@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from .analog_evolution import AnalogEvolution
+from .digital_propagation import DigitalPropagation
 from .quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
 from .quantum_reservoirs_result import QuantumReservoirResult
 from .sampling import Sampling
@@ -22,6 +24,8 @@ from .variational_program import VariationalProgram
 from .variational_program_result import VariationalProgramResult
 
 __all__ = [
+    "AnalogEvolution",
+    "DigitalPropagation",
     "QuantumReservoir",
     "QuantumReservoirResult",
     "ReservoirInput",

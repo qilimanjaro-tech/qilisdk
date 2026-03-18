@@ -16,7 +16,7 @@ import pytest
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliX, PauliY, PauliZ
 from qilisdk.analog.schedule import Schedule
-from qilisdk.digital.ansatz import QAOA, HardwareEfficientAnsatz, TrotterizedTimeEvolution
+from qilisdk.digital.ansatz import QAOA, HardwareEfficientAnsatz, TrotterizedSchedule
 from qilisdk.digital.gates import CNOT, CZ, RZ, U1
 
 # ------------------------------ Helpers ------------------------------
@@ -344,14 +344,14 @@ def test_qaoa_gate_count():
 
 
 def test_trotterized_time_evolution_uses_schedule_dt():
-    """TrotterizedTimeEvolution should honor schedule dt and trotter_steps."""
+    """TrotterizedSchedule should honor schedule dt and trotter_steps."""
     hamiltonian = Hamiltonian({(PauliZ(0),): 1.0})
     schedule = Schedule(
         hamiltonians={"h": hamiltonian},
         coefficients={"h": {0.0: 1.0, 1.0: 1.0}},
         dt=1.0,
     )
-    ansatz = TrotterizedTimeEvolution(schedule, trotter_steps=3)
+    ansatz = TrotterizedSchedule(schedule, trotter_steps=3)
     rz_gates = [gate for gate in ansatz.gates if isinstance(gate, RZ)]
     assert len(rz_gates) == 3
     assert all(gate.phi == pytest.approx(2.0 / 3.0) for gate in rz_gates)

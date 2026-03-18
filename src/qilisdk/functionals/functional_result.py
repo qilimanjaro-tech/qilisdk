@@ -59,7 +59,7 @@ class FunctionalResult(Result):
         )
 
     @property
-    def final_states(self) -> QTensor:
+    def final_state(self) -> QTensor:
         for ro in self._readout_results:
             if isinstance(ro, StateTomographyReadoutResult):
                 return ro.final_state

@@ -15,12 +15,10 @@ from __future__ import annotations
 
 import functools
 import operator
-from typing import TYPE_CHECKING, ClassVar, Generic, TypeVar
+from typing import TYPE_CHECKING
 
 from qilisdk.core.variables import BaseVariable, Parameter
 from qilisdk.functionals.functional import Functional, PrimitiveFunctional
-from qilisdk.functionals.functional_result import FunctionalResult
-from qilisdk.functionals.variational_program_result import VariationalProgramResult
 from qilisdk.yaml import yaml
 
 if TYPE_CHECKING:
@@ -28,11 +26,9 @@ if TYPE_CHECKING:
     from qilisdk.cost_functions.cost_function import CostFunction
     from qilisdk.optimizers.optimizer import Optimizer
 
-TFunctional = TypeVar("TFunctional", bound=PrimitiveFunctional[FunctionalResult])
-
 
 @yaml.register_class
-class VariationalProgram(Functional, Generic[TFunctional]):
+class VariationalProgram(Functional):
     """
     Bundle a parameterized functional, optimizer, and cost function into a variational loop.
 
@@ -42,11 +38,9 @@ class VariationalProgram(Functional, Generic[TFunctional]):
             program = VariationalProgram(functional, optimizer, cost_function)
     """
 
-    result_type: ClassVar[type[FunctionalResult]] = VariationalProgramResult
-
     def __init__(
         self,
-        functional: TFunctional,
+        functional: PrimitiveFunctional,
         optimizer: Optimizer,
         cost_function: CostFunction,
         store_intermediate_results: bool = False,
@@ -83,7 +77,7 @@ class VariationalProgram(Functional, Generic[TFunctional]):
         self._parameter_constraints = parameter_constraints
 
     @property
-    def functional(self) -> TFunctional:
+    def functional(self) -> PrimitiveFunctional:
         """Return the wrapped functional that will be optimised."""
         return self._functional
 

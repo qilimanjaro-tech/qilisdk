@@ -41,7 +41,7 @@ from qilisdk.core.qtensor import QTensor, ket, tensor_prod
 from qilisdk.core.variables import BinaryVariable
 from qilisdk.cost_functions.model_cost_function import ModelCostFunction
 from qilisdk.digital import RX, RY, RZ, SWAP, U1, U2, U3, Circuit, H, I, M, S, T, X, Y, Z
-from qilisdk.digital.ansatz import HardwareEfficientAnsatz, TrotterizedTimeEvolution
+from qilisdk.digital.ansatz import HardwareEfficientAnsatz, TrotterizedSchedule
 from qilisdk.digital.gates import CNOT, Controlled
 from qilisdk.functionals import QuantumReservoir, ReservoirLayer
 from qilisdk.functionals.sampling import Sampling
@@ -252,7 +252,7 @@ def test_real_example(backend):
 
 @pytest.mark.parametrize("backend", backends_no_cuda)
 def test_trotterized_time_evolution_results(backend):
-    """TrotterizedTimeEvolution should honor schedule dt and trotter_steps."""
+    """TrotterizedSchedule should honor schedule dt and trotter_steps."""
 
     h0 = Hamiltonian({(PauliX(0),): -1})
     h1 = Hamiltonian({(PauliZ(0),): 1})
@@ -262,7 +262,7 @@ def test_trotterized_time_evolution_results(backend):
         dt=0.01,
         total_time=10,
     )
-    ansatz = TrotterizedTimeEvolution(schedule)
+    ansatz = TrotterizedSchedule(schedule)
     ansatz.insert([H(0)], 0)
     te = TimeEvolution(
         schedule,

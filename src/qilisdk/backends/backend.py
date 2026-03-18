@@ -17,16 +17,9 @@ from abc import ABC
 from copy import copy
 from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast, overload
 
-import numpy as np
-
-from qilisdk.analog import Schedule
-from qilisdk.core import QTensor, expect_val, reset_qubits
-from qilisdk.digital import Circuit
+from qilisdk.functionals.analog_evolution import AnalogEvolution
+from qilisdk.functionals.digital_propagation import DigitalPropagation
 from qilisdk.functionals.functional_result import FunctionalResult
-from qilisdk.functionals.quantum_reservoirs import QuantumReservoir
-from qilisdk.functionals.quantum_reservoirs_result import QuantumReservoirResult
-from qilisdk.functionals.sampling import Sampling
-from qilisdk.functionals.time_evolution import TimeEvolution
 from qilisdk.functionals.variational_program import VariationalProgram
 from qilisdk.functionals.variational_program_result import VariationalProgramResult
 from qilisdk.readout import (
@@ -42,10 +35,8 @@ from qilisdk.readout import (
 from qilisdk.settings import get_settings
 
 if TYPE_CHECKING:
-    from qilisdk.core.types import Number
+    from qilisdk.core import QTensor
     from qilisdk.functionals.functional import Functional, PrimitiveFunctional
-    from qilisdk.functionals.sampling_result import SamplingResult
-    from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
 
 TResult = TypeVar("TResult", bound=FunctionalResult)
 
@@ -53,36 +44,25 @@ TResult = TypeVar("TResult", bound=FunctionalResult)
 class Backend(ABC):
     def __init__(self) -> None:
         self._handlers: dict[type[Functional], Callable[[Functional, list[ReadoutMethod]], FunctionalResult]] = {
-            Sampling: lambda f, readout: self._execute_sampling(cast("Sampling", f), readout),
-            TimeEvolution: lambda f, readout: self._execute_time_evolution(cast("TimeEvolution", f), readout),
-            QuantumReservoir: lambda f, readout: self._execute_quantum_reservoir(cast("QuantumReservoir", f), readout),
+            DigitalPropagation: lambda f, readout: self._execute_digital_propagation(
+                cast("DigitalPropagation", f), readout
+            ),
+            AnalogEvolution: lambda f, readout: self._execute_analog_evolution(cast("AnalogEvolution", f), readout),
+            # QuantumReservoir: lambda f, readout: self._execute_quantum_reservoir(cast("QuantumReservoir", f), readout),
             VariationalProgram: lambda f, readout: self._execute_variational_program(
                 cast("VariationalProgram", f), readout
             ),
         }
 
     @overload
-    def execute(self, functional: Sampling, readout: ReadoutMethod | list[ReadoutMethod]) -> SamplingResult: ...
+    def execute(
+        self, functional: VariationalProgram, readout: ReadoutMethod | list[ReadoutMethod]
+    ) -> VariationalProgramResult[FunctionalResult]: ...
 
     @overload
     def execute(
-        self, functional: TimeEvolution, readout: ReadoutMethod | list[ReadoutMethod]
-    ) -> TimeEvolutionResult: ...
-
-    @overload
-    def execute(
-        self, functional: VariationalProgram[Sampling], readout: ReadoutMethod | list[ReadoutMethod]
-    ) -> VariationalProgramResult[SamplingResult]: ...
-
-    @overload
-    def execute(
-        self, functional: VariationalProgram[TimeEvolution], readout: ReadoutMethod | list[ReadoutMethod]
-    ) -> VariationalProgramResult[TimeEvolutionResult]: ...
-
-    @overload
-    def execute(
-        self, functional: PrimitiveFunctional[TResult], readout: ReadoutMethod | list[ReadoutMethod]
-    ) -> TResult: ...
+        self, functional: PrimitiveFunctional, readout: ReadoutMethod | list[ReadoutMethod]
+    ) -> FunctionalResult: ...
 
     def execute(self, functional: Functional, readout: ReadoutMethod | list[ReadoutMethod]) -> FunctionalResult:
         try:
@@ -101,66 +81,68 @@ class Backend(ABC):
             raise ValueError(f"Each readout method can only passed once.\nProvided: {_readout}")
         return handler(functional, _readout)
 
-    def _execute_sampling(self, functional: Sampling, readout: list[ReadoutMethod]) -> SamplingResult:
+    def _execute_digital_propagation(
+        self, functional: DigitalPropagation, readout: list[ReadoutMethod]
+    ) -> FunctionalResult:
         raise NotImplementedError(f"{type(self).__qualname__} has no Sampling implementation")
 
-    def _execute_time_evolution(self, functional: TimeEvolution, readout: list[ReadoutMethod]) -> TimeEvolutionResult:
+    def _execute_analog_evolution(self, functional: AnalogEvolution, readout: list[ReadoutMethod]) -> FunctionalResult:
         raise NotImplementedError(f"{type(self).__qualname__} has no TimeEvolution implementation")
 
-    def _execute_quantum_reservoir(
-        self, functional: QuantumReservoir, readout: list[ReadoutMethod]
-    ) -> QuantumReservoirResult:
-        state = functional.initial_state.to_density_matrix()
-        expected_values: list[list[Number]] = []
-        intermediate_states: list[QTensor] = []
-        cache: dict[Circuit, tuple[tuple[float, ...], QTensor]] = {}
-        for input_dict in functional.input_per_layer:
-            functional.reservoir_layer.set_parameters(input_dict)
-            for step in functional.reservoir_layer:
-                if isinstance(step, Circuit):
-                    param_signature = tuple(step.get_parameter_values())
-                    cached = cache.get(step)
-                    if cached is None or cached[0] != param_signature:
-                        U = step.to_qtensor()
-                        cache[step] = (param_signature, U)
-                    else:
-                        U = cached[1]
-                    state = U @ state @ U.adjoint()
-                elif isinstance(step, Schedule):
-                    res = self._execute_time_evolution(TimeEvolution(step, [], state, functional.nshots), readout)
-                    if not res.final_state:
-                        raise ValueError("Reservoir Runtime Error: Time Evolution Failed.")
-                    state = res.final_state
+    # def _execute_quantum_reservoir(
+    #     self, functional: QuantumReservoir, readout: list[ReadoutMethod]
+    # ) -> FunctionalResult:
+    #     state = functional.initial_state.to_density_matrix()
+    #     expected_values: list[list[Number]] = []
+    #     intermediate_states: list[QTensor] = []
+    #     cache: dict[Circuit, tuple[tuple[float, ...], QTensor]] = {}
+    #     for input_dict in functional.input_per_layer:
+    #         functional.reservoir_layer.set_parameters(input_dict)
+    #         for step in functional.reservoir_layer:
+    #             if isinstance(step, Circuit):
+    #                 param_signature = tuple(step.get_parameter_values())
+    #                 cached = cache.get(step)
+    #                 if cached is None or cached[0] != param_signature:
+    #                     U = step.to_qtensor()
+    #                     cache[step] = (param_signature, U)
+    #                 else:
+    #                     U = cached[1]
+    #                 state = U @ state @ U.adjoint()
+    #             elif isinstance(step, Schedule):
+    #                 res = self._execute_time_evolution(
+    #                     TimeEvolution(step, [], state, functional.nshots), readout=[StateTomographyReadout()]
+    #                 )
+    #                 if not res.final_state:
+    #                     raise ValueError("Reservoir Runtime Error: Time Evolution Failed.")
+    #                 state = res.final_state
 
-            try:
-                state = state.to_density_matrix()
-            except ValueError as exc:
-                raise ValueError(
-                    "Reservoir Runtime Error: state repair failed before expectation value computation. "
-                    f"{exc} "
-                    "Try improving simulation precision (e.g., smaller dt, more integrator substeps, or higher precision)."
-                ) from exc
+    #         try:
+    #             state = state.to_density_matrix()
+    #         except ValueError as exc:
+    #             raise ValueError(
+    #                 "Reservoir Runtime Error: state repair failed before expectation value computation. "
+    #                 f"{exc} "
+    #                 "Try improving simulation precision (e.g., smaller dt, more integrator substeps, or higher precision)."
+    #             ) from exc
 
-            if functional.store_intermediate_states:
-                intermediate_states.append(state)
+    #         expected_values.append(
+    #             [expect_val(operator=obs, state=state) for obs in functional.reservoir_layer.observables_as_qtensor]
+    #         )
 
-            expected_values.append(
-                [expect_val(operator=obs, state=state) for obs in functional.reservoir_layer.observables_as_qtensor]
-            )
+    #         if functional.reservoir_layer.qubits_to_reset:
+    #             state = reset_qubits(state, functional.reservoir_layer.qubits_to_reset)
 
-            if functional.reservoir_layer.qubits_to_reset:
-                state = reset_qubits(state, functional.reservoir_layer.qubits_to_reset)
-
-        return QuantumReservoirResult(
-            expected_values=np.array(expected_values),
-            final_expected_values=np.array(expected_values[-1]),
-            final_state=state.to_density_matrix() if functional.store_final_state else None,
-            intermediate_states=intermediate_states if functional.store_intermediate_states else None,
-        )
+    #     return FunctionalResult(...)
+    # return QuantumReservoirResult(
+    #     expected_values=np.array(expected_values),
+    #     final_expected_values=np.array(expected_values[-1]),
+    #     final_state=state.to_density_matrix() if functional.store_final_state else None,
+    #     intermediate_states=intermediate_states if functional.store_intermediate_states else None,
+    # )
 
     def _execute_variational_program(
         self, functional: VariationalProgram[PrimitiveFunctional[TResult]], readout: list[ReadoutMethod]
-    ) -> VariationalProgramResult[TResult]:
+    ) -> VariationalProgramResult[FunctionalResult]:
         """Optimize a :class:`~qilisdk.functionals.variational_program.VariationalProgram`.
 
         Args:
@@ -212,7 +194,7 @@ class Backend(ABC):
                 "Optimizer Failed at finding an optimal solution. Check the parameter constraints or try with a different optimization method."
             )
         functional.functional.set_parameters(optimal_parameter_dict)
-        optimal_results: TResult = self.execute(functional.functional, readout)
+        optimal_results: FunctionalResult = self.execute(functional.functional, readout)
 
         return VariationalProgramResult(optimizer_result=optimizer_result, result=optimal_results)
 

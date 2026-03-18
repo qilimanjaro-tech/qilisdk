@@ -15,12 +15,13 @@ from __future__ import annotations
 
 from copy import copy
 from enum import Enum
-from typing import TYPE_CHECKING, Callable, Type, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, Type, TypeVar
 
 import cudaq
 import numpy as np
 from cudaq import ElementaryOperator, OperatorSum, ScalarOperator, SpinOperatorTerm, State, evolve, operators, spin
 from cudaq import Schedule as CudaSchedule
+from defusedxml import NotSupportedError
 from loguru import logger
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator, PauliX, PauliY, PauliZ
@@ -49,8 +50,7 @@ from qilisdk.digital.gates import (
     Y,
     Z,
 )
-from qilisdk.functionals.sampling_result import SamplingResult
-from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
+from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.noise import (
     BitFlip,
     Depolarizing,
@@ -64,15 +64,16 @@ from qilisdk.noise import (
     SupportsTimeDerivedKraus,
     SupportsTimeDerivedLindblad,
 )
-from qilisdk.readout import ReadoutMethod
+from qilisdk.readout.readout_result import SamplingReadoutResult
 from qilisdk.settings import Precision, get_settings
 
 if TYPE_CHECKING:
     from qilisdk.analog.schedule import Schedule
     from qilisdk.digital.circuit import Circuit
-    from qilisdk.functionals.sampling import Sampling
-    from qilisdk.functionals.time_evolution import TimeEvolution
+    from qilisdk.functionals.analog_evolution import AnalogEvolution
+    from qilisdk.functionals.digital_propagation import DigitalPropagation
     from qilisdk.noise import NoiseModel
+    from qilisdk.readout import ReadoutMethod
 
 
 def _complex_dtype() -> np.dtype:
@@ -165,8 +166,19 @@ class CudaBackend(Backend):
         self._noise_model = noise_model
         logger.success("CudaBackend initialised (sampling_method={})", sampling_method.value)
 
-    def _execute_sampling(self, functional: Sampling, readout: list[ReadoutMethod]) -> SamplingResult:
-        logger.info("Executing Sampling (shots={})", functional.nshots)
+    def _execute_digital_propagation(
+        self, functional: DigitalPropagation, readout: list[ReadoutMethod]
+    ) -> FunctionalResult:
+        logger.info("Executing Digital Propagation")
+        if self._noise_model:
+            if any(not ro.is_sample() for ro in readout):
+                raise ValueError(
+                    "Currently only the sample readout method is supported with CUDA backend for digital simulation with noise."
+                )
+            if len(readout) > 1:
+                raise ValueError(
+                    "Currently only a single sampling operation is supported with CUDA backend digital simulation with noise."
+                )
         self._apply_digital_simulation_method()
         kernel = cudaq.make_kernel()
         qubits = kernel.qalloc(functional.circuit.nqubits)
@@ -179,12 +191,16 @@ class CudaBackend(Backend):
 
         # Transpile the circuit into CUDAQ format
         transpiled_circuit = DecomposeMultiControlledGatesPass().run(functional.circuit)
-        for gate in transpiled_circuit.gates:
+        measured_qubits = set()
+        for i, gate in enumerate(transpiled_circuit.gates):
             if isinstance(gate, Controlled):
                 self._handle_controlled(kernel, gate, qubits[gate.control_qubits[0]], qubits[gate.target_qubits[0]])
             elif isinstance(gate, Adjoint):
                 self._handle_adjoint(kernel, gate, qubits[gate.target_qubits[0]])
             elif isinstance(gate, M):
+                if any(not isinstance(g, M) for g in transpiled_circuit.gates[i:]):
+                    raise NotSupportedError("Intermediate-measurement is not Supported with Cuda Backend")
+                measured_qubits.update(gate.qubits)
                 self._handle_M(kernel, gate, transpiled_circuit, qubits)
             else:
                 handler = self._basic_gate_handlers.get(type(gate), None)
@@ -194,17 +210,44 @@ class CudaBackend(Backend):
 
         if self._noise_model:
             cuda_noise_model = self._noise_model_to_cudaq(self._noise_model, functional.circuit.nqubits)
+            cudaq_result = cudaq.sample(
+                kernel, shots_count=readout[0].nshots, noise_model=cuda_noise_model  # ty:ignore[unresolved-attribute]
+            )
+            cudaq_result = self._handle_readout_errors(cudaq_result, self._noise_model, functional.circuit.nqubits)
+            if og_param:
+                functional.set_parameters(og_param)
+            logger.success("Sampling finished; {} distinct bitstrings", len(cudaq_result))
+            return FunctionalResult(
+                [
+                    SamplingReadoutResult(
+                        readout=readout[0], samples=dict(cudaq_result.items())  # ty:ignore[invalid-argument-type]
+                    )
+                ]
+            )
+
+            cuda_noise_model = self._noise_model_to_cudaq(self._noise_model, functional.circuit.nqubits)
             cudaq_result = cudaq.sample(kernel, shots_count=functional.nshots, noise_model=cuda_noise_model)
             cudaq_result = self._handle_readout_errors(cudaq_result, self._noise_model, functional.circuit.nqubits)
-        else:
-            cudaq_result = cudaq.sample(kernel, shots_count=functional.nshots)
 
-        logger.success("Sampling finished; {} distinct bitstrings", len(cudaq_result))
-        if og_param:
-            functional.set_parameters(og_param)
-        return SamplingResult(nshots=functional.nshots, samples=dict(cudaq_result.items()))
+        cudaq_state = cudaq.get_state(kernel)
+        final_state = np.array(
+            cudaq_state,
+            dtype=_complex_dtype(),
+        )
+        if len(final_state.shape) == 1:
+            final_state = final_state.reshape(-1, 1)
+        final_state = QTensor(final_state)
+        if len(measured_qubits) > 0:
+            final_state = final_state.ptrace(list(measured_qubits))
 
-    def _execute_time_evolution(self, functional: TimeEvolution, readout: list[ReadoutMethod]) -> TimeEvolutionResult:
+        return FunctionalResult(
+            readout_results=CudaBackend._construct_results_list(
+                final_state=final_state,
+                readout=readout,
+            )
+        )
+
+    def _execute_analog_evolution(self, functional: AnalogEvolution, readout: list[ReadoutMethod]) -> FunctionalResult:
         logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
         cudaq.set_target("dynamics")
         og_params = None
@@ -222,21 +265,22 @@ class CudaBackend(Backend):
         logger.trace("Hamiltonian compiled for evolution")
 
         cuda_observables = []
-        for index, observable in enumerate(functional.observables):
-            if isinstance(observable, PauliOperator):
-                cuda_observables.append(self._pauli_operator_handlers[type(observable)](observable))
-            elif isinstance(observable, Hamiltonian):
-                cuda_observables.append(self._hamiltonian_to_cuda(observable))
-            elif isinstance(observable, QTensor):
-                cuda_observables.append(
-                    self._hamiltonian_to_cuda(
-                        self._qtensor_observable_to_hamiltonian(observable, functional.schedule.nqubits)
-                    )
-                )
-            else:
-                logger.error("Unsupported observable type {}", observable.__class__.__name__)
-                raise ValueError(f"unsupported observable type of {observable.__class__}")
-        logger.trace("Observables compiled for evolution")
+
+        # for index, observable in enumerate(functional.observables):
+        #     if isinstance(observable, PauliOperator):
+        #         cuda_observables.append(self._pauli_operator_handlers[type(observable)](observable))
+        #     elif isinstance(observable, Hamiltonian):
+        #         cuda_observables.append(self._hamiltonian_to_cuda(observable))
+        #     elif isinstance(observable, QTensor):
+        #         cuda_observables.append(
+        #             self._hamiltonian_to_cuda(
+        #                 self._qtensor_observable_to_hamiltonian(observable, functional.schedule.nqubits)
+        #             )
+        #         )
+        #     else:
+        #         logger.error("Unsupported observable type {}", observable.__class__.__name__)
+        #         raise ValueError(f"unsupported observable type of {observable.__class__}")
+        # logger.trace("Observables compiled for evolution")
 
         # Add noise
         jump_operators: list[OperatorSum] = []
@@ -261,61 +305,19 @@ class CudaBackend(Backend):
         )
 
         logger.success("TimeEvolution finished")
-
-        final_expected_values = np.array(
-            [
-                exp_val.expectation()
-                for exp_val in evolution_result.final_expectation_values()  # ty:ignore[unresolved-attribute]
-            ],
+        final_state = np.array(
+            evolution_result.final_state(),  # ty:ignore[unresolved-attribute]
             dtype=_complex_dtype(),
         )
-        expected_values = (
-            np.array(
-                [
-                    [val.expectation() for val in exp_vals]
-                    for exp_vals in evolution_result.expectation_values()  # ty:ignore[unresolved-attribute]
-                ],
-                dtype=_complex_dtype(),
-            )
-            if evolution_result.expectation_values() is not None  # ty:ignore[unresolved-attribute]
-            and functional.store_intermediate_results
-            else None
-        )
-
-        if evolution_result.final_state() is not None:  # ty:ignore[unresolved-attribute]
-            final_state = np.array(
-                evolution_result.final_state(),  # ty:ignore[unresolved-attribute]
-                dtype=_complex_dtype(),
-            )
-            if len(final_state.shape) == 1:
-                final_state = final_state.reshape(-1, 1)
-            final_state = QTensor(final_state)
-
-        else:
-            final_state = None
-
-        if (
-            evolution_result.intermediate_states() is not None  # ty:ignore[unresolved-attribute]
-            and functional.store_intermediate_results
-        ):
-            intermediate_states = []
-            for state in evolution_result.intermediate_states():  # ty:ignore[unresolved-attribute]
-                _state = np.array(state, dtype=_complex_dtype())
-                if len(_state.shape) == 1:
-                    _state = _state.reshape(-1, 1)
-                intermediate_states.append(QTensor(_state))
-
-        else:
-            intermediate_states = None
+        if len(final_state.shape) == 1:
+            final_state = final_state.reshape(-1, 1)
+        final_state = QTensor(final_state)
 
         if og_params:
             functional.set_parameters(og_params)
 
-        return TimeEvolutionResult(
-            final_expected_values=final_expected_values,
-            expected_values=expected_values,
-            final_state=final_state,
-            intermediate_states=intermediate_states,
+        return FunctionalResult(
+            readout_results=CudaBackend._construct_results_list(final_state=final_state, readout=readout)
         )
 
     @property

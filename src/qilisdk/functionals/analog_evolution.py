@@ -13,7 +13,6 @@
 # limitations under the License.
 from typing import ClassVar, Iterator
 
-from qilisdk.analog.hamiltonian import Hamiltonian, PauliOperator
 from qilisdk.analog.schedule import Schedule
 from qilisdk.core.parameterizable import Parameterizable
 from qilisdk.core.qtensor import QTensor
@@ -23,7 +22,7 @@ from qilisdk.yaml import yaml
 
 
 @yaml.register_class
-class TimeEvolution(PrimitiveFunctional):
+class AnalogEvolution(PrimitiveFunctional):
     """
     Simulate the dynamics induced by a time-dependent Hamiltonian schedule.
 
@@ -44,17 +43,13 @@ class TimeEvolution(PrimitiveFunctional):
     def __init__(
         self,
         schedule: Schedule,
-        observables: list[QTensor | PauliOperator | Hamiltonian],
         initial_state: QTensor,
-        nshots: int = 1000,
         store_intermediate_results: bool = False,
     ) -> None:
         """
         Args:
             schedule (Schedule): Annealing or control schedule describing the Hamiltonian evolution.
-            observables (list[QTensor | PauliOperator | Hamiltonian]): Observables measured at the end of the evolution.
             initial_state (QTensor): Quantum state used as the simulation starting point.
-            nshots (int, optional): Number of executions for statistical estimation. Defaults to 1000.
             store_intermediate_results (bool, optional): Keep intermediate states if produced by the backend. Defaults to False.
 
         Raises:
@@ -63,8 +58,6 @@ class TimeEvolution(PrimitiveFunctional):
         super().__init__()
         self.initial_state = initial_state
         self.schedule = schedule
-        self.observables = observables
-        self.nshots = nshots
         self.store_intermediate_results = store_intermediate_results
 
         if initial_state.nqubits != schedule.nqubits:
@@ -79,9 +72,7 @@ class TimeEvolution(PrimitiveFunctional):
         lines = [
             f"{type(self).__qualname__}(",
             f"  schedule={self.schedule!r},",
-            f"  observables={self.observables!r},",
             f"  initial_state={self.initial_state!r},",
-            f"  nshots={self.nshots!r},",
             f"  store_intermediate_results={self.store_intermediate_results!r},",
             ")",
         ]

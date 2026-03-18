@@ -18,16 +18,13 @@ from typing import TYPE_CHECKING, Iterator
 
 import numpy as np
 
-from qilisdk.analog import Hamiltonian, Schedule
-from qilisdk.analog.hamiltonian import PauliOperator
 from qilisdk.core import Domain, Parameter, QTensor, tensor_prod
 from qilisdk.core.parameterizable import Parameterizable
 from qilisdk.digital import Circuit, M
 from qilisdk.functionals.functional import PrimitiveFunctional
 
-from .quantum_reservoirs_result import QuantumReservoirResult
-
 if TYPE_CHECKING:
+    from qilisdk.analog import Schedule
     from qilisdk.core.types import RealNumber
 
 
@@ -69,7 +66,6 @@ class ReservoirLayer(Parameterizable):
     def __init__(
         self,
         evolution_dynamics: Schedule,
-        observables: list[QTensor | Hamiltonian | PauliOperator],
         input_encoding: Circuit | None = None,
         output_encoding: Circuit | None = None,
         qubits_to_reset: list[int] | None = None,
@@ -78,7 +74,6 @@ class ReservoirLayer(Parameterizable):
 
         Args:
             evolution_dynamics: Main analog schedule block.
-            observables: Observables sampled at the end of the pass.
             input_encoding: Optional single-qubit pre-processing circuit.
             output_encoding: Optional single-qubit post-processing circuit.
             qubits_to_reset: Optional qubits reset between consecutive layers.
@@ -101,21 +96,6 @@ class ReservoirLayer(Parameterizable):
             self._validate_output_encoding(output_encoding)
 
         self._qtensor_observables: list[QTensor] = []
-
-        for observable in observables:
-            if isinstance(observable, PauliOperator):
-                self._qtensor_observables.append(observable.to_hamiltonian().to_qtensor(self._nqubits))
-            elif isinstance(observable, Hamiltonian):
-                self._qtensor_observables.append(observable.to_qtensor(self._nqubits))
-            elif isinstance(observable, QTensor):
-                self._qtensor_observables.append(self._process_qtensor(observable))
-            else:
-                raise ValueError(
-                    "Unsupported observable type. Expected QTensor, Hamiltonian, or PauliOperator, "
-                    f"received {type(observable).__name__}."
-                )
-
-        self._observables = observables
 
     def _validate_input_encoding(self, pre_processing: Circuit) -> None:
         """Validate and normalize the optional pre-processing circuit.
@@ -203,11 +183,6 @@ class ReservoirLayer(Parameterizable):
         return self._qubits_to_reset
 
     @property
-    def observables(self) -> list[QTensor | Hamiltonian | PauliOperator]:
-        """Original observable list provided by the user."""
-        return self._observables
-
-    @property
     def evolution_dynamics(self) -> Schedule:
         """Main dynamics stage for each pass."""
         return self._evolution_dynamics
@@ -249,14 +224,13 @@ class ReservoirLayer(Parameterizable):
     def __copy__(self) -> ReservoirLayer:
         return ReservoirLayer(
             evolution_dynamics=copy(self.evolution_dynamics),
-            observables=copy(self.observables),
             input_encoding=copy(self.input_encoding),
             output_encoding=copy(self.output_encoding),
             qubits_to_reset=copy(self.qubits_to_reset),
         )
 
 
-class QuantumReservoir(PrimitiveFunctional[QuantumReservoirResult]):
+class QuantumReservoir(PrimitiveFunctional):
     """Reservoir functional executed over a sequence of input layers.
 
     Each element in ``input_per_layer`` is applied to the underlying
@@ -268,9 +242,6 @@ class QuantumReservoir(PrimitiveFunctional[QuantumReservoirResult]):
         initial_state: QTensor,
         reservoir_layer: ReservoirLayer | None = None,
         input_per_layer: list[dict[str, float]] | None = None,
-        store_final_state: bool = False,
-        store_intermediate_states: bool = False,
-        nshots: int = 0,
     ) -> None:
         """Construct a quantum reservoir functional.
 
@@ -278,9 +249,6 @@ class QuantumReservoir(PrimitiveFunctional[QuantumReservoirResult]):
             initial_state: Initial state before the first layer.
             reservoir_layer: Reservoir pass definition repeated at each layer.
             input_per_layer: Input parameter assignments for each layer.
-            store_final_state: Whether to store the final state after the last layer.
-            store_intermediate_states: Whether to store layer-by-layer intermediate states.
-            nshots: Number of measurement shots for dynamics executions that use sampling.
 
         Raises:
             ValueError: If the initial state qubit count does not match the reservoir pass.
@@ -296,9 +264,6 @@ class QuantumReservoir(PrimitiveFunctional[QuantumReservoirResult]):
         self._initial_state = initial_state
         self._reservoir_layer = reservoir_layer
         self._input_per_layer = input_per_layer
-        self._store_final_state = store_final_state
-        self._store_intermediate_states = store_intermediate_states
-        self._nshots = nshots
         if self._reservoir_layer.nqubits != self._initial_state.nqubits:
             raise ValueError(
                 f"invalid initial state: the initial state acts on {self._initial_state.nqubits} qubits while the reservoir is defined with {self._reservoir_layer.nqubits} qubits."
@@ -323,21 +288,6 @@ class QuantumReservoir(PrimitiveFunctional[QuantumReservoirResult]):
     def input_per_layer(self) -> list[dict[str, float]]:
         """Layer-ordered input parameter assignments."""
         return self._input_per_layer
-
-    @property
-    def store_final_state(self) -> bool:
-        """Whether to include the final reservoir state in the result."""
-        return self._store_final_state
-
-    @property
-    def store_intermediate_states(self) -> bool:
-        """Whether to include intermediate per-layer states in the result."""
-        return self._store_intermediate_states
-
-    @property
-    def nshots(self) -> int:
-        """Number of shots used by backend executions."""
-        return self._nshots
 
     @property
     def input_parameter_names(self) -> list[str]:
@@ -371,7 +321,4 @@ class QuantumReservoir(PrimitiveFunctional[QuantumReservoirResult]):
             initial_state=copy(self.initial_state),
             reservoir_layer=copy(self.reservoir_layer),
             input_per_layer=copy(self.input_per_layer),
-            store_final_state=copy(self.store_final_state),
-            store_intermediate_states=copy(self.store_intermediate_states),
-            nshots=copy(self.nshots),
         )

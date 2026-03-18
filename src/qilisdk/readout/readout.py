@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from qilisdk.analog import Hamiltonian  # noqa: TC001
 from qilisdk.core import QTensor  # noqa: TC001
@@ -154,6 +154,7 @@ class ExpectationReadout(ReadoutMethod):
 
     nshots: int = Field(default=0, ge=0)
     observables: list[Hamiltonian | QTensor]
+    qtensor_observables: list[QTensor] = Field(default=[], init=False)
 
     def __init__(self, *args: object, **data: object) -> None:
         """Create an expectation-value readout.
@@ -169,6 +170,11 @@ class ExpectationReadout(ReadoutMethod):
             keyword_args=data,
         )
         super().__init__(**payload)
+
+    @model_validator(mode="after")
+    def set_qtensor_observables(self) -> ExpectationReadout:
+        self.qtensor_observables = [(o if isinstance(o, QTensor) else o.to_qtensor()) for o in self.observables]
+        return self
 
 
 class StateTomographyReadout(ReadoutMethod):

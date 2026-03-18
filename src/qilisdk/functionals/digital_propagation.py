@@ -21,7 +21,7 @@ from qilisdk.yaml import yaml
 
 
 @yaml.register_class
-class Sampling(PrimitiveFunctional):
+class DigitalPropagation(PrimitiveFunctional):
     """
     Execute a digital circuit and collect bitstring samples.
 
@@ -38,18 +38,16 @@ class Sampling(PrimitiveFunctional):
 
     result_type: ClassVar[type[SamplingResult]] = SamplingResult
 
-    def __init__(self, circuit: Circuit, nshots: int = 1000) -> None:
+    def __init__(self, circuit: Circuit) -> None:
         """
         Args:
             circuit (Circuit): Circuit to execute for sampling.
-            nshots (int, optional): Number of repetitions used to estimate probabilities. Defaults to 1000.
         """
         super().__init__()
         self.circuit = circuit
-        self.nshots = nshots
 
     def _iter_parameter_children(self) -> Iterator[Parameterizable]:
         yield self.circuit
 
     def __repr__(self) -> str:
-        return f"Sampling(circuit={self.circuit}, nshots={self.nshots})"
+        return f"DigitalPropagation(circuit={self.circuit})"
