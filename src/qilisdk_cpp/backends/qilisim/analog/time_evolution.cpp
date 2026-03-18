@@ -18,7 +18,7 @@
 #include "../utils/random.h"
 #include "iterations.h"
 
-void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, NoiseModelCpp& noise_model_cpp, const std::vector<SparseMatrix>& observable_matrices, QiliSimConfig& config, DenseMatrix& rho_t, std::vector<DenseMatrix>& intermediate_rhos, std::vector<double>& expectation_values, std::vector<std::vector<double>>& intermediate_expectation_values) {
+void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, NoiseModelCpp& noise_model_cpp, QiliSimConfig& config, DenseMatrix& rho_t, std::vector<DenseMatrix>& intermediate_rhos) {
     /*
     Execute a time evolution functional.
 
@@ -33,7 +33,6 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
         rho_t (DenseMatrix&): Output parameter to hold the final state after evolution.
         intermediate_rhos (std::vector<DenseMatrix>&): Output parameter to hold intermediate states if requested.
         expectation_values (std::vector<std::vector<double>>&): Output parameter to hold the expectation values of observables at final time.
-        intermediate_expectation_values (std::vector<std::vector<std::vector<double>>>&): Output parameter to hold expectation values at intermediate times.
 
     Returns:
         TimeEvolutionResult: The results of the evolution.
@@ -165,34 +164,9 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
     if (use_monte_carlo || (!input_was_vector && rho_t.cols() == 1)) {
         rho_t = trajectories_to_density_matrix(rho_t);
     }
-
-    // Apply the operators using the Born rule
-    for (const auto& O : observable_matrices) {
-        if (rho_t.cols() == 1) {
-            expectation_values.push_back(std::real(dot(rho_t, O * rho_t)));
-        } else {
-            expectation_values.push_back(std::real(dot(O, rho_t)));
-        }
-    }
-
-    // If we have intermediates, process them too
-    if (config.get_store_intermediate_results()) {
-        for (const auto& rho_intermediate : intermediate_rhos) {
-            std::vector<double> step_expectation_values;
-            for (const auto& O : observable_matrices) {
-                if (rho_intermediate.cols() == 1) {
-                    DenseMatrix rho_dense(rho_intermediate);
-                    step_expectation_values.push_back(std::real(dot(rho_dense, O * rho_dense)));
-                } else {
-                    step_expectation_values.push_back(std::real(dot(O, rho_intermediate)));
-                }
-            }
-            intermediate_expectation_values.push_back(step_expectation_values);
-        }
-    }
 }
 
-void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, NoiseModelCpp& noise_model_cpp, const std::vector<MatrixFreeHamiltonian>& observables, QiliSimConfig& config, DenseMatrix& rho_t, std::vector<DenseMatrix>& intermediate_rhos, std::vector<double>& expectation_values, std::vector<std::vector<double>>& intermediate_expectation_values) {
+void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, NoiseModelCpp& noise_model_cpp, QiliSimConfig& config, DenseMatrix& rho_t, std::vector<DenseMatrix>& intermediate_rhos) {
     /*
     Execute a time evolution functional.
 
@@ -202,12 +176,10 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
         parameters_list (std::vector<std::vector<double>>): The list of parameter values for each Hamiltonian term at each time step.
         step_list (std::vector<double>): The list of time steps.
         noise_model_cpp (NoiseModelCpp&): The noise model to apply during evolution.
-        observables (std::vector<MatrixFreeHamiltonian>): The list of observables to measure.
         config (QiliSimConfig&): Configuration parameters for the time evolution.
         rho_t (DenseMatrix&): Output parameter to hold the final state after evolution.
         intermediate_rhos (std::vector<DenseMatrix>&): Output parameter to hold intermediate states if requested.
         expectation_values (std::vector<std::vector<double>>&): Output parameter to hold the expectation values of observables at final time.
-        intermediate_expectation_values (std::vector<std::vector<std::vector<double>>>&): Output parameter to hold expectation values at intermediate times.
 
     Returns:
         TimeEvolutionResult: The results of the evolution.
@@ -319,21 +291,4 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
         rho_t = trajectories_to_density_matrix(rho_t);
     }
 
-    // Apply the operators using the Born rule
-    for (const auto& O : observables) {
-        expectation_values.push_back(O.expectation_value(rho_t));
-    }
-
-    // If we have intermediates, process them too
-    if (config.get_store_intermediate_results()) {
-        intermediate_expectation_values.resize(intermediate_rhos.size());
-        for (size_t step = 0; step < intermediate_rhos.size(); ++step) {
-            const auto& rho_intermediate = intermediate_rhos[step];
-            std::vector<double> step_expectation_values(observables.size());
-            for (size_t i = 0; i < observables.size(); ++i) {
-                step_expectation_values[i] = observables[i].expectation_value(rho_intermediate);
-            }
-            intermediate_expectation_values[step] = step_expectation_values;
-        }
-    }
 }

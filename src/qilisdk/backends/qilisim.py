@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING
 from loguru import logger
 from qilisim_module import QiliSimCpp  # ty:ignore[unresolved-import]
 
-from qilisdk.readout import ReadoutMethod
+from qilisdk.functionals import AnalogEvolution
 from qilisdk.settings import get_settings
 
 from .backend import Backend
@@ -26,11 +26,12 @@ from .backend_config import AnalogMethod, DigitalMethod, ExecutionConfig, Solver
 
 if TYPE_CHECKING:
     from qilisdk.core import QTensor
-    from qilisdk.functionals.sampling import Sampling
-    from qilisdk.functionals.sampling_result import SamplingResult
+    from qilisdk.functionals import DigitalPropagation
+    from qilisdk.functionals.functional_result import FunctionalResult
     from qilisdk.functionals.time_evolution import TimeEvolution
     from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
     from qilisdk.noise.noise_model import NoiseModel
+    from qilisdk.readout import ReadoutMethod
 
 
 class QiliSim(Backend):
@@ -114,9 +115,9 @@ class QiliSim(Backend):
         """Return the full flattened solver configuration used by the C++ backend."""
         return dict(self._solver_config)
 
-    def _execute_sampling(
-        self, functional: Sampling, readout: list[ReadoutMethod], initial_state: QTensor | None = None
-    ) -> SamplingResult:
+    def _execute_digital_propagation(
+        self, functional: DigitalPropagation, readout: list[ReadoutMethod], initial_state: QTensor | None = None
+    ) -> FunctionalResult:
         """
         Execute a digital-circuit sampling functional and return measurement results.
 
@@ -128,12 +129,14 @@ class QiliSim(Backend):
             SamplingResult: Measurement samples and computed probabilities.
 
         """
-        logger.info("Executing Sampling with {} shots", functional.nshots)
-        result = self.qili_sim.execute_sampling(functional, self._noise_model, initial_state, self._solver_config)
+        logger.info("Executing Sampling")
+        result = self.qili_sim.execute_digital_propagation(
+            functional, readout, self._noise_model, initial_state, self._solver_config
+        )
         logger.success("Sampling finished")
         return result
 
-    def _execute_time_evolution(self, functional: TimeEvolution, readout: list[ReadoutMethod]) -> TimeEvolutionResult:
+    def _execute_analog_evolution(self, functional: AnalogEvolution, readout: list[ReadoutMethod]) -> FunctionalResult:
         """
         Compute analog time evolution for the provided schedule and initial state.
 
@@ -148,7 +151,7 @@ class QiliSim(Backend):
         logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
 
         # Execute the time evolution
-        result = self.qili_sim.execute_time_evolution(functional, self._noise_model, self._solver_config)
+        result = self.qili_sim.execute_analog_evolution(functional, readout, self._noise_model, self._solver_config)
 
         logger.success("TimeEvolution finished")
         return result

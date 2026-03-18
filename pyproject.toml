@@ -140,7 +140,7 @@ url = "https://urob.github.io/numpy-mkl"
 explicit = true
 
 [build-system]
-requires = ["scikit-build-core", "pybind11"]
+requires = ["scikit-build-core", "pybind11>=2.13,<3"]
 build-backend = "scikit_build_core.build"
 
 [tool.scikit-build.sdist]

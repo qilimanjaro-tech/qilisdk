@@ -16,11 +16,11 @@ from .readout_result import ExpectationReadoutResult, ReadoutResult, SamplingRea
 
 __all__ = [
     "ExpectationReadout",
-    "ExpectationReadoutResults",
+    "ExpectationReadoutResult",
     "ReadoutMethod",
     "ReadoutResult",
     "SamplingReadout",
-    "SamplingReadoutResults",
+    "SamplingReadoutResult",
     "StateTomographyReadout",
-    "StateTomographyReadoutResults",
+    "StateTomographyReadoutResult",
 ]

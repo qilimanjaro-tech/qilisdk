@@ -1,4 +1,4 @@
-// Copyright 2025 Qilimanjaro Quantum Tech
+// Copyright 2026 Qilimanjaro Quantum Tech
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,14 +15,12 @@
 
 #include <map>
 #include <string>
+#include <tuple>
 #include <vector>
 #include "../../../libs/eigen.h"
 #include "../config/qilisim_config.h"
-#include "../digital/gate.h"
-#include "../../../libs/eigen.h"
 #include "../noise/noise_model.h"
-#include "../representations/matrix_free_operator.h"
 
-void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrix& initial_state, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, const QiliSimConfig& config);
-
-void sampling_matrix_free(const std::vector<Gate>& gates,  int n_qubits, const SparseMatrix& initial_state, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, const QiliSimConfig& config);
+std::map<std::string, int> apply_readout_error(const std::map<std::string, int>& counts, const NoiseModelCpp& noise_model_cpp, int n_qubits);
+std::map<std::string, int> filter_counts(const std::map<std::string, int>& counts, const std::vector<bool>& qubits_to_measure);
+std::map<std::string, int> construct_samples(DenseMatrix& state, int n_qubits, int n_shots, NoiseModelCpp& noise_model_cpp, const QiliSimConfig& config, const std::vector<bool>& qubits_to_measure);

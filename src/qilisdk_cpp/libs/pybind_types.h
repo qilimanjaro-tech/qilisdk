@@ -23,9 +23,12 @@ namespace py = pybind11;
 using namespace py::literals;
 
 // Get the Python functional classes
+const py::object DigitalPropagation = py::module_::import("qilisdk.functionals.digital_propagation").attr("DigitalPropagation");
+const py::object AnalogEvolution = py::module_::import("qilisdk.functionals.analog_evolution").attr("AnalogEvolution");
 const py::object Sampling = py::module_::import("qilisdk.functionals.sampling").attr("Sampling");
 const py::object TimeEvolution = py::module_::import("qilisdk.functionals.time_evolution").attr("TimeEvolution");
 const py::object SamplingResult = py::module_::import("qilisdk.functionals.sampling").attr("SamplingResult");
+const py::object FunctionalResult = py::module_::import("qilisdk.functionals.functional_result").attr("FunctionalResult");
 const py::object TimeEvolutionResult = py::module_::import("qilisdk.functionals.time_evolution").attr("TimeEvolutionResult");
 const py::object QTensor = py::module_::import("qilisdk.core.qtensor").attr("QTensor");
 const py::object Hamiltonian = py::module_::import("qilisdk.analog.hamiltonian").attr("Hamiltonian");
@@ -37,3 +40,11 @@ const py::object SupportsTimeDerivedKraus = py::module_::import("qilisdk.noise.p
 const py::object SupportsTimeDerivedLindblad = py::module_::import("qilisdk.noise.protocols").attr("SupportsTimeDerivedLindblad");
 const py::object ReadoutAssignment = py::module_::import("qilisdk.noise.readout_assignment").attr("ReadoutAssignment");
 const py::object NoiseConfig = py::module_::import("qilisdk.noise.noise_config").attr("NoiseConfig");
+const py::object ExpectationReadout = py::module_::import("qilisdk.readout.readout").attr("ExpectationReadout");
+const py::object ReadoutMethod = py::module_::import("qilisdk.readout.readout").attr("ReadoutMethod");
+const py::object SamplingReadout = py::module_::import("qilisdk.readout.readout").attr("SamplingReadout");
+const py::object StateTomographyReadout = py::module_::import("qilisdk.readout.readout").attr("StateTomographyReadout");
+const py::object ExpectationReadoutResult = py::module_::import("qilisdk.readout.readout_result").attr("ExpectationReadoutResult");
+const py::object ReadoutResult = py::module_::import("qilisdk.readout.readout_result").attr("ReadoutResult");
+const py::object SamplingReadoutResult = py::module_::import("qilisdk.readout.readout_result").attr("SamplingReadoutResult");
+const py::object StateTomographyReadoutResult = py::module_::import("qilisdk.readout.readout_result").attr("StateTomographyReadoutResult");
