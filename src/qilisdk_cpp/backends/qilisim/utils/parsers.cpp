@@ -536,6 +536,17 @@ std::vector<Gate> parse_gates(const py::object& circuit, double atol, const py::
             base_matrix = controlled_matrix;
         }
 
+        // Turn CNOTs into X gates with controls, since that's how we represent them internally
+        if (gate_type_str == "CNOT" || gate_type_str == "CX" || gate_type_str == "Toffoli" || gate_type_str == "CCX") {
+            gate_type_str = "X";
+        }
+        if (gate_type_str == "CY" || gate_type_str == "CCY") {
+            gate_type_str = "Y";
+        }
+        if (gate_type_str == "CZ" || gate_type_str == "CCZ") {
+            gate_type_str = "Z";
+        }
+
         // Get the parameter names
         std::vector<std::pair<std::string, double>> parameters;
         py::dict py_parameters = py_gate.attr("get_parameters")();

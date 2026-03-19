@@ -50,6 +50,15 @@ SparseMatrix pauliX() {
     return m;
 }
 
+// Pauli-Y gate.
+SparseMatrix pauliY() {
+    SparseMatrix m(2, 2);
+    m.insert(0, 1) = cx(0, -1);
+    m.insert(1, 0) = cx(0, 1);
+    m.makeCompressed();
+    return m;
+} 
+
 // Pauli-Z gate.
 SparseMatrix pauliZ() {
     SparseMatrix m(2, 2);
@@ -80,36 +89,6 @@ SparseMatrix rz(double theta) {
     return m;
 }
 
-// 4×4 CNOT (control=0, target=1) in standard computational basis.
-SparseMatrix cnot4() {
-    SparseMatrix m(4, 4);
-    m.insert(0, 0) = cx(1, 0);
-    m.insert(1, 1) = cx(1, 0);
-    m.insert(2, 3) = cx(1, 0);
-    m.insert(3, 2) = cx(1, 0);
-    m.makeCompressed();
-    return m;
-}
-
-// Factory helpers.
-Gate makeX(int qubit, int nTotal) {
-    (void)nTotal;
-    return Gate("X", pauliX(), {}, {qubit}, {});
-}
-
-Gate makeH(int qubit) {
-    return Gate("H", hadamard(), {}, {qubit}, {});
-}
-
-Gate makeCNOT(int ctrl, int tgt) {
-    // base_matrix is the 2×2 X; full expansion is handled by get_full_matrix.
-    return Gate("CNOT", pauliX(), {ctrl}, {tgt}, {});
-}
-
-Gate makeRZ(int qubit, double theta) {
-    return Gate("RZ", rz(theta), {qubit}, {}, {{"theta", theta}});
-}
-
 }
 
 class GateTest : public ::testing::Test {
@@ -125,6 +104,7 @@ protected:
 
     // Two-qubit CNOT (ctrl=0, tgt=1).
     Gate cnotGate = Gate("CNOT", pauliX(),  {0}, {1}, {});
+    Gate cyGate = Gate("CY", pauliY(), {0}, {1}, {});
 };
 
 TEST_F(GateTest, GetNQubits_SingleQubitGate) {
@@ -178,10 +158,11 @@ TEST_F(GateTest, GetQubits_MultipleTargets) {
 }
 
 TEST_F(GateTest, GetName_ReturnsGateType) {
-    EXPECT_EQ(xGate.get_name(),    "X");
-    EXPECT_EQ(hGate.get_name(),    "H");
-    EXPECT_EQ(cnotGate.get_name(), "CNOT");
-    EXPECT_EQ(rzGate.get_name(),   "RZ");
+    EXPECT_EQ(xGate.get_name(), "X");
+    EXPECT_EQ(hGate.get_name(), "H");
+    EXPECT_EQ(cnotGate.get_name(), "X");
+    EXPECT_EQ(rzGate.get_name(), "RZ");
+    EXPECT_EQ(cyGate.get_name(), "Y");
 }
 
 TEST_F(GateTest, GetName_EmptyStringGate) {
@@ -202,6 +183,14 @@ TEST_F(GateTest, GetId_SameConstructionProducesSameId) {
     Gate g1("X", pauliX(), {}, {0}, {});
     Gate g2("X", pauliX(), {}, {0}, {});
     EXPECT_EQ(g1.get_id(), g2.get_id());
+}
+
+TEST_F(GateTest, GetId_WithParameters) {
+    Gate g1("RZ", rz(M_PI), {}, {0}, {{"theta", M_PI}});
+    Gate g2("RZ", rz(M_PI), {}, {0}, {{"theta", M_PI}});
+    Gate g3("RZ", rz(M_PI/2), {}, {0}, {{"theta", M_PI/2}});
+    EXPECT_EQ(g1.get_id(), g2.get_id());
+    EXPECT_NE(g1.get_id(), g3.get_id());
 }
 
 TEST_F(GateTest, GetParameters_EmptyForNonParametrised) {
@@ -335,7 +324,20 @@ TEST_F(GateTest, GetFullMatrix_CNOT_2Qubits) {
         0, 1, 0, 0,
         0, 0, 0, 1,
         0, 0, 1, 0;
-    EXPECT_TRUE(full.isApprox(expected, kTol)) << "Full matrix:\n" << full << "\nExpected:\n" << expected;
+    EXPECT_TRUE(full.isApprox(expected, kTol)) << "Full matrix:\n" << full << "\nExpected:\n" << expected << "\nCNOT base matrix:\n" << toDense(cnotGate.get_base_matrix()) << "\nControl qubits: " << cnotGate.get_control_qubits().size() << " Target qubits: " << cnotGate.get_target_qubits().size();
+}
+
+TEST_F(GateTest, GetFullMatrix_CNOT_2Qubits_Swapped) {
+    Gate g("CNOT", pauliX(), {1}, {0}, {});
+    auto full = toDense(g.get_full_matrix(2));
+    ASSERT_EQ(full.rows(), 4);
+    Eigen::MatrixXcd expected(4, 4);
+    expected <<
+        1, 0, 0, 0,
+        0, 0, 0, 1,
+        0, 0, 1, 0,
+        0, 1, 0, 0;
+    EXPECT_TRUE(full.isApprox(expected, kTol)) << "Full matrix:\n" << full << "\nExpected:\n" << expected << "\nCNOT base matrix:\n" << toDense(g.get_base_matrix()) << "\nControl qubits: " << g.get_control_qubits().size() << " Target qubits: " << g.get_target_qubits().size();
 }
 
 TEST_F(GateTest, GetFullMatrix_DimensionScalesExponentially) {

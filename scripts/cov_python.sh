@@ -19,6 +19,16 @@ echo "Clearing coverage caches..." | tee -a $LOG_FILE
 rm -rf .coverage tests/unit_cpp/coverage 2>&1 | tee -a $LOG_FILE
 mkdir -p coverage
 
+# Rebuild the C++, no need to build tests
+echo "Rebuilding C++ without tests..." | tee -a $LOG_FILE
+uv -v sync --group dev --extra all-cu13 --reinstall 2>&1 | tee -a $LOG_FILE
+
+# Stop we if errored
+if [ ${PIPESTATUS[0]} -ne 0 ]; then
+    echo "Build failed, exiting." | tee -a $LOG_FILE
+    exit 1
+fi
+
 # Run Python coverage
 echo "Running Python tests with coverage..." | tee -a $LOG_FILE
 python3 -m pytest --cov=qilisdk --cov-report=xml --cov-report=term-missing tests/unit_python/ 2>&1 | tee -a $LOG_FILE

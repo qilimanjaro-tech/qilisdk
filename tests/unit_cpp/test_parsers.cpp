@@ -1306,7 +1306,71 @@ TEST(ParseGates, ControlledGate) {
     auto result = parse_gates(fake_circuit, /*atol=*/1e-10, /*noise_model=*/py::none());
 
     ASSERT_EQ(result.size(), 1u);
-    EXPECT_EQ(result[0].get_name(), "CX");
+    EXPECT_EQ(result[0].get_name(), "X");
+    ASSERT_EQ(result[0].get_control_qubits().size(), 1u);
+    EXPECT_EQ(result[0].get_control_qubits()[0], 0);
+    ASSERT_EQ(result[0].get_target_qubits().size(), 1u);
+    EXPECT_EQ(result[0].get_target_qubits()[0], 1);
+}
+
+// Same as above but for CY
+TEST(ParseGates, ControlledYGate) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        import numpy as np
+
+        class FakeCYGate:
+            name = 'CY'
+            control_qubits = [0]
+            target_qubits = [1]
+            is_parameterized = False
+            def _generate_matrix(self):
+                return np.array([[1,0,0,0],[0,1,0,0],[0,0,0,-1j],[0,0,1j,0]], dtype=complex)
+            def get_parameters(self): return {}
+
+        class FakeCircuitControlledYGate:
+            nqubits = 2
+            gates = [FakeCYGate()]
+
+        fake_circuit_controlled_y_gate = FakeCircuitControlledYGate()
+    )");
+
+    py::object fake_circuit = py::globals()["fake_circuit_controlled_y_gate"];
+    auto result = parse_gates(fake_circuit, /*atol=*/1e-10, /*noise_model=*/py::none());
+
+    ASSERT_EQ(result.size(), 1u);
+    EXPECT_EQ(result[0].get_name(), "Y");
+    ASSERT_EQ(result[0].get_control_qubits().size(), 1u);
+    EXPECT_EQ(result[0].get_control_qubits()[0], 0);
+    ASSERT_EQ(result[0].get_target_qubits().size(), 1u);
+    EXPECT_EQ(result[0].get_target_qubits()[0], 1);
+}
+
+// Same as above but for CZ
+TEST(ParseGates, ControlledZGate) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        import numpy as np
+        class FakeCZGate:
+            name = 'CZ'
+            control_qubits = [0]
+            target_qubits = [1]
+            is_parameterized = False
+            def _generate_matrix(self):
+                return np.array([[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,-1]], dtype=complex)
+            def get_parameters(self): return {}
+
+        class FakeCircuitControlledZGate:
+            nqubits = 2
+            gates = [FakeCZGate()]
+        fake_circuit_controlled_z_gate = FakeCircuitControlledZGate()
+    )");
+
+    py::object fake_circuit = py::globals()["fake_circuit_controlled_z_gate"];
+    auto result = parse_gates(fake_circuit, /*atol=*/1e-10, /*noise_model=*/py::none());
+
+    ASSERT_EQ(result.size(), 1u);
+    EXPECT_EQ(result[0].get_name(), "Z");
     ASSERT_EQ(result[0].get_control_qubits().size(), 1u);
     EXPECT_EQ(result[0].get_control_qubits()[0], 0);
     ASSERT_EQ(result[0].get_target_qubits().size(), 1u);

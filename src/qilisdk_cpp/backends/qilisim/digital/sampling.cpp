@@ -343,6 +343,16 @@ void sampling_matrix_free(const std::vector<Gate>& gates, const std::vector<bool
     // Check if we have noise
     bool has_noise = !noise_model_cpp.is_empty();
 
+    // If it's a density matrix, check if it's pure
+    if (!is_statevector) {
+        DenseMatrix state_squared = state.adjoint().cwiseProduct(state);
+        double trace_squared = state_squared.trace().real();
+        if (std::abs(trace_squared - 1.0) < config.get_atol()) {
+            state = get_vector_from_density_matrix(state);
+            is_statevector = true;
+        }
+    }
+
     // If we have noise but start with a statevector, convert to density matrix
     if (has_noise && is_statevector) {
         state = state * state.adjoint();

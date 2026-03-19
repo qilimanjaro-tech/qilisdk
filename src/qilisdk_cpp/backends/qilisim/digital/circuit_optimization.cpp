@@ -14,8 +14,6 @@
 
 #include "circuit_optimizations.h"
 
-#include <iostream>  // TODO(luke) remove
-
 std::vector<Gate> combine_single_qubit_gates(const std::vector<Gate>& gates) {
     /*
     Combine consecutive single-qubit gates on the same qubit into a single gate to speed up simulation.
@@ -78,16 +76,6 @@ std::vector<Gate> combine_single_qubit_gates(const std::vector<Gate>& gates) {
             combined_gates.push_back(gate);
         }
     }
-
-    // std::cout << "Gates before:" << std::endl;
-    // for (const auto& gate : gates) {
-    //     std::cout << gate.get_id() << std::endl;
-    // }
-    // std::cout << std::endl;
-    // std::cout << "Gates after:" << std::endl;
-    // for (const auto& gate : combined_gates) {
-    //     std::cout << gate.get_id() << std::endl;
-    // }
 
     return combined_gates;
 }

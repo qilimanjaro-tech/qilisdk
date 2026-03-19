@@ -23,6 +23,12 @@ mkdir -p coverage
 echo "Rebuilding C++ with tests enabled..." | tee -a $LOG_FILE
 uv -v sync --group dev --extra all-cu13 -Ccmake.build-type=Debug -Ccmake.define.tests=ON -Ccmake.define.coverage=ON --reinstall 2>&1 | tee -a $LOG_FILE
 
+# Stop we if errored
+if [ ${PIPESTATUS[0]} -ne 0 ]; then
+    echo "Build failed, exiting." | tee -a $LOG_FILE
+    exit 1
+fi
+
 # Run the C++ test suite
 echo "Running C++ tests..." | tee -a $LOG_FILE
 GCOV_PREFIX=./tests/unit_cpp/coverage GCOV_PREFIX_STRIP=5 ./tests/unit_cpp/test_cpp 2>&1 | tee -a $LOG_FILE

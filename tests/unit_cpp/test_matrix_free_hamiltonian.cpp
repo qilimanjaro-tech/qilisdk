@@ -467,6 +467,12 @@ TEST(MatrixFreeHamiltonian, ExpectationValueXonKetPlusIs1) {
     EXPECT_NEAR(h.expectation_value(ketPlus()), 1.0, 1e-10);
 }
 
+TEST(MatrixFreeHamiltonian, ExpectationValueCNOTOnKet00IsPlus1) {
+    MatrixFreeHamiltonian h;
+    h.add({1.0, 0.0}, std::vector<MatrixFreeOperator>{MatrixFreeOperator("X", 0, 1)});
+    EXPECT_NEAR(h.expectation_value(ket00()), 1.0, 1e-10);
+}
+
 TEST(MatrixFreeHamiltonian, ExpectationValueWithRealCoefficientScales) {
     MatrixFreeHamiltonian h;
     h.add({3.0, 0.0}, MatrixFreeOperator("Z", 0));

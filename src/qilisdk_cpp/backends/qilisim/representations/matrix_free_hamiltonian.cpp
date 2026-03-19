@@ -72,7 +72,14 @@ double MatrixFreeHamiltonian::expectation_value(const DenseMatrix& state) const 
     int num_qubits_in_state = static_cast<int>(std::log2(state.rows()));
     for (const auto& [coefficient, ops] : operators) {
         for (const auto& op : ops) {
-            if (op.get_target_qubit() >= num_qubits_in_state || (op.get_control_qubit() != -1 && op.get_control_qubit() >= num_qubits_in_state)) {
+            int max_qubit = -1;
+            for (int target : op.get_target_qubits()) {
+                max_qubit = std::max(max_qubit, target);
+            }
+            for (int control : op.get_control_qubits()) {
+                max_qubit = std::max(max_qubit, control);
+            }
+            if (max_qubit >= num_qubits_in_state) {
                 throw py::value_error("Operator in Hamiltonian acts on a qubit that is out of bounds for the given state.");
             }
         }
