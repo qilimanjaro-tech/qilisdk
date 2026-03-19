@@ -264,7 +264,7 @@ SparseMatrix Gate::get_full_matrix(int num_qubits) const {
     Returns:
         SparseMatrix: The full matrix representation of the gate.
     */
-    if (num_qubits == 1 && target_qubits.size() == 1 && control_qubits.empty()) {
+    if (control_qubits.empty() && num_qubits == std::ceil(std::log2(base_matrix.cols()))) {
         return base_matrix;
     } else {
         return base_to_full(base_matrix, num_qubits, control_qubits, target_qubits);
