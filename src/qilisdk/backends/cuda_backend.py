@@ -19,9 +19,8 @@ from typing import TYPE_CHECKING, Callable, Type, TypeVar
 
 import cudaq
 import numpy as np
-from cudaq import ElementaryOperator, OperatorSum, ScalarOperator
+from cudaq import ElementaryOperator, OperatorSum, ScalarOperator, SpinOperatorTerm, State, evolve, operators, spin
 from cudaq import Schedule as CudaSchedule
-from cudaq import SpinOperatorTerm, State, evolve, operators, spin
 from defusedxml import NotSupportedError
 from loguru import logger
 
@@ -65,6 +64,7 @@ from qilisdk.noise import (
     SupportsTimeDerivedKraus,
     SupportsTimeDerivedLindblad,
 )
+from qilisdk.readout import SamplingReadout
 from qilisdk.readout.readout_result import SamplingReadoutResult
 from qilisdk.settings import Precision, get_settings
 
@@ -267,6 +267,21 @@ class CudaBackend(Backend):
                 [
                     SamplingReadoutResult(
                         readout=readout[0],  # ty:ignore[invalid-argument-type]
+                        samples=dict(cudaq_result.items()),
+                    )
+                ]
+            )
+
+        if all(ro.is_sample() for ro in readout):
+            sampling_readout = next(ro for ro in readout if isinstance(ro, SamplingReadout))
+            cudaq_result = cudaq.sample(kernel, shots_count=sampling_readout.nshots)
+            if og_param:
+                functional.set_parameters(og_param)
+            logger.success("Sampling finished; {} distinct bitstrings", len(cudaq_result))
+            return FunctionalResult(
+                [
+                    SamplingReadoutResult(
+                        readout=sampling_readout,
                         samples=dict(cudaq_result.items()),
                     )
                 ]

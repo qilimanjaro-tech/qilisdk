@@ -11,15 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import numpy as np
 import pytest
 
 from qilisdk.core.qtensor import ket
 from qilisdk.cost_functions.cost_function import CostFunction
 from qilisdk.functionals.functional_result import FunctionalResult
-from qilisdk.readout import ExpectationReadout, SamplingReadout, StateTomographyReadout
+from qilisdk.readout import SamplingReadout, StateTomographyReadout
 from qilisdk.readout.readout_result import (
-    ExpectationReadoutResult,
     SamplingReadoutResult,
     StateTomographyReadoutResult,
 )

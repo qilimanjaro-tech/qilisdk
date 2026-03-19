@@ -35,6 +35,7 @@ from qilisdk.functionals import (
     AnalogEvolution,
     DigitalPropagation,
     FunctionalResult,
+    QuantumReservoir,
     VariationalProgram,
     VariationalProgramResult,
 )
@@ -133,8 +134,24 @@ class AnalogEvolutionPayload(SpeQtrumModel):
         return v
 
 
+class QuantumReservoirPayload(SpeQtrumModel):
+    quantum_reservoir: QuantumReservoir = Field(...)
+    readout: list[ReadoutMethod]
+
+    @field_serializer("quantum_reservoir")
+    def _serialize_time_evolution(self, quantum_reservoir: QuantumReservoir, _info):
+        return serialize(quantum_reservoir)
+
+    @field_validator("quantum_reservoir", mode="before")
+    def _load_time_evolution(cls, v):
+        if isinstance(v, str):
+            return deserialize(v, AnalogEvolution)
+        return v
+
+
 class VariationalProgramPayload(SpeQtrumModel):
     variational_program: VariationalProgram = Field(...)
+    readout: list[ReadoutMethod]
 
     @field_serializer("variational_program")
     def _serialize_variational_program(self, variational_program: VariationalProgram, _info):
@@ -207,6 +224,7 @@ class ExecutePayload(SpeQtrumModel):
     type: ExecuteType = Field(...)
     digital_propagation_payload: DigitalPropagationPayload | None = None
     analog_evolution_payload: AnalogEvolutionPayload | None = None
+    quantum_reservoir_payload: QuantumReservoirPayload | None = None
     variational_program_payload: VariationalProgramPayload | None = None
     rabi_experiment_payload: RabiExperimentPayload | None = None
     t1_experiment_payload: T1ExperimentPayload | None = None

@@ -126,18 +126,14 @@ class QutipBackend(Backend):
 
         init_state = tensor(*[basis(2, 0) for _ in range(functional.circuit.nqubits)])
 
-        measurements_set = set()
-        for m in functional.circuit.gates:
-            if isinstance(m, M):
-                measurements_set.update(list(m.target_qubits))
+        measurements_set = {q for g in functional.circuit.gates if isinstance(g, M) for q in g.qubits}
         measurements = sorted(measurements_set)
 
         transpiled_circuit = DecomposeMultiControlledGatesPass().run(functional.circuit)
         qutip_circuit = self._get_qutip_circuit(transpiled_circuit)
         sim = CircuitSimulator(qutip_circuit)
 
-        res = sim.run_statistics(init_state)  # runs the full circuit for one shot
-        final_state = QTensor(sum(res.get_final_states()).unit()[:])
+        final_state = QTensor(sim.run(init_state).get_final_states()[0].full())
 
         logger.success("Sampling finished; ")
         if len(measurements) > 0 and len(measurements) != functional.circuit.nqubits:
@@ -266,7 +262,7 @@ class QutipBackend(Backend):
         raise ValueError(f"unsupported observable type of {obs.__class__}")
 
     def _get_qutip_circuit(self, circuit: Circuit) -> QubitCircuit:
-        """_summary_
+        """Translate a qiliSDK circuit to a QuTiP circuit.
 
         Args:
             circuit (Circuit): the qiliSDK circuit to be translated to qutip.
@@ -295,16 +291,6 @@ class QutipBackend(Backend):
                     raise UnsupportedGateError(f"Unsupported gate {type(gate).__name__}")
                 qubits = gate.target_qubits
                 handler(qutip_circuit, gate, *qubits)
-
-        no_measurement = True
-
-        for g in circuit.gates:
-            if isinstance(g, M):
-                no_measurement = False
-
-        if no_measurement:
-            for i in range(circuit.nqubits):
-                qutip_circuit.add_measurement(f"M{i}", targets=i, classical_store=i)
         return qutip_circuit
 
     def _handle_controlled(self, circuit: QubitCircuit, gate: Controlled) -> None:  # noqa: PLR6301

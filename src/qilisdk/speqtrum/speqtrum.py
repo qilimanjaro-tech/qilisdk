@@ -39,6 +39,7 @@ from qilisdk.functionals import (
     AnalogEvolution,
     DigitalPropagation,
     FunctionalResult,
+    QuantumReservoir,
     VariationalProgram,
     VariationalProgramResult,
 )
@@ -58,6 +59,7 @@ from .speqtrum_models import (
     JobInfo,
     JobStatus,
     JobType,
+    QuantumReservoirPayload,
     RabiExperimentPayload,
     T1ExperimentPayload,
     T2ExperimentPayload,
@@ -68,7 +70,7 @@ from .speqtrum_models import (
 )
 
 if TYPE_CHECKING:
-    from qilisdk.functionals.functional import Functional
+    from qilisdk.functionals.functional import Functional, PrimitiveFunctional
 
 
 TFunctionalResult = TypeVar("TFunctionalResult", bound=FunctionalResult)
@@ -76,6 +78,7 @@ JSONValue: TypeAlias = dict[str, "JSONValue"] | list["JSONValue"] | str | int | 
 
 _SKIP_ENSURE_OK_EXTENSION = "qilisdk.skip_ensure_ok"
 _CONTEXT_EXTENSION = "qilisdk.request_context"
+_EXECUTE_URL = "/execute"
 
 
 class SpeQtrumAPIError(httpx.HTTPStatusError):
@@ -519,16 +522,7 @@ class SpeQtrum:
     @overload
     def submit(
         self,
-        functional: DigitalPropagation,
-        device: str,
-        readout: ReadoutMethod | list[ReadoutMethod],
-        job_name: str | None = None,
-    ) -> JobHandle[FunctionalResult]: ...
-
-    @overload
-    def submit(
-        self,
-        functional: AnalogEvolution,
+        functional: PrimitiveFunctional,
         device: str,
         readout: ReadoutMethod | list[ReadoutMethod],
         job_name: str | None = None,
@@ -598,6 +592,9 @@ class SpeQtrum:
         if isinstance(functional, AnalogEvolution):
             return self._submit_analog_evolution(functional, device, _readout, job_name)
 
+        if isinstance(functional, QuantumReservoir):
+            return self._submit_quantum_reservoir_functional(functional, device, _readout, job_name)
+
         if isinstance(functional, RabiExperiment):
             return self._submit_rabi(functional, device, job_name)
 
@@ -642,7 +639,7 @@ class SpeQtrum:
         logger.debug("Executing DigitalPropagation on device {}", device)
         with self._create_client() as client:
             response = client.post(
-                "/execute", json=json, extensions=_request_extensions(context="Executing DigitalPropagation")
+                _EXECUTE_URL, json=json, extensions=_request_extensions(context="Executing DigitalPropagation")
             )
         job = JobId(**response.json())
         logger.info("DigitalPropagation job submitted: {}", job.id)
@@ -666,7 +663,7 @@ class SpeQtrum:
         logger.debug("Executing Rabi experiment on device {}", device)
         with self._create_client() as client:
             response = client.post(
-                "/execute",
+                _EXECUTE_URL,
                 json=json,
                 extensions=_request_extensions(context="Executing Rabi experiment"),
             )
@@ -692,7 +689,7 @@ class SpeQtrum:
         logger.debug("Executing T1 experiment on device {}", device)
         with self._create_client() as client:
             response = client.post(
-                "/execute",
+                _EXECUTE_URL,
                 json=json,
                 extensions=_request_extensions(context="Executing T1 experiment"),
             )
@@ -718,7 +715,7 @@ class SpeQtrum:
         logger.debug("Executing T2 experiment on device {}", device)
         with self._create_client() as client:
             response = client.post(
-                "/execute",
+                _EXECUTE_URL,
                 json=json,
                 extensions=_request_extensions(context="Executing T2 experiment"),
             )
@@ -744,7 +741,7 @@ class SpeQtrum:
         logger.debug("Executing Two-Tones experiment on device {}", device)
         with self._create_client() as client:
             response = client.post(
-                "/execute",
+                _EXECUTE_URL,
                 json=json,
                 extensions=_request_extensions(context="Executing Two-Tones experiment"),
             )
@@ -770,7 +767,33 @@ class SpeQtrum:
         logger.debug("Executing AnalogEvolution on device {}", device)
         with self._create_client() as client:
             response = client.post(
-                "/execute",
+                _EXECUTE_URL,
+                json=json,
+                extensions=_request_extensions(context="Executing AnalogEvolution"),
+            )
+        job = JobId(**response.json())
+        logger.info("AnalogEvolution job submitted: {}", job.id)
+        return JobHandle.functional(job.id)
+
+    def _submit_quantum_reservoir_functional(
+        self, functional: QuantumReservoir, device: str, readout: list[ReadoutMethod], job_name: str | None = None
+    ) -> JobHandle[FunctionalResult]:
+        payload = ExecutePayload(
+            type=ExecuteType.ANALOG_EVOLUTION,
+            quantum_reservoir_payload=QuantumReservoirPayload(quantum_reservoir=functional, readout=readout),
+        )
+        json = {
+            "device_code": device,
+            "payload": payload.model_dump_json(),
+            "job_type": JobType.ANALOG,
+            "meta": {},
+        }
+        if job_name:
+            json["name"] = job_name
+        logger.debug("Executing AnalogEvolution on device {}", device)
+        with self._create_client() as client:
+            response = client.post(
+                _EXECUTE_URL,
                 json=json,
                 extensions=_request_extensions(context="Executing AnalogEvolution"),
             )
@@ -787,7 +810,9 @@ class SpeQtrum:
     ) -> JobHandle[VariationalProgramResult]:
         payload = ExecutePayload(
             type=ExecuteType.VARIATIONAL_PROGRAM,
-            variational_program_payload=VariationalProgramPayload(variational_program=variational_program),
+            variational_program_payload=VariationalProgramPayload(
+                variational_program=variational_program, readout=readout
+            ),
         )
         json = {
             "device_code": device,
@@ -800,7 +825,7 @@ class SpeQtrum:
         logger.debug("Executing variational program on device {}", device)
         with self._create_client() as client:
             response = client.post(
-                "/execute",
+                _EXECUTE_URL,
                 json=json,
                 extensions=_request_extensions(context="Executing variational program"),
             )

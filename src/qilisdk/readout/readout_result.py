@@ -128,7 +128,6 @@ class ReadoutResult(Result):
 
 
 class SamplingReadoutResult(ReadoutResult):
-
     @overload
     def __init__(
         self,
@@ -235,7 +234,6 @@ class SamplingReadoutResult(ReadoutResult):
 
 
 class ExpectationReadoutResult(ReadoutResult):
-
     @overload
     def __init__(self, readout: ExpectationReadout, *, state: QTensor) -> None: ...
 
@@ -292,7 +290,6 @@ class ExpectationReadoutResult(ReadoutResult):
 
 
 class StateTomographyReadoutResult(ReadoutResult):
-
     def __init__(
         self,
         readout: StateTomographyReadout,
@@ -423,5 +420,4 @@ def _samples_from_probabilities(
     draws = rng.choice(len(states), size=nshots, p=probs)
 
     counts = np.bincount(draws, minlength=len(states))
-    return {str(states[i]): int(counts[i]) for i in range(len(states)) if counts[i] > 0}
     return {str(states[i]): int(counts[i]) for i in range(len(states)) if counts[i] > 0}

@@ -105,8 +105,10 @@ def test_variational_program_payload():
     digital_propagation = DigitalPropagation(circuit=circ)
     optimizer = SciPyOptimizer(method="Nelder-Mead")
     cost_function = ObservableCostFunction(observable=PauliZ(0))
-    variational_program = VariationalProgram(functional=digital_propagation, optimizer=optimizer, cost_function=cost_function)
-    payload = VariationalProgramPayload(variational_program=variational_program)
+    variational_program = VariationalProgram(
+        functional=digital_propagation, optimizer=optimizer, cost_function=cost_function
+    )
+    payload = VariationalProgramPayload(variational_program=variational_program, readout=[StateTomographyReadout()])
     serialized_variational_program = payload._serialize_variational_program(
         variational_program=variational_program, _info={}
     )
@@ -177,9 +179,7 @@ def test_execute_result_time_evolution():
         type=execute_type,
         functional_result=functional_result,
     )
-    serialized_result = result._serialize_sampling_result(
-        functional_result=result.functional_result, _info={}
-    )
+    serialized_result = result._serialize_sampling_result(functional_result=result.functional_result, _info={})
     deserialized_result = result._load_sampling_result(serialized_result)
     assert deserialized_result.final_state == functional_result.final_state
 

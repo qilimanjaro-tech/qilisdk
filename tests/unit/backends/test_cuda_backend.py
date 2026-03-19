@@ -16,6 +16,7 @@ from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
+from pydantic import ValidationError
 
 from qilisdk.analog.hamiltonian import Hamiltonian
 from qilisdk.core import Parameter
@@ -26,7 +27,6 @@ from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirLa
 from qilisdk.noise import AmplitudeDamping, BitFlip, Dephasing, LindbladGenerator, NoiseModel
 from qilisdk.noise.offset_perturbation import OffsetPerturbation
 from qilisdk.readout import ExpectationReadout, SamplingReadout, StateTomographyReadout
-from qilisdk.readout.readout_result import StateTomographyReadoutResult
 
 pytest.importorskip(
     "cudaq",
@@ -155,7 +155,6 @@ def _build_quantum_reservoir_functional() -> QuantumReservoir:
     post.add(X(0))
     reservoir_layer = ReservoirLayer(
         evolution_dynamics=schedule,
-        observables=[QTensor(np.eye(2, dtype=np.complex128))],
         input_encoding=pre,
         output_encoding=post,
         qubits_to_reset=[0],
@@ -164,9 +163,6 @@ def _build_quantum_reservoir_functional() -> QuantumReservoir:
         initial_state=ket(0),
         reservoir_layer=reservoir_layer,
         input_per_layer=[{}, {}],
-        store_final_state=True,
-        store_intermediate_states=True,
-        nshots=10,
     )
 
 
@@ -517,7 +513,7 @@ def test_time_dependent_hamiltonian_cuda(monkeypatch):
     psi0 = (ket(0) - ket(1)).unit()
     obs = [
         pauli_z(0),
-        PauliZ(0),
+        pauli_z(0),
     ]
 
     backend = CudaBackend()
@@ -555,7 +551,6 @@ def test_time_dependent_hamiltonian_cuda_qtensor_observable(monkeypatch):
 
     assert isinstance(res, FunctionalResult)
     assert dummy_evolve.called
-    assert len(dummy_evolve.call_args.kwargs["observables"]) == 1
 
 
 def test_qtensor_observable_non_hermitian_raises():
@@ -566,34 +561,9 @@ def test_qtensor_observable_non_hermitian_raises():
         backend._qtensor_observable_to_hamiltonian(non_hermitian, nqubits=1)
 
 
-def test_bad_observable_raises(monkeypatch):
-    # monkeypatch the evolve that we import from cudaq in cuda_backend
-    dummy_return = MagicMock()
-    dummy_return.final_state = MagicMock(return_value=np.array([1 / np.sqrt(2), -1 / np.sqrt(2)]))
-    dummy_evolve = MagicMock(return_value=dummy_return)
-    monkeypatch.setattr("qilisdk.backends.cuda_backend.evolve", dummy_evolve)
-    monkeypatch.setattr("qilisdk.backends.cuda_backend.cudaq.set_target", lambda target: None)
-    dummy_state = MagicMock(return_value=None)
-    monkeypatch.setattr("qilisdk.backends.cuda_backend.State.from_data", dummy_state)
-
-    o = 1.0
-    dt = 1
-    T = 1000
-    schedule = Schedule(
-        dt=dt,
-        hamiltonians={"h1": o * pauli_x(0), "h2": o * pauli_z(0)},
-        coefficients={"h1": {(0, T): lambda t: 1 - t / T}, "h2": {(0, T): lambda t: t / T}},
-    )
-    psi0 = (ket(0) - ket(1)).unit()
-    obs = [
-        "bad observable",  # measure z
-    ]
-
-    backend = CudaBackend()
-    with pytest.raises(ValueError, match="unsupported observable type"):
-        backend.execute(
-            AnalogEvolution(schedule=schedule, initial_state=psi0), readout=[ExpectationReadout(observables=obs)]
-        )
+def test_bad_observable_raises():
+    with pytest.raises(ValidationError):
+        ExpectationReadout(observables=["bad observable"])
 
 
 def test_time_dependent_hamiltonian_cuda_with_noise(monkeypatch):
@@ -621,7 +591,7 @@ def test_time_dependent_hamiltonian_cuda_with_noise(monkeypatch):
     psi0 = (ket(0) - ket(1)).unit()
     obs = [
         pauli_z(0),
-        PauliZ(0),
+        pauli_z(0),
     ]
 
     backend = CudaBackend(noise_model=noise_model)
@@ -668,7 +638,7 @@ def test_time_dependent_hamiltonian_cuda_noise(monkeypatch):
     psi0 = (ket(0) - ket(1)).unit()
     obs = [
         pauli_z(0),
-        PauliZ(0),
+        pauli_z(0),
     ]
 
     param = Parameter("p", 1.0)
@@ -721,9 +691,8 @@ def test_time_evolution_keeps_statevector_outputs_as_columns(monkeypatch):
 
     assert res.final_state is not None
     assert res.final_state.shape == (2, 1)
-    assert len(res.states) == 2
-    assert res.states[0].shape == (2, 1)
-    assert res.states[1].shape == (2, 1)
+    assert len(res.states) == 3  # 2 intermediate + 1 final
+    assert all(s.shape == (2, 1) for s in res.states)
 
 
 def test_time_evolution_preserves_density_matrix_shape(monkeypatch):
@@ -757,8 +726,8 @@ def test_time_evolution_preserves_density_matrix_shape(monkeypatch):
     assert res.final_state is not None
     assert res.final_state.shape == (2, 2)
     assert not res.final_state.is_ket()
-    assert len(res.states) == 1
-    assert res.states[0].shape == (2, 2)
+    assert len(res.states) == 2  # 1 intermediate + 1 final
+    assert all(s.shape == (2, 2) for s in res.states)
 
 
 def test_get_cuda_hamiltonian_raises_with_empty_schedule():

@@ -25,7 +25,6 @@ from qilisdk.functionals.analog_evolution import AnalogEvolution
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirLayer
 from qilisdk.readout import ExpectationReadout, SamplingReadout, StateTomographyReadout
-from qilisdk.readout.readout_result import StateTomographyReadoutResult
 
 pytest.importorskip("qutip", reason="QuTiP backend tests require the 'qutip' optional dependency", exc_type=ImportError)
 pytest.importorskip(

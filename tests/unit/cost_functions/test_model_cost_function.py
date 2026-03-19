@@ -22,8 +22,8 @@ from qilisdk.core.qtensor import QTensor, bra, ket, tensor_prod
 from qilisdk.core.variables import EQ, BinaryVariable
 from qilisdk.cost_functions import ModelCostFunction
 from qilisdk.functionals.functional_result import FunctionalResult
-from qilisdk.readout import SamplingReadout, StateTomographyReadout
-from qilisdk.readout.readout_result import SamplingReadoutResult, StateTomographyReadoutResult
+from qilisdk.readout import ExpectationReadout, SamplingReadout, StateTomographyReadout
+from qilisdk.readout.readout_result import ExpectationReadoutResult, SamplingReadoutResult, StateTomographyReadoutResult
 
 
 def test_compute_cost_state_tomography():
@@ -71,16 +71,13 @@ def test_compute_cost_state_tomography():
     mcf = ModelCostFunction(model)
 
     # no state and no samples -- should raise
+
+    exp_readout = ExpectationReadout(observables=[QTensor(np.eye(2**n))])
+    exp_result = ExpectationReadoutResult(readout=exp_readout, expected_values=[0.0])
+    no_state_result = FunctionalResult(readout_results=[exp_result])
     with pytest.raises(
         ValueError, match=r"ModelCostFunction requires either a StateTomography or Sampling readout in the results."
     ):
-        from qilisdk.readout import ExpectationReadout
-        from qilisdk.readout.readout_result import ExpectationReadoutResult
-
-        H = sum(b)
-        exp_readout = ExpectationReadout(observables=[QTensor(np.eye(2**n))])
-        exp_result = ExpectationReadoutResult(readout=exp_readout, expected_values=[0.0])
-        no_state_result = FunctionalResult(readout_results=[exp_result])
         _ = mcf.compute_cost(no_state_result)
 
 

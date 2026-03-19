@@ -17,7 +17,7 @@ from pathlib import Path
 import pytest
 
 import qilisdk.utils.serialization
-from qilisdk.analog.hamiltonian import Hamiltonian, PauliY, X, Y, Z
+from qilisdk.analog.hamiltonian import Hamiltonian, PauliY, X, Z
 from qilisdk.analog.schedule import Schedule
 from qilisdk.core.qtensor import ket, tensor_prod
 from qilisdk.functionals.analog_evolution import AnalogEvolution

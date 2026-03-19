@@ -19,7 +19,7 @@ import pytest
 
 from qilisdk.analog import Schedule, Z
 from qilisdk.backends.backend import Backend
-from qilisdk.core import LT, Parameter, QTensor, ket
+from qilisdk.core import LT, Parameter, ket
 from qilisdk.digital import Circuit
 from qilisdk.digital.gates import RZ, H
 from qilisdk.functionals import DigitalPropagation, FunctionalResult, QuantumReservoir, ReservoirInput, ReservoirLayer

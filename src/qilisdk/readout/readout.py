@@ -18,7 +18,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from qilisdk.analog import Hamiltonian  # noqa: TC001
-from qilisdk.core import QTensor  # noqa: TC001
+from qilisdk.core import QTensor
 
 
 class ReadoutMethod(BaseModel):

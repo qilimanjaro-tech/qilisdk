@@ -36,7 +36,6 @@ from qilisdk.core.qtensor import QTensor, tensor_prod
 from qilisdk.digital.circuit import Circuit
 from qilisdk.digital.gates import RX, H, I, X, Z
 from qilisdk.functionals import AnalogEvolution, DigitalPropagation
-from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.noise import (
     AmplitudeDamping,
     BitFlip,

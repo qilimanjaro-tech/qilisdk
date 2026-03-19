@@ -19,7 +19,7 @@ import pytest
 from pydantic import ValidationError
 
 import qilisdk
-from qilisdk.analog import Hamiltonian, Schedule
+from qilisdk.analog import Schedule
 from qilisdk.analog.hamiltonian import X as pauli_x
 from qilisdk.analog.hamiltonian import Z as pauli_z
 from qilisdk.backends.backend_config import AnalogMethod, DigitalMethod, ExecutionConfig, MonteCarloConfig

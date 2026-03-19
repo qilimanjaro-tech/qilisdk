@@ -19,7 +19,6 @@ from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast, overload
 
 from qilisdk.analog import Schedule
 from qilisdk.core import reset_qubits
-from qilisdk.core.result import Result
 from qilisdk.digital import Circuit
 from qilisdk.functionals import QuantumReservoir
 from qilisdk.functionals.analog_evolution import AnalogEvolution
@@ -41,6 +40,7 @@ from qilisdk.settings import get_settings
 
 if TYPE_CHECKING:
     from qilisdk.core import QTensor
+    from qilisdk.core.result import Result
     from qilisdk.functionals.functional import Functional, PrimitiveFunctional
 
 TResult = TypeVar("TResult", bound=FunctionalResult)

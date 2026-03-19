@@ -14,6 +14,7 @@
 import numpy as np
 import pytest
 
+from qilisdk.analog.hamiltonian import Z
 from qilisdk.core.qtensor import QTensor
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.readout import ExpectationReadout, StateTomographyReadout
@@ -33,7 +34,6 @@ def test_functional_result_with_state_tomography():
 
 
 def test_functional_result_with_expectation_values():
-    from qilisdk.analog.hamiltonian import Z
 
     final_state = QTensor(np.array([[1], [0]]))
     readout = ExpectationReadout(observables=[Z(0)])

@@ -18,8 +18,8 @@ from qilisdk.analog.hamiltonian import PauliZ, Z
 from qilisdk.core.qtensor import QTensor, ket, tensor_prod
 from qilisdk.cost_functions.observable_cost_function import ObservableCostFunction
 from qilisdk.functionals.functional_result import FunctionalResult
-from qilisdk.readout import SamplingReadout, StateTomographyReadout
-from qilisdk.readout.readout_result import SamplingReadoutResult, StateTomographyReadoutResult
+from qilisdk.readout import ExpectationReadout, SamplingReadout, StateTomographyReadout
+from qilisdk.readout.readout_result import ExpectationReadoutResult, SamplingReadoutResult, StateTomographyReadoutResult
 
 
 def test_init_observable_cost_function():
@@ -66,16 +66,13 @@ def test_compute_cost_state_tomography():
     assert cost == -2
 
     # Without state or samples -- should raise
+    exp_readout = ExpectationReadout(observables=[H])
+    exp_result = ExpectationReadoutResult(readout=exp_readout, expected_values=[0.0])
+    no_state_result = FunctionalResult(readout_results=[exp_result])
     with pytest.raises(
         ValueError,
         match=r"ObservableCostFunction requires either a StateTomography or Sampling readout in the results.",
     ):
-        from qilisdk.readout import ExpectationReadout
-        from qilisdk.readout.readout_result import ExpectationReadoutResult
-
-        exp_readout = ExpectationReadout(observables=[H])
-        exp_result = ExpectationReadoutResult(readout=exp_readout, expected_values=[0.0])
-        no_state_result = FunctionalResult(readout_results=[exp_result])
         _ = ocf.compute_cost(no_state_result)
 
     with pytest.raises(
