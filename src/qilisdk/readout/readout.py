@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, model_validator
 
 from qilisdk.analog import Hamiltonian  # noqa: TC001
 from qilisdk.core import QTensor
@@ -171,15 +171,21 @@ class ExpectationReadout(ReadoutMethod):
         )
         super().__init__(**payload)
 
+    _scaled_nqubits: int | None = PrivateAttr(default=None)
+
     @model_validator(mode="after")
     def set_qtensor_observables(self) -> ExpectationReadout:
         self.qtensor_observables = [(o if isinstance(o, QTensor) else o.to_qtensor()) for o in self.observables]
+        self._scaled_nqubits = None
         return self
 
     def scale_observables(self, nqubits: int) -> None:
+        if self._scaled_nqubits == nqubits:
+            return
         self.qtensor_observables = [
             (o.scale_qtensor(nqubits) if isinstance(o, QTensor) else o.to_qtensor(nqubits)) for o in self.observables
         ]
+        self._scaled_nqubits = nqubits
 
 
 class StateTomographyReadout(ReadoutMethod):

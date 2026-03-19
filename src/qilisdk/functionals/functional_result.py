@@ -142,3 +142,10 @@ class FunctionalResult(Result):
             out += str(readout)
         out += "\n)"
         return out
+
+    def __getitem__(self, index: int) -> ReadoutCompositeResults:
+        if index > len(self):
+            raise ValueError("Invalid Index")
+        if index < len(self._intermediate_results):
+            return self._intermediate_results[index]
+        return self._readout_results

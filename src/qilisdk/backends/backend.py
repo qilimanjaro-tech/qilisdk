@@ -17,6 +17,8 @@ from abc import ABC
 from copy import copy
 from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast, overload
 
+from loguru import logger
+
 from qilisdk.analog import Schedule
 from qilisdk.core import reset_qubits
 from qilisdk.digital import Circuit
@@ -26,6 +28,7 @@ from qilisdk.functionals.digital_propagation import DigitalPropagation
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.functionals.variational_program import VariationalProgram
 from qilisdk.functionals.variational_program_result import VariationalProgramResult
+from qilisdk.noise import NoiseModel
 from qilisdk.readout import (
     ExpectationReadout,
     ExpectationReadoutResult,
@@ -47,7 +50,11 @@ TResult = TypeVar("TResult", bound=FunctionalResult)
 
 
 class Backend(ABC):
-    def __init__(self) -> None:
+
+    def __init__(
+        self,
+        noise_model: NoiseModel | None = None,
+    ) -> None:
         self._handlers: dict[type[Functional], Callable[[Functional, list[ReadoutMethod]], FunctionalResult]] = {
             DigitalPropagation: lambda f, readout: self._execute_digital_propagation(
                 cast("DigitalPropagation", f), readout
@@ -58,6 +65,7 @@ class Backend(ABC):
                 cast("VariationalProgram", f), readout
             ),
         }
+        self._noise_model = noise_model
 
     @overload
     def execute(
@@ -97,6 +105,8 @@ class Backend(ABC):
     def _execute_quantum_reservoir(
         self, functional: QuantumReservoir, readout: list[ReadoutMethod]
     ) -> FunctionalResult:
+        if self._noise_model:
+            logger.warning("Noise Models are not supported with Quantum Reservoirs, so they will be ignored.")
         state = functional.initial_state.to_density_matrix()
         inter_results: list[list[ReadoutResult]] = []
         cache: dict[Circuit, tuple[tuple[float, ...], QTensor]] = {}
@@ -205,6 +215,8 @@ class Backend(ABC):
     def _construct_expectation_results(
         cls, final_state: QTensor, readout: ExpectationReadout, **kwarg: Any
     ) -> ExpectationReadoutResult:
+        # Pre-scale on the original so the copy inherits cached qtensor_observables
+        readout.scale_observables(nqubits=final_state.nqubits)
         return ExpectationReadoutResult(readout=copy(readout), state=final_state)
 
     @classmethod
