@@ -18,7 +18,7 @@ LOG_FILE=$(dirname "$0")/checks.log
 echo "Syncing C++ dependencies with tests enabled..." | tee -a $LOG_FILE
 uv -v sync --all-groups --extra all-cu13 --reinstall -Ccmake.define.tests=ON 2>&1 | tee -a $LOG_FILE
 
-# clang-format everty .cpp and .h in ./src/qilisdk_cpp/
+# clang-format every .cpp and .h in ./src/qilisdk_cpp/
 echo "Running clang-format on C++ source files..." | tee -a $LOG_FILE 
 find ./src/qilisdk_cpp/ -regex '.*\.\(cpp\|h\)$' -exec clang-format -i {} \;  2>&1 | tee -a $LOG_FILE
 
