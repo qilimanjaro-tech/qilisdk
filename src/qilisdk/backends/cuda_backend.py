@@ -15,12 +15,13 @@ from __future__ import annotations
 
 from copy import copy
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Callable, Type, TypeVar
+from typing import TYPE_CHECKING, Callable, Type, TypeVar
 
 import cudaq
 import numpy as np
-from cudaq import ElementaryOperator, OperatorSum, ScalarOperator, SpinOperatorTerm, State, evolve, operators, spin
+from cudaq import ElementaryOperator, OperatorSum, ScalarOperator
 from cudaq import Schedule as CudaSchedule
+from cudaq import SpinOperatorTerm, State, evolve, operators, spin
 from defusedxml import NotSupportedError
 from loguru import logger
 
@@ -50,7 +51,7 @@ from qilisdk.digital.gates import (
     Y,
     Z,
 )
-from qilisdk.functionals.functional_result import FunctionalResult
+from qilisdk.functionals import FunctionalResult
 from qilisdk.noise import (
     BitFlip,
     Depolarizing,
@@ -103,6 +104,49 @@ def _to_cuda_noise(noise: Noise, gate_duration: float) -> cudaq.KrausChannel | N
         kraus_operators_np = [np.array(operator.dense(), dtype=np.complex128) for operator in kraus_channel.operators]
         return cudaq.KrausChannel(kraus_operators_np)
     return None
+
+
+def reverse_bits(x: int, n: int) -> int:
+    """Reverse the lowest n bits of integer x.
+
+    Returns:
+        int: x with the lowest n bit reversed.
+    """
+    y = 0
+    for _ in range(n):
+        y = (y << 1) | (x & 1)
+        x >>= 1
+    return y
+
+
+def cudaq_to_standard(statevector: np.ndarray) -> np.ndarray:
+    """
+    Convert a CUDA-Q style statevector to the more common qubit-ordering
+    convention where [0,1,0,0] corresponds to |01> for 2 qubits.
+
+    Args:
+        statevector: 1D array-like of length 2^n
+
+    Returns:
+        np.ndarray: reordered statevector
+
+    Raises:
+        ValueError: if the statevector is not a 1D array or the length is not a power of 2.
+    """
+    psi = np.asarray(statevector, dtype=complex)
+    dim = psi.shape[0]
+
+    if psi.ndim != 1:
+        raise ValueError("statevector must be a 1D array")
+
+    n = int(np.log2(dim))
+    if 2**n != dim:
+        raise ValueError("length of statevector must be a power of 2")
+
+    out = np.empty_like(psi)
+    for i in range(dim):
+        out[reverse_bits(i, n)] = psi[i]
+    return out
 
 
 class CudaSamplingMethod(str, Enum):
@@ -211,7 +255,9 @@ class CudaBackend(Backend):
         if self._noise_model:
             cuda_noise_model = self._noise_model_to_cudaq(self._noise_model, functional.circuit.nqubits)
             cudaq_result = cudaq.sample(
-                kernel, shots_count=readout[0].nshots, noise_model=cuda_noise_model  # ty:ignore[unresolved-attribute]
+                kernel,
+                shots_count=readout[0].nshots,  # ty:ignore[unresolved-attribute]
+                noise_model=cuda_noise_model,
             )
             cudaq_result = self._handle_readout_errors(cudaq_result, self._noise_model, functional.circuit.nqubits)
             if og_param:
@@ -220,23 +266,22 @@ class CudaBackend(Backend):
             return FunctionalResult(
                 [
                     SamplingReadoutResult(
-                        readout=readout[0], samples=dict(cudaq_result.items())  # ty:ignore[invalid-argument-type]
+                        readout=readout[0],  # ty:ignore[invalid-argument-type]
+                        samples=dict(cudaq_result.items()),
                     )
                 ]
             )
 
-            cuda_noise_model = self._noise_model_to_cudaq(self._noise_model, functional.circuit.nqubits)
-            cudaq_result = cudaq.sample(kernel, shots_count=functional.nshots, noise_model=cuda_noise_model)
-            cudaq_result = self._handle_readout_errors(cudaq_result, self._noise_model, functional.circuit.nqubits)
-
         cudaq_state = cudaq.get_state(kernel)
-        final_state = np.array(
-            cudaq_state,
-            dtype=_complex_dtype(),
+        final_state = cudaq_to_standard(
+            np.array(
+                cudaq_state,
+                dtype=_complex_dtype(),
+            )
         )
         if len(final_state.shape) == 1:
             final_state = final_state.reshape(-1, 1)
-        final_state = QTensor(final_state)
+        final_state = QTensor((final_state))
         if len(measured_qubits) > 0:
             final_state = final_state.ptrace(list(measured_qubits))
 

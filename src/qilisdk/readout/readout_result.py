@@ -17,18 +17,27 @@ import heapq
 import operator
 from abc import abstractmethod
 from pprint import pformat
-from typing import Iterator, overload
+from typing import TYPE_CHECKING, Iterator, overload
 
 import numpy as np
 
 from qilisdk.core import QTensor, expect_val
 from qilisdk.core.result import Result
-from qilisdk.core.types import Number
 from qilisdk.settings import get_settings
 
-from .readout import ExpectationReadout, ReadoutMethod, SamplingReadout, StateTomographyReadout
+if TYPE_CHECKING:
+    from qilisdk.core.types import Number
+
+    from .readout import ExpectationReadout, ReadoutMethod, SamplingReadout, StateTomographyReadout
+
 
 NORMALIZATION_TOLERANCE = 1e-8
+
+
+def _real_if_close(number: Number) -> Number:
+    if isinstance(number, complex) and number.imag < get_settings().atol:
+        return number.real
+    return number
 
 
 class ReadoutCompositeResults(Result):
@@ -181,7 +190,7 @@ class SamplingReadoutResult(ReadoutResult):
     def _init_from_state(self, readout: SamplingReadout, state: QTensor) -> None:
         self._readout: SamplingReadout = readout
         self._probabilities = _probabilities_from_state(state)
-        self._samples: dict[str, int] = _samples_from_probabilities(self._probabilities)
+        self._samples: dict[str, int] = _samples_from_probabilities(self._probabilities, nshots=readout.nshots)
 
     @property
     def readout(self) -> SamplingReadout:
@@ -253,7 +262,7 @@ class ExpectationReadoutResult(ReadoutResult):
     def _init_from_state(self, readout: ExpectationReadout, state: QTensor) -> None:
         self._readout = readout
         readout.scale_observables(nqubits=state.nqubits)
-        self._expected_values = [(expect_val(o, state)) for o in readout.qtensor_observables]
+        self._expected_values = [_real_if_close((expect_val(o, state))) for o in readout.qtensor_observables]
 
     def _init_from_expected_values(
         self,

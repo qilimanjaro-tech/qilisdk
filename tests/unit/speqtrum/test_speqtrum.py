@@ -33,8 +33,8 @@ from typing import Any
 import pytest
 
 from qilisdk.experiments.experiment_functional import RabiExperiment, T1Experiment, T2Experiment, TwoTonesExperiment
-from qilisdk.functionals.sampling import Sampling
-from qilisdk.functionals.time_evolution import TimeEvolution
+from qilisdk.functionals.analog_evolution import AnalogEvolution
+from qilisdk.functionals.digital_propagation import DigitalPropagation
 from qilisdk.functionals.variational_program import VariationalProgram
 
 pytest.importorskip("httpx", reason="SpeQtrum tests require the 'speqtrum' optional dependency", exc_type=ImportError)
@@ -47,10 +47,11 @@ pytest.importorskip(
 import httpx
 
 import qilisdk.speqtrum.speqtrum as speqtrum
-from qilisdk.functionals.sampling_result import SamplingResult
-from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
+from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.functionals.variational_program_result import VariationalProgramResult
 from qilisdk.optimizers.optimizer_result import OptimizerResult
+from qilisdk.readout import SamplingReadout
+from qilisdk.readout.readout_result import SamplingReadoutResult
 from qilisdk.speqtrum.speqtrum_models import ExecuteResult
 
 
@@ -121,11 +122,11 @@ def test_init_succeeds_with_stub_credentials(monkeypatch):
     assert q.token is tok
 
 
-class FakeSampling(Sampling):
+class FakeDigitalPropagation(DigitalPropagation):
     def __init__(self): ...
 
 
-class FakeTimeEvolution(TimeEvolution):
+class FakeAnalogEvolution(AnalogEvolution):
     def __init__(self): ...
 
 
@@ -150,8 +151,8 @@ class FakeVariationalProgram(VariationalProgram):
         self._functional = functional
 
 
-def test_submit_dispatches_to_sampling_handler(monkeypatch):
-    monkeypatch.setattr(speqtrum, "Sampling", FakeSampling)
+def test_submit_dispatches_to_digital_propagation_handler(monkeypatch):
+    monkeypatch.setattr(speqtrum, "DigitalPropagation", FakeDigitalPropagation)
     monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
     monkeypatch.setattr(
         speqtrum.SpeQtrum,
@@ -160,13 +161,13 @@ def test_submit_dispatches_to_sampling_handler(monkeypatch):
         raising=True,
     )
     q = speqtrum.SpeQtrum()
-    handle = q.submit(FakeSampling(), device="some_device", job_name="my_job")
+    handle = q.submit(FakeDigitalPropagation(), device="some_device", job_name="my_job")
     assert handle.id == 99
 
 
 def test_submit_dispatches_to_variational_program_handler(monkeypatch):
-    monkeypatch.setattr(speqtrum, "Sampling", FakeSampling)
-    monkeypatch.setattr(speqtrum, "TimeEvolution", FakeTimeEvolution)
+    monkeypatch.setattr(speqtrum, "DigitalPropagation", FakeDigitalPropagation)
+    monkeypatch.setattr(speqtrum, "AnalogEvolution", FakeAnalogEvolution)
     monkeypatch.setattr(speqtrum, "RabiExperiment", FakeRabiExperiment)
     monkeypatch.setattr(speqtrum, "VariationalProgram", FakeVariationalProgram)
     monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
@@ -177,14 +178,14 @@ def test_submit_dispatches_to_variational_program_handler(monkeypatch):
         raising=True,
     )
     q = speqtrum.SpeQtrum()
-    handle = q.submit(FakeVariationalProgram(FakeSampling()), device="some_device", job_name="my_vp_job")
-    q.submit(FakeVariationalProgram(FakeTimeEvolution()), device="some_device", job_name="my_vp_job")
+    handle = q.submit(FakeVariationalProgram(FakeDigitalPropagation()), device="some_device", job_name="my_vp_job")
+    q.submit(FakeVariationalProgram(FakeAnalogEvolution()), device="some_device", job_name="my_vp_job")
     q.submit(FakeVariationalProgram(FakeRabiExperiment()), device="some_device", job_name="my_vp_job")
     assert handle.id == 88
 
 
-def test_submit_dispatches_to_time_evolution_handler(monkeypatch):
-    monkeypatch.setattr(speqtrum, "TimeEvolution", FakeTimeEvolution)
+def test_submit_dispatches_to_analog_evolution_handler(monkeypatch):
+    monkeypatch.setattr(speqtrum, "AnalogEvolution", FakeAnalogEvolution)
     monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
     monkeypatch.setattr(
         speqtrum.SpeQtrum,
@@ -193,7 +194,7 @@ def test_submit_dispatches_to_time_evolution_handler(monkeypatch):
         raising=True,
     )
     q = speqtrum.SpeQtrum()
-    handle = q.submit(FakeTimeEvolution(), device="some_device", job_name="te_job")
+    handle = q.submit(FakeAnalogEvolution(), device="some_device", job_name="te_job")
     assert handle.id == 77
 
 
@@ -316,8 +317,10 @@ def test_wait_for_job_with_handle_returns_typed_detail(monkeypatch):
     monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
     q = speqtrum.SpeQtrum()
 
-    handle = speqtrum.JobHandle.sampling(7)
-    sampling_result = SamplingResult(nshots=2, samples={"00": 2})
+    handle = speqtrum.JobHandle.functional(7)
+    readout = SamplingReadout(nshots=2)
+    readout_result = SamplingReadoutResult(readout=readout, samples={"00": 2})
+    functional_result = FunctionalResult(readout_results=[readout_result])
     detail = speqtrum.JobDetail(
         id=7,
         name="job",
@@ -328,7 +331,7 @@ def test_wait_for_job_with_handle_returns_typed_detail(monkeypatch):
         updated_at=None,
         completed_at=datetime.now(timezone.utc),
         payload=None,
-        result=ExecuteResult(type=speqtrum.ExecuteType.SAMPLING, sampling_result=sampling_result),
+        result=ExecuteResult(type=speqtrum.ExecuteType.DIGITAL_PROPAGATION, functional_result=functional_result),
     )
 
     monkeypatch.setattr(speqtrum.SpeQtrum, "get_job", lambda self, _: detail, raising=True)
@@ -337,9 +340,8 @@ def test_wait_for_job_with_handle_returns_typed_detail(monkeypatch):
     assert isinstance(typed_detail, speqtrum.TypedJobDetail)
     assert typed_detail.id == 7
     typed_result = typed_detail.get_results()
-    assert isinstance(typed_result, SamplingResult)
-    assert typed_result.samples == sampling_result.samples
-    assert typed_result.nshots == sampling_result.nshots
+    assert isinstance(typed_result, FunctionalResult)
+    assert typed_result.final_samples == functional_result.final_samples
 
 
 def test_ensure_ok_raises_with_api_payload():
@@ -399,10 +401,12 @@ def test_variational_program_handle_preserves_inner_result(monkeypatch):
     monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
     q = speqtrum.SpeQtrum()
 
-    handle = speqtrum.JobHandle.variational_program(21, result_type=SamplingResult)
-    sampling_result = SamplingResult(nshots=3, samples={"01": 1, "10": 2})
+    handle = speqtrum.JobHandle.variational_program(21, result_type=FunctionalResult)
+    readout = SamplingReadout(nshots=3)
+    readout_result = SamplingReadoutResult(readout=readout, samples={"01": 1, "10": 2})
+    functional_result = FunctionalResult(readout_results=[readout_result])
     optimizer_result = OptimizerResult(optimal_cost=0.5, optimal_parameters=[0.1, 0.2, 0.3])
-    variational_result = VariationalProgramResult(optimizer_result=optimizer_result, result=sampling_result)
+    variational_result = VariationalProgramResult(optimizer_result=optimizer_result, result=functional_result)
     detail = speqtrum.JobDetail(
         id=21,
         name="vp",
@@ -426,7 +430,7 @@ def test_variational_program_handle_preserves_inner_result(monkeypatch):
     typed_result = typed_detail.get_results()
     assert isinstance(typed_result, VariationalProgramResult)
     optimal_results = typed_result.optimal_execution_results
-    assert isinstance(optimal_results, SamplingResult)
+    assert isinstance(optimal_results, FunctionalResult)
 
 
 def test_variational_program_handle_with_wrong_type_raises(monkeypatch):
@@ -435,10 +439,16 @@ def test_variational_program_handle_with_wrong_type_raises(monkeypatch):
     monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
     q = speqtrum.SpeQtrum()
 
-    handle = speqtrum.JobHandle.variational_program(22, result_type=TimeEvolutionResult)
-    sampling_result = SamplingResult(nshots=1, samples={"00": 1})
+    # Use a dummy type that is a subclass of FunctionalResult but won't match
+    class WrongFunctionalResult(FunctionalResult):
+        def __init__(self): ...
+
+    handle = speqtrum.JobHandle.variational_program(22, result_type=WrongFunctionalResult)
+    readout = SamplingReadout(nshots=1)
+    readout_result = SamplingReadoutResult(readout=readout, samples={"00": 1})
+    functional_result = FunctionalResult(readout_results=[readout_result])
     optimizer_result = OptimizerResult(optimal_cost=0.2, optimal_parameters=[0.0])
-    variational_result = VariationalProgramResult(optimizer_result=optimizer_result, result=sampling_result)
+    variational_result = VariationalProgramResult(optimizer_result=optimizer_result, result=functional_result)
     detail = speqtrum.JobDetail(
         id=22,
         name="vp",
@@ -475,7 +485,7 @@ def test_wait_for_job_times_out(monkeypatch):
     monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
     q = speqtrum.SpeQtrum()
 
-    # always RUNNING → never terminal
+    # always RUNNING -> never terminal
     monkeypatch.setattr(
         speqtrum.SpeQtrum,
         "get_job",
@@ -711,7 +721,7 @@ def test_get_job(monkeypatch):
     assert job["id"] == 42
     assert job["name"] == "test_job"
     assert isinstance(job["status"], speqtrum.JobStatus)
-    job = client.get_job(speqtrum.JobHandle.sampling(42))
+    job = client.get_job(speqtrum.JobHandle.functional(42))
     assert isinstance(job, speqtrum.TypedJobDetail)
 
 

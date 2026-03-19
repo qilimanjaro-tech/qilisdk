@@ -14,36 +14,46 @@
 import numpy as np
 import pytest
 
+from qilisdk.core.qtensor import ket
 from qilisdk.cost_functions.cost_function import CostFunction
-from qilisdk.functionals.sampling_result import SamplingResult
-from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
+from qilisdk.functionals.functional_result import FunctionalResult
+from qilisdk.readout import ExpectationReadout, SamplingReadout, StateTomographyReadout
+from qilisdk.readout.readout_result import (
+    ExpectationReadoutResult,
+    SamplingReadoutResult,
+    StateTomographyReadoutResult,
+)
 
 
-def test_cost_function_init():
-    cost_function = CostFunction()
-    assert isinstance(cost_function, CostFunction)
+def test_cost_function_cannot_be_instantiated():
+    with pytest.raises(TypeError):
+        CostFunction()
 
 
-def test_compute_cost():
-    cost_function = CostFunction()
-    with pytest.raises(NotImplementedError):
-        cost_function.compute_cost(None)
+def test_compute_cost_with_sampling_result():
+    # CostFunction is abstract, so we create a minimal subclass
+    class DummyCostFunction(CostFunction):
+        def compute_cost(self, results):
+            return 42.0
+
+    cost_function = DummyCostFunction()
+
+    readout = SamplingReadout(nshots=1)
+    readout_result = SamplingReadoutResult(readout=readout, samples={"0": 1})
+    result = FunctionalResult(readout_results=[readout_result])
+
+    assert cost_function.compute_cost(result) == 42.0
 
 
-def test_compute_cost_sampling():
-    cost_function = CostFunction()
-    with pytest.raises(NotImplementedError):
-        cost_function.compute_cost(SamplingResult(1, {"0": 1}))
+def test_compute_cost_with_state_tomography_result():
+    class DummyCostFunction(CostFunction):
+        def compute_cost(self, results):
+            return 99.0
 
+    cost_function = DummyCostFunction()
 
-def test_compute_cost_time_evolution():
-    cost_function = CostFunction()
-    with pytest.raises(NotImplementedError):
-        cost_function.compute_cost(
-            TimeEvolutionResult(
-                final_expected_values=np.array([]),
-                expected_values=None,
-                final_state=None,
-                intermediate_states=None,
-            )
-        )
+    readout = StateTomographyReadout()
+    readout_result = StateTomographyReadoutResult(readout=readout, final_state=ket(0))
+    result = FunctionalResult(readout_results=[readout_result])
+
+    assert cost_function.compute_cost(result) == 99.0

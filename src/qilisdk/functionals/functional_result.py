@@ -16,12 +16,11 @@ from collections.abc import Iterator
 from qilisdk.core import QTensor
 from qilisdk.core.result import Result
 from qilisdk.core.types import Number
-from qilisdk.readout import ExpectationReadoutResult, ReadoutResult, SamplingReadoutResult, StateTomographyReadoutResult
+from qilisdk.readout import ReadoutResult
 from qilisdk.readout.readout_result import ReadoutCompositeResults
 
 
 class FunctionalResult(Result):
-
     def __init__(
         self, readout_results: list[ReadoutResult], intermediate_results: list[list[ReadoutResult]] | None = None
     ) -> None:

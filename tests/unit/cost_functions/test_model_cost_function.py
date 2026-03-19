@@ -21,11 +21,12 @@ from qilisdk.core.model import QUBO, ObjectiveSense
 from qilisdk.core.qtensor import QTensor, bra, ket, tensor_prod
 from qilisdk.core.variables import EQ, BinaryVariable
 from qilisdk.cost_functions import ModelCostFunction
-from qilisdk.functionals.sampling_result import SamplingResult
-from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
+from qilisdk.functionals.functional_result import FunctionalResult
+from qilisdk.readout import SamplingReadout, StateTomographyReadout
+from qilisdk.readout.readout_result import SamplingReadoutResult, StateTomographyReadoutResult
 
 
-def test_compute_cost_time_evolution():
+def test_compute_cost_state_tomography():
     n = 2
     b = [BinaryVariable(f"b({i})") for i in range(n)]
 
@@ -37,62 +38,50 @@ def test_compute_cost_time_evolution():
 
     mcf = ModelCostFunction(model)
 
-    te_results = TimeEvolutionResult(
-        final_expected_values=np.array([[-0.9, 0]]),
-        expected_values=None,
-        final_state=tensor_prod([ket(0), ket(1)]),
-        intermediate_states=None,
-    )
-    cost = mcf.compute_cost(te_results)
+    # ket state
+    readout = StateTomographyReadout()
+    readout_result = StateTomographyReadoutResult(readout=readout, final_state=tensor_prod([ket(0), ket(1)]))
+    result = FunctionalResult(readout_results=[readout_result])
+    cost = mcf.compute_cost(result)
 
     assert cost == -1
-    te_results = TimeEvolutionResult(
-        final_expected_values=np.array([[-0.9, 0]]),
-        expected_values=None,
-        final_state=tensor_prod([ket(0), ket(1)]).to_density_matrix(),
-        intermediate_states=None,
+
+    # density matrix state
+    readout_result = StateTomographyReadoutResult(
+        readout=readout, final_state=tensor_prod([ket(0), ket(1)]).to_density_matrix()
     )
-    cost = mcf.compute_cost(te_results)
+    result = FunctionalResult(readout_results=[readout_result])
+    cost = mcf.compute_cost(result)
 
     assert cost == -1
 
     mcf = ModelCostFunction(model)
 
-    te_results = TimeEvolutionResult(
-        final_expected_values=np.array([[-0.9, 0]]),
-        expected_values=None,
-        final_state=tensor_prod([bra(0), bra(1)]),
-        intermediate_states=None,
-    )
-    cost = mcf.compute_cost(te_results)
+    # bra state
+    readout_result = StateTomographyReadoutResult(readout=readout, final_state=tensor_prod([bra(0), bra(1)]))
+    result = FunctionalResult(readout_results=[readout_result])
+    cost = mcf.compute_cost(result)
     assert cost == -1
 
     mcf = ModelCostFunction(model.to_qubo())
 
-    cost = mcf.compute_cost(te_results)
+    cost = mcf.compute_cost(result)
     assert cost == -1
 
     mcf = ModelCostFunction(model)
 
-    te_results = TimeEvolutionResult(
-        final_expected_values=np.array([[-0.9, 0]]),
-        expected_values=None,
-        final_state=QTensor(np.array([[1, 1], [0, 0]])),
-        intermediate_states=None,
-    )
-    with pytest.raises(ValueError, match=r"The final state is invalid."):
-        _ = mcf.compute_cost(te_results)
-
-    te_results = TimeEvolutionResult(
-        final_expected_values=np.array([[-0.9, 0]]),
-        expected_values=None,
-        final_state=None,
-        intermediate_states=None,
-    )
+    # no state and no samples -- should raise
     with pytest.raises(
-        ValueError, match=r"can't compute cost using Models from time evolution results when the state is not provided."
+        ValueError, match=r"ModelCostFunction requires either a StateTomography or Sampling readout in the results."
     ):
-        _ = mcf.compute_cost(te_results)
+        from qilisdk.readout import ExpectationReadout
+        from qilisdk.readout.readout_result import ExpectationReadoutResult
+
+        H = sum(b)
+        exp_readout = ExpectationReadout(observables=[QTensor(np.eye(2**n))])
+        exp_result = ExpectationReadoutResult(readout=exp_readout, expected_values=[0.0])
+        no_state_result = FunctionalResult(readout_results=[exp_result])
+        _ = mcf.compute_cost(no_state_result)
 
 
 def test_compute_cost_sampling():
@@ -107,18 +96,22 @@ def test_compute_cost_sampling():
 
     mcf = ModelCostFunction(model)
 
-    te_results = SamplingResult(nshots=100, samples={"01": 100})
-    cost = mcf.compute_cost(te_results)
+    readout = SamplingReadout(nshots=100)
+    readout_result = SamplingReadoutResult(readout=readout, samples={"01": 100})
+    result = FunctionalResult(readout_results=[readout_result])
+    cost = mcf.compute_cost(result)
 
     assert cost == -1
 
-    te_results = SamplingResult(nshots=100, samples={"0": 100})
+    readout_result = SamplingReadoutResult(readout=SamplingReadout(nshots=100), samples={"0": 100})
+    result = FunctionalResult(readout_results=[readout_result])
 
     with pytest.raises(ValueError, match=r"Mapping samples to the model's variables is ambiguous."):
-        _ = mcf.compute_cost(te_results)
+        _ = mcf.compute_cost(result)
 
-    te_results = SamplingResult(nshots=100, samples={"01": 50, "10": 50})
-    cost = mcf.compute_cost(te_results)
+    readout_result = SamplingReadoutResult(readout=SamplingReadout(nshots=100), samples={"01": 50, "10": 50})
+    result = FunctionalResult(readout_results=[readout_result])
+    cost = mcf.compute_cost(result)
 
     assert np.isclose(cost, -1 * 0.5 + 9 * 0.5)
 
@@ -126,40 +119,46 @@ def test_compute_cost_sampling():
 def test_complex_return_values():
     return_val = complex(1, 2)
     model = MagicMock()
+    model.variables = MagicMock(return_value=[MagicMock()])  # 1 variable for 1-qubit samples
     eval_results = MagicMock()
     eval_results.values = MagicMock(return_value=[return_val])
     model.evaluate = MagicMock(return_value=eval_results)
     mcf = ModelCostFunction(model)
-    sampling_result = MagicMock(spec=SamplingResult)
-    sampling_result.get_probabilities = MagicMock(return_value=[("", 1.0)])
-    cost = mcf._compute_cost_sampling(sampling_result)
+
+    # sampling
+    readout = SamplingReadout(nshots=100)
+    readout_result = SamplingReadoutResult(readout=readout, samples={"0": 100})
+    sampling_result = FunctionalResult(readout_results=[readout_result])
+    cost = mcf._compute_from_samples(sampling_result)
     assert cost == return_val
 
-    # same for time evolution
+    # state tomography
     model = MagicMock()
+    model.variables = MagicMock(return_value=[MagicMock()])
     rho = QTensor(np.array([[1, 0], [0, 0]]))
     eval_results = MagicMock()
     eval_results.values = MagicMock(return_value=[return_val])
     model.evaluate = MagicMock(return_value=eval_results)
     mcf = ModelCostFunction(model)
-    time_evolution_result = MagicMock(spec=TimeEvolutionResult)
-    time_evolution_result.final_state = rho
-    cost = mcf._compute_cost_time_evolution(time_evolution_result)
+    st_readout = StateTomographyReadout()
+    st_readout_result = StateTomographyReadoutResult(readout=st_readout, final_state=rho)
+    state_result = FunctionalResult(readout_results=[st_readout_result])
+    cost = mcf._compute_from_state(state_result)
     assert cost == return_val
 
-    # same for time evolution (bra)
+    # state tomography (ket)
     model = MagicMock()
     rho = QTensor(np.array([1, 0]).reshape((2, 1)))
     eval_results = MagicMock()
     eval_results.values = MagicMock(return_value=[return_val])
     model.evaluate = MagicMock(return_value=eval_results)
     mcf = ModelCostFunction(model)
-    time_evolution_result = MagicMock(spec=TimeEvolutionResult)
-    time_evolution_result.final_state = rho
-    cost = mcf._compute_cost_time_evolution(time_evolution_result)
+    st_readout_result = StateTomographyReadoutResult(readout=st_readout, final_state=rho)
+    state_result = FunctionalResult(readout_results=[st_readout_result])
+    cost = mcf._compute_from_state(state_result)
     assert cost == return_val
 
-    # same for time evolution (qubo)
+    # state tomography (qubo)
     fake_ham = MagicMock()
     fake_ham.to_matrix = MagicMock(return_value=np.array([[return_val, 0], [0, 1]]))
     model = MagicMock(spec=QUBO)
@@ -169,9 +168,9 @@ def test_complex_return_values():
     eval_results.values = MagicMock(return_value=[return_val])
     model.evaluate = MagicMock(return_value=eval_results)
     mcf = ModelCostFunction(model)
-    time_evolution_result = MagicMock(spec=TimeEvolutionResult)
-    time_evolution_result.final_state = rho
-    cost = mcf._compute_cost_time_evolution(time_evolution_result)
+    st_readout_result = StateTomographyReadoutResult(readout=st_readout, final_state=rho)
+    state_result = FunctionalResult(readout_results=[st_readout_result])
+    cost = mcf._compute_from_state(state_result)
     assert cost == return_val
 
 

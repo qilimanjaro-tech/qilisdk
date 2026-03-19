@@ -18,7 +18,6 @@ from typing import TYPE_CHECKING
 from loguru import logger
 from qilisim_module import QiliSimCpp  # ty:ignore[unresolved-import]
 
-from qilisdk.functionals import AnalogEvolution
 from qilisdk.settings import get_settings
 
 from .backend import Backend
@@ -26,10 +25,8 @@ from .backend_config import AnalogMethod, DigitalMethod, ExecutionConfig, Solver
 
 if TYPE_CHECKING:
     from qilisdk.core import QTensor
-    from qilisdk.functionals import DigitalPropagation
+    from qilisdk.functionals import AnalogEvolution, DigitalPropagation
     from qilisdk.functionals.functional_result import FunctionalResult
-    from qilisdk.functionals.time_evolution import TimeEvolution
-    from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
     from qilisdk.noise.noise_model import NoiseModel
     from qilisdk.readout import ReadoutMethod
 

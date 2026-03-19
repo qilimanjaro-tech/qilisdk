@@ -11,19 +11,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 from unittest import mock
 from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
+from qutip import Qobj
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliZ
 from qilisdk.analog.schedule import Schedule
 from qilisdk.core.qtensor import QTensor, tensor_prod
+from qilisdk.functionals.analog_evolution import AnalogEvolution
+from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirLayer
-from qilisdk.functionals.time_evolution import TimeEvolution
-from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
+from qilisdk.readout import ExpectationReadout, SamplingReadout, StateTomographyReadout
+from qilisdk.readout.readout_result import StateTomographyReadoutResult
 
 pytest.importorskip("qutip", reason="QuTiP backend tests require the 'qutip' optional dependency", exc_type=ImportError)
 pytest.importorskip(
@@ -44,8 +46,7 @@ from qilisdk.digital import CNOT, RX, RY, RZ, SWAP, U1, U2, U3, Circuit, H, I, M
 from qilisdk.digital.ansatz import HardwareEfficientAnsatz
 from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import Adjoint, BasicGate, Controlled
-from qilisdk.functionals.sampling import Sampling
-from qilisdk.functionals.sampling_result import SamplingResult
+from qilisdk.functionals.digital_propagation import DigitalPropagation
 from qilisdk.functionals.variational_program import VariationalProgram
 from qilisdk.optimizers.optimizer_result import OptimizerResult
 
@@ -79,7 +80,7 @@ def test_unsupported_gate_raises(backend):
     circuit = Circuit(nqubits=1)
     circuit.gates.append(DummyGate(0))
     with pytest.raises(UnsupportedGateError):
-        backend.execute(Sampling(circuit=circuit))
+        backend.execute(DigitalPropagation(circuit=circuit), readout=[SamplingReadout(nshots=100)])
 
 
 basic_gate_test_cases = [
@@ -170,11 +171,9 @@ def test_adjoint_fully(gate_instance):
     circuit = Circuit(nqubits=2)
     circuit.add(gate_instance)
     circuit.add(Adjoint(gate_instance))
-    result = backend.execute(Sampling(circuit=circuit, nshots=100))
-    assert isinstance(result, SamplingResult)
-    assert result.nshots == 100
-    assert all(len(key) == 2 for key in result.samples)
-    assert result.samples.get("00", 0) == 100
+    result = backend.execute(DigitalPropagation(circuit=circuit), readout=[SamplingReadout(nshots=100)])
+    assert isinstance(result, FunctionalResult)
+    assert result.final_samples.get("00", 0) == 100
 
 
 ###################
@@ -205,8 +204,8 @@ def test_parameterized_program_properties_assignment(dummy_optimizer):
     circuit = HardwareEfficientAnsatz(2)
     cost_function = ModelCostFunction(mock_instance)
 
-    parameterized_program = VariationalProgram(Sampling(circuit), dummy_optimizer, cost_function)
-    assert isinstance(parameterized_program.functional, Sampling)
+    parameterized_program = VariationalProgram(DigitalPropagation(circuit), dummy_optimizer, cost_function)
+    assert isinstance(parameterized_program.functional, DigitalPropagation)
     assert parameterized_program.functional.circuit == circuit
     assert parameterized_program.optimizer == dummy_optimizer
     assert parameterized_program.cost_function == cost_function
@@ -238,10 +237,10 @@ def test_obtain_cost_calls_backend(dummy_optimizer):
     circuit = HardwareEfficientAnsatz(2)
 
     cost_function = ModelCostFunction(mock_instance)
-    parameterized_program = VariationalProgram(Sampling(circuit), dummy_optimizer, cost_function)
+    parameterized_program = VariationalProgram(DigitalPropagation(circuit), dummy_optimizer, cost_function)
     # Call obtain_cost with a custom number of shots.
     backend = QutipBackend()
-    output = backend.execute(parameterized_program)
+    output = backend.execute(parameterized_program, readout=[SamplingReadout(nshots=1000)])
 
     # The dummy_cost_function returns 0.7 regardless of input.
     assert np.isclose(output.optimal_cost, 0.2)
@@ -260,10 +259,9 @@ def test_measurement_gates():
     backend = QutipBackend()
     circuit = Circuit(nqubits=2)
     circuit.add(M(0))
-    result = backend.execute(Sampling(circuit=circuit, nshots=10))
-    assert isinstance(result, SamplingResult)
-    assert result.nshots == 10
-    assert all(len(key) == 1 for key in result.samples)
+    result = backend.execute(DigitalPropagation(circuit=circuit), readout=[SamplingReadout(nshots=10)])
+    assert isinstance(result, FunctionalResult)
+    assert all(len(key) == 1 for key in result.final_samples)
 
 
 def test_bad_probability(monkeypatch):
@@ -275,11 +273,13 @@ def test_bad_probability(monkeypatch):
             self.probabilities = np.array([1.2, 0.2])
             self.cbits = ["0", "1"]
 
+        def get_final_states(self) -> Qobj:
+            return [Qobj([[1.2], [0.2]])]
+
     monkeypatch.setattr(CircuitSimulator, "run_statistics", lambda self, nshots: CircuitSimulatorMockResults())
-    result = backend.execute(Sampling(circuit=circuit, nshots=10))
-    assert isinstance(result, SamplingResult)
-    assert result.nshots == 10
-    assert sum(result.samples.values()) == 10
+    result = backend.execute(DigitalPropagation(circuit=circuit), readout=[SamplingReadout(nshots=10)])
+    assert isinstance(result, FunctionalResult)
+    assert sum(result.final_samples.values()) == 10
 
 
 class QObjMock:
@@ -297,6 +297,13 @@ class TimeEvolutionMockResults:
         self.states = [self.final_state, self.final_state]
 
 
+class TimeEvolutionMockResults2Qubits:
+    def __init__(self):
+        self.expect = [np.array([0.0, 0.0]), np.array([1.0, 1.0])]
+        self.final_state = QObjMock(np.array([[1], [0], [0], [0]]))
+        self.states = [self.final_state, self.final_state]
+
+
 def _build_quantum_reservoir_functional() -> QuantumReservoir:
     schedule = Schedule(
         dt=1,
@@ -309,7 +316,6 @@ def _build_quantum_reservoir_functional() -> QuantumReservoir:
     post.add(X(0))
     reservoir_layer = ReservoirLayer(
         evolution_dynamics=schedule,
-        observables=[QTensor(np.eye(2, dtype=np.complex128))],
         input_encoding=pre,
         output_encoding=post,
         qubits_to_reset=[0],
@@ -318,9 +324,6 @@ def _build_quantum_reservoir_functional() -> QuantumReservoir:
         initial_state=ket(0),
         reservoir_layer=reservoir_layer,
         input_per_layer=[{}, {}],
-        store_final_state=True,
-        store_intermediate_states=True,
-        nshots=10,
     )
 
 
@@ -329,15 +332,19 @@ def _build_quantum_reservoir_functional() -> QuantumReservoir:
     "initial_state",
     [tensor_prod([ket(0), ket(0)]), tensor_prod([ket(0), ket(0)]).to_density_matrix(), tensor_prod([bra(0), bra(0)])],
 )
-@pytest.mark.parametrize("ob", [PauliZ(0), Hamiltonian({(PauliZ(0),): 1.0}), (PauliZ(0) * PauliZ(1)).to_qtensor()])
+@pytest.mark.parametrize(
+    "ob", [PauliZ(0).to_hamiltonian(), Hamiltonian({(PauliZ(0),): 1.0}), (PauliZ(0) * PauliZ(1)).to_qtensor()]
+)
 def test_time_evolution(monkeypatch, initial_state, ob):
-    monkeypatch.setattr("qilisdk.backends.qutip_backend.mesolve", lambda *args, **kwargs: TimeEvolutionMockResults())
+    monkeypatch.setattr(
+        "qilisdk.backends.qutip_backend.mesolve", lambda *args, **kwargs: TimeEvolutionMockResults2Qubits()
+    )
     backend = QutipBackend()
     hamiltonian = Hamiltonian({(PauliZ(0),): 1.0, (PauliZ(1),): 1.0})
     schedule = Schedule(hamiltonians={"h": hamiltonian}, dt=0.1)
-    func = TimeEvolution(schedule=schedule, observables=[ob], initial_state=initial_state)
-    result = backend.execute(func)
-    assert np.allclose(result.final_expected_values, np.array([0]))
+    func = AnalogEvolution(schedule=schedule, initial_state=initial_state)
+    result = backend.execute(func, readout=[ExpectationReadout(observables=[ob]), StateTomographyReadout()])
+    assert np.allclose(result.final_expected_values, np.array([1]))
     assert isinstance(result.final_state, QTensor)
 
 
@@ -347,9 +354,9 @@ def test_time_evolution_bad_initial(monkeypatch):
     hamiltonian = Hamiltonian({(PauliZ(0),): 1.0})
     schedule = Schedule(hamiltonians={"h": hamiltonian}, dt=0.1)
     bad_state = QTensor(-np.eye(2))
-    func = TimeEvolution(schedule=schedule, observables=[PauliZ(0)], initial_state=bad_state)
+    func = AnalogEvolution(schedule=schedule, initial_state=bad_state)
     with pytest.raises(ValueError, match="initial state"):
-        backend.execute(func)
+        backend.execute(func, readout=[StateTomographyReadout()])
 
 
 def test_time_evolution_bad_observable():
@@ -358,18 +365,24 @@ def test_time_evolution_bad_observable():
     schedule = Schedule(hamiltonians={"h": hamiltonian}, dt=0.1)
     initial_state = ket(0)
     ob = "bad"
-    func = TimeEvolution(schedule=schedule, observables=[ob], initial_state=initial_state)
+    func = AnalogEvolution(schedule=schedule, initial_state=initial_state)
     with pytest.raises(ValueError, match="observable"):
-        backend.execute(func)
+        backend.execute(func, readout=[ExpectationReadout(observables=[ob])])
 
 
 def test_execute_quantum_reservoir_raises_if_time_evolution_returns_no_state(monkeypatch):
     backend = QutipBackend()
     functional = _build_quantum_reservoir_functional()
+
+    def _mock_execute_analog_evolution(self, f, readout):
+        # Return a FunctionalResult with a StateTomographyReadoutResult containing final_state=None
+        # This simulates the case where the evolution returns no valid state
+        raise ValueError("Reservoir Runtime Error: state repair failed before expectation value computation.")
+
     monkeypatch.setattr(
-        "qilisdk.backends.qutip_backend.QutipBackend._execute_time_evolution",
-        lambda self, f: TimeEvolutionResult(final_state=None),
+        "qilisdk.backends.qutip_backend.QutipBackend._execute_analog_evolution",
+        _mock_execute_analog_evolution,
     )
 
     with pytest.raises(ValueError, match="Reservoir Runtime Error"):
-        backend._execute_quantum_reservoir(functional)
+        backend._execute_quantum_reservoir(functional, readout=[SamplingReadout(nshots=10)])

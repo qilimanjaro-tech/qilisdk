@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast, overload
 
 from qilisdk.analog import Schedule
 from qilisdk.core import reset_qubits
-from qilisdk.core.types import Number
+from qilisdk.core.result import Result
 from qilisdk.digital import Circuit
 from qilisdk.functionals import QuantumReservoir
 from qilisdk.functionals.analog_evolution import AnalogEvolution
@@ -62,14 +62,14 @@ class Backend(ABC):
     @overload
     def execute(
         self, functional: VariationalProgram, readout: ReadoutMethod | list[ReadoutMethod]
-    ) -> VariationalProgramResult[FunctionalResult]: ...
+    ) -> VariationalProgramResult: ...
 
     @overload
     def execute(
         self, functional: PrimitiveFunctional, readout: ReadoutMethod | list[ReadoutMethod]
     ) -> FunctionalResult: ...
 
-    def execute(self, functional: Functional, readout: ReadoutMethod | list[ReadoutMethod]) -> FunctionalResult:
+    def execute(self, functional: Functional, readout: ReadoutMethod | list[ReadoutMethod]) -> Result:
         try:
             handler = self._handlers[type(functional)]
         except KeyError as exc:
@@ -136,7 +136,7 @@ class Backend(ABC):
 
     def _execute_variational_program(
         self, functional: VariationalProgram[PrimitiveFunctional[TResult]], readout: list[ReadoutMethod]
-    ) -> VariationalProgramResult[FunctionalResult]:
+    ) -> VariationalProgramResult:
         """Optimize a :class:`~qilisdk.functionals.variational_program.VariationalProgram`.
 
         Args:

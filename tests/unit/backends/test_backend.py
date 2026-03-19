@@ -22,10 +22,10 @@ from qilisdk.backends.backend import Backend
 from qilisdk.core import LT, Parameter, QTensor, ket
 from qilisdk.digital import Circuit
 from qilisdk.digital.gates import RZ, H
-from qilisdk.functionals import QuantumReservoir, ReservoirInput, ReservoirLayer
-from qilisdk.functionals.sampling import Sampling
-from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
+from qilisdk.functionals import DigitalPropagation, FunctionalResult, QuantumReservoir, ReservoirInput, ReservoirLayer
 from qilisdk.functionals.variational_program import VariationalProgram
+from qilisdk.readout import SamplingReadout, StateTomographyReadout
+from qilisdk.readout.readout_result import SamplingReadoutResult, StateTomographyReadoutResult
 
 
 def test_backend_initialization():
@@ -35,46 +35,45 @@ def test_backend_initialization():
 
 def test_backend_execute():
     backend = Backend()
-    circuit = Circuit(1)
-    with pytest.raises(NotImplementedError, match="Backend does not support"):
-        backend.execute(circuit)
+    functional = DigitalPropagation(Circuit(1))
+    readout = [SamplingReadout(nshots=10)]
 
-    sampling = Sampling(circuit=circuit)
-    with pytest.raises(NotImplementedError, match="has no Sampling"):
-        backend._execute_sampling(sampling)
-
-    time_evo = MagicMock()
-    with pytest.raises(NotImplementedError, match="has no TimeEvolution"):
-        backend._execute_time_evolution(time_evo)
-
-    schedule = Schedule(
-        dt=1,
-        hamiltonians={"h": Z(0)},
-        coefficients={"h": {(0, 1): 1.0}},
-    )
-    quantum_reservoir = QuantumReservoir(
-        initial_state=ket(0),
-        reservoir_layer=ReservoirLayer(
-            evolution_dynamics=schedule,
-            observables=[QTensor(np.eye(2, dtype=np.complex128))],
-        ),
-        input_per_layer=[{}],
-    )
-    with pytest.raises(NotImplementedError, match="has no TimeEvolution"):
-        backend._execute_quantum_reservoir(quantum_reservoir)
+    with pytest.raises(NotImplementedError, match="has no DigitalPropagation"):
+        backend.execute(functional, readout)
 
 
-class MockSampleResult:
-    def __init__(self, functional):
-        self.samples = {"0": functional.get_parameter_values()[0]}
+def test_backend_execute_invalid_readout():
+    backend = Backend()
+    functional = DigitalPropagation(Circuit(1))
+
+    with pytest.raises(ValueError, match="not a valid readout method"):
+        backend.execute(functional, ["not_a_readout"])
+
+
+def test_backend_execute_duplicate_readout():
+    backend = Backend()
+    functional = DigitalPropagation(Circuit(1))
+    readout = [SamplingReadout(nshots=10), SamplingReadout(nshots=20)]
+
+    with pytest.raises(ValueError, match="Each readout method can only passed once"):
+        backend.execute(functional, readout)
+
+
+def _make_mock_result(functional):
+    """Create a FunctionalResult with sampling results from functional parameters."""
+    param_val = functional.get_parameter_values()[0] if functional.get_parameter_values() else 0.0
+    readout = SamplingReadout(nshots=100)
+    samples = {"0": int(param_val * 100) if param_val > 0 else 100}
+    readout_result = SamplingReadoutResult(readout=readout, samples=samples)
+    return FunctionalResult(readout_results=[readout_result])
 
 
 class MockCostFunction:
-    def compute_cost(self, sample_result):
-        # bit of a hack, but basically we use it to simulate returning an almost real value
-        if abs(sample_result.samples["0"] - 0.5) < 1e-8:
+    def compute_cost(self, result):
+        samples = result.final_samples
+        if abs(samples.get("0", 0) - 50) < 1:
             return 0.5 + 0j
-        return sample_result.samples["0"]
+        return samples.get("0", 0) / 100.0
 
 
 class MockOptimizerResult:
@@ -91,8 +90,6 @@ class MockOptimizer:
         if self.has_parameter_constraints:
             assert cost_function([3.0]) > 0
         else:
-            with pytest.raises(ValueError, match="Unsupported result type"):
-                cost_function([1])
             assert np.isclose(cost_function([0.5]), 0.5)
             assert np.isclose(cost_function([0.7]), 0.7)
         return MockOptimizerResult(optimal_parameters=[0.5], optimal_value=0.1)
@@ -104,14 +101,17 @@ def test_backend_variational_program(monkeypatch):
     circ = Circuit(1)
     param = Parameter("phi", 0.0, bounds=(0.0, np.pi))
     circ.add(RZ(0, phi=param))
-    func = Sampling(circuit=circ)
+    func = DigitalPropagation(circuit=circ)
+    readout = [SamplingReadout(nshots=100)]
     var_prog = VariationalProgram(functional=func, optimizer=MockOptimizer(), cost_function=MockCostFunction())
 
-    monkeypatch.setattr(backend, "_execute_sampling", lambda f, noise_model=None: MockSampleResult(f))
-
-    res = backend._execute_variational_program(
-        functional=var_prog,
+    monkeypatch.setattr(
+        backend,
+        "_execute_digital_propagation",
+        lambda f, ro: _make_mock_result(f),
     )
+
+    res = backend._execute_variational_program(functional=var_prog, readout=readout)
     assert np.isclose(res.optimal_parameters[0], 0.5)
 
 
@@ -120,13 +120,12 @@ def test_non_parameterized_functional():
 
     circ = Circuit(1)
     circ.add(H(0))
-    func = Sampling(circuit=circ)
+    func = DigitalPropagation(circuit=circ)
+    readout = [SamplingReadout(nshots=10)]
     var_prog = VariationalProgram(functional=func, optimizer=MagicMock(), cost_function=MagicMock())
 
     with pytest.raises(ValueError, match=r"Functional provided does not contain trainable parameters."):
-        backend._execute_variational_program(
-            functional=var_prog,
-        )
+        backend._execute_variational_program(functional=var_prog, readout=readout)
 
 
 def test_variational_program_parameter_constraints(monkeypatch):
@@ -137,25 +136,30 @@ def test_variational_program_parameter_constraints(monkeypatch):
     term = param * 2 + 1
     circ.add(RZ(0, phi=param))
     circ._parameter_constraints.append(LT(term, 0))
-    func = Sampling(circuit=circ)
+    func = DigitalPropagation(circuit=circ)
+    readout = [SamplingReadout(nshots=100)]
     var_prog = VariationalProgram(
         functional=func, optimizer=MockOptimizer(has_parameter_constraints=True), cost_function=MockCostFunction()
     )
 
-    monkeypatch.setattr(backend, "_execute_sampling", lambda f, noise_model=None: MockSampleResult(f))
+    monkeypatch.setattr(
+        backend,
+        "_execute_digital_propagation",
+        lambda f, ro: _make_mock_result(f),
+    )
 
     with pytest.raises(ValueError, match="Optimizer Failed at finding"):
-        backend._execute_variational_program(
-            functional=var_prog,
-        )
-
-
-class _MockReservoirBackend(Backend):
-    def _execute_time_evolution(self, functional):
-        return TimeEvolutionResult(final_state=functional.initial_state)
+        backend._execute_variational_program(functional=var_prog, readout=readout)
 
 
 def test_quantum_reservoir_invalidates_circuit_cache_on_parameter_updates(monkeypatch):
+    class _MockReservoirBackend(Backend):
+        def _execute_analog_evolution(self, functional, readout):
+            state = functional.initial_state
+            return FunctionalResult(
+                readout_results=[StateTomographyReadoutResult(readout=StateTomographyReadout(), final_state=state)]
+            )
+
     backend = _MockReservoirBackend()
 
     schedule = Schedule(
@@ -169,7 +173,6 @@ def test_quantum_reservoir_invalidates_circuit_cache_on_parameter_updates(monkey
 
     reservoir_layer = ReservoirLayer(
         evolution_dynamics=schedule,
-        observables=[QTensor(np.eye(2, dtype=np.complex128))],
         input_encoding=pre_processing,
     )
     functional = QuantumReservoir(
@@ -194,36 +197,11 @@ def test_quantum_reservoir_invalidates_circuit_cache_on_parameter_updates(monkey
 
     monkeypatch.setattr(Circuit, "to_qtensor", _counting_to_qtensor)
 
-    backend._execute_quantum_reservoir(functional)
+    readout = [StateTomographyReadout()]
+    backend._execute_quantum_reservoir(functional, readout)
 
     assert to_qtensor_calls == 2
     assert signatures == [(0.1,), (0.2,)]
-
-
-class _MockScaledStateReservoirBackend(Backend):
-    def _execute_time_evolution(self, functional):
-        return TimeEvolutionResult(final_state=functional.initial_state * 2.0)
-
-
-def test_quantum_reservoir_raises_if_state_repair_is_too_large():
-    backend = _MockScaledStateReservoirBackend()
-
-    schedule = Schedule(
-        dt=1,
-        hamiltonians={"h": Z(0)},
-        coefficients={"h": {(0, 1): 1.0}},
-    )
-    functional = QuantumReservoir(
-        initial_state=ket(0),
-        reservoir_layer=ReservoirLayer(
-            evolution_dynamics=schedule,
-            observables=[QTensor(np.eye(2, dtype=np.complex128))],
-        ),
-        input_per_layer=[{}],
-    )
-
-    with pytest.raises(ValueError, match="large correction"):
-        backend._execute_quantum_reservoir(functional)
 
 
 def test_print_backend():

@@ -11,9 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import numpy as np
 import pytest
+
+from qilisdk.backends.backend import Backend
 
 pytest.importorskip("qutip", reason="QuTiP backend tests require the 'qutip' optional dependency", exc_type=ImportError)
 pytest.importorskip(
@@ -21,14 +22,13 @@ pytest.importorskip(
     reason="QuTiP backend tests require the 'qutip' optional dependency",
     exc_type=ImportError,
 )
+pytest.importorskip("qilisim_module", reason="Backend integration tests require the 'qilisim_module' C++ extension")
 
-from unittest import mock
 from unittest.mock import MagicMock
 
 import pytest
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliX, PauliZ
-from qilisdk.analog.hamiltonian import PauliZ as pauli_z_pauli
 from qilisdk.analog.hamiltonian import X as pauli_x
 from qilisdk.analog.hamiltonian import Y as pauli_y
 from qilisdk.analog.hamiltonian import Z as pauli_z
@@ -43,14 +43,11 @@ from qilisdk.cost_functions.model_cost_function import ModelCostFunction
 from qilisdk.digital import RX, RY, RZ, SWAP, U1, U2, U3, Circuit, H, I, M, S, T, X, Y, Z
 from qilisdk.digital.ansatz import HardwareEfficientAnsatz, TrotterizedSchedule
 from qilisdk.digital.gates import CNOT, Controlled
-from qilisdk.functionals import QuantumReservoir, ReservoirLayer
-from qilisdk.functionals.sampling import Sampling
-from qilisdk.functionals.sampling_result import SamplingResult
-from qilisdk.functionals.time_evolution import TimeEvolution
-from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
+from qilisdk.functionals import AnalogEvolution, DigitalPropagation, FunctionalResult, QuantumReservoir, ReservoirLayer
 from qilisdk.functionals.variational_program import VariationalProgram
 from qilisdk.optimizers.optimizer_result import OptimizerResult
 from qilisdk.optimizers.scipy_optimizer import SciPyOptimizer
+from qilisdk.readout import ExpectationReadout, SamplingReadout, StateTomographyReadout
 
 pytest.importorskip(
     "cudaq",
@@ -82,7 +79,6 @@ def _build_quantum_reservoir_functional() -> QuantumReservoir:
     post.add(X(0))
     reservoir_layer = ReservoirLayer(
         evolution_dynamics=schedule,
-        observables=[QTensor(np.eye(2, dtype=np.complex128))],
         input_encoding=pre,
         output_encoding=post,
         qubits_to_reset=[0],
@@ -91,9 +87,6 @@ def _build_quantum_reservoir_functional() -> QuantumReservoir:
         initial_state=ket(0),
         reservoir_layer=reservoir_layer,
         input_per_layer=[{}, {}],
-        store_final_state=True,
-        store_intermediate_states=True,
-        nshots=10,
     )
 
 
@@ -101,10 +94,9 @@ def _build_quantum_reservoir_functional() -> QuantumReservoir:
 def test_execute_simple_circuit_no_measurement(backend):
     circuit = Circuit(nqubits=1)
     circuit.add(X(0))
-    result = backend.execute(Sampling(circuit=circuit, nshots=100))
-    # Expect roughly all shots to be '1'
-    assert isinstance(result, SamplingResult)
-    samples = result.samples
+    result = backend.execute(DigitalPropagation(circuit=circuit), readout=[SamplingReadout(nshots=100)])
+    assert isinstance(result, FunctionalResult)
+    samples = result.final_samples
     assert "1" in samples
     assert samples["1"] == 100
 
@@ -114,28 +106,26 @@ def test_execute_with_measurement_gate(backend):
     circuit = Circuit(nqubits=1)
     circuit.add(X(0))
     circuit.add(M(0))
-    result = backend.execute(Sampling(circuit=circuit, nshots=50))
-    # Still expect only '1'
-    assert result.samples == {"1": 50}
+    result = backend.execute(DigitalPropagation(circuit=circuit), readout=[SamplingReadout(nshots=50)])
+    assert result.final_samples == {"1": 50}
 
 
 @pytest.mark.parametrize("backend", backends)
 def test_controlled_cnot(backend):
     circuit = Circuit(nqubits=2)
     circuit.add(CNOT(control=0, target=1))
-    # Expect no error on building or executing
-    result = backend.execute(Sampling(circuit=circuit, nshots=10))
-    assert isinstance(result, SamplingResult)
-    # All samples should be "00" since X only applies if control=1, but no preparation
-    assert result.samples == {"00": 10}
+    result = backend.execute(DigitalPropagation(circuit=circuit), readout=[SamplingReadout(nshots=10)])
+    assert isinstance(result, FunctionalResult)
+    assert result.final_samples == {"00": 10}
 
 
 @pytest.mark.parametrize("backend", backends)
 def test_nshots(backend):
     circuit = Circuit(nqubits=1)
-    result = backend.execute(Sampling(circuit=circuit, nshots=10))
-    assert isinstance(result, SamplingResult)
-    assert result.nshots == 10
+    result = backend.execute(DigitalPropagation(circuit=circuit), readout=[SamplingReadout(nshots=10)])
+    assert isinstance(result, FunctionalResult)
+    total_shots = sum(result.final_samples.values())
+    assert total_shots == 10
 
 
 @pytest.mark.parametrize("backend", backends)
@@ -144,15 +134,13 @@ def test_multi_controlled_execution(backend):
         pytest.skip(
             "Multi-controlled gates are not currently supported in statevector_matrix_free sampling method of QiliSim."
         )
-    # Create two Xs then a multi-controlled X (Toffoli) gate
-    # Expect all shots to be '111'
     circuit = Circuit(nqubits=3)
     circuit.add(X(0))
     circuit.add(X(1))
     circuit.add(Controlled(0, 1, basic_gate=X(2)))
-    result = backend.execute(Sampling(circuit=circuit, nshots=100))
-    assert isinstance(result, SamplingResult)
-    samples = result.samples
+    result = backend.execute(DigitalPropagation(circuit=circuit), readout=[SamplingReadout(nshots=100)])
+    assert isinstance(result, FunctionalResult)
+    samples = result.final_samples
     assert "111" in samples
     assert samples["111"] == 100
 
@@ -167,18 +155,19 @@ def test_constant_hamiltonian(backend):
         coefficients={"hz": dict.fromkeys(range(int(1.0 / 0.1)), 1.0)},
     )
     psi0 = ket(0)
-    obs = [pauli_z(0)]
+
     res = backend.execute(
-        TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs, store_intermediate_results=True)
+        AnalogEvolution(schedule=schedule, initial_state=psi0, store_intermediate_results=True),
+        readout=[ExpectationReadout(observables=[pauli_z(0)]), StateTomographyReadout()],
     )
 
-    assert isinstance(res, TimeEvolutionResult)
-
+    assert isinstance(res, FunctionalResult)
     assert np.isclose(res.final_expected_values[0], 1.0, rtol=1e-6)
 
     # Intermediate states should replicate constant behavior
-    assert res.intermediate_states is not None
-    for state in res.intermediate_states:
+    assert len(res.intermediate_results) > 0
+    for inter in res.intermediate_results:
+        state = inter.final_state
         psi = state.dense().flatten()
         assert np.isclose(abs(psi[0]) ** 2, 1.0, rtol=1e-6)
 
@@ -196,14 +185,13 @@ def test_time_dependent_hamiltonian(backend):
     )
 
     psi0 = (ket(0) - ket(1)).unit()
-    obs = [
-        pauli_z(0),  # measure z
-    ]
 
-    res = backend.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs))
+    res = backend.execute(
+        AnalogEvolution(schedule=schedule, initial_state=psi0),
+        readout=[ExpectationReadout(observables=[pauli_z(0)]), StateTomographyReadout()],
+    )
 
-    assert isinstance(res, TimeEvolutionResult)
-
+    assert isinstance(res, FunctionalResult)
     expect_z = res.final_expected_values[0]
     assert np.isclose(expect_z, -1.0, rtol=1e-2)
 
@@ -216,7 +204,6 @@ def test_time_dependent_hamiltonian_with_3_qubits(backend):
     h1 = pauli_x(0) + pauli_x(1) + pauli_x(2)
     h2 = -1 * pauli_z(0) - 1 * pauli_z(1) - 2 * pauli_z(2) + 3 * pauli_z(0) * pauli_z(1)
 
-    # Create a schedule for the time evolution
     schedule = Schedule(
         dt=dt,
         hamiltonians={"h1": h1, "h2": h2},
@@ -225,10 +212,10 @@ def test_time_dependent_hamiltonian_with_3_qubits(backend):
 
     psi0 = (ket(0) + ket(1)).unit()
     psi0 = tensor_prod([psi0, psi0, psi0]).unit()
-    obs = [pauli_z(0), pauli_z(1), pauli_z(2)]  # measure z
 
     res = backend.execute(
-        TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs, store_intermediate_results=False)
+        AnalogEvolution(schedule=schedule, initial_state=psi0, store_intermediate_results=False),
+        readout=[ExpectationReadout(observables=[pauli_z(0), pauli_z(1), pauli_z(2)])],
     )
 
     assert np.isclose(res.final_expected_values[0], -1.0, rtol=1e-2)
@@ -245,13 +232,17 @@ def test_real_example(backend):
     cr = Circuit(1)
     cr.add(U1(0, phi=0.1))
 
-    output = backend.execute(VariationalProgram(Sampling(cr), SciPyOptimizer(), ModelCostFunction(model)))
+    readout = [SamplingReadout(nshots=1000)]
+    output = backend.execute(
+        VariationalProgram(DigitalPropagation(cr), SciPyOptimizer(), ModelCostFunction(model)),
+        readout=readout,
+    )
     assert np.isclose(output.optimal_cost, -1.0, rtol=1e-6)
-    assert output.optimal_execution_results.samples == {"0": 1000}
+    assert output.optimal_execution_results.final_samples == {"0": 1000}
 
 
 @pytest.mark.parametrize("backend", backends_no_cuda)
-def test_trotterized_time_evolution_results(backend):
+def test_trotterized_time_evolution_results(backend: Backend):
     """TrotterizedSchedule should honor schedule dt and trotter_steps."""
 
     h0 = Hamiltonian({(PauliX(0),): -1})
@@ -262,20 +253,17 @@ def test_trotterized_time_evolution_results(backend):
         dt=0.01,
         total_time=10,
     )
-    ansatz = TrotterizedSchedule(schedule)
+    ansatz = TrotterizedSchedule(schedule, trotter_steps=5)
     ansatz.insert([H(0)], 0)
-    te = TimeEvolution(
-        schedule,
-        observables=[h1],
-        initial_state=(ket(0) + ket(1)).unit(),
+    te_res = backend.execute(
+        AnalogEvolution(schedule=schedule, initial_state=(ket(0) + ket(1)).unit()),
+        readout=[StateTomographyReadout()],
     )
     nshots = 10_000
-    te_res = backend.execute(te)
-    sam_res = backend.execute(Sampling(ansatz, nshots=nshots))
-    probs = np.abs((te_res.final_state.dense()) ** 2).T[0]
-    te_probs = {("{" + ":0" + str(schedule.nqubits) + "b}").format(i): float(p) for i, p in enumerate(probs)}
-    sam_probs = {key: sam_res.samples[key] / nshots if key in sam_res.samples else 0.0 for key in te_probs}
-    assert all(np.isclose(list(te_probs.values()), list(sam_probs.values()), atol=1e-2))
+    sam_res = backend.execute(DigitalPropagation(ansatz), readout=[SamplingReadout(nshots=nshots)])
+    assert all(
+        np.isclose(list(te_res.final_probabilities.values()), list(sam_res.final_probabilities.values()), atol=1e-2)
+    )
 
 
 basic_gate_test_cases = [
@@ -303,9 +291,8 @@ swap_test_case = [
 def test_basic_gates(backend, gate):
     circuit = Circuit(nqubits=1)
     circuit.add(gate)
-    # Expect no error on building or executing
-    result = backend.execute(Sampling(circuit=circuit, nshots=10))
-    assert isinstance(result, SamplingResult)
+    result = backend.execute(DigitalPropagation(circuit=circuit), readout=[SamplingReadout(nshots=10)])
+    assert isinstance(result, FunctionalResult)
 
 
 @pytest.fixture
@@ -323,17 +310,8 @@ def dummy_optimizer():
 
 @pytest.mark.parametrize("backend", backends)
 def test_obtain_cost_calls_backend(dummy_optimizer, backend):
-    """
-    Test that the obtain_cost method correctly generates the circuit, calls the backend,
-    and applies the cost function.
-
-    This ensures:
-      - ansatz.get_circuit is called with the provided parameters.
-      - backend.execute is called with the generated circuit and specified number of shots.
-      - The returned cost is as defined by the dummy cost function.
-    """
     mock_instance = MagicMock(spec=Model)
-    mock_instance.variables = mock.Mock(return_value=[BinaryVariable("b0"), BinaryVariable("b1")])
+    mock_instance.variables = MagicMock(return_value=[BinaryVariable("b0"), BinaryVariable("b1")])
 
     mock_objective = MagicMock(spec=Objective)
     mock_objective.label = "obj"
@@ -348,9 +326,9 @@ def test_obtain_cost_calls_backend(dummy_optimizer, backend):
     circuit = HardwareEfficientAnsatz(2)
 
     cost_function = ModelCostFunction(mock_instance)
-    parameterized_program = VariationalProgram(Sampling(circuit), dummy_optimizer, cost_function)
-    # Call obtain_cost with a custom number of shots.
-    output = backend.execute(parameterized_program)
+    readout = [SamplingReadout(nshots=1000)]
+    parameterized_program = VariationalProgram(DigitalPropagation(circuit), dummy_optimizer, cost_function)
+    output = backend.execute(parameterized_program, readout=readout)
 
     assert np.isclose(output.optimal_cost, 0.2)
     assert np.isclose(cost_function.compute_cost(output.optimal_execution_results), 8.0)
@@ -370,14 +348,13 @@ def test_time_dependent_hamiltonian_pauli_observable(backend):
 
     psi0 = (ket(0) - ket(1)).unit()
     psi0 = tensor_prod([psi0, ket(0)]).unit()
-    obs = [
-        pauli_z_pauli(0),
-    ]
 
-    res = backend.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs))
+    res = backend.execute(
+        AnalogEvolution(schedule=schedule, initial_state=psi0),
+        readout=[ExpectationReadout(observables=[pauli_z(0)]), StateTomographyReadout()],
+    )
 
-    assert isinstance(res, TimeEvolutionResult)
-
+    assert isinstance(res, FunctionalResult)
     expect_z = res.final_expected_values[0]
     assert res.final_state.is_ket()
     assert np.isclose(expect_z, -1.0, rtol=1e-2)
@@ -397,14 +374,13 @@ def test_time_dependent_hamiltonian_imaginary(backend):
 
     psi0 = (ket(0) - ket(1)).unit()
     psi0 = psi0.to_density_matrix()
-    obs = [
-        pauli_y(0),  # measure y
-    ]
 
-    res = backend.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs))
+    res = backend.execute(
+        AnalogEvolution(schedule=schedule, initial_state=psi0),
+        readout=[ExpectationReadout(observables=[pauli_y(0)]), StateTomographyReadout()],
+    )
 
-    assert isinstance(res, TimeEvolutionResult)
-
+    assert isinstance(res, FunctionalResult)
     expect_y = res.final_expected_values[0]
     assert res.final_state.shape == (2, 2)
     assert np.isclose(expect_y, -1.0, rtol=1e-2)
@@ -427,14 +403,13 @@ def test_time_dependent_hamiltonian_qtensor_observable(backend):
     )
 
     psi0 = (ket(0) - ket(1)).unit()
-    obs = [
-        QTensor(pauli_z(0).to_matrix()),  # measure z as QTensor
-    ]
 
-    res = backend.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs))
+    res = backend.execute(
+        AnalogEvolution(schedule=schedule, initial_state=psi0),
+        readout=[ExpectationReadout(observables=[QTensor(pauli_z(0).to_matrix())]), StateTomographyReadout()],
+    )
 
-    assert isinstance(res, TimeEvolutionResult)
-
+    assert isinstance(res, FunctionalResult)
     expect_z = res.final_expected_values[0]
     assert res.final_state.is_ket()
     assert np.isclose(expect_z, -1.0, rtol=1e-2)
@@ -444,11 +419,9 @@ def test_time_dependent_hamiltonian_qtensor_observable(backend):
 def test_cnot(backend):
     circuit = Circuit(nqubits=2)
     circuit.add(CNOT(control=0, target=1))
-    # Expect no error on building or executing
-    result = backend.execute(Sampling(circuit=circuit, nshots=10))
-    assert isinstance(result, SamplingResult)
-    # All samples should be "00" since X only applies if control=1, but no preparation
-    assert result.samples == {"00": 10}
+    result = backend.execute(DigitalPropagation(circuit=circuit), readout=[SamplingReadout(nshots=10)])
+    assert isinstance(result, FunctionalResult)
+    assert result.final_samples == {"00": 10}
 
 
 @pytest.mark.parametrize("backend", backends)
@@ -457,9 +430,9 @@ def test_multiple_parameterized_gates(backend):
     c.add(RX(qubit=0, theta=np.pi / 4))
     c.add(RX(qubit=0, theta=np.pi / 4))
     c.add(RX(qubit=0, theta=np.pi / 2))
-    result = backend.execute(Sampling(circuit=c, nshots=100))
-    assert isinstance(result, SamplingResult)
-    samples = result.samples
+    result = backend.execute(DigitalPropagation(circuit=c), readout=[SamplingReadout(nshots=100)])
+    assert isinstance(result, FunctionalResult)
+    samples = result.final_samples
     assert "1" in samples
     assert samples["1"] == 100
 
@@ -467,8 +440,8 @@ def test_multiple_parameterized_gates(backend):
 @pytest.mark.parametrize("backend", backends)
 def test_many_gates(backend):
     c = Circuit.random(nqubits=2, single_qubit_gates={H, X, Y, Z, T, RX, RZ}, two_qubit_gates={CNOT}, ngates=1000)
-    result = backend.execute(Sampling(circuit=c, nshots=1000))
-    assert isinstance(result, SamplingResult)
+    result = backend.execute(DigitalPropagation(circuit=c), readout=[SamplingReadout(nshots=1000)])
+    assert isinstance(result, FunctionalResult)
 
 
 @pytest.mark.parametrize("backend", backends)
@@ -476,9 +449,9 @@ def test_measurement_gates(backend):
     circuit = Circuit(nqubits=2)
     circuit.add(X(0))
     circuit.add(M(0))
-    result = backend.execute(Sampling(circuit=circuit, nshots=50))
-    assert isinstance(result, SamplingResult)
-    samples = result.samples
+    result = backend.execute(DigitalPropagation(circuit=circuit), readout=[SamplingReadout(nshots=50)])
+    assert isinstance(result, FunctionalResult)
+    samples = result.final_samples
     assert "1" in samples
     assert samples["1"] == 50
 
@@ -497,14 +470,13 @@ def test_time_dependent_hamiltonian_density_mat(backend):
 
     psi0 = (ket(0) - ket(1)).unit()
     psi0 = psi0.to_density_matrix()
-    obs = [
-        pauli_z(0),  # measure z
-    ]
 
-    res = backend.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs))
+    res = backend.execute(
+        AnalogEvolution(schedule=schedule, initial_state=psi0),
+        readout=[ExpectationReadout(observables=[pauli_z(0)]), StateTomographyReadout()],
+    )
 
-    assert isinstance(res, TimeEvolutionResult)
-
+    assert isinstance(res, FunctionalResult)
     expect_z = res.final_expected_values[0]
     assert res.final_state.shape == (2, 2)
     assert np.isclose(expect_z, -1.0, rtol=1e-2)
@@ -514,35 +486,12 @@ def test_time_dependent_hamiltonian_density_mat(backend):
     assert np.allclose(final_rho, final_rho.conj().T, rtol=1e-6)
 
 
-def test_execute_quantum_reservoir_cuda(monkeypatch):
-    backend = CudaBackend()
-    functional = _build_quantum_reservoir_functional()
-
-    final_density = ket(0).to_density_matrix()
-    monkeypatch.setattr(
-        "qilisdk.backends.cuda_backend.CudaBackend._execute_time_evolution",
-        lambda self, f: TimeEvolutionResult(final_state=final_density),
-    )
-
-    result = backend.execute(functional)
-
-    assert result.final_state is not None
-    assert len(result.expected_values) == 2
-    assert len(result.intermediate_states) == 2
-
-
-def test_execute_quantum_reservoir_qutip(monkeypatch):
+def test_execute_quantum_reservoir_qutip():
     backend = QutipBackend()
     functional = _build_quantum_reservoir_functional()
+    readout = [StateTomographyReadout()]
 
-    final_density = ket(0).to_density_matrix()
-    monkeypatch.setattr(
-        "qilisdk.backends.qutip_backend.QutipBackend._execute_time_evolution",
-        lambda self, f: TimeEvolutionResult(final_state=final_density),
-    )
-
-    result = backend._execute_quantum_reservoir(functional)
+    result = backend._execute_quantum_reservoir(functional, readout)
 
     assert result.final_state is not None
-    assert len(result.expected_values) == 2
-    assert len(result.intermediate_states) == 2
+    assert len(result) >= 2

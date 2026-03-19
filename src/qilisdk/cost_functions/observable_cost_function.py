@@ -24,8 +24,7 @@ from qilisdk.settings import get_settings
 
 if TYPE_CHECKING:
     from qilisdk.core.types import Number
-    from qilisdk.functionals.sampling_result import SamplingResult
-    from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
+    from qilisdk.functionals.functional_result import FunctionalResult
 
 
 class ObservableCostFunction(CostFunction):
@@ -66,39 +65,37 @@ class ObservableCostFunction(CostFunction):
         """Return the observable in ``QTensor`` form."""
         return self._observable
 
-    def _compute_cost_time_evolution(self, results: TimeEvolutionResult) -> Number:
+    def compute_cost(self, results: FunctionalResult) -> Number:
         """
+        Compute the cost from a functional result.
+
+        Uses the final state if available (exact expectation value),
+        otherwise falls back to sampling-based estimation.
+
         Returns:
-            Number: the expectation value of ``observable`` given a final quantum state.
+            Number: the expectation value of the observable.
 
         Raises:
-            ValueError: If the final state is not provided in the results.
-
+            ValueError: If the results contain neither a StateTomography nor a Sampling readout.
         """
-        if results.final_state is None:
-            raise ValueError(
-                "can't compute cost using Observables from time evolution results when the state is not provided."
-            )
-        total_cost = complex(
-            np.real_if_close(expect_val(self._observable, results.final_state), tol=get_settings().atol)
-        )
+        if results.has_final_state():
+            return self._compute_from_state(results)
+        if results.has_samples():
+            return self._compute_from_samples(results)
+        raise ValueError("ObservableCostFunction requires either a StateTomography or Sampling readout in the results.")
+
+    def _compute_from_state(self, results: FunctionalResult) -> Number:
+        final_state = results.final_state
+        total_cost = complex(np.real_if_close(expect_val(self._observable, final_state), tol=get_settings().atol))
         if abs(total_cost.imag) < get_settings().atol:
             return total_cost.real
         return total_cost
 
-    def _compute_cost_sampling(self, results: SamplingResult) -> Number:
-        """
-        Estimate the observable expectation value using measured bitstring probabilities.
-
-        Returns:
-            Number: the expectation value of ``observable`` estimated from sampled bitstrings.
-
-        Raises:
-            ValueError: If the number of qubits in the observable does not match the sample size
-        """
+    def _compute_from_samples(self, results: FunctionalResult) -> Number:
         total_cost = complex(0.0)
         nqubits = self._observable.nqubits
-        for sample, prob in results.get_probabilities():
+        probabilities = results.final_probabilities
+        for sample, prob in probabilities.items():
             state = tensor_prod([ket(int(i)) for i in sample])
             if nqubits != state.nqubits:
                 raise ValueError(

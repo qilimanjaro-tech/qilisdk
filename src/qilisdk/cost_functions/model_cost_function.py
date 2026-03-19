@@ -24,8 +24,7 @@ from qilisdk.settings import get_settings
 
 if TYPE_CHECKING:
     from qilisdk.core.types import Number
-    from qilisdk.functionals.sampling_result import SamplingResult
-    from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
+    from qilisdk.functionals.functional_result import FunctionalResult
 
 
 class ModelCostFunction(CostFunction):
@@ -58,27 +57,31 @@ class ModelCostFunction(CostFunction):
         """Return the underlying optimisation model."""
         return self._model
 
-    def _compute_cost_time_evolution(self, results: TimeEvolutionResult) -> Number:
+    def compute_cost(self, results: FunctionalResult) -> Number:
         """
-        Compute the expectation value of the model objective using a time-evolution result.
+        Compute the cost from a functional result.
 
-        Evaluates the model on each computational basis state with probability extracted from the final state.
+        Uses the final state if available, otherwise falls back to sampling-based estimation.
 
         Returns:
-            Number: Expectation value of the model objective.
+            Number: Cost value computed from the results.
 
         Raises:
-            ValueError: If the final state is not provided in the results.
+            ValueError: If the results contain neither a StateTomography nor a Sampling readout.
         """
-        if results.final_state is None:
-            raise ValueError(
-                "can't compute cost using Models from time evolution results when the state is not provided."
-            )
+        if results.has_final_state():
+            return self._compute_from_state(results)
+        if results.has_samples():
+            return self._compute_from_samples(results)
+        raise ValueError("ModelCostFunction requires either a StateTomography or Sampling readout in the results.")
+
+    def _compute_from_state(self, results: FunctionalResult) -> Number:
+        final_state = results.final_state
 
         if isinstance(self.model, QUBO):
             ham = self.model.to_hamiltonian()
             total_cost = complex(
-                np.real_if_close(expect_val(QTensor(ham.to_matrix()), results.final_state), tol=get_settings().atol)
+                np.real_if_close(expect_val(QTensor(ham.to_matrix()), final_state), tol=get_settings().atol)
             )
             if abs(total_cost.imag) < get_settings().atol:
                 return total_cost.real
@@ -86,9 +89,9 @@ class ModelCostFunction(CostFunction):
 
         total_cost = complex(0.0)
 
-        if results.final_state.is_density_matrix(tol=1e-5):
-            rho = results.final_state.dense()
-            n = results.final_state.nqubits
+        if final_state.is_density_matrix(tol=1e-5):
+            rho = final_state.dense()
+            n = final_state.nqubits
             for i in range(rho.shape[0]):
                 state = [int(b) for b in f"{i:0{n}b}"]
                 _ket_state = ket(*state)
@@ -105,10 +108,10 @@ class ModelCostFunction(CostFunction):
             return total_cost
 
         dense_state = None
-        if results.final_state.is_ket():
-            dense_state = results.final_state.dense().T[0]
-        elif results.final_state.is_bra():
-            dense_state = results.final_state.dense()[0]
+        if final_state.is_ket():
+            dense_state = final_state.dense().T[0]
+        elif final_state.is_bra():
+            dense_state = final_state.dense()[0]
 
         if dense_state is None:
             raise ValueError("The final state is invalid.")
@@ -126,20 +129,10 @@ class ModelCostFunction(CostFunction):
             return total_cost.real
         return total_cost
 
-    def _compute_cost_sampling(self, results: SamplingResult) -> Number:
-        """
-        Compute the model cost by averaging over sampled bitstrings.
-
-        Each sample is mapped onto the model variables and evaluated using ``model.evaluate``.
-
-        Returns:
-            Number: Average cost of the model objective over all samples.
-
-        Raises:
-            ValueError: If the number of model variables does not match the sample size.
-        """
+    def _compute_from_samples(self, results: FunctionalResult) -> Number:
         total_cost = complex(0.0)
-        for sample, prob in results.get_probabilities():
+        probabilities = results.final_probabilities
+        for sample, prob in probabilities.items():
             bit_configuration = [int(i) for i in sample]
             if len(self.model.variables()) != len(bit_configuration):
                 raise ValueError("Mapping samples to the model's variables is ambiguous.")

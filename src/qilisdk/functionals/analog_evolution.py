@@ -17,7 +17,7 @@ from qilisdk.analog.schedule import Schedule
 from qilisdk.core.parameterizable import Parameterizable
 from qilisdk.core.qtensor import QTensor
 from qilisdk.functionals.functional import PrimitiveFunctional
-from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
+from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.yaml import yaml
 
 
@@ -29,16 +29,18 @@ class AnalogEvolution(PrimitiveFunctional):
     Example:
         .. code-block:: python
 
-            from qilisdk.analog import Schedule, Hamiltonian, Z
+            from qilisdk.analog import Schedule, Z
             from qilisdk.core import ket
-            from qilisdk.functionals.time_evolution import TimeEvolution
+            from qilisdk.functionals import AnalogEvolution
+            from qilisdk.readout import StateTomographyReadout
 
             h0 = Z(0)
             schedule = Schedule(hamiltonians={"h0": h0}, total_time=10.0)
-            functional = TimeEvolution(schedule, observables=[Z(0), X(0)], initial_state=ket(0))
+            functional = AnalogEvolution(schedule, initial_state=ket(0))
+            result = backend.execute(functional, readout=[StateTomographyReadout()])
     """
 
-    result_type: ClassVar[type[TimeEvolutionResult]] = TimeEvolutionResult
+    result_type: ClassVar[type[FunctionalResult]] = FunctionalResult
 
     def __init__(
         self,

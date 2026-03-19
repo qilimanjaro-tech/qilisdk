@@ -16,32 +16,37 @@ from typing import ClassVar, Iterator
 from qilisdk.core.parameterizable import Parameterizable
 from qilisdk.digital.circuit import Circuit
 from qilisdk.functionals.functional import PrimitiveFunctional
-from qilisdk.functionals.sampling_result import SamplingResult
+from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.yaml import yaml
 
 
 @yaml.register_class
 class DigitalPropagation(PrimitiveFunctional):
     """
-    Execute a digital circuit and collect bitstring samples.
+    Propagate a quantum state through a digital circuit.
+
+    The circuit is executed and results are returned based on the readout
+    methods provided to the backend.
 
     Example:
         .. code-block:: python
 
             from qilisdk.digital.circuit import Circuit
-            from qilisdk.functionals.sampling import Sampling
+            from qilisdk.functionals import DigitalPropagation
+            from qilisdk.readout import SamplingReadout
 
             circuit = Circuit(nqubits=2)
             circuit.h(0)
-            sampler = Sampling(circuit, nshots=1024)
+            functional = DigitalPropagation(circuit)
+            result = backend.execute(functional, readout=[SamplingReadout(nshots=1024)])
     """
 
-    result_type: ClassVar[type[SamplingResult]] = SamplingResult
+    result_type: ClassVar[type[FunctionalResult]] = FunctionalResult
 
     def __init__(self, circuit: Circuit) -> None:
         """
         Args:
-            circuit (Circuit): Circuit to execute for sampling.
+            circuit (Circuit): Circuit to propagate.
         """
         super().__init__()
         self.circuit = circuit

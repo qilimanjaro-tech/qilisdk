@@ -15,6 +15,8 @@
 import numpy as np
 import pytest
 
+pytest.importorskip("qilisim_module", reason="QiliSim integration tests require the 'qilisim_module' C++ extension")
+
 from qilisdk.analog.hamiltonian import X as pauli_x
 from qilisdk.analog.hamiltonian import Y as pauli_y
 from qilisdk.analog.hamiltonian import Z as pauli_z
@@ -23,10 +25,8 @@ from qilisdk.backends.backend_config import AnalogMethod, DigitalMethod, Executi
 from qilisdk.backends.qilisim import QiliSim
 from qilisdk.core.qtensor import ket
 from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, H, X, Y, Z
-from qilisdk.functionals.sampling import Sampling
-from qilisdk.functionals.sampling_result import SamplingResult
-from qilisdk.functionals.time_evolution import TimeEvolution
-from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
+from qilisdk.functionals import AnalogEvolution, DigitalPropagation, FunctionalResult
+from qilisdk.readout import ExpectationReadout, SamplingReadout, StateTomographyReadout
 
 analog_methods = [
     AnalogMethod.direct(),
@@ -45,9 +45,10 @@ def test_seed_same(method):
     backend2 = QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1), digital_simulation_method=method)
     circuit = Circuit(nqubits=1)
     circuit.add(H(0))
-    result1 = backend1.execute(Sampling(circuit=circuit, nshots=100))
-    result2 = backend2.execute(Sampling(circuit=circuit, nshots=100))
-    assert result1.samples == result2.samples
+    readout = [SamplingReadout(nshots=100)]
+    result1 = backend1.execute(DigitalPropagation(circuit=circuit), readout=readout)
+    result2 = backend2.execute(DigitalPropagation(circuit=circuit), readout=readout)
+    assert result1.final_samples == result2.final_samples
 
 
 def test_no_seed():
@@ -69,9 +70,12 @@ def test_monte_carlo_circuit(method):
     )
     circuit = Circuit(nqubits=1)
     circuit.add(H(0))
-    result = backend._execute_sampling(Sampling(circuit=circuit, nshots=100), initial_state=initial_state)
-    assert isinstance(result, SamplingResult)
-    samples = result.samples
+    readout = [SamplingReadout(nshots=100)]
+    result = backend._execute_digital_propagation(
+        DigitalPropagation(circuit=circuit), readout=readout, initial_state=initial_state
+    )
+    assert isinstance(result, FunctionalResult)
+    samples = result.final_samples
     assert "0" in samples
     assert "1" in samples
 
@@ -82,9 +86,10 @@ def test_seed_different(method):
     backend2 = QiliSim(execution_config=ExecutionConfig(seed=43, num_threads=1), digital_simulation_method=method)
     circuit = Circuit(nqubits=1)
     circuit.add(H(0))
-    result1 = backend1.execute(Sampling(circuit=circuit, nshots=100))
-    result2 = backend2.execute(Sampling(circuit=circuit, nshots=100))
-    assert result1.samples != result2.samples
+    readout = [SamplingReadout(nshots=100)]
+    result1 = backend1.execute(DigitalPropagation(circuit=circuit), readout=readout)
+    result2 = backend2.execute(DigitalPropagation(circuit=circuit), readout=readout)
+    assert result1.final_samples != result2.final_samples
 
 
 @pytest.mark.parametrize("method", analog_methods)
@@ -103,18 +108,17 @@ def test_row_vec_ordering(method):
 
     psi0 = (ket(0) - ket(1)).unit()
     psi0 = psi0.to_density_matrix()
-    obs = [
-        pauli_y(0),  # measure y
-    ]
 
     backend = QiliSim(
         analog_simulation_method=method,
         execution_config=ExecutionConfig(seed=42, num_threads=1, monte_carlo=_MONTE_CARLO_CONFIG),
     )
-    res = backend.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs))
+    res = backend.execute(
+        AnalogEvolution(schedule=schedule, initial_state=psi0),
+        readout=[ExpectationReadout(observables=[pauli_y(0)]), StateTomographyReadout()],
+    )
 
-    assert isinstance(res, TimeEvolutionResult)
-
+    assert isinstance(res, FunctionalResult)
     assert res.final_state.shape == (2, 2)
 
     # check that it's hermitian
@@ -138,18 +142,17 @@ def test_monte_carlo_time_evolution(method):
     psi1 = ket(1).to_density_matrix()
     mix = 0.2
     psi0 = ((1 - mix) * psi0 + mix * psi1).unit()
-    obs = [
-        pauli_z(0),  # measure z
-    ]
 
     backend = QiliSim(
         analog_simulation_method=method,
         execution_config=ExecutionConfig(seed=42, num_threads=1, monte_carlo=_MONTE_CARLO_CONFIG),
     )
-    res = backend.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs))
+    res = backend.execute(
+        AnalogEvolution(schedule=schedule, initial_state=psi0),
+        readout=[ExpectationReadout(observables=[pauli_z(0)]), StateTomographyReadout()],
+    )
 
-    assert isinstance(res, TimeEvolutionResult)
-
+    assert isinstance(res, FunctionalResult)
     expect_z = res.final_expected_values[0]
     assert res.final_state.shape == (2, 2)
     assert np.isclose(expect_z, -0.8, rtol=1e-1)
@@ -160,9 +163,9 @@ def test_exponential_gates(method):
     backend = QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1), digital_simulation_method=method)
     circuit = Circuit(nqubits=1)
     circuit.add(X(0).exponential())
-    result = backend.execute(Sampling(circuit=circuit, nshots=100))
-    assert isinstance(result, SamplingResult)
-    samples = result.samples
+    result = backend.execute(DigitalPropagation(circuit=circuit), readout=[SamplingReadout(nshots=100)])
+    assert isinstance(result, FunctionalResult)
+    samples = result.final_samples
     assert "1" in samples
     assert "0" in samples
 
@@ -189,9 +192,10 @@ def test_matrix_free_circuit_versus_normal():
         execution_config=ExecutionConfig(seed=42, num_threads=1),
         digital_simulation_method=DigitalMethod.statevector(matrix_free=True),
     )
-    res_statevector = backend_statevector.execute(Sampling(circuit=c, nshots=1000))
-    res_matrix_free = backend_matrix_free.execute(Sampling(circuit=c, nshots=1000))
-    assert _counts_similar(res_statevector.samples, res_matrix_free.samples, total_shots=1000, tol=0.1)
+    readout = [SamplingReadout(nshots=1000)]
+    res_statevector = backend_statevector.execute(DigitalPropagation(circuit=c), readout=readout)
+    res_matrix_free = backend_matrix_free.execute(DigitalPropagation(circuit=c), readout=readout)
+    assert _counts_similar(res_statevector.final_samples, res_matrix_free.final_samples, total_shots=1000, tol=0.1)
 
 
 @pytest.mark.parametrize("matrix_free", [True, False])
@@ -208,9 +212,10 @@ def test_combine_single_qubit_gates(matrix_free):
         execution_config=ExecutionConfig(seed=42, num_threads=1),
         digital_simulation_method=DigitalMethod.statevector(matrix_free=matrix_free, combine_single_qubit_gates=False),
     )
-    res_combined = backend_combined.execute(Sampling(circuit=c, nshots=1000))
-    res_uncombined = backend_uncombined.execute(Sampling(circuit=c, nshots=1000))
-    assert _counts_similar(res_combined.samples, res_uncombined.samples, total_shots=1000, tol=0.1)
+    readout = [SamplingReadout(nshots=1000)]
+    res_combined = backend_combined.execute(DigitalPropagation(circuit=c), readout=readout)
+    res_uncombined = backend_uncombined.execute(DigitalPropagation(circuit=c), readout=readout)
+    assert _counts_similar(res_combined.final_samples, res_uncombined.final_samples, total_shots=1000, tol=0.1)
 
 
 def test_matrix_free_time_evolution_versus_normal():
@@ -223,7 +228,7 @@ def test_matrix_free_time_evolution_versus_normal():
         coefficients={"h1": {(0, T): 1}},
     )
     psi0 = (ket(0) - ket(1)).unit()
-    obs = [pauli_y(0)]
+    readout = [ExpectationReadout(observables=[pauli_y(0)])]
     backend_normal = QiliSim(
         execution_config=ExecutionConfig(seed=42, num_threads=1), analog_simulation_method=AnalogMethod.integrator()
     )
@@ -231,6 +236,8 @@ def test_matrix_free_time_evolution_versus_normal():
         execution_config=ExecutionConfig(seed=42, num_threads=1),
         analog_simulation_method=AnalogMethod.integrator(matrix_free=True),
     )
-    res_normal = backend_normal.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs))
-    res_matrix_free = backend_matrix_free.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs))
+    res_normal = backend_normal.execute(AnalogEvolution(schedule=schedule, initial_state=psi0), readout=readout)
+    res_matrix_free = backend_matrix_free.execute(
+        AnalogEvolution(schedule=schedule, initial_state=psi0), readout=readout
+    )
     assert np.isclose(res_normal.final_expected_values[0], res_matrix_free.final_expected_values[0], rtol=0.01)

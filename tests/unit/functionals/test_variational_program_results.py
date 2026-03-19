@@ -15,9 +15,11 @@
 
 import numpy as np
 
-from qilisdk.functionals import VariationalProgramResult
-from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
+from qilisdk.core.qtensor import QTensor
+from qilisdk.functionals import FunctionalResult, VariationalProgramResult
 from qilisdk.optimizers.optimizer_result import OptimizerResult
+from qilisdk.readout import StateTomographyReadout
+from qilisdk.readout.readout_result import StateTomographyReadoutResult
 
 
 def test_variational_program_results_initialization():
@@ -25,12 +27,11 @@ def test_variational_program_results_initialization():
         optimal_cost=1.5,
         optimal_parameters=[0.1, 0.2, 0.3],
     )
-    result = TimeEvolutionResult(
-        final_expected_values=None,
-        expected_values=None,
-        final_state=None,
-        intermediate_states=None,
-    )
+    state = QTensor(np.array([[1], [0]]))
+    readout = StateTomographyReadout()
+    readout_result = StateTomographyReadoutResult(readout=readout, final_state=state)
+    result = FunctionalResult(readout_results=[readout_result])
+
     var_res = VariationalProgramResult(optimizer_result, result)
 
     assert np.isclose(var_res.optimal_cost, 1.5)

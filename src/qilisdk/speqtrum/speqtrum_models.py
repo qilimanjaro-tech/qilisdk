@@ -20,6 +20,7 @@ from typing import Any, Callable, Generic, TypeVar, cast, overload
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_serializer, field_validator
 
+from qilisdk.core.result import Result
 from qilisdk.experiments import (
     RabiExperiment,
     RabiExperimentResult,
@@ -31,14 +32,13 @@ from qilisdk.experiments import (
     TwoTonesExperimentResult,
 )
 from qilisdk.functionals import (
-    Sampling,
-    SamplingResult,
-    TimeEvolution,
-    TimeEvolutionResult,
+    AnalogEvolution,
+    DigitalPropagation,
+    FunctionalResult,
     VariationalProgram,
     VariationalProgramResult,
 )
-from qilisdk.functionals.functional_result import FunctionalResult
+from qilisdk.readout import ReadoutMethod  # noqa: TC001
 from qilisdk.utils.serialization import deserialize, serialize
 
 
@@ -94,8 +94,8 @@ class Device(SpeQtrumModel):
 
 
 class ExecuteType(str, Enum):
-    SAMPLING = "sampling"
-    TIME_EVOLUTION = "time_evolution"
+    DIGITAL_PROPAGATION = "digital_propagation"
+    ANALOG_EVOLUTION = "analog_evolution"
     VARIATIONAL_PROGRAM = "variational_program"
     RABI_EXPERIMENT = "rabi_experiment"
     T1_EXPERIMENT = "t1_experiment"
@@ -103,31 +103,33 @@ class ExecuteType(str, Enum):
     TWO_TONES_EXPERIMENT = "two_tones_experiment"
 
 
-class SamplingPayload(SpeQtrumModel):
-    sampling: Sampling = Field(...)
+class DigitalPropagationPayload(SpeQtrumModel):
+    digital_propagation: DigitalPropagation = Field(...)
+    readout: list[ReadoutMethod]
 
-    @field_serializer("sampling")
-    def _serialize_sampling(self, sampling: Sampling, _info):
-        return serialize(sampling)
+    @field_serializer("digital_propagation")
+    def _serialize_sampling(self, digital_propagation: DigitalPropagation, _info):
+        return serialize(digital_propagation)
 
-    @field_validator("sampling", mode="before")
+    @field_validator("digital_propagation", mode="before")
     def _load_sampling(cls, v):
         if isinstance(v, str):
-            return deserialize(v, Sampling)
+            return deserialize(v, DigitalPropagation)
         return v
 
 
-class TimeEvolutionPayload(SpeQtrumModel):
-    time_evolution: TimeEvolution = Field(...)
+class AnalogEvolutionPayload(SpeQtrumModel):
+    analog_evolution: AnalogEvolution = Field(...)
+    readout: list[ReadoutMethod]
 
-    @field_serializer("time_evolution")
-    def _serialize_time_evolution(self, time_evolution: TimeEvolution, _info):
-        return serialize(time_evolution)
+    @field_serializer("analog_evolution")
+    def _serialize_time_evolution(self, analog_evolution: AnalogEvolution, _info):
+        return serialize(analog_evolution)
 
-    @field_validator("time_evolution", mode="before")
+    @field_validator("analog_evolution", mode="before")
     def _load_time_evolution(cls, v):
         if isinstance(v, str):
-            return deserialize(v, TimeEvolution)
+            return deserialize(v, AnalogEvolution)
         return v
 
 
@@ -203,8 +205,8 @@ class TwoTonesExperimentPayload(SpeQtrumModel):
 
 class ExecutePayload(SpeQtrumModel):
     type: ExecuteType = Field(...)
-    sampling_payload: SamplingPayload | None = None
-    time_evolution_payload: TimeEvolutionPayload | None = None
+    digital_propagation_payload: DigitalPropagationPayload | None = None
+    analog_evolution_payload: AnalogEvolutionPayload | None = None
     variational_program_payload: VariationalProgramPayload | None = None
     rabi_experiment_payload: RabiExperimentPayload | None = None
     t1_experiment_payload: T1ExperimentPayload | None = None
@@ -214,32 +216,21 @@ class ExecutePayload(SpeQtrumModel):
 
 class ExecuteResult(SpeQtrumModel):
     type: ExecuteType = Field(...)
-    sampling_result: SamplingResult | None = None
-    time_evolution_result: TimeEvolutionResult | None = None
+    functional_result: FunctionalResult | None = None
     variational_program_result: VariationalProgramResult | None = None
     rabi_experiment_result: RabiExperimentResult | None = None
     t1_experiment_result: T1ExperimentResult | None = None
     t2_experiment_result: T2ExperimentResult | None = None
     two_tones_experiment_result: TwoTonesExperimentResult | None = None
 
-    @field_serializer("sampling_result")
-    def _serialize_sampling_result(self, sampling_result: SamplingResult, _info):
-        return serialize(sampling_result) if sampling_result is not None else None
+    @field_serializer("functional_result")
+    def _serialize_sampling_result(self, functional_result: FunctionalResult, _info):
+        return serialize(functional_result) if functional_result is not None else None
 
-    @field_validator("sampling_result", mode="before")
+    @field_validator("functional_result", mode="before")
     def _load_sampling_result(cls, v):
         if isinstance(v, str) and v.startswith("!"):
-            return deserialize(v, SamplingResult)
-        return v
-
-    @field_serializer("time_evolution_result")
-    def _serialize_time_evolution_result(self, time_evolution_result: TimeEvolutionResult, _info):
-        return serialize(time_evolution_result) if time_evolution_result is not None else None
-
-    @field_validator("time_evolution_result", mode="before")
-    def _load_time_evolution_result(cls, v):
-        if isinstance(v, str) and v.startswith("!"):
-            return deserialize(v, TimeEvolutionResult)
+            return deserialize(v, FunctionalResult)
         return v
 
     @field_serializer("variational_program_result")
@@ -293,7 +284,7 @@ class ExecuteResult(SpeQtrumModel):
         return v
 
 
-TFunctionalResult_co = TypeVar("TFunctionalResult_co", bound=FunctionalResult, covariant=True)
+TFunctionalResult_co = TypeVar("TFunctionalResult_co", bound=Result, covariant=True)
 TVariationalInnerResult = TypeVar("TVariationalInnerResult", bound=FunctionalResult)
 
 
@@ -301,16 +292,10 @@ ResultExtractor = Callable[[ExecuteResult], TFunctionalResult_co]
 
 
 # these helpers live outside the models so they can be referenced by default values
-def _require_sampling_result(result: ExecuteResult) -> SamplingResult:
-    if result.sampling_result is None:
-        raise RuntimeError("SpeQtrum did not return a sampling_result for a sampling execution.")
-    return result.sampling_result
-
-
-def _require_time_evolution_result(result: ExecuteResult) -> TimeEvolutionResult:
-    if result.time_evolution_result is None:
-        raise RuntimeError("SpeQtrum did not return a time_evolution_result for a time evolution execution.")
-    return result.time_evolution_result
+def _require_functional_result(result: ExecuteResult) -> FunctionalResult:
+    if result.functional_result is None:
+        raise RuntimeError("SpeQtrum did not return a functional_result for the execution.")
+    return result.functional_result
 
 
 def _require_variational_program_result(result: ExecuteResult) -> VariationalProgramResult:
@@ -370,12 +355,8 @@ class JobHandle(SpeQtrumModel, Generic[TFunctionalResult_co]):
     extractor: ResultExtractor[TFunctionalResult_co] = Field(repr=False, exclude=True)
 
     @classmethod
-    def sampling(cls: type[JobHandle[SamplingResult]], job_id: int) -> JobHandle[SamplingResult]:
-        return cls(id=job_id, execute_type=ExecuteType.SAMPLING, extractor=_require_sampling_result)
-
-    @classmethod
-    def time_evolution(cls: type[JobHandle[TimeEvolutionResult]], job_id: int) -> JobHandle[TimeEvolutionResult]:
-        return cls(id=job_id, execute_type=ExecuteType.TIME_EVOLUTION, extractor=_require_time_evolution_result)
+    def functional(cls: type[JobHandle[FunctionalResult]], job_id: int) -> JobHandle[FunctionalResult]:
+        return cls(id=job_id, execute_type=ExecuteType.DIGITAL_PROPAGATION, extractor=_require_functional_result)
 
     @overload
     @classmethod

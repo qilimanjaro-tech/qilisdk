@@ -13,7 +13,6 @@
 # limitations under the License.
 from __future__ import annotations
 
-from collections import Counter
 from typing import TYPE_CHECKING, Callable, Type, TypeVar
 
 import numpy as np
@@ -30,16 +29,12 @@ from qilisdk.digital import RX, RY, RZ, SWAP, U1, U2, U3, Circuit, H, I, M, S, T
 from qilisdk.digital.circuit_transpiler_passes import DecomposeMultiControlledGatesPass
 from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import Adjoint, BasicGate, Controlled
-from qilisdk.functionals import AnalogEvolution, DigitalPropagation
 from qilisdk.functionals.functional_result import FunctionalResult
-from qilisdk.functionals.sampling_result import SamplingResult
-from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
-from qilisdk.readout import ReadoutMethod
 from qilisdk.settings import get_settings
 
 if TYPE_CHECKING:
-    from qilisdk.functionals import TimeEvolution
-    from qilisdk.functionals.sampling import Sampling
+    from qilisdk.functionals import AnalogEvolution, DigitalPropagation
+    from qilisdk.readout import ReadoutMethod
 
 
 TBasicGate = TypeVar("TBasicGate", bound=BasicGate)
@@ -145,7 +140,7 @@ class QutipBackend(Backend):
         final_state = QTensor(sum(res.get_final_states()).unit()[:])
 
         logger.success("Sampling finished; ")
-        if len(measurements) != functional.circuit.nqubits:
+        if len(measurements) > 0 and len(measurements) != functional.circuit.nqubits:
             return FunctionalResult(
                 readout_results=QutipBackend._construct_results_list(
                     final_state=final_state.ptrace(measurements), readout=readout

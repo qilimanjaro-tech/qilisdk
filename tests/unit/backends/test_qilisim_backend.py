@@ -19,15 +19,17 @@ import pytest
 from pydantic import ValidationError
 
 import qilisdk
-from qilisdk.analog import Hamiltonian, PauliZ, Schedule
+from qilisdk.analog import Hamiltonian, Schedule
 from qilisdk.analog.hamiltonian import X as pauli_x
 from qilisdk.analog.hamiltonian import Z as pauli_z
 from qilisdk.backends.backend_config import AnalogMethod, DigitalMethod, ExecutionConfig, MonteCarloConfig
 from qilisdk.backends.qilisim import QiliSim
 from qilisdk.core import ket
-from qilisdk.functionals import QuantumReservoir, ReservoirLayer, Sampling, TimeEvolution
-from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
+from qilisdk.functionals import AnalogEvolution, DigitalPropagation, QuantumReservoir, ReservoirLayer
+from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.noise import Dephasing, NoiseModel
+from qilisdk.readout import ExpectationReadout, SamplingReadout, StateTomographyReadout
+from qilisdk.readout.readout_result import StateTomographyReadoutResult
 
 
 def test_qilisim_init():
@@ -99,30 +101,31 @@ def test_qilisim_invalid_config_types():
 class QiliSimMock:
     def __init__(self, *args, **kwargs): ...
 
-    def execute_sampling(self, *args, **kwargs):
+    def execute_digital_propagation(self, *args, **kwargs):
         return "mocked_sampling_result"
 
-    def execute_time_evolution(self, *args, **kwargs):
+    def execute_analog_evolution(self, *args, **kwargs):
         return "mocked_time_evolution_result"
 
 
 def test_qilisim_sampling_dummy(monkeypatch):
     monkeypatch.setattr(qilisdk.backends.qilisim, "QiliSimCpp", QiliSimMock)
     circuit = MagicMock()
-    sampling = Sampling(circuit)
+    digital_propagation = DigitalPropagation(circuit)
     backend = QiliSim()
-    assert backend.execute(sampling) == "mocked_sampling_result"
+    assert backend.execute(digital_propagation, readout=[SamplingReadout(nshots=100)]) == "mocked_sampling_result"
 
 
 def test_qilisim_time_evolution_dummy(monkeypatch):
     monkeypatch.setattr(qilisdk.backends.qilisim, "QiliSimCpp", QiliSimMock)
-    hamiltonian = Hamiltonian({(PauliZ(0),): 1.0})
+    hamiltonian = pauli_z(0)
     schedule = Schedule(hamiltonians={"h": hamiltonian}, dt=0.1)
-    ob = PauliZ(0)
     initial_state = ket(0)
-    func = TimeEvolution(schedule=schedule, observables=[ob], initial_state=initial_state)
+    func = AnalogEvolution(schedule=schedule, initial_state=initial_state)
     backend = QiliSim()
-    assert backend.execute(func) == "mocked_time_evolution_result"
+    assert (
+        backend.execute(func, readout=[ExpectationReadout(observables=[pauli_z(0)])]) == "mocked_time_evolution_result"
+    )
 
 
 def test_time_dependent_hamiltonian_bad_observable():
@@ -142,8 +145,10 @@ def test_time_dependent_hamiltonian_bad_observable():
         3.5,  # invalid observable
     ]
 
-    with pytest.raises(ValueError, match=r"Observable type not recognized."):
-        backend.execute(TimeEvolution(schedule=schedule, initial_state=psi0, observables=obs))
+    with pytest.raises(ValidationError):
+        backend.execute(
+            AnalogEvolution(schedule=schedule, initial_state=psi0), readout=[ExpectationReadout(observables=obs)]
+        )
 
 
 def test_qilisim_dephasing_strength_changes_dynamics():
@@ -158,14 +163,16 @@ def test_qilisim_dephasing_strength_changes_dynamics():
     weak_noise.add(Dephasing(t_phi=1e6), qubits=[0])
     weak_backend = QiliSim(noise_model=weak_noise, execution_config=ExecutionConfig(seed=42, num_threads=1))
     weak_result = weak_backend.execute(
-        TimeEvolution(schedule=schedule, initial_state=initial_state, observables=[pauli_x(0)])
+        AnalogEvolution(schedule=schedule, initial_state=initial_state),
+        readout=[ExpectationReadout(observables=[pauli_x(0)])],
     )
 
     strong_noise = NoiseModel()
     strong_noise.add(Dephasing(t_phi=10), qubits=[0])
     strong_backend = QiliSim(noise_model=strong_noise, execution_config=ExecutionConfig(seed=42, num_threads=1))
     strong_result = strong_backend.execute(
-        TimeEvolution(schedule=schedule, initial_state=initial_state, observables=[pauli_x(0)])
+        AnalogEvolution(schedule=schedule, initial_state=initial_state),
+        readout=[ExpectationReadout(observables=[pauli_x(0)])],
     )
 
     weak_exp = float(np.real(weak_result.final_expected_values[0]))
@@ -181,16 +188,12 @@ def _build_quantum_reservoir_functional() -> QuantumReservoir:
     )
     reservoir_layer = ReservoirLayer(
         evolution_dynamics=schedule,
-        observables=[pauli_z(0)],
         qubits_to_reset=[0],
     )
     return QuantumReservoir(
         initial_state=ket(0),
         reservoir_layer=reservoir_layer,
         input_per_layer=[{}, {}],
-        store_final_state=True,
-        store_intermediate_states=True,
-        nshots=10,
     )
 
 
@@ -198,19 +201,27 @@ def test_execute_quantum_reservoir_qilisim(monkeypatch):
     backend = QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1))
     functional = _build_quantum_reservoir_functional()
     final_density = ket(0).to_density_matrix()
+
+    def _mock_execute_analog_evolution(self, f, readout):
+        readout_result = StateTomographyReadoutResult(readout=StateTomographyReadout(), final_state=final_density)
+        return FunctionalResult(readout_results=[readout_result])
+
     monkeypatch.setattr(
-        "qilisdk.backends.qilisim.QiliSim._execute_time_evolution",
-        lambda self, f: TimeEvolutionResult(final_state=final_density),
+        "qilisdk.backends.qilisim.QiliSim._execute_analog_evolution",
+        _mock_execute_analog_evolution,
     )
 
-    result = backend.execute(functional)
+    result = backend.execute(
+        functional, readout=[ExpectationReadout(observables=[pauli_z(0)]), StateTomographyReadout()]
+    )
 
     assert result.final_state is not None
     assert len(result.expected_values) == 2
-    assert len(result.intermediate_states) == 2
+    assert len(result.states) == 2
 
 
 def test_qilisim_repr():
     backend = QiliSim()
     repr_str = str(backend)
+    assert "QiliSim" in repr_str
     assert "QiliSim" in repr_str

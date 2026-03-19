@@ -17,8 +17,9 @@ import pytest
 from qilisdk.analog.hamiltonian import PauliZ, Z
 from qilisdk.core.qtensor import QTensor, ket, tensor_prod
 from qilisdk.cost_functions.observable_cost_function import ObservableCostFunction
-from qilisdk.functionals.sampling_result import SamplingResult
-from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
+from qilisdk.functionals.functional_result import FunctionalResult
+from qilisdk.readout import SamplingReadout, StateTomographyReadout
+from qilisdk.readout.readout_result import SamplingReadoutResult, StateTomographyReadoutResult
 
 
 def test_init_observable_cost_function():
@@ -40,51 +41,48 @@ def test_init_observable_cost_function():
     assert isinstance(ocf.observable, QTensor)
 
 
-def test_compute_cost_time_evolution():
+def test_compute_cost_state_tomography():
     n = 2
 
     H = sum(Z(i) for i in range(n))
 
     ocf = ObservableCostFunction(H)
 
-    te_results = TimeEvolutionResult(
-        final_expected_values=np.array([[-0.9, 0]]),
-        expected_values=None,
-        final_state=tensor_prod([ket(1), ket(1)]),
-        intermediate_states=None,
-    )
-    cost = ocf.compute_cost(te_results)
+    # With ket state
+    readout = StateTomographyReadout()
+    readout_result = StateTomographyReadoutResult(readout=readout, final_state=tensor_prod([ket(1), ket(1)]))
+    result = FunctionalResult(readout_results=[readout_result])
+    cost = ocf.compute_cost(result)
 
     assert cost == -2
 
-    te_results = TimeEvolutionResult(
-        final_expected_values=np.array([[-0.9, 0]]),
-        expected_values=None,
-        final_state=tensor_prod([ket(1), ket(1)]).to_density_matrix(),
-        intermediate_states=None,
+    # With density matrix state
+    readout_result = StateTomographyReadoutResult(
+        readout=readout, final_state=tensor_prod([ket(1), ket(1)]).to_density_matrix()
     )
-    cost = ocf.compute_cost(te_results)
+    result = FunctionalResult(readout_results=[readout_result])
+    cost = ocf.compute_cost(result)
 
     assert cost == -2
 
-    te_results = TimeEvolutionResult(
-        final_expected_values=np.array([[-0.9, 0]]),
-        expected_values=None,
-        final_state=None,
-        intermediate_states=None,
-    )
+    # Without state or samples -- should raise
+    with pytest.raises(
+        ValueError,
+        match=r"ObservableCostFunction requires either a StateTomography or Sampling readout in the results.",
+    ):
+        from qilisdk.readout import ExpectationReadout
+        from qilisdk.readout.readout_result import ExpectationReadoutResult
+
+        exp_readout = ExpectationReadout(observables=[H])
+        exp_result = ExpectationReadoutResult(readout=exp_readout, expected_values=[0.0])
+        no_state_result = FunctionalResult(readout_results=[exp_result])
+        _ = ocf.compute_cost(no_state_result)
 
     with pytest.raises(
         ValueError,
-        match=r"can't compute cost using Observables from time evolution results when the state is not provided.",
+        match=r"Observable needs to be of type QTensor, Hamiltonian, or PauliOperator but <class 'qilisdk.functionals.functional_result.FunctionalResult'> was provided",
     ):
-        _ = ocf.compute_cost(te_results)
-
-    with pytest.raises(
-        ValueError,
-        match=r"Observable needs to be of type QTensor, Hamiltonian, or PauliOperator but <class 'qilisdk.functionals.time_evolution_result.TimeEvolutionResult'> was provided",
-    ):
-        ObservableCostFunction(te_results)
+        ObservableCostFunction(result)
 
 
 def test_compute_cost_sampling():
@@ -94,35 +92,36 @@ def test_compute_cost_sampling():
 
     ocf = ObservableCostFunction(H)
 
-    te_results = SamplingResult(nshots=100, samples={"11": 100})
-    cost = ocf.compute_cost(te_results)
+    readout = SamplingReadout(nshots=100)
+    readout_result = SamplingReadoutResult(readout=readout, samples={"11": 100})
+    result = FunctionalResult(readout_results=[readout_result])
+    cost = ocf.compute_cost(result)
 
     assert cost == -2
 
-    te_results = SamplingResult(nshots=100, samples={"0": 100})
+    readout_result = SamplingReadoutResult(readout=SamplingReadout(nshots=100), samples={"0": 100})
+    result = FunctionalResult(readout_results=[readout_result])
 
     with pytest.raises(ValueError, match=r"The samples provided have 1 qubits but the observable has 2 qubits"):
-        _ = ocf.compute_cost(te_results)
+        _ = ocf.compute_cost(result)
 
-    te_results = SamplingResult(nshots=100, samples={"11": 50, "00": 50})
-    cost = ocf.compute_cost(te_results)
+    readout_result = SamplingReadoutResult(readout=SamplingReadout(nshots=100), samples={"11": 50, "00": 50})
+    result = FunctionalResult(readout_results=[readout_result])
+    cost = ocf.compute_cost(result)
 
     assert cost == 0
 
 
-def test_imag_time_evolution_result():
+def test_imag_state_tomography_result():
     n = 2
     ob = QTensor(1j * np.eye(2**n))
 
     ocf = ObservableCostFunction(ob)
 
-    te_results = TimeEvolutionResult(
-        final_expected_values=np.array([[-0.9, 0]]),
-        expected_values=None,
-        final_state=tensor_prod([ket(1), ket(1)]),
-        intermediate_states=None,
-    )
-    cost = ocf.compute_cost(te_results)
+    readout = StateTomographyReadout()
+    readout_result = StateTomographyReadoutResult(readout=readout, final_state=tensor_prod([ket(1), ket(1)]))
+    result = FunctionalResult(readout_results=[readout_result])
+    cost = ocf.compute_cost(result)
 
     assert cost == 1j
 
@@ -133,8 +132,10 @@ def test_imag_sampling_result():
 
     ocf = ObservableCostFunction(ob)
 
-    te_results = SamplingResult(nshots=100, samples={"11": 100})
-    cost = ocf.compute_cost(te_results)
+    readout = SamplingReadout(nshots=100)
+    readout_result = SamplingReadoutResult(readout=readout, samples={"11": 100})
+    result = FunctionalResult(readout_results=[readout_result])
+    cost = ocf.compute_cost(result)
 
     assert cost == 1j
 

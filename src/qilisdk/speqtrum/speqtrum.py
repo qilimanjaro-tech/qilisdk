@@ -36,19 +36,20 @@ from qilisdk.experiments import (
     TwoTonesExperimentResult,
 )
 from qilisdk.functionals import (
-    Sampling,
-    SamplingResult,
-    TimeEvolution,
-    TimeEvolutionResult,
+    AnalogEvolution,
+    DigitalPropagation,
+    FunctionalResult,
     VariationalProgram,
     VariationalProgramResult,
 )
-from qilisdk.functionals.functional_result import FunctionalResult
+from qilisdk.readout import ReadoutMethod
 from qilisdk.settings import get_settings
 
 from .keyring import delete_credentials, load_credentials, store_credentials
 from .speqtrum_models import (
+    AnalogEvolutionPayload,
     Device,
+    DigitalPropagationPayload,
     ExecutePayload,
     ExecuteType,
     JobDetail,
@@ -58,10 +59,8 @@ from .speqtrum_models import (
     JobStatus,
     JobType,
     RabiExperimentPayload,
-    SamplingPayload,
     T1ExperimentPayload,
     T2ExperimentPayload,
-    TimeEvolutionPayload,
     Token,
     TwoTonesExperimentPayload,
     TypedJobDetail,
@@ -69,7 +68,7 @@ from .speqtrum_models import (
 )
 
 if TYPE_CHECKING:
-    from qilisdk.functionals.functional import Functional, PrimitiveFunctional
+    from qilisdk.functionals.functional import Functional
 
 
 TFunctionalResult = TypeVar("TFunctionalResult", bound=FunctionalResult)
@@ -518,30 +517,31 @@ class SpeQtrum:
             time.sleep(poll_interval)
 
     @overload
-    def submit(self, functional: Sampling, device: str, job_name: str | None = None) -> JobHandle[SamplingResult]: ...
-
-    @overload
     def submit(
-        self, functional: TimeEvolution, device: str, job_name: str | None = None
-    ) -> JobHandle[TimeEvolutionResult]: ...
-
-    @overload
-    def submit(
-        self, functional: VariationalProgram[Sampling], device: str, job_name: str | None = None
-    ) -> JobHandle[VariationalProgramResult[SamplingResult]]: ...
-
-    @overload
-    def submit(
-        self, functional: VariationalProgram[TimeEvolution], device: str, job_name: str | None = None
-    ) -> JobHandle[VariationalProgramResult[TimeEvolutionResult]]: ...
+        self,
+        functional: DigitalPropagation,
+        device: str,
+        readout: ReadoutMethod | list[ReadoutMethod],
+        job_name: str | None = None,
+    ) -> JobHandle[FunctionalResult]: ...
 
     @overload
     def submit(
         self,
-        functional: VariationalProgram[PrimitiveFunctional[TFunctionalResult]],
+        functional: AnalogEvolution,
         device: str,
+        readout: ReadoutMethod | list[ReadoutMethod],
         job_name: str | None = None,
-    ) -> JobHandle[VariationalProgramResult[TFunctionalResult]]: ...
+    ) -> JobHandle[FunctionalResult]: ...
+
+    @overload
+    def submit(
+        self,
+        functional: VariationalProgram,
+        device: str,
+        readout: ReadoutMethod | list[ReadoutMethod],
+        job_name: str | None = None,
+    ) -> JobHandle[VariationalProgramResult]: ...
 
     @overload
     def submit(
@@ -553,57 +553,50 @@ class SpeQtrum:
         self, functional: T1Experiment, device: str, job_name: str | None = None
     ) -> JobHandle[T1ExperimentResult]: ...
 
-    def submit(self, functional: Functional, device: str, job_name: str | None = None) -> JobHandle[FunctionalResult]:
+    def submit(
+        self,
+        functional: Functional,
+        device: str,
+        readout: ReadoutMethod | list[ReadoutMethod] | None = None,
+        job_name: str | None = None,
+    ) -> JobHandle:
         """
         Submit a quantum functional for execution on the selected device.
 
-        The concrete subclass of
-        :class:`~qilisdk.functionals.functional.Functional` provided in
-        *functional* determines which private ``_execute_*`` routine is
-        invoked. Supported types are:
+        Supported types:
 
-        * :class:`~qilisdk.functionals.sampling.Sampling`
-        * :class:`~qilisdk.functionals.time_evolution.TimeEvolution`
+        * :class:`~qilisdk.functionals.digital_propagation.DigitalPropagation`
+        * :class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`
         * :class:`~qilisdk.functionals.variational_program.VariationalProgram`
-        * :class:`~qilisdk.speqtrum.experiments.experiment_functional.RabiExperiment`
-        * :class:`~qilisdk.speqtrum.experiments.experiment_functional.T1Experiment`
-
-        A backend device must be selected beforehand with
-        :py:meth:`set_device`.
+        * :class:`~qilisdk.experiments.experiment_functional.RabiExperiment`
+        * :class:`~qilisdk.experiments.experiment_functional.T1Experiment`
+        * :class:`~qilisdk.experiments.experiment_functional.T2Experiment`
+        * :class:`~qilisdk.experiments.experiment_functional.TwoTonesExperiment`
 
         Args:
-            functional: A fully configured functional instance (e.g.,
-                ``Sampling`` or ``TimeEvolution``) that defines the quantum
-                workload to be executed.
+            functional: A fully configured functional instance that defines the quantum workload.
             device: Device code returned by :py:meth:`list_devices`.
-            job_name (optional): The name of the job, this can help you identify different jobs easier. Default: None.
+            readout: Readout method(s) specifying how results should be measured.
+                Required for ``DigitalPropagation``, ``AnalogEvolution``, and ``VariationalProgram``.
+            job_name (optional): The name of the job. Default: None.
 
         Returns:
             JobHandle: A typed handle carrying the numeric job identifier and result type metadata.
 
         Raises:
             NotImplementedError: If *functional* is not of a supported type.
+            ValueError: If *readout* is required but not provided, or contains invalid methods.
         """
+        _readout = self._validate_readout(readout) if readout is not None else []
+
         if isinstance(functional, VariationalProgram):
-            inner = functional.functional
-            if isinstance(inner, Sampling):
-                return self._submit_variational_program(
-                    cast("VariationalProgram[Sampling]", functional), device, job_name
-                )
-            if isinstance(inner, TimeEvolution):
-                return self._submit_variational_program(
-                    cast("VariationalProgram[TimeEvolution]", functional), device, job_name
-                )
+            return self._submit_variational_program(functional, device, _readout, job_name)
 
-            # Fallback to untyped handle for custom primitives.
-            job_handle = self._submit_variational_program(cast("VariationalProgram[Any]", functional), device, job_name)
-            return cast("JobHandle[FunctionalResult]", job_handle)
+        if isinstance(functional, DigitalPropagation):
+            return self._submit_digital_propagation(functional, device, _readout, job_name)
 
-        if isinstance(functional, Sampling):
-            return self._submit_sampling(functional, device, job_name)
-
-        if isinstance(functional, TimeEvolution):
-            return self._submit_time_evolution(functional, device, job_name)
+        if isinstance(functional, AnalogEvolution):
+            return self._submit_analog_evolution(functional, device, _readout, job_name)
 
         if isinstance(functional, RabiExperiment):
             return self._submit_rabi(functional, device, job_name)
@@ -620,12 +613,23 @@ class SpeQtrum:
         logger.error("Unsupported functional type: {}", type(functional).__qualname__)
         raise NotImplementedError(f"{type(self).__qualname__} does not support {type(functional).__qualname__}")
 
-    def _submit_sampling(
-        self, sampling: Sampling, device: str, job_name: str | None = None
-    ) -> JobHandle[SamplingResult]:
+    @staticmethod
+    def _validate_readout(readout: ReadoutMethod | list[ReadoutMethod]) -> list[ReadoutMethod]:
+        _readout = [readout] if isinstance(readout, ReadoutMethod) else list(readout)
+        if any(not isinstance(ro, ReadoutMethod) for ro in _readout):
+            raise ValueError(
+                f"One of the readout methods provided is not a valid readout method.\nProvided: {_readout}"
+            )
+        if len({ro.__class__ for ro in _readout}) != len(_readout):
+            raise ValueError(f"Each readout method can only be passed once.\nProvided: {_readout}")
+        return _readout
+
+    def _submit_digital_propagation(
+        self, functional: DigitalPropagation, device: str, readout: list[ReadoutMethod], job_name: str | None = None
+    ) -> JobHandle[FunctionalResult]:
         payload = ExecutePayload(
-            type=ExecuteType.SAMPLING,
-            sampling_payload=SamplingPayload(sampling=sampling),
+            type=ExecuteType.DIGITAL_PROPAGATION,
+            digital_propagation_payload=DigitalPropagationPayload(digital_propagation=functional, readout=readout),
         )
         json = {
             "device_code": device,
@@ -635,12 +639,14 @@ class SpeQtrum:
         }
         if job_name:
             json["name"] = job_name
-        logger.debug("Executing Sampling on device {}", device)
+        logger.debug("Executing DigitalPropagation on device {}", device)
         with self._create_client() as client:
-            response = client.post("/execute", json=json, extensions=_request_extensions(context="Executing Sampling"))
+            response = client.post(
+                "/execute", json=json, extensions=_request_extensions(context="Executing DigitalPropagation")
+            )
         job = JobId(**response.json())
-        logger.info("Sampling job submitted: {}", job.id)
-        return JobHandle.sampling(job.id)
+        logger.info("DigitalPropagation job submitted: {}", job.id)
+        return JobHandle.functional(job.id)
 
     def _submit_rabi(
         self, rabi_experiment: RabiExperiment, device: str, job_name: str | None = None
@@ -746,12 +752,12 @@ class SpeQtrum:
         logger.info("Two-Tones experiment job submitted: {}", job.id)
         return JobHandle.two_tones_experiment(job.id)
 
-    def _submit_time_evolution(
-        self, time_evolution: TimeEvolution, device: str, job_name: str | None = None
-    ) -> JobHandle[TimeEvolutionResult]:
+    def _submit_analog_evolution(
+        self, functional: AnalogEvolution, device: str, readout: list[ReadoutMethod], job_name: str | None = None
+    ) -> JobHandle[FunctionalResult]:
         payload = ExecutePayload(
-            type=ExecuteType.TIME_EVOLUTION,
-            time_evolution_payload=TimeEvolutionPayload(time_evolution=time_evolution),
+            type=ExecuteType.ANALOG_EVOLUTION,
+            analog_evolution_payload=AnalogEvolutionPayload(analog_evolution=functional, readout=readout),
         )
         json = {
             "device_code": device,
@@ -761,34 +767,23 @@ class SpeQtrum:
         }
         if job_name:
             json["name"] = job_name
-        logger.debug("Executing time evolution on device {}", device)
+        logger.debug("Executing AnalogEvolution on device {}", device)
         with self._create_client() as client:
             response = client.post(
                 "/execute",
                 json=json,
-                extensions=_request_extensions(context="Executing time evolution"),
+                extensions=_request_extensions(context="Executing AnalogEvolution"),
             )
         job = JobId(**response.json())
-        logger.info("Time Evolution job submitted: {}", job.id)
-        return JobHandle.time_evolution(job.id)
-
-    @overload
-    def _submit_variational_program(
-        self, variational_program: VariationalProgram[Sampling], device: str, job_name: str | None = None
-    ) -> JobHandle[VariationalProgramResult[SamplingResult]]: ...
-
-    @overload
-    def _submit_variational_program(
-        self, variational_program: VariationalProgram[TimeEvolution], device: str, job_name: str | None = None
-    ) -> JobHandle[VariationalProgramResult[TimeEvolutionResult]]: ...
-
-    @overload
-    def _submit_variational_program(
-        self, variational_program: VariationalProgram[Any], device: str, job_name: str | None = None
-    ) -> JobHandle[VariationalProgramResult]: ...
+        logger.info("AnalogEvolution job submitted: {}", job.id)
+        return JobHandle.functional(job.id)
 
     def _submit_variational_program(
-        self, variational_program: VariationalProgram[Any], device: str, job_name: str | None = None
+        self,
+        variational_program: VariationalProgram,
+        device: str,
+        readout: list[ReadoutMethod],
+        job_name: str | None = None,
     ) -> JobHandle[VariationalProgramResult]:
         payload = ExecutePayload(
             type=ExecuteType.VARIATIONAL_PROGRAM,
@@ -811,11 +806,6 @@ class SpeQtrum:
             )
         job = JobId(**response.json())
         logger.info("Variational program job submitted: {}", job.id)
-        inner = variational_program.functional
-        if isinstance(inner, Sampling):
-            return JobHandle.variational_program(job.id, result_type=SamplingResult)
-        if isinstance(inner, TimeEvolution):
-            return JobHandle.variational_program(job.id, result_type=TimeEvolutionResult)
         return JobHandle.variational_program(job.id)
 
     def __repr__(self) -> str:

@@ -12,40 +12,42 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import pytest
-
 from qilisdk.core.model import Model, ObjectiveSense
 from qilisdk.core.variables import EQ, BinaryVariable
 from qilisdk.cost_functions.model_cost_function import ModelCostFunction
-from qilisdk.functionals.sampling_result import SamplingResult
+from qilisdk.functionals.functional_result import FunctionalResult
+from qilisdk.readout import SamplingReadout
+from qilisdk.readout.readout_result import SamplingReadoutResult
+
+
+def _make_sampling_result(nshots: int, samples: dict[str, int]) -> FunctionalResult:
+    """Helper to create a FunctionalResult with sampling readout results."""
+    readout = SamplingReadout(nshots=nshots)
+    readout_result = SamplingReadoutResult(readout=readout, samples=samples)
+    return FunctionalResult(readout_results=[readout_result])
 
 
 def test_sample_results_initialization():
-    with pytest.raises(ValueError, match=r"The samples dictionary is empty."):
-        SamplingResult(1, {})
-    with pytest.raises(ValueError, match=r"Not all bitstring keys have the same length."):
-        SamplingResult(1, {"01": 2, "000": 1})
-
-    sr = SamplingResult(1, {"00": 1})
-    assert sr.nqubits == 2
-    assert sr.nshots == 1
-    assert sr.probabilities == {"00": 1}
-    assert sr.samples == {"00": 1}
-    assert sr.get_probability("00") == 1
-    assert sr.get_probabilities() == [("00", 1)]
+    sr = _make_sampling_result(1, {"00": 1})
+    assert sr.final_probabilities == {"00": 1.0}
+    assert sr.final_samples == {"00": 1}
 
 
 def test_sample_results_probabilities():
-    sr = SamplingResult(100, {"000": 10, "010": 20, "101": 40, "001": 30})
-    assert sr.get_probabilities() == [("101", 0.4), ("001", 0.3), ("010", 0.2), ("000", 0.1)]
-    assert sr.get_probabilities(2) == [("101", 0.4), ("001", 0.3)]
+    sr = _make_sampling_result(100, {"000": 10, "010": 20, "101": 40, "001": 30})
+    probs = sr.final_probabilities
+    assert probs["101"] == 0.4
+    assert probs["001"] == 0.3
+    assert probs["010"] == 0.2
+    assert probs["000"] == 0.1
 
 
 def test_sample_results_compute_cost():
-    sr = SamplingResult(100, {"000": 10, "010": 20, "101": 40, "001": 30})
+    sr = _make_sampling_result(100, {"000": 10, "010": 20, "101": 40, "001": 30})
 
     model = Model("test")
-    b = [BinaryVariable(f"b({i})") for i in range(sr.nqubits)]
+    nqubits = 3
+    b = [BinaryVariable(f"b({i})") for i in range(nqubits)]
     model.set_objective(sum(b), sense=ObjectiveSense.MAXIMIZE)
     model.add_constraint("second_b_bad", EQ(b[1], 0), lagrange_multiplier=10)
     mcf = ModelCostFunction(model)
@@ -54,6 +56,6 @@ def test_sample_results_compute_cost():
 
 
 def test_sample_results_printable_representation():
-    sr = SamplingResult(10, {"00": 3, "01": 2, "10": 4, "11": 1})
-    expected_output = "SamplingResult(\n  nshots=10,\n  samples={'00': 3, '01': 2, '10': 4, '11': 1}\n)"
-    assert str(sr) == expected_output
+    sr = _make_sampling_result(10, {"00": 3, "01": 2, "10": 4, "11": 1})
+    output = str(sr)
+    assert "Functional Results" in output
