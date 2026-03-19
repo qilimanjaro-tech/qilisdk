@@ -270,7 +270,7 @@ py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, co
 
     // Construct the result object
     int n_qubits = functional.attr("schedule").attr("nqubits").cast<int>();
-    std::vector<bool> qubits_to_measure(n_qubits, false);
+    std::vector<bool> qubits_to_measure(n_qubits, true);
     py::object result = construct_result_object(rho_t, readout, noise_model_cpp, n_qubits, config, qubits_to_measure);
     
     bool store_intermediate_results = functional.attr("store_intermediate_results").cast<bool>();
