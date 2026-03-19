@@ -297,7 +297,7 @@ class BasicGate(Gate):
         return self._target_qubits
 
     def _invalidate_matrix(self) -> None:
-        self.__dict__.pop('matrix', None)
+        self.__dict__.pop("matrix", None)
 
     def set_parameters(self, parameters: dict[str, float]) -> None:
         super().set_parameters(parameters=parameters)
@@ -406,7 +406,7 @@ class Modified(Gate, Generic[TBasicGate]):
         return self._basic_gate.get_parameter_values(where=where)
 
     def _invalidate_matrix(self) -> None:
-        self.__dict__.pop('matrix', None)
+        self.__dict__.pop("matrix", None)
 
     def set_parameters(self, parameters: dict[str, float]) -> None:
         self._basic_gate.set_parameters(parameters=parameters)
