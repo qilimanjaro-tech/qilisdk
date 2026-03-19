@@ -176,6 +176,9 @@ class ExpectationReadout(ReadoutMethod):
         self.qtensor_observables = [(o if isinstance(o, QTensor) else o.to_qtensor()) for o in self.observables]
         return self
 
+    def scale_observables(self, nqubits: int) -> None:
+        self.qtensor_observables = [o.scale_qtensor(nqubits) for o in self.qtensor_observables]
+
 
 class StateTomographyReadout(ReadoutMethod):
     """State-tomography readout configuration.

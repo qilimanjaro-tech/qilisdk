@@ -13,6 +13,7 @@
 # limitations under the License.
 from __future__ import annotations
 
+from copy import copy
 from typing import TYPE_CHECKING, Literal
 
 import numpy as np
@@ -588,6 +589,15 @@ class QTensor:
         # one nonzero at (row=n, col=0), value=1.0
         mat = csr_matrix(([1.0], ([n], [0])), shape=(N, 1))
         return QTensor(mat)
+
+    def scale_qtensor(self, nqubits: int) -> QTensor:
+        if self.nqubits == nqubits:
+            return copy(self)
+        if self.nqubits > nqubits:
+            raise ValueError("Can't scale QTensor down, only can scale it up.")
+        added_qubits = nqubits - self.nqubits
+        identity = self.identity(added_qubits)
+        return tensor_prod([self, identity])
 
     def reset_qubits(self, qubits: set[int]) -> QTensor:
         """
