@@ -15,6 +15,7 @@
 
 #include <iomanip>
 #include <random>
+#include <cstdint>
 #include <sstream>
 
 #include "qilisim.h"
@@ -31,7 +32,7 @@
 #include "utils/sample.h"
 
 
-py::object construct_result_object(DenseMatrix& state_dense, const py::object& readout, NoiseModelCpp& noise_model_cpp, int n_qubits, const QiliSimConfig& config, const std::vector<bool>& qubits_to_measure) {
+py::object construct_result_object(const DenseMatrix& state_dense, const py::object& readout, NoiseModelCpp& noise_model_cpp, int n_qubits, const QiliSimConfig& config, const std::vector<bool>& qubits_to_measure) {
     py::list results;
     py::array final_state_numpy = to_numpy(state_dense);
     
@@ -288,5 +289,206 @@ py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, co
     }
     return FunctionalResult(
         "readout_results"_a = result
+    );
+}
+
+
+// The public execute_sampling
+py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, const py::object& readout, const py::object& noise_model, const py::dict& solver_params) {
+    /*
+    Execute a sampling functional using a simple statevector simulator.
+    Note that this is just the wrapper mapping the Python objects to C++ objects.
+    For the actual implementation, see the method execute_sampling_internal.
+
+    Args:
+        functional (py::object): The Sampling functional to execute.
+        readout (py::object): A list with readout
+        noise_model (py::object): The noise model to apply during simulation.
+        initial_state (py::object): The initial state as a QTensor or none.
+        solver_params (py::dict): Solver parameters, including 'max_cache_size'.
+
+    Returns:
+        SamplingResult: A result object containing the measurement samples and computed probabilities.
+
+    Raises:
+        py::value_error: If functional is not a Sampling instance.
+        py::value_error: If nqubits is non-positive.
+        py::value_error: If shots is non-positive.
+    */
+
+    // Ensure that the functional is of the correct type
+    if (!py::isinstance(functional, QuantumReservoir)) {
+        throw py::value_error("The provided functional is not a QuantumReservoir instance");
+    }
+
+    // Get info from the functional
+    int n_qubits = functional.attr("nqubits").cast<int>();
+
+    // Get parameters
+    QiliSimConfig config = parse_solver_params(solver_params);
+
+    // Sanity checks
+    if (n_qubits <= 0) {
+        throw py::value_error("nqubits must be positive.");
+    }
+
+    // Parse the Python objects into C++ objects
+    std::vector<bool> qubits_to_measure(n_qubits, true);
+    NoiseModelCpp noise_model_cpp = parse_noise_model(noise_model, n_qubits, config.get_atol());
+    
+    py::object initial_state = functional.attr("initial_state");
+    SparseMatrix rho_0 = parse_initial_state(initial_state, config.get_atol());
+    // Ensure state is always a density matrix (matching Python's to_density_matrix())
+    DenseMatrix state;
+    if (rho_0.cols() == 1) {
+        DenseMatrix ket = DenseMatrix(rho_0);
+        state = ket * ket.adjoint();
+    } else {
+        state = DenseMatrix(rho_0);
+    }
+
+    py::list inter_results;
+    for (py::handle input_handler : functional.attr("input_per_layer")) {
+        py::object input_dict = py::reinterpret_borrow<py::object>(input_handler);
+        functional.attr("reservoir_layer").attr("set_parameters")(input_dict);
+        for (py::handle step_handler : functional.attr("reservoir_layer")) {
+            py::object step = py::reinterpret_borrow<py::object>(step_handler);
+
+            if (py::isinstance(step, Circuit)) {
+                std::vector<Gate> gates = parse_gates(step, config.get_atol(), noise_model);
+                // If we have any exponential gates, we need to force renormalization
+                for (const auto& gate : gates) {
+                    if (!gate.is_normalized()) {
+                        config.set_normalize_after_gate(true);
+                        break;
+                    }
+                }
+
+                // Pass everything to the internal implementation
+                std::map<std::string, int> counts;
+                if (config.get_sampling_method() == "statevector_matrix_free") {
+                    sampling_matrix_free(gates, n_qubits, state.sparseView(), noise_model_cpp, state, config);
+                } else {
+                    sampling(gates, n_qubits, state.sparseView(), noise_model_cpp, state, config);
+                }
+            }
+            else if (py::isinstance(step, Schedule)) {
+
+                // Check if we need to perturb the parameters
+                if (!noise_model.is_none()) {
+                    py::dict schedule_parameters = step.attr("get_parameters")();
+                    py::dict global_noise_map = noise_model.attr("global_perturbations");
+                    for (auto item : global_noise_map) {
+                        py::handle param_name = item.first;
+                        if (schedule_parameters.contains(param_name)) {
+                            for (auto perturbation : global_noise_map[param_name]) {
+                                double original_value = schedule_parameters[param_name].cast<double>();
+                                double new_value = perturbation.attr("perturb")(original_value).cast<double>();
+                                schedule_parameters[param_name] = new_value;
+                            }
+                        }
+                    }
+                    step.attr("set_parameters")(schedule_parameters);
+                    schedule_parameters = step.attr("get_parameters")();
+                }
+
+                py::object hamiltonians_full = step.attr("hamiltonians");
+                py::list hamiltonians_keys = hamiltonians_full.attr("keys")();
+                py::list hamiltonians_values = hamiltonians_full.attr("values")();
+                py::object steps = step.attr("tlist");
+                
+                std::vector<std::vector<double>> parameters_list = parse_coefficients(step, hamiltonians_keys, steps);
+                std::vector<double> step_list = parse_time_steps(steps);
+
+                // Depending on the method, call the internal implementation
+                std::vector<DenseMatrix> intermediate_rhos;
+                if (config.get_time_evolution_method() == "integrate_matrix_free") {
+                    // Parse the Hamiltonians
+                    std::vector<MatrixFreeHamiltonian> hamiltonians = parse_hamiltonians_matrix_free(hamiltonians_values);
+                    if (hamiltonians.size() != parameters_list.size()) {
+                        throw py::value_error("Number of Hamiltonians does not match number of parameter lists");
+                    }
+                    for (size_t h_ind = 0; h_ind < hamiltonians.size(); ++h_ind) {
+                        if (parameters_list[h_ind].size() != step_list.size()) {
+                            throw py::value_error("Number of parameters for Hamiltonian " + std::to_string(h_ind) + " does not match number of time steps");
+                        }
+                    }
+
+                    // Call the implementation
+                    time_evolution_matrix_free(state.sparseView(), hamiltonians, parameters_list, step_list, noise_model_cpp, config, state, intermediate_rhos);
+
+                } else {
+                    // Parse the Hamiltonians
+                    std::vector<SparseMatrix> hamiltonians = parse_hamiltonians(hamiltonians_values, config.get_atol());
+                    if (hamiltonians.size() != parameters_list.size()) {
+                        throw py::value_error("Number of Hamiltonians does not match number of parameter lists");
+                    }
+                    for (size_t h_ind = 0; h_ind < hamiltonians.size(); ++h_ind) {
+                        if (parameters_list[h_ind].size() != step_list.size()) {
+                            throw py::value_error("Number of parameters for Hamiltonian " + std::to_string(h_ind) + " does not match number of time steps");
+                        }
+                    }
+
+                    // Call the implementation
+                    time_evolution(state.sparseView(), hamiltonians, parameters_list, step_list, noise_model_cpp,  config, state, intermediate_rhos);
+                }
+            }
+        }
+    // Ensure state is a density matrix after each layer (matching Python's to_density_matrix())
+    if (state.cols() == 1) {
+        state = state * state.adjoint();
+    }
+
+    inter_results.append(construct_result_object(state, readout, noise_model_cpp, n_qubits, config, qubits_to_measure));
+    if (!functional.attr("reservoir_layer").attr("qubits_to_reset").is_none()){
+        std::set<int> qubits_set;
+        for (const auto& item : functional.attr("reservoir_layer").attr("qubits_to_reset")) {
+            qubits_set.insert(item.cast<int>());
+        }
+
+        if (!qubits_set.empty()) {
+            uint64_t reset_mask = 0ULL;
+            for (int q : qubits_set) {
+                if (q < 0 || q >= n_qubits) {
+                    throw py::value_error("Invalid qubit indices in qubits_to_reset");
+                }
+                reset_mask |= (1ULL << q);
+            }
+
+            DenseMatrix reset_rho = DenseMatrix::Zero(state.rows(), state.cols());
+
+            for (Eigen::Index row = 0; row < state.rows(); ++row) {
+                for (Eigen::Index col = 0; col < state.cols(); ++col) {
+                    if (state(row, col) == std::complex<double>(0.0, 0.0)) {
+                        continue;
+                    }
+
+                    const uint64_t urow = static_cast<uint64_t>(row);
+                    const uint64_t ucol = static_cast<uint64_t>(col);
+
+                    if (((urow ^ ucol) & reset_mask) != 0ULL) {
+                        continue;
+                    }
+
+                    const Eigen::Index out_row =
+                        static_cast<Eigen::Index>(urow & ~reset_mask);
+                    const Eigen::Index out_col =
+                        static_cast<Eigen::Index>(ucol & ~reset_mask);
+
+                    reset_rho(out_row, out_col) += state(row, col);
+                }
+            }
+
+            state = std::move(reset_rho);
+        }
+    }
+
+    }
+
+    py::slice slice(0, -1, 1);
+
+    return FunctionalResult(
+        py::arg("readout_results") = inter_results[py::int_(-1)],
+        py::arg("intermediate_results") = inter_results[slice]
     );
 }

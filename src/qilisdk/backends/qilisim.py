@@ -18,6 +18,11 @@ from typing import TYPE_CHECKING
 from loguru import logger
 from qilisim_module import QiliSimCpp  # ty:ignore[unresolved-import]
 
+from qilisdk.analog import Schedule
+from qilisdk.digital import Circuit
+from qilisdk.functionals import AnalogEvolution, DigitalPropagation, QuantumReservoir
+from qilisdk.functionals.functional_result import FunctionalResult
+from qilisdk.readout import ReadoutResult, StateTomographyReadout
 from qilisdk.settings import get_settings
 
 from .backend import Backend
@@ -25,8 +30,6 @@ from .backend_config import AnalogMethod, DigitalMethod, ExecutionConfig, Solver
 
 if TYPE_CHECKING:
     from qilisdk.core import QTensor
-    from qilisdk.functionals import AnalogEvolution, DigitalPropagation
-    from qilisdk.functionals.functional_result import FunctionalResult
     from qilisdk.noise.noise_model import NoiseModel
     from qilisdk.readout import ReadoutMethod
 
@@ -76,9 +79,8 @@ class QiliSim(Backend):
         """
 
         # Initialize the backend and the class vars
-        super().__init__()
+        super().__init__(noise_model=noise_model)
         self.qili_sim = QiliSimCpp()
-        self._noise_model = noise_model
 
         analog_simulation_method: AnalogMethod = analog_simulation_method or AnalogMethod.integrator()
         digital_simulation_method: DigitalMethod = digital_simulation_method or DigitalMethod.statevector()
@@ -149,6 +151,18 @@ class QiliSim(Backend):
 
         # Execute the time evolution
         result = self.qili_sim.execute_analog_evolution(functional, readout, self._noise_model, self._solver_config)
+
+        logger.success("TimeEvolution finished")
+        return result
+
+    def _execute_quantum_reservoir(
+        self, functional: QuantumReservoir, readout: list[ReadoutMethod]
+    ) -> FunctionalResult:
+        # Get the time steps
+        logger.info("Executing Quantum Reservoir")
+
+        # Execute the time evolution
+        result = self.qili_sim.execute_quantum_reservoir(functional, readout, self._noise_model, self._solver_config)
 
         logger.success("TimeEvolution finished")
         return result

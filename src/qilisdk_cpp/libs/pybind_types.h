@@ -23,8 +23,11 @@ namespace py = pybind11;
 using namespace py::literals;
 
 // Get the Python functional classes
+const py::object Circuit = py::module_::import("qilisdk.digital.circuit").attr("Circuit");
+const py::object Schedule = py::module_::import("qilisdk.analog.schedule").attr("Schedule");
 const py::object DigitalPropagation = py::module_::import("qilisdk.functionals.digital_propagation").attr("DigitalPropagation");
 const py::object AnalogEvolution = py::module_::import("qilisdk.functionals.analog_evolution").attr("AnalogEvolution");
+const py::object QuantumReservoir = py::module_::import("qilisdk.functionals.quantum_reservoirs").attr("QuantumReservoir");
 const py::object FunctionalResult = py::module_::import("qilisdk.functionals.functional_result").attr("FunctionalResult");
 const py::object QTensor = py::module_::import("qilisdk.core.qtensor").attr("QTensor");
 const py::object Hamiltonian = py::module_::import("qilisdk.analog.hamiltonian").attr("Hamiltonian");

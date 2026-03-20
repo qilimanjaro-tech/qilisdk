@@ -17,5 +17,5 @@
 
 PYBIND11_MODULE(qilisim_module, m) {
     // Make the QiliSimCpp class available in Python, as well as the two main methods
-    py::class_<QiliSimCpp>(m, "QiliSimCpp").def(py::init<>()).def("execute_analog_evolution", &QiliSimCpp::execute_analog_evolution).def("execute_digital_propagation", &QiliSimCpp::execute_digital_propagation);
+    py::class_<QiliSimCpp>(m, "QiliSimCpp").def(py::init<>()).def("execute_analog_evolution", &QiliSimCpp::execute_analog_evolution).def("execute_digital_propagation", &QiliSimCpp::execute_digital_propagation).def("execute_quantum_reservoir", &QiliSimCpp::execute_quantum_reservoir);
 }

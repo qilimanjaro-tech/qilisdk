@@ -99,7 +99,7 @@ std::map<std::string, int> filter_counts(const std::map<std::string, int>& count
     return filtered_counts;
 }
 
-std::map<std::string, int> construct_samples(DenseMatrix& state, int n_qubits, int n_shots, NoiseModelCpp& noise_model_cpp, const QiliSimConfig& config, const std::vector<bool>& qubits_to_measure){
+std::map<std::string, int> construct_samples(const DenseMatrix& state, int n_qubits, int n_shots, NoiseModelCpp& noise_model_cpp, const QiliSimConfig& config, const std::vector<bool>& qubits_to_measure){
 
     std::map<std::string, int> counts;
     bool has_noise = !noise_model_cpp.is_empty();
