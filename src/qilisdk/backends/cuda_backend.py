@@ -729,6 +729,132 @@ class CudaBackend(Backend):
         except ValueError as exc:
             raise ValueError("QTensor observables in the CUDA backend must be Hermitian operators.") from exc
 
+    @staticmethod
+    def _qtensor_initial_state_to_cuda(initial_state: QTensor) -> State:
+        normalized_state = initial_state.unit()
+        if normalized_state.is_bra():
+            normalized_state = normalized_state.adjoint()
+
+        cuda_state_data = np.array(normalized_state.dense(), dtype=_complex_dtype())
+        if normalized_state.is_ket():
+            cuda_state_data = cuda_state_data.reshape(-1)
+
+        return State.from_data(cuda_state_data)
+
+    def _execute_time_evolution(self, functional: TimeEvolution) -> TimeEvolutionResult:
+        logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
+        cudaq.set_target("dynamics")
+        og_params = None
+        # Apply parameter perturbations
+        if self._noise_model and self._noise_model.global_perturbations:
+            og_params = copy(functional.get_parameters())
+            self._handle_schedule_parameter_perturbations(functional.schedule, self._noise_model)
+
+        steps = functional.schedule.tlist
+
+        cuda_schedule = CudaSchedule(steps, ["t"])
+
+        cuda_hamiltonian = self._get_cuda_hamiltonian(functional.schedule)
+
+        logger.trace("Hamiltonian compiled for evolution")
+
+        cuda_observables = []
+        for index, observable in enumerate(functional.observables):
+            if isinstance(observable, PauliOperator):
+                cuda_observables.append(self._pauli_operator_handlers[type(observable)](observable))
+            elif isinstance(observable, Hamiltonian):
+                cuda_observables.append(self._hamiltonian_to_cuda(observable))
+            elif isinstance(observable, QTensor):
+                cuda_observables.append(
+                    self._hamiltonian_to_cuda(
+                        self._qtensor_observable_to_hamiltonian(observable, functional.schedule.nqubits)
+                    )
+                )
+            else:
+                logger.error("Unsupported observable type {}", observable.__class__.__name__)
+                raise ValueError(f"unsupported observable type of {observable.__class__}")
+        logger.trace("Observables compiled for evolution")
+
+        # Add noise
+        jump_operators: list[OperatorSum] = []
+        hamiltonian_deltas: list[OperatorSum] = []
+        if self._noise_model:
+            jump_operators, hamiltonian_deltas = self._noise_model_to_cudaq_dynamics(
+                self._noise_model, functional.schedule.nqubits, functional.schedule.dt
+            )
+
+        # Remove any constant terms from the Hamiltonian, also add the deltas
+        for delta in hamiltonian_deltas:
+            cuda_hamiltonian += delta
+
+        evolution_result = evolve(
+            hamiltonian=cuda_hamiltonian,
+            dimensions=dict.fromkeys(range(functional.schedule.nqubits), 2),
+            schedule=cuda_schedule,
+            initial_state=self._qtensor_initial_state_to_cuda(functional.initial_state),
+            observables=cuda_observables,
+            collapse_operators=jump_operators,
+            store_intermediate_results=functional.store_intermediate_results,
+        )
+
+        logger.success("TimeEvolution finished")
+
+        final_expected_values = np.array(
+            [
+                exp_val.expectation()
+                for exp_val in evolution_result.final_expectation_values()  # ty:ignore[unresolved-attribute]
+            ],
+            dtype=_complex_dtype(),
+        )
+        expected_values = (
+            np.array(
+                [
+                    [val.expectation() for val in exp_vals]
+                    for exp_vals in evolution_result.expectation_values()  # ty:ignore[unresolved-attribute]
+                ],
+                dtype=_complex_dtype(),
+            )
+            if evolution_result.expectation_values() is not None  # ty:ignore[unresolved-attribute]
+            and functional.store_intermediate_results
+            else None
+        )
+
+        if evolution_result.final_state() is not None:  # ty:ignore[unresolved-attribute]
+            final_state = np.array(
+                evolution_result.final_state(),  # ty:ignore[unresolved-attribute]
+                dtype=_complex_dtype(),
+            )
+            if len(final_state.shape) == 1:
+                final_state = final_state.reshape(-1, 1)
+            final_state = QTensor(final_state)
+
+        else:
+            final_state = None
+
+        if (
+            evolution_result.intermediate_states() is not None  # ty:ignore[unresolved-attribute]
+            and functional.store_intermediate_results
+        ):
+            intermediate_states = []
+            for state in evolution_result.intermediate_states():  # ty:ignore[unresolved-attribute]
+                _state = np.array(state, dtype=_complex_dtype())
+                if len(_state.shape) == 1:
+                    _state = _state.reshape(-1, 1)
+                intermediate_states.append(QTensor(_state))
+
+        else:
+            intermediate_states = None
+
+        if og_params:
+            functional.set_parameters(og_params)
+
+        return TimeEvolutionResult(
+            final_expected_values=final_expected_values,
+            expected_values=expected_values,
+            final_state=final_state,
+            intermediate_states=intermediate_states,
+        )
+
     def _handle_controlled(
         self, kernel: cudaq.Kernel, gate: Controlled, control_qubit: cudaq.QuakeValue, target_qubit: cudaq.QuakeValue
     ) -> None:

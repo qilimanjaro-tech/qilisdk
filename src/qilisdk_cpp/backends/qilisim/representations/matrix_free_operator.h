@@ -25,17 +25,17 @@ enum class MatrixFreeApplicationType { Left, Right, LeftAndRight };
 class MatrixFreeOperator {
    private:
     std::string name;
-    int target_qubit;
-    int control_qubit = -1;
+    std::vector<int> target_qubits;
+    std::vector<int> control_qubits;
     DenseMatrix base_matrix;
 
    public:
     MatrixFreeOperator(const Gate& gate);
-    MatrixFreeOperator(const std::string& name, int target_qubit) : name(name), target_qubit(target_qubit) {}
+    MatrixFreeOperator(const std::string& name, int target_qubit) : name(name), target_qubits({target_qubit}) {}
     void apply(DenseMatrix& output_state, MatrixFreeApplicationType application_type) const;
     friend std::ostream& operator<<(std::ostream& os, const MatrixFreeOperator& mfo);
-    int get_target_qubit() const { return target_qubit; }
-    int get_control_qubit() const { return control_qubit; }
+    std::vector<int> get_target_qubits() const { return target_qubits; }
+    std::vector<int> get_control_qubits() const { return control_qubits; }
     std::string get_name() const { return name; }
-    std::string get_id() const { return name + "_t" + std::to_string(target_qubit) + "_c" + std::to_string(control_qubit); }
+    std::string get_id() const;
 };

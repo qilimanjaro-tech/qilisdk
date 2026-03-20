@@ -525,6 +525,7 @@ def test_time_dependent_hamiltonian_cuda(monkeypatch):
     assert isinstance(res, FunctionalResult)
     assert dummy_evolve.called
     assert dummy_state.called
+    assert dummy_state.call_args.args[0].shape == (2,)
 
 
 def test_time_dependent_hamiltonian_cuda_qtensor_observable(monkeypatch):
@@ -707,7 +708,8 @@ def test_time_evolution_preserves_density_matrix_shape(monkeypatch):
 
     monkeypatch.setattr("qilisdk.backends.cuda_backend.evolve", MagicMock(return_value=dummy_return))
     monkeypatch.setattr("qilisdk.backends.cuda_backend.cudaq.set_target", lambda target: None)
-    monkeypatch.setattr("qilisdk.backends.cuda_backend.State.from_data", MagicMock(return_value=None))
+    state_from_data = MagicMock(return_value=None)
+    monkeypatch.setattr("qilisdk.backends.cuda_backend.State.from_data", state_from_data)
 
     schedule = Schedule(
         dt=1,

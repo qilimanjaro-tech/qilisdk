@@ -45,10 +45,10 @@ cuda = [
     "qilisdk[cuda12]"
 ]
 cuda12 = [
-    "cuda-quantum-cu12==0.13.0",
+    "cuda-quantum-cu12==0.14.0",
 ]
 cuda13 = [
-    "cuda-quantum-cu13==0.13.0"
+    "cuda-quantum-cu13==0.14.0"
 ]
 speqtrum = [
     "httpx==0.28.1",
