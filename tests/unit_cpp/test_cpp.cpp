@@ -16,13 +16,22 @@
 #include "gtest/gtest.h"
 #include "../../src/qilisdk_cpp/libs/pybind.h"
 
+// One interpreter for the whole test binary
+class PybindEnvironment : public ::testing::Environment {
+public:
+    void SetUp() override { 
+        initialize_all_pybind_types();
+        ASSERT_TRUE(dtype.ptr() != nullptr) << "dtype was not initialized";
+        ASSERT_TRUE(SupportsStaticKraus.ptr() != nullptr) << "SupportsStaticKraus was not initialized";
+    }
+    void TearDown() override { 
+        finalize_all_pybind_types();
+    }
+};
+
 int main(int argc, char** argv) {
     pybind11::scoped_interpreter guard{};
-    // initialize_all_pybind_types();
-    // if (dtype.ptr() == nullptr || SupportsStaticKraus.ptr() == nullptr) {
-    //     std::cerr << "Fatal: pybind globals were not initialized correctly.\n";
-    //     return 1;
-    // }
+    ::testing::Environment* pybind_env = ::testing::AddGlobalTestEnvironment(new PybindEnvironment());
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }

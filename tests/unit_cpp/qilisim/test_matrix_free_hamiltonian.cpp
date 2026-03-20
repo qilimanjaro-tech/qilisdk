@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include <gtest/gtest.h>
-#include "../../src/qilisdk_cpp/backends/qilisim/representations/matrix_free_hamiltonian.h"
+#include "../../../src/qilisdk_cpp/backends/qilisim/representations/matrix_free_hamiltonian.h"
 
 namespace {
 
@@ -30,11 +30,6 @@ DenseMatrix ket1() {
 DenseMatrix ket00() {
     DenseMatrix s = DenseMatrix::Zero(4, 1);
     s(0, 0) = 1.0;
-    return s;
-}
-DenseMatrix ket01() {
-    DenseMatrix s = DenseMatrix::Zero(4, 1);
-    s(1, 0) = 1.0;
     return s;
 }
 DenseMatrix ket10() {

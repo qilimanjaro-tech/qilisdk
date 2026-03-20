@@ -14,7 +14,7 @@
 
 #include <gtest/gtest.h>
 
-#include "../../src/qilisdk_cpp/backends/qilisim/utils/random.h"
+#include "../../../src/qilisdk_cpp/backends/qilisim/utils/random.h"
 
 TEST(SampleFromProbabilitiesTest, SampleFromProbabilitiesReturnsValidSamples) {
     std::vector<std::tuple<int, double>> prob_entries = {{0, 0.5}, {1, 0.5}};

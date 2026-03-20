@@ -16,8 +16,10 @@
 #include "../../libs/pybind.h"
 
 // The main QiliSim C++ class
+#pragma GCC visibility push(default)
 class QiliSimCpp {
    public:
     py::object execute_sampling(const py::object& functional, const py::object& noise_model, const py::object& initial_state, const py::dict& solver_params);
     py::object execute_time_evolution(const py::object& functional, const py::object& noise_model, const py::dict& solver_params);
 };
+#pragma GCC visibility pop

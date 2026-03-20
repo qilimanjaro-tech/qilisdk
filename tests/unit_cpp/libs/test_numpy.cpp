@@ -13,23 +13,10 @@
 // limitations under the License.
 
 #include <gtest/gtest.h>
-#include "../../src/qilisdk_cpp/libs/numpy.h"
+#include "../../../src/qilisdk_cpp/libs/numpy.h"
 #include <pybind11/embed.h>
 
 namespace py = pybind11;
-
-class PybindEnvironment : public ::testing::Environment {
-public:
-    void SetUp() override { 
-        initialize_all_pybind_types();
-        ASSERT_TRUE(dtype.ptr() != nullptr) << "dtype was not initialized";
-        ASSERT_TRUE(SupportsStaticKraus.ptr() != nullptr) << "SupportsStaticKraus was not initialized";
-    }
-    void TearDown() override { 
-        finalize_all_pybind_types();
-    }
-};
-::testing::Environment* const pybind_env = ::testing::AddGlobalTestEnvironment(new PybindEnvironment());
 
 TEST(MatrixConversion, FromNumpyBasic2x2Identity) {
     py::gil_scoped_acquire gil;

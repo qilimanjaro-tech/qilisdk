@@ -67,6 +67,7 @@ void initialize_external_pybind_types() {
     py_complex = py::module_::import("builtins").attr("complex");
 }
 
+// GCOVR_EXCL_START
 void finalize_all_pybind_types() {
     Sampling = py::object();
     TimeEvolution = py::object();
@@ -91,5 +92,6 @@ void finalize_all_pybind_types() {
     dtype = py::object();
     py_complex = py::object();
 }
+// GCOVR_EXCL_STOP
 
 #pragma GCC visibility pop

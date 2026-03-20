@@ -14,7 +14,7 @@
 
 #include <gtest/gtest.h>
 
-#include "../../src/qilisdk_cpp/backends/qilisim/digital/gate.h"
+#include "../../../src/qilisdk_cpp/backends/qilisim/digital/gate.h"
 
 #include <complex>
 #include <string>

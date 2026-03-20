@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include <gtest/gtest.h>
-#include "../../src/qilisdk_cpp/backends/qilisim/noise/noise_model.h"
+#include "../../../src/qilisdk_cpp/backends/qilisim/noise/noise_model.h"
 
 TEST(NoiseModel, GetRelevantKrausOperators) {
 

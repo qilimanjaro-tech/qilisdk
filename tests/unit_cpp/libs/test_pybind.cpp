@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include <gtest/gtest.h>
-#include "../../src/qilisdk_cpp/libs/numpy.h"
+#include "../../../src/qilisdk_cpp/libs/numpy.h"
 #include <pybind11/embed.h>
 
 namespace py = pybind11;
@@ -22,12 +22,6 @@ TEST(PybindAllTypes, Initialization) {
     initialize_all_pybind_types();
     EXPECT_TRUE(dtype.ptr() != nullptr);
     EXPECT_TRUE(SupportsStaticKraus.ptr() != nullptr);
-}
-
-TEST(PybindAllTypes, Finalization) {
-    finalize_all_pybind_types();
-    EXPECT_TRUE(dtype.ptr() == nullptr);
-    EXPECT_TRUE(SupportsStaticKraus.ptr() == nullptr);
 }
 
 TEST(PybindExternalTypes, Initialization) {

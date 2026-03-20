@@ -14,7 +14,7 @@
 
 #include <gtest/gtest.h>
 
-#include "../../src/qilisdk_cpp/backends/qilisim/digital/sampling.h"
+#include "../../../src/qilisdk_cpp/backends/qilisim/digital/sampling.h"
 
 #include <gtest/gtest.h>
 #include <complex>
@@ -31,13 +31,6 @@ using cx = std::complex<double>;
 constexpr double kTol    = 1e-6;
 constexpr double kLoose  = 0.05;
 
-SparseMatrix sparseIdentity(int dim) {
-    SparseMatrix m(dim, dim);
-    for (int i = 0; i < dim; ++i) m.insert(i, i) = cx(1, 0);
-    m.makeCompressed();
-    return m;
-}
-
 SparseMatrix pauliX2() {
     SparseMatrix m(2, 2);
     m.insert(0, 1) = cx(1, 0);
@@ -53,13 +46,6 @@ SparseMatrix hadamard2() {
     m.insert(1, 0) = cx( v, 0); m.insert(1, 1) = cx(-v, 0);
     m.makeCompressed();
     return m;
-}
-
-DenseMatrix zeroStatevector(int n_qubits) {
-    long dim = 1L << n_qubits;
-    DenseMatrix v = DenseMatrix::Zero(dim, 1);
-    v(0, 0) = cx(1, 0);
-    return v;
 }
 
 // Sparse version of the zero-state column vector (used as initial_state).

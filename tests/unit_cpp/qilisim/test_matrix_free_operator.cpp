@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include <gtest/gtest.h>
-#include "../../src/qilisdk_cpp/backends/qilisim/representations/matrix_free_operator.h"
+#include "../../../src/qilisdk_cpp/backends/qilisim/representations/matrix_free_operator.h"
 
 
 namespace {
@@ -69,30 +69,6 @@ DenseMatrix ket000() {
     DenseMatrix s(8, 1);
     s.setZero();
     s(0, 0) = 1.0;
-    return s;
-}
-DenseMatrix ket001() {
-    DenseMatrix s(8, 1);
-    s.setZero();
-    s(1, 0) = 1.0;
-    return s;
-}
-DenseMatrix ket010() {
-    DenseMatrix s(8, 1);
-    s.setZero();
-    s(2, 0) = 1.0;
-    return s;
-}
-DenseMatrix ket011() {
-    DenseMatrix s(8, 1);
-    s.setZero();
-    s(3, 0) = 1.0;
-    return s;
-}
-DenseMatrix ket100() {
-    DenseMatrix s(8, 1);
-    s.setZero();
-    s(4, 0) = 1.0;
     return s;
 }
 DenseMatrix ket101() {

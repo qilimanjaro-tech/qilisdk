@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include <gtest/gtest.h>
-#include "../../src/qilisdk_cpp/backends/qilisim/config/qilisim_config.h"
+#include "../../../src/qilisdk_cpp/backends/qilisim/config/qilisim_config.h"
 
 TEST(QilisimConfig, BadValidateThrows) {
     QiliSimConfig default_config;

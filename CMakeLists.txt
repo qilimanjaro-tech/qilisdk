@@ -169,6 +169,8 @@ if (DEFINED tests AND tests STREQUAL "ON")
         tests/unit_cpp/test_cpp.cpp
     )
     file(GLOB TEST_SOURCES tests/unit_cpp/*.cpp)
+    file(GLOB TEST_SUBDIR_SOURCES tests/unit_cpp/*/*.cpp)
+    list(APPEND TEST_SOURCES ${TEST_SUBDIR_SOURCES})
     target_sources(test_cpp PRIVATE ${TEST_SOURCES})
     target_include_directories(test_cpp PRIVATE src/qilisdk_cpp/backends/qilisim)
     target_include_directories(test_cpp PRIVATE ${pybind11_INCLUDE_DIRS})

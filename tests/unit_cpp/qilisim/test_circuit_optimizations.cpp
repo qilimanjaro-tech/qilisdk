@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include <gtest/gtest.h>
-#include "../../src/qilisdk_cpp/backends/qilisim/digital/circuit_optimizations.h"
+#include "../../../src/qilisdk_cpp/backends/qilisim/digital/circuit_optimizations.h"
 #include <complex>
 #include <string>
 #include <vector>
@@ -80,16 +80,6 @@ SparseMatrix rz(double theta) {
     return m;
 }
 
-SparseMatrix cnot4() {
-    SparseMatrix m(4, 4);
-    m.insert(0, 0) = cx(1, 0);
-    m.insert(1, 1) = cx(1, 0);
-    m.insert(2, 3) = cx(1, 0);
-    m.insert(3, 2) = cx(1, 0);
-    m.makeCompressed();
-    return m;
-}
-
 Gate makeGate(const std::string& name, const SparseMatrix& mat,
               std::vector<int> controls, std::vector<int> targets) {
     return Gate(name, mat, controls, targets, {});
@@ -102,20 +92,6 @@ Gate H(int q)  { return makeGate("H",    hadamard(), {}, {q}); }
 Gate makeI(int q)  { return makeGate("I",    identity2(),{}, {q}); }
 Gate RZ(int q, double t) { return makeGate("RZ", rz(t),    {}, {q}); }
 Gate CNOT(int c, int t)  { return makeGate("CNOT", pauliX(), {c}, {t}); }
-
-Gate TwoQubit(int c, int t) {
-    return Gate("2Q", cnot4(), {c}, {t}, {});
-}
-
-// Expected combined matrix for a sequence: M_last * … * M_1 * M_0
-SparseMatrix chainMultiply(const std::vector<SparseMatrix>& mats) {
-    Eigen::MatrixXcd result = toDense(mats[0]);
-    for (size_t i = 1; i < mats.size(); ++i)
-        result = toDense(mats[i]) * result;
-    SparseMatrix s = result.sparseView();
-    s.makeCompressed();
-    return s;
-}
 
 bool matricesApproxEqual(const SparseMatrix& a, const SparseMatrix& b) {
     return toDense(a).isApprox(toDense(b), kTol);

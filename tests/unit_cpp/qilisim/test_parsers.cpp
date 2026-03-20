@@ -13,24 +13,10 @@
 // limitations under the License.
 
 #include <gtest/gtest.h>
-#include "../../src/qilisdk_cpp/backends/qilisim/utils/parsers.h"
+#include "../../../src/qilisdk_cpp/backends/qilisim/utils/parsers.h"
 #include <pybind11/embed.h>
 
 namespace py = pybind11;
-
-// One interpreter for the whole test binary
-class PybindEnvironment : public ::testing::Environment {
-public:
-    void SetUp() override { 
-        initialize_all_pybind_types();
-        ASSERT_TRUE(dtype.ptr() != nullptr) << "dtype was not initialized";
-        ASSERT_TRUE(SupportsStaticKraus.ptr() != nullptr) << "SupportsStaticKraus was not initialized";
-    }
-    void TearDown() override { 
-        finalize_all_pybind_types();
-    }
-};
-::testing::Environment* const pybind_env = ::testing::AddGlobalTestEnvironment(new PybindEnvironment());
 
 TEST(ParseHamiltonians, MatrixFreeEmptyThrows) {
     py::list empty;
@@ -54,7 +40,6 @@ TEST(ParseHamiltonians, MatrixFreeSingleTerm) {
     EXPECT_EQ(result.size(), 1);
     EXPECT_EQ(result[0], expected[0]);
 }
-
 
 TEST(ParseHamiltonians, ParseEmptyHamiltoniansThrows) {
     py::list empty;
@@ -125,6 +110,10 @@ TEST(ParseNoiseModel, GlobalStaticKraus) {
     )");
 
     py::object fake_nm = py::globals()["fake_nm_global_static_kraus"];
+
+    // make sure that the SupportsStaticKraus is not nullptr
+    EXPECT_FALSE(SupportsStaticKraus.ptr() == nullptr) << "SupportsStaticKraus is not initialized";
+
     auto result = parse_noise_model(fake_nm, /*nqubits=*/1, /*atol=*/1e-10);
 
     EXPECT_FALSE(result.is_empty());

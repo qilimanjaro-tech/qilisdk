@@ -14,7 +14,9 @@
 
 #include <gtest/gtest.h>
 
-#include "../../src/qilisdk_cpp/backends/qilisim/utils/matrix_utils.h"
+#include "../../../src/qilisdk_cpp/backends/qilisim/utils/matrix_utils.h"
+
+namespace {
 
 constexpr double kTol = 1e-10;
 
@@ -49,6 +51,8 @@ SparseMatrix mat2x2() {
     m << std::complex<double>(1, 0), std::complex<double>(2, 0),
             std::complex<double>(3, 0), std::complex<double>(4, 0);
     return m.sparseView();
+}
+
 }
 
 TEST(MatrixUtilsTest, DotProductKet) {

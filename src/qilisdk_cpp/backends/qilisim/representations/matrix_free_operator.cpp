@@ -460,7 +460,6 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
         // If we have a SWAP between qubits i and j, we swap the amplitudes of all basis states where qubit i is 0 and qubit j is 1 with those where qubit i is 1 and qubit j is 0
     } else if (name == "SWAP" && target_qubits.size() == 2 && control_qubits.empty()) {
         long other_mask = 1L << (num_qubits - 1 - target_qubits[1]);
-        long swap_mask = mask | other_mask;
         long mask0 = mask;
         long mask1 = other_mask;
         if (mask0 > mask1) {
