@@ -32,23 +32,30 @@ if TYPE_CHECKING:
 
 
 class QiliSim(Backend):
-    """
-    Backend that runs both digital-circuit sampling and analog
-    time-evolution experiments using a custom C++ simulator.
+    """Backend that runs digital-circuit and analog time-evolution experiments using a custom C++ simulator.
 
-    Setup Example:
-    .. code-block:: python
+    Example:
+        .. code-block:: python
 
-    from qilisdk.backends import AnalogMethod, DigitalMethod, ExecutionConfig, MonteCarloConfig,  QiliSim
+            from qilisdk.backends import (
+                AnalogMethod, DigitalMethod, ExecutionConfig,
+                MonteCarloConfig, QiliSim,
+            )
 
-    backend = QiliSim(
-        analog_simulation_method=AnalogMethod.arnoldi(
-            dim=16,
-            num_substeps=2
-        ),
-        digital_simulation_method=DigitalMethod.statevector(max_cache_size=2_000),
-        execution_config=ExecutionConfig(num_threads=4, seed=42, monte_carlo=MonteCarloConfig(trajectories=200),),
-    )
+            backend = QiliSim(
+                analog_simulation_method=AnalogMethod.arnoldi(
+                    dim=16,
+                    num_substeps=2,
+                ),
+                digital_simulation_method=DigitalMethod.statevector(
+                    max_cache_size=2_000,
+                ),
+                execution_config=ExecutionConfig(
+                    num_threads=4,
+                    seed=42,
+                    monte_carlo=MonteCarloConfig(trajectories=200),
+                ),
+            )
     """
 
     def __init__(
@@ -58,18 +65,27 @@ class QiliSim(Backend):
         digital_simulation_method: DigitalMethod | None = None,
         execution_config: ExecutionConfig | None = None,
     ) -> None:
-        """
-        Instantiate a new :class:`QiliSim` backend. This is a CPU-based simulator
-        implemented in C++, using pybind11 for bindings.
+        """Instantiate a new :class:`QiliSim` backend.
+
+        This is a CPU-based simulator implemented in C++, using pybind11
+        for bindings.
 
         Args:
-            noise_model: Optional noise model applied during execution.
-            analog_simulation_method: Analog simulation configuration. Available options: :meth:`AnalogMethod.integrator`,
-                :meth:`AnalogMethod.arnoldi`, or :meth:`AnalogMethod.direct`. Defaults to
-                :meth:`AnalogMethod.integrator`.
-            digital_simulation_method: Digital simulation configuration. Available options: :meth:`DigitalMethod.statevector`. Defaults to :meth:`DigitalMethod.statevector`.
-            execution_config: Execution-level configuration for threading, random seed and monte-carlo executions.
-                Defaults to the default configuration in :class:`ExecutionConfig`.
+            noise_model (NoiseModel | None): Optional noise model applied
+                during execution. Defaults to ``None``.
+            analog_simulation_method (AnalogMethod | None): Analog simulation
+                configuration. Available options:
+                :meth:`AnalogMethod.integrator`,
+                :meth:`AnalogMethod.arnoldi`, or :meth:`AnalogMethod.direct`.
+                Defaults to :meth:`AnalogMethod.integrator`.
+            digital_simulation_method (DigitalMethod | None): Digital
+                simulation configuration. Available options:
+                :meth:`DigitalMethod.statevector`. Defaults to
+                :meth:`DigitalMethod.statevector`.
+            execution_config (ExecutionConfig | None): Execution-level
+                configuration for threading, random seed and Monte-Carlo
+                executions. Defaults to the default configuration in
+                :class:`ExecutionConfig`.
 
         Raises:
             ValueError: If a configuration argument has an invalid type.
@@ -114,16 +130,20 @@ class QiliSim(Backend):
     def _execute_digital_propagation(
         self, functional: DigitalPropagation, readout: list[ReadoutMethod], initial_state: QTensor | None = None
     ) -> FunctionalResult:
-        """
-        Execute a digital-circuit sampling functional and return measurement results.
+        """Execute a digital-circuit propagation functional and return measurement results.
 
         Args:
-            functional: Sampling functional to execute.
-            initial_state: Optional initial state to start the simulation from.
+            functional (DigitalPropagation): The digital propagation
+                functional to execute.
+            readout (list[ReadoutMethod]): Readout specifications for
+                result extraction.
+            initial_state (QTensor | None): Optional initial state to start
+                the simulation from. Defaults to ``None`` (computational
+                basis zero state).
 
         Returns:
-            SamplingResult: Measurement samples and computed probabilities.
-
+            FunctionalResult: The execution result containing the requested
+                readout data.
         """
         logger.info("Executing Sampling")
         result = self.qili_sim.execute_digital_propagation(
@@ -133,14 +153,17 @@ class QiliSim(Backend):
         return result
 
     def _execute_analog_evolution(self, functional: AnalogEvolution, readout: list[ReadoutMethod]) -> FunctionalResult:
-        """
-        Compute analog time evolution for the provided schedule and initial state.
+        """Compute analog time evolution for the provided schedule and initial state.
 
         Args:
-            functional: TimeEvolution functional to execute.
+            functional (AnalogEvolution): The analog evolution functional
+                to execute, containing the schedule and initial state.
+            readout (list[ReadoutMethod]): Readout specifications for
+                result extraction.
 
         Returns:
-            TimeEvolutionResult: Final state and requested observables.
+            FunctionalResult: The execution result containing the requested
+                readout data.
         """
 
         # Get the time steps
@@ -155,6 +178,18 @@ class QiliSim(Backend):
     def _execute_quantum_reservoir(
         self, functional: QuantumReservoir, readout: list[ReadoutMethod]
     ) -> FunctionalResult:
+        """Execute a quantum reservoir computing functional via the C++ backend.
+
+        Args:
+            functional (QuantumReservoir): The quantum reservoir functional
+                to execute.
+            readout (list[ReadoutMethod]): Readout specifications for
+                result extraction.
+
+        Returns:
+            FunctionalResult: The execution result containing the requested
+                readout data.
+        """
         # Get the time steps
         logger.info("Executing Quantum Reservoir")
 
@@ -165,6 +200,7 @@ class QiliSim(Backend):
         return result
 
     def __repr__(self) -> str:
+        """Return a developer-friendly string representation including solver config."""
         lines = [
             f"{type(self).__qualname__}(",
             f"  noise_model={self._noise_model!r},",

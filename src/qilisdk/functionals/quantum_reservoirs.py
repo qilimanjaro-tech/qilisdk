@@ -43,8 +43,8 @@ class ReservoirInput(Parameter):
         """Create a non-trainable reservoir input parameter.
 
         Args:
-            label: Parameter label used to reference input values.
-            value: Default numerical value.
+            label (str): Parameter label used to reference input values.
+            value (RealNumber): Default numerical value.
         """
         super().__init__(
             label=label,
@@ -70,16 +70,22 @@ class ReservoirLayer(Parameterizable):
         output_encoding: Circuit | None = None,
         qubits_to_reset: list[int] | None = None,
     ) -> None:
-        """Build a reservoir pass description.
+        """Build a reservoir layer description.
 
         Args:
-            evolution_dynamics: Main analog schedule block.
-            input_encoding: Optional single-qubit pre-processing circuit.
-            output_encoding: Optional single-qubit post-processing circuit.
-            qubits_to_reset: Optional qubits reset between consecutive layers.
+            evolution_dynamics (Schedule): Main analog schedule block
+                driving the reservoir dynamics.
+            input_encoding (Circuit | None): Optional single-qubit
+                pre-processing circuit. Defaults to None.
+            output_encoding (Circuit | None): Optional single-qubit
+                post-processing circuit. Defaults to None.
+            qubits_to_reset (list[int] | None): Optional qubit indices
+                to reset between consecutive layers. Defaults to None.
 
         Raises:
-            ValueError: If an observable type is unsupported.
+            ValueError: If the input or output encoding circuit contains
+                measurements, multi-qubit gates, or acts on more qubits
+                than the evolution dynamics.
         """
 
         super().__init__()
@@ -100,9 +106,13 @@ class ReservoirLayer(Parameterizable):
     def _validate_input_encoding(self, pre_processing: Circuit) -> None:
         """Validate and normalize the optional pre-processing circuit.
 
+        Args:
+            pre_processing (Circuit): The candidate input encoding circuit.
+
         Raises:
-            ValueError: If measurements are present, multi-qubit gates are used, or the
-                circuit acts on more qubits than the reservoir dynamics.
+            ValueError: If measurements are present, multi-qubit gates are
+                used, or the circuit acts on more qubits than the reservoir
+                dynamics.
         """
         if any(isinstance(g, M) for g in pre_processing.gates):
             raise ValueError("Pre-Processing Circuit can't contain measurements")
@@ -117,9 +127,13 @@ class ReservoirLayer(Parameterizable):
     def _validate_output_encoding(self, post_processing: Circuit) -> None:
         """Validate and normalize the optional post-processing circuit.
 
+        Args:
+            post_processing (Circuit): The candidate output encoding circuit.
+
         Raises:
-            ValueError: If measurements are present, multi-qubit gates are used, or the
-                circuit acts on more qubits than the reservoir dynamics.
+            ValueError: If measurements are present, multi-qubit gates are
+                used, or the circuit acts on more qubits than the reservoir
+                dynamics.
         """
         if any(isinstance(g, M) for g in post_processing.gates):
             raise ValueError("Post-Processing Circuit can't contain measurements")
@@ -134,11 +148,16 @@ class ReservoirLayer(Parameterizable):
     def _process_qtensor(self, observable: QTensor) -> QTensor:
         """Pad observable tensors with identities to match the reservoir width.
 
+        Args:
+            observable (QTensor): Observable operator to expand.
+
         Returns:
-            Observable expanded (if needed) to match the number of reservoir qubits.
+            QTensor: Observable expanded (if needed) to match the number of
+                reservoir qubits.
 
         Raises:
-            ValueError: If the observable acts on more qubits than the reservoir.
+            ValueError: If the observable acts on more qubits than the
+                reservoir.
         """
         if observable.nqubits < self._nqubits:
             padding = [QTensor(np.identity(2)) for _ in range(self._nqubits - observable.nqubits)]
@@ -152,24 +171,24 @@ class ReservoirLayer(Parameterizable):
 
     @property
     def input_parameter_names(self) -> list[str]:
-        """Return parameter names that are input-driven (non-trainable)."""
+        """Input-driven (non-trainable) parameter names for this layer."""
         return self.get_parameter_names(
             where=lambda param: isinstance(param, ReservoirInput) and not param.is_trainable
         )
 
     @property
     def nqubits(self) -> int:
-        """Number of qubits acted on by this pass."""
+        """Number of qubits acted on by this layer."""
         return self._nqubits
 
     @property
     def input_encoding(self) -> Circuit | None:
-        """Optional pre-processing stage."""
+        """Optional pre-processing circuit, or ``None`` if not set."""
         return self._input_encoding
 
     @property
     def output_encoding(self) -> Circuit | None:
-        """Optional post-processing stage."""
+        """Optional post-processing circuit, or ``None`` if not set."""
         return self._output_encoding
 
     @property
@@ -179,20 +198,26 @@ class ReservoirLayer(Parameterizable):
 
     @property
     def qubits_to_reset(self) -> list[int] | None:
-        """Optional qubits reset between layers."""
+        """Qubit indices reset between layers, or ``None`` if not set."""
         return self._qubits_to_reset
 
     @property
     def evolution_dynamics(self) -> Schedule:
-        """Main dynamics stage for each pass."""
+        """Main analog dynamics schedule for each layer."""
         return self._evolution_dynamics
 
     @property
     def reservoir_dynamics(self) -> Schedule:
-        """Backward-compatible alias for ``evolution_dynamics``."""
+        """Backward-compatible alias for :attr:`evolution_dynamics`."""
         return self._evolution_dynamics
 
     def _iter_parameter_children(self) -> Iterator[Parameterizable]:
+        """Yield the encoding circuits and dynamics as parameterizable children.
+
+        Yields:
+            Iterator[Parameterizable]: Input encoding (if set), evolution
+                dynamics, and output encoding (if set).
+        """
         if self._input_encoding:
             yield self._input_encoding
         yield self._evolution_dynamics
@@ -246,12 +271,17 @@ class QuantumReservoir(PrimitiveFunctional):
         """Construct a quantum reservoir functional.
 
         Args:
-            initial_state: Initial state before the first layer.
-            reservoir_layer: Reservoir pass definition repeated at each layer.
-            input_per_layer: Input parameter assignments for each layer.
+            initial_state (QTensor): Initial quantum state before the first
+                layer.
+            reservoir_layer (ReservoirLayer | None): Reservoir layer
+                definition repeated at each step. Defaults to None.
+            input_per_layer (list[dict[str, float]] | None): Input parameter
+                assignments for each layer. Defaults to None.
 
         Raises:
-            ValueError: If the initial state qubit count does not match the reservoir pass.
+            ValueError: If ``reservoir_layer`` or ``input_per_layer`` is
+                ``None``, if ``input_per_layer`` is empty, or if the initial
+                state qubit count does not match the reservoir layer.
         """
         super().__init__()
         if reservoir_layer is None:
@@ -295,6 +325,11 @@ class QuantumReservoir(PrimitiveFunctional):
         return self._reservoir_layer.input_parameter_names
 
     def _iter_parameter_children(self) -> Iterator[Parameterizable]:
+        """Yield the reservoir layer as the sole parameterizable child.
+
+        Yields:
+            Iterator[Parameterizable]: The underlying ``ReservoirLayer``.
+        """
         yield self._reservoir_layer
 
     def set_inputs_per_layer(self, input_per_layer: list[dict[str, float]]) -> None:

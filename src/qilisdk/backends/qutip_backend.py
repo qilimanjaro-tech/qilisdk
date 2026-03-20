@@ -72,18 +72,20 @@ class QutipI(SingleQubitGate):
 
 
 class QutipBackend(Backend):
-    """
-    Backend that runs both digital-circuit sampling and analog
-    time-evolution experiments using the **QuTiP** simulation library.
+    """Backend that runs digital-circuit and analog time-evolution experiments using QuTiP.
 
-    The backend is CPU-only and has no hardware dependencies, which makes it
-    ideal for local development, CI pipelines, and educational notebooks.
+    The backend is CPU-only and has no hardware dependencies, which makes
+    it ideal for local development, CI pipelines, and educational
+    notebooks.
     """
 
     def __init__(self, nsteps: int = 10_000) -> None:
         """Instantiate a new :class:`QutipBackend`.
+
         Args:
-            nsteps (int): The maximum number of internal steps for the ODE solver."""
+            nsteps (int): The maximum number of internal steps for the
+                ODE solver. Defaults to ``10_000``.
+        """
         self.nsteps = nsteps
 
         super().__init__()
@@ -108,19 +110,21 @@ class QutipBackend(Backend):
     def _execute_digital_propagation(
         self, functional: DigitalPropagation, readout: list[ReadoutMethod]
     ) -> FunctionalResult:
-        """
-        Execute a quantum circuit and return the measurement results.
+        """Execute a digital-circuit propagation functional using QuTiP.
 
-        This method applies the selected simulation method, translates the circuit's gates into
-        CUDA operations via their respective handlers, runs the simulation, and returns the result
-        as a QutipDigitalResult.
+        Translates the circuit gates into QuTiP operations, runs the
+        simulation via ``CircuitSimulator``, and returns the requested
+        readout results.
 
         Args:
-            functional (Sampling): The Sampling function to execute.
+            functional (DigitalPropagation): The digital propagation
+                functional to execute.
+            readout (list[ReadoutMethod]): Readout specifications for
+                result extraction.
 
         Returns:
-            DigitalResult: A result object containing the measurement samples and computed probabilities.
-
+            FunctionalResult: The execution result containing the
+                requested readout data.
         """
         logger.info("Executing Sampling")
 
@@ -147,16 +151,25 @@ class QutipBackend(Backend):
         )
 
     def _execute_analog_evolution(self, functional: AnalogEvolution, readout: list[ReadoutMethod]) -> FunctionalResult:
-        """computes the time evolution under of an initial state under the given schedule.
+        """Compute the time evolution of an initial state under the given schedule.
+
+        Uses QuTiP's ``mesolve`` to integrate the master equation over the
+        schedule time steps.
 
         Args:
-            functional (TimeEvolution): The TimeEvolution functional to execute.
+            functional (AnalogEvolution): The analog evolution functional
+                to execute, containing the schedule and initial state.
+            readout (list[ReadoutMethod]): Readout specifications for
+                result extraction.
 
         Returns:
-            TimeEvolutionResult: The results of the evolution.
+            FunctionalResult: The execution result, optionally including
+                intermediate-state readouts when
+                ``functional.store_intermediate_results`` is ``True``.
 
         Raises:
-            ValueError: if the initial state provided is invalid.
+            ValueError: If the initial state has an unsupported shape
+                (must be a ket, bra, or density matrix).
         """
 
         logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
@@ -294,12 +307,15 @@ class QutipBackend(Backend):
         return qutip_circuit
 
     def _handle_controlled(self, circuit: QubitCircuit, gate: Controlled) -> None:  # noqa: PLR6301
-        """
-        Handle a controlled gate operation by registering a custom QuTiP gate.
+        """Handle a controlled gate operation by registering a custom QuTiP gate.
 
-        For non-native controlled gates we construct the block-matrix explicitly, mirroring
-        the approach recommended in the QuTiP QIP documentation for custom controlled rotations.
+        For non-native controlled gates the block-matrix is constructed
+        explicitly, mirroring the approach recommended in the QuTiP QIP
+        documentation for custom controlled rotations.
 
+        Args:
+            circuit (QubitCircuit): The QuTiP circuit being constructed.
+            gate (Controlled): The controlled gate to handle.
         """
 
         if gate.name == "CNOT":
@@ -323,11 +339,14 @@ class QutipBackend(Backend):
             circuit.add_gate(gate_name, targets=[*gate.control_qubits, *gate.target_qubits])
 
     def _handle_adjoint(self, circuit: QubitCircuit, gate: Adjoint) -> None:  # noqa: PLR6301
-        """
-        Handle an adjoint (inverse) gate operation.
+        """Handle an adjoint (inverse) gate operation.
 
-        This method creates a temporary kernel for the basic gate wrapped by the adjoint,
-        applies the corresponding handler, and then integrates it into the main kernel as an adjoint operation.
+        Registers a custom QuTiP gate whose unitary is the adjoint of the
+        wrapped basic gate.
+
+        Args:
+            circuit (QubitCircuit): The QuTiP circuit being constructed.
+            gate (Adjoint): The adjoint gate to handle.
         """
 
         def qutip_adjoined_gate() -> Qobj:
@@ -340,18 +359,22 @@ class QutipBackend(Backend):
 
     @staticmethod
     def _handle_M(qutip_circuit: QubitCircuit, gate: M) -> None:
-        """
-        Handle a measurement gate.
+        """Handle a measurement gate.
 
-        Depending on whether the measurement targets all qubits or a subset,
-        this method applies measurement operations accordingly.
+        Adds a measurement operation to each target qubit, storing the
+        classical result in the corresponding classical bit.
+
+        Args:
+            qutip_circuit (QubitCircuit): The QuTiP circuit being
+                constructed.
+            gate (M): The measurement gate to handle.
         """
         for i in gate.target_qubits:
             qutip_circuit.add_measurement(f"M{i}", targets=[i], classical_store=i)
 
     @staticmethod
     def _handle_I(circuit: QubitCircuit, gate: I, qubit: int) -> None:
-        """Handle an X gate operation."""
+        """Handle an I (identity) gate operation."""
         circuit.add_gate(QutipI(targets=qubit))
 
     @staticmethod
@@ -361,12 +384,12 @@ class QutipBackend(Backend):
 
     @staticmethod
     def _handle_Y(circuit: QubitCircuit, gate: Y, qubit: int) -> None:
-        """Handle an Y gate operation."""
+        """Handle a Y gate operation."""
         circuit.add_gate(QutipGates.Y(targets=qubit))
 
     @staticmethod
     def _handle_Z(circuit: QubitCircuit, gate: Z, qubit: int) -> None:
-        """Handle an Z gate operation."""
+        """Handle a Z gate operation."""
         circuit.add_gate(QutipGates.Z(targets=qubit))
 
     @staticmethod
@@ -381,7 +404,7 @@ class QutipBackend(Backend):
 
     @staticmethod
     def _handle_T(circuit: QubitCircuit, gate: T, qubit: int) -> None:
-        """Handle an T gate operation."""
+        """Handle a T gate operation."""
         circuit.add_gate(QutipGates.T(targets=qubit))
 
     @staticmethod
@@ -406,7 +429,7 @@ class QutipBackend(Backend):
 
     @staticmethod
     def _handle_U1(circuit: QubitCircuit, gate: U1, qubit: int) -> None:
-        """Handle an U1 gate operation."""
+        """Handle a U1 gate operation."""
         u1_label = "U1"
 
         if u1_label not in circuit.user_gates:
@@ -428,7 +451,7 @@ class QutipBackend(Backend):
 
     @staticmethod
     def _handle_U2(circuit: QubitCircuit, gate: U2, qubit: int) -> None:
-        """Handle an U2 gate operation."""
+        """Handle a U2 gate operation."""
         u2_label = "U2"
 
         if u2_label not in circuit.user_gates:
@@ -451,7 +474,7 @@ class QutipBackend(Backend):
 
     @staticmethod
     def _handle_U3(circuit: QubitCircuit, gate: U3, qubit: int) -> None:
-        """Handle an U3 gate operation."""
+        """Handle a U3 gate operation."""
         u3_label = "U3"
 
         if u3_label not in circuit.user_gates:

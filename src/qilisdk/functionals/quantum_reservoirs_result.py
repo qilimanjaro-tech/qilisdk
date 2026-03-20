@@ -19,4 +19,4 @@ from .functional_result import FunctionalResult
 
 @yaml.register_class
 class QuantumReservoirResult(FunctionalResult):
-    """Container for results produced by a reservoir simulation."""
+    """Container for results produced by a :class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir` execution."""

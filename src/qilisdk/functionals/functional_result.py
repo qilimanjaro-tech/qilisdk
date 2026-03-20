@@ -21,9 +21,29 @@ from qilisdk.readout.readout_result import ReadoutCompositeResults
 
 
 class FunctionalResult(Result):
+    """Container for the outputs produced by executing a functional on a backend.
+
+    A ``FunctionalResult`` wraps one or more :class:`~qilisdk.readout.ReadoutResult`
+    objects and exposes convenience accessors for samples, probabilities,
+    final states, and expectation values.  When intermediate results are
+    stored, the object is iterable over all time-steps (intermediates
+    followed by the final readout).
+    """
+
     def __init__(
         self, readout_results: list[ReadoutResult], intermediate_results: list[list[ReadoutResult]] | None = None
     ) -> None:
+        """Initialise a functional result from readout outputs.
+
+        Args:
+            readout_results (list[ReadoutResult]): Final readout results.
+                Each type of readout may appear at most once.
+            intermediate_results (list[list[ReadoutResult]] | None): Optional
+                per-step intermediate readout results. Defaults to None.
+
+        Raises:
+            ValueError: If ``readout_results`` contains duplicate readout types.
+        """
 
         if len({ro.__class__ for ro in readout_results}) != len(readout_results):
             raise ValueError(
@@ -36,30 +56,45 @@ class FunctionalResult(Result):
 
     @property
     def readout_results(self) -> ReadoutCompositeResults:
+        """Composite readout results from the final execution step."""
         return self._readout_results
 
     @property
     def intermediate_results(self) -> list[ReadoutCompositeResults]:
+        """Intermediate readout results for each time-step, if stored."""
         return self._intermediate_results
 
     @property
     def final_samples(self) -> dict[str, int]:
+        """Measurement samples from the final execution step."""
         return self._readout_results.samples
 
     @property
     def final_probabilities(self) -> dict[str, float]:
+        """Outcome probabilities from the final execution step."""
         return self._readout_results.probabilities
 
     @property
     def final_state(self) -> QTensor:
+        """Quantum state vector from the final execution step."""
         return self._readout_results.final_state
 
     @property
     def final_expected_values(self) -> list[Number]:
+        """Expectation values from the final execution step."""
         return self._readout_results.expected_values
 
     @property
     def samples(self) -> list[dict[str, int]]:
+        """Measurement samples for every time-step (intermediate + final).
+
+        Returns:
+            list[dict[str, int]]: Per-step sample dictionaries.
+
+        Raises:
+            ValueError: If no intermediate results were stored or no
+                ``SamplingReadout`` was provided.
+        """
         if self._intermediate_results:
             if self.has_samples():
                 results = []
@@ -71,6 +106,15 @@ class FunctionalResult(Result):
 
     @property
     def probabilities(self) -> list[dict[str, float]]:
+        """Outcome probabilities for every time-step (intermediate + final).
+
+        Returns:
+            list[dict[str, float]]: Per-step probability dictionaries.
+
+        Raises:
+            ValueError: If no intermediate results were stored or no
+                ``SamplingReadout`` / ``StateTomographyReadout`` was provided.
+        """
         if self._intermediate_results:
             if self.has_probabilities():
                 results = []
@@ -84,6 +128,15 @@ class FunctionalResult(Result):
 
     @property
     def states(self) -> list[QTensor]:
+        """Quantum state vectors for every time-step (intermediate + final).
+
+        Returns:
+            list[QTensor]: Per-step state vectors.
+
+        Raises:
+            ValueError: If no intermediate results were stored or no
+                ``StateTomographyReadout`` was provided.
+        """
         if self._intermediate_results:
             if self.has_final_state():
                 results = []
@@ -95,6 +148,15 @@ class FunctionalResult(Result):
 
     @property
     def expected_values(self) -> list[list[Number]]:
+        """Expectation values for every time-step (intermediate + final).
+
+        Returns:
+            list[list[Number]]: Per-step expectation value lists.
+
+        Raises:
+            ValueError: If no intermediate results were stored or no
+                ``ExpectationReadout`` was provided.
+        """
         if self._intermediate_results:
             if self.has_expectation_values():
                 results = []
@@ -105,15 +167,36 @@ class FunctionalResult(Result):
         raise ValueError("Can't find intermediate expected values because intermediate Results were not stored.")
 
     def has_final_state(self) -> bool:
+        """Check whether the result contains a final quantum state.
+
+        Returns:
+            bool: ``True`` if a ``StateTomographyReadout`` result is present.
+        """
         return self._readout_results.has_final_state()
 
     def has_samples(self) -> bool:
+        """Check whether the result contains measurement samples.
+
+        Returns:
+            bool: ``True`` if a ``SamplingReadout`` result is present.
+        """
         return self._readout_results.has_samples()
 
     def has_probabilities(self) -> bool:
+        """Check whether the result contains outcome probabilities.
+
+        Returns:
+            bool: ``True`` if a sampling or state-tomography readout result
+                is present.
+        """
         return self._readout_results.has_probabilities()
 
     def has_expectation_values(self) -> bool:
+        """Check whether the result contains expectation values.
+
+        Returns:
+            bool: ``True`` if an ``ExpectationReadout`` result is present.
+        """
         return self._readout_results.has_expectation_values()
 
     def __len__(self) -> int:
@@ -144,6 +227,19 @@ class FunctionalResult(Result):
         return out
 
     def __getitem__(self, index: int) -> ReadoutCompositeResults:
+        """Return the readout composite results at the given time-step index.
+
+        Args:
+            index (int): Zero-based index into the sequence of intermediate
+                results followed by the final result.
+
+        Returns:
+            ReadoutCompositeResults: The composite readout result at
+                ``index``.
+
+        Raises:
+            ValueError: If ``index`` exceeds the number of stored results.
+        """
         if index > len(self):
             raise ValueError("Invalid Index")
         if index < len(self._intermediate_results):

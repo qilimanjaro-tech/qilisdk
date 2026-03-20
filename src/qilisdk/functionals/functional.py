@@ -23,10 +23,11 @@ TResult_co = TypeVar("TResult_co", bound=FunctionalResult, covariant=True)
 
 
 class Functional(ABC):
-    """
-    Abstract interface for executable routines that return a :class:`FunctionalResult`.
+    """Abstract interface for executable routines that return a :class:`FunctionalResult`.
 
-    Subclasses detail the concrete `result_type` they generate.
+    Subclasses must define the concrete ``result_type`` class variable
+    indicating which :class:`~qilisdk.functionals.functional_result.FunctionalResult`
+    subclass they produce.
     """
 
     result_type: ClassVar[type[FunctionalResult]]
@@ -34,6 +35,9 @@ class Functional(ABC):
 
 
 class PrimitiveFunctional(Parameterizable, Functional, ABC):
-    """
-    Base class for functionals backed by a :class:`~qilisdk.core.parameterizable.Parameterizable` object.
+    """Base class for functionals backed by a :class:`~qilisdk.core.parameterizable.Parameterizable` object.
+
+    Primitive functionals expose tunable parameters via the
+    :class:`~qilisdk.core.parameterizable.Parameterizable` interface and
+    are directly executable by a backend.
     """

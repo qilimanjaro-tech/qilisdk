@@ -11,6 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Readout method definitions for quantum circuit execution.
+
+This module provides the :class:`ReadoutMethod` base class and its concrete
+subclasses -- :class:`SamplingReadout`, :class:`ExpectationReadout`, and
+:class:`StateTomographyReadout` -- that specify how results are extracted from
+a quantum backend after execution.
+"""
+
 from __future__ import annotations
 
 from typing import Literal
@@ -24,8 +32,14 @@ from qilisdk.core import QTensor
 class ReadoutMethod(BaseModel):
     """Base type for readout configurations.
 
-    Use the subclasses directly or build them with the factory helpers defined
-    in this class.
+    :class:`ReadoutMethod` is not meant to be instantiated directly.  Use one
+    of the concrete subclasses (:class:`SamplingReadout`,
+    :class:`ExpectationReadout`, :class:`StateTomographyReadout`) or the
+    convenience factory methods defined on this class:
+
+    * :meth:`sample` -- creates a :class:`SamplingReadout`
+    * :meth:`expectation_values` -- creates an :class:`ExpectationReadout`
+    * :meth:`state_tomography` -- creates a :class:`StateTomographyReadout`
     """
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
@@ -44,58 +58,103 @@ class ReadoutMethod(BaseModel):
 
     @classmethod
     def sample(cls, nshots: int = 100) -> ReadoutMethod:
-        """Create a sampling readout.
+        """Create a :class:`SamplingReadout`.
+
+        This factory must be called on :class:`ReadoutMethod` itself, not on a
+        subclass.
 
         Args:
-            nshots (int): Number of measurement shots.
+            nshots (int): Number of measurement shots.  Must be >= 0.
 
         Returns:
-            SamplingReadout: a constructed sampling readout.
+            SamplingReadout: A configured sampling readout instance.
+
+        Raises:
+            AttributeError: If called on a subclass instead of
+                :class:`ReadoutMethod`.
         """
         cls._require_factory_called_on_base("sample")
         return SamplingReadout(nshots=nshots)
 
     def is_sample(self) -> bool:
-        """Return ``True`` when this readout is :class:`SamplingReadout`."""
+        """Check whether this readout is a :class:`SamplingReadout`.
+
+        Returns:
+            bool: ``True`` if this instance is a :class:`SamplingReadout`,
+            ``False`` otherwise.
+        """
         return isinstance(self, SamplingReadout)
 
     @classmethod
     def expectation_values(cls, observables: list[Hamiltonian | QTensor], nshots: int = 0) -> ExpectationReadout:
-        """Create an expectation-value readout.
+        """Create an :class:`ExpectationReadout`.
+
+        This factory must be called on :class:`ReadoutMethod` itself, not on a
+        subclass.
 
         Args:
-            observables (list[Hamiltonian | QTensor]): Observables to evaluate.
-            nshots (int): Number of shots. Use 0 for exact/state-based evaluation.
+            observables (list[Hamiltonian | QTensor]): Observables whose
+                expectation values will be evaluated.
+            nshots (int): Number of measurement shots.  Use ``0`` for
+                exact (state-vector-based) evaluation.
 
         Returns:
-            ExpectationReadout: The constructed expectation readout.
+            ExpectationReadout: A configured expectation-value readout instance.
+
+        Raises:
+            AttributeError: If called on a subclass instead of
+                :class:`ReadoutMethod`.
         """
         cls._require_factory_called_on_base("expectation_values")
         return ExpectationReadout(observables=observables, nshots=nshots)
 
     def is_expectation_values(self) -> bool:
-        """Return ``True`` when this readout is :class:`ExpectationReadout`."""
+        """Check whether this readout is an :class:`ExpectationReadout`.
+
+        Returns:
+            bool: ``True`` if this instance is an :class:`ExpectationReadout`,
+            ``False`` otherwise.
+        """
         return isinstance(self, ExpectationReadout)
 
     @classmethod
     def state_tomography(cls, method: Literal["exact"] = "exact") -> StateTomographyReadout:
-        """Create a state-tomography readout.
+        """Create a :class:`StateTomographyReadout`.
+
+        This factory must be called on :class:`ReadoutMethod` itself, not on a
+        subclass.
 
         Args:
             method (Literal["exact"]): Tomography method identifier.
+                Currently only ``"exact"`` is supported.
 
         Returns:
-            StateTomographyReadout: The constructed state tomography readout.
+            StateTomographyReadout: A configured state-tomography readout
+            instance.
+
+        Raises:
+            AttributeError: If called on a subclass instead of
+                :class:`ReadoutMethod`.
         """
         cls._require_factory_called_on_base("state_tomography")
         return StateTomographyReadout(state_tomography_method=method)
 
     def is_state_tomography(self) -> bool:
-        """Return ``True`` when this readout is :class:`StateTomographyReadout`."""
+        """Check whether this readout is a :class:`StateTomographyReadout`.
+
+        Returns:
+            bool: ``True`` if this instance is a
+            :class:`StateTomographyReadout`, ``False`` otherwise.
+        """
         return isinstance(self, StateTomographyReadout)
 
     def is_valid(self) -> bool:
-        """Return whether this readout is one of the supported concrete kinds."""
+        """Check whether this readout is one of the supported concrete kinds.
+
+        Returns:
+            bool: ``True`` if the instance is a :class:`SamplingReadout`,
+            :class:`ExpectationReadout`, or :class:`StateTomographyReadout`.
+        """
         return self.is_state_tomography() or self.is_expectation_values() or self.is_sample()
 
     @staticmethod
@@ -122,9 +181,17 @@ class ReadoutMethod(BaseModel):
 class SamplingReadout(ReadoutMethod):
     """Sampling readout configuration.
 
-    Constructor examples:
-        ``SamplingReadout(nshots=1000)``
-        ``SamplingReadout(1000)``
+    Instructs the backend to perform repeated measurement shots and return
+    bitstring counts.  Can also be created via
+    :meth:`ReadoutMethod.sample`.
+
+    Args:
+        nshots (int): Number of measurement shots (must be >= 0).  Accepted
+            as a keyword argument or as the first positional argument.
+
+    Examples:
+        >>> SamplingReadout(nshots=1000)
+        >>> SamplingReadout(1000)
     """
 
     nshots: int = Field(ge=0)
@@ -147,9 +214,27 @@ class SamplingReadout(ReadoutMethod):
 class ExpectationReadout(ReadoutMethod):
     """Expectation-value readout configuration.
 
-    Constructor examples:
-        ``ExpectationReadout(observables=[...], nshots=0)``
-        ``ExpectationReadout([...], 0)``
+    Instructs the backend to compute expectation values
+    ``<observable>`` for one or more observables.  Can also be created via
+    :meth:`ReadoutMethod.expectation_values`.
+
+    Args:
+        observables (list[Hamiltonian | QTensor]): Observables whose
+            expectation values are requested.  Accepted as a keyword
+            argument or as the first positional argument.
+        nshots (int): Number of measurement shots.  Use ``0`` (the default)
+            for exact state-vector evaluation.  Accepted as a keyword
+            argument or as the second positional argument.
+
+    Attributes:
+        qtensor_observables (list[QTensor]): The ``observables`` converted
+            to :class:`~qilisdk.core.QTensor` form.  Populated
+            automatically by a model validator; not intended to be set
+            manually.
+
+    Examples:
+        >>> ExpectationReadout(observables=[hamiltonian], nshots=0)
+        >>> ExpectationReadout([hamiltonian], 0)
     """
 
     nshots: int = Field(default=0, ge=0)
@@ -180,6 +265,14 @@ class ExpectationReadout(ReadoutMethod):
         return self
 
     def scale_observables(self, nqubits: int) -> None:
+        """Scale each observable to match a given number of qubits.
+
+        The conversion is cached: calling this method again with the same
+        ``nqubits`` value is a no-op.
+
+        Args:
+            nqubits (int): Target qubit count to scale the observables to.
+        """
         if self._scaled_nqubits == nqubits:
             return
         self.qtensor_observables = [
@@ -191,9 +284,22 @@ class ExpectationReadout(ReadoutMethod):
 class StateTomographyReadout(ReadoutMethod):
     """State-tomography readout configuration.
 
-    Constructor examples:
-        ``StateTomographyReadout(state_tomography_method="exact")``
-        ``StateTomographyReadout("exact")``
+    Instructs the backend to return the full quantum state (ket or density
+    matrix) after execution.  Can also be created via
+    :meth:`ReadoutMethod.state_tomography`.
+
+    Args:
+        state_tomography_method (Literal["exact"]): Tomography method
+            identifier.  Currently only ``"exact"`` is supported.  Accepted
+            as a keyword argument or as the first positional argument.
+        compute_probabilities (bool): If ``True`` (the default), the
+            resulting :class:`~qilisdk.readout.readout_result.StateTomographyReadoutResult`
+            will also derive computational-basis probabilities from the
+            reconstructed state.
+
+    Examples:
+        >>> StateTomographyReadout(state_tomography_method="exact")
+        >>> StateTomographyReadout("exact")
     """
 
     state_tomography_method: Literal["exact"] = Field(default="exact")

@@ -28,8 +28,13 @@ if TYPE_CHECKING:
 
 
 class ModelCostFunction(CostFunction):
-    """
-    Evaluate the cost of functional results with respect to a :class:`~qilisdk.core.model.Model`.
+    """Evaluate the cost of a ``FunctionalResult`` with respect to a :class:`~qilisdk.core.model.Model`.
+
+    The model encodes an objective function (and optional constraints) over
+    binary variables. This cost function maps a ``FunctionalResult`` -- obtained
+    from a ``DigitalPropagation`` or ``AnalogEvolution`` -- onto a scalar by
+    evaluating the model against either the final quantum state or the sampled
+    probability distribution.
 
     Example:
         .. code-block:: python
@@ -45,7 +50,8 @@ class ModelCostFunction(CostFunction):
     """
 
     def __init__(self, model: Model) -> None:
-        """
+        """Initialise a ``ModelCostFunction``.
+
         Args:
             model (Model): Classical model describing objective and constraints.
         """
@@ -54,20 +60,29 @@ class ModelCostFunction(CostFunction):
 
     @property
     def model(self) -> Model:
-        """Return the underlying optimisation model."""
+        """Return the underlying optimisation model.
+
+        Returns:
+            Model: The :class:`~qilisdk.core.model.Model` instance passed at
+            construction time.
+        """
         return self._model
 
     def compute_cost(self, results: FunctionalResult) -> Number:
-        """
-        Compute the cost from a functional result.
+        """Compute the cost from a ``FunctionalResult``.
 
-        Uses the final state if available, otherwise falls back to sampling-based estimation.
+        Uses the final state if available (via ``StateTomography``), otherwise
+        falls back to sampling-based estimation.
+
+        Args:
+            results (FunctionalResult): The result from executing a functional.
 
         Returns:
             Number: Cost value computed from the results.
 
         Raises:
-            ValueError: If the results contain neither a StateTomography nor a Sampling readout.
+            ValueError: If ``results`` contains neither a ``StateTomography``
+                nor a ``Sampling`` readout.
         """
         if results.has_final_state():
             return self._compute_from_state(results)
@@ -76,6 +91,24 @@ class ModelCostFunction(CostFunction):
         raise ValueError("ModelCostFunction requires either a StateTomography or Sampling readout in the results.")
 
     def _compute_from_state(self, results: FunctionalResult) -> Number:
+        """Compute the cost using the full final quantum state.
+
+        Handles ket, bra, and density-matrix representations. For
+        :class:`~qilisdk.core.model.QUBO` models the Hamiltonian expectation
+        value is computed directly; for general models each computational-basis
+        component is evaluated individually.
+
+        Args:
+            results (FunctionalResult): A result whose ``final_state`` is
+                available.
+
+        Returns:
+            Number: The computed cost value.
+
+        Raises:
+            ValueError: If the final state is neither a ket, bra, nor a valid
+                density matrix.
+        """
         final_state = results.final_state
 
         if isinstance(self.model, QUBO):
@@ -130,6 +163,23 @@ class ModelCostFunction(CostFunction):
         return total_cost
 
     def _compute_from_samples(self, results: FunctionalResult) -> Number:
+        """Compute the cost from sampled probability distributions.
+
+        Each bitstring sample is mapped to the model's variables and the
+        model is evaluated; the total cost is the probability-weighted sum
+        of those evaluations.
+
+        Args:
+            results (FunctionalResult): A result whose ``final_probabilities``
+                are available.
+
+        Returns:
+            Number: The probability-weighted cost value.
+
+        Raises:
+            ValueError: If the number of qubits in a sample does not match
+                the number of model variables.
+        """
         total_cost = complex(0.0)
         probabilities = results.final_probabilities
         for sample, prob in probabilities.items():
@@ -145,4 +195,9 @@ class ModelCostFunction(CostFunction):
         return total_cost
 
     def __repr__(self) -> str:
+        """Return a string representation of this cost function.
+
+        Returns:
+            str: A string of the form ``ModelCostFunction(model=...)``.
+        """
         return f"ModelCostFunction(model={self.model})"

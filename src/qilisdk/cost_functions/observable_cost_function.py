@@ -28,8 +28,17 @@ if TYPE_CHECKING:
 
 
 class ObservableCostFunction(CostFunction):
-    """
-    Compute costs by taking expectation values of observables.
+    """Compute costs by taking the expectation value of a quantum observable.
+
+    The observable can be supplied as a :class:`~qilisdk.core.qtensor.QTensor`,
+    a :class:`~qilisdk.analog.hamiltonian.Hamiltonian`, or a
+    :class:`~qilisdk.analog.hamiltonian.PauliOperator`. It is stored internally
+    as a ``QTensor``.
+
+    When a ``FunctionalResult`` (from a ``DigitalPropagation`` or
+    ``AnalogEvolution``) is passed to :meth:`compute_cost`, the expectation
+    value is computed either exactly from the final state or estimated from
+    sampled probabilities.
 
     Example:
         .. code-block:: python
@@ -41,9 +50,11 @@ class ObservableCostFunction(CostFunction):
     """
 
     def __init__(self, observable: QTensor | Hamiltonian | PauliOperator) -> None:
-        """
+        """Initialise an ``ObservableCostFunction``.
+
         Args:
-            observable (QTensor | Hamiltonian | PauliOperator): Quantum observable whose expectation value defines the cost.
+            observable (QTensor | Hamiltonian | PauliOperator): Quantum
+                observable whose expectation value defines the cost.
 
         Raises:
             ValueError: If the provided observable type is unsupported.
@@ -62,21 +73,28 @@ class ObservableCostFunction(CostFunction):
 
     @property
     def observable(self) -> QTensor:
-        """Return the observable in ``QTensor`` form."""
+        """Return the observable in ``QTensor`` form.
+
+        Returns:
+            QTensor: The matrix representation of the observable.
+        """
         return self._observable
 
     def compute_cost(self, results: FunctionalResult) -> Number:
-        """
-        Compute the cost from a functional result.
+        """Compute the cost from a ``FunctionalResult``.
 
-        Uses the final state if available (exact expectation value),
-        otherwise falls back to sampling-based estimation.
+        Uses the final state if available (exact expectation value via
+        ``StateTomography``), otherwise falls back to sampling-based estimation.
+
+        Args:
+            results (FunctionalResult): The result from executing a functional.
 
         Returns:
-            Number: the expectation value of the observable.
+            Number: The expectation value of the observable.
 
         Raises:
-            ValueError: If the results contain neither a StateTomography nor a Sampling readout.
+            ValueError: If ``results`` contains neither a ``StateTomography``
+                nor a ``Sampling`` readout.
         """
         if results.has_final_state():
             return self._compute_from_state(results)
@@ -85,6 +103,16 @@ class ObservableCostFunction(CostFunction):
         raise ValueError("ObservableCostFunction requires either a StateTomography or Sampling readout in the results.")
 
     def _compute_from_state(self, results: FunctionalResult) -> Number:
+        """Compute the exact expectation value from the final quantum state.
+
+        Args:
+            results (FunctionalResult): A result whose ``final_state`` is
+                available.
+
+        Returns:
+            Number: The expectation value ``<psi|O|psi>`` (or ``Tr(rho O)``
+            for mixed states).
+        """
         final_state = results.final_state
         total_cost = complex(np.real_if_close(expect_val(self._observable, final_state), tol=get_settings().atol))
         if abs(total_cost.imag) < get_settings().atol:
@@ -92,6 +120,23 @@ class ObservableCostFunction(CostFunction):
         return total_cost
 
     def _compute_from_samples(self, results: FunctionalResult) -> Number:
+        """Estimate the expectation value from sampled probability distributions.
+
+        Each bitstring sample is converted to a computational-basis ket and the
+        observable is evaluated against it; the total is a probability-weighted
+        sum of those evaluations.
+
+        Args:
+            results (FunctionalResult): A result whose ``final_probabilities``
+                are available.
+
+        Returns:
+            Number: The probability-weighted expectation value.
+
+        Raises:
+            ValueError: If the number of qubits in a sample does not match the
+                number of qubits of the observable.
+        """
         total_cost = complex(0.0)
         nqubits = self._observable.nqubits
         probabilities = results.final_probabilities
@@ -109,4 +154,9 @@ class ObservableCostFunction(CostFunction):
         return total_cost
 
     def __repr__(self) -> str:
+        """Return a string representation of this cost function.
+
+        Returns:
+            str: A string of the form ``ObservableCostFunction(observable=...)``.
+        """
         return f"ObservableCostFunction(observable={self._observable})"

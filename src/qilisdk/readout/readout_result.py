@@ -11,6 +11,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Result containers returned by the various readout methods.
+
+Each concrete :class:`ReadoutMethod` has a corresponding result class defined
+here:
+
+* :class:`SamplingReadoutResult` -- bitstring counts and probabilities.
+* :class:`ExpectationReadoutResult` -- expectation values of observables.
+* :class:`StateTomographyReadoutResult` -- full quantum state with optional
+  probability extraction.
+
+:class:`ReadoutCompositeResults` aggregates several result objects when
+multiple readout methods are requested in a single execution.
+"""
+
 from __future__ import annotations
 
 import heapq
@@ -41,15 +55,39 @@ def _real_if_close(number: Number) -> Number:
 
 
 class ReadoutCompositeResults(Result):
+    """Aggregated container for multiple :class:`ReadoutResult` objects.
+
+    When a backend execution is configured with more than one readout method,
+    the results are collected into a single :class:`ReadoutCompositeResults`
+    instance.  Convenience properties (:attr:`samples`, :attr:`probabilities`,
+    :attr:`final_state`, :attr:`expected_values`) provide direct access to the
+    first matching result of each kind.
+
+    The container is iterable and supports ``len()``.
+
+    Args:
+        readout_results (list[ReadoutResult]): Individual readout results
+            from the execution.
+    """
+
     def __init__(self, readout_results: list[ReadoutResult]) -> None:
         self._readout_results = readout_results
 
     @property
     def readout_results(self) -> list[ReadoutResult]:
+        """list[ReadoutResult]: All individual readout results."""
         return self._readout_results
 
     @property
     def samples(self) -> dict[str, int]:
+        """Bitstring counts from the first :class:`SamplingReadoutResult`.
+
+        Returns:
+            dict[str, int]: Mapping of bitstring to measurement count.
+
+        Raises:
+            ValueError: If no :class:`SamplingReadoutResult` is present.
+        """
         for ro in self._readout_results:
             if isinstance(ro, SamplingReadoutResult):
                 return ro.samples
@@ -57,6 +95,18 @@ class ReadoutCompositeResults(Result):
 
     @property
     def probabilities(self) -> dict[str, float]:
+        """Probability distribution from the first sampling or state-tomography result.
+
+        A :class:`SamplingReadoutResult` is preferred; if none is found, a
+        :class:`StateTomographyReadoutResult` with ``compute_probabilities``
+        enabled is used instead.
+
+        Returns:
+            dict[str, float]: Mapping of bitstring to probability.
+
+        Raises:
+            ValueError: If no suitable result is present.
+        """
         for ro in self._readout_results:
             if isinstance(ro, SamplingReadoutResult):
                 return ro.probabilities
@@ -68,6 +118,14 @@ class ReadoutCompositeResults(Result):
 
     @property
     def final_state(self) -> QTensor:
+        """Reconstructed quantum state from the first :class:`StateTomographyReadoutResult`.
+
+        Returns:
+            QTensor: The final quantum state (ket or density matrix).
+
+        Raises:
+            ValueError: If no :class:`StateTomographyReadoutResult` is present.
+        """
         for ro in self._readout_results:
             if isinstance(ro, StateTomographyReadoutResult):
                 return ro.final_state
@@ -75,18 +133,49 @@ class ReadoutCompositeResults(Result):
 
     @property
     def expected_values(self) -> list[Number]:
+        """Expectation values from the first :class:`ExpectationReadoutResult`.
+
+        Returns:
+            list[Number]: Expectation value for each observable, in the order
+            they were specified in the readout configuration.
+
+        Raises:
+            ValueError: If no :class:`ExpectationReadoutResult` is present.
+        """
         for ro in self._readout_results:
             if isinstance(ro, ExpectationReadoutResult):
                 return ro.expected_values
         raise ValueError("Can't find expected values in results, because no Expectation readout was provided.")
 
     def has_final_state(self) -> bool:
+        """Check whether a :class:`StateTomographyReadoutResult` is present.
+
+        Returns:
+            bool: ``True`` if any contained result is a
+            :class:`StateTomographyReadoutResult`.
+        """
         return any(isinstance(res, StateTomographyReadoutResult) for res in self)
 
     def has_samples(self) -> bool:
+        """Check whether a :class:`SamplingReadoutResult` is present.
+
+        Returns:
+            bool: ``True`` if any contained result is a
+            :class:`SamplingReadoutResult`.
+        """
         return any(isinstance(res, SamplingReadoutResult) for res in self)
 
     def has_probabilities(self) -> bool:
+        """Check whether probability data is available.
+
+        Probabilities are available when the results contain a
+        :class:`SamplingReadoutResult` or a
+        :class:`StateTomographyReadoutResult` with
+        ``compute_probabilities`` enabled.
+
+        Returns:
+            bool: ``True`` if probability data can be retrieved.
+        """
         return any(
             isinstance(res, (SamplingReadoutResult))
             or (isinstance(res, StateTomographyReadoutResult) and res.readout.compute_probabilities)
@@ -94,6 +183,12 @@ class ReadoutCompositeResults(Result):
         )
 
     def has_expectation_values(self) -> bool:
+        """Check whether an :class:`ExpectationReadoutResult` is present.
+
+        Returns:
+            bool: ``True`` if any contained result is an
+            :class:`ExpectationReadoutResult`.
+        """
         return any(isinstance(res, (ExpectationReadoutResult)) for res in self)
 
     def __len__(self) -> int:
@@ -122,12 +217,47 @@ class ReadoutCompositeResults(Result):
 
 
 class ReadoutResult(Result):
+    """Abstract base class for a single readout result.
+
+    Every concrete subclass must expose a :attr:`readout` property that
+    returns the :class:`~qilisdk.readout.ReadoutMethod` configuration used
+    to produce the result.
+    """
+
     @property
     @abstractmethod
-    def readout(self) -> ReadoutMethod: ...
+    def readout(self) -> ReadoutMethod:
+        """ReadoutMethod: The readout configuration that produced this result."""
+        ...
 
 
 class SamplingReadoutResult(ReadoutResult):
+    """Result produced by a :class:`~qilisdk.readout.SamplingReadout`.
+
+    Holds bitstring measurement counts and the corresponding probability
+    distribution.  The object can be constructed in two ways:
+
+    1. From explicit ``samples`` (and optionally ``probabilities``).
+    2. From a quantum ``state``, in which case samples are drawn
+       stochastically according to the state amplitudes.
+
+    Args:
+        readout (SamplingReadout): The readout configuration that produced
+            this result.
+        samples (dict[str, int] | None): Mapping of bitstring to
+            measurement count.  Mutually exclusive with ``state``.
+        probabilities (dict[str, float] | None): Pre-computed probability
+            distribution.  If omitted when ``samples`` is given, it is
+            derived from the counts.
+        state (QTensor | None): Quantum state from which to derive
+            samples and probabilities.  Mutually exclusive with
+            ``samples``.
+
+    Raises:
+        ValueError: If neither ``samples``/``probabilities`` nor ``state``
+            is provided.
+    """
+
     @overload
     def __init__(
         self,
@@ -193,34 +323,45 @@ class SamplingReadoutResult(ReadoutResult):
 
     @property
     def readout(self) -> SamplingReadout:
+        """SamplingReadout: The readout configuration that produced this result."""
         return self._readout
 
     @property
     def samples(self) -> dict[str, int]:
+        """dict[str, int]: Mapping of measured bitstring to count."""
         return self._samples
 
     @property
     def probabilities(self) -> dict[str, float]:
-        """
+        """Estimated probability distribution over bitstrings.
+
         Returns:
-            dict[str,float]: a copy of the estimated probability distribution.
+            dict[str, float]: Mapping of bitstring to probability.
         """
         return self._probabilities
 
     def get_probability(self, bitstring: str) -> float:
-        """
+        """Return the probability for a single bitstring.
+
+        Args:
+            bitstring (str): The bitstring to look up (e.g. ``"010"``).
+
         Returns:
-            float: the probability associated with ``bitstring`` (0.0 if unseen).
+            float: The probability associated with ``bitstring``, or ``0.0``
+            if it was not observed.
         """
         return self._probabilities.get(bitstring, 0.0)
 
     def get_probabilities(self, n: int | None = None) -> list[tuple[str, float]]:
-        """
+        """Return the most probable bitstrings in descending order.
+
         Args:
-            n (int | None): Maximum number of items to return. Defaults to all outcomes.
+            n (int | None): Maximum number of entries to return.  ``None``
+                (the default) returns all outcomes.
 
         Returns:
-            list[tuple[str, float]]: the ``n`` most probable bitstrings in descending probability order.
+            list[tuple[str, float]]: Up to ``n`` ``(bitstring, probability)``
+            pairs sorted by probability in descending order.
         """
         if n is None:
             n = len(self._probabilities)
@@ -234,6 +375,29 @@ class SamplingReadoutResult(ReadoutResult):
 
 
 class ExpectationReadoutResult(ReadoutResult):
+    """Result produced by an :class:`~qilisdk.readout.ExpectationReadout`.
+
+    Contains the computed expectation values for each observable specified in
+    the readout configuration.  The object can be constructed in two ways:
+
+    1. From pre-computed ``expected_values``.
+    2. From a quantum ``state``, in which case the expectation values are
+       derived via :func:`~qilisdk.core.expect_val`.
+
+    Args:
+        readout (ExpectationReadout): The readout configuration that
+            produced this result.
+        expected_values (list[Number] | None): Pre-computed expectation
+            values, one per observable.  Mutually exclusive with ``state``.
+        state (QTensor | None): Quantum state used to compute expectation
+            values on-the-fly.  Mutually exclusive with
+            ``expected_values``.
+
+    Raises:
+        ValueError: If neither ``expected_values`` nor ``state`` is
+            provided.
+    """
+
     @overload
     def __init__(self, readout: ExpectationReadout, *, state: QTensor) -> None: ...
 
@@ -272,10 +436,12 @@ class ExpectationReadoutResult(ReadoutResult):
 
     @property
     def readout(self) -> ExpectationReadout:
+        """ExpectationReadout: The readout configuration that produced this result."""
         return self._readout
 
     @property
     def expected_values(self) -> list[Number]:
+        """list[Number]: Expectation values, one per observable, in the same order as specified in the readout."""
         return self._expected_values
 
     def __repr__(self) -> str:
@@ -290,6 +456,18 @@ class ExpectationReadoutResult(ReadoutResult):
 
 
 class StateTomographyReadoutResult(ReadoutResult):
+    """Result produced by a :class:`~qilisdk.readout.StateTomographyReadout`.
+
+    Contains the full quantum state after execution and, optionally, the
+    computational-basis probability distribution derived from it.
+
+    Args:
+        readout (StateTomographyReadout): The readout configuration that
+            produced this result.
+        final_state (QTensor): The reconstructed quantum state (ket or
+            density matrix).
+    """
+
     def __init__(
         self,
         readout: StateTomographyReadout,
@@ -303,27 +481,37 @@ class StateTomographyReadoutResult(ReadoutResult):
 
     @property
     def readout(self) -> StateTomographyReadout:
+        """StateTomographyReadout: The readout configuration that produced this result."""
         return self._readout
 
     @property
     def final_state(self) -> QTensor:
+        """QTensor: The reconstructed quantum state (ket or density matrix)."""
         return self._final_state
 
     @property
     def probabilities(self) -> dict[str, float] | None:
-        """
+        """Computational-basis probability distribution derived from the state.
+
         Returns:
-            dict[str,float]: a copy of the estimated probability distribution.
+            dict[str, float] | None: Mapping of bitstring to probability, or
+            ``None`` if ``compute_probabilities`` was disabled in the readout.
         """
         return self._probabilities
 
     def get_probability(self, bitstring: str) -> float:
-        """
+        """Return the probability for a single bitstring.
+
+        Args:
+            bitstring (str): The bitstring to look up (e.g. ``"010"``).
+
         Returns:
-            float: the probability associated with ``bitstring`` (0.0 if unseen).
+            float: The probability associated with ``bitstring``, or ``0.0``
+            if it was not observed.
 
         Raises:
-            ValueError: if the readout set `compute_probabilities` to False,
+            ValueError: If ``compute_probabilities`` was set to ``False``
+                in the readout configuration.
         """
         if not self._probabilities:
             raise ValueError(
@@ -332,15 +520,19 @@ class StateTomographyReadoutResult(ReadoutResult):
         return self._probabilities.get(bitstring, 0.0)
 
     def get_probabilities(self, n: int | None = None) -> list[tuple[str, float]]:
-        """
+        """Return the most probable bitstrings in descending order.
+
         Args:
-            n (int | None): Maximum number of items to return. Defaults to all outcomes.
+            n (int | None): Maximum number of entries to return.  ``None``
+                (the default) returns all outcomes.
 
         Returns:
-            list[tuple[str, float]]: the ``n`` most probable bitstrings in descending probability order.
+            list[tuple[str, float]]: Up to ``n`` ``(bitstring, probability)``
+            pairs sorted by probability in descending order.
 
         Raises:
-            ValueError: if the readout set `compute_probabilities` to False,
+            ValueError: If ``compute_probabilities`` was set to ``False``
+                in the readout configuration.
         """
         if not self._probabilities:
             raise ValueError(
@@ -357,15 +549,22 @@ class StateTomographyReadoutResult(ReadoutResult):
 
 
 def _probabilities_from_state(state: QTensor, *, check_normalization: bool = False) -> dict[str, float]:
-    """
-    Return computational-basis probabilities for a QTensor state.
+    """Return computational-basis probabilities for a :class:`~qilisdk.core.QTensor` state.
+
+    Args:
+        state (QTensor): A ket, bra, or density-matrix state.
+        check_normalization (bool): If ``True``, raise when the
+            probabilities do not sum to 1 (within
+            ``NORMALIZATION_TOLERANCE``).
 
     Returns:
-        dict[str, float]: a dictionary mapping every possible outcome to the probability of it appearing.
+        dict[str, float]: Mapping of every computational-basis bitstring to
+        its probability.
 
     Raises:
-        TypeError: if the state provided is not a valid state.
-        ValueError: if the probabilities are not normalized and check_normalization is set to True.
+        TypeError: If ``state`` is not a valid ket, bra, or density matrix.
+        ValueError: If ``check_normalization`` is ``True`` and the
+            probabilities are not properly normalized.
     """
     atol = get_settings().atol
 

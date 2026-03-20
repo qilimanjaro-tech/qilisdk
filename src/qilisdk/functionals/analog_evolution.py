@@ -68,6 +68,11 @@ class AnalogEvolution(PrimitiveFunctional):
             )
 
     def _iter_parameter_children(self) -> Iterator[Parameterizable]:
+        """Yield the schedule as the sole parameterizable child.
+
+        Yields:
+            Iterator[Parameterizable]: The underlying ``Schedule``.
+        """
         yield self.schedule
 
     def __repr__(self) -> str:

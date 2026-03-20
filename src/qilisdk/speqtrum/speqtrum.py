@@ -82,13 +82,35 @@ _EXECUTE_URL = "/execute"
 
 
 class SpeQtrumAPIError(httpx.HTTPStatusError):
-    """Raised when the SpeQtrum API responds with a non-success HTTP status."""
+    """Raised when the SpeQtrum API responds with a non-success HTTP status.
+
+    Wraps :class:`httpx.HTTPStatusError` with a human-readable error message
+    extracted from the response body when possible.
+    """
 
     def __init__(self, message: str, *, request: httpx.Request, response: httpx.Response) -> None:
+        """Initialise the error.
+
+        Args:
+            message (str): Human-readable description of the failure.
+            request (httpx.Request): The outgoing HTTP request that triggered
+                the error.
+            response (httpx.Response): The HTTP response carrying the error
+                status.
+        """
         super().__init__(message, request=request, response=response)
 
 
 def _safe_json_loads(value: str, *, context: str) -> JSONValue | None:
+    """Attempt to parse *value* as JSON, returning ``None`` on failure.
+
+    Args:
+        value (str): Raw JSON string.
+        context (str): Label used in warning messages on parse failure.
+
+    Returns:
+        JSONValue | None: Parsed JSON value, or ``None`` if decoding fails.
+    """
     try:
         result = json.loads(value)
         return cast("JSONValue", result)
@@ -98,6 +120,15 @@ def _safe_json_loads(value: str, *, context: str) -> JSONValue | None:
 
 
 def _safe_b64_decode(value: str, *, context: str) -> str | None:
+    """Base64-decode *value* and return the UTF-8 string, or ``None`` on failure.
+
+    Args:
+        value (str): Base64-encoded string.
+        context (str): Label used in warning messages on decode failure.
+
+    Returns:
+        str | None: Decoded UTF-8 string, or ``None`` if any decoding step fails.
+    """
     try:
         decoded_bytes = base64.b64decode(value)
     except (binascii.Error, ValueError) as exc:
@@ -111,6 +142,15 @@ def _safe_b64_decode(value: str, *, context: str) -> str | None:
 
 
 def _safe_b64_json(value: str, *, context: str) -> JSONValue | None:
+    """Base64-decode *value*, then JSON-parse the result.
+
+    Args:
+        value (str): Base64-encoded JSON string.
+        context (str): Label used in warning messages on failure.
+
+    Returns:
+        JSONValue | None: Parsed JSON value, or ``None`` if any step fails.
+    """
     decoded_text = _safe_b64_decode(value, context=context)
     if decoded_text is None:
         return None
@@ -118,6 +158,18 @@ def _safe_b64_json(value: str, *, context: str) -> JSONValue | None:
 
 
 def _request_extensions(*, context: str | None = None, skip_ensure_ok: bool = False) -> dict[str, Any] | None:
+    """Build an ``httpx`` request extensions dictionary.
+
+    Args:
+        context (str | None): Human-readable label attached to the request for
+            error reporting. ``None`` omits the key.
+        skip_ensure_ok (bool): When ``True``, the ``_ensure_ok`` event hook
+            will not raise on non-success status codes.
+
+    Returns:
+        dict[str, Any] | None: Extensions mapping, or ``None`` when no flags
+        are set.
+    """
     extensions: dict[str, Any] = {}
     if context:
         extensions[_CONTEXT_EXTENSION] = context
@@ -127,6 +179,15 @@ def _request_extensions(*, context: str | None = None, skip_ensure_ok: bool = Fa
 
 
 def _response_context(response: httpx.Response) -> str:
+    """Extract a human-readable context label from a response's originating request.
+
+    Args:
+        response (httpx.Response): The HTTP response to inspect.
+
+    Returns:
+        str: The context string stored in the request extensions, or a
+        fallback ``"METHOD URL"`` string.
+    """
     request = response.request
     if request is None:
         return "SpeQtrum API call"
@@ -137,6 +198,18 @@ def _response_context(response: httpx.Response) -> str:
 
 
 def _stringify_payload(payload: JSONValue | None) -> str | None:
+    """Convert a parsed JSON error payload into a one-line human-readable string.
+
+    Looks for common error-message keys (``message``, ``detail``, ``error``,
+    etc.) and falls back to ``json.dumps`` when none are found.
+
+    Args:
+        payload (JSONValue | None): Parsed JSON body of the error response.
+
+    Returns:
+        str | None: A concise error description, or ``None`` when *payload*
+        is ``None``.
+    """
     if payload is None:
         return None
     if isinstance(payload, dict):
@@ -159,6 +232,14 @@ def _stringify_payload(payload: JSONValue | None) -> str | None:
 
 
 def _summarize_error_payload(response: httpx.Response) -> str:
+    """Produce a single-line summary of the error body carried by *response*.
+
+    Args:
+        response (httpx.Response): The non-success HTTP response.
+
+    Returns:
+        str: A best-effort textual summary of the error payload.
+    """
     context = _response_context(response)
     try:
         body_text = response.text or ""
@@ -179,6 +260,18 @@ def _summarize_error_payload(response: httpx.Response) -> str:
 
 
 def _ensure_ok(response: httpx.Response) -> None:
+    """``httpx`` event hook that raises :class:`SpeQtrumAPIError` on non-success status codes.
+
+    Skips the check when the request carries the
+    ``_SKIP_ENSURE_OK_EXTENSION`` flag or when the status is
+    ``401 Unauthorized`` (handled separately by token refresh logic).
+
+    Args:
+        response (httpx.Response): The HTTP response to validate.
+
+    Raises:
+        SpeQtrumAPIError: If the response status indicates an error.
+    """
     request = response.request
     if request is not None and request.extensions.get(_SKIP_ENSURE_OK_EXTENSION):
         return
@@ -201,14 +294,33 @@ def _ensure_ok(response: httpx.Response) -> None:
 
 
 class _BearerAuth(httpx.Auth):
-    """Bearer token auth handler with automatic refresh support."""
+    """Bearer-token authentication handler with automatic token refresh.
+
+    Implements the ``httpx`` auth-flow protocol. On a ``401 Unauthorized``
+    response the handler transparently refreshes the access token using the
+    stored refresh token and retries the original request.
+    """
 
     requires_response_body = True
 
     def __init__(self, client: SpeQtrum) -> None:
+        """Initialise the auth handler.
+
+        Args:
+            client (SpeQtrum): The parent ``SpeQtrum`` client whose token
+                will be read and updated.
+        """
         self._client = client
 
     def auth_flow(self, request: httpx.Request) -> Generator[httpx.Request, httpx.Response, None]:
+        """Yield authenticated requests, refreshing the token on ``401``.
+
+        Args:
+            request (httpx.Request): The outgoing request to authenticate.
+
+        Yields:
+            httpx.Request: Requests decorated with an ``Authorization`` header.
+        """
         request.headers["Authorization"] = f"Bearer {self._client.token.access_token}"
         response = yield request
 
@@ -257,9 +369,27 @@ class _BearerAuth(httpx.Auth):
 
 
 class SpeQtrum:
-    """Synchronous client for the Qilimanjaro SpeQtrum API."""
+    """Synchronous client for the Qilimanjaro SpeQtrum API.
+
+    Provides methods for authentication, device discovery, job submission,
+    and result retrieval. Credentials are loaded from the system keyring;
+    call :meth:`login` first if no credentials have been cached.
+
+    Supported functional types for submission include
+    :class:`~qilisdk.functionals.digital_propagation.DigitalPropagation`,
+    :class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`,
+    :class:`~qilisdk.functionals.variational_program.VariationalProgram`,
+    :class:`~qilisdk.functionals.quantum_reservoir.QuantumReservoir`, and
+    various experiment types.
+    """
 
     def __init__(self) -> None:
+        """Initialise the ``SpeQtrum`` client using cached keyring credentials.
+
+        Raises:
+            RuntimeError: If no credentials are found in the keyring. Call
+                :meth:`login` before instantiation.
+        """
         logger.debug("Initializing SpeQtrum client")
         credentials = load_credentials()
         if credentials is None:
@@ -270,6 +400,11 @@ class SpeQtrum:
 
     @classmethod
     def _get_headers(cls) -> dict:
+        """Return default HTTP headers including the SDK ``User-Agent``.
+
+        Returns:
+            dict: Headers dictionary with at least the ``User-Agent`` key.
+        """
         from qilisdk import __version__  # noqa: PLC0415
 
         return {"User-Agent": f"qilisdk/{__version__}"}
@@ -612,6 +747,19 @@ class SpeQtrum:
 
     @staticmethod
     def _validate_readout(readout: ReadoutMethod | list[ReadoutMethod]) -> list[ReadoutMethod]:
+        """Normalise and validate the readout method(s).
+
+        Args:
+            readout (ReadoutMethod | list[ReadoutMethod]): One or more readout
+                methods to validate.
+
+        Returns:
+            list[ReadoutMethod]: The validated list of unique readout methods.
+
+        Raises:
+            ValueError: If any element is not a ``ReadoutMethod`` instance or if
+                duplicate readout types are supplied.
+        """
         _readout = [readout] if isinstance(readout, ReadoutMethod) else list(readout)
         if any(not isinstance(ro, ReadoutMethod) for ro in _readout):
             raise ValueError(
@@ -624,6 +772,17 @@ class SpeQtrum:
     def _submit_digital_propagation(
         self, functional: DigitalPropagation, device: str, readout: list[ReadoutMethod], job_name: str | None = None
     ) -> JobHandle[FunctionalResult]:
+        """Submit a ``DigitalPropagation`` functional to the SpeQtrum API.
+
+        Args:
+            functional (DigitalPropagation): The digital propagation to execute.
+            device (str): Target device code.
+            readout (list[ReadoutMethod]): Readout methods for measurement.
+            job_name (str | None): Optional human-readable job name.
+
+        Returns:
+            JobHandle[FunctionalResult]: A handle for tracking the submitted job.
+        """
         payload = ExecutePayload(
             type=ExecuteType.DIGITAL_PROPAGATION,
             digital_propagation_payload=DigitalPropagationPayload(digital_propagation=functional, readout=readout),
@@ -648,6 +807,16 @@ class SpeQtrum:
     def _submit_rabi(
         self, rabi_experiment: RabiExperiment, device: str, job_name: str | None = None
     ) -> JobHandle[RabiExperimentResult]:
+        """Submit a Rabi experiment to the SpeQtrum API.
+
+        Args:
+            rabi_experiment (RabiExperiment): The experiment to execute.
+            device (str): Target device code.
+            job_name (str | None): Optional human-readable job name.
+
+        Returns:
+            JobHandle[RabiExperimentResult]: A handle for tracking the submitted job.
+        """
         payload = ExecutePayload(
             type=ExecuteType.RABI_EXPERIMENT,
             rabi_experiment_payload=RabiExperimentPayload(rabi_experiment=rabi_experiment),
@@ -674,6 +843,16 @@ class SpeQtrum:
     def _submit_t1(
         self, t1_experiment: T1Experiment, device: str, job_name: str | None = None
     ) -> JobHandle[T1ExperimentResult]:
+        """Submit a T1 experiment to the SpeQtrum API.
+
+        Args:
+            t1_experiment (T1Experiment): The experiment to execute.
+            device (str): Target device code.
+            job_name (str | None): Optional human-readable job name.
+
+        Returns:
+            JobHandle[T1ExperimentResult]: A handle for tracking the submitted job.
+        """
         payload = ExecutePayload(
             type=ExecuteType.T1_EXPERIMENT,
             t1_experiment_payload=T1ExperimentPayload(t1_experiment=t1_experiment),
@@ -700,6 +879,16 @@ class SpeQtrum:
     def _submit_t2(
         self, t2_experiment: T2Experiment, device: str, job_name: str | None = None
     ) -> JobHandle[T2ExperimentResult]:
+        """Submit a T2 experiment to the SpeQtrum API.
+
+        Args:
+            t2_experiment (T2Experiment): The experiment to execute.
+            device (str): Target device code.
+            job_name (str | None): Optional human-readable job name.
+
+        Returns:
+            JobHandle[T2ExperimentResult]: A handle for tracking the submitted job.
+        """
         payload = ExecutePayload(
             type=ExecuteType.T2_EXPERIMENT,
             t2_experiment_payload=T2ExperimentPayload(t2_experiment=t2_experiment),
@@ -726,6 +915,17 @@ class SpeQtrum:
     def _submit_two_tones(
         self, two_tones_experiment: TwoTonesExperiment, device: str, job_name: str | None = None
     ) -> JobHandle[TwoTonesExperimentResult]:
+        """Submit a Two-Tones experiment to the SpeQtrum API.
+
+        Args:
+            two_tones_experiment (TwoTonesExperiment): The experiment to execute.
+            device (str): Target device code.
+            job_name (str | None): Optional human-readable job name.
+
+        Returns:
+            JobHandle[TwoTonesExperimentResult]: A handle for tracking the
+            submitted job.
+        """
         payload = ExecutePayload(
             type=ExecuteType.TWO_TONES_EXPERIMENT,
             two_tones_experiment_payload=TwoTonesExperimentPayload(two_tones_experiment=two_tones_experiment),
@@ -752,6 +952,17 @@ class SpeQtrum:
     def _submit_analog_evolution(
         self, functional: AnalogEvolution, device: str, readout: list[ReadoutMethod], job_name: str | None = None
     ) -> JobHandle[FunctionalResult]:
+        """Submit an ``AnalogEvolution`` functional to the SpeQtrum API.
+
+        Args:
+            functional (AnalogEvolution): The analog evolution to execute.
+            device (str): Target device code.
+            readout (list[ReadoutMethod]): Readout methods for measurement.
+            job_name (str | None): Optional human-readable job name.
+
+        Returns:
+            JobHandle[FunctionalResult]: A handle for tracking the submitted job.
+        """
         payload = ExecutePayload(
             type=ExecuteType.ANALOG_EVOLUTION,
             analog_evolution_payload=AnalogEvolutionPayload(analog_evolution=functional, readout=readout),
@@ -778,6 +989,17 @@ class SpeQtrum:
     def _submit_quantum_reservoir_functional(
         self, functional: QuantumReservoir, device: str, readout: list[ReadoutMethod], job_name: str | None = None
     ) -> JobHandle[FunctionalResult]:
+        """Submit a ``QuantumReservoir`` functional to the SpeQtrum API.
+
+        Args:
+            functional (QuantumReservoir): The quantum reservoir to execute.
+            device (str): Target device code.
+            readout (list[ReadoutMethod]): Readout methods for measurement.
+            job_name (str | None): Optional human-readable job name.
+
+        Returns:
+            JobHandle[FunctionalResult]: A handle for tracking the submitted job.
+        """
         payload = ExecutePayload(
             type=ExecuteType.ANALOG_EVOLUTION,
             quantum_reservoir_payload=QuantumReservoirPayload(quantum_reservoir=functional, readout=readout),
@@ -808,6 +1030,19 @@ class SpeQtrum:
         readout: list[ReadoutMethod],
         job_name: str | None = None,
     ) -> JobHandle[VariationalProgramResult]:
+        """Submit a ``VariationalProgram`` to the SpeQtrum API.
+
+        Args:
+            variational_program (VariationalProgram): The variational program
+                to execute.
+            device (str): Target device code.
+            readout (list[ReadoutMethod]): Readout methods for measurement.
+            job_name (str | None): Optional human-readable job name.
+
+        Returns:
+            JobHandle[VariationalProgramResult]: A handle for tracking the
+            submitted job.
+        """
         payload = ExecutePayload(
             type=ExecuteType.VARIATIONAL_PROGRAM,
             variational_program_payload=VariationalProgramPayload(
@@ -834,4 +1069,9 @@ class SpeQtrum:
         return JobHandle.variational_program(job.id)
 
     def __repr__(self) -> str:
+        """Return a string representation of the client.
+
+        Returns:
+            str: A string of the form ``SpeQtrum(username=...)``.
+        """
         return f"{type(self).__name__}(username={self.username})"

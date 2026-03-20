@@ -27,7 +27,7 @@ class VariationalProgramResult(Result):
         """
         Args:
             optimizer_result (OptimizerResult): Summary produced by the optimiser.
-            result (TResult_co): Functional result evaluated at the final parameters.
+            result (FunctionalResult): Functional result evaluated at the final parameters.
         """
         super().__init__()
         self._optimizer_result = optimizer_result
@@ -35,22 +35,22 @@ class VariationalProgramResult(Result):
 
     @property
     def optimal_cost(self) -> float:
-        """Best cost reported by the optimiser."""
+        """Best cost value reported by the optimiser."""
         return self._optimizer_result.optimal_cost
 
     @property
     def optimal_execution_results(self) -> FunctionalResult:
-        """Return the functional result evaluated at the optimal parameters."""
+        """Functional result evaluated at the optimal parameters."""
         return self._result
 
     @property
     def optimal_parameters(self) -> list[float]:
-        """Optimised parameter values."""
+        """Optimised parameter values found by the optimiser."""
         return self._optimizer_result.optimal_parameters
 
     @property
     def intermediate_results(self) -> list[OptimizerIntermediateResult]:
-        """Sequence of intermediate optimiser snapshots, if recorded."""
+        """Sequence of intermediate optimiser snapshots recorded during the run."""
         return self._optimizer_result.intermediate_results
 
     def __repr__(self) -> str:

@@ -128,7 +128,7 @@ def _safe_collect_pages(app):  # noqa: ANN001, ANN201
     env = app.builder.env
     if not hasattr(env, "_viewcode_modules"):
         return
-    if not _viewcode.is_supported_builder(app.builder):
+    if not _viewcode.is_supported_builder(app.builder, app.config.viewcode_enable_epub):
         return
 
     highlighter = app.builder.highlighter

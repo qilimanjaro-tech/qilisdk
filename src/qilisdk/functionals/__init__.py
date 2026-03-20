@@ -12,6 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Public API for quantum functionals and their results.
+
+This package exposes the core functional abstractions used to describe
+executable quantum routines (digital propagation, analog evolution,
+quantum reservoirs, variational programs) together with their result
+containers.
+"""
+
 from .analog_evolution import AnalogEvolution
 from .digital_propagation import DigitalPropagation
 from .functional_result import FunctionalResult

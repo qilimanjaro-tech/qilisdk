@@ -22,17 +22,22 @@ if TYPE_CHECKING:
 
 
 class CostFunction(ABC):
-    """
-    Base class that maps functional results into scalar costs.
+    """Abstract base class that maps a ``FunctionalResult`` into a scalar cost.
+
+    Subclasses must implement :meth:`compute_cost` to define how a
+    ``FunctionalResult`` is reduced to a single numeric value. This value is
+    typically consumed by an optimiser inside a
+    :class:`~qilisdk.functionals.variational_program.VariationalProgram`.
     """
 
     @abstractmethod
     def compute_cost(self, results: FunctionalResult) -> Number:
-        """
-        Compute a scalar cost from functional execution results.
+        """Compute a scalar cost from functional execution results.
 
         Args:
-            results (FunctionalResult): Output of a functional execution.
+            results (FunctionalResult): Output of executing a
+                :class:`~qilisdk.functionals.functional.Functional` (e.g. a
+                ``DigitalPropagation`` or ``AnalogEvolution``).
 
         Returns:
             Number: Scalar cost extracted from the results.

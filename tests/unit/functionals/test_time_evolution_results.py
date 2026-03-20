@@ -74,7 +74,9 @@ def test_functional_result_no_intermediate_raises():
     final = [StateTomographyReadoutResult(readout=readout, final_state=state)]
     result = FunctionalResult(readout_results=final)
 
-    with pytest.raises(ValueError, match="Intermediate Results were not stored"):
+    with pytest.raises(
+        ValueError, match=r"Can't find intermediate states because intermediate Results were not stored."
+    ):
         _ = result.states
 
 

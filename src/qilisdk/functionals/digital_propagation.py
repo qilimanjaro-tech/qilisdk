@@ -52,6 +52,11 @@ class DigitalPropagation(PrimitiveFunctional):
         self.circuit = circuit
 
     def _iter_parameter_children(self) -> Iterator[Parameterizable]:
+        """Yield the circuit as the sole parameterizable child.
+
+        Yields:
+            Iterator[Parameterizable]: The underlying ``Circuit``.
+        """
         yield self.circuit
 
     def __repr__(self) -> str:

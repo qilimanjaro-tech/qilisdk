@@ -435,7 +435,9 @@ class TestFunctionalResult:
 
     def test_states_no_intermediate_raises(self):
         result = FunctionalResult([StateTomographyReadoutResult(readout=StateTomographyReadout(), final_state=ket(0))])
-        with pytest.raises(ValueError, match="Intermediate Results were not stored"):
+        with pytest.raises(
+            ValueError, match=r"Can't find intermediate states because intermediate Results were not stored."
+        ):
             _ = result.states
 
     def test_states_no_tomography_raises(self):

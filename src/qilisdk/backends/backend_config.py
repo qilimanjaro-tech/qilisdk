@@ -64,7 +64,8 @@ class MonteCarloConfig(BaseSimulatorConfig):
     """Configuration for Monte Carlo trajectory sampling in open-system simulations.
 
     Args:
-        trajectories: Number of Monte Carlo trajectories to simulate when Monte Carlo mode is enabled.
+        trajectories (int): Number of Monte Carlo trajectories to simulate
+            when Monte Carlo mode is enabled. Defaults to ``100``.
     """
 
     trajectories: int = Field(
@@ -87,10 +88,15 @@ class AnalogMethod(BaseSimulatorConfig):
         - :meth:`direct` for direct evolution.
 
     Args:
-        evolution_method: Analog time-evolution method to use: ``"direct"``, ``"arnoldi"``, or ``"integrate"``.
-        arnoldi_dim: Dimension of the Arnoldi Krylov subspace used when ``evolution_method="arnoldi"``.
-        num_arnoldi_substeps: Number of integration substeps per schedule step for the Arnoldi method.
-        num_integrate_substeps: Number of integration substeps per schedule step for the Integrate method.
+        evolution_method (str): Analog time-evolution method to use:
+            ``"direct"``, ``"arnoldi"``, ``"integrate"``, or
+            ``"integrate_matrix_free"``. Defaults to ``"integrate"``.
+        arnoldi_dim (int): Dimension of the Arnoldi Krylov subspace used
+            when ``evolution_method="arnoldi"``. Defaults to ``10``.
+        num_arnoldi_substeps (int): Number of integration substeps per
+            schedule step for the Arnoldi method. Defaults to ``1``.
+        num_integrate_substeps (int): Number of integration substeps per
+            schedule step for the Integrate method. Defaults to ``2``.
     """
 
     evolution_method: Literal["direct", "arnoldi", "integrate", "integrate_matrix_free"] = Field(
@@ -129,8 +135,11 @@ class AnalogMethod(BaseSimulatorConfig):
         """Build an ``integrate`` analog method configuration.
 
         Args:
-            num_substeps: Number of integration substeps per schedule step when using the Integrate method.
-            matrix_free: Whether to use the matrix-free implementation for the Integrate method.
+            num_substeps (int): Number of integration substeps per schedule
+                step when using the Integrate method. Defaults to ``2``.
+            matrix_free (bool): Whether to use the matrix-free
+                implementation for the Integrate method. Defaults to
+                ``False``.
 
         Returns:
             AnalogMethod: Configured integrate-method analog configuration.
@@ -148,8 +157,10 @@ class AnalogMethod(BaseSimulatorConfig):
         """Build an ``arnoldi`` analog method configuration.
 
         Args:
-            num_substeps: Number of integration substeps per schedule step when using the Arnoldi method.
-            dim: Dimension of the Arnoldi Krylov subspace.
+            num_substeps (int): Number of integration substeps per schedule
+                step when using the Arnoldi method. Defaults to ``1``.
+            dim (int): Dimension of the Arnoldi Krylov subspace. Defaults
+                to ``10``.
 
         Returns:
             AnalogMethod: Configured arnoldi-method analog configuration.
@@ -179,11 +190,14 @@ class ExecutionConfig(BaseSimulatorConfig):
     """Configuration for execution-level controls (threading and randomness).
 
     Args:
-        num_threads: Number of CPU threads used for simulation. If set to ``0``, all available cores are selected.
-        seed: Random seed used by the simulator. If ``None``, a random seed is generated.
-        monte_carlo: Monte Carlo configuration. If ``None``, Monte Carlo is disabled and deterministic evolution is
-            used.
-
+        num_threads (int): Number of CPU threads used for simulation. If
+            set to ``0``, all available cores are selected. Defaults to
+            ``0``.
+        seed (int | None): Random seed used by the simulator. If ``None``,
+            a random seed is generated. Defaults to ``None``.
+        monte_carlo (MonteCarloConfig | None): Monte Carlo configuration.
+            If ``None``, Monte Carlo is disabled and deterministic
+            evolution is used. Defaults to ``None``.
     """
 
     model_config = PydanticConfigDict(validate_default=True)
@@ -245,7 +259,17 @@ class DigitalMethod(BaseSimulatorConfig):
         - :meth:`statevector` for standard state-vector simulation settings.
 
     Args:
-        max_cache_size: Maximum number of cached gate representations used by the digital simulator.
+        max_cache_size (int): Maximum number of cached gate
+            representations used by the digital simulator. Defaults to
+            ``1000``.
+        normalize_after_each_gate (bool): Whether to normalize the
+            statevector after each gate application to mitigate numerical
+            errors at the cost of increased runtime. Defaults to ``True``.
+        combine_single_qubit_gates (bool): Whether to combine consecutive
+            single-qubit gates into a single operation to reduce overhead
+            at the cost of increased memory usage. Defaults to ``True``.
+        matrix_free (bool): Whether to use the matrix-free implementation
+            for statevector simulation. Defaults to ``True``.
     """
 
     max_cache_size: int = Field(
@@ -287,10 +311,19 @@ class DigitalMethod(BaseSimulatorConfig):
         """Build the standard statevector simulation configuration.
 
         Args:
-            max_cache_size: Maximum number of cached gate representations used by the digital simulator.
-            normalize_after_each_gate: Whether to normalize the statevector after each gate application to mitigate numerical errors at the cost of increased runtime.
-            matrix_free: Whether to use the matrix-free implementation for statevector simulation.
-            combine_single_qubit_gates: Whether to combine consecutive single-qubit gates into a single operation.
+            max_cache_size (int): Maximum number of cached gate
+                representations used by the digital simulator. Defaults
+                to ``1000``.
+            normalize_after_each_gate (bool): Whether to normalize the
+                statevector after each gate application to mitigate
+                numerical errors at the cost of increased runtime.
+                Defaults to ``False``.
+            matrix_free (bool): Whether to use the matrix-free
+                implementation for statevector simulation. Defaults to
+                ``True``.
+            combine_single_qubit_gates (bool): Whether to combine
+                consecutive single-qubit gates into a single operation.
+                Defaults to ``True``.
 
         Returns:
             DigitalMethod: Configured statevector digital configuration.
