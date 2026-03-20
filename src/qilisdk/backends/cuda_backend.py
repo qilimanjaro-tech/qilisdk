@@ -21,7 +21,6 @@ import cudaq
 import numpy as np
 from cudaq import ElementaryOperator, OperatorSum, ScalarOperator, SpinOperatorTerm, State, evolve, operators, spin
 from cudaq import Schedule as CudaSchedule
-from defusedxml import NotSupportedError
 from loguru import logger
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator, PauliX, PauliY, PauliZ
@@ -240,7 +239,7 @@ class CudaBackend(Backend):
                 readout data.
 
         Raises:
-            NotSupportedError: If the circuit contains intermediate
+            NotImplementedError: If the circuit contains intermediate
                 measurements (measurements followed by further gates).
             UnsupportedGateError: If the circuit contains a gate with no
                 registered CUDA handler.
@@ -269,7 +268,7 @@ class CudaBackend(Backend):
                 self._handle_adjoint(kernel, gate, qubits[gate.target_qubits[0]])
             elif isinstance(gate, M):
                 if any(not isinstance(g, M) for g in transpiled_circuit.gates[i:]):
-                    raise NotSupportedError("Intermediate-measurement is not Supported with Cuda Backend")
+                    raise NotImplementedError("Intermediate-measurement is not Supported with Cuda Backend")
                 measured_qubits.update(gate.qubits)
                 self._handle_M(kernel, gate, transpiled_circuit, qubits)
             else:
