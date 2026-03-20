@@ -14,6 +14,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from functools import cached_property
 from typing import TYPE_CHECKING, ClassVar, Generic, TypeVar
 
 import numpy as np
@@ -273,7 +274,6 @@ class BasicGate(Gate):
         self._target_qubits: tuple[int, ...] = target_qubits
         self._parameters: dict[str, Parameter] = parameters or {}
         self._parameter_transforms: dict[str, Term] = parameter_transforms or {}
-        self._matrix: np.ndarray = self._generate_matrix()
 
         # Check the transforms
         for term in self._parameter_transforms:
@@ -288,17 +288,20 @@ class BasicGate(Gate):
                 if param.label not in self._parameters:
                     raise InvalidParameterNameError
 
-    @property
+    @cached_property
     def matrix(self) -> np.ndarray:
-        return self._matrix
+        return self._generate_matrix()
 
     @property
     def target_qubits(self) -> tuple[int, ...]:
         return self._target_qubits
 
+    def _invalidate_matrix(self) -> None:
+        self.__dict__.pop("matrix", None)
+
     def set_parameters(self, parameters: dict[str, float]) -> None:
         super().set_parameters(parameters=parameters)
-        self._matrix = self._generate_matrix()
+        self._invalidate_matrix()
 
     def set_parameter_values(
         self,
@@ -306,11 +309,11 @@ class BasicGate(Gate):
         where: Callable[[Parameter], bool] | None = None,
     ) -> None:
         super().set_parameter_values(values=values, where=where)
-        self._matrix = self._generate_matrix()
+        self._invalidate_matrix()
 
     def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
         super().set_parameter_bounds(ranges=ranges)
-        self._matrix = self._generate_matrix()
+        self._invalidate_matrix()
 
     def controlled(self: Self, *control_qubits: int) -> Controlled[Self]:
         """
@@ -362,16 +365,15 @@ class Modified(Gate, Generic[TBasicGate]):
     def __init__(self, basic_gate: TBasicGate) -> None:
         super().__init__()
         self._basic_gate: TBasicGate = basic_gate
-        self._matrix: np.ndarray
         self._link_parameters(self._basic_gate)
 
     @property
     def basic_gate(self) -> TBasicGate:
         return self._basic_gate
 
-    @property
+    @cached_property
     def matrix(self) -> np.ndarray:
-        return self._matrix
+        return self._generate_matrix()
 
     @property
     def target_qubits(self) -> tuple[int, ...]:
@@ -403,9 +405,12 @@ class Modified(Gate, Generic[TBasicGate]):
     ) -> list[float]:
         return self._basic_gate.get_parameter_values(where=where)
 
+    def _invalidate_matrix(self) -> None:
+        self.__dict__.pop("matrix", None)
+
     def set_parameters(self, parameters: dict[str, float]) -> None:
         self._basic_gate.set_parameters(parameters=parameters)
-        self._matrix = self._generate_matrix()
+        self._invalidate_matrix()
 
     def set_parameter_values(
         self,
@@ -413,7 +418,7 @@ class Modified(Gate, Generic[TBasicGate]):
         where: Callable[[Parameter], bool] | None = None,
     ) -> None:
         self._basic_gate.set_parameter_values(values=values, where=where)
-        self._matrix = self._generate_matrix()
+        self._invalidate_matrix()
 
     def get_parameter_bounds(
         self,
@@ -449,7 +454,6 @@ class Controlled(Modified[TBasicGate]):
             raise ValueError("At least one control qubit must be specified.")
 
         self._control_qubits = control_qubits + basic_gate.control_qubits
-        self._matrix = self._generate_matrix()
 
     def _generate_matrix(self) -> np.ndarray:
         i_full = np.eye(1 << self.nqubits, dtype=_complex_dtype())
@@ -480,7 +484,6 @@ class Adjoint(Modified[TBasicGate]):
 
     def __init__(self, basic_gate: TBasicGate) -> None:
         super().__init__(basic_gate=basic_gate)
-        self._matrix = self._generate_matrix()
 
     def _generate_matrix(self) -> np.ndarray:
         return self.basic_gate.matrix.conj().T
@@ -509,7 +512,6 @@ class Exponential(Modified[TBasicGate]):
 
     def __init__(self, basic_gate: TBasicGate) -> None:
         super().__init__(basic_gate=basic_gate)
-        self._matrix = self._generate_matrix()
 
     def _generate_matrix(self) -> np.ndarray:
         return expm(self.basic_gate.matrix)
@@ -871,10 +873,6 @@ class RX(BasicGate):
         sin_half = np.sin(theta / 2)
         return np.array([[cos_half, -1j * sin_half], [-1j * sin_half, cos_half]], dtype=_complex_dtype())
 
-    @property
-    def matrix(self) -> np.ndarray:
-        return self._generate_matrix()
-
 
 @yaml.register_class
 class RY(BasicGate):
@@ -936,10 +934,6 @@ class RY(BasicGate):
         cos_half = np.cos(theta / 2)
         sin_half = np.sin(theta / 2)
         return np.array([[cos_half, -sin_half], [sin_half, cos_half]], dtype=_complex_dtype())
-
-    @property
-    def matrix(self) -> np.ndarray:
-        return self._generate_matrix()
 
 
 @yaml.register_class
@@ -1009,10 +1003,6 @@ class RZ(BasicGate):
         phi = self.phi
         return np.array([[np.exp(-0.5j * phi), 0.0], [0.0, np.exp(0.5j * phi)]], dtype=_complex_dtype())
 
-    @property
-    def matrix(self) -> np.ndarray:
-        return self._generate_matrix()
-
 
 @yaml.register_class
 class U1(BasicGate):
@@ -1075,10 +1065,6 @@ class U1(BasicGate):
     def _generate_matrix(self) -> np.ndarray:
         phi = self.phi
         return np.array([[1, 0], [0, np.exp(1j * phi)]], dtype=_complex_dtype())
-
-    @property
-    def matrix(self) -> np.ndarray:
-        return self._generate_matrix()
 
 
 @yaml.register_class
@@ -1164,10 +1150,6 @@ class U2(BasicGate):
             ],
             dtype=_complex_dtype(),
         )
-
-    @property
-    def matrix(self) -> np.ndarray:
-        return self._generate_matrix()
 
 
 @yaml.register_class
@@ -1274,10 +1256,6 @@ class U3(BasicGate):
             ],
             dtype=_complex_dtype(),
         )
-
-    @property
-    def matrix(self) -> np.ndarray:
-        return self._generate_matrix()
 
 
 @yaml.register_class
