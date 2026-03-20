@@ -67,7 +67,7 @@ class FunctionalResult(Result):
                     results.append(res.samples)
                 return results
             raise ValueError("Can't find samples in results, because no Sampling readout was provided.")
-        raise ValueError("Intermediate Results were not stored.")
+        raise ValueError("Can't find intermediate samples because intermediate Results were not stored.")
 
     @property
     def probabilities(self) -> list[dict[str, float]]:
@@ -80,7 +80,7 @@ class FunctionalResult(Result):
             raise ValueError(
                 "Can't find probabilities in results, because no Sampling/State Tomography readout was provided."
             )
-        raise ValueError("Intermediate Results were not stored.")
+        raise ValueError("Can't find intermediate probabilities because intermediate Results were not stored.")
 
     @property
     def states(self) -> list[QTensor]:
@@ -91,7 +91,7 @@ class FunctionalResult(Result):
                     results.append(res.final_state)
                 return results
             raise ValueError("Can't find final state in results, because no State Tomography readout was provided.")
-        raise ValueError("Intermediate Results were not stored.")
+        raise ValueError("Can't find intermediate states because intermediate Results were not stored.")
 
     @property
     def expected_values(self) -> list[list[Number]]:
@@ -102,7 +102,7 @@ class FunctionalResult(Result):
                     results.append(res.expected_values)
                 return results
             raise ValueError("Can't find expected values in results, because no Expectation readout was provided.")
-        raise ValueError("Intermediate Results were not stored.")
+        raise ValueError("Can't find intermediate expected values because intermediate Results were not stored.")
 
     def has_final_state(self) -> bool:
         return self._readout_results.has_final_state()

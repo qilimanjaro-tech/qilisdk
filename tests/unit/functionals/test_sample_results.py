@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import numpy as np
+
 from qilisdk.core.model import Model, ObjectiveSense
 from qilisdk.core.variables import EQ, BinaryVariable
 from qilisdk.cost_functions.model_cost_function import ModelCostFunction
@@ -36,10 +38,10 @@ def test_sample_results_initialization():
 def test_sample_results_probabilities():
     sr = _make_sampling_result(100, {"000": 10, "010": 20, "101": 40, "001": 30})
     probs = sr.final_probabilities
-    assert probs["101"] == 0.4
-    assert probs["001"] == 0.3
-    assert probs["010"] == 0.2
-    assert probs["000"] == 0.1
+    assert np.isclose(probs["101"], 0.4)
+    assert np.isclose(probs["001"], 0.3)
+    assert np.isclose(probs["010"], 0.2)
+    assert np.isclose(probs["000"], 0.1)
 
 
 def test_sample_results_compute_cost():

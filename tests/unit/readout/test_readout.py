@@ -20,11 +20,8 @@ from qilisdk.analog import Z as pauli_z
 from qilisdk.core import QTensor
 from qilisdk.readout import ExpectationReadout, ReadoutMethod, SamplingReadout, StateTomographyReadout
 
-# ──────────────────────────────────────────────────────────────────────
+
 # SamplingReadout
-# ──────────────────────────────────────────────────────────────────────
-
-
 class TestSamplingReadout:
     def test_keyword_constructor(self):
         ro = SamplingReadout(nshots=500)
@@ -51,9 +48,7 @@ class TestSamplingReadout:
             SamplingReadout(100, nshots=200)
 
 
-# ──────────────────────────────────────────────────────────────────────
 # ExpectationReadout
-# ──────────────────────────────────────────────────────────────────────
 
 
 class TestExpectationReadout:
@@ -98,9 +93,7 @@ class TestExpectationReadout:
             ExpectationReadout([pauli_z(0)], 0, "extra")
 
 
-# ──────────────────────────────────────────────────────────────────────
 # StateTomographyReadout
-# ──────────────────────────────────────────────────────────────────────
 
 
 class TestStateTomographyReadout:
@@ -118,9 +111,7 @@ class TestStateTomographyReadout:
         assert ro.compute_probabilities is False
 
 
-# ──────────────────────────────────────────────────────────────────────
 # ReadoutMethod base class
-# ──────────────────────────────────────────────────────────────────────
 
 
 class TestReadoutMethodBase:

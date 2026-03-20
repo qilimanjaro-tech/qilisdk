@@ -45,12 +45,12 @@ class TestRealIfClose:
     def test_complex_with_zero_imag(self):
         result = _real_if_close(complex(2.5, 0.0))
         assert isinstance(result, float)
-        assert result == 2.5
+        assert np.isclose(result, 2.5)
 
     def test_complex_with_tiny_imag(self):
         result = _real_if_close(complex(2.5, 1e-15))
         assert isinstance(result, float)
-        assert result == 2.5
+        assert np.isclose(result, 2.5)
 
     def test_complex_with_large_imag_kept(self):
         c = complex(2.5, 1.0)
@@ -117,9 +117,7 @@ class TestSamplesFromState:
         assert samples == {"0": 50}
 
 
-# ──────────────────────────────────────────────────────────────────────
 # SamplingReadoutResult
-# ──────────────────────────────────────────────────────────────────────
 
 
 class TestSamplingReadoutResult:
@@ -151,7 +149,7 @@ class TestSamplingReadoutResult:
         readout = SamplingReadout(nshots=100)
         result = SamplingReadoutResult(readout=readout, samples={"00": 60, "01": 40})
         assert np.isclose(result.get_probability("00"), 0.6)
-        assert result.get_probability("11") == 0.0
+        assert np.isclose(result.get_probability("11"), 0.0)
 
     def test_get_probabilities_top_n(self):
         readout = SamplingReadout(nshots=100)
@@ -183,9 +181,7 @@ class TestSamplingReadoutResult:
             SamplingReadoutResult(readout=readout, samples={"0": 50, "01": 50})
 
 
-# ──────────────────────────────────────────────────────────────────────
 # ExpectationReadoutResult
-# ──────────────────────────────────────────────────────────────────────
 
 
 class TestExpectationReadoutResult:
@@ -232,9 +228,7 @@ class TestExpectationReadoutResult:
         assert "nshots = 100" in repr(result)
 
 
-# ──────────────────────────────────────────────────────────────────────
 # StateTomographyReadoutResult
-# ──────────────────────────────────────────────────────────────────────
 
 
 class TestStateTomographyReadoutResult:
@@ -259,7 +253,7 @@ class TestStateTomographyReadoutResult:
         readout = StateTomographyReadout()
         result = StateTomographyReadoutResult(readout=readout, final_state=ket(0))
         assert np.isclose(result.get_probability("0"), 1.0)
-        assert result.get_probability("1") == 0.0
+        assert np.isclose(result.get_probability("1"), 0.0)
 
     def test_get_probability_not_computed_raises(self):
         readout = StateTomographyReadout(compute_probabilities=False)
@@ -297,9 +291,7 @@ class TestStateTomographyReadoutResult:
         assert np.isclose(result.probabilities["0"], 1.0)
 
 
-# ──────────────────────────────────────────────────────────────────────
 # ReadoutCompositeResults
-# ──────────────────────────────────────────────────────────────────────
 
 
 class TestReadoutCompositeResults:
@@ -385,9 +377,7 @@ class TestReadoutCompositeResults:
         assert composite.final_state is not None
 
 
-# ──────────────────────────────────────────────────────────────────────
 # FunctionalResult integration
-# ──────────────────────────────────────────────────────────────────────
 
 
 class TestFunctionalResult:
@@ -483,9 +473,7 @@ class TestFunctionalResult:
         assert "Functional Results" in repr(result)
 
 
-# ──────────────────────────────────────────────────────────────────────
 # Backend._construct_results_list
-# ──────────────────────────────────────────────────────────────────────
 
 
 class TestBackendConstructResultsList:

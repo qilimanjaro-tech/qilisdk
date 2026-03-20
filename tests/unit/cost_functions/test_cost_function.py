@@ -11,16 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import numpy as np
 import pytest
 
 from qilisdk.core.qtensor import ket
 from qilisdk.cost_functions.cost_function import CostFunction
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.readout import SamplingReadout, StateTomographyReadout
-from qilisdk.readout.readout_result import (
-    SamplingReadoutResult,
-    StateTomographyReadoutResult,
-)
+from qilisdk.readout.readout_result import SamplingReadoutResult, StateTomographyReadoutResult
 
 
 def test_cost_function_cannot_be_instantiated():
@@ -40,7 +38,7 @@ def test_compute_cost_with_sampling_result():
     readout_result = SamplingReadoutResult(readout=readout, samples={"0": 1})
     result = FunctionalResult(readout_results=[readout_result])
 
-    assert cost_function.compute_cost(result) == 42.0
+    assert np.isclose(cost_function.compute_cost(result), 42.0)
 
 
 def test_compute_cost_with_state_tomography_result():
@@ -54,4 +52,4 @@ def test_compute_cost_with_state_tomography_result():
     readout_result = StateTomographyReadoutResult(readout=readout, final_state=ket(0))
     result = FunctionalResult(readout_results=[readout_result])
 
-    assert cost_function.compute_cost(result) == 99.0
+    assert np.isclose(cost_function.compute_cost(result), 99.0)

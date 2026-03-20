@@ -213,15 +213,7 @@ class CudaBackend(Backend):
         self, functional: DigitalPropagation, readout: list[ReadoutMethod]
     ) -> FunctionalResult:
         logger.info("Executing Digital Propagation")
-        if self._noise_model:
-            if any(not ro.is_sample() for ro in readout):
-                raise ValueError(
-                    "Currently only the sample readout method is supported with CUDA backend for digital simulation with noise."
-                )
-            if len(readout) > 1:
-                raise ValueError(
-                    "Currently only a single sampling operation is supported with CUDA backend digital simulation with noise."
-                )
+        self._validate_digital_readout_with_noise(readout=readout)
         self._apply_digital_simulation_method()
         kernel = cudaq.make_kernel()
         qubits = kernel.qalloc(functional.circuit.nqubits)
@@ -388,6 +380,17 @@ class CudaBackend(Backend):
             SimulationMethod: The simulation method to be used for circuit execution.
         """
         return self._sampling_method
+
+    def _validate_digital_readout_with_noise(self, readout: list[ReadoutMethod]) -> None:
+        if self._noise_model:
+            if any(not ro.is_sample() for ro in readout):
+                raise ValueError(
+                    "Currently only the sample readout method is supported with CUDA backend for digital simulation with noise."
+                )
+            if len(readout) > 1:
+                raise ValueError(
+                    "Currently only a single sampling operation is supported with CUDA backend digital simulation with noise."
+                )
 
     def _apply_digital_simulation_method(self) -> None:
         """
