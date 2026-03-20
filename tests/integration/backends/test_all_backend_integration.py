@@ -15,7 +15,6 @@ import numpy as np
 import pytest
 
 from qilisdk.backends.backend import Backend
-from qilisdk.noise import ReadoutAssignment
 
 pytest.importorskip("qutip", reason="QuTiP backend tests require the 'qutip' optional dependency", exc_type=ImportError)
 pytest.importorskip(

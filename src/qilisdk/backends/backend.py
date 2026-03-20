@@ -28,7 +28,6 @@ from qilisdk.functionals.digital_propagation import DigitalPropagation
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.functionals.variational_program import VariationalProgram
 from qilisdk.functionals.variational_program_result import VariationalProgramResult
-from qilisdk.noise import NoiseModel
 from qilisdk.readout import (
     ExpectationReadout,
     ExpectationReadoutResult,
@@ -45,12 +44,12 @@ if TYPE_CHECKING:
     from qilisdk.core import QTensor
     from qilisdk.core.result import Result
     from qilisdk.functionals.functional import Functional, PrimitiveFunctional
+    from qilisdk.noise import NoiseModel
 
 TResult = TypeVar("TResult", bound=FunctionalResult)
 
 
 class Backend(ABC):
-
     def __init__(
         self,
         noise_model: NoiseModel | None = None,
