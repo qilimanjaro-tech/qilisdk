@@ -15,6 +15,7 @@ import numpy as np
 import pytest
 
 from qilisdk.backends.backend import Backend
+from qilisdk.noise import ReadoutAssignment
 
 pytest.importorskip("qutip", reason="QuTiP backend tests require the 'qutip' optional dependency", exc_type=ImportError)
 pytest.importorskip(
@@ -502,18 +503,18 @@ def test_cnot_on_one(backend):
     circuit = Circuit(nqubits=2)
     circuit.add(X(0))
     circuit.add(CNOT(control=0, target=1))
-    result = backend.execute(Sampling(circuit=circuit, nshots=10))
-    assert isinstance(result, SamplingResult)
-    assert result.samples == {"11": 10}
+    result = backend.execute(DigitalPropagation(circuit=circuit), readout=[SamplingReadout(nshots=10)])
+    assert isinstance(result, FunctionalResult)
+    assert result.final_samples == {"11": 10}
 
 
 @pytest.mark.parametrize("backend", backends)
 def test_controlled_u3(backend):
     circuit = Circuit(nqubits=2)
     circuit.add(U3(1, theta=1.0, phi=0.5, gamma=0.25).controlled(0))
-    result = backend.execute(Sampling(circuit=circuit, nshots=10))
-    assert isinstance(result, SamplingResult)
-    assert result.samples == {"00": 10}
+    result = backend.execute(DigitalPropagation(circuit=circuit), readout=[SamplingReadout(nshots=10)])
+    assert isinstance(result, FunctionalResult)
+    assert result.final_samples == {"00": 10}
 
 
 @pytest.mark.parametrize("backend", backends)
@@ -521,9 +522,9 @@ def test_swap(backend):
     circuit = Circuit(nqubits=2)
     circuit.add(X(0))
     circuit.add(SWAP(0, 1))
-    result = backend.execute(Sampling(circuit=circuit, nshots=10))
-    assert isinstance(result, SamplingResult)
-    assert result.samples == {"01": 10}
+    result = backend.execute(DigitalPropagation(circuit=circuit), readout=[SamplingReadout(nshots=10)])
+    assert isinstance(result, FunctionalResult)
+    assert result.final_samples == {"01": 10}
 
 
 @pytest.mark.parametrize("backend", backends)
@@ -532,6 +533,6 @@ def test_toffoli(backend):
     circuit.add(X(0))
     circuit.add(X(1))
     circuit.add(X(2).controlled(0, 1))
-    result = backend.execute(Sampling(circuit=circuit, nshots=10))
-    assert isinstance(result, SamplingResult)
-    assert result.samples == {"111": 10}
+    result = backend.execute(DigitalPropagation(circuit=circuit), readout=[SamplingReadout(nshots=10)])
+    assert isinstance(result, FunctionalResult)
+    assert result.final_samples == {"111": 10}
