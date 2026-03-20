@@ -167,13 +167,13 @@ def test_execute_result_sampling():
     )
     serialized_result = result._serialize_sampling_result(functional_result=result.functional_result, _info={})
     deserialized_result = result._load_sampling_result(serialized_result)
-    assert deserialized_result.final_samples == functional_result.final_samples
+    assert deserialized_result.samples == functional_result.samples
 
 
 def test_execute_result_time_evolution():
     execute_type = ExecuteType.ANALOG_EVOLUTION
     readout = StateTomographyReadout()
-    readout_result = StateTomographyReadoutResult(readout=readout, final_state=ket(0))
+    readout_result = StateTomographyReadoutResult(readout=readout, state=ket(0))
     functional_result = FunctionalResult(readout_results=[readout_result])
     result = ExecuteResult(
         type=execute_type,
@@ -181,7 +181,7 @@ def test_execute_result_time_evolution():
     )
     serialized_result = result._serialize_sampling_result(functional_result=result.functional_result, _info={})
     deserialized_result = result._load_sampling_result(serialized_result)
-    assert deserialized_result.final_state == functional_result.final_state
+    assert deserialized_result.state == functional_result.state
 
 
 def test_execute_result_variational_program():

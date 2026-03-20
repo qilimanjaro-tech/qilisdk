@@ -30,7 +30,7 @@ Build a 2-qubit circuit, propagate it using CUDA backend, and inspect measuremen
     backend = CudaBackend(sampling_method=CudaSamplingMethod.STATE_VECTOR)
     results = backend.execute(propagation, readout=[SamplingReadout(nshots=500)])
 
-    print("Counts:", results.final_probabilities)
+    print("Counts:", results.probabilities)
 
 
 .. NOTE::

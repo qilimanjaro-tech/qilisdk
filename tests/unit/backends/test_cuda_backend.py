@@ -199,7 +199,7 @@ def test_state_vector_no_gpu(mock_sample, mock_make_kernel, mock_set_target, moc
     result = backend.execute(DigitalPropagation(circuit=circuit), readout=[SamplingReadout(nshots=10)])
     mock_set_target.assert_called_with("qpp-cpu")
     assert isinstance(result, FunctionalResult)
-    assert result.final_samples == {"0": 1000}
+    assert result.samples == {"0": 1000}
 
 
 @patch("cudaq.num_available_gpus", return_value=1)
@@ -213,7 +213,7 @@ def test_state_vector_with_gpu(mock_sample, mock_make_kernel, mock_set_target, m
     float_precision = "fp32" if get_settings().complex_precision == Precision.COMPLEX_64 else "fp64"
     mock_set_target.assert_called_with("nvidia", option=float_precision)
     assert isinstance(result, FunctionalResult)
-    assert result.final_samples == {"0": 1000}
+    assert result.samples == {"0": 1000}
 
 
 @patch("cudaq.set_target")
@@ -225,7 +225,7 @@ def test_tensornet(mock_sample, mock_make_kernel, mock_set_target):
     result = backend.execute(DigitalPropagation(circuit), readout=[SamplingReadout(nshots=10)])
     mock_set_target.assert_called_with("tensornet")
     assert isinstance(result, FunctionalResult)
-    assert result.final_samples == {"0": 1000}
+    assert result.samples == {"0": 1000}
 
 
 @patch("cudaq.set_target")
@@ -237,7 +237,7 @@ def test_matrix_product_state(mock_sample, mock_make_kernel, mock_set_target):
     result = backend.execute(DigitalPropagation(circuit), readout=[SamplingReadout(nshots=10)])
     mock_set_target.assert_called_with("tensornet-mps")
     assert isinstance(result, FunctionalResult)
-    assert result.final_samples == {"0": 1000}
+    assert result.samples == {"0": 1000}
 
 
 # --- Parameterized tests for basic gate execution ---
@@ -461,7 +461,7 @@ def test_real_example():
         readout=[SamplingReadout(nshots=1000)],
     )
     assert output.optimal_cost == -1
-    assert output.optimal_execution_results.final_samples == {"0": 1000}
+    assert output.optimal_execution_results.samples == {"0": 1000}
 
 
 def test_integer_gates():
@@ -690,10 +690,10 @@ def test_time_evolution_keeps_statevector_outputs_as_columns(monkeypatch):
     backend = CudaBackend()
     res = backend.execute(functional, readout=[StateTomographyReadout()])
 
-    assert res.final_state is not None
-    assert res.final_state.shape == (2, 1)
-    assert len(res.states) == 3  # 2 intermediate + 1 final
-    assert all(s.shape == (2, 1) for s in res.states)
+    assert res.state is not None
+    assert res.state.shape == (2, 1)
+    assert len(res.intermediate_states) == 3  # 2 intermediate + 1 final
+    assert all(s.shape == (2, 1) for s in res.intermediate_states)
 
 
 def test_time_evolution_preserves_density_matrix_shape(monkeypatch):
@@ -725,11 +725,11 @@ def test_time_evolution_preserves_density_matrix_shape(monkeypatch):
     backend = CudaBackend()
     res = backend.execute(functional, readout=[StateTomographyReadout()])
 
-    assert res.final_state is not None
-    assert res.final_state.shape == (2, 2)
-    assert not res.final_state.is_ket()
-    assert len(res.states) == 2  # 1 intermediate + 1 final
-    assert all(s.shape == (2, 2) for s in res.states)
+    assert res.state is not None
+    assert res.state.shape == (2, 2)
+    assert not res.state.is_ket()
+    assert len(res.intermediate_states) == 2  # 1 intermediate + 1 final
+    assert all(s.shape == (2, 2) for s in res.intermediate_states)
 
 
 def test_get_cuda_hamiltonian_raises_with_empty_schedule():

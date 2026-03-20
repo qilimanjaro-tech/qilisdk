@@ -220,7 +220,7 @@ class Backend(ABC):
                     res: FunctionalResult = self._execute_analog_evolution(
                         AnalogEvolution(step, state), readout=[StateTomographyReadout()]
                     )
-                    state: QTensor = res.final_state
+                    state: QTensor = res.state
 
             try:
                 state = state.to_density_matrix()
@@ -370,7 +370,7 @@ class Backend(ABC):
             StateTomographyReadoutResult: The constructed state-tomography
                 result.
         """
-        return StateTomographyReadoutResult(readout=copy(readout), final_state=final_state)
+        return StateTomographyReadoutResult(readout=copy(readout), state=final_state)
 
     @classmethod
     def _construct_results_list(

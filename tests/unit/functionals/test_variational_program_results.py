@@ -29,7 +29,7 @@ def test_variational_program_results_initialization():
     )
     state = QTensor(np.array([[1], [0]]))
     readout = StateTomographyReadout()
-    readout_result = StateTomographyReadoutResult(readout=readout, final_state=state)
+    readout_result = StateTomographyReadoutResult(readout=readout, state=state)
     result = FunctionalResult(readout_results=[readout_result])
 
     var_res = VariationalProgramResult(optimizer_result, result)

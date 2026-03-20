@@ -134,7 +134,7 @@ must supply a ``device`` argument with the device code obtained from :meth:`~qil
 
     final_job = client.wait_for_job(job_handle, timeout=600)
     result = final_job.get_results()
-    print("Most frequent outcome:", result.final_probabilities)
+    print("Most frequent outcome:", result.probabilities)
 
 .. Warning::
 

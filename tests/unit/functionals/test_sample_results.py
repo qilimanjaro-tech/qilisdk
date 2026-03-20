@@ -31,13 +31,13 @@ def _make_sampling_result(nshots: int, samples: dict[str, int]) -> FunctionalRes
 
 def test_sample_results_initialization():
     sr = _make_sampling_result(1, {"00": 1})
-    assert sr.final_probabilities == {"00": 1.0}
-    assert sr.final_samples == {"00": 1}
+    assert sr.probabilities == {"00": 1.0}
+    assert sr.samples == {"00": 1}
 
 
 def test_sample_results_probabilities():
     sr = _make_sampling_result(100, {"000": 10, "010": 20, "101": 40, "001": 30})
-    probs = sr.final_probabilities
+    probs = sr.probabilities
     assert np.isclose(probs["101"], 0.4)
     assert np.isclose(probs["001"], 0.3)
     assert np.isclose(probs["010"], 0.2)

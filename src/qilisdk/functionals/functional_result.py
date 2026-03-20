@@ -65,27 +65,27 @@ class FunctionalResult(Result):
         return self._intermediate_results
 
     @property
-    def final_samples(self) -> dict[str, int]:
+    def samples(self) -> dict[str, int]:
         """Measurement samples from the final execution step."""
         return self._readout_results.samples
 
     @property
-    def final_probabilities(self) -> dict[str, float]:
+    def probabilities(self) -> dict[str, float]:
         """Outcome probabilities from the final execution step."""
         return self._readout_results.probabilities
 
     @property
-    def final_state(self) -> QTensor:
+    def state(self) -> QTensor:
         """Quantum state vector from the final execution step."""
-        return self._readout_results.final_state
+        return self._readout_results.state
 
     @property
-    def final_expected_values(self) -> list[Number]:
+    def expected_values(self) -> list[Number]:
         """Expectation values from the final execution step."""
         return self._readout_results.expected_values
 
     @property
-    def samples(self) -> list[dict[str, int]]:
+    def intermediate_samples(self) -> list[dict[str, int]]:
         """Measurement samples for every time-step (intermediate + final).
 
         Returns:
@@ -105,7 +105,7 @@ class FunctionalResult(Result):
         raise ValueError("Can't find intermediate samples because intermediate Results were not stored.")
 
     @property
-    def probabilities(self) -> list[dict[str, float]]:
+    def intermediate_probabilities(self) -> list[dict[str, float]]:
         """Outcome probabilities for every time-step (intermediate + final).
 
         Returns:
@@ -127,7 +127,7 @@ class FunctionalResult(Result):
         raise ValueError("Can't find intermediate probabilities because intermediate Results were not stored.")
 
     @property
-    def states(self) -> list[QTensor]:
+    def intermediate_states(self) -> list[QTensor]:
         """Quantum state vectors for every time-step (intermediate + final).
 
         Returns:
@@ -138,16 +138,16 @@ class FunctionalResult(Result):
                 ``StateTomographyReadout`` was provided.
         """
         if self._intermediate_results:
-            if self.has_final_state():
+            if self.has_state():
                 results = []
                 for res in self:
-                    results.append(res.final_state)
+                    results.append(res.state)
                 return results
             raise ValueError("Can't find final state in results, because no State Tomography readout was provided.")
         raise ValueError("Can't find intermediate states because intermediate Results were not stored.")
 
     @property
-    def expected_values(self) -> list[list[Number]]:
+    def intermediate_expected_values(self) -> list[list[Number]]:
         """Expectation values for every time-step (intermediate + final).
 
         Returns:
@@ -166,13 +166,13 @@ class FunctionalResult(Result):
             raise ValueError("Can't find expected values in results, because no Expectation readout was provided.")
         raise ValueError("Can't find intermediate expected values because intermediate Results were not stored.")
 
-    def has_final_state(self) -> bool:
+    def has_state(self) -> bool:
         """Check whether the result contains a final quantum state.
 
         Returns:
             bool: ``True`` if a ``StateTomographyReadout`` result is present.
         """
-        return self._readout_results.has_final_state()
+        return self._readout_results.has_state()
 
     def has_samples(self) -> bool:
         """Check whether the result contains measurement samples.

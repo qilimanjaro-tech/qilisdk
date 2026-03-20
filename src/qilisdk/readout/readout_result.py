@@ -60,7 +60,7 @@ class ReadoutCompositeResults(Result):
     When a backend execution is configured with more than one readout method,
     the results are collected into a single :class:`ReadoutCompositeResults`
     instance.  Convenience properties (:attr:`samples`, :attr:`probabilities`,
-    :attr:`final_state`, :attr:`expected_values`) provide direct access to the
+    :attr:`state`, :attr:`expected_values`) provide direct access to the
     first matching result of each kind.
 
     The container is iterable and supports ``len()``.
@@ -117,7 +117,7 @@ class ReadoutCompositeResults(Result):
         )
 
     @property
-    def final_state(self) -> QTensor:
+    def state(self) -> QTensor:
         """Reconstructed quantum state from the first :class:`StateTomographyReadoutResult`.
 
         Returns:
@@ -128,7 +128,7 @@ class ReadoutCompositeResults(Result):
         """
         for ro in self._readout_results:
             if isinstance(ro, StateTomographyReadoutResult):
-                return ro.final_state
+                return ro.state
         raise ValueError("Can't find final state in results, because no State Tomography readout was provided.")
 
     @property
@@ -147,7 +147,7 @@ class ReadoutCompositeResults(Result):
                 return ro.expected_values
         raise ValueError("Can't find expected values in results, because no Expectation readout was provided.")
 
-    def has_final_state(self) -> bool:
+    def has_state(self) -> bool:
         """Check whether a :class:`StateTomographyReadoutResult` is present.
 
         Returns:
@@ -464,19 +464,19 @@ class StateTomographyReadoutResult(ReadoutResult):
     Args:
         readout (StateTomographyReadout): The readout configuration that
             produced this result.
-        final_state (QTensor): The reconstructed quantum state (ket or
+        state (QTensor): The reconstructed quantum state (ket or
             density matrix).
     """
 
     def __init__(
         self,
         readout: StateTomographyReadout,
-        final_state: QTensor,
+        state: QTensor,
     ) -> None:
         self._readout: StateTomographyReadout = readout
-        self._final_state: QTensor = final_state
+        self._state: QTensor = state
         self._probabilities: dict[str, float] | None = (
-            _probabilities_from_state(self._final_state) if self._readout.compute_probabilities else None
+            _probabilities_from_state(self._state) if self._readout.compute_probabilities else None
         )
 
     @property
@@ -485,9 +485,9 @@ class StateTomographyReadoutResult(ReadoutResult):
         return self._readout
 
     @property
-    def final_state(self) -> QTensor:
+    def state(self) -> QTensor:
         """QTensor: The reconstructed quantum state (ket or density matrix)."""
-        return self._final_state
+        return self._state
 
     @property
     def probabilities(self) -> dict[str, float] | None:
@@ -543,7 +543,7 @@ class StateTomographyReadoutResult(ReadoutResult):
         return heapq.nlargest(n, self._probabilities.items(), key=operator.itemgetter(1))
 
     def __repr__(self) -> str:
-        return "State Tomography Results: (\n" + (f"\tfinal_state={pformat(self.final_state)}\n") + ")\n\n"
+        return "State Tomography Results: (\n" + (f"\tfinal_state={pformat(self.state)}\n") + ")\n\n"
 
     __str__ = __repr__
 

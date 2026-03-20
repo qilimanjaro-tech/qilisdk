@@ -31,12 +31,12 @@ Result Objects
 
 * :class:`~qilisdk.functionals.functional_result.FunctionalResult`
     The unified result type for all primitive functionals. Access results through:
-    ``final_samples`` for shot counts, ``final_probabilities`` for measurement probabilities,
-    ``final_state`` for the terminal :class:`~qilisdk.core.qtensor.QTensor` state (when using
-    :class:`~qilisdk.readout.StateTomographyReadout`), and ``final_expected_values`` for expectation values
+    ``samples`` for shot counts, ``probabilities`` for measurement probabilities,
+    ``state`` for the terminal :class:`~qilisdk.core.qtensor.QTensor` state (when using
+    :class:`~qilisdk.readout.StateTomographyReadout`), and ``expected_values`` for expectation values
     (when using :class:`~qilisdk.readout.ExpectationReadout`).
     When ``store_intermediate_results=True``, intermediate results are available via
-    ``states``, ``samples``, ``probabilities``, and ``expected_values``.
+    ``intermediate_states``, ``intermediate_samples``, ``intermediate_probabilities``, and ``intermediate_expected_values``.
 * :class:`~qilisdk.functionals.variational_program_result.VariationalProgramResult`
     bundles the optimizer trajectory (optimal cost, parameters, intermediate steps) together with the functional result
     obtained at convergence.
@@ -52,7 +52,7 @@ most likely bitstrings:
 
     backend = QutipBackend()
     result = backend.execute(DigitalPropagation(circuit), readout=[SamplingReadout(nshots=1_000)])
-    print("Most likely outcomes:", result.final_probabilities)
+    print("Most likely outcomes:", result.probabilities)
 
 Digital Propagation
 -------------------
@@ -73,7 +73,7 @@ Measurement details such as the number of shots are specified separately via rea
 **Returns**
 
 - :class:`~qilisdk.functionals.functional_result.FunctionalResult`: Access shot counts via :attr:`final_samples`, or
-  probabilities through :attr:`final_probabilities`.
+  probabilities through :attr:`probabilities`.
 
 **Usage Example**
 
@@ -135,9 +135,9 @@ Observables and shot counts are specified separately via readout objects passed 
 **Returns**
 
 - :class:`~qilisdk.functionals.functional_result.FunctionalResult`: Inspect
-  :attr:`final_expected_values` for measured observables,
-  :attr:`final_state` for the closing state, and
-  :attr:`states` when ``store_intermediate_results`` is enabled.
+  :attr:`expected_values` for measured observables,
+  :attr:`state` for the closing state, and
+  :attr:`intermediate_states` and :attr:`intermediate_expected_values` when ``store_intermediate_results`` is enabled.
 
 **Usage Example**
 

@@ -49,7 +49,7 @@ def test_compute_cost_with_state_tomography_result():
     cost_function = DummyCostFunction()
 
     readout = StateTomographyReadout()
-    readout_result = StateTomographyReadoutResult(readout=readout, final_state=ket(0))
+    readout_result = StateTomographyReadoutResult(readout=readout, state=ket(0))
     result = FunctionalResult(readout_results=[readout_result])
 
     assert np.isclose(cost_function.compute_cost(result), 99.0)

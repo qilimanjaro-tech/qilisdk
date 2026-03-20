@@ -172,7 +172,7 @@ def test_adjoint_fully(gate_instance):
     circuit.add(Adjoint(gate_instance))
     result = backend.execute(DigitalPropagation(circuit=circuit), readout=[SamplingReadout(nshots=100)])
     assert isinstance(result, FunctionalResult)
-    assert result.final_samples.get("00", 0) == 100
+    assert result.samples.get("00", 0) == 100
 
 
 ###################
@@ -260,7 +260,7 @@ def test_measurement_gates():
     circuit.add(M(0))
     result = backend.execute(DigitalPropagation(circuit=circuit), readout=[SamplingReadout(nshots=10)])
     assert isinstance(result, FunctionalResult)
-    assert all(len(key) == 1 for key in result.final_samples)
+    assert all(len(key) == 1 for key in result.samples)
 
 
 def test_bad_probability(monkeypatch):
@@ -278,7 +278,7 @@ def test_bad_probability(monkeypatch):
     monkeypatch.setattr(CircuitSimulator, "run_statistics", lambda self, nshots: CircuitSimulatorMockResults())
     result = backend.execute(DigitalPropagation(circuit=circuit), readout=[SamplingReadout(nshots=10)])
     assert isinstance(result, FunctionalResult)
-    assert sum(result.final_samples.values()) == 10
+    assert sum(result.samples.values()) == 10
 
 
 class QObjMock:
@@ -343,8 +343,8 @@ def test_time_evolution(monkeypatch, initial_state, ob):
     schedule = Schedule(hamiltonians={"h": hamiltonian}, dt=0.1)
     func = AnalogEvolution(schedule=schedule, initial_state=initial_state)
     result = backend.execute(func, readout=[ExpectationReadout(observables=[ob]), StateTomographyReadout()])
-    assert np.allclose(result.final_expected_values, np.array([1]))
-    assert isinstance(result.final_state, QTensor)
+    assert np.allclose(result.expected_values, np.array([1]))
+    assert isinstance(result.state, QTensor)
 
 
 def test_time_evolution_bad_initial(monkeypatch):

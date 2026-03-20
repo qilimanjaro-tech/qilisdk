@@ -96,7 +96,7 @@ class ObservableCostFunction(CostFunction):
             ValueError: If ``results`` contains neither a ``StateTomography``
                 nor a ``Sampling`` readout.
         """
-        if results.has_final_state():
+        if results.has_state():
             return self._compute_from_state(results)
         if results.has_samples():
             return self._compute_from_samples(results)
@@ -113,7 +113,7 @@ class ObservableCostFunction(CostFunction):
             Number: The expectation value ``<psi|O|psi>`` (or ``Tr(rho O)``
             for mixed states).
         """
-        final_state = results.final_state
+        final_state = results.state
         total_cost = complex(np.real_if_close(expect_val(self._observable, final_state), tol=get_settings().atol))
         if abs(total_cost.imag) < get_settings().atol:
             return total_cost.real
@@ -127,7 +127,7 @@ class ObservableCostFunction(CostFunction):
         sum of those evaluations.
 
         Args:
-            results (FunctionalResult): A result whose ``final_probabilities``
+            results (FunctionalResult): A result whose ``probabilities``
                 are available.
 
         Returns:
@@ -139,7 +139,7 @@ class ObservableCostFunction(CostFunction):
         """
         total_cost = complex(0.0)
         nqubits = self._observable.nqubits
-        probabilities = results.final_probabilities
+        probabilities = results.probabilities
         for sample, prob in probabilities.items():
             state = tensor_prod([ket(int(i)) for i in sample])
             if nqubits != state.nqubits:

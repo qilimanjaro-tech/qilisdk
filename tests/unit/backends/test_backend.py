@@ -70,7 +70,7 @@ def _make_mock_result(functional):
 
 class MockCostFunction:
     def compute_cost(self, result):
-        samples = result.final_samples
+        samples = result.samples
         if abs(samples.get("0", 0) - 50) < 1:
             return 0.5 + 0j
         return samples.get("0", 0) / 100.0
@@ -157,7 +157,7 @@ def test_quantum_reservoir_invalidates_circuit_cache_on_parameter_updates(monkey
         def _execute_analog_evolution(self, functional, readout):
             state = functional.initial_state
             return FunctionalResult(
-                readout_results=[StateTomographyReadoutResult(readout=StateTomographyReadout(), final_state=state)]
+                readout_results=[StateTomographyReadoutResult(readout=StateTomographyReadout(), state=state)]
             )
 
     backend = _MockReservoirBackend()

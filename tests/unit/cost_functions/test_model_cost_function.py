@@ -40,7 +40,7 @@ def test_compute_cost_state_tomography():
 
     # ket state
     readout = StateTomographyReadout()
-    readout_result = StateTomographyReadoutResult(readout=readout, final_state=tensor_prod([ket(0), ket(1)]))
+    readout_result = StateTomographyReadoutResult(readout=readout, state=tensor_prod([ket(0), ket(1)]))
     result = FunctionalResult(readout_results=[readout_result])
     cost = mcf.compute_cost(result)
 
@@ -48,7 +48,7 @@ def test_compute_cost_state_tomography():
 
     # density matrix state
     readout_result = StateTomographyReadoutResult(
-        readout=readout, final_state=tensor_prod([ket(0), ket(1)]).to_density_matrix()
+        readout=readout, state=tensor_prod([ket(0), ket(1)]).to_density_matrix()
     )
     result = FunctionalResult(readout_results=[readout_result])
     cost = mcf.compute_cost(result)
@@ -58,7 +58,7 @@ def test_compute_cost_state_tomography():
     mcf = ModelCostFunction(model)
 
     # bra state
-    readout_result = StateTomographyReadoutResult(readout=readout, final_state=tensor_prod([bra(0), bra(1)]))
+    readout_result = StateTomographyReadoutResult(readout=readout, state=tensor_prod([bra(0), bra(1)]))
     result = FunctionalResult(readout_results=[readout_result])
     cost = mcf.compute_cost(result)
     assert cost == -1
@@ -138,7 +138,7 @@ def test_complex_return_values():
     model.evaluate = MagicMock(return_value=eval_results)
     mcf = ModelCostFunction(model)
     st_readout = StateTomographyReadout()
-    st_readout_result = StateTomographyReadoutResult(readout=st_readout, final_state=rho)
+    st_readout_result = StateTomographyReadoutResult(readout=st_readout, state=rho)
     state_result = FunctionalResult(readout_results=[st_readout_result])
     cost = mcf._compute_from_state(state_result)
     assert cost == return_val
@@ -150,7 +150,7 @@ def test_complex_return_values():
     eval_results.values = MagicMock(return_value=[return_val])
     model.evaluate = MagicMock(return_value=eval_results)
     mcf = ModelCostFunction(model)
-    st_readout_result = StateTomographyReadoutResult(readout=st_readout, final_state=rho)
+    st_readout_result = StateTomographyReadoutResult(readout=st_readout, state=rho)
     state_result = FunctionalResult(readout_results=[st_readout_result])
     cost = mcf._compute_from_state(state_result)
     assert cost == return_val
@@ -165,7 +165,7 @@ def test_complex_return_values():
     eval_results.values = MagicMock(return_value=[return_val])
     model.evaluate = MagicMock(return_value=eval_results)
     mcf = ModelCostFunction(model)
-    st_readout_result = StateTomographyReadoutResult(readout=st_readout, final_state=rho)
+    st_readout_result = StateTomographyReadoutResult(readout=st_readout, state=rho)
     state_result = FunctionalResult(readout_results=[st_readout_result])
     cost = mcf._compute_from_state(state_result)
     assert cost == return_val

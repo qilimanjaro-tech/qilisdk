@@ -48,7 +48,7 @@ py::object construct_result_object(const DenseMatrix& state_dense, const py::obj
             }
             results.append(StateTomographyReadoutResult(
                 "readout"_a     = py::module_::import("copy").attr("copy")(ro),
-                "final_state"_a = QTensor(final_state_numpy)
+                "state"_a = QTensor(final_state_numpy)
             ));
 
         } else if (py::isinstance(ro, ExpectationReadout)) {

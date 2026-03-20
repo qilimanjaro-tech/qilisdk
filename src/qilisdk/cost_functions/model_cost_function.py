@@ -84,7 +84,7 @@ class ModelCostFunction(CostFunction):
             ValueError: If ``results`` contains neither a ``StateTomography``
                 nor a ``Sampling`` readout.
         """
-        if results.has_final_state():
+        if results.has_state():
             return self._compute_from_state(results)
         if results.has_samples():
             return self._compute_from_samples(results)
@@ -109,7 +109,7 @@ class ModelCostFunction(CostFunction):
             ValueError: If the final state is neither a ket, bra, nor a valid
                 density matrix.
         """
-        final_state = results.final_state
+        final_state = results.state
 
         if isinstance(self.model, QUBO):
             ham = self.model.to_hamiltonian()
@@ -170,7 +170,7 @@ class ModelCostFunction(CostFunction):
         of those evaluations.
 
         Args:
-            results (FunctionalResult): A result whose ``final_probabilities``
+            results (FunctionalResult): A result whose ``probabilities``
                 are available.
 
         Returns:
@@ -181,7 +181,7 @@ class ModelCostFunction(CostFunction):
                 the number of model variables.
         """
         total_cost = complex(0.0)
-        probabilities = results.final_probabilities
+        probabilities = results.probabilities
         for sample, prob in probabilities.items():
             bit_configuration = [int(i) for i in sample]
             if len(self.model.variables()) != len(bit_configuration):

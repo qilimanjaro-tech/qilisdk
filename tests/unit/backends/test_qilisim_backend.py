@@ -175,8 +175,8 @@ def test_qilisim_dephasing_strength_changes_dynamics():
         readout=[ExpectationReadout(observables=[pauli_x(0)])],
     )
 
-    weak_exp = float(np.real(weak_result.final_expected_values[0]))
-    strong_exp = float(np.real(strong_result.final_expected_values[0]))
+    weak_exp = float(np.real(weak_result.expected_values[0]))
+    strong_exp = float(np.real(strong_result.expected_values[0]))
     assert strong_exp < weak_exp
 
 
@@ -203,7 +203,7 @@ def test_execute_quantum_reservoir_qilisim(monkeypatch):
     final_density = ket(0).to_density_matrix()
 
     def _mock_execute_analog_evolution(self, f, readout):
-        readout_result = StateTomographyReadoutResult(readout=StateTomographyReadout(), final_state=final_density)
+        readout_result = StateTomographyReadoutResult(readout=StateTomographyReadout(), state=final_density)
         return FunctionalResult(readout_results=[readout_result])
 
     monkeypatch.setattr(
@@ -215,9 +215,9 @@ def test_execute_quantum_reservoir_qilisim(monkeypatch):
         functional, readout=[ExpectationReadout(observables=[pauli_z(0)]), StateTomographyReadout()]
     )
 
-    assert result.final_state is not None
-    assert len(result.expected_values) == 2
-    assert len(result.states) == 2
+    assert result.state is not None
+    assert len(result.intermediate_expected_values) == 2
+    assert len(result.intermediate_states) == 2
 
 
 def test_qilisim_repr():

@@ -169,7 +169,7 @@ There is no need to install QiliSim separately, as it is included with the core 
     # Execute with the QiliSim backend
     qilisim_backend = QiliSim()
     result = qilisim_backend.execute(functional, readout=[SamplingReadout(nshots=500)])
-    print(result.final_samples)
+    print(result.samples)
 
 CUDA Backend
 ------------
@@ -228,7 +228,7 @@ commodity hardware before moving to accelerated machines.
     # Execute with the chosen sampling method (GPU if available)
     cuda_backend = CudaBackend(sampling_method=CudaSamplingMethod.STATE_VECTOR)
     result = cuda_backend.execute(functional, readout=[SamplingReadout(nshots=500)])
-    print(result.final_samples)
+    print(result.samples)
 
 **Output**
 

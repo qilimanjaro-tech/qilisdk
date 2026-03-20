@@ -50,7 +50,7 @@ def test_compute_cost_state_tomography():
 
     # With ket state
     readout = StateTomographyReadout()
-    readout_result = StateTomographyReadoutResult(readout=readout, final_state=tensor_prod([ket(1), ket(1)]))
+    readout_result = StateTomographyReadoutResult(readout=readout, state=tensor_prod([ket(1), ket(1)]))
     result = FunctionalResult(readout_results=[readout_result])
     cost = ocf.compute_cost(result)
 
@@ -58,7 +58,7 @@ def test_compute_cost_state_tomography():
 
     # With density matrix state
     readout_result = StateTomographyReadoutResult(
-        readout=readout, final_state=tensor_prod([ket(1), ket(1)]).to_density_matrix()
+        readout=readout, state=tensor_prod([ket(1), ket(1)]).to_density_matrix()
     )
     result = FunctionalResult(readout_results=[readout_result])
     cost = ocf.compute_cost(result)
@@ -116,7 +116,7 @@ def test_imag_state_tomography_result():
     ocf = ObservableCostFunction(ob)
 
     readout = StateTomographyReadout()
-    readout_result = StateTomographyReadoutResult(readout=readout, final_state=tensor_prod([ket(1), ket(1)]))
+    readout_result = StateTomographyReadoutResult(readout=readout, state=tensor_prod([ket(1), ket(1)]))
     result = FunctionalResult(readout_results=[readout_result])
     cost = ocf.compute_cost(result)
 
