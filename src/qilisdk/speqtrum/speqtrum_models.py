@@ -56,8 +56,6 @@ class SpeQtrumModel(BaseModel):
 class LoginPayload(BaseModel):
     """Placeholder model for the login request payload."""
 
-    ...
-
 
 class Token(SpeQtrumModel):
     """

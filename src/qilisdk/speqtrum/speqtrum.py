@@ -320,6 +320,10 @@ class _BearerAuth(httpx.Auth):
 
         Yields:
             httpx.Request: Requests decorated with an ``Authorization`` header.
+
+        Raises:
+            RuntimeError: if Speqtrum token refresh fails.
+            HTTPStatusError: if the refresh token fails.
         """
         request.headers["Authorization"] = f"Bearer {self._client.token.access_token}"
         response = yield request

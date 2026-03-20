@@ -38,8 +38,11 @@ class QiliSim(Backend):
         .. code-block:: python
 
             from qilisdk.backends import (
-                AnalogMethod, DigitalMethod, ExecutionConfig,
-                MonteCarloConfig, QiliSim,
+                AnalogMethod,
+                DigitalMethod,
+                ExecutionConfig,
+                MonteCarloConfig,
+                QiliSim,
             )
 
             backend = QiliSim(
