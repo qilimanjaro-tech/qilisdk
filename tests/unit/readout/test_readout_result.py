@@ -19,7 +19,7 @@ import pytest
 
 from qilisdk.analog import Z as pauli_z
 from qilisdk.backends.backend import Backend
-from qilisdk.core import ket, tensor_prod
+from qilisdk.core import QTensor, ket, tensor_prod
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.readout import ExpectationReadout, ReadoutMethod, SamplingReadout, StateTomographyReadout
 from qilisdk.readout.readout_result import (
@@ -376,6 +376,47 @@ class TestReadoutCompositeResults:
         assert composite.expected_values == [1.0]
         assert composite.state is not None
 
+    def test_repr(self, sampling_result):
+        composite = ReadoutCompositeResults([sampling_result])
+        text = repr(composite)
+        assert isinstance(text, str)
+        assert len(text) > 0
+
+    def test_readout_results_property(self, sampling_result):
+        composite = ReadoutCompositeResults([sampling_result])
+        assert len(composite.readout_results) == 1
+
+
+class TestSamplingReadoutResultEdgeCases:
+    def test_init_no_samples_no_state_raises(self):
+        ro = SamplingReadout(nshots=10)
+        with pytest.raises(ValueError, match="samples and state are not provided"):
+            SamplingReadoutResult(readout=ro)
+
+    def test_init_from_probabilities_via_none_samples(self):
+        ro = SamplingReadout(nshots=100)
+        result = SamplingReadoutResult(readout=ro, samples=None, probabilities={"0": 0.5, "1": 0.5})
+        assert sum(result.samples.values()) > 0
+
+
+class TestStateTomographyEdgeCases:
+    def test_get_probabilities(self):
+        result = StateTomographyReadoutResult(readout=StateTomographyReadout(), state=ket(0))
+        top = result.get_probabilities(n=1)
+        assert len(top) == 1
+        assert top[0][0] == "0"
+
+    def test_repr(self):
+        result = StateTomographyReadoutResult(readout=StateTomographyReadout(), state=ket(0))
+        assert "State Tomography" in repr(result)
+
+
+class TestProbabilitiesFromState2:
+    def test_unnormalized_state_check_raises(self):
+        unnormalized = QTensor(np.array([[2], [2]]))
+        with pytest.raises(ValueError, match="not normalized"):
+            _probabilities_from_state(unnormalized, check_normalization=True)
+
 
 # FunctionalResult integration
 
@@ -473,6 +514,80 @@ class TestFunctionalResult:
     def test_repr(self):
         result = FunctionalResult([SamplingReadoutResult(readout=SamplingReadout(nshots=10), samples={"0": 10})])
         assert "Functional Results" in repr(result)
+
+    def test_intermediate_probabilities(self):
+        tomo = StateTomographyReadout()
+        final = [StateTomographyReadoutResult(readout=tomo, state=ket(0))]
+        inter = [StateTomographyReadoutResult(readout=tomo, state=ket(1))]
+        result = FunctionalResult(readout_results=final, intermediate_results=[inter])
+        probs = result.intermediate_probabilities
+        assert len(probs) == 2
+        assert np.isclose(probs[0]["1"], 1.0)
+        assert np.isclose(probs[1]["0"], 1.0)
+
+    def test_intermediate_probabilities_no_intermediate_raises(self):
+        result = FunctionalResult([StateTomographyReadoutResult(readout=StateTomographyReadout(), state=ket(0))])
+        with pytest.raises(ValueError, match="intermediate probabilities"):
+            _ = result.intermediate_probabilities
+
+    def test_intermediate_probabilities_no_readout_raises(self):
+        ro = ExpectationReadout(observables=[pauli_z(0)])
+        r = ExpectationReadoutResult(readout=ro, expected_values=[1.0])
+        result = FunctionalResult(readout_results=[r], intermediate_results=[[r]])
+        with pytest.raises(ValueError, match="no Sampling/State Tomography"):
+            _ = result.intermediate_probabilities
+
+    def test_intermediate_expected_values(self):
+        ro = ExpectationReadout(observables=[pauli_z(0)])
+        final = [ExpectationReadoutResult(readout=ro, expected_values=[1.0])]
+        inter = [ExpectationReadoutResult(readout=ro, expected_values=[-1.0])]
+        result = FunctionalResult(readout_results=final, intermediate_results=[inter])
+        vals = result.intermediate_expected_values
+        assert len(vals) == 2
+        assert np.isclose(vals[0][0], -1.0)
+        assert np.isclose(vals[1][0], 1.0)
+
+    def test_intermediate_expected_values_no_intermediate_raises(self):
+        ro = ExpectationReadout(observables=[pauli_z(0)])
+        result = FunctionalResult([ExpectationReadoutResult(readout=ro, expected_values=[1.0])])
+        with pytest.raises(ValueError, match="intermediate expected values"):
+            _ = result.intermediate_expected_values
+
+    def test_intermediate_expected_values_no_readout_raises(self):
+        ro = SamplingReadout(nshots=10)
+        r = SamplingReadoutResult(readout=ro, samples={"0": 10})
+        result = FunctionalResult(readout_results=[r], intermediate_results=[[r]])
+        with pytest.raises(ValueError, match="no Expectation readout"):
+            _ = result.intermediate_expected_values
+
+    def test_intermediate_samples_no_readout_raises(self):
+        tomo = StateTomographyReadout()
+        r = StateTomographyReadoutResult(readout=tomo, state=ket(0))
+        result = FunctionalResult(readout_results=[r], intermediate_results=[[r]])
+        with pytest.raises(ValueError, match="no Sampling readout"):
+            _ = result.intermediate_samples
+
+    def test_getitem_returns_intermediate(self):
+        ro = SamplingReadout(nshots=10)
+        final = [SamplingReadoutResult(readout=ro, samples={"0": 10})]
+        inter = [SamplingReadoutResult(readout=ro, samples={"1": 10})]
+        result = FunctionalResult(readout_results=final, intermediate_results=[inter])
+        assert result[0].samples == {"1": 10}
+        assert result[1].samples == {"0": 10}
+
+    def test_getitem_invalid_index_raises(self):
+        result = FunctionalResult([SamplingReadoutResult(readout=SamplingReadout(nshots=10), samples={"0": 10})])
+        with pytest.raises(ValueError, match="Invalid Index"):
+            _ = result[5]
+
+    def test_readout_results_property(self):
+        ro = SamplingReadout(nshots=10)
+        result = FunctionalResult([SamplingReadoutResult(readout=ro, samples={"0": 10})])
+        assert result.readout_results is not None
+
+    def test_intermediate_results_empty_when_not_stored(self):
+        result = FunctionalResult([SamplingReadoutResult(readout=SamplingReadout(nshots=10), samples={"0": 10})])
+        assert result.intermediate_results == []
 
 
 # Backend._construct_results_list

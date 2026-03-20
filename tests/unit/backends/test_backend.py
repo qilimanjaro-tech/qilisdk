@@ -19,11 +19,20 @@ import pytest
 
 from qilisdk.analog import Schedule, Z
 from qilisdk.backends.backend import Backend
+from qilisdk.backends.backend_config import AnalogMethod
 from qilisdk.core import LT, Parameter, ket
 from qilisdk.digital import Circuit
 from qilisdk.digital.gates import RZ, H
-from qilisdk.functionals import DigitalPropagation, FunctionalResult, QuantumReservoir, ReservoirInput, ReservoirLayer
+from qilisdk.functionals import (
+    AnalogEvolution,
+    DigitalPropagation,
+    FunctionalResult,
+    QuantumReservoir,
+    ReservoirInput,
+    ReservoirLayer,
+)
 from qilisdk.functionals.variational_program import VariationalProgram
+from qilisdk.noise import NoiseModel
 from qilisdk.readout import SamplingReadout, StateTomographyReadout
 from qilisdk.readout.readout_result import SamplingReadoutResult, StateTomographyReadoutResult
 
@@ -208,3 +217,131 @@ def test_print_backend():
     backend = Backend()
     as_str = str(backend)
     assert "Backend" in as_str
+
+
+def test_backend_execute_unsupported_functional():
+    backend = Backend()
+
+    class UnknownFunctional:
+        pass
+
+    with pytest.raises(NotImplementedError, match="does not support"):
+        backend.execute(UnknownFunctional(), [SamplingReadout(nshots=10)])
+
+
+def test_backend_analog_evolution_not_implemented():
+    backend = Backend()
+    schedule = Schedule(dt=1, hamiltonians={"h": Z(0)}, coefficients={"h": {(0, 1): 1.0}})
+    functional = AnalogEvolution(schedule=schedule, initial_state=ket(0))
+    with pytest.raises(NotImplementedError, match="has no AnalogEvolution"):
+        backend.execute(functional, [StateTomographyReadout()])
+
+
+def test_quantum_reservoir_with_noise_model_warns(monkeypatch):
+    class _MockBackend(Backend):
+        def _execute_analog_evolution(self, functional, readout):
+            state = functional.initial_state
+            return FunctionalResult(
+                readout_results=[StateTomographyReadoutResult(readout=StateTomographyReadout(), state=state)]
+            )
+
+    backend = _MockBackend(noise_model=NoiseModel())
+
+    schedule = Schedule(dt=1, hamiltonians={"h": Z(0)}, coefficients={"h": {(0, 1): 1.0}})
+    reservoir_layer = ReservoirLayer(evolution_dynamics=schedule)
+    functional = QuantumReservoir(
+        initial_state=ket(0),
+        reservoir_layer=reservoir_layer,
+        input_per_layer=[{}],
+    )
+
+    result = backend._execute_quantum_reservoir(functional, [StateTomographyReadout()])
+    assert result is not None
+
+
+def test_quantum_reservoir_uses_circuit_cache(monkeypatch):
+    class _MockBackend(Backend):
+        def _execute_analog_evolution(self, functional, readout):
+            state = functional.initial_state
+            return FunctionalResult(
+                readout_results=[StateTomographyReadoutResult(readout=StateTomographyReadout(), state=state)]
+            )
+
+    backend = _MockBackend()
+
+    schedule = Schedule(dt=1, hamiltonians={"h": Z(0)}, coefficients={"h": {(0, 1): 1.0}})
+    pre = Circuit(1)
+    pre.add(H(0))  # no parameters, same signature every time
+    reservoir_layer = ReservoirLayer(evolution_dynamics=schedule, input_encoding=pre)
+    functional = QuantumReservoir(
+        initial_state=ket(0),
+        reservoir_layer=reservoir_layer,
+        input_per_layer=[{}, {}],  # two layers with same circuit params -> cache hit
+    )
+
+    to_qtensor_count = [0]
+    original = Circuit.to_qtensor
+
+    def counting_to_qtensor(self):
+        to_qtensor_count[0] += 1
+        return original(self)
+
+    monkeypatch.setattr(Circuit, "to_qtensor", counting_to_qtensor)
+    result = backend._execute_quantum_reservoir(functional, [StateTomographyReadout()])
+    # First call computes, second should use cache
+    assert to_qtensor_count[0] == 1
+    assert result is not None
+
+
+def test_quantum_reservoir_with_qubit_reset(monkeypatch):
+    class _MockBackend(Backend):
+        def _execute_analog_evolution(self, functional, readout):
+            state = functional.initial_state
+            return FunctionalResult(
+                readout_results=[StateTomographyReadoutResult(readout=StateTomographyReadout(), state=state)]
+            )
+
+    backend = _MockBackend()
+    schedule = Schedule(dt=1, hamiltonians={"h": Z(0)}, coefficients={"h": {(0, 1): 1.0}})
+    reservoir_layer = ReservoirLayer(evolution_dynamics=schedule, qubits_to_reset=[0])
+    functional = QuantumReservoir(
+        initial_state=ket(0),
+        reservoir_layer=reservoir_layer,
+        input_per_layer=[{}, {}],
+    )
+
+    result = backend._execute_quantum_reservoir(functional, [StateTomographyReadout()])
+    assert result is not None
+
+
+def test_variational_program_unsupported_result_type(monkeypatch):
+    class _BadCostFunction:
+        def compute_cost(self, result):
+            return 1 + 2j  # complex with large imaginary part
+
+    backend = Backend()
+    circ = Circuit(1)
+    param = Parameter("phi", 0.5, bounds=(0.0, np.pi))
+    circ.add(RZ(0, phi=param))
+    func = DigitalPropagation(circuit=circ)
+    readout = [SamplingReadout(nshots=100)]
+
+    class _SingleCallOptimizer:
+        has_parameter_constraints = False
+
+        def optimize(self, cost_function, bounds, init_parameters, store_intermediate_results=False):
+            cost_function(init_parameters)
+            return MockOptimizerResult(optimal_parameters=init_parameters, optimal_value=0.0)
+
+    var_prog = VariationalProgram(functional=func, optimizer=_SingleCallOptimizer(), cost_function=_BadCostFunction())
+
+    monkeypatch.setattr(backend, "_execute_digital_propagation", lambda f, ro: _make_mock_result(f))
+
+    with pytest.raises(ValueError, match="Unsupported result type"):
+        backend._execute_variational_program(functional=var_prog, readout=readout)
+
+
+def test_backend_config_analog_method_direct():
+
+    method = AnalogMethod.direct()
+    assert method.evolution_method == "direct"

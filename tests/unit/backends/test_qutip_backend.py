@@ -20,6 +20,8 @@ from qutip import Qobj
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliZ
 from qilisdk.analog.schedule import Schedule
+from qilisdk.backends.qutip_backend import QutipBackend
+from qilisdk.core import ket
 from qilisdk.core.qtensor import QTensor, tensor_prod
 from qilisdk.functionals.analog_evolution import AnalogEvolution
 from qilisdk.functionals.functional_result import FunctionalResult
@@ -36,8 +38,8 @@ pytest.importorskip(
 
 from qutip_qip.circuit import CircuitSimulator
 
-from qilisdk.backends.qutip_backend import QutipBackend, QutipI
-from qilisdk.core import bra, ket
+from qilisdk.backends.qutip_backend import QutipI
+from qilisdk.core import bra
 from qilisdk.core.model import Constraint, Model, Objective
 from qilisdk.core.variables import BinaryVariable
 from qilisdk.cost_functions.model_cost_function import ModelCostFunction
@@ -385,3 +387,38 @@ def test_execute_quantum_reservoir_raises_if_time_evolution_returns_no_state(mon
 
     with pytest.raises(ValueError, match="Reservoir Runtime Error"):
         backend._execute_quantum_reservoir(functional, readout=[SamplingReadout(nshots=10)])
+
+
+def test_get_qutip_observable_qtensor(monkeypatch):
+
+    monkeypatch.setattr("qilisdk.backends.qutip_backend.mesolve", lambda *args, **kwargs: TimeEvolutionMockResults())
+    backend = QutipBackend()
+    z_matrix = QTensor(np.array([[1, 0], [0, -1]]))
+    hamiltonian = Hamiltonian({(PauliZ(0),): 1.0})
+    schedule = Schedule(hamiltonians={"h": hamiltonian}, dt=0.1)
+    func = AnalogEvolution(schedule=schedule, initial_state=ket(0))
+    result = backend.execute(func, readout=[ExpectationReadout(observables=[z_matrix]), StateTomographyReadout()])
+    assert result.expected_values is not None
+
+
+def test_get_qutip_observable_hamiltonian_smaller_than_system(monkeypatch):
+
+    monkeypatch.setattr(
+        "qilisdk.backends.qutip_backend.mesolve", lambda *args, **kwargs: TimeEvolutionMockResults2Qubits()
+    )
+    backend = QutipBackend()
+    small_hamiltonian = Hamiltonian({(PauliZ(0),): 1.0})
+    system_hamiltonian = Hamiltonian({(PauliZ(0),): 1.0, (PauliZ(1),): 1.0})
+    schedule = Schedule(hamiltonians={"h": system_hamiltonian}, dt=0.1)
+    func = AnalogEvolution(schedule=schedule, initial_state=ket(0, 0))
+    result = backend.execute(
+        func, readout=[ExpectationReadout(observables=[small_hamiltonian]), StateTomographyReadout()]
+    )
+    assert result.expected_values is not None
+
+
+def test_get_qutip_observable_unsupported_type_raises():
+
+    backend = QutipBackend()
+    with pytest.raises(ValueError, match="unsupported observable type"):
+        backend._to_qubip_observables(42, nqubits=1)

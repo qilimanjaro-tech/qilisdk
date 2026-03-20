@@ -19,6 +19,7 @@ import pytest
 from pydantic import ValidationError
 
 from qilisdk.analog.hamiltonian import Hamiltonian
+from qilisdk.backends.cuda_backend import cudaq_to_standard, reverse_bits
 from qilisdk.core import Parameter
 from qilisdk.core.qtensor import QTensor, ket
 from qilisdk.functionals.analog_evolution import AnalogEvolution
@@ -754,3 +755,78 @@ def test_execute_quantum_reservoir_raises_if_time_evolution_returns_no_state(mon
 
     with pytest.raises(ValueError, match="Reservoir Runtime Error"):
         backend._execute_quantum_reservoir(functional, readout=[SamplingReadout(nshots=10)])
+
+
+def test_cudaq_to_standard_reorders_statevector():
+
+    # 2 qubits: |01> in CUDA-Q ordering → should map to standard ordering
+    psi = np.array([0, 1, 0, 0], dtype=complex)
+    reordered = cudaq_to_standard(psi)
+    assert reordered.shape == (4,)
+    assert np.isclose(np.sum(np.abs(reordered) ** 2), 1.0)
+
+
+def test_cudaq_to_standard_invalid_ndim_raises():
+
+    with pytest.raises(ValueError, match="1D array"):
+        cudaq_to_standard(np.array([[1, 0], [0, 0]], dtype=complex))
+
+
+def test_cudaq_to_standard_non_power_of_two_raises():
+
+    with pytest.raises(ValueError, match="power of 2"):
+        cudaq_to_standard(np.array([1, 0, 0], dtype=complex))
+
+
+def test_reverse_bits():
+
+    assert reverse_bits(0b110, 3) == 0b011
+    assert reverse_bits(0b001, 3) == 0b100
+    assert reverse_bits(0b00, 2) == 0b00
+    assert reverse_bits(0b11, 2) == 0b11
+
+
+def test_validate_digital_readout_with_noise_non_sampling_raises():
+    backend = CudaBackend(noise_model=NoiseModel())
+    with pytest.raises(ValueError, match="only the sample readout"):
+        backend._validate_digital_readout_with_noise([StateTomographyReadout()])
+
+
+def test_validate_digital_readout_with_noise_multiple_readouts_raises():
+    backend = CudaBackend(noise_model=NoiseModel())
+    with pytest.raises(ValueError, match="single sampling operation"):
+        backend._validate_digital_readout_with_noise([SamplingReadout(nshots=10), SamplingReadout(nshots=20)])
+
+
+def test_validate_digital_readout_with_noise_ok():
+    backend = CudaBackend(noise_model=NoiseModel())
+    backend._validate_digital_readout_with_noise([SamplingReadout(nshots=10)])
+
+
+def test_sampling_method_property():
+    backend = CudaBackend()
+    assert backend.sampling_method == CudaSamplingMethod.STATE_VECTOR
+
+
+def test_qtensor_observable_to_hamiltonian_not_operator_raises():
+    backend = CudaBackend()
+    # A ket is not an operator
+    with pytest.raises(ValueError, match="must be an operator"):
+        backend._qtensor_observable_to_hamiltonian(ket(0), nqubits=1)
+
+
+def test_qtensor_observable_to_hamiltonian_wrong_nqubits_raises():
+    backend = CudaBackend()
+    obs = QTensor(np.eye(4))  # 2-qubit operator
+    with pytest.raises(ValueError, match="acts on 2 qubits but the schedule acts on 1"):
+        backend._qtensor_observable_to_hamiltonian(obs, nqubits=1)
+
+
+def test_qtensor_initial_state_bra_converted_to_ket():
+    # A bra should be converted to a ket (adjoint)
+    bra = ket(0).adjoint()
+    assert bra.is_bra()
+    state_mock = MagicMock()
+    with patch("qilisdk.backends.cuda_backend.State.from_data", state_mock):
+        CudaBackend._qtensor_initial_state_to_cuda(bra)
+        state_mock.assert_called_once()

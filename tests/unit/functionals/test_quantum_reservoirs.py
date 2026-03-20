@@ -12,13 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from copy import copy
+
 import numpy as np
 import pytest
 
 from qilisdk.analog import Schedule, Z
-from qilisdk.core import Parameter, ket
+from qilisdk.core import Parameter, QTensor, ket
 from qilisdk.digital import CNOT, RX, RY, Circuit, M
 from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
+from qilisdk.functionals.quantum_reservoirs_result import QuantumReservoirResult
+from qilisdk.readout import SamplingReadout
+from qilisdk.readout.readout_result import SamplingReadoutResult
 from qilisdk.settings import get_settings
 
 
@@ -249,3 +254,105 @@ def test_quantum_reservoir_parameter_sync_with_reservoir_layer_child():
     assert _isclose(layer.get_parameters()["g"], 0.95)
     assert _isclose(layer.get_parameters()["output_encoding_p"], 1.2)
     assert _isclose(layer.get_parameters()["u"], 0.6)
+
+
+def test_validate_output_encoding_with_measurement():
+    schedule, _ = _schedule_with_parameter(nqubits=2)
+    bad_post = Circuit(1)
+    bad_post.add(M(0))
+    with pytest.raises(ValueError, match="can't contain measurements"):
+        ReservoirLayer(evolution_dynamics=schedule, output_encoding=bad_post)
+
+
+def test_process_qtensor_padding():
+    schedule, _ = _schedule_with_parameter(nqubits=2)
+    layer = ReservoirLayer(evolution_dynamics=schedule)
+    single_qubit_obs = QTensor(np.array([[1, 0], [0, -1]]))
+    padded = layer._process_qtensor(single_qubit_obs)
+    assert padded.nqubits == 2
+
+
+def test_process_qtensor_too_many_qubits_raises():
+    schedule, _ = _schedule_with_parameter(nqubits=2)
+    layer = ReservoirLayer(evolution_dynamics=schedule)
+
+    big_obs = QTensor(np.identity(8))
+    with pytest.raises(ValueError, match="more qubits than the system"):
+        layer._process_qtensor(big_obs)
+
+
+def test_process_qtensor_exact_match():
+
+    schedule, _ = _schedule_with_parameter(nqubits=2)
+    layer = ReservoirLayer(evolution_dynamics=schedule)
+    obs = QTensor(np.identity(4))
+    result = layer._process_qtensor(obs)
+    assert result.nqubits == 2
+
+
+def test_reservoir_layer_evolution_dynamics_property():
+    schedule, _ = _schedule_with_parameter(nqubits=2)
+    layer = ReservoirLayer(evolution_dynamics=schedule)
+    assert layer.evolution_dynamics is schedule
+
+
+def test_quantum_reservoir_none_layer_raises():
+    with pytest.raises(ValueError, match="must be provided"):
+        QuantumReservoir(initial_state=ket(0), reservoir_layer=None, input_per_layer=[{}])
+
+
+def test_quantum_reservoir_none_input_raises():
+    schedule, _ = _schedule_with_parameter(nqubits=1)
+    layer = ReservoirLayer(evolution_dynamics=schedule)
+    with pytest.raises(ValueError, match="must be provided"):
+        QuantumReservoir(initial_state=ket(0), reservoir_layer=layer, input_per_layer=None)
+
+
+def test_set_inputs_per_layer():
+    schedule, _ = _schedule_with_parameter(nqubits=2)
+    layer = ReservoirLayer(evolution_dynamics=schedule)
+    reservoir = QuantumReservoir(initial_state=ket(0, 0), reservoir_layer=layer, input_per_layer=[{"g": 0.1}])
+    reservoir.set_inputs_per_layer([{"g": 0.5}, {"g": 0.6}])
+    assert len(reservoir.input_per_layer) == 2
+    assert _isclose(reservoir.input_per_layer[0]["g"], 0.5)
+
+
+def test_add_inputs_per_layer_list():
+    schedule, _ = _schedule_with_parameter(nqubits=2)
+    layer = ReservoirLayer(evolution_dynamics=schedule)
+    reservoir = QuantumReservoir(initial_state=ket(0, 0), reservoir_layer=layer, input_per_layer=[{"g": 0.1}])
+    reservoir.add_inputs_per_layer([{"g": 0.2}, {"g": 0.3}])
+    assert len(reservoir.input_per_layer) == 3
+
+
+def test_add_inputs_per_layer_single_dict():
+    schedule, _ = _schedule_with_parameter(nqubits=2)
+    layer = ReservoirLayer(evolution_dynamics=schedule)
+    reservoir = QuantumReservoir(initial_state=ket(0, 0), reservoir_layer=layer, input_per_layer=[{"g": 0.1}])
+    reservoir.add_inputs_per_layer({"g": 0.4})
+    assert len(reservoir.input_per_layer) == 2
+
+
+def test_quantum_reservoir_copy():
+    schedule, _ = _schedule_with_parameter(nqubits=2)
+    layer = ReservoirLayer(evolution_dynamics=schedule)
+    reservoir = QuantumReservoir(initial_state=ket(0, 0), reservoir_layer=layer, input_per_layer=[{"g": 0.1}])
+    copied = copy(reservoir)
+    assert copied.nqubits == reservoir.nqubits
+    assert len(copied.input_per_layer) == len(reservoir.input_per_layer)
+
+
+def test_reservoir_layer_copy():
+    schedule, _ = _schedule_with_parameter(nqubits=2)
+    layer = ReservoirLayer(evolution_dynamics=schedule, qubits_to_reset=[0])
+    copied = copy(layer)
+    assert copied.nqubits == layer.nqubits
+    assert copied.qubits_to_reset == [0]
+
+
+def test_quantum_reservoir_result_is_functional_result():
+    ro = SamplingReadout(nshots=10)
+    r = SamplingReadoutResult(readout=ro, samples={"0": 10})
+    result = QuantumReservoirResult([r])
+    assert result.samples == {"0": 10}
+    assert isinstance(result, QuantumReservoirResult)
