@@ -394,11 +394,12 @@ This ansatz can then be used as a circuit. For example, we can execute this ansa
 .. code-block:: python 
 
     from qilisdk.backends import QutipBackend
-    from qilisdk.functionals import Sampling
+    from qilisdk.functionals import DigitalPropagation
+    from qilisdk.readout import SamplingReadout
 
     backend = QutipBackend()
 
-    backend.execute(Sampling(ansatz))
+    backend.execute(DigitalPropagation(ansatz), readout=[SamplingReadout(nshots=1000)])
 
 QAOA
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -446,16 +447,18 @@ expectation value of the problem Hamiltonian, one can set up a :class:`~qilisdk.
 .. code-block:: python 
 
     from qilisdk.functionals.variational_program import VariationalProgram
+    from qilisdk.functionals import DigitalPropagation
     from qilisdk.optimizers.scipy_optimizer import SciPyOptimizer
     from qilisdk.cost_functions.observable_cost_function import ObservableCostFunction
+    from qilisdk.readout import SamplingReadout
 
-    vqa = VariationalProgram(functional=Sampling(ansatz), 
-                             optimizer=SciPyOptimizer(method="powell", tol=1e-7), 
+    vqa = VariationalProgram(functional=DigitalPropagation(ansatz),
+                             optimizer=SciPyOptimizer(method="powell", tol=1e-7),
                              cost_function=ObservableCostFunction(problem_hamiltonian))
 
     print(f"Running QAOA with {len(ansatz.get_parameters())} parameters...")
     backend = QutipBackend()
-    result = backend.execute(vqa)
+    result = backend.execute(vqa, readout=[SamplingReadout(nshots=1000)])
     print("VQA Result:", result)
 
 TrotterizedSchedule

@@ -9,8 +9,8 @@ an abstract optimization model.
 You will typically use cost functions to:
 
 - score intermediate iterations inside a :class:`~qilisdk.functionals.variational_program.VariationalProgram`
-- post-process :class:`~qilisdk.functionals.sampling_result.SamplingResult` samples into meaningful costs
-- translate :class:`~qilisdk.functionals.time_evolution_result.TimeEvolutionResult` states into expectation values
+- post-process :class:`~qilisdk.functionals.functional_result.FunctionalResult` samples into meaningful costs
+- translate :class:`~qilisdk.functionals.functional_result.FunctionalResult` states into expectation values
 
 
 CostFunction Interface
@@ -20,10 +20,8 @@ The abstract :class:`~qilisdk.cost_functions.cost_function.CostFunction` base cl
 :meth:`~qilisdk.cost_functions.cost_function.CostFunction.compute_cost`. It dispatches on the concrete type of the
 functional result and calls the appropriate protected hook:
 
-- :meth:`~qilisdk.cost_functions.cost_function.CostFunction._compute_cost_sampling` receives a
-  :class:`~qilisdk.functionals.sampling_result.SamplingResult`
-- :meth:`~qilisdk.cost_functions.cost_function.CostFunction._compute_cost_time_evolution` receives a
-  :class:`~qilisdk.functionals.time_evolution_result.TimeEvolutionResult`
+- It dispatches on the content of the :class:`~qilisdk.functionals.functional_result.FunctionalResult`, inspecting
+  the available readout results (samples, expectation values, final state) to compute the cost.
 
 If your workflow introduces new functional result types you can subclass :class:`~qilisdk.cost_functions.cost_function.CostFunction` and register additional
 handlers in ``self._handlers`` or override the protected methods above. Custom implementations must return a real or
@@ -41,8 +39,8 @@ It accepts three interchangeable representations for the observable: a
 :class:`~qilisdk.analog.hamiltonian.PauliOperator`. Internally, all inputs are converted to :class:`~qilisdk.core.qtensor.QTensor` so the same
 numeric pipeline can be reused for both analog and digital results.
 
-Example: expectation value from time evolution
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Example: expectation value from analog evolution
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: python
 
@@ -51,7 +49,8 @@ Example: expectation value from time evolution
     from qilisdk.core import ket, tensor_prod
     from qilisdk.core.interpolator import Interpolation
     from qilisdk.backends import QutipBackend, CudaBackend
-    from qilisdk.functionals import TimeEvolution
+    from qilisdk.functionals import AnalogEvolution
+    from qilisdk.readout import ExpectationReadout
 
     # Define total time and timestep
     T = 10.0
@@ -62,7 +61,7 @@ Example: expectation value from time evolution
     Hx = sum(X(i) for i in range(nqubits))
     Hz = sum(Z(i) for i in range(nqubits))
 
-    # Build a time‑dependent schedule
+    # Build a time-dependent schedule
     schedule = Schedule(
         hamiltonians={"driver": Hx, "problem": Hz},
         coefficients={
@@ -72,25 +71,24 @@ Example: expectation value from time evolution
         dt=dt,
         interpolation=Interpolation.LINEAR,
     )
-    
+
     schedule.draw()
 
-    functional = TimeEvolution(
+    functional = AnalogEvolution(
         schedule=schedule,
         initial_state=(ket(0) - ket(1)).unit(),
-        observables=[Z(0)],
     )
 
     backend = QutipBackend()
-    evolution_result = backend.execute(functional)
+    evolution_result = backend.execute(functional, readout=[ExpectationReadout(observables=[Z(0)])])
 
 
     cost_fn = ObservableCostFunction(Z(0))
     energy = cost_fn.compute_cost(evolution_result)
-    print("Expectation value ⟨Z⟩ =", energy)
+    print("Expectation value <Z> =", energy)
 
 For sampling workflows, the cost function iterates through the probability distribution exposed by
-:meth:`~qilisdk.functionals.sampling_result.SamplingResult.get_probabilities` and accumulates the expectation value in
+:attr:`~qilisdk.functionals.functional_result.FunctionalResult.final_probabilities` and accumulates the expectation value in
 the computational basis.
 
 
@@ -116,7 +114,8 @@ Example: scoring samples from a variational circuit
     from qilisdk.core.variables import BinaryVariable, LEQ
     from qilisdk.cost_functions import ModelCostFunction
     from qilisdk.digital import Circuit, RX, RZ, CNOT, M
-    from qilisdk.functionals import Sampling
+    from qilisdk.functionals import DigitalPropagation
+    from qilisdk.readout import SamplingReadout
     import numpy as np
 
     # Simple 2-qubit ansatz
@@ -127,7 +126,7 @@ Example: scoring samples from a variational circuit
     circuit.add(M(0))
     circuit.add(M(1))
 
-    sampling = Sampling(circuit, nshots=1_000)
+    functional = DigitalPropagation(circuit)
 
     # Build a toy knapsack-like model
     b0, b1 = (BinaryVariable("b0"), BinaryVariable("b1"))
@@ -138,7 +137,7 @@ Example: scoring samples from a variational circuit
     cost_fn = ModelCostFunction(model)
 
     backend = CudaBackend()
-    backend_result = backend.execute(sampling)
+    backend_result = backend.execute(functional, readout=[SamplingReadout(nshots=1_000)])
     score = cost_fn.compute_cost(backend_result)
     print("Aggregated model evaluation =", score)
 
@@ -155,17 +154,18 @@ object, and feeds it into the configured cost function to obtain the scalar that
 
     from qilisdk.backends import CudaBackend
     from qilisdk.cost_functions import ModelCostFunction
-    from qilisdk.functionals import VariationalProgram, Sampling
+    from qilisdk.functionals import VariationalProgram, DigitalPropagation
+    from qilisdk.readout import SamplingReadout
     from qilisdk.optimizers import SciPyOptimizer
 
     variational_program = VariationalProgram(
-        functional=Sampling(ansatz),          # parameterized circuit or schedule
+        functional=DigitalPropagation(ansatz),          # parameterized circuit or schedule
         optimizer=SciPyOptimizer(method="Powell"),
         cost_function=ModelCostFunction(model),
     )
 
     backend = CudaBackend()
-    result = backend.execute(variational_program)
+    result = backend.execute(variational_program, readout=[SamplingReadout(nshots=1000)])
     print("Optimal parameters:", result.optimal_parameters)
     print("Optimal cost:", result.optimal_cost)
 

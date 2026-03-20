@@ -7,14 +7,15 @@ Below are minimal examples to get you running digital circuits and analog evolut
 Digital Circuit Example
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Build a 2-qubit circuit, sample it using CUDA backend, and inspect measurement counts:
+Build a 2-qubit circuit, propagate it using CUDA backend, and inspect measurement counts:
 
 .. code-block:: python
 
     import numpy as np
     from qilisdk.digital import Circuit, H, RX, CNOT
     from qilisdk.backends import CudaBackend, CudaSamplingMethod
-    from qilisdk.functionals import Sampling
+    from qilisdk.functionals import DigitalPropagation
+    from qilisdk.readout import SamplingReadout
 
     # 1. Define a simple 2‑qubit circuit
     circuit = Circuit(2)
@@ -22,22 +23,22 @@ Build a 2-qubit circuit, sample it using CUDA backend, and inspect measurement c
     circuit.add(RX(1, theta=np.pi / 2))
     circuit.add(CNOT(0, 1))
 
-    # 2. Wrap it in a Sampling functional
-    sampling = Sampling(circuit=circuit, nshots=500)
+    # 2. Wrap it in a DigitalPropagation functional
+    propagation = DigitalPropagation(circuit=circuit)
 
-    # 3. Execute on GPU
+    # 3. Execute on GPU with sampling readout
     backend = CudaBackend(sampling_method=CudaSamplingMethod.STATE_VECTOR)
-    results = backend.execute(sampling)
+    results = backend.execute(propagation, readout=[SamplingReadout(nshots=500)])
 
-    print("Counts:", results.probabilities)
+    print("Counts:", results.final_probabilities)
 
 
 .. NOTE::
 
-    This example requires CUDA backend which can be installed using ``pip install qilisdk[cuda]`` if you have the proper drivers installed. 
-    for more details check the information on the official CUDA documentation: https://nvidia.github.io/cuda-quantum/latest/using/quick_start.html#install-cuda-q 
+    This example requires CUDA backend which can be installed using ``pip install qilisdk[cuda]`` if you have the proper drivers installed.
+    for more details check the information on the official CUDA documentation: https://nvidia.github.io/cuda-quantum/latest/using/quick_start.html#install-cuda-q
 
-Analog Time Evolution Example
+Analog Evolution Example
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Define two Hamiltonians, build an interval-based interpolation schedule, and run using Qutip backend:
@@ -46,8 +47,9 @@ Define two Hamiltonians, build an interval-based interpolation schedule, and run
 
     from qilisdk.analog import Schedule, X, Z
     from qilisdk.core import ket, tensor_prod
-    from qilisdk.functionals import TimeEvolution
+    from qilisdk.functionals import AnalogEvolution
     from qilisdk.backends import QutipBackend
+    from qilisdk.readout import ExpectationReadout, StateTomographyReadout
 
     # Total time and step
     T, dt = 5.0, 0.1
@@ -70,23 +72,24 @@ Define two Hamiltonians, build an interval-based interpolation schedule, and run
     # Initial state |+⟩
     psi0 = tensor_prod([(ket(0) - ket(1)).unit() for _ in range(n)]).unit()
 
-    # TimeEvolution functional
-    tevo = TimeEvolution(
+    # AnalogEvolution functional
+    evolution = AnalogEvolution(
         schedule=schedule,
         initial_state=psi0,
-        observables=[Z(0)],
-        nshots=100,
         store_intermediate_results=True,
     )
 
-    # Execute on CPU
-    results = QutipBackend().execute(tevo)
+    # Execute on CPU with expectation readout
+    results = QutipBackend().execute(
+        evolution,
+        readout=[ExpectationReadout(observables=[Z(0)]), StateTomographyReadout()],
+    )
     print(results)
 
 
 .. NOTE::
 
-    This example requires QuTiP backend which can be installed using ``pip install qilisdk[qutip]``. 
+    This example requires QuTiP backend which can be installed using ``pip install qilisdk[qutip]``.
 
 
 Next Steps
