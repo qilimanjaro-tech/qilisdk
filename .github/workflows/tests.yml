@@ -62,7 +62,8 @@ jobs:
         uses: codecov/codecov-action@v5
         with:
           files: combined_coverage.xml
-          gcov-executable: null
+          disable_search: true
+          gcov_executable: null
           token: ${{ secrets.CODECOV_TOKEN }}
       
       - name: Upload test results to Codecov
