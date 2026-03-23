@@ -46,16 +46,15 @@ jobs:
         run: uv -v sync --group dev --extra all-cu13 -Ccmake.define.tests=ON -Ccmake.build-type=Debug -Ccmake.define.coverage=ON --reinstall
 
       - name: Run Python tests
-        run: uv run pytest --cov=qilisdk --cov-report=xml --cov-report=term-missing --junitxml=junit.xml -o junit_family=legacy tests/unit_python/
+        run: |
+          source .venv/bin/activate
+          pytest --cov=qilisdk --cov-report=xml --cov-report=term-missing --junitxml=junit.xml -o junit_family=legacy tests/unit_python/
 
       - name: Run C++ tests
         run: |
           source .venv/bin/activate
           GCOV_PREFIX=$(pwd)/tests/unit_cpp/coverage GCOV_PREFIX_STRIP=5 ./tests/unit_cpp/test_cpp
           gcovr --exclude '.*googletest.*' --exclude '/usr/.*' --gcov-ignore-errors=all --xml coverage_cpp.xml
-
-      # - name: Compile C++ test results
-      #   run: uv run gcovr --exclude '.*googletest.*' --exclude '/usr/.*' --gcov-ignore-errors=all --xml coverage_cpp.xml
 
       - name: Combine coverage reports
         run: uv run gcovr --xml combined_coverage.xml --cobertura-add-tracefile coverage.xml --cobertura-add-tracefile coverage_cpp.xml
