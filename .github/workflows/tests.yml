@@ -52,7 +52,7 @@ jobs:
         run: export GCOV_PREFIX=$(pwd)/tests/unit_cpp/coverage && export GCOV_PREFIX_STRIP=5
 
       - name: Check environment variables for C++ tests
-        run: echo "GCOV_PREFIX: $GCOV_PREFIX" && echo "GCOV_PREFIX_STRIP: $GCOV_PREFIX_STRIP"
+        run: echo $GCOV_PREFIX && echo $GCOV_PREFIX_STRIP
 
       - name: Run C++ tests
         run: uv run ./tests/unit_cpp/test_cpp
