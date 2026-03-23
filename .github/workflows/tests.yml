@@ -43,7 +43,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install qilisdk
-        run: uv -v sync --group dev --extra all-cu13 -Ccmake.define.tests=ON -Ccmake.build-type=Debug -Ccmake.define.coverage=ON
+        run: uv -v sync --group dev --extra all-cu13 -Ccmake.define.tests=ON -Ccmake.build-type=Debug -Ccmake.define.coverage=ON --reinstall
 
       - name: Run Python tests
         run: uv run pytest --cov=qilisdk --cov-report=xml --cov-report=term-missing --junitxml=junit.xml -o junit_family=legacy tests/unit_python/
@@ -52,11 +52,8 @@ jobs:
         env:
           GCOV_PREFIX: ${{ github.workspace }}/tests/unit_cpp/coverage
           GCOV_PREFIX_STRIP: 5
-        run: |
-          echo "GCOV_PREFIX: $GCOV_PREFIX"
-          echo "GCOV_PREFIX_STRIP: $GCOV_PREFIX_STRIP"
-          mkdir -p tests/unit_cpp/coverage
-          uv run ./tests/unit_cpp/test_cpp
+          PYTHONPATH: ${{ github.workspace }}/tests/unit_cpp
+        run: uv run ./tests/unit_cpp/test_cpp
 
       - name: Compile C++ test results
         run: uv run gcovr --exclude '.*googletest.*' --exclude '/usr/.*' --gcov-ignore-errors=all --xml coverage_cpp.xml
@@ -76,8 +73,6 @@ jobs:
         with:
           files: combined_coverage.xml
           disable_search: true
-          # gcov_executable: null
-          # gcov_ignore: '*'
           token: ${{ secrets.CODECOV_TOKEN }}
       
       - name: Upload test results to Codecov
