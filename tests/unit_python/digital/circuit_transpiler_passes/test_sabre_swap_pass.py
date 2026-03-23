@@ -189,6 +189,7 @@ def test_sabre_swap_accepts_padding_qubits_after_layout():
 
     out = swap_pass.run(circuit)
 
+    assert out is not None
     assert out.nqubits >= 5
     assert swap_pass.last_final_layout is not None
     assert len(swap_pass.last_final_layout) == circuit.nqubits

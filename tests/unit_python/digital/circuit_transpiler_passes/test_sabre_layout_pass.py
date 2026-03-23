@@ -53,6 +53,7 @@ def test_sabre_layout_accepts_edge_list_topology():
 
     out = layout_pass.run(circuit)
 
+    assert out is not None
     assert out.nqubits == 3
     assert layout_pass.last_layout is not None
     assert len(layout_pass.last_layout) == circuit.nqubits
@@ -86,6 +87,7 @@ def test_sabre_layout_identity_when_no_two_qubit_gates():
 
     out = layout_pass.run(circuit)
 
+    assert out is not None
     assert out.nqubits == 3
     assert [gate.qubits for gate in out.gates] == [(0,), (1,)]
     assert layout_pass.last_layout == [0, 1]
