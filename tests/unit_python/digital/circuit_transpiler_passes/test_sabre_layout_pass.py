@@ -4,6 +4,7 @@ from itertools import starmap
 
 import pytest
 from rustworkx import PyGraph
+from unittest.mock import MagicMock
 
 from qilisdk.digital import (
     CNOT,
@@ -266,10 +267,11 @@ def test_sabre_layout_simulation_uses_sampled_candidate_when_neighbors_are_unava
 
     graph = make_graph([], nodes=[0, 1])
     layout_pass = SabreLayoutPass(graph, num_trials=1, seed=0)
+    fake_cost_front = MagicMock(side_effect=SampledCandidateUsed())
     monkeypatch.setattr(
         layout_pass,
         "_cost_front",
-        lambda *args, **kwargs: (_ for _ in ()).throw(SampledCandidateUsed()),
+        fake_cost_front,
     )
 
     with pytest.raises(SampledCandidateUsed):

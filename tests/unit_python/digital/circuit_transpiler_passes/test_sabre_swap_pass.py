@@ -307,10 +307,11 @@ def test_sabre_swap_fallback_samples_candidate_edge_when_no_neighbors_exist(monk
     swap_pass = SabreSwapPass(graph, max_attempts=1)
     circuit = _two_qubit_circuit()
 
+    fake_cost_set = MagicMock(side_effect=SampledCandidateUsed())
     monkeypatch.setattr(
         swap_pass,
         "_cost_set",
-        lambda *args, **kwargs: (_ for _ in ()).throw(SampledCandidateUsed()),
+        fake_cost_set,
     )
 
     with pytest.raises(SampledCandidateUsed):
