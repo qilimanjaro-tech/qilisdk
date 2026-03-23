@@ -555,7 +555,7 @@ TEST(TraceTest, Identity2_TraceIs2) {
 TEST(TraceTest, Cached_SecondCallSameResult) {
     QTensorCpp q(make_identity2());
     auto t1 = q.trace();
-    auto t2 = q.trace(); // hits cache
+    auto t2 = q.trace();  // hits cache
     EXPECT_EQ(t1, t2);
 }
 
@@ -672,7 +672,7 @@ TEST(NormTest, Unknown_Throws) {
 }
 
 TEST(NormalizedTest, ZeroNorm_Throws) {
-    SparseMatrix m(2, 1); // all zeros
+    SparseMatrix m(2, 1);  // all zeros
     m.makeCompressed();
     QTensorCpp q(m);
     EXPECT_THROW(q.normalized("l2"), py::value_error);
@@ -1160,7 +1160,7 @@ TEST(ClearCacheTest, AfterClear_EigenvaluesThrow) {
 
 TEST(ClearCacheTest, AfterClear_TraceRecomputed) {
     QTensorCpp q(make_identity2());
-    q.trace(); // caches trace
+    q.trace();  // caches trace
     q.clear_cache();
     // should recompute without error
     EXPECT_NO_THROW(q.trace());
@@ -1368,7 +1368,7 @@ TEST(IsUnitaryTest, ScaledIdentity_False) {
 TEST(IsUnitaryTest, Cached_SecondCallSameResult) {
     QTensorCpp q(make_pauli_x());
     EXPECT_TRUE(q.is_unitary());
-    EXPECT_TRUE(q.is_unitary()); // hits cache
+    EXPECT_TRUE(q.is_unitary());  // hits cache
 }
 
 TEST(PurityTest, PureDM_Purity1) {
@@ -1377,14 +1377,14 @@ TEST(PurityTest, PureDM_Purity1) {
 }
 
 TEST(PurityTest, MixedDM_PurityLessThan1) {
-    QTensorCpp q(make_dm_mixed()); // Tr((0.5I)^2) = 0.5
+    QTensorCpp q(make_dm_mixed());  // Tr((0.5I)^2) = 0.5
     EXPECT_NEAR(q.purity(), 0.5, 1e-10);
 }
 
 TEST(PurityTest, Cached_SecondCallSameResult) {
     QTensorCpp q(make_dm_pure0());
     double p1 = q.purity();
-    double p2 = q.purity(); // hits cache
+    double p2 = q.purity();  // hits cache
     EXPECT_EQ(p1, p2);
 }
 
@@ -1481,7 +1481,7 @@ TEST(FidelityPythonTest, WrongType_Throws) {
 }
 
 TEST(EntropyTest, VonNeumann_NotDM_Throws) {
-    QTensorCpp q(make_identity2()); // trace=2, not a DM
+    QTensorCpp q(make_identity2());  // trace=2, not a DM
     EXPECT_THROW(q.entropy_von_neumann(), py::value_error);
 }
 
@@ -1754,4 +1754,3 @@ TEST(ResetQubitsTest, ResetToZeroState) {
     EXPECT_TRUE(r.is_density_matrix());
     EXPECT_NEAR(r.get_data().coeff(0, 0).real(), 1.0, 1e-10);
 }
-

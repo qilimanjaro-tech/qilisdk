@@ -16,11 +16,11 @@
 
 #include "../../../src/qilisdk_cpp/backends/qilisim/digital/gate.h"
 
+#include <cmath>
 #include <complex>
+#include <sstream>
 #include <string>
 #include <vector>
-#include <sstream>
-#include <cmath>
 
 namespace {
 
@@ -57,12 +57,12 @@ SparseMatrix pauliY() {
     m.insert(1, 0) = cx(0, 1);
     m.makeCompressed();
     return m;
-} 
+}
 
 // Pauli-Z gate.
 SparseMatrix pauliZ() {
     SparseMatrix m(2, 2);
-    m.insert(0, 0) = cx( 1, 0);
+    m.insert(0, 0) = cx(1, 0);
     m.insert(1, 1) = cx(-1, 0);
     m.makeCompressed();
     return m;
@@ -84,26 +84,26 @@ SparseMatrix hadamard() {
 SparseMatrix rz(double theta) {
     SparseMatrix m(2, 2);
     m.insert(0, 0) = std::exp(cx(0, -theta / 2.0));
-    m.insert(1, 1) = std::exp(cx(0,  theta / 2.0));
+    m.insert(1, 1) = std::exp(cx(0, theta / 2.0));
     m.makeCompressed();
     return m;
 }
 
-}
+}  // namespace
 
 class GateTest : public ::testing::Test {
-protected:
+   protected:
     // Single-qubit X on qubit 0, 1-qubit circuit.
-    Gate xGate   = Gate("X",    pauliX(),   {},  {0}, {});
-    Gate hGate   = Gate("H",    hadamard(), {},  {0}, {});
-    Gate zGate   = Gate("Z",    pauliZ(),   {},  {0}, {});
-    Gate idGate  = Gate("I",    identity2(),{},  {0}, {});
+    Gate xGate = Gate("X", pauliX(), {}, {0}, {});
+    Gate hGate = Gate("H", hadamard(), {}, {0}, {});
+    Gate zGate = Gate("Z", pauliZ(), {}, {0}, {});
+    Gate idGate = Gate("I", identity2(), {}, {0}, {});
 
     // Parameterised gate.
-    Gate rzGate  = Gate("RZ",   rz(M_PI),   {},  {1}, {{"theta", M_PI}});
+    Gate rzGate = Gate("RZ", rz(M_PI), {}, {1}, {{"theta", M_PI}});
 
     // Two-qubit CNOT (ctrl=0, tgt=1).
-    Gate cnotGate = Gate("CNOT", pauliX(),  {0}, {1}, {});
+    Gate cnotGate = Gate("CNOT", pauliX(), {0}, {1}, {});
     Gate cyGate = Gate("CY", pauliY(), {0}, {1}, {});
 };
 
@@ -188,7 +188,7 @@ TEST_F(GateTest, GetId_SameConstructionProducesSameId) {
 TEST_F(GateTest, GetId_WithParameters) {
     Gate g1("RZ", rz(M_PI), {}, {0}, {{"theta", M_PI}});
     Gate g2("RZ", rz(M_PI), {}, {0}, {{"theta", M_PI}});
-    Gate g3("RZ", rz(M_PI/2), {}, {0}, {{"theta", M_PI/2}});
+    Gate g3("RZ", rz(M_PI / 2), {}, {0}, {{"theta", M_PI / 2}});
     EXPECT_EQ(g1.get_id(), g2.get_id());
     EXPECT_NE(g1.get_id(), g3.get_id());
 }
@@ -219,27 +219,27 @@ TEST_F(GateTest, GetParameters_MultipleParameters) {
 
 TEST_F(GateTest, GetBaseMatrix_IdentityGate) {
     auto m = toDense(idGate.get_base_matrix());
-    EXPECT_NEAR(m(0,0).real(), 1.0, kTol);
-    EXPECT_NEAR(m(1,1).real(), 1.0, kTol);
-    EXPECT_NEAR(m(0,1).real(), 0.0, kTol);
-    EXPECT_NEAR(m(1,0).real(), 0.0, kTol);
+    EXPECT_NEAR(m(0, 0).real(), 1.0, kTol);
+    EXPECT_NEAR(m(1, 1).real(), 1.0, kTol);
+    EXPECT_NEAR(m(0, 1).real(), 0.0, kTol);
+    EXPECT_NEAR(m(1, 0).real(), 0.0, kTol);
 }
 
 TEST_F(GateTest, GetBaseMatrix_PauliX) {
     auto m = toDense(xGate.get_base_matrix());
-    EXPECT_NEAR(m(0,0).real(), 0.0, kTol);
-    EXPECT_NEAR(m(0,1).real(), 1.0, kTol);
-    EXPECT_NEAR(m(1,0).real(), 1.0, kTol);
-    EXPECT_NEAR(m(1,1).real(), 0.0, kTol);
+    EXPECT_NEAR(m(0, 0).real(), 0.0, kTol);
+    EXPECT_NEAR(m(0, 1).real(), 1.0, kTol);
+    EXPECT_NEAR(m(1, 0).real(), 1.0, kTol);
+    EXPECT_NEAR(m(1, 1).real(), 0.0, kTol);
 }
 
 TEST_F(GateTest, GetBaseMatrix_Hadamard) {
     double v = 1.0 / std::sqrt(2.0);
     auto m = toDense(hGate.get_base_matrix());
-    EXPECT_NEAR(m(0,0).real(),  v, kTol);
-    EXPECT_NEAR(m(0,1).real(),  v, kTol);
-    EXPECT_NEAR(m(1,0).real(),  v, kTol);
-    EXPECT_NEAR(m(1,1).real(), -v, kTol);
+    EXPECT_NEAR(m(0, 0).real(), v, kTol);
+    EXPECT_NEAR(m(0, 1).real(), v, kTol);
+    EXPECT_NEAR(m(1, 0).real(), v, kTol);
+    EXPECT_NEAR(m(1, 1).real(), -v, kTol);
 }
 
 TEST_F(GateTest, GetBaseMatrix_Dimensions) {
@@ -287,11 +287,7 @@ TEST_F(GateTest, GetFullMatrix_XOnQubit0_2Qubits) {
     ASSERT_EQ(full.rows(), 4);
     ASSERT_EQ(full.cols(), 4);
     Eigen::MatrixXcd expected(4, 4);
-    expected <<
-        0, 0, 1, 0,
-        0, 0, 0, 1,
-        1, 0, 0, 0,
-        0, 1, 0, 0;
+    expected << 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0;
     EXPECT_TRUE(full.isApprox(expected, kTol));
 }
 
@@ -301,11 +297,7 @@ TEST_F(GateTest, GetFullMatrix_XOnQubit1_2Qubits) {
     ASSERT_EQ(full.rows(), 4);
     ASSERT_EQ(full.cols(), 4);
     Eigen::MatrixXcd expected(4, 4);
-    expected <<
-        0, 1, 0, 0,
-        1, 0, 0, 0,
-        0, 0, 0, 1,
-        0, 0, 1, 0;
+    expected << 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0;
     EXPECT_TRUE(full.isApprox(expected, kTol));
 }
 
@@ -319,11 +311,7 @@ TEST_F(GateTest, GetFullMatrix_CNOT_2Qubits) {
     auto full = toDense(cnotGate.get_full_matrix(2));
     ASSERT_EQ(full.rows(), 4);
     Eigen::MatrixXcd expected(4, 4);
-    expected <<
-        1, 0, 0, 0,
-        0, 1, 0, 0,
-        0, 0, 0, 1,
-        0, 0, 1, 0;
+    expected << 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0;
     EXPECT_TRUE(full.isApprox(expected, kTol)) << "Full matrix:\n" << full << "\nExpected:\n" << expected << "\nCNOT base matrix:\n" << toDense(cnotGate.get_base_matrix()) << "\nControl qubits: " << cnotGate.get_control_qubits().size() << " Target qubits: " << cnotGate.get_target_qubits().size();
 }
 
@@ -332,11 +320,7 @@ TEST_F(GateTest, GetFullMatrix_CNOT_2Qubits_Swapped) {
     auto full = toDense(g.get_full_matrix(2));
     ASSERT_EQ(full.rows(), 4);
     Eigen::MatrixXcd expected(4, 4);
-    expected <<
-        1, 0, 0, 0,
-        0, 0, 0, 1,
-        0, 0, 1, 0,
-        0, 1, 0, 0;
+    expected << 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0;
     EXPECT_TRUE(full.isApprox(expected, kTol)) << "Full matrix:\n" << full << "\nExpected:\n" << expected << "\nCNOT base matrix:\n" << toDense(g.get_base_matrix()) << "\nControl qubits: " << g.get_control_qubits().size() << " Target qubits: " << g.get_target_qubits().size();
 }
 
@@ -372,18 +356,14 @@ TEST(GateStreamTest, EmptyVector) {
 }
 
 TEST(GateStreamTest, SingleGate) {
-    std::vector<Gate> gates = { Gate("X", pauliX(), {}, {0}, {}) };
+    std::vector<Gate> gates = {Gate("X", pauliX(), {}, {0}, {})};
     std::ostringstream oss;
     oss << gates;
     EXPECT_NE(oss.str().find("X"), std::string::npos);
 }
 
 TEST(GateStreamTest, MultipleGates) {
-    std::vector<Gate> gates = {
-        Gate("X",    pauliX(),   {}, {0}, {}),
-        Gate("H",    hadamard(), {}, {1}, {}),
-        Gate("CNOT", pauliX(),   {0}, {1}, {})
-    };
+    std::vector<Gate> gates = {Gate("X", pauliX(), {}, {0}, {}), Gate("H", hadamard(), {}, {1}, {}), Gate("CNOT", pauliX(), {0}, {1}, {})};
     std::ostringstream oss;
     EXPECT_NO_THROW(oss << gates);
     EXPECT_FALSE(oss.str().empty());
@@ -401,7 +381,7 @@ TEST(GateEdgeTest, MultipleControlQubits) {
     tof.makeCompressed();
     Gate ccx("CCX", tof, {0, 1}, {2}, {});
     EXPECT_EQ(ccx.get_control_qubits().size(), 2u);
-    EXPECT_EQ(ccx.get_target_qubits().size(),  1u);
+    EXPECT_EQ(ccx.get_target_qubits().size(), 1u);
     EXPECT_EQ(ccx.get_nqubits(), 3);
 }
 
@@ -409,9 +389,8 @@ TEST(GateEdgeTest, CopyConstructedGateIsEquivalent) {
     Gate original("H", hadamard(), {}, {0}, {});
     Gate copy = original;
     EXPECT_EQ(copy.get_name(), original.get_name());
-    EXPECT_EQ(copy.get_id(),   original.get_id());
-    EXPECT_TRUE(toDense(copy.get_base_matrix())
-                .isApprox(toDense(original.get_base_matrix()), kTol));
+    EXPECT_EQ(copy.get_id(), original.get_id());
+    EXPECT_TRUE(toDense(copy.get_base_matrix()).isApprox(toDense(original.get_base_matrix()), kTol));
 }
 
 TEST(GateEdgeTest, RZAtZeroIsIdentity) {

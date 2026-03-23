@@ -22,7 +22,6 @@ constexpr double kTol = 1e-8;
 constexpr double kTolLoose = 1e-4;
 constexpr double kAtol = 1e-12;
 
-
 SparseMatrix to_sparse(const DenseMatrix& M) {
     SparseMatrix S(M.rows(), M.cols());
     S = M.sparseView();
@@ -68,10 +67,10 @@ MatrixFreeHamiltonian make_matrix_free_H(const DenseMatrix& base_matrix) {
     return MatrixFreeHamiltonian(op);
 }
 
-}
+}  // namespace
 
 class IterDirectValidationTest : public ::testing::Test {
-protected:
+   protected:
     SparseMatrix H = to_sparse(0.5 * pauli_z());
 };
 
@@ -105,7 +104,7 @@ TEST_F(IterDirectValidationTest, NonSquareJumpOperatorThrows) {
 }
 
 class IterDirectUnitaryStatevectorTest : public ::testing::Test {
-protected:
+   protected:
     SparseMatrix H = to_sparse(0.5 * pauli_z());
     double dt = 0.1;
 };
@@ -158,7 +157,7 @@ TEST_F(IterDirectUnitaryStatevectorTest, TwoHalfStepsEqualsOneFullStep) {
 }
 
 class IterDirectUnitaryDensityMatrixTest : public ::testing::Test {
-protected:
+   protected:
     SparseMatrix H = to_sparse(0.5 * pauli_z());
     double dt = 0.1;
 };
@@ -224,7 +223,7 @@ TEST_F(IterDirectUnitaryDensityMatrixTest, MaximallyMixedStateInvariant) {
 }
 
 class IterDirectLindbladTest : public ::testing::Test {
-protected:
+   protected:
     SparseMatrix H = to_sparse(0.5 * pauli_z());
     SparseMatrix jump = amp_damp_jump();
     double dt = 0.1;
@@ -300,14 +299,12 @@ TEST_F(IterDirectLindbladTest, MultipleJumpsPreserveTrace) {
 }
 
 class ArnoldiTest : public ::testing::Test {
-protected:
+   protected:
     SparseMatrix L = to_sparse(pauli_z().cast<std::complex<double>>());
     DenseMatrix v0 = DenseMatrix::Zero(2, 1);
     int m = 2;
 
-    void SetUp() override {
-        v0(0, 0) = 1.0;
-    }
+    void SetUp() override { v0(0, 0) = 1.0; }
 };
 
 TEST_F(ArnoldiTest, OutputVectorCountIsAtMostMPlusOne) {
@@ -333,8 +330,7 @@ TEST_F(ArnoldiTest, BasisVectorsAreOrthonormal) {
         for (int j = 0; j < int(V.size()); ++j) {
             std::complex<double> inner = dot(V[i], V[j]);
             double expected = (i == j) ? 1.0 : 0.0;
-            EXPECT_NEAR(std::abs(inner - expected), 0.0, kTol)
-                << "Orthonormality failed for i=" << i << " j=" << j;
+            EXPECT_NEAR(std::abs(inner - expected), 0.0, kTol) << "Orthonormality failed for i=" << i << " j=" << j;
         }
     }
 }
@@ -382,7 +378,7 @@ TEST_F(ArnoldiTest, LargerSubspaceDimension) {
 }
 
 class ArnoldiMatTest : public ::testing::Test {
-protected:
+   protected:
     SparseMatrix H = to_sparse(0.5 * pauli_z());
     DenseMatrix rho0 = pure_plus();
     int m = 2;
@@ -411,8 +407,7 @@ TEST_F(ArnoldiMatTest, BasisVectorsAreOrthonormal) {
         for (int j = 0; j < int(V.size()); ++j) {
             std::complex<double> inner = dot(V[i], V[j]);
             double expected = (i == j) ? 1.0 : 0.0;
-            EXPECT_NEAR(std::abs(inner - expected), 0.0, kTol)
-                << "Orthonormality failed for i=" << i << " j=" << j;
+            EXPECT_NEAR(std::abs(inner - expected), 0.0, kTol) << "Orthonormality failed for i=" << i << " j=" << j;
         }
     }
 }
@@ -446,7 +441,7 @@ TEST_F(ArnoldiMatTest, ZeroInitialMatrixProducesEmptyBasis) {
 }
 
 class IterArnoldiValidationTest : public ::testing::Test {
-protected:
+   protected:
     SparseMatrix H = to_sparse(0.5 * pauli_z());
     DenseMatrix rho = pure_zero();
     double dt = 0.1;
@@ -488,7 +483,7 @@ TEST_F(IterArnoldiValidationTest, MismatchedJumpOperatorDimensionThrows) {
 }
 
 class IterArnoldiUnitaryStatevectorTest : public ::testing::Test {
-protected:
+   protected:
     SparseMatrix H = to_sparse(0.5 * pauli_z());
     double dt = 0.1;
     int arnoldi_dim = 4;
@@ -526,7 +521,7 @@ TEST_F(IterArnoldiUnitaryStatevectorTest, ZeroTimeStepReturnsInitialState) {
 }
 
 class IterArnoldiUnitaryDensityMatrixTest : public ::testing::Test {
-protected:
+   protected:
     SparseMatrix H = to_sparse(0.5 * pauli_z());
     double dt = 0.1;
     int arnoldi_dim = 4;
@@ -579,7 +574,7 @@ TEST_F(IterArnoldiUnitaryDensityMatrixTest, MultipleSubstepsConsistent) {
 }
 
 class IterArnoldiLindbladTest : public ::testing::Test {
-protected:
+   protected:
     SparseMatrix H = to_sparse(0.5 * pauli_z());
     SparseMatrix jump = amp_damp_jump();
     double dt = 0.1;
@@ -626,7 +621,7 @@ TEST_F(IterArnoldiLindbladTest, LongTimeConvergesToGroundState) {
 }
 
 class IterIntegrateSparseValidationTest : public ::testing::Test {
-protected:
+   protected:
     SparseMatrix H = to_sparse(0.5 * pauli_z());
     DenseMatrix rho = pure_zero();
     double dt = 0.1;
@@ -654,7 +649,7 @@ TEST_F(IterIntegrateSparseValidationTest, MismatchedJumpOperatorDimensionThrows)
 }
 
 class IterIntegrateSparseUnitaryStatevectorTest : public ::testing::Test {
-protected:
+   protected:
     SparseMatrix H = to_sparse(0.5 * pauli_z());
     double dt = 0.1;
 };
@@ -701,7 +696,7 @@ TEST_F(IterIntegrateSparseUnitaryStatevectorTest, MoreSubstepsImproveAccuracy) {
 }
 
 class IterIntegrateSparseUnitaryDensityMatrixTest : public ::testing::Test {
-protected:
+   protected:
     SparseMatrix H = to_sparse(0.5 * pauli_z());
     double dt = 0.1;
 };
@@ -745,7 +740,7 @@ TEST_F(IterIntegrateSparseUnitaryDensityMatrixTest, PurityPreservedForPureState)
 }
 
 class IterIntegrateSparseLindbladTest : public ::testing::Test {
-protected:
+   protected:
     SparseMatrix H = to_sparse(0.5 * pauli_z());
     SparseMatrix jump = amp_damp_jump();
     double dt = 0.1;
@@ -798,7 +793,7 @@ TEST_F(IterIntegrateSparseLindbladTest, LongTimeConvergesToGroundState) {
 }
 
 class IterIntegrateMatrixFreeValidationTest : public ::testing::Test {
-protected:
+   protected:
     MatrixFreeHamiltonian H_mf = make_matrix_free_H(0.5 * pauli_z());
 };
 
@@ -815,7 +810,7 @@ TEST_F(IterIntegrateMatrixFreeValidationTest, MismatchedJumpOperatorDimensionThr
 }
 
 class IterIntegrateMatrixFreeUnitaryStatevectorTest : public ::testing::Test {
-protected:
+   protected:
     MatrixFreeHamiltonian H_mf = make_matrix_free_H(0.5 * pauli_z());
     SparseMatrix H_sparse = to_sparse(0.5 * pauli_z());
     double dt = 0.1;
@@ -854,7 +849,7 @@ TEST_F(IterIntegrateMatrixFreeUnitaryStatevectorTest, MatchesSparseOverloadForSh
 }
 
 class IterIntegrateMatrixFreeUnitaryDensityMatrixTest : public ::testing::Test {
-protected:
+   protected:
     MatrixFreeHamiltonian H_mf = make_matrix_free_H(0.5 * pauli_z());
     SparseMatrix H_sparse = to_sparse(0.5 * pauli_z());
     double dt = 0.1;
@@ -894,7 +889,7 @@ TEST_F(IterIntegrateMatrixFreeUnitaryDensityMatrixTest, MatchesSparseOverloadFor
 }
 
 class IterIntegrateMatrixFreeLindbladTest : public ::testing::Test {
-protected:
+   protected:
     MatrixFreeHamiltonian H_mf = make_matrix_free_H(0.5 * pauli_z());
     SparseMatrix H_sparse = to_sparse(0.5 * pauli_z());
     SparseMatrix jump = amp_damp_jump();

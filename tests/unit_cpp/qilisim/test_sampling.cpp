@@ -17,19 +17,19 @@
 #include "../../../src/qilisdk_cpp/backends/qilisim/digital/sampling.h"
 
 #include <gtest/gtest.h>
+#include <algorithm>
+#include <cmath>
 #include <complex>
+#include <map>
+#include <numeric>
 #include <string>
 #include <vector>
-#include <map>
-#include <cmath>
-#include <numeric>
-#include <algorithm>
 
 namespace {
 
 using cx = std::complex<double>;
-constexpr double kTol    = 1e-6;
-constexpr double kLoose  = 0.05;
+constexpr double kTol = 1e-6;
+constexpr double kLoose = 0.05;
 
 SparseMatrix pauliX2() {
     SparseMatrix m(2, 2);
@@ -42,8 +42,10 @@ SparseMatrix pauliX2() {
 SparseMatrix hadamard2() {
     double v = 1.0 / std::sqrt(2.0);
     SparseMatrix m(2, 2);
-    m.insert(0, 0) = cx( v, 0); m.insert(0, 1) = cx( v, 0);
-    m.insert(1, 0) = cx( v, 0); m.insert(1, 1) = cx(-v, 0);
+    m.insert(0, 0) = cx(v, 0);
+    m.insert(0, 1) = cx(v, 0);
+    m.insert(1, 0) = cx(v, 0);
+    m.insert(1, 1) = cx(-v, 0);
     m.makeCompressed();
     return m;
 }
@@ -75,14 +77,15 @@ Gate makeH(int qubit) {
 
 int totalCounts(const std::map<std::string, int>& counts) {
     int total = 0;
-    for (const auto& p : counts) total += p.second;
+    for (const auto& p : counts)
+        total += p.second;
     return total;
 }
 
-double fractionOf(const std::map<std::string, int>& counts,
-                  const std::string& key) {
+double fractionOf(const std::map<std::string, int>& counts, const std::string& key) {
     auto it = counts.find(key);
-    if (it == counts.end()) return 0.0;
+    if (it == counts.end())
+        return 0.0;
     return static_cast<double>(it->second) / totalCounts(counts);
 }
 
@@ -110,13 +113,13 @@ QiliSimConfig defaultConfig() {
     return cfg;
 }
 
-}
+}  // namespace
 
 class ApplyReadoutErrorTest : public ::testing::Test {};
 
 TEST_F(ApplyReadoutErrorTest, ZeroError_CountsUnchanged) {
     // p01 = p10 = 0 → readout is perfect, counts must be identical.
-    std::map<std::string, int> counts = { {"00", 500}, {"11", 500} };
+    std::map<std::string, int> counts = {{"00", 500}, {"11", 500}};
     auto nm = symmetricReadoutNoise(2, 0.0);
     auto result = apply_readout_error(counts, nm, 2);
 
@@ -127,7 +130,7 @@ TEST_F(ApplyReadoutErrorTest, ZeroError_CountsUnchanged) {
 
 TEST_F(ApplyReadoutErrorTest, TotalShotCountPreserved) {
     // Total shots must be conserved regardless of flip probabilities.
-    std::map<std::string, int> counts = { {"0", 300}, {"1", 700} };
+    std::map<std::string, int> counts = {{"0", 300}, {"1", 700}};
     auto nm = symmetricReadoutNoise(1, 0.1);
     auto result = apply_readout_error(counts, nm, 1);
     EXPECT_EQ(totalCounts(result), 1000);
@@ -136,10 +139,10 @@ TEST_F(ApplyReadoutErrorTest, TotalShotCountPreserved) {
 TEST_F(ApplyReadoutErrorTest, PerfectFlip_AllOnesBecomesAllZeros) {
     // p10 = 1.0 means every '1' flips to '0'.
     // With all-ones input and p10=1, output must be all-zeros.
-    std::map<std::string, int> counts = { {"11", 1000} };
+    std::map<std::string, int> counts = {{"11", 1000}};
     NoiseModelCpp nm;
-    nm.add_readout_error_per_qubit(0, 0.0, 1.0);   // qubit 0: p01=0, p10=1
-    nm.add_readout_error_per_qubit(1, 0.0, 1.0);   // qubit 1: p01=0, p10=1
+    nm.add_readout_error_per_qubit(0, 0.0, 1.0);  // qubit 0: p01=0, p10=1
+    nm.add_readout_error_per_qubit(1, 0.0, 1.0);  // qubit 1: p01=0, p10=1
     auto result = apply_readout_error(counts, nm, 2);
 
     ASSERT_EQ(result.count("00"), 1u);
@@ -148,7 +151,7 @@ TEST_F(ApplyReadoutErrorTest, PerfectFlip_AllOnesBecomesAllZeros) {
 
 TEST_F(ApplyReadoutErrorTest, PerfectFlip_AllZerosBecomesAllOnes) {
     // p01 = 1.0 means every '0' flips to '1'.
-    std::map<std::string, int> counts = { {"00", 1000} };
+    std::map<std::string, int> counts = {{"00", 1000}};
     NoiseModelCpp nm;
     nm.add_readout_error_global(1.0, 0.0);
     auto result = apply_readout_error(counts, nm, 2);
@@ -160,7 +163,7 @@ TEST_F(ApplyReadoutErrorTest, PerfectFlip_AllZerosBecomesAllOnes) {
 TEST_F(ApplyReadoutErrorTest, PartialError_ReducesDominantOutcome) {
     // With a small flip probability, the dominant outcome should still dominate
     // but with slightly reduced count.
-    std::map<std::string, int> counts = { {"0", 10000} };
+    std::map<std::string, int> counts = {{"0", 10000}};
     auto nm = symmetricReadoutNoise(1, 0.1);
     auto result = apply_readout_error(counts, nm, 1);
 
@@ -178,7 +181,7 @@ TEST_F(ApplyReadoutErrorTest, EmptyInputCounts_ReturnsEmpty) {
 }
 
 TEST_F(ApplyReadoutErrorTest, SingleQubit_OutputKeysAreValidBitstrings) {
-    std::map<std::string, int> counts = { {"0", 500}, {"1", 500} };
+    std::map<std::string, int> counts = {{"0", 500}, {"1", 500}};
     auto nm = symmetricReadoutNoise(1, 0.05);
     auto result = apply_readout_error(counts, nm, 1);
     for (const auto& p : result) {
@@ -188,7 +191,7 @@ TEST_F(ApplyReadoutErrorTest, SingleQubit_OutputKeysAreValidBitstrings) {
 }
 
 TEST_F(ApplyReadoutErrorTest, MultiQubit_OutputKeysHaveCorrectLength) {
-    std::map<std::string, int> counts = { {"000", 500}, {"111", 500} };
+    std::map<std::string, int> counts = {{"000", 500}, {"111", 500}};
     auto nm = symmetricReadoutNoise(3, 0.05);
     auto result = apply_readout_error(counts, nm, 3);
     for (const auto& p : result) {
@@ -199,7 +202,7 @@ TEST_F(ApplyReadoutErrorTest, MultiQubit_OutputKeysHaveCorrectLength) {
 TEST_F(ApplyReadoutErrorTest, Deterministic_SameSeedSameResult) {
     // The function uses a fixed seed (42 inside), so calling it twice
     // with the same input should give the same output.
-    std::map<std::string, int> counts = { {"0", 500}, {"1", 500} };
+    std::map<std::string, int> counts = {{"0", 500}, {"1", 500}};
     auto nm = symmetricReadoutNoise(1, 0.2);
     auto r1 = apply_readout_error(counts, nm, 1);
     auto r2 = apply_readout_error(counts, nm, 1);
@@ -209,7 +212,7 @@ TEST_F(ApplyReadoutErrorTest, Deterministic_SameSeedSameResult) {
 TEST_F(ApplyReadoutErrorTest, AsymmetricError_DifferentFlipRates) {
     // p01 = 0 (no 0→1), p10 = 1 (all 1→0).
     // Mixed input: "0" shots stay "0", "1" shots all become "0".
-    std::map<std::string, int> counts = { {"0", 400}, {"1", 600} };
+    std::map<std::string, int> counts = {{"0", 400}, {"1", 600}};
     NoiseModelCpp nm;
     nm.add_readout_error_per_qubit(0, 0.0, 1.0);
     auto result = apply_readout_error(counts, nm, 1);
@@ -219,7 +222,6 @@ TEST_F(ApplyReadoutErrorTest, AsymmetricError_DifferentFlipRates) {
     EXPECT_EQ(result.count("1"), 0u);
 }
 
-
 // ══════════════════════════════════════════════════════════════
 // 2. filter_counts
 // ══════════════════════════════════════════════════════════════
@@ -227,14 +229,14 @@ TEST_F(ApplyReadoutErrorTest, AsymmetricError_DifferentFlipRates) {
 class FilterCountsTest : public ::testing::Test {};
 
 TEST_F(FilterCountsTest, AllQubitsSelected_CountsUnchanged) {
-    std::map<std::string, int> counts = { {"00", 300}, {"11", 700} };
+    std::map<std::string, int> counts = {{"00", 300}, {"11", 700}};
     std::vector<bool> mask = {true, true};
     auto result = filter_counts(counts, mask);
     EXPECT_EQ(result, counts);
 }
 
 TEST_F(FilterCountsTest, NoQubitsSelected_SingleEmptyKey) {
-    std::map<std::string, int> counts = { {"00", 300}, {"11", 700} };
+    std::map<std::string, int> counts = {{"00", 300}, {"11", 700}};
     std::vector<bool> mask = {false, false};
     auto result = filter_counts(counts, mask);
     // All bitstrings collapse to "" and counts merge.
@@ -243,7 +245,7 @@ TEST_F(FilterCountsTest, NoQubitsSelected_SingleEmptyKey) {
 }
 
 TEST_F(FilterCountsTest, FirstQubitOnly_ProjectsCorrectly) {
-    std::map<std::string, int> counts = { {"00", 200}, {"01", 300}, {"10", 100}, {"11", 400} };
+    std::map<std::string, int> counts = {{"00", 200}, {"01", 300}, {"10", 100}, {"11", 400}};
     std::vector<bool> mask = {true, false};
     auto result = filter_counts(counts, mask);
     // "00","01" → "0" (500); "10","11" → "1" (500).
@@ -253,7 +255,7 @@ TEST_F(FilterCountsTest, FirstQubitOnly_ProjectsCorrectly) {
 }
 
 TEST_F(FilterCountsTest, SecondQubitOnly_ProjectsCorrectly) {
-    std::map<std::string, int> counts = { {"00", 200}, {"01", 300}, {"10", 100}, {"11", 400} };
+    std::map<std::string, int> counts = {{"00", 200}, {"01", 300}, {"10", 100}, {"11", 400}};
     std::vector<bool> mask = {false, true};
     auto result = filter_counts(counts, mask);
     // "00","10" → "0" (300); "01","11" → "1" (700).
@@ -263,7 +265,7 @@ TEST_F(FilterCountsTest, SecondQubitOnly_ProjectsCorrectly) {
 }
 
 TEST_F(FilterCountsTest, TotalCountPreserved) {
-    std::map<std::string, int> counts = { {"000", 100}, {"010", 200}, {"101", 300}, {"111", 400} };
+    std::map<std::string, int> counts = {{"000", 100}, {"010", 200}, {"101", 300}, {"111", 400}};
     std::vector<bool> mask = {true, false, true};
     auto result = filter_counts(counts, mask);
     EXPECT_EQ(totalCounts(result), 1000);
@@ -271,7 +273,7 @@ TEST_F(FilterCountsTest, TotalCountPreserved) {
 
 TEST_F(FilterCountsTest, MiddleQubitSelected_ThreeQubits) {
     // Keep only qubit 1 (middle).
-    std::map<std::string, int> counts = { {"000", 125}, {"010", 125}, {"100", 125}, {"110", 125}, {"001", 125}, {"011", 125}, {"101", 125}, {"111", 125} };
+    std::map<std::string, int> counts = {{"000", 125}, {"010", 125}, {"100", 125}, {"110", 125}, {"001", 125}, {"011", 125}, {"101", 125}, {"111", 125}};
     std::vector<bool> mask = {false, true, false};
     auto result = filter_counts(counts, mask);
     // Qubit 1 is '0' for "000","100","001","101" → 500 counts.
@@ -289,7 +291,7 @@ TEST_F(FilterCountsTest, EmptyInput_ReturnsEmpty) {
 }
 
 TEST_F(FilterCountsTest, SingleQubit_AllSelected) {
-    std::map<std::string, int> counts = { {"0", 600}, {"1", 400} };
+    std::map<std::string, int> counts = {{"0", 600}, {"1", 400}};
     std::vector<bool> mask = {true};
     auto result = filter_counts(counts, mask);
     EXPECT_EQ(result.at("0"), 600);
@@ -298,7 +300,7 @@ TEST_F(FilterCountsTest, SingleQubit_AllSelected) {
 
 TEST_F(FilterCountsTest, CollapsingDistinctBitstrings_CountsMerge) {
     // "00" and "10" both project to "0" when only qubit 1 is kept.
-    std::map<std::string, int> counts = { {"00", 300}, {"10", 700} };
+    std::map<std::string, int> counts = {{"00", 300}, {"10", 700}};
     std::vector<bool> mask = {false, true};
     auto result = filter_counts(counts, mask);
     ASSERT_EQ(result.size(), 1u);
@@ -306,7 +308,7 @@ TEST_F(FilterCountsTest, CollapsingDistinctBitstrings_CountsMerge) {
 }
 
 class SamplingTest : public ::testing::Test {
-protected:
+   protected:
     QiliSimConfig cfg = defaultConfig();
     NoiseModelCpp noNoise = emptyNoise();
 };
@@ -326,7 +328,7 @@ TEST_F(SamplingTest, ZeroState_NoGates_AllCountsAreZeroString) {
 
 TEST_F(SamplingTest, XGateOnQubit0_AllCountsAre10) {
     int n = 2;
-    std::vector<Gate> gates = { makeX(0) };
+    std::vector<Gate> gates = {makeX(0)};
     std::vector<bool> measure = {true, true};
     DenseMatrix state;
     std::map<std::string, int> counts;
@@ -339,7 +341,7 @@ TEST_F(SamplingTest, XGateOnQubit0_AllCountsAre10) {
 
 TEST_F(SamplingTest, DoubleXGateOnQubit0_AllCountsAre00_NoCache) {
     int n = 2;
-    std::vector<Gate> gates = { makeX(0), makeX(0) };
+    std::vector<Gate> gates = {makeX(0), makeX(0)};
     std::vector<bool> measure = {true, true};
     DenseMatrix state;
     std::map<std::string, int> counts;
@@ -354,7 +356,7 @@ TEST_F(SamplingTest, DoubleXGateOnQubit0_AllCountsAre00_NoCache) {
 
 TEST_F(SamplingTest, DoubleXGateOnQubit0_AllCountsAre00_SmallCache) {
     int n = 2;
-    std::vector<Gate> gates = { makeX(0), makeX(0), makeH(0), makeH(0) };
+    std::vector<Gate> gates = {makeX(0), makeX(0), makeH(0), makeH(0)};
     std::vector<bool> measure = {true, true};
     DenseMatrix state;
     std::map<std::string, int> counts;
@@ -369,7 +371,7 @@ TEST_F(SamplingTest, DoubleXGateOnQubit0_AllCountsAre00_SmallCache) {
 
 TEST_F(SamplingTest, XOnBothQubits_AllCountsAre11) {
     int n = 2;
-    std::vector<Gate> gates = { makeX(0), makeX(1) };
+    std::vector<Gate> gates = {makeX(0), makeX(1)};
     std::vector<bool> measure = {true, true};
     DenseMatrix state;
     std::map<std::string, int> counts;
@@ -382,7 +384,7 @@ TEST_F(SamplingTest, XOnBothQubits_AllCountsAre11) {
 
 TEST_F(SamplingTest, HadamardOnSingleQubit_ApproxFiftyFifty) {
     int n = 1;
-    std::vector<Gate> gates = { makeH(0) };
+    std::vector<Gate> gates = {makeH(0)};
     std::vector<bool> measure = {true};
     DenseMatrix state;
     std::map<std::string, int> counts;
@@ -399,7 +401,7 @@ TEST_F(SamplingTest, HadamardOnSingleQubit_ApproxFiftyFifty) {
 
 TEST_F(SamplingTest, HadamardOnBothQubits_FourOutcomesEquallyLikely) {
     int n = 2;
-    std::vector<Gate> gates = { makeH(0), makeH(1) };
+    std::vector<Gate> gates = {makeH(0), makeH(1)};
     std::vector<bool> measure = {true, true};
     DenseMatrix state;
     std::map<std::string, int> counts;
@@ -415,7 +417,7 @@ TEST_F(SamplingTest, HadamardOnBothQubits_FourOutcomesEquallyLikely) {
 
 TEST_F(SamplingTest, ShotCountAlwaysPreserved) {
     int n = 2;
-    std::vector<Gate> gates = { makeH(0) };
+    std::vector<Gate> gates = {makeH(0)};
     std::vector<bool> measure = {true, true};
     for (int shots : {1, 10, 100, 1000}) {
         DenseMatrix state;
@@ -427,7 +429,7 @@ TEST_F(SamplingTest, ShotCountAlwaysPreserved) {
 
 TEST_F(SamplingTest, MeasureOnlyQubit0_OutputKeysAreSingleBit) {
     int n = 2;
-    std::vector<Gate> gates = { makeH(0), makeH(1) };
+    std::vector<Gate> gates = {makeH(0), makeH(1)};
     std::vector<bool> measure = {true, false};
     DenseMatrix state;
     std::map<std::string, int> counts;
@@ -441,7 +443,7 @@ TEST_F(SamplingTest, MeasureOnlyQubit0_OutputKeysAreSingleBit) {
 
 TEST_F(SamplingTest, MeasureNoQubits_SingleEmptyKeyWithAllShots) {
     int n = 2;
-    std::vector<Gate> gates = { makeX(0) };
+    std::vector<Gate> gates = {makeX(0)};
     std::vector<bool> measure = {false, false};
     DenseMatrix state;
     std::map<std::string, int> counts;
@@ -454,7 +456,7 @@ TEST_F(SamplingTest, MeasureNoQubits_SingleEmptyKeyWithAllShots) {
 
 TEST_F(SamplingTest, StateVectorHasCorrectDimension) {
     int n = 3;
-    std::vector<Gate> gates = { makeH(0) };
+    std::vector<Gate> gates = {makeH(0)};
     std::vector<bool> measure(n, true);
     DenseMatrix state;
     std::map<std::string, int> counts;
@@ -466,7 +468,7 @@ TEST_F(SamplingTest, StateVectorHasCorrectDimension) {
 
 TEST_F(SamplingTest, XGate_StateIsExcitedState) {
     int n = 1;
-    std::vector<Gate> gates = { makeX(0) };
+    std::vector<Gate> gates = {makeX(0)};
     std::vector<bool> measure = {true};
     DenseMatrix state;
     std::map<std::string, int> counts;
@@ -481,7 +483,7 @@ TEST_F(SamplingTest, XGate_StateIsExcitedState) {
 TEST_F(SamplingTest, WithReadoutNoise_TotalCountsStillPreserved) {
     int n = 2;
     auto nm = symmetricReadoutNoise(n, 0.1);
-    std::vector<Gate> gates = { makeX(0) };
+    std::vector<Gate> gates = {makeX(0)};
     std::vector<bool> measure = {true, true};
     DenseMatrix state;
     std::map<std::string, int> counts;
@@ -496,7 +498,7 @@ TEST_F(SamplingTest, WithReadoutNoise_DominantOutcomeStillDominates) {
     // X on qubit 0 → should mostly give "10" but with some flips.
     int n = 2;
     auto nm = symmetricReadoutNoise(n, 0.05);
-    std::vector<Gate> gates = { makeX(0) };
+    std::vector<Gate> gates = {makeX(0)};
     std::vector<bool> measure = {true, true};
     DenseMatrix state;
     std::map<std::string, int> counts;
@@ -523,7 +525,7 @@ TEST_F(SamplingTest, DensityMatrixInitialState_ZeroState_AllCountsAreZero) {
 TEST_F(SamplingTest, CombineSingleQubitGates_SameResultAsWithout) {
     // H then H = identity; with or without combining, result is all-zero.
     int n = 1;
-    std::vector<Gate> gates = { makeH(0), makeH(0) };
+    std::vector<Gate> gates = {makeH(0), makeH(0)};
     std::vector<bool> measure = {true};
     DenseMatrix stateA, stateB;
     std::map<std::string, int> countsA, countsB;
@@ -538,7 +540,7 @@ TEST_F(SamplingTest, CombineSingleQubitGates_SameResultAsWithout) {
 }
 
 class SamplingMatrixFreeTest : public ::testing::Test {
-protected:
+   protected:
     QiliSimConfig cfg = defaultConfig();
     NoiseModelCpp noNoise = emptyNoise();
 };
@@ -558,7 +560,7 @@ TEST_F(SamplingMatrixFreeTest, ZeroState_NoGates_AllCountsAreZeroString) {
 
 TEST_F(SamplingMatrixFreeTest, XGate_AllCountsAre10) {
     int n = 2;
-    std::vector<Gate> gates = { makeX(0) };
+    std::vector<Gate> gates = {makeX(0)};
     std::vector<bool> measure = {true, true};
     DenseMatrix state;
     std::map<std::string, int> counts;
@@ -571,7 +573,7 @@ TEST_F(SamplingMatrixFreeTest, XGate_AllCountsAre10) {
 
 TEST_F(SamplingMatrixFreeTest, XOnBothQubits_AllCountsAre11) {
     int n = 2;
-    std::vector<Gate> gates = { makeX(0), makeX(1) };
+    std::vector<Gate> gates = {makeX(0), makeX(1)};
     std::vector<bool> measure = {true, true};
     DenseMatrix state;
     std::map<std::string, int> counts;
@@ -584,7 +586,7 @@ TEST_F(SamplingMatrixFreeTest, XOnBothQubits_AllCountsAre11) {
 
 TEST_F(SamplingMatrixFreeTest, HadamardOnSingleQubit_ApproxFiftyFifty) {
     int n = 1;
-    std::vector<Gate> gates = { makeH(0) };
+    std::vector<Gate> gates = {makeH(0)};
     std::vector<bool> measure = {true};
     DenseMatrix state;
     std::map<std::string, int> counts;
@@ -599,7 +601,7 @@ TEST_F(SamplingMatrixFreeTest, HadamardOnSingleQubit_ApproxFiftyFifty) {
 
 TEST_F(SamplingMatrixFreeTest, ShotCountAlwaysPreserved) {
     int n = 2;
-    std::vector<Gate> gates = { makeH(0) };
+    std::vector<Gate> gates = {makeH(0)};
     std::vector<bool> measure = {true, true};
     for (int shots : {1, 10, 100, 1000}) {
         DenseMatrix state;
@@ -611,7 +613,7 @@ TEST_F(SamplingMatrixFreeTest, ShotCountAlwaysPreserved) {
 
 TEST_F(SamplingMatrixFreeTest, MeasureOnlyQubit0_OutputKeysAreSingleBit) {
     int n = 2;
-    std::vector<Gate> gates = { makeH(0), makeH(1) };
+    std::vector<Gate> gates = {makeH(0), makeH(1)};
     std::vector<bool> measure = {true, false};
     DenseMatrix state;
     std::map<std::string, int> counts;
@@ -625,7 +627,7 @@ TEST_F(SamplingMatrixFreeTest, MeasureOnlyQubit0_OutputKeysAreSingleBit) {
 
 TEST_F(SamplingMatrixFreeTest, StateVectorHasCorrectDimension) {
     int n = 3;
-    std::vector<Gate> gates = { makeH(0) };
+    std::vector<Gate> gates = {makeH(0)};
     std::vector<bool> measure(n, true);
     DenseMatrix state;
     std::map<std::string, int> counts;
@@ -637,7 +639,7 @@ TEST_F(SamplingMatrixFreeTest, StateVectorHasCorrectDimension) {
 
 TEST_F(SamplingMatrixFreeTest, XGate_StateIsExcitedState) {
     int n = 1;
-    std::vector<Gate> gates = { makeX(0) };
+    std::vector<Gate> gates = {makeX(0)};
     std::vector<bool> measure = {true};
     DenseMatrix state;
     std::map<std::string, int> counts;
@@ -651,7 +653,7 @@ TEST_F(SamplingMatrixFreeTest, XGate_StateIsExcitedState) {
 TEST_F(SamplingMatrixFreeTest, WithReadoutNoise_TotalCountsStillPreserved) {
     int n = 2;
     auto nm = symmetricReadoutNoise(n, 0.1);
-    std::vector<Gate> gates = { makeX(0) };
+    std::vector<Gate> gates = {makeX(0)};
     std::vector<bool> measure = {true, true};
     DenseMatrix state;
     std::map<std::string, int> counts;
@@ -665,12 +667,12 @@ TEST_F(SamplingMatrixFreeTest, PureZeroState_MatchesStandardSampling) {
     // Both methods should produce identical counts for a deterministic circuit
     // (no noise, fixed seed).
     int n = 2;
-    std::vector<Gate> gates = { makeX(1) };
+    std::vector<Gate> gates = {makeX(1)};
     std::vector<bool> measure = {true, true};
     DenseMatrix stA, stB;
     std::map<std::string, int> cA, cB;
 
-    sampling(            gates, measure, n, 1000, zeroStateSparse(n), noNoise, stA, cA, cfg);
+    sampling(gates, measure, n, 1000, zeroStateSparse(n), noNoise, stA, cA, cfg);
     sampling_matrix_free(gates, measure, n, 1000, zeroStateSparse(n), noNoise, stB, cB, cfg);
 
     EXPECT_EQ(cA, cB);
@@ -679,13 +681,13 @@ TEST_F(SamplingMatrixFreeTest, PureZeroState_MatchesStandardSampling) {
 TEST_F(SamplingMatrixFreeTest, HadamardCircuit_StatisticsMatchStandardSampling) {
     // For a stochastic circuit, match to within statistical tolerance.
     int n = 2;
-    std::vector<Gate> gates = { makeH(0), makeH(1) };
+    std::vector<Gate> gates = {makeH(0), makeH(1)};
     std::vector<bool> measure = {true, true};
     DenseMatrix stA, stB;
     std::map<std::string, int> cA, cB;
     const int shots = 10000;
 
-    sampling(            gates, measure, n, shots, zeroStateSparse(n), noNoise, stA, cA, cfg);
+    sampling(gates, measure, n, shots, zeroStateSparse(n), noNoise, stA, cA, cfg);
     sampling_matrix_free(gates, measure, n, shots, zeroStateSparse(n), noNoise, stB, cB, cfg);
 
     // Both should see each outcome ≈ 25 % ± 5 %.
@@ -709,14 +711,14 @@ TEST_F(SamplingMatrixFreeTest, DensityMatrixInitialState_ZeroState_AllCountsAreZ
 }
 
 class SamplingMonteCarloTest : public ::testing::Test {
-protected:
+   protected:
     QiliSimConfig cfg = defaultConfig();
     NoiseModelCpp noNoise = emptyNoise();
 };
 
 TEST_F(SamplingMonteCarloTest, MonteCarloEnabled_ProducesNonDeterministicCounts) {
     int n = 1;
-    std::vector<Gate> gates = { makeH(0) };
+    std::vector<Gate> gates = {makeH(0)};
     std::vector<bool> measure = {true};
     DenseMatrix state;
     std::map<std::string, int> counts;
@@ -738,7 +740,7 @@ TEST_F(SamplingMonteCarloTest, MonteCarloEnabled_ProducesNonDeterministicCounts)
 
 TEST_F(SamplingMonteCarloTest, MatrixFreeMonteCarloEnabled_ProducesNonDeterministicCounts) {
     int n = 1;
-    std::vector<Gate> gates = { makeH(0) };
+    std::vector<Gate> gates = {makeH(0)};
     std::vector<bool> measure = {true};
     DenseMatrix state;
     std::map<std::string, int> counts;
@@ -760,7 +762,7 @@ TEST_F(SamplingMonteCarloTest, MatrixFreeMonteCarloEnabled_ProducesNonDeterminis
 
 TEST_F(SamplingTest, BadGate_ThrowsException) {
     int n = 1;
-    std::vector<Gate> gates = { Gate("BadGate", SparseMatrix(2, 2), {}, {0}, {}) };
+    std::vector<Gate> gates = {Gate("BadGate", SparseMatrix(2, 2), {}, {0}, {})};
     std::vector<bool> measure = {true};
     DenseMatrix state;
     std::map<std::string, int> counts;
@@ -770,7 +772,7 @@ TEST_F(SamplingTest, BadGate_ThrowsException) {
 
 TEST_F(SamplingMatrixFreeTest, BadGate_ThrowsException) {
     int n = 1;
-    std::vector<Gate> gates = { Gate("BadGate", SparseMatrix(2, 2), {}, {0}, {}) };
+    std::vector<Gate> gates = {Gate("BadGate", SparseMatrix(2, 2), {}, {0}, {})};
     std::vector<bool> measure = {true};
     DenseMatrix state;
     std::map<std::string, int> counts;
@@ -811,7 +813,7 @@ TEST_F(SamplingTest, NonUnitaryGate_NormalizationWorks) {
     shrink.insert(0, 0) = cx(0.5, 0);
     shrink.insert(1, 1) = cx(0.5, 0);
     shrink.makeCompressed();
-    std::vector<Gate> gates = { Gate("Shrink", shrink, {}, {0}, {}) };
+    std::vector<Gate> gates = {Gate("Shrink", shrink, {}, {0}, {})};
     std::vector<bool> measure = {true};
     DenseMatrix state;
     std::map<std::string, int> counts;
@@ -831,7 +833,7 @@ TEST_F(SamplingMatrixFreeTest, NonUnitaryGate_NormalizationWorks) {
     shrink.insert(0, 0) = cx(0.5, 0);
     shrink.insert(1, 1) = cx(0.5, 0);
     shrink.makeCompressed();
-    std::vector<Gate> gates = { Gate("Shrink", shrink, {}, {0}, {}) };
+    std::vector<Gate> gates = {Gate("Shrink", shrink, {}, {0}, {})};
     std::vector<bool> measure = {true};
     DenseMatrix state;
     std::map<std::string, int> counts;
@@ -843,10 +845,9 @@ TEST_F(SamplingMatrixFreeTest, NonUnitaryGate_NormalizationWorks) {
     EXPECT_NEAR(fractionOf(counts, "0"), 1.0, kLoose);
 }
 
-
 TEST_F(SamplingTest, KrausNoise_BitflipOnSingleQubit) {
     int n = 1;
-    std::vector<Gate> gates = { makeX(0) };
+    std::vector<Gate> gates = {makeX(0)};
     std::vector<bool> measure = {true};
     DenseMatrix state;
     std::map<std::string, int> counts;
@@ -857,7 +858,7 @@ TEST_F(SamplingTest, KrausNoise_BitflipOnSingleQubit) {
     op.insert(0, 1) = cx(1.0, 0);
     op.insert(1, 0) = cx(1.0, 0);
     op.makeCompressed();
-    nm.add_kraus_operators_global({ op }); 
+    nm.add_kraus_operators_global({op});
 
     sampling(gates, measure, n, shots, zeroStateSparse(n), nm, state, counts, cfg);
 
@@ -867,7 +868,7 @@ TEST_F(SamplingTest, KrausNoise_BitflipOnSingleQubit) {
 
 TEST_F(SamplingMatrixFreeTest, KrausNoise_BitflipOnSingleQubit) {
     int n = 1;
-    std::vector<Gate> gates = { makeX(0) };
+    std::vector<Gate> gates = {makeX(0)};
     std::vector<bool> measure = {true};
     DenseMatrix state;
     std::map<std::string, int> counts;
@@ -878,7 +879,7 @@ TEST_F(SamplingMatrixFreeTest, KrausNoise_BitflipOnSingleQubit) {
     op.insert(0, 1) = cx(1.0, 0);
     op.insert(1, 0) = cx(1.0, 0);
     op.makeCompressed();
-    nm.add_kraus_operators_global({ op }); 
+    nm.add_kraus_operators_global({op});
 
     sampling_matrix_free(gates, measure, n, shots, zeroStateSparse(n), nm, state, counts, cfg);
 
@@ -889,7 +890,7 @@ TEST_F(SamplingMatrixFreeTest, KrausNoise_BitflipOnSingleQubit) {
 TEST_F(SamplingMatrixFreeTest, CombineSingleQubitGates_SameResultAsWithout) {
     // H then H = identity; with or without combining, result is all-zero.
     int n = 1;
-    std::vector<Gate> gates = { makeH(0), makeH(0) };
+    std::vector<Gate> gates = {makeH(0), makeH(0)};
     std::vector<bool> measure = {true};
     DenseMatrix stateA, stateB;
     std::map<std::string, int> countsA, countsB;

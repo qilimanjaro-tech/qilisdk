@@ -65,11 +65,10 @@ void expectMatrixNear(const DenseMatrix& a, const DenseMatrix& b, double tol = 1
     ASSERT_EQ(a.cols(), b.cols());
     for (int r = 0; r < a.rows(); ++r)
         for (int c = 0; c < a.cols(); ++c)
-            EXPECT_NEAR(std::abs(a(r, c)), std::abs(b(r, c)), tol)
-                << "Mismatch at (" << r << ", " << c << ")";
+            EXPECT_NEAR(std::abs(a(r, c)), std::abs(b(r, c)), tol) << "Mismatch at (" << r << ", " << c << ")";
 }
 
-}
+}  // namespace
 
 TEST(MatrixFreeHamiltonian, DefaultConstructorIsEmpty) {
     MatrixFreeHamiltonian h;
@@ -88,10 +87,7 @@ TEST(MatrixFreeHamiltonian, ConstructFromSingleOperator) {
 TEST(MatrixFreeHamiltonian, ConstructFromVectorOfTerms) {
     MatrixFreeOperator z("Z", 0);
     MatrixFreeOperator x("X", 0);
-    std::vector<std::pair<std::complex<double>, std::vector<MatrixFreeOperator>>> terms = {
-        { {1.0, 0.0}, {z} },
-        { {2.0, 0.0}, {x} }
-    };
+    std::vector<std::pair<std::complex<double>, std::vector<MatrixFreeOperator>>> terms = {{{1.0, 0.0}, {z}}, {{2.0, 0.0}, {x}}};
     MatrixFreeHamiltonian h(terms);
     MatrixFreeHamiltonian ref;
     ref.add({1.0, 0.0}, z);
@@ -490,7 +486,6 @@ TEST(MatrixFreeHamiltonian, ExpectationValueZZonSingleQubitRaisesError) {
     h.add({1.0, 0.0}, std::vector<MatrixFreeOperator>{MatrixFreeOperator("Z", 0), MatrixFreeOperator("Z", 1)});
     EXPECT_ANY_THROW(h.expectation_value(ket0()));
 }
-
 
 TEST(MatrixFreeHamiltonian, StreamOutputSingleTerm) {
     MatrixFreeHamiltonian h;

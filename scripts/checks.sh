@@ -21,6 +21,7 @@ uv -v sync --all-groups --extra all-cu13 --reinstall -Ccmake.define.tests=ON 2>&
 # clang-format every .cpp and .h in ./src/qilisdk_cpp/
 echo "Running clang-format on C++ source files..." | tee -a $LOG_FILE 
 find ./src/qilisdk_cpp/ -regex '.*\.\(cpp\|h\)$' -exec clang-format -i {} \;  2>&1 | tee -a $LOG_FILE
+find ./tests/unit_cpp/ -regex '.*\.\(cpp\|h\)$' -exec clang-format -i {} \;  2>&1 | tee -a $LOG_FILE
 
 # Ruff
 echo "Running Ruff checks..." | tee -a $LOG_FILE

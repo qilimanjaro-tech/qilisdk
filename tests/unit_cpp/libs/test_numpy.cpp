@@ -13,8 +13,8 @@
 // limitations under the License.
 
 #include <gtest/gtest.h>
-#include "../../../src/qilisdk_cpp/libs/numpy.h"
 #include <pybind11/embed.h>
+#include "../../../src/qilisdk_cpp/libs/numpy.h"
 
 namespace py = pybind11;
 
@@ -141,8 +141,8 @@ TEST(MatrixConversion, DenseToNumpyValues) {
     py::array_t<std::complex<double>> result = to_numpy(dense);
     py::buffer_info buf = result.request();
     auto ptr = static_cast<std::complex<double>*>(buf.ptr);
-    EXPECT_NEAR(std::abs(ptr[0] - std::complex<double>(1.0,  0.0)), 0.0, 1e-10);
-    EXPECT_NEAR(std::abs(ptr[1] - std::complex<double>(0.0,  1.0)), 0.0, 1e-10);
+    EXPECT_NEAR(std::abs(ptr[0] - std::complex<double>(1.0, 0.0)), 0.0, 1e-10);
+    EXPECT_NEAR(std::abs(ptr[1] - std::complex<double>(0.0, 1.0)), 0.0, 1e-10);
     EXPECT_NEAR(std::abs(ptr[2] - std::complex<double>(-1.0, 0.0)), 0.0, 1e-10);
     EXPECT_NEAR(std::abs(ptr[3] - std::complex<double>(0.0, -1.0)), 0.0, 1e-10);
 }
@@ -165,10 +165,10 @@ TEST(MatrixConversion, VectorToNumpyValues) {
     py::buffer_info buf = result.request();
     auto ptr = static_cast<double*>(buf.ptr);
     ASSERT_EQ(buf.shape[0], 5);
-    EXPECT_NEAR(ptr[0],  1.0, 1e-10);
-    EXPECT_NEAR(ptr[1],  2.5, 1e-10);
+    EXPECT_NEAR(ptr[0], 1.0, 1e-10);
+    EXPECT_NEAR(ptr[1], 2.5, 1e-10);
     EXPECT_NEAR(ptr[2], -3.0, 1e-10);
-    EXPECT_NEAR(ptr[3],  0.0, 1e-10);
+    EXPECT_NEAR(ptr[3], 0.0, 1e-10);
     EXPECT_NEAR(ptr[4], 42.0, 1e-10);
 }
 
@@ -181,10 +181,7 @@ TEST(MatrixConversion, VectorToNumpyEmpty) {
 }
 
 TEST(MatrixConversion, VectorOfVectorsToNumpyValues) {
-    std::vector<std::vector<double>> vecs = {
-        {1.0, 2.0, 3.0},
-        {4.0, 5.0, 6.0}
-    };
+    std::vector<std::vector<double>> vecs = {{1.0, 2.0, 3.0}, {4.0, 5.0, 6.0}};
     py::gil_scoped_acquire gil;
     py::array_t<double> result = to_numpy(vecs);
     py::buffer_info buf = result.request();

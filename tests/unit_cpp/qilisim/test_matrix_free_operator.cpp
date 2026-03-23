@@ -15,17 +15,18 @@
 #include <gtest/gtest.h>
 #include "../../../src/qilisdk_cpp/backends/qilisim/representations/matrix_free_operator.h"
 
-
 namespace {
 
 DenseMatrix ket0() {
     DenseMatrix s(2, 1);
-    s(0, 0) = 1.0; s(1, 0) = 0.0;
+    s(0, 0) = 1.0;
+    s(1, 0) = 0.0;
     return s;
 }
 DenseMatrix ket1() {
     DenseMatrix s(2, 1);
-    s(0, 0) = 0.0; s(1, 0) = 1.0;
+    s(0, 0) = 0.0;
+    s(1, 0) = 1.0;
     return s;
 }
 DenseMatrix ketPlus() {
@@ -35,15 +36,15 @@ DenseMatrix ketPlus() {
 }
 DenseMatrix ketMinus() {
     DenseMatrix s(2, 1);
-    s(0, 0) =  1.0 / std::sqrt(2.0);
+    s(0, 0) = 1.0 / std::sqrt(2.0);
     s(1, 0) = -1.0 / std::sqrt(2.0);
     return s;
 }
 
 DenseMatrix ket00() {
-    DenseMatrix s(4, 1); 
-    s.setZero(); 
-    s(0, 0) = 1.0; 
+    DenseMatrix s(4, 1);
+    s.setZero();
+    s(0, 0) = 1.0;
     return s;
 }
 DenseMatrix ket01() {
@@ -104,12 +105,13 @@ DenseMatrix dm1() {
 }
 DenseMatrix dmPlus() {
     DenseMatrix d(2, 2);
-    d(0,0) = d(0,1) = d(1,0) = d(1,1) = 0.5;
+    d(0, 0) = d(0, 1) = d(1, 0) = d(1, 1) = 0.5;
     return d;
 }
 DenseMatrix dmMinus() {
     DenseMatrix d(2, 2);
-    d(0,0) = d(1,1) = 0.5; d(0,1) = d(1,0) = -0.5;
+    d(0, 0) = d(1, 1) = 0.5;
+    d(0, 1) = d(1, 0) = -0.5;
     return d;
 }
 
@@ -120,13 +122,13 @@ DenseMatrix ketbra(const DenseMatrix& ket, const DenseMatrix& bra) {
     return ket * bra.adjoint();
 }
 
-const std::complex<double> kImag     {0.0,  1.0};
-const std::complex<double> kImagConj {0.0, -1.0};
+const std::complex<double> kImag{0.0, 1.0};
+const std::complex<double> kImagConj{0.0, -1.0};
 const double kInvSqrt2 = 1.0 / std::sqrt(2.0);
-const std::complex<double> kTPhase     = std::exp(std::complex<double>(0.0,  M_PI / 4.0));
+const std::complex<double> kTPhase = std::exp(std::complex<double>(0.0, M_PI / 4.0));
 const std::complex<double> kTPhaseConj = std::conj(kTPhase);
 
-}
+}  // namespace
 
 TEST(MatrixFreeOperator, NameAndTargetQubitAccessors) {
     MatrixFreeOperator op("X", 3);
@@ -173,8 +175,7 @@ TEST(MatrixFreeOperator, InitSWAP) {
 
 TEST(MatrixFreeOperator, InitWithGate) {
     DenseMatrix x_matrix(2, 2);
-    x_matrix << 0, 1,
-                1, 0;
+    x_matrix << 0, 1, 1, 0;
     Gate g("X", x_matrix.sparseView(), {0}, {1}, {});
     MatrixFreeOperator op(g);
     EXPECT_EQ(op.get_name(), "X");
@@ -187,17 +188,15 @@ TEST(MatrixFreeOperator, InitWithGate) {
 
 TEST(MatrixFreeOperator, InitWithMultiTargetGate) {
     DenseMatrix x_matrix(2, 2);
-    x_matrix << 0, 1,
-                1, 0;
-    Gate g("X", x_matrix.sparseView(), {}, {1,2}, {});
+    x_matrix << 0, 1, 1, 0;
+    Gate g("X", x_matrix.sparseView(), {}, {1, 2}, {});
     EXPECT_ANY_THROW(MatrixFreeOperator op(g));
 }
 
 TEST(MatrixFreeOperator, InitWithMultiControlGate) {
     DenseMatrix x_matrix(2, 2);
-    x_matrix << 0, 1,
-                1, 0;
-    Gate g("Y", x_matrix.sparseView(), {1,2}, {1}, {});
+    x_matrix << 0, 1, 1, 0;
+    Gate g("Y", x_matrix.sparseView(), {1, 2}, {1}, {});
     EXPECT_ANY_THROW(MatrixFreeOperator op(g));
 }
 
@@ -333,9 +332,9 @@ TEST(MatrixFreeOperator, Y_Left_DensityMatrix_Dm0) {
     MatrixFreeOperator op("Y", 0);
     DenseMatrix rho = dm0();
     op.apply(rho, MatrixFreeApplicationType::Left);
-    DenseMatrix expected(2, 2); 
+    DenseMatrix expected(2, 2);
     expected.setZero();
-    expected(1, 0) = kImag;   // i·<0|0><0|
+    expected(1, 0) = kImag;  // i·<0|0><0|
     ASSERT_TRUE(rho.isApprox(expected, 1e-10)) << "Y Left |0><0| should be approximately i|1><0|, but got:\n" << rho;
 }
 
@@ -517,8 +516,10 @@ TEST(MatrixFreeOperator, S_Left_DensityMatrix_DmPlus) {
     DenseMatrix rho = dmPlus();
     op.apply(rho, MatrixFreeApplicationType::Left);
     DenseMatrix expected(2, 2);
-    expected(0, 0) = 0.5;    expected(0, 1) = 0.5;
-    expected(1, 0) = 0.5 * kImag; expected(1, 1) = 0.5 * kImag;
+    expected(0, 0) = 0.5;
+    expected(0, 1) = 0.5;
+    expected(1, 0) = 0.5 * kImag;
+    expected(1, 1) = 0.5 * kImag;
     ASSERT_TRUE(rho.isApprox(expected, 1e-10)) << "S Left |+><+| should be approximately |+><+| with i in the bottom row, but got:\n" << rho;
 }
 
@@ -527,8 +528,10 @@ TEST(MatrixFreeOperator, S_Right_DensityMatrix_DmPlus) {
     DenseMatrix rho = dmPlus();
     op.apply(rho, MatrixFreeApplicationType::Right);
     DenseMatrix expected(2, 2);
-    expected(0, 0) = 0.5; expected(0, 1) = 0.5 * kImagConj;
-    expected(1, 0) = 0.5; expected(1, 1) = 0.5 * kImagConj;
+    expected(0, 0) = 0.5;
+    expected(0, 1) = 0.5 * kImagConj;
+    expected(1, 0) = 0.5;
+    expected(1, 1) = 0.5 * kImagConj;
     ASSERT_TRUE(rho.isApprox(expected, 1e-10)) << "Got:\n" << rho << "\nExpected:\n" << expected;
 }
 
@@ -537,8 +540,10 @@ TEST(MatrixFreeOperator, S_LeftAndRight_DmPlus) {
     DenseMatrix rho = dmPlus();
     op.apply(rho, MatrixFreeApplicationType::LeftAndRight);
     DenseMatrix expected(2, 2);
-    expected(0, 0) = 0.5; expected(0, 1) = 0.5 * kImagConj;
-    expected(1, 0) = 0.5 * kImag; expected(1, 1) = 0.5;
+    expected(0, 0) = 0.5;
+    expected(0, 1) = 0.5 * kImagConj;
+    expected(1, 0) = 0.5 * kImag;
+    expected(1, 1) = 0.5;
     ASSERT_TRUE(rho.isApprox(expected, 1e-10)) << "Got:\n" << rho << "\nExpected:\n" << expected;
 }
 
@@ -573,8 +578,10 @@ TEST(MatrixFreeOperator, T_Left_DensityMatrix_DmPlus) {
     DenseMatrix rho = dmPlus();
     op.apply(rho, MatrixFreeApplicationType::Left);
     DenseMatrix expected(2, 2);
-    expected(0, 0) = 0.5;             expected(0, 1) = 0.5;
-    expected(1, 0) = 0.5 * kTPhase;   expected(1, 1) = 0.5 * kTPhase;
+    expected(0, 0) = 0.5;
+    expected(0, 1) = 0.5;
+    expected(1, 0) = 0.5 * kTPhase;
+    expected(1, 1) = 0.5 * kTPhase;
     ASSERT_TRUE(rho.isApprox(expected, 1e-10)) << "T Left |+><+| should be approximately |+><+| with T phase in the bottom row, but got:\n" << rho;
 }
 
@@ -583,8 +590,10 @@ TEST(MatrixFreeOperator, T_Right_DensityMatrix_DmPlus) {
     DenseMatrix rho = dmPlus();
     op.apply(rho, MatrixFreeApplicationType::Right);
     DenseMatrix expected(2, 2);
-    expected(0, 0) = 0.5; expected(0, 1) = 0.5 * kTPhaseConj;
-    expected(1, 0) = 0.5; expected(1, 1) = 0.5 * kTPhaseConj;
+    expected(0, 0) = 0.5;
+    expected(0, 1) = 0.5 * kTPhaseConj;
+    expected(1, 0) = 0.5;
+    expected(1, 1) = 0.5 * kTPhaseConj;
     ASSERT_TRUE(rho.isApprox(expected, 1e-10)) << "T Right |+><+| should be approximately |+><+| with T phase in the right column, but got:\n" << rho;
 }
 
@@ -724,8 +733,10 @@ TEST(MatrixFreeOperator, CZ_LeftAndRight_Ket11Unchanged) {
 
 TEST(MatrixFreeOperator, CustomBaseMatrix_StateVector_ActsCorrectly) {
     DenseMatrix hmat(2, 2);
-    hmat(0,0) =  kInvSqrt2; hmat(0,1) =  kInvSqrt2;
-    hmat(1,0) =  kInvSqrt2; hmat(1,1) = -kInvSqrt2;
+    hmat(0, 0) = kInvSqrt2;
+    hmat(0, 1) = kInvSqrt2;
+    hmat(1, 0) = kInvSqrt2;
+    hmat(1, 1) = -kInvSqrt2;
     Gate g("CustomH", hmat.sparseView(), {}, {0}, {});
     MatrixFreeOperator op(g);
     DenseMatrix s = ket0();
@@ -735,8 +746,10 @@ TEST(MatrixFreeOperator, CustomBaseMatrix_StateVector_ActsCorrectly) {
 
 TEST(MatrixFreeOperator, CustomBaseMatrixLeft_DensityMatrix_ActsCorrectly) {
     DenseMatrix hmat(2, 2);
-    hmat(0,0) =  0; hmat(0,1) = 1;
-    hmat(1,0) =  1; hmat(1,1) = 0;
+    hmat(0, 0) = 0;
+    hmat(0, 1) = 1;
+    hmat(1, 0) = 1;
+    hmat(1, 1) = 0;
     Gate g("CustomX", hmat.sparseView(), {}, {0}, {});
     MatrixFreeOperator op(g);
     DenseMatrix rho = ketbra(ket0());
@@ -746,8 +759,10 @@ TEST(MatrixFreeOperator, CustomBaseMatrixLeft_DensityMatrix_ActsCorrectly) {
 
 TEST(MatrixFreeOperator, CustomBaseMatrixRight_DensityMatrix_ActsCorrectly) {
     DenseMatrix hmat(2, 2);
-    hmat(0,0) =  0; hmat(0,1) = 1;
-    hmat(1,0) =  1; hmat(1,1) = 0;
+    hmat(0, 0) = 0;
+    hmat(0, 1) = 1;
+    hmat(1, 0) = 1;
+    hmat(1, 1) = 0;
     Gate g("CustomX", hmat.sparseView(), {}, {0}, {});
     MatrixFreeOperator op(g);
     DenseMatrix rho = ketbra(ket0());
@@ -756,17 +771,19 @@ TEST(MatrixFreeOperator, CustomBaseMatrixRight_DensityMatrix_ActsCorrectly) {
 }
 
 TEST(MatrixFreeOperator, CustomBaseMatrix_LeftAndRight_UsesConjugateOnRight) {
-    DenseMatrix umat(2, 2); 
+    DenseMatrix umat(2, 2);
     umat.setZero();
-    umat(0, 0) = 1.0; 
+    umat(0, 0) = 1.0;
     umat(1, 1) = kImag;
     Gate g("CustomS", umat.sparseView(), {}, {0}, {});
     MatrixFreeOperator op(g);
     DenseMatrix rho = dmPlus();
     op.apply(rho, MatrixFreeApplicationType::LeftAndRight);
     DenseMatrix expected(2, 2);
-    expected(0, 0) = 0.5; expected(0, 1) = 0.5 * kImagConj;
-    expected(1, 0) = 0.5 * kImag; expected(1, 1) = 0.5;
+    expected(0, 0) = 0.5;
+    expected(0, 1) = 0.5 * kImagConj;
+    expected(1, 0) = 0.5 * kImag;
+    expected(1, 1) = 0.5;
     ASSERT_TRUE(rho.isApprox(expected, 1e-10)) << "Got:\n" << rho << "\nExpected:\n" << expected;
 }
 
@@ -829,35 +846,35 @@ TEST(MatrixFreeOperator, SWAP_LeftAndRight_Ket01GivesKet10) {
 }
 
 TEST(MatrixFreeOperator, Toffoli_StateVector_Control0Control1Target2_Ket110FlipsToKet111) {
-    MatrixFreeOperator op("Toffoli", {0,1}, {2}, DenseMatrix());
+    MatrixFreeOperator op("Toffoli", {0, 1}, {2}, DenseMatrix());
     DenseMatrix s = ket110();
     op.apply(s, MatrixFreeApplicationType::Left);
     ASSERT_TRUE(s.isApprox(ket111(), 1e-10)) << "Toffoli(0,1,2) |110> should be approximately |111>, but got:\n" << s;
 }
 
 TEST(MatrixFreeOperator, Toffoli_StateVector_Control0Control1Target2_Ket111FlipsToKet110) {
-    MatrixFreeOperator op("Toffoli", {0,1}, {2}, DenseMatrix());
+    MatrixFreeOperator op("Toffoli", {0, 1}, {2}, DenseMatrix());
     DenseMatrix s = ket111();
     op.apply(s, MatrixFreeApplicationType::Left);
     ASSERT_TRUE(s.isApprox(ket110(), 1e-10)) << "Toffoli(0,1,2) |111> should be approximately |110>, but got:\n" << s;
 }
 
 TEST(MatrixFreeOperator, Toffoli_StateVector_Control0Control1Target2_Ket000Unchanged) {
-    MatrixFreeOperator op("Toffoli", {0,1}, {2}, DenseMatrix());
+    MatrixFreeOperator op("Toffoli", {0, 1}, {2}, DenseMatrix());
     DenseMatrix s = ket000();
     op.apply(s, MatrixFreeApplicationType::Left);
     ASSERT_TRUE(s.isApprox(ket000(), 1e-10)) << "Toffoli(0,1,2) |000> should be approximately |000>, but got:\n" << s;
 }
 
 TEST(MatrixFreeOperator, Toffoli_StateVector_Control0Control1Target2_Ket101Unchanged) {
-    MatrixFreeOperator op("Toffoli", {0,1}, {2}, DenseMatrix());
+    MatrixFreeOperator op("Toffoli", {0, 1}, {2}, DenseMatrix());
     DenseMatrix s = ket101();
     op.apply(s, MatrixFreeApplicationType::Left);
     ASSERT_TRUE(s.isApprox(ket101(), 1e-10)) << "Toffoli(0,1,2) |101> should be approximately |101>, but got:\n" << s;
 }
 
 TEST(MatrixFreeOperator, Toffoli_StateVector_Involutory) {
-    MatrixFreeOperator op("Toffoli", {0,1}, {2}, DenseMatrix());
+    MatrixFreeOperator op("Toffoli", {0, 1}, {2}, DenseMatrix());
     DenseMatrix s = ket110();
     DenseMatrix original = s;
     op.apply(s, MatrixFreeApplicationType::Left);
@@ -866,21 +883,21 @@ TEST(MatrixFreeOperator, Toffoli_StateVector_Involutory) {
 }
 
 TEST(MatrixFreeOperator, Toffoli_Left_DensityMatrix_Ket110) {
-    MatrixFreeOperator op("Toffoli", {0,1}, {2}, DenseMatrix());
+    MatrixFreeOperator op("Toffoli", {0, 1}, {2}, DenseMatrix());
     DenseMatrix rho = ketbra(ket110());
     op.apply(rho, MatrixFreeApplicationType::Left);
     ASSERT_TRUE(rho.isApprox(ketbra(ket111(), ket110()), 1e-10)) << "Toffoli Left |110><110| should be approximately |111><110|, but got:\n" << rho;
 }
 
 TEST(MatrixFreeOperator, Toffoli_Right_DensityMatrix_Ket110) {
-    MatrixFreeOperator op("Toffoli", {0,1}, {2}, DenseMatrix());
+    MatrixFreeOperator op("Toffoli", {0, 1}, {2}, DenseMatrix());
     DenseMatrix rho = ketbra(ket110());
     op.apply(rho, MatrixFreeApplicationType::Right);
     ASSERT_TRUE(rho.isApprox(ketbra(ket110(), ket111()), 1e-10)) << "Toffoli Right |110><110| should be approximately |110><111|, but got:\n" << rho;
 }
 
 TEST(MatrixFreeOperator, Toffoli_LeftAndRight_Ket110GivesKet111) {
-    MatrixFreeOperator op("Toffoli", {0,1}, {2}, DenseMatrix());
+    MatrixFreeOperator op("Toffoli", {0, 1}, {2}, DenseMatrix());
     DenseMatrix rho = ketbra(ket110());
     op.apply(rho, MatrixFreeApplicationType::LeftAndRight);
     ASSERT_TRUE(rho.isApprox(ketbra(ket111()), 1e-10)) << "Toffoli LAR |110><110| should be approximately |111><111|, but got:\n" << rho;
@@ -890,8 +907,10 @@ TEST(MatrixFreeOperator, Toffoli_LeftAndRight_Ket110GivesKet111) {
 
 TEST(MatrixFreeOperator, ControlledCustomGate_StateVector_Control0Target1_Ket10FlipsToKet11) {
     DenseMatrix xmat(2, 2);
-    xmat(0,0) = 0; xmat(0,1) = 1;
-    xmat(1,0) = 1; xmat(1,1) = 0;
+    xmat(0, 0) = 0;
+    xmat(0, 1) = 1;
+    xmat(1, 0) = 1;
+    xmat(1, 1) = 0;
     Gate customX("CustomX", xmat.sparseView(), {0}, {1}, {});
     MatrixFreeOperator op(customX);
     DenseMatrix s = ket10();
@@ -901,8 +920,10 @@ TEST(MatrixFreeOperator, ControlledCustomGate_StateVector_Control0Target1_Ket10F
 
 TEST(MatrixFreeOperator, ControlledCustomGate_StateVector_Control0Target1_Ket11FlipsToKet10) {
     DenseMatrix xmat(2, 2);
-    xmat(0,0) = 0; xmat(0,1) = 1;
-    xmat(1,0) = 1; xmat(1,1) = 0;
+    xmat(0, 0) = 0;
+    xmat(0, 1) = 1;
+    xmat(1, 0) = 1;
+    xmat(1, 1) = 0;
     Gate customX("CustomX", xmat.sparseView(), {0}, {1}, {});
     MatrixFreeOperator op(customX);
     DenseMatrix s = ket11();
@@ -912,8 +933,10 @@ TEST(MatrixFreeOperator, ControlledCustomGate_StateVector_Control0Target1_Ket11F
 
 TEST(MatrixFreeOperator, ControlledCustomGate_StateVector_Control0Target1_Ket00Unchanged) {
     DenseMatrix xmat(2, 2);
-    xmat(0,0) = 0; xmat(0,1) = 1;
-    xmat(1,0) = 1; xmat(1,1) = 0;
+    xmat(0, 0) = 0;
+    xmat(0, 1) = 1;
+    xmat(1, 0) = 1;
+    xmat(1, 1) = 0;
     Gate customX("CustomX", xmat.sparseView(), {0}, {1}, {});
     MatrixFreeOperator op(customX);
     DenseMatrix s = ket00();
@@ -923,8 +946,10 @@ TEST(MatrixFreeOperator, ControlledCustomGate_StateVector_Control0Target1_Ket00U
 
 TEST(MatrixFreeOperator, ControlledCustomGate_StateVector_Control0Target1_Ket01Unchanged) {
     DenseMatrix xmat(2, 2);
-    xmat(0,0) = 0; xmat(0,1) = 1;
-    xmat(1,0) = 1; xmat(1,1) = 0;
+    xmat(0, 0) = 0;
+    xmat(0, 1) = 1;
+    xmat(1, 0) = 1;
+    xmat(1, 1) = 0;
     Gate customX("CustomX", xmat.sparseView(), {0}, {1}, {});
     MatrixFreeOperator op(customX);
     DenseMatrix s = ket01();
@@ -934,8 +959,10 @@ TEST(MatrixFreeOperator, ControlledCustomGate_StateVector_Control0Target1_Ket01U
 
 TEST(MatrixFreeOperator, ControlledCustomGate_StateVector_Involutory) {
     DenseMatrix xmat(2, 2);
-    xmat(0,0) = 0; xmat(0,1) = 1;
-    xmat(1,0) = 1; xmat(1,1) = 0;
+    xmat(0, 0) = 0;
+    xmat(0, 1) = 1;
+    xmat(1, 0) = 1;
+    xmat(1, 1) = 0;
     Gate customX("CustomX", xmat.sparseView(), {0}, {1}, {});
     MatrixFreeOperator op(customX);
     DenseMatrix s = ket10();
@@ -947,8 +974,10 @@ TEST(MatrixFreeOperator, ControlledCustomGate_StateVector_Involutory) {
 
 TEST(MatrixFreeOperator, ControlledCustomGate_Left_DensityMatrix_Control0Target1_Ket10) {
     DenseMatrix xmat(2, 2);
-    xmat(0,0) = 0; xmat(0,1) = 1;
-    xmat(1,0) = 1; xmat(1,1) = 0;
+    xmat(0, 0) = 0;
+    xmat(0, 1) = 1;
+    xmat(1, 0) = 1;
+    xmat(1, 1) = 0;
     Gate customX("CustomX", xmat.sparseView(), {0}, {1}, {});
     MatrixFreeOperator op(customX);
     DenseMatrix rho = ketbra(ket10());
@@ -958,8 +987,10 @@ TEST(MatrixFreeOperator, ControlledCustomGate_Left_DensityMatrix_Control0Target1
 
 TEST(MatrixFreeOperator, ControlledCustomGate_Right_DensityMatrix_Control0Target1_Ket10) {
     DenseMatrix xmat(2, 2);
-    xmat(0,0) = 0; xmat(0,1) = 1;
-    xmat(1,0) = 1; xmat(1,1) = 0;
+    xmat(0, 0) = 0;
+    xmat(0, 1) = 1;
+    xmat(1, 0) = 1;
+    xmat(1, 1) = 0;
     Gate customX("CustomX", xmat.sparseView(), {0}, {1}, {});
     MatrixFreeOperator op(customX);
     DenseMatrix rho = ketbra(ket10());
@@ -969,13 +1000,13 @@ TEST(MatrixFreeOperator, ControlledCustomGate_Right_DensityMatrix_Control0Target
 
 TEST(MatrixFreeOperator, ControlledCustomGate_LeftAndRight_Control0Target1_Ket10GivesKet11) {
     DenseMatrix xmat(2, 2);
-    xmat(0,0) = 0; xmat(0,1) = 1;
-    xmat(1,0) = 1; xmat(1,1) = 0;
+    xmat(0, 0) = 0;
+    xmat(0, 1) = 1;
+    xmat(1, 0) = 1;
+    xmat(1, 1) = 0;
     Gate customX("CustomX", xmat.sparseView(), {0}, {1}, {});
     MatrixFreeOperator op(customX);
     DenseMatrix rho = ketbra(ket10());
     op.apply(rho, MatrixFreeApplicationType::LeftAndRight);
     ASSERT_TRUE(rho.isApprox(ketbra(ket11()), 1e-10)) << "Controlled Custom X LAR |10><10| should be approximately |11><11|, but got:\n" << rho;
 }
-
-

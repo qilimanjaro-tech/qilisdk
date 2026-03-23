@@ -51,5 +51,4 @@ TEST(QilisimConfig, BadValidateThrows) {
     config = default_config;
     config.set_atol(0);
     EXPECT_ANY_THROW(config.validate());
-
 }

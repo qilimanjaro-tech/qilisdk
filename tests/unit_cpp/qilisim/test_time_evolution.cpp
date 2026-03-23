@@ -74,20 +74,9 @@ struct TimeEvolutionOutputs {
     std::vector<std::vector<double>> intermediate_expectation_values;
 };
 
-TimeEvolutionOutputs run_time_evolution(
-    SparseMatrix rho_0,
-    const std::vector<SparseMatrix>& hamiltonians,
-    const std::vector<std::vector<double>>& parameters_list,
-    const std::vector<double>& step_list,
-    NoiseModelCpp& noise_model,
-    const std::vector<SparseMatrix>& observables,
-    QiliSimConfig& config)
-{
+TimeEvolutionOutputs run_time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, NoiseModelCpp& noise_model, const std::vector<SparseMatrix>& observables, QiliSimConfig& config) {
     TimeEvolutionOutputs out;
-    time_evolution(rho_0, hamiltonians, parameters_list, step_list,
-                   noise_model, observables, config,
-                   out.rho_t, out.intermediate_rhos,
-                   out.expectation_values, out.intermediate_expectation_values);
+    time_evolution(rho_0, hamiltonians, parameters_list, step_list, noise_model, observables, config, out.rho_t, out.intermediate_rhos, out.expectation_values, out.intermediate_expectation_values);
     return out;
 }
 
@@ -98,27 +87,16 @@ struct MatrixFreeOutputs {
     std::vector<std::vector<double>> intermediate_expectation_values;
 };
 
-MatrixFreeOutputs run_time_evolution_mf(
-    SparseMatrix rho_0,
-    const std::vector<MatrixFreeHamiltonian>& hamiltonians,
-    const std::vector<std::vector<double>>& parameters_list,
-    const std::vector<double>& step_list,
-    NoiseModelCpp& noise_model,
-    const std::vector<MatrixFreeHamiltonian>& observables,
-    QiliSimConfig& config)
-{
+MatrixFreeOutputs run_time_evolution_mf(SparseMatrix rho_0, const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, NoiseModelCpp& noise_model, const std::vector<MatrixFreeHamiltonian>& observables, QiliSimConfig& config) {
     MatrixFreeOutputs out;
-    time_evolution_matrix_free(rho_0, hamiltonians, parameters_list, step_list,
-                               noise_model, observables, config,
-                               out.rho_t, out.intermediate_rhos,
-                               out.expectation_values, out.intermediate_expectation_values);
+    time_evolution_matrix_free(rho_0, hamiltonians, parameters_list, step_list, noise_model, observables, config, out.rho_t, out.intermediate_rhos, out.expectation_values, out.intermediate_expectation_values);
     return out;
 }
 
-}
+}  // namespace
 
 class TimeEvolutionTest : public ::testing::Test {
-protected:
+   protected:
     SparseMatrix H_z = to_sparse(0.5 * pauli_z());
     std::vector<SparseMatrix> hamiltonians = {H_z};
     std::vector<std::vector<double>> params = {{1.0, 1.0, 1.0}};
@@ -128,7 +106,7 @@ protected:
 };
 
 class TimeEvolutionMatrixFreeTest : public ::testing::Test {
-protected:
+   protected:
     MatrixFreeHamiltonian H_mf = make_matrix_free_H(0.5 * pauli_z());
     std::vector<MatrixFreeHamiltonian> hamiltonians = {H_mf};
     std::vector<std::vector<double>> params = {{1.0, 1.0, 1.0}};
@@ -475,7 +453,7 @@ TEST_F(TimeEvolutionMatrixFreeTest, EachIntermediateRhoHasUnitTrace) {
 }
 
 class TimeEvolutionMethodTest : public ::testing::Test {
-protected:
+   protected:
     SparseMatrix H_z = to_sparse(0.5 * pauli_z());
     std::vector<SparseMatrix> hamiltonians = {H_z};
     std::vector<std::vector<double>> params = {{1.0}};
@@ -565,7 +543,7 @@ TEST_F(TimeEvolutionMatrixFreeTest, IntermediateResultsWithStatevectorInput) {
 }
 
 class TimeEvolutionMonteCarloTest : public ::testing::Test {
-protected:
+   protected:
     SparseMatrix H_z = to_sparse(0.5 * pauli_z());
     std::vector<SparseMatrix> hamiltonians = {H_z};
     std::vector<std::vector<double>> params = {{1.0}};
@@ -609,7 +587,7 @@ TEST_F(TimeEvolutionMonteCarloTest, GroundStateRemainsGroundState) {
 }
 
 class TimeEvolutionMonteCarloMatrixFreeTest : public ::testing::Test {
-protected:
+   protected:
     MatrixFreeHamiltonian H_mf = make_matrix_free_H(0.5 * pauli_z());
     std::vector<MatrixFreeHamiltonian> hamiltonians = {H_mf};
     std::vector<std::vector<double>> params = {{1.0}};
@@ -650,5 +628,3 @@ TEST_F(TimeEvolutionMonteCarloMatrixFreeTest, GroundStateRemainsGroundStateMF) {
     auto out = run_time_evolution_mf(pure_zero_sparse(), hamiltonians, params, steps, noise, {}, config);
     EXPECT_NEAR(std::real(out.rho_t(0, 0)), 1.0, kTolLoose);
 }
-
-

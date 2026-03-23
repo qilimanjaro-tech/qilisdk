@@ -13,20 +13,18 @@
 // limitations under the License.
 
 #include <pybind11/embed.h>
-#include "gtest/gtest.h"
 #include "../../src/qilisdk_cpp/libs/pybind.h"
+#include "gtest/gtest.h"
 
 // One interpreter for the whole test binary
 class PybindEnvironment : public ::testing::Environment {
-public:
-    void SetUp() override { 
+   public:
+    void SetUp() override {
         initialize_all_pybind_types();
         ASSERT_TRUE(dtype.ptr() != nullptr) << "dtype was not initialized";
         ASSERT_TRUE(SupportsStaticKraus.ptr() != nullptr) << "SupportsStaticKraus was not initialized";
     }
-    void TearDown() override { 
-        finalize_all_pybind_types();
-    }
+    void TearDown() override { finalize_all_pybind_types(); }
 };
 
 int main(int argc, char** argv) {

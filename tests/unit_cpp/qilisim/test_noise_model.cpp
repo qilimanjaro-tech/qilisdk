@@ -16,7 +16,6 @@
 #include "../../../src/qilisdk_cpp/backends/qilisim/noise/noise_model.h"
 
 TEST(NoiseModel, GetRelevantKrausOperators) {
-
     NoiseModelCpp model;
     model.add_kraus_operators_global({SparseMatrix(2, 2), SparseMatrix(2, 2)});
     model.add_kraus_operators_per_qubit(0, {SparseMatrix(2, 2)});
@@ -38,5 +37,4 @@ TEST(NoiseModel, GetRelevantKrausOperators) {
     result = model.get_relevant_kraus_operators("Y", {2}, 3);
     // We expect to get 1 (global) = 1 Kraus operator
     EXPECT_EQ(result.size(), 1);
-
 }

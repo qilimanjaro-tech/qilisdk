@@ -13,8 +13,8 @@
 // limitations under the License.
 
 #include <gtest/gtest.h>
-#include "../../../src/qilisdk_cpp/backends/qilisim/utils/parsers.h"
 #include <pybind11/embed.h>
+#include "../../../src/qilisdk_cpp/backends/qilisim/utils/parsers.h"
 
 namespace py = pybind11;
 
@@ -699,10 +699,7 @@ TEST(ParseNoiseModel, NonSquareLindbladThrows) {
     )");
 
     py::object fake_nm = py::globals()["fake_nm_nonsquare"];
-    EXPECT_THROW(
-        parse_noise_model(fake_nm, /*nqubits=*/2, /*atol=*/1e-10),
-        py::value_error
-    );
+    EXPECT_THROW(parse_noise_model(fake_nm, /*nqubits=*/2, /*atol=*/1e-10), py::value_error);
 }
 
 TEST(ParseNoiseModel, NonPowerOfTwoLindbladThrows) {
@@ -736,10 +733,7 @@ TEST(ParseNoiseModel, NonPowerOfTwoLindbladThrows) {
     )");
 
     py::object fake_nm = py::globals()["fake_nm_nonpow2"];
-    EXPECT_THROW(
-        parse_noise_model(fake_nm, /*nqubits=*/2, /*atol=*/1e-10),
-        py::value_error
-    );
+    EXPECT_THROW(parse_noise_model(fake_nm, /*nqubits=*/2, /*atol=*/1e-10), py::value_error);
 }
 
 TEST(ParseNoiseModel, AllEmptyPassesProduceEmptyModel) {
@@ -1033,7 +1027,7 @@ TEST(ParseCoefficients, BasicCoefficients) {
     )");
 
     py::object schedule = py::globals()["fake_schedule_basic"];
-    py::list   h_keys = py::globals()["fake_ham_keys_basic"].cast<py::list>();
+    py::list h_keys = py::globals()["fake_ham_keys_basic"].cast<py::list>();
     py::object steps = py::globals()["fake_steps_coeff"];
 
     auto result = parse_coefficients(schedule, h_keys, steps);
@@ -1061,7 +1055,7 @@ TEST(ParseCoefficients, SingleHamiltonianSingleStep) {
     )");
 
     py::object schedule = py::globals()["fake_schedule_single"];
-    py::list   h_keys = py::globals()["fake_ham_keys_single"].cast<py::list>();
+    py::list h_keys = py::globals()["fake_ham_keys_single"].cast<py::list>();
     py::object steps = py::globals()["fake_steps_single_coeff"];
 
     auto result = parse_coefficients(schedule, h_keys, steps);
@@ -1517,8 +1511,8 @@ TEST(ParseSolverParams, AllFieldsParsedCorrectly) {
     EXPECT_EQ(config.get_arnoldi_dim(), 20);
     EXPECT_EQ(config.get_num_arnoldi_substeps(), 4);
     EXPECT_EQ(config.get_num_integrate_substeps(), 8);
-    EXPECT_EQ(config.get_time_evolution_method(),"arnoldi");
-    EXPECT_EQ(config.get_sampling_method(),"statevector");
+    EXPECT_EQ(config.get_time_evolution_method(), "arnoldi");
+    EXPECT_EQ(config.get_sampling_method(), "statevector");
     EXPECT_TRUE(config.get_monte_carlo());
     EXPECT_EQ(config.get_num_monte_carlo_trajectories(), 500);
     EXPECT_EQ(config.get_num_threads(), 4);

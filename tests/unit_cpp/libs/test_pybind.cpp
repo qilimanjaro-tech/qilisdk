@@ -13,8 +13,8 @@
 // limitations under the License.
 
 #include <gtest/gtest.h>
-#include "../../../src/qilisdk_cpp/libs/numpy.h"
 #include <pybind11/embed.h>
+#include "../../../src/qilisdk_cpp/libs/numpy.h"
 
 namespace py = pybind11;
 
@@ -29,7 +29,3 @@ TEST(PybindExternalTypes, Initialization) {
     EXPECT_TRUE(numpy_array.ptr() != nullptr);
     EXPECT_TRUE(csrmatrix.ptr() != nullptr);
 }
-
-
-
-
