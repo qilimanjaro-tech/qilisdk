@@ -1,5 +1,6 @@
 import builtins
 import math
+from unittest.mock import MagicMock
 
 import pytest
 from rustworkx import PyGraph

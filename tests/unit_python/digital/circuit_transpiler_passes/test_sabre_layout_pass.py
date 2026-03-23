@@ -1,10 +1,10 @@
 import math
 import random
 from itertools import starmap
+from unittest.mock import MagicMock
 
 import pytest
 from rustworkx import PyGraph
-from unittest.mock import MagicMock
 
 from qilisdk.digital import (
     CNOT,
