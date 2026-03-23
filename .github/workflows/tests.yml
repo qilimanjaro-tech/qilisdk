@@ -54,7 +54,7 @@ jobs:
         run: |
           source .venv/bin/activate
           GCOV_PREFIX=$(pwd)/tests/unit_cpp/coverage GCOV_PREFIX_STRIP=5 ./tests/unit_cpp/test_cpp
-          gcovr --exclude '.*googletest.*' --exclude '/usr/.*' --gcov-ignore-errors=all --xml coverage_cpp.xml
+          gcovr --exclude '.*googletest.*' --exclude '/usr/.*' --gcov-ignore-errors=all --exclude-unreachable-branches --exclude-throw-branches --xml coverage_cpp.xml
 
       - name: Combine coverage reports
         run: |
