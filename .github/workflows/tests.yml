@@ -64,6 +64,7 @@ jobs:
           files: combined_coverage.xml
           disable_search: true
           gcov_executable: null
+          gcov_ignore: "*"
           token: ${{ secrets.CODECOV_TOKEN }}
       
       - name: Upload test results to Codecov
