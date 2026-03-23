@@ -51,6 +51,9 @@ jobs:
       - name: Run C++ tests
         run: GCOV_PREFIX=./tests/unit_cpp/coverage GCOV_PREFIX_STRIP=5 uv run ./tests/unit_cpp/test_cpp
 
+      - name: Make coverage folder
+        run: mkdir -p coverage
+
       - name: Compile C++ test results
         run: uv run gcovr --exclude '.*googletest.*' --exclude '/usr/.*' --gcov-ignore-errors=all --xml coverage/coverage_cpp.xml
 
