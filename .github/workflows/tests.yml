@@ -57,6 +57,15 @@ jobs:
       - name: Combine coverage reports
         run: uv run gcovr --xml combined_coverage.xml --cobertura-add-tracefile coverage.xml --cobertura-add-tracefile coverage_cpp.xml
 
+      - name: Output the tests directory for debugging
+        run: ls -R tests/unit_cpp/
+
+      - name: Output the base directory for debugging
+        run: ls ./
+
+      - name: Print the working directory for debugging
+        run: pwd
+
       - name: Upload coverage to Codecov
         if: ${{ matrix.python-version == '3.13' }}
         uses: codecov/codecov-action@v5
