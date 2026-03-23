@@ -43,13 +43,13 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install qilisdk
-        run: uv sync --group dev --extra all-cu13 -Ccmake.define.tests=ON -Ccmake.build-type=Debug -Ccmake.define.coverage=ON
+        run: uv -v sync --group dev --extra all-cu13 -Ccmake.define.tests=ON -Ccmake.build-type=Debug -Ccmake.define.coverage=ON
 
       - name: Run Python tests
         run: uv run pytest --cov=qilisdk --cov-report=xml --cov-report=term-missing --junitxml=junit.xml -o junit_family=legacy tests/unit_python/
 
       - name: Run C++ tests
-        run: GCOV_PREFIX=./tests/unit_cpp/coverage GCOV_PREFIX_STRIP=5 ./tests/unit_cpp/test_cpp
+        run: GCOV_PREFIX=./tests/unit_cpp/coverage GCOV_PREFIX_STRIP=5 uv run ./tests/unit_cpp/test_cpp
 
       - name: Compile C++ test results
         run: gcovr --exclude '.*googletest.*' --exclude '/usr/.*' --gcov-ignore-errors=all --xml coverage/coverage_cpp.xml
