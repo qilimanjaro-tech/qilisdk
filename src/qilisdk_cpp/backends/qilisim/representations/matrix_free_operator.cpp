@@ -127,30 +127,30 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
 #if defined(_OPENMP)
 #pragma omp for schedule(static)
 #endif
-                for (long k = 0; k < half; ++k) {
-                    long block = k / stride;
-                    long offset = k % stride;
-                    long base = block * (stride << 1);
-                    long r0 = base + offset;
-                    long r1 = r0 + stride;
-                    output_state.row(r0).swap(output_state.row(r1));
-                    output_state.row(r0) *= imag_conj;
-                    output_state.row(r1) *= imag;
-                }
+            for (long k = 0; k < half; ++k) {
+                long block = k / stride;
+                long offset = k % stride;
+                long base = block * (stride << 1);
+                long r0 = base + offset;
+                long r1 = r0 + stride;
+                output_state.row(r0).swap(output_state.row(r1));
+                output_state.row(r0) *= imag_conj;
+                output_state.row(r1) *= imag;
+            }
         } else if (application_type == MatrixFreeApplicationType::Right) {
 #if defined(_OPENMP)
 #pragma omp for schedule(static)
 #endif
-                for (long k = 0; k < half; ++k) {
-                    long block = k / stride;
-                    long offset = k % stride;
-                    long base = block * (stride << 1);
-                    long c0 = base + offset;
-                    long c1 = c0 + stride;
-                    output_state.col(c0).swap(output_state.col(c1));
-                    output_state.col(c0) *= imag;
-                    output_state.col(c1) *= imag_conj;
-                }
+            for (long k = 0; k < half; ++k) {
+                long block = k / stride;
+                long offset = k % stride;
+                long base = block * (stride << 1);
+                long c0 = base + offset;
+                long c1 = c0 + stride;
+                output_state.col(c0).swap(output_state.col(c1));
+                output_state.col(c0) *= imag;
+                output_state.col(c1) *= imag_conj;
+            }
         } else if (application_type == MatrixFreeApplicationType::LeftAndRight) {
 #if defined(_OPENMP)
 #pragma omp parallel
@@ -468,68 +468,53 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
         long half_dim = dim >> 2;
 
         if (output_state.cols() == 1) {
-    #if defined(_OPENMP)
-    #pragma omp parallel for schedule(static)
-    #endif
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
             for (long k = 0; k < half_dim; ++k) {
-                long i = (k & (mask0 - 1))
-                    | ((k & ~(mask1 - 1)) << 2)
-                    | ((k & (mask1 - 1) & ~(mask0 - 1)) << 1)
-                    | mask1;
+                long i = (k & (mask0 - 1)) | ((k & ~(mask1 - 1)) << 2) | ((k & (mask1 - 1) & ~(mask0 - 1)) << 1) | mask1;
                 long j = i ^ (mask0 | mask1);
                 std::swap(output_state(i), output_state(j));
             }
 
         } else if (application_type == MatrixFreeApplicationType::Left) {
-    #if defined(_OPENMP)
-    #pragma omp parallel for schedule(static)
-    #endif
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
             for (long k = 0; k < half_dim; ++k) {
-                long i = (k & (mask0 - 1))
-                    | ((k & ~(mask1 - 1)) << 2)
-                    | ((k & (mask1 - 1) & ~(mask0 - 1)) << 1)
-                    | mask1;
+                long i = (k & (mask0 - 1)) | ((k & ~(mask1 - 1)) << 2) | ((k & (mask1 - 1) & ~(mask0 - 1)) << 1) | mask1;
                 long j = i ^ (mask0 | mask1);
                 output_state.row(i).swap(output_state.row(j));
             }
 
         } else if (application_type == MatrixFreeApplicationType::Right) {
-    #if defined(_OPENMP)
-    #pragma omp parallel for schedule(static)
-    #endif
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
             for (long k = 0; k < half_dim; ++k) {
-                long i = (k & (mask0 - 1))
-                    | ((k & ~(mask1 - 1)) << 2)
-                    | ((k & (mask1 - 1) & ~(mask0 - 1)) << 1)
-                    | mask1;
+                long i = (k & (mask0 - 1)) | ((k & ~(mask1 - 1)) << 2) | ((k & (mask1 - 1) & ~(mask0 - 1)) << 1) | mask1;
                 long j = i ^ (mask0 | mask1);
                 output_state.col(i).swap(output_state.col(j));
             }
 
         } else if (application_type == MatrixFreeApplicationType::LeftAndRight) {
-    #if defined(_OPENMP)
-    #pragma omp parallel
-    #endif
+#if defined(_OPENMP)
+#pragma omp parallel
+#endif
             {
-    #if defined(_OPENMP)
-    #pragma omp for schedule(static)
-    #endif
+#if defined(_OPENMP)
+#pragma omp for schedule(static)
+#endif
                 for (long k = 0; k < half_dim; ++k) {
-                    long i = (k & (mask0 - 1))
-                        | ((k & ~(mask1 - 1)) << 2)
-                        | ((k & (mask1 - 1) & ~(mask0 - 1)) << 1)
-                        | mask1;
+                    long i = (k & (mask0 - 1)) | ((k & ~(mask1 - 1)) << 2) | ((k & (mask1 - 1) & ~(mask0 - 1)) << 1) | mask1;
                     long j = i ^ (mask0 | mask1);
                     output_state.row(i).swap(output_state.row(j));
                 }
-    #if defined(_OPENMP)
-    #pragma omp for schedule(static)
-    #endif
+#if defined(_OPENMP)
+#pragma omp for schedule(static)
+#endif
                 for (long k = 0; k < half_dim; ++k) {
-                    long i = (k & (mask0 - 1))
-                        | ((k & ~(mask1 - 1)) << 2)
-                        | ((k & (mask1 - 1) & ~(mask0 - 1)) << 1)
-                        | mask1;
+                    long i = (k & (mask0 - 1)) | ((k & ~(mask1 - 1)) << 2) | ((k & (mask1 - 1) & ~(mask0 - 1)) << 1) | mask1;
                     long j = i ^ (mask0 | mask1);
                     output_state.col(i).swap(output_state.col(j));
                 }
@@ -850,7 +835,6 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
                     }
                 }
             }
-
         }
 
         // If we have a 2x2 base matrix, we apply it by treating the target qubit as the least significant bit and iterating through pairs of basis states
@@ -967,7 +951,7 @@ MatrixFreeOperator::MatrixFreeOperator(const std::string& name, const std::vecto
     this->control_qubits = control_qubits;
     this->target_qubits = target_qubits;
     this->base_matrix = base_matrix;
-    
+
     // Get rid of superfluous names for common gates
     if (this->name == "CCX" || this->name == "Toffoli" || this->name == "CX" || this->name == "CNOT") {
         this->name = "X";
@@ -986,7 +970,6 @@ MatrixFreeOperator::MatrixFreeOperator(const std::string& name, const std::vecto
     if (this->target_qubits.size() != 1 && this->name != "SWAP") {
         throw py::value_error("MatrixFreeOperator requires a gate with exactly 1 target qubit (other than SWAP).");
     }
-
 }
 
 std::ostream& operator<<(std::ostream& os, const MatrixFreeOperator& op) {

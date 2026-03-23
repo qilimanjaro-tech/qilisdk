@@ -483,6 +483,22 @@ std::vector<Gate> parse_gates(const py::object& circuit, double atol, const py::
             py::dict gate_noise_map = noise_model.attr("per_gate_perturbations");
             py::object class_name = py::str(py_gate.attr("__class__").attr("__name__"));
 
+            // Turn the gate noise map keys into names rather than classes for easier comparison
+            py::dict new_gate_noise_map;
+            for (auto item : gate_noise_map) {
+                py::handle key = item.first;
+                py::tuple key_tuple = key.cast<py::tuple>();
+                if (key_tuple.size() == 2) {
+                    py::handle gate_class = key_tuple[0];
+                    py::handle param_name = key_tuple[1];
+                    std::string gate_class_name = py::str(gate_class.attr("__name__"));
+                    std::string param_name_str = py::str(param_name);
+                    py::tuple new_key = py::make_tuple(gate_class_name, param_name_str);
+                    new_gate_noise_map[new_key] = item.second;
+                }
+            }
+            gate_noise_map = new_gate_noise_map;
+
             // For each parameter
             for (auto item : gate_parameters) {
                 py::handle param_name = item.first;

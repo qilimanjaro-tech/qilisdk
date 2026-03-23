@@ -32,9 +32,9 @@ echo "Running Ty checks..." | tee -a $LOG_FILE
 ty check 2>&1 | tee -a $LOG_FILE
 
 # Tests
-echo "Running Python tests..." | tee -a $LOG_FILE
+echo "Running Python unit tests..." | tee -a $LOG_FILE
 pytest tests/unit_python 2>&1 | tee -a $LOG_FILE
 echo "Running C++ unit tests..." | tee -a $LOG_FILE
-./tests/unit_cpp/test_cpp 2>&1 | tee -a $LOG_FILE
+./tests/unit_cpp/test_cpp --gtest_brief=1 2>&1 | tee -a $LOG_FILE
 echo "Running integration tests..." | tee -a $LOG_FILE
 pytest tests/integration 2>&1 | tee -a $LOG_FILE

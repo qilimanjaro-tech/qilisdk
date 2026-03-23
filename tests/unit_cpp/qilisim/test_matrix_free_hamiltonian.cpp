@@ -59,14 +59,6 @@ DenseMatrix dm1() {
     d(1, 1) = 1.0;
     return d;
 }
-DenseMatrix dmPlus() {
-    DenseMatrix d = DenseMatrix::Zero(2, 2);
-    d(0, 0) = 0.5;
-    d(0, 1) = 0.5;
-    d(1, 0) = 0.5;
-    d(1, 1) = 0.5;
-    return d;
-}
 
 void expectMatrixNear(const DenseMatrix& a, const DenseMatrix& b, double tol = 1e-10) {
     ASSERT_EQ(a.rows(), b.rows());

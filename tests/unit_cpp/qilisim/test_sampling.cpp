@@ -271,8 +271,7 @@ TEST_F(FilterCountsTest, TotalCountPreserved) {
 
 TEST_F(FilterCountsTest, MiddleQubitSelected_ThreeQubits) {
     // Keep only qubit 1 (middle).
-    std::map<std::string, int> counts = { {"000", 125}, {"010", 125}, {"100", 125}, {"110", 125},
-                                          {"001", 125}, {"011", 125}, {"101", 125}, {"111", 125} };
+    std::map<std::string, int> counts = { {"000", 125}, {"010", 125}, {"100", 125}, {"110", 125}, {"001", 125}, {"011", 125}, {"101", 125}, {"111", 125} };
     std::vector<bool> mask = {false, true, false};
     auto result = filter_counts(counts, mask);
     // Qubit 1 is '0' for "000","100","001","101" → 500 counts.

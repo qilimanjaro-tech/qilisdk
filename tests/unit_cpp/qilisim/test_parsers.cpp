@@ -1448,7 +1448,7 @@ TEST(ParseGates, ParameterPerturbationAppliedPerGate) {
 
         class FakeNoiseModelPertPerGate:
             global_perturbations = {}
-            per_gate_perturbations = {('RZ', 'theta'): [FakePerturbation()]}
+            per_gate_perturbations = {(RZ, 'theta'): [FakePerturbation()]}
 
         class FakeCircuitPertPerGate:
             nqubits = 1

@@ -121,7 +121,6 @@ QTensorCpp::QTensorCpp(const SparseMatrix& data, bool no_checks) : _data(data) {
     }
 }
 
-
 QTensorCpp::QTensorCpp(const py::object& data) {
     /*
     Construct a QTensor from a py::object, which can be one of the following:
@@ -1996,11 +1995,6 @@ QTensorCpp QTensorCpp::reset_qubits(const std::set<int>& qubits) {
     // Perform the partial trace over the qubits to be reset
     QTensorCpp rest_state = partial_trace(rest_qubits);
     int out_dim = 1 << nqubits;
-
-    // If the resulting state is zero, we can just return a zero matrix of the appropriate size
-    if (rest_state.get_data().nonZeros() == 0) {
-        return QTensorCpp(SparseMatrix(out_dim, out_dim));
-    }
 
     // Now we need to embed the rest_state back into the full space of nqubits, filling in zeros for the reset qubits
     if (!rest_qubits.empty()) {

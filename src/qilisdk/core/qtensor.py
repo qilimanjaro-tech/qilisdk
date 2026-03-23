@@ -498,7 +498,7 @@ class QTensor:
         Returns:
             QTensor: A new QTensor representing the tensor product.
         """
-        return QTensor(QTensorCpp.tensor_product_python(QTensorCpp(), others))
+        return QTensor(QTensorCpp.tensor_product_python(others))
 
     @classmethod
     def ket(cls, *state: int) -> QTensor:

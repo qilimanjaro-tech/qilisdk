@@ -29,7 +29,6 @@ Gate::Gate(const std::string& gate_type_, const SparseMatrix& base_matrix_, cons
     } else if (this->gate_type == "CCZ" || this->gate_type == "CZ") {
         this->gate_type = "Z";
     }
-
 }
 
 int Gate::permute_bits(int index, const std::vector<int>& perm) const {
