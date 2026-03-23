@@ -48,8 +48,14 @@ jobs:
       - name: Run Python tests
         run: uv run pytest --cov=qilisdk --cov-report=xml --cov-report=term-missing --junitxml=junit.xml -o junit_family=legacy tests/unit_python/
 
+      - name: Set environment variable for C++ tests
+        run: export GCOV_PREFIX=$(pwd)/tests/unit_cpp/coverage && export GCOV_PREFIX_STRIP=5
+
+      - name: Check environment variables for C++ tests
+        run: echo "GCOV_PREFIX: $GCOV_PREFIX" && echo "GCOV_PREFIX_STRIP: $GCOV_PREFIX_STRIP"
+
       - name: Run C++ tests
-        run: GCOV_PREFIX=./tests/unit_cpp/coverage GCOV_PREFIX_STRIP=5 uv run ./tests/unit_cpp/test_cpp
+        run: uv run ./tests/unit_cpp/test_cpp
 
       - name: Compile C++ test results
         run: uv run gcovr --exclude '.*googletest.*' --exclude '/usr/.*' --gcov-ignore-errors=all --xml coverage_cpp.xml
@@ -58,10 +64,7 @@ jobs:
         run: uv run gcovr --xml combined_coverage.xml --cobertura-add-tracefile coverage.xml --cobertura-add-tracefile coverage_cpp.xml
 
       - name: Output the tests directory for debugging
-        run: ls -R tests/unit_cpp/
-
-      - name: Output the base directory for debugging
-        run: ls ./
+        run: ls -R tests/unit_cpp/coverage/
 
       - name: Print the working directory for debugging
         run: pwd
@@ -72,8 +75,8 @@ jobs:
         with:
           files: combined_coverage.xml
           disable_search: true
-          gcov_executable: null
-          gcov_ignore: "*"
+          # gcov_executable: null
+          # gcov_ignore: '*'
           token: ${{ secrets.CODECOV_TOKEN }}
       
       - name: Upload test results to Codecov
