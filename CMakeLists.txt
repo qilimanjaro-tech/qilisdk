@@ -8,6 +8,8 @@
 #   uv pip install -v -e ./ -Ccmake.define.tests=ON
 # To enable coverage flags:
 #   uv pip install -v -e ./ -Ccmake.define.coverage=ON
+# For a fully editable install:
+#   uv pip install --config-settings=editable.rebuild=true -Ccmake.build_type=Debug -Cbuild-dir=build -ve .
 
 cmake_minimum_required(VERSION 3.18)
 project(qilisdk LANGUAGES CXX)
@@ -23,6 +25,7 @@ if(NOT COMPILER_EXISTS OR CMAKE_CXX_COMPILER STREQUAL "")
 endif()
 
 # pybind should already be installed via the dependencies
+set(pybind11_DIR "${CMAKE_CURRENT_LIST_DIR}/.venv/share/cmake/pybind11")
 find_package(pybind11 REQUIRED)
 
 # This is optional, but should be available as part of most compilers

@@ -4,7 +4,7 @@
 # This script runs everything needed to generate a coverage report 
 # for the Python code
 # --------------------------------------------------------------------------
-# Time esimate: < 1 minute
+# Time estimate: < 1 minute
 # --------------------------------------------------------------------------
 
 # Stop if any command fails

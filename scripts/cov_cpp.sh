@@ -4,7 +4,7 @@
 # This script runs everything needed to generate a coverage report 
 # for the C++ code
 # --------------------------------------------------------------------------
-# Time esimate: 1-2 minutes
+# Time estimate: 1-2 minutes
 # --------------------------------------------------------------------------
 
 # Stop if any command fails

@@ -4,7 +4,7 @@
 # This script runs all the checks for the project, basically
 # everything that should be done before pushing
 # --------------------------------------------------------------------------
-# Time esimate: 3 minutes
+# Time estimate: 3 minutes
 # --------------------------------------------------------------------------
 
 # Stop if any command fails

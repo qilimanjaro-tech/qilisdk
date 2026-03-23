@@ -4,7 +4,7 @@
 # This script runs everything needed to generate a combined coverage report 
 # for both the C++ and Python code
 # --------------------------------------------------------------------------
-# Time esimate: 2-3 minutes
+# Time estimate: 2-3 minutes
 # --------------------------------------------------------------------------
 
 # Stop if any command fails
