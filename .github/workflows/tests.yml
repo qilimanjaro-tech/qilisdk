@@ -57,7 +57,9 @@ jobs:
           gcovr --exclude '.*googletest.*' --exclude '/usr/.*' --gcov-ignore-errors=all --xml coverage_cpp.xml
 
       - name: Combine coverage reports
-        run: uv run gcovr --xml combined_coverage.xml --cobertura-add-tracefile coverage.xml --cobertura-add-tracefile coverage_cpp.xml
+        run: |
+          source .venv/bin/activate
+          gcovr --gcov-ignore-errors=all --xml combined_coverage.xml --cobertura-add-tracefile coverage.xml --cobertura-add-tracefile coverage_cpp.xml
 
       - name: Output the coverage directory for debugging
         run: ls -R tests/unit_cpp/coverage/
