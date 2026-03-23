@@ -52,7 +52,7 @@ jobs:
         run: GCOV_PREFIX=./tests/unit_cpp/coverage GCOV_PREFIX_STRIP=5 uv run ./tests/unit_cpp/test_cpp
 
       - name: Compile C++ test results
-        run: gcovr --exclude '.*googletest.*' --exclude '/usr/.*' --gcov-ignore-errors=all --xml coverage/coverage_cpp.xml
+        run: uv run gcovr --exclude '.*googletest.*' --exclude '/usr/.*' --gcov-ignore-errors=all --xml coverage/coverage_cpp.xml
 
       - name: Upload coverage to Codecov
         if: ${{ matrix.python-version == '3.13' }}
