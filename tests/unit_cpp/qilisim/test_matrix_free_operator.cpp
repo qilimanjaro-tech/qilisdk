@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// GCOV_EXCL_BR_START
+
 #include <gtest/gtest.h>
 #include "../../../src/qilisdk_cpp/backends/qilisim/representations/matrix_free_operator.h"
 
@@ -128,7 +130,7 @@ const double kInvSqrt2 = 1.0 / std::sqrt(2.0);
 const std::complex<double> kTPhase = std::exp(std::complex<double>(0.0, M_PI / 4.0));
 const std::complex<double> kTPhaseConj = std::conj(kTPhase);
 
-}  // namespace
+}
 
 TEST(MatrixFreeOperator, NameAndTargetQubitAccessors) {
     MatrixFreeOperator op("X", 3);
@@ -903,8 +905,6 @@ TEST(MatrixFreeOperator, Toffoli_LeftAndRight_Ket110GivesKet111) {
     ASSERT_TRUE(rho.isApprox(ketbra(ket111()), 1e-10)) << "Toffoli LAR |110><110| should be approximately |111><111|, but got:\n" << rho;
 }
 
-// generic controlled  test (from arbitrayr single qubit gate)
-
 TEST(MatrixFreeOperator, ControlledCustomGate_StateVector_Control0Target1_Ket10FlipsToKet11) {
     DenseMatrix xmat(2, 2);
     xmat(0, 0) = 0;
@@ -1010,3 +1010,5 @@ TEST(MatrixFreeOperator, ControlledCustomGate_LeftAndRight_Control0Target1_Ket10
     op.apply(rho, MatrixFreeApplicationType::LeftAndRight);
     ASSERT_TRUE(rho.isApprox(ketbra(ket11()), 1e-10)) << "Controlled Custom X LAR |10><10| should be approximately |11><11|, but got:\n" << rho;
 }
+
+// GCOV_EXCL_BR_STOP

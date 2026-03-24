@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// GCOV_EXCL_BR_START
+
 #include <gtest/gtest.h>
 
 #include "../../../src/qilisdk_cpp/backends/qilisim/digital/gate.h"
@@ -27,12 +29,10 @@ namespace {
 using cx = std::complex<double>;
 constexpr double kTol = 1e-9;
 
-// Build a dense Eigen matrix from a SparseMatrix for easy comparison.
 Eigen::MatrixXcd toDense(const SparseMatrix& s) {
     return Eigen::MatrixXcd(s);
 }
 
-// Return a 2×2 identity as a SparseMatrix.
 SparseMatrix identity2() {
     SparseMatrix m(2, 2);
     m.insert(0, 0) = cx(1, 0);
@@ -41,7 +41,6 @@ SparseMatrix identity2() {
     return m;
 }
 
-// Pauli-X (NOT gate).
 SparseMatrix pauliX() {
     SparseMatrix m(2, 2);
     m.insert(0, 1) = cx(1, 0);
@@ -50,7 +49,6 @@ SparseMatrix pauliX() {
     return m;
 }
 
-// Pauli-Y gate.
 SparseMatrix pauliY() {
     SparseMatrix m(2, 2);
     m.insert(0, 1) = cx(0, -1);
@@ -59,7 +57,6 @@ SparseMatrix pauliY() {
     return m;
 }
 
-// Pauli-Z gate.
 SparseMatrix pauliZ() {
     SparseMatrix m(2, 2);
     m.insert(0, 0) = cx(1, 0);
@@ -68,7 +65,6 @@ SparseMatrix pauliZ() {
     return m;
 }
 
-// Hadamard gate.
 SparseMatrix hadamard() {
     double v = 1.0 / std::sqrt(2.0);
     SparseMatrix m(2, 2);
@@ -80,7 +76,6 @@ SparseMatrix hadamard() {
     return m;
 }
 
-// RZ(theta) gate.
 SparseMatrix rz(double theta) {
     SparseMatrix m(2, 2);
     m.insert(0, 0) = std::exp(cx(0, -theta / 2.0));
@@ -89,20 +84,15 @@ SparseMatrix rz(double theta) {
     return m;
 }
 
-}  // namespace
+}
 
 class GateTest : public ::testing::Test {
    protected:
-    // Single-qubit X on qubit 0, 1-qubit circuit.
     Gate xGate = Gate("X", pauliX(), {}, {0}, {});
     Gate hGate = Gate("H", hadamard(), {}, {0}, {});
     Gate zGate = Gate("Z", pauliZ(), {}, {0}, {});
     Gate idGate = Gate("I", identity2(), {}, {0}, {});
-
-    // Parameterised gate.
     Gate rzGate = Gate("RZ", rz(M_PI), {}, {1}, {{"theta", M_PI}});
-
-    // Two-qubit CNOT (ctrl=0, tgt=1).
     Gate cnotGate = Gate("CNOT", pauliX(), {0}, {1}, {});
     Gate cyGate = Gate("CY", pauliY(), {0}, {1}, {});
 };
@@ -146,7 +136,6 @@ TEST_F(GateTest, GetControlQubits_EmptyForSingleQubitGate) {
 TEST_F(GateTest, GetQubits_ContainsBothControlAndTarget) {
     auto q = cnotGate.get_qubits();
     ASSERT_EQ(q.size(), 2u);
-    // Should contain both qubit indices (order may vary by implementation).
     EXPECT_NE(std::find(q.begin(), q.end(), 0), q.end());
     EXPECT_NE(std::find(q.begin(), q.end(), 1), q.end());
 }
@@ -171,7 +160,6 @@ TEST_F(GateTest, GetName_EmptyStringGate) {
 }
 
 TEST_F(GateTest, GetId_NonEmpty) {
-    // The id should be a non-empty string that uniquely identifies the gate.
     EXPECT_FALSE(xGate.get_id().empty());
 }
 
@@ -409,3 +397,5 @@ TEST(GateEdgeTest, RZAtTwoPI_IsIdentityUpToGlobalPhase) {
     EXPECT_NEAR(std::abs(m(0, 1)), 0.0, kTol);
     EXPECT_NEAR(std::abs(m(1, 0)), 0.0, kTol);
 }
+
+// GCOV_EXCL_BR_STOP

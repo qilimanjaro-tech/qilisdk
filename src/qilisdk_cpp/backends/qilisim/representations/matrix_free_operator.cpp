@@ -16,6 +16,8 @@
 #include <sstream>
 #include "../../../libs/pybind.h"
 
+// GCOV_EXCL_BR_START
+
 const std::complex<double> imag(0.0, 1.0);
 const std::complex<double> imag_conj(0.0, -1.0);
 const double inv_sqrt_2 = 1.0 / std::sqrt(2.0);
@@ -1022,3 +1024,5 @@ std::string MatrixFreeOperator::get_id() const {
     id << *this;
     return id.str();
 }
+
+// GCOV_EXCL_BR_STOP

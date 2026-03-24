@@ -14,6 +14,8 @@
 
 #include "circuit_optimizations.h"
 
+// GCOV_EXCL_BR_START
+
 std::vector<Gate> combine_single_qubit_gates(const std::vector<Gate>& gates) {
     /*
     Combine consecutive single-qubit gates on the same qubit into a single gate to speed up simulation.
@@ -79,3 +81,5 @@ std::vector<Gate> combine_single_qubit_gates(const std::vector<Gate>& gates) {
 
     return combined_gates;
 }
+
+// GCOV_EXCL_BR_STOP

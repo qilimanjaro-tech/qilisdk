@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// GCOV_EXCL_BR_START
+
 #include <gtest/gtest.h>
 #include <pybind11/embed.h>
 #include "../../../src/qilisdk_cpp/backends/qilisim/qilisim.h"
@@ -483,3 +485,5 @@ _te_shape = TimeEvolution(
     EXPECT_TRUE(py::hasattr(result, "intermediate_states"));
     EXPECT_TRUE(py::hasattr(result, "expected_values"));
 }
+
+// GCOV_EXCL_BR_STOP

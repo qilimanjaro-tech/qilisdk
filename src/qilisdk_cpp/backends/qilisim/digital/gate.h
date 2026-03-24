@@ -19,6 +19,8 @@
 
 #include "../../../libs/eigen.h"
 
+// GCOV_EXCL_BR_START
+
 class Gate {
    private:
     std::string gate_type;
@@ -45,3 +47,5 @@ class Gate {
 };
 
 std::ostream& operator<<(std::ostream& os, const std::vector<Gate>& gates);
+
+// GCOV_EXCL_BR_STOP

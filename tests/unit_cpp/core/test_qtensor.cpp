@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// GCOV_EXCL_BR_START
+
 #include <gtest/gtest.h>
 #include <pybind11/embed.h>
 #include "../../../src/qilisdk_cpp/core/qtensor.h"
@@ -1160,14 +1162,12 @@ TEST(ClearCacheTest, AfterClear_EigenvaluesThrow) {
 
 TEST(ClearCacheTest, AfterClear_TraceRecomputed) {
     QTensorCpp q(make_identity2());
-    q.trace();  // caches trace
+    q.trace();
     q.clear_cache();
-    // should recompute without error
     EXPECT_NO_THROW(q.trace());
 }
 
 TEST(ExpectationValueTest, ExactKet_ZOperator) {
-    // <0|Z|0> = 1
     SparseMatrix Z(2, 2);
     Z.insert(0, 0) = 1.0;
     Z.insert(1, 1) = -1.0;
@@ -1280,7 +1280,6 @@ TEST(CommutatorPythonTest, WrongType_Throws) {
 TEST(AnticommutatorTest, IdentityAndX) {
     QTensorCpp id(make_identity2()), x(make_pauli_x());
     QTensorCpp acomm = id.anticommutator(x);
-    // {I, X} = 2X
     EXPECT_NEAR(acomm.get_data().coeff(0, 1).real(), 2.0, 1e-10);
 }
 
@@ -1368,7 +1367,7 @@ TEST(IsUnitaryTest, ScaledIdentity_False) {
 TEST(IsUnitaryTest, Cached_SecondCallSameResult) {
     QTensorCpp q(make_pauli_x());
     EXPECT_TRUE(q.is_unitary());
-    EXPECT_TRUE(q.is_unitary());  // hits cache
+    EXPECT_TRUE(q.is_unitary());
 }
 
 TEST(PurityTest, PureDM_Purity1) {
@@ -1377,14 +1376,14 @@ TEST(PurityTest, PureDM_Purity1) {
 }
 
 TEST(PurityTest, MixedDM_PurityLessThan1) {
-    QTensorCpp q(make_dm_mixed());  // Tr((0.5I)^2) = 0.5
+    QTensorCpp q(make_dm_mixed());
     EXPECT_NEAR(q.purity(), 0.5, 1e-10);
 }
 
 TEST(PurityTest, Cached_SecondCallSameResult) {
     QTensorCpp q(make_dm_pure0());
     double p1 = q.purity();
-    double p2 = q.purity();  // hits cache
+    double p2 = q.purity();
     EXPECT_EQ(p1, p2);
 }
 
@@ -1481,7 +1480,7 @@ TEST(FidelityPythonTest, WrongType_Throws) {
 }
 
 TEST(EntropyTest, VonNeumann_NotDM_Throws) {
-    QTensorCpp q(make_identity2());  // trace=2, not a DM
+    QTensorCpp q(make_identity2());
     EXPECT_THROW(q.entropy_von_neumann(), py::value_error);
 }
 
@@ -1754,3 +1753,5 @@ TEST(ResetQubitsTest, ResetToZeroState) {
     EXPECT_TRUE(r.is_density_matrix());
     EXPECT_NEAR(r.get_data().coeff(0, 0).real(), 1.0, 1e-10);
 }
+
+// GCOV_EXCL_BR_STOP

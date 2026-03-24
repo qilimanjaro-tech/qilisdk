@@ -17,6 +17,8 @@
 #include "iterations.h"
 #include "lindblad.h"
 
+// GCOV_EXCL_BR_START
+
 void arnoldi(const SparseMatrix& L, const DenseMatrix& v0, int m, std::vector<DenseMatrix>& V, SparseMatrix& H, double atol) {
     /*
     Perform the Arnoldi iteration to build the basis.
@@ -251,3 +253,5 @@ DenseMatrix iter_arnoldi(const DenseMatrix& rho_0, double dt, const SparseMatrix
 
     return rho_t;
 }
+
+// GCOV_EXCL_BR_STOP

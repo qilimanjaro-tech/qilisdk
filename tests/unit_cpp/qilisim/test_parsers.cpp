@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// GCOV_EXCL_BR_START
+
 #include <gtest/gtest.h>
 #include <pybind11/embed.h>
 #include "../../../src/qilisdk_cpp/backends/qilisim/utils/parsers.h"
@@ -72,7 +74,7 @@ TEST(ParseHamiltonians, SparseSingleHamiltonian) {
 
 TEST(ParseNoiseModel, NoneReturnsEmpty) {
     py::gil_scoped_acquire gil;
-    auto result = parse_noise_model(py::none(), /*nqubits=*/2, /*atol=*/1e-10);
+    auto result = parse_noise_model(py::none(), 2, 1e-10);
     EXPECT_TRUE(result.is_empty());
 }
 
@@ -111,10 +113,9 @@ TEST(ParseNoiseModel, GlobalStaticKraus) {
 
     py::object fake_nm = py::globals()["fake_nm_global_static_kraus"];
 
-    // make sure that the SupportsStaticKraus is not nullptr
     EXPECT_FALSE(SupportsStaticKraus.ptr() == nullptr) << "SupportsStaticKraus is not initialized";
 
-    auto result = parse_noise_model(fake_nm, /*nqubits=*/1, /*atol=*/1e-10);
+    auto result = parse_noise_model(fake_nm, 1, 1e-10);
 
     EXPECT_FALSE(result.is_empty());
     EXPECT_EQ(result.get_kraus_operators_global().size(), 1u);
@@ -151,7 +152,7 @@ TEST(ParseNoiseModel, GlobalTimeDerivedKraus) {
     )");
 
     py::object fake_nm = py::globals()["fake_nm_global_td_kraus"];
-    auto result = parse_noise_model(fake_nm, /*nqubits=*/1, /*atol=*/1e-10);
+    auto result = parse_noise_model(fake_nm, 1, 1e-10);
 
     EXPECT_FALSE(result.is_empty());
     EXPECT_EQ(result.get_kraus_operators_global().size(), 1u);
@@ -186,7 +187,7 @@ TEST(ParseNoiseModel, GlobalStaticLindblad_SingleQubit_ExpandsToAll) {
         fake_nm_global_lindblad_1q = FakeNoiseModel()
     )");
     py::object fake_nm = py::globals()["fake_nm_global_lindblad_1q"];
-    auto result = parse_noise_model(fake_nm, /*nqubits=*/3, /*atol=*/1e-10);
+    auto result = parse_noise_model(fake_nm, 3, 1e-10);
     EXPECT_EQ(result.get_jump_operators().size(), 1u);
 }
 
@@ -221,7 +222,7 @@ TEST(ParseNoiseModel, GlobalLindblad_FullSystemOperator) {
     )");
 
     py::object fake_nm = py::globals()["fake_nm_global_lindblad_full"];
-    auto result = parse_noise_model(fake_nm, /*nqubits=*/2, /*atol=*/1e-10);
+    auto result = parse_noise_model(fake_nm, 2, 1e-10);
 
     EXPECT_EQ(result.get_jump_operators().size(), 1u);
 }
@@ -257,7 +258,7 @@ TEST(ParseNoiseModel, GlobalTimeDerivedLindblad) {
     )");
 
     py::object fake_nm = py::globals()["fake_nm_global_td_lindblad"];
-    auto result = parse_noise_model(fake_nm, /*nqubits=*/2, /*atol=*/1e-10);
+    auto result = parse_noise_model(fake_nm, 2, 1e-10);
     EXPECT_EQ(result.get_jump_operators().size(), 1u);
 }
 
@@ -285,9 +286,8 @@ TEST(ParseNoiseModel, GlobalReadoutAssignment) {
     )");
 
     py::object fake_nm = py::globals()["fake_nm_global_readout"];
-    auto result = parse_noise_model(fake_nm, /*nqubits=*/2, /*atol=*/1e-10);
+    auto result = parse_noise_model(fake_nm, 2, 1e-10);
 
-    // get_relevant_readout_error falls back to global when no per-qubit entry exists
     auto [p01_q0, p10_q0] = result.get_relevant_readout_error(0);
     EXPECT_NEAR(p01_q0, 0.01, 1e-10);
     EXPECT_NEAR(p10_q0, 0.02, 1e-10);
@@ -327,7 +327,7 @@ TEST(ParseNoiseModel, PerQubitStaticKraus) {
     )");
 
     py::object fake_nm = py::globals()["fake_nm_per_qubit_kraus"];
-    auto result = parse_noise_model(fake_nm, /*nqubits=*/2, /*atol=*/1e-10);
+    auto result = parse_noise_model(fake_nm, 2, 1e-10);
 
     const auto& per_qubit_map = result.get_kraus_operators_per_qubit();
     ASSERT_TRUE(per_qubit_map.count(0));
@@ -362,7 +362,7 @@ TEST(ParseNoiseModel, PerQubitDynamicKraus) {
         fake_nm_per_qubit_td_kraus = FakeNoiseModel()
     )");
     py::object fake_nm = py::globals()["fake_nm_per_qubit_td_kraus"];
-    auto result = parse_noise_model(fake_nm, /*nqubits=*/2, /*atol=*/1e-10);
+    auto result = parse_noise_model(fake_nm, 2, 1e-10);
     const auto& per_qubit_map = result.get_kraus_operators_per_qubit();
     ASSERT_TRUE(per_qubit_map.count(0));
     EXPECT_EQ(per_qubit_map.at(0).size(), 1u);
@@ -401,7 +401,7 @@ TEST(ParseNoiseModel, PerQubitLindbladDynamic) {
     )");
 
     py::object fake_nm = py::globals()["fake_nm_per_qubit_td_lindblad"];
-    auto result = parse_noise_model(fake_nm, /*nqubits=*/3, /*atol=*/1e-10);
+    auto result = parse_noise_model(fake_nm, 3, 1e-10);
 
     EXPECT_EQ(result.get_jump_operators().size(), 1u);
 }
@@ -436,8 +436,7 @@ TEST(ParseNoiseModel, PerQubitLindbladExpandedToFullSystem) {
     )");
 
     py::object fake_nm = py::globals()["fake_nm_per_qubit_lindblad"];
-    // Per-qubit Lindblad always calls expand_operator(q, nqubits, L), so 1 jump op
-    auto result = parse_noise_model(fake_nm, /*nqubits=*/3, /*atol=*/1e-10);
+    auto result = parse_noise_model(fake_nm, 3, 1e-10);
 
     EXPECT_EQ(result.get_jump_operators().size(), 1u);
 }
@@ -466,7 +465,7 @@ TEST(ParseNoiseModel, PerQubitReadoutAssignment) {
     )");
 
     py::object fake_nm = py::globals()["fake_nm_per_qubit_readout"];
-    auto result = parse_noise_model(fake_nm, /*nqubits=*/3, /*atol=*/1e-10);
+    auto result = parse_noise_model(fake_nm, 3, 1e-10);
 
     auto [p01, p10] = result.get_relevant_readout_error(2);
     EXPECT_NEAR(p01, 0.05, 1e-10);
@@ -497,9 +496,8 @@ TEST(ParseNoiseModel, PerQubitReadoutAssignment_NoBleedToOtherQubits) {
     )");
 
     py::object fake_nm = py::globals()["fake_nm_per_qubit_readout_no_bleed"];
-    auto result = parse_noise_model(fake_nm, /*nqubits=*/3, /*atol=*/1e-10);
+    auto result = parse_noise_model(fake_nm, 3, 1e-10);
 
-    // Qubits 0 and 1 have no readout error set → should fall back to (0.0, 0.0)
     auto [p01_q0, p10_q0] = result.get_relevant_readout_error(0);
     EXPECT_NEAR(p01_q0, 0.0, 1e-10);
     EXPECT_NEAR(p10_q0, 0.0, 1e-10);
@@ -538,7 +536,7 @@ TEST(ParseNoiseModel, PerGateStaticKraus) {
     )");
 
     py::object fake_nm = py::globals()["fake_nm_per_gate_kraus"];
-    auto result = parse_noise_model(fake_nm, /*nqubits=*/1, /*atol=*/1e-10);
+    auto result = parse_noise_model(fake_nm, 1, 1e-10);
 
     const auto& per_gate_map = result.get_kraus_operators_per_gate();
     ASSERT_TRUE(per_gate_map.count("H"));
@@ -579,7 +577,7 @@ TEST(ParseNoiseModel, PerGateTimeDerivedKraus) {
     )");
 
     py::object fake_nm = py::globals()["fake_nm_per_gate_td_kraus"];
-    auto result = parse_noise_model(fake_nm, /*nqubits=*/1, /*atol=*/1e-10);
+    auto result = parse_noise_model(fake_nm, 1, 1e-10);
 
     const auto& per_gate_map = result.get_kraus_operators_per_gate();
     ASSERT_TRUE(per_gate_map.count("RZ"));
@@ -619,7 +617,7 @@ TEST(ParseNoiseModel, PerGatePerQubitStaticKraus) {
     )");
 
     py::object fake_nm = py::globals()["fake_nm_per_gate_per_qubit_kraus"];
-    auto result = parse_noise_model(fake_nm, /*nqubits=*/2, /*atol=*/1e-10);
+    auto result = parse_noise_model(fake_nm, 2, 1e-10);
 
     const auto& map = result.get_kraus_operators_per_gate_qubit();
     auto key = std::make_pair(std::string("CNOT"), 0);
@@ -661,7 +659,7 @@ TEST(ParseNoiseModel, PerGatePerQubitTimeDerivedKraus) {
     )");
 
     py::object fake_nm = py::globals()["fake_nm_per_gate_per_qubit_td_kraus"];
-    auto result = parse_noise_model(fake_nm, /*nqubits=*/2, /*atol=*/1e-10);
+    auto result = parse_noise_model(fake_nm, 2, 1e-10);
 
     const auto& map = result.get_kraus_operators_per_gate_qubit();
     auto key = std::make_pair(std::string("CZ"), 1);
@@ -699,7 +697,7 @@ TEST(ParseNoiseModel, NonSquareLindbladThrows) {
     )");
 
     py::object fake_nm = py::globals()["fake_nm_nonsquare"];
-    EXPECT_THROW(parse_noise_model(fake_nm, /*nqubits=*/2, /*atol=*/1e-10), py::value_error);
+    EXPECT_THROW(parse_noise_model(fake_nm, 2, 1e-10), py::value_error);
 }
 
 TEST(ParseNoiseModel, NonPowerOfTwoLindbladThrows) {
@@ -733,7 +731,7 @@ TEST(ParseNoiseModel, NonPowerOfTwoLindbladThrows) {
     )");
 
     py::object fake_nm = py::globals()["fake_nm_nonpow2"];
-    EXPECT_THROW(parse_noise_model(fake_nm, /*nqubits=*/2, /*atol=*/1e-10), py::value_error);
+    EXPECT_THROW(parse_noise_model(fake_nm, 2, 1e-10), py::value_error);
 }
 
 TEST(ParseNoiseModel, AllEmptyPassesProduceEmptyModel) {
@@ -753,7 +751,7 @@ TEST(ParseNoiseModel, AllEmptyPassesProduceEmptyModel) {
     )");
 
     py::object fake_nm = py::globals()["fake_nm_all_empty"];
-    auto result = parse_noise_model(fake_nm, /*nqubits=*/3, /*atol=*/1e-10);
+    auto result = parse_noise_model(fake_nm, 3, 1e-10);
 
     EXPECT_TRUE(result.is_empty());
     EXPECT_TRUE(result.get_kraus_operators_global().empty());
@@ -793,7 +791,7 @@ TEST(ParseNoiseModel, MultipleGlobalKrausPassesAccumulate) {
     )");
 
     py::object fake_nm = py::globals()["fake_nm_multi_kraus"];
-    auto result = parse_noise_model(fake_nm, /*nqubits=*/1, /*atol=*/1e-10);
+    auto result = parse_noise_model(fake_nm, 1, 1e-10);
 
     EXPECT_EQ(result.get_kraus_operators_global().size(), 3u);
 }
@@ -881,7 +879,7 @@ TEST(ParseObservables, HamiltonianObservable) {
     )");
 
     py::object fake_obs = py::globals()["fake_parse_obs_hamiltonian"];
-    auto result = parse_observables(fake_obs, /*nqubits=*/2, /*atol=*/1e-10);
+    auto result = parse_observables(fake_obs, 2, 1e-10);
 
     ASSERT_EQ(result.size(), 1u);
     EXPECT_EQ(result[0].rows(), 4);
@@ -896,7 +894,7 @@ TEST(ParseObservables, HamiltonianObservable_ExpandedToFullSystem) {
     )");
 
     py::object fake_obs = py::globals()["fake_parse_obs_hamiltonian_expand"];
-    auto result = parse_observables(fake_obs, /*nqubits=*/2, /*atol=*/1e-10);
+    auto result = parse_observables(fake_obs, 2, 1e-10);
 
     ASSERT_EQ(result.size(), 1u);
     EXPECT_EQ(result[0].rows(), 4);
@@ -912,7 +910,7 @@ TEST(ParseObservables, PauliOperatorObservable) {
     )");
 
     py::object fake_obs = py::globals()["fake_parse_obs_pauli"];
-    auto result = parse_observables(fake_obs, /*nqubits=*/1, /*atol=*/1e-10);
+    auto result = parse_observables(fake_obs, 1, 1e-10);
 
     ASSERT_EQ(result.size(), 1u);
     EXPECT_EQ(result[0].rows(), 2);
@@ -927,7 +925,7 @@ TEST(ParseObservables, PauliOperatorObservable_ExpandedToFullSystem) {
     )");
 
     py::object fake_obs = py::globals()["fake_parse_obs_pauli_expand"];
-    auto result = parse_observables(fake_obs, /*nqubits=*/2, /*atol=*/1e-10);
+    auto result = parse_observables(fake_obs, 2, 1e-10);
 
     ASSERT_EQ(result.size(), 1u);
     EXPECT_EQ(result[0].rows(), 4);
@@ -943,7 +941,7 @@ TEST(ParseObservables, QTensorObservable) {
     )");
 
     py::object fake_obs = py::globals()["fake_parse_obs_qtensor"];
-    auto result = parse_observables(fake_obs, /*nqubits=*/2, /*atol=*/1e-10);
+    auto result = parse_observables(fake_obs, 2, 1e-10);
 
     ASSERT_EQ(result.size(), 1u);
     EXPECT_EQ(result[0].rows(), 4);
@@ -959,7 +957,7 @@ TEST(ParseObservables, UnrecognizedTypeThrows) {
     )");
 
     py::object fake_obs = py::globals()["fake_parse_obs_unknown"];
-    EXPECT_THROW(parse_observables(fake_obs, /*nqubits=*/1, /*atol=*/1e-10), py::value_error);
+    EXPECT_THROW(parse_observables(fake_obs, 1, 1e-10), py::value_error);
 }
 
 TEST(ParseObservables, EmptyObservablesReturnsEmpty) {
@@ -969,7 +967,7 @@ TEST(ParseObservables, EmptyObservablesReturnsEmpty) {
     )");
 
     py::object fake_obs = py::globals()["fake_parse_obs_empty_list"];
-    auto result = parse_observables(fake_obs, /*nqubits=*/1, /*atol=*/1e-10);
+    auto result = parse_observables(fake_obs, 1, 1e-10);
     EXPECT_TRUE(result.empty());
 }
 
@@ -1078,7 +1076,7 @@ TEST(ParseInitialState, BasicDensityMatrix) {
     )");
 
     py::object fake_state = py::globals()["fake_initial_state_basic"];
-    auto result = parse_initial_state(fake_state, /*atol=*/1e-10);
+    auto result = parse_initial_state(fake_state, 1e-10);
 
     EXPECT_EQ(result.rows(), 2);
     EXPECT_EQ(result.cols(), 2);
@@ -1097,7 +1095,7 @@ TEST(ParseInitialState, FourByFourState) {
     )");
 
     py::object fake_state = py::globals()["fake_initial_state_4x4"];
-    auto result = parse_initial_state(fake_state, /*atol=*/1e-10);
+    auto result = parse_initial_state(fake_state, 1e-10);
 
     EXPECT_EQ(result.rows(), 4);
     EXPECT_EQ(result.cols(), 4);
@@ -1191,7 +1189,7 @@ TEST(ParseGates, BasicGate) {
     )");
 
     py::object fake_circuit = py::globals()["fake_circuit_basic_gate"];
-    auto result = parse_gates(fake_circuit, /*atol=*/1e-10, /*noise_model=*/py::none());
+    auto result = parse_gates(fake_circuit, 1e-10, py::none());
 
     ASSERT_EQ(result.size(), 1u);
     EXPECT_EQ(result[0].get_name(), "H");
@@ -1221,7 +1219,7 @@ TEST(ParseGates, MeasurementGateIsSkipped) {
     )");
 
     py::object fake_circuit = py::globals()["fake_circuit_m_gate"];
-    auto result = parse_gates(fake_circuit, /*atol=*/1e-10, /*noise_model=*/py::none());
+    auto result = parse_gates(fake_circuit, 1e-10, py::none());
 
     EXPECT_TRUE(result.empty());
 }
@@ -1255,7 +1253,7 @@ TEST(ParseGates, ParameterizedGate) {
     )");
 
     py::object fake_circuit = py::globals()["fake_circuit_param_gate"];
-    auto result = parse_gates(fake_circuit, /*atol=*/1e-10, /*noise_model=*/py::none());
+    auto result = parse_gates(fake_circuit, 1e-10, py::none());
 
     ASSERT_EQ(result.size(), 1u);
     EXPECT_EQ(result[0].get_name(), "RZ");
@@ -1286,7 +1284,7 @@ TEST(ParseGates, ControlledGate) {
     )");
 
     py::object fake_circuit = py::globals()["fake_circuit_controlled_gate"];
-    auto result = parse_gates(fake_circuit, /*atol=*/1e-10, /*noise_model=*/py::none());
+    auto result = parse_gates(fake_circuit, 1e-10, py::none());
 
     ASSERT_EQ(result.size(), 1u);
     EXPECT_EQ(result[0].get_name(), "X");
@@ -1319,7 +1317,7 @@ TEST(ParseGates, ControlledYGate) {
     )");
 
     py::object fake_circuit = py::globals()["fake_circuit_controlled_y_gate"];
-    auto result = parse_gates(fake_circuit, /*atol=*/1e-10, /*noise_model=*/py::none());
+    auto result = parse_gates(fake_circuit, 1e-10, py::none());
 
     ASSERT_EQ(result.size(), 1u);
     EXPECT_EQ(result[0].get_name(), "Y");
@@ -1350,7 +1348,7 @@ TEST(ParseGates, ControlledZGate) {
     )");
 
     py::object fake_circuit = py::globals()["fake_circuit_controlled_z_gate"];
-    auto result = parse_gates(fake_circuit, /*atol=*/1e-10, /*noise_model=*/py::none());
+    auto result = parse_gates(fake_circuit, 1e-10, py::none());
 
     ASSERT_EQ(result.size(), 1u);
     EXPECT_EQ(result[0].get_name(), "Z");
@@ -1371,7 +1369,7 @@ TEST(ParseGates, EmptyCircuitReturnsNoGates) {
     )");
 
     py::object fake_circuit = py::globals()["fake_circuit_no_gates"];
-    auto result = parse_gates(fake_circuit, /*atol=*/1e-10, /*noise_model=*/py::none());
+    auto result = parse_gates(fake_circuit, 1e-10, py::none());
 
     EXPECT_TRUE(result.empty());
 }
@@ -1412,7 +1410,7 @@ TEST(ParseGates, ParameterPerturbationAppliedGlobalNoise) {
 
     py::object fake_circuit = py::globals()["fake_circuit_pert"];
     py::object fake_noise_model = py::globals()["fake_noise_model_pert"];
-    auto result = parse_gates(fake_circuit, /*atol=*/1e-10, fake_noise_model);
+    auto result = parse_gates(fake_circuit, 1e-10, fake_noise_model);
 
     ASSERT_EQ(result.size(), 1u);
     EXPECT_NEAR(result[0].get_parameters()[0].second, 0.6, 1e-10);
@@ -1454,7 +1452,7 @@ TEST(ParseGates, ParameterPerturbationAppliedPerGate) {
 
     py::object fake_circuit = py::globals()["fake_circuit_pert_per_gate"];
     py::object fake_noise_model = py::globals()["fake_noise_model_pert_per_gate"];
-    auto result = parse_gates(fake_circuit, /*atol=*/1e-10, fake_noise_model);
+    auto result = parse_gates(fake_circuit, 1e-10, fake_noise_model);
 
     ASSERT_EQ(result.size(), 1u);
     EXPECT_NEAR(result[0].get_parameters()[0].second, 0.5, 1e-10);
@@ -1532,3 +1530,5 @@ TEST(ParseSolverParams, PartialFieldsParsed) {
     EXPECT_EQ(config.get_seed(), 99);
     EXPECT_EQ(config.get_num_threads(), 2);
 }
+
+// GCOV_EXCL_BR_STOP

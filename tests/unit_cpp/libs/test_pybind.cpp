@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// GCOV_EXCL_BR_START
+
 #include <gtest/gtest.h>
 #include <pybind11/embed.h>
 #include "../../../src/qilisdk_cpp/libs/numpy.h"
@@ -29,3 +31,5 @@ TEST(PybindExternalTypes, Initialization) {
     EXPECT_TRUE(numpy_array.ptr() != nullptr);
     EXPECT_TRUE(csrmatrix.ptr() != nullptr);
 }
+
+// GCOV_EXCL_BR_STOP

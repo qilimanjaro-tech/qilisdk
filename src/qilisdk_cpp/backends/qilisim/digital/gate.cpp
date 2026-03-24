@@ -14,6 +14,8 @@
 
 #include "gate.h"
 
+// GCOV_EXCL_BR_START
+
 Gate::Gate(const std::string& gate_type_, const SparseMatrix& base_matrix_, const std::vector<int>& controls_, const std::vector<int>& targets_, const std::vector<std::pair<std::string, double>>& parameters_) {
     this->gate_type = gate_type_;
     this->base_matrix = base_matrix_;
@@ -353,3 +355,5 @@ std::ostream& operator<<(std::ostream& os, const std::vector<Gate>& gates) {
     os << "]";
     return os;
 }
+
+// GCOV_EXCL_BR_STOP

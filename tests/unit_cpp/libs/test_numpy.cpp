@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// GCOV_EXCL_BR_START
+
 #include <gtest/gtest.h>
 #include <pybind11/embed.h>
 #include "../../../src/qilisdk_cpp/libs/numpy.h"
@@ -25,7 +27,7 @@ TEST(MatrixConversion, FromNumpyBasic2x2Identity) {
         identity_2x2 = np.eye(2, dtype=complex)
     )");
     py::object np_matrix = py::globals()["identity_2x2"];
-    SparseMatrix result = from_numpy(np_matrix, /*atol=*/1e-10);
+    SparseMatrix result = from_numpy(np_matrix, 1e-10);
     ASSERT_EQ(result.rows(), 2);
     ASSERT_EQ(result.cols(), 2);
     EXPECT_NEAR(std::abs(result.coeff(0, 0) - std::complex<double>(1.0, 0.0)), 0.0, 1e-10);
@@ -41,7 +43,7 @@ TEST(MatrixConversion, FromNumpyComplexValues) {
         complex_matrix = np.array([[1+2j, 3+4j], [5+6j, 7+8j]], dtype=complex)
     )");
     py::object np_matrix = py::globals()["complex_matrix"];
-    SparseMatrix result = from_numpy(np_matrix, /*atol=*/1e-10);
+    SparseMatrix result = from_numpy(np_matrix, 1e-10);
     ASSERT_EQ(result.rows(), 2);
     ASSERT_EQ(result.cols(), 2);
     EXPECT_NEAR(std::abs(result.coeff(0, 0) - std::complex<double>(1.0, 2.0)), 0.0, 1e-10);
@@ -54,11 +56,10 @@ TEST(MatrixConversion, FromNumpyAtolFiltersSmallValues) {
     py::gil_scoped_acquire gil;
     py::exec(R"(
         import numpy as np
-        # Off-diagonals are below atol=0.1 and should be treated as zero
         nearly_diagonal = np.array([[1.0+0j, 0.01+0j], [0.01+0j, 1.0+0j]], dtype=complex)
     )");
     py::object np_matrix = py::globals()["nearly_diagonal"];
-    SparseMatrix result = from_numpy(np_matrix, /*atol=*/0.1);
+    SparseMatrix result = from_numpy(np_matrix, 0.1);
     EXPECT_NEAR(std::abs(result.coeff(0, 1)), 0.0, 1e-10);
     EXPECT_NEAR(std::abs(result.coeff(1, 0)), 0.0, 1e-10);
     EXPECT_NEAR(std::abs(result.coeff(0, 0) - 1.0), 0.0, 1e-10);
@@ -69,11 +70,10 @@ TEST(MatrixConversion, FromNumpyAtolKeepsValuesAboveThreshold) {
     py::gil_scoped_acquire gil;
     py::exec(R"(
         import numpy as np
-        # Off-diagonals are above atol=0.001 and must be preserved
         nearly_diagonal = np.array([[1.0+0j, 0.01+0j], [0.01+0j, 1.0+0j]], dtype=complex)
     )");
     py::object np_matrix = py::globals()["nearly_diagonal"];
-    SparseMatrix result = from_numpy(np_matrix, /*atol=*/0.001);
+    SparseMatrix result = from_numpy(np_matrix, 0.001);
     EXPECT_NEAR(std::abs(result.coeff(0, 1) - 0.01), 0.0, 1e-10);
     EXPECT_NEAR(std::abs(result.coeff(1, 0) - 0.01), 0.0, 1e-10);
 }
@@ -85,7 +85,7 @@ TEST(MatrixConversion, FromNumpyThrowsOn1DInput) {
         vector_1d = np.array([1.0, 2.0, 3.0], dtype=complex)
     )");
     py::object np_vector = py::globals()["vector_1d"];
-    EXPECT_THROW(from_numpy(np_vector, /*atol=*/1e-10), py::value_error);
+    EXPECT_THROW(from_numpy(np_vector, 1e-10), py::value_error);
 }
 
 TEST(MatrixConversion, FromNumpyAllZerosMatrix) {
@@ -95,7 +95,7 @@ TEST(MatrixConversion, FromNumpyAllZerosMatrix) {
         zero_matrix = np.zeros((3, 3), dtype=complex)
     )");
     py::object np_matrix = py::globals()["zero_matrix"];
-    SparseMatrix result = from_numpy(np_matrix, /*atol=*/1e-10);
+    SparseMatrix result = from_numpy(np_matrix, 1e-10);
     ASSERT_EQ(result.rows(), 3);
     ASSERT_EQ(result.cols(), 3);
     EXPECT_EQ(result.nonZeros(), 0);
@@ -108,7 +108,7 @@ TEST(MatrixConversion, FromNumpyNonSquareMatrix) {
         rect_matrix = np.array([[1+0j, 2+0j, 3+0j], [4+0j, 5+0j, 6+0j]], dtype=complex)
     )");
     py::object np_matrix = py::globals()["rect_matrix"];
-    SparseMatrix result = from_numpy(np_matrix, /*atol=*/1e-10);
+    SparseMatrix result = from_numpy(np_matrix, 1e-10);
     ASSERT_EQ(result.rows(), 2);
     ASSERT_EQ(result.cols(), 3);
     EXPECT_NEAR(std::abs(result.coeff(0, 2) - 3.0), 0.0, 1e-10);
@@ -122,7 +122,7 @@ TEST(MatrixConversion, SparseToNumpyShape) {
         mat = np.eye(4, dtype=complex)
     )");
     py::object np_matrix = py::globals()["mat"];
-    SparseMatrix sparse = from_numpy(np_matrix, /*atol=*/1e-10);
+    SparseMatrix sparse = from_numpy(np_matrix, 1e-10);
     py::array_t<std::complex<double>> result = to_numpy(sparse);
     py::buffer_info buf = result.request();
     ASSERT_EQ(buf.ndim, 2);
@@ -131,7 +131,6 @@ TEST(MatrixConversion, SparseToNumpyShape) {
 }
 
 TEST(MatrixConversion, DenseToNumpyValues) {
-    // Build a small DenseMatrix directly and verify to_numpy output
     DenseMatrix dense(2, 2);
     dense(0, 0) = std::complex<double>(1.0, 0.0);
     dense(0, 1) = std::complex<double>(0.0, 1.0);
@@ -211,7 +210,7 @@ TEST(MatrixConversion, FromSpmatrixIdentity) {
         sp_identity = sp.eye(3, dtype=complex, format='csr')
     )");
     py::object sp_matrix = py::globals()["sp_identity"];
-    SparseMatrix result = from_spmatrix(sp_matrix, /*atol=*/1e-10);
+    SparseMatrix result = from_spmatrix(sp_matrix, 1e-10);
     ASSERT_EQ(result.rows(), 3);
     ASSERT_EQ(result.cols(), 3);
     for (int i = 0; i < 3; ++i) {
@@ -231,7 +230,7 @@ TEST(MatrixConversion, FromSpmatrixAtolFiltersValues) {
         sp_small_offdiag = sp.coo_matrix((data, (row, col)), shape=(2, 2))
     )");
     py::object sp_matrix = py::globals()["sp_small_offdiag"];
-    SparseMatrix result = from_spmatrix(sp_matrix, /*atol=*/0.01);
+    SparseMatrix result = from_spmatrix(sp_matrix, 0.01);
     EXPECT_NEAR(std::abs(result.coeff(0, 1)), 0.0, 1e-10);
     EXPECT_NEAR(std::abs(result.coeff(1, 0)), 0.0, 1e-10);
     EXPECT_NEAR(std::abs(result.coeff(0, 0) - 1.0), 0.0, 1e-10);
@@ -248,7 +247,7 @@ TEST(MatrixConversion, FromSpmatrixComplexValues) {
         sp_complex = sp.coo_matrix((data, (row, col)), shape=(2, 2))
     )");
     py::object sp_matrix = py::globals()["sp_complex"];
-    SparseMatrix result = from_spmatrix(sp_matrix, /*atol=*/1e-10);
+    SparseMatrix result = from_spmatrix(sp_matrix, 1e-10);
     EXPECT_NEAR(std::abs(result.coeff(0, 1) - std::complex<double>(1.0, 2.0)), 0.0, 1e-10);
     EXPECT_NEAR(std::abs(result.coeff(1, 0) - std::complex<double>(3.0, 4.0)), 0.0, 1e-10);
     EXPECT_NEAR(std::abs(result.coeff(0, 0)), 0.0, 1e-10);
@@ -266,7 +265,7 @@ TEST(MatrixConversion, ToSpmatrixNonZeroCount) {
         ], dtype=complex)
     )");
     py::object np_matrix = py::globals()["nnz_input"];
-    SparseMatrix sparse = from_numpy(np_matrix, /*atol=*/1e-10);
+    SparseMatrix sparse = from_numpy(np_matrix, 1e-10);
     py::object sp_result = to_spmatrix(sparse);
     int nnz = sp_result.attr("nnz").cast<int>();
     EXPECT_EQ(nnz, 4);
@@ -279,7 +278,7 @@ TEST(MatrixConversion, ToSpmatrixShape) {
         shape_input = np.eye(5, dtype=complex)
     )");
     py::object np_matrix = py::globals()["shape_input"];
-    SparseMatrix sparse = from_numpy(np_matrix, /*atol=*/1e-10);
+    SparseMatrix sparse = from_numpy(np_matrix, 1e-10);
     py::object sp_result = to_spmatrix(sparse);
     py::object shape = sp_result.attr("shape");
     int rows = shape.attr("__getitem__")(0).cast<int>();
@@ -287,3 +286,5 @@ TEST(MatrixConversion, ToSpmatrixShape) {
     EXPECT_EQ(rows, 5);
     EXPECT_EQ(cols, 5);
 }
+
+// GCOV_EXCL_BR_STOP

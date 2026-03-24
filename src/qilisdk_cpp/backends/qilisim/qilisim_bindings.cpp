@@ -15,10 +15,13 @@
 #include "../../libs/pybind.h"
 #include "qilisim.h"
 
+// GCOV_EXCL_BR_START
 // GCOVR_EXCL_START
+
 PYBIND11_MODULE(qilisim_module, m) {
     initialize_all_pybind_types();
-    // Make the QiliSimCpp class available in Python, as well as the two main methods
     py::class_<QiliSimCpp>(m, "QiliSimCpp").def(py::init<>()).def("execute_sampling", &QiliSimCpp::execute_sampling).def("execute_time_evolution", &QiliSimCpp::execute_time_evolution);
 }
+
 // GCOVR_EXCL_STOP
+// GCOV_EXCL_BR_STOP

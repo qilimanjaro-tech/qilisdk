@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// GCOV_EXCL_BR_START
+
 #include <gtest/gtest.h>
 #include "../../../src/qilisdk_cpp/backends/qilisim/representations/matrix_free_hamiltonian.h"
 
@@ -68,7 +70,7 @@ void expectMatrixNear(const DenseMatrix& a, const DenseMatrix& b, double tol = 1
             EXPECT_NEAR(std::abs(a(r, c)), std::abs(b(r, c)), tol) << "Mismatch at (" << r << ", " << c << ")";
 }
 
-}  // namespace
+}
 
 TEST(MatrixFreeHamiltonian, DefaultConstructorIsEmpty) {
     MatrixFreeHamiltonian h;
@@ -518,3 +520,5 @@ TEST(MatrixFreeHamiltonian, StreamOutputEmptyHamiltonian) {
     std::ostringstream oss;
     EXPECT_NO_THROW(oss << h);
 }
+
+// GCOV_EXCL_BR_STOP

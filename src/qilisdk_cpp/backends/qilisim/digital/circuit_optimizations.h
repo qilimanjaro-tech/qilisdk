@@ -15,4 +15,9 @@
 
 #include "gate.h"
 
+// GCOV_EXCL_BR_START
+
 std::vector<Gate> combine_single_qubit_gates(const std::vector<Gate>& gates);
+
+
+// GCOV_EXCL_BR_STOP

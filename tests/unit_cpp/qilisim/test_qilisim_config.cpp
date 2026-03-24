@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// GCOV_EXCL_BR_START
+
 #include <gtest/gtest.h>
 #include "../../../src/qilisdk_cpp/backends/qilisim/config/qilisim_config.h"
 
@@ -52,3 +54,5 @@ TEST(QilisimConfig, BadValidateThrows) {
     config.set_atol(0);
     EXPECT_ANY_THROW(config.validate());
 }
+
+// GCOV_EXCL_BR_STOP

@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// GCOV_EXCL_BR_START
+
 #include <pybind11/embed.h>
 #include "../../src/qilisdk_cpp/libs/pybind.h"
 #include "gtest/gtest.h"
@@ -33,3 +35,5 @@ int main(int argc, char** argv) {
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
+
+// GCOV_EXCL_BR_STOP

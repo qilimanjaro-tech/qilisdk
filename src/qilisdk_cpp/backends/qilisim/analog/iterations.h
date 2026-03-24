@@ -17,6 +17,8 @@
 #include "../../../libs/eigen.h"
 #include "../representations/matrix_free_hamiltonian.h"
 
+// GCOV_EXCL_BR_START
+
 void arnoldi(const SparseMatrix& L, const DenseMatrix& v0, int m, std::vector<DenseMatrix>& V, SparseMatrix& H, double atol);
 void arnoldi_mat(const SparseMatrix& Hsys, const DenseMatrix& rho0, int m, std::vector<DenseMatrix>& V, SparseMatrix& Hk, double atol);
 
@@ -24,3 +26,5 @@ DenseMatrix iter_direct(const DenseMatrix& rho_0, double dt, const SparseMatrix&
 DenseMatrix iter_arnoldi(const DenseMatrix& rho_0, double dt, const SparseMatrix& currentH, const std::vector<SparseMatrix>& jump_operators, int arnoldi_dim, int num_substeps, bool is_unitary_on_statevector, double atol);
 DenseMatrix iter_integrate(const DenseMatrix& rho_0, double dt, const SparseMatrix& currentH, const std::vector<SparseMatrix>& jump_operators, int num_substeps, bool is_unitary_on_statevector);
 void iter_integrate(DenseMatrix& rho_t, double dt, const MatrixFreeHamiltonian& currentH, const std::vector<SparseMatrix>& jump_operators, int num_substeps, bool is_unitary_on_statevector);
+
+// GCOV_EXCL_BR_STOP

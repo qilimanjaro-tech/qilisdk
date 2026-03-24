@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// GCOV_EXCL_BR_START
+
 #include <gtest/gtest.h>
 
 #include "../../../src/qilisdk_cpp/backends/qilisim/utils/matrix_utils.h"
@@ -52,7 +54,7 @@ SparseMatrix mat2x2() {
     return m.sparseView();
 }
 
-}  // namespace
+}
 
 TEST(MatrixUtilsTest, DotProductKet) {
     SparseMatrix v1(3, 1);
@@ -521,3 +523,5 @@ TEST(NormalizeStateTest, MultiColumnDensityMatrix) {
     EXPECT_NEAR(tr.real(), 1.0, kTol);
     EXPECT_NEAR(tr.imag(), 0.0, kTol);
 }
+
+// GCOV_EXCL_BR_STOP

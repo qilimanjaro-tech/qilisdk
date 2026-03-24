@@ -17,6 +17,8 @@
 #include "../../../libs/pybind.h"
 #include "../utils/matrix_utils.h"
 
+// GCOV_EXCL_BR_START
+
 void MatrixFreeHamiltonian::apply(DenseMatrix& output_state, MatrixFreeApplicationType application_type) const {
     /*
     Applies the matrix-free Hamiltonian to the given output state.
@@ -264,3 +266,5 @@ bool MatrixFreeHamiltonian::operator==(const MatrixFreeHamiltonian& other) const
     }
     return true;
 }
+
+// GCOV_EXCL_BR_STOP

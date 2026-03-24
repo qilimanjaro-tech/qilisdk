@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// GCOV_EXCL_BR_START
+
 #include <gtest/gtest.h>
 
 #include "../../../src/qilisdk_cpp/backends/qilisim/utils/random.h"
@@ -154,3 +156,5 @@ TEST(GetVectorFromDensityMatrixTest, GetVectorFromZeroMatrixSparse) {
     SparseMatrix rho(2, 2);
     EXPECT_ANY_THROW(get_vector_from_density_matrix(rho, 1e-10));
 }
+
+// GCOV_EXCL_BR_STOP

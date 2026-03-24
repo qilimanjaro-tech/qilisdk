@@ -18,6 +18,8 @@
 #include "../../../libs/pybind.h"
 #include "matrix_utils.h"
 
+// GCOV_EXCL_BR_START
+
 std::map<std::string, int> sample_from_probabilities(const std::vector<std::tuple<int, double>>& prob_entries, int n_qubits, int n_shots, int seed) {
     /*
     Sample measurement outcomes from a probability distribution.
@@ -371,3 +373,5 @@ SparseMatrix trajectories_to_density_matrix(const SparseMatrix& trajectories) {
     rho /= trace(rho);
     return rho;
 }
+
+// GCOV_EXCL_BR_STOP

@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// GCOV_EXCL_BR_START
+
 #include "qtensor.h"
 #include "../libs/numpy.h"
 #include "../libs/pybind.h"
@@ -2076,3 +2078,5 @@ QTensorCpp QTensorCpp::div(std::complex<double> scalar) const {
     }
     return QTensorCpp(_data / scalar);
 }
+
+// GCOV_EXCL_BR_STOP

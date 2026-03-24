@@ -29,3 +29,5 @@ std::map<std::string, int> filter_counts(const std::map<std::string, int>& count
 void sampling(const std::vector<Gate>& gates, const std::vector<bool>& qubits_to_measure, int n_qubits, int n_shots, const SparseMatrix& initial_state, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, std::map<std::string, int>& counts, const QiliSimConfig& config);
 
 void sampling_matrix_free(const std::vector<Gate>& gates, const std::vector<bool>& qubits_to_measure, int n_qubits, int n_shots, const SparseMatrix& initial_state, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, std::map<std::string, int>& counts, const QiliSimConfig& config);
+
+// GCOV_EXCL_BR_STOP

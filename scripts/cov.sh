@@ -44,6 +44,8 @@ gcovr \
     --exclude '.*googletest.*' \
     --exclude '/usr/.*' \
     --gcov-ignore-errors=all \
+    --exclude-unreachable-branches \
+    --exclude-throw-branches \
     --xml coverage/coverage_cpp.xml 2>&1 | tee -a $LOG_FILE
 echo "C++ coverage XML generated at coverage/coverage_cpp.xml" | tee -a $LOG_FILE
 

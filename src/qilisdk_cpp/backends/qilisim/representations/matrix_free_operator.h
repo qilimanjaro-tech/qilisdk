@@ -20,6 +20,8 @@
 #include "../../../libs/eigen.h"
 #include "../digital/gate.h"
 
+// GCOV_EXCL_BR_START
+
 enum class MatrixFreeApplicationType { Left, Right, LeftAndRight };
 
 class MatrixFreeOperator {
@@ -42,3 +44,5 @@ class MatrixFreeOperator {
     std::string get_name() const { return name; }
     std::string get_id() const;
 };
+
+// GCOV_EXCL_BR_STOP

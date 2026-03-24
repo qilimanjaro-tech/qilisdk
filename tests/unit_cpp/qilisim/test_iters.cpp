@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// GCOV_EXCL_BR_START
+
 #include <gtest/gtest.h>
 #include "../../../src/qilisdk_cpp/backends/qilisim/analog/iterations.h"
 #include "../../../src/qilisdk_cpp/backends/qilisim/utils/matrix_utils.h"
@@ -67,7 +69,7 @@ MatrixFreeHamiltonian make_matrix_free_H(const DenseMatrix& base_matrix) {
     return MatrixFreeHamiltonian(op);
 }
 
-}  // namespace
+}
 
 class IterDirectValidationTest : public ::testing::Test {
    protected:
@@ -945,3 +947,5 @@ TEST_F(IterIntegrateMatrixFreeLindbladTest, LongTimeConvergesToGroundState) {
     EXPECT_NEAR(std::real(rho(0, 0)), 1.0, kTolLoose);
     EXPECT_NEAR(std::real(rho(1, 1)), 0.0, kTolLoose);
 }
+
+// GCOV_EXCL_BR_STOP

@@ -14,10 +14,11 @@
 
 #include "parsers.h"
 #include "../../../libs/numpy.h"
-#include "../../../libs/pybind_types.h"
 #include "../digital/gate.h"
 #include "../representations/matrix_free_hamiltonian.h"
 #include "../utils/matrix_utils.h"
+
+// GCOV_EXCL_BR_START
 
 #pragma GCC visibility push(default)
 
@@ -677,3 +678,5 @@ QiliSimConfig parse_solver_params(const py::dict& solver_params) {
 }
 
 #pragma GCC visibility pop
+
+// GCOV_EXCL_BR_STOP

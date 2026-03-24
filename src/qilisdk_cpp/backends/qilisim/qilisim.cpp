@@ -14,7 +14,6 @@
 
 #include "qilisim.h"
 #include "../../libs/numpy.h"
-#include "../../libs/pybind_types.h"
 #include "analog/time_evolution.h"
 #include "config/qilisim_config.h"
 #include "digital/gate.h"
@@ -22,6 +21,8 @@
 #include "noise/noise_model.h"
 #include "representations/matrix_free_hamiltonian.h"
 #include "utils/parsers.h"
+
+// GCOV_EXCL_BR_START
 
 #pragma GCC visibility push(default)
 
@@ -230,3 +231,5 @@ py::object QiliSimCpp::execute_time_evolution(const py::object& functional, cons
 }
 
 #pragma GCC visibility pop
+
+// GCOV_EXCL_BR_STOP

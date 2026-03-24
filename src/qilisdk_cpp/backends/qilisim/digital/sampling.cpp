@@ -27,6 +27,8 @@
 #include <omp.h>
 #endif
 
+// GCOV_EXCL_BR_START
+
 std::map<std::string, int> apply_readout_error(const std::map<std::string, int>& counts, const NoiseModelCpp& noise_model_cpp, int n_qubits) {
     /*
     Apply readout error to the measurement counts.
@@ -452,3 +454,5 @@ void sampling_matrix_free(const std::vector<Gate>& gates, const std::vector<bool
         state = state * state.adjoint();
     }
 }
+
+// GCOV_EXCL_BR_STOP

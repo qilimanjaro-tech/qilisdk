@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// GCOV_EXCL_BR_START
+
 #include <gtest/gtest.h>
 #include "../../../src/qilisdk_cpp/backends/qilisim/analog/time_evolution.h"
 
@@ -93,7 +95,7 @@ MatrixFreeOutputs run_time_evolution_mf(SparseMatrix rho_0, const std::vector<Ma
     return out;
 }
 
-}  // namespace
+}
 
 class TimeEvolutionTest : public ::testing::Test {
    protected:
@@ -628,3 +630,5 @@ TEST_F(TimeEvolutionMonteCarloMatrixFreeTest, GroundStateRemainsGroundStateMF) {
     auto out = run_time_evolution_mf(pure_zero_sparse(), hamiltonians, params, steps, noise, {}, config);
     EXPECT_NEAR(std::real(out.rho_t(0, 0)), 1.0, kTolLoose);
 }
+
+// GCOV_EXCL_BR_STOP

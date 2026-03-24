@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// GCOV_EXCL_BR_START
+
 #include <gtest/gtest.h>
 #include "../../../src/qilisdk_cpp/backends/qilisim/analog/lindblad.h"
 
@@ -62,7 +64,7 @@ SparseMatrix amp_damp_jump() {
     return to_sparse(j);
 }
 
-}  // namespace
+}
 
 class CreateSuperoperatorTest : public ::testing::Test {};
 
@@ -289,3 +291,5 @@ TEST_F(LindbladRhsMatrixFreeTest, SparseAndMatrixFreeOverloadsAgree) {
     lindblad_rhs(dsp, rho, H_sparse, {jump}, false);
     EXPECT_TRUE(dmf.isApprox(dsp, kTol));
 }
+
+// GCOV_EXCL_BR_STOP

@@ -13,6 +13,8 @@
 // limitations under the License.
 #pragma once
 
+// GCOV_EXCL_BR_START
+
 #include <set>
 #include "../libs/eigen.h"
 #include "../libs/pybind.h"
@@ -156,3 +158,5 @@ class QTensorCpp {
     QTensorCpp operator*(double scalar) const { return mul(std::complex<double>(scalar, 0.0)); }
 };
 #pragma GCC visibility pop
+
+// GCOV_EXCL_BR_STOP

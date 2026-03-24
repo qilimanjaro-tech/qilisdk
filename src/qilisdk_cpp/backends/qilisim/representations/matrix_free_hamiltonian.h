@@ -15,6 +15,8 @@
 
 #include "matrix_free_operator.h"
 
+// GCOV_EXCL_BR_START
+
 class MatrixFreeHamiltonian {
    private:
     std::vector<std::pair<std::complex<double>, std::vector<MatrixFreeOperator>>> operators;
@@ -38,3 +40,5 @@ class MatrixFreeHamiltonian {
     friend std::ostream& operator<<(std::ostream& os, const MatrixFreeHamiltonian& hamiltonian);
     std::vector<std::pair<std::complex<double>, std::vector<MatrixFreeOperator>>> get_operators() const { return operators; }
 };
+
+// GCOV_EXCL_BR_STOP

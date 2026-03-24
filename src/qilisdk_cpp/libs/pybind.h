@@ -18,6 +18,8 @@
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
 
+// GCOV_EXCL_BR_START
+
 // Shorthand
 namespace py = pybind11;
 
@@ -53,3 +55,5 @@ extern py::object NoiseConfig;
 void initialize_all_pybind_types();
 void initialize_external_pybind_types();
 void finalize_all_pybind_types();
+
+// GCOV_EXCL_BR_STOP

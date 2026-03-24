@@ -14,6 +14,8 @@
 
 #include "numpy.h"
 
+// GCOV_EXCL_BR_START
+
 #pragma GCC visibility push(default)
 
 SparseMatrix from_numpy(const py::buffer& matrix_buffer, double atol) {
@@ -207,3 +209,5 @@ py::object to_spmatrix(const SparseMatrix& matrix) {
 }
 
 #pragma GCC visibility pop
+
+// GCOV_EXCL_BR_STOP

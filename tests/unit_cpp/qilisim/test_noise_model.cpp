@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// GCOV_EXCL_BR_START
+
 #include <gtest/gtest.h>
 #include "../../../src/qilisdk_cpp/backends/qilisim/noise/noise_model.h"
 
@@ -38,3 +40,5 @@ TEST(NoiseModel, GetRelevantKrausOperators) {
     // We expect to get 1 (global) = 1 Kraus operator
     EXPECT_EQ(result.size(), 1);
 }
+
+// GCOV_EXCL_BR_STOP

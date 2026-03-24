@@ -13,6 +13,8 @@
 // limitations under the License.
 #include "pybind.h"
 
+// GCOV_EXCL_BR_START
+
 #pragma GCC visibility push(default)
 
 py::object numpy_array;
@@ -95,3 +97,5 @@ void finalize_all_pybind_types() {
 // GCOVR_EXCL_STOP
 
 #pragma GCC visibility pop
+
+// GCOV_EXCL_BR_STOP

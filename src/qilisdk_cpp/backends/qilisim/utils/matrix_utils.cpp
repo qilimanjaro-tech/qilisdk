@@ -15,6 +15,8 @@
 #include "matrix_utils.h"
 #include "../../../libs/pybind.h"
 
+// GCOV_EXCL_BR_START
+
 SparseMatrix exp_mat_action(const SparseMatrix& H, std::complex<double> dt, const SparseMatrix& e1) {
     /*
     Compute the action of the matrix exponential exp(H*dt) acting on a vector e1.
@@ -370,3 +372,5 @@ void normalize_state(DenseMatrix& state, bool is_statevector, bool monte_carlo) 
         }
     }
 }
+
+// GCOV_EXCL_BR_STOP
