@@ -69,7 +69,7 @@ MatrixFreeHamiltonian make_matrix_free_H(const DenseMatrix& base_matrix) {
     return MatrixFreeHamiltonian(op);
 }
 
-}
+}  // namespace
 
 class IterDirectValidationTest : public ::testing::Test {
    protected:

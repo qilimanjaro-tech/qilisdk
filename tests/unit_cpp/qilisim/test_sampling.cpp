@@ -112,7 +112,7 @@ QiliSimConfig defaultConfig() {
     return cfg;
 }
 
-}
+}  // namespace
 
 class ApplyReadoutErrorTest : public ::testing::Test {};
 

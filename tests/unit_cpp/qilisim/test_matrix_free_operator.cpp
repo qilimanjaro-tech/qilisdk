@@ -130,7 +130,7 @@ const double kInvSqrt2 = 1.0 / std::sqrt(2.0);
 const std::complex<double> kTPhase = std::exp(std::complex<double>(0.0, M_PI / 4.0));
 const std::complex<double> kTPhaseConj = std::conj(kTPhase);
 
-}
+}  // namespace
 
 TEST(MatrixFreeOperator, NameAndTargetQubitAccessors) {
     MatrixFreeOperator op("X", 3);

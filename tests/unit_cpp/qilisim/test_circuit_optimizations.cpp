@@ -112,7 +112,7 @@ bool matricesApproxEqual(const SparseMatrix& a, const SparseMatrix& b) {
     return toDense(a).isApprox(toDense(b), kTol);
 }
 
-}
+}  // namespace
 
 TEST(CombineSingleQubitGatesTest, EmptyInput_ReturnsEmpty) {
     std::vector<Gate> result = combine_single_qubit_gates({});

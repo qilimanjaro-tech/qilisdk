@@ -84,7 +84,7 @@ SparseMatrix rz(double theta) {
     return m;
 }
 
-}
+}  // namespace
 
 class GateTest : public ::testing::Test {
    protected:

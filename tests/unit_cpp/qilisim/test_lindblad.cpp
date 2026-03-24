@@ -64,7 +64,7 @@ SparseMatrix amp_damp_jump() {
     return to_sparse(j);
 }
 
-}
+}  // namespace
 
 class CreateSuperoperatorTest : public ::testing::Test {};
 

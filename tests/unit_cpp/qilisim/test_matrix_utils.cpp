@@ -54,7 +54,7 @@ SparseMatrix mat2x2() {
     return m.sparseView();
 }
 
-}
+}  // namespace
 
 TEST(MatrixUtilsTest, DotProductKet) {
     SparseMatrix v1(3, 1);

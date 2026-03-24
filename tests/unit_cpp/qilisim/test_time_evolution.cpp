@@ -95,7 +95,7 @@ MatrixFreeOutputs run_time_evolution_mf(SparseMatrix rho_0, const std::vector<Ma
     return out;
 }
 
-}
+}  // namespace
 
 class TimeEvolutionTest : public ::testing::Test {
    protected:
