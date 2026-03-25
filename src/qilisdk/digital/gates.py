@@ -235,7 +235,7 @@ class Gate(Parameterizable, ABC):
         super().set_parameter_bounds(ranges=ranges)
 
     def __repr__(self) -> str:
-        qubits_str = f"{self.qubits[0]}" if self.nqubits == 1 else str(self.qubits)
+        qubits_str = f"{self.qubits[0]}" if self.nqubits == 1 else str(self.qubits).replace("(", "").replace(")", "")
         if self.is_parameterized:
             param_str = ", ".join(f"{value}" for value in self.get_parameter_values())
             return f"{self.name}({qubits_str}, {param_str})"

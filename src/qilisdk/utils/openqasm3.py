@@ -13,14 +13,27 @@
 # limitations under the License.
 from pathlib import Path
 
-from numpy import pi
+from copy import copy
+from numpy import pi, e
 from openqasm3.ast import (
     BinaryOperator,
+    TimeUnit,
+    QuantumGateDefinition,
     ClassicalAssignment,
     ClassicalDeclaration,
     ConstantDeclaration,
+    AliasStatement,
     ImaginaryLiteral,
     Include,
+    UintType,
+    DurationType,
+    StretchType,
+    BitType,
+    BoolType,
+    IntType,
+    FloatType,
+    ComplexType,
+    AngleType,
     QuantumGate,
     QubitDeclaration,
 )
@@ -28,16 +41,60 @@ from openqasm3.parser import parse
 
 from qilisdk.digital import CNOT, CZ, RX, RY, RZ, U1, U2, U3, Circuit, H, M, S, T, X, Y, Z
 
+def _recursive_replace(statement: object, replacement_map: dict) -> object:
+    new_statement = copy(statement)
+
+    # If the statement is in the replacement map, replace it
+    if hasattr(new_statement, "name") and new_statement.name is not None and isinstance(new_statement.name, str) and not hasattr(new_statement.name, "name"):
+        if new_statement.name in replacement_map:
+            
+            # If it's a string, change the name
+            if isinstance(replacement_map[new_statement.name], str):
+                print(f"Replacing {new_statement.name} with {replacement_map[new_statement.name]}")
+                setattr(new_statement, "name", replacement_map[new_statement.name])
+            
+            # If it's something else (i.e. a number), change the value
+            else:
+                print(f"Replacing {new_statement.name} with {replacement_map[new_statement.name]} (non-string replacement)")
+                setattr(new_statement, "value", replacement_map[new_statement.name])
+
+    # For any other attributes, as long as it's not a default attribute or a callable, recurse
+    for attr_name in dir(statement):
+        if attr_name.startswith("__") or callable(getattr(new_statement, attr_name)) or isinstance(getattr(new_statement, attr_name), (str, int, float, type(None))):
+            continue
+        attr_value = getattr(new_statement, attr_name)
+        if isinstance(attr_value, list):
+            new_list = []
+            for sub_value in attr_value:
+                new_list.append(_recursive_replace(sub_value, replacement_map))
+            setattr(new_statement, attr_name, new_list)
+        else:
+            setattr(new_statement, attr_name, _recursive_replace(attr_value, replacement_map))
+    return new_statement
 
 def _evaluate_expression(expr: object, var_list: dict) -> any:
 
+    # Scale by the unit if we have it
+    value_with_unit = None
+    if hasattr(expr, "value") and expr.value is not None:
+        value_with_unit = expr.value
+        if hasattr(expr, "unit") and expr.unit is not None:
+            if expr.unit == TimeUnit["ns"]:
+                value_with_unit = value_with_unit * 1e-9
+            elif expr.unit == TimeUnit["us"]:
+                value_with_unit = value_with_unit * 1e-6
+            elif expr.unit == TimeUnit["ms"]:
+                value_with_unit = value_with_unit * 1e-3
+            elif expr.unit != TimeUnit["s"]:
+                raise ValueError(f"Unsupported time unit: {expr.unit}")
+
     # If it's an imaginary literal
-    if isinstance(expr, ImaginaryLiteral) and hasattr(expr, "value"):
-        return 1j * expr.value
+    if isinstance(expr, ImaginaryLiteral) and value_with_unit is not None:
+        return 1j * value_with_unit
 
     # If we have a value, perfect
-    if hasattr(expr, "value"):
-        return expr.value
+    if value_with_unit is not None:
+        return value_with_unit
 
     # If it's a variable
     if hasattr(expr, "name"):
@@ -58,10 +115,46 @@ def _evaluate_expression(expr: object, var_list: dict) -> any:
             return _evaluate_expression(expr.lhs, var_list) * _evaluate_expression(expr.rhs, var_list)
         raise ValueError(f"Unsupported operator: {expr.op}")
 
-    raise ValueError(f"Unsupported expression type: {type(expr)}")
+    raise ValueError(f"Unsupported expression: {expr}")
 
+def _evaluate_register(qb: object, var_list: dict, reg_name_to_start_end: dict) -> list[int]:
+    
+    # We should always have a name for the register
+    if hasattr(qb, "name") and qb.name is not None:
+        
+        # Get the reg info
+        reg_name = qb.name
+        if hasattr(reg_name, "name") and reg_name.name is not None:
+            reg_name = reg_name.name
+        if "$" in reg_name:
+            start = int(reg_name.split("$")[1])
+            end = start
+        else:
+            start, end = reg_name_to_start_end[reg_name]
 
-def _to_qilisdk_gate(gate_name: str, qubits: list) -> object:
+        # If we have indices, get those specific qubits
+        if hasattr(qb, "indices") and qb.indices is not None:
+            indices = [ [_evaluate_expression(index, var_list) for index in index_list ] for index_list in qb.indices ]
+            
+            # If only given one index, get at that location
+            if len(indices) == 1 and len(indices[0]) == 1:
+                if reg_name in reg_name_to_start_end:
+                    if indices[0][0] <= end - start + 1:
+                        return [start + indices[0][0]]
+                    raise ValueError(f"Index {indices[0][0]} out of bounds for register {reg_name} with start {start} and end {end}")
+
+            raise ValueError(f"Undefined register: {reg_name}")
+
+        # If we don't have indices, return the whole register as a list of qubits
+        else:
+            qubits_to_return = []
+            for i in range(start, end + 1):
+                qubits_to_return.append(i)
+            return qubits_to_return
+
+    raise ValueError(f"Unsupported qubit specification: {qb}")
+
+def _to_qilisdk_gate(gate_name: str, qubits: list, arguments: list[float] = []) -> object:
     gate_name = gate_name.lower()
     if gate_name == "x":
         return X(*qubits)
@@ -76,17 +169,17 @@ def _to_qilisdk_gate(gate_name: str, qubits: list) -> object:
     if gate_name == "t":
         return T(*qubits)
     if gate_name == "rx":
-        return RX(*qubits)
+        return RX(*qubits, theta=arguments[0])
     if gate_name == "ry":
-        return RY(*qubits)
+        return RY(*qubits, theta=arguments[0])
     if gate_name == "rz":
-        return RZ(*qubits)
+        return RZ(*qubits, phi=arguments[0])
     if gate_name == "u1":
-        return U1(*qubits)
+        return U1(*qubits, phi=arguments[0])
     if gate_name == "u2":
-        return U2(*qubits)
-    if gate_name == "u3":
-        return U3(*qubits)
+        return U2(*qubits, phi=arguments[0], gamma=arguments[1])
+    if gate_name == "u3" or gate_name == "u":
+        return U3(*qubits, theta=arguments[0], phi=arguments[1], gamma=arguments[2])
     if gate_name == "cx":
         return CNOT(*qubits)
     if gate_name == "cz":
@@ -97,12 +190,13 @@ def _to_qilisdk_gate(gate_name: str, qubits: list) -> object:
     raise ValueError(f"Unsupported gate: {gate_name}")
 
 
-def from_qasm3(qasm3: str) -> Circuit:
+def from_qasm3(qasm3: str, directory: str = "") -> Circuit:
     """
     Convert an OpenQASM 3.0 string representation of a quantum circuit into a Circuit object.
 
     Args:
         qasm3 (str): The OpenQASM 3.0 string representation of the quantum circuit.
+        directory (str): The directory to resolve include statements from. Defaults to the current directory.
 
     Returns:
         Circuit: The reconstructed Circuit object.
@@ -111,21 +205,58 @@ def from_qasm3(qasm3: str) -> Circuit:
         ValueError: If the QASM string contains unsupported statements, gates, or expressions.
     """
 
+    # Check for includes, if so, add their text to the qasm3 text and re-parse to get a full AST with all statements
+    qasm3_with_includes = qasm3
+    qasm3_with_includes = qasm3_with_includes.replace(';', ';\n')
+    new_qasm3 = ""
+    for line in qasm3.splitlines():
+        if line.strip().startswith("include"):
+            include_filename = line.strip().split(" ")[1].replace('"', '').replace("'", "").replace(";", "")
+            if include_filename != "stdgates.inc":
+                include_path = Path(directory) / include_filename
+                if include_path.is_file():
+                    include_qasm = include_path.read_text(encoding="utf-8")
+                    include_qasm_lines = include_qasm.splitlines()
+                    include_qasm_lines = [line for line in include_qasm_lines if not line.strip().startswith("OPENQASM") and not line.strip().startswith('include "stdgates.inc"')]
+                    include_qasm = "\n".join(include_qasm_lines)
+                    new_qasm3 += "\n" + include_qasm
+                else:
+                    raise ValueError(f"Unsupported include statement: {line}")
+        else:
+            new_qasm3 += line + "\n"
+    qasm3_with_includes = new_qasm3
+
+    # Find any let statements and do a find/replace for the alias in the qasm3 text
+    as_lines = qasm3_with_includes.splitlines()
+    for i, line in enumerate(as_lines):
+        if line.strip().startswith("let "):
+            let_statement = line.strip()[len("let "):].rstrip(";")
+            alias_name, alias_value = let_statement.split(" = ")
+            alias_name = alias_name.strip()
+            alias_value = alias_value.strip()
+            for j in range(i + 1, len(as_lines)):
+                as_lines[j] = as_lines[j].replace(alias_name, alias_value)
+    qasm3_with_includes = "\n".join(as_lines)
+
     # Use the official OpenQASM 3.0 parser to parse the text and get the AST nodes
-    ast = parse(qasm3)
+    ast = parse(qasm3_with_includes)
 
     # The vars to fill as we parse the tree
     nqubits = 0
     reg_name_to_start_end = {}
     var_list = {
         "π": {"size": 1, "value": pi},
+        "pi": {"size": 1, "value": pi},
+        "τ": {"size": 1, "value": 2 * pi},
+        "tau": {"size": 1, "value": 2 * pi},
+        "euler": {"size": 1, "value": e},
+        "ℇ": {"size": 1, "value": e},
     }
+    custom_gate_definitions = {}
     gates_to_add = []
 
-    # Go through the tree and determine what to do
-    for statement in ast.statements:
-        print()
-        print(statement)
+    def _process_statement(statement: object):
+        nonlocal nqubits, reg_name_to_start_end, var_list, custom_gate_definitions, gates_to_add
 
         # Initializing a qubit
         if isinstance(statement, QubitDeclaration):
@@ -140,13 +271,46 @@ def from_qasm3(qasm3: str) -> Circuit:
         # Initializing a classical variable
         elif isinstance(statement, (ClassicalDeclaration, ConstantDeclaration)):
             var_name = statement.identifier.name
-            var_size = 1
+            var_size = 0
             var_value = 0
+            var_type = "bit"
             if hasattr(statement, "size") and statement.size is not None:
                 var_size = _evaluate_expression(statement.size, var_list)
             if hasattr(statement, "init_expression") and statement.init_expression is not None:
                 var_value = _evaluate_expression(statement.init_expression, var_list)
-            var_list[var_name] = {"size": var_size, "value": var_value}
+            if hasattr(statement, "type") and statement.type is not None:
+                if isinstance(statement.type, UintType):
+                    var_type = "uint"
+                    var_size = 32
+                elif isinstance(statement.type, BitType):
+                    var_type = "bit"
+                    var_size = 1
+                elif isinstance(statement.type, BoolType):
+                    var_type = "bool"
+                    var_size = 1
+                elif isinstance(statement.type, IntType):
+                    var_type = "int"
+                    var_size = 32
+                elif isinstance(statement.type, FloatType):
+                    var_type = "float"
+                    var_size = 64
+                elif isinstance(statement.type, AngleType):
+                    var_type = "angle"
+                    var_size = 64
+                elif isinstance(statement.type, DurationType):
+                    var_type = "duration"
+                    var_size = 32
+                elif isinstance(statement.type, StretchType):
+                    var_type = "stretch"
+                    var_size = 32
+                elif isinstance(statement.type, ComplexType):
+                    var_type = "complex"
+                    var_size = 128
+                else:
+                    raise ValueError(f"Unsupported variable type: {statement.type}")
+                if hasattr(statement.type, "size") and statement.type.size is not None:
+                    var_size = _evaluate_expression(statement.type.size, var_list)
+            var_list[var_name] = {"size": var_size, "value": var_value, "type": var_type}
 
         # Classical assignment
         elif isinstance(statement, ClassicalAssignment):
@@ -156,18 +320,70 @@ def from_qasm3(qasm3: str) -> Circuit:
         # Quantum gates
         elif isinstance(statement, QuantumGate):
             gate_name = statement.name.name
-            qubits = [_evaluate_expression(qb, var_list) for qb in statement.qubits]
-            gates_to_add.append(_to_qilisdk_gate(gate_name, qubits))
+            qubits = []
+            for qubit in statement.qubits:
+                qubits.extend(_evaluate_register(qubit, var_list, reg_name_to_start_end))
+            arguments = []
+            for argument in statement.arguments:
+                arguments.append(_evaluate_expression(argument, var_list))
+            if gate_name in custom_gate_definitions:
+                gate_def = custom_gate_definitions[gate_name]
+                replacement_map = {}
+                for actual_arg in arguments:
+                    arg_name_in_body = gate_def["args"][arguments.index(actual_arg)]
+                    replacement_map[arg_name_in_body] = actual_arg
+                reg_names = [qubit.name for qubit in statement.qubits]
+                for reg_name in reg_names:
+                    reg_name_in_body = gate_def["qubits"][reg_names.index(reg_name)]
+                    replacement_map[reg_name_in_body] = reg_name
+                print(f"Body: {gate_def['body']}")
+                print(f"Replacement map for gate {gate_name}: {replacement_map}")
+                for gate_statement in gate_def["body"]:
+                    _process_statement(_recursive_replace(gate_statement, replacement_map))
+            else:
+                gates_to_add.append(_to_qilisdk_gate(gate_name, qubits, arguments))
+
+        # Include statements
+        elif isinstance(statement, Include):
+            if statement.filename.value != "stdgates.inc":
+                include_path = Path(statement.filename.value)
+                if include_path.is_file():
+                    include_qasm = include_path.read_text(encoding="utf-8")
+                    include_circuit = from_qasm3(include_qasm)
+                    gates_to_add.extend(include_circuit.gates)
+
+        # Custom gate definitions
+        elif isinstance(statement, QuantumGateDefinition):
+            gate_name = statement.name.name
+            gate_args = [arg.name for arg in statement.arguments]
+            gate_qubits = [arg.name for arg in statement.qubits]
+            gate_body = statement.body
+            custom_gate_definitions[gate_name] = {"args": gate_args, "qubits": gate_qubits, "body": gate_body}
 
         # Otherwise raise an error for now - we can add more statement types later
-        elif not isinstance(statement, (Include)):
+        elif not isinstance(statement, (AliasStatement)):
             raise ValueError(f"Unsupported statement type: {type(statement)}")
+
+    # Go through the tree and determine what to do
+    for statement in ast.statements:
+        print()
+        print(statement)
+        _process_statement(statement)
 
     print()
     print(f"Determined number of qubits: {nqubits}")
-    print(f"Register name to qubit index mapping: {reg_name_to_start_end}")
-    print(f"All variables: {var_list}")
-    print(f"Gates to add: {gates_to_add}")
+    print(f"Register name to qubit index mapping:")
+    for reg_name, (start, end) in reg_name_to_start_end.items():
+        print(f"  {reg_name}: qubits {start} to {end}")
+    print(f"All variables:")
+    for var_name, var_info in var_list.items():
+        print(f"  {var_name}: type={var_info.get('type', 'unknown')}, size={var_info['size']}, value={var_info['value']}")
+    print(f"Custom gate definitions:")
+    for gate_name, gate_info in custom_gate_definitions.items():
+        print(f"  {gate_name}: args={gate_info['args']}, qubits={gate_info['qubits']}")
+    print(f"Gates to add:")
+    for gate in gates_to_add:
+        print(f"  {gate}")
 
     # Create a Circuit with the determined number of qubits
     c = Circuit(nqubits)
@@ -212,7 +428,8 @@ def from_qasm3_file(filename: str) -> Circuit:
         Circuit: The reconstructed Circuit object.
     """
     qasm_str = Path(filename).read_text(encoding="utf-8")
-    return from_qasm3(qasm_str)
+    directory = str(Path(filename).parent)
+    return from_qasm3(qasm_str, directory)
 
 
 def to_qasm3_file(circuit: Circuit, filename: str) -> None:
@@ -225,3 +442,112 @@ def to_qasm3_file(circuit: Circuit, filename: str) -> None:
     """
     qasm_code = to_qasm3(circuit)
     Path(filename).write_text(qasm_code, encoding="utf-8")
+
+"""
+Feature Table
+OpenQASM 3 Feature     Qiskit SDK       IBM Qiskit Runtime      QiliSDK       Qiskit Notes
+comments               ✅               ✅                      ✅
+QASM vstring           ✅               ✅                      ✅            1
+include                🟡               ❌                      ✅            1, 7
+unicode names          ✅               ✅                      ✅   
+qubit                  ✅               🟡                      ✅            2
+bit                    ✅               ✅                      ✅            3
+bool                   🟡               ✅                      ✅            4
+int                    ❌               ✅                      ✅            4
+uint                   🟡               ✅                      ✅            4
+float                  🟡               🟡                      ✅            4
+angle                  ❌               🟡                      ✅            4
+complex                ❌               ❌                      ✅            4
+const                  ❌               ❌                      ✅            4
+pi/π/tau/τ/euler/ℇ     ✅               ✅                      ✅   
+Aliasing: let          🟡               ❌                      ✅            5
+register concatenation 🟡               ❌                      ❌            5
+casting expr.Cast      🟡               🟡                      ✅            4
+duration               ❌               ❌                      ✅   
+durationof             ❌               ❌                      ❌   
+ns/µs/us/ms/s/dt       ✅               ✅                      ✅            6
+stretch expr.Stretch   🟡               🟡                      ✅            4, 6
+delay                  ✅               ✅                      ❌            6
+barrier                ✅               ✅                      ❌   
+box                    ✅               ❌                      ❌            6
+Built-in U             ✅               ✅                      ✅   
+gate                   🟡               🟡                      ✅            7
+gphase                 🟡               ❌                      ❌            7
+ctrl @/ negctrl @      🟡               ❌                      ❌            7
+inv @                  🟡               ❌                      ❌            7
+pow(k) @               🟡               ❌                      ❌            7
+reset                  ✅               ✅                      ❌   
+measure                ✅               ✅                      ❌   
+bit operations         🟡               ✅                      ❌            4
+boolean operations     🟡               ✅                      ❌            4
+arithmetic expressions 🟡               🟡                      ❌            4
+comparisons            🟡               ✅                      ❌            4
+if                     ✅               ✅                      ❌            8
+else                   ✅               ✅                      ❌            8
+else if                ✅               ❌                      ❌            8
+for loops              🟡               ❌                      ❌            8
+while loops            ✅               ❌                      ❌            8
+continue               🟡               ❌                      ❌            8
+break                  🟡               ❌                      ❌            8
+return                 ❌               ❌                      ❌   
+extern                 ❌               ❌                      ❌   
+def subroutines        ❌               ❌                      ❌   
+input                  ✅               🟡                      ❌            4, 9
+output                 ❌               ❌                      ❌   
+
+1) These OpenQASM 3 program features have no impact on the execution and Qiskit strips 
+them out as part of parsing the files. Files that use them can be submitted but they 
+will have no effect. For include files, stdgates.inc is currently supported as input 
+to Qiskit, and backend execution always requires circuits to have been compiled to 
+the backend Instruction Set Architecture (ISA), where include files are irrelevant.
+
+2) Qiskit SDK supports parsing and dumping OpenQASM 3 files with any qubit declarations. 
+For execution on hardware, only circuits defined in terms of hardware qubits 
+(for example, $0) are valid. Qiskit SDK automatically outputs OpenQASM 3 in terms 
+of the supported hardware-qubit identifiers if the circuit was transpiled for a 
+backend with layout information.
+
+3) bit- and bit[n]-typed variable declarations in Qiskit SDK correspond to Clbit 
+and ClassicalRegister declarations.
+
+4) As of July 2025, Qiskit SDK can represent local variables of a restricted 
+set of types, can represent many runtime operations on these objects, and supports 
+outputting them to OpenQASM 3. However, Qiskit SDK (through qiskit-qasm3-import v0.6.0) 
+does not support parsing OpenQASM 3 files that contain variable declarations, and has very 
+limited support for parsing variable expressions. In general, most of what Qiskit can 
+represent in its expression system can be executed on suitable dynamic circuits hardware, 
+even if the expression cannot yet be parsed by Qiskit SDK. See the Qiskit documentation 
+of the qiskit.circuit.classical module for the most up-to-date information.
+
+5) Qiskit SDK can represent register aliasing for both quantum and classical registers, 
+but it is strongly discouraged to use aliasing of classical registers. Most expressions 
+on classical registers do not work with aliases, and aliased classical registers are not 
+supported for execution on hardware. The Qiskit OpenQASM 3 parser can resolve let alias 
+statements that bind the result of register concantenation.
+
+6) Qiskit SDK supports explicit delays via QuantumCircuit.delay, and circuit boxes 
+(QuantumCircuit.box) can also have explicit durations. These durations can include 
+classical expressions of stretch variables. Qiskit SDK (as of July 2025 through 
+qiskit-qasm3-import v0.6.0) does not support parsing declarations of type duration 
+or type stretch from OpenQASM 3 files. Hardware has limited support for durations including stretch.
+
+7) Circuits must be transpiled to the backend ISA to run on IBM hardware. This precludes 
+custom gate definitions and higher-level constructs like gate modifiers (such as inv @) 
+from being valid for execution on hardware verbatim, but the transpile process resolves 
+them into valid ISA circuits. Qiskit SDK (as of July 2025, through qiskit-qasm3-import v0.6.0) 
+will eagerly evaluate gate modifiers during the parse, so these will not be evident 
+in the resulting QuantumCircuit, potentially at a runtime cost.
+
+8) Qiskit SDK can represent structured control flow and export this to OpenQASM 3. The 
+continue and break statements can technically be represented by Qiskit, but are not well 
+supported even within Qiskit SDK. for loops in Qiskit v2.1.0 are not well supported. Nested 
+control flow (such as an if inside another if, or an else if statement) is not 
+eligible for execution on hardware.
+
+9) Qiskit SDK supports declaring any supported classical type as an input variable on the 
+circuit. Such variables are not currently eligible for execution on hardware, and cannot 
+be loaded by the Qiskit OpenQASM 3 importer. Unbound Parameter objects present in the 
+QuantumCircuit are exported as input float[64] variables. Certain runtime configuration 
+options can enable executing such circuits on some backends.
+
+"""
