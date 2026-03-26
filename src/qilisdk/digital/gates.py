@@ -439,6 +439,12 @@ class Modified(Gate, Generic[TBasicGate]):
 @yaml.register_class
 class Controlled(Modified[TBasicGate]):
     def __init__(self, *control_qubits: int, basic_gate: TBasicGate) -> None:
+
+        # If doing Controlled of another Controlled, combine into one with all control qubits.
+        if isinstance(basic_gate, Controlled):
+            control_qubits += basic_gate.control_qubits
+            basic_gate = basic_gate.basic_gate
+
         super().__init__(basic_gate=basic_gate)
 
         # Check for duplicate integers in control_qubits.

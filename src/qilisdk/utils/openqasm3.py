@@ -27,6 +27,7 @@ from openqasm3.ast import (
     ConstantDeclaration,
     DurationType,
     FloatType,
+    GateModifierName,
     ImaginaryLiteral,
     Include,
     IntType,
@@ -39,7 +40,7 @@ from openqasm3.ast import (
 )
 from openqasm3.parser import parse
 
-from qilisdk.digital import CNOT, CZ, RX, RY, RZ, U1, U2, U3, Circuit, H, M, S, T, X, Y, Z
+from qilisdk.digital import CNOT, CZ, RX, RY, RZ, U1, U2, U3, Adjoint, Circuit, Controlled, H, S, T, X, Y, Z
 
 
 def _recursive_replace(statement: object, replacement_map: dict) -> object:
@@ -152,40 +153,88 @@ def _evaluate_register(qb: object, var_list: dict, reg_name_to_start_end: dict) 
     raise ValueError(f"Unsupported qubit specification: {qb}")
 
 
-def _to_qilisdk_gate(gate_name: str, qubits: list, arguments: list[float] = []) -> object:
-    gate_name = gate_name.lower()
-    if gate_name == "x":
-        return X(*qubits)
-    if gate_name == "y":
-        return Y(*qubits)
-    if gate_name == "z":
-        return Z(*qubits)
-    if gate_name == "h":
-        return H(*qubits)
-    if gate_name == "s":
-        return S(*qubits)
-    if gate_name == "t":
-        return T(*qubits)
-    if gate_name == "rx":
-        return RX(*qubits, theta=arguments[0])
-    if gate_name == "ry":
-        return RY(*qubits, theta=arguments[0])
-    if gate_name == "rz":
-        return RZ(*qubits, phi=arguments[0])
-    if gate_name == "u1":
-        return U1(*qubits, phi=arguments[0])
-    if gate_name == "u2":
-        return U2(*qubits, phi=arguments[0], gamma=arguments[1])
-    if gate_name in {"u", "u3"}:
-        return U3(*qubits, theta=arguments[0], phi=arguments[1], gamma=arguments[2])
-    if gate_name == "cx":
-        return CNOT(*qubits)
-    if gate_name == "cz":
-        return CZ(*qubits)
-    if gate_name == "m":
-        return M(*qubits)
+def _to_qilisdk_gate(gate_name: str, qubits: list, arguments: list[float] = [], modifiers: list[str] = []) -> object:
 
-    raise ValueError(f"Unsupported gate: {gate_name}")
+    # Process the gate info
+    gate_name = gate_name.lower()
+    gates_to_return = []
+    num_controls_total = 0
+    for modifier in modifiers:
+        if modifier in {"ctrl", "negctrl"}:
+            num_controls_total += 1
+    qubits_without_controls = qubits[num_controls_total:]
+
+    # The gate itself
+    if gate_name == "x":
+        for qubit in qubits_without_controls:
+            gates_to_return.append(X(qubit))
+    elif gate_name == "y":
+        for qubit in qubits_without_controls:
+            gates_to_return.append(Y(qubit))
+    elif gate_name == "z":
+        for qubit in qubits_without_controls:
+            gates_to_return.append(Z(qubit))
+    elif gate_name == "h":
+        for qubit in qubits_without_controls:
+            gates_to_return.append(H(qubit))
+    elif gate_name == "s":
+        for qubit in qubits_without_controls:
+            gates_to_return.append(S(qubit))
+    elif gate_name == "t":
+        for qubit in qubits_without_controls:
+            gates_to_return.append(T(qubit))
+    elif gate_name == "rx":
+        for qubit in qubits_without_controls:
+            gates_to_return.append(RX(qubit, theta=arguments[0]))
+    elif gate_name == "ry":
+        for qubit in qubits_without_controls:
+            gates_to_return.append(RY(qubit, theta=arguments[0]))
+    elif gate_name == "rz":
+        for qubit in qubits_without_controls:
+            gates_to_return.append(RZ(qubit, phi=arguments[0]))
+    elif gate_name == "u1":
+        for qubit in qubits_without_controls:
+            gates_to_return.append(U1(qubit, phi=arguments[0]))
+    elif gate_name == "u2":
+        for qubit in qubits_without_controls:
+            gates_to_return.append(U2(qubit, phi=arguments[0], gamma=arguments[1]))
+    elif gate_name in {"u", "u3"}:
+        for qubit in qubits_without_controls:
+            gates_to_return.append(U3(qubit, theta=arguments[0], phi=arguments[1], gamma=arguments[2]))
+    elif gate_name == "cx":
+        gates_to_return.append(CNOT(*qubits_without_controls))
+    elif gate_name == "cz":
+        gates_to_return.append(CZ(*qubits_without_controls))
+    else:
+        raise ValueError(f"Unsupported gate: {gate_name}")
+
+    # Add controls if we have them
+    main_gates = copy(gates_to_return)
+    gates_to_return = []
+    for j in range(len(main_gates)):
+        main_gate = main_gates[j]
+        gates_to_prepend = []
+        gates_to_append = []
+        num_repeats = 1
+        for i in range(len(modifiers) - 1, -1, -1):
+            if modifiers[i] == "ctrl":
+                main_gate = Controlled(qubits[i], basic_gate=main_gate)
+            elif modifiers[i] == "negctrl":
+                main_gate = Controlled(qubits[i], basic_gate=main_gate)
+                gates_to_prepend.append(X(qubits[i]))
+                gates_to_append.append(X(qubits[i]))
+            elif modifiers[i] == "inv":
+                main_gate = Adjoint(main_gate)
+            elif modifiers[i] == "pow":
+                num_repeats += 1
+            else:
+                raise ValueError(f"Unsupported gate modifier: {modifiers[i]}")
+        for _ in range(num_repeats):
+            gates_to_return.extend(gates_to_prepend)
+            gates_to_return.append(main_gate)
+            gates_to_return.extend(gates_to_append)
+
+    return gates_to_return
 
 
 def from_qasm3(qasm3: str, directory: str = "") -> Circuit:
@@ -253,7 +302,9 @@ def from_qasm3(qasm3: str, directory: str = "") -> Circuit:
     custom_gate_definitions = {}
     gates_to_add = []
 
-    def _process_statement(statement: object) -> None:
+    def _process_statement(statement: object, extra_modifiers: list[str] = [], extra_qubits: list[int] = []) -> None:
+        print()  # noqa: T201
+        print(statement)  # noqa: T201
         nonlocal nqubits, reg_name_to_start_end, var_list, custom_gate_definitions, gates_to_add
 
         # Initializing a qubit
@@ -317,13 +368,56 @@ def from_qasm3(qasm3: str, directory: str = "") -> Circuit:
 
         # Quantum gates
         elif isinstance(statement, QuantumGate):
+
+            # Get info about the gates
             gate_name = statement.name.name
-            qubits = []
+            qubits = extra_qubits.copy()
             for qubit in statement.qubits:
                 qubits.extend(_evaluate_register(qubit, var_list, reg_name_to_start_end))
             arguments = []
             for argument in statement.arguments:
                 arguments.append(_evaluate_expression(argument, var_list))
+            modifiers = extra_modifiers.copy()
+            num_controls = 0
+            if hasattr(statement, "modifiers") and statement.modifiers is not None:
+                for modifier in statement.modifiers:
+
+                    # Get the modifier name
+                    modifier_name = ""
+                    if hasattr(modifier, "modifier") and modifier.modifier == GateModifierName["ctrl"]:
+                        modifier_name = "ctrl"
+                        num_controls += 1
+                    elif hasattr(modifier, "modifier") and modifier.modifier == GateModifierName["negctrl"]:
+                        modifier_name = "negctrl"
+                        num_controls += 1
+                    elif hasattr(modifier, "modifier") and modifier.modifier == GateModifierName["inv"]:
+                        modifier_name = "inv"
+                    elif hasattr(modifier, "modifier") and modifier.modifier == GateModifierName["pow"]:
+                        modifier_name = "pow"
+                    else:
+                        raise ValueError(f"Unsupported gate modifier: {modifier}")
+
+                    # Repeat if needed
+                    repeats_needed = 1
+                    value_given = False
+                    if hasattr(modifier, "argument") and modifier.argument is not None and hasattr(modifier.argument, "value") and modifier.argument.value is not None:
+                        repeats_needed = int(modifier.argument.value)
+                        value_given = True
+                    if modifier_name == "pow":
+                        if not value_given:
+                            raise ValueError("Missing value for pow modifier")
+                        if (repeats_needed == 0 or not isinstance(repeats_needed, int)):
+                            raise ValueError(f"Invalid value for pow modifier: {modifier.argument.value}")
+                        if repeats_needed < 0:
+                            repeats_needed = -repeats_needed
+                            modifiers.append("inv")
+                        else:
+                            repeats_needed -= 1
+
+                    for _ in range(repeats_needed):
+                        modifiers.append(modifier_name)
+
+            # If it's a custom
             if gate_name in custom_gate_definitions:
                 gate_def = custom_gate_definitions[gate_name]
                 replacement_map = {}
@@ -331,13 +425,16 @@ def from_qasm3(qasm3: str, directory: str = "") -> Circuit:
                     arg_name_in_body = gate_def["args"][arguments.index(actual_arg)]
                     replacement_map[arg_name_in_body] = actual_arg
                 reg_names = [qubit.name for qubit in statement.qubits]
-                for reg_name in reg_names:
-                    reg_name_in_body = gate_def["qubits"][reg_names.index(reg_name)]
+                for reg_name in reg_names[num_controls:num_controls + len(gate_def["qubits"])]:
+                    reg_name_in_body = gate_def["qubits"][reg_names.index(reg_name) - num_controls]
                     replacement_map[reg_name_in_body] = reg_name
+                control_qubits = qubits[:num_controls]
                 for gate_statement in gate_def["body"]:
-                    _process_statement(_recursive_replace(gate_statement, replacement_map))
+                    _process_statement(_recursive_replace(gate_statement, replacement_map), extra_modifiers=modifiers, extra_qubits=control_qubits)
+
+            # Otherwise process normally
             else:
-                gates_to_add.append(_to_qilisdk_gate(gate_name, qubits, arguments))
+                gates_to_add.extend(_to_qilisdk_gate(gate_name, qubits, arguments, modifiers))
 
         # Include statements
         elif isinstance(statement, Include):
@@ -364,8 +461,6 @@ def from_qasm3(qasm3: str, directory: str = "") -> Circuit:
 
     # Go through the tree and determine what to do
     for statement in ast.statements:
-        print()  # noqa: T201
-        print(statement)  # noqa: T201
         _process_statement(statement)
 
     print()  # noqa: T201
@@ -472,27 +567,27 @@ box                    ✅               ❌                      ❌           
 Built-in U             ✅               ✅                      ✅
 gate                   🟡               🟡                      ✅            7
 gphase                 🟡               ❌                      ❌            7
-ctrl @/ negctrl @      🟡               ❌                      ❌            7
-inv @                  🟡               ❌                      ❌            7
-pow(k) @               🟡               ❌                      ❌            7
+ctrl @/ negctrl @      🟡               ❌                      ✅            7
+inv @                  🟡               ❌                      ✅            7
+pow(k) @               🟡               ❌                      🟡            7
 reset                  ✅               ✅                      ❌
-measure                ✅               ✅                      ❌
-bit operations         🟡               ✅                      ❌            4
-boolean operations     🟡               ✅                      ❌            4
-arithmetic expressions 🟡               🟡                      ❌            4
-comparisons            🟡               ✅                      ❌            4
-if                     ✅               ✅                      ❌            8
-else                   ✅               ✅                      ❌            8
-else if                ✅               ❌                      ❌            8
-for loops              🟡               ❌                      ❌            8
-while loops            ✅               ❌                      ❌            8
-continue               🟡               ❌                      ❌            8
-break                  🟡               ❌                      ❌            8
-return                 ❌               ❌                      ❌
-extern                 ❌               ❌                      ❌
-def subroutines        ❌               ❌                      ❌
-input                  ✅               🟡                      ❌            4, 9
-output                 ❌               ❌                      ❌
+measure                ✅               ✅                      TODO
+bit operations         🟡               ✅                      TODO          4
+boolean operations     🟡               ✅                      TODO          4
+arithmetic expressions 🟡               🟡                      TODO          4
+comparisons            🟡               ✅                      TODO          4
+if                     ✅               ✅                      TODO          8
+else                   ✅               ✅                      TODO          8
+else if                ✅               ❌                      TODO          8
+for loops              🟡               ❌                      TODO          8
+while loops            ✅               ❌                      TODO          8
+continue               🟡               ❌                      TODO          8
+break                  🟡               ❌                      TODO          8
+return                 ❌               ❌                      TODO
+extern                 ❌               ❌                      TODO?
+def subroutines        ❌               ❌                      TODO
+input                  ✅               🟡                      TODO?         4, 9
+output                 ❌               ❌                      TODO?
 
 1) These OpenQASM 3 program features have no impact on the execution and Qiskit strips
 them out as part of parsing the files. Files that use them can be submitted but they
