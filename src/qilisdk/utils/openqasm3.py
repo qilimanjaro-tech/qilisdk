@@ -16,43 +16,43 @@ from pathlib import Path
 
 from numpy import e, pi
 from openqasm3.ast import (
-    Cast,
-    ArrayType,
-    BreakStatement,
-    SwitchStatement,
-    ContinueStatement,
-    WhileLoop,
     AliasStatement,
-    AssignmentOperator,
-    BranchingStatement,
-    ForInLoop,
-    ExpressionStatement,
     AngleType,
+    ArrayType,
+    AssignmentOperator,
     BinaryOperator,
-    UnaryOperator,
     BitType,
-    QuantumMeasurementStatement,
     BoolType,
+    BranchingStatement,
+    BreakStatement,
+    Cast,
     ClassicalAssignment,
     ClassicalDeclaration,
     ComplexType,
     ConstantDeclaration,
+    ContinueStatement,
     DurationType,
+    ExpressionStatement,
     FloatType,
+    ForInLoop,
     GateModifierName,
     ImaginaryLiteral,
     Include,
     IntType,
     QuantumGate,
     QuantumGateDefinition,
+    QuantumMeasurementStatement,
     QubitDeclaration,
     StretchType,
+    SwitchStatement,
     TimeUnit,
     UintType,
+    UnaryOperator,
+    WhileLoop,
 )
 from openqasm3.parser import parse
 
-from qilisdk.digital import CNOT, CZ, RX, RY, RZ, U1, U2, U3, Adjoint, Circuit, Controlled, H, S, T, X, Y, Z, M
+from qilisdk.digital import CNOT, CZ, RX, RY, RZ, U1, U2, U3, Adjoint, Circuit, Controlled, H, M, S, T, X, Y, Z
 
 
 def _recursive_replace(statement: object, replacement_map: dict) -> object:
@@ -167,7 +167,7 @@ def _evaluate_expression(expr: object, var_list: dict) -> any:
         raise ValueError(f"Unsupported cast type: {expr.type}")
 
     # If it's an array literal
-    elif hasattr(expr, "values") and expr.values is not None:
+    if hasattr(expr, "values") and expr.values is not None:
         return [_evaluate_expression(element, var_list) for element in expr.values]
 
     raise ValueError(f"Unsupported expression: {expr}")
@@ -440,9 +440,9 @@ def from_qasm3(qasm3: str, directory: str = "") -> Circuit:
             # Cast to the variable type if needed
             if "type" in var_list[var_name] and var_list[var_name]["type"] is not None:
                 var_type = var_list[var_name]["type"]
-                if var_type == "uint" or var_type == "int" or var_type == "bit":
+                if var_type in {"uint", "int", "bit"}:
                     var_list[var_name]["value"] = int(var_list[var_name]["value"])
-                elif var_type == "float" or var_type == "angle" or var_type == "duration" or var_type == "stretch":
+                elif var_type in {"float", "angle", "duration", "stretch"}:
                     var_list[var_name]["value"] = float(var_list[var_name]["value"])
                 elif var_type == "complex":
                     var_list[var_name]["value"] = complex(var_list[var_name]["value"])
@@ -597,7 +597,7 @@ def from_qasm3(qasm3: str, directory: str = "") -> Circuit:
 
             # Remove the loop variable from the var list after the loop is done
             del var_list[loop_var_name]
-        
+
         # While Loops
         elif isinstance(statement, WhileLoop):
             res = None
@@ -634,7 +634,7 @@ def from_qasm3(qasm3: str, directory: str = "") -> Circuit:
             for qubit in qubits_to_measure:
                 gates_to_add.append(M(qubit))
             if hasattr(statement, "target") and statement.target is not None:
-                raise ValueError("Measurement statements with targets are not currently supported") 
+                raise ValueError("Measurement statements with targets are not currently supported")
 
         # Otherwise raise an error for now - we can add more statement types later
         elif not isinstance(statement, (AliasStatement, ExpressionStatement)):
