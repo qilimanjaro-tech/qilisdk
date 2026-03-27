@@ -16,10 +16,22 @@ from pathlib import Path
 
 from numpy import e, pi
 from openqasm3.ast import (
+    Cast,
+    ArrayType,
+    BreakStatement,
+    SwitchStatement,
+    ContinueStatement,
+    WhileLoop,
     AliasStatement,
+    AssignmentOperator,
+    BranchingStatement,
+    ForInLoop,
+    ExpressionStatement,
     AngleType,
     BinaryOperator,
+    UnaryOperator,
     BitType,
+    QuantumMeasurementStatement,
     BoolType,
     ClassicalAssignment,
     ClassicalDeclaration,
@@ -40,7 +52,7 @@ from openqasm3.ast import (
 )
 from openqasm3.parser import parse
 
-from qilisdk.digital import CNOT, CZ, RX, RY, RZ, U1, U2, U3, Adjoint, Circuit, Controlled, H, S, T, X, Y, Z
+from qilisdk.digital import CNOT, CZ, RX, RY, RZ, U1, U2, U3, Adjoint, Circuit, Controlled, H, S, T, X, Y, Z, M
 
 
 def _recursive_replace(statement: object, replacement_map: dict) -> object:
@@ -113,7 +125,50 @@ def _evaluate_expression(expr: object, var_list: dict) -> any:
             return _evaluate_expression(expr.lhs, var_list) / _evaluate_expression(expr.rhs, var_list)
         if expr.op == BinaryOperator["*"]:
             return _evaluate_expression(expr.lhs, var_list) * _evaluate_expression(expr.rhs, var_list)
+        if expr.op == BinaryOperator["<<"]:
+            return _evaluate_expression(expr.lhs, var_list) << _evaluate_expression(expr.rhs, var_list)
+        if expr.op == BinaryOperator[">>"]:
+            return _evaluate_expression(expr.lhs, var_list) >> _evaluate_expression(expr.rhs, var_list)
+        if expr.op == BinaryOperator["&"]:
+            return _evaluate_expression(expr.lhs, var_list) & _evaluate_expression(expr.rhs, var_list)
+        if expr.op == BinaryOperator["|"]:
+            return _evaluate_expression(expr.lhs, var_list) | _evaluate_expression(expr.rhs, var_list)
+        if expr.op == BinaryOperator["=="]:
+            return _evaluate_expression(expr.lhs, var_list) == _evaluate_expression(expr.rhs, var_list)
+        if expr.op == BinaryOperator["!="]:
+            return _evaluate_expression(expr.lhs, var_list) == _evaluate_expression(expr.rhs, var_list)
+        if expr.op == BinaryOperator[">"]:
+            return _evaluate_expression(expr.lhs, var_list) > _evaluate_expression(expr.rhs, var_list)
+        if expr.op == BinaryOperator[">="]:
+            return _evaluate_expression(expr.lhs, var_list) >= _evaluate_expression(expr.rhs, var_list)
+        if expr.op == BinaryOperator["<"]:
+            return _evaluate_expression(expr.lhs, var_list) < _evaluate_expression(expr.rhs, var_list)
+        if expr.op == BinaryOperator["<="]:
+            return _evaluate_expression(expr.lhs, var_list) <= _evaluate_expression(expr.rhs, var_list)
+        if expr.op == UnaryOperator["-"]:
+            return -_evaluate_expression(expr.expression, var_list)
+        if expr.op == UnaryOperator["!"]:
+            return not _evaluate_expression(expr.expression, var_list)
+        if expr.op == BinaryOperator["**"]:
+            return _evaluate_expression(expr.lhs, var_list) ** _evaluate_expression(expr.rhs, var_list)
         raise ValueError(f"Unsupported operator: {expr.op}")
+
+    # If it's a cast
+    if isinstance(expr, Cast):
+        value_to_cast = _evaluate_expression(expr.argument, var_list)
+        if isinstance(expr.type, (UintType, IntType, BitType)):
+            return int(value_to_cast) % (2 ** 32)
+        if isinstance(expr.type, (FloatType, AngleType, DurationType, StretchType)):
+            return float(value_to_cast)
+        if isinstance(expr.type, ComplexType):
+            return complex(value_to_cast)
+        if isinstance(expr.type, BoolType):
+            return bool(value_to_cast)
+        raise ValueError(f"Unsupported cast type: {expr.type}")
+
+    # If it's an array literal
+    elif hasattr(expr, "values") and expr.values is not None:
+        return [_evaluate_expression(element, var_list) for element in expr.values]
 
     raise ValueError(f"Unsupported expression: {expr}")
 
@@ -302,7 +357,7 @@ def from_qasm3(qasm3: str, directory: str = "") -> Circuit:
     custom_gate_definitions = {}
     gates_to_add = []
 
-    def _process_statement(statement: object, extra_modifiers: list[str] = [], extra_qubits: list[int] = []) -> None:
+    def _process_statement(statement: object, extra_modifiers: list[str] = [], extra_qubits: list[int] = []) -> str:
         print()  # noqa: T201
         print(statement)  # noqa: T201
         nonlocal nqubits, reg_name_to_start_end, var_list, custom_gate_definitions, gates_to_add
@@ -355,6 +410,8 @@ def from_qasm3(qasm3: str, directory: str = "") -> Circuit:
                 elif isinstance(statement.type, ComplexType):
                     var_type = "complex"
                     var_size = 128
+                elif isinstance(statement.type, ArrayType):
+                    var_type = "array"
                 else:
                     raise ValueError(f"Unsupported variable type: {statement.type}")
                 if hasattr(statement.type, "size") and statement.type.size is not None:
@@ -364,7 +421,33 @@ def from_qasm3(qasm3: str, directory: str = "") -> Circuit:
         # Classical assignment
         elif isinstance(statement, ClassicalAssignment):
             var_name = statement.lvalue.name
-            var_list[var_name]["value"] = _evaluate_expression(statement.rvalue, var_list)
+            new_value = _evaluate_expression(statement.rvalue, var_list)
+            if statement.op == AssignmentOperator["="]:
+                var_list[var_name]["value"] = new_value
+            elif statement.op == AssignmentOperator["+="]:
+                var_list[var_name]["value"] += new_value
+            elif statement.op == AssignmentOperator["-="]:
+                var_list[var_name]["value"] -= new_value
+
+            # Truncate to the variable size if needed
+            if "size" in var_list[var_name] and var_list[var_name]["size"] is not None:
+                var_size = var_list[var_name]["size"]
+                if var_list[var_name]["type"] == "uint":
+                    var_list[var_name]["value"] %= (2 ** var_size)
+                elif var_list[var_name]["type"] == "int":
+                    var_list[var_name]["value"] = ((var_list[var_name]["value"] + 2 ** (var_size - 1)) % (2 ** var_size)) - 2 ** (var_size - 1)
+
+            # Cast to the variable type if needed
+            if "type" in var_list[var_name] and var_list[var_name]["type"] is not None:
+                var_type = var_list[var_name]["type"]
+                if var_type == "uint" or var_type == "int" or var_type == "bit":
+                    var_list[var_name]["value"] = int(var_list[var_name]["value"])
+                elif var_type == "float" or var_type == "angle" or var_type == "duration" or var_type == "stretch":
+                    var_list[var_name]["value"] = float(var_list[var_name]["value"])
+                elif var_type == "complex":
+                    var_list[var_name]["value"] = complex(var_list[var_name]["value"])
+                elif var_type == "bool":
+                    var_list[var_name]["value"] = bool(var_list[var_name]["value"])
 
         # Quantum gates
         elif isinstance(statement, QuantumGate):
@@ -445,6 +528,97 @@ def from_qasm3(qasm3: str, directory: str = "") -> Circuit:
                     include_circuit = from_qasm3(include_qasm)
                     gates_to_add.extend(include_circuit.gates)
 
+        # Branching statements
+        elif isinstance(statement, BranchingStatement):
+
+            # Check the condition
+            condition_value = _evaluate_expression(statement.condition, var_list)
+
+            # If the condition is true, process the true body
+            if condition_value:
+                for branched_statement in statement.if_block:
+                    _process_statement(branched_statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits)
+            else:
+                for branched_statement in statement.else_block:
+                    _process_statement(branched_statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits)
+
+        # Switch statements TODO
+        elif isinstance(statement, SwitchStatement):
+            target_val = _evaluate_expression(statement.target, var_list)
+            found_case = False
+            for case in statement.cases:
+                case_val = _evaluate_expression(case[0][0], var_list)
+                if target_val == case_val:
+                    found_case = True
+                    for case_statement in case[1].statements:
+                        _process_statement(case_statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits)
+                    break
+            if not found_case and hasattr(statement, "default") and statement.default is not None:
+                for default_statement in statement.default.statements:
+                    _process_statement(default_statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits)
+
+        # For Loops
+        elif isinstance(statement, ForInLoop):
+
+            # The new variable to declare for the loop variable
+            loop_var_name = statement.identifier.name
+            loop_var_type = statement.type
+            loop_var_size = statement.type.size
+
+            # If it's a range-based for loop
+            if hasattr(statement.set_declaration, "start") and statement.set_declaration.start is not None:
+                loop_var_starting_value = _evaluate_expression(statement.set_declaration.start, var_list)
+                loop_var_step = 1
+                if hasattr(statement.set_declaration, "step") and statement.set_declaration.step is not None:
+                    loop_var_step = _evaluate_expression(statement.set_declaration.step, var_list)
+                loop_var_final_value = _evaluate_expression(statement.set_declaration.end, var_list)
+                loop_range = range(loop_var_starting_value, loop_var_final_value, loop_var_step)
+
+            # If it's looping over an array
+            else:
+                array_var_name = statement.set_declaration.name
+                loop_range = var_list[array_var_name]["value"]
+
+            # Make the variable
+            var_list[loop_var_name] = {"size": loop_var_size, "value": 0, "type": loop_var_type}
+
+            # Loop through the values and process the body with the loop variable set to the current value
+            res = None
+            for i in loop_range:
+                var_list[loop_var_name]["value"] = i
+                for loop_statement in statement.block:
+                    res = _process_statement(loop_statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits)
+                    if res:
+                        break
+                if res == "break":
+                    break
+                if res == "continue":
+                    continue
+
+            # Remove the loop variable from the var list after the loop is done
+            del var_list[loop_var_name]
+        
+        # While Loops
+        elif isinstance(statement, WhileLoop):
+            res = None
+            while _evaluate_expression(statement.while_condition, var_list):
+                for loop_statement in statement.block:
+                    res = _process_statement(loop_statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits)
+                    if res:
+                        break
+                if res == "break":
+                    break
+                if res == "continue":
+                    continue
+
+        # Break statement TODO
+        elif isinstance(statement, BreakStatement):
+            return "break"
+
+        # Continue statement TODO
+        elif isinstance(statement, ContinueStatement):
+            return "continue"
+
         # Custom gate definitions
         elif isinstance(statement, QuantumGateDefinition):
             gate_name = statement.name.name
@@ -453,9 +627,20 @@ def from_qasm3(qasm3: str, directory: str = "") -> Circuit:
             gate_body = statement.body
             custom_gate_definitions[gate_name] = {"args": gate_args, "qubits": gate_qubits, "body": gate_body}
 
+        # Measurements
+        elif isinstance(statement, QuantumMeasurementStatement):
+            qubit_statement = statement.measure.qubit
+            qubits_to_measure = _evaluate_register(qubit_statement, var_list, reg_name_to_start_end)
+            for qubit in qubits_to_measure:
+                gates_to_add.append(M(qubit))
+            if hasattr(statement, "target") and statement.target is not None:
+                raise ValueError("Measurement statements with targets are not currently supported") 
+
         # Otherwise raise an error for now - we can add more statement types later
-        elif not isinstance(statement, (AliasStatement)):
+        elif not isinstance(statement, (AliasStatement, ExpressionStatement)):
             raise ValueError(f"Unsupported statement type: {type(statement)}")
+
+        return ""
 
     # TODO: remove all prints
 
@@ -571,23 +756,24 @@ ctrl @/ negctrl @      🟡               ❌                      ✅          
 inv @                  🟡               ❌                      ✅            7
 pow(k) @               🟡               ❌                      🟡            7
 reset                  ✅               ✅                      ❌
-measure                ✅               ✅                      TODO
-bit operations         🟡               ✅                      TODO          4
-boolean operations     🟡               ✅                      TODO          4
-arithmetic expressions 🟡               🟡                      TODO          4
-comparisons            🟡               ✅                      TODO          4
-if                     ✅               ✅                      TODO          8
-else                   ✅               ✅                      TODO          8
-else if                ✅               ❌                      TODO          8
-for loops              🟡               ❌                      TODO          8
-while loops            ✅               ❌                      TODO          8
-continue               🟡               ❌                      TODO          8
-break                  🟡               ❌                      TODO          8
-return                 ❌               ❌                      TODO
-extern                 ❌               ❌                      TODO?
+measure                ✅               ✅                      🟡
+bit operations         🟡               ✅                      ✅            4
+boolean operations     🟡               ✅                      ✅            4
+arithmetic expressions 🟡               🟡                      ✅            4
+comparisons            🟡               ✅                      ✅            4
+if                     ✅               ✅                      ✅            8
+else                   ✅               ✅                      ✅            8
+else if                ✅               ❌                      ✅            8
+for loops              🟡               ❌                      ✅            8
+switch                 ❌               ❌                      ✅
+while loops            ✅               ❌                      ✅            8
+continue               🟡               ❌                      ✅            8
+break                  🟡               ❌                      ✅            8
+extern                 ❌               ❌                      ❌
 def subroutines        ❌               ❌                      TODO
-input                  ✅               🟡                      TODO?         4, 9
-output                 ❌               ❌                      TODO?
+return                 ❌               ❌                      TODO
+input                  ✅               🟡                      ❌            4, 9
+output                 ❌               ❌                      ❌
 
 1) These OpenQASM 3 program features have no impact on the execution and Qiskit strips
 them out as part of parsing the files. Files that use them can be submitted but they
