@@ -224,38 +224,48 @@ class OpenQasmParser:
     def _handle_standard_functions(
         func_name: str, args_evalled: list
     ) -> list | str | int | float | complex | bool | None:
-        if func_name == "rotl" and isinstance(args_evalled[0], int) and isinstance(args_evalled[1], int):
-            return ((args_evalled[0] << args_evalled[1]) | (args_evalled[0] >> (32 - args_evalled[1]))) % (2**32)
-        if func_name == "rotr" and isinstance(args_evalled[0], int) and isinstance(args_evalled[1], int):
-            return ((args_evalled[0] >> args_evalled[1]) | (args_evalled[0] << (32 - args_evalled[1]))) % (2**32)
-        if func_name == "sin" and isinstance(args_evalled[0], (int, float)):
-            return math.sin(args_evalled[0])
-        if func_name == "cos" and isinstance(args_evalled[0], (int, float)):
-            return math.cos(args_evalled[0])
-        if func_name == "tan" and isinstance(args_evalled[0], (int, float)):
-            return math.tan(args_evalled[0])
-        if func_name == "arcsin" and isinstance(args_evalled[0], (int, float)):
-            return math.asin(args_evalled[0])
-        if func_name == "arccos" and isinstance(args_evalled[0], (int, float)):
-            return math.acos(args_evalled[0])
-        if func_name == "arctan" and isinstance(args_evalled[0], (int, float)):
-            return math.atan(args_evalled[0])
-        if func_name == "mod" and isinstance(args_evalled[0], int) and isinstance(args_evalled[1], int):
-            return args_evalled[0] % args_evalled[1]
-        if func_name == "real" and isinstance(args_evalled[0], (int, float, complex)):
-            return float(args_evalled[0].real)
-        if func_name == "imag" and isinstance(args_evalled[0], (int, float, complex)):
-            return float(args_evalled[0].imag)
-        if func_name == "exp" and isinstance(args_evalled[0], (int, float)):
-            return math.exp(args_evalled[0])
-        if func_name == "log" and isinstance(args_evalled[0], (int, float)):
-            return math.log(args_evalled[0])
-        if func_name == "floor" and isinstance(args_evalled[0], (int, float)):
-            return math.floor(args_evalled[0])
-        if func_name == "ceiling" and isinstance(args_evalled[0], (int, float)):
-            return math.ceil(args_evalled[0])
-        if func_name == "sqrt" and isinstance(args_evalled[0], (int, float)):
-            return math.sqrt(args_evalled[0])
+
+        # With two int arguments
+        if len(args_evalled) >= 2 and isinstance(args_evalled[0], int) and isinstance(args_evalled[1], int):  # noqa: PLR2004
+            if func_name == "rotl":
+                return ((args_evalled[0] << args_evalled[1]) | (args_evalled[0] >> (32 - args_evalled[1]))) % (2**32)
+            if func_name == "rotr":
+                return ((args_evalled[0] >> args_evalled[1]) | (args_evalled[0] << (32 - args_evalled[1]))) % (2**32)
+            if func_name == "mod":
+                return args_evalled[0] % args_evalled[1]
+
+        # One arg, at most a float
+        if len(args_evalled) >= 1 and isinstance(args_evalled[0], (int, float)):
+            if func_name == "sin":
+                return math.sin(args_evalled[0])
+            if func_name == "cos":
+                return math.cos(args_evalled[0])
+            if func_name == "tan":
+                return math.tan(args_evalled[0])
+            if func_name == "arcsin":
+                return math.asin(args_evalled[0])
+            if func_name == "arccos":
+                return math.acos(args_evalled[0])
+            if func_name == "arctan":
+                return math.atan(args_evalled[0])
+            if func_name == "floor":
+                return math.floor(args_evalled[0])
+            if func_name == "ceiling":
+                return math.ceil(args_evalled[0])
+
+        # One arg, at most a complex
+        if len(args_evalled) >= 1 and isinstance(args_evalled[0], (int, float, complex)):
+            if func_name == "real":
+                return float(args_evalled[0].real)
+            if func_name == "imag":
+                return float(args_evalled[0].imag)
+            if func_name == "exp":
+                return math.exp(args_evalled[0])
+            if func_name == "sqrt":
+                return math.sqrt(args_evalled[0])
+            if func_name == "log":
+                return math.log(args_evalled[0])
+
         return None
 
     def _handle_expression_with_op(self, expr: object) -> list | str | int | float | complex | bool:
