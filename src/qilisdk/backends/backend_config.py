@@ -311,18 +311,13 @@ class DigitalMethod(BaseSimulatorConfig):
         """Build the standard statevector simulation configuration.
 
         Args:
-            max_cache_size (int): Maximum number of cached gate
-                representations used by the digital simulator. Defaults
-                to ``1000``.
-            normalize_after_each_gate (bool): Whether to normalize the
-                statevector after each gate application to mitigate
-                numerical errors at the cost of increased runtime.
-                Defaults to ``False``.
-            matrix_free (bool): Whether to use the matrix-free
-                implementation for statevector simulation. Defaults to
-                ``True``.
-            combine_single_qubit_gates (bool): Whether to combine
-                consecutive single-qubit gates into a single operation.
+            max_cache_size (int): Maximum number of cached gate representations used by the digital simulator.
+                Defaults to ``1000``.
+            normalize_after_each_gate (bool): Whether to normalize the statevector after each gate application to
+                mitigate numerical errors at the cost of increased runtime. Defaults to ``False``.
+            matrix_free (bool): Whether to use the matrix-free implementation for statevector simulation.
+                Defaults to ``True``.
+            combine_single_qubit_gates (bool): Whether to combine consecutive single-qubit gates into a single operation.
                 Defaults to ``True``.
 
         Returns:

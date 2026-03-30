@@ -140,10 +140,6 @@ std::map<std::string, int> construct_samples(const DenseMatrix& state, int n_qub
 
     // Only keep measured qubits in the counts
     return  filter_counts(counts, qubits_to_measure);
-    // py::dict samples;
-    // for (const auto& pair : counts) {
-    //     samples[py::cast(pair.first)] = py::cast(pair.second);
-    // }
-    // return samples;
+
 }
 

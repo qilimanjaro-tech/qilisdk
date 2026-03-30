@@ -264,7 +264,7 @@ class ExpectationReadout(ReadoutMethod):
         self._scaled_nqubits = None
         return self
 
-    def scale_observables(self, nqubits: int) -> None:
+    def expand_observables(self, nqubits: int) -> None:
         """Scale each observable to match a given number of qubits.
 
         The conversion is cached: calling this method again with the same
@@ -276,7 +276,7 @@ class ExpectationReadout(ReadoutMethod):
         if self._scaled_nqubits == nqubits:
             return
         self.qtensor_observables = [
-            (o.scale_qtensor(nqubits) if isinstance(o, QTensor) else o.to_qtensor(nqubits)) for o in self.observables
+            (o.expand(nqubits) if isinstance(o, QTensor) else o.to_qtensor(nqubits)) for o in self.observables
         ]
         self._scaled_nqubits = nqubits
 

@@ -423,7 +423,7 @@ class ExpectationReadoutResult(ReadoutResult):
 
     def _init_from_state(self, readout: ExpectationReadout, state: QTensor) -> None:
         self._readout = readout
-        readout.scale_observables(nqubits=state.nqubits)
+        readout.expand_observables(nqubits=state.nqubits)
         self._expected_values = [_real_if_close((expect_val(o, state))) for o in readout.qtensor_observables]
 
     def _init_from_expected_values(

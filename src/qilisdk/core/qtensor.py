@@ -590,7 +590,7 @@ class QTensor:
         mat = csr_matrix(([1.0], ([n], [0])), shape=(N, 1))
         return QTensor(mat)
 
-    def scale_qtensor(self, nqubits: int) -> QTensor:
+    def expand(self, nqubits: int) -> QTensor:
         if self.nqubits == nqubits:
             return copy(self)
         if self.nqubits > nqubits:

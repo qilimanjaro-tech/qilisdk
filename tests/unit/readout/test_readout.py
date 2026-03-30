@@ -77,7 +77,7 @@ class TestExpectationReadout:
 
     def test_scale_observables(self):
         ro = ExpectationReadout(observables=[pauli_z(0)])
-        ro.scale_observables(nqubits=2)
+        ro.expand_observables(nqubits=2)
         assert ro.qtensor_observables[0].shape == (4, 4)
 
     def test_invalid_observable_type_raises(self):

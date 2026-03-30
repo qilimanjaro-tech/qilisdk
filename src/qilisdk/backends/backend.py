@@ -248,18 +248,14 @@ class Backend(ABC):
         cost function is evaluated.
 
         Args:
-            functional (VariationalProgram): Variational
-                program to optimize.
-            readout (list[ReadoutMethod]): Readout specifications forwarded
-                to each inner functional execution.
+            functional (VariationalProgram): Variational program to optimize.
+            readout (list[ReadoutMethod]): Readout specifications forwarded to each inner functional execution.
 
         Returns:
-            VariationalProgramResult: Optimizer output together with the
-                optimal functional execution result.
+            VariationalProgramResult: Optimizer output together with the optimal functional execution result.
 
         Raises:
-            ValueError: If the wrapped functional has no trainable
-                parameters, or if the optimizer fails to find a valid
+            ValueError: If the wrapped functional has no trainable parameters, or if the optimizer fails to find a valid
                 solution within the parameter constraints.
         """
 
@@ -319,10 +315,8 @@ class Backend(ABC):
         Args:
             final_state (QTensor): The final quantum state to sample from.
             readout (SamplingReadout): The sampling readout configuration.
-            seed (int | None): Optional random seed for reproducible
-                sampling. Defaults to ``None``.
-            **kwarg (Any): Additional keyword arguments forwarded to the
-                result constructor.
+            seed (int | None): Optional random seed for reproducible sampling. Defaults to ``None``.
+            **kwarg (Any): Additional keyword arguments forwarded to then result constructor.
 
         Returns:
             SamplingReadoutResult: The constructed sampling result.
@@ -350,7 +344,7 @@ class Backend(ABC):
             ExpectationReadoutResult: The constructed expectation result.
         """
         # Pre-scale on the original so the copy inherits cached qtensor_observables
-        readout.scale_observables(nqubits=final_state.nqubits)
+        readout.expand_observables(nqubits=final_state.nqubits)
         return ExpectationReadoutResult(readout=copy(readout), state=final_state)
 
     @classmethod

@@ -151,13 +151,6 @@ py::object QiliSimCpp::execute_digital_propagation(const py::object& functional,
         sampling(gates, n_qubits, initial_state_cpp, noise_model_cpp, state_dense, config);
     }
 
-    // Convert counts to samples dict
-    // py::dict samples;
-    // for (const auto& pair : counts) {
-    //     samples[py::cast(pair.first)] = py::cast(pair.second);
-    // }
-
-
 
     // Construct the result object
     py::object result = construct_result_object(state_dense, readout, noise_model_cpp, n_qubits, config, qubits_to_measure);
