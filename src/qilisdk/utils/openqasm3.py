@@ -220,99 +220,45 @@ class OpenQasmParser:
         # Otherwise, just return the string
         return return_str
 
-    def _evaluate_expression(self, expr: object) -> list | str | int | float | complex | bool:
+    @staticmethod
+    def _handle_standard_functions(
+        func_name: str, args_evalled: list
+    ) -> list | str | int | float | complex | bool | None:
+        if func_name == "rotl" and isinstance(args_evalled[0], int) and isinstance(args_evalled[1], int):
+            return ((args_evalled[0] << args_evalled[1]) | (args_evalled[0] >> (32 - args_evalled[1]))) % (2**32)
+        if func_name == "rotr" and isinstance(args_evalled[0], int) and isinstance(args_evalled[1], int):
+            return ((args_evalled[0] >> args_evalled[1]) | (args_evalled[0] << (32 - args_evalled[1]))) % (2**32)
+        if func_name == "sin" and isinstance(args_evalled[0], (int, float)):
+            return math.sin(args_evalled[0])
+        if func_name == "cos" and isinstance(args_evalled[0], (int, float)):
+            return math.cos(args_evalled[0])
+        if func_name == "tan" and isinstance(args_evalled[0], (int, float)):
+            return math.tan(args_evalled[0])
+        if func_name == "arcsin" and isinstance(args_evalled[0], (int, float)):
+            return math.asin(args_evalled[0])
+        if func_name == "arccos" and isinstance(args_evalled[0], (int, float)):
+            return math.acos(args_evalled[0])
+        if func_name == "arctan" and isinstance(args_evalled[0], (int, float)):
+            return math.atan(args_evalled[0])
+        if func_name == "mod" and isinstance(args_evalled[0], int) and isinstance(args_evalled[1], int):
+            return args_evalled[0] % args_evalled[1]
+        if func_name == "real" and isinstance(args_evalled[0], (int, float, complex)):
+            return float(args_evalled[0].real)
+        if func_name == "imag" and isinstance(args_evalled[0], (int, float, complex)):
+            return float(args_evalled[0].imag)
+        if func_name == "exp" and isinstance(args_evalled[0], (int, float)):
+            return math.exp(args_evalled[0])
+        if func_name == "log" and isinstance(args_evalled[0], (int, float)):
+            return math.log(args_evalled[0])
+        if func_name == "floor" and isinstance(args_evalled[0], (int, float)):
+            return math.floor(args_evalled[0])
+        if func_name == "ceiling" and isinstance(args_evalled[0], (int, float)):
+            return math.ceil(args_evalled[0])
+        if func_name == "sqrt" and isinstance(args_evalled[0], (int, float)):
+            return math.sqrt(args_evalled[0])
+        return None
 
-        # If it's a list, evaluate each element
-        if isinstance(expr, list):
-            return [self._evaluate_expression(element) for element in expr]
-
-        # If it's a function call
-        if isinstance(expr, FunctionCall):
-            func_name = expr.name.name
-            args_evalled = [self._evaluate_expression(arg) for arg in expr.arguments]
-
-            # Standard functions
-            if func_name == "rotl" and isinstance(args_evalled[0], int) and isinstance(args_evalled[1], int):
-                return ((args_evalled[0] << args_evalled[1]) | (args_evalled[0] >> (32 - args_evalled[1]))) % (2**32)
-            if func_name == "rotr" and isinstance(args_evalled[0], int) and isinstance(args_evalled[1], int):
-                return ((args_evalled[0] >> args_evalled[1]) | (args_evalled[0] << (32 - args_evalled[1]))) % (2**32)
-            if func_name == "sin" and isinstance(args_evalled[0], (int, float)):
-                return math.sin(args_evalled[0])
-            if func_name == "cos" and isinstance(args_evalled[0], (int, float)):
-                return math.cos(args_evalled[0])
-            if func_name == "tan" and isinstance(args_evalled[0], (int, float)):
-                return math.tan(args_evalled[0])
-            if func_name == "arcsin" and isinstance(args_evalled[0], (int, float)):
-                return math.asin(args_evalled[0])
-            if func_name == "arccos" and isinstance(args_evalled[0], (int, float)):
-                return math.acos(args_evalled[0])
-            if func_name == "arctan" and isinstance(args_evalled[0], (int, float)):
-                return math.atan(args_evalled[0])
-            if func_name == "mod" and isinstance(args_evalled[0], int) and isinstance(args_evalled[1], int):
-                return args_evalled[0] % args_evalled[1]
-            if func_name == "real" and isinstance(args_evalled[0], (int, float, complex)):
-                return float(args_evalled[0].real)
-            if func_name == "imag" and isinstance(args_evalled[0], (int, float, complex)):
-                return float(args_evalled[0].imag)
-            if func_name == "exp" and isinstance(args_evalled[0], (int, float)):
-                return math.exp(args_evalled[0])
-            if func_name == "log" and isinstance(args_evalled[0], (int, float)):
-                return math.log(args_evalled[0])
-            if func_name == "floor" and isinstance(args_evalled[0], (int, float)):
-                return math.floor(args_evalled[0])
-            if func_name == "ceiling" and isinstance(args_evalled[0], (int, float)):
-                return math.ceil(args_evalled[0])
-            if func_name == "sqrt" and isinstance(args_evalled[0], (int, float)):
-                return math.sqrt(args_evalled[0])
-
-            # Custom functions
-            if func_name in self.subroutine_definitions:
-                func_def = self.subroutine_definitions[func_name]
-                replacement_map = {}
-                for actual_arg in expr.arguments:
-                    arg_name_in_body = func_def["args"][expr.arguments.index(actual_arg)]
-                    if isinstance(actual_arg, (IndexExpression)):
-                        replacement_map[arg_name_in_body] = actual_arg
-                    else:
-                        replacement_map[arg_name_in_body] = self._evaluate_expression(actual_arg)
-                for func_statement in func_def["body"]:
-                    res = self._process_statement(self._recursive_replace(func_statement, replacement_map))
-                    if res:
-                        return self._parse_return_val(res)
-                return 0
-
-            raise ValueError(f"Unsupported function: {func_name}")
-
-        # Scale by the unit if we have it
-        value_with_unit = None
-        if hasattr(expr, "value") and expr.value is not None and isinstance(expr.value, (int, float, complex)):
-            value_with_unit = expr.value
-            if hasattr(expr, "unit") and expr.unit is not None:
-                if expr.unit == TimeUnit["ns"]:
-                    value_with_unit *= 1e-9
-                elif expr.unit == TimeUnit["us"]:
-                    value_with_unit *= 1e-6
-                elif expr.unit == TimeUnit["ms"]:
-                    value_with_unit *= 1e-3
-                elif expr.unit != TimeUnit["s"]:
-                    raise ValueError(f"Unsupported time unit: {expr.unit}")  # pragma: no cover
-
-        # If it's an imaginary literal
-        if isinstance(expr, ImaginaryLiteral) and value_with_unit is not None:
-            return 1j * value_with_unit
-
-        # If we have a value, perfect
-        if value_with_unit is not None:
-            return value_with_unit
-
-        # If it's a variable
-        if hasattr(expr, "name"):
-            var_name = expr.name
-            if isinstance(var_name, str) and var_name in self.var_list:
-                return self.var_list[var_name]["value"]
-            raise ValueError(f"Undefined variable: {var_name}")
-
-        # If it's an operation, recurse
+    def _handle_expression_with_op(self, expr: object) -> list | str | int | float | complex | bool:
         if hasattr(expr, "op"):
             if hasattr(expr, "lhs") and hasattr(expr, "rhs"):
                 lhs = self._evaluate_expression(expr.lhs)
@@ -378,21 +324,93 @@ class OpenQasmParser:
                     if expr.op == UnaryOperator["!"]:
                         return not expr_val
             raise ValueError(f"Unsupported operator: {expr.op}")  # pragma: no cover
+        raise ValueError("Expression does not have an operator")  # pragma: no cover
+
+    @staticmethod
+    def _handle_cast(expr: Cast, value_to_cast: object) -> list | str | int | float | complex | bool:
+        if isinstance(expr.type, (UintType, IntType, BitType)) and isinstance(value_to_cast, (int, float)):
+            return int(value_to_cast) % (2**32)
+        if isinstance(expr.type, (FloatType, AngleType, DurationType, StretchType)) and isinstance(
+            value_to_cast, (int, float)
+        ):
+            return float(value_to_cast)
+        if isinstance(expr.type, ComplexType) and isinstance(value_to_cast, (int, float, complex)):
+            return complex(value_to_cast)
+        if isinstance(expr.type, BoolType) and isinstance(value_to_cast, (str, int, float, complex, bool)):
+            return bool(value_to_cast)
+        raise ValueError(f"Unsupported cast type: {expr.type}")  # pragma: no cover
+
+    def _evaluate_expression(self, expr: object) -> list | str | int | float | complex | bool:
+
+        # If it's a list, evaluate each element
+        if isinstance(expr, list):
+            return [self._evaluate_expression(element) for element in expr]
+
+        # If it's a function call
+        if isinstance(expr, FunctionCall):
+            func_name = expr.name.name
+            args_evalled = [self._evaluate_expression(arg) for arg in expr.arguments]
+
+            # Standard functions
+            standard_func_result = self._handle_standard_functions(func_name, args_evalled)
+            if standard_func_result is not None:
+                return standard_func_result
+
+            # Custom functions
+            if func_name in self.subroutine_definitions:
+                func_def = self.subroutine_definitions[func_name]
+                replacement_map = {}
+                for actual_arg in expr.arguments:
+                    arg_name_in_body = func_def["args"][expr.arguments.index(actual_arg)]
+                    if isinstance(actual_arg, (IndexExpression)):
+                        replacement_map[arg_name_in_body] = actual_arg
+                    else:
+                        replacement_map[arg_name_in_body] = self._evaluate_expression(actual_arg)
+                for func_statement in func_def["body"]:
+                    res = self._process_statement(self._recursive_replace(func_statement, replacement_map))
+                    if res:
+                        return self._parse_return_val(res)
+                return 0
+
+            raise ValueError(f"Unsupported function: {func_name}")
+
+        # Scale by the unit if we have it
+        value_with_unit = None
+        if hasattr(expr, "value") and expr.value is not None and isinstance(expr.value, (int, float, complex)):
+            value_with_unit = expr.value
+            if hasattr(expr, "unit") and expr.unit is not None:
+                if expr.unit == TimeUnit["ns"]:
+                    value_with_unit *= 1e-9
+                elif expr.unit == TimeUnit["us"]:
+                    value_with_unit *= 1e-6
+                elif expr.unit == TimeUnit["ms"]:
+                    value_with_unit *= 1e-3
+                elif expr.unit != TimeUnit["s"]:
+                    raise ValueError(f"Unsupported time unit: {expr.unit}")  # pragma: no cover
+
+        # If it's an imaginary literal
+        if isinstance(expr, ImaginaryLiteral) and value_with_unit is not None:
+            return 1j * value_with_unit
+
+        # If we have a value, perfect
+        if value_with_unit is not None:
+            return value_with_unit
+
+        # If it's a variable
+        if hasattr(expr, "name"):
+            var_name = expr.name
+            if isinstance(var_name, str) and var_name in self.var_list:
+                return self.var_list[var_name]["value"]
+            raise ValueError(f"Undefined variable: {var_name}")
+
+        # If it's an operation, recurse
+        if hasattr(expr, "op"):
+            return self._handle_expression_with_op(expr)
 
         # If it's a cast
         if isinstance(expr, Cast):
             value_to_cast = self._evaluate_expression(expr.argument)
-            if isinstance(expr.type, (UintType, IntType, BitType)) and isinstance(value_to_cast, (int, float)):
-                return int(value_to_cast) % (2**32)
-            if isinstance(expr.type, (FloatType, AngleType, DurationType, StretchType)) and isinstance(
-                value_to_cast, (int, float)
-            ):
-                return float(value_to_cast)
-            if isinstance(expr.type, ComplexType) and isinstance(value_to_cast, (int, float, complex)):
-                return complex(value_to_cast)
-            if isinstance(expr.type, BoolType) and isinstance(value_to_cast, (str, int, float, complex, bool)):
-                return bool(value_to_cast)
-            raise ValueError(f"Unsupported cast type: {expr.type}")  # pragma: no cover
+            return self._handle_cast(expr, value_to_cast)
 
         # If it's an array literal
         if hasattr(expr, "values") and expr.values is not None and isinstance(expr.values, list):
@@ -477,8 +495,35 @@ class OpenQasmParser:
         raise ValueError(f"Unsupported qubit specification: {qb}")  # pragma: no cover
 
     @staticmethod
+    def _str_to_gate(gate_name: str, qubit: int, arguments: list[float]) -> Gate:
+        if gate_name == "x":
+            return X(qubit)
+        if gate_name == "y":
+            return Y(qubit)
+        if gate_name == "z":
+            return Z(qubit)
+        if gate_name == "h":
+            return H(qubit)
+        if gate_name == "s":
+            return S(qubit)
+        if gate_name == "t":
+            return T(qubit)
+        if gate_name == "rx":
+            return RX(qubit, theta=arguments[0])
+        if gate_name == "ry":
+            return RY(qubit, theta=arguments[0])
+        if gate_name == "rz":
+            return RZ(qubit, phi=arguments[0])
+        if gate_name == "u1":
+            return U1(qubit, phi=arguments[0])
+        if gate_name == "u2":
+            return U2(qubit, phi=arguments[0], gamma=arguments[1])
+        if gate_name in {"u", "u3"}:
+            return U3(qubit, theta=arguments[0], phi=arguments[1], gamma=arguments[2])
+        raise ValueError(f"Unsupported gate: {gate_name}")  # pragma: no cover
+
     def _to_qilisdk_gate(
-        gate_name: str, qubits: list, arguments: list[float] = [], modifiers: list[str] = []
+        self, gate_name: str, qubits: list, arguments: list[float] = [], modifiers: list[str] = []
     ) -> list[Gate]:
 
         # Process the gate info
@@ -491,48 +536,13 @@ class OpenQasmParser:
         qubits_without_controls = qubits[num_controls_total:]
 
         # The gate itself
-        if gate_name == "x":
-            for qubit in qubits_without_controls:
-                gates_to_return.append(X(qubit))
-        elif gate_name == "y":
-            for qubit in qubits_without_controls:
-                gates_to_return.append(Y(qubit))
-        elif gate_name == "z":
-            for qubit in qubits_without_controls:
-                gates_to_return.append(Z(qubit))
-        elif gate_name == "h":
-            for qubit in qubits_without_controls:
-                gates_to_return.append(H(qubit))
-        elif gate_name == "s":
-            for qubit in qubits_without_controls:
-                gates_to_return.append(S(qubit))
-        elif gate_name == "t":
-            for qubit in qubits_without_controls:
-                gates_to_return.append(T(qubit))
-        elif gate_name == "rx":
-            for qubit in qubits_without_controls:
-                gates_to_return.append(RX(qubit, theta=arguments[0]))
-        elif gate_name == "ry":
-            for qubit in qubits_without_controls:
-                gates_to_return.append(RY(qubit, theta=arguments[0]))
-        elif gate_name == "rz":
-            for qubit in qubits_without_controls:
-                gates_to_return.append(RZ(qubit, phi=arguments[0]))
-        elif gate_name == "u1":
-            for qubit in qubits_without_controls:
-                gates_to_return.append(U1(qubit, phi=arguments[0]))
-        elif gate_name == "u2":
-            for qubit in qubits_without_controls:
-                gates_to_return.append(U2(qubit, phi=arguments[0], gamma=arguments[1]))
-        elif gate_name in {"u", "u3"}:
-            for qubit in qubits_without_controls:
-                gates_to_return.append(U3(qubit, theta=arguments[0], phi=arguments[1], gamma=arguments[2]))
-        elif gate_name == "cx":
+        if gate_name == "cx":
             gates_to_return.append(CNOT(*qubits_without_controls))
         elif gate_name == "cz":
             gates_to_return.append(CZ(*qubits_without_controls))
         else:
-            raise ValueError(f"Unsupported gate: {gate_name}")  # pragma: no cover
+            for qubit in qubits_without_controls:
+                gates_to_return.append(self._str_to_gate(gate_name, qubit, arguments))
 
         # Add controls if we have them
         main_gates = copy(gates_to_return)
@@ -997,6 +1007,7 @@ class OpenQasmParser:
 
         return c
 
+    @staticmethod
     def to_qasm3(circuit: Circuit) -> str:
         qasm3 = "OPENQASM 3.0;\n"
         qasm3 += 'include "stdgates.inc";\n'
