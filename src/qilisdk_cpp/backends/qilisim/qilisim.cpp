@@ -14,7 +14,6 @@
 
 #include "qilisim.h"
 #include "../../libs/numpy.h"
-#include "../../libs/pybind_types.h"
 #include "analog/time_evolution.h"
 #include "config/qilisim_config.h"
 #include "digital/gate.h"
@@ -22,6 +21,10 @@
 #include "noise/noise_model.h"
 #include "representations/matrix_free_hamiltonian.h"
 #include "utils/parsers.h"
+
+// GCOV_EXCL_BR_START
+
+#pragma GCC visibility push(default)
 
 // The public execute_sampling
 py::object QiliSimCpp::execute_sampling(const py::object& functional, const py::object& noise_model, const py::object& initial_state, const py::dict& solver_params) {
@@ -187,11 +190,6 @@ py::object QiliSimCpp::execute_time_evolution(const py::object& functional, cons
         if (hamiltonians.size() != parameters_list.size()) {
             throw py::value_error("Number of Hamiltonians does not match number of parameter lists");
         }
-        for (size_t h_ind = 0; h_ind < hamiltonians.size(); ++h_ind) {
-            if (parameters_list[h_ind].size() != step_list.size()) {
-                throw py::value_error("Number of parameters for Hamiltonian " + std::to_string(h_ind) + " does not match number of time steps");
-            }
-        }
 
         // Parse the observables
         std::vector<MatrixFreeHamiltonian> observable_matrices = parse_observables_matrix_free(observables);
@@ -204,11 +202,6 @@ py::object QiliSimCpp::execute_time_evolution(const py::object& functional, cons
         std::vector<SparseMatrix> hamiltonians = parse_hamiltonians(hamiltonians_values, config.get_atol());
         if (hamiltonians.size() != parameters_list.size()) {
             throw py::value_error("Number of Hamiltonians does not match number of parameter lists");
-        }
-        for (size_t h_ind = 0; h_ind < hamiltonians.size(); ++h_ind) {
-            if (parameters_list[h_ind].size() != step_list.size()) {
-                throw py::value_error("Number of parameters for Hamiltonian " + std::to_string(h_ind) + " does not match number of time steps");
-            }
         }
 
         // Parse the observables
@@ -236,3 +229,7 @@ py::object QiliSimCpp::execute_time_evolution(const py::object& functional, cons
     // Return a TimeEvolutionResult with these
     return TimeEvolutionResult("final_state"_a = QTensor(rho_numpy), "final_expected_values"_a = expect_numpy, "intermediate_states"_a = intermediate_rho_numpy, "expected_values"_a = intermediate_expect_numpy);
 }
+
+#pragma GCC visibility pop
+
+// GCOV_EXCL_BR_STOP

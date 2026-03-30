@@ -9,6 +9,12 @@ wheels/
 # C++ stuff
 *.so
 *.o
+test_cpp
+*.gcda
+*.gcno
+coverage/
+coverage*.info
+scripts/*.log
 
 # Virtual environments
 .venv

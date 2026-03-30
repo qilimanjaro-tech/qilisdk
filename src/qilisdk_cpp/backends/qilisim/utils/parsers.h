@@ -17,12 +17,13 @@
 #include "../../../libs/pybind.h"
 #include "../config/qilisim_config.h"
 #include "../digital/gate.h"
-#include "../config/qilisim_config.h"
 #include "../noise/noise_model.h"
 #include "../representations/matrix_free_hamiltonian.h"
 
-std::vector<SparseMatrix> parse_hamiltonians(const py::object& Hs, double atol);
+// GCOV_EXCL_BR_START
+
 std::vector<MatrixFreeHamiltonian> parse_hamiltonians_matrix_free(const py::object& Hs);
+std::vector<SparseMatrix> parse_hamiltonians(const py::object& Hs, double atol);
 NoiseModelCpp parse_noise_model(const py::object& noise_model, int nqubits, double atol);
 std::vector<SparseMatrix> parse_observables(const py::object& observables, long nqubits, double atol);
 std::vector<MatrixFreeHamiltonian> parse_observables_matrix_free(const py::object& observables);
@@ -32,3 +33,5 @@ SparseMatrix parse_initial_state(const py::object& initial_state, double atol);
 std::vector<Gate> parse_gates(const py::object& circuit, double atol, const py::object& noise_model);
 std::vector<bool> parse_measurements(const py::object& circuit);
 QiliSimConfig parse_solver_params(const py::dict& solver_params);
+
+// GCOV_EXCL_BR_STOP

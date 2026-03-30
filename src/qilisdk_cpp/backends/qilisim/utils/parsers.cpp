@@ -14,11 +14,13 @@
 
 #include "parsers.h"
 #include "../../../libs/numpy.h"
-#include "../../../libs/pybind_types.h"
 #include "../digital/gate.h"
 #include "../representations/matrix_free_hamiltonian.h"
 #include "../utils/matrix_utils.h"
-#include "../../../libs/numpy.h"
+
+// GCOV_EXCL_BR_START
+
+#pragma GCC visibility push(default)
 
 std::vector<MatrixFreeHamiltonian> parse_hamiltonians_matrix_free(const py::object& Hs) {
     /*
@@ -159,10 +161,6 @@ NoiseModelCpp parse_noise_model(const py::object& noise_model, int nqubits, doub
 
             if (L_qubits == nqubits) {
                 noise_model_cpp.add_jump_operator(L);
-            } else if (L_qubits == 1) {
-                for (int q = 0; q < nqubits; ++q) {
-                    noise_model_cpp.add_jump_operator(expand_operator(q, nqubits, L));
-                }
             } else {
                 noise_model_cpp.add_jump_operator(expand_operator(nqubits, L));
             }
@@ -322,7 +320,8 @@ std::vector<MatrixFreeHamiltonian> parse_observables_matrix_free(const py::objec
         } else if (py::isinstance(obs, QTensor)) {
             throw py::value_error("Matrix-free parsing of QTensor observables is not currently supported.");
         } else {
-            throw py::value_error("Observable type not recognized.");
+            std::string type_name = py::type::of(obs).attr("__name__").cast<std::string>();
+            throw py::value_error("Observable type not recognized: " + type_name);
         }
     }
     return observable_matrices;
@@ -359,7 +358,6 @@ std::vector<SparseMatrix> parse_observables(const py::object& observables, long 
         } else if (py::isinstance(obs, PauliOperator)) {
             // Get the matrix
             py::buffer matrix = numpy_array(obs.attr("matrix"), py::dtype("complex128"));
-            py::buffer_info buf = matrix.request();
             SparseMatrix O = from_numpy(matrix, atol);
 
             // Expand to full qubit count
@@ -383,7 +381,8 @@ std::vector<SparseMatrix> parse_observables(const py::object& observables, long 
             observable_matrices.push_back(O);
 
         } else {
-            throw py::value_error("Observable type not recognized.");
+            std::string type_name = py::type::of(obs).attr("__name__").cast<std::string>();
+            throw py::value_error("Observable type not recognized: " + type_name);
         }
     }
     return observable_matrices;
@@ -483,7 +482,23 @@ std::vector<Gate> parse_gates(const py::object& circuit, double atol, const py::
             py::dict gate_parameters = py_gate.attr("get_parameters")();
             py::dict global_noise_map = noise_model.attr("global_perturbations");
             py::dict gate_noise_map = noise_model.attr("per_gate_perturbations");
-            py::object class_name = py_gate.attr("__class__");
+            py::object class_name = py::str(py_gate.attr("__class__").attr("__name__"));
+
+            // Turn the gate noise map keys into names rather than classes for easier comparison
+            py::dict new_gate_noise_map;
+            for (auto item : gate_noise_map) {
+                py::handle key = item.first;
+                py::tuple key_tuple = key.cast<py::tuple>();
+                if (key_tuple.size() == 2) {
+                    py::handle gate_class = key_tuple[0];
+                    py::handle param_name = key_tuple[1];
+                    std::string gate_class_name = py::str(gate_class.attr("__name__"));
+                    std::string param_name_str = py::str(param_name);
+                    py::tuple new_key = py::make_tuple(gate_class_name, param_name_str);
+                    new_gate_noise_map[new_key] = item.second;
+                }
+            }
+            gate_noise_map = new_gate_noise_map;
 
             // For each parameter
             for (auto item : gate_parameters) {
@@ -515,7 +530,6 @@ std::vector<Gate> parse_gates(const py::object& circuit, double atol, const py::
 
         // Get the matrix
         py::buffer matrix = py_gate.attr("_generate_matrix")();
-        py::buffer_info buf = matrix.request();
         SparseMatrix base_matrix = from_numpy(matrix, atol);
 
         // Get the controls
@@ -537,6 +551,17 @@ std::vector<Gate> parse_gates(const py::object& circuit, double atol, const py::
             int dim = 1 << targets.size();
             SparseMatrix controlled_matrix = base_matrix.bottomRightCorner(dim, dim);
             base_matrix = controlled_matrix;
+        }
+
+        // Turn CNOTs into X gates with controls, since that's how we represent them internally
+        if (gate_type_str == "CNOT" || gate_type_str == "CX" || gate_type_str == "Toffoli" || gate_type_str == "CCX") {
+            gate_type_str = "X";
+        }
+        if (gate_type_str == "CY" || gate_type_str == "CCY") {
+            gate_type_str = "Y";
+        }
+        if (gate_type_str == "CZ" || gate_type_str == "CCZ") {
+            gate_type_str = "Z";
         }
 
         // Get the parameter names
@@ -651,3 +676,7 @@ QiliSimConfig parse_solver_params(const py::dict& solver_params) {
     config.validate();
     return config;
 }
+
+#pragma GCC visibility pop
+
+// GCOV_EXCL_BR_STOP

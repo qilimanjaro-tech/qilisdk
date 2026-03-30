@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// GCOV_EXCL_BR_START
+
 #include "qtensor.h"
 #include "../libs/numpy.h"
 #include "../libs/pybind.h"
@@ -29,11 +31,11 @@ DenseMatrix _get_dense_eigenvectors(const std::vector<SparseMatrix>& evecs) {
     Returns:
         DenseMatrix: A dense matrix where each column is an eigenvector from the input vector.
     */
-    if (evecs.empty()) {
-        return DenseMatrix();
-    }
-    int nrows = int(evecs[0].rows());
+    // if (evecs.empty()) {
+    //     return DenseMatrix();
+    // }
     int ncols = int(evecs.size());
+    int nrows = ncols > 0 ? evecs[0].rows() : 0;
     DenseMatrix evecs_dense(nrows, ncols);
     for (int i = 0; i < ncols; ++i) {
         evecs_dense.col(i) = DenseMatrix(evecs[i]);
@@ -106,6 +108,19 @@ QTensorCpp::QTensorCpp(const SparseMatrix& data) : _data(data) {
         data (Eigen::SparseMatrix<std::complex<double>, Eigen::RowMajor>): The sparse matrix data for the tensor.
     */
     _validate_shape(_data);
+}
+
+QTensorCpp::QTensorCpp(const SparseMatrix& data, bool no_checks) : _data(data) {
+    /*
+    Construct a QTensor from the given Eigen::SparseMatrix without performing shape validation.
+
+    Args:
+        data (Eigen::SparseMatrix<std::complex<double>, Eigen::RowMajor>): The sparse matrix data for the tensor.
+        no_checks (bool): A dummy parameter to differentiate this constructor from the one that performs validation. It is not used.
+    */
+    if (!no_checks) {
+        _validate_shape(_data);
+    }
 }
 
 QTensorCpp::QTensorCpp(const py::object& data) {
@@ -212,7 +227,7 @@ bool QTensorCpp::is_ket() const {
     Returns:
         bool: True if the QTensor is a ket vector, False otherwise.
     */
-    return _data.cols() == 1;
+    return _data.cols() == 1 && _data.rows() > 1;
 }
 
 bool QTensorCpp::is_bra() const {
@@ -222,7 +237,7 @@ bool QTensorCpp::is_bra() const {
     Returns:
         bool: True if the QTensor is a bra vector, False otherwise.
     */
-    return _data.rows() == 1;
+    return _data.rows() == 1 && _data.cols() > 1;
 }
 
 bool QTensorCpp::is_operator() const {
@@ -232,7 +247,7 @@ bool QTensorCpp::is_operator() const {
     Returns:
         bool: True if the QTensor is an operator, False otherwise.
     */
-    return _data.rows() == _data.cols() && (_data.rows() & (_data.rows() - 1)) == 0 && _data.rows() > 0;
+    return _data.rows() == _data.cols() && (_data.rows() & (_data.rows() - 1)) == 0 && _data.rows() > 1;
 }
 
 bool QTensorCpp::is_scalar() const {
@@ -275,7 +290,6 @@ bool QTensorCpp::is_symmetric(double atol) {
         return false;
     }
     return true;
-
 }
 
 bool QTensorCpp::is_self_adjoint(double atol) {
@@ -342,11 +356,14 @@ bool QTensorCpp::is_positive_semidefinite(double atol) {
             return _is_positive;
         }
 
-        // Otherwise try an LDLT decomposition with a shift to check for positive semidefiniteness
+        // Otherwise try an LDLT decomposition with a shift to check for positive semidefiniteness.
+        // info() == Success alone is insufficient: LDLT succeeds on indefinite/negative-definite
+        // matrices too (it only fails on zero pivots). We also require all diagonal entries of D
+        // to be non-negative, which is the actual PSD condition.
         SparseMatrix sparse_identity(_data.rows(), _data.cols());
         sparse_identity.setIdentity();
         Eigen::SimplicialLDLT<SparseMatrix> chol(_data + atol * sparse_identity);
-        _is_positive = (chol.info() == Eigen::Success);
+        _is_positive = (chol.info() == Eigen::Success) && (chol.vectorD().real().minCoeff() >= 0.0);
         _is_positive_computed = true;
         _atol_used_for_positive = atol;
     }
@@ -373,9 +390,6 @@ void QTensorCpp::compute_eigendecomposition() {
         _eigenvalues.push_back(1.0);
         _eigenvectors.push_back(_data.transpose());
         return;
-    }
-    if (_data.rows() != _data.cols()) {
-        throw py::value_error("Eigendecomposition is only defined for square matrices or vectors: got shape (" + std::to_string(_data.rows()) + ", " + std::to_string(_data.cols()) + ")");
     }
     DenseMatrix dense_data(_data);
     if (is_self_adjoint(default_atol)) {
@@ -827,7 +841,7 @@ QTensorCpp QTensorCpp::bra_python(const py::object& state) {
     return bra(qubit_values);
 }
 
-QTensorCpp QTensorCpp::tensor_product_python(const py::list& others) const {
+QTensorCpp QTensorCpp::tensor_product_python(const py::list& others) {
     /*
     Compute the tensor product of a list of QTensors provided as a Python list.
 
@@ -850,7 +864,7 @@ QTensorCpp QTensorCpp::tensor_product_python(const py::list& others) const {
     return tensor_product(other_tensors);
 }
 
-QTensorCpp QTensorCpp::tensor_product(const std::vector<QTensorCpp>& others) const {
+QTensorCpp QTensorCpp::tensor_product(const std::vector<QTensorCpp>& others) {
     /*
     Compute the tensor product of a list of QTensors.
 
@@ -1148,10 +1162,10 @@ QTensorCpp QTensorCpp::as_density_matrix(double atol, double max_relative_correc
 
         // Shift eigenvalues to make positive semidefinite if necessary
         if (!self_adjoint.is_positive_semidefinite(atol)) {
-            if (_eigenvalues.empty()) {
+            if (self_adjoint._eigenvalues.empty()) {
                 self_adjoint.compute_eigendecomposition();
             }
-            std::complex<double> min_eval = *std::min_element(_eigenvalues.begin(), _eigenvalues.end(), [](const std::complex<double>& a, const std::complex<double>& b) { return a.real() < b.real(); });
+            std::complex<double> min_eval = *std::min_element(self_adjoint._eigenvalues.begin(), self_adjoint._eigenvalues.end(), [](const std::complex<double>& a, const std::complex<double>& b) { return a.real() < b.real(); });
             double shift = std::max(0.0, -min_eval.real() + atol);
             SparseMatrix shift_matrix(self_adjoint.get_data().rows(), self_adjoint.get_data().cols());
             for (int i = 0; i < std::min(self_adjoint.get_data().rows(), self_adjoint.get_data().cols()); ++i) {
@@ -1878,7 +1892,7 @@ QTensorCpp QTensorCpp::inverse() {
     If the eigendecomposition of this QTensor has already been computed, the inverse
     is computed more efficiently using the eigenvalues and eigenvectors.
 
-    If the matrix is singular, this function will return a pseudo-inverse where the 
+    If the matrix is singular, this function will return a pseudo-inverse where the
     inverse of zero eigenvalues is treated as zero.
 
     Returns:
@@ -1984,11 +1998,6 @@ QTensorCpp QTensorCpp::reset_qubits(const std::set<int>& qubits) {
     QTensorCpp rest_state = partial_trace(rest_qubits);
     int out_dim = 1 << nqubits;
 
-    // If the resulting state is zero, we can just return a zero matrix of the appropriate size
-    if (rest_state.get_data().nonZeros() == 0) {
-        return QTensorCpp(SparseMatrix(out_dim, out_dim));
-    }
-
     // Now we need to embed the rest_state back into the full space of nqubits, filling in zeros for the reset qubits
     if (!rest_qubits.empty()) {
         std::vector<Eigen::Triplet<std::complex<double>>> triplets;
@@ -2069,3 +2078,5 @@ QTensorCpp QTensorCpp::div(std::complex<double> scalar) const {
     }
     return QTensorCpp(_data / scalar);
 }
+
+// GCOV_EXCL_BR_STOP

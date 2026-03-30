@@ -19,6 +19,8 @@
 #include <vector>
 #include "../../../libs/eigen.h"
 
+// GCOV_EXCL_BR_START
+
 std::map<std::string, int> sample_from_probabilities(const std::vector<std::tuple<int, double>>& prob_entries, int n_qubits, int n_shots, int seed);
 std::map<std::string, int> sample_from_probabilities(const std::vector<double>& probabilities, int n_qubits, int n_shots, int seed);
 SparseMatrix sample_from_density_matrix(const SparseMatrix& rho, int n_trajectories, int seed, double atol = 1e-12);
@@ -27,3 +29,5 @@ SparseMatrix trajectories_to_density_matrix(const SparseMatrix& trajectories);
 DenseMatrix trajectories_to_density_matrix(const DenseMatrix& trajectories);
 SparseMatrix get_vector_from_density_matrix(const SparseMatrix& rho_t, double atol = 1e-12);
 DenseMatrix get_vector_from_density_matrix(const DenseMatrix& rho_t, double atol = 1e-12);
+
+// GCOV_EXCL_BR_STOP

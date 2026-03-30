@@ -92,6 +92,7 @@ dev = [
     "towncrier>=25.8.0",
     "loguru-caplog>=0.2.0",
     "pytest-cov>=7.0.0",
+    "gcovr>=8.6",
     "ty>=0.0.20",
 ]
 docs = [
@@ -159,9 +160,8 @@ exclude = [
 
 [tool.scikit-build]
 cmake.args = ["-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON"]
-# cmake.build-type = "Debug"
 cmake.build-type = "Release"
-cmake.define.qilisim = "ON"
+editable.verbose = false
 
 [tool.scikit-build.wheel]
 packages = ["src/qilisdk"]

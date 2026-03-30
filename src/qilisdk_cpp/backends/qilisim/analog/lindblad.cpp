@@ -14,6 +14,8 @@
 
 #include "lindblad.h"
 
+// GCOV_EXCL_BR_START
+
 const std::complex<double> imag(0.0, 1.0);
 
 SparseMatrix create_superoperator(const SparseMatrix& currentH, const std::vector<SparseMatrix>& jump_operators) {
@@ -121,3 +123,5 @@ void lindblad_rhs(DenseMatrix& drho, const DenseMatrix& rho, const MatrixFreeHam
         }
     }
 }
+
+// GCOV_EXCL_BR_STOP

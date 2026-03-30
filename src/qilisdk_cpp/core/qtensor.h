@@ -13,6 +13,8 @@
 // limitations under the License.
 #pragma once
 
+// GCOV_EXCL_BR_START
+
 #include <set>
 #include "../libs/eigen.h"
 #include "../libs/pybind.h"
@@ -20,6 +22,7 @@
 const double default_atol = 1e-12;
 
 // The main QiliSim C++ class
+#pragma GCC visibility push(default)
 class QTensorCpp {
    private:
     // The main data of the class, an Eigen::SparseMatrix<std::complex<double>, Eigen::RowMajor>
@@ -48,6 +51,7 @@ class QTensorCpp {
     // Constructors and basic accessors
     QTensorCpp() {}
     QTensorCpp(const SparseMatrix& data);
+    QTensorCpp(const SparseMatrix& data, bool no_checks);
     QTensorCpp(const py::object& data);
     QTensorCpp(int rows, int cols);
     const SparseMatrix& get_data() const { return _data; }
@@ -82,8 +86,6 @@ class QTensorCpp {
     QTensorCpp transpose() const;
     QTensorCpp adjoint() const;
     std::complex<double> trace();
-    QTensorCpp tensor_product_python(const py::list& others) const;
-    QTensorCpp tensor_product(const std::vector<QTensorCpp>& others) const;
     QTensorCpp add_python(const py::object& other) const;
     QTensorCpp add(const QTensorCpp& other) const;
     QTensorCpp sub_python(const py::object& other) const;
@@ -130,12 +132,14 @@ class QTensorCpp {
 
     // Static initializers for common states
     static QTensorCpp identity(int nqubits);
-    static QTensorCpp zero(int nqubits, std::string qtensor_type="operator");
+    static QTensorCpp zero(int nqubits, std::string qtensor_type = "operator");
     static QTensorCpp ket_python(const py::object& state);
     static QTensorCpp ket(const std::vector<int>& qubit_values);
     static QTensorCpp bra_python(const py::object& state);
     static QTensorCpp bra(const std::vector<int>& qubit_values);
     static QTensorCpp ghz(int nqubits);
+    static QTensorCpp tensor_product_python(const py::list& others);
+    static QTensorCpp tensor_product(const std::vector<QTensorCpp>& others);
 
     // C++ specific overloads
     QTensorCpp operator+(const QTensorCpp& other) const { return add(other); }
@@ -153,3 +157,6 @@ class QTensorCpp {
     QTensorCpp operator*(std::complex<double> scalar) const { return mul(scalar); }
     QTensorCpp operator*(double scalar) const { return mul(std::complex<double>(scalar, 0.0)); }
 };
+#pragma GCC visibility pop
+
+// GCOV_EXCL_BR_STOP

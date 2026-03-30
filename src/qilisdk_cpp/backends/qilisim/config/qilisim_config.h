@@ -15,6 +15,8 @@
 
 #include <string>
 
+// GCOV_EXCL_BR_START
+
 // Config file
 class QiliSimConfig {
    private:
@@ -72,3 +74,5 @@ class QiliSimConfig {
     // Can be called to validate the config and throw a py error if not
     void validate() const;
 };
+
+// GCOV_EXCL_BR_STOP

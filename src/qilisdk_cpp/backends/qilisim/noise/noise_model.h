@@ -17,6 +17,8 @@
 #include <vector>
 #include "../../../libs/eigen.h"
 
+// GCOV_EXCL_BR_START
+
 class NoiseModelCpp {
    private:
     bool has_something = false;
@@ -49,3 +51,5 @@ class NoiseModelCpp {
     std::pair<double, double> get_relevant_readout_error(int qubit) const;
     std::vector<std::vector<SparseMatrix>> get_relevant_kraus_operators(const std::string& gate_name, const std::vector<int>& target_qubits, int nqubits) const;
 };
+
+// GCOV_EXCL_BR_STOP

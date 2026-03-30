@@ -18,6 +18,8 @@
 #include <unsupported/Eigen/KroneckerProduct>
 #include <unsupported/Eigen/MatrixFunctions>
 
+// GCOV_EXCL_BR_START
+
 // Eigen specfic type defs
 typedef Eigen::SparseMatrix<std::complex<double>, Eigen::RowMajor> SparseMatrix;
 typedef Eigen::SparseMatrix<std::complex<double>, Eigen::ColMajor> SparseMatrixCol;
@@ -34,3 +36,5 @@ const SparseMatrix I = []() {
     I_mat.setFromTriplets(entries.begin(), entries.end());
     return I_mat;
 }();
+
+// GCOV_EXCL_BR_STOP

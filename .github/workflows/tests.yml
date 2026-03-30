@@ -43,16 +43,36 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install qilisdk
-        run: uv sync --group dev --extra all-cu13
+        run: uv -v sync --group dev --extra all-cu13 -Ccmake.define.tests=ON -Ccmake.build-type=Debug -Ccmake.define.coverage=ON --reinstall
 
-      - name: Run tests
-        run: uv run pytest --cov=qilisdk --cov-report=xml --cov-report=term-missing --junitxml=junit.xml -o junit_family=legacy tests/unit/
+      - name: Run Python tests
+        run: |
+          source .venv/bin/activate
+          pytest --cov=qilisdk --cov-report=xml --cov-report=term-missing --junitxml=junit.xml -o junit_family=legacy tests/unit_python/
+
+      - name: Run C++ tests
+        run: |
+          source .venv/bin/activate
+          GCOV_PREFIX=$(pwd)/tests/unit_cpp/coverage GCOV_PREFIX_STRIP=5 ./tests/unit_cpp/test_cpp
+          gcovr --exclude '.*googletest.*' --exclude '/usr/.*' --gcov-ignore-errors=all --exclude-unreachable-branches --exclude-throw-branches --xml coverage_cpp.xml
+
+      - name: Combine coverage reports
+        run: |
+          source .venv/bin/activate
+          gcovr --gcov-ignore-errors=all --xml combined_coverage.xml --cobertura-add-tracefile coverage.xml --cobertura-add-tracefile coverage_cpp.xml
+
+      - name: Output the coverage directory for debugging
+        run: ls -R tests/unit_cpp/coverage/
+
+      - name: Print the working directory for debugging
+        run: pwd
 
       - name: Upload coverage to Codecov
         if: ${{ matrix.python-version == '3.13' }}
         uses: codecov/codecov-action@v5
         with:
-          files: coverage.xml
+          files: combined_coverage.xml
+          disable_search: true
           token: ${{ secrets.CODECOV_TOKEN }}
       
       - name: Upload test results to Codecov

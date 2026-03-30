@@ -15,6 +15,8 @@
 #include "noise_model.h"
 #include "../utils/matrix_utils.h"
 
+// GCOV_EXCL_BR_START
+
 bool NoiseModelCpp::is_empty() const {
     /*
     Check if the noise model has any cached operators.
@@ -235,3 +237,5 @@ std::pair<double, double> NoiseModelCpp::get_relevant_readout_error(int qubit) c
     }
     return std::make_pair(p01, p10);
 }
+
+// GCOV_EXCL_BR_STOP

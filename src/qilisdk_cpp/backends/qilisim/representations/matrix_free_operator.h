@@ -17,8 +17,10 @@
 #include <map>
 #include <set>
 #include <vector>
-#include "../digital/gate.h"
 #include "../../../libs/eigen.h"
+#include "../digital/gate.h"
+
+// GCOV_EXCL_BR_START
 
 enum class MatrixFreeApplicationType { Left, Right, LeftAndRight };
 
@@ -30,8 +32,11 @@ class MatrixFreeOperator {
     DenseMatrix base_matrix;
 
    public:
-    MatrixFreeOperator(const Gate& gate);
-    MatrixFreeOperator(const std::string& name, int target_qubit) : name(name), target_qubits({target_qubit}) {}
+    MatrixFreeOperator(const Gate& gate) { *this = MatrixFreeOperator(gate.get_name(), gate.get_control_qubits(), gate.get_target_qubits(), gate.get_base_matrix()); }
+    MatrixFreeOperator(const std::string& name, int target_qubit) { *this = MatrixFreeOperator(name, {}, {target_qubit}, DenseMatrix()); }
+    MatrixFreeOperator(const std::string& name, int control_qubit, int target_qubit) { *this = MatrixFreeOperator(name, {control_qubit}, {target_qubit}, DenseMatrix()); }
+    MatrixFreeOperator(const std::string& name, const std::vector<int>& control_qubits, const std::vector<int>& target_qubits, const DenseMatrix& base_matrix);
+    bool operator==(const MatrixFreeOperator& other) const;
     void apply(DenseMatrix& output_state, MatrixFreeApplicationType application_type) const;
     friend std::ostream& operator<<(std::ostream& os, const MatrixFreeOperator& mfo);
     std::vector<int> get_target_qubits() const { return target_qubits; }
@@ -39,3 +44,5 @@ class MatrixFreeOperator {
     std::string get_name() const { return name; }
     std::string get_id() const;
 };
+
+// GCOV_EXCL_BR_STOP

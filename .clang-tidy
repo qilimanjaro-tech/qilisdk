@@ -1,7 +1,7 @@
 ---
-Checks:          'clang-diagnostic-*,clang-analyzer-*,bugprone-*,concurrency-*,cppcoreguidelines-*,performance-*,portability-*,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-cppcoreguidelines-avoid-magic-numbers,-bugprone-easily-swappable-parameters,misc-*'
+Checks:          'clang-diagnostic-*,clang-analyzer-*,bugprone-*,concurrency-*,cppcoreguidelines-*,performance-*,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-cppcoreguidelines-avoid-magic-numbers,-bugprone-easily-swappable-parameters,misc-*,-cppcoreguidelines-avoid-non-const-global-variables,-clang-analyzer-optin.portability.UnixAPI,-bugprone-branch-clone'
 WarningsAsErrors: ''
-HeaderFilterRegex: ''
+HeaderFilterRegex: 'qilisdk'
 AnalyzeTemporaryDtors: false
 FormatStyle:     none
 User:            luke

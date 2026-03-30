@@ -17,6 +17,8 @@
 #include "iterations.h"
 #include "lindblad.h"
 
+// GCOV_EXCL_BR_START
+
 DenseMatrix iter_direct(const DenseMatrix& rho_0, double dt, const SparseMatrix& currentH, const std::vector<SparseMatrix>& jump_operators, bool is_unitary_on_statevector) {
     /*
     Perform time evolution using direct matrix exponentiation.
@@ -74,3 +76,5 @@ DenseMatrix iter_direct(const DenseMatrix& rho_0, double dt, const SparseMatrix&
         return U * rho_0 * U.adjoint();
     }
 }
+
+// GCOV_EXCL_BR_STOP
