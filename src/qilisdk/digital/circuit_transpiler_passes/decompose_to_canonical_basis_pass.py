@@ -297,7 +297,7 @@ def _invert_basis_gate(gate: Gate) -> list[Gate]:
     if isinstance(gate, Z):
         return [U3(gate.qubits[0], theta=0.0, phi=0.0, gamma=math.pi)]
     # Should not happen after canonicalization.
-    return [Adjoint(gate)]  # type: ignore[type-var]
+    return [Adjoint(gate)]
 
 
 # ======================= Canonicalization (mapping-only) =======================

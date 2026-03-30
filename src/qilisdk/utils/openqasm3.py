@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import math
 from copy import copy
 from pathlib import Path
 
@@ -31,19 +32,28 @@ from openqasm3.ast import (
     ComplexType,
     ConstantDeclaration,
     ContinueStatement,
+    DiscreteSet,
     DurationType,
     ExpressionStatement,
     FloatType,
     ForInLoop,
+    FunctionCall,
     GateModifierName,
+    Identifier,
     ImaginaryLiteral,
     Include,
+    IndexExpression,
     IntType,
+    IODeclaration,
+    IOKeyword,
     QuantumGate,
     QuantumGateDefinition,
     QuantumMeasurementStatement,
     QubitDeclaration,
+    RangeDefinition,
+    ReturnStatement,
     StretchType,
+    SubroutineDefinition,
     SwitchStatement,
     TimeUnit,
     UintType,
@@ -52,325 +62,548 @@ from openqasm3.ast import (
 )
 from openqasm3.parser import parse
 
-from qilisdk.digital import CNOT, CZ, RX, RY, RZ, U1, U2, U3, Adjoint, Circuit, Controlled, H, M, S, T, X, Y, Z
+from qilisdk.core import Parameter
+from qilisdk.digital import CNOT, CZ, RX, RY, RZ, U1, U2, U3, Adjoint, Circuit, Controlled, Gate, H, M, S, T, X, Y, Z
 
 
-def _recursive_replace(statement: object, replacement_map: dict) -> object:
-    new_statement = copy(statement)
+class OpenQasmParser:
+    """
+    Internal class for parsing OpenQASM 3.0.
 
-    # If the statement is in the replacement map, replace it
-    if hasattr(new_statement, "name") and new_statement.name is not None and isinstance(new_statement.name, str) and not hasattr(new_statement.name, "name") and new_statement.name in replacement_map:
+    Use the external methods instead:
+     - `from qilisdk.utils.openqasm3 import to_qasm3_file`
+     - `from qilisdk.utils.openqasm3 import from_qasm3_file`
+     - `from qilisdk.utils.openqasm3 import to_qasm3`
+     - `from qilisdk.utils.openqasm3 import from_qasm3`
 
-        # If it's a string, change the name
-        if isinstance(replacement_map[new_statement.name], str):
-            setattr(new_statement, "name", replacement_map[new_statement.name])
+    Feature Table
+    OpenQASM 3 Feature     Qiskit SDK       IBM Qiskit Runtime      QiliSDK       Notes
+    comments               ✅               ✅                      ✅
+    QASM vstring           ✅               ✅                      ✅
+    include                🟡               ❌                      ✅
+    unicode names          ✅               ✅                      ✅
+    qubit                  ✅               🟡                      ✅
+    bit                    ✅               ✅                      ✅
+    bool                   🟡               ✅                      ✅
+    int                    ❌               ✅                      ✅
+    uint                   🟡               ✅                      ✅
+    float                  🟡               🟡                      ✅
+    angle                  ❌               🟡                      ✅
+    complex                ❌               ❌                      ✅
+    const                  ❌               ❌                      ✅
+    pi/π/tau/τ/euler/ℇ     ✅               ✅                      ✅
+    Aliasing: let          🟡               ❌                      ✅
+    register concatenation 🟡               ❌                      ❌
+    casting expr.Cast      🟡               🟡                      ✅
+    duration               ❌               ❌                      ✅
+    durationof             ❌               ❌                      ❌
+    ns/μs/us/ms/s/dt       ✅               ✅                      ✅
+    stretch expr.Stretch   🟡               🟡                      ✅
+    delay                  ✅               ✅                      ❌
+    barrier                ✅               ✅                      ❌
+    box                    ✅               ❌                      ❌
+    Built-in U             ✅               ✅                      ✅
+    gate                   🟡               🟡                      ✅
+    gphase                 🟡               ❌                      ❌
+    ctrl @/ negctrl @      🟡               ❌                      ✅
+    inv @                  🟡               ❌                      ✅
+    pow(k) @               🟡               ❌                      🟡            a
+    reset                  ✅               ✅                      ❌
+    measure                ✅               ✅                      🟡            b
+    bit operations         🟡               ✅                      ✅
+    boolean operations     🟡               ✅                      ✅
+    arithmetic expressions 🟡               🟡                      ✅
+    comparisons            🟡               ✅                      ✅
+    if                     ✅               ✅                      ✅
+    else                   ✅               ✅                      ✅
+    else if                ✅               ❌                      ✅
+    for loops              🟡               ❌                      ✅
+    switch                 ❌               ❌                      ✅
+    while loops            ✅               ❌                      ✅
+    continue               🟡               ❌                      ✅
+    break                  🟡               ❌                      ✅
+    extern                 ❌               ❌                      ❌
+    def subroutines        ❌               ❌                      ✅
+    return                 ❌               ❌                      ✅
+    input                  ✅               🟡                      ✅
+    output                 ❌               ❌                      ❌
 
-        # If it's something else (i.e. a number), change the value
-        else:
-            setattr(new_statement, "value", replacement_map[new_statement.name])
+    a) pow(k) is only supported in QiliSDK when k is an integer, and is done by doing repeated gate applications.
 
-    # For any other attributes, as long as it's not a default attribute or a callable, recurse
-    for attr_name in dir(statement):
-        if attr_name.startswith("__") or callable(getattr(new_statement, attr_name)) or isinstance(getattr(new_statement, attr_name), (str, int, float, type(None))):
-            continue
-        attr_value = getattr(new_statement, attr_name)
-        if isinstance(attr_value, list):
-            new_list = []
-            for sub_value in attr_value:
-                new_list.append(_recursive_replace(sub_value, replacement_map))
-            setattr(new_statement, attr_name, new_list)
-        else:
-            setattr(new_statement, attr_name, _recursive_replace(attr_value, replacement_map))
-    return new_statement
+    b) Mid-circuit measurements are not supported in QiliSDK.
 
+    """
 
-def _evaluate_expression(expr: object, var_list: dict) -> any:
+    def __init__(self) -> None:
+        self.reg_name_to_start_end = {}
+        self.var_list = {}
+        self.custom_gate_definitions = {}
+        self.subroutine_definitions = {}
+        self.gates_to_add = []
+        self.nqubits = 0
 
-    # Scale by the unit if we have it
-    value_with_unit = None
-    if hasattr(expr, "value") and expr.value is not None:
-        value_with_unit = expr.value
-        if hasattr(expr, "unit") and expr.unit is not None:
-            if expr.unit == TimeUnit["ns"]:
-                value_with_unit *= 1e-9
-            elif expr.unit == TimeUnit["us"]:
-                value_with_unit *= 1e-6
-            elif expr.unit == TimeUnit["ms"]:
-                value_with_unit *= 1e-3
-            elif expr.unit != TimeUnit["s"]:
-                raise ValueError(f"Unsupported time unit: {expr.unit}")
+    def _recursive_replace(self, statement: object, replacement_map: dict) -> object:
+        new_statement = copy(statement)
 
-    # If it's an imaginary literal
-    if isinstance(expr, ImaginaryLiteral) and value_with_unit is not None:
-        return 1j * value_with_unit
+        # If the statement is in the replacement map, replace it
+        if (
+            hasattr(new_statement, "name")
+            and new_statement.name is not None
+            and isinstance(new_statement.name, str)
+            and not hasattr(new_statement.name, "name")
+            and new_statement.name in replacement_map
+        ):
+            # If we're changing to an identifier
+            if isinstance(replacement_map[new_statement.name], Identifier):
+                new_statement = copy(replacement_map[new_statement.name])
 
-    # If we have a value, perfect
-    if value_with_unit is not None:
-        return value_with_unit
+            # If we're changing to a string, change the name
+            elif isinstance(replacement_map[new_statement.name], str):
+                setattr(new_statement, "name", replacement_map[new_statement.name])
 
-    # If it's a variable
-    if hasattr(expr, "name"):
-        var_name = expr.name
-        if isinstance(var_name, str) and var_name in var_list:
-            return var_list[var_name]["value"]
-        raise ValueError(f"Undefined variable: {var_name}")
-
-    # If it's an operation, recurse
-    if hasattr(expr, "op"):
-        if expr.op == BinaryOperator["+"]:
-            return _evaluate_expression(expr.lhs, var_list) + _evaluate_expression(expr.rhs, var_list)
-        if expr.op == BinaryOperator["-"]:
-            return _evaluate_expression(expr.lhs, var_list) - _evaluate_expression(expr.rhs, var_list)
-        if expr.op == BinaryOperator["/"]:
-            return _evaluate_expression(expr.lhs, var_list) / _evaluate_expression(expr.rhs, var_list)
-        if expr.op == BinaryOperator["*"]:
-            return _evaluate_expression(expr.lhs, var_list) * _evaluate_expression(expr.rhs, var_list)
-        if expr.op == BinaryOperator["<<"]:
-            return _evaluate_expression(expr.lhs, var_list) << _evaluate_expression(expr.rhs, var_list)
-        if expr.op == BinaryOperator[">>"]:
-            return _evaluate_expression(expr.lhs, var_list) >> _evaluate_expression(expr.rhs, var_list)
-        if expr.op == BinaryOperator["&"]:
-            return _evaluate_expression(expr.lhs, var_list) & _evaluate_expression(expr.rhs, var_list)
-        if expr.op == BinaryOperator["|"]:
-            return _evaluate_expression(expr.lhs, var_list) | _evaluate_expression(expr.rhs, var_list)
-        if expr.op == BinaryOperator["=="]:
-            return _evaluate_expression(expr.lhs, var_list) == _evaluate_expression(expr.rhs, var_list)
-        if expr.op == BinaryOperator["!="]:
-            return _evaluate_expression(expr.lhs, var_list) == _evaluate_expression(expr.rhs, var_list)
-        if expr.op == BinaryOperator[">"]:
-            return _evaluate_expression(expr.lhs, var_list) > _evaluate_expression(expr.rhs, var_list)
-        if expr.op == BinaryOperator[">="]:
-            return _evaluate_expression(expr.lhs, var_list) >= _evaluate_expression(expr.rhs, var_list)
-        if expr.op == BinaryOperator["<"]:
-            return _evaluate_expression(expr.lhs, var_list) < _evaluate_expression(expr.rhs, var_list)
-        if expr.op == BinaryOperator["<="]:
-            return _evaluate_expression(expr.lhs, var_list) <= _evaluate_expression(expr.rhs, var_list)
-        if expr.op == UnaryOperator["-"]:
-            return -_evaluate_expression(expr.expression, var_list)
-        if expr.op == UnaryOperator["!"]:
-            return not _evaluate_expression(expr.expression, var_list)
-        if expr.op == BinaryOperator["**"]:
-            return _evaluate_expression(expr.lhs, var_list) ** _evaluate_expression(expr.rhs, var_list)
-        raise ValueError(f"Unsupported operator: {expr.op}")
-
-    # If it's a cast
-    if isinstance(expr, Cast):
-        value_to_cast = _evaluate_expression(expr.argument, var_list)
-        if isinstance(expr.type, (UintType, IntType, BitType)):
-            return int(value_to_cast) % (2 ** 32)
-        if isinstance(expr.type, (FloatType, AngleType, DurationType, StretchType)):
-            return float(value_to_cast)
-        if isinstance(expr.type, ComplexType):
-            return complex(value_to_cast)
-        if isinstance(expr.type, BoolType):
-            return bool(value_to_cast)
-        raise ValueError(f"Unsupported cast type: {expr.type}")
-
-    # If it's an array literal
-    if hasattr(expr, "values") and expr.values is not None:
-        return [_evaluate_expression(element, var_list) for element in expr.values]
-
-    raise ValueError(f"Unsupported expression: {expr}")
-
-
-def _evaluate_register(qb: object, var_list: dict, reg_name_to_start_end: dict) -> list[int]:
-
-    # We should always have a name for the register
-    if hasattr(qb, "name") and qb.name is not None:
-
-        # Get the reg info
-        reg_name = qb.name
-        if hasattr(reg_name, "name") and reg_name.name is not None:
-            reg_name = reg_name.name
-        if "$" in reg_name:
-            start = int(reg_name.split("$")[1])
-            end = start
-        elif reg_name in reg_name_to_start_end:
-            start, end = reg_name_to_start_end[reg_name]
-        else:
-            raise ValueError(f"Undefined register: {reg_name}")
-
-        # If we have indices, get those specific qubits
-        if hasattr(qb, "indices") and qb.indices is not None:
-            indices = [[_evaluate_expression(index, var_list) for index in index_list] for index_list in qb.indices]
-
-            # If only given one index, get at that location
-            if len(indices) == 1 and len(indices[0]) == 1 and indices[0][0] <= end - start + 1:
-                return [start + indices[0][0]]
-            raise ValueError(f"Index {indices[0][0]} out of bounds for register {reg_name} with start {start} and end {end}")
-
-        # If we don't have indices, return the whole register as a list of qubits
-        qubits_to_return = []
-        for i in range(start, end + 1):
-            qubits_to_return.append(i)
-        return qubits_to_return
-
-    raise ValueError(f"Unsupported qubit specification: {qb}")
-
-
-def _to_qilisdk_gate(gate_name: str, qubits: list, arguments: list[float] = [], modifiers: list[str] = []) -> object:
-
-    # Process the gate info
-    gate_name = gate_name.lower()
-    gates_to_return = []
-    num_controls_total = 0
-    for modifier in modifiers:
-        if modifier in {"ctrl", "negctrl"}:
-            num_controls_total += 1
-    qubits_without_controls = qubits[num_controls_total:]
-
-    # The gate itself
-    if gate_name == "x":
-        for qubit in qubits_without_controls:
-            gates_to_return.append(X(qubit))
-    elif gate_name == "y":
-        for qubit in qubits_without_controls:
-            gates_to_return.append(Y(qubit))
-    elif gate_name == "z":
-        for qubit in qubits_without_controls:
-            gates_to_return.append(Z(qubit))
-    elif gate_name == "h":
-        for qubit in qubits_without_controls:
-            gates_to_return.append(H(qubit))
-    elif gate_name == "s":
-        for qubit in qubits_without_controls:
-            gates_to_return.append(S(qubit))
-    elif gate_name == "t":
-        for qubit in qubits_without_controls:
-            gates_to_return.append(T(qubit))
-    elif gate_name == "rx":
-        for qubit in qubits_without_controls:
-            gates_to_return.append(RX(qubit, theta=arguments[0]))
-    elif gate_name == "ry":
-        for qubit in qubits_without_controls:
-            gates_to_return.append(RY(qubit, theta=arguments[0]))
-    elif gate_name == "rz":
-        for qubit in qubits_without_controls:
-            gates_to_return.append(RZ(qubit, phi=arguments[0]))
-    elif gate_name == "u1":
-        for qubit in qubits_without_controls:
-            gates_to_return.append(U1(qubit, phi=arguments[0]))
-    elif gate_name == "u2":
-        for qubit in qubits_without_controls:
-            gates_to_return.append(U2(qubit, phi=arguments[0], gamma=arguments[1]))
-    elif gate_name in {"u", "u3"}:
-        for qubit in qubits_without_controls:
-            gates_to_return.append(U3(qubit, theta=arguments[0], phi=arguments[1], gamma=arguments[2]))
-    elif gate_name == "cx":
-        gates_to_return.append(CNOT(*qubits_without_controls))
-    elif gate_name == "cz":
-        gates_to_return.append(CZ(*qubits_without_controls))
-    else:
-        raise ValueError(f"Unsupported gate: {gate_name}")
-
-    # Add controls if we have them
-    main_gates = copy(gates_to_return)
-    gates_to_return = []
-    for j in range(len(main_gates)):
-        main_gate = main_gates[j]
-        gates_to_prepend = []
-        gates_to_append = []
-        num_repeats = 1
-        for i in range(len(modifiers) - 1, -1, -1):
-            if modifiers[i] == "ctrl":
-                main_gate = Controlled(qubits[i], basic_gate=main_gate)
-            elif modifiers[i] == "negctrl":
-                main_gate = Controlled(qubits[i], basic_gate=main_gate)
-                gates_to_prepend.append(X(qubits[i]))
-                gates_to_append.append(X(qubits[i]))
-            elif modifiers[i] == "inv":
-                main_gate = Adjoint(main_gate)
-            elif modifiers[i] == "pow":
-                num_repeats += 1
+            # If changing to something else (i.e. a number), change the value
             else:
-                raise ValueError(f"Unsupported gate modifier: {modifiers[i]}")
-        for _ in range(num_repeats):
-            gates_to_return.extend(gates_to_prepend)
-            gates_to_return.append(main_gate)
-            gates_to_return.extend(gates_to_append)
+                setattr(new_statement, "value", replacement_map[new_statement.name])
 
-    return gates_to_return
+        # For any other attributes, as long as it's not a default attribute or a callable, recurse
+        for attr_name in dir(statement):
+            if (
+                attr_name.startswith("__")
+                or callable(getattr(new_statement, attr_name))
+                or isinstance(getattr(new_statement, attr_name), (str, int, float, type(None)))
+            ):
+                continue
+            attr_value = getattr(new_statement, attr_name)
+            if isinstance(attr_value, list):
+                new_list = []
+                for sub_value in attr_value:
+                    new_list.append(self._recursive_replace(sub_value, replacement_map))
+                setattr(new_statement, attr_name, new_list)
+            else:
+                setattr(new_statement, attr_name, self._recursive_replace(attr_value, replacement_map))
+        return new_statement
 
+    @staticmethod
+    def _parse_return_val(return_str: str | complex | bool) -> str | int | float | complex | bool:
 
-def from_qasm3(qasm3: str, directory: str = "") -> Circuit:
-    """
-    Convert an OpenQASM 3.0 string representation of a quantum circuit into a Circuit object.
+        # If we have "return:" at the start, remove it
+        if isinstance(return_str, str):
+            return_str = return_str.removeprefix("return:")
+            return_str = return_str.strip()
+            if not return_str:
+                return 0
 
-    Args:
-        qasm3 (str): The OpenQASM 3.0 string representation of the quantum circuit.
-        directory (str): The directory to resolve include statements from. Defaults to the current directory.
+        # Try to interpret as an int
+        try:
+            return int(str(return_str))
+        except ValueError:
+            pass
 
-    Returns:
-        Circuit: The reconstructed Circuit object.
+        # Try to interpret as a float
+        try:
+            return float(str(return_str))
+        except ValueError:
+            pass
 
-    Raises:
-        ValueError: If the QASM string contains unsupported statements, gates, or expressions.
-    """
+        # Try to interpret as a complex
+        try:
+            return complex(str(return_str))
+        except ValueError:
+            pass
 
-    # Check for includes, if so, add their text to the qasm3 text and re-parse to get a full AST with all statements
-    qasm3_with_includes = qasm3
-    qasm3_with_includes = qasm3_with_includes.replace(';', ';\n')
-    new_qasm3 = ""
-    for line in qasm3.splitlines():
-        if line.strip().startswith("include"):
-            include_filename = line.strip().split(" ")[1].replace('"', '').replace("'", "").replace(";", "")
-            if include_filename != "stdgates.inc":
-                include_path = Path(directory) / include_filename
-                if include_path.is_file():
-                    include_qasm = include_path.read_text(encoding="utf-8")
-                    include_qasm_lines = include_qasm.splitlines()
-                    include_qasm_lines = [line for line in include_qasm_lines if not line.strip().startswith("OPENQASM") and not line.strip().startswith('include "stdgates.inc"')]
-                    include_qasm = "\n".join(include_qasm_lines)
-                    new_qasm3 += "\n" + include_qasm
-                else:
-                    raise ValueError(f"Unsupported include statement: {line}")
+        # Try to interpret as a bool
+        if return_str == "True":
+            return True
+        if return_str == "False":
+            return False
+
+        # Otherwise, just return the string
+        return return_str
+
+    def _evaluate_expression(self, expr: object) -> list | str | int | float | complex | bool:
+
+        # If it's a list, evaluate each element
+        if isinstance(expr, list):
+            return [self._evaluate_expression(element) for element in expr]
+
+        # If it's a function call
+        if isinstance(expr, FunctionCall):
+            func_name = expr.name.name
+            args_evalled = [self._evaluate_expression(arg) for arg in expr.arguments]
+
+            # Standard functions
+            if func_name == "rotl" and isinstance(args_evalled[0], int) and isinstance(args_evalled[1], int):
+                return ((args_evalled[0] << args_evalled[1]) | (args_evalled[0] >> (32 - args_evalled[1]))) % (2**32)
+            if func_name == "rotr" and isinstance(args_evalled[0], int) and isinstance(args_evalled[1], int):
+                return ((args_evalled[0] >> args_evalled[1]) | (args_evalled[0] << (32 - args_evalled[1]))) % (2**32)
+            if func_name == "sin" and isinstance(args_evalled[0], (int, float)):
+                return math.sin(args_evalled[0])
+            if func_name == "cos" and isinstance(args_evalled[0], (int, float)):
+                return math.cos(args_evalled[0])
+            if func_name == "tan" and isinstance(args_evalled[0], (int, float)):
+                return math.tan(args_evalled[0])
+            if func_name == "arcsin" and isinstance(args_evalled[0], (int, float)):
+                return math.asin(args_evalled[0])
+            if func_name == "arccos" and isinstance(args_evalled[0], (int, float)):
+                return math.acos(args_evalled[0])
+            if func_name == "arctan" and isinstance(args_evalled[0], (int, float)):
+                return math.atan(args_evalled[0])
+            if func_name == "mod" and isinstance(args_evalled[0], int) and isinstance(args_evalled[1], int):
+                return args_evalled[0] % args_evalled[1]
+            if func_name == "real" and isinstance(args_evalled[0], (int, float, complex)):
+                return float(args_evalled[0].real)
+            if func_name == "imag" and isinstance(args_evalled[0], (int, float, complex)):
+                return float(args_evalled[0].imag)
+            if func_name == "exp" and isinstance(args_evalled[0], (int, float)):
+                return math.exp(args_evalled[0])
+            if func_name == "log" and isinstance(args_evalled[0], (int, float)):
+                return math.log(args_evalled[0])
+            if func_name == "floor" and isinstance(args_evalled[0], (int, float)):
+                return math.floor(args_evalled[0])
+            if func_name == "ceiling" and isinstance(args_evalled[0], (int, float)):
+                return math.ceil(args_evalled[0])
+            if func_name == "sqrt" and isinstance(args_evalled[0], (int, float)):
+                return math.sqrt(args_evalled[0])
+
+            # Custom functions
+            if func_name in self.subroutine_definitions:
+                func_def = self.subroutine_definitions[func_name]
+                replacement_map = {}
+                for actual_arg in expr.arguments:
+                    arg_name_in_body = func_def["args"][expr.arguments.index(actual_arg)]
+                    if isinstance(actual_arg, (IndexExpression)):
+                        replacement_map[arg_name_in_body] = actual_arg
+                    else:
+                        replacement_map[arg_name_in_body] = self._evaluate_expression(actual_arg)
+                for func_statement in func_def["body"]:
+                    res = self._process_statement(self._recursive_replace(func_statement, replacement_map))
+                    if res:
+                        return self._parse_return_val(res)
+                return 0
+
+            raise ValueError(f"Unsupported function: {func_name}")
+
+        # Scale by the unit if we have it
+        value_with_unit = None
+        if hasattr(expr, "value") and expr.value is not None and isinstance(expr.value, (int, float, complex)):
+            value_with_unit = expr.value
+            if hasattr(expr, "unit") and expr.unit is not None:
+                if expr.unit == TimeUnit["ns"]:
+                    value_with_unit *= 1e-9
+                elif expr.unit == TimeUnit["us"]:
+                    value_with_unit *= 1e-6
+                elif expr.unit == TimeUnit["ms"]:
+                    value_with_unit *= 1e-3
+                elif expr.unit != TimeUnit["s"]:
+                    raise ValueError(f"Unsupported time unit: {expr.unit}")  # pragma: no cover
+
+        # If it's an imaginary literal
+        if isinstance(expr, ImaginaryLiteral) and value_with_unit is not None:
+            return 1j * value_with_unit
+
+        # If we have a value, perfect
+        if value_with_unit is not None:
+            return value_with_unit
+
+        # If it's a variable
+        if hasattr(expr, "name"):
+            var_name = expr.name
+            if isinstance(var_name, str) and var_name in self.var_list:
+                return self.var_list[var_name]["value"]
+            raise ValueError(f"Undefined variable: {var_name}")
+
+        # If it's an operation, recurse
+        if hasattr(expr, "op"):
+            if hasattr(expr, "lhs") and hasattr(expr, "rhs"):
+                lhs = self._evaluate_expression(expr.lhs)
+                rhs = self._evaluate_expression(expr.rhs)
+                if isinstance(lhs, (int, float, complex)) and isinstance(rhs, (int, float, complex)):
+                    if expr.op == BinaryOperator["+"]:
+                        return lhs + rhs
+                    if expr.op == BinaryOperator["-"]:
+                        return lhs - rhs
+                    if expr.op == BinaryOperator["/"]:
+                        return lhs / rhs
+                    if expr.op == BinaryOperator["*"]:
+                        return lhs * rhs
+                    if expr.op == BinaryOperator["<<"] and isinstance(lhs, int) and isinstance(rhs, int):
+                        return lhs << rhs
+                    if expr.op == BinaryOperator[">>"] and isinstance(lhs, int) and isinstance(rhs, int):
+                        return lhs >> rhs
+                    if expr.op == BinaryOperator["&"] and isinstance(lhs, int) and isinstance(rhs, int):
+                        return lhs & rhs
+                    if expr.op == BinaryOperator["|"] and isinstance(lhs, int) and isinstance(rhs, int):
+                        return lhs | rhs
+                    if expr.op == BinaryOperator["=="]:
+                        return lhs == rhs
+                    if expr.op == BinaryOperator["!="]:
+                        return lhs != rhs
+                    if (
+                        expr.op == BinaryOperator[">"]
+                        and isinstance(lhs, (int, float))
+                        and isinstance(rhs, (int, float))
+                    ):
+                        return lhs > rhs
+                    if (
+                        expr.op == BinaryOperator[">="]
+                        and isinstance(lhs, (int, float))
+                        and isinstance(rhs, (int, float))
+                    ):
+                        return lhs >= rhs
+                    if (
+                        expr.op == BinaryOperator["<"]
+                        and isinstance(lhs, (int, float))
+                        and isinstance(rhs, (int, float))
+                    ):
+                        return lhs < rhs
+                    if (
+                        expr.op == BinaryOperator["<="]
+                        and isinstance(lhs, (int, float))
+                        and isinstance(rhs, (int, float))
+                    ):
+                        return lhs <= rhs
+                    if expr.op == BinaryOperator["&&"]:
+                        return lhs and rhs
+                    if expr.op == BinaryOperator["||"]:
+                        return lhs or rhs
+                    if expr.op == BinaryOperator["%"] and isinstance(lhs, int) and isinstance(rhs, int):
+                        return lhs % rhs
+                    if expr.op == BinaryOperator["**"]:
+                        return lhs**rhs
+            if hasattr(expr, "expression"):
+                expr_val = self._evaluate_expression(expr.expression)
+                if isinstance(expr_val, (bool, int, float, complex)):
+                    if expr.op == UnaryOperator["-"]:
+                        return -expr_val
+                    if expr.op == UnaryOperator["!"]:
+                        return not expr_val
+            raise ValueError(f"Unsupported operator: {expr.op}")  # pragma: no cover
+
+        # If it's a cast
+        if isinstance(expr, Cast):
+            value_to_cast = self._evaluate_expression(expr.argument)
+            if isinstance(expr.type, (UintType, IntType, BitType)) and isinstance(value_to_cast, (int, float)):
+                return int(value_to_cast) % (2**32)
+            if isinstance(expr.type, (FloatType, AngleType, DurationType, StretchType)) and isinstance(
+                value_to_cast, (int, float)
+            ):
+                return float(value_to_cast)
+            if isinstance(expr.type, ComplexType) and isinstance(value_to_cast, (int, float, complex)):
+                return complex(value_to_cast)
+            if isinstance(expr.type, BoolType) and isinstance(value_to_cast, (str, int, float, complex, bool)):
+                return bool(value_to_cast)
+            raise ValueError(f"Unsupported cast type: {expr.type}")  # pragma: no cover
+
+        # If it's an array literal
+        if hasattr(expr, "values") and expr.values is not None and isinstance(expr.values, list):
+            return [self._evaluate_expression(element) for element in expr.values]
+
+        # If it's a range definition
+        if hasattr(expr, "start") and expr.start is not None and hasattr(expr, "end") and expr.end is not None:
+            start = self._evaluate_expression(expr.start)
+            end = self._evaluate_expression(expr.end)
+            step = 1
+            if hasattr(expr, "step") and expr.step is not None:
+                step = self._evaluate_expression(expr.step)
+            if isinstance(start, int) and isinstance(end, int) and isinstance(step, int):
+                return list(range(start, end, step))
+
+        # If it's an index expression, evaluate the base and the indices and return the indexed value
+        if (
+            isinstance(expr, IndexExpression)
+            and hasattr(expr, "index")
+            and isinstance(expr.index, list)
+            and hasattr(expr, "collection")
+            and hasattr(expr.collection, "name")
+        ):
+            var_name = expr.collection.name
+            var_indices = [self._evaluate_expression(index) for index in expr.index]
+            if var_name in self.var_list and "value" in self.var_list[var_name]:
+                value = self.var_list[var_name]["value"]
+                for index in var_indices:
+                    if isinstance(index, int) and isinstance(value, list) and index < len(value):
+                        value = value[index]
+                return value
+
+        raise ValueError(f"Unsupported expression: {expr}")  # pragma: no cover
+
+    def _flatten(self, lst: list) -> list:
+        flat_list = []
+        for item in lst:
+            if isinstance(item, list):
+                flat_list.extend(self._flatten(item))
+            else:
+                flat_list.append(item)
+        return flat_list
+
+    def _evaluate_register(self, qb: object) -> list[int]:
+
+        # We should always have a name for the register
+        if hasattr(qb, "name") and qb.name is not None:
+            # Get the reg info
+            reg_name = qb.name
+            if hasattr(reg_name, "name") and reg_name.name is not None:
+                reg_name = reg_name.name
+            if isinstance(reg_name, str) and "$" in reg_name:
+                start = int(reg_name.split("$")[1])
+                end = start
+            elif reg_name in self.reg_name_to_start_end:
+                start, end = self.reg_name_to_start_end[reg_name]
+            else:
+                raise ValueError(f"Undefined register: {reg_name}")
+
+            # If we have indices, get those specific qubits
+            if hasattr(qb, "indices") and isinstance(qb.indices, list):
+                indices = [self._evaluate_expression(index_list) for index_list in qb.indices]
+                indices = self._flatten(indices)
+
+                # If only given one index, get at that location
+                qubits_to_return = []
+                for index in indices:
+                    if index < end - start + 1:
+                        qubits_to_return.append(start + index)
+                    else:
+                        raise ValueError(
+                            f"Index {index} out of bounds for register {reg_name} with start {start} and end {end}"
+                        )
+                return qubits_to_return
+
+            # If we don't have indices, return the whole register as a list of qubits
+            qubits_to_return = []
+            for i in range(start, end + 1):
+                qubits_to_return.append(i)
+            return qubits_to_return
+
+        raise ValueError(f"Unsupported qubit specification: {qb}")  # pragma: no cover
+
+    @staticmethod
+    def _to_qilisdk_gate(
+        gate_name: str, qubits: list, arguments: list[float] = [], modifiers: list[str] = []
+    ) -> list[Gate]:
+
+        # Process the gate info
+        gate_name = gate_name.lower()
+        gates_to_return = []
+        num_controls_total = 0
+        for modifier in modifiers:
+            if modifier in {"ctrl", "negctrl"}:
+                num_controls_total += 1
+        qubits_without_controls = qubits[num_controls_total:]
+
+        # The gate itself
+        if gate_name == "x":
+            for qubit in qubits_without_controls:
+                gates_to_return.append(X(qubit))
+        elif gate_name == "y":
+            for qubit in qubits_without_controls:
+                gates_to_return.append(Y(qubit))
+        elif gate_name == "z":
+            for qubit in qubits_without_controls:
+                gates_to_return.append(Z(qubit))
+        elif gate_name == "h":
+            for qubit in qubits_without_controls:
+                gates_to_return.append(H(qubit))
+        elif gate_name == "s":
+            for qubit in qubits_without_controls:
+                gates_to_return.append(S(qubit))
+        elif gate_name == "t":
+            for qubit in qubits_without_controls:
+                gates_to_return.append(T(qubit))
+        elif gate_name == "rx":
+            for qubit in qubits_without_controls:
+                gates_to_return.append(RX(qubit, theta=arguments[0]))
+        elif gate_name == "ry":
+            for qubit in qubits_without_controls:
+                gates_to_return.append(RY(qubit, theta=arguments[0]))
+        elif gate_name == "rz":
+            for qubit in qubits_without_controls:
+                gates_to_return.append(RZ(qubit, phi=arguments[0]))
+        elif gate_name == "u1":
+            for qubit in qubits_without_controls:
+                gates_to_return.append(U1(qubit, phi=arguments[0]))
+        elif gate_name == "u2":
+            for qubit in qubits_without_controls:
+                gates_to_return.append(U2(qubit, phi=arguments[0], gamma=arguments[1]))
+        elif gate_name in {"u", "u3"}:
+            for qubit in qubits_without_controls:
+                gates_to_return.append(U3(qubit, theta=arguments[0], phi=arguments[1], gamma=arguments[2]))
+        elif gate_name == "cx":
+            gates_to_return.append(CNOT(*qubits_without_controls))
+        elif gate_name == "cz":
+            gates_to_return.append(CZ(*qubits_without_controls))
         else:
-            new_qasm3 += line + "\n"
-    qasm3_with_includes = new_qasm3
+            raise ValueError(f"Unsupported gate: {gate_name}")  # pragma: no cover
 
-    # Find any let statements and do a find/replace for the alias in the qasm3 text
-    as_lines = qasm3_with_includes.splitlines()
-    for i, line in enumerate(as_lines):
-        if line.strip().startswith("let "):
-            let_statement = line.strip()[len("let "):].rstrip(";")
-            alias_name, alias_value = let_statement.split(" = ")
-            alias_name = alias_name.strip()
-            alias_value = alias_value.strip()
-            for j in range(i + 1, len(as_lines)):
-                as_lines[j] = as_lines[j].replace(alias_name, alias_value)
-    qasm3_with_includes = "\n".join(as_lines)
+        # Add controls if we have them
+        main_gates = copy(gates_to_return)
+        gates_to_return = []
+        for j in range(len(main_gates)):
+            main_gate = main_gates[j]
+            gates_to_prepend = []
+            gates_to_append = []
+            num_repeats = 1
+            for i in range(len(modifiers) - 1, -1, -1):
+                if modifiers[i] == "ctrl":
+                    main_gate = Controlled(qubits[i], basic_gate=main_gate)
+                elif modifiers[i] == "negctrl":
+                    main_gate = Controlled(qubits[i], basic_gate=main_gate)
+                    gates_to_prepend.append(X(qubits[i]))
+                    gates_to_append.append(X(qubits[i]))
+                elif modifiers[i] == "inv":
+                    main_gate = Adjoint(main_gate)
+                elif modifiers[i] == "pow":
+                    num_repeats += 1
+                else:
+                    raise ValueError(f"Unsupported gate modifier: {modifiers[i]}")  # pragma: no cover
+            for _ in range(num_repeats):
+                gates_to_return.extend(gates_to_prepend)
+                gates_to_return.append(main_gate)
+                gates_to_return.extend(gates_to_append)
 
-    # Use the official OpenQASM 3.0 parser to parse the text and get the AST nodes
-    ast = parse(qasm3_with_includes)
+        return gates_to_return
 
-    # The vars to fill as we parse the tree
-    nqubits = 0
-    reg_name_to_start_end = {}
-    var_list = {
-        "π": {"size": 1, "value": pi},
-        "pi": {"size": 1, "value": pi},
-        "τ": {"size": 1, "value": 2 * pi},
-        "tau": {"size": 1, "value": 2 * pi},
-        "euler": {"size": 1, "value": e},
-        "ℇ": {"size": 1, "value": e},
-    }
-    custom_gate_definitions = {}
-    gates_to_add = []
+    def _cast_to_type(self, var_name: str | Identifier) -> None:
 
-    def _process_statement(statement: object, extra_modifiers: list[str] = [], extra_qubits: list[int] = []) -> str:
-        print()  # noqa: T201
-        print(statement)  # noqa: T201
-        nonlocal nqubits, reg_name_to_start_end, var_list, custom_gate_definitions, gates_to_add
+        # If we have a variable name object, get the name string
+        if isinstance(var_name, Identifier):
+            var_name = var_name.name
+
+        # Make sure the type is correct
+        if "type" in self.var_list[var_name] and self.var_list[var_name]["type"] is not None:
+            var_type = self.var_list[var_name]["type"]
+            if var_type in {"uint", "int", "bit"}:
+                self.var_list[var_name]["value"] = int(self.var_list[var_name]["value"])
+            elif var_type in {"float", "angle", "duration", "stretch"}:
+                self.var_list[var_name]["value"] = float(self.var_list[var_name]["value"])
+            elif var_type == "complex":
+                self.var_list[var_name]["value"] = complex(self.var_list[var_name]["value"])
+            elif var_type == "bool":
+                self.var_list[var_name]["value"] = bool(self.var_list[var_name]["value"])
+
+            # Truncate to the variable size if needed
+            if "size" in self.var_list[var_name] and self.var_list[var_name]["size"] is not None:
+                var_size = self.var_list[var_name]["size"]
+                if var_type in {"uint", "bit"}:
+                    self.var_list[var_name]["value"] %= 2**var_size
+                elif var_type == "int":
+                    self.var_list[var_name]["value"] = (
+                        (self.var_list[var_name]["value"] + 2 ** (var_size - 1)) % (2**var_size)
+                    ) - 2 ** (var_size - 1)
+
+    def _process_statement(
+        self, statement: object, extra_modifiers: list[str] = [], extra_qubits: list[int] = []
+    ) -> str | int | float | complex | bool | None:
 
         # Initializing a qubit
         if isinstance(statement, QubitDeclaration):
             reg_name = statement.qubit.name
             reg_size = 1
             if hasattr(statement, "size") and statement.size is not None:
-                reg_size = _evaluate_expression(statement.size, var_list)
-            reg_name_to_start_end[reg_name] = (nqubits, nqubits + reg_size - 1)
-            var_list[reg_name] = {"size": reg_size, "value": 0}
-            nqubits = max(nqubits, nqubits + reg_size)
+                reg_size = self._evaluate_expression(statement.size)
+            if isinstance(reg_size, int):
+                self.reg_name_to_start_end[reg_name] = (self.nqubits, self.nqubits + reg_size - 1)
+                self.var_list[reg_name] = {"size": reg_size, "value": 0, "type": "qubit"}
+                self.nqubits = max(self.nqubits, self.nqubits + reg_size)
 
         # Initializing a classical variable
         elif isinstance(statement, (ClassicalDeclaration, ConstantDeclaration)):
@@ -378,10 +611,8 @@ def from_qasm3(qasm3: str, directory: str = "") -> Circuit:
             var_size = 0
             var_value = 0
             var_type = "bit"
-            if hasattr(statement, "size") and statement.size is not None:
-                var_size = _evaluate_expression(statement.size, var_list)
             if hasattr(statement, "init_expression") and statement.init_expression is not None:
-                var_value = _evaluate_expression(statement.init_expression, var_list)
+                var_value = self._evaluate_expression(statement.init_expression)
             if hasattr(statement, "type") and statement.type is not None:
                 if isinstance(statement.type, UintType):
                     var_type = "uint"
@@ -413,58 +644,42 @@ def from_qasm3(qasm3: str, directory: str = "") -> Circuit:
                 elif isinstance(statement.type, ArrayType):
                     var_type = "array"
                 else:
-                    raise ValueError(f"Unsupported variable type: {statement.type}")
+                    raise ValueError(f"Unsupported variable type: {statement.type}")  # pragma: no cover
                 if hasattr(statement.type, "size") and statement.type.size is not None:
-                    var_size = _evaluate_expression(statement.type.size, var_list)
-            var_list[var_name] = {"size": var_size, "value": var_value, "type": var_type}
+                    var_size = self._evaluate_expression(statement.type.size)
+            self.var_list[var_name] = {"size": var_size, "value": var_value, "type": var_type}
+            self._cast_to_type(var_name)
 
         # Classical assignment
         elif isinstance(statement, ClassicalAssignment):
             var_name = statement.lvalue.name
-            new_value = _evaluate_expression(statement.rvalue, var_list)
-            if statement.op == AssignmentOperator["="]:
-                var_list[var_name]["value"] = new_value
-            elif statement.op == AssignmentOperator["+="]:
-                var_list[var_name]["value"] += new_value
-            elif statement.op == AssignmentOperator["-="]:
-                var_list[var_name]["value"] -= new_value
+            new_value = self._evaluate_expression(statement.rvalue)
 
-            # Truncate to the variable size if needed
-            if "size" in var_list[var_name] and var_list[var_name]["size"] is not None:
-                var_size = var_list[var_name]["size"]
-                if var_list[var_name]["type"] == "uint":
-                    var_list[var_name]["value"] %= (2 ** var_size)
-                elif var_list[var_name]["type"] == "int":
-                    var_list[var_name]["value"] = ((var_list[var_name]["value"] + 2 ** (var_size - 1)) % (2 ** var_size)) - 2 ** (var_size - 1)
+            # Depending on the assignment type
+            if statement.op == AssignmentOperator["="]:
+                self.var_list[var_name]["value"] = new_value
+            elif statement.op == AssignmentOperator["+="] and not isinstance(new_value, (str, list)):
+                self.var_list[var_name]["value"] += new_value
+            elif statement.op == AssignmentOperator["-="] and not isinstance(new_value, (str, list)):
+                self.var_list[var_name]["value"] -= new_value
 
             # Cast to the variable type if needed
-            if "type" in var_list[var_name] and var_list[var_name]["type"] is not None:
-                var_type = var_list[var_name]["type"]
-                if var_type in {"uint", "int", "bit"}:
-                    var_list[var_name]["value"] = int(var_list[var_name]["value"])
-                elif var_type in {"float", "angle", "duration", "stretch"}:
-                    var_list[var_name]["value"] = float(var_list[var_name]["value"])
-                elif var_type == "complex":
-                    var_list[var_name]["value"] = complex(var_list[var_name]["value"])
-                elif var_type == "bool":
-                    var_list[var_name]["value"] = bool(var_list[var_name]["value"])
+            self._cast_to_type(var_name)
 
         # Quantum gates
         elif isinstance(statement, QuantumGate):
-
             # Get info about the gates
             gate_name = statement.name.name
             qubits = extra_qubits.copy()
             for qubit in statement.qubits:
-                qubits.extend(_evaluate_register(qubit, var_list, reg_name_to_start_end))
+                qubits.extend(self._evaluate_register(qubit))
             arguments = []
             for argument in statement.arguments:
-                arguments.append(_evaluate_expression(argument, var_list))
+                arguments.append(self._evaluate_expression(argument))
             modifiers = extra_modifiers.copy()
             num_controls = 0
             if hasattr(statement, "modifiers") and statement.modifiers is not None:
                 for modifier in statement.modifiers:
-
                     # Get the modifier name
                     modifier_name = ""
                     if hasattr(modifier, "modifier") and modifier.modifier == GateModifierName["ctrl"]:
@@ -478,146 +693,195 @@ def from_qasm3(qasm3: str, directory: str = "") -> Circuit:
                     elif hasattr(modifier, "modifier") and modifier.modifier == GateModifierName["pow"]:
                         modifier_name = "pow"
                     else:
-                        raise ValueError(f"Unsupported gate modifier: {modifier}")
+                        raise ValueError(f"Unsupported gate modifier: {modifier}")  # pragma: no cover
 
                     # Repeat if needed
                     repeats_needed = 1
-                    value_given = False
-                    if hasattr(modifier, "argument") and modifier.argument is not None and hasattr(modifier.argument, "value") and modifier.argument.value is not None:
-                        repeats_needed = int(modifier.argument.value)
-                        value_given = True
+                    if hasattr(modifier, "argument") and modifier.argument is not None:
+                        repeats_needed = self._evaluate_expression(modifier.argument)
                     if modifier_name == "pow":
-                        if not value_given:
-                            raise ValueError("Missing value for pow modifier")
-                        if (repeats_needed == 0 or not isinstance(repeats_needed, int)):
-                            raise ValueError(f"Invalid value for pow modifier: {modifier.argument.value}")
+                        if (
+                            repeats_needed == 0
+                            or not isinstance(repeats_needed, int)
+                            or not hasattr(modifier, "argument")
+                            or modifier.argument is None
+                        ):
+                            raise ValueError(f"Invalid value for pow modifier: {modifier.argument}")
                         if repeats_needed < 0:
-                            repeats_needed = -repeats_needed
+                            repeats_needed = -repeats_needed - 1
                             modifiers.append("inv")
                         else:
                             repeats_needed -= 1
+
+                    if not isinstance(repeats_needed, int):
+                        raise ValueError(f"Invalid repeat count for gate modifier: {modifier.argument}")
 
                     for _ in range(repeats_needed):
                         modifiers.append(modifier_name)
 
             # If it's a custom
-            if gate_name in custom_gate_definitions:
-                gate_def = custom_gate_definitions[gate_name]
+            if gate_name in self.custom_gate_definitions:
+                gate_def = self.custom_gate_definitions[gate_name]
                 replacement_map = {}
                 for actual_arg in arguments:
                     arg_name_in_body = gate_def["args"][arguments.index(actual_arg)]
                     replacement_map[arg_name_in_body] = actual_arg
                 reg_names = [qubit.name for qubit in statement.qubits]
-                for reg_name in reg_names[num_controls:num_controls + len(gate_def["qubits"])]:
+                for reg_name in reg_names[num_controls : num_controls + len(gate_def["qubits"])]:
                     reg_name_in_body = gate_def["qubits"][reg_names.index(reg_name) - num_controls]
                     replacement_map[reg_name_in_body] = reg_name
                 control_qubits = qubits[:num_controls]
                 for gate_statement in gate_def["body"]:
-                    _process_statement(_recursive_replace(gate_statement, replacement_map), extra_modifiers=modifiers, extra_qubits=control_qubits)
+                    self._process_statement(
+                        self._recursive_replace(gate_statement, replacement_map),
+                        extra_modifiers=modifiers,
+                        extra_qubits=control_qubits,
+                    )
 
             # Otherwise process normally
             else:
-                gates_to_add.extend(_to_qilisdk_gate(gate_name, qubits, arguments, modifiers))
-
-        # Include statements
-        elif isinstance(statement, Include):
-            if statement.filename.value != "stdgates.inc":
-                include_path = Path(statement.filename.value)
-                if include_path.is_file():
-                    include_qasm = include_path.read_text(encoding="utf-8")
-                    include_circuit = from_qasm3(include_qasm)
-                    gates_to_add.extend(include_circuit.gates)
+                self.gates_to_add.extend(self._to_qilisdk_gate(gate_name, qubits, arguments, modifiers))
 
         # Branching statements
         elif isinstance(statement, BranchingStatement):
-
             # Check the condition
-            condition_value = _evaluate_expression(statement.condition, var_list)
+            condition_value = self._evaluate_expression(statement.condition)
 
             # If the condition is true, process the true body
             if condition_value:
                 for branched_statement in statement.if_block:
-                    _process_statement(branched_statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits)
+                    res = self._process_statement(
+                        branched_statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits
+                    )
+                    if res:
+                        return self._parse_return_val(res)
             else:
                 for branched_statement in statement.else_block:
-                    _process_statement(branched_statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits)
+                    res = self._process_statement(
+                        branched_statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits
+                    )
+                    if res:
+                        return self._parse_return_val(res)
 
-        # Switch statements TODO
+        # Switch statements
         elif isinstance(statement, SwitchStatement):
-            target_val = _evaluate_expression(statement.target, var_list)
+            target_val = self._evaluate_expression(statement.target)
             found_case = False
             for case in statement.cases:
-                case_val = _evaluate_expression(case[0][0], var_list)
+                case_val = self._evaluate_expression(case[0][0])
                 if target_val == case_val:
                     found_case = True
                     for case_statement in case[1].statements:
-                        _process_statement(case_statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits)
+                        res = self._process_statement(
+                            case_statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits
+                        )
+                        if res:
+                            return self._parse_return_val(res)
                     break
             if not found_case and hasattr(statement, "default") and statement.default is not None:
                 for default_statement in statement.default.statements:
-                    _process_statement(default_statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits)
+                    res = self._process_statement(
+                        default_statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits
+                    )
+                    if res:
+                        return self._parse_return_val(res)
 
         # For Loops
         elif isinstance(statement, ForInLoop):
-
             # The new variable to declare for the loop variable
             loop_var_name = statement.identifier.name
             loop_var_type = statement.type
-            loop_var_size = statement.type.size
+            loop_var_size = 1
+            if hasattr(statement.type, "size") and statement.type.size is not None:
+                loop_var_size = self._evaluate_expression(statement.type.size)
+            loop_range = []
 
             # If it's a range-based for loop
-            if hasattr(statement.set_declaration, "start") and statement.set_declaration.start is not None:
-                loop_var_starting_value = _evaluate_expression(statement.set_declaration.start, var_list)
+            if isinstance(statement.set_declaration, RangeDefinition):
+                loop_var_starting_value = self._evaluate_expression(statement.set_declaration.start)
                 loop_var_step = 1
                 if hasattr(statement.set_declaration, "step") and statement.set_declaration.step is not None:
-                    loop_var_step = _evaluate_expression(statement.set_declaration.step, var_list)
-                loop_var_final_value = _evaluate_expression(statement.set_declaration.end, var_list)
+                    loop_var_step = self._evaluate_expression(statement.set_declaration.step)
+                loop_var_final_value = self._evaluate_expression(statement.set_declaration.end)
+                if (
+                    not isinstance(loop_var_step, int)
+                    or not isinstance(loop_var_starting_value, int)
+                    or not isinstance(loop_var_final_value, int)
+                ):
+                    raise ValueError(f"Invalid loop setup: {statement.set_declaration}")
                 loop_range = range(loop_var_starting_value, loop_var_final_value, loop_var_step)
 
             # If it's looping over an array
-            else:
+            elif isinstance(statement.set_declaration, Identifier):
                 array_var_name = statement.set_declaration.name
-                loop_range = var_list[array_var_name]["value"]
+                loop_range = self.var_list[array_var_name]["value"]
+
+            # If it's a set
+            elif isinstance(statement.set_declaration, DiscreteSet):
+                values = statement.set_declaration.values
+                loop_range = self._evaluate_expression(values)
+
+            else:
+                raise ValueError(f"Unsupported for loop declaration: {statement.set_declaration}")
 
             # Make the variable
-            var_list[loop_var_name] = {"size": loop_var_size, "value": 0, "type": loop_var_type}
+            self.var_list[loop_var_name] = {"size": loop_var_size, "value": 0, "type": loop_var_type}
 
             # Loop through the values and process the body with the loop variable set to the current value
             res = None
+            if not isinstance(loop_range, (list, range)):
+                raise ValueError(f"Loop statement is not iterable: {statement}")
             for i in loop_range:
-                var_list[loop_var_name]["value"] = i
+                self.var_list[loop_var_name]["value"] = i
                 for loop_statement in statement.block:
-                    res = _process_statement(loop_statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits)
+                    res = self._process_statement(
+                        loop_statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits
+                    )
                     if res:
                         break
                 if res == "break":
                     break
                 if res == "continue":
                     continue
+                if res:
+                    return self._parse_return_val(res)
 
             # Remove the loop variable from the var list after the loop is done
-            del var_list[loop_var_name]
+            del self.var_list[loop_var_name]
 
         # While Loops
         elif isinstance(statement, WhileLoop):
             res = None
-            while _evaluate_expression(statement.while_condition, var_list):
+            while self._evaluate_expression(statement.while_condition):
                 for loop_statement in statement.block:
-                    res = _process_statement(loop_statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits)
+                    res = self._process_statement(
+                        loop_statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits
+                    )
                     if res:
                         break
                 if res == "break":
                     break
                 if res == "continue":
                     continue
+                if res:
+                    return self._parse_return_val(res)
 
-        # Break statement TODO
+        # Break statement
         elif isinstance(statement, BreakStatement):
             return "break"
 
-        # Continue statement TODO
+        # Continue statement
         elif isinstance(statement, ContinueStatement):
             return "continue"
+
+        # Return statement
+        elif isinstance(statement, ReturnStatement):
+            return_val = (
+                str(self._evaluate_expression(statement.expression))
+                if hasattr(statement, "expression") and statement.expression is not None
+                else ""
+            )
+            return "return:" + return_val
 
         # Custom gate definitions
         elif isinstance(statement, QuantumGateDefinition):
@@ -625,50 +889,144 @@ def from_qasm3(qasm3: str, directory: str = "") -> Circuit:
             gate_args = [arg.name for arg in statement.arguments]
             gate_qubits = [arg.name for arg in statement.qubits]
             gate_body = statement.body
-            custom_gate_definitions[gate_name] = {"args": gate_args, "qubits": gate_qubits, "body": gate_body}
+            self.custom_gate_definitions[gate_name] = {"args": gate_args, "qubits": gate_qubits, "body": gate_body}
+
+        # Subroutine definitions
+        elif isinstance(statement, SubroutineDefinition):
+            sub_name = statement.name.name
+            sub_args = [arg.name.name for arg in statement.arguments]
+            sub_body = statement.body
+            self.subroutine_definitions[sub_name] = {"args": sub_args, "body": sub_body}
 
         # Measurements
         elif isinstance(statement, QuantumMeasurementStatement):
             qubit_statement = statement.measure.qubit
-            qubits_to_measure = _evaluate_register(qubit_statement, var_list, reg_name_to_start_end)
+            qubits_to_measure = self._evaluate_register(qubit_statement)
             for qubit in qubits_to_measure:
-                gates_to_add.append(M(qubit))
+                self.gates_to_add.append(M(qubit))
             if hasattr(statement, "target") and statement.target is not None:
                 raise ValueError("Measurement statements with targets are not currently supported")
 
+        # If it's an expression, evaluate it just in case there's a subroutine call inside
+        elif isinstance(statement, ExpressionStatement):
+            self._evaluate_expression(statement.expression)
+
+        # If it's an input type, make a parameter
+        elif isinstance(statement, IODeclaration):
+            # For now we only support input, not output
+            if statement.io_identifier != IOKeyword["input"]:
+                raise ValueError(f"Unsupported IO statement: {statement}")  # pragma: no cover
+
+            # Otherwise, declare a parameter
+            param_name = statement.identifier.name
+            new_param = Parameter(param_name, 0.0)
+            self.var_list[param_name] = {"size": 1, "value": new_param, "type": "parameter"}
+
         # Otherwise raise an error for now - we can add more statement types later
-        elif not isinstance(statement, (AliasStatement, ExpressionStatement)):
-            raise ValueError(f"Unsupported statement type: {type(statement)}")
+        elif not isinstance(statement, (Include, AliasStatement)):
+            raise ValueError(f"Unsupported statement type: {type(statement)}")  # pragma: no cover
 
         return ""
 
-    # TODO: remove all prints
+    def from_qasm3(self, qasm3: str, directory: str = "") -> Circuit:
 
-    # Go through the tree and determine what to do
-    for statement in ast.statements:
-        _process_statement(statement)
+        # Check for includes, if so, add their text to the qasm3 text and re-parse to get a full AST with all statements
+        qasm3_with_includes = qasm3
+        qasm3_with_includes = qasm3_with_includes.replace(";", ";\n")
+        new_qasm3 = ""
+        for line in qasm3.splitlines():
+            if line.strip().startswith("include"):
+                include_filename = line.strip().split(" ")[1].replace('"', "").replace("'", "").replace(";", "")
+                if include_filename != "stdgates.inc":
+                    include_path = Path(directory) / include_filename
+                    if include_path.is_file():
+                        include_qasm = include_path.read_text(encoding="utf-8")
+                        include_qasm_lines = include_qasm.splitlines()
+                        include_qasm_lines = [
+                            line
+                            for line in include_qasm_lines
+                            if not line.strip().startswith("OPENQASM")
+                            and not line.strip().startswith('include "stdgates.inc"')
+                        ]
+                        include_qasm = "\n".join(include_qasm_lines)
+                        new_qasm3 += "\n" + include_qasm
+                    else:
+                        raise ValueError(f"Unsupported include statement: {line}")  # pragma: no cover
+            else:
+                new_qasm3 += line + "\n"
+        qasm3_with_includes = new_qasm3
 
-    print()  # noqa: T201
-    print(f"Determined number of qubits: {nqubits}")  # noqa: T201
-    print("Register name to qubit index mapping:")  # noqa: T201
-    for reg_name, (start, end) in reg_name_to_start_end.items():
-        print(f"  {reg_name}: qubits {start} to {end}")  # noqa: T201
-    print("All variables:")  # noqa: T201
-    for var_name, var_info in var_list.items():
-        print(f"  {var_name}: type={var_info.get('type', 'unknown')}, size={var_info['size']}, value={var_info['value']}")  # noqa: T201
-    print("Custom gate definitions:")  # noqa: T201
-    for gate_name, gate_info in custom_gate_definitions.items():
-        print(f"  {gate_name}: args={gate_info['args']}, qubits={gate_info['qubits']}")  # noqa: T201
-    print("Gates to add:")  # noqa: T201
-    for gate in gates_to_add:
-        print(f"  {gate}")  # noqa: T201
+        # Find any let statements and do a find/replace for the alias in the qasm3 text
+        as_lines = qasm3_with_includes.splitlines()
+        for i, line in enumerate(as_lines):
+            if line.strip().startswith("let "):
+                let_statement = line.strip()[len("let ") :].rstrip(";")
+                alias_name, alias_value = let_statement.split(" = ")
+                alias_name = alias_name.strip()
+                alias_value = alias_value.strip()
+                for j in range(i + 1, len(as_lines)):
+                    as_lines[j] = as_lines[j].replace(alias_name, alias_value)
+        qasm3_with_includes = "\n".join(as_lines)
 
-    # Create a Circuit with the determined number of qubits
-    c = Circuit(nqubits)
-    for gate in gates_to_add:
-        c.add(gate)
+        # Use the official OpenQASM 3.0 parser to parse the text and get the AST nodes
+        ast = parse(qasm3_with_includes)
 
-    return c
+        # The vars to fill as we parse the tree
+        self.nqubits = 0
+        self.reg_name_to_start_end = {}
+        self.var_list = {
+            "π": {"size": 1, "value": pi},
+            "pi": {"size": 1, "value": pi},
+            "τ": {"size": 1, "value": 2 * pi},
+            "tau": {"size": 1, "value": 2 * pi},
+            "euler": {"size": 1, "value": e},
+            "ℇ": {"size": 1, "value": e},
+        }
+        self.custom_gate_definitions = {}
+        self.subroutine_definitions = {}
+        self.gates_to_add = []
+
+        # Go through the tree and determine what to do
+        for statement in ast.statements:
+            self._process_statement(statement)
+
+        # Create a Circuit with the determined number of qubits
+        c = Circuit(self.nqubits)
+        for gate in self.gates_to_add:
+            c.add(gate)
+
+        return c
+
+    def to_qasm3(circuit: Circuit) -> str:
+        qasm3 = "OPENQASM 3.0;\n"
+        qasm3 += 'include "stdgates.inc";\n'
+        if circuit.nqubits > 0:
+            qasm3 += f"qubit[{circuit.nqubits}] q;\n"
+        for gate in circuit.gates:
+            qasm_gate_name = gate.name.lower()
+            qasm_control_str = "".join(["ctrl @ " for _ in gate.control_qubits])
+            qasm_qubits_str = ", ".join([f"q[{qb}]" for qb in gate.qubits])
+            qasm_gate_string = f"{qasm_control_str} {qasm_gate_name} {qasm_qubits_str}"
+            qasm_gate_string = qasm_gate_string.strip()
+            qasm3 += f"{qasm_gate_string};\n"
+        return qasm3.strip()
+
+
+def from_qasm3(qasm3: str, directory: str = "") -> Circuit:
+    """
+    Convert an OpenQASM 3.0 string representation of a quantum circuit into a Circuit object.
+
+    Args:
+        qasm3 (str): The OpenQASM 3.0 string representation of the quantum circuit.
+        directory (str): The directory to resolve include statements from. Defaults to the current directory.
+
+    Returns:
+        Circuit: The reconstructed Circuit object.
+
+    Raises:
+        ValueError: If the QASM string contains unsupported statements, gates, or expressions.
+    """
+    return OpenQasmParser().from_qasm3(qasm3, directory)
 
 
 def to_qasm3(circuit: Circuit) -> str:
@@ -681,18 +1039,7 @@ def to_qasm3(circuit: Circuit) -> str:
     Returns:
         str: The OpenQASM 3.0 representation of the circuit.
     """
-    qasm3 = "OPENQASM 3.0;\n"
-    qasm3 += 'include "stdgates.inc";\n\n'
-    if circuit.nqubits > 0:
-        qasm3 += f"qubit[{circuit.nqubits}] q;\n\n"
-    for gate in circuit.gates:
-        qasm_gate_name = gate.name.lower()
-        qasm_control_str = ["ctrl @ " for _ in gate.controls].join("")
-        qasm_qubits_str = ", ".join([f"q[{qb}]" for qb in gate.qubits])
-        qasm_gate_string = f"{qasm_control_str} {qasm_gate_name} {qasm_qubits_str}"
-        qasm_gate_string = qasm_gate_string.strip()
-        qasm3 += f"{qasm_gate_string};\n"
-    return qasm3
+    return OpenQasmParser.to_qasm3(circuit)
 
 
 def from_qasm3_file(filename: str) -> Circuit:
@@ -720,114 +1067,3 @@ def to_qasm3_file(circuit: Circuit, filename: str) -> None:
     """
     qasm_code = to_qasm3(circuit)
     Path(filename).write_text(qasm_code, encoding="utf-8")
-
-
-"""
-Feature Table
-OpenQASM 3 Feature     Qiskit SDK       IBM Qiskit Runtime      QiliSDK       Qiskit Notes
-comments               ✅               ✅                      ✅
-QASM vstring           ✅               ✅                      ✅            1
-include                🟡               ❌                      ✅            1, 7
-unicode names          ✅               ✅                      ✅
-qubit                  ✅               🟡                      ✅            2
-bit                    ✅               ✅                      ✅            3
-bool                   🟡               ✅                      ✅            4
-int                    ❌               ✅                      ✅            4
-uint                   🟡               ✅                      ✅            4
-float                  🟡               🟡                      ✅            4
-angle                  ❌               🟡                      ✅            4
-complex                ❌               ❌                      ✅            4
-const                  ❌               ❌                      ✅            4
-pi/π/tau/τ/euler/ℇ     ✅               ✅                      ✅
-Aliasing: let          🟡               ❌                      ✅            5
-register concatenation 🟡               ❌                      ❌            5
-casting expr.Cast      🟡               🟡                      ✅            4
-duration               ❌               ❌                      ✅
-durationof             ❌               ❌                      ❌
-ns/μs/us/ms/s/dt       ✅               ✅                      ✅            6
-stretch expr.Stretch   🟡               🟡                      ✅            4, 6
-delay                  ✅               ✅                      ❌            6
-barrier                ✅               ✅                      ❌
-box                    ✅               ❌                      ❌            6
-Built-in U             ✅               ✅                      ✅
-gate                   🟡               🟡                      ✅            7
-gphase                 🟡               ❌                      ❌            7
-ctrl @/ negctrl @      🟡               ❌                      ✅            7
-inv @                  🟡               ❌                      ✅            7
-pow(k) @               🟡               ❌                      🟡            7
-reset                  ✅               ✅                      ❌
-measure                ✅               ✅                      🟡
-bit operations         🟡               ✅                      ✅            4
-boolean operations     🟡               ✅                      ✅            4
-arithmetic expressions 🟡               🟡                      ✅            4
-comparisons            🟡               ✅                      ✅            4
-if                     ✅               ✅                      ✅            8
-else                   ✅               ✅                      ✅            8
-else if                ✅               ❌                      ✅            8
-for loops              🟡               ❌                      ✅            8
-switch                 ❌               ❌                      ✅
-while loops            ✅               ❌                      ✅            8
-continue               🟡               ❌                      ✅            8
-break                  🟡               ❌                      ✅            8
-extern                 ❌               ❌                      ❌
-def subroutines        ❌               ❌                      TODO
-return                 ❌               ❌                      TODO
-input                  ✅               🟡                      ❌            4, 9
-output                 ❌               ❌                      ❌
-
-1) These OpenQASM 3 program features have no impact on the execution and Qiskit strips
-them out as part of parsing the files. Files that use them can be submitted but they
-will have no effect. For include files, stdgates.inc is currently supported as input
-to Qiskit, and backend execution always requires circuits to have been compiled to
-the backend Instruction Set Architecture (ISA), where include files are irrelevant.
-
-2) Qiskit SDK supports parsing and dumping OpenQASM 3 files with any qubit declarations.
-For execution on hardware, only circuits defined in terms of hardware qubits
-(for example, $0) are valid. Qiskit SDK automatically outputs OpenQASM 3 in terms
-of the supported hardware-qubit identifiers if the circuit was transpiled for a
-backend with layout information.
-
-3) bit- and bit[n]-typed variable declarations in Qiskit SDK correspond to Clbit
-and ClassicalRegister declarations.
-
-4) As of July 2025, Qiskit SDK can represent local variables of a restricted
-set of types, can represent many runtime operations on these objects, and supports
-outputting them to OpenQASM 3. However, Qiskit SDK (through qiskit-qasm3-import v0.6.0)
-does not support parsing OpenQASM 3 files that contain variable declarations, and has very
-limited support for parsing variable expressions. In general, most of what Qiskit can
-represent in its expression system can be executed on suitable dynamic circuits hardware,
-even if the expression cannot yet be parsed by Qiskit SDK. See the Qiskit documentation
-of the qiskit.circuit.classical module for the most up-to-date information.
-
-5) Qiskit SDK can represent register aliasing for both quantum and classical registers,
-but it is strongly discouraged to use aliasing of classical registers. Most expressions
-on classical registers do not work with aliases, and aliased classical registers are not
-supported for execution on hardware. The Qiskit OpenQASM 3 parser can resolve let alias
-statements that bind the result of register concantenation.
-
-6) Qiskit SDK supports explicit delays via QuantumCircuit.delay, and circuit boxes
-(QuantumCircuit.box) can also have explicit durations. These durations can include
-classical expressions of stretch variables. Qiskit SDK (as of July 2025 through
-qiskit-qasm3-import v0.6.0) does not support parsing declarations of type duration
-or type stretch from OpenQASM 3 files. Hardware has limited support for durations including stretch.
-
-7) Circuits must be transpiled to the backend ISA to run on IBM hardware. This precludes
-custom gate definitions and higher-level constructs like gate modifiers (such as inv @)
-from being valid for execution on hardware verbatim, but the transpile process resolves
-them into valid ISA circuits. Qiskit SDK (as of July 2025, through qiskit-qasm3-import v0.6.0)
-will eagerly evaluate gate modifiers during the parse, so these will not be evident
-in the resulting QuantumCircuit, potentially at a runtime cost.
-
-8) Qiskit SDK can represent structured control flow and export this to OpenQASM 3. The
-continue and break statements can technically be represented by Qiskit, but are not well
-supported even within Qiskit SDK. for loops in Qiskit v2.1.0 are not well supported. Nested
-control flow (such as an if inside another if, or an else if statement) is not
-eligible for execution on hardware.
-
-9) Qiskit SDK supports declaring any supported classical type as an input variable on the
-circuit. Such variables are not currently eligible for execution on hardware, and cannot
-be loaded by the Qiskit OpenQASM 3 importer. Unbound Parameter objects present in the
-QuantumCircuit are exported as input float[64] variables. Certain runtime configuration
-options can enable executing such circuits on some backends.
-
-"""

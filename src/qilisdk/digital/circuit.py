@@ -303,7 +303,7 @@ class Circuit(Parameterizable):
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Circuit):
-            return NotImplemented("Equality is only supported between Circuit objects")
+            return NotImplemented
         if self.nqubits != other.nqubits:
             return False
         if len(self.gates) != len(other.gates):

@@ -24,6 +24,7 @@ from typing_extensions import Self
 from qilisdk.core.parameterizable import Parameterizable
 from qilisdk.core.variables import Parameter, Term
 from qilisdk.settings import get_settings
+from qilisdk.utils.hashing import hash as qili_hash
 from qilisdk.yaml import yaml
 
 from .exceptions import (
@@ -241,6 +242,18 @@ class Gate(Parameterizable, ABC):
             return f"{self.name}({qubits_str}, {param_str})"
         return f"{self.name}({qubits_str})"
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Gate):
+            return NotImplemented
+        return (
+            self.name == other.name
+            and self.qubits == other.qubits
+            and np.allclose(self.get_parameter_values(), other.get_parameter_values())
+        )
+
+    def __hash__(self) -> int:
+        return qili_hash((self.name, self.qubits, self.matrix, tuple(self.get_parameters())))
+
 
 @yaml.register_class
 class BasicGate(Gate):
@@ -438,10 +451,10 @@ class Modified(Gate, Generic[TBasicGate]):
 
 @yaml.register_class
 class Controlled(Modified[TBasicGate]):
-    def __init__(self, *control_qubits: int, basic_gate: TBasicGate) -> None:
+    def __init__(self, *control_qubits: int, basic_gate: Gate) -> None:
 
         # If doing Controlled of another Controlled, combine into one with all control qubits.
-        if isinstance(basic_gate, Controlled):
+        if isinstance(basic_gate, Controlled) and isinstance(basic_gate.basic_gate, Gate):
             control_qubits += basic_gate.control_qubits
             basic_gate = basic_gate.basic_gate
 
@@ -488,7 +501,7 @@ class Adjoint(Modified[TBasicGate]):
     Represents the adjoint (conjugate transpose) of a unitary gate.
     """
 
-    def __init__(self, basic_gate: TBasicGate) -> None:
+    def __init__(self, basic_gate: Gate) -> None:
         super().__init__(basic_gate=basic_gate)
 
     def _generate_matrix(self) -> np.ndarray:
