@@ -554,6 +554,6 @@ This example optimizes a variational schedule under some parameter constraints.
     print(vp.get_constraints()) # print the constraints of the variational program.
 
     backend = QutipBackend()
-    results = backend.execute(vp, readout=[ReadoutMethod.expectation_values(observables=[h1]), ReadoutMethod.state_tomography(), ReadoutMethod.sample(1000)])
+    results = backend.execute(vp, readout=[ReadoutMethod.expectation(observables=[h1]), ReadoutMethod.state_tomography(), ReadoutMethod.sampling(1000)])
     schedule.draw(ScheduleStyle(title="Schedule After Optimization"))
     print(results)

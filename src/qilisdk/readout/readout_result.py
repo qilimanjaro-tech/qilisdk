@@ -32,7 +32,7 @@ import operator
 from abc import abstractmethod
 from dataclasses import dataclass
 from pprint import pformat
-from typing import TYPE_CHECKING, Protocol, Self, TypeGuard
+from typing import TYPE_CHECKING, Generic, Protocol, Self, TypeGuard, TypeVar
 
 import numpy as np
 from loguru import logger
@@ -41,10 +41,10 @@ from qilisdk.core import QTensor, expect_val
 from qilisdk.core.result import Result
 from qilisdk.settings import get_settings
 
+from .readout import ExpectationReadout, ReadoutMethod, SamplingReadout, StateTomographyReadout
+
 if TYPE_CHECKING:
     from qilisdk.core.types import Number
-
-    from .readout import ExpectationReadout, ReadoutMethod, SamplingReadout, StateTomographyReadout
 
 
 NORMALIZATION_TOLERANCE = 1e-8
@@ -150,7 +150,10 @@ class ReadoutCompositeResults(Result):
         return out
 
 
-class ReadoutResult(Result):
+C = TypeVar("C", bound="ReadoutMethod")
+
+
+class ReadoutResult(Result, Generic[C]):
     """Abstract base class for a single readout result.
 
     Every concrete subclass must expose a :attr:`readout` property that
@@ -160,12 +163,12 @@ class ReadoutResult(Result):
 
     @property
     @abstractmethod
-    def readout(self) -> ReadoutMethod:
+    def readout(self) -> C:
         """ReadoutMethod: The readout configuration that produced this result."""
         ...
 
 
-class SamplingReadoutResult(ReadoutResult):
+class SamplingReadoutResult(ReadoutResult[SamplingReadout]):
     """Result produced by a :class:`~qilisdk.readout.SamplingReadout`.
 
     Holds bitstring measurement counts and the corresponding probability
@@ -221,7 +224,8 @@ class SamplingReadoutResult(ReadoutResult):
     def __init__(
         self, readout: SamplingReadout, *, samples: dict[str, int] | None, probabilities: dict[str, float] | None = None
     ) -> None:
-
+        if not isinstance(readout, SamplingReadout):
+            raise TypeError(f"Expected SamplingReadout, got {type(readout).__name__}")
         if samples is None:
             raise ValueError("Can't construct the Sampling results if samples are not provided.")
         self._samples: dict[str, int] = samples or {}
@@ -281,7 +285,7 @@ class SamplingReadoutResult(ReadoutResult):
     __str__ = __repr__
 
 
-class ExpectationReadoutResult(ReadoutResult):
+class ExpectationReadoutResult(ReadoutResult[ExpectationReadout]):
     """Result produced by an :class:`~qilisdk.readout.ExpectationReadout`.
 
     Contains the computed expectation values for each observable specified in
@@ -306,7 +310,7 @@ class ExpectationReadoutResult(ReadoutResult):
     """
 
     @classmethod
-    def from_samples(cls, readout: ExpectationReadout, expected_values: list[float]) -> Self:
+    def from_expectations(cls, readout: ExpectationReadout, expected_values: list[float]) -> Self:
         return cls(readout=readout, expected_values=expected_values)
 
     @classmethod
@@ -323,6 +327,8 @@ class ExpectationReadoutResult(ReadoutResult):
         return cls(readout=readout, expected_values=expected_values)
 
     def __init__(self, readout: ExpectationReadout, expected_values: list[float]) -> None:
+        if not isinstance(readout, ExpectationReadout):
+            raise TypeError(f"Expected ExpectationReadout, got {type(readout).__name__}")
         if expected_values is None:
             raise ValueError("Can't initialize Expectation Readout if the expected values are not provided.")
         self._expected_values: list[int | float] = expected_values
@@ -349,7 +355,7 @@ class ExpectationReadoutResult(ReadoutResult):
     __str__ = __repr__
 
 
-class StateTomographyReadoutResult(ReadoutResult):
+class StateTomographyReadoutResult(ReadoutResult[StateTomographyReadout]):
     """Result produced by a :class:`~qilisdk.readout.StateTomographyReadout`.
 
     Contains the full quantum state after execution and, optionally, the
@@ -367,6 +373,8 @@ class StateTomographyReadoutResult(ReadoutResult):
         readout: StateTomographyReadout,
         state: QTensor,
     ) -> None:
+        if not isinstance(readout, StateTomographyReadout):
+            raise TypeError(f"Expected StateTomographyReadout, got {type(readout).__name__}")
         self._readout: StateTomographyReadout = readout
         self._state: QTensor = state
 

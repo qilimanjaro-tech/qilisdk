@@ -297,7 +297,7 @@ class CudaBackend(Backend):
                 )
             )
 
-        if all(ro.is_sample() for ro in readout):
+        if all(ro.is_sampling_readout() for ro in readout):
             sampling_readout = next(ro for ro in readout if isinstance(ro, SamplingReadout))
             cudaq_result = cudaq.sample(kernel, shots_count=sampling_readout.nshots)
             if og_param:
@@ -447,7 +447,7 @@ class CudaBackend(Backend):
                 or if more than one readout is provided with noise.
         """
         if self._noise_model:
-            if any(not ro.is_sample() for ro in readout):
+            if any(not ro.is_sampling_readout() for ro in readout):
                 raise ValueError(
                     "Currently only the sample readout method is supported with CUDA backend for digital simulation with noise."
                 )

@@ -57,7 +57,7 @@ class ReadoutMethod(BaseModel):
             )
 
     @classmethod
-    def sample(cls, nshots: int = 100) -> SamplingReadout:
+    def sampling(cls, nshots: int = 100) -> SamplingReadout:
         """Create a :class:`SamplingReadout`.
 
         This factory must be called on :class:`ReadoutMethod` itself, not on a
@@ -73,10 +73,10 @@ class ReadoutMethod(BaseModel):
             AttributeError: If called on a subclass instead of
                 :class:`ReadoutMethod`.
         """
-        cls._require_factory_called_on_base("sample")
+        cls._require_factory_called_on_base("sampling")
         return SamplingReadout(nshots=nshots)
 
-    def is_sample(self) -> bool:
+    def is_sampling_readout(self) -> bool:
         """Check whether this readout is a :class:`SamplingReadout`.
 
         Returns:
@@ -86,7 +86,7 @@ class ReadoutMethod(BaseModel):
         return isinstance(self, SamplingReadout)
 
     @classmethod
-    def expectation_values(cls, observables: list[Hamiltonian | QTensor], nshots: int = 0) -> ExpectationReadout:
+    def expectation(cls, observables: list[Hamiltonian | QTensor], nshots: int = 0) -> ExpectationReadout:
         """Create an :class:`ExpectationReadout`.
 
         This factory must be called on :class:`ReadoutMethod` itself, not on a
@@ -105,10 +105,10 @@ class ReadoutMethod(BaseModel):
             AttributeError: If called on a subclass instead of
                 :class:`ReadoutMethod`.
         """
-        cls._require_factory_called_on_base("expectation_values")
+        cls._require_factory_called_on_base("expectation")
         return ExpectationReadout(observables=observables, nshots=nshots)
 
-    def is_expectation_values(self) -> bool:
+    def is_expectation_readout(self) -> bool:
         """Check whether this readout is an :class:`ExpectationReadout`.
 
         Returns:
@@ -139,7 +139,7 @@ class ReadoutMethod(BaseModel):
         cls._require_factory_called_on_base("state_tomography")
         return StateTomographyReadout(state_tomography_method=method)
 
-    def is_state_tomography(self) -> bool:
+    def is_state_tomography_readout(self) -> bool:
         """Check whether this readout is a :class:`StateTomographyReadout`.
 
         Returns:
@@ -147,15 +147,6 @@ class ReadoutMethod(BaseModel):
             :class:`StateTomographyReadout`, ``False`` otherwise.
         """
         return isinstance(self, StateTomographyReadout)
-
-    def is_valid(self) -> bool:
-        """Check whether this readout is one of the supported concrete kinds.
-
-        Returns:
-            bool: ``True`` if the instance is a :class:`SamplingReadout`,
-            :class:`ExpectationReadout`, or :class:`StateTomographyReadout`.
-        """
-        return self.is_state_tomography() or self.is_expectation_values() or self.is_sample()
 
     @staticmethod
     def _merge_positional_args(

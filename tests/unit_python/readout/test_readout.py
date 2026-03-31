@@ -89,13 +89,13 @@ class TestStateTomographyReadout:
 
 class TestReadoutMethodBase:
     def test_factory_sample(self):
-        ro = ReadoutMethod.sample(nshots=42)
+        ro = ReadoutMethod.sampling(nshots=42)
         assert isinstance(ro, SamplingReadout)
         assert ro.nshots == 42
 
     def test_factory_expectation_values(self):
         obs = [pauli_z(0)]
-        ro = ReadoutMethod.expectation_values(observables=obs)
+        ro = ReadoutMethod.expectation(observables=obs)
         assert isinstance(ro, ExpectationReadout)
 
     def test_factory_state_tomography(self):
@@ -104,10 +104,10 @@ class TestReadoutMethodBase:
 
     def test_factory_on_subclass_raises(self):
         with pytest.raises(TypeError, match="only available on ReadoutMethod"):
-            SamplingReadout.sample(nshots=10)
+            SamplingReadout.sampling(nshots=10)
 
         with pytest.raises(TypeError, match="only available on ReadoutMethod"):
-            ExpectationReadout.expectation_values(observables=[pauli_z(0)])
+            ExpectationReadout.expectation(observables=[pauli_z(0)])
 
         with pytest.raises(TypeError, match="only available on ReadoutMethod"):
             StateTomographyReadout.state_tomography()
@@ -115,21 +115,16 @@ class TestReadoutMethodBase:
 
 class TestReadoutMethodIsChecks:
     def test_is_sample(self):
-        assert SamplingReadout(nshots=10).is_sample() is True
-        assert ExpectationReadout(observables=[pauli_z(0)]).is_sample() is False
-        assert StateTomographyReadout().is_sample() is False
+        assert SamplingReadout(nshots=10).is_sampling_readout() is True
+        assert ExpectationReadout(observables=[pauli_z(0)]).is_sampling_readout() is False
+        assert StateTomographyReadout().is_sampling_readout() is False
 
     def test_is_expectation_values(self):
-        assert SamplingReadout(nshots=10).is_expectation_values() is False
-        assert ExpectationReadout(observables=[pauli_z(0)]).is_expectation_values() is True
-        assert StateTomographyReadout().is_expectation_values() is False
+        assert SamplingReadout(nshots=10).is_expectation_readout() is False
+        assert ExpectationReadout(observables=[pauli_z(0)]).is_expectation_readout() is True
+        assert StateTomographyReadout().is_expectation_readout() is False
 
     def test_is_state_tomography(self):
-        assert SamplingReadout(nshots=10).is_state_tomography() is False
-        assert ExpectationReadout(observables=[pauli_z(0)]).is_state_tomography() is False
-        assert StateTomographyReadout().is_state_tomography() is True
-
-    def test_is_valid(self):
-        assert SamplingReadout(nshots=10).is_valid() is True
-        assert ExpectationReadout(observables=[pauli_z(0)]).is_valid() is True
-        assert StateTomographyReadout().is_valid() is True
+        assert SamplingReadout(nshots=10).is_state_tomography_readout() is False
+        assert ExpectationReadout(observables=[pauli_z(0)]).is_state_tomography_readout() is False
+        assert StateTomographyReadout().is_state_tomography_readout() is True
