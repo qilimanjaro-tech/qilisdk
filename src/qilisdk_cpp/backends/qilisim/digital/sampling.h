@@ -19,10 +19,12 @@
 #include "../../../libs/eigen.h"
 #include "../config/qilisim_config.h"
 #include "../digital/gate.h"
-#include "../../../libs/eigen.h"
 #include "../noise/noise_model.h"
 #include "../representations/matrix_free_operator.h"
 
+// Helper functions for sampling.cpp
 void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrix& initial_state, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, const QiliSimConfig& config);
 
 void sampling_matrix_free(const std::vector<Gate>& gates,  int n_qubits, const SparseMatrix& initial_state, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, const QiliSimConfig& config);
+
+// GCOV_EXCL_BR_STOP

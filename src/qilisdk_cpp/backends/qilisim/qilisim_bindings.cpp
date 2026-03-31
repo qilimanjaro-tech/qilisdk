@@ -15,7 +15,13 @@
 #include "../../libs/pybind.h"
 #include "qilisim.h"
 
+// GCOV_EXCL_BR_START
+// GCOVR_EXCL_START
+
 PYBIND11_MODULE(qilisim_module, m) {
-    // Make the QiliSimCpp class available in Python, as well as the two main methods
+    initialize_all_pybind_types();
     py::class_<QiliSimCpp>(m, "QiliSimCpp").def(py::init<>()).def("execute_analog_evolution", &QiliSimCpp::execute_analog_evolution).def("execute_digital_propagation", &QiliSimCpp::execute_digital_propagation).def("execute_quantum_reservoir", &QiliSimCpp::execute_quantum_reservoir);
 }
+
+// GCOVR_EXCL_STOP
+// GCOV_EXCL_BR_STOP

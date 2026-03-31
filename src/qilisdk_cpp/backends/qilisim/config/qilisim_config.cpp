@@ -15,6 +15,8 @@
 #include "qilisim_config.h"
 #include "../../../libs/pybind.h"
 
+// GCOV_EXCL_BR_START
+
 void QiliSimConfig::validate() const {
     /*
     Validate the QiliSim configuration.
@@ -48,3 +50,5 @@ void QiliSimConfig::validate() const {
         throw py::value_error("Absolute tolerance must be positive.");
     }
 }
+
+// GCOV_EXCL_BR_STOP

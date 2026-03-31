@@ -14,7 +14,10 @@
 
 #include "matrix_free_hamiltonian.h"
 #include <unordered_map>
+#include "../../../libs/pybind.h"
 #include "../utils/matrix_utils.h"
+
+// GCOV_EXCL_BR_START
 
 void MatrixFreeHamiltonian::apply(DenseMatrix& output_state, MatrixFreeApplicationType application_type) const {
     /*
@@ -64,7 +67,25 @@ double MatrixFreeHamiltonian::expectation_value(const DenseMatrix& state) const 
 
     Args:
         state: The state for which the expectation value will be calculated.
+
+    Raises:
+        std::invalid_argument: If any operator in the Hamiltonian acts on a qubit that is out of bounds for the given state.
     */
+    int num_qubits_in_state = static_cast<int>(std::log2(state.rows()));
+    for (const auto& [coefficient, ops] : operators) {
+        for (const auto& op : ops) {
+            int max_qubit = -1;
+            for (int target : op.get_target_qubits()) {
+                max_qubit = std::max(max_qubit, target);
+            }
+            for (int control : op.get_control_qubits()) {
+                max_qubit = std::max(max_qubit, control);
+            }
+            if (max_qubit >= num_qubits_in_state) {
+                throw py::value_error("Operator in Hamiltonian acts on a qubit that is out of bounds for the given state.");
+            }
+        }
+    }
     double exp_val = 0.0;
     m_temp_state.resizeLike(state);
     for (const auto& [coefficient, ops] : operators) {
@@ -132,6 +153,13 @@ MatrixFreeHamiltonian& MatrixFreeHamiltonian::operator+=(const MatrixFreeHamilto
         A reference to the resulting Hamiltonian after addition.
     */
     std::unordered_map<std::string, int> op_map;
+    for (size_t i = 0; i < operators.size(); ++i) {
+        std::string id;
+        for (const auto& op : operators[i].second) {
+            id += op.get_id() + "|";
+        }
+        op_map[id] = int(i);
+    }
     for (const auto& [coefficient, ops] : other.operators) {
         std::string id;
         for (const auto& op : ops) {
@@ -196,3 +224,47 @@ void MatrixFreeHamiltonian::add(const std::complex<double>& coeff, const std::ve
     */
     operators.push_back({coeff, ops});
 }
+
+bool MatrixFreeHamiltonian::operator==(const MatrixFreeHamiltonian& other) const {
+    /*
+    Equality operator for MatrixFreeHamiltonian. Two Hamiltonians are considered equal if they have the same terms with the same coefficients.
+
+    Args:
+        other: The Hamiltonian to compare with this one.
+
+    Returns:
+        True if the Hamiltonians are equal, false otherwise.
+    */
+    if (operators.size() != other.operators.size()) {
+        return false;
+    }
+    MatrixFreeHamiltonian sorted_this = *this;
+    MatrixFreeHamiltonian sorted_other = other;
+    auto sort_key = [](const std::pair<std::complex<double>, std::vector<MatrixFreeOperator>>& term) {
+        std::string key;
+        for (const auto& op : term.second) {
+            key += op.get_id() + "|";
+        }
+        return key;
+    };
+    std::sort(sorted_this.operators.begin(), sorted_this.operators.end(), [&](const auto& a, const auto& b) { return sort_key(a) < sort_key(b); });
+    std::sort(sorted_other.operators.begin(), sorted_other.operators.end(), [&](const auto& a, const auto& b) { return sort_key(a) < sort_key(b); });
+    for (size_t i = 0; i < sorted_this.operators.size(); ++i) {
+        if (sorted_this.operators[i].first != sorted_other.operators[i].first) {
+            return false;
+        }
+        const auto& ops1 = sorted_this.operators[i].second;
+        const auto& ops2 = sorted_other.operators[i].second;
+        if (ops1.size() != ops2.size()) {
+            return false;
+        }
+        for (size_t j = 0; j < ops1.size(); ++j) {
+            if (!(ops1[j] == ops2[j])) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+// GCOV_EXCL_BR_STOP

@@ -30,6 +30,7 @@ def test_custom_layout_routing_inserts_swaps_when_needed():
 
     output = layout_pass.run(circuit)
 
+    assert output is not None
     assert output.nqubits == 3
     assert [type(g).__name__ for g in output.gates] == ["RX", "SWAP", "CZ", "SWAP", "M"]
     assert [gate.qubits for gate in output.gates] == [(2,), (1, 0), (2, 1), (1, 0), (0,)]
@@ -137,6 +138,7 @@ def test_custom_layout_accepts_edge_list_topology():
     layout_pass = CustomLayoutPass([(0, 1), (1, 2)], {0: 0, 1: 1})
     output = layout_pass.run(circuit)
 
+    assert output is not None
     assert output.nqubits == 3
     assert [type(g).__name__ for g in output.gates] == ["CZ"]
     assert [gate.qubits for gate in output.gates] == [(0, 1)]

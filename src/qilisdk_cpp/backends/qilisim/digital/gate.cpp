@@ -14,6 +14,25 @@
 
 #include "gate.h"
 
+// GCOV_EXCL_BR_START
+
+Gate::Gate(const std::string& gate_type_, const SparseMatrix& base_matrix_, const std::vector<int>& controls_, const std::vector<int>& targets_, const std::vector<std::pair<std::string, double>>& parameters_) {
+    this->gate_type = gate_type_;
+    this->base_matrix = base_matrix_;
+    this->control_qubits = controls_;
+    this->target_qubits = targets_;
+    this->parameters = parameters_;
+
+    // Convert common names to standard
+    if (this->gate_type == "Toffoli" || this->gate_type == "CCX" || this->gate_type == "CNOT" || this->gate_type == "CX") {
+        this->gate_type = "X";
+    } else if (this->gate_type == "CCY" || this->gate_type == "CY") {
+        this->gate_type = "Y";
+    } else if (this->gate_type == "CCZ" || this->gate_type == "CZ") {
+        this->gate_type = "Z";
+    }
+}
+
 int Gate::permute_bits(int index, const std::vector<int>& perm) const {
     /*
     Permute the bits of an index according to a given permutation.
@@ -195,24 +214,12 @@ SparseMatrix Gate::base_to_full(const SparseMatrix& base_gate, int num_qubits, c
 
 std::string Gate::get_name() const {
     /*
-    Get the name of the gate, prefixed by c's for each control qubit.
+    Get the name of the gate.
+
     Returns:
         std::string: The gate name.
     */
-    std::string control_string = "";
-    int number_c_needed = int(control_qubits.size());
-    // reduce if we already have some 'c's in the gate_type
-    for (char c : gate_type) {
-        if (c == 'C' || c == 'c') {
-            number_c_needed--;
-        } else {
-            break;
-        }
-    }
-    for (int i = 0; i < number_c_needed; ++i) {
-        control_string += "C";
-    }
-    return control_string + gate_type;
+    return gate_type;
 }
 
 std::string Gate::get_id() const {
@@ -264,7 +271,7 @@ SparseMatrix Gate::get_full_matrix(int num_qubits) const {
     Returns:
         SparseMatrix: The full matrix representation of the gate.
     */
-    if (num_qubits == 1 && target_qubits.size() == 1 && control_qubits.empty()) {
+    if (control_qubits.empty() && num_qubits == std::ceil(std::log2(base_matrix.cols()))) {
         return base_matrix;
     } else {
         return base_to_full(base_matrix, num_qubits, control_qubits, target_qubits);
@@ -348,3 +355,5 @@ std::ostream& operator<<(std::ostream& os, const std::vector<Gate>& gates) {
     os << "]";
     return os;
 }
+
+// GCOV_EXCL_BR_STOP

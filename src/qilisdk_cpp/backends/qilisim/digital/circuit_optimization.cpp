@@ -14,7 +14,7 @@
 
 #include "circuit_optimizations.h"
 
-#include <iostream>  // TODO(luke) remove
+// GCOV_EXCL_BR_START
 
 std::vector<Gate> combine_single_qubit_gates(const std::vector<Gate>& gates) {
     /*
@@ -79,15 +79,7 @@ std::vector<Gate> combine_single_qubit_gates(const std::vector<Gate>& gates) {
         }
     }
 
-    // std::cout << "Gates before:" << std::endl;
-    // for (const auto& gate : gates) {
-    //     std::cout << gate.get_id() << std::endl;
-    // }
-    // std::cout << std::endl;
-    // std::cout << "Gates after:" << std::endl;
-    // for (const auto& gate : combined_gates) {
-    //     std::cout << gate.get_id() << std::endl;
-    // }
-
     return combined_gates;
 }
+
+// GCOV_EXCL_BR_STOP

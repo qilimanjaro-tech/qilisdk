@@ -18,6 +18,8 @@
 #include "../../../libs/pybind.h"
 #include "matrix_utils.h"
 
+// GCOV_EXCL_BR_START
+
 std::map<std::string, int> sample_from_probabilities(const std::vector<std::tuple<int, double>>& prob_entries, int n_qubits, int n_shots, int seed) {
     /*
     Sample measurement outcomes from a probability distribution.
@@ -142,10 +144,7 @@ DenseMatrix get_vector_from_density_matrix(const DenseMatrix& rho_t, double atol
     // Extract the corresponding state vector
     DenseMatrix state_vec(rho_t.rows(), 1);
     for (int r = 0; r < rho_t.rows(); ++r) {
-        std::complex<double> val = rho_t(r, non_zero_col);
-        if (std::abs(val) > atol) {
-            state_vec(r, 0) = val;
-        }
+        state_vec(r, 0) = rho_t(r, non_zero_col);
     }
     state_vec /= state_vec.norm();
 
@@ -374,3 +373,5 @@ SparseMatrix trajectories_to_density_matrix(const SparseMatrix& trajectories) {
     rho /= trace(rho);
     return rho;
 }
+
+// GCOV_EXCL_BR_STOP

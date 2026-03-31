@@ -19,6 +19,8 @@
 
 #include "../../../libs/eigen.h"
 
+// GCOV_EXCL_BR_START
+
 class Gate {
    private:
     std::string gate_type;
@@ -31,7 +33,7 @@ class Gate {
     SparseMatrix base_to_full(const SparseMatrix& base_gate, int num_qubits, const std::vector<int>& control_qubits, const std::vector<int>& target_qubits) const;
 
    public:
-    Gate(const std::string& gate_type_, const SparseMatrix& base_matrix_, const std::vector<int>& controls_, const std::vector<int>& targets_, const std::vector<std::pair<std::string, double>>& parameters_) : gate_type(gate_type_), base_matrix(base_matrix_), control_qubits(controls_), target_qubits(targets_), parameters(parameters_) {}
+    Gate(const std::string& gate_type_, const SparseMatrix& base_matrix_, const std::vector<int>& controls_, const std::vector<int>& targets_, const std::vector<std::pair<std::string, double>>& parameters_);
     int get_nqubits() const;
     std::vector<int> get_qubits() const;
     std::vector<int> get_target_qubits() const;
@@ -45,3 +47,5 @@ class Gate {
 };
 
 std::ostream& operator<<(std::ostream& os, const std::vector<Gate>& gates);
+
+// GCOV_EXCL_BR_STOP

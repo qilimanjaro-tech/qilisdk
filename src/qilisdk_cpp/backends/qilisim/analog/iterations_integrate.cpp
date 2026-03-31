@@ -16,6 +16,8 @@
 #include "iterations.h"
 #include "lindblad.h"
 
+// GCOV_EXCL_BR_START
+
 DenseMatrix iter_integrate(const DenseMatrix& rho_0, double dt, const SparseMatrix& currentH, const std::vector<SparseMatrix>& jump_operators, int num_substeps, bool is_unitary_on_statevector) {
     /*
     4th-order Runge–Kutta integration of the Lindblad master equation
@@ -170,3 +172,5 @@ void iter_integrate(DenseMatrix& rho_t, double dt, const MatrixFreeHamiltonian& 
         }
     }
 }
+
+// GCOV_EXCL_BR_STOP

@@ -1,5 +1,6 @@
 import builtins
 import math
+from unittest.mock import MagicMock
 
 import pytest
 from rustworkx import PyGraph
@@ -189,6 +190,7 @@ def test_sabre_swap_accepts_padding_qubits_after_layout():
 
     out = swap_pass.run(circuit)
 
+    assert out is not None
     assert out.nqubits >= 5
     assert swap_pass.last_final_layout is not None
     assert len(swap_pass.last_final_layout) == circuit.nqubits
@@ -306,10 +308,11 @@ def test_sabre_swap_fallback_samples_candidate_edge_when_no_neighbors_exist(monk
     swap_pass = SabreSwapPass(graph, max_attempts=1)
     circuit = _two_qubit_circuit()
 
+    fake_cost_set = MagicMock(side_effect=SampledCandidateUsed())
     monkeypatch.setattr(
         swap_pass,
         "_cost_set",
-        lambda *args, **kwargs: (_ for _ in ()).throw(SampledCandidateUsed()),
+        fake_cost_set,
     )
 
     with pytest.raises(SampledCandidateUsed):

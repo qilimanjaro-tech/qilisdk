@@ -96,6 +96,7 @@ def test_involutions_and_identity_are_removed() -> None:
 
     result = CancelIdentityPairsPass().run(circuit)
 
+    assert result is not None
     assert describe_gates(result) == []
     # Original circuit remains untouched
     assert len(circuit.gates) == 9
@@ -114,6 +115,7 @@ def test_parameterized_rotations_cancel_with_wrapped_angles() -> None:
 
     result = CancelIdentityPairsPass().run(circuit)
 
+    assert result is not None
     assert describe_gates(result) == []
 
 
@@ -128,6 +130,7 @@ def test_u_gate_cancellations() -> None:
     result = CancelIdentityPairsPass().run(circuit)
 
     # Only the unmatched trailing U3 should remain
+    assert result is not None
     assert describe_gates(result) == [("U3", (0,), (0.9, 0.1, 0.7))]
 
 
@@ -140,6 +143,7 @@ def test_adjoint_and_controlled_pairs_cancel() -> None:
 
     result = CancelIdentityPairsPass().run(circuit)
 
+    assert result is not None
     assert describe_gates(result) == []
 
 
@@ -151,6 +155,7 @@ def test_matrix_fallback_cancels_custom_unitaries() -> None:
 
     result = CancelIdentityPairsPass().run(circuit)
 
+    assert result is not None
     assert describe_gates(result) == [("PhaseGate", (1,), (0.1,))]
 
 
@@ -166,6 +171,7 @@ def test_measurements_and_unknown_gates_block_cancellation() -> None:
     result = CancelIdentityPairsPass().run(circuit)
 
     # Measurement prevents the first pair from cancelling, but the last two X cancel
+    assert result is not None
     assert describe_gates(result) == [
         ("X", (0,), ()),
         ("M", (0,), ()),

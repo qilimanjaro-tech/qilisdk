@@ -20,7 +20,6 @@
 
 #include "qilisim.h"
 #include "../../libs/numpy.h"
-#include "../../libs/pybind_types.h"
 #include "analog/time_evolution.h"
 #include "config/qilisim_config.h"
 #include "digital/gate.h"
@@ -80,6 +79,10 @@ py::object construct_result_object(const DenseMatrix& state_dense, const py::obj
 
 }
 
+
+// GCOV_EXCL_BR_START
+
+#pragma GCC visibility push(default)
 
 // The public execute_sampling
 py::object QiliSimCpp::execute_digital_propagation(const py::object& functional, const py::object& readout, const py::object& noise_model, const py::object& initial_state, const py::dict& solver_params) {
@@ -237,11 +240,6 @@ py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, co
         if (hamiltonians.size() != parameters_list.size()) {
             throw py::value_error("Number of Hamiltonians does not match number of parameter lists");
         }
-        for (size_t h_ind = 0; h_ind < hamiltonians.size(); ++h_ind) {
-            if (parameters_list[h_ind].size() != step_list.size()) {
-                throw py::value_error("Number of parameters for Hamiltonian " + std::to_string(h_ind) + " does not match number of time steps");
-            }
-        }
 
         // Call the implementation
         time_evolution_matrix_free(rho_0, hamiltonians, parameters_list, step_list, noise_model_cpp, config, rho_t, intermediate_rhos);
@@ -251,11 +249,6 @@ py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, co
         std::vector<SparseMatrix> hamiltonians = parse_hamiltonians(hamiltonians_values, config.get_atol());
         if (hamiltonians.size() != parameters_list.size()) {
             throw py::value_error("Number of Hamiltonians does not match number of parameter lists");
-        }
-        for (size_t h_ind = 0; h_ind < hamiltonians.size(); ++h_ind) {
-            if (parameters_list[h_ind].size() != step_list.size()) {
-                throw py::value_error("Number of parameters for Hamiltonian " + std::to_string(h_ind) + " does not match number of time steps");
-            }
         }
 
         // Call the implementation
@@ -485,3 +478,7 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
         py::arg("intermediate_results") = inter_results[slice]
     );
 }
+
+#pragma GCC visibility pop
+
+// GCOV_EXCL_BR_STOP

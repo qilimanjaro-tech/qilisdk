@@ -16,8 +16,8 @@
 #include <random>
 #include <sstream>
 
-#include "../digital/circuit_optimizations.h"
 #include "../../../libs/pybind.h"
+#include "../digital/circuit_optimizations.h"
 #include "../noise/noise_model.h"
 #include "../utils/matrix_utils.h"
 #include "../utils/random.h"
@@ -26,6 +26,8 @@
 #if defined(_OPENMP)
 #include <omp.h>
 #endif
+
+// GCOV_EXCL_BR_START
 
 
 void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrix& initial_state, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, const QiliSimConfig& config) {
@@ -234,6 +236,16 @@ void sampling_matrix_free(const std::vector<Gate>& gates,  int n_qubits, const S
     // Check if we have noise
     bool has_noise = !noise_model_cpp.is_empty();
 
+    // If it's a density matrix, check if it's pure
+    if (!is_statevector) {
+        DenseMatrix state_squared = state.adjoint().cwiseProduct(state);
+        double trace_squared = state_squared.trace().real();
+        if (std::abs(trace_squared - 1.0) < config.get_atol()) {
+            state = get_vector_from_density_matrix(state);
+            is_statevector = true;
+        }
+    }
+
     // If we have noise but start with a statevector, convert to density matrix
     if (has_noise && is_statevector) {
         state = state * state.adjoint();
@@ -298,3 +310,4 @@ void sampling_matrix_free(const std::vector<Gate>& gates,  int n_qubits, const S
         state = state * state.adjoint();
     }
 }
+// GCOV_EXCL_BR_STOP

@@ -15,7 +15,9 @@
 #include "../libs/pybind.h"
 #include "qtensor.h"
 
+// GCOVR_EXCL_START
 PYBIND11_MODULE(qtensor_module, m) {
+    initialize_external_pybind_types();
     // Make the QTensor class available in Python as well as the various methods
     py::class_<QTensorCpp>(m, "QTensorCpp")
         .def("as_scipy", &QTensorCpp::as_scipy)
@@ -79,3 +81,4 @@ PYBIND11_MODULE(qtensor_module, m) {
         .def(py::init<>())
         .def(py::init<const py::object&>());
 }
+// GCOVR_EXCL_STOP

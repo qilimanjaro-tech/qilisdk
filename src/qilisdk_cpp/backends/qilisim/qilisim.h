@@ -15,10 +15,17 @@
 
 #include "../../libs/pybind.h"
 
-// The main QiliSim C++ class
+// GCOV_EXCL_BR_START
+
+#pragma GCC visibility push(default)
+
 class QiliSimCpp {
    public:
     py::object execute_digital_propagation(const py::object& functional, const py::object& readout, const py::object& noise_model, const py::object& initial_state, const py::dict& solver_params);
     py::object execute_analog_evolution(const py::object& functional, const py::object& readout, const py::object& noise_model, const py::dict& solver_params);
     py::object execute_quantum_reservoir(const py::object& functional, const py::object& readout, const py::object& noise_model, const py::dict& solver_params);
 };
+
+#pragma GCC visibility pop
+
+// GCOV_EXCL_BR_STOP

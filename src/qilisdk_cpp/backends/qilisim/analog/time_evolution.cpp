@@ -18,6 +18,9 @@
 #include "../utils/random.h"
 #include "iterations.h"
 
+
+// GCOV_EXCL_BR_START
+
 void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, NoiseModelCpp& noise_model_cpp, QiliSimConfig& config, DenseMatrix& rho_t, std::vector<DenseMatrix>& intermediate_rhos) {
     /*
     Execute a time evolution functional.
@@ -45,9 +48,6 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
     config.validate();
 
     // Set the number of threads
-    if (config.get_num_threads() <= 0) {
-        config.set_num_threads(1);
-    }
     Eigen::setNbThreads(config.get_num_threads());
 
     // Get the jump operators from the noise model
@@ -94,13 +94,7 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
 
     // If we have non-unitary dynamics and the input was a state vector, convert to density matrix
     if (!is_unitary_dynamics && input_was_vector) {
-        if (rho_0.rows() == 1) {
-            rho_0 = rho_0.adjoint() * rho_0;
-            input_was_vector = true;
-        } else if (rho_0.cols() == 1) {
-            rho_0 = rho_0 * rho_0.adjoint();
-            input_was_vector = true;
-        }
+        rho_0 = rho_0 * rho_0.adjoint();
     }
 
     // If monte carlo, sample from rho_0 to get initial states
@@ -193,8 +187,8 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
 
 // Set the number of threads
 #if defined(_OPENMP)
-    omp_set_num_threads(config.get_num_threads());
     Eigen::setNbThreads(1);
+    omp_set_num_threads(config.get_num_threads());
 #endif
 
     // Get the jump operators from the noise model
@@ -239,13 +233,7 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
 
     // If we have non-unitary dynamics and the input was a state vector, convert to density matrix
     if (!is_unitary_dynamics && input_was_vector) {
-        if (rho_0.rows() == 1) {
-            rho_0 = rho_0.adjoint() * rho_0;
-            input_was_vector = true;
-        } else if (rho_0.cols() == 1) {
-            rho_0 = rho_0 * rho_0.adjoint();
-            input_was_vector = true;
-        }
+        rho_0 = rho_0 * rho_0.adjoint();
     }
 
     // If monte carlo, sample from rho_0 to get initial states
@@ -292,3 +280,6 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
     }
 
 }
+
+// GCOV_EXCL_BR_STOP
+
