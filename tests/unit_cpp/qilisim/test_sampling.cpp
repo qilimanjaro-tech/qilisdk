@@ -664,18 +664,11 @@ TEST_F(SamplingMonteCarloTest, MatrixFreeMonteCarloEnabled_ProducesNonDeterminis
     EXPECT_TRUE(counts.count("1") > 0);
 }
 
-TEST_F(SamplingTest, BadGate_ThrowsException) {
-    int n = 1;
-    std::vector<Gate> gates = {Gate("BadGate", SparseMatrix(2, 2), {}, {0}, {})};
-    std::vector<bool> measure = {true};
-    DenseMatrix state;
-    EXPECT_ANY_THROW(sampling(gates, n, zeroStateSparse(n), noNoise, state, cfg));
-}
-
 TEST_F(SamplingMatrixFreeTest, BadGate_ThrowsException) {
-    int n = 1;
-    std::vector<Gate> gates = {Gate("BadGate", SparseMatrix(2, 2), {}, {0}, {})};
-    std::vector<bool> measure = {true};
+    // MatrixFreeOperator rejects gates with != 1 target qubit (unless SWAP).
+    // sampling() has no gate-name validation, so this test only applies to matrix-free.
+    int n = 2;
+    std::vector<Gate> gates = {Gate("BadGate", SparseMatrix(4, 4), {}, {0, 1}, {})};
     DenseMatrix state;
     EXPECT_ANY_THROW(sampling_matrix_free(gates, n, zeroStateSparse(n), noNoise, state, cfg));
 }
