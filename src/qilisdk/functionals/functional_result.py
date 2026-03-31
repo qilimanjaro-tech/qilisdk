@@ -15,7 +15,6 @@ from collections.abc import Iterator
 
 from qilisdk.core import QTensor
 from qilisdk.core.result import Result
-from qilisdk.core.types import Number
 from qilisdk.readout.readout_result import (
     ReadoutCompositeResults,
     has_expectation_values,

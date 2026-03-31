@@ -19,7 +19,7 @@ import pytest
 
 from qilisdk.analog import Z as pauli_z
 from qilisdk.backends.backend import Backend
-from qilisdk.core import QTensor, ket, tensor_prod
+from qilisdk.core import QTensor, ket
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.readout import ExpectationReadout, ReadoutMethod, SamplingReadout, StateTomographyReadout
 from qilisdk.readout.readout_result import (
@@ -297,11 +297,13 @@ class TestReadoutCompositeResults:
         assert composite.state_tomography.state is not None
 
     def test_from_dict(self, sampling_result, expectation_result, tomography_result):
-        composite = ReadoutCompositeResults.from_dict({
-            "sampling": sampling_result,
-            "expectation_values": expectation_result,
-            "state_tomography": tomography_result,
-        })
+        composite = ReadoutCompositeResults.from_dict(
+            {
+                "sampling": sampling_result,
+                "expectation_values": expectation_result,
+                "state_tomography": tomography_result,
+            }
+        )
         assert has_sampling(composite)
         assert has_expectation_values(composite)
         assert has_state_tomography(composite)
@@ -402,7 +404,6 @@ class TestFunctionalResult:
         assert result.has_probabilities()
 
     def test_intermediate_results(self):
-        tomo_readout = StateTomographyReadout()
         final = _make_tomography_composite(ket(0))
         inter1 = _make_tomography_composite(ket(1))
         inter2 = _make_tomography_composite((ket(0) + ket(1)).unit())

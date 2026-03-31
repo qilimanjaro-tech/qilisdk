@@ -107,7 +107,9 @@ def test_compute_cost_sampling():
     with pytest.raises(ValueError, match=r"The samples provided have 1 qubits but the observable has 2 qubits"):
         _ = ocf.compute_cost(result)
 
-    readout_result = SamplingReadoutResult.from_samples(readout=SamplingReadout(nshots=100), samples={"11": 50, "00": 50})
+    readout_result = SamplingReadoutResult.from_samples(
+        readout=SamplingReadout(nshots=100), samples={"11": 50, "00": 50}
+    )
     result = FunctionalResult(readout_results=ReadoutCompositeResults(sampling=readout_result))
     cost = ocf.compute_cost(result)
 

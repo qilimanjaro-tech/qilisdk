@@ -111,7 +111,9 @@ def test_compute_cost_sampling():
     with pytest.raises(ValueError, match=r"Mapping samples to the model's variables is ambiguous."):
         _ = mcf.compute_cost(result)
 
-    readout_result = SamplingReadoutResult.from_samples(readout=SamplingReadout(nshots=100), samples={"01": 50, "10": 50})
+    readout_result = SamplingReadoutResult.from_samples(
+        readout=SamplingReadout(nshots=100), samples={"01": 50, "10": 50}
+    )
     result = FunctionalResult(readout_results=ReadoutCompositeResults(sampling=readout_result))
     cost = mcf.compute_cost(result)
 
