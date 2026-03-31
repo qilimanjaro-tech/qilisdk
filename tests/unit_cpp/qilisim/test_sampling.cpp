@@ -17,8 +17,8 @@
 #include <gtest/gtest.h>
 
 #include "../../../src/qilisdk_cpp/backends/qilisim/digital/sampling.h"
+#include "../../../src/qilisdk_cpp/backends/qilisim/utils/sample.h"
 
-#include <gtest/gtest.h>
 #include <algorithm>
 #include <cmath>
 #include <complex>
@@ -289,8 +289,8 @@ TEST_F(SamplingTest, ZeroState_NoGates_AllCountsAreZeroString) {
     std::vector<Gate> gates;
     std::vector<bool> measure = {true, true};
     DenseMatrix state;
-    std::map<std::string, int> counts;
-    sampling(gates, measure, n, 1000, zeroStateSparse(n), noNoise, state, counts, cfg);
+    sampling(gates, n, zeroStateSparse(n), noNoise, state, cfg);
+    std::map<std::string, int> counts = construct_samples(state, n, 1000, noNoise, cfg, measure);
     ASSERT_EQ(counts.size(), 1u);
     EXPECT_EQ(counts.at("00"), 1000);
 }
@@ -300,8 +300,8 @@ TEST_F(SamplingTest, XGateOnQubit0_AllCountsAre10) {
     std::vector<Gate> gates = {makeX(0)};
     std::vector<bool> measure = {true, true};
     DenseMatrix state;
-    std::map<std::string, int> counts;
-    sampling(gates, measure, n, 1000, zeroStateSparse(n), noNoise, state, counts, cfg);
+    sampling(gates, n, zeroStateSparse(n), noNoise, state, cfg);
+    std::map<std::string, int> counts = construct_samples(state, n, 1000, noNoise, cfg, measure);
     ASSERT_EQ(counts.size(), 1u);
     EXPECT_EQ(counts.at("10"), 1000);
 }
@@ -311,10 +311,10 @@ TEST_F(SamplingTest, DoubleXGateOnQubit0_AllCountsAre00_NoCache) {
     std::vector<Gate> gates = {makeX(0), makeX(0)};
     std::vector<bool> measure = {true, true};
     DenseMatrix state;
-    std::map<std::string, int> counts;
     QiliSimConfig cfgNoCache = cfg;
     cfgNoCache.set_max_cache_size(0);
-    sampling(gates, measure, n, 1000, zeroStateSparse(n), noNoise, state, counts, cfgNoCache);
+    sampling(gates, n, zeroStateSparse(n), noNoise, state, cfgNoCache);
+    std::map<std::string, int> counts = construct_samples(state, n, 1000, noNoise, cfgNoCache, measure);
     ASSERT_EQ(counts.size(), 1u);
     EXPECT_EQ(counts.at("00"), 1000);
 }
@@ -324,10 +324,10 @@ TEST_F(SamplingTest, DoubleXGateOnQubit0_AllCountsAre00_SmallCache) {
     std::vector<Gate> gates = {makeX(0), makeX(0), makeH(0), makeH(0)};
     std::vector<bool> measure = {true, true};
     DenseMatrix state;
-    std::map<std::string, int> counts;
     QiliSimConfig cfgNoCache = cfg;
     cfgNoCache.set_max_cache_size(1);
-    sampling(gates, measure, n, 1000, zeroStateSparse(n), noNoise, state, counts, cfgNoCache);
+    sampling(gates, n, zeroStateSparse(n), noNoise, state, cfgNoCache);
+    std::map<std::string, int> counts = construct_samples(state, n, 1000, noNoise, cfgNoCache, measure);
     ASSERT_EQ(counts.size(), 1u);
     EXPECT_EQ(counts.at("00"), 1000);
 }
@@ -337,8 +337,8 @@ TEST_F(SamplingTest, XOnBothQubits_AllCountsAre11) {
     std::vector<Gate> gates = {makeX(0), makeX(1)};
     std::vector<bool> measure = {true, true};
     DenseMatrix state;
-    std::map<std::string, int> counts;
-    sampling(gates, measure, n, 1000, zeroStateSparse(n), noNoise, state, counts, cfg);
+    sampling(gates, n, zeroStateSparse(n), noNoise, state, cfg);
+    std::map<std::string, int> counts = construct_samples(state, n, 1000, noNoise, cfg, measure);
     ASSERT_EQ(counts.size(), 1u);
     EXPECT_EQ(counts.at("11"), 1000);
 }
@@ -348,9 +348,9 @@ TEST_F(SamplingTest, HadamardOnSingleQubit_ApproxFiftyFifty) {
     std::vector<Gate> gates = {makeH(0)};
     std::vector<bool> measure = {true};
     DenseMatrix state;
-    std::map<std::string, int> counts;
     const int shots = 10000;
-    sampling(gates, measure, n, shots, zeroStateSparse(n), noNoise, state, counts, cfg);
+    sampling(gates, n, zeroStateSparse(n), noNoise, state, cfg);
+    std::map<std::string, int> counts = construct_samples(state, n, shots, noNoise, cfg, measure);
     EXPECT_EQ(totalCounts(counts), shots);
     double f0 = fractionOf(counts, "0");
     double f1 = fractionOf(counts, "1");
@@ -363,9 +363,9 @@ TEST_F(SamplingTest, HadamardOnBothQubits_FourOutcomesEquallyLikely) {
     std::vector<Gate> gates = {makeH(0), makeH(1)};
     std::vector<bool> measure = {true, true};
     DenseMatrix state;
-    std::map<std::string, int> counts;
     const int shots = 10000;
-    sampling(gates, measure, n, shots, zeroStateSparse(n), noNoise, state, counts, cfg);
+    sampling(gates, n, zeroStateSparse(n), noNoise, state, cfg);
+    std::map<std::string, int> counts = construct_samples(state, n, shots, noNoise, cfg, measure);
     EXPECT_EQ(totalCounts(counts), shots);
     for (const std::string& key : {"00", "01", "10", "11"}) {
         EXPECT_NEAR(fractionOf(counts, key), 0.25, kLoose);
@@ -378,8 +378,8 @@ TEST_F(SamplingTest, ShotCountAlwaysPreserved) {
     std::vector<bool> measure = {true, true};
     for (int shots : {1, 10, 100, 1000}) {
         DenseMatrix state;
-        std::map<std::string, int> counts;
-        sampling(gates, measure, n, shots, zeroStateSparse(n), noNoise, state, counts, cfg);
+        sampling(gates, n, zeroStateSparse(n), noNoise, state, cfg);
+        std::map<std::string, int> counts = construct_samples(state, n, shots, noNoise, cfg, measure);
         EXPECT_EQ(totalCounts(counts), shots) << "shots=" << shots;
     }
 }
@@ -389,8 +389,8 @@ TEST_F(SamplingTest, MeasureOnlyQubit0_OutputKeysAreSingleBit) {
     std::vector<Gate> gates = {makeH(0), makeH(1)};
     std::vector<bool> measure = {true, false};
     DenseMatrix state;
-    std::map<std::string, int> counts;
-    sampling(gates, measure, n, 1000, zeroStateSparse(n), noNoise, state, counts, cfg);
+    sampling(gates, n, zeroStateSparse(n), noNoise, state, cfg);
+    std::map<std::string, int> counts = construct_samples(state, n, 1000, noNoise, cfg, measure);
     for (const auto& p : counts) {
         EXPECT_EQ(p.first.size(), 1u);
     }
@@ -402,8 +402,8 @@ TEST_F(SamplingTest, MeasureNoQubits_SingleEmptyKeyWithAllShots) {
     std::vector<Gate> gates = {makeX(0)};
     std::vector<bool> measure = {false, false};
     DenseMatrix state;
-    std::map<std::string, int> counts;
-    sampling(gates, measure, n, 500, zeroStateSparse(n), noNoise, state, counts, cfg);
+    sampling(gates, n, zeroStateSparse(n), noNoise, state, cfg);
+    std::map<std::string, int> counts = construct_samples(state, n, 500, noNoise, cfg, measure);
     ASSERT_EQ(counts.size(), 1u);
     EXPECT_EQ(counts.at(""), 500);
 }
@@ -413,8 +413,7 @@ TEST_F(SamplingTest, StateVectorHasCorrectDimension) {
     std::vector<Gate> gates = {makeH(0)};
     std::vector<bool> measure(n, true);
     DenseMatrix state;
-    std::map<std::string, int> counts;
-    sampling(gates, measure, n, 100, zeroStateSparse(n), noNoise, state, counts, cfg);
+    sampling(gates, n, zeroStateSparse(n), noNoise, state, cfg);
     EXPECT_EQ(state.rows(), 1L << n);
 }
 
@@ -423,8 +422,7 @@ TEST_F(SamplingTest, XGate_StateIsExcitedState) {
     std::vector<Gate> gates = {makeX(0)};
     std::vector<bool> measure = {true};
     DenseMatrix state;
-    std::map<std::string, int> counts;
-    sampling(gates, measure, n, 100, zeroStateSparse(n), noNoise, state, counts, cfg);
+    sampling(gates, n, zeroStateSparse(n), noNoise, state, cfg);
     EXPECT_NEAR(std::norm(state(0, 0)), 0.0, kTol);
     EXPECT_NEAR(std::norm(state(1, 0)), 1.0, kTol);
 }
@@ -435,9 +433,9 @@ TEST_F(SamplingTest, WithReadoutNoise_TotalCountsStillPreserved) {
     std::vector<Gate> gates = {makeX(0)};
     std::vector<bool> measure = {true, true};
     DenseMatrix state;
-    std::map<std::string, int> counts;
     const int shots = 1000;
-    sampling(gates, measure, n, shots, zeroStateSparse(n), nm, state, counts, cfg);
+    sampling(gates, n, zeroStateSparse(n), nm, state, cfg);
+    std::map<std::string, int> counts = construct_samples(state, n, shots, nm, cfg, measure);
     EXPECT_EQ(totalCounts(counts), shots);
 }
 
@@ -447,9 +445,9 @@ TEST_F(SamplingTest, WithReadoutNoise_DominantOutcomeStillDominates) {
     std::vector<Gate> gates = {makeX(0)};
     std::vector<bool> measure = {true, true};
     DenseMatrix state;
-    std::map<std::string, int> counts;
     const int shots = 5000;
-    sampling(gates, measure, n, shots, zeroStateSparse(n), nm, state, counts, cfg);
+    sampling(gates, n, zeroStateSparse(n), nm, state, cfg);
+    std::map<std::string, int> counts = construct_samples(state, n, shots, nm, cfg, measure);
     EXPECT_GT(fractionOf(counts, "10"), 0.80);
 }
 
@@ -458,8 +456,8 @@ TEST_F(SamplingTest, DensityMatrixInitialState_ZeroState_AllCountsAreZero) {
     std::vector<Gate> gates;
     std::vector<bool> measure = {true, true};
     DenseMatrix state;
-    std::map<std::string, int> counts;
-    sampling(gates, measure, n, 1000, zeroStateDenseSparse(n), noNoise, state, counts, cfg);
+    sampling(gates, n, zeroStateDenseSparse(n), noNoise, state, cfg);
+    std::map<std::string, int> counts = construct_samples(state, n, 1000, noNoise, cfg, measure);
     ASSERT_EQ(counts.size(), 1u);
     EXPECT_EQ(counts.at("00"), 1000);
 }
@@ -469,11 +467,12 @@ TEST_F(SamplingTest, CombineSingleQubitGates_SameResultAsWithout) {
     std::vector<Gate> gates = {makeH(0), makeH(0)};
     std::vector<bool> measure = {true};
     DenseMatrix stateA, stateB;
-    std::map<std::string, int> countsA, countsB;
     QiliSimConfig cfgOpt = cfg;
     cfgOpt.set_combine_single_qubit_gates(true);
-    sampling(gates, measure, n, 1000, zeroStateSparse(n), noNoise, stateA, countsA, cfg);
-    sampling(gates, measure, n, 1000, zeroStateSparse(n), noNoise, stateB, countsB, cfgOpt);
+    sampling(gates, n, zeroStateSparse(n), noNoise, stateA, cfg);
+    std::map<std::string, int> countsA = construct_samples(stateA, n, 1000, noNoise, cfg, measure);
+    sampling(gates, n, zeroStateSparse(n), noNoise, stateB, cfgOpt);
+    std::map<std::string, int> countsB = construct_samples(stateB, n, 1000, noNoise, cfgOpt, measure);
     EXPECT_EQ(countsA, countsB);
 }
 
@@ -488,8 +487,8 @@ TEST_F(SamplingMatrixFreeTest, ZeroState_NoGates_AllCountsAreZeroString) {
     std::vector<Gate> gates;
     std::vector<bool> measure = {true, true};
     DenseMatrix state;
-    std::map<std::string, int> counts;
-    sampling_matrix_free(gates, measure, n, 1000, zeroStateSparse(n), noNoise, state, counts, cfg);
+    sampling_matrix_free(gates, n, zeroStateSparse(n), noNoise, state, cfg);
+    std::map<std::string, int> counts = construct_samples(state, n, 1000, noNoise, cfg, measure);
     ASSERT_EQ(counts.size(), 1u);
     EXPECT_EQ(counts.at("00"), 1000);
 }
@@ -499,8 +498,8 @@ TEST_F(SamplingMatrixFreeTest, XGate_AllCountsAre10) {
     std::vector<Gate> gates = {makeX(0)};
     std::vector<bool> measure = {true, true};
     DenseMatrix state;
-    std::map<std::string, int> counts;
-    sampling_matrix_free(gates, measure, n, 1000, zeroStateSparse(n), noNoise, state, counts, cfg);
+    sampling_matrix_free(gates, n, zeroStateSparse(n), noNoise, state, cfg);
+    std::map<std::string, int> counts = construct_samples(state, n, 1000, noNoise, cfg, measure);
     ASSERT_EQ(counts.size(), 1u);
     EXPECT_EQ(counts.at("10"), 1000);
 }
@@ -510,8 +509,8 @@ TEST_F(SamplingMatrixFreeTest, XOnBothQubits_AllCountsAre11) {
     std::vector<Gate> gates = {makeX(0), makeX(1)};
     std::vector<bool> measure = {true, true};
     DenseMatrix state;
-    std::map<std::string, int> counts;
-    sampling_matrix_free(gates, measure, n, 1000, zeroStateSparse(n), noNoise, state, counts, cfg);
+    sampling_matrix_free(gates, n, zeroStateSparse(n), noNoise, state, cfg);
+    std::map<std::string, int> counts = construct_samples(state, n, 1000, noNoise, cfg, measure);
     ASSERT_EQ(counts.size(), 1u);
     EXPECT_EQ(counts.at("11"), 1000);
 }
@@ -521,9 +520,9 @@ TEST_F(SamplingMatrixFreeTest, HadamardOnSingleQubit_ApproxFiftyFifty) {
     std::vector<Gate> gates = {makeH(0)};
     std::vector<bool> measure = {true};
     DenseMatrix state;
-    std::map<std::string, int> counts;
     const int shots = 10000;
-    sampling_matrix_free(gates, measure, n, shots, zeroStateSparse(n), noNoise, state, counts, cfg);
+    sampling_matrix_free(gates, n, zeroStateSparse(n), noNoise, state, cfg);
+    std::map<std::string, int> counts = construct_samples(state, n, shots, noNoise, cfg, measure);
     EXPECT_EQ(totalCounts(counts), shots);
     EXPECT_NEAR(fractionOf(counts, "0"), 0.5, kLoose);
     EXPECT_NEAR(fractionOf(counts, "1"), 0.5, kLoose);
@@ -535,8 +534,8 @@ TEST_F(SamplingMatrixFreeTest, ShotCountAlwaysPreserved) {
     std::vector<bool> measure = {true, true};
     for (int shots : {1, 10, 100, 1000}) {
         DenseMatrix state;
-        std::map<std::string, int> counts;
-        sampling_matrix_free(gates, measure, n, shots, zeroStateSparse(n), noNoise, state, counts, cfg);
+        sampling_matrix_free(gates, n, zeroStateSparse(n), noNoise, state, cfg);
+        std::map<std::string, int> counts = construct_samples(state, n, shots, noNoise, cfg, measure);
         EXPECT_EQ(totalCounts(counts), shots) << "shots=" << shots;
     }
 }
@@ -546,8 +545,8 @@ TEST_F(SamplingMatrixFreeTest, MeasureOnlyQubit0_OutputKeysAreSingleBit) {
     std::vector<Gate> gates = {makeH(0), makeH(1)};
     std::vector<bool> measure = {true, false};
     DenseMatrix state;
-    std::map<std::string, int> counts;
-    sampling_matrix_free(gates, measure, n, 1000, zeroStateSparse(n), noNoise, state, counts, cfg);
+    sampling_matrix_free(gates, n, zeroStateSparse(n), noNoise, state, cfg);
+    std::map<std::string, int> counts = construct_samples(state, n, 1000, noNoise, cfg, measure);
     for (const auto& p : counts) {
         EXPECT_EQ(p.first.size(), 1u);
     }
@@ -559,8 +558,7 @@ TEST_F(SamplingMatrixFreeTest, StateVectorHasCorrectDimension) {
     std::vector<Gate> gates = {makeH(0)};
     std::vector<bool> measure(n, true);
     DenseMatrix state;
-    std::map<std::string, int> counts;
-    sampling_matrix_free(gates, measure, n, 100, zeroStateSparse(n), noNoise, state, counts, cfg);
+    sampling_matrix_free(gates, n, zeroStateSparse(n), noNoise, state, cfg);
     EXPECT_EQ(state.rows(), 1L << n);
 }
 
@@ -569,8 +567,7 @@ TEST_F(SamplingMatrixFreeTest, XGate_StateIsExcitedState) {
     std::vector<Gate> gates = {makeX(0)};
     std::vector<bool> measure = {true};
     DenseMatrix state;
-    std::map<std::string, int> counts;
-    sampling_matrix_free(gates, measure, n, 100, zeroStateSparse(n), noNoise, state, counts, cfg);
+    sampling_matrix_free(gates, n, zeroStateSparse(n), noNoise, state, cfg);
     EXPECT_NEAR(std::norm(state(0, 0)), 0.0, kTol);
     EXPECT_NEAR(std::norm(state(1, 0)), 1.0, kTol);
 }
@@ -581,8 +578,8 @@ TEST_F(SamplingMatrixFreeTest, WithReadoutNoise_TotalCountsStillPreserved) {
     std::vector<Gate> gates = {makeX(0)};
     std::vector<bool> measure = {true, true};
     DenseMatrix state;
-    std::map<std::string, int> counts;
-    sampling_matrix_free(gates, measure, n, 1000, zeroStateSparse(n), nm, state, counts, cfg);
+    sampling_matrix_free(gates, n, zeroStateSparse(n), nm, state, cfg);
+    std::map<std::string, int> counts = construct_samples(state, n, 1000, nm, cfg, measure);
     EXPECT_EQ(totalCounts(counts), 1000);
 }
 
@@ -591,9 +588,10 @@ TEST_F(SamplingMatrixFreeTest, PureZeroState_MatchesStandardSampling) {
     std::vector<Gate> gates = {makeX(1)};
     std::vector<bool> measure = {true, true};
     DenseMatrix stA, stB;
-    std::map<std::string, int> cA, cB;
-    sampling(gates, measure, n, 1000, zeroStateSparse(n), noNoise, stA, cA, cfg);
-    sampling_matrix_free(gates, measure, n, 1000, zeroStateSparse(n), noNoise, stB, cB, cfg);
+    sampling(gates, n, zeroStateSparse(n), noNoise, stA, cfg);
+    std::map<std::string, int> cA = construct_samples(stA, n, 1000, noNoise, cfg, measure);
+    sampling_matrix_free(gates, n, zeroStateSparse(n), noNoise, stB, cfg);
+    std::map<std::string, int> cB = construct_samples(stB, n, 1000, noNoise, cfg, measure);
     EXPECT_EQ(cA, cB);
 }
 
@@ -602,10 +600,11 @@ TEST_F(SamplingMatrixFreeTest, HadamardCircuit_StatisticsMatchStandardSampling) 
     std::vector<Gate> gates = {makeH(0), makeH(1)};
     std::vector<bool> measure = {true, true};
     DenseMatrix stA, stB;
-    std::map<std::string, int> cA, cB;
     const int shots = 10000;
-    sampling(gates, measure, n, shots, zeroStateSparse(n), noNoise, stA, cA, cfg);
-    sampling_matrix_free(gates, measure, n, shots, zeroStateSparse(n), noNoise, stB, cB, cfg);
+    sampling(gates, n, zeroStateSparse(n), noNoise, stA, cfg);
+    std::map<std::string, int> cA = construct_samples(stA, n, shots, noNoise, cfg, measure);
+    sampling_matrix_free(gates, n, zeroStateSparse(n), noNoise, stB, cfg);
+    std::map<std::string, int> cB = construct_samples(stB, n, shots, noNoise, cfg, measure);
     for (const std::string& key : {"00", "01", "10", "11"}) {
         EXPECT_NEAR(fractionOf(cA, key), 0.25, kLoose) << "standard key=" << key;
         EXPECT_NEAR(fractionOf(cB, key), 0.25, kLoose) << "matrix_free key=" << key;
@@ -617,8 +616,8 @@ TEST_F(SamplingMatrixFreeTest, DensityMatrixInitialState_ZeroState_AllCountsAreZ
     std::vector<Gate> gates;
     std::vector<bool> measure = {true, true};
     DenseMatrix state;
-    std::map<std::string, int> counts;
-    sampling_matrix_free(gates, measure, n, 1000, zeroStateDenseSparse(n), noNoise, state, counts, cfg);
+    sampling_matrix_free(gates, n, zeroStateDenseSparse(n), noNoise, state, cfg);
+    std::map<std::string, int> counts = construct_samples(state, n, 1000, noNoise, cfg, measure);
     ASSERT_EQ(counts.size(), 1u);
     EXPECT_EQ(counts.at("00"), 1000);
 }
@@ -634,7 +633,6 @@ TEST_F(SamplingMonteCarloTest, MonteCarloEnabled_ProducesNonDeterministicCounts)
     std::vector<Gate> gates = {makeH(0)};
     std::vector<bool> measure = {true};
     DenseMatrix state;
-    std::map<std::string, int> counts;
     const int shots = 1000;
     QiliSimConfig cfgMC = cfg;
     cfgMC.set_monte_carlo(true);
@@ -642,7 +640,8 @@ TEST_F(SamplingMonteCarloTest, MonteCarloEnabled_ProducesNonDeterministicCounts)
     rho_mixed.insert(0, 0) = cx(0.5, 0);
     rho_mixed.insert(1, 1) = cx(0.5, 0);
     rho_mixed.makeCompressed();
-    sampling(gates, measure, n, shots, rho_mixed, noNoise, state, counts, cfgMC);
+    sampling(gates, n, rho_mixed, noNoise, state, cfgMC);
+    std::map<std::string, int> counts = construct_samples(state, n, shots, noNoise, cfgMC, measure);
     EXPECT_TRUE(counts.count("0") > 0);
     EXPECT_TRUE(counts.count("1") > 0);
 }
@@ -652,7 +651,6 @@ TEST_F(SamplingMonteCarloTest, MatrixFreeMonteCarloEnabled_ProducesNonDeterminis
     std::vector<Gate> gates = {makeH(0)};
     std::vector<bool> measure = {true};
     DenseMatrix state;
-    std::map<std::string, int> counts;
     const int shots = 1000;
     QiliSimConfig cfgMC = cfg;
     cfgMC.set_monte_carlo(true);
@@ -660,7 +658,8 @@ TEST_F(SamplingMonteCarloTest, MatrixFreeMonteCarloEnabled_ProducesNonDeterminis
     rho_mixed.insert(0, 0) = cx(0.5, 0);
     rho_mixed.insert(1, 1) = cx(0.5, 0);
     rho_mixed.makeCompressed();
-    sampling_matrix_free(gates, measure, n, shots, rho_mixed, noNoise, state, counts, cfgMC);
+    sampling_matrix_free(gates, n, rho_mixed, noNoise, state, cfgMC);
+    std::map<std::string, int> counts = construct_samples(state, n, shots, noNoise, cfgMC, measure);
     EXPECT_TRUE(counts.count("0") > 0);
     EXPECT_TRUE(counts.count("1") > 0);
 }
@@ -670,8 +669,7 @@ TEST_F(SamplingTest, BadGate_ThrowsException) {
     std::vector<Gate> gates = {Gate("BadGate", SparseMatrix(2, 2), {}, {0}, {})};
     std::vector<bool> measure = {true};
     DenseMatrix state;
-    std::map<std::string, int> counts;
-    EXPECT_ANY_THROW(sampling(gates, measure, n, 1000, zeroStateSparse(n), noNoise, state, counts, cfg));
+    EXPECT_ANY_THROW(sampling(gates, n, zeroStateSparse(n), noNoise, state, cfg));
 }
 
 TEST_F(SamplingMatrixFreeTest, BadGate_ThrowsException) {
@@ -679,8 +677,7 @@ TEST_F(SamplingMatrixFreeTest, BadGate_ThrowsException) {
     std::vector<Gate> gates = {Gate("BadGate", SparseMatrix(2, 2), {}, {0}, {})};
     std::vector<bool> measure = {true};
     DenseMatrix state;
-    std::map<std::string, int> counts;
-    EXPECT_ANY_THROW(sampling_matrix_free(gates, measure, n, 1000, zeroStateSparse(n), noNoise, state, counts, cfg));
+    EXPECT_ANY_THROW(sampling_matrix_free(gates, n, zeroStateSparse(n), noNoise, state, cfg));
 }
 
 TEST_F(SamplingTest, PureDensityMatrixInitialState_OutputIsMatrixNotStatevector) {
@@ -688,8 +685,7 @@ TEST_F(SamplingTest, PureDensityMatrixInitialState_OutputIsMatrixNotStatevector)
     std::vector<Gate> gates;
     std::vector<bool> measure = {true};
     DenseMatrix state;
-    std::map<std::string, int> counts;
-    sampling(gates, measure, n, 1000, zeroStateDenseSparse(n), noNoise, state, counts, cfg);
+    sampling(gates, n, zeroStateDenseSparse(n), noNoise, state, cfg);
     EXPECT_EQ(state.rows(), 2);
     EXPECT_EQ(state.cols(), 2);
 }
@@ -699,8 +695,7 @@ TEST_F(SamplingMatrixFreeTest, PureDensityMatrixInitialState_OutputIsMatrixNotSt
     std::vector<Gate> gates;
     std::vector<bool> measure = {true};
     DenseMatrix state;
-    std::map<std::string, int> counts;
-    sampling_matrix_free(gates, measure, n, 1000, zeroStateDenseSparse(n), noNoise, state, counts, cfg);
+    sampling_matrix_free(gates, n, zeroStateDenseSparse(n), noNoise, state, cfg);
     EXPECT_EQ(state.rows(), 2);
     EXPECT_EQ(state.cols(), 2);
 }
@@ -714,10 +709,10 @@ TEST_F(SamplingTest, NonUnitaryGate_NormalizationWorks) {
     std::vector<Gate> gates = {Gate("Shrink", shrink, {}, {0}, {})};
     std::vector<bool> measure = {true};
     DenseMatrix state;
-    std::map<std::string, int> counts;
     QiliSimConfig cfgNorm = cfg;
     cfgNorm.set_normalize_after_gate(true);
-    sampling(gates, measure, n, 1000, zeroStateSparse(n), noNoise, state, counts, cfgNorm);
+    sampling(gates, n, zeroStateSparse(n), noNoise, state, cfgNorm);
+    std::map<std::string, int> counts = construct_samples(state, n, 1000, noNoise, cfgNorm, measure);
     EXPECT_NEAR(fractionOf(counts, "0"), 1.0, kLoose);
 }
 
@@ -730,10 +725,10 @@ TEST_F(SamplingMatrixFreeTest, NonUnitaryGate_NormalizationWorks) {
     std::vector<Gate> gates = {Gate("Shrink", shrink, {}, {0}, {})};
     std::vector<bool> measure = {true};
     DenseMatrix state;
-    std::map<std::string, int> counts;
     QiliSimConfig cfgNorm = cfg;
     cfgNorm.set_normalize_after_gate(true);
-    sampling_matrix_free(gates, measure, n, 1000, zeroStateSparse(n), noNoise, state, counts, cfgNorm);
+    sampling_matrix_free(gates, n, zeroStateSparse(n), noNoise, state, cfgNorm);
+    std::map<std::string, int> counts = construct_samples(state, n, 1000, noNoise, cfgNorm, measure);
     EXPECT_NEAR(fractionOf(counts, "0"), 1.0, kLoose);
 }
 
@@ -742,7 +737,6 @@ TEST_F(SamplingTest, KrausNoise_BitflipOnSingleQubit) {
     std::vector<Gate> gates = {makeX(0)};
     std::vector<bool> measure = {true};
     DenseMatrix state;
-    std::map<std::string, int> counts;
     const int shots = 10000;
     NoiseModelCpp nm;
     SparseMatrix op(2, 2);
@@ -750,7 +744,8 @@ TEST_F(SamplingTest, KrausNoise_BitflipOnSingleQubit) {
     op.insert(1, 0) = cx(1.0, 0);
     op.makeCompressed();
     nm.add_kraus_operators_global({op});
-    sampling(gates, measure, n, shots, zeroStateSparse(n), nm, state, counts, cfg);
+    sampling(gates, n, zeroStateSparse(n), nm, state, cfg);
+    std::map<std::string, int> counts = construct_samples(state, n, shots, nm, cfg, measure);
     ASSERT_EQ(counts.size(), 1u);
     EXPECT_EQ(counts.at("0"), shots);
 }
@@ -760,7 +755,6 @@ TEST_F(SamplingMatrixFreeTest, KrausNoise_BitflipOnSingleQubit) {
     std::vector<Gate> gates = {makeX(0)};
     std::vector<bool> measure = {true};
     DenseMatrix state;
-    std::map<std::string, int> counts;
     const int shots = 10000;
     NoiseModelCpp nm;
     SparseMatrix op(2, 2);
@@ -768,7 +762,8 @@ TEST_F(SamplingMatrixFreeTest, KrausNoise_BitflipOnSingleQubit) {
     op.insert(1, 0) = cx(1.0, 0);
     op.makeCompressed();
     nm.add_kraus_operators_global({op});
-    sampling_matrix_free(gates, measure, n, shots, zeroStateSparse(n), nm, state, counts, cfg);
+    sampling_matrix_free(gates, n, zeroStateSparse(n), nm, state, cfg);
+    std::map<std::string, int> counts = construct_samples(state, n, shots, nm, cfg, measure);
     ASSERT_EQ(counts.size(), 1u);
     EXPECT_EQ(counts.at("0"), shots);
 }
@@ -778,11 +773,12 @@ TEST_F(SamplingMatrixFreeTest, CombineSingleQubitGates_SameResultAsWithout) {
     std::vector<Gate> gates = {makeH(0), makeH(0)};
     std::vector<bool> measure = {true};
     DenseMatrix stateA, stateB;
-    std::map<std::string, int> countsA, countsB;
     QiliSimConfig cfgOpt = cfg;
     cfgOpt.set_combine_single_qubit_gates(true);
-    sampling_matrix_free(gates, measure, n, 1000, zeroStateSparse(n), noNoise, stateA, countsA, cfg);
-    sampling_matrix_free(gates, measure, n, 1000, zeroStateSparse(n), noNoise, stateB, countsB, cfgOpt);
+    sampling_matrix_free(gates, n, zeroStateSparse(n), noNoise, stateA, cfg);
+    std::map<std::string, int> countsA = construct_samples(stateA, n, 1000, noNoise, cfg, measure);
+    sampling_matrix_free(gates, n, zeroStateSparse(n), noNoise, stateB, cfgOpt);
+    std::map<std::string, int> countsB = construct_samples(stateB, n, 1000, noNoise, cfgOpt, measure);
     EXPECT_EQ(countsA, countsB);
 }
 
