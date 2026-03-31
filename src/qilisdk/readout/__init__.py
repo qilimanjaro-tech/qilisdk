@@ -31,11 +31,18 @@ Result containers (see :mod:`qilisdk.readout.readout_result`):
 """
 
 from .readout import ExpectationReadout, ReadoutMethod, SamplingReadout, StateTomographyReadout
-from .readout_result import ExpectationReadoutResult, ReadoutResult, SamplingReadoutResult, StateTomographyReadoutResult
+from .readout_result import (
+    ExpectationReadoutResult,
+    ReadoutCompositeResults,
+    ReadoutResult,
+    SamplingReadoutResult,
+    StateTomographyReadoutResult,
+)
 
 __all__ = [
     "ExpectationReadout",
     "ExpectationReadoutResult",
+    "ReadoutCompositeResults",
     "ReadoutMethod",
     "ReadoutResult",
     "SamplingReadout",
