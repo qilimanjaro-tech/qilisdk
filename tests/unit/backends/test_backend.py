@@ -34,7 +34,7 @@ from qilisdk.functionals import (
 from qilisdk.functionals.variational_program import VariationalProgram
 from qilisdk.noise import NoiseModel
 from qilisdk.readout import SamplingReadout, StateTomographyReadout
-from qilisdk.readout.readout_result import SamplingReadoutResult, StateTomographyReadoutResult
+from qilisdk.readout.readout_result import ReadoutCompositeResults, SamplingReadoutResult, StateTomographyReadoutResult
 
 
 def test_backend_initialization():
@@ -73,8 +73,8 @@ def _make_mock_result(functional):
     param_val = functional.get_parameter_values()[0] if functional.get_parameter_values() else 0.0
     readout = SamplingReadout(nshots=100)
     samples = {"0": int(param_val * 100) if param_val > 0 else 100}
-    readout_result = SamplingReadoutResult(readout=readout, samples=samples)
-    return FunctionalResult(readout_results=[readout_result])
+    readout_result = SamplingReadoutResult.from_samples(readout=readout, samples=samples)
+    return FunctionalResult(readout_results=ReadoutCompositeResults(sampling=readout_result))
 
 
 class MockCostFunction:
@@ -166,7 +166,9 @@ def test_quantum_reservoir_invalidates_circuit_cache_on_parameter_updates(monkey
         def _execute_analog_evolution(self, functional, readout):
             state = functional.initial_state
             return FunctionalResult(
-                readout_results=[StateTomographyReadoutResult(readout=StateTomographyReadout(), state=state)]
+                readout_results=ReadoutCompositeResults(
+                    state_tomography=StateTomographyReadoutResult(readout=StateTomographyReadout(), state=state)
+                )
             )
 
     backend = _MockReservoirBackend()
@@ -242,7 +244,9 @@ def test_quantum_reservoir_with_noise_model_warns(monkeypatch):
         def _execute_analog_evolution(self, functional, readout):
             state = functional.initial_state
             return FunctionalResult(
-                readout_results=[StateTomographyReadoutResult(readout=StateTomographyReadout(), state=state)]
+                readout_results=ReadoutCompositeResults(
+                    state_tomography=StateTomographyReadoutResult(readout=StateTomographyReadout(), state=state)
+                )
             )
 
     backend = _MockBackend(noise_model=NoiseModel())
@@ -264,7 +268,9 @@ def test_quantum_reservoir_uses_circuit_cache(monkeypatch):
         def _execute_analog_evolution(self, functional, readout):
             state = functional.initial_state
             return FunctionalResult(
-                readout_results=[StateTomographyReadoutResult(readout=StateTomographyReadout(), state=state)]
+                readout_results=ReadoutCompositeResults(
+                    state_tomography=StateTomographyReadoutResult(readout=StateTomographyReadout(), state=state)
+                )
             )
 
     backend = _MockBackend()
@@ -298,7 +304,9 @@ def test_quantum_reservoir_with_qubit_reset(monkeypatch):
         def _execute_analog_evolution(self, functional, readout):
             state = functional.initial_state
             return FunctionalResult(
-                readout_results=[StateTomographyReadoutResult(readout=StateTomographyReadout(), state=state)]
+                readout_results=ReadoutCompositeResults(
+                    state_tomography=StateTomographyReadoutResult(readout=StateTomographyReadout(), state=state)
+                )
             )
 
     backend = _MockBackend()

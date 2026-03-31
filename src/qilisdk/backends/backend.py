@@ -38,6 +38,7 @@ from qilisdk.readout import (
     StateTomographyReadout,
     StateTomographyReadoutResult,
 )
+from qilisdk.readout.readout_result import ReadoutCompositeResults
 from qilisdk.settings import get_settings
 
 if TYPE_CHECKING:
@@ -202,7 +203,7 @@ class Backend(ABC):
         if self._noise_model:
             logger.warning("Noise Models are not supported with Quantum Reservoirs, so they will be ignored.")
         state = functional.initial_state.to_density_matrix()
-        inter_results: list[list[ReadoutResult]] = []
+        inter_results: list[ReadoutCompositeResults] = []
         cache: dict[Circuit, tuple[tuple[float, ...], QTensor]] = {}
         for input_dict in functional.input_per_layer:
             functional.reservoir_layer.set_parameters(input_dict)
@@ -321,7 +322,7 @@ class Backend(ABC):
         Returns:
             SamplingReadoutResult: The constructed sampling result.
         """
-        return SamplingReadoutResult(readout=copy(readout), state=final_state)
+        return SamplingReadoutResult.from_state(readout=copy(readout), state=final_state)
 
     @classmethod
     def _construct_expectation_results(
@@ -345,7 +346,7 @@ class Backend(ABC):
         """
         # Pre-scale on the original so the copy inherits cached qtensor_observables
         readout.expand_observables(nqubits=final_state.nqubits)
-        return ExpectationReadoutResult(readout=copy(readout), state=final_state)
+        return ExpectationReadoutResult.from_state(readout=copy(readout), state=final_state)
 
     @classmethod
     def _construct_state_tomography_results(
@@ -369,7 +370,7 @@ class Backend(ABC):
     @classmethod
     def _construct_results_list(
         cls, final_state: QTensor, readout: list[ReadoutMethod], seed: int | None = None, **kwarg: Any
-    ) -> list[ReadoutResult]:
+    ) -> ReadoutCompositeResults:
         """Build a list of readout results by dispatching each readout method.
 
         Iterates over the provided readout methods and delegates to the
@@ -394,16 +395,22 @@ class Backend(ABC):
                 ``StateTomographyReadout`` uses a method other than
                 ``"exact"``.
         """
-        results: list[ReadoutResult] = []
+        results: dict[str, ReadoutResult] = {}
         for ro in readout:
             if isinstance(ro, StateTomographyReadout):
                 if ro.state_tomography_method != "exact":
                     raise ValueError("State Tomography methods that are not exact are not supported yet.")
-                results.append(cls._construct_state_tomography_results(final_state=final_state, readout=ro, **kwarg))
+                results["state_tomography"] = cls._construct_state_tomography_results(
+                    final_state=final_state, readout=ro, **kwarg
+                )
             elif isinstance(ro, ExpectationReadout):
-                results.append(cls._construct_expectation_results(final_state=final_state, readout=ro, **kwarg))
+                results["expectation_values"] = cls._construct_expectation_results(
+                    final_state=final_state, readout=ro, **kwarg
+                )
             elif isinstance(ro, SamplingReadout):
-                results.append(cls._construct_sampling_results(final_state=final_state, readout=ro, seed=seed, **kwarg))
+                results["sampling"] = cls._construct_sampling_results(
+                    final_state=final_state, readout=ro, seed=seed, **kwarg
+                )
             else:
                 raise ValueError(f"Unsupported Readout Method provided: {ro}")
-        return results
+        return ReadoutCompositeResults.from_dict(results)

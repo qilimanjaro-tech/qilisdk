@@ -18,7 +18,7 @@ from qilisdk.core.qtensor import ket
 from qilisdk.cost_functions.cost_function import CostFunction
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.readout import SamplingReadout, StateTomographyReadout
-from qilisdk.readout.readout_result import SamplingReadoutResult, StateTomographyReadoutResult
+from qilisdk.readout.readout_result import ReadoutCompositeResults, SamplingReadoutResult, StateTomographyReadoutResult
 
 
 def test_cost_function_cannot_be_instantiated():
@@ -35,8 +35,8 @@ def test_compute_cost_with_sampling_result():
     cost_function = DummyCostFunction()
 
     readout = SamplingReadout(nshots=1)
-    readout_result = SamplingReadoutResult(readout=readout, samples={"0": 1})
-    result = FunctionalResult(readout_results=[readout_result])
+    readout_result = SamplingReadoutResult.from_samples(readout=readout, samples={"0": 1})
+    result = FunctionalResult(readout_results=ReadoutCompositeResults(sampling=readout_result))
 
     assert np.isclose(cost_function.compute_cost(result), 42.0)
 
@@ -50,6 +50,6 @@ def test_compute_cost_with_state_tomography_result():
 
     readout = StateTomographyReadout()
     readout_result = StateTomographyReadoutResult(readout=readout, state=ket(0))
-    result = FunctionalResult(readout_results=[readout_result])
+    result = FunctionalResult(readout_results=ReadoutCompositeResults(state_tomography=readout_result))
 
     assert np.isclose(cost_function.compute_cost(result), 99.0)

@@ -47,3 +47,4 @@ const py::object ExpectationReadoutResult = py::module_::import("qilisdk.readout
 const py::object ReadoutResult = py::module_::import("qilisdk.readout.readout_result").attr("ReadoutResult");
 const py::object SamplingReadoutResult = py::module_::import("qilisdk.readout.readout_result").attr("SamplingReadoutResult");
 const py::object StateTomographyReadoutResult = py::module_::import("qilisdk.readout.readout_result").attr("StateTomographyReadoutResult");
+const py::object ReadoutCompositeResults = py::module_::import("qilisdk.readout.readout_result").attr("ReadoutCompositeResults");

@@ -29,7 +29,7 @@ from qilisdk.functionals import AnalogEvolution, DigitalPropagation, QuantumRese
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.noise import Dephasing, NoiseModel
 from qilisdk.readout import ExpectationReadout, SamplingReadout, StateTomographyReadout
-from qilisdk.readout.readout_result import StateTomographyReadoutResult
+from qilisdk.readout.readout_result import ReadoutCompositeResults, StateTomographyReadoutResult
 
 
 def test_qilisim_init():
@@ -204,7 +204,7 @@ def test_execute_quantum_reservoir_qilisim(monkeypatch):
 
     def _mock_execute_analog_evolution(self, f, readout):
         readout_result = StateTomographyReadoutResult(readout=StateTomographyReadout(), state=final_density)
-        return FunctionalResult(readout_results=[readout_result])
+        return FunctionalResult(readout_results=ReadoutCompositeResults(state_tomography=readout_result))
 
     monkeypatch.setattr(
         "qilisdk.backends.qilisim.QiliSim._execute_analog_evolution",

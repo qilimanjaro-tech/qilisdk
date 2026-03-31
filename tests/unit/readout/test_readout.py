@@ -27,10 +27,6 @@ class TestSamplingReadout:
         ro = SamplingReadout(nshots=500)
         assert ro.nshots == 500
 
-    def test_positional_constructor(self):
-        ro = SamplingReadout(200)
-        assert ro.nshots == 200
-
     def test_nshots_zero(self):
         ro = SamplingReadout(nshots=0)
         assert ro.nshots == 0
@@ -38,14 +34,6 @@ class TestSamplingReadout:
     def test_negative_nshots_raises(self):
         with pytest.raises(ValidationError):
             SamplingReadout(nshots=-1)
-
-    def test_too_many_positional_args_raises(self):
-        with pytest.raises(TypeError, match="at most 1 positional"):
-            SamplingReadout(100, 200)
-
-    def test_duplicate_positional_and_keyword_raises(self):
-        with pytest.raises(TypeError, match="multiple values"):
-            SamplingReadout(100, nshots=200)
 
 
 # ExpectationReadout
@@ -57,12 +45,6 @@ class TestExpectationReadout:
         ro = ExpectationReadout(observables=obs)
         assert ro.observables == obs
         assert ro.nshots == 0
-
-    def test_positional_constructor(self):
-        obs = [pauli_z(0)]
-        ro = ExpectationReadout(obs, 10)
-        assert ro.observables == obs
-        assert ro.nshots == 10
 
     def test_qtensor_observables_auto_set(self):
         obs = [pauli_z(0)]
@@ -88,10 +70,6 @@ class TestExpectationReadout:
         with pytest.raises(ValidationError):
             ExpectationReadout(observables=[pauli_z(0)], nshots=-1)
 
-    def test_too_many_positional_args_raises(self):
-        with pytest.raises(TypeError, match="at most 2 positional"):
-            ExpectationReadout([pauli_z(0)], 0, "extra")
-
 
 # StateTomographyReadout
 
@@ -100,15 +78,10 @@ class TestStateTomographyReadout:
     def test_default_constructor(self):
         ro = StateTomographyReadout()
         assert ro.state_tomography_method == "exact"
-        assert ro.compute_probabilities is True
 
-    def test_positional_constructor(self):
-        ro = StateTomographyReadout("exact")
+    def test_keyword_constructor(self):
+        ro = StateTomographyReadout(state_tomography_method="exact")
         assert ro.state_tomography_method == "exact"
-
-    def test_compute_probabilities_false(self):
-        ro = StateTomographyReadout(compute_probabilities=False)
-        assert ro.compute_probabilities is False
 
 
 # ReadoutMethod base class
@@ -130,13 +103,13 @@ class TestReadoutMethodBase:
         assert isinstance(ro, StateTomographyReadout)
 
     def test_factory_on_subclass_raises(self):
-        with pytest.raises(AttributeError, match="only available on ReadoutMethod"):
+        with pytest.raises(TypeError, match="only available on ReadoutMethod"):
             SamplingReadout.sample(nshots=10)
 
-        with pytest.raises(AttributeError, match="only available on ReadoutMethod"):
+        with pytest.raises(TypeError, match="only available on ReadoutMethod"):
             ExpectationReadout.expectation_values(observables=[pauli_z(0)])
 
-        with pytest.raises(AttributeError, match="only available on ReadoutMethod"):
+        with pytest.raises(TypeError, match="only available on ReadoutMethod"):
             StateTomographyReadout.state_tomography()
 
 

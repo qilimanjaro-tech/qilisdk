@@ -49,15 +49,15 @@ class ReadoutMethod(BaseModel):
         """Ensure factory helpers are only called on ``ReadoutMethod``.
 
         Raises:
-            AttributeError: if it's called on a child rather than the base class.
+            TypeError: if it's called on a child rather than the base class.
         """
         if cls is not ReadoutMethod:
-            raise AttributeError(
+            raise TypeError(
                 f"{factory_name}() is only available on ReadoutMethod; use ReadoutMethod.{factory_name}(...)"
             )
 
     @classmethod
-    def sample(cls, nshots: int = 100) -> ReadoutMethod:
+    def sample(cls, nshots: int = 100) -> SamplingReadout:
         """Create a :class:`SamplingReadout`.
 
         This factory must be called on :class:`ReadoutMethod` itself, not on a
@@ -191,24 +191,9 @@ class SamplingReadout(ReadoutMethod):
 
     Examples:
         >>> SamplingReadout(nshots=1000)
-        >>> SamplingReadout(1000)
     """
 
     nshots: int = Field(ge=0)
-
-    def __init__(self, *args: object, **data: object) -> None:
-        """Create a sampling readout.
-
-        Args:
-            nshots (int | None): Number of shots (>= 0), by keyword or first positional arg.
-        """
-        payload = self._merge_positional_args(
-            class_name=type(self).__name__,
-            positional_args=args,
-            positional_names=("nshots",),
-            keyword_args=data,
-        )
-        super().__init__(**payload)
 
 
 class ExpectationReadout(ReadoutMethod):
@@ -234,27 +219,11 @@ class ExpectationReadout(ReadoutMethod):
 
     Examples:
         >>> ExpectationReadout(observables=[hamiltonian], nshots=0)
-        >>> ExpectationReadout([hamiltonian], 0)
     """
 
     nshots: int = Field(default=0, ge=0)
     observables: list[Hamiltonian | QTensor]
     qtensor_observables: list[QTensor] = Field(default=[], init=False)
-
-    def __init__(self, *args: object, **data: object) -> None:
-        """Create an expectation-value readout.
-
-        Args:
-            observables (list[Hamiltonian | QTensor] | None): Observables to measure.
-            nshots (int | None): Number of shots (>= 0), by keyword or second positional arg.
-        """
-        payload = self._merge_positional_args(
-            class_name=type(self).__name__,
-            positional_args=args,
-            positional_names=("observables", "nshots"),
-            keyword_args=data,
-        )
-        super().__init__(**payload)
 
     _scaled_nqubits: int | None = PrivateAttr(default=None)
 
@@ -292,29 +261,9 @@ class StateTomographyReadout(ReadoutMethod):
         state_tomography_method (Literal["exact"]): Tomography method
             identifier.  Currently only ``"exact"`` is supported.  Accepted
             as a keyword argument or as the first positional argument.
-        compute_probabilities (bool): If ``True`` (the default), the
-            resulting :class:`~qilisdk.readout.readout_result.StateTomographyReadoutResult`
-            will also derive computational-basis probabilities from the
-            reconstructed state.
 
     Examples:
         >>> StateTomographyReadout(state_tomography_method="exact")
-        >>> StateTomographyReadout("exact")
     """
 
     state_tomography_method: Literal["exact"] = Field(default="exact")
-    compute_probabilities: bool = Field(default=True)
-
-    def __init__(self, *args: object, **data: object) -> None:
-        """Create a state-tomography readout.
-
-        Args:
-            state_tomography_method (Literal["exact"] | None): Method by keyword or first positional arg.
-        """
-        payload = self._merge_positional_args(
-            class_name=type(self).__name__,
-            positional_args=args,
-            positional_names=("state_tomography_method",),
-            keyword_args=data,
-        )
-        super().__init__(**payload)

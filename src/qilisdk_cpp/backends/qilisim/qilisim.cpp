@@ -52,7 +52,7 @@ py::object construct_result_object(const DenseMatrix& state_dense, const py::obj
             ));
 
         } else if (py::isinstance(ro, ExpectationReadout)) {
-            results.append(ExpectationReadoutResult(
+            results.append(ExpectationReadoutResult.attr("from_state")(
                 "readout"_a     = py::module_::import("copy").attr("copy")(ro),
                 "state"_a = QTensor(final_state_numpy)
             ));
@@ -64,7 +64,7 @@ py::object construct_result_object(const DenseMatrix& state_dense, const py::obj
             for (const auto& pair : counts) {
                 samples[py::cast(pair.first)] = py::cast(pair.second);
             }
-            results.append(SamplingReadoutResult(
+            results.append(SamplingReadoutResult.attr("from_samples")(
                 "readout"_a = py::module_::import("copy").attr("copy")(ro),
                 "samples"_a  = samples
             ));
@@ -76,7 +76,7 @@ py::object construct_result_object(const DenseMatrix& state_dense, const py::obj
         }
     }
 
-    return results;
+    return ReadoutCompositeResults.attr("from_list")(results);
 
 }
 

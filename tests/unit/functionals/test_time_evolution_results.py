@@ -18,14 +18,22 @@ from qilisdk.analog.hamiltonian import Z
 from qilisdk.core.qtensor import QTensor
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.readout import ExpectationReadout, StateTomographyReadout
-from qilisdk.readout.readout_result import ExpectationReadoutResult, StateTomographyReadoutResult
+from qilisdk.readout.readout_result import (
+    ExpectationReadoutResult,
+    ReadoutCompositeResults,
+    StateTomographyReadoutResult,
+)
+
+
+def _tomo_composite(state: QTensor) -> ReadoutCompositeResults:
+    return ReadoutCompositeResults(
+        state_tomography=StateTomographyReadoutResult(readout=StateTomographyReadout(), state=state)
+    )
 
 
 def test_functional_result_with_state_tomography():
     final_state = QTensor(np.array([[0], [1]]))
-    readout = StateTomographyReadout()
-    readout_result = StateTomographyReadoutResult(readout=readout, state=final_state)
-    result = FunctionalResult(readout_results=[readout_result])
+    result = FunctionalResult(readout_results=_tomo_composite(final_state))
 
     assert result.has_state()
     expected_list = [[0], [1]]
@@ -34,11 +42,9 @@ def test_functional_result_with_state_tomography():
 
 
 def test_functional_result_with_expectation_values():
-
-    state = QTensor(np.array([[1], [0]]))
     readout = ExpectationReadout(observables=[Z(0)])
-    readout_result = ExpectationReadoutResult(readout=readout, state=state)
-    result = FunctionalResult(readout_results=[readout_result])
+    readout_result = ExpectationReadoutResult.from_state(readout=readout, state=QTensor(np.array([[1], [0]])))
+    result = FunctionalResult(readout_results=ReadoutCompositeResults(expectation_values=readout_result))
 
     assert result.has_expectation_values()
     assert len(result.expected_values) == 1
@@ -50,12 +56,10 @@ def test_functional_result_with_intermediate_results():
     state2 = QTensor(np.array([[1 / np.sqrt(2)], [1 / np.sqrt(2)]]))
     state3 = QTensor(np.array([[0], [1]]))
 
-    readout = StateTomographyReadout()
-    inter1 = [StateTomographyReadoutResult(readout=readout, state=state1)]
-    inter2 = [StateTomographyReadoutResult(readout=readout, state=state2)]
-    final = [StateTomographyReadoutResult(readout=readout, state=state3)]
-
-    result = FunctionalResult(readout_results=final, intermediate_results=[inter1, inter2])
+    result = FunctionalResult(
+        readout_results=_tomo_composite(state3),
+        intermediate_results=[_tomo_composite(state1), _tomo_composite(state2)],
+    )
 
     assert len(result) == 3
     assert result.has_state()
@@ -69,10 +73,7 @@ def test_functional_result_with_intermediate_results():
 
 
 def test_functional_result_no_intermediate_raises():
-    state = QTensor(np.array([[1], [0]]))
-    readout = StateTomographyReadout()
-    final = [StateTomographyReadoutResult(readout=readout, state=state)]
-    result = FunctionalResult(readout_results=final)
+    result = FunctionalResult(readout_results=_tomo_composite(QTensor(np.array([[1], [0]]))))
 
     with pytest.raises(
         ValueError, match=r"Can't find intermediate states because intermediate Results were not stored."
@@ -82,9 +83,7 @@ def test_functional_result_no_intermediate_raises():
 
 def test_functional_result_output():
     state = QTensor(np.array([[1 / np.sqrt(2)], [1 / np.sqrt(2)]]))
-    readout = StateTomographyReadout()
-    readout_result = StateTomographyReadoutResult(readout=readout, state=state)
-    result = FunctionalResult(readout_results=[readout_result])
+    result = FunctionalResult(readout_results=_tomo_composite(state))
 
     output = repr(result)
     assert "Functional Results" in output

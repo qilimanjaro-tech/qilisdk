@@ -16,8 +16,12 @@ from collections.abc import Iterator
 from qilisdk.core import QTensor
 from qilisdk.core.result import Result
 from qilisdk.core.types import Number
-from qilisdk.readout import ReadoutResult
-from qilisdk.readout.readout_result import ReadoutCompositeResults
+from qilisdk.readout.readout_result import (
+    ReadoutCompositeResults,
+    has_expectation_values,
+    has_sampling,
+    has_state_tomography,
+)
 
 
 class FunctionalResult(Result):
@@ -31,7 +35,9 @@ class FunctionalResult(Result):
     """
 
     def __init__(
-        self, readout_results: list[ReadoutResult], intermediate_results: list[list[ReadoutResult]] | None = None
+        self,
+        readout_results: ReadoutCompositeResults,
+        intermediate_results: list[ReadoutCompositeResults] | None = None,
     ) -> None:
         """Initialise a functional result from readout outputs.
 
@@ -44,15 +50,8 @@ class FunctionalResult(Result):
         Raises:
             ValueError: If ``readout_results`` contains duplicate readout types.
         """
-
-        if len({ro.__class__ for ro in readout_results}) != len(readout_results):
-            raise ValueError(
-                f"Each type of readout is allowed to be specified once.\nprovided a list with the following types {readout_results}"
-            )
-        self._readout_results = ReadoutCompositeResults(readout_results)
-        self._intermediate_results = (
-            [ReadoutCompositeResults(res) for res in intermediate_results] if intermediate_results else []
-        )
+        self._readout_results = readout_results
+        self._intermediate_results = intermediate_results or []
 
     @property
     def readout_results(self) -> ReadoutCompositeResults:
@@ -66,23 +65,53 @@ class FunctionalResult(Result):
 
     @property
     def samples(self) -> dict[str, int]:
-        """Measurement samples from the final execution step."""
-        return self._readout_results.samples
+        """
+        Measurement samples from the final execution step.
+
+        Raises:
+            ValueError: If samples are queried but sample results were not specified in the experiment.
+        """
+        if has_sampling(self._readout_results):
+            return self._readout_results.sampling.samples
+        raise ValueError("Sampling Readout was not provided.")
 
     @property
     def probabilities(self) -> dict[str, float]:
-        """Outcome probabilities from the final execution step."""
-        return self._readout_results.probabilities
+        """
+        Outcome probabilities from the final execution step.
+
+        Raises:
+            ValueError: if sampling or state tomography readouts are not specified.
+        """
+        if has_sampling(self._readout_results):
+            return self._readout_results.sampling.probabilities
+        if has_state_tomography(self._readout_results):
+            return self._readout_results.state_tomography.probabilities
+        raise ValueError("Can't compute probabilities if Sampling or State tomography readouts are not specified.")
 
     @property
     def state(self) -> QTensor:
-        """Quantum state vector from the final execution step."""
-        return self._readout_results.state
+        """
+        Quantum state vector from the final execution step.
+
+        Raises:
+            ValueError: if state tomography readout is not specified.
+        """
+        if has_state_tomography(self._readout_results):
+            return self._readout_results.state_tomography.state
+        raise ValueError("Can't obtain the final state if State Tomography readout is not specified.")
 
     @property
-    def expected_values(self) -> list[Number]:
-        """Expectation values from the final execution step."""
-        return self._readout_results.expected_values
+    def expected_values(self) -> list[float]:
+        """
+        Expectation values from the final execution step.
+
+        Raises:
+            ValueError: if ExpectationReadout is not specified.
+        """
+        if has_expectation_values(self._readout_results):
+            return self._readout_results.expectation_values.expected_values
+        raise ValueError("Can't Compute Expectations because Expectation readout was not specified.")
 
     @property
     def intermediate_samples(self) -> list[dict[str, int]]:
@@ -96,12 +125,11 @@ class FunctionalResult(Result):
                 ``SamplingReadout`` was provided.
         """
         if self._intermediate_results:
-            if self.has_samples():
-                results = []
-                for res in self:
-                    results.append(res.samples)
-                return results
-            raise ValueError("Can't find samples in results, because no Sampling readout was provided.")
+            results = []
+            for res in self:
+                if has_sampling(res):
+                    results.append(res.sampling.samples)
+            return results
         raise ValueError("Can't find intermediate samples because intermediate Results were not stored.")
 
     @property
@@ -116,14 +144,13 @@ class FunctionalResult(Result):
                 ``SamplingReadout`` / ``StateTomographyReadout`` was provided.
         """
         if self._intermediate_results:
-            if self.has_probabilities():
-                results = []
-                for res in self:
-                    results.append(res.probabilities)
-                return results
-            raise ValueError(
-                "Can't find probabilities in results, because no Sampling/State Tomography readout was provided."
-            )
+            results = []
+            for res in self:
+                if has_state_tomography(res):
+                    results.append(res.state_tomography.probabilities)
+                elif has_sampling(res):
+                    results.append(res.sampling.probabilities)
+            return results
         raise ValueError("Can't find intermediate probabilities because intermediate Results were not stored.")
 
     @property
@@ -138,16 +165,15 @@ class FunctionalResult(Result):
                 ``StateTomographyReadout`` was provided.
         """
         if self._intermediate_results:
-            if self.has_state():
-                results = []
-                for res in self:
-                    results.append(res.state)
-                return results
-            raise ValueError("Can't find final state in results, because no State Tomography readout was provided.")
+            results = []
+            for res in self:
+                if has_state_tomography(res):
+                    results.append(res.state_tomography.state)
+            return results
         raise ValueError("Can't find intermediate states because intermediate Results were not stored.")
 
     @property
-    def intermediate_expected_values(self) -> list[list[Number]]:
+    def intermediate_expected_values(self) -> list[list[float]]:
         """Expectation values for every time-step (intermediate + final).
 
         Returns:
@@ -158,12 +184,11 @@ class FunctionalResult(Result):
                 ``ExpectationReadout`` was provided.
         """
         if self._intermediate_results:
-            if self.has_expectation_values():
-                results = []
-                for res in self:
-                    results.append(res.expected_values)
-                return results
-            raise ValueError("Can't find expected values in results, because no Expectation readout was provided.")
+            results = []
+            for res in self:
+                if has_expectation_values(res):
+                    results.append(res.expectation_values.expected_values)
+            return results
         raise ValueError("Can't find intermediate expected values because intermediate Results were not stored.")
 
     def has_state(self) -> bool:
@@ -172,7 +197,7 @@ class FunctionalResult(Result):
         Returns:
             bool: ``True`` if a ``StateTomographyReadout`` result is present.
         """
-        return self._readout_results.has_state()
+        return has_state_tomography(self._readout_results)
 
     def has_samples(self) -> bool:
         """Check whether the result contains measurement samples.
@@ -180,7 +205,7 @@ class FunctionalResult(Result):
         Returns:
             bool: ``True`` if a ``SamplingReadout`` result is present.
         """
-        return self._readout_results.has_samples()
+        return has_sampling(self._readout_results)
 
     def has_probabilities(self) -> bool:
         """Check whether the result contains outcome probabilities.
@@ -189,7 +214,7 @@ class FunctionalResult(Result):
             bool: ``True`` if a sampling or state-tomography readout result
                 is present.
         """
-        return self._readout_results.has_probabilities()
+        return has_state_tomography(self._readout_results) or has_sampling(self._readout_results)
 
     def has_expectation_values(self) -> bool:
         """Check whether the result contains expectation values.
@@ -197,7 +222,7 @@ class FunctionalResult(Result):
         Returns:
             bool: ``True`` if an ``ExpectationReadout`` result is present.
         """
-        return self._readout_results.has_expectation_values()
+        return has_expectation_values(self._readout_results)
 
     def __len__(self) -> int:
         """
@@ -221,8 +246,7 @@ class FunctionalResult(Result):
 
     def __repr__(self) -> str:
         out = "Functional Results: (\n"
-        for readout in self._readout_results:
-            out += str(readout)
+        out += str(self._readout_results)
         out += "\n)"
         return out
 

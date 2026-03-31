@@ -167,7 +167,7 @@ def test_constant_hamiltonian(backend):
     # Intermediate states should replicate constant behavior
     assert len(res.intermediate_results) > 0
     for inter in res.intermediate_results:
-        state = inter.state
+        state = inter.state_tomography.state
         psi = state.dense().flatten()
         assert np.isclose(abs(psi[0]) ** 2, 1.0, rtol=1e-6)
 

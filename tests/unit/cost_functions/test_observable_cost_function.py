@@ -19,7 +19,12 @@ from qilisdk.core.qtensor import QTensor, ket, tensor_prod
 from qilisdk.cost_functions.observable_cost_function import ObservableCostFunction
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.readout import ExpectationReadout, SamplingReadout, StateTomographyReadout
-from qilisdk.readout.readout_result import ExpectationReadoutResult, SamplingReadoutResult, StateTomographyReadoutResult
+from qilisdk.readout.readout_result import (
+    ExpectationReadoutResult,
+    ReadoutCompositeResults,
+    SamplingReadoutResult,
+    StateTomographyReadoutResult,
+)
 
 
 def test_init_observable_cost_function():
@@ -51,7 +56,7 @@ def test_compute_cost_state_tomography():
     # With ket state
     readout = StateTomographyReadout()
     readout_result = StateTomographyReadoutResult(readout=readout, state=tensor_prod([ket(1), ket(1)]))
-    result = FunctionalResult(readout_results=[readout_result])
+    result = FunctionalResult(readout_results=ReadoutCompositeResults(state_tomography=readout_result))
     cost = ocf.compute_cost(result)
 
     assert cost == -2
@@ -60,7 +65,7 @@ def test_compute_cost_state_tomography():
     readout_result = StateTomographyReadoutResult(
         readout=readout, state=tensor_prod([ket(1), ket(1)]).to_density_matrix()
     )
-    result = FunctionalResult(readout_results=[readout_result])
+    result = FunctionalResult(readout_results=ReadoutCompositeResults(state_tomography=readout_result))
     cost = ocf.compute_cost(result)
 
     assert cost == -2
@@ -68,7 +73,7 @@ def test_compute_cost_state_tomography():
     # Without state or samples -- should raise
     exp_readout = ExpectationReadout(observables=[H])
     exp_result = ExpectationReadoutResult(readout=exp_readout, expected_values=[0.0])
-    no_state_result = FunctionalResult(readout_results=[exp_result])
+    no_state_result = FunctionalResult(readout_results=ReadoutCompositeResults(expectation_values=exp_result))
     with pytest.raises(
         ValueError,
         match=r"ObservableCostFunction requires either a StateTomography or Sampling readout in the results.",
@@ -90,20 +95,20 @@ def test_compute_cost_sampling():
     ocf = ObservableCostFunction(H)
 
     readout = SamplingReadout(nshots=100)
-    readout_result = SamplingReadoutResult(readout=readout, samples={"11": 100})
-    result = FunctionalResult(readout_results=[readout_result])
+    readout_result = SamplingReadoutResult.from_samples(readout=readout, samples={"11": 100})
+    result = FunctionalResult(readout_results=ReadoutCompositeResults(sampling=readout_result))
     cost = ocf.compute_cost(result)
 
     assert cost == -2
 
-    readout_result = SamplingReadoutResult(readout=SamplingReadout(nshots=100), samples={"0": 100})
-    result = FunctionalResult(readout_results=[readout_result])
+    readout_result = SamplingReadoutResult.from_samples(readout=SamplingReadout(nshots=100), samples={"0": 100})
+    result = FunctionalResult(readout_results=ReadoutCompositeResults(sampling=readout_result))
 
     with pytest.raises(ValueError, match=r"The samples provided have 1 qubits but the observable has 2 qubits"):
         _ = ocf.compute_cost(result)
 
-    readout_result = SamplingReadoutResult(readout=SamplingReadout(nshots=100), samples={"11": 50, "00": 50})
-    result = FunctionalResult(readout_results=[readout_result])
+    readout_result = SamplingReadoutResult.from_samples(readout=SamplingReadout(nshots=100), samples={"11": 50, "00": 50})
+    result = FunctionalResult(readout_results=ReadoutCompositeResults(sampling=readout_result))
     cost = ocf.compute_cost(result)
 
     assert cost == 0
@@ -117,7 +122,7 @@ def test_imag_state_tomography_result():
 
     readout = StateTomographyReadout()
     readout_result = StateTomographyReadoutResult(readout=readout, state=tensor_prod([ket(1), ket(1)]))
-    result = FunctionalResult(readout_results=[readout_result])
+    result = FunctionalResult(readout_results=ReadoutCompositeResults(state_tomography=readout_result))
     cost = ocf.compute_cost(result)
 
     assert cost == 1j
@@ -130,8 +135,8 @@ def test_imag_sampling_result():
     ocf = ObservableCostFunction(ob)
 
     readout = SamplingReadout(nshots=100)
-    readout_result = SamplingReadoutResult(readout=readout, samples={"11": 100})
-    result = FunctionalResult(readout_results=[readout_result])
+    readout_result = SamplingReadoutResult.from_samples(readout=readout, samples={"11": 100})
+    result = FunctionalResult(readout_results=ReadoutCompositeResults(sampling=readout_result))
     cost = ocf.compute_cost(result)
 
     assert cost == 1j

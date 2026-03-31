@@ -23,7 +23,12 @@ from qilisdk.core.variables import EQ, BinaryVariable
 from qilisdk.cost_functions import ModelCostFunction
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.readout import ExpectationReadout, SamplingReadout, StateTomographyReadout
-from qilisdk.readout.readout_result import ExpectationReadoutResult, SamplingReadoutResult, StateTomographyReadoutResult
+from qilisdk.readout.readout_result import (
+    ExpectationReadoutResult,
+    ReadoutCompositeResults,
+    SamplingReadoutResult,
+    StateTomographyReadoutResult,
+)
 
 
 def test_compute_cost_state_tomography():
@@ -41,7 +46,7 @@ def test_compute_cost_state_tomography():
     # ket state
     readout = StateTomographyReadout()
     readout_result = StateTomographyReadoutResult(readout=readout, state=tensor_prod([ket(0), ket(1)]))
-    result = FunctionalResult(readout_results=[readout_result])
+    result = FunctionalResult(readout_results=ReadoutCompositeResults(state_tomography=readout_result))
     cost = mcf.compute_cost(result)
 
     assert cost == -1
@@ -50,7 +55,7 @@ def test_compute_cost_state_tomography():
     readout_result = StateTomographyReadoutResult(
         readout=readout, state=tensor_prod([ket(0), ket(1)]).to_density_matrix()
     )
-    result = FunctionalResult(readout_results=[readout_result])
+    result = FunctionalResult(readout_results=ReadoutCompositeResults(state_tomography=readout_result))
     cost = mcf.compute_cost(result)
 
     assert cost == -1
@@ -59,7 +64,7 @@ def test_compute_cost_state_tomography():
 
     # bra state
     readout_result = StateTomographyReadoutResult(readout=readout, state=tensor_prod([bra(0), bra(1)]))
-    result = FunctionalResult(readout_results=[readout_result])
+    result = FunctionalResult(readout_results=ReadoutCompositeResults(state_tomography=readout_result))
     cost = mcf.compute_cost(result)
     assert cost == -1
 
@@ -74,7 +79,7 @@ def test_compute_cost_state_tomography():
 
     exp_readout = ExpectationReadout(observables=[QTensor(np.eye(2**n))])
     exp_result = ExpectationReadoutResult(readout=exp_readout, expected_values=[0.0])
-    no_state_result = FunctionalResult(readout_results=[exp_result])
+    no_state_result = FunctionalResult(readout_results=ReadoutCompositeResults(expectation_values=exp_result))
     with pytest.raises(
         ValueError, match=r"ModelCostFunction requires either a StateTomography or Sampling readout in the results."
     ):
@@ -94,20 +99,20 @@ def test_compute_cost_sampling():
     mcf = ModelCostFunction(model)
 
     readout = SamplingReadout(nshots=100)
-    readout_result = SamplingReadoutResult(readout=readout, samples={"01": 100})
-    result = FunctionalResult(readout_results=[readout_result])
+    readout_result = SamplingReadoutResult.from_samples(readout=readout, samples={"01": 100})
+    result = FunctionalResult(readout_results=ReadoutCompositeResults(sampling=readout_result))
     cost = mcf.compute_cost(result)
 
     assert cost == -1
 
-    readout_result = SamplingReadoutResult(readout=SamplingReadout(nshots=100), samples={"0": 100})
-    result = FunctionalResult(readout_results=[readout_result])
+    readout_result = SamplingReadoutResult.from_samples(readout=SamplingReadout(nshots=100), samples={"0": 100})
+    result = FunctionalResult(readout_results=ReadoutCompositeResults(sampling=readout_result))
 
     with pytest.raises(ValueError, match=r"Mapping samples to the model's variables is ambiguous."):
         _ = mcf.compute_cost(result)
 
-    readout_result = SamplingReadoutResult(readout=SamplingReadout(nshots=100), samples={"01": 50, "10": 50})
-    result = FunctionalResult(readout_results=[readout_result])
+    readout_result = SamplingReadoutResult.from_samples(readout=SamplingReadout(nshots=100), samples={"01": 50, "10": 50})
+    result = FunctionalResult(readout_results=ReadoutCompositeResults(sampling=readout_result))
     cost = mcf.compute_cost(result)
 
     assert np.isclose(cost, -1 * 0.5 + 9 * 0.5)
@@ -124,8 +129,8 @@ def test_complex_return_values():
 
     # sampling
     readout = SamplingReadout(nshots=100)
-    readout_result = SamplingReadoutResult(readout=readout, samples={"0": 100})
-    sampling_result = FunctionalResult(readout_results=[readout_result])
+    readout_result = SamplingReadoutResult.from_samples(readout=readout, samples={"0": 100})
+    sampling_result = FunctionalResult(readout_results=ReadoutCompositeResults(sampling=readout_result))
     cost = mcf._compute_from_samples(sampling_result)
     assert cost == return_val
 
@@ -139,7 +144,7 @@ def test_complex_return_values():
     mcf = ModelCostFunction(model)
     st_readout = StateTomographyReadout()
     st_readout_result = StateTomographyReadoutResult(readout=st_readout, state=rho)
-    state_result = FunctionalResult(readout_results=[st_readout_result])
+    state_result = FunctionalResult(readout_results=ReadoutCompositeResults(state_tomography=st_readout_result))
     cost = mcf._compute_from_state(state_result)
     assert cost == return_val
 
@@ -151,7 +156,7 @@ def test_complex_return_values():
     model.evaluate = MagicMock(return_value=eval_results)
     mcf = ModelCostFunction(model)
     st_readout_result = StateTomographyReadoutResult(readout=st_readout, state=rho)
-    state_result = FunctionalResult(readout_results=[st_readout_result])
+    state_result = FunctionalResult(readout_results=ReadoutCompositeResults(state_tomography=st_readout_result))
     cost = mcf._compute_from_state(state_result)
     assert cost == return_val
 
@@ -166,7 +171,7 @@ def test_complex_return_values():
     model.evaluate = MagicMock(return_value=eval_results)
     mcf = ModelCostFunction(model)
     st_readout_result = StateTomographyReadoutResult(readout=st_readout, state=rho)
-    state_result = FunctionalResult(readout_results=[st_readout_result])
+    state_result = FunctionalResult(readout_results=ReadoutCompositeResults(state_tomography=st_readout_result))
     cost = mcf._compute_from_state(state_result)
     assert cost == return_val
 

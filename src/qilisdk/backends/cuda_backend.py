@@ -64,7 +64,7 @@ from qilisdk.noise import (
     SupportsTimeDerivedLindblad,
 )
 from qilisdk.readout import SamplingReadout
-from qilisdk.readout.readout_result import SamplingReadoutResult
+from qilisdk.readout.readout_result import ReadoutCompositeResults, SamplingReadoutResult
 from qilisdk.settings import Precision, get_settings
 
 if TYPE_CHECKING:
@@ -289,12 +289,12 @@ class CudaBackend(Backend):
                 functional.set_parameters(og_param)
             logger.success("Sampling finished; {} distinct bitstrings", len(cudaq_result))
             return FunctionalResult(
-                [
-                    SamplingReadoutResult(
+                ReadoutCompositeResults(
+                    sampling=SamplingReadoutResult.from_samples(
                         readout=readout[0],  # ty:ignore[invalid-argument-type]
                         samples=dict(cudaq_result.items()),
                     )
-                ]
+                )
             )
 
         if all(ro.is_sample() for ro in readout):
@@ -304,12 +304,12 @@ class CudaBackend(Backend):
                 functional.set_parameters(og_param)
             logger.success("Sampling finished; {} distinct bitstrings", len(cudaq_result))
             return FunctionalResult(
-                [
-                    SamplingReadoutResult(
+                ReadoutCompositeResults(
+                    SamplingReadoutResult.from_samples(
                         readout=sampling_readout,
                         samples=dict(cudaq_result.items()),
                     )
-                ]
+                )
             )
 
         cudaq_state = cudaq.get_state(kernel)

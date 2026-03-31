@@ -19,7 +19,7 @@ from qilisdk.core.qtensor import QTensor
 from qilisdk.functionals import FunctionalResult, VariationalProgramResult
 from qilisdk.optimizers.optimizer_result import OptimizerResult
 from qilisdk.readout import StateTomographyReadout
-from qilisdk.readout.readout_result import StateTomographyReadoutResult
+from qilisdk.readout.readout_result import ReadoutCompositeResults, StateTomographyReadoutResult
 
 
 def test_variational_program_results_initialization():
@@ -30,7 +30,7 @@ def test_variational_program_results_initialization():
     state = QTensor(np.array([[1], [0]]))
     readout = StateTomographyReadout()
     readout_result = StateTomographyReadoutResult(readout=readout, state=state)
-    result = FunctionalResult(readout_results=[readout_result])
+    result = FunctionalResult(readout_results=ReadoutCompositeResults(state_tomography=readout_result))
 
     var_res = VariationalProgramResult(optimizer_result, result)
 
