@@ -108,6 +108,7 @@ class ExecuteType(str, Enum):
 
     DIGITAL_PROPAGATION = "digital_propagation"
     ANALOG_EVOLUTION = "analog_evolution"
+    QUANTUM_RESERVOIR = "quantum_reservoir"
     VARIATIONAL_PROGRAM = "variational_program"
     RABI_EXPERIMENT = "rabi_experiment"
     T1_EXPERIMENT = "t1_experiment"

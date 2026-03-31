@@ -137,10 +137,14 @@ class Interpolator(Parameterizable):
             ti = fixed_times[i]
             tj = fixed_times[i + 1]
             t0 = (
-                self._get_value(ti) if not isinstance(ti, tuple) else self._get_value(ti[1])  # ty:ignore[invalid-argument-type]
+                self._get_value(ti)
+                if not isinstance(ti, tuple)
+                else self._get_value(ti[1])  # ty:ignore[invalid-argument-type]
             )
             t1 = (
-                self._get_value(tj) if not isinstance(tj, tuple) else self._get_value(tj[0])  # ty:ignore[invalid-argument-type]
+                self._get_value(tj)
+                if not isinstance(tj, tuple)
+                else self._get_value(tj[0])  # ty:ignore[invalid-argument-type]
             )
             if abs(t0 - t1) < get_settings().atol:
                 raise ValueError(f"The time point {t0} is defined twice.")
@@ -319,10 +323,10 @@ class Interpolator(Parameterizable):
         """
         if abs(self._get_value(max_time)) < get_settings().atol:
             raise ValueError("Cannot set the max time to zero.")
-        self._delete_cache()
+        self.delete_cache()
         self._max_time = max_time
 
-    def _delete_cache(self) -> None:
+    def delete_cache(self) -> None:
         """Clear cached evaluations and derived lists."""
         self._cached = False
         self._total_time = None
@@ -413,7 +417,7 @@ class Interpolator(Parameterizable):
                 "Coefficient must be a number, Parameter, Term, or callable that returns one of these types."
             )
         self._time_dict[time / self._time_scale] = coeff
-        self._delete_cache()
+        self.delete_cache()
 
     def set_parameter_values(
         self,
@@ -427,7 +431,7 @@ class Interpolator(Parameterizable):
             values (list[float]): New values ordered consistently with ``get_parameter_names()``.
             where (Callable[[Parameter], bool] | None): Optional predicate selecting parameters to update.
         """
-        self._delete_cache()
+        self.delete_cache()
         super().set_parameter_values(values=values, where=where)
 
     def set_parameters(self, parameters: dict[str, int | float]) -> None:
@@ -437,7 +441,7 @@ class Interpolator(Parameterizable):
         Args:
             parameters (dict[str, int | float]): Mapping from parameter labels to numeric values.
         """
-        self._delete_cache()
+        self.delete_cache()
         super().set_parameters(parameters)
 
     def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
@@ -447,7 +451,7 @@ class Interpolator(Parameterizable):
         Args:
             ranges (dict[str, tuple[float, float]]): Bounds keyed by parameter label.
         """
-        self._delete_cache()
+        self.delete_cache()
         super().set_parameter_bounds(ranges)
 
     def get_coefficient(self, time_step: float) -> float:
@@ -460,7 +464,9 @@ class Interpolator(Parameterizable):
         Returns:
             float: Evaluated coefficient.
         """
-        time_step = time_step.item() if isinstance(time_step, np.generic) else self._get_value(time_step)  # ty:ignore[invalid-assignment]
+        time_step = (
+            time_step.item() if isinstance(time_step, np.generic) else self._get_value(time_step)
+        )  # ty:ignore[invalid-assignment]
         val = self.get_coefficient_expression(time_step=time_step)
 
         if self._max_time is not None:
@@ -483,7 +489,9 @@ class Interpolator(Parameterizable):
         Raises:
             ValueError: If the interpolation mode is unsupported or evaluation fails.
         """
-        time_step = time_step.item() if isinstance(time_step, np.generic) else self._get_value(time_step)  # ty:ignore[invalid-assignment]
+        time_step = (
+            time_step.item() if isinstance(time_step, np.generic) else self._get_value(time_step)
+        )  # ty:ignore[invalid-assignment]
 
         # generate the tlist
         self._tlist = self._generate_tlist()

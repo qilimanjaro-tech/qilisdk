@@ -72,7 +72,7 @@ Measurement details such as the number of shots are specified separately via rea
 
 **Returns**
 
-- :class:`~qilisdk.functionals.functional_result.FunctionalResult`: Access shot counts via :attr:`final_samples`, or
+- :class:`~qilisdk.functionals.functional_result.FunctionalResult`: Access shot counts via :attr:`samples`, or
   probabilities through :attr:`probabilities`.
 
 **Usage Example**
@@ -110,9 +110,14 @@ This functional can be executed on any backend that supports digital circuits. F
 
 ::
 
-    FunctionalResult(
-        final_samples={'00': 53, '11': 47}
+    - Functional Results: [
+
+    Sampling Results: (
+        nshots=100,
+        samples={'00': 53, '11': 47}
     )
+
+    ]
 
 
 
@@ -197,12 +202,13 @@ we can execute it on the Qutip backend:
 
 ::
 
-    FunctionalResult(
-        final_expected_values=array([-0.99388223,  0.0467696 , -0.10005353]),
-        final_state=QTensor(shape=2x1, nnz=2, format='csr')
-        [[0.05506547-0.00516502j]
-        [0.3364973 -0.94005887j]]
+    - Functional Results: [
+
+    Expectation Value Results: (
+        expected_values=[-0.99388223, 0.0467696, -0.10005353],
     )
+
+    ]
 
 
 Quantum Reservoirs
@@ -228,7 +234,7 @@ be driven by input data sequences rather than optimization loops.
 **Returns**
 
 - :class:`~qilisdk.functionals.functional_result.FunctionalResult`: Access per-layer expectation values via
-  :attr:`expected_values`, plus optional states via :attr:`states`.
+  :attr:`expected_values`, plus optional states via :attr:`state`.
 
 **Usage Example**
 
@@ -476,12 +482,18 @@ Only parameters marked as trainable are optimized during this loop.
 ::
 
     VariationalProgramResult(
-        Optimal Cost=-9.0,
-        ...
-        Optimal Results=FunctionalResult(
-        final_samples={'000': 2, '010': 3, '101': 994, '110': 1}
-        )
-        )
+      Optimal Cost=-9.0,
+      Optimal Parameters=[...],
+      Intermediate Results=[...],
+      Optimal Results=- Functional Results: [
+
+    Sampling Results: (
+        nshots=1000,
+        samples={'000': 2, '010': 3, '101': 994, '110': 1}
+    )
+
+    ]
+    )
 
 
 **Usage Example 2 (Using QuTiP Backend)**
@@ -499,7 +511,7 @@ This example optimizes a variational schedule under some parameter constraints.
     from qilisdk.core.variables import Parameter
     from qilisdk.core import ket, tensor_prod
     from qilisdk.backends import QutipBackend
-    from qilisdk.readout import ExpectationReadout
+    from qilisdk.readout import ReadoutMethod
     import numpy as np
 
     from qilisdk.utils.visualization.style import ScheduleStyle
@@ -542,6 +554,6 @@ This example optimizes a variational schedule under some parameter constraints.
     print(vp.get_constraints()) # print the constraints of the variational program.
 
     backend = QutipBackend()
-    results = backend.execute(vp, readout=[ExpectationReadout(observables=[h1])])
+    results = backend.execute(vp, readout=[ReadoutMethod.expectation_values(observables=[h1]), ReadoutMethod.state_tomography(), ReadoutMethod.sample(1000)])
     schedule.draw(ScheduleStyle(title="Schedule After Optimization"))
     print(results)

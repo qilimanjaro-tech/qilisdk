@@ -15,7 +15,7 @@
 import numpy as np
 
 from qilisdk.core import Parameter
-from qilisdk.digital import RZ, Circuit
+from qilisdk.digital import RX, RZ, Circuit
 from qilisdk.functionals.digital_propagation import DigitalPropagation
 from qilisdk.settings import get_settings
 
@@ -81,3 +81,43 @@ def test_repr():
     repr_str = str(functional)
     assert "DigitalPropagation" in repr_str
     assert "circuit=" in repr_str
+
+
+# --- Parameter Cache Invalidation Tests ---
+
+
+def test_digital_propagation_set_parameters_clears_gate_matrix_cache():
+    """DigitalPropagation.set_parameters must propagate through Circuit to
+    invalidate the gate's cached_property matrix.
+
+    The chain is: DigitalPropagation.set_parameters → Circuit.set_parameters
+    → gate.set_parameters → gate._invalidate_matrix().  A break anywhere in
+    this chain would leave a stale matrix in the cache.
+    """
+    # Use a name that differs from the gate's slot name ("theta") so the
+    # circuit registers the parameter under the user-supplied label "angle".
+    gate = RX(0, theta=Parameter("angle", np.pi / 4))
+    circuit = Circuit(nqubits=1)
+    circuit.add(gate)
+    functional = DigitalPropagation(circuit=circuit)
+
+    # Populate the cached_property.
+    matrix_before = gate.matrix.copy()
+
+    functional.set_parameters({"angle": np.pi / 2})
+
+    assert not np.allclose(matrix_before, gate.matrix)
+
+
+def test_digital_propagation_set_parameter_values_clears_gate_matrix_cache():
+    """DigitalPropagation.set_parameter_values must invalidate the gate's cached matrix."""
+    gate = RX(0, theta=Parameter("angle", np.pi / 4))
+    circuit = Circuit(nqubits=1)
+    circuit.add(gate)
+    functional = DigitalPropagation(circuit=circuit)
+
+    matrix_before = gate.matrix.copy()
+
+    functional.set_parameter_values([np.pi / 2])
+
+    assert not np.allclose(matrix_before, gate.matrix)

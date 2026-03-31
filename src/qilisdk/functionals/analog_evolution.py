@@ -11,9 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import ClassVar, Iterator
+from typing import Callable, ClassVar, Iterator
 
 from qilisdk.analog.schedule import Schedule
+from qilisdk.core import Parameter
 from qilisdk.core.parameterizable import Parameterizable
 from qilisdk.core.qtensor import QTensor
 from qilisdk.functionals.functional import PrimitiveFunctional
@@ -74,6 +75,38 @@ class AnalogEvolution(PrimitiveFunctional):
             Iterator[Parameterizable]: The underlying ``Schedule``.
         """
         yield self.schedule
+
+    def set_parameter_values(
+        self,
+        values: list[float],
+        where: Callable[[Parameter], bool] | None = None,
+    ) -> None:
+        """
+        Assign parameter values by position and clear caches.
+
+        Args:
+            values (list[float]): New values ordered consistently with ``get_parameter_names()``.
+            where (Callable[[Parameter], bool] | None): Optional predicate selecting parameters to update.
+        """
+        self.schedule.set_parameter_values(values=values, where=where)
+
+    def set_parameters(self, parameters: dict[str, int | float]) -> None:
+        """
+        Assign parameter values by name and clear caches.
+
+        Args:
+            parameters (dict[str, int | float]): Mapping from parameter labels to numeric values.
+        """
+        self.schedule.set_parameters(parameters)
+
+    def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
+        """
+        Update parameter bounds and clear caches.
+
+        Args:
+            ranges (dict[str, tuple[float, float]]): Bounds keyed by parameter label.
+        """
+        self.schedule.set_parameter_bounds(ranges)
 
     def __repr__(self) -> str:
         lines = [

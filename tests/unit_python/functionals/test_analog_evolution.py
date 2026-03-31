@@ -96,3 +96,72 @@ def test_repr():
     assert "AnalogEvolution" in repr_str
     assert "schedule=" in repr_str
     assert "initial_state=" in repr_str
+
+
+# --- Parameter Cache Invalidation Tests ---
+
+
+def _isclose_cache(lhs: float, rhs: float) -> bool:
+    from qilisdk.settings import get_settings
+
+    return bool(np.isclose(lhs, rhs, atol=get_settings().atol, rtol=get_settings().rtol))
+
+
+def test_analog_evolution_set_parameters_clears_interpolator_cache():
+    """AnalogEvolution.set_parameters must propagate through Schedule to clear
+    the Interpolator's _cached_time, not just update the Parameter value."""
+    p = Parameter("coeff", 2.0)
+    hamiltonian = Hamiltonian({(PauliZ(0),): 1.0})
+    schedule = Schedule(
+        hamiltonians={"H": hamiltonian},
+        coefficients={"H": {0: p, 1.0: 0.0}},
+        dt=0.1,
+    )
+    initial_state = ket(0).unit()
+    evolution = AnalogEvolution(schedule=schedule, initial_state=initial_state)
+
+    # Populate _cached_time: linear interp at t=0.5 → p*0.5 = 1.0
+    assert _isclose_cache(schedule.coefficients["H"][0.5], 1.0)
+
+    evolution.set_parameters({"coeff": 4.0})
+
+    # Stale cache would return 1.0; correct answer is 4.0*0.5 = 2.0.
+    assert _isclose_cache(schedule.coefficients["H"][0.5], 2.0)
+
+
+def test_analog_evolution_set_parameter_values_clears_interpolator_cache():
+    """AnalogEvolution.set_parameter_values must clear the Interpolator cache."""
+    p = Parameter("coeff", 2.0)
+    hamiltonian = Hamiltonian({(PauliZ(0),): 1.0})
+    schedule = Schedule(
+        hamiltonians={"H": hamiltonian},
+        coefficients={"H": {0: p, 1.0: 0.0}},
+        dt=0.1,
+    )
+    initial_state = ket(0).unit()
+    evolution = AnalogEvolution(schedule=schedule, initial_state=initial_state)
+
+    assert _isclose_cache(schedule.coefficients["H"][0.5], 1.0)
+
+    evolution.set_parameter_values([4.0])
+
+    assert _isclose_cache(schedule.coefficients["H"][0.5], 2.0)
+
+
+def test_analog_evolution_set_parameter_bounds_propagates_to_schedule():
+    """AnalogEvolution.set_parameter_bounds must update bounds in the Schedule."""
+    p = Parameter("coeff", 2.0, bounds=(0.0, 3.0))
+    hamiltonian = Hamiltonian({(PauliZ(0),): 1.0})
+    schedule = Schedule(
+        hamiltonians={"H": hamiltonian},
+        coefficients={"H": {(0, 1.0): p}},
+        dt=0.1,
+    )
+    initial_state = ket(0).unit()
+    evolution = AnalogEvolution(schedule=schedule, initial_state=initial_state)
+
+    assert schedule.get_parameter_bounds()["coeff"] == (0.0, 3.0)
+
+    evolution.set_parameter_bounds({"coeff": (0.0, 5.0)})
+
+    assert schedule.get_parameter_bounds()["coeff"] == (0.0, 5.0)
