@@ -227,105 +227,134 @@ class OpenQasmParser:
 
         # With two int arguments
         if len(args_evalled) >= 2 and isinstance(args_evalled[0], int) and isinstance(args_evalled[1], int):  # noqa: PLR2004
-            if func_name == "rotl":
-                return ((args_evalled[0] << args_evalled[1]) | (args_evalled[0] >> (32 - args_evalled[1]))) % (2**32)
-            if func_name == "rotr":
-                return ((args_evalled[0] >> args_evalled[1]) | (args_evalled[0] << (32 - args_evalled[1]))) % (2**32)
-            if func_name == "mod":
-                return args_evalled[0] % args_evalled[1]
+            match func_name:
+                case "rotl":
+                    return ((args_evalled[0] << args_evalled[1]) | (args_evalled[0] >> (32 - args_evalled[1]))) % (
+                        2**32
+                    )
+                case "rotr":
+                    return ((args_evalled[0] >> args_evalled[1]) | (args_evalled[0] << (32 - args_evalled[1]))) % (
+                        2**32
+                    )
+                case "mod":
+                    return args_evalled[0] % args_evalled[1]
 
         # One arg, at most a float
         if len(args_evalled) >= 1 and isinstance(args_evalled[0], (int, float)):
-            if func_name == "sin":
-                return math.sin(args_evalled[0])
-            if func_name == "cos":
-                return math.cos(args_evalled[0])
-            if func_name == "tan":
-                return math.tan(args_evalled[0])
-            if func_name == "arcsin":
-                return math.asin(args_evalled[0])
-            if func_name == "arccos":
-                return math.acos(args_evalled[0])
-            if func_name == "arctan":
-                return math.atan(args_evalled[0])
-            if func_name == "floor":
-                return math.floor(args_evalled[0])
-            if func_name == "ceiling":
-                return math.ceil(args_evalled[0])
+            match func_name:
+                case "sin":
+                    return math.sin(args_evalled[0])
+                case "cos":
+                    return math.cos(args_evalled[0])
+                case "tan":
+                    return math.tan(args_evalled[0])
+                case "arcsin":
+                    return math.asin(args_evalled[0])
+                case "arccos":
+                    return math.acos(args_evalled[0])
+                case "arctan":
+                    return math.atan(args_evalled[0])
+                case "floor":
+                    return math.floor(args_evalled[0])
+                case "ceiling":
+                    return math.ceil(args_evalled[0])
+                case "sqrt":
+                    return math.sqrt(args_evalled[0])
+                case "exp":
+                    return math.exp(args_evalled[0])
 
         # One arg, at most a complex
         if len(args_evalled) >= 1 and isinstance(args_evalled[0], (int, float, complex)):
-            if func_name == "real":
-                return float(args_evalled[0].real)
-            if func_name == "imag":
-                return float(args_evalled[0].imag)
-            if func_name == "exp":
-                return math.exp(args_evalled[0])
-            if func_name == "sqrt":
-                return math.sqrt(args_evalled[0])
-            if func_name == "log":
-                return math.log(args_evalled[0])
+            match func_name:
+                case "real":
+                    return float(args_evalled[0].real)
+                case "imag":
+                    return float(args_evalled[0].imag)
+                case "log":
+                    return math.log(args_evalled[0])
 
         return None
+
+    @staticmethod
+    def _try_generic_operators(
+        lhs: complex, rhs: complex, op: BinaryOperator
+    ) -> list | str | int | float | complex | bool | None:
+        if op == BinaryOperator["+"]:
+            return lhs + rhs
+        if op == BinaryOperator["-"]:
+            return lhs - rhs
+        if op == BinaryOperator["/"]:
+            return lhs / rhs
+        if op == BinaryOperator["*"]:
+            return lhs * rhs
+        if op == BinaryOperator["=="]:
+            return lhs == rhs
+        if op == BinaryOperator["!="]:
+            return lhs != rhs
+        if op == BinaryOperator["&&"]:
+            return lhs and rhs
+        if op == BinaryOperator["||"]:
+            return lhs or rhs
+        if op == BinaryOperator["**"]:
+            return lhs**rhs
+        return None
+
+    @staticmethod
+    def _try_non_complex_operators(
+        lhs: float, rhs: float, op: BinaryOperator
+    ) -> list | str | int | float | complex | bool | None:
+        if op == BinaryOperator[">"]:
+            return lhs > rhs
+        if op == BinaryOperator[">="]:
+            return lhs >= rhs
+        if op == BinaryOperator["<"]:
+            return lhs < rhs
+        if op == BinaryOperator["<="]:
+            return lhs <= rhs
+        return None
+
+    @staticmethod
+    def _try_int_operators(lhs: int, rhs: int, op: BinaryOperator) -> list | str | int | float | complex | bool | None:
+        if op == BinaryOperator["<<"]:
+            return lhs << rhs
+        if op == BinaryOperator[">>"]:
+            return lhs >> rhs
+        if op == BinaryOperator["&"]:
+            return lhs & rhs
+        if op == BinaryOperator["|"]:
+            return lhs | rhs
+        if op == BinaryOperator["%"]:
+            return lhs % rhs
+        return None  # pragma: no cover
+
+    def _handle_expression_lhs_rhs(
+        self, lhs: object, rhs: object, op: BinaryOperator
+    ) -> list | str | int | float | complex | bool:
+        if not (isinstance(lhs, (int, float, complex)) and isinstance(rhs, (int, float, complex))):
+            raise ValueError(f"Unsupported operands for operator {op}: {lhs} and {rhs}")  # pragma: no cover
+
+        res = self._try_generic_operators(lhs, rhs, op)
+        if res is not None:
+            return res
+
+        if isinstance(lhs, (int, float)) and isinstance(rhs, (int, float)):
+            res = self._try_non_complex_operators(lhs, rhs, op)
+            if res is not None:
+                return res
+
+        if isinstance(lhs, int) and isinstance(rhs, int):
+            res = self._try_int_operators(lhs, rhs, op)
+            if res is not None:
+                return res
+
+        raise ValueError(f"Unsupported operator: {op}")  # pragma: no cover
 
     def _handle_expression_with_op(self, expr: object) -> list | str | int | float | complex | bool:
         if hasattr(expr, "op"):
             if hasattr(expr, "lhs") and hasattr(expr, "rhs"):
                 lhs = self._evaluate_expression(expr.lhs)
                 rhs = self._evaluate_expression(expr.rhs)
-                if isinstance(lhs, (int, float, complex)) and isinstance(rhs, (int, float, complex)):
-                    if expr.op == BinaryOperator["+"]:
-                        return lhs + rhs
-                    if expr.op == BinaryOperator["-"]:
-                        return lhs - rhs
-                    if expr.op == BinaryOperator["/"]:
-                        return lhs / rhs
-                    if expr.op == BinaryOperator["*"]:
-                        return lhs * rhs
-                    if expr.op == BinaryOperator["<<"] and isinstance(lhs, int) and isinstance(rhs, int):
-                        return lhs << rhs
-                    if expr.op == BinaryOperator[">>"] and isinstance(lhs, int) and isinstance(rhs, int):
-                        return lhs >> rhs
-                    if expr.op == BinaryOperator["&"] and isinstance(lhs, int) and isinstance(rhs, int):
-                        return lhs & rhs
-                    if expr.op == BinaryOperator["|"] and isinstance(lhs, int) and isinstance(rhs, int):
-                        return lhs | rhs
-                    if expr.op == BinaryOperator["=="]:
-                        return lhs == rhs
-                    if expr.op == BinaryOperator["!="]:
-                        return lhs != rhs
-                    if (
-                        expr.op == BinaryOperator[">"]
-                        and isinstance(lhs, (int, float))
-                        and isinstance(rhs, (int, float))
-                    ):
-                        return lhs > rhs
-                    if (
-                        expr.op == BinaryOperator[">="]
-                        and isinstance(lhs, (int, float))
-                        and isinstance(rhs, (int, float))
-                    ):
-                        return lhs >= rhs
-                    if (
-                        expr.op == BinaryOperator["<"]
-                        and isinstance(lhs, (int, float))
-                        and isinstance(rhs, (int, float))
-                    ):
-                        return lhs < rhs
-                    if (
-                        expr.op == BinaryOperator["<="]
-                        and isinstance(lhs, (int, float))
-                        and isinstance(rhs, (int, float))
-                    ):
-                        return lhs <= rhs
-                    if expr.op == BinaryOperator["&&"]:
-                        return lhs and rhs
-                    if expr.op == BinaryOperator["||"]:
-                        return lhs or rhs
-                    if expr.op == BinaryOperator["%"] and isinstance(lhs, int) and isinstance(rhs, int):
-                        return lhs % rhs
-                    if expr.op == BinaryOperator["**"]:
-                        return lhs**rhs
+                return self._handle_expression_lhs_rhs(lhs, rhs, expr.op)
             if hasattr(expr, "expression"):
                 expr_val = self._evaluate_expression(expr.expression)
                 if isinstance(expr_val, (bool, int, float, complex)):
@@ -350,42 +379,35 @@ class OpenQasmParser:
             return bool(value_to_cast)
         raise ValueError(f"Unsupported cast type: {expr.type}")  # pragma: no cover
 
-    def _evaluate_expression(self, expr: object) -> list | str | int | float | complex | bool:
+    def _handle_expression_function_call(self, expr: FunctionCall) -> list | str | int | float | complex | bool:
+        func_name = expr.name.name
+        args_evalled = [self._evaluate_expression(arg) for arg in expr.arguments]
 
-        # If it's a list, evaluate each element
-        if isinstance(expr, list):
-            return [self._evaluate_expression(element) for element in expr]
+        # Standard functions
+        standard_func_result = self._handle_standard_functions(func_name, args_evalled)
+        if standard_func_result is not None:
+            return standard_func_result
 
-        # If it's a function call
-        if isinstance(expr, FunctionCall):
-            func_name = expr.name.name
-            args_evalled = [self._evaluate_expression(arg) for arg in expr.arguments]
+        # Custom functions
+        if func_name in self.subroutine_definitions:
+            func_def = self.subroutine_definitions[func_name]
+            replacement_map = {}
+            for actual_arg in expr.arguments:
+                arg_name_in_body = func_def["args"][expr.arguments.index(actual_arg)]
+                if isinstance(actual_arg, (IndexExpression)):
+                    replacement_map[arg_name_in_body] = actual_arg
+                else:
+                    replacement_map[arg_name_in_body] = self._evaluate_expression(actual_arg)
+            for func_statement in func_def["body"]:
+                res = self._process_statement(self._recursive_replace(func_statement, replacement_map))
+                if res:
+                    return self._parse_return_val(res)
+            return 0
 
-            # Standard functions
-            standard_func_result = self._handle_standard_functions(func_name, args_evalled)
-            if standard_func_result is not None:
-                return standard_func_result
+        raise ValueError(f"Unsupported function: {func_name}")
 
-            # Custom functions
-            if func_name in self.subroutine_definitions:
-                func_def = self.subroutine_definitions[func_name]
-                replacement_map = {}
-                for actual_arg in expr.arguments:
-                    arg_name_in_body = func_def["args"][expr.arguments.index(actual_arg)]
-                    if isinstance(actual_arg, (IndexExpression)):
-                        replacement_map[arg_name_in_body] = actual_arg
-                    else:
-                        replacement_map[arg_name_in_body] = self._evaluate_expression(actual_arg)
-                for func_statement in func_def["body"]:
-                    res = self._process_statement(self._recursive_replace(func_statement, replacement_map))
-                    if res:
-                        return self._parse_return_val(res)
-                return 0
-
-            raise ValueError(f"Unsupported function: {func_name}")
-
-        # Scale by the unit if we have it
-        value_with_unit = None
+    @staticmethod
+    def _get_value_with_unit(expr: object) -> list | str | int | float | complex | bool | None:
         if hasattr(expr, "value") and expr.value is not None and isinstance(expr.value, (int, float, complex)):
             value_with_unit = expr.value
             if hasattr(expr, "unit") and expr.unit is not None:
@@ -397,9 +419,37 @@ class OpenQasmParser:
                     value_with_unit *= 1e-3
                 elif expr.unit != TimeUnit["s"]:
                     raise ValueError(f"Unsupported time unit: {expr.unit}")  # pragma: no cover
+            return value_with_unit
+        return None
+
+    def _handle_expression_index_expression(self, expr: IndexExpression) -> list | str | int | float | complex | bool:
+        if not isinstance(expr.index, list) or not hasattr(expr.collection, "name") or expr.collection.name is None:
+            raise ValueError(f"Invalid index expression: {expr}")  # pragma: no cover
+        var_name = expr.collection.name
+        var_indices = [self._evaluate_expression(index) for index in expr.index]
+        if var_name in self.var_list and "value" in self.var_list[var_name]:
+            value = self.var_list[var_name]["value"]
+            for index in var_indices:
+                if isinstance(index, int) and isinstance(value, list) and index < len(value):
+                    value = value[index]
+            return value
+        raise ValueError(f"Undefined variable for index expression: {var_name}")  # pragma: no cover
+
+    def _evaluate_expression(self, expr: object) -> list | str | int | float | complex | bool:
+
+        # If it's a list, evaluate each element
+        if isinstance(expr, list):
+            return [self._evaluate_expression(element) for element in expr]
+
+        # If it's a function call
+        if isinstance(expr, FunctionCall):
+            return self._handle_expression_function_call(expr)
+
+        # Scale by the unit if we have it
+        value_with_unit = self._get_value_with_unit(expr)
 
         # If it's an imaginary literal
-        if isinstance(expr, ImaginaryLiteral) and value_with_unit is not None:
+        if isinstance(expr, ImaginaryLiteral) and isinstance(value_with_unit, (int, float, complex)):
             return 1j * value_with_unit
 
         # If we have a value, perfect
@@ -437,21 +487,8 @@ class OpenQasmParser:
                 return list(range(start, end, step))
 
         # If it's an index expression, evaluate the base and the indices and return the indexed value
-        if (
-            isinstance(expr, IndexExpression)
-            and hasattr(expr, "index")
-            and isinstance(expr.index, list)
-            and hasattr(expr, "collection")
-            and hasattr(expr.collection, "name")
-        ):
-            var_name = expr.collection.name
-            var_indices = [self._evaluate_expression(index) for index in expr.index]
-            if var_name in self.var_list and "value" in self.var_list[var_name]:
-                value = self.var_list[var_name]["value"]
-                for index in var_indices:
-                    if isinstance(index, int) and isinstance(value, list) and index < len(value):
-                        value = value[index]
-                return value
+        if isinstance(expr, IndexExpression):
+            return self._handle_expression_index_expression(expr)
 
         raise ValueError(f"Unsupported expression: {expr}")  # pragma: no cover
 
@@ -586,7 +623,7 @@ class OpenQasmParser:
 
         # If we have a variable name object, get the name string
         if isinstance(var_name, Identifier):
-            var_name = var_name.name
+            var_name = var_name.name  # pragma: no cover
 
         # Make sure the type is correct
         if "type" in self.var_list[var_name] and self.var_list[var_name]["type"] is not None:
@@ -610,281 +647,366 @@ class OpenQasmParser:
                         (self.var_list[var_name]["value"] + 2 ** (var_size - 1)) % (2**var_size)
                     ) - 2 ** (var_size - 1)
 
+    def _handle_statement_qubit_declaration(self, statement: QubitDeclaration) -> None:
+        reg_name = statement.qubit.name
+        reg_size = 1
+        if hasattr(statement, "size") and statement.size is not None:
+            reg_size = self._evaluate_expression(statement.size)
+        if isinstance(reg_size, int):
+            self.reg_name_to_start_end[reg_name] = (self.nqubits, self.nqubits + reg_size - 1)
+            self.var_list[reg_name] = {"size": reg_size, "value": 0, "type": "qubit"}
+            self.nqubits = max(self.nqubits, self.nqubits + reg_size)
+
+    def _handle_statement_classical_declaration(self, statement: ClassicalDeclaration | ConstantDeclaration) -> None:
+        var_name = statement.identifier.name
+        var_size = 0
+        var_value = 0
+        var_type = "bit"
+        if hasattr(statement, "init_expression") and statement.init_expression is not None:
+            var_value = self._evaluate_expression(statement.init_expression)
+        if hasattr(statement, "type") and statement.type is not None:
+            if isinstance(statement.type, UintType):
+                var_type = "uint"
+                var_size = 32
+            elif isinstance(statement.type, BitType):
+                var_type = "bit"
+                var_size = 1
+            elif isinstance(statement.type, BoolType):
+                var_type = "bool"
+                var_size = 1
+            elif isinstance(statement.type, IntType):
+                var_type = "int"
+                var_size = 32
+            elif isinstance(statement.type, FloatType):
+                var_type = "float"
+                var_size = 64
+            elif isinstance(statement.type, AngleType):
+                var_type = "angle"
+                var_size = 64
+            elif isinstance(statement.type, DurationType):
+                var_type = "duration"
+                var_size = 32
+            elif isinstance(statement.type, StretchType):
+                var_type = "stretch"
+                var_size = 32
+            elif isinstance(statement.type, ComplexType):
+                var_type = "complex"
+                var_size = 128
+            elif isinstance(statement.type, ArrayType):
+                var_type = "array"
+            else:
+                raise ValueError(f"Unsupported variable type: {statement.type}")  # pragma: no cover
+            if hasattr(statement.type, "size") and statement.type.size is not None:
+                var_size = self._evaluate_expression(statement.type.size)
+        self.var_list[var_name] = {"size": var_size, "value": var_value, "type": var_type}
+        self._cast_to_type(var_name)
+
+    def _handle_statement_classical_assignment(self, statement: ClassicalAssignment) -> None:
+        var_name = statement.lvalue.name
+        new_value = self._evaluate_expression(statement.rvalue)
+
+        # Depending on the assignment type
+        if statement.op == AssignmentOperator["="]:
+            self.var_list[var_name]["value"] = new_value
+        elif statement.op == AssignmentOperator["+="] and not isinstance(new_value, (str, list)):
+            self.var_list[var_name]["value"] += new_value
+        elif statement.op == AssignmentOperator["-="] and not isinstance(new_value, (str, list)):
+            self.var_list[var_name]["value"] -= new_value
+
+        # Cast to the variable type if needed
+        self._cast_to_type(var_name)
+
+    def _handle_modifier(self, modifier: object, modifiers: list[str]) -> None:
+        modifier_name = ""
+        if not hasattr(modifier, "modifier"):
+            return  # pragma: no cover
+        if modifier.modifier == GateModifierName["ctrl"]:
+            modifier_name = "ctrl"
+        elif modifier.modifier == GateModifierName["negctrl"]:
+            modifier_name = "negctrl"
+        elif modifier.modifier == GateModifierName["inv"]:
+            modifier_name = "inv"
+        elif modifier.modifier == GateModifierName["pow"]:
+            modifier_name = "pow"
+        else:
+            raise ValueError(f"Unsupported gate modifier: {modifier}")  # pragma: no cover
+
+        # Repeat if needed
+        repeats_needed = 1
+        if hasattr(modifier, "argument") and modifier.argument is not None:
+            repeats_needed = self._evaluate_expression(modifier.argument)
+        if modifier_name == "pow":
+            if (
+                repeats_needed == 0
+                or not isinstance(repeats_needed, int)
+                or not hasattr(modifier, "argument")
+                or modifier.argument is None
+            ):
+                raise ValueError(f"Invalid value for pow modifier: {modifier}")
+            if repeats_needed < 0:
+                repeats_needed = -repeats_needed - 1
+                modifiers.append("inv")
+            else:
+                repeats_needed -= 1
+
+        if isinstance(repeats_needed, int):
+            for _ in range(repeats_needed):
+                modifiers.append(modifier_name)
+
+    def _get_modifiers_for_statement(self, statement: QuantumGate) -> tuple[list[str], int]:
+
+        modifiers = []
+        num_controls = 0
+
+        # Return early if we don't have any modifiers
+        if not (hasattr(statement, "modifiers") and isinstance(statement.modifiers, list)):
+            return modifiers, num_controls  # pragma: no cover
+
+        # For each modifier, get the name
+        for modifier in statement.modifiers:
+            self._handle_modifier(modifier, modifiers)
+
+        # Count the controls
+        for modifier in modifiers:
+            if modifier in {"ctrl", "negctrl"}:
+                num_controls += 1
+
+        return modifiers, num_controls
+
+    def _handle_statement_quantum_gate(
+        self, statement: QuantumGate, extra_qubits: list[int] = [], extra_modifiers: list[str] = []
+    ) -> None:
+
+        # Get info about the gates
+        gate_name = statement.name.name
+        qubits = extra_qubits.copy()
+        for qubit in statement.qubits:
+            qubits.extend(self._evaluate_register(qubit))
+        arguments = []
+        for argument in statement.arguments:
+            arguments.append(self._evaluate_expression(argument))
+        modifiers = extra_modifiers.copy()
+        new_modifiers, num_controls = self._get_modifiers_for_statement(statement)
+        modifiers.extend(new_modifiers)
+
+        # If it's a custom
+        if gate_name in self.custom_gate_definitions:
+            gate_def = self.custom_gate_definitions[gate_name]
+            replacement_map = {}
+            for actual_arg in arguments:
+                arg_name_in_body = gate_def["args"][arguments.index(actual_arg)]
+                replacement_map[arg_name_in_body] = actual_arg
+            reg_names = [qubit.name for qubit in statement.qubits]
+            for reg_name in reg_names[num_controls : num_controls + len(gate_def["qubits"])]:
+                reg_name_in_body = gate_def["qubits"][reg_names.index(reg_name) - num_controls]
+                replacement_map[reg_name_in_body] = reg_name
+            control_qubits = qubits[:num_controls]
+            for gate_statement in gate_def["body"]:
+                self._process_statement(
+                    self._recursive_replace(gate_statement, replacement_map),
+                    extra_modifiers=modifiers,
+                    extra_qubits=control_qubits,
+                )
+
+        # Otherwise process normally
+        else:
+            self.gates_to_add.extend(self._to_qilisdk_gate(gate_name, qubits, arguments, modifiers))
+
+    def _handle_statement_branching_statement(
+        self, statement: BranchingStatement, extra_modifiers: list[str] = [], extra_qubits: list[int] = []
+    ) -> complex | bool | int | float | str | None:
+
+        # Check the condition
+        condition_value = self._evaluate_expression(statement.condition)
+
+        # If the condition is true, process the true body
+        if condition_value:
+            for branched_statement in statement.if_block:
+                res = self._process_statement(
+                    branched_statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits
+                )
+                if res:
+                    return self._parse_return_val(res)
+        else:
+            for branched_statement in statement.else_block:
+                res = self._process_statement(
+                    branched_statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits
+                )
+                if res:
+                    return self._parse_return_val(res)
+
+        return ""
+
+    def _handle_statement_switch_statement(
+        self, statement: SwitchStatement, extra_modifiers: list[str] = [], extra_qubits: list[int] = []
+    ) -> complex | bool | int | float | str | None:
+
+        # Get the value of the target expression
+        target_val = self._evaluate_expression(statement.target)
+        found_case = False
+
+        # Check each case
+        for case in statement.cases:
+            case_val = self._evaluate_expression(case[0][0])
+            if target_val == case_val:
+                found_case = True
+                for case_statement in case[1].statements:
+                    res = self._process_statement(
+                        case_statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits
+                    )
+                    if res:
+                        return self._parse_return_val(res)
+                break
+
+        # If not, then use the default case
+        if not found_case and hasattr(statement, "default") and statement.default is not None:
+            for default_statement in statement.default.statements:
+                res = self._process_statement(
+                    default_statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits
+                )
+                if res:
+                    return self._parse_return_val(res)
+
+        return ""
+
+    def _handle_statement_for_in_loop(
+        self, statement: ForInLoop, extra_modifiers: list[str] = [], extra_qubits: list[int] = []
+    ) -> complex | bool | int | float | str | None:
+
+        # The new variable to declare for the loop variable
+        loop_var_name = statement.identifier.name
+        loop_var_type = statement.type
+        loop_var_size = 1
+        if hasattr(statement.type, "size") and statement.type.size is not None:
+            loop_var_size = self._evaluate_expression(statement.type.size)
+        loop_range = []
+
+        # If it's a range-based for loop
+        if isinstance(statement.set_declaration, RangeDefinition):
+            loop_var_starting_value = self._evaluate_expression(statement.set_declaration.start)
+            loop_var_step = 1
+            if hasattr(statement.set_declaration, "step") and statement.set_declaration.step is not None:
+                loop_var_step = self._evaluate_expression(statement.set_declaration.step)
+            loop_var_final_value = self._evaluate_expression(statement.set_declaration.end)
+            if (
+                not isinstance(loop_var_step, int)
+                or not isinstance(loop_var_starting_value, int)
+                or not isinstance(loop_var_final_value, int)
+            ):
+                raise ValueError(f"Invalid loop setup: {statement.set_declaration}")
+            loop_range = range(loop_var_starting_value, loop_var_final_value, loop_var_step)
+
+        # If it's looping over an array
+        elif isinstance(statement.set_declaration, Identifier):
+            array_var_name = statement.set_declaration.name
+            loop_range = self.var_list[array_var_name]["value"]
+
+        # If it's a set
+        elif isinstance(statement.set_declaration, DiscreteSet):
+            values = statement.set_declaration.values
+            loop_range = self._evaluate_expression(values)
+
+        else:
+            raise ValueError(f"Unsupported for loop declaration: {statement.set_declaration}")  # pragma: no cover
+
+        # Make the variable
+        self.var_list[loop_var_name] = {"size": loop_var_size, "value": 0, "type": loop_var_type}
+
+        # Loop through the values and process the body with the loop variable set to the current value
+        res = None
+        if not isinstance(loop_range, (list, range)):
+            raise ValueError(f"Loop statement is not iterable: {statement}")
+        for i in loop_range:
+            self.var_list[loop_var_name]["value"] = i
+            for loop_statement in statement.block:
+                res = self._process_statement(
+                    loop_statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits
+                )
+                if res:
+                    break
+            if res == "break":
+                break
+            if res == "continue":
+                continue
+            if res:
+                return self._parse_return_val(res)
+
+        # Remove the loop variable from the var list after the loop is done
+        del self.var_list[loop_var_name]
+
+        return ""
+
+    def _handle_statement_while_loop(
+        self, statement: WhileLoop, extra_modifiers: list[str] = [], extra_qubits: list[int] = []
+    ) -> complex | bool | int | float | str | None:
+        res = None
+        while self._evaluate_expression(statement.while_condition):
+            for loop_statement in statement.block:
+                res = self._process_statement(
+                    loop_statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits
+                )
+                if res:
+                    break
+            if res == "break":
+                break
+            if res == "continue":
+                continue
+            if res:
+                return self._parse_return_val(res)
+
+        return ""
+
+    def _handle_statement_quantum_measurement(self, statement: QuantumMeasurementStatement) -> None:
+        qubit_statement = statement.measure.qubit
+        qubits_to_measure = self._evaluate_register(qubit_statement)
+        for qubit in qubits_to_measure:
+            self.gates_to_add.append(M(qubit))
+        if hasattr(statement, "target") and statement.target is not None:
+            raise ValueError("Measurement statements with targets are not currently supported")
+
     def _process_statement(
         self, statement: object, extra_modifiers: list[str] = [], extra_qubits: list[int] = []
     ) -> str | int | float | complex | bool | None:
 
         # Initializing a qubit
         if isinstance(statement, QubitDeclaration):
-            reg_name = statement.qubit.name
-            reg_size = 1
-            if hasattr(statement, "size") and statement.size is not None:
-                reg_size = self._evaluate_expression(statement.size)
-            if isinstance(reg_size, int):
-                self.reg_name_to_start_end[reg_name] = (self.nqubits, self.nqubits + reg_size - 1)
-                self.var_list[reg_name] = {"size": reg_size, "value": 0, "type": "qubit"}
-                self.nqubits = max(self.nqubits, self.nqubits + reg_size)
+            self._handle_statement_qubit_declaration(statement)
 
         # Initializing a classical variable
         elif isinstance(statement, (ClassicalDeclaration, ConstantDeclaration)):
-            var_name = statement.identifier.name
-            var_size = 0
-            var_value = 0
-            var_type = "bit"
-            if hasattr(statement, "init_expression") and statement.init_expression is not None:
-                var_value = self._evaluate_expression(statement.init_expression)
-            if hasattr(statement, "type") and statement.type is not None:
-                if isinstance(statement.type, UintType):
-                    var_type = "uint"
-                    var_size = 32
-                elif isinstance(statement.type, BitType):
-                    var_type = "bit"
-                    var_size = 1
-                elif isinstance(statement.type, BoolType):
-                    var_type = "bool"
-                    var_size = 1
-                elif isinstance(statement.type, IntType):
-                    var_type = "int"
-                    var_size = 32
-                elif isinstance(statement.type, FloatType):
-                    var_type = "float"
-                    var_size = 64
-                elif isinstance(statement.type, AngleType):
-                    var_type = "angle"
-                    var_size = 64
-                elif isinstance(statement.type, DurationType):
-                    var_type = "duration"
-                    var_size = 32
-                elif isinstance(statement.type, StretchType):
-                    var_type = "stretch"
-                    var_size = 32
-                elif isinstance(statement.type, ComplexType):
-                    var_type = "complex"
-                    var_size = 128
-                elif isinstance(statement.type, ArrayType):
-                    var_type = "array"
-                else:
-                    raise ValueError(f"Unsupported variable type: {statement.type}")  # pragma: no cover
-                if hasattr(statement.type, "size") and statement.type.size is not None:
-                    var_size = self._evaluate_expression(statement.type.size)
-            self.var_list[var_name] = {"size": var_size, "value": var_value, "type": var_type}
-            self._cast_to_type(var_name)
+            self._handle_statement_classical_declaration(statement)
 
         # Classical assignment
         elif isinstance(statement, ClassicalAssignment):
-            var_name = statement.lvalue.name
-            new_value = self._evaluate_expression(statement.rvalue)
-
-            # Depending on the assignment type
-            if statement.op == AssignmentOperator["="]:
-                self.var_list[var_name]["value"] = new_value
-            elif statement.op == AssignmentOperator["+="] and not isinstance(new_value, (str, list)):
-                self.var_list[var_name]["value"] += new_value
-            elif statement.op == AssignmentOperator["-="] and not isinstance(new_value, (str, list)):
-                self.var_list[var_name]["value"] -= new_value
-
-            # Cast to the variable type if needed
-            self._cast_to_type(var_name)
+            self._handle_statement_classical_assignment(statement)
 
         # Quantum gates
         elif isinstance(statement, QuantumGate):
-            # Get info about the gates
-            gate_name = statement.name.name
-            qubits = extra_qubits.copy()
-            for qubit in statement.qubits:
-                qubits.extend(self._evaluate_register(qubit))
-            arguments = []
-            for argument in statement.arguments:
-                arguments.append(self._evaluate_expression(argument))
-            modifiers = extra_modifiers.copy()
-            num_controls = 0
-            if hasattr(statement, "modifiers") and statement.modifiers is not None:
-                for modifier in statement.modifiers:
-                    # Get the modifier name
-                    modifier_name = ""
-                    if hasattr(modifier, "modifier") and modifier.modifier == GateModifierName["ctrl"]:
-                        modifier_name = "ctrl"
-                        num_controls += 1
-                    elif hasattr(modifier, "modifier") and modifier.modifier == GateModifierName["negctrl"]:
-                        modifier_name = "negctrl"
-                        num_controls += 1
-                    elif hasattr(modifier, "modifier") and modifier.modifier == GateModifierName["inv"]:
-                        modifier_name = "inv"
-                    elif hasattr(modifier, "modifier") and modifier.modifier == GateModifierName["pow"]:
-                        modifier_name = "pow"
-                    else:
-                        raise ValueError(f"Unsupported gate modifier: {modifier}")  # pragma: no cover
-
-                    # Repeat if needed
-                    repeats_needed = 1
-                    if hasattr(modifier, "argument") and modifier.argument is not None:
-                        repeats_needed = self._evaluate_expression(modifier.argument)
-                    if modifier_name == "pow":
-                        if (
-                            repeats_needed == 0
-                            or not isinstance(repeats_needed, int)
-                            or not hasattr(modifier, "argument")
-                            or modifier.argument is None
-                        ):
-                            raise ValueError(f"Invalid value for pow modifier: {modifier.argument}")
-                        if repeats_needed < 0:
-                            repeats_needed = -repeats_needed - 1
-                            modifiers.append("inv")
-                        else:
-                            repeats_needed -= 1
-
-                    if not isinstance(repeats_needed, int):
-                        raise ValueError(f"Invalid repeat count for gate modifier: {modifier.argument}")
-
-                    for _ in range(repeats_needed):
-                        modifiers.append(modifier_name)
-
-            # If it's a custom
-            if gate_name in self.custom_gate_definitions:
-                gate_def = self.custom_gate_definitions[gate_name]
-                replacement_map = {}
-                for actual_arg in arguments:
-                    arg_name_in_body = gate_def["args"][arguments.index(actual_arg)]
-                    replacement_map[arg_name_in_body] = actual_arg
-                reg_names = [qubit.name for qubit in statement.qubits]
-                for reg_name in reg_names[num_controls : num_controls + len(gate_def["qubits"])]:
-                    reg_name_in_body = gate_def["qubits"][reg_names.index(reg_name) - num_controls]
-                    replacement_map[reg_name_in_body] = reg_name
-                control_qubits = qubits[:num_controls]
-                for gate_statement in gate_def["body"]:
-                    self._process_statement(
-                        self._recursive_replace(gate_statement, replacement_map),
-                        extra_modifiers=modifiers,
-                        extra_qubits=control_qubits,
-                    )
-
-            # Otherwise process normally
-            else:
-                self.gates_to_add.extend(self._to_qilisdk_gate(gate_name, qubits, arguments, modifiers))
+            self._handle_statement_quantum_gate(statement, extra_qubits=extra_qubits, extra_modifiers=extra_modifiers)
 
         # Branching statements
         elif isinstance(statement, BranchingStatement):
-            # Check the condition
-            condition_value = self._evaluate_expression(statement.condition)
-
-            # If the condition is true, process the true body
-            if condition_value:
-                for branched_statement in statement.if_block:
-                    res = self._process_statement(
-                        branched_statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits
-                    )
-                    if res:
-                        return self._parse_return_val(res)
-            else:
-                for branched_statement in statement.else_block:
-                    res = self._process_statement(
-                        branched_statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits
-                    )
-                    if res:
-                        return self._parse_return_val(res)
+            return self._handle_statement_branching_statement(
+                statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits
+            )
 
         # Switch statements
         elif isinstance(statement, SwitchStatement):
-            target_val = self._evaluate_expression(statement.target)
-            found_case = False
-            for case in statement.cases:
-                case_val = self._evaluate_expression(case[0][0])
-                if target_val == case_val:
-                    found_case = True
-                    for case_statement in case[1].statements:
-                        res = self._process_statement(
-                            case_statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits
-                        )
-                        if res:
-                            return self._parse_return_val(res)
-                    break
-            if not found_case and hasattr(statement, "default") and statement.default is not None:
-                for default_statement in statement.default.statements:
-                    res = self._process_statement(
-                        default_statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits
-                    )
-                    if res:
-                        return self._parse_return_val(res)
+            return self._handle_statement_switch_statement(
+                statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits
+            )
 
         # For Loops
         elif isinstance(statement, ForInLoop):
-            # The new variable to declare for the loop variable
-            loop_var_name = statement.identifier.name
-            loop_var_type = statement.type
-            loop_var_size = 1
-            if hasattr(statement.type, "size") and statement.type.size is not None:
-                loop_var_size = self._evaluate_expression(statement.type.size)
-            loop_range = []
-
-            # If it's a range-based for loop
-            if isinstance(statement.set_declaration, RangeDefinition):
-                loop_var_starting_value = self._evaluate_expression(statement.set_declaration.start)
-                loop_var_step = 1
-                if hasattr(statement.set_declaration, "step") and statement.set_declaration.step is not None:
-                    loop_var_step = self._evaluate_expression(statement.set_declaration.step)
-                loop_var_final_value = self._evaluate_expression(statement.set_declaration.end)
-                if (
-                    not isinstance(loop_var_step, int)
-                    or not isinstance(loop_var_starting_value, int)
-                    or not isinstance(loop_var_final_value, int)
-                ):
-                    raise ValueError(f"Invalid loop setup: {statement.set_declaration}")
-                loop_range = range(loop_var_starting_value, loop_var_final_value, loop_var_step)
-
-            # If it's looping over an array
-            elif isinstance(statement.set_declaration, Identifier):
-                array_var_name = statement.set_declaration.name
-                loop_range = self.var_list[array_var_name]["value"]
-
-            # If it's a set
-            elif isinstance(statement.set_declaration, DiscreteSet):
-                values = statement.set_declaration.values
-                loop_range = self._evaluate_expression(values)
-
-            else:
-                raise ValueError(f"Unsupported for loop declaration: {statement.set_declaration}")
-
-            # Make the variable
-            self.var_list[loop_var_name] = {"size": loop_var_size, "value": 0, "type": loop_var_type}
-
-            # Loop through the values and process the body with the loop variable set to the current value
-            res = None
-            if not isinstance(loop_range, (list, range)):
-                raise ValueError(f"Loop statement is not iterable: {statement}")
-            for i in loop_range:
-                self.var_list[loop_var_name]["value"] = i
-                for loop_statement in statement.block:
-                    res = self._process_statement(
-                        loop_statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits
-                    )
-                    if res:
-                        break
-                if res == "break":
-                    break
-                if res == "continue":
-                    continue
-                if res:
-                    return self._parse_return_val(res)
-
-            # Remove the loop variable from the var list after the loop is done
-            del self.var_list[loop_var_name]
+            return self._handle_statement_for_in_loop(
+                statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits
+            )
 
         # While Loops
         elif isinstance(statement, WhileLoop):
-            res = None
-            while self._evaluate_expression(statement.while_condition):
-                for loop_statement in statement.block:
-                    res = self._process_statement(
-                        loop_statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits
-                    )
-                    if res:
-                        break
-                if res == "break":
-                    break
-                if res == "continue":
-                    continue
-                if res:
-                    return self._parse_return_val(res)
+            return self._handle_statement_while_loop(
+                statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits
+            )
 
         # Break statement
         elif isinstance(statement, BreakStatement):
@@ -920,12 +1042,7 @@ class OpenQasmParser:
 
         # Measurements
         elif isinstance(statement, QuantumMeasurementStatement):
-            qubit_statement = statement.measure.qubit
-            qubits_to_measure = self._evaluate_register(qubit_statement)
-            for qubit in qubits_to_measure:
-                self.gates_to_add.append(M(qubit))
-            if hasattr(statement, "target") and statement.target is not None:
-                raise ValueError("Measurement statements with targets are not currently supported")
+            self._handle_statement_quantum_measurement(statement)
 
         # If it's an expression, evaluate it just in case there's a subroutine call inside
         elif isinstance(statement, ExpressionStatement):

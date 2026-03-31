@@ -1868,3 +1868,42 @@ def test_for_over_discrete_set():
     expected.add(X(0))
     expected.add(X(0))
     assert c == expected
+
+
+def test_init_with_other_variable():
+    c = from_qasm3("""
+            OPENQASM 3.0;
+            include "stdgates.inc";
+            qubit[1] q;
+            int a = 1;
+            int b = a + 1;
+            rx(b) q[0];
+        """)
+    expected = Circuit(1)
+    expected.add(RX(0, theta=2.0))
+    assert c == expected
+
+
+def test_bad_loop_range():
+    with pytest.raises(ValueError, match="Invalid loop setup"):
+        from_qasm3("""
+            OPENQASM 3.0;
+            include "stdgates.inc";
+            qubit[1] q;
+            for int i in [5:1.0] {
+                x q[0];
+            }
+        """)
+
+
+def test_not_iterable_loop():
+    with pytest.raises(ValueError, match="not iterable"):
+        from_qasm3("""
+            OPENQASM 3.0;
+            include "stdgates.inc";
+            qubit[1] q;
+            int a = 3;
+            for int i in a {
+                x q[0];
+            }
+        """)
