@@ -137,14 +137,10 @@ class Interpolator(Parameterizable):
             ti = fixed_times[i]
             tj = fixed_times[i + 1]
             t0 = (
-                self._get_value(ti)
-                if not isinstance(ti, tuple)
-                else self._get_value(ti[1])  # ty:ignore[invalid-argument-type]
+                self._get_value(ti) if not isinstance(ti, tuple) else self._get_value(ti[1])  # ty:ignore[invalid-argument-type]
             )
             t1 = (
-                self._get_value(tj)
-                if not isinstance(tj, tuple)
-                else self._get_value(tj[0])  # ty:ignore[invalid-argument-type]
+                self._get_value(tj) if not isinstance(tj, tuple) else self._get_value(tj[0])  # ty:ignore[invalid-argument-type]
             )
             if abs(t0 - t1) < get_settings().atol:
                 raise ValueError(f"The time point {t0} is defined twice.")
@@ -464,9 +460,7 @@ class Interpolator(Parameterizable):
         Returns:
             float: Evaluated coefficient.
         """
-        time_step = (
-            time_step.item() if isinstance(time_step, np.generic) else self._get_value(time_step)
-        )  # ty:ignore[invalid-assignment]
+        time_step = time_step.item() if isinstance(time_step, np.generic) else self._get_value(time_step)  # ty:ignore[invalid-assignment]
         val = self.get_coefficient_expression(time_step=time_step)
 
         if self._max_time is not None:
@@ -489,9 +483,7 @@ class Interpolator(Parameterizable):
         Raises:
             ValueError: If the interpolation mode is unsupported or evaluation fails.
         """
-        time_step = (
-            time_step.item() if isinstance(time_step, np.generic) else self._get_value(time_step)
-        )  # ty:ignore[invalid-assignment]
+        time_step = time_step.item() if isinstance(time_step, np.generic) else self._get_value(time_step)  # ty:ignore[invalid-assignment]
 
         # generate the tlist
         self._tlist = self._generate_tlist()

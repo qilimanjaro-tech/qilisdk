@@ -102,8 +102,6 @@ def test_repr():
 
 
 def _isclose_cache(lhs: float, rhs: float) -> bool:
-    from qilisdk.settings import get_settings
-
     return bool(np.isclose(lhs, rhs, atol=get_settings().atol, rtol=get_settings().rtol))
 
 
