@@ -244,9 +244,19 @@ class FunctionalResult(Result):
         yield self._readout_results
 
     def __repr__(self) -> str:
-        out = "Functional Results: (\n"
+        LIMIT = 10
+        out = "- Functional Results: [\n\n"
         out += str(self._readout_results)
-        out += "\n)"
+        out += "]"
+        if self._intermediate_results:
+            out += "\n\n\n- Intermediate Results: [\n\n"
+            for i, res in enumerate(self._intermediate_results[:LIMIT]):
+                out += str(res)
+                if i < LIMIT - 1:
+                    out += "\n" + "-" * 20 + "\n"
+            if len(self._intermediate_results) > LIMIT:
+                out += "\n...\n\n"
+            out += "]"
         return out
 
     def __getitem__(self, index: int) -> ReadoutCompositeResults:

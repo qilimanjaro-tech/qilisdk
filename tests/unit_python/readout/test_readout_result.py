@@ -389,13 +389,13 @@ class TestFunctionalResult:
 
     def test_multiple_readout_types(self):
         sampling = SamplingReadoutResult.from_samples(readout=SamplingReadout(nshots=100), samples={"0": 100})
-        tomo = StateTomographyReadoutResult(readout=StateTomographyReadout(), state=ket(0))
+        tomography = StateTomographyReadoutResult(readout=StateTomographyReadout(), state=ket(0))
         expectation = ExpectationReadoutResult(
             readout=ExpectationReadout(observables=[pauli_z(0)]), expected_values=[1.0]
         )
         result = FunctionalResult(
             readout_results=ReadoutCompositeResults(
-                sampling=sampling, state_tomography=tomo, expectation_values=expectation
+                sampling=sampling, state_tomography=tomography, expectation_values=expectation
             )
         )
         assert result.has_samples()

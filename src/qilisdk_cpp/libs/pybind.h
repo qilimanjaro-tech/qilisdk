@@ -37,10 +37,12 @@ extern py::dtype dtype;
 extern py::object py_complex;
 
 // Internal types
-extern py::object Sampling;
-extern py::object TimeEvolution;
-extern py::object SamplingResult;
-extern py::object TimeEvolutionResult;
+extern py::object Circuit;
+extern py::object Schedule;
+extern py::object DigitalPropagation;
+extern py::object AnalogEvolution;
+extern py::object QuantumReservoir;
+extern py::object FunctionalResult;
 extern py::object QTensor;
 extern py::object Hamiltonian;
 extern py::object PauliOperator;
@@ -51,6 +53,15 @@ extern py::object SupportsTimeDerivedKraus;
 extern py::object SupportsTimeDerivedLindblad;
 extern py::object ReadoutAssignment;
 extern py::object NoiseConfig;
+extern py::object ExpectationReadout;
+extern py::object ReadoutMethod;
+extern py::object SamplingReadout;
+extern py::object StateTomographyReadout;
+extern py::object ExpectationReadoutResult;
+extern py::object ReadoutResult;
+extern py::object SamplingReadoutResult;
+extern py::object StateTomographyReadoutResult;
+extern py::object ReadoutCompositeResults;
 
 void initialize_all_pybind_types();
 void initialize_external_pybind_types();
