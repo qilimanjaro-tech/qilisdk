@@ -732,6 +732,8 @@ As well as some quantum-specific transformations:
 - :meth:`.reset_qubits(qubits)<qilisdk.core.qtensor.QTensor.reset_qubits>`: reset specified qubits to |0⟩
 - :meth:`.dagger()<qilisdk.core.qtensor.QTensor.dagger>`: alias for adjoint
 
+You can also visualize single-qubit states on the Bloch sphere: :meth:`.draw()<qilisdk.core.qtensor.QTensor.draw>`.
+
 Examples:
 
 .. code-block:: python
