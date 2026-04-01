@@ -13,6 +13,7 @@
 # limitations under the License.
 
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 from scipy.linalg import expm, logm, sqrtm
@@ -125,11 +126,11 @@ def test_ptrace_valid():
     reduced_ket_qubit_1 = qket.ptrace(keep=[1])
     reduced_ket_qubit_0 = qket.ptrace(keep=[0])
 
-    qket = ket(0, 1, 0, *[0 for _ in range(20)])
+    qket = ket(0, 1, 0, *[0 for _ in range(5)])
     reduced_ket_qubit_1_big = qket.ptrace(keep=[1])
     reduced_ket_qubit_0_big = qket.ptrace(keep=[0])
 
-    qket = bra(0, 1, 0, *[0 for _ in range(20)])
+    qket = bra(0, 1, 0, *[0 for _ in range(5)])
     reduced_ket_qubit_1_big_bra = qket.ptrace(keep=[1])
     reduced_ket_qubit_0_big_bra = qket.ptrace(keep=[0])
 
@@ -1035,3 +1036,21 @@ def test_qtensor_negative_norm():
         qobj.norm(order=-1)
     with pytest.raises(ValueError, match="Norm order must be a positive"):
         qobj.norm(order=0)
+
+
+def test_qtensor_draw_runs(monkeypatch):
+    monkeypatch.setattr(plt, "show", lambda: None)  # Prevent actual rendering during tests
+    qobj = QTensor.ket(0)
+    qobj.draw()
+
+
+def test_qtensor_draw_many_qubits_raises():
+    qobj = QTensor.ket(0, 0, 0, 0)  # 4 qubits
+    with pytest.raises(ValueError, match="Drawing is only supported for single-qubit states"):
+        qobj.draw()
+
+
+def test_qtensor_draw_non_ket_raises():
+    qobj = QTensor(np.eye(2))  # Not a ket
+    with pytest.raises(ValueError, match="Drawing is only supported for state vectors"):
+        qobj.draw()

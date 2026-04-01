@@ -15,6 +15,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Literal
 
+import matplotlib as mpl
+import matplotlib.pyplot as plt
 import numpy as np
 from qtensor_module import QTensorCpp  # ty:ignore
 from scipy.sparse import csr_matrix, sparray, spmatrix
@@ -763,6 +765,77 @@ class QTensor:
             state (dict): A dictionary containing the state of the QTensor for deserialization.
         """
         self.__init__(state["data"])
+
+    def draw(self) -> None:
+        """
+        Visualize the QTensor on the Bloch sphere.
+
+        Raises:
+            ValueError: If the QTensor is not a state vector (ket or bra).
+            ValueError: If the QTensor represents more than one qubit.
+        """
+        if not self.is_ket() and not self.is_bra():
+            raise ValueError("Drawing is only supported for state vectors (kets or bras)")
+        if self.nqubits != 1:
+            raise ValueError(
+                "Drawing is only supported for single-qubit states: consider using .partial_trace([i]) to reduce to a single qubit i"
+            )
+
+        # Better mouse rotation style
+        mpl.rcParams["axes3d.mouserotationstyle"] = "azel"
+
+        # Set up the plot
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection="3d")
+        u = np.linspace(0, 2 * np.pi, 50)
+        v = np.linspace(0, np.pi, 50)
+        x = np.outer(np.cos(u), np.sin(v))
+        y = np.outer(np.sin(u), np.sin(v))
+        z = np.outer(np.ones(np.size(u)), np.cos(v))
+        ax.plot_surface(x, y, z, color="b", alpha=0.1)
+        ax.set_xlim([-1, 1])
+        ax.set_ylim([-1, 1])
+        ax.set_zlim([-1, 1])
+        ax.set_xlabel("X")
+        ax.set_ylabel("Y")
+        ax.set_zlabel("Z")
+        ax.set_title("Bloch Sphere Representation")
+        ax.xaxis.set_major_locator(plt.MaxNLocator(5))
+        ax.yaxis.set_major_locator(plt.MaxNLocator(5))
+        ax.zaxis.set_major_locator(plt.MaxNLocator(5))
+
+        # Fix the aspect ratio to be equal
+        ax.set_box_aspect([1, 1, 1])
+
+        # Draw the arrow
+        coeffs = self.dense().flatten()
+        x = 2 * np.real(coeffs[0] * np.conj(coeffs[1]))
+        y = 2 * np.imag(coeffs[0] * np.conj(coeffs[1]))
+        z = np.abs(coeffs[0]) ** 2 - np.abs(coeffs[1]) ** 2
+        ax.quiver(0, 0, 0, x, y, z, color="b", arrow_length_ratio=0.1)
+
+        # Draw some key points for reference
+        distance = 1.2
+        ax.text(0, 0, distance, "|0⟩", fontsize=12, ha="center")
+        ax.text(0, 0, -distance, "|1⟩", fontsize=12, ha="center")
+        ax.text(distance, 0, 0, "|+⟩", fontsize=12, ha="center")
+        ax.text(-distance, 0, 0, "|-⟩", fontsize=12, ha="center")
+        ax.text(0, distance, 0, "|+i⟩", fontsize=12, ha="center")
+        ax.text(0, -distance, 0, "|-i⟩", fontsize=12, ha="center")
+
+        # Draw a circle around the centre
+        u = np.linspace(0, 2 * np.pi, 100)
+        radius = 1.0
+        x = radius * np.cos(u)
+        y = radius * np.sin(u)
+        z = np.zeros_like(x)
+        ax.plot(x, y, z, color="b", linestyle="--", alpha=0.5)
+
+        # Hide the axes
+        ax.set_axis_off()
+
+        # Draw the plot
+        plt.show()
 
 
 def ket(*state: int) -> QTensor:
