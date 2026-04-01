@@ -82,57 +82,57 @@ class OpenQasmParser:
     - ❌: The feature is not supported at all
 
     Feature Table
-    OpenQASM 3 Feature     Qiskit SDK       IBM Qiskit Runtime      QiliSDK       Notes
-    comments               ✅               ✅                      ✅
-    QASM vstring           ✅               ✅                      ✅
-    include                🟡               ❌                      ✅
-    unicode names          ✅               ✅                      ✅
-    qubit                  ✅               🟡                      ✅
-    bit                    ✅               ✅                      🟡            1
-    bool                   🟡               ✅                      🟡            1
-    int                    ❌               ✅                      🟡            1
-    uint                   🟡               ✅                      🟡            1
-    float                  🟡               🟡                      🟡            1
-    angle                  ❌               🟡                      🟡            1
-    complex                ❌               ❌                      🟡            1
-    const                  ❌               ❌                      ✅
-    pi/π/tau/τ/euler/ℇ     ✅               ✅                      ✅
-    Aliasing: let          🟡               ❌                      ✅
-    register concatenation 🟡               ❌                      ❌
-    casting expr.Cast      🟡               🟡                      ✅
-    duration               ❌               ❌                      🟡            1
-    durationof             ❌               ❌                      ❌
-    ns/μs/us/ms/s/dt       ✅               ✅                      ✅
-    stretch expr.Stretch   🟡               🟡                      🟡            1
-    delay                  ✅               ✅                      ❌
-    barrier                ✅               ✅                      ❌
-    box                    ✅               ❌                      ❌
-    Built-in U             ✅               ✅                      ✅
-    gate                   🟡               🟡                      🟡            1
-    gphase                 🟡               ❌                      ❌
-    ctrl @                 🟡               ❌                      ✅
-    negctrl @              🟡               ❌                      🟡            1
-    inv @                  🟡               ❌                      ✅
-    pow(k) @               🟡               ❌                      🟡            1, 2
-    reset                  ✅               ✅                      ❌
-    measure                ✅               ✅                      🟡            3
-    bit operations         🟡               ✅                      🟡            1
-    boolean operations     🟡               ✅                      🟡            1
-    arithmetic expressions 🟡               🟡                      🟡            1
-    comparisons            🟡               ✅                      🟡            1
-    if                     ✅               ✅                      🟡            1
-    else                   ✅               ✅                      🟡            1
-    else if                ✅               ❌                      🟡            1
-    for loops              🟡               ❌                      🟡            1
-    switch                 ❌               ❌                      🟡            1
-    while loops            ✅               ❌                      🟡            1
-    continue               🟡               ❌                      🟡            1
-    break                  🟡               ❌                      🟡            1
-    extern                 ❌               ❌                      ❌
-    def subroutines        ❌               ❌                      🟡            1
-    return                 ❌               ❌                      🟡            1
-    input                  ✅               🟡                      🟡            1
-    output                 ❌               ❌                      ❌
+    OpenQASM 3 Feature          QiliSDK       Notes
+    comments                    ✅
+    QASM vstring                ✅
+    include                     ✅
+    unicode names               ✅
+    qubit                       ✅
+    bit                         🟡            1
+    bool                        🟡            1
+    int                         🟡            1
+    uint                        🟡            1
+    float                       🟡            1
+    angle                       🟡            1
+    complex                     🟡            1
+    const                       ✅
+    pi/π/tau/τ/euler/ℇ          ✅
+    Aliasing: let               ✅
+    register concatenation      ❌
+    casting expr.Cast           ✅
+    duration                    🟡            1
+    durationof                  ❌
+    ns/μs/us/ms/s/dt            ✅
+    stretch expr.Stretch        🟡            1
+    delay                       ❌
+    barrier                     ❌
+    box                         ❌
+    Built-in U                  ✅
+    gate                        🟡            1
+    gphase                      ❌
+    ctrl @                      ✅
+    negctrl @                   🟡            1
+    inv @                       ✅
+    pow(k) @                    🟡            1, 2
+    reset                       ❌
+    measure                     🟡            3
+    bit operations              🟡            1
+    boolean operations          🟡            1
+    arithmetic expressions      🟡            1
+    comparisons                 🟡            1
+    if                          🟡            1
+    else                        🟡            1
+    else if                     🟡            1
+    for loops                   🟡            1
+    switch                      🟡            1
+    while loops                 🟡            1
+    continue                    🟡            1
+    break                       🟡            1
+    extern                      ❌
+    def subroutines             🟡            1
+    return                      🟡            1
+    input                       🟡            1
+    output                      ❌
 
     1) Reading these operations is fully supported, but the expressions will not be stored within the circuit object, and thus
        will not written back out if you convert back to OpenQASM. For example, if you declare "int x = 5;", the variable "x"
