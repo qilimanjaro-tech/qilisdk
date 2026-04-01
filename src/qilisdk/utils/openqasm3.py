@@ -76,6 +76,11 @@ class OpenQasmParser:
      - `from qilisdk.utils.openqasm3 import to_qasm3`
      - `from qilisdk.utils.openqasm3 import from_qasm3`
 
+    Understanding the following table:
+    - ✅: The feature is fully supported
+    - 🟡: The feature is partially supported, see the note for explanation
+    - ❌: The feature is not supported at all
+
     Feature Table
     OpenQASM 3 Feature     Qiskit SDK       IBM Qiskit Runtime      QiliSDK       Notes
     comments               ✅               ✅                      ✅
@@ -83,54 +88,60 @@ class OpenQasmParser:
     include                🟡               ❌                      ✅
     unicode names          ✅               ✅                      ✅
     qubit                  ✅               🟡                      ✅
-    bit                    ✅               ✅                      ✅
-    bool                   🟡               ✅                      ✅
-    int                    ❌               ✅                      ✅
-    uint                   🟡               ✅                      ✅
-    float                  🟡               🟡                      ✅
-    angle                  ❌               🟡                      ✅
-    complex                ❌               ❌                      ✅
+    bit                    ✅               ✅                      🟡            1
+    bool                   🟡               ✅                      🟡            1
+    int                    ❌               ✅                      🟡            1
+    uint                   🟡               ✅                      🟡            1
+    float                  🟡               🟡                      🟡            1
+    angle                  ❌               🟡                      🟡            1
+    complex                ❌               ❌                      🟡            1
     const                  ❌               ❌                      ✅
     pi/π/tau/τ/euler/ℇ     ✅               ✅                      ✅
     Aliasing: let          🟡               ❌                      ✅
     register concatenation 🟡               ❌                      ❌
     casting expr.Cast      🟡               🟡                      ✅
-    duration               ❌               ❌                      ✅
+    duration               ❌               ❌                      🟡            1
     durationof             ❌               ❌                      ❌
     ns/μs/us/ms/s/dt       ✅               ✅                      ✅
-    stretch expr.Stretch   🟡               🟡                      ✅
+    stretch expr.Stretch   🟡               🟡                      🟡            1
     delay                  ✅               ✅                      ❌
     barrier                ✅               ✅                      ❌
     box                    ✅               ❌                      ❌
     Built-in U             ✅               ✅                      ✅
-    gate                   🟡               🟡                      ✅
+    gate                   🟡               🟡                      🟡            1
     gphase                 🟡               ❌                      ❌
-    ctrl @/ negctrl @      🟡               ❌                      ✅
+    ctrl @                 🟡               ❌                      ✅
+    negctrl @              🟡               ❌                      🟡            1
     inv @                  🟡               ❌                      ✅
-    pow(k) @               🟡               ❌                      🟡            a
+    pow(k) @               🟡               ❌                      🟡            1, 2
     reset                  ✅               ✅                      ❌
-    measure                ✅               ✅                      🟡            b
-    bit operations         🟡               ✅                      ✅
-    boolean operations     🟡               ✅                      ✅
-    arithmetic expressions 🟡               🟡                      ✅
-    comparisons            🟡               ✅                      ✅
-    if                     ✅               ✅                      ✅
-    else                   ✅               ✅                      ✅
-    else if                ✅               ❌                      ✅
-    for loops              🟡               ❌                      ✅
-    switch                 ❌               ❌                      ✅
-    while loops            ✅               ❌                      ✅
-    continue               🟡               ❌                      ✅
-    break                  🟡               ❌                      ✅
+    measure                ✅               ✅                      🟡            3
+    bit operations         🟡               ✅                      🟡            1
+    boolean operations     🟡               ✅                      🟡            1
+    arithmetic expressions 🟡               🟡                      🟡            1
+    comparisons            🟡               ✅                      🟡            1
+    if                     ✅               ✅                      🟡            1
+    else                   ✅               ✅                      🟡            1
+    else if                ✅               ❌                      🟡            1
+    for loops              🟡               ❌                      🟡            1
+    switch                 ❌               ❌                      🟡            1
+    while loops            ✅               ❌                      🟡            1
+    continue               🟡               ❌                      🟡            1
+    break                  🟡               ❌                      🟡            1
     extern                 ❌               ❌                      ❌
-    def subroutines        ❌               ❌                      ✅
-    return                 ❌               ❌                      ✅
-    input                  ✅               🟡                      ✅
+    def subroutines        ❌               ❌                      🟡            1
+    return                 ❌               ❌                      🟡            1
+    input                  ✅               🟡                      🟡            1
     output                 ❌               ❌                      ❌
 
-    a) pow(k) is only supported in QiliSDK when k is an integer, and is done by doing repeated gate applications.
+    1) Reading these operations is fully supported, but the expressions will not be stored within the circuit object, and thus
+       will not written back out if you convert back to OpenQASM. For example, if you declare "int x = 5;", the variable "x"
+       will be evaluated and used during the rest of the parsing, but in the circuit object itself "x" will not appear,
+       and thus converting back to OpenQASM will not include the declaration of "x".
 
-    b) Mid-circuit measurements are not supported in QiliSDK.
+    2) pow(k) is only supported in QiliSDK when k is an integer, and is done by doing repeated gate applications.
+
+    3) Mid-circuit measurements are not supported in QiliSDK.
 
     """
 
@@ -1142,9 +1153,12 @@ class OpenQasmParser:
             qasm3 += f"qubit[{circuit.nqubits}] q;\n"
         for gate in circuit.gates:
             qasm_gate_name = gate.name.lower()
+            qasm_parameter_str = ""
+            if gate.is_parameterized:
+                qasm_parameter_str = "(" + ", ".join([str(param) for param in gate.get_parameter_values()]) + ")"
             qasm_control_str = "".join(["ctrl @ " for _ in gate.control_qubits])
             qasm_qubits_str = ", ".join([f"q[{qb}]" for qb in gate.qubits])
-            qasm_gate_string = f"{qasm_control_str} {qasm_gate_name} {qasm_qubits_str}"
+            qasm_gate_string = f"{qasm_control_str} {qasm_gate_name}{qasm_parameter_str} {qasm_qubits_str}"
             qasm_gate_string = qasm_gate_string.strip()
             qasm3 += f"{qasm_gate_string};\n"
         return qasm3.strip()
