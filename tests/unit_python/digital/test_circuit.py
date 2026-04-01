@@ -557,3 +557,21 @@ def test_repr():
     assert "Circuit" in repr_str
     assert "nqubits=2" in repr_str
     assert "gates=[X(0)]" in repr_str
+
+def test_circuit_set_bad_param_raises(monkeypatch):
+    c = Circuit(nqubits=1)
+    monkeypatch.setattr(c, "check_constraints", lambda params: True)  # Bypass constraint checking for this test
+    with pytest.raises(ValueError, match="is not defined in this circuit"):
+        c.set_parameters({"bad_param": 0.5})
+
+def test_circuit_no_equality_different_qubits():
+    c1 = Circuit(nqubits=2)
+    c2 = Circuit(nqubits=3)
+    assert c1 != c2
+
+def test_circuit_no_equality_different_gate_count():
+    c1 = Circuit(nqubits=2)
+    c2 = Circuit(nqubits=2)
+    c1.add(X(0))
+    assert c1 != c2
+
