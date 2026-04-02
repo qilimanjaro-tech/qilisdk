@@ -39,9 +39,9 @@ class Precision(str, Enum):
         """
         match self:
             case Precision.COMPLEX_64:
-                return np.complex64  # type: ignore[return-value]  # ty:ignore[invalid-return-type]
+                return np.complex64  # ty:ignore[invalid-return-type]
             case _:
-                return np.complex128  # type: ignore[return-value]  # ty:ignore[invalid-return-type]
+                return np.complex128  # ty:ignore[invalid-return-type]
 
 
 class QiliSDKSettings(BaseSettings):

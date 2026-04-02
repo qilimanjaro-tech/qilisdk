@@ -318,7 +318,7 @@ It is the most lightweight option, ideal for local development or environments w
 ::
 
     FunctionalResult(
-        final_expected_values=array([-0.99388223,  0.0467696 , -0.10005353]),
+        expectation_values=array([-0.99388223,  0.0467696 , -0.10005353]),
         final_state=QTensor(shape=2x1, nnz=2, format='csr')
         [[0.05506547-0.00516502j]
         [0.3364973 -0.94005887j]]

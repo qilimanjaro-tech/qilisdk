@@ -103,7 +103,7 @@ class ReadoutSpec(Generic[S, E, T]):
             raise ValueError("Sampling readout already set in this specification.")
         new: ReadoutSpec = copy(self)
         new._sampling = SamplingReadout(nshots=nshots)
-        return new  # type: ignore[return-value]  # ty:ignore[invalid-return-type]
+        return new  # ty:ignore[invalid-return-type]
 
     def with_expectation(
         self,
@@ -126,7 +126,7 @@ class ReadoutSpec(Generic[S, E, T]):
             raise ValueError("Expectation readout already set in this specification.")
         new: ReadoutSpec = copy(self)
         new._expectation = ExpectationReadout(observables=observables, nshots=nshots)
-        return new  # type: ignore[return-value]  # ty:ignore[invalid-return-type]
+        return new  # ty:ignore[invalid-return-type]
 
     def with_state_tomography(
         self, method: Literal["exact"] = "exact"
@@ -146,7 +146,7 @@ class ReadoutSpec(Generic[S, E, T]):
             raise ValueError("State-tomography readout already set in this specification.")
         new: ReadoutSpec = copy(self)
         new._state_tomography = StateTomographyReadout(method=method)
-        return new  # type: ignore[return-value]  # ty:ignore[invalid-return-type]
+        return new  # ty:ignore[invalid-return-type]
 
     # -- accessors --------------------------------------------------------
 
