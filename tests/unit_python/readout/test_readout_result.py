@@ -136,26 +136,26 @@ class TestExpectationReadoutResult:
     def test_from_state(self):
         readout = ExpectationReadout(observables=[pauli_z(0)])
         result = ExpectationReadoutResult.from_state(expectation_readout=readout, state=ket(0))
-        assert len(result.expected_values) == 1
-        assert np.isclose(result.expected_values[0], 1.0)
+        assert len(result.expectation_values) == 1
+        assert np.isclose(result.expectation_values[0], 1.0)
 
-    def test_init_from_expected_values(self):
-        result = ExpectationReadoutResult(expected_values=[0.5])
-        assert result.expected_values == [0.5]
+    def test_init_from_expectation_values(self):
+        result = ExpectationReadoutResult(expectation_values=[0.5])
+        assert result.expectation_values == [0.5]
 
     def test_ket_one_z_expectation(self):
         readout = ExpectationReadout(observables=[pauli_z(0)])
         result = ExpectationReadoutResult.from_state(expectation_readout=readout, state=ket(1))
-        assert np.isclose(result.expected_values[0], -1.0)
+        assert np.isclose(result.expectation_values[0], -1.0)
 
     def test_superposition_z_expectation(self):
         readout = ExpectationReadout(observables=[pauli_z(0)])
         state = (ket(0) + ket(1)).unit()
         result = ExpectationReadoutResult.from_state(expectation_readout=readout, state=state)
-        assert np.isclose(result.expected_values[0], 0.0, atol=1e-10)
+        assert np.isclose(result.expectation_values[0], 0.0, atol=1e-10)
 
     def test_repr(self):
-        result = ExpectationReadoutResult(expected_values=[1.0])
+        result = ExpectationReadoutResult(expectation_values=[1.0])
         assert "Expectation Value Results" in repr(result)
 
 
@@ -204,7 +204,7 @@ class TestReadoutCompositeResults:
 
     @pytest.fixture
     def expectation_result(self):
-        return ExpectationReadoutResult(expected_values=[1.0])
+        return ExpectationReadoutResult(expectation_values=[1.0])
 
     @pytest.fixture
     def tomography_result(self):
@@ -222,7 +222,7 @@ class TestReadoutCompositeResults:
     def test_expectation_field(self, expectation_result):
         composite = ReadoutCompositeResults(expectation_values=expectation_result)
         assert has_expectation_values(composite)
-        assert composite.expectation_values.expected_values == [1.0]
+        assert composite.expectation_values.expectation_values == [1.0]
 
     def test_expectation_missing(self, sampling_result):
         composite = ReadoutCompositeResults(sampling=sampling_result)
@@ -253,7 +253,7 @@ class TestReadoutCompositeResults:
         assert has_expectation_values(composite)
         assert has_state_tomography(composite)
         assert composite.sampling.samples == {"0": 60, "1": 40}
-        assert composite.expectation_values.expected_values == [1.0]
+        assert composite.expectation_values.expectation_values == [1.0]
         assert composite.state_tomography.state is not None
 
     def test_from_dict(self, sampling_result, expectation_result, tomography_result):
@@ -312,8 +312,8 @@ def _make_tomography_composite(state: QTensor) -> ReadoutCompositeResults:
     return ReadoutCompositeResults(state_tomography=StateTomographyReadoutResult(state=state))
 
 
-def _make_expectation_composite(expected_values: list[float]) -> ReadoutCompositeResults:
-    return ReadoutCompositeResults(expectation_values=ExpectationReadoutResult(expected_values=expected_values))
+def _make_expectation_composite(expectation_values: list[float]) -> ReadoutCompositeResults:
+    return ReadoutCompositeResults(expectation_values=ExpectationReadoutResult(expectation_values=expectation_values))
 
 
 class TestFunctionalResult:
@@ -325,9 +325,9 @@ class TestFunctionalResult:
         result = FunctionalResult(readout_results=_make_tomography_composite(ket(0)))
         assert result.state is not None
 
-    def test_final_expected_values(self):
+    def test_final_expectation_values(self):
         result = FunctionalResult(readout_results=_make_expectation_composite([1.0]))
-        assert result.expected_values == [1.0]
+        assert result.expectation_values == [1.0]
 
     def test_final_probabilities_from_sampling(self):
         result = FunctionalResult(readout_results=_make_sampling_composite(100, {"0": 70, "1": 30}))
@@ -340,7 +340,7 @@ class TestFunctionalResult:
     def test_multiple_readout_types(self):
         sampling = SamplingReadoutResult.from_samples(samples={"0": 100})
         tomography = StateTomographyReadoutResult(state=ket(0))
-        expectation = ExpectationReadoutResult.from_expectations(expected_values=[1.0])
+        expectation = ExpectationReadoutResult.from_expectations(expectation_values=[1.0])
         result = FunctionalResult(
             readout_results=ReadoutCompositeResults(
                 sampling=sampling, state_tomography=tomography, expectation_values=expectation
@@ -405,24 +405,24 @@ class TestFunctionalResult:
         with pytest.raises(ValueError, match="intermediate probabilities"):
             _ = result.intermediate_probabilities
 
-    def test_intermediate_expected_values(self):
+    def test_intermediate_expectation_values(self):
         final = _make_expectation_composite([1.0])
         inter = _make_expectation_composite([-1.0])
         result = FunctionalResult(readout_results=final, intermediate_results=[inter])
-        vals = result.intermediate_expected_values
+        vals = result.intermediate_expectation_values
         assert len(vals) == 2
         assert np.isclose(vals[0][0], -1.0)
         assert np.isclose(vals[1][0], 1.0)
 
-    def test_intermediate_expected_values_no_intermediate_raises(self):
+    def test_intermediate_expectation_values_no_intermediate_raises(self):
         result = FunctionalResult(readout_results=_make_expectation_composite([1.0]))
-        with pytest.raises(ValueError, match="intermediate expected values"):
-            _ = result.intermediate_expected_values
+        with pytest.raises(ValueError, match="intermediate expectation values"):
+            _ = result.intermediate_expectation_values
 
-    def test_intermediate_expected_values_no_readout_returns_empty(self):
+    def test_intermediate_expectation_values_no_readout_returns_empty(self):
         cr = _make_sampling_composite(10, {"0": 10})
         result = FunctionalResult(readout_results=cr, intermediate_results=[cr])
-        assert result.intermediate_expected_values == []
+        assert result.intermediate_expectation_values == []
 
     def test_intermediate_samples_no_readout_returns_empty(self):
         cr = _make_tomography_composite(ket(0))
@@ -474,7 +474,7 @@ class TestBackendConstructResultsList:
         )
         assert has_expectation_values(results)
         assert isinstance(results.expectation_values, ExpectationReadoutResult)
-        assert np.isclose(results.expectation_values.expected_values[0], 1.0)
+        assert np.isclose(results.expectation_values.expectation_values[0], 1.0)
 
     def test_multiple_readouts(self):
         results = Backend._construct_results_list(

@@ -176,8 +176,8 @@ def test_qilisim_dephasing_strength_changes_dynamics():
         ReadoutSpec().with_expectation(observables=[pauli_x(0)]),
     )
 
-    weak_exp = float(np.real(weak_result.expected_values[0]))
-    strong_exp = float(np.real(strong_result.expected_values[0]))
+    weak_exp = float(np.real(weak_result.expectation_values[0]))
+    strong_exp = float(np.real(strong_result.expectation_values[0]))
     assert strong_exp < weak_exp
 
 

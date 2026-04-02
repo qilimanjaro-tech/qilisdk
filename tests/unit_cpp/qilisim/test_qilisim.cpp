@@ -442,9 +442,9 @@ _readout_shape = [StateTomographyReadout(), ExpectationReadout(observables=[Z(0)
     py::object result;
     ASSERT_NO_THROW(result = sim.execute_analog_evolution(py::globals()["_te_shape"], py::globals()["_readout_shape"], py::none(), empty_solver_params()));
     EXPECT_TRUE(py::hasattr(result, "state"));
-    EXPECT_TRUE(py::hasattr(result, "expected_values"));
+    EXPECT_TRUE(py::hasattr(result, "expectation_values"));
     EXPECT_TRUE(py::hasattr(result, "intermediate_states"));
-    EXPECT_TRUE(py::hasattr(result, "intermediate_expected_values"));
+    EXPECT_TRUE(py::hasattr(result, "intermediate_expectation_values"));
 }
 
 // GCOV_EXCL_BR_STOP

@@ -67,7 +67,7 @@ def test_compute_cost_state_tomography():
     assert cost == -2
 
     # Without state or samples -- should raise
-    exp_result = ExpectationReadoutResult(expected_values=[0.0])
+    exp_result = ExpectationReadoutResult(expectation_values=[0.0])
     no_state_result = FunctionalResult(readout_results=ReadoutCompositeResults(expectation_values=exp_result))
     with pytest.raises(
         ValueError,

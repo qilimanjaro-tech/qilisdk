@@ -168,7 +168,7 @@ def test_qilisim_backend_time_evolution_amplitude_damping(backend_class):
         analog_evolution, readout=ReadoutSpec().with_expectation(observables=[PauliZ(0)]).with_state_tomography()
     )
 
-    assert result.expected_values[0] > 0.9
+    assert result.expectation_values[0] > 0.9
 
 
 @pytest.mark.parametrize("backend_class", backends)
@@ -194,7 +194,7 @@ def test_qilisim_backend_time_evolution_dephasing(backend_class):
         analog_evolution, readout=ReadoutSpec().with_expectation(observables=[PauliX(0)]).with_state_tomography()
     )
 
-    assert abs(result.expected_values[0]) < 0.1
+    assert abs(result.expectation_values[0]) < 0.1
 
 
 @pytest.mark.parametrize("backend_class", backends)
@@ -221,7 +221,7 @@ def test_qilisim_backend_schedule_parameter_perturbation(backend_class):
         analog_evolution, readout=ReadoutSpec().with_expectation(observables=[PauliX(0)]).with_state_tomography()
     )
 
-    assert np.real_if_close(result.expected_values[0]) < -0.8
+    assert np.real_if_close(result.expectation_values[0]) < -0.8
 
 
 @pytest.mark.parametrize("backend_class", backends)
@@ -367,7 +367,7 @@ def test_analog_dissapation_noise(backend_class, time_evolution):
         readout=ReadoutSpec().with_expectation(observables=[PauliZ(0), PauliX(0), PauliY(0)]).with_state_tomography(),
     )
 
-    assert results.expected_values[0] > -0.8
+    assert results.expectation_values[0] > -0.8
 
 
 @pytest.mark.parametrize("backend_class", backends)
@@ -384,7 +384,7 @@ def test_analog_amplitude_damping_noise(backend_class, time_evolution):
         readout=ReadoutSpec().with_expectation(observables=[PauliZ(0), PauliX(0), PauliY(0)]).with_state_tomography(),
     )
 
-    assert results.expected_values[0] > -0.8
+    assert results.expectation_values[0] > -0.8
 
 
 @pytest.mark.parametrize("backend_class", backends)
@@ -401,7 +401,7 @@ def test_analog_dephasing_noise(backend_class, time_evolution):
         readout=ReadoutSpec().with_expectation(observables=[PauliZ(0), PauliX(0), PauliY(0)]).with_state_tomography(),
     )
 
-    assert results.expected_values[0] > -0.8
+    assert results.expectation_values[0] > -0.8
 
 
 @pytest.mark.parametrize("backend_class", backends)

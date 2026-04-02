@@ -47,8 +47,8 @@ def test_functional_result_with_expectation_values():
     result = FunctionalResult(readout_results=ReadoutCompositeResults(expectation_values=readout_result))
 
     assert result.has_expectation_values()
-    assert len(result.expected_values) == 1
-    assert np.isclose(result.expected_values[0], 1.0, atol=1e-6)
+    assert len(result.expectation_values) == 1
+    assert np.isclose(result.expectation_values[0], 1.0, atol=1e-6)
 
 
 def test_functional_result_with_intermediate_results():

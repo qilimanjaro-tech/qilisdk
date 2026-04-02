@@ -345,7 +345,7 @@ def test_time_evolution(monkeypatch, initial_state, ob):
     schedule = Schedule(hamiltonians={"h": hamiltonian}, dt=0.1)
     func = AnalogEvolution(schedule=schedule, initial_state=initial_state)
     result = backend.execute(func, ReadoutSpec().with_expectation(observables=[ob]).with_state_tomography())
-    assert np.allclose(result.expected_values, np.array([1]))
+    assert np.allclose(result.expectation_values, np.array([1]))
     assert isinstance(result.state, QTensor)
 
 
@@ -400,7 +400,7 @@ def test_get_qutip_observable_qtensor(monkeypatch):
     schedule = Schedule(hamiltonians={"h": hamiltonian}, dt=0.1)
     func = AnalogEvolution(schedule=schedule, initial_state=ket(0))
     result = backend.execute(func, ReadoutSpec().with_expectation(observables=[z_matrix]).with_state_tomography())
-    assert result.expected_values is not None
+    assert result.expectation_values is not None
 
 
 def test_get_qutip_observable_hamiltonian_smaller_than_system(monkeypatch):
@@ -416,7 +416,7 @@ def test_get_qutip_observable_hamiltonian_smaller_than_system(monkeypatch):
     result = backend.execute(
         func, ReadoutSpec().with_expectation(observables=[small_hamiltonian]).with_state_tomography()
     )
-    assert result.expected_values is not None
+    assert result.expectation_values is not None
 
 
 def test_get_qutip_observable_unsupported_type_raises():

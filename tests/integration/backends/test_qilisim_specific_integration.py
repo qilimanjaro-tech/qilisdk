@@ -153,7 +153,7 @@ def test_monte_carlo_time_evolution(method):
     )
 
     assert isinstance(res, FunctionalResult)
-    expect_z = res.expected_values[0]
+    expect_z = res.expectation_values[0]
     assert res.state.shape == (2, 2)
     assert np.isclose(expect_z, -0.8, rtol=1e-1)
 
@@ -240,4 +240,4 @@ def test_matrix_free_time_evolution_versus_normal():
     res_matrix_free = backend_matrix_free.execute(
         AnalogEvolution(schedule=schedule, initial_state=psi0), readout=readout
     )
-    assert np.isclose(res_normal.expected_values[0], res_matrix_free.expected_values[0], rtol=0.01)
+    assert np.isclose(res_normal.expectation_values[0], res_matrix_free.expectation_values[0], rtol=0.01)

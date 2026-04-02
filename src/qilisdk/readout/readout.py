@@ -21,12 +21,14 @@ a quantum backend after execution.
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, model_validator
 
-from qilisdk.analog import Hamiltonian  # noqa: TC001
 from qilisdk.core import QTensor
+
+if TYPE_CHECKING:
+    from qilisdk.analog import Hamiltonian
 
 
 class ReadoutMethod(BaseModel):
@@ -43,58 +45,6 @@ class ReadoutMethod(BaseModel):
     """
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
-
-    @classmethod
-    def sampling(cls, nshots: int) -> SamplingReadout:
-        """Create a :class:`SamplingReadout`.
-
-        Args:
-            nshots (int): Number of measurement shots.
-
-        Returns:
-            SamplingReadout: A new sampling readout configuration.
-
-        Raises:
-            TypeError: If called on a subclass rather than :class:`ReadoutMethod` directly.
-        """
-        if cls is not ReadoutMethod:
-            raise TypeError("factory methods are only available on ReadoutMethod, not on subclasses")
-        return SamplingReadout(nshots=nshots)
-
-    @classmethod
-    def expectation(cls, observables: list, nshots: int = 0) -> ExpectationReadout:
-        """Create an :class:`ExpectationReadout`.
-
-        Args:
-            observables (list): Observables whose expectation values will be evaluated.
-            nshots (int): Number of measurement shots. Defaults to ``0`` (exact evaluation).
-
-        Returns:
-            ExpectationReadout: A new expectation-value readout configuration.
-
-        Raises:
-            TypeError: If called on a subclass rather than :class:`ReadoutMethod` directly.
-        """
-        if cls is not ReadoutMethod:
-            raise TypeError("factory methods are only available on ReadoutMethod, not on subclasses")
-        return ExpectationReadout(observables=observables, nshots=nshots)
-
-    @classmethod
-    def state_tomography(cls, method: Literal["exact"] = "exact") -> StateTomographyReadout:
-        """Create a :class:`StateTomographyReadout`.
-
-        Args:
-            method (Literal["exact"]): Tomography method. Currently only ``"exact"`` is supported.
-
-        Returns:
-            StateTomographyReadout: A new state-tomography readout configuration.
-
-        Raises:
-            TypeError: If called on a subclass rather than :class:`ReadoutMethod` directly.
-        """
-        if cls is not ReadoutMethod:
-            raise TypeError("factory methods are only available on ReadoutMethod, not on subclasses")
-        return StateTomographyReadout(state_tomography_method=method)
 
     def is_sampling_readout(self) -> bool:
         """Check whether this readout is a :class:`SamplingReadout`.

@@ -162,7 +162,7 @@ def test_constant_hamiltonian(backend):
     )
 
     assert isinstance(res, FunctionalResult)
-    assert np.isclose(res.expected_values[0], 1.0, rtol=1e-6)
+    assert np.isclose(res.expectation_values[0], 1.0, rtol=1e-6)
 
     # Intermediate states should replicate constant behavior
     assert len(res.intermediate_results) > 0
@@ -192,7 +192,7 @@ def test_time_dependent_hamiltonian(backend):
     )
 
     assert isinstance(res, FunctionalResult)
-    expect_z = res.expected_values[0]
+    expect_z = res.expectation_values[0]
     assert np.isclose(expect_z, -1.0, rtol=1e-2)
 
 
@@ -218,9 +218,9 @@ def test_time_dependent_hamiltonian_with_3_qubits(backend):
         ReadoutSpec().with_expectation(observables=[pauli_z(0), pauli_z(1), pauli_z(2)]),
     )
 
-    assert np.isclose(res.expected_values[0], -1.0, rtol=1e-2)
-    assert np.isclose(res.expected_values[1], -1.0, rtol=1e-2)
-    assert np.isclose(res.expected_values[2], -1.0, rtol=1e-2)
+    assert np.isclose(res.expectation_values[0], -1.0, rtol=1e-2)
+    assert np.isclose(res.expectation_values[1], -1.0, rtol=1e-2)
+    assert np.isclose(res.expectation_values[2], -1.0, rtol=1e-2)
 
 
 @pytest.mark.parametrize("backend", backends)
@@ -353,7 +353,7 @@ def test_time_dependent_hamiltonian_pauli_observable(backend):
     )
 
     assert isinstance(res, FunctionalResult)
-    expect_z = res.expected_values[0]
+    expect_z = res.expectation_values[0]
     assert res.state.is_ket()
     assert np.isclose(expect_z, -1.0, rtol=1e-2)
 
@@ -379,7 +379,7 @@ def test_time_dependent_hamiltonian_imaginary(backend):
     )
 
     assert isinstance(res, FunctionalResult)
-    expect_y = res.expected_values[0]
+    expect_y = res.expectation_values[0]
     assert res.state.shape == (2, 2)
     assert np.isclose(expect_y, -1.0, rtol=1e-2)
 
@@ -408,7 +408,7 @@ def test_time_dependent_hamiltonian_qtensor_observable(backend):
     )
 
     assert isinstance(res, FunctionalResult)
-    expect_z = res.expected_values[0]
+    expect_z = res.expectation_values[0]
     assert res.state.is_ket()
     assert np.isclose(expect_z, -1.0, rtol=1e-2)
 
@@ -475,7 +475,7 @@ def test_time_dependent_hamiltonian_density_mat(backend):
     )
 
     assert isinstance(res, FunctionalResult)
-    expect_z = res.expected_values[0]
+    expect_z = res.expectation_values[0]
     assert res.state.shape == (2, 2)
     assert np.isclose(expect_z, -1.0, rtol=1e-2)
 

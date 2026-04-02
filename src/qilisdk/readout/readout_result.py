@@ -185,53 +185,53 @@ class ExpectationReadoutResult(ReadoutResult[ExpectationReadout]):
     Contains the computed expectation values for each observable specified in
     the readout configuration.  The object can be constructed in two ways:
 
-    1. From pre-computed ``expected_values``.
+    1. From pre-computed ``expectation_values``.
     2. From a quantum ``state``, in which case the expectation values are derived via :func:`~qilisdk.core.expect_val`.
 
     Args:
         readout (ExpectationReadout): The readout configuration that produced this result.
-        expected_values (list[Number] | None): Pre-computed expectation values, one per observable.
+        expectation_values (list[Number] | None): Pre-computed expectation values, one per observable.
             Mutually exclusive with ``state``.
         state (QTensor | None): Quantum state used to compute expectation values on-the-fly.  Mutually exclusive with
-            ``expected_values``.
+            ``expectation_values``.
 
     Raises:
-        ValueError: If neither ``expected_values`` nor ``state`` is provided.
+        ValueError: If neither ``expectation_values`` nor ``state`` is provided.
     """
 
     @classmethod
-    def from_expectations(cls, expected_values: list[float], nshots: int | None = None) -> Self:
-        return cls(expected_values=expected_values, nshots=nshots)
+    def from_expectations(cls, expectation_values: list[float], nshots: int | None = None) -> Self:
+        return cls(expectation_values=expectation_values, nshots=nshots)
 
     @classmethod
     def from_state(cls, expectation_readout: ExpectationReadout, state: QTensor) -> Self:
         expectation_readout.expand_observables(nqubits=state.nqubits)
         try:
-            expected_values: list[int | float] = [
+            expectation_values: list[int | float] = [
                 _assert_real((expect_val(o, state))) for o in expectation_readout.qtensor_observables
             ]
         except ValueError:
             raise ValueError(
-                "Encountered an imaginary expected value while computing the expectation values, try reducing the total tolerance or improving simulation precision."
+                "Encountered an imaginary expectation value while computing the expectation values, try reducing the total tolerance or improving simulation precision."
             )
-        return cls(expected_values=expected_values, nshots=expectation_readout.nshots)
+        return cls(expectation_values=expectation_values, nshots=expectation_readout.nshots)
 
-    def __init__(self, expected_values: list[float], nshots: int | None = None) -> None:
-        if expected_values is None:
-            raise ValueError("Can't initialize Expectation Readout if the expected values are not provided.")
-        self._expected_values: list[int | float] = expected_values
+    def __init__(self, expectation_values: list[float], nshots: int | None = None) -> None:
+        if expectation_values is None:
+            raise ValueError("Can't initialize Expectation Readout if the expectation values are not provided.")
+        self._expectation_values: list[int | float] = expectation_values
         self._nshots: int | None = nshots
 
     @property
-    def expected_values(self) -> list[float]:
+    def expectation_values(self) -> list[float]:
         """list[Number]: Expectation values, one per observable, in the same order as specified in the readout."""
-        return self._expected_values
+        return self._expectation_values
 
     def __repr__(self) -> str:
         return (
             "Expectation Value Results: (\n"
             + (f"\tnshots = {self._nshots},\n" if self._nshots and self._nshots > 0 else "")
-            + f"\texpected_values={pformat(self._expected_values)},\n"
+            + f"\texpectation_values={pformat(self._expectation_values)},\n"
             + ")\n\n"
         )
 

@@ -47,7 +47,7 @@ class FunctionalResult(Result, Generic[S, E, T]):
 
         result.sampling.samples  # ✅ when S = SamplingReadoutResult
         result.state_tomography.state  # ✅ when T = StateTomographyReadoutResult
-        result.expectation  # None when E = None → .expected_values is a type error
+        result.expectation  # None when E = None → .expectation_values is a type error
 
     **Convenience shortcuts** — ``result.samples``, ``result.state``, etc.
     remain available for interactive / notebook use.  They raise
@@ -89,7 +89,7 @@ class FunctionalResult(Result, Generic[S, E, T]):
         """The expectation-value readout result, or ``None`` if not requested.
 
         When ``E = ExpectationReadoutResult``, this returns the result object
-        with typed access to ``.expected_values``.
+        with typed access to ``.expectation_values``.
         When ``E = None``, the type checker sees ``None``.
         """
         return self._readout_results.expectation_values
@@ -155,15 +155,15 @@ class FunctionalResult(Result, Generic[S, E, T]):
         raise ValueError("Can't obtain the final state if State Tomography readout is not specified.")
 
     @property
-    def expected_values(self) -> list[float]:
+    def expectation_values(self) -> list[float]:
         """Expectation values from the final execution step.
 
         Raises:
             ValueError: If expectation readout was not provided.
         """
         if has_expectation_values(self._readout_results):
-            return self._readout_results.expectation_values.expected_values
-        raise ValueError("Can't compute expectations because Expectation readout was not specified.")
+            return self._readout_results.expectation_values.expectation_values
+        raise ValueError("Can't compute expectation values because Expectation readout was not specified.")
 
     # -- intermediate accessors (runtime-checked) -------------------------
 
@@ -218,7 +218,7 @@ class FunctionalResult(Result, Generic[S, E, T]):
         raise ValueError("Can't find intermediate states because intermediate Results were not stored.")
 
     @property
-    def intermediate_expected_values(self) -> list[list[float]]:
+    def intermediate_expectation_values(self) -> list[list[float]]:
         """Expectation values for every time-step (intermediate + final).
 
         Raises:
@@ -229,9 +229,9 @@ class FunctionalResult(Result, Generic[S, E, T]):
             results = []
             for res in self:
                 if has_expectation_values(res):
-                    results.append(res.expectation_values.expected_values)
+                    results.append(res.expectation_values.expectation_values)
             return results
-        raise ValueError("Can't find intermediate expected values because intermediate Results were not stored.")
+        raise ValueError("Can't find intermediate expectation values because intermediate Results were not stored.")
 
     # -- has_* helpers (useful for runtime checks) ------------------------
 

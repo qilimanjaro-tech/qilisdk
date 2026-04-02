@@ -78,7 +78,7 @@ def test_compute_cost_state_tomography():
     mcf = ModelCostFunction(model)
 
     # no state and no samples -- should raise
-    exp_result = ExpectationReadoutResult.from_expectations(expected_values=[0.0])
+    exp_result = ExpectationReadoutResult.from_expectations(expectation_values=[0.0])
     no_state_result = FunctionalResult(readout_results=ReadoutCompositeResults(expectation_values=exp_result))
     with pytest.raises(
         ValueError, match=r"ModelCostFunction requires either a StateTomography or Sampling readout in the results."
