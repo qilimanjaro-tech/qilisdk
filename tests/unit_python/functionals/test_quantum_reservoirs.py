@@ -351,5 +351,5 @@ def test_reservoir_layer_copy():
 def test_quantum_reservoir_result_is_functional_result():
     r = SamplingReadoutResult.from_samples(samples={"0": 10})
     result = FunctionalResult(readout_results=ReadoutCompositeResults(sampling=r))
-    assert result.samples == {"0": 10}
+    assert result.get_samples() == {"0": 10}
     assert isinstance(result, FunctionalResult)

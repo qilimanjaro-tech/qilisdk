@@ -48,7 +48,7 @@ def test_seed_same(method):
     readout = Readout().with_sampling(nshots=100)
     result1 = backend1.execute(DigitalPropagation(circuit=circuit), readout=readout)
     result2 = backend2.execute(DigitalPropagation(circuit=circuit), readout=readout)
-    assert result1.samples == result2.samples
+    assert result1.get_samples() == result2.get_samples()
 
 
 def test_no_seed():
@@ -75,7 +75,7 @@ def test_monte_carlo_circuit(method):
         DigitalPropagation(circuit=circuit), readout=readout, initial_state=initial_state
     )
     assert isinstance(result, FunctionalResult)
-    samples = result.samples
+    samples = result.get_samples()
     assert "0" in samples
     assert "1" in samples
 
@@ -89,7 +89,7 @@ def test_seed_different(method):
     readout = Readout().with_sampling(nshots=100)
     result1 = backend1.execute(DigitalPropagation(circuit=circuit), readout=readout)
     result2 = backend2.execute(DigitalPropagation(circuit=circuit), readout=readout)
-    assert result1.samples != result2.samples
+    assert result1.get_samples() != result2.get_samples()
 
 
 @pytest.mark.parametrize("method", analog_methods)
@@ -119,10 +119,10 @@ def test_row_vec_ordering(method):
     )
 
     assert isinstance(res, FunctionalResult)
-    assert res.state.shape == (2, 2)
+    assert res.get_state().shape == (2, 2)
 
     # check that it's hermitian
-    final_rho = res.state.dense()
+    final_rho = res.get_state().dense()
     assert np.allclose(final_rho, final_rho.conj().T, rtol=1e-6)
 
 
@@ -153,8 +153,8 @@ def test_monte_carlo_time_evolution(method):
     )
 
     assert isinstance(res, FunctionalResult)
-    expect_z = res.expectation_values[0]
-    assert res.state.shape == (2, 2)
+    expect_z = res.get_expectation_values()[0]
+    assert res.get_state().shape == (2, 2)
     assert np.isclose(expect_z, -0.8, rtol=1e-1)
 
 
@@ -165,7 +165,7 @@ def test_exponential_gates(method):
     circuit.add(X(0).exponential())
     result = backend.execute(DigitalPropagation(circuit=circuit), readout=Readout().with_sampling(nshots=100))
     assert isinstance(result, FunctionalResult)
-    samples = result.samples
+    samples = result.get_samples()
     assert "1" in samples
     assert "0" in samples
 
@@ -195,7 +195,7 @@ def test_matrix_free_circuit_versus_normal():
     readout = Readout().with_sampling(nshots=1000)
     res_statevector = backend_statevector.execute(DigitalPropagation(circuit=c), readout=readout)
     res_matrix_free = backend_matrix_free.execute(DigitalPropagation(circuit=c), readout=readout)
-    assert _counts_similar(res_statevector.samples, res_matrix_free.samples, total_shots=1000, tol=0.1)
+    assert _counts_similar(res_statevector.get_samples(), res_matrix_free.get_samples(), total_shots=1000, tol=0.1)
 
 
 @pytest.mark.parametrize("matrix_free", [True, False])
@@ -215,7 +215,7 @@ def test_combine_single_qubit_gates(matrix_free):
     readout = Readout().with_sampling(nshots=1000)
     res_combined = backend_combined.execute(DigitalPropagation(circuit=c), readout=readout)
     res_uncombined = backend_uncombined.execute(DigitalPropagation(circuit=c), readout=readout)
-    assert _counts_similar(res_combined.samples, res_uncombined.samples, total_shots=1000, tol=0.1)
+    assert _counts_similar(res_combined.get_samples(), res_uncombined.get_samples(), total_shots=1000, tol=0.1)
 
 
 def test_matrix_free_time_evolution_versus_normal():
@@ -240,4 +240,4 @@ def test_matrix_free_time_evolution_versus_normal():
     res_matrix_free = backend_matrix_free.execute(
         AnalogEvolution(schedule=schedule, initial_state=psi0), readout=readout
     )
-    assert np.isclose(res_normal.expectation_values[0], res_matrix_free.expectation_values[0], rtol=0.01)
+    assert np.isclose(res_normal.get_expectation_values()[0], res_matrix_free.get_expectation_values()[0], rtol=0.01)

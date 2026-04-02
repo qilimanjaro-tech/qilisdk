@@ -64,7 +64,7 @@ def test_qilisim_backend_bit_flip_sampling(backend_class):
     backend = backend_class(noise_model=noise_model, **args_per_backend[backend_class])
     result = backend.execute(DigitalPropagation(circuit), readout=Readout().with_sampling(nshots=100))
 
-    assert result.samples == {"0": 100}
+    assert result.get_samples() == {"0": 100}
 
 
 @pytest.mark.parametrize("backend_class", backends)
@@ -79,7 +79,7 @@ def test_qilisim_backend_bit_flip_two_qubits_sampling(backend_class):
     backend = backend_class(noise_model=noise_model, **args_per_backend[backend_class])
     result = backend.execute(DigitalPropagation(circuit), readout=Readout().with_sampling(nshots=100))
 
-    assert result.samples == {"01": 100}
+    assert result.get_samples() == {"01": 100}
 
 
 @pytest.mark.parametrize("backend_class", backends)
@@ -94,7 +94,7 @@ def test_qilisim_backend_bit_flip_only_identity(backend_class):
     backend = backend_class(noise_model=noise_model, **args_per_backend[backend_class])
     result = backend.execute(DigitalPropagation(circuit), readout=Readout().with_sampling(nshots=100))
 
-    assert result.samples == {"11": 100}
+    assert result.get_samples() == {"11": 100}
 
 
 @pytest.mark.parametrize("backend_class", backends)
@@ -111,7 +111,7 @@ def test_qilisim_backend_bit_flip_gate_and_qubit(backend_class):
     backend = backend_class(noise_model=noise_model, **args_per_backend[backend_class])
     result = backend.execute(DigitalPropagation(circuit), readout=Readout().with_sampling(nshots=100))
 
-    assert result.samples == {"01": 100}
+    assert result.get_samples() == {"01": 100}
 
 
 @pytest.mark.parametrize("backend_class", backends)
@@ -127,7 +127,7 @@ def test_qilisim_backend_static_kraus_sampling(backend_class):
     backend = backend_class(noise_model=noise_model, **args_per_backend[backend_class])
     result = backend.execute(functional, readout=Readout().with_sampling(nshots=shots))
 
-    assert result.samples == {"1": shots}
+    assert result.get_samples() == {"1": shots}
 
 
 @pytest.mark.parametrize("backend_class", backends)
@@ -143,7 +143,7 @@ def test_qilisim_backend_gate_parameter_perturbation(backend_class):
     backend = backend_class(noise_model=noise_model, **args_per_backend[backend_class])
     result = backend.execute(functional, readout=Readout().with_sampling(nshots=shots))
 
-    assert result.samples == {"1": shots}
+    assert result.get_samples() == {"1": shots}
 
 
 @pytest.mark.parametrize("backend_class", backends)
@@ -168,7 +168,7 @@ def test_qilisim_backend_time_evolution_amplitude_damping(backend_class):
         analog_evolution, readout=Readout().with_expectation(observables=[PauliZ(0)]).with_state_tomography()
     )
 
-    assert result.expectation_values[0] > 0.9
+    assert result.get_expectation_values()[0] > 0.9
 
 
 @pytest.mark.parametrize("backend_class", backends)
@@ -194,7 +194,7 @@ def test_qilisim_backend_time_evolution_dephasing(backend_class):
         analog_evolution, readout=Readout().with_expectation(observables=[PauliX(0)]).with_state_tomography()
     )
 
-    assert abs(result.expectation_values[0]) < 0.1
+    assert abs(result.get_expectation_values()[0]) < 0.1
 
 
 @pytest.mark.parametrize("backend_class", backends)
@@ -221,7 +221,7 @@ def test_qilisim_backend_schedule_parameter_perturbation(backend_class):
         analog_evolution, readout=Readout().with_expectation(observables=[PauliX(0)]).with_state_tomography()
     )
 
-    assert np.real_if_close(result.expectation_values[0]) < -0.8
+    assert np.real_if_close(result.get_expectation_values()[0]) < -0.8
 
 
 @pytest.mark.parametrize("backend_class", backends)
@@ -244,7 +244,7 @@ def test_depolarizing_noise(backend_class):
     res = backend.execute(functional, readout=Readout().with_sampling(nshots=shots))
 
     # With a probability p, the |1> state should flip to |0> or |1> with equal chance
-    prob_10 = res.samples.get("00", 0) / shots
+    prob_10 = res.get_samples().get("00", 0) / shots
     assert np.isclose(prob_10, p * 0.5, atol=0.2)
 
 
@@ -271,7 +271,7 @@ def test_digital_dephasing_noise(backend_class):
     res = backend.execute(functional, readout=Readout().with_sampling(nshots=shots))
 
     # With a probability p, the |+> state should flip to |-> (which maps to |1> after the basis change)
-    prob_10 = res.samples.get("10", 0) / shots
+    prob_10 = res.get_samples().get("10", 0) / shots
     assert np.isclose(prob_10, p, atol=0.2)
 
 
@@ -296,7 +296,7 @@ def test_amplitude_damping_noise(backend_class):
     res = backend.execute(functional, readout=Readout().with_sampling(nshots=shots))
 
     # With a probability gamma, the |1> state should decay to |0>
-    prob_00 = res.samples.get("00", 0) / shots
+    prob_00 = res.get_samples().get("00", 0) / shots
     assert np.isclose(prob_00, p, atol=0.2)
 
 
@@ -323,7 +323,7 @@ def test_kraus_noise_single_qubit_noise(backend_class):
     res = backend.execute(functional, readout=Readout().with_sampling(nshots=shots))
 
     # With a probability p, the |1> state should flip to |0>
-    prob_10 = res.samples.get("10", 0) / shots
+    prob_10 = res.get_samples().get("10", 0) / shots
     assert np.isclose(prob_10, p, atol=0.2)
 
 
@@ -367,7 +367,7 @@ def test_analog_dissapation_noise(backend_class, time_evolution):
         readout=Readout().with_expectation(observables=[PauliZ(0), PauliX(0), PauliY(0)]).with_state_tomography(),
     )
 
-    assert results.expectation_values[0] > -0.8
+    assert results.get_expectation_values()[0] > -0.8
 
 
 @pytest.mark.parametrize("backend_class", backends)
@@ -384,7 +384,7 @@ def test_analog_amplitude_damping_noise(backend_class, time_evolution):
         readout=Readout().with_expectation(observables=[PauliZ(0), PauliX(0), PauliY(0)]).with_state_tomography(),
     )
 
-    assert results.expectation_values[0] > -0.8
+    assert results.get_expectation_values()[0] > -0.8
 
 
 @pytest.mark.parametrize("backend_class", backends)
@@ -401,7 +401,7 @@ def test_analog_dephasing_noise(backend_class, time_evolution):
         readout=Readout().with_expectation(observables=[PauliZ(0), PauliX(0), PauliY(0)]).with_state_tomography(),
     )
 
-    assert results.expectation_values[0] > -0.8
+    assert results.get_expectation_values()[0] > -0.8
 
 
 @pytest.mark.parametrize("backend_class", backends)
@@ -422,7 +422,7 @@ def test_readout_error_noise_01(backend_class):
     backend = backend_class(noise_model=nm, **args_per_backend[backend_class])
     res = backend.execute(functional, readout=Readout().with_sampling(nshots=shots))
 
-    assert res.samples == {"1": shots}
+    assert res.get_samples() == {"1": shots}
 
 
 @pytest.mark.parametrize("backend_class", backends)
@@ -443,4 +443,4 @@ def test_readout_error_qilisim_10(backend_class):
     backend = backend_class(noise_model=nm, **args_per_backend[backend_class])
     res = backend.execute(functional, readout=Readout().with_sampling(nshots=shots))
 
-    assert res.samples == {"0": shots}
+    assert res.get_samples() == {"0": shots}

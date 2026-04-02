@@ -76,7 +76,7 @@ def _make_mock_result(functional):
 
 class MockCostFunction:
     def compute_cost(self, result):
-        samples = result.samples
+        samples = result.get_samples()
         if abs(samples.get("0", 0) - 50) < 1:
             return 0.5 + 0j
         return samples.get("0", 0) / 100.0

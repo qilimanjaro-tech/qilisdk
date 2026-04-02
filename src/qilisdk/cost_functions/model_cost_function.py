@@ -109,7 +109,7 @@ class ModelCostFunction(CostFunction):
             ValueError: If the final state is neither a ket, bra, nor a valid
                 density matrix.
         """
-        final_state = results.state
+        final_state = results.get_state()
 
         if isinstance(self.model, QUBO):
             ham = self.model.to_hamiltonian()
@@ -181,7 +181,7 @@ class ModelCostFunction(CostFunction):
                 the number of model variables.
         """
         total_cost = complex(0.0)
-        probabilities = results.probabilities
+        probabilities = results.get_probabilities()
         for sample, prob in probabilities.items():
             bit_configuration = [int(i) for i in sample]
             if len(self.model.variables()) != len(bit_configuration):
