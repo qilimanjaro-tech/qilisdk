@@ -765,4 +765,3 @@ class TypedJobDetail(JobDetail, Generic[TFunctionalResult_co]):
             )
 
         return self.extractor(self.result)
-        return self.extractor(self.result)
