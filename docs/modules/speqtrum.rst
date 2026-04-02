@@ -21,6 +21,7 @@ The API uses short-lived OAuth tokens that are cached in the system keyring. Cal
 :meth:`SpeQtrum.login <qilisdk.speqtrum.speqtrum.SpeQtrum.login>` once and the credentials will be reused for subsequent
 sessions.
 
+.. SKIP
 .. code-block:: python
 
     from qilisdk.speqtrum import SpeQtrum
@@ -43,6 +44,7 @@ Client Construction
 Once credentials are stored, instantiate :class:`~qilisdk.speqtrum.speqtrum.SpeQtrum` to start issuing requests. Construction fails with a 
 ``RuntimeError`` if no cached credentials exist.
 
+.. SKIP
 .. code-block:: python
 
     from qilisdk.speqtrum import SpeQtrum
@@ -57,6 +59,7 @@ qubits, hardware type, and status. Use :meth:`SpeQtrum.list_devices
 <qilisdk.speqtrum.speqtrum.SpeQtrum.list_devices>` to enumerate them. An optional ``where`` predicate allows client-side
 filtering.
 
+.. SKIP
 .. code-block:: python
 
     from qilisdk.speqtrum import SpeQtrum, DeviceStatus
@@ -71,6 +74,7 @@ Remote Jobs
 :meth:`SpeQtrum.list_jobs <qilisdk.speqtrum.speqtrum.SpeQtrum.list_jobs>` returns lightweight :class:`JobInfo
 <qilisdk.speqtrum.speqtrum_models.JobInfo>` records. The ``where`` predicate works the same way as with devices.
 
+.. SKIP
 .. code-block:: python
 
     from qilisdk.speqtrum import SpeQtrum
@@ -88,6 +92,7 @@ decoded strings or structured :class:`~qilisdk.speqtrum.speqtrum_models.ExecuteR
 When you wait on a :class:`~qilisdk.speqtrum.speqtrum_models.JobHandle`, the returned object is a
 :class:`~qilisdk.speqtrum.speqtrum_models.TypedJobDetail` that exposes a strongly typed :meth:`~qilisdk.speqtrum.speqtrum_models.TypedJobDetail.get_results` helper.
 
+.. SKIP
 .. code-block:: python
 
     job_handle = client.submit(sampling, device=device)
@@ -115,6 +120,7 @@ SpeQtrum accepts the same primitive functionals used by local backends. The :met
 <qilisdk.speqtrum.speqtrum.SpeQtrum.submit>` method inspects the functional type and serializes the correct payload. You
 must supply a ``device`` argument with the device code obtained from :meth:`~qilisdk.speqtrum.speqtrum.SpeQtrum.list_devices`.
 
+.. SKIP
 .. code-block:: python
 
     from qilisdk.digital import Circuit, H, CNOT
@@ -148,6 +154,7 @@ Hybrid optimization is handled through the same :class:`~qilisdk.functionals.var
 functional used with local backends. Serialize the fully-configured variational program (ansatz, optimizer, cost
 function) and submit it as any other functional.
 
+.. SKIP
 .. code-block:: python
 
     from qilisdk.core.model import Model, ObjectiveSense
@@ -187,6 +194,7 @@ Pulse Experiments
 The SpeQtrum client also supports calibration-style experiments defined in :mod:`qilisdk.experiments.experiment_functional`. These
 functional objects mirror the interfaces described in the :doc:`functionals` chapter and return rich result types.
 
+.. SKIP
 .. code-block:: python
 
     import numpy as np

@@ -50,10 +50,12 @@ bitstrings:
 
 .. code-block:: python
 
+    from qilisdk.digital import Circuit
     from qilisdk.backends import QutipBackend
     from qilisdk.functionals import Sampling
 
     backend = QutipBackend()
+    circuit = Circuit(2)
     sampling_result = backend.execute(Sampling(circuit, nshots=1_000))
     top = sampling_result.get_probabilities(5)
     print("Most likely outcomes:", top)

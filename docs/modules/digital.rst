@@ -46,9 +46,9 @@ Use these constructors to apply standard single- and two-qubit operations:
 - :class:`SWAP(a: int, b: int)<qilisdk.digital.gates.SWAP>`
   Exchanges the states of qubits ``a`` and ``b``.
 - :class:`CNOT(control: int, target: int)<qilisdk.digital.gates.CNOT>`
-  Controlled-X: flips target if control is |1⟩.
+  Controlled-X: flips target if control is 1.
 - :class:`CZ(control: int, target: int)<qilisdk.digital.gates.CZ>`
-  Controlled-Z: applies Z on target if control is |1⟩.
+  Controlled-Z: applies Z on target if control is 1.
 - :class:`M(*qubits: int)<qilisdk.digital.gates.M>`
   Measures the listed qubits in the computational basis.
 
@@ -170,9 +170,10 @@ Circuits can include parameterized gates. Adding them is similar to regular gate
 
 .. code-block:: python
 
-    from qilisdk.digital import RX
+    from qilisdk.digital import Circuit, RX
     import numpy as np
 
+    circuit = Circuit(1)
     circuit.add(RX(0, theta=np.pi))
 
 You can retrieve the current parameter using:
@@ -209,8 +210,6 @@ To update parameters by their keys:
 
     circuit.set_parameters({"RX(0)_theta_0": 2 * np.pi})
 
-
-
 To update all parameters with new values:
 
 .. code-block:: python
@@ -233,7 +232,7 @@ confines styling to the specific call without modifying global Matplotlib settin
 
     from qilisdk.digital import Circuit, H, CNOT
 
-    circuit = Circuit(num_qubits=3)
+    circuit = Circuit(3)
     circuit.add(H(0))
     circuit.add(CNOT(0, 2))
 
@@ -259,7 +258,7 @@ Saving to a file
     circuit.draw(filepath="my_circuit.svg")
 
 Custom styling with :class:`~qilisdk.utils.visualization.style.CircuitStyle`
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Create a style object to control theme, fonts, spacing, DPI, labels, and more. Passing this object to :meth:`~qilisdk.digital.circuit.Circuit.draw` overrides the library defaults for this call.
 You can also change if the order of the draw follows the order they are added in or if it compacts the layers as much as possible by changing the parameter **layout** to *"normal"* (default) or *"compact"* respectively.
@@ -426,16 +425,17 @@ Configuration options:
 
 .. code-block:: python
 
-    from qilisdk.digital import QAOA, Z
+    from qilisdk.digital import QAOA
+    from qilisdk.analog.hamiltonian import Z as pauli_z
 
-    problem_hamiltonian = Z(0) * Z(1) + Z(2)
+    problem_hamiltonian = pauli_z(0) * pauli_z(1) + pauli_z(2)
     ansatz = QAOA(
         problem_hamiltonian=problem_hamiltonian,
         layers=2,
         mixer_hamiltonian=None,
-        trotter_steps=1
+        trotter_steps=1,
         problem_params=[0.5, 1.0],
-        mixer_params=[0.25, 0.75]
+        mixer_params=[0.25, 0.75],
     )
     ansatz.draw()
 

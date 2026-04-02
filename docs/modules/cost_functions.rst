@@ -52,6 +52,7 @@ Example: expectation value from time evolution
     from qilisdk.core.interpolator import Interpolation
     from qilisdk.backends import QutipBackend, CudaBackend
     from qilisdk.functionals import TimeEvolution
+    from qilisdk.cost_functions import ObservableCostFunction
 
     # Define total time and timestep
     T = 10.0
@@ -83,7 +84,6 @@ Example: expectation value from time evolution
 
     backend = QutipBackend()
     evolution_result = backend.execute(functional)
-
 
     cost_fn = ObservableCostFunction(Z(0))
     energy = cost_fn.compute_cost(evolution_result)
@@ -157,9 +157,20 @@ object, and feeds it into the configured cost function to obtain the scalar that
     from qilisdk.cost_functions import ModelCostFunction
     from qilisdk.functionals import VariationalProgram, Sampling
     from qilisdk.optimizers import SciPyOptimizer
+    from qilisdk.digital import Circuit, RX
+    from qilisdk.core import Parameter
+
+    param = Parameter("a", 0.3)
+    ansatz = Circuit(1)
+    ansatz.add(RX(0, theta=param))
+
+    # Build a toy knapsack-like model
+    b0 = BinaryVariable("b0")
+    model = Model("toy")
+    model.set_objective(2 * b0, label="obj")
 
     variational_program = VariationalProgram(
-        functional=Sampling(ansatz),          # parameterized circuit or schedule
+        functional=Sampling(ansatz),
         optimizer=SciPyOptimizer(method="Powell"),
         cost_function=ModelCostFunction(model),
     )

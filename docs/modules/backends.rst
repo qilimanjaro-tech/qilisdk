@@ -22,11 +22,14 @@ Once installed, any primitive functional can be executed by passing it to the ba
 
 .. code-block:: python
 
-    from qilisdk.backends import CudaBackend
+    from qilisdk.backends import QiliSim
+    from qilisdk.digital import Circuit
     from qilisdk.functionals import Sampling
 
-    # ... build your circuit and Sampling functional ...
-    results = CudaBackend().execute(sampling_functional)
+    circuit = Circuit(2)
+    sampling_functional = Sampling(circuit=circuit, nshots=100)
+    backend = QiliSim()
+    results = backend.execute(sampling_functional)
     print(results)
 
 Architecture Overview
@@ -139,7 +142,7 @@ There is no need to install QiliSim separately, as it is included with the core 
             dim=16,
             num_substeps=2
         ),
-        digital_simulation_method=DigitalMethod.state_vector(max_cache_size=2_000),
+        digital_simulation_method=DigitalMethod.statevector(max_cache_size=2_000),
         execution_config=ExecutionConfig(num_threads=4, seed=42, monte_carlo=MonteCarloConfig(trajectories=200)),
     )
 

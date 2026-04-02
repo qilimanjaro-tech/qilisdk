@@ -110,7 +110,7 @@ html_sidebars = {
 }
 
 theme_options = ThemeOptions(
-    logo_light="_static/q_trans.png", logo_dark="_static/q_trans.png", awesome_external_links=True
+    logo_light="_static/q_trans.png", logo_dark="_static/q_trans.png", awesome_external_links=True,
 )
 
 html_theme_options = asdict(theme_options)
@@ -128,7 +128,7 @@ def _safe_collect_pages(app):  # noqa: ANN001, ANN201
     env = app.builder.env
     if not hasattr(env, "_viewcode_modules"):
         return
-    if not _viewcode.is_supported_builder(app.builder):
+    if not _viewcode.is_supported_builder(app.builder, viewcode_enable_epub=True):
         return
 
     highlighter = app.builder.highlighter

@@ -17,39 +17,8 @@ Highlights:
 - :mod:`~qilisdk.core.parameterizable.Parameterizable` standardizes how
   objects expose symbolic parameters (shared by circuits, schedules, etc.).
 
-Quick Start
------------
-
-This minimal example introduces a binary optimization model, converts it to a
-QUBO penalty form, and exports the corresponding Hamiltonian:
-
-.. code-block:: python
-
-    from qilisdk.core import BinaryVariable, LEQ, Model, ObjectiveSense
-    from qilisdk.core.model import QUBO
-
-    x0, x1 = BinaryVariable("x0"), BinaryVariable("x1")
-
-    model = Model("toy")
-    model.set_objective(-2 * x0 - 3 * x1 + 4 * x0 * x1,
-                        label="energy",
-                        sense=ObjectiveSense.MINIMIZE)
-    model.add_constraint("budget", LEQ(x0 + x1, 1), lagrange_multiplier=5)
-
-    qubo = model.to_qubo()
-    print(qubo.qubo_objective)
-
-    ham = qubo.to_hamiltonian()
-    print(ham)
-
-
-Models
-------
-
-The core components for model construction are defined in the :mod:`~qilisdk.core.variables` module.
-
 Variables
-^^^^^^^^^
+----------------
 
 This module offers tools to define different types of variables:
 
@@ -108,7 +77,7 @@ Each binary variable configuration generates a float within the bounds, based on
     1.2
 
 Terms
-^^^^^
+---------------
 
 :class:`Variables<qilisdk.core.variables.Variable>` can be combined algebraically to form expressions 
 known as :class:`Terms<qilisdk.core.variables.Term>`. For example:
@@ -153,7 +122,7 @@ Terms can be evaluated by providing values for the involved variables:
     To evaluate a term, all participating variables must be assigned valid values within their respective domains and bounds.
 
 Parameters and Parameterizable Objects
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+---------------------------------------------
 
 Many components in QiliSDK expose symbolic parameters that can be optimized or
 re-bound at runtime. The :class:`~qilisdk.core.variables.Parameter` class
@@ -209,7 +178,7 @@ such as trainable parameters.
 
 
 Mathematical Maps (sin, cos)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+---------------------------------
 
 Use :class:`~qilisdk.core.variables.MathematicalMap` helpers to apply common
 functions to a parameter or term while keeping expressions symbolic.
@@ -234,9 +203,8 @@ These maps compose naturally with other terms, so you can include them in
 constraints or objectives and rely on the same evaluation and encoding rules
 as other symbolic expressions.
 
-
 Comparison Terms
-^^^^^^^^^^^^^^^^
+------------------------
 
 Each :class:`~qilisdk.core.variables.ComparisonTerm` defines a constraint using mathematical comparisons. 
 Use the following operators to construct them:
@@ -284,6 +252,31 @@ Example:
     (2) * x < (2.0)
 
 When a comparison term is created, constants are automatically moved to the right-hand side, and variable terms to the left-hand side.
+
+Models
+------
+
+This minimal example introduces a binary optimization model, converts it to a
+QUBO penalty form, and exports the corresponding Hamiltonian:
+
+.. code-block:: python
+
+    from qilisdk.core import BinaryVariable, LEQ, Model, ObjectiveSense
+    from qilisdk.core.model import QUBO
+
+    x0, x1 = BinaryVariable("x0"), BinaryVariable("x1")
+
+    model = Model("toy")
+    model.set_objective(-2 * x0 - 3 * x1 + 4 * x0 * x1,
+                        label="energy",
+                        sense=ObjectiveSense.MINIMIZE)
+    model.add_constraint("budget", LEQ(x0 + x1, 1), lagrange_multiplier=5)
+
+    qubo = model.to_qubo()
+    print(qubo.qubo_objective)
+
+    ham = qubo.to_hamiltonian()
+    print(ham)
 
 Objectives and Constraints
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -592,7 +585,7 @@ Interoperability
 
         h = qubo_model.to_hamiltonian()
 
-Quantum Objects
+QTensor
 ---------------
 
 The :mod:`~qilisdk.core.qtensor` module defines the :class:`~qilisdk.core.qtensor.QTensor`
@@ -729,7 +722,7 @@ As well as some quantum-specific transformations:
 - :meth:`.fidelity(other)<qilisdk.core.qtensor.QTensor.fidelity>`: compute the fidelity between two quantum states
 - :meth:`.probabilities()<qilisdk.core.qtensor.QTensor.probabilities>`: compute the probability distribution of each state in the computational basis
 - :meth:`.partial_trace(keep)<qilisdk.core.qtensor.QTensor.ptrace>`: partial trace
-- :meth:`.reset_qubits(qubits)<qilisdk.core.qtensor.QTensor.reset_qubits>`: reset specified qubits to |0⟩
+- :meth:`.reset_qubits(qubits)<qilisdk.core.qtensor.QTensor.reset_qubits>`: reset specified qubits to 0
 - :meth:`.dagger()<qilisdk.core.qtensor.QTensor.dagger>`: alias for adjoint
 
 Examples:

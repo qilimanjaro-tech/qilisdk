@@ -473,10 +473,6 @@ This section covers how to set up a local development environment for qilisdk, r
      ```bash
      uv sync --all-extras --all-groups
      ```
-     If you don't want to install QiliSim (normally installed by default):
-     ```bash
-     uv sync -Ccmake.define.qilism=OFF
-     ```
 
 4. **Activate the virtual environment**:
    - uv typically creates and manages its own environment, e.g., `.venv/`.
@@ -526,18 +522,19 @@ ruff format
 
 *(We recommend running `ruff check --fix` and `ruff format` before committing any changes.)*
 
-To check the C++ code, compile with the debug flag:
+To check the C++ code, compile with the tidy flag:
 ```bash
-uv pip install -v -e ./ -Ccmake.build-type=Debug
+uv pip install -v -e ./ -Ccmake.build-type=Debug -Ccmake.define.tidy=ON
 ```
-This will run clang-format and clang-tidy as well as a number of C++ compiler flags for debugging. For this you will need clang-tidy and clang-format installed, which can be done on Debian/Ubuntu with:
+This will run clang-tidy as well as a number of C++ compiler flags for debugging. For this you will need clang-tidy installed, which can be done on Debian/Ubuntu with:
 ```bash
-sudo apt-get install clang-format clang-tidy
+sudo apt-get install clang-tidy
 ```
 It may also throw an error about not being able to find `omp.h`, if so, try:
 ```bash
 sudo apt-get install libomp-dev
 ```
+For easy of use there are also a number of bash scripts in the "scripts" folder, for instance to generate coverage reports or to run all pre-commit checks.
 
 ### Type Checking
 

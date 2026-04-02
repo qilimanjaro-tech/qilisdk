@@ -195,7 +195,7 @@ where :math:`\gamma_i` are rates related to the probabilities.
 .. code-block:: python
 
     from qilisdk.noise import PauliChannel
-    pauli_noise = PauliChannel(p_X=0.1, p_Y=0.1, p_Z=0.1)
+    pauli_noise = PauliChannel(pX=0.1, pY=0.1, pZ=0.1)
 
 BitFlip
 ^^^^^^^^^^^^^^^
@@ -384,7 +384,7 @@ where :math:`\sigma` is the standard deviation of the perturbations and :math:`\
 .. code-block:: python
 
     from qilisdk.noise import GaussianPerturbation
-    gaussian_perturbation_noise = GaussianPerturbation(stddev=0.05, mean=0.0)
+    gaussian_perturbation_noise = GaussianPerturbation(std=0.05, mean=0.0)
 
 OffsetPerturbation
 ^^^^^^^^^^^^^^^^^^^^^
