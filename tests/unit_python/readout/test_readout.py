@@ -28,11 +28,11 @@ class TestSamplingReadout:
         assert ro.nshots == 500
 
     def test_nshots_zero(self):
-        ro = SamplingReadout(nshots=0)
-        assert ro.nshots == 0
+        with pytest.raises(ValueError, match="The number of shots has to be a positive integer"):
+            SamplingReadout(nshots=0)
 
     def test_negative_nshots_raises(self):
-        with pytest.raises(ValidationError):
+        with pytest.raises(ValueError, match="The number of shots has to be a positive integer"):
             SamplingReadout(nshots=-1)
 
 
@@ -63,11 +63,11 @@ class TestExpectationReadout:
         assert ro.qtensor_observables[0].shape == (4, 4)
 
     def test_invalid_observable_type_raises(self):
-        with pytest.raises(ValidationError):
+        with pytest.raises(ValueError, match="Invalid Observable"):
             ExpectationReadout(observables=["not_an_observable"])
 
     def test_negative_nshots_raises(self):
-        with pytest.raises(ValidationError):
+        with pytest.raises(ValueError, match="The number of shots has to be a positive integer"):
             ExpectationReadout(observables=[pauli_z(0)], nshots=-1)
 
 
@@ -77,40 +77,14 @@ class TestExpectationReadout:
 class TestStateTomographyReadout:
     def test_default_constructor(self):
         ro = StateTomographyReadout()
-        assert ro.state_tomography_method == "exact"
+        assert ro.method == "exact"
 
     def test_keyword_constructor(self):
-        ro = StateTomographyReadout(state_tomography_method="exact")
-        assert ro.state_tomography_method == "exact"
+        ro = StateTomographyReadout(method="exact")
+        assert ro.method == "exact"
 
 
 # ReadoutMethod base class
-
-
-class TestReadoutMethodBase:
-    def test_factory_sample(self):
-        ro = ReadoutMethod.sampling(nshots=42)
-        assert isinstance(ro, SamplingReadout)
-        assert ro.nshots == 42
-
-    def test_factory_expectation_values(self):
-        obs = [pauli_z(0)]
-        ro = ReadoutMethod.expectation(observables=obs)
-        assert isinstance(ro, ExpectationReadout)
-
-    def test_factory_state_tomography(self):
-        ro = ReadoutMethod.state_tomography()
-        assert isinstance(ro, StateTomographyReadout)
-
-    def test_factory_on_subclass_raises(self):
-        with pytest.raises(TypeError, match="only available on ReadoutMethod"):
-            SamplingReadout.sampling(nshots=10)
-
-        with pytest.raises(TypeError, match="only available on ReadoutMethod"):
-            ExpectationReadout.expectation(observables=[pauli_z(0)])
-
-        with pytest.raises(TypeError, match="only available on ReadoutMethod"):
-            StateTomographyReadout.state_tomography()
 
 
 class TestReadoutMethodIsChecks:

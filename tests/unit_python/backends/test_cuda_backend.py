@@ -564,7 +564,7 @@ def test_qtensor_observable_non_hermitian_raises():
 
 
 def test_bad_observable_raises():
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValueError, match="Invalid Observable"):
         ExpectationReadout(observables=["bad observable"])
 
 

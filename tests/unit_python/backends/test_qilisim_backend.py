@@ -146,7 +146,7 @@ def test_time_dependent_hamiltonian_bad_observable():
         3.5,  # invalid observable
     ]
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValueError, match="Invalid Observable"):
         backend.execute(
             AnalogEvolution(schedule=schedule, initial_state=psi0), ReadoutSpec().with_expectation(observables=obs)
         )
@@ -217,7 +217,7 @@ def test_execute_quantum_reservoir_qilisim(monkeypatch):
     )
 
     assert result.state is not None
-    assert len(result.intermediate_expected_values) == 2
+    assert len(result.intermediate_expectation_values) == 2
     assert len(result.intermediate_states) == 2
 
 

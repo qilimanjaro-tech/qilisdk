@@ -241,7 +241,7 @@ class Backend(ABC):
 
         for ro in readout:
             if isinstance(ro, StateTomographyReadout):
-                if ro.state_tomography_method != "exact":
+                if ro.method != "exact":
                     raise ValueError("State Tomography methods that are not exact are not supported yet.")
                 state_tomography_result: StateTomographyReadoutResult = StateTomographyReadoutResult.from_state(
                     state=final_state
@@ -280,5 +280,5 @@ def _readout_list_to_spec(readout: list[ReadoutMethod]) -> ReadoutSpec:
         elif isinstance(ro, ExpectationReadout):
             spec = spec.with_expectation(observables=ro.observables, nshots=ro.nshots)
         elif isinstance(ro, StateTomographyReadout):
-            spec = spec.with_state_tomography(method=ro.state_tomography_method)
+            spec = spec.with_state_tomography(method=ro.method)
     return spec

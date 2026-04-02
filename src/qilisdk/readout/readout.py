@@ -21,17 +21,13 @@ a quantum backend after execution.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal
+from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, model_validator
-
+from qilisdk.analog import Hamiltonian
 from qilisdk.core import QTensor
 
-if TYPE_CHECKING:
-    from qilisdk.analog import Hamiltonian
 
-
-class ReadoutMethod(BaseModel):
+class ReadoutMethod:
     """Base type for readout configurations.
 
     :class:`ReadoutMethod` is not meant to be instantiated directly.  Use one
@@ -43,8 +39,6 @@ class ReadoutMethod(BaseModel):
     * :meth:`expectation` -- creates an :class:`ExpectationReadout`
     * :meth:`state_tomography` -- creates a :class:`StateTomographyReadout`
     """
-
-    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     def is_sampling_readout(self) -> bool:
         """Check whether this readout is a :class:`SamplingReadout`.
@@ -89,7 +83,22 @@ class SamplingReadout(ReadoutMethod):
         >>> SamplingReadout(nshots=1000)
     """
 
-    nshots: int = Field(ge=0)
+    def __init__(self, nshots: int) -> None:
+        """
+
+        Args:
+            nshots (int): The number of shots to use during sampling. Needs to be a positive integer.
+
+        Raises:
+            ValueError: If the number of shots is not a positive integer.
+        """
+        if nshots <= 0 or not isinstance(nshots, int):
+            raise ValueError("The number of shots has to be a positive integer")
+        self._nshots: int = nshots
+
+    @property
+    def nshots(self) -> int:
+        return self._nshots
 
 
 class ExpectationReadout(ReadoutMethod):
@@ -117,17 +126,29 @@ class ExpectationReadout(ReadoutMethod):
         >>> ExpectationReadout(observables=[hamiltonian], nshots=0)
     """
 
-    nshots: int = Field(default=0, ge=0)
-    observables: list[Hamiltonian | QTensor]
-    qtensor_observables: list[QTensor] = Field(default_factory=list, init=False)
+    def __init__(self, observables: list[Hamiltonian | QTensor], nshots: int = 0) -> None:
+        if nshots < 0 or not isinstance(nshots, int):
+            raise ValueError("The number of shots has to be a positive integer")
+        if any(not isinstance(o, (Hamiltonian, QTensor)) for o in observables):
+            raise ValueError("Invalid Observable: All observables need to be QTensors or a Hamiltonian.")
+        self._nshots: int = nshots
+        self._observables: list[Hamiltonian | QTensor] = observables
+        self._qtensor_observables: list[QTensor] = [
+            (o if isinstance(o, QTensor) else o.to_qtensor()) for o in self.observables
+        ]
+        self._scaled_nqubits: int | None = None
 
-    _scaled_nqubits: int | None = PrivateAttr(default=None)
+    @property
+    def nshots(self) -> int:
+        return self._nshots
 
-    @model_validator(mode="after")
-    def set_qtensor_observables(self) -> ExpectationReadout:
-        self.qtensor_observables = [(o if isinstance(o, QTensor) else o.to_qtensor()) for o in self.observables]
-        self._scaled_nqubits = None
-        return self
+    @property
+    def observables(self) -> list[Hamiltonian | QTensor]:
+        return self._observables
+
+    @property
+    def qtensor_observables(self) -> list[QTensor]:
+        return self._qtensor_observables
 
     def expand_observables(self, nqubits: int) -> None:
         """Scale each observable to match a given number of qubits.
@@ -140,7 +161,7 @@ class ExpectationReadout(ReadoutMethod):
         """
         if self._scaled_nqubits == nqubits:
             return
-        self.qtensor_observables = [
+        self._qtensor_observables = [
             (o.expand(nqubits) if isinstance(o, QTensor) else o.to_qtensor(nqubits)) for o in self.observables
         ]
         self._scaled_nqubits = nqubits
@@ -162,4 +183,9 @@ class StateTomographyReadout(ReadoutMethod):
         >>> StateTomographyReadout(state_tomography_method="exact")
     """
 
-    state_tomography_method: Literal["exact"] = Field(default="exact")
+    def __init__(self, method: Literal["exact"] = "exact") -> None:
+        self._method: Literal["exact"] = method
+
+    @property
+    def method(self) -> Literal["exact"]:
+        return self._method

@@ -103,7 +103,7 @@ class ReadoutSpec(Generic[S, E, T]):
         if self._state_tomography is not None:
             raise ValueError("State-tomography readout already set in this specification.")
         new: ReadoutSpec = copy(self)
-        new._state_tomography = StateTomographyReadout(state_tomography_method=method)
+        new._state_tomography = StateTomographyReadout(method=method)
         return new  # type: ignore[return-value]  # ty:ignore[invalid-return-type]
 
     # -- accessors --------------------------------------------------------

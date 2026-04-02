@@ -41,7 +41,7 @@ py::object construct_result_object(const DenseMatrix& state_dense, const py::obj
 
         if (py::isinstance(ro, StateTomographyReadout)) {
             // Check state_tomography_method != "exact"
-            std::string method = ro.attr("state_tomography_method").cast<std::string>();
+            std::string method = ro.attr("method").cast<std::string>();
             if (method != "exact") {
                 throw py::value_error("State Tomography methods that are not exact are not supported yet.");
             }

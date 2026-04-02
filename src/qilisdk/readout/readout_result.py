@@ -185,7 +185,7 @@ class ExpectationReadoutResult(ReadoutResult[ExpectationReadout]):
     Contains the computed expectation values for each observable specified in
     the readout configuration.  The object can be constructed in two ways:
 
-    1. From pre-computed ``expectation_values``.
+    1. From pre-computed ``expected_values``.
     2. From a quantum ``state``, in which case the expectation values are derived via :func:`~qilisdk.core.expect_val`.
 
     Args:
