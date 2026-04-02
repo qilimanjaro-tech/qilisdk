@@ -31,7 +31,7 @@ class CostFunction(ABC):
     """
 
     @abstractmethod
-    def compute_cost(self, results: FunctionalResult) -> Number:
+    def compute_cost(self, results: FunctionalResult) -> Number:  # type: ignore[type-arg]
         """Compute a scalar cost from functional execution results.
 
         Args:

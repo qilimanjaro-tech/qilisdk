@@ -32,21 +32,35 @@ Result containers (see :mod:`qilisdk.readout.readout_result`):
 
 from .readout import ExpectationReadout, ReadoutMethod, SamplingReadout, StateTomographyReadout
 from .readout_result import (
+    E,
     ExpectationReadoutResult,
     ReadoutCompositeResults,
     ReadoutResult,
+    S,
     SamplingReadoutResult,
     StateTomographyReadoutResult,
+    T,
+    has_expectation_values,
+    has_sampling,
+    has_state_tomography,
 )
+from .readout_spec import ReadoutSpec
 
 __all__ = [
+    "E",
     "ExpectationReadout",
     "ExpectationReadoutResult",
     "ReadoutCompositeResults",
     "ReadoutMethod",
     "ReadoutResult",
+    "ReadoutSpec",
+    "S",
     "SamplingReadout",
     "SamplingReadoutResult",
     "StateTomographyReadout",
     "StateTomographyReadoutResult",
+    "T",
+    "has_expectation_values",
+    "has_sampling",
+    "has_state_tomography",
 ]

@@ -36,7 +36,7 @@ def test_compute_cost_with_sampling_result():
 
     readout = SamplingReadout(nshots=1)
     readout_result = SamplingReadoutResult.from_samples(readout=readout, samples={"0": 1})
-    result = FunctionalResult(readout_results=ReadoutCompositeResults(sampling=readout_result))
+    result = FunctionalResult(readout_results=ReadoutCompositeResults(sampling=readout_result, expectation_values=None, state_tomography=None))
 
     assert np.isclose(cost_function.compute_cost(result), 42.0)
 
@@ -50,6 +50,6 @@ def test_compute_cost_with_state_tomography_result():
 
     readout = StateTomographyReadout()
     readout_result = StateTomographyReadoutResult(readout=readout, state=ket(0))
-    result = FunctionalResult(readout_results=ReadoutCompositeResults(state_tomography=readout_result))
+    result = FunctionalResult(readout_results=ReadoutCompositeResults(sampling=None, expectation_values=None, state_tomography=readout_result))
 
     assert np.isclose(cost_function.compute_cost(result), 99.0)

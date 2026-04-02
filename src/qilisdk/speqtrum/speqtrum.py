@@ -43,7 +43,7 @@ from qilisdk.functionals import (
     VariationalProgram,
     VariationalProgramResult,
 )
-from qilisdk.readout import ReadoutMethod
+from qilisdk.readout import E, ReadoutMethod, ReadoutSpec, S, T
 from qilisdk.settings import get_settings
 
 from .keyring import delete_credentials, load_credentials, store_credentials
@@ -663,16 +663,16 @@ class SpeQtrum:
         self,
         functional: PrimitiveFunctional,
         device: str,
-        readout: ReadoutMethod | list[ReadoutMethod],
+        readout: ReadoutSpec[S, E, T],
         job_name: str | None = None,
-    ) -> JobHandle[FunctionalResult]: ...
+    ) -> JobHandle[FunctionalResult[S, E, T]]: ...
 
     @overload
     def submit(
         self,
         functional: VariationalProgram,
         device: str,
-        readout: ReadoutMethod | list[ReadoutMethod],
+        readout: ReadoutSpec[S, E, T],
         job_name: str | None = None,
     ) -> JobHandle[VariationalProgramResult]: ...
 
@@ -690,7 +690,7 @@ class SpeQtrum:
         self,
         functional: Functional,
         device: str,
-        readout: ReadoutMethod | list[ReadoutMethod] | None = None,
+        readout: ReadoutSpec | ReadoutMethod | list[ReadoutMethod] | None = None,  # type: ignore[type-arg]
         job_name: str | None = None,
     ) -> JobHandle:
         """
@@ -750,12 +750,12 @@ class SpeQtrum:
         raise NotImplementedError(f"{type(self).__qualname__} does not support {type(functional).__qualname__}")
 
     @staticmethod
-    def _validate_readout(readout: ReadoutMethod | list[ReadoutMethod]) -> list[ReadoutMethod]:
+    def _validate_readout(readout: ReadoutSpec | ReadoutMethod | list[ReadoutMethod]) -> list[ReadoutMethod]:  # type: ignore[type-arg]
         """Normalise and validate the readout method(s).
 
         Args:
-            readout (ReadoutMethod | list[ReadoutMethod]): One or more readout
-                methods to validate.
+            readout: A :class:`ReadoutSpec`, a single :class:`ReadoutMethod`,
+                or a list of readout methods to validate.
 
         Returns:
             list[ReadoutMethod]: The validated list of unique readout methods.
@@ -764,6 +764,8 @@ class SpeQtrum:
             ValueError: If any element is not a ``ReadoutMethod`` instance or if
                 duplicate readout types are supplied.
         """
+        if isinstance(readout, ReadoutSpec):
+            return readout.to_list()
         _readout = [readout] if isinstance(readout, ReadoutMethod) else list(readout)
         if any(not isinstance(ro, ReadoutMethod) for ro in _readout):
             raise ValueError(
