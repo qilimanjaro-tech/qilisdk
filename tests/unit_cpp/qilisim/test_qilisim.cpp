@@ -163,7 +163,7 @@ _readout_res = [SamplingReadout(nshots=50)]
     )");
     py::object result;
     ASSERT_NO_THROW(result = sim.execute_digital_propagation(py::globals()["_samp_res"], py::globals()["_readout_res"], py::none(), py::none(), empty_solver_params()));
-    EXPECT_TRUE(py::hasattr(result, "samples"));
+    EXPECT_TRUE(py::hasattr(result, "sampling"));
 }
 
 class ExecuteTimeEvolutionTest : public ::testing::Test {
@@ -441,8 +441,8 @@ _readout_shape = [StateTomographyReadout(), ExpectationReadout(observables=[Z(0)
     )");
     py::object result;
     ASSERT_NO_THROW(result = sim.execute_analog_evolution(py::globals()["_te_shape"], py::globals()["_readout_shape"], py::none(), empty_solver_params()));
-    EXPECT_TRUE(py::hasattr(result, "state"));
-    EXPECT_TRUE(py::hasattr(result, "expectation_values"));
+    EXPECT_TRUE(py::hasattr(result, "state_tomography"));
+    EXPECT_TRUE(py::hasattr(result, "expectation"));
     EXPECT_TRUE(py::hasattr(result, "intermediate_states"));
     EXPECT_TRUE(py::hasattr(result, "intermediate_expectation_values"));
 }
