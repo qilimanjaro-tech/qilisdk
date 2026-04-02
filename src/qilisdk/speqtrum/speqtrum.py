@@ -43,7 +43,6 @@ from qilisdk.functionals import (
     VariationalProgram,
     VariationalProgramResult,
 )
-from qilisdk.readout import E, ReadoutMethod, ReadoutSpec, S, T
 from qilisdk.settings import get_settings
 
 from .keyring import delete_credentials, load_credentials, store_credentials
@@ -71,6 +70,7 @@ from .speqtrum_models import (
 
 if TYPE_CHECKING:
     from qilisdk.functionals.functional import Functional, PrimitiveFunctional
+    from qilisdk.readout import E, ReadoutSpec, S, T
 
 
 TFunctionalResult = TypeVar("TFunctionalResult", bound=FunctionalResult)

@@ -22,12 +22,14 @@ from qilisdk.core import Domain, Parameter, QTensor, tensor_prod
 from qilisdk.core.parameterizable import Parameterizable
 from qilisdk.digital import Circuit, M
 from qilisdk.functionals.functional import PrimitiveFunctional
+from qilisdk.yaml import yaml
 
 if TYPE_CHECKING:
     from qilisdk.analog import Schedule
     from qilisdk.core.types import RealNumber
 
 
+@yaml.register_class
 class ReservoirInput(Parameter):
     """Input-only parameter used to inject layer-wise data into a reservoir program.
 

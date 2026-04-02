@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from email.utils import parsedate_to_datetime
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Callable, Generic, TypeVar, cast, overload
+from typing import Any, Callable, Generic, TypeVar, cast, overload
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_serializer, field_validator
 
@@ -39,10 +39,8 @@ from qilisdk.functionals import (
     VariationalProgram,
     VariationalProgramResult,
 )
+from qilisdk.readout import ReadoutSpec
 from qilisdk.utils.serialization import deserialize, serialize
-
-if TYPE_CHECKING:
-    from qilisdk.readout import E, ReadoutMethod, ReadoutSpec, S, T
 
 
 class SpeQtrumModel(BaseModel):
@@ -122,7 +120,7 @@ class DigitalPropagationPayload(SpeQtrumModel):
     """Payload model wrapping a ``DigitalPropagation`` and its readout methods for API submission."""
 
     digital_propagation: DigitalPropagation = Field(...)
-    readout: ReadoutSpec
+    readout: ReadoutSpec = Field(...)
 
     @field_serializer("digital_propagation")
     def _serialize_sampling(self, digital_propagation: DigitalPropagation, _info):
@@ -134,12 +132,22 @@ class DigitalPropagationPayload(SpeQtrumModel):
             return deserialize(v, DigitalPropagation)
         return v
 
+    @field_serializer("readout")
+    def _serialize_readout(self, readout: ReadoutSpec, _info):
+        return serialize(readout)
+
+    @field_validator("readout", mode="before")
+    def _load_readout(cls, v):
+        if isinstance(v, str):
+            return deserialize(v, ReadoutSpec)
+        return v
+
 
 class AnalogEvolutionPayload(SpeQtrumModel):
     """Payload model wrapping an ``AnalogEvolution`` and its readout methods for API submission."""
 
     analog_evolution: AnalogEvolution = Field(...)
-    readout: ReadoutSpec
+    readout: ReadoutSpec = Field(...)
 
     @field_serializer("analog_evolution")
     def _serialize_time_evolution(self, analog_evolution: AnalogEvolution, _info):
@@ -151,12 +159,22 @@ class AnalogEvolutionPayload(SpeQtrumModel):
             return deserialize(v, AnalogEvolution)
         return v
 
+    @field_serializer("readout")
+    def _serialize_readout(self, readout: ReadoutSpec, _info):
+        return serialize(readout)
+
+    @field_validator("readout", mode="before")
+    def _load_readout(cls, v):
+        if isinstance(v, str):
+            return deserialize(v, ReadoutSpec)
+        return v
+
 
 class QuantumReservoirPayload(SpeQtrumModel):
     """Payload model wrapping a ``QuantumReservoir`` and its readout methods for API submission."""
 
     quantum_reservoir: QuantumReservoir = Field(...)
-    readout: ReadoutSpec
+    readout: ReadoutSpec = Field(...)
 
     @field_serializer("quantum_reservoir")
     def _serialize_time_evolution(self, quantum_reservoir: QuantumReservoir, _info):
@@ -168,12 +186,22 @@ class QuantumReservoirPayload(SpeQtrumModel):
             return deserialize(v, AnalogEvolution)
         return v
 
+    @field_serializer("readout")
+    def _serialize_readout(self, readout: ReadoutSpec, _info):
+        return serialize(readout)
+
+    @field_validator("readout", mode="before")
+    def _load_readout(cls, v):
+        if isinstance(v, str):
+            return deserialize(v, ReadoutSpec)
+        return v
+
 
 class VariationalProgramPayload(SpeQtrumModel):
     """Payload model wrapping a ``VariationalProgram`` and its readout methods for API submission."""
 
     variational_program: VariationalProgram = Field(...)
-    readout: ReadoutSpec
+    readout: ReadoutSpec = Field(...)
 
     @field_serializer("variational_program")
     def _serialize_variational_program(self, variational_program: VariationalProgram, _info):
@@ -183,6 +211,16 @@ class VariationalProgramPayload(SpeQtrumModel):
     def _load_variational_program(cls, v):
         if isinstance(v, str):
             return deserialize(v, VariationalProgram)
+        return v
+
+    @field_serializer("readout")
+    def _serialize_readout(self, readout: ReadoutSpec, _info):
+        return serialize(readout)
+
+    @field_validator("readout", mode="before")
+    def _load_readout(cls, v):
+        if isinstance(v, str):
+            return deserialize(v, ReadoutSpec)
         return v
 
 
@@ -726,4 +764,5 @@ class TypedJobDetail(JobDetail, Generic[TFunctionalResult_co]):
                 f"Expected a result of type '{self.expected_type.value}' but received '{self.result.type.value}'."
             )
 
+        return self.extractor(self.result)
         return self.extractor(self.result)

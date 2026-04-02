@@ -26,6 +26,7 @@ from loguru import logger
 from qilisdk.core import QTensor, expect_val
 from qilisdk.core.result import Result
 from qilisdk.settings import get_settings
+from qilisdk.yaml import yaml
 
 from .readout import ExpectationReadout, ReadoutMethod, SamplingReadout, StateTomographyReadout
 
@@ -62,6 +63,7 @@ def _assert_real(number: Number) -> float:
 C = TypeVar("C", bound="ReadoutMethod")
 
 
+@yaml.register_class
 class ReadoutResult(Result, Generic[C]):
     """Abstract base class for a single readout result.
 
@@ -75,6 +77,7 @@ class ReadoutResult(Result, Generic[C]):
 # ---------------------------------------------------------------------------
 
 
+@yaml.register_class
 class SamplingReadoutResult(ReadoutResult[SamplingReadout]):
     """Result produced by a :class:`~qilisdk.readout.SamplingReadout`.
 
@@ -179,6 +182,7 @@ class SamplingReadoutResult(ReadoutResult[SamplingReadout]):
     __str__ = __repr__
 
 
+@yaml.register_class
 class ExpectationReadoutResult(ReadoutResult[ExpectationReadout]):
     """Result produced by an :class:`~qilisdk.readout.ExpectationReadout`.
 
@@ -238,6 +242,7 @@ class ExpectationReadoutResult(ReadoutResult[ExpectationReadout]):
     __str__ = __repr__
 
 
+@yaml.register_class
 class StateTomographyReadoutResult(ReadoutResult[StateTomographyReadout]):
     """Result produced by a :class:`~qilisdk.readout.StateTomographyReadout`.
 
@@ -356,6 +361,7 @@ def has_state_tomography(obj: ReadoutCompositeResults) -> TypeGuard[_HasStateTom
     return obj.state_tomography is not None
 
 
+@yaml.register_class
 @dataclass(frozen=True)
 class ReadoutCompositeResults(Result, Generic[S, E, T]):
     """Aggregated container for readout results from a single execution step.

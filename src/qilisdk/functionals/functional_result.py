@@ -25,6 +25,7 @@ from qilisdk.readout.readout_result import (
     has_sampling,
     has_state_tomography,
 )
+from qilisdk.yaml import yaml
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -32,6 +33,7 @@ if TYPE_CHECKING:
     from qilisdk.core import QTensor
 
 
+@yaml.register_class
 class FunctionalResult(Result, Generic[S, E, T]):
     """Container for the outputs produced by executing a functional on a backend.
 
@@ -49,9 +51,9 @@ class FunctionalResult(Result, Generic[S, E, T]):
     **Typed access** — use the forwarding properties that return the readout result objects directly.
     The type checker knows whether each is ``None`` or populated based on the type parameters::
 
-        result.sampling.samples        # ✅ when S = SamplingReadoutResult
+        result.sampling.samples  # ✅ when S = SamplingReadoutResult
         result.state_tomography.state  # ✅ when T = StateTomographyReadoutResult
-        result.expectation             # None when E = None → .expectation_values is a type error
+        result.expectation  # None when E = None → .expectation_values is a type error
 
     **Convenience shortcuts** — ``result.samples``, ``result.state``, ``result.expectation_values``,
     etc. remain available for interactive / notebook use.  They raise ``ValueError`` at runtime when

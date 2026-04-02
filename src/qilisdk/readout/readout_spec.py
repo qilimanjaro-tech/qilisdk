@@ -16,6 +16,8 @@ from __future__ import annotations
 from copy import copy
 from typing import TYPE_CHECKING, Generic, Literal
 
+from qilisdk.yaml import yaml
+
 from .readout import ExpectationReadout, SamplingReadout, StateTomographyReadout
 from .readout_result import E, ExpectationReadoutResult, S, SamplingReadoutResult, StateTomographyReadoutResult, T
 
@@ -26,6 +28,7 @@ if TYPE_CHECKING:
     from .readout import ReadoutMethod
 
 
+@yaml.register_class
 class ReadoutSpec(Generic[S, E, T]):
     """Type-safe specification of which readout methods to apply during execution.
 
@@ -50,8 +53,8 @@ class ReadoutSpec(Generic[S, E, T]):
 
             spec = ReadoutSpec().with_sampling(nshots=1000)
             result = backend.execute(functional, readout=spec)
-            counts = result.samples        # dict[str, int]
-            probs  = result.probabilities  # dict[str, float]
+            counts = result.samples  # dict[str, int]
+            probs = result.probabilities  # dict[str, float]
 
         Expectation values — compute ``<psi|O|psi>`` for one or more observables::
 
@@ -71,14 +74,10 @@ class ReadoutSpec(Generic[S, E, T]):
 
             from qilisdk.analog import Z
 
-            spec = (
-                ReadoutSpec()
-                .with_sampling(nshots=500)
-                .with_expectation(observables=[Z(0)])
-            )
+            spec = ReadoutSpec().with_sampling(nshots=500).with_expectation(observables=[Z(0)])
             result = backend.execute(functional, readout=spec)
-            counts = result.samples           # dict[str, int]
-            ev     = result.expectation_values  # list[float]
+            counts = result.samples  # dict[str, int]
+            ev = result.expectation_values  # list[float]
     """
 
     def __init__(self: ReadoutSpec[None, None, None]) -> None:

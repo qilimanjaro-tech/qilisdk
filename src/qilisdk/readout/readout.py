@@ -28,8 +28,10 @@ from typing import Literal
 
 from qilisdk.analog import Hamiltonian
 from qilisdk.core import QTensor
+from qilisdk.yaml import yaml
 
 
+@yaml.register_class
 class ReadoutMethod:
     """Base type for readout configurations.
 
@@ -66,6 +68,7 @@ class ReadoutMethod:
         return isinstance(self, StateTomographyReadout)
 
 
+@yaml.register_class
 class SamplingReadout(ReadoutMethod):
     """Sampling readout configuration.
 
@@ -98,6 +101,7 @@ class SamplingReadout(ReadoutMethod):
         return self._nshots
 
 
+@yaml.register_class
 class ExpectationReadout(ReadoutMethod):
     """Expectation-value readout configuration.
 
@@ -161,6 +165,7 @@ class ExpectationReadout(ReadoutMethod):
         self._scaled_nqubits = nqubits
 
 
+@yaml.register_class
 class StateTomographyReadout(ReadoutMethod):
     """State-tomography readout configuration.
 
