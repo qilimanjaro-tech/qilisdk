@@ -291,7 +291,6 @@ class CudaBackend(Backend):
             return FunctionalResult(
                 ReadoutCompositeResults(
                     sampling=SamplingReadoutResult.from_samples(
-                        readout=readout[0],  # ty:ignore[invalid-argument-type]
                         samples=dict(cudaq_result.items()),
                     )
                 )
@@ -306,7 +305,6 @@ class CudaBackend(Backend):
             return FunctionalResult(
                 ReadoutCompositeResults(
                     SamplingReadoutResult.from_samples(
-                        readout=sampling_readout,
                         samples=dict(cudaq_result.items()),
                     )
                 )

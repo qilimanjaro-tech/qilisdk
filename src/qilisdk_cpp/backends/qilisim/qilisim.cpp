@@ -46,13 +46,12 @@ py::object construct_result_object(const DenseMatrix& state_dense, const py::obj
                 throw py::value_error("State Tomography methods that are not exact are not supported yet.");
             }
             results.append(StateTomographyReadoutResult(
-                "readout"_a     = py::module_::import("copy").attr("copy")(ro),
                 "state"_a = QTensor(final_state_numpy)
             ));
 
         } else if (py::isinstance(ro, ExpectationReadout)) {
             results.append(ExpectationReadoutResult.attr("from_state")(
-                "readout"_a     = py::module_::import("copy").attr("copy")(ro),
+                "expectation_readout"_a     = py::module_::import("copy").attr("copy")(ro),
                 "state"_a = QTensor(final_state_numpy)
             ));
 
@@ -64,7 +63,6 @@ py::object construct_result_object(const DenseMatrix& state_dense, const py::obj
                 samples[py::cast(pair.first)] = py::cast(pair.second);
             }
             results.append(SamplingReadoutResult.attr("from_samples")(
-                "readout"_a = py::module_::import("copy").attr("copy")(ro),
                 "samples"_a  = samples
             ));
 

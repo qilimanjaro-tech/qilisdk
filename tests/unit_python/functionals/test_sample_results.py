@@ -18,14 +18,12 @@ from qilisdk.core.model import Model, ObjectiveSense
 from qilisdk.core.variables import EQ, BinaryVariable
 from qilisdk.cost_functions.model_cost_function import ModelCostFunction
 from qilisdk.functionals.functional_result import FunctionalResult
-from qilisdk.readout import SamplingReadout
 from qilisdk.readout.readout_result import ReadoutCompositeResults, SamplingReadoutResult
 
 
 def _make_sampling_result(nshots: int, samples: dict[str, int]) -> FunctionalResult:
     """Helper to create a FunctionalResult with sampling readout results."""
-    readout = SamplingReadout(nshots=nshots)
-    readout_result = SamplingReadoutResult.from_samples(readout=readout, samples=samples)
+    readout_result = SamplingReadoutResult.from_samples(samples=samples)
     return FunctionalResult(readout_results=ReadoutCompositeResults(sampling=readout_result))
 
 

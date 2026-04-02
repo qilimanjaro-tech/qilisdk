@@ -322,7 +322,7 @@ class Backend(ABC):
         Returns:
             SamplingReadoutResult: The constructed sampling result.
         """
-        return SamplingReadoutResult.from_state(readout=copy(readout), state=final_state)
+        return SamplingReadoutResult.from_state(sampling_readout=copy(readout), state=final_state)
 
     @classmethod
     def _construct_expectation_results(
@@ -346,7 +346,7 @@ class Backend(ABC):
         """
         # Pre-scale on the original so the copy inherits cached qtensor_observables
         readout.expand_observables(nqubits=final_state.nqubits)
-        return ExpectationReadoutResult.from_state(readout=copy(readout), state=final_state)
+        return ExpectationReadoutResult.from_state(expectation_readout=copy(readout), state=final_state)
 
     @classmethod
     def _construct_state_tomography_results(
@@ -365,7 +365,7 @@ class Backend(ABC):
             StateTomographyReadoutResult: The constructed state-tomography
                 result.
         """
-        return StateTomographyReadoutResult(readout=copy(readout), state=final_state)
+        return StateTomographyReadoutResult.from_state(state=final_state)
 
     @classmethod
     def _construct_results_list(

@@ -21,7 +21,6 @@ from qilisdk.core import Parameter, QTensor, ket
 from qilisdk.digital import CNOT, RX, RY, Circuit, M
 from qilisdk.functionals import FunctionalResult
 from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
-from qilisdk.readout import SamplingReadout
 from qilisdk.readout.readout_result import ReadoutCompositeResults, SamplingReadoutResult
 from qilisdk.settings import get_settings
 
@@ -350,8 +349,7 @@ def test_reservoir_layer_copy():
 
 
 def test_quantum_reservoir_result_is_functional_result():
-    ro = SamplingReadout(nshots=10)
-    r = SamplingReadoutResult.from_samples(readout=ro, samples={"0": 10})
+    r = SamplingReadoutResult.from_samples(samples={"0": 10})
     result = FunctionalResult(readout_results=ReadoutCompositeResults(sampling=r))
     assert result.samples == {"0": 10}
     assert isinstance(result, FunctionalResult)
