@@ -16,7 +16,6 @@ from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
-from pydantic import ValidationError
 
 from qilisdk.analog.hamiltonian import Hamiltonian
 from qilisdk.backends.cuda_backend import cudaq_to_standard, reverse_bits

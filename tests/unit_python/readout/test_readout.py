@@ -14,11 +14,10 @@
 
 import numpy as np
 import pytest
-from pydantic import ValidationError
 
 from qilisdk.analog import Z as pauli_z
 from qilisdk.core import QTensor
-from qilisdk.readout import ExpectationReadout, ReadoutMethod, SamplingReadout, StateTomographyReadout
+from qilisdk.readout import ExpectationReadout, SamplingReadout, StateTomographyReadout
 
 
 # SamplingReadout
