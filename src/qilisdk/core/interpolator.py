@@ -126,16 +126,18 @@ class Interpolator(Parameterizable):
         self._max_time: PARAMETERIZED_NUMBER | None = None
         self._time_scale_cache: float | None = None
 
-        fixed_times = sorted(
+        fixed_times: list[PARAMETERIZED_NUMBER | tuple[float, float]] = sorted(
             time_dict.keys(),
-            key=lambda t: (
-                self._get_value(min(t, key=self._get_value) if isinstance(t, tuple) else self._get_value(t))
+            key=lambda t: self._get_value(
+                min(t, key=self._get_value)  # ty:ignore[no-matching-overload]
+                if isinstance(t, tuple)
+                else self._get_value(t)
             ),
         )
 
         for i in range(len(fixed_times) - 1):
-            ti = fixed_times[i]
-            tj = fixed_times[i + 1]
+            ti: PARAMETERIZED_NUMBER | tuple[float, float] = fixed_times[i]
+            tj: PARAMETERIZED_NUMBER | tuple[float, float] = fixed_times[i + 1]
             t0 = (
                 self._get_value(ti)
                 if not isinstance(ti, tuple)

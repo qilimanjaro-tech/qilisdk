@@ -223,7 +223,7 @@ class SabreLayoutPass(CircuitTranspilerPass):
         if self.context is not None:
             self.context.initial_layout = self.last_layout or []
 
-        new_circuit = self._retarget_circuit(circuit, best_layout, max_physical_label_plus_one)  # type: ignore[arg-type]
+        new_circuit = self._retarget_circuit(circuit, best_layout, max_physical_label_plus_one)  # type: ignore[arg-type]  # ty:ignore[invalid-argument-type]
 
         self.append_circuit_to_context(new_circuit)
 

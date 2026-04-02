@@ -371,9 +371,9 @@ class ReadoutCompositeResults(Result, Generic[S, E, T]):
     populated and the type checker can verify access without runtime guards.
     """
 
-    sampling: S = None  # type: ignore[assignment]
-    expectation_values: E = None  # type: ignore[assignment]
-    state_tomography: T = None  # type: ignore[assignment]
+    sampling: S = None  # type: ignore[assignment]  # ty:ignore[invalid-assignment]
+    expectation_values: E = None  # type: ignore[assignment]  # ty:ignore[invalid-assignment]
+    state_tomography: T = None  # type: ignore[assignment]  # ty:ignore[invalid-assignment]
 
     @classmethod
     def from_list(cls, results: list) -> ReadoutCompositeResults:

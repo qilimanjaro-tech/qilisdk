@@ -26,7 +26,7 @@ from qilisdk.core.qtensor import QTensor, tensor_prod
 from qilisdk.functionals.analog_evolution import AnalogEvolution
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirLayer
-from qilisdk.readout import ExpectationReadout, ReadoutSpec, SamplingReadout, StateTomographyReadout
+from qilisdk.readout import ReadoutSpec, SamplingReadout
 
 pytest.importorskip("qutip", reason="QuTiP backend tests require the 'qutip' optional dependency", exc_type=ImportError)
 pytest.importorskip(
@@ -386,7 +386,9 @@ def test_execute_quantum_reservoir_raises_if_time_evolution_returns_no_state(mon
     )
 
     with pytest.raises(ValueError, match="Reservoir Runtime Error"):
-        backend._execute_quantum_reservoir(functional, readout=[SamplingReadout(nshots=10)])  # internal method takes list
+        backend._execute_quantum_reservoir(
+            functional, readout=[SamplingReadout(nshots=10)]
+        )  # internal method takes list
 
 
 def test_get_qutip_observable_qtensor(monkeypatch):

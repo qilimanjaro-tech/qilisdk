@@ -106,9 +106,7 @@ def test_execute_with_measurement_gate(backend):
     circuit = Circuit(nqubits=1)
     circuit.add(X(0))
     circuit.add(M(0))
-    result = backend.execute(
-        DigitalPropagation(circuit=circuit), ReadoutSpec().with_sampling(nshots=50)
-    )
+    result = backend.execute(DigitalPropagation(circuit=circuit), ReadoutSpec().with_sampling(nshots=50))
     assert result.samples == {"1": 50}
 
 
@@ -116,9 +114,7 @@ def test_execute_with_measurement_gate(backend):
 def test_controlled_cnot(backend):
     circuit = Circuit(nqubits=2)
     circuit.add(CNOT(control=0, target=1))
-    result = backend.execute(
-        DigitalPropagation(circuit=circuit), ReadoutSpec().with_sampling(nshots=10)
-    )
+    result = backend.execute(DigitalPropagation(circuit=circuit), ReadoutSpec().with_sampling(nshots=10))
     assert isinstance(result, FunctionalResult)
     assert result.samples == {"00": 10}
 
@@ -126,9 +122,7 @@ def test_controlled_cnot(backend):
 @pytest.mark.parametrize("backend", backends)
 def test_nshots(backend):
     circuit = Circuit(nqubits=1)
-    result = backend.execute(
-        DigitalPropagation(circuit=circuit), ReadoutSpec().with_sampling(nshots=10)
-    )
+    result = backend.execute(DigitalPropagation(circuit=circuit), ReadoutSpec().with_sampling(nshots=10))
     assert isinstance(result, FunctionalResult)
     total_shots = sum(result.samples.values())
     assert total_shots == 10
@@ -144,9 +138,7 @@ def test_multi_controlled_execution(backend):
     circuit.add(X(0))
     circuit.add(X(1))
     circuit.add(Controlled(0, 1, basic_gate=X(2)))
-    result = backend.execute(
-        DigitalPropagation(circuit=circuit), ReadoutSpec().with_sampling(nshots=100)
-    )
+    result = backend.execute(DigitalPropagation(circuit=circuit), ReadoutSpec().with_sampling(nshots=100))
     assert isinstance(result, FunctionalResult)
     samples = result.samples
     assert "111" in samples
@@ -166,9 +158,7 @@ def test_constant_hamiltonian(backend):
 
     res = backend.execute(
         AnalogEvolution(schedule=schedule, initial_state=psi0, store_intermediate_results=True),
-        ReadoutSpec()
-        .with_expectation(observables=[pauli_z(0)])
-        .with_state_tomography(),
+        ReadoutSpec().with_expectation(observables=[pauli_z(0)]).with_state_tomography(),
     )
 
     assert isinstance(res, FunctionalResult)
@@ -198,9 +188,7 @@ def test_time_dependent_hamiltonian(backend):
 
     res = backend.execute(
         AnalogEvolution(schedule=schedule, initial_state=psi0),
-        ReadoutSpec()
-        .with_expectation(observables=[pauli_z(0)])
-        .with_state_tomography(),
+        ReadoutSpec().with_expectation(observables=[pauli_z(0)]).with_state_tomography(),
     )
 
     assert isinstance(res, FunctionalResult)
@@ -301,9 +289,7 @@ swap_test_case = [
 def test_basic_gates(backend, gate):
     circuit = Circuit(nqubits=1)
     circuit.add(gate)
-    result = backend.execute(
-        DigitalPropagation(circuit=circuit), ReadoutSpec().with_sampling(nshots=10)
-    )
+    result = backend.execute(DigitalPropagation(circuit=circuit), ReadoutSpec().with_sampling(nshots=10))
     assert isinstance(result, FunctionalResult)
 
 
@@ -363,9 +349,7 @@ def test_time_dependent_hamiltonian_pauli_observable(backend):
 
     res = backend.execute(
         AnalogEvolution(schedule=schedule, initial_state=psi0),
-        ReadoutSpec()
-        .with_expectation(observables=[pauli_z(0)])
-        .with_state_tomography(),
+        ReadoutSpec().with_expectation(observables=[pauli_z(0)]).with_state_tomography(),
     )
 
     assert isinstance(res, FunctionalResult)
@@ -391,9 +375,7 @@ def test_time_dependent_hamiltonian_imaginary(backend):
 
     res = backend.execute(
         AnalogEvolution(schedule=schedule, initial_state=psi0),
-        ReadoutSpec()
-        .with_expectation(observables=[pauli_y(0)])
-        .with_state_tomography(),
+        ReadoutSpec().with_expectation(observables=[pauli_y(0)]).with_state_tomography(),
     )
 
     assert isinstance(res, FunctionalResult)
@@ -422,9 +404,7 @@ def test_time_dependent_hamiltonian_qtensor_observable(backend):
 
     res = backend.execute(
         AnalogEvolution(schedule=schedule, initial_state=psi0),
-        ReadoutSpec()
-        .with_expectation(observables=[QTensor(pauli_z(0).to_matrix())])
-        .with_state_tomography(),
+        ReadoutSpec().with_expectation(observables=[QTensor(pauli_z(0).to_matrix())]).with_state_tomography(),
     )
 
     assert isinstance(res, FunctionalResult)
@@ -437,9 +417,7 @@ def test_time_dependent_hamiltonian_qtensor_observable(backend):
 def test_cnot(backend):
     circuit = Circuit(nqubits=2)
     circuit.add(CNOT(control=0, target=1))
-    result = backend.execute(
-        DigitalPropagation(circuit=circuit), ReadoutSpec().with_sampling(nshots=10)
-    )
+    result = backend.execute(DigitalPropagation(circuit=circuit), ReadoutSpec().with_sampling(nshots=10))
     assert isinstance(result, FunctionalResult)
     assert result.samples == {"00": 10}
 
@@ -469,9 +447,7 @@ def test_measurement_gates(backend):
     circuit = Circuit(nqubits=2)
     circuit.add(X(0))
     circuit.add(M(0))
-    result = backend.execute(
-        DigitalPropagation(circuit=circuit), ReadoutSpec().with_sampling(nshots=50)
-    )
+    result = backend.execute(DigitalPropagation(circuit=circuit), ReadoutSpec().with_sampling(nshots=50))
     assert isinstance(result, FunctionalResult)
     samples = result.samples
     assert "1" in samples
@@ -495,9 +471,7 @@ def test_time_dependent_hamiltonian_density_mat(backend):
 
     res = backend.execute(
         AnalogEvolution(schedule=schedule, initial_state=psi0),
-        ReadoutSpec()
-        .with_expectation(observables=[pauli_z(0)])
-        .with_state_tomography(),
+        ReadoutSpec().with_expectation(observables=[pauli_z(0)]).with_state_tomography(),
     )
 
     assert isinstance(res, FunctionalResult)

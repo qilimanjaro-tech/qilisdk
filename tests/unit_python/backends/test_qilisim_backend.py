@@ -28,7 +28,7 @@ from qilisdk.core import ket
 from qilisdk.functionals import AnalogEvolution, DigitalPropagation, QuantumReservoir, ReservoirLayer
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.noise import Dephasing, NoiseModel
-from qilisdk.readout import ExpectationReadout, ReadoutSpec, SamplingReadout, StateTomographyReadout
+from qilisdk.readout import ReadoutSpec
 from qilisdk.readout.readout_result import ReadoutCompositeResults, StateTomographyReadoutResult
 
 
@@ -124,7 +124,8 @@ def test_qilisim_time_evolution_dummy(monkeypatch):
     func = AnalogEvolution(schedule=schedule, initial_state=initial_state)
     backend = QiliSim()
     assert (
-        backend.execute(func, ReadoutSpec().with_expectation(observables=[pauli_z(0)])) == "mocked_time_evolution_result"
+        backend.execute(func, ReadoutSpec().with_expectation(observables=[pauli_z(0)]))
+        == "mocked_time_evolution_result"
     )
 
 
