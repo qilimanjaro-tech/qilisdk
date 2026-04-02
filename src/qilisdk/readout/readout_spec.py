@@ -86,7 +86,7 @@ class Readout(Generic[S, E, T]):
 
     # -- builder methods -- each one transforms one type parameter --------
 
-    def with_sampling(self, nshots: int = 100) -> Readout[SamplingReadoutResult, E, T]:
+    def with_sampling(self, nshots: int = 1000) -> Readout[SamplingReadoutResult, E, T]:
         """Add a sampling readout to the specification.
 
         Args:
