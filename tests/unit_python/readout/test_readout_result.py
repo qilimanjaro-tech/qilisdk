@@ -319,23 +319,23 @@ def _make_expectation_composite(expectation_values: list[float]) -> ReadoutCompo
 class TestFunctionalResult:
     def test_samples(self):
         result = FunctionalResult(readout_results=_make_sampling_composite(100, {"0": 100}))
-        assert result.samples == {"0": 100}
+        assert result.get_samples() == {"0": 100}
 
     def test_state(self):
         result = FunctionalResult(readout_results=_make_tomography_composite(ket(0)))
-        assert result.state is not None
+        assert result.get_state() is not None
 
     def test_final_expectation_values(self):
         result = FunctionalResult(readout_results=_make_expectation_composite([1.0]))
-        assert result.expectation_values == [1.0]
+        assert result.get_expectation_values() == [1.0]
 
     def test_final_probabilities_from_sampling(self):
         result = FunctionalResult(readout_results=_make_sampling_composite(100, {"0": 70, "1": 30}))
-        assert np.isclose(result.probabilities["0"], 0.7)
+        assert np.isclose(result.get_probabilities()["0"], 0.7)
 
     def test_final_probabilities_from_tomography(self):
         result = FunctionalResult(readout_results=_make_tomography_composite(ket(0)))
-        assert np.isclose(result.probabilities["0"], 1.0)
+        assert np.isclose(result.get_probabilities()["0"], 1.0)
 
     def test_multiple_readout_types(self):
         sampling = SamplingReadoutResult.from_samples(samples={"0": 100})

@@ -160,7 +160,7 @@ class Backend(ABC):
                     res = self._execute_analog_evolution(
                         AnalogEvolution(step, state), readout=[StateTomographyReadout()]
                     )
-                    state: QTensor = res.state
+                    state: QTensor = res.get_state()
 
             try:
                 state: QTensor = state.to_density_matrix()

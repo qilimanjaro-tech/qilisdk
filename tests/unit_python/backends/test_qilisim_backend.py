@@ -173,8 +173,8 @@ def test_qilisim_dephasing_strength_changes_dynamics():
         Readout().with_expectation(observables=[pauli_x(0)]),
     )
 
-    weak_exp = float(np.real(weak_result.expectation_values[0]))
-    strong_exp = float(np.real(strong_result.expectation_values[0]))
+    weak_exp = float(np.real(weak_result.get_expectation_values()[0]))
+    strong_exp = float(np.real(strong_result.get_expectation_values()[0]))
     assert strong_exp < weak_exp
 
 
@@ -211,7 +211,7 @@ def test_execute_quantum_reservoir_qilisim(monkeypatch):
 
     result = backend.execute(functional, Readout().with_expectation(observables=[pauli_z(0)]).with_state_tomography())
 
-    assert result.state is not None
+    assert result.get_state() is not None
     assert len(result.intermediate_expectation_values) == 2
     assert len(result.intermediate_states) == 2
 

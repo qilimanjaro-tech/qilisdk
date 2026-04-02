@@ -13,13 +13,16 @@
 # limitations under the License.
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Generic
+from typing import TYPE_CHECKING, Generic, overload
 
 from qilisdk.core.result import Result
 from qilisdk.readout.readout_result import (
     E,
+    ExpectationReadoutResult,
     ReadoutCompositeResults,
     S,
+    SamplingReadoutResult,
+    StateTomographyReadoutResult,
     T,
     has_expectation_values,
     has_sampling,
@@ -29,6 +32,7 @@ from qilisdk.yaml import yaml
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+    from typing import Any, Never
 
     from qilisdk.core import QTensor
 
@@ -120,14 +124,20 @@ class FunctionalResult(Result, Generic[S, E, T]):
         """Intermediate readout results for each time-step, if stored."""
         return self._intermediate_results
 
-    # -- convenience shortcuts (runtime-checked, not type-narrowed) -------
-    # These provide quick access for REPL / notebook use.  They always
-    # return the concrete type or raise ValueError.  The typed safe path
-    # above is preferred for production code.
+    # -- convenience methods (type-narrowed via self-type overloads) ------
+    # Each method has overloads keyed on the *type of self*, so the type
+    # checker returns the concrete type when the readout is present and
+    # ``Never`` when it is absent (flagging the call as unreachable).
 
-    @property
-    def samples(self) -> dict[str, int]:
+    @overload
+    def get_samples(self: FunctionalResult[SamplingReadoutResult, Any, Any]) -> dict[str, int]: ...
+    @overload
+    def get_samples(self: FunctionalResult[None, Any, Any]) -> Never: ...
+    def get_samples(self) -> dict[str, int]:
         """Measurement samples from the final execution step.
+
+        Returns:
+            dict[str, int]: Mapping of measured bitstring to count.
 
         Raises:
             ValueError: If sampling readout was not provided.
@@ -136,9 +146,17 @@ class FunctionalResult(Result, Generic[S, E, T]):
             return self._readout_results.sampling.samples
         raise ValueError("Sampling readout was not provided.")
 
-    @property
-    def probabilities(self) -> dict[str, float]:
+    @overload
+    def get_probabilities(self: FunctionalResult[SamplingReadoutResult, Any, Any]) -> dict[str, float]: ...
+    @overload
+    def get_probabilities(self: FunctionalResult[None, Any, StateTomographyReadoutResult]) -> dict[str, float]: ...
+    @overload
+    def get_probabilities(self: FunctionalResult[None, Any, None]) -> Never: ...
+    def get_probabilities(self) -> dict[str, float]:
         """Outcome probabilities from the final execution step.
+
+        Returns:
+            dict[str, float]: Mapping of bitstring to probability.
 
         Raises:
             ValueError: If neither sampling nor state-tomography readout was provided.
@@ -149,9 +167,15 @@ class FunctionalResult(Result, Generic[S, E, T]):
             return self._readout_results.state_tomography.probabilities
         raise ValueError("Can't compute probabilities if Sampling or State tomography readouts are not specified.")
 
-    @property
-    def state(self) -> QTensor:
+    @overload
+    def get_state(self: FunctionalResult[Any, Any, StateTomographyReadoutResult]) -> QTensor: ...
+    @overload
+    def get_state(self: FunctionalResult[Any, Any, None]) -> Never: ...
+    def get_state(self) -> QTensor:
         """Quantum state vector from the final execution step.
+
+        Returns:
+            QTensor: The final quantum state.
 
         Raises:
             ValueError: If state-tomography readout was not provided.
@@ -160,9 +184,15 @@ class FunctionalResult(Result, Generic[S, E, T]):
             return self._readout_results.state_tomography.state
         raise ValueError("Can't obtain the final state if State Tomography readout is not specified.")
 
-    @property
-    def expectation_values(self) -> list[float]:
+    @overload
+    def get_expectation_values(self: FunctionalResult[Any, ExpectationReadoutResult, Any]) -> list[float]: ...
+    @overload
+    def get_expectation_values(self: FunctionalResult[Any, None, Any]) -> Never: ...
+    def get_expectation_values(self) -> list[float]:
         """Expectation values from the final execution step.
+
+        Returns:
+            list[float]: One expectation value per observable.
 
         Raises:
             ValueError: If expectation readout was not provided.

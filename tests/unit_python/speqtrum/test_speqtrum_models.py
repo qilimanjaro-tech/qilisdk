@@ -168,7 +168,7 @@ def test_execute_result_sampling():
     )
     serialized_result = result._serialize_sampling_result(functional_result=result.functional_result, _info={})
     deserialized_result = result._load_sampling_result(serialized_result)
-    assert deserialized_result.samples == functional_result.samples
+    assert deserialized_result.get_samples() == functional_result.get_samples()
 
 
 def test_execute_result_time_evolution():
@@ -181,7 +181,7 @@ def test_execute_result_time_evolution():
     )
     serialized_result = result._serialize_sampling_result(functional_result=result.functional_result, _info={})
     deserialized_result = result._load_sampling_result(serialized_result)
-    assert deserialized_result.state == functional_result.state
+    assert deserialized_result.get_state() == functional_result.get_state()
 
 
 def test_execute_result_variational_program():

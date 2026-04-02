@@ -113,7 +113,7 @@ class ObservableCostFunction(CostFunction):
             Number: The expectation value ``<psi|O|psi>`` (or ``Tr(rho O)``
             for mixed states).
         """
-        final_state = results.state
+        final_state = results.get_state()
         total_cost = complex(np.real_if_close(expect_val(self._observable, final_state), tol=get_settings().atol))
         if abs(total_cost.imag) < get_settings().atol:
             return total_cost.real
@@ -139,7 +139,7 @@ class ObservableCostFunction(CostFunction):
         """
         total_cost = complex(0.0)
         nqubits = self._observable.nqubits
-        probabilities = results.probabilities
+        probabilities = results.get_probabilities()
         for sample, prob in probabilities.items():
             state = tensor_prod([ket(int(i)) for i in sample])
             if nqubits != state.nqubits:

@@ -174,7 +174,7 @@ def test_adjoint_fully(gate_instance):
     circuit.add(Adjoint(gate_instance))
     result = backend.execute(DigitalPropagation(circuit=circuit), Readout().with_sampling(nshots=100))
     assert isinstance(result, FunctionalResult)
-    assert result.samples.get("00", 0) == 100
+    assert result.get_samples().get("00", 0) == 100
 
 
 ###################
@@ -262,7 +262,7 @@ def test_measurement_gates():
     circuit.add(M(0))
     result = backend.execute(DigitalPropagation(circuit=circuit), Readout().with_sampling(nshots=10))
     assert isinstance(result, FunctionalResult)
-    assert all(len(key) == 1 for key in result.samples)
+    assert all(len(key) == 1 for key in result.get_samples())
 
 
 def test_bad_probability(monkeypatch):
@@ -280,7 +280,7 @@ def test_bad_probability(monkeypatch):
     monkeypatch.setattr(CircuitSimulator, "run_statistics", lambda self, nshots: CircuitSimulatorMockResults())
     result = backend.execute(DigitalPropagation(circuit=circuit), Readout().with_sampling(nshots=10))
     assert isinstance(result, FunctionalResult)
-    assert sum(result.samples.values()) == 10
+    assert sum(result.get_samples().values()) == 10
 
 
 class QObjMock:
@@ -345,8 +345,8 @@ def test_time_evolution(monkeypatch, initial_state, ob):
     schedule = Schedule(hamiltonians={"h": hamiltonian}, dt=0.1)
     func = AnalogEvolution(schedule=schedule, initial_state=initial_state)
     result = backend.execute(func, Readout().with_expectation(observables=[ob]).with_state_tomography())
-    assert np.allclose(result.expectation_values, np.array([1]))
-    assert isinstance(result.state, QTensor)
+    assert np.allclose(result.get_expectation_values(), np.array([1]))
+    assert isinstance(result.get_state(), QTensor)
 
 
 def test_time_evolution_bad_initial(monkeypatch):
@@ -400,7 +400,7 @@ def test_get_qutip_observable_qtensor(monkeypatch):
     schedule = Schedule(hamiltonians={"h": hamiltonian}, dt=0.1)
     func = AnalogEvolution(schedule=schedule, initial_state=ket(0))
     result = backend.execute(func, Readout().with_expectation(observables=[z_matrix]).with_state_tomography())
-    assert result.expectation_values is not None
+    assert result.get_expectation_values() is not None
 
 
 def test_get_qutip_observable_hamiltonian_smaller_than_system(monkeypatch):
@@ -414,7 +414,7 @@ def test_get_qutip_observable_hamiltonian_smaller_than_system(monkeypatch):
     schedule = Schedule(hamiltonians={"h": system_hamiltonian}, dt=0.1)
     func = AnalogEvolution(schedule=schedule, initial_state=ket(0, 0))
     result = backend.execute(func, Readout().with_expectation(observables=[small_hamiltonian]).with_state_tomography())
-    assert result.expectation_values is not None
+    assert result.get_expectation_values() is not None
 
 
 def test_get_qutip_observable_unsupported_type_raises():

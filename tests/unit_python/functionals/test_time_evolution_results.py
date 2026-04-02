@@ -35,7 +35,7 @@ def test_functional_result_with_state_tomography():
 
     assert result.has_state()
     expected_list = [[0], [1]]
-    for i, row in enumerate(list(result.state.dense())):
+    for i, row in enumerate(list(result.get_state().dense())):
         assert list(row) == expected_list[i]
 
 
@@ -47,8 +47,8 @@ def test_functional_result_with_expectation_values():
     result = FunctionalResult(readout_results=ReadoutCompositeResults(expectation_values=readout_result))
 
     assert result.has_expectation_values()
-    assert len(result.expectation_values) == 1
-    assert np.isclose(result.expectation_values[0], 1.0, atol=1e-6)
+    assert len(result.get_expectation_values()) == 1
+    assert np.isclose(result.get_expectation_values()[0], 1.0, atol=1e-6)
 
 
 def test_functional_result_with_intermediate_results():
@@ -63,7 +63,7 @@ def test_functional_result_with_intermediate_results():
 
     assert len(result) == 3
     assert result.has_state()
-    assert result.state == state3
+    assert result.get_state() == state3
 
     states = result.intermediate_states
     assert len(states) == 3

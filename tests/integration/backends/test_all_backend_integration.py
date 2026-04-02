@@ -96,7 +96,7 @@ def test_execute_simple_circuit_no_measurement(backend):
     circuit.add(X(0))
     result = backend.execute(DigitalPropagation(circuit=circuit), Readout().with_sampling(nshots=100))
     assert isinstance(result, FunctionalResult)
-    samples = result.samples
+    samples = result.get_samples()
     assert "1" in samples
     assert samples["1"] == 100
 
@@ -107,7 +107,7 @@ def test_execute_with_measurement_gate(backend):
     circuit.add(X(0))
     circuit.add(M(0))
     result = backend.execute(DigitalPropagation(circuit=circuit), Readout().with_sampling(nshots=50))
-    assert result.samples == {"1": 50}
+    assert result.get_samples() == {"1": 50}
 
 
 @pytest.mark.parametrize("backend", backends)
@@ -116,7 +116,7 @@ def test_controlled_cnot(backend):
     circuit.add(CNOT(control=0, target=1))
     result = backend.execute(DigitalPropagation(circuit=circuit), Readout().with_sampling(nshots=10))
     assert isinstance(result, FunctionalResult)
-    assert result.samples == {"00": 10}
+    assert result.get_samples() == {"00": 10}
 
 
 @pytest.mark.parametrize("backend", backends)
@@ -124,7 +124,7 @@ def test_nshots(backend):
     circuit = Circuit(nqubits=1)
     result = backend.execute(DigitalPropagation(circuit=circuit), Readout().with_sampling(nshots=10))
     assert isinstance(result, FunctionalResult)
-    total_shots = sum(result.samples.values())
+    total_shots = sum(result.get_samples().values())
     assert total_shots == 10
 
 
@@ -140,7 +140,7 @@ def test_multi_controlled_execution(backend):
     circuit.add(Controlled(0, 1, basic_gate=X(2)))
     result = backend.execute(DigitalPropagation(circuit=circuit), Readout().with_sampling(nshots=100))
     assert isinstance(result, FunctionalResult)
-    samples = result.samples
+    samples = result.get_samples()
     assert "111" in samples
     assert samples["111"] == 100
 
@@ -162,7 +162,7 @@ def test_constant_hamiltonian(backend):
     )
 
     assert isinstance(res, FunctionalResult)
-    assert np.isclose(res.expectation_values[0], 1.0, rtol=1e-6)
+    assert np.isclose(res.get_expectation_values()[0], 1.0, rtol=1e-6)
 
     # Intermediate states should replicate constant behavior
     assert len(res.intermediate_results) > 0
@@ -192,7 +192,7 @@ def test_time_dependent_hamiltonian(backend):
     )
 
     assert isinstance(res, FunctionalResult)
-    expect_z = res.expectation_values[0]
+    expect_z = res.get_expectation_values()[0]
     assert np.isclose(expect_z, -1.0, rtol=1e-2)
 
 
@@ -218,9 +218,9 @@ def test_time_dependent_hamiltonian_with_3_qubits(backend):
         Readout().with_expectation(observables=[pauli_z(0), pauli_z(1), pauli_z(2)]),
     )
 
-    assert np.isclose(res.expectation_values[0], -1.0, rtol=1e-2)
-    assert np.isclose(res.expectation_values[1], -1.0, rtol=1e-2)
-    assert np.isclose(res.expectation_values[2], -1.0, rtol=1e-2)
+    assert np.isclose(res.get_expectation_values()[0], -1.0, rtol=1e-2)
+    assert np.isclose(res.get_expectation_values()[1], -1.0, rtol=1e-2)
+    assert np.isclose(res.get_expectation_values()[2], -1.0, rtol=1e-2)
 
 
 @pytest.mark.parametrize("backend", backends)
@@ -238,7 +238,7 @@ def test_real_example(backend):
         readout,
     )
     assert np.isclose(output.optimal_cost, -1.0, rtol=1e-6)
-    assert output.optimal_execution_results.samples == {"0": 1000}
+    assert output.optimal_execution_results.get_samples() == {"0": 1000}
 
 
 @pytest.mark.parametrize("backend", backends_no_cuda)
@@ -261,7 +261,9 @@ def test_trotterized_time_evolution_results(backend: Backend):
     )
     nshots = 10_000
     sam_res = backend.execute(DigitalPropagation(ansatz), Readout().with_sampling(nshots=nshots))
-    assert all(np.isclose(list(te_res.probabilities.values()), list(sam_res.probabilities.values()), atol=1e-2))
+    assert all(
+        np.isclose(list(te_res.get_probabilities().values()), list(sam_res.get_probabilities().values()), atol=1e-2)
+    )
 
 
 basic_gate_test_cases = [
@@ -353,8 +355,8 @@ def test_time_dependent_hamiltonian_pauli_observable(backend):
     )
 
     assert isinstance(res, FunctionalResult)
-    expect_z = res.expectation_values[0]
-    assert res.state.is_ket()
+    expect_z = res.get_expectation_values()[0]
+    assert res.get_state().is_ket()
     assert np.isclose(expect_z, -1.0, rtol=1e-2)
 
 
@@ -379,12 +381,12 @@ def test_time_dependent_hamiltonian_imaginary(backend):
     )
 
     assert isinstance(res, FunctionalResult)
-    expect_y = res.expectation_values[0]
-    assert res.state.shape == (2, 2)
+    expect_y = res.get_expectation_values()[0]
+    assert res.get_state().shape == (2, 2)
     assert np.isclose(expect_y, -1.0, rtol=1e-2)
 
     # check that it's hermitian
-    final_rho = res.state.dense()
+    final_rho = res.get_state().dense()
     assert np.allclose(final_rho, final_rho.conj().T, rtol=1e-6)
 
 
@@ -408,8 +410,8 @@ def test_time_dependent_hamiltonian_qtensor_observable(backend):
     )
 
     assert isinstance(res, FunctionalResult)
-    expect_z = res.expectation_values[0]
-    assert res.state.is_ket()
+    expect_z = res.get_expectation_values()[0]
+    assert res.get_state().is_ket()
     assert np.isclose(expect_z, -1.0, rtol=1e-2)
 
 
@@ -419,7 +421,7 @@ def test_cnot(backend):
     circuit.add(CNOT(control=0, target=1))
     result = backend.execute(DigitalPropagation(circuit=circuit), Readout().with_sampling(nshots=10))
     assert isinstance(result, FunctionalResult)
-    assert result.samples == {"00": 10}
+    assert result.get_samples() == {"00": 10}
 
 
 @pytest.mark.parametrize("backend", backends)
@@ -430,7 +432,7 @@ def test_multiple_parameterized_gates(backend):
     c.add(RX(qubit=0, theta=np.pi / 2))
     result = backend.execute(DigitalPropagation(circuit=c), Readout().with_sampling(nshots=100))
     assert isinstance(result, FunctionalResult)
-    samples = result.samples
+    samples = result.get_samples()
     assert "1" in samples
     assert samples["1"] == 100
 
@@ -449,7 +451,7 @@ def test_measurement_gates(backend):
     circuit.add(M(0))
     result = backend.execute(DigitalPropagation(circuit=circuit), Readout().with_sampling(nshots=50))
     assert isinstance(result, FunctionalResult)
-    samples = result.samples
+    samples = result.get_samples()
     assert "1" in samples
     assert samples["1"] == 50
 
@@ -475,12 +477,12 @@ def test_time_dependent_hamiltonian_density_mat(backend):
     )
 
     assert isinstance(res, FunctionalResult)
-    expect_z = res.expectation_values[0]
-    assert res.state.shape == (2, 2)
+    expect_z = res.get_expectation_values()[0]
+    assert res.get_state().shape == (2, 2)
     assert np.isclose(expect_z, -1.0, rtol=1e-2)
 
     # check that it's hermitian
-    final_rho = res.state.dense()
+    final_rho = res.get_state().dense()
     assert np.allclose(final_rho, final_rho.conj().T, rtol=1e-6)
 
 
@@ -491,7 +493,7 @@ def test_execute_quantum_reservoir_qutip():
 
     result = backend._execute_quantum_reservoir(functional, readout)
 
-    assert result.state is not None
+    assert result.get_state() is not None
     assert len(result) >= 2
 
 
@@ -502,7 +504,7 @@ def test_cnot_on_one(backend):
     circuit.add(CNOT(control=0, target=1))
     result = backend.execute(DigitalPropagation(circuit=circuit), Readout().with_sampling(nshots=10))
     assert isinstance(result, FunctionalResult)
-    assert result.samples == {"11": 10}
+    assert result.get_samples() == {"11": 10}
 
 
 @pytest.mark.parametrize("backend", backends)
@@ -511,7 +513,7 @@ def test_controlled_u3(backend):
     circuit.add(U3(1, theta=1.0, phi=0.5, gamma=0.25).controlled(0))
     result = backend.execute(DigitalPropagation(circuit=circuit), Readout().with_sampling(nshots=10))
     assert isinstance(result, FunctionalResult)
-    assert result.samples == {"00": 10}
+    assert result.get_samples() == {"00": 10}
 
 
 @pytest.mark.parametrize("backend", backends)
@@ -521,7 +523,7 @@ def test_swap(backend):
     circuit.add(SWAP(0, 1))
     result = backend.execute(DigitalPropagation(circuit=circuit), Readout().with_sampling(nshots=10))
     assert isinstance(result, FunctionalResult)
-    assert result.samples == {"01": 10}
+    assert result.get_samples() == {"01": 10}
 
 
 @pytest.mark.parametrize("backend", backends)
@@ -532,4 +534,4 @@ def test_toffoli(backend):
     circuit.add(X(2).controlled(0, 1))
     result = backend.execute(DigitalPropagation(circuit=circuit), Readout().with_sampling(nshots=10))
     assert isinstance(result, FunctionalResult)
-    assert result.samples == {"111": 10}
+    assert result.get_samples() == {"111": 10}

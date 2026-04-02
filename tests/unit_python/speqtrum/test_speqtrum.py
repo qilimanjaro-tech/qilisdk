@@ -349,7 +349,7 @@ def test_wait_for_job_with_handle_returns_typed_detail(monkeypatch):
     assert typed_detail.id == 7
     typed_result = typed_detail.get_results()
     assert isinstance(typed_result, FunctionalResult)
-    assert typed_result.samples == functional_result.samples
+    assert typed_result.get_samples() == functional_result.get_samples()
 
 
 def test_ensure_ok_raises_with_api_payload():
