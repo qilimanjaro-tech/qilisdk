@@ -50,7 +50,6 @@ import qilisdk.speqtrum.speqtrum as speqtrum
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.functionals.variational_program_result import VariationalProgramResult
 from qilisdk.optimizers.optimizer_result import OptimizerResult
-from qilisdk.readout import SamplingReadout
 from qilisdk.readout.readout_result import ReadoutCompositeResults, SamplingReadoutResult
 from qilisdk.speqtrum.speqtrum_models import ExecuteResult
 
@@ -318,8 +317,7 @@ def test_wait_for_job_with_handle_returns_typed_detail(monkeypatch):
     q = speqtrum.SpeQtrum()
 
     handle = speqtrum.JobHandle.functional(7)
-    readout = SamplingReadout(nshots=2)
-    readout_result = SamplingReadoutResult.from_samples(readout=readout, samples={"00": 2})
+    readout_result = SamplingReadoutResult.from_samples(samples={"00": 2})
     functional_result = FunctionalResult(readout_results=ReadoutCompositeResults(sampling=readout_result))
     detail = speqtrum.JobDetail(
         id=7,
@@ -402,8 +400,7 @@ def test_variational_program_handle_preserves_inner_result(monkeypatch):
     q = speqtrum.SpeQtrum()
 
     handle = speqtrum.JobHandle.variational_program(21, result_type=FunctionalResult)
-    readout = SamplingReadout(nshots=3)
-    readout_result = SamplingReadoutResult.from_samples(readout=readout, samples={"01": 1, "10": 2})
+    readout_result = SamplingReadoutResult.from_samples(samples={"01": 1, "10": 2})
     functional_result = FunctionalResult(readout_results=ReadoutCompositeResults(sampling=readout_result))
     optimizer_result = OptimizerResult(optimal_cost=0.5, optimal_parameters=[0.1, 0.2, 0.3])
     variational_result = VariationalProgramResult(optimizer_result=optimizer_result, result=functional_result)
@@ -444,8 +441,7 @@ def test_variational_program_handle_with_wrong_type_raises(monkeypatch):
         def __init__(self): ...
 
     handle = speqtrum.JobHandle.variational_program(22, result_type=WrongFunctionalResult)
-    readout = SamplingReadout(nshots=1)
-    readout_result = SamplingReadoutResult.from_samples(readout=readout, samples={"00": 1})
+    readout_result = SamplingReadoutResult.from_samples(samples={"00": 1})
     functional_result = FunctionalResult(readout_results=ReadoutCompositeResults(sampling=readout_result))
     optimizer_result = OptimizerResult(optimal_cost=0.2, optimal_parameters=[0.0])
     variational_result = VariationalProgramResult(optimizer_result=optimizer_result, result=functional_result)

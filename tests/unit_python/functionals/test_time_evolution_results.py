@@ -17,7 +17,7 @@ import pytest
 from qilisdk.analog.hamiltonian import Z
 from qilisdk.core.qtensor import QTensor
 from qilisdk.functionals.functional_result import FunctionalResult
-from qilisdk.readout import ExpectationReadout, StateTomographyReadout
+from qilisdk.readout import ExpectationReadout
 from qilisdk.readout.readout_result import (
     ExpectationReadoutResult,
     ReadoutCompositeResults,
@@ -26,9 +26,7 @@ from qilisdk.readout.readout_result import (
 
 
 def _tomo_composite(state: QTensor) -> ReadoutCompositeResults:
-    return ReadoutCompositeResults(
-        state_tomography=StateTomographyReadoutResult(readout=StateTomographyReadout(), state=state)
-    )
+    return ReadoutCompositeResults(state_tomography=StateTomographyReadoutResult(state=state))
 
 
 def test_functional_result_with_state_tomography():
@@ -43,7 +41,9 @@ def test_functional_result_with_state_tomography():
 
 def test_functional_result_with_expectation_values():
     readout = ExpectationReadout(observables=[Z(0)])
-    readout_result = ExpectationReadoutResult.from_state(readout=readout, state=QTensor(np.array([[1], [0]])))
+    readout_result = ExpectationReadoutResult.from_state(
+        expectation_readout=readout, state=QTensor(np.array([[1], [0]]))
+    )
     result = FunctionalResult(readout_results=ReadoutCompositeResults(expectation_values=readout_result))
 
     assert result.has_expectation_values()

@@ -18,7 +18,6 @@ from qilisdk.analog.hamiltonian import PauliZ, Z
 from qilisdk.core.qtensor import QTensor, ket, tensor_prod
 from qilisdk.cost_functions.observable_cost_function import ObservableCostFunction
 from qilisdk.functionals.functional_result import FunctionalResult
-from qilisdk.readout import ExpectationReadout, SamplingReadout, StateTomographyReadout
 from qilisdk.readout.readout_result import (
     ExpectationReadoutResult,
     ReadoutCompositeResults,
@@ -54,25 +53,21 @@ def test_compute_cost_state_tomography():
     ocf = ObservableCostFunction(H)
 
     # With ket state
-    readout = StateTomographyReadout()
-    readout_result = StateTomographyReadoutResult(readout=readout, state=tensor_prod([ket(1), ket(1)]))
+    readout_result = StateTomographyReadoutResult(state=tensor_prod([ket(1), ket(1)]))
     result = FunctionalResult(readout_results=ReadoutCompositeResults(state_tomography=readout_result))
     cost = ocf.compute_cost(result)
 
     assert cost == -2
 
     # With density matrix state
-    readout_result = StateTomographyReadoutResult(
-        readout=readout, state=tensor_prod([ket(1), ket(1)]).to_density_matrix()
-    )
+    readout_result = StateTomographyReadoutResult(state=tensor_prod([ket(1), ket(1)]).to_density_matrix())
     result = FunctionalResult(readout_results=ReadoutCompositeResults(state_tomography=readout_result))
     cost = ocf.compute_cost(result)
 
     assert cost == -2
 
     # Without state or samples -- should raise
-    exp_readout = ExpectationReadout(observables=[H])
-    exp_result = ExpectationReadoutResult(readout=exp_readout, expected_values=[0.0])
+    exp_result = ExpectationReadoutResult(expected_values=[0.0])
     no_state_result = FunctionalResult(readout_results=ReadoutCompositeResults(expectation_values=exp_result))
     with pytest.raises(
         ValueError,
@@ -94,22 +89,19 @@ def test_compute_cost_sampling():
 
     ocf = ObservableCostFunction(H)
 
-    readout = SamplingReadout(nshots=100)
-    readout_result = SamplingReadoutResult.from_samples(readout=readout, samples={"11": 100})
+    readout_result = SamplingReadoutResult.from_samples(samples={"11": 100})
     result = FunctionalResult(readout_results=ReadoutCompositeResults(sampling=readout_result))
     cost = ocf.compute_cost(result)
 
     assert cost == -2
 
-    readout_result = SamplingReadoutResult.from_samples(readout=SamplingReadout(nshots=100), samples={"0": 100})
+    readout_result = SamplingReadoutResult.from_samples(samples={"0": 100})
     result = FunctionalResult(readout_results=ReadoutCompositeResults(sampling=readout_result))
 
     with pytest.raises(ValueError, match=r"The samples provided have 1 qubits but the observable has 2 qubits"):
         _ = ocf.compute_cost(result)
 
-    readout_result = SamplingReadoutResult.from_samples(
-        readout=SamplingReadout(nshots=100), samples={"11": 50, "00": 50}
-    )
+    readout_result = SamplingReadoutResult.from_samples(samples={"11": 50, "00": 50})
     result = FunctionalResult(readout_results=ReadoutCompositeResults(sampling=readout_result))
     cost = ocf.compute_cost(result)
 
@@ -122,8 +114,7 @@ def test_imag_state_tomography_result():
 
     ocf = ObservableCostFunction(ob)
 
-    readout = StateTomographyReadout()
-    readout_result = StateTomographyReadoutResult(readout=readout, state=tensor_prod([ket(1), ket(1)]))
+    readout_result = StateTomographyReadoutResult(state=tensor_prod([ket(1), ket(1)]))
     result = FunctionalResult(readout_results=ReadoutCompositeResults(state_tomography=readout_result))
     cost = ocf.compute_cost(result)
 
@@ -136,8 +127,7 @@ def test_imag_sampling_result():
 
     ocf = ObservableCostFunction(ob)
 
-    readout = SamplingReadout(nshots=100)
-    readout_result = SamplingReadoutResult.from_samples(readout=readout, samples={"11": 100})
+    readout_result = SamplingReadoutResult.from_samples(samples={"11": 100})
     result = FunctionalResult(readout_results=ReadoutCompositeResults(sampling=readout_result))
     cost = ocf.compute_cost(result)
 

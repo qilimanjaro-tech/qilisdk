@@ -88,57 +88,45 @@ class TestSamplesFromState:
 
 class TestSamplingReadoutResult:
     def test_from_samples(self):
-        readout = SamplingReadout(nshots=100)
-        result = SamplingReadoutResult.from_samples(readout=readout, samples={"0": 60, "1": 40})
+        result = SamplingReadoutResult.from_samples(samples={"0": 60, "1": 40})
         assert result.samples == {"0": 60, "1": 40}
         assert np.isclose(result.probabilities["0"], 0.6)
         assert np.isclose(result.probabilities["1"], 0.4)
 
     def test_from_state(self):
         readout = SamplingReadout(nshots=100)
-        result = SamplingReadoutResult.from_state(readout=readout, state=ket(0))
+        result = SamplingReadoutResult.from_state(sampling_readout=readout, state=ket(0))
         assert sum(result.samples.values()) == 100
         assert "0" in result.samples
 
     def test_init_no_samples_raises(self):
-        readout = SamplingReadout(nshots=100)
         with pytest.raises(ValueError, match="samples are not provided"):
-            SamplingReadoutResult(readout=readout, samples=None, probabilities=None)
+            SamplingReadoutResult(samples=None, probabilities=None)
 
     def test_get_probability(self):
-        readout = SamplingReadout(nshots=100)
-        result = SamplingReadoutResult.from_samples(readout=readout, samples={"00": 60, "01": 40})
+        result = SamplingReadoutResult.from_samples(samples={"00": 60, "01": 40})
         assert np.isclose(result.get_probability("00"), 0.6)
         assert np.isclose(result.get_probability("11"), 0.0)
 
     def test_get_probabilities_top_n(self):
-        readout = SamplingReadout(nshots=100)
-        result = SamplingReadoutResult.from_samples(readout=readout, samples={"00": 60, "01": 30, "10": 10})
+        result = SamplingReadoutResult.from_samples(samples={"00": 60, "01": 30, "10": 10})
         top = result.get_probabilities(n=2)
         assert len(top) == 2
         assert top[0][0] == "00"
 
     def test_get_probabilities_all(self):
-        readout = SamplingReadout(nshots=100)
-        result = SamplingReadoutResult.from_samples(readout=readout, samples={"0": 60, "1": 40})
+        result = SamplingReadoutResult.from_samples(samples={"0": 60, "1": 40})
         all_probs = result.get_probabilities()
         assert len(all_probs) == 2
 
-    def test_readout_property(self):
-        readout = SamplingReadout(nshots=42)
-        result = SamplingReadoutResult.from_samples(readout=readout, samples={"0": 42})
-        assert result.readout is readout
-
     def test_repr(self):
-        readout = SamplingReadout(nshots=10)
-        result = SamplingReadoutResult.from_samples(readout=readout, samples={"0": 10})
+        result = SamplingReadoutResult.from_samples(samples={"0": 10})
         assert "Sampling Results" in repr(result)
         assert "nshots=10" in repr(result)
 
     def test_mismatched_bitstring_lengths_raises(self):
-        readout = SamplingReadout(nshots=100)
         with pytest.raises(ValueError, match="same length"):
-            SamplingReadoutResult.from_samples(readout=readout, samples={"0": 50, "01": 50})
+            SamplingReadoutResult.from_samples(samples={"0": 50, "01": 50})
 
 
 # ExpectationReadoutResult
@@ -147,45 +135,28 @@ class TestSamplingReadoutResult:
 class TestExpectationReadoutResult:
     def test_from_state(self):
         readout = ExpectationReadout(observables=[pauli_z(0)])
-        result = ExpectationReadoutResult.from_state(readout=readout, state=ket(0))
+        result = ExpectationReadoutResult.from_state(expectation_readout=readout, state=ket(0))
         assert len(result.expected_values) == 1
         assert np.isclose(result.expected_values[0], 1.0)
 
     def test_init_from_expected_values(self):
-        readout = ExpectationReadout(observables=[pauli_z(0)])
-        result = ExpectationReadoutResult(readout=readout, expected_values=[0.5])
+        result = ExpectationReadoutResult(expected_values=[0.5])
         assert result.expected_values == [0.5]
-
-    def test_init_no_args_raises(self):
-        readout = ExpectationReadout(observables=[pauli_z(0)])
-        with pytest.raises(TypeError):
-            ExpectationReadoutResult(readout=readout)
-
-    def test_readout_property(self):
-        readout = ExpectationReadout(observables=[pauli_z(0)])
-        result = ExpectationReadoutResult(readout=readout, expected_values=[1.0])
-        assert result.readout is readout
 
     def test_ket_one_z_expectation(self):
         readout = ExpectationReadout(observables=[pauli_z(0)])
-        result = ExpectationReadoutResult.from_state(readout=readout, state=ket(1))
+        result = ExpectationReadoutResult.from_state(expectation_readout=readout, state=ket(1))
         assert np.isclose(result.expected_values[0], -1.0)
 
     def test_superposition_z_expectation(self):
         readout = ExpectationReadout(observables=[pauli_z(0)])
         state = (ket(0) + ket(1)).unit()
-        result = ExpectationReadoutResult.from_state(readout=readout, state=state)
+        result = ExpectationReadoutResult.from_state(expectation_readout=readout, state=state)
         assert np.isclose(result.expected_values[0], 0.0, atol=1e-10)
 
     def test_repr(self):
-        readout = ExpectationReadout(observables=[pauli_z(0)])
-        result = ExpectationReadoutResult(readout=readout, expected_values=[1.0])
+        result = ExpectationReadoutResult(expected_values=[1.0])
         assert "Expectation Value Results" in repr(result)
-
-    def test_repr_with_nshots(self):
-        readout = ExpectationReadout(observables=[pauli_z(0)], nshots=100)
-        result = ExpectationReadoutResult(readout=readout, expected_values=[1.0])
-        assert "nshots = 100" in repr(result)
 
 
 # StateTomographyReadoutResult
@@ -193,44 +164,33 @@ class TestExpectationReadoutResult:
 
 class TestStateTomographyReadoutResult:
     def test_basic_construction(self):
-        readout = StateTomographyReadout()
-        result = StateTomographyReadoutResult(readout=readout, state=ket(0))
+        result = StateTomographyReadoutResult(state=ket(0))
         assert result.state is not None
         assert result.probabilities is not None
 
     def test_probabilities_computed(self):
-        readout = StateTomographyReadout()
-        result = StateTomographyReadoutResult(readout=readout, state=ket(0))
+        result = StateTomographyReadoutResult(state=ket(0))
         assert np.isclose(result.probabilities["0"], 1.0)
         assert np.isclose(result.probabilities["1"], 0.0)
 
     def test_get_probability(self):
-        readout = StateTomographyReadout()
-        result = StateTomographyReadoutResult(readout=readout, state=ket(0))
+        result = StateTomographyReadoutResult(state=ket(0))
         assert np.isclose(result.get_probability("0"), 1.0)
         assert np.isclose(result.get_probability("1"), 0.0)
 
     def test_get_probabilities_top_n(self):
-        readout = StateTomographyReadout()
         state = (ket(0) + ket(1)).unit()
-        result = StateTomographyReadoutResult(readout=readout, state=state)
+        result = StateTomographyReadoutResult(state=state)
         top = result.get_probabilities(n=1)
         assert len(top) == 1
 
-    def test_readout_property(self):
-        readout = StateTomographyReadout()
-        result = StateTomographyReadoutResult(readout=readout, state=ket(0))
-        assert result.readout is readout
-
     def test_repr(self):
-        readout = StateTomographyReadout()
-        result = StateTomographyReadoutResult(readout=readout, state=ket(0))
+        result = StateTomographyReadoutResult(state=ket(0))
         assert "State Tomography Results" in repr(result)
 
     def test_density_matrix_state(self):
-        readout = StateTomographyReadout()
         state = ket(0).to_density_matrix()
-        result = StateTomographyReadoutResult(readout=readout, state=state)
+        result = StateTomographyReadoutResult(state=state)
         assert np.isclose(result.probabilities["0"], 1.0)
 
 
@@ -240,15 +200,15 @@ class TestStateTomographyReadoutResult:
 class TestReadoutCompositeResults:
     @pytest.fixture
     def sampling_result(self):
-        return SamplingReadoutResult.from_samples(readout=SamplingReadout(nshots=100), samples={"0": 60, "1": 40})
+        return SamplingReadoutResult.from_samples(samples={"0": 60, "1": 40})
 
     @pytest.fixture
     def expectation_result(self):
-        return ExpectationReadoutResult(readout=ExpectationReadout(observables=[pauli_z(0)]), expected_values=[1.0])
+        return ExpectationReadoutResult(expected_values=[1.0])
 
     @pytest.fixture
     def tomography_result(self):
-        return StateTomographyReadoutResult(readout=StateTomographyReadout(), state=ket(0))
+        return StateTomographyReadoutResult(state=ket(0))
 
     def test_sampling_field(self, sampling_result):
         composite = ReadoutCompositeResults(sampling=sampling_result)
@@ -321,25 +281,23 @@ class TestReadoutCompositeResults:
 
 class TestSamplingReadoutResultEdgeCases:
     def test_init_no_samples_raises(self):
-        ro = SamplingReadout(nshots=10)
         with pytest.raises(ValueError, match="samples are not provided"):
-            SamplingReadoutResult(readout=ro, samples=None, probabilities=None)
+            SamplingReadoutResult(samples=None, probabilities=None)
 
     def test_from_samples_empty_raises(self):
-        ro = SamplingReadout(nshots=100)
-        with pytest.raises(ValueError, match="samples and probabilities are not provided"):
-            SamplingReadoutResult.from_samples(readout=ro, samples={})
+        with pytest.raises(ValueError, match="samples are not provided"):
+            SamplingReadoutResult.from_samples(samples={})
 
 
 class TestStateTomographyEdgeCases:
     def test_get_probabilities(self):
-        result = StateTomographyReadoutResult(readout=StateTomographyReadout(), state=ket(0))
+        result = StateTomographyReadoutResult(state=ket(0))
         top = result.get_probabilities(n=1)
         assert len(top) == 1
         assert top[0][0] == "0"
 
     def test_repr(self):
-        result = StateTomographyReadoutResult(readout=StateTomographyReadout(), state=ket(0))
+        result = StateTomographyReadoutResult(state=ket(0))
         assert "State Tomography" in repr(result)
 
 
@@ -347,23 +305,15 @@ class TestStateTomographyEdgeCases:
 
 
 def _make_sampling_composite(nshots: int, samples: dict[str, int]) -> ReadoutCompositeResults:
-    return ReadoutCompositeResults(
-        sampling=SamplingReadoutResult.from_samples(readout=SamplingReadout(nshots=nshots), samples=samples)
-    )
+    return ReadoutCompositeResults(sampling=SamplingReadoutResult.from_samples(samples=samples))
 
 
 def _make_tomography_composite(state: QTensor) -> ReadoutCompositeResults:
-    return ReadoutCompositeResults(
-        state_tomography=StateTomographyReadoutResult(readout=StateTomographyReadout(), state=state)
-    )
+    return ReadoutCompositeResults(state_tomography=StateTomographyReadoutResult(state=state))
 
 
 def _make_expectation_composite(expected_values: list[float]) -> ReadoutCompositeResults:
-    return ReadoutCompositeResults(
-        expectation_values=ExpectationReadoutResult(
-            readout=ExpectationReadout(observables=[pauli_z(0)]), expected_values=expected_values
-        )
-    )
+    return ReadoutCompositeResults(expectation_values=ExpectationReadoutResult(expected_values=expected_values))
 
 
 class TestFunctionalResult:
@@ -388,11 +338,9 @@ class TestFunctionalResult:
         assert np.isclose(result.probabilities["0"], 1.0)
 
     def test_multiple_readout_types(self):
-        sampling = SamplingReadoutResult.from_samples(readout=SamplingReadout(nshots=100), samples={"0": 100})
-        tomography = StateTomographyReadoutResult(readout=StateTomographyReadout(), state=ket(0))
-        expectation = ExpectationReadoutResult(
-            readout=ExpectationReadout(observables=[pauli_z(0)]), expected_values=[1.0]
-        )
+        sampling = SamplingReadoutResult.from_samples(samples={"0": 100})
+        tomography = StateTomographyReadoutResult(state=ket(0))
+        expectation = ExpectationReadoutResult.from_expectations(expected_values=[1.0])
         result = FunctionalResult(
             readout_results=ReadoutCompositeResults(
                 sampling=sampling, state_tomography=tomography, expectation_values=expectation

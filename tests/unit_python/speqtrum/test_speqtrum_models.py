@@ -65,7 +65,7 @@ from qilisdk.digital import Circuit
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.functionals.variational_program_result import VariationalProgramResult
 from qilisdk.optimizers.optimizer_result import OptimizerResult
-from qilisdk.readout import SamplingReadout, StateTomographyReadout
+from qilisdk.readout import StateTomographyReadout
 from qilisdk.readout.readout_result import ReadoutCompositeResults, SamplingReadoutResult, StateTomographyReadoutResult
 from qilisdk.speqtrum.speqtrum_models import (
     AnalogEvolutionPayload,
@@ -158,8 +158,7 @@ def test_two_tones_experiment_payload():
 
 def test_execute_result_sampling():
     execute_type = ExecuteType.DIGITAL_PROPAGATION
-    readout = SamplingReadout(nshots=1024)
-    readout_result = SamplingReadoutResult.from_samples(readout=readout, samples={"0": 512, "1": 512})
+    readout_result = SamplingReadoutResult.from_samples(samples={"0": 512, "1": 512})
     functional_result = FunctionalResult(readout_results=ReadoutCompositeResults(sampling=readout_result))
     result = ExecuteResult(
         type=execute_type,
@@ -172,8 +171,7 @@ def test_execute_result_sampling():
 
 def test_execute_result_time_evolution():
     execute_type = ExecuteType.ANALOG_EVOLUTION
-    readout = StateTomographyReadout()
-    readout_result = StateTomographyReadoutResult(readout=readout, state=ket(0))
+    readout_result = StateTomographyReadoutResult(state=ket(0))
     functional_result = FunctionalResult(readout_results=ReadoutCompositeResults(state_tomography=readout_result))
     result = ExecuteResult(
         type=execute_type,

@@ -29,10 +29,9 @@ from __future__ import annotations
 
 import heapq
 import operator
-from abc import abstractmethod
 from dataclasses import dataclass
 from pprint import pformat
-from typing import TYPE_CHECKING, Generic, Protocol, Self, TypeGuard, TypeVar
+from typing import TYPE_CHECKING, Protocol, Self, TypeGuard, TypeVar
 
 import numpy as np
 from loguru import logger
@@ -41,10 +40,10 @@ from qilisdk.core import QTensor, expect_val
 from qilisdk.core.result import Result
 from qilisdk.settings import get_settings
 
-from .readout import ExpectationReadout, ReadoutMethod, SamplingReadout, StateTomographyReadout
-
 if TYPE_CHECKING:
     from qilisdk.core.types import Number
+
+    from .readout import ExpectationReadout, ReadoutMethod, SamplingReadout, StateTomographyReadout
 
 
 NORMALIZATION_TOLERANCE = 1e-8
@@ -78,16 +77,10 @@ C = TypeVar("C", bound="ReadoutMethod")
 class ReadoutResult(Result, Generic[C]):
     """Abstract base class for a single readout result.
 
-    Every concrete subclass must expose a :attr:`readout` property that
-    returns the :class:`~qilisdk.readout.ReadoutMethod` configuration used
-    to produce the result.
+    Every concrete subclass must expose a :attr:`readout` property that returns the :class:`~qilisdk.readout.ReadoutMethod`
+    configuration used to produce the result.
     """
 
-    @property
-    @abstractmethod
-    def readout(self) -> C:
-        """ReadoutMethod: The readout configuration that produced this result."""
-        ...
 
 
 # ---------------------------------------------------------------------------
@@ -102,20 +95,15 @@ class SamplingReadoutResult(ReadoutResult[SamplingReadout]):
     distribution.  The object can be constructed in two ways:
 
     1. From explicit ``samples`` (and optionally ``probabilities``).
-    2. From a quantum ``state``, in which case samples are drawn
-       stochastically according to the state amplitudes.
+    2. From a quantum ``state``, in which case samples are drawn stochastically according to the state amplitudes.
 
     Args:
-        readout (SamplingReadout): The readout configuration that produced
-            this result.
-        samples (dict[str, int] | None): Mapping of bitstring to
-            measurement count.  Mutually exclusive with ``state``.
-        probabilities (dict[str, float] | None): Pre-computed probability
-            distribution.  If omitted when ``samples`` is given, it is
-            derived from the counts.
-        state (QTensor | None): Quantum state from which to derive
-            samples and probabilities.  Mutually exclusive with
-            ``samples``.
+        readout (SamplingReadout): The readout configuration that produced this result.
+        samples (dict[str, int] | None): Mapping of bitstring to measurement count.  Mutually exclusive with ``state``.
+        probabilities (dict[str, float] | None): Pre-computed probability distribution.  If omitted when ``samples``
+            is given, it is derived from the counts.
+        state (QTensor | None): Quantum state from which to derive samples and probabilities.  Mutually exclusive
+            with ``samples``.
 
     Raises:
         ValueError: If neither ``samples``/``probabilities`` nor ``state``
@@ -123,46 +111,38 @@ class SamplingReadoutResult(ReadoutResult[SamplingReadout]):
     """
 
     @classmethod
-    def from_samples(
-        cls, readout: SamplingReadout, samples: dict[str, int], probabilities: dict[str, float] | None = None
-    ) -> Self:
-        if not samples and not probabilities:
-            raise ValueError("can't initialize Sampling Results if both samples and probabilities are not provided.")
-        if not probabilities:
-            bitstrings = list(samples.keys())
-            nqubits = len(bitstrings[0])
-            if not all(len(bitstring) == nqubits for bitstring in bitstrings):
-                raise ValueError("Not all bitstring keys have the same length.")
+    def from_samples(cls, samples: dict[str, int]) -> Self:
+        if not samples:
+            raise ValueError("can't initialize Sampling Results if samples are not provided.")
 
-            # Calculate probabilities
-            probabilities: dict[str, int | float] = {
-                bitstring: (counts / readout.nshots if readout.nshots and readout.nshots > 0 else 0.0)
-                for bitstring, counts in samples.items()
-            }
-        return cls(readout=readout, samples=samples, probabilities=probabilities)
+        nshots = sum(samples.values())
+        bitstrings = list(samples.keys())
+        nqubits = len(bitstrings[0])
+        if not all(len(bitstring) == nqubits for bitstring in bitstrings):
+            raise ValueError("Not all bitstring keys have the same length.")
+
+        # Calculate probabilities
+        probabilities: dict[str, int | float] = {
+            bitstring: (counts / nshots if nshots and nshots > 0 else 0.0) for bitstring, counts in samples.items()
+        }
+        return cls(samples=samples, probabilities=probabilities)
 
     @classmethod
-    def from_state(cls, readout: SamplingReadout, state: QTensor) -> Self:
+    def from_state(
+        cls,
+        sampling_readout: SamplingReadout,
+        state: QTensor,
+    ) -> Self:
         f_string = "{:0" + str(state.nqubits) + "b}"
         probabilities: dict[str, int | float] = {(f_string).format(i): p for i, p in enumerate(state.probabilities())}
-        samples: dict[str, int] = _samples_from_probabilities(probabilities, nshots=readout.nshots)
-        return cls(readout=readout, samples=samples, probabilities=probabilities)
+        samples: dict[str, int] = _samples_from_probabilities(probabilities, nshots=sampling_readout.nshots)
+        return cls(samples=samples, probabilities=probabilities)
 
-    def __init__(
-        self, readout: SamplingReadout, *, samples: dict[str, int] | None, probabilities: dict[str, float] | None = None
-    ) -> None:
-        if not isinstance(readout, SamplingReadout):
-            raise TypeError(f"Expected SamplingReadout, got {type(readout).__name__}")
+    def __init__(self, samples: dict[str, int] | None, probabilities: dict[str, float] | None = None) -> None:
         if samples is None:
             raise ValueError("Can't construct the Sampling results if samples are not provided.")
         self._samples: dict[str, int] = samples or {}
         self._probabilities: dict[str, int | float] = probabilities or {}
-        self._readout: SamplingReadout = readout
-
-    @property
-    def readout(self) -> SamplingReadout:
-        """SamplingReadout: The readout configuration that produced this result."""
-        return self._readout
 
     @property
     def samples(self) -> dict[str, int]:
@@ -207,7 +187,7 @@ class SamplingReadoutResult(ReadoutResult[SamplingReadout]):
 
     def __repr__(self) -> str:
 
-        return f"Sampling Results: (\n\tnshots={self._readout.nshots},\n\tsamples={pformat(self.samples)}\n)\n\n"
+        return f"Sampling Results: (\n\tnshots={sum(self.samples.values())},\n\tsamples={pformat(self.samples)}\n)\n\n"
 
     __str__ = __repr__
 
@@ -237,34 +217,27 @@ class ExpectationReadoutResult(ReadoutResult[ExpectationReadout]):
     """
 
     @classmethod
-    def from_expectations(cls, readout: ExpectationReadout, expected_values: list[float]) -> Self:
-        return cls(readout=readout, expected_values=expected_values)
+    def from_expectations(cls, expected_values: list[float], nshots: int | None = None) -> Self:
+        return cls(expected_values=expected_values, nshots=nshots)
 
     @classmethod
-    def from_state(cls, readout: ExpectationReadout, state: QTensor) -> Self:
-        readout.expand_observables(nqubits=state.nqubits)
+    def from_state(cls, expectation_readout: ExpectationReadout, state: QTensor) -> Self:
+        expectation_readout.expand_observables(nqubits=state.nqubits)
         try:
             expected_values: list[int | float] = [
-                _assert_real((expect_val(o, state))) for o in readout.qtensor_observables
+                _assert_real((expect_val(o, state))) for o in expectation_readout.qtensor_observables
             ]
         except ValueError:
             raise ValueError(
                 "Encountered an imaginary expected value while computing the expectation values, try reducing the total tolerance or improving simulation precision."
             )
-        return cls(readout=readout, expected_values=expected_values)
+        return cls(expected_values=expected_values, nshots=expectation_readout.nshots)
 
-    def __init__(self, readout: ExpectationReadout, expected_values: list[float]) -> None:
-        if not isinstance(readout, ExpectationReadout):
-            raise TypeError(f"Expected ExpectationReadout, got {type(readout).__name__}")
+    def __init__(self, expected_values: list[float], nshots: int | None = None) -> None:
         if expected_values is None:
             raise ValueError("Can't initialize Expectation Readout if the expected values are not provided.")
         self._expected_values: list[int | float] = expected_values
-        self._readout: ExpectationReadout = readout
-
-    @property
-    def readout(self) -> ExpectationReadout:
-        """ExpectationReadout: The readout configuration that produced this result."""
-        return self._readout
+        self._nshots: int | None = nshots
 
     @property
     def expected_values(self) -> list[float]:
@@ -274,7 +247,7 @@ class ExpectationReadoutResult(ReadoutResult[ExpectationReadout]):
     def __repr__(self) -> str:
         return (
             "Expectation Value Results: (\n"
-            + (f"\tnshots = {self._readout.nshots},\n" if self._readout.nshots and self._readout.nshots > 0 else "")
+            + (f"\tnshots = {self._nshots},\n" if self._nshots and self._nshots > 0 else "")
             + f"\texpected_values={pformat(self._expected_values)},\n"
             + ")\n\n"
         )
@@ -295,20 +268,15 @@ class StateTomographyReadoutResult(ReadoutResult[StateTomographyReadout]):
             density matrix).
     """
 
+    @classmethod
+    def from_state(cls, state: QTensor) -> Self:
+        return cls(state=state)
+
     def __init__(
         self,
-        readout: StateTomographyReadout,
         state: QTensor,
     ) -> None:
-        if not isinstance(readout, StateTomographyReadout):
-            raise TypeError(f"Expected StateTomographyReadout, got {type(readout).__name__}")
-        self._readout: StateTomographyReadout = readout
         self._state: QTensor = state
-
-    @property
-    def readout(self) -> StateTomographyReadout:
-        """StateTomographyReadout: The readout configuration that produced this result."""
-        return self._readout
 
     @property
     def state(self) -> QTensor:

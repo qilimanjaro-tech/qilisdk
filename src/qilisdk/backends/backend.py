@@ -250,8 +250,18 @@ class Backend(ABC):
     def _construct_sampling_results(
         cls, final_state: QTensor, readout: SamplingReadout, seed: int | None = None, **kwarg: Any
     ) -> SamplingReadoutResult:
-        """Construct a sampling readout result from a final quantum state."""
-        return SamplingReadoutResult.from_state(readout=copy(readout), state=final_state)
+        """Construct a sampling readout result from a final quantum state.
+
+        Args:
+            final_state (QTensor): The final quantum state to sample from.
+            readout (SamplingReadout): The sampling readout configuration.
+            seed (int | None): Optional random seed for reproducible sampling. Defaults to ``None``.
+            **kwarg (Any): Additional keyword arguments forwarded to then result constructor.
+
+        Returns:
+            SamplingReadoutResult: The constructed sampling result.
+        """
+        return SamplingReadoutResult.from_state(sampling_readout=copy(readout), state=final_state)
 
     @classmethod
     def _construct_expectation_results(
@@ -259,14 +269,26 @@ class Backend(ABC):
     ) -> ExpectationReadoutResult:
         """Construct an expectation-value readout result from a final quantum state."""
         readout.expand_observables(nqubits=final_state.nqubits)
-        return ExpectationReadoutResult.from_state(readout=copy(readout), state=final_state)
+        return ExpectationReadoutResult.from_state(expectation_readout=copy(readout), state=final_state)
 
     @classmethod
     def _construct_state_tomography_results(
         cls, final_state: QTensor, readout: StateTomographyReadout, **kwarg: Any
     ) -> StateTomographyReadoutResult:
-        """Construct a state-tomography readout result from a final quantum state."""
-        return StateTomographyReadoutResult(readout=copy(readout), state=final_state)
+        """Construct a state-tomography readout result from a final quantum state.
+
+        Args:
+            final_state (QTensor): The final quantum state.
+            readout (StateTomographyReadout): The state-tomography readout
+                configuration.
+            **kwarg (Any): Additional keyword arguments forwarded to the
+                result constructor.
+
+        Returns:
+            StateTomographyReadoutResult: The constructed state-tomography
+                result.
+        """
+        return StateTomographyReadoutResult.from_state(state=final_state)
 
     @classmethod
     def _construct_results_list(

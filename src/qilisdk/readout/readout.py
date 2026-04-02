@@ -21,15 +21,19 @@ a quantum backend after execution.
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import ClassVar, Generic, Literal, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, model_validator
 
 from qilisdk.analog import Hamiltonian  # noqa: TC001
 from qilisdk.core import QTensor
 
+from .readout_result import ExpectationReadoutResult, ReadoutResult, SamplingReadoutResult, StateTomographyReadoutResult
 
-class ReadoutMethod(BaseModel):
+R = TypeVar("R", bound="ReadoutResult")
+
+
+class ReadoutMethod(BaseModel, Generic[R]):
     """Base type for readout configurations.
 
     :class:`ReadoutMethod` is not meant to be instantiated directly.  Use one
@@ -41,6 +45,8 @@ class ReadoutMethod(BaseModel):
     * :meth:`expectation_values` -- creates an :class:`ExpectationReadout`
     * :meth:`state_tomography` -- creates a :class:`StateTomographyReadout`
     """
+
+    results_type: ClassVar[type[ReadoutResult]]
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
@@ -149,7 +155,7 @@ class ReadoutMethod(BaseModel):
         return isinstance(self, StateTomographyReadout)
 
 
-class SamplingReadout(ReadoutMethod):
+class SamplingReadout(ReadoutMethod[SamplingReadoutResult]):
     """Sampling readout configuration.
 
     Instructs the backend to perform repeated measurement shots and return
@@ -164,10 +170,11 @@ class SamplingReadout(ReadoutMethod):
         >>> SamplingReadout(nshots=1000)
     """
 
+    results_type: ClassVar[type[SamplingReadoutResult]] = SamplingReadoutResult
     nshots: int = Field(ge=0)
 
 
-class ExpectationReadout(ReadoutMethod):
+class ExpectationReadout(ReadoutMethod[ExpectationReadoutResult]):
     """Expectation-value readout configuration.
 
     Instructs the backend to compute expectation values
@@ -192,6 +199,7 @@ class ExpectationReadout(ReadoutMethod):
         >>> ExpectationReadout(observables=[hamiltonian], nshots=0)
     """
 
+    results_type: ClassVar[type[ExpectationReadoutResult]] = ExpectationReadoutResult
     nshots: int = Field(default=0, ge=0)
     observables: list[Hamiltonian | QTensor]
     qtensor_observables: list[QTensor] = Field(default_factory=list, init=False)
@@ -221,7 +229,7 @@ class ExpectationReadout(ReadoutMethod):
         self._scaled_nqubits = nqubits
 
 
-class StateTomographyReadout(ReadoutMethod):
+class StateTomographyReadout(ReadoutMethod[StateTomographyReadoutResult]):
     """State-tomography readout configuration.
 
     Instructs the backend to return the full quantum state (ket or density
@@ -237,4 +245,5 @@ class StateTomographyReadout(ReadoutMethod):
         >>> StateTomographyReadout(state_tomography_method="exact")
     """
 
+    results_type: ClassVar[type[StateTomographyReadoutResult]] = StateTomographyReadoutResult
     state_tomography_method: Literal["exact"] = Field(default="exact")
