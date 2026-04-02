@@ -154,26 +154,6 @@ class ReadoutMethod(BaseModel, Generic[R]):
         """
         return isinstance(self, StateTomographyReadout)
 
-    @staticmethod
-    def _merge_positional_args(
-        *,
-        class_name: str,
-        positional_args: tuple[object, ...],
-        positional_names: tuple[str, ...],
-        keyword_args: dict[str, object],
-    ) -> dict[str, object]:
-        if len(positional_args) > len(positional_names):
-            expected = ", ".join(positional_names)
-            raise TypeError(
-                f"{class_name} expects at most {len(positional_names)} positional argument(s): ({expected})."
-            )
-        merged = dict(keyword_args)
-        for name, value in zip(positional_names, positional_args):
-            if name in merged:
-                raise TypeError(f"{class_name} got multiple values for '{name}' (positional and keyword).")
-            merged[name] = value
-        return merged
-
 
 class SamplingReadout(ReadoutMethod[SamplingReadoutResult]):
     """Sampling readout configuration.
@@ -222,7 +202,7 @@ class ExpectationReadout(ReadoutMethod[ExpectationReadoutResult]):
     results_type: ClassVar[type[ExpectationReadoutResult]] = ExpectationReadoutResult
     nshots: int = Field(default=0, ge=0)
     observables: list[Hamiltonian | QTensor]
-    qtensor_observables: list[QTensor] = Field(default=[], init=False)
+    qtensor_observables: list[QTensor] = Field(default_factory=list, init=False)
 
     _scaled_nqubits: int | None = PrivateAttr(default=None)
 

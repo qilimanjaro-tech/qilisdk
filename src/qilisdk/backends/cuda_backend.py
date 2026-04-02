@@ -292,7 +292,9 @@ class CudaBackend(Backend):
                 ReadoutCompositeResults(
                     sampling=SamplingReadoutResult.from_samples(
                         samples=dict(cudaq_result.items()),
-                    )
+                    ),
+                    expectation_values=None,
+                    state_tomography=None,
                 )
             )
 
@@ -304,9 +306,11 @@ class CudaBackend(Backend):
             logger.success("Sampling finished; {} distinct bitstrings", len(cudaq_result))
             return FunctionalResult(
                 ReadoutCompositeResults(
-                    SamplingReadoutResult.from_samples(
+                    sampling=SamplingReadoutResult.from_samples(
                         samples=dict(cudaq_result.items()),
-                    )
+                    ),
+                    expectation_values=None,
+                    state_tomography=None,
                 )
             )
 

@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from abc import ABC
 from copy import copy
-from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast, overload
+from typing import TYPE_CHECKING, Any, Callable, cast, overload
 
 from loguru import logger
 
@@ -29,14 +29,17 @@ from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.functionals.variational_program import VariationalProgram
 from qilisdk.functionals.variational_program_result import VariationalProgramResult
 from qilisdk.readout import (
+    E,
     ExpectationReadout,
     ExpectationReadoutResult,
     ReadoutMethod,
-    ReadoutResult,
+    ReadoutSpec,
+    S,
     SamplingReadout,
     SamplingReadoutResult,
     StateTomographyReadout,
     StateTomographyReadoutResult,
+    T,
 )
 from qilisdk.readout.readout_result import ReadoutCompositeResults
 from qilisdk.settings import get_settings
@@ -46,8 +49,6 @@ if TYPE_CHECKING:
     from qilisdk.core.result import Result
     from qilisdk.functionals.functional import Functional, PrimitiveFunctional
     from qilisdk.noise import NoiseModel
-
-TResult = TypeVar("TResult", bound=FunctionalResult)
 
 
 class Backend(ABC):
@@ -68,7 +69,7 @@ class Backend(ABC):
             noise_model (NoiseModel | None): Optional noise model applied
                 during execution. Defaults to ``None``.
         """
-        self._handlers: dict[type[Functional], Callable[[Functional, list[ReadoutMethod]], FunctionalResult]] = {
+        self._handlers: dict[type[Functional], Callable[[Functional, list[ReadoutMethod]], FunctionalResult]] = {  # type: ignore[type-arg]
             DigitalPropagation: lambda f, readout: self._execute_digital_propagation(
                 cast("DigitalPropagation", f), readout
             ),
@@ -82,39 +83,35 @@ class Backend(ABC):
 
     @overload
     def execute(
-        self, functional: VariationalProgram, readout: ReadoutMethod | list[ReadoutMethod]
+        self, functional: VariationalProgram, readout: ReadoutSpec[S, E, T]
     ) -> VariationalProgramResult: ...
 
     @overload
     def execute(
-        self, functional: PrimitiveFunctional, readout: ReadoutMethod | list[ReadoutMethod]
-    ) -> FunctionalResult: ...
+        self, functional: PrimitiveFunctional, readout: ReadoutSpec[S, E, T]
+    ) -> FunctionalResult[S, E, T]: ...
 
-    def execute(self, functional: Functional, readout: ReadoutMethod | list[ReadoutMethod]) -> Result:
+    def execute(self, functional: Functional, readout: ReadoutSpec[Any, Any, Any]) -> Result:
         """Execute a quantum functional with the specified readout methods.
 
         This is the main entry point for running any supported functional on
-        the backend. The method validates the readout list, then dispatches
-        to the appropriate ``_execute_*`` handler registered for the
-        functional type.
+        the backend.  The method validates the readout specification, then
+        dispatches to the appropriate ``_execute_*`` handler registered for
+        the functional type.
 
         Args:
-            functional (Functional): The quantum functional to execute.
-            readout (ReadoutMethod | list[ReadoutMethod]): One or more readout
-                specifications describing how to extract results from the
-                final quantum state.
+            functional: The quantum functional to execute.
+            readout: A :class:`~qilisdk.readout.ReadoutSpec` built via
+                the builder pattern.
 
         Returns:
-            Result: The execution result, whose concrete type depends on the
-            functional (e.g. ``FunctionalResult`` or
-            ``VariationalProgramResult``).
+            The execution result whose concrete type depends on the
+            functional and readout specification.
 
         Raises:
             NotImplementedError: If the backend does not support the given
                 functional type.
-            ValueError: If any element of ``readout`` is not a valid
-                :class:`~qilisdk.readout.ReadoutMethod`, or if duplicate
-                readout types are provided.
+            ValueError: If the readout specification is empty.
         """
         try:
             handler = self._handlers[type(functional)]
@@ -123,87 +120,43 @@ class Backend(ABC):
                 f"{type(self).__qualname__} does not support {type(functional).__qualname__}"
             ) from exc
 
-        _readout = list(readout)
-        if any(not isinstance(ro, ReadoutMethod) for ro in _readout):
-            raise ValueError(
-                f"One of the readout methods provided are not a valid readout method.\nProvided: {_readout}"
-            )
-        if len({ro.__class__ for ro in _readout}) != len(_readout):
-            raise ValueError(f"Each readout method can only passed once.\nProvided: {_readout}")
-        return handler(functional, _readout)
+        readout_list = readout.to_list()
+        if not readout_list:
+            raise ValueError("At least one readout method must be provided in the ReadoutSpec.")
+        return handler(functional, readout_list)
 
     def _execute_digital_propagation(
         self, functional: DigitalPropagation, readout: list[ReadoutMethod]
-    ) -> FunctionalResult:
+    ) -> FunctionalResult:  # type: ignore[type-arg]
         """Execute a digital-circuit propagation functional.
 
         Subclasses that support digital circuits must override this method.
-
-        Args:
-            functional (DigitalPropagation): The digital propagation
-                functional to execute.
-            readout (list[ReadoutMethod]): Readout specifications for
-                result extraction.
-
-        Returns:
-            FunctionalResult: The execution result.
-
-        Raises:
-            NotImplementedError: Always, unless overridden by a subclass.
         """
         raise NotImplementedError(f"{type(self).__qualname__} has no DigitalPropagation implementation")
 
-    def _execute_analog_evolution(self, functional: AnalogEvolution, readout: list[ReadoutMethod]) -> FunctionalResult:
+    def _execute_analog_evolution(
+        self, functional: AnalogEvolution, readout: list[ReadoutMethod]
+    ) -> FunctionalResult:  # type: ignore[type-arg]
         """Execute an analog time-evolution functional.
 
         Subclasses that support analog evolution must override this method.
-
-        Args:
-            functional (AnalogEvolution): The analog evolution functional
-                to execute.
-            readout (list[ReadoutMethod]): Readout specifications for
-                result extraction.
-
-        Returns:
-            FunctionalResult: The execution result.
-
-        Raises:
-            NotImplementedError: Always, unless overridden by a subclass.
         """
         raise NotImplementedError(f"{type(self).__qualname__} has no AnalogEvolution implementation")
 
     def _execute_quantum_reservoir(
         self, functional: QuantumReservoir, readout: list[ReadoutMethod]
-    ) -> FunctionalResult:
+    ) -> FunctionalResult:  # type: ignore[type-arg]
         """Execute a quantum reservoir computing functional.
 
         Iterates over each input layer of the reservoir, propagating the
         quantum state through digital circuits and analog schedules.
         Readout results are collected after each layer and the final layer's
         results are returned.
-
-        Args:
-            functional (QuantumReservoir): The quantum reservoir functional
-                to execute.
-            readout (list[ReadoutMethod]): Readout specifications for
-                result extraction.
-
-        Returns:
-            FunctionalResult: The execution result, including intermediate
-                results from earlier layers.
-
-        Raises:
-            ValueError: If the quantum state cannot be repaired to a valid
-                density matrix between layers.
-
-        Notes:
-            Noise models are not supported with quantum reservoirs and will
-            be silently ignored if one is set on the backend.
         """
         if self._noise_model:
             logger.warning("Noise Models are not supported with Quantum Reservoirs, so they will be ignored.")
         state = functional.initial_state.to_density_matrix()
-        inter_results: list[ReadoutCompositeResults] = []
+        inter_results: list[ReadoutCompositeResults] = []  # type: ignore[type-arg]
         cache: dict[Circuit, tuple[tuple[float, ...], QTensor]] = {}
         for input_dict in functional.input_per_layer:
             functional.reservoir_layer.set_parameters(input_dict)
@@ -218,10 +171,10 @@ class Backend(ABC):
                         U = cached[1]
                     state = U @ state @ U.adjoint()
                 elif isinstance(step, Schedule):
-                    res: FunctionalResult = self._execute_analog_evolution(
+                    res = self._execute_analog_evolution(
                         AnalogEvolution(step, state), readout=[StateTomographyReadout()]
                     )
-                    state: QTensor = res.state
+                    state = res.state  # type: ignore[assignment]
 
             try:
                 state = state.to_density_matrix()
@@ -242,23 +195,9 @@ class Backend(ABC):
     def _execute_variational_program(
         self, functional: VariationalProgram, readout: list[ReadoutMethod]
     ) -> VariationalProgramResult:
-        """Optimize a :class:`~qilisdk.functionals.variational_program.VariationalProgram`.
-
-        Runs the classical optimizer loop: at each iteration the inner
-        functional is executed with the given ``readout`` methods and the
-        cost function is evaluated.
-
-        Args:
-            functional (VariationalProgram): Variational program to optimize.
-            readout (list[ReadoutMethod]): Readout specifications forwarded to each inner functional execution.
-
-        Returns:
-            VariationalProgramResult: Optimizer output together with the optimal functional execution result.
-
-        Raises:
-            ValueError: If the wrapped functional has no trainable parameters, or if the optimizer fails to find a valid
-                solution within the parameter constraints.
-        """
+        """Optimize a :class:`~qilisdk.functionals.variational_program.VariationalProgram`."""
+        # Wrap the flat readout list back into a spec for the recursive execute() call
+        spec = _readout_list_to_spec(readout)
 
         def evaluate_sample(parameters: list[float]) -> float:
             param_names = functional.functional.get_parameter_names(where=lambda param: param.is_trainable)
@@ -273,7 +212,7 @@ class Backend(ABC):
             if err > 0:
                 return err
             functional.functional.set_parameters(new_param_dict)
-            results = self.execute(functional.functional, readout)
+            results = self.execute(functional.functional, spec)
             final_results = functional.cost_function.compute_cost(results)
             if isinstance(final_results, float):
                 return final_results
@@ -299,7 +238,7 @@ class Backend(ABC):
                 "Optimizer Failed at finding an optimal solution. Check the parameter constraints or try with a different optimization method."
             )
         functional.functional.set_parameters(optimal_parameter_dict)
-        optimal_results: FunctionalResult = self.execute(functional.functional, readout)
+        optimal_results = self.execute(functional.functional, spec)
 
         return VariationalProgramResult(optimizer_result=optimizer_result, result=optimal_results)
 
@@ -328,23 +267,7 @@ class Backend(ABC):
     def _construct_expectation_results(
         cls, final_state: QTensor, readout: ExpectationReadout, **kwarg: Any
     ) -> ExpectationReadoutResult:
-        """Construct an expectation-value readout result from a final quantum state.
-
-        Observables are pre-scaled to match ``final_state.nqubits`` so
-        that the copied readout inherits the cached ``QTensor``
-        representations.
-
-        Args:
-            final_state (QTensor): The final quantum state.
-            readout (ExpectationReadout): The expectation readout
-                configuration.
-            **kwarg (Any): Additional keyword arguments forwarded to the
-                result constructor.
-
-        Returns:
-            ExpectationReadoutResult: The constructed expectation result.
-        """
-        # Pre-scale on the original so the copy inherits cached qtensor_observables
+        """Construct an expectation-value readout result from a final quantum state."""
         readout.expand_observables(nqubits=final_state.nqubits)
         return ExpectationReadoutResult.from_state(expectation_readout=copy(readout), state=final_state)
 
@@ -370,47 +293,49 @@ class Backend(ABC):
     @classmethod
     def _construct_results_list(
         cls, final_state: QTensor, readout: list[ReadoutMethod], seed: int | None = None, **kwarg: Any
-    ) -> ReadoutCompositeResults:
-        """Build a list of readout results by dispatching each readout method.
+    ) -> ReadoutCompositeResults:  # type: ignore[type-arg]
+        """Build a :class:`ReadoutCompositeResults` by dispatching each readout method."""
+        sampling_result: SamplingReadoutResult | None = None
+        expectation_result: ExpectationReadoutResult | None = None
+        state_tomo_result: StateTomographyReadoutResult | None = None
 
-        Iterates over the provided readout methods and delegates to the
-        appropriate ``_construct_*_results`` helper for each one.
-
-        Args:
-            final_state (QTensor): The final quantum state used by all
-                readout methods.
-            readout (list[ReadoutMethod]): Readout specifications to
-                process.
-            seed (int | None): Optional random seed forwarded to sampling
-                readouts. Defaults to ``None``.
-            **kwarg (Any): Additional keyword arguments forwarded to each
-                result constructor.
-
-        Returns:
-            list[ReadoutResult]: One result per readout method, in the
-                same order as ``readout``.
-
-        Raises:
-            ValueError: If a readout method is unsupported or if a
-                ``StateTomographyReadout`` uses a method other than
-                ``"exact"``.
-        """
-        results: dict[str, ReadoutResult] = {}
         for ro in readout:
             if isinstance(ro, StateTomographyReadout):
                 if ro.state_tomography_method != "exact":
                     raise ValueError("State Tomography methods that are not exact are not supported yet.")
-                results["state_tomography"] = cls._construct_state_tomography_results(
+                state_tomo_result = cls._construct_state_tomography_results(
                     final_state=final_state, readout=ro, **kwarg
                 )
             elif isinstance(ro, ExpectationReadout):
-                results["expectation_values"] = cls._construct_expectation_results(
+                expectation_result = cls._construct_expectation_results(
                     final_state=final_state, readout=ro, **kwarg
                 )
             elif isinstance(ro, SamplingReadout):
-                results["sampling"] = cls._construct_sampling_results(
+                sampling_result = cls._construct_sampling_results(
                     final_state=final_state, readout=ro, seed=seed, **kwarg
                 )
             else:
                 raise ValueError(f"Unsupported Readout Method provided: {ro}")
-        return ReadoutCompositeResults.from_dict(results)
+
+        return ReadoutCompositeResults(
+            sampling=sampling_result,
+            expectation_values=expectation_result,
+            state_tomography=state_tomo_result,
+        )
+
+
+def _readout_list_to_spec(readout: list[ReadoutMethod]) -> ReadoutSpec:  # type: ignore[type-arg]
+    """Convert a flat readout list back to a :class:`ReadoutSpec`.
+
+    Used internally when the variational program handler needs to
+    reconstruct a spec from the list received from the dispatcher.
+    """
+    spec: ReadoutSpec = ReadoutSpec()  # type: ignore[type-arg]
+    for ro in readout:
+        if isinstance(ro, SamplingReadout):
+            spec = spec.with_sampling(ro)
+        elif isinstance(ro, ExpectationReadout):
+            spec = spec.with_expectation(ro)
+        elif isinstance(ro, StateTomographyReadout):
+            spec = spec.with_state_tomography(ro)
+    return spec

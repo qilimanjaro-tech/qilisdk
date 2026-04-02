@@ -24,7 +24,7 @@ from qilisdk.settings import get_settings
 
 if TYPE_CHECKING:
     from qilisdk.core.types import Number
-    from qilisdk.functionals.functional_result import FunctionalResult
+    from qilisdk.functionals.functional_result import FunctionalResult  # type: ignore[type-arg]
 
 
 class ModelCostFunction(CostFunction):

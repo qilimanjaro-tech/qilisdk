@@ -11,76 +11,128 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import annotations
+
 from collections.abc import Iterator
+from typing import Generic
 
 from qilisdk.core import QTensor
 from qilisdk.core.result import Result
 from qilisdk.readout.readout_result import (
+    E,
     ReadoutCompositeResults,
+    S,
+    T,
     has_expectation_values,
     has_sampling,
     has_state_tomography,
 )
 
 
-class FunctionalResult(Result):
+class FunctionalResult(Result, Generic[S, E, T]):
     """Container for the outputs produced by executing a functional on a backend.
 
-    A ``FunctionalResult`` wraps one or more :class:`~qilisdk.readout.ReadoutResult`
-    objects and exposes convenience accessors for samples, probabilities,
-    final states, and expectation values.  When intermediate results are
-    stored, the object is iterable over all time-steps (intermediates
-    followed by the final readout).
+    The three type parameters encode which readout results are present:
+
+    * ``S``: :class:`SamplingReadoutResult` or ``None``
+    * ``E``: :class:`ExpectationReadoutResult` or ``None``
+    * ``T``: :class:`StateTomographyReadoutResult` or ``None``
+
+    **Typed access** — use the forwarding properties that return the readout
+    result objects directly.  The type checker knows whether each is ``None``
+    or populated based on the type parameters::
+
+        result.sampling.samples              # ✅ when S = SamplingReadoutResult
+        result.state_tomography.state        # ✅ when T = StateTomographyReadoutResult
+        result.expectation                   # None when E = None → .expected_values is a type error
+
+    **Convenience shortcuts** — ``result.samples``, ``result.state``, etc.
+    remain available for interactive / notebook use.  They raise
+    ``ValueError`` at runtime when the corresponding readout is absent.
     """
 
     def __init__(
         self,
-        readout_results: ReadoutCompositeResults,
-        intermediate_results: list[ReadoutCompositeResults] | None = None,
+        readout_results: ReadoutCompositeResults[S, E, T],
+        intermediate_results: list[ReadoutCompositeResults[S, E, T]] | None = None,
     ) -> None:
         """Initialise a functional result from readout outputs.
 
         Args:
-            readout_results (list[ReadoutResult]): Final readout results.
-                Each type of readout may appear at most once.
-            intermediate_results (list[list[ReadoutResult]] | None): Optional
-                per-step intermediate readout results. Defaults to None.
-
-        Raises:
-            ValueError: If ``readout_results`` contains duplicate readout types.
+            readout_results: Final readout results.
+            intermediate_results: Optional per-step intermediate readout
+                results. Defaults to ``None``.
         """
         self._readout_results = readout_results
         self._intermediate_results = intermediate_results or []
 
+    # -- forwarding properties (typed safe path) --------------------------
+    # These return the generic type parameters S, E, T directly, so the
+    # type checker knows the exact type from the FunctionalResult's
+    # parameterisation.  No descriptors or overloads needed.
+
     @property
-    def readout_results(self) -> ReadoutCompositeResults:
+    def sampling(self) -> S:
+        """The sampling readout result, or ``None`` if not requested.
+
+        When ``S = SamplingReadoutResult``, this returns the result object
+        with typed access to ``.samples``, ``.probabilities``, etc.
+        When ``S = None``, the type checker sees ``None``.
+        """
+        return self._readout_results.sampling
+
+    @property
+    def expectation(self) -> E:
+        """The expectation-value readout result, or ``None`` if not requested.
+
+        When ``E = ExpectationReadoutResult``, this returns the result object
+        with typed access to ``.expected_values``.
+        When ``E = None``, the type checker sees ``None``.
+        """
+        return self._readout_results.expectation_values
+
+    @property
+    def state_tomography(self) -> T:
+        """The state-tomography readout result, or ``None`` if not requested.
+
+        When ``T = StateTomographyReadoutResult``, this returns the result
+        object with typed access to ``.state``, ``.probabilities``, etc.
+        When ``T = None``, the type checker sees ``None``.
+        """
+        return self._readout_results.state_tomography
+
+    @property
+    def readout_results(self) -> ReadoutCompositeResults[S, E, T]:
         """Composite readout results from the final execution step."""
         return self._readout_results
 
     @property
-    def intermediate_results(self) -> list[ReadoutCompositeResults]:
+    def intermediate_results(self) -> list[ReadoutCompositeResults[S, E, T]]:
         """Intermediate readout results for each time-step, if stored."""
         return self._intermediate_results
 
+    # -- convenience shortcuts (runtime-checked, not type-narrowed) -------
+    # These provide quick access for REPL / notebook use.  They always
+    # return the concrete type or raise ValueError.  The typed safe path
+    # above is preferred for production code.
+
     @property
     def samples(self) -> dict[str, int]:
-        """
-        Measurement samples from the final execution step.
+        """Measurement samples from the final execution step.
 
         Raises:
-            ValueError: If samples are queried but sample results were not specified in the experiment.
+            ValueError: If sampling readout was not provided.
         """
         if has_sampling(self._readout_results):
             return self._readout_results.sampling.samples
-        raise ValueError("Sampling Readout was not provided.")
+        raise ValueError("Sampling readout was not provided.")
 
     @property
     def probabilities(self) -> dict[str, float]:
-        """
-        Outcome probabilities from the final execution step.
+        """Outcome probabilities from the final execution step.
 
         Raises:
-            ValueError: if sampling or state tomography readouts are not specified.
+            ValueError: If neither sampling nor state-tomography readout was provided.
         """
         if has_sampling(self._readout_results):
             return self._readout_results.sampling.probabilities
@@ -90,11 +142,10 @@ class FunctionalResult(Result):
 
     @property
     def state(self) -> QTensor:
-        """
-        Quantum state vector from the final execution step.
+        """Quantum state vector from the final execution step.
 
         Raises:
-            ValueError: if state tomography readout is not specified.
+            ValueError: If state-tomography readout was not provided.
         """
         if has_state_tomography(self._readout_results):
             return self._readout_results.state_tomography.state
@@ -102,22 +153,20 @@ class FunctionalResult(Result):
 
     @property
     def expected_values(self) -> list[float]:
-        """
-        Expectation values from the final execution step.
+        """Expectation values from the final execution step.
 
         Raises:
-            ValueError: if ExpectationReadout is not specified.
+            ValueError: If expectation readout was not provided.
         """
         if has_expectation_values(self._readout_results):
             return self._readout_results.expectation_values.expected_values
-        raise ValueError("Can't Compute Expectations because Expectation readout was not specified.")
+        raise ValueError("Can't compute expectations because Expectation readout was not specified.")
+
+    # -- intermediate accessors (runtime-checked) -------------------------
 
     @property
     def intermediate_samples(self) -> list[dict[str, int]]:
         """Measurement samples for every time-step (intermediate + final).
-
-        Returns:
-            list[dict[str, int]]: Per-step sample dictionaries.
 
         Raises:
             ValueError: If no intermediate results were stored or no
@@ -134,9 +183,6 @@ class FunctionalResult(Result):
     @property
     def intermediate_probabilities(self) -> list[dict[str, float]]:
         """Outcome probabilities for every time-step (intermediate + final).
-
-        Returns:
-            list[dict[str, float]]: Per-step probability dictionaries.
 
         Raises:
             ValueError: If no intermediate results were stored or no
@@ -156,9 +202,6 @@ class FunctionalResult(Result):
     def intermediate_states(self) -> list[QTensor]:
         """Quantum state vectors for every time-step (intermediate + final).
 
-        Returns:
-            list[QTensor]: Per-step state vectors.
-
         Raises:
             ValueError: If no intermediate results were stored or no
                 ``StateTomographyReadout`` was provided.
@@ -175,9 +218,6 @@ class FunctionalResult(Result):
     def intermediate_expected_values(self) -> list[list[float]]:
         """Expectation values for every time-step (intermediate + final).
 
-        Returns:
-            list[list[Number]]: Per-step expectation value lists.
-
         Raises:
             ValueError: If no intermediate results were stored or no
                 ``ExpectationReadout`` was provided.
@@ -190,58 +230,40 @@ class FunctionalResult(Result):
             return results
         raise ValueError("Can't find intermediate expected values because intermediate Results were not stored.")
 
-    def has_state(self) -> bool:
-        """Check whether the result contains a final quantum state.
+    # -- has_* helpers (useful for runtime checks) ------------------------
 
-        Returns:
-            bool: ``True`` if a ``StateTomographyReadout`` result is present.
-        """
+    def has_state(self) -> bool:
+        """Check whether the result contains a final quantum state."""
         return has_state_tomography(self._readout_results)
 
     def has_samples(self) -> bool:
-        """Check whether the result contains measurement samples.
-
-        Returns:
-            bool: ``True`` if a ``SamplingReadout`` result is present.
-        """
+        """Check whether the result contains measurement samples."""
         return has_sampling(self._readout_results)
 
     def has_probabilities(self) -> bool:
-        """Check whether the result contains outcome probabilities.
-
-        Returns:
-            bool: ``True`` if a sampling or state-tomography readout result
-                is present.
-        """
+        """Check whether the result contains outcome probabilities."""
         return has_state_tomography(self._readout_results) or has_sampling(self._readout_results)
 
     def has_expectation_values(self) -> bool:
-        """Check whether the result contains expectation values.
-
-        Returns:
-            bool: ``True`` if an ``ExpectationReadout`` result is present.
-        """
+        """Check whether the result contains expectation values."""
         return has_expectation_values(self._readout_results)
 
-    def __len__(self) -> int:
-        """
-        Get the number of final readout results in the functional results.
+    # -- container protocol -----------------------------------------------
 
-        Returns:
-            int: The number of final readout results in the functional results.
-        """
+    def __len__(self) -> int:
         return len(self._intermediate_results) + 1 if self._intermediate_results else 1
 
-    def __iter__(self) -> Iterator[ReadoutCompositeResults]:
-        """
-        Return an iterator over the readout results in the functional result object.
-
-        Yields:
-            Iterator[ReadoutResult]: The readout results in the functional result object.
-        """
+    def __iter__(self) -> Iterator[ReadoutCompositeResults[S, E, T]]:
         if self._intermediate_results:
             yield from self._intermediate_results
         yield self._readout_results
+
+    def __getitem__(self, index: int) -> ReadoutCompositeResults[S, E, T]:
+        if index >= len(self):
+            raise IndexError(f"Index {index} out of range for FunctionalResult of length {len(self)}")
+        if index < len(self._intermediate_results):
+            return self._intermediate_results[index]
+        return self._readout_results
 
     def __repr__(self) -> str:
         LIMIT = 10
@@ -258,23 +280,3 @@ class FunctionalResult(Result):
                 out += "\n...\n\n"
             out += "]"
         return out
-
-    def __getitem__(self, index: int) -> ReadoutCompositeResults:
-        """Return the readout composite results at the given time-step index.
-
-        Args:
-            index (int): Zero-based index into the sequence of intermediate
-                results followed by the final result.
-
-        Returns:
-            ReadoutCompositeResults: The composite readout result at
-                ``index``.
-
-        Raises:
-            ValueError: If ``index`` exceeds the number of stored results.
-        """
-        if index > len(self):
-            raise ValueError("Invalid Index")
-        if index < len(self._intermediate_results):
-            return self._intermediate_results[index]
-        return self._readout_results

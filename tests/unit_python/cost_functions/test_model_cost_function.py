@@ -44,14 +44,14 @@ def test_compute_cost_state_tomography():
 
     # ket state
     readout_result = StateTomographyReadoutResult(state=tensor_prod([ket(0), ket(1)]))
-    result = FunctionalResult(readout_results=ReadoutCompositeResults(state_tomography=readout_result))
+    result = FunctionalResult(readout_results=ReadoutCompositeResults(sampling=None, expectation_values=None, state_tomography=readout_result))
     cost = mcf.compute_cost(result)
 
     assert cost == -1
 
     # density matrix state
     readout_result = StateTomographyReadoutResult(state=tensor_prod([ket(0), ket(1)]).to_density_matrix())
-    result = FunctionalResult(readout_results=ReadoutCompositeResults(state_tomography=readout_result))
+    result = FunctionalResult(readout_results=ReadoutCompositeResults(sampling=None, expectation_values=None, state_tomography=readout_result))
     cost = mcf.compute_cost(result)
 
     assert cost == -1
@@ -60,7 +60,7 @@ def test_compute_cost_state_tomography():
 
     # bra state
     readout_result = StateTomographyReadoutResult(state=tensor_prod([bra(0), bra(1)]))
-    result = FunctionalResult(readout_results=ReadoutCompositeResults(state_tomography=readout_result))
+    result = FunctionalResult(readout_results=ReadoutCompositeResults(sampling=None, expectation_values=None, state_tomography=readout_result))
     cost = mcf.compute_cost(result)
     assert cost == -1
 

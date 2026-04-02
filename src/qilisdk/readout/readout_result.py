@@ -43,11 +43,15 @@ from qilisdk.settings import get_settings
 if TYPE_CHECKING:
     from qilisdk.core.types import Number
 
-    from .readout import ExpectationReadout, ReadoutMethod, SamplingReadout
+    from .readout import ExpectationReadout, ReadoutMethod, SamplingReadout, StateTomographyReadout
 
 
 NORMALIZATION_TOLERANCE = 1e-8
 
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
 
 def _real_if_close(number: Number) -> Number:
     if isinstance(number, complex) and abs(number.imag) < get_settings().atol:
@@ -63,93 +67,14 @@ def _assert_real(number: Number) -> float:
     return number
 
 
-class _HasSampling(Protocol):
-    sampling: SamplingReadoutResult
-
-
-def has_sampling(obj: ReadoutCompositeResults) -> TypeGuard[_HasSampling]:
-    return obj.sampling is not None
-
-
-class _HasExpectation(Protocol):
-    expectation_values: ExpectationReadoutResult
-
-
-def has_expectation_values(obj: ReadoutCompositeResults) -> TypeGuard[_HasExpectation]:
-    return obj.expectation_values is not None
-
-
-class _HasStateTomography(Protocol):
-    state_tomography: StateTomographyReadoutResult
-
-
-def has_state_tomography(obj: ReadoutCompositeResults) -> TypeGuard[_HasStateTomography]:
-    return obj.state_tomography is not None
-
-
-@dataclass(frozen=True)
-class ReadoutCompositeResults(Result):
-    """Aggregated container for multiple :class:`ReadoutResult` objects.
-
-    When a backend execution is configured with more than one readout method, the results are collected into a single
-    :class:`ReadoutCompositeResults` instance. Convenience properties (:attr:`samples`, :attr:`probabilities`,
-    :attr:`state`, :attr:`expected_values`) provide direct access to the first matching result of each kind.
-
-    The container is iterable and supports ``len()``.
-
-    Args:
-        readout_results (list[ReadoutResult]): Individual readout results from the execution.
-    """
-
-    sampling: SamplingReadoutResult | None = None
-    expectation_values: ExpectationReadoutResult | None = None
-    state_tomography: StateTomographyReadoutResult | None = None
-
-    @classmethod
-    def from_dict(cls, data: dict) -> ReadoutCompositeResults:
-        if "sampling" in data and not isinstance(data.get("sampling"), SamplingReadoutResult):
-            raise TypeError("sampling must be SamplingReadoutResult")
-        if "expectation_values" in data and not isinstance(data.get("expectation_values"), ExpectationReadoutResult):
-            raise TypeError("expectation_values must be ExpectationReadoutResult")
-        if "state_tomography" in data and not isinstance(data.get("state_tomography"), StateTomographyReadoutResult):
-            raise TypeError("state_tomography must be ExpectationReadoutResult")
-        return cls(
-            sampling=data.get("sampling"),
-            expectation_values=data.get("expectation_values"),
-            state_tomography=data.get("state_tomography"),
-        )
-
-    @classmethod
-    def from_list(cls, list_data: list) -> ReadoutCompositeResults:
-        data = {}
-        for element in list_data:
-            if isinstance(element, SamplingReadoutResult):
-                data["sampling"] = element
-            if isinstance(element, ExpectationReadoutResult):
-                data["expectation_values"] = element
-            if isinstance(element, StateTomographyReadoutResult):
-                data["state_tomography"] = element
-        return cls(
-            sampling=data.get("sampling"),
-            expectation_values=data.get("expectation_values"),
-            state_tomography=data.get("state_tomography"),
-        )
-
-    def __repr__(self) -> str:
-        out = ""
-        if self.sampling:
-            out += str(self.sampling)
-        if self.expectation_values:
-            out += str(self.expectation_values)
-        if self.state_tomography:
-            out += str(self.state_tomography)
-        return out
-
+# ---------------------------------------------------------------------------
+# ReadoutResult base class
+# ---------------------------------------------------------------------------
 
 C = TypeVar("C", bound="ReadoutMethod")
 
 
-class ReadoutResult(Result):
+class ReadoutResult(Result, Generic[C]):
     """Abstract base class for a single readout result.
 
     Every concrete subclass must expose a :attr:`readout` property that returns the :class:`~qilisdk.readout.ReadoutMethod`
@@ -157,7 +82,13 @@ class ReadoutResult(Result):
     """
 
 
-class SamplingReadoutResult(ReadoutResult):
+
+# ---------------------------------------------------------------------------
+# Concrete result classes
+# ---------------------------------------------------------------------------
+
+
+class SamplingReadoutResult(ReadoutResult[SamplingReadout]):
     """Result produced by a :class:`~qilisdk.readout.SamplingReadout`.
 
     Holds bitstring measurement counts and the corresponding probability
@@ -261,7 +192,7 @@ class SamplingReadoutResult(ReadoutResult):
     __str__ = __repr__
 
 
-class ExpectationReadoutResult(ReadoutResult):
+class ExpectationReadoutResult(ReadoutResult[ExpectationReadout]):
     """Result produced by an :class:`~qilisdk.readout.ExpectationReadout`.
 
     Contains the computed expectation values for each observable specified in
@@ -324,7 +255,7 @@ class ExpectationReadoutResult(ReadoutResult):
     __str__ = __repr__
 
 
-class StateTomographyReadoutResult(ReadoutResult):
+class StateTomographyReadoutResult(ReadoutResult[StateTomographyReadout]):
     """Result produced by a :class:`~qilisdk.readout.StateTomographyReadout`.
 
     Contains the full quantum state after execution and, optionally, the
@@ -357,8 +288,7 @@ class StateTomographyReadoutResult(ReadoutResult):
         """Computational-basis probability distribution derived from the state.
 
         Returns:
-            dict[str, float] | None: Mapping of bitstring to probability, or
-            ``None`` if ``compute_probabilities`` was disabled in the readout.
+            dict[str, float]: Mapping of bitstring to probability.
         """
         f_string = "{:0" + str(self.state.nqubits) + "b}"
         return {(f_string).format(i): p for i, p in enumerate(self.state.probabilities())}
@@ -372,10 +302,6 @@ class StateTomographyReadoutResult(ReadoutResult):
         Returns:
             float: The probability associated with ``bitstring``, or ``0.0``
             if it was not observed.
-
-        Raises:
-            ValueError: If ``compute_probabilities`` was set to ``False``
-                in the readout configuration.
         """
         return self.probabilities.get(bitstring, 0.0)
 
@@ -389,10 +315,6 @@ class StateTomographyReadoutResult(ReadoutResult):
         Returns:
             list[tuple[str, float]]: Up to ``n`` ``(bitstring, probability)``
             pairs sorted by probability in descending order.
-
-        Raises:
-            ValueError: If ``compute_probabilities`` was set to ``False``
-                in the readout configuration.
         """
         probs = self.probabilities
         if n is None:
@@ -403,6 +325,96 @@ class StateTomographyReadoutResult(ReadoutResult):
         return "State Tomography Results: (\n" + (f"\tfinal_state={pformat(self.state)}\n") + ")\n\n"
 
     __str__ = __repr__
+
+
+# ---------------------------------------------------------------------------
+# Type variables for generic readout result containers
+#
+# Defined AFTER the concrete result classes so the constraints reference
+# real types, not string literals.  TypeVar arguments are evaluated at
+# runtime (they are function parameters, not annotations), so forward
+# references via strings would silently pass as literal strings.
+# ---------------------------------------------------------------------------
+
+#: Type variable tracking whether sampling results are present.
+S = TypeVar("S", SamplingReadoutResult, None)
+
+#: Type variable tracking whether expectation-value results are present.
+E = TypeVar("E", ExpectationReadoutResult, None)
+
+#: Type variable tracking whether state-tomography results are present.
+T = TypeVar("T", StateTomographyReadoutResult, None)
+
+
+# ---------------------------------------------------------------------------
+# ReadoutCompositeResults — generic aggregate container
+# ---------------------------------------------------------------------------
+
+
+class _HasSampling(Protocol):
+    sampling: SamplingReadoutResult
+
+
+def has_sampling(obj: ReadoutCompositeResults) -> TypeGuard[_HasSampling]:  # type: ignore[type-arg]
+    """Return ``True`` if the composite contains a sampling result."""
+    return obj.sampling is not None
+
+
+class _HasExpectation(Protocol):
+    expectation_values: ExpectationReadoutResult
+
+
+def has_expectation_values(obj: ReadoutCompositeResults) -> TypeGuard[_HasExpectation]:  # type: ignore[type-arg]
+    """Return ``True`` if the composite contains an expectation-value result."""
+    return obj.expectation_values is not None
+
+
+class _HasStateTomography(Protocol):
+    state_tomography: StateTomographyReadoutResult
+
+
+def has_state_tomography(obj: ReadoutCompositeResults) -> TypeGuard[_HasStateTomography]:  # type: ignore[type-arg]
+    """Return ``True`` if the composite contains a state-tomography result."""
+    return obj.state_tomography is not None
+
+
+@dataclass(frozen=True)
+class ReadoutCompositeResults(Result, Generic[S, E, T]):
+    """Aggregated container for readout results from a single execution step.
+
+    The three type parameters ``S``, ``E``, ``T`` encode at the *type level*
+    which readout results are present:
+
+    * ``S`` is :class:`SamplingReadoutResult` or ``None``
+    * ``E`` is :class:`ExpectationReadoutResult` or ``None``
+    * ``T`` is :class:`StateTomographyReadoutResult` or ``None``
+
+    When the concrete type parameter is the result class (not ``None``), the
+    corresponding field is guaranteed to be populated and the type checker
+    can verify access without runtime guards.
+
+    All three fields must be passed explicitly (no defaults) so that the
+    type checker can always infer the type parameters correctly.
+    """
+
+    sampling: S
+    expectation_values: E
+    state_tomography: T
+
+    def __repr__(self) -> str:
+        out = ""
+        if self.sampling:
+            out += str(self.sampling)
+        if self.expectation_values:
+            out += str(self.expectation_values)
+        if self.state_tomography:
+            out += str(self.state_tomography)
+        return out or f"{type(self).__name__}(empty)"
+
+
+# ---------------------------------------------------------------------------
+# Utility functions
+# ---------------------------------------------------------------------------
 
 
 def _samples_from_state(state: QTensor, nshots: int = 100, seed: int | None = None) -> dict[str, int]:
