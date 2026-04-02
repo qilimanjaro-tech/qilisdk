@@ -11,19 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Result containers returned by the various readout methods.
-
-Each concrete :class:`ReadoutMethod` has a corresponding result class defined
-here:
-
-* :class:`SamplingReadoutResult` -- bitstring counts and probabilities.
-* :class:`ExpectationReadoutResult` -- expectation values of observables.
-* :class:`StateTomographyReadoutResult` -- full quantum state with optional
-  probability extraction.
-
-:class:`ReadoutCompositeResults` aggregates several result objects when
-multiple readout methods are requested in a single execution.
-"""
 
 from __future__ import annotations
 
@@ -31,7 +18,7 @@ import heapq
 import operator
 from dataclasses import dataclass
 from pprint import pformat
-from typing import TYPE_CHECKING, Protocol, Self, TypeGuard, TypeVar
+from typing import TYPE_CHECKING, Generic, Protocol, Self, TypeGuard, TypeVar
 
 import numpy as np
 from loguru import logger
@@ -40,10 +27,10 @@ from qilisdk.core import QTensor, expect_val
 from qilisdk.core.result import Result
 from qilisdk.settings import get_settings
 
+from .readout import ExpectationReadout, ReadoutMethod, SamplingReadout, StateTomographyReadout
+
 if TYPE_CHECKING:
     from qilisdk.core.types import Number
-
-    from .readout import ExpectationReadout, ReadoutMethod, SamplingReadout, StateTomographyReadout
 
 
 NORMALIZATION_TOLERANCE = 1e-8
@@ -52,6 +39,7 @@ NORMALIZATION_TOLERANCE = 1e-8
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _real_if_close(number: Number) -> Number:
     if isinstance(number, complex) and abs(number.imag) < get_settings().atol:
@@ -80,7 +68,6 @@ class ReadoutResult(Result, Generic[C]):
     Every concrete subclass must expose a :attr:`readout` property that returns the :class:`~qilisdk.readout.ReadoutMethod`
     configuration used to produce the result.
     """
-
 
 
 # ---------------------------------------------------------------------------
@@ -122,7 +109,7 @@ class SamplingReadoutResult(ReadoutResult[SamplingReadout]):
             raise ValueError("Not all bitstring keys have the same length.")
 
         # Calculate probabilities
-        probabilities: dict[str, int | float] = {
+        probabilities: dict[str, float] = {
             bitstring: (counts / nshots if nshots and nshots > 0 else 0.0) for bitstring, counts in samples.items()
         }
         return cls(samples=samples, probabilities=probabilities)
@@ -134,15 +121,15 @@ class SamplingReadoutResult(ReadoutResult[SamplingReadout]):
         state: QTensor,
     ) -> Self:
         f_string = "{:0" + str(state.nqubits) + "b}"
-        probabilities: dict[str, int | float] = {(f_string).format(i): p for i, p in enumerate(state.probabilities())}
+        probabilities: dict[str, float] = {(f_string).format(i): p for i, p in enumerate(state.probabilities())}
         samples: dict[str, int] = _samples_from_probabilities(probabilities, nshots=sampling_readout.nshots)
         return cls(samples=samples, probabilities=probabilities)
 
-    def __init__(self, samples: dict[str, int] | None, probabilities: dict[str, float] | None = None) -> None:
+    def __init__(self, samples: dict[str, int], probabilities: dict[str, float] | None = None) -> None:
         if samples is None:
             raise ValueError("Can't construct the Sampling results if samples are not provided.")
         self._samples: dict[str, int] = samples or {}
-        self._probabilities: dict[str, int | float] = probabilities or {}
+        self._probabilities: dict[str, float] = probabilities or {}
 
     @property
     def samples(self) -> dict[str, int]:
@@ -199,21 +186,17 @@ class ExpectationReadoutResult(ReadoutResult[ExpectationReadout]):
     the readout configuration.  The object can be constructed in two ways:
 
     1. From pre-computed ``expected_values``.
-    2. From a quantum ``state``, in which case the expectation values are
-       derived via :func:`~qilisdk.core.expect_val`.
+    2. From a quantum ``state``, in which case the expectation values are derived via :func:`~qilisdk.core.expect_val`.
 
     Args:
-        readout (ExpectationReadout): The readout configuration that
-            produced this result.
-        expected_values (list[Number] | None): Pre-computed expectation
-            values, one per observable.  Mutually exclusive with ``state``.
-        state (QTensor | None): Quantum state used to compute expectation
-            values on-the-fly.  Mutually exclusive with
+        readout (ExpectationReadout): The readout configuration that produced this result.
+        expected_values (list[Number] | None): Pre-computed expectation values, one per observable.
+            Mutually exclusive with ``state``.
+        state (QTensor | None): Quantum state used to compute expectation values on-the-fly.  Mutually exclusive with
             ``expected_values``.
 
     Raises:
-        ValueError: If neither ``expected_values`` nor ``state`` is
-            provided.
+        ValueError: If neither ``expected_values`` nor ``state`` is provided.
     """
 
     @classmethod
@@ -258,14 +241,11 @@ class ExpectationReadoutResult(ReadoutResult[ExpectationReadout]):
 class StateTomographyReadoutResult(ReadoutResult[StateTomographyReadout]):
     """Result produced by a :class:`~qilisdk.readout.StateTomographyReadout`.
 
-    Contains the full quantum state after execution and, optionally, the
-    computational-basis probability distribution derived from it.
+    Contains the full quantum state after execution and, optionally, the computational-basis probability distribution derived from it.
 
     Args:
-        readout (StateTomographyReadout): The readout configuration that
-            produced this result.
-        state (QTensor): The reconstructed quantum state (ket or
-            density matrix).
+        readout (StateTomographyReadout): The readout configuration that produced this result.
+        state (QTensor): The reconstructed quantum state (ket or density matrix).
     """
 
     @classmethod
@@ -309,12 +289,10 @@ class StateTomographyReadoutResult(ReadoutResult[StateTomographyReadout]):
         """Return the most probable bitstrings in descending order.
 
         Args:
-            n (int | None): Maximum number of entries to return.  ``None``
-                (the default) returns all outcomes.
+            n (int | None): Maximum number of entries to return.  ``None`` (the default) returns all outcomes.
 
         Returns:
-            list[tuple[str, float]]: Up to ``n`` ``(bitstring, probability)``
-            pairs sorted by probability in descending order.
+            list[tuple[str, float]]: Up to ``n`` ``(bitstring, probability)`` pairs sorted by probability in descending order.
         """
         probs = self.probabilities
         if n is None:
@@ -355,7 +333,7 @@ class _HasSampling(Protocol):
     sampling: SamplingReadoutResult
 
 
-def has_sampling(obj: ReadoutCompositeResults) -> TypeGuard[_HasSampling]:  # type: ignore[type-arg]
+def has_sampling(obj: ReadoutCompositeResults) -> TypeGuard[_HasSampling]:
     """Return ``True`` if the composite contains a sampling result."""
     return obj.sampling is not None
 
@@ -364,7 +342,7 @@ class _HasExpectation(Protocol):
     expectation_values: ExpectationReadoutResult
 
 
-def has_expectation_values(obj: ReadoutCompositeResults) -> TypeGuard[_HasExpectation]:  # type: ignore[type-arg]
+def has_expectation_values(obj: ReadoutCompositeResults) -> TypeGuard[_HasExpectation]:
     """Return ``True`` if the composite contains an expectation-value result."""
     return obj.expectation_values is not None
 
@@ -373,7 +351,7 @@ class _HasStateTomography(Protocol):
     state_tomography: StateTomographyReadoutResult
 
 
-def has_state_tomography(obj: ReadoutCompositeResults) -> TypeGuard[_HasStateTomography]:  # type: ignore[type-arg]
+def has_state_tomography(obj: ReadoutCompositeResults) -> TypeGuard[_HasStateTomography]:
     """Return ``True`` if the composite contains a state-tomography result."""
     return obj.state_tomography is not None
 
@@ -389,17 +367,66 @@ class ReadoutCompositeResults(Result, Generic[S, E, T]):
     * ``E`` is :class:`ExpectationReadoutResult` or ``None``
     * ``T`` is :class:`StateTomographyReadoutResult` or ``None``
 
-    When the concrete type parameter is the result class (not ``None``), the
-    corresponding field is guaranteed to be populated and the type checker
-    can verify access without runtime guards.
-
-    All three fields must be passed explicitly (no defaults) so that the
-    type checker can always infer the type parameters correctly.
+    When the concrete type parameter is the result class (not ``None``), the corresponding field is guaranteed to be
+    populated and the type checker can verify access without runtime guards.
     """
 
-    sampling: S
-    expectation_values: E
-    state_tomography: T
+    sampling: S = None  # type: ignore[assignment]
+    expectation_values: E = None  # type: ignore[assignment]
+    state_tomography: T = None  # type: ignore[assignment]
+
+    @classmethod
+    def from_list(cls, results: list) -> ReadoutCompositeResults:
+        """Construct a :class:`ReadoutCompositeResults` from a flat list of readout results.
+
+        Each element is matched by type to the appropriate field.
+
+        Args:
+            results (list): A list containing any combination of
+                :class:`SamplingReadoutResult`, :class:`ExpectationReadoutResult`,
+                and :class:`StateTomographyReadoutResult` instances.
+
+        Returns:
+            ReadoutCompositeResults: The constructed result container.
+        """
+        sampling = None
+        expectation_values = None
+        state_tomography = None
+        for result in results:
+            if isinstance(result, SamplingReadoutResult):
+                sampling = result
+            elif isinstance(result, ExpectationReadoutResult):
+                expectation_values = result
+            elif isinstance(result, StateTomographyReadoutResult):
+                state_tomography = result
+        return cls(sampling=sampling, expectation_values=expectation_values, state_tomography=state_tomography)
+
+    @classmethod
+    def from_dict(cls, data: dict) -> ReadoutCompositeResults:
+        """Construct a :class:`ReadoutCompositeResults` from a plain dictionary.
+
+        Args:
+            data (dict): Mapping with optional keys ``"sampling"``,
+                ``"expectation_values"``, and ``"state_tomography"``.
+
+        Returns:
+            ReadoutCompositeResults: The constructed result container.
+
+        Raises:
+            TypeError: If any provided value has the wrong type.
+        """
+        sampling = data.get("sampling")
+        expectation_values = data.get("expectation_values")
+        state_tomography = data.get("state_tomography")
+
+        if sampling is not None and not isinstance(sampling, SamplingReadoutResult):
+            raise TypeError("sampling must be SamplingReadoutResult or None")
+        if expectation_values is not None and not isinstance(expectation_values, ExpectationReadoutResult):
+            raise TypeError("expectation_values must be ExpectationReadoutResult or None")
+        if state_tomography is not None and not isinstance(state_tomography, StateTomographyReadoutResult):
+            raise TypeError("state_tomography must be StateTomographyReadoutResult or None")
+
+        return cls(sampling=sampling, expectation_values=expectation_values, state_tomography=state_tomography)
 
     def __repr__(self) -> str:
         out = ""

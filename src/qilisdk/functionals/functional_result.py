@@ -13,10 +13,8 @@
 # limitations under the License.
 from __future__ import annotations
 
-from collections.abc import Iterator
-from typing import Generic
+from typing import TYPE_CHECKING, Generic
 
-from qilisdk.core import QTensor
 from qilisdk.core.result import Result
 from qilisdk.readout.readout_result import (
     E,
@@ -27,6 +25,11 @@ from qilisdk.readout.readout_result import (
     has_sampling,
     has_state_tomography,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+
+    from qilisdk.core import QTensor
 
 
 class FunctionalResult(Result, Generic[S, E, T]):
@@ -42,9 +45,9 @@ class FunctionalResult(Result, Generic[S, E, T]):
     result objects directly.  The type checker knows whether each is ``None``
     or populated based on the type parameters::
 
-        result.sampling.samples              # ✅ when S = SamplingReadoutResult
-        result.state_tomography.state        # ✅ when T = StateTomographyReadoutResult
-        result.expectation                   # None when E = None → .expected_values is a type error
+        result.sampling.samples  # ✅ when S = SamplingReadoutResult
+        result.state_tomography.state  # ✅ when T = StateTomographyReadoutResult
+        result.expectation  # None when E = None → .expected_values is a type error
 
     **Convenience shortcuts** — ``result.samples``, ``result.state``, etc.
     remain available for interactive / notebook use.  They raise
@@ -233,19 +236,31 @@ class FunctionalResult(Result, Generic[S, E, T]):
     # -- has_* helpers (useful for runtime checks) ------------------------
 
     def has_state(self) -> bool:
-        """Check whether the result contains a final quantum state."""
+        """Check whether the result contains a final quantum state.
+        Returns:
+            bool: True if the Functional result has the state. False Otherwise.
+        """
         return has_state_tomography(self._readout_results)
 
     def has_samples(self) -> bool:
-        """Check whether the result contains measurement samples."""
+        """Check whether the result contains measurement samples.
+        Returns:
+            bool: True if the Functional result has samples. False Otherwise.
+        """
         return has_sampling(self._readout_results)
 
     def has_probabilities(self) -> bool:
-        """Check whether the result contains outcome probabilities."""
+        """Check whether the result contains outcome probabilities.
+        Returns:
+            bool: True if the Functional result has probabilities. False Otherwise.
+        """
         return has_state_tomography(self._readout_results) or has_sampling(self._readout_results)
 
     def has_expectation_values(self) -> bool:
-        """Check whether the result contains expectation values."""
+        """Check whether the result contains expectation values.
+        Returns:
+            bool: True if the Functional result has expectation  values. False Otherwise.
+        """
         return has_expectation_values(self._readout_results)
 
     # -- container protocol -----------------------------------------------

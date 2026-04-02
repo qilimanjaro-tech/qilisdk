@@ -221,7 +221,7 @@ class ExecutionConfig(BaseSimulatorConfig):
 
     def get_config(self) -> SolverConfigDict:
         """Return execution settings with resolved defaults."""
-        d = {
+        d: dict[str, float | str] = {
             "num_threads": self.num_threads,
             "seed": int(self.seed) if self.seed is not None else 0,  # defensive
             "monte_carlo": self.monte_carlo is not None,

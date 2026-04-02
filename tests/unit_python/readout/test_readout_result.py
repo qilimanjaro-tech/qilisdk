@@ -440,7 +440,7 @@ class TestFunctionalResult:
 
     def test_getitem_invalid_index_raises(self):
         result = FunctionalResult(readout_results=_make_sampling_composite(10, {"0": 10}))
-        with pytest.raises(ValueError, match="Invalid Index"):
+        with pytest.raises(IndexError, match="out of range"):
             _ = result[5]
 
     def test_readout_results_property(self):

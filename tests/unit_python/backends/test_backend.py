@@ -45,7 +45,7 @@ def test_backend_initialization():
 def test_backend_execute():
     backend = Backend()
     functional = DigitalPropagation(Circuit(1))
-    readout = ReadoutSpec().with_sampling(SamplingReadout(nshots=10))
+    readout = ReadoutSpec().with_sampling(nshots=10)
 
     with pytest.raises(NotImplementedError, match="has no DigitalPropagation"):
         backend.execute(functional, readout)
@@ -61,7 +61,7 @@ def test_backend_execute_empty_readout():
 
 def test_backend_execute_duplicate_readout():
     with pytest.raises(ValueError, match="Sampling readout already set"):
-        ReadoutSpec().with_sampling(SamplingReadout(nshots=10)).with_sampling(SamplingReadout(nshots=20))
+        ReadoutSpec().with_sampling(nshots=10).with_sampling(nshots=20)
 
 
 def _make_mock_result(functional):
@@ -69,7 +69,9 @@ def _make_mock_result(functional):
     param_val = functional.get_parameter_values()[0] if functional.get_parameter_values() else 0.0
     samples = {"0": int(param_val * 100) if param_val > 0 else 100}
     readout_result = SamplingReadoutResult.from_samples(samples=samples)
-    return FunctionalResult(readout_results=ReadoutCompositeResults(sampling=readout_result, expectation_values=None, state_tomography=None))
+    return FunctionalResult(
+        readout_results=ReadoutCompositeResults(sampling=readout_result, expectation_values=None, state_tomography=None)
+    )
 
 
 class MockCostFunction:
@@ -221,7 +223,7 @@ def test_backend_execute_unsupported_functional():
         pass
 
     with pytest.raises(NotImplementedError, match="does not support"):
-        backend.execute(UnknownFunctional(), [SamplingReadout(nshots=10)])
+        backend.execute(UnknownFunctional(), ReadoutSpec().with_sampling(nshots=10))
 
 
 def test_backend_analog_evolution_not_implemented():
@@ -229,7 +231,7 @@ def test_backend_analog_evolution_not_implemented():
     schedule = Schedule(dt=1, hamiltonians={"h": Z(0)}, coefficients={"h": {(0, 1): 1.0}})
     functional = AnalogEvolution(schedule=schedule, initial_state=ket(0))
     with pytest.raises(NotImplementedError, match="has no AnalogEvolution"):
-        backend.execute(functional, [StateTomographyReadout()])
+        backend.execute(functional, ReadoutSpec().with_state_tomography())
 
 
 def test_quantum_reservoir_with_noise_model_warns(monkeypatch):

@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from copy import copy
 from enum import Enum
-from typing import TYPE_CHECKING, Callable, Type, TypeVar
+from typing import TYPE_CHECKING, Callable, Type, TypeAlias, TypeVar
 
 import cudaq
 import numpy as np
@@ -84,7 +84,7 @@ TBasicGate = TypeVar("TBasicGate", bound=BasicGate)
 BasicGateHandlersMapping = dict[Type[TBasicGate], Callable[[cudaq.Kernel, TBasicGate, cudaq.QuakeValue], None]]
 
 TPauliOperator = TypeVar("TPauliOperator", bound=PauliOperator)
-PauliOperatorHandlersMapping = dict[Type[TPauliOperator], Callable[[TPauliOperator], ElementaryOperator]]
+PauliOperatorHandlersMapping: TypeAlias = dict[Type[TPauliOperator], Callable[[TPauliOperator], ElementaryOperator]]
 
 
 def _to_cuda_noise(noise: Noise, gate_duration: float) -> cudaq.KrausChannel | None:

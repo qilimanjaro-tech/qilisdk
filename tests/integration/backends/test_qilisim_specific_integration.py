@@ -26,7 +26,7 @@ from qilisdk.backends.qilisim import QiliSim
 from qilisdk.core.qtensor import ket
 from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, H, X, Y, Z
 from qilisdk.functionals import AnalogEvolution, DigitalPropagation, FunctionalResult
-from qilisdk.readout import ExpectationReadout, SamplingReadout, StateTomographyReadout
+from qilisdk.readout import ReadoutSpec, SamplingReadout
 
 analog_methods = [
     AnalogMethod.direct(),
@@ -45,7 +45,7 @@ def test_seed_same(method):
     backend2 = QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1), digital_simulation_method=method)
     circuit = Circuit(nqubits=1)
     circuit.add(H(0))
-    readout = [SamplingReadout(nshots=100)]
+    readout = ReadoutSpec().with_sampling(nshots=100)
     result1 = backend1.execute(DigitalPropagation(circuit=circuit), readout=readout)
     result2 = backend2.execute(DigitalPropagation(circuit=circuit), readout=readout)
     assert result1.samples == result2.samples
@@ -86,7 +86,7 @@ def test_seed_different(method):
     backend2 = QiliSim(execution_config=ExecutionConfig(seed=43, num_threads=1), digital_simulation_method=method)
     circuit = Circuit(nqubits=1)
     circuit.add(H(0))
-    readout = [SamplingReadout(nshots=100)]
+    readout = ReadoutSpec().with_sampling(nshots=100)
     result1 = backend1.execute(DigitalPropagation(circuit=circuit), readout=readout)
     result2 = backend2.execute(DigitalPropagation(circuit=circuit), readout=readout)
     assert result1.samples != result2.samples
@@ -115,7 +115,7 @@ def test_row_vec_ordering(method):
     )
     res = backend.execute(
         AnalogEvolution(schedule=schedule, initial_state=psi0),
-        readout=[ExpectationReadout(observables=[pauli_y(0)]), StateTomographyReadout()],
+        readout=ReadoutSpec().with_expectation(observables=[pauli_y(0)]).with_state_tomography(),
     )
 
     assert isinstance(res, FunctionalResult)
@@ -149,7 +149,7 @@ def test_monte_carlo_time_evolution(method):
     )
     res = backend.execute(
         AnalogEvolution(schedule=schedule, initial_state=psi0),
-        readout=[ExpectationReadout(observables=[pauli_z(0)]), StateTomographyReadout()],
+        readout=ReadoutSpec().with_expectation(observables=[pauli_z(0)]).with_state_tomography(),
     )
 
     assert isinstance(res, FunctionalResult)
@@ -163,7 +163,7 @@ def test_exponential_gates(method):
     backend = QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1), digital_simulation_method=method)
     circuit = Circuit(nqubits=1)
     circuit.add(X(0).exponential())
-    result = backend.execute(DigitalPropagation(circuit=circuit), readout=[SamplingReadout(nshots=100)])
+    result = backend.execute(DigitalPropagation(circuit=circuit), readout=ReadoutSpec().with_sampling(nshots=100))
     assert isinstance(result, FunctionalResult)
     samples = result.samples
     assert "1" in samples
@@ -192,7 +192,7 @@ def test_matrix_free_circuit_versus_normal():
         execution_config=ExecutionConfig(seed=42, num_threads=1),
         digital_simulation_method=DigitalMethod.statevector(matrix_free=True),
     )
-    readout = [SamplingReadout(nshots=1000)]
+    readout = ReadoutSpec().with_sampling(nshots=1000)
     res_statevector = backend_statevector.execute(DigitalPropagation(circuit=c), readout=readout)
     res_matrix_free = backend_matrix_free.execute(DigitalPropagation(circuit=c), readout=readout)
     assert _counts_similar(res_statevector.samples, res_matrix_free.samples, total_shots=1000, tol=0.1)
@@ -212,7 +212,7 @@ def test_combine_single_qubit_gates(matrix_free):
         execution_config=ExecutionConfig(seed=42, num_threads=1),
         digital_simulation_method=DigitalMethod.statevector(matrix_free=matrix_free, combine_single_qubit_gates=False),
     )
-    readout = [SamplingReadout(nshots=1000)]
+    readout = ReadoutSpec().with_sampling(nshots=1000)
     res_combined = backend_combined.execute(DigitalPropagation(circuit=c), readout=readout)
     res_uncombined = backend_uncombined.execute(DigitalPropagation(circuit=c), readout=readout)
     assert _counts_similar(res_combined.samples, res_uncombined.samples, total_shots=1000, tol=0.1)
@@ -228,7 +228,7 @@ def test_matrix_free_time_evolution_versus_normal():
         coefficients={"h1": {(0, T): 1}},
     )
     psi0 = (ket(0) - ket(1)).unit()
-    readout = [ExpectationReadout(observables=[pauli_y(0)])]
+    readout = ReadoutSpec().with_expectation(observables=[pauli_y(0)])
     backend_normal = QiliSim(
         execution_config=ExecutionConfig(seed=42, num_threads=1), analog_simulation_method=AnalogMethod.integrator()
     )

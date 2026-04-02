@@ -21,19 +21,15 @@ a quantum backend after execution.
 
 from __future__ import annotations
 
-from typing import ClassVar, Generic, Literal, TypeVar
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, model_validator
 
 from qilisdk.analog import Hamiltonian  # noqa: TC001
 from qilisdk.core import QTensor
 
-from .readout_result import ExpectationReadoutResult, ReadoutResult, SamplingReadoutResult, StateTomographyReadoutResult
 
-R = TypeVar("R", bound="ReadoutResult")
-
-
-class ReadoutMethod(BaseModel, Generic[R]):
+class ReadoutMethod(BaseModel):
     """Base type for readout configurations.
 
     :class:`ReadoutMethod` is not meant to be instantiated directly.  Use one
@@ -41,46 +37,64 @@ class ReadoutMethod(BaseModel, Generic[R]):
     :class:`ExpectationReadout`, :class:`StateTomographyReadout`) or the
     convenience factory methods defined on this class:
 
-    * :meth:`sample` -- creates a :class:`SamplingReadout`
-    * :meth:`expectation_values` -- creates an :class:`ExpectationReadout`
+    * :meth:`sampling` -- creates a :class:`SamplingReadout`
+    * :meth:`expectation` -- creates an :class:`ExpectationReadout`
     * :meth:`state_tomography` -- creates a :class:`StateTomographyReadout`
     """
-
-    results_type: ClassVar[type[ReadoutResult]]
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     @classmethod
-    def _require_factory_called_on_base(cls, factory_name: str) -> None:
-        """Ensure factory helpers are only called on ``ReadoutMethod``.
-
-        Raises:
-            TypeError: if it's called on a child rather than the base class.
-        """
-        if cls is not ReadoutMethod:
-            raise TypeError(
-                f"{factory_name}() is only available on ReadoutMethod; use ReadoutMethod.{factory_name}(...)"
-            )
-
-    @classmethod
-    def sampling(cls, nshots: int = 100) -> SamplingReadout:
+    def sampling(cls, nshots: int) -> SamplingReadout:
         """Create a :class:`SamplingReadout`.
 
-        This factory must be called on :class:`ReadoutMethod` itself, not on a
-        subclass.
-
         Args:
-            nshots (int): Number of measurement shots.  Must be >= 0.
+            nshots (int): Number of measurement shots.
 
         Returns:
-            SamplingReadout: A configured sampling readout instance.
+            SamplingReadout: A new sampling readout configuration.
 
         Raises:
-            AttributeError: If called on a subclass instead of
-                :class:`ReadoutMethod`.
+            TypeError: If called on a subclass rather than :class:`ReadoutMethod` directly.
         """
-        cls._require_factory_called_on_base("sampling")
+        if cls is not ReadoutMethod:
+            raise TypeError("factory methods are only available on ReadoutMethod, not on subclasses")
         return SamplingReadout(nshots=nshots)
+
+    @classmethod
+    def expectation(cls, observables: list, nshots: int = 0) -> ExpectationReadout:
+        """Create an :class:`ExpectationReadout`.
+
+        Args:
+            observables (list): Observables whose expectation values will be evaluated.
+            nshots (int): Number of measurement shots. Defaults to ``0`` (exact evaluation).
+
+        Returns:
+            ExpectationReadout: A new expectation-value readout configuration.
+
+        Raises:
+            TypeError: If called on a subclass rather than :class:`ReadoutMethod` directly.
+        """
+        if cls is not ReadoutMethod:
+            raise TypeError("factory methods are only available on ReadoutMethod, not on subclasses")
+        return ExpectationReadout(observables=observables, nshots=nshots)
+
+    @classmethod
+    def state_tomography(cls, method: Literal["exact"] = "exact") -> StateTomographyReadout:
+        """Create a :class:`StateTomographyReadout`.
+
+        Args:
+            method (Literal["exact"]): Tomography method. Currently only ``"exact"`` is supported.
+
+        Returns:
+            StateTomographyReadout: A new state-tomography readout configuration.
+
+        Raises:
+            TypeError: If called on a subclass rather than :class:`ReadoutMethod` directly.
+        """
+        if cls is not ReadoutMethod:
+            raise TypeError("factory methods are only available on ReadoutMethod, not on subclasses")
+        return StateTomographyReadout(state_tomography_method=method)
 
     def is_sampling_readout(self) -> bool:
         """Check whether this readout is a :class:`SamplingReadout`.
@@ -91,29 +105,6 @@ class ReadoutMethod(BaseModel, Generic[R]):
         """
         return isinstance(self, SamplingReadout)
 
-    @classmethod
-    def expectation(cls, observables: list[Hamiltonian | QTensor], nshots: int = 0) -> ExpectationReadout:
-        """Create an :class:`ExpectationReadout`.
-
-        This factory must be called on :class:`ReadoutMethod` itself, not on a
-        subclass.
-
-        Args:
-            observables (list[Hamiltonian | QTensor]): Observables whose
-                expectation values will be evaluated.
-            nshots (int): Number of measurement shots.  Use ``0`` for
-                exact (state-vector-based) evaluation.
-
-        Returns:
-            ExpectationReadout: A configured expectation-value readout instance.
-
-        Raises:
-            AttributeError: If called on a subclass instead of
-                :class:`ReadoutMethod`.
-        """
-        cls._require_factory_called_on_base("expectation")
-        return ExpectationReadout(observables=observables, nshots=nshots)
-
     def is_expectation_readout(self) -> bool:
         """Check whether this readout is an :class:`ExpectationReadout`.
 
@@ -122,28 +113,6 @@ class ReadoutMethod(BaseModel, Generic[R]):
             ``False`` otherwise.
         """
         return isinstance(self, ExpectationReadout)
-
-    @classmethod
-    def state_tomography(cls, method: Literal["exact"] = "exact") -> StateTomographyReadout:
-        """Create a :class:`StateTomographyReadout`.
-
-        This factory must be called on :class:`ReadoutMethod` itself, not on a
-        subclass.
-
-        Args:
-            method (Literal["exact"]): Tomography method identifier.
-                Currently only ``"exact"`` is supported.
-
-        Returns:
-            StateTomographyReadout: A configured state-tomography readout
-            instance.
-
-        Raises:
-            AttributeError: If called on a subclass instead of
-                :class:`ReadoutMethod`.
-        """
-        cls._require_factory_called_on_base("state_tomography")
-        return StateTomographyReadout(state_tomography_method=method)
 
     def is_state_tomography_readout(self) -> bool:
         """Check whether this readout is a :class:`StateTomographyReadout`.
@@ -155,7 +124,7 @@ class ReadoutMethod(BaseModel, Generic[R]):
         return isinstance(self, StateTomographyReadout)
 
 
-class SamplingReadout(ReadoutMethod[SamplingReadoutResult]):
+class SamplingReadout(ReadoutMethod):
     """Sampling readout configuration.
 
     Instructs the backend to perform repeated measurement shots and return
@@ -170,11 +139,10 @@ class SamplingReadout(ReadoutMethod[SamplingReadoutResult]):
         >>> SamplingReadout(nshots=1000)
     """
 
-    results_type: ClassVar[type[SamplingReadoutResult]] = SamplingReadoutResult
     nshots: int = Field(ge=0)
 
 
-class ExpectationReadout(ReadoutMethod[ExpectationReadoutResult]):
+class ExpectationReadout(ReadoutMethod):
     """Expectation-value readout configuration.
 
     Instructs the backend to compute expectation values
@@ -199,7 +167,6 @@ class ExpectationReadout(ReadoutMethod[ExpectationReadoutResult]):
         >>> ExpectationReadout(observables=[hamiltonian], nshots=0)
     """
 
-    results_type: ClassVar[type[ExpectationReadoutResult]] = ExpectationReadoutResult
     nshots: int = Field(default=0, ge=0)
     observables: list[Hamiltonian | QTensor]
     qtensor_observables: list[QTensor] = Field(default_factory=list, init=False)
@@ -229,7 +196,7 @@ class ExpectationReadout(ReadoutMethod[ExpectationReadoutResult]):
         self._scaled_nqubits = nqubits
 
 
-class StateTomographyReadout(ReadoutMethod[StateTomographyReadoutResult]):
+class StateTomographyReadout(ReadoutMethod):
     """State-tomography readout configuration.
 
     Instructs the backend to return the full quantum state (ket or density
@@ -245,5 +212,4 @@ class StateTomographyReadout(ReadoutMethod[StateTomographyReadoutResult]):
         >>> StateTomographyReadout(state_tomography_method="exact")
     """
 
-    results_type: ClassVar[type[StateTomographyReadoutResult]] = StateTomographyReadoutResult
     state_tomography_method: Literal["exact"] = Field(default="exact")
