@@ -5,7 +5,7 @@ Readout is the mechanism that controls **what information is extracted from the 
 functional is executed.  It is specified separately from the functional itself, so the same circuit or
 schedule can be measured in different ways without any code change to the functional.
 
-The entry point is always :class:`~qilisdk.readout.ReadoutSpec`.
+The entry point is always :class:`~qilisdk.readout.readout_spec.Readout`.
 
 .. contents::
    :local:
@@ -13,22 +13,22 @@ The entry point is always :class:`~qilisdk.readout.ReadoutSpec`.
 
 ----
 
-ReadoutSpec — the builder
+Readout — the builder
 --------------------------
 
-:class:`~qilisdk.readout.ReadoutSpec` is a **immutable builder** that accumulates readout methods by
+:class:`~qilisdk.readout.readout_spec.Readout` is a builder that accumulates readout methods by
 chaining ``with_*`` calls.  Each call returns a *new* spec with one additional slot filled; the original
 object is never modified.
 
 .. code-block:: python
 
-    from qilisdk.readout import ReadoutSpec
+    from qilisdk.readout import Readout
 
-    spec = ReadoutSpec()                         # no readout selected yet
+    spec = Readout()                         # no readout selected yet
     spec = spec.with_sampling(nshots=1000)       # add sampling
     spec = spec.with_expectation(observables=[Z(0)])  # add expectation values
     # or in one line:
-    spec = ReadoutSpec().with_sampling(nshots=1000).with_expectation(observables=[Z(0)])
+    spec = Readout().with_sampling(nshots=1000).with_expectation(observables=[Z(0)])
 
 The finished spec is passed to :meth:`~qilisdk.backends.backend.Backend.execute` (or
 :meth:`~qilisdk.speqtrum.speqtrum.SpeQtrum.submit` for remote hardware):
@@ -40,7 +40,7 @@ The finished spec is passed to :meth:`~qilisdk.backends.backend.Backend.execute`
 .. note::
 
     At least one readout method must be added before calling ``execute``.  Passing an empty
-    ``ReadoutSpec()`` raises ``ValueError``.
+    ``Readout()`` raises ``ValueError``.
 
 Readout types
 -------------
@@ -53,9 +53,9 @@ collect the bitstring counts.
 
 .. code-block:: python
 
-    from qilisdk.readout import ReadoutSpec
+    from qilisdk.readout import Readout
 
-    spec = ReadoutSpec().with_sampling(nshots=1000)
+    spec = Readout().with_sampling(nshots=1000)
     result = backend.execute(functional, readout=spec)
 
     # Access the results
@@ -82,9 +82,9 @@ Instructs the backend to compute ``⟨ψ|O|ψ⟩`` for each observable in the li
 .. code-block:: python
 
     from qilisdk.analog import X, Y, Z
-    from qilisdk.readout import ReadoutSpec
+    from qilisdk.readout import Readout
 
-    spec = ReadoutSpec().with_expectation(observables=[Z(0), X(0), Y(0)], nshots=0)
+    spec = Readout().with_expectation(observables=[Z(0), X(0), Y(0)], nshots=0)
     result = backend.execute(functional, readout=spec)
 
     evs = result.expectation_values   # list[float], one entry per observable
@@ -110,9 +110,9 @@ Instructs the backend to return the full quantum state vector (or density matrix
 
 .. code-block:: python
 
-    from qilisdk.readout import ReadoutSpec
+    from qilisdk.readout import Readout
 
-    spec = ReadoutSpec().with_state_tomography()
+    spec = Readout().with_state_tomography()
     result = backend.execute(functional, readout=spec)
 
     state = result.state              # QTensor — the full ket or density matrix
@@ -145,10 +145,10 @@ Any combination of the three readout types can be requested in a single executio
 .. code-block:: python
 
     from qilisdk.analog import Z
-    from qilisdk.readout import ReadoutSpec
+    from qilisdk.readout import Readout
 
     spec = (
-        ReadoutSpec()
+        Readout()
         .with_sampling(nshots=500)
         .with_expectation(observables=[Z(0)])
         .with_state_tomography()
@@ -203,9 +203,9 @@ These return the raw result objects and let the type checker verify access witho
 .. code-block:: python
 
     from qilisdk.analog import Z
-    from qilisdk.readout import ReadoutSpec
+    from qilisdk.readout import Readout
 
-    spec = ReadoutSpec().with_sampling(nshots=1000).with_expectation(observables=[Z(0)])
+    spec = Readout().with_sampling(nshots=1000).with_expectation(observables=[Z(0)])
     result = backend.execute(functional, readout=spec)
 
     # result.sampling is SamplingReadoutResult — type checker knows this
@@ -245,10 +245,10 @@ readout result for every time step.  The same readout methods apply at each step
     from qilisdk.analog import Schedule, Z
     from qilisdk.core import ket
     from qilisdk.functionals import AnalogEvolution
-    from qilisdk.readout import ReadoutSpec
+    from qilisdk.readout import Readout
 
     functional = AnalogEvolution(schedule, initial_state=ket(0), store_intermediate_results=True)
-    spec = ReadoutSpec().with_expectation(observables=[Z(0)]).with_state_tomography()
+    spec = Readout().with_expectation(observables=[Z(0)]).with_state_tomography()
     result = backend.execute(functional, readout=spec)
 
     # Per-step expectation values (intermediate steps + final step)
@@ -276,7 +276,7 @@ readout result for every time step.  The same readout methods apply at each step
      - ``.with_state_tomography()``
 
 All intermediate lists contain one entry per time step in chronological order, with the **final**
-step appended last.  ``result[i]`` returns the :class:`~qilisdk.readout.ReadoutCompositeResults`
+step appended last.  ``result[i]`` returns the :class:`~qilisdk.readout.readout_results.ReadoutCompositeResults`
 for step ``i``.
 
 ----
@@ -296,7 +296,7 @@ state at every time step, then plots the observable trajectory.
     from qilisdk.backends import QutipBackend
     from qilisdk.core import ket
     from qilisdk.functionals import AnalogEvolution
-    from qilisdk.readout import ReadoutSpec
+    from qilisdk.readout import Readout
 
     T = 5.0
     schedule = Schedule(
@@ -315,7 +315,7 @@ state at every time step, then plots the observable trajectory.
     )
 
     spec = (
-        ReadoutSpec()
+        Readout()
         .with_expectation(observables=[Z(0)])
         .with_state_tomography()
     )

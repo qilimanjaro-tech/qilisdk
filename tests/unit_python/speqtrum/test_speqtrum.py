@@ -36,7 +36,7 @@ from qilisdk.experiments.experiment_functional import RabiExperiment, T1Experime
 from qilisdk.functionals.analog_evolution import AnalogEvolution
 from qilisdk.functionals.digital_propagation import DigitalPropagation
 from qilisdk.functionals.variational_program import VariationalProgram
-from qilisdk.readout import ReadoutSpec
+from qilisdk.readout import Readout
 
 pytest.importorskip("httpx", reason="SpeQtrum tests require the 'speqtrum' optional dependency", exc_type=ImportError)
 pytest.importorskip(
@@ -161,7 +161,7 @@ def test_submit_dispatches_to_digital_propagation_handler(monkeypatch):
         raising=True,
     )
     q = speqtrum.SpeQtrum()
-    handle = q.submit(FakeDigitalPropagation(), device="some_device", job_name="my_job", readout=ReadoutSpec())
+    handle = q.submit(FakeDigitalPropagation(), device="some_device", job_name="my_job", readout=Readout())
     assert handle.id == 99
 
 
@@ -182,13 +182,13 @@ def test_submit_dispatches_to_variational_program_handler(monkeypatch):
         FakeVariationalProgram(FakeDigitalPropagation()),
         device="some_device",
         job_name="my_vp_job",
-        readout=ReadoutSpec(),
+        readout=Readout(),
     )
     q.submit(
-        FakeVariationalProgram(FakeAnalogEvolution()), device="some_device", job_name="my_vp_job", readout=ReadoutSpec()
+        FakeVariationalProgram(FakeAnalogEvolution()), device="some_device", job_name="my_vp_job", readout=Readout()
     )
     q.submit(
-        FakeVariationalProgram(FakeRabiExperiment()), device="some_device", job_name="my_vp_job", readout=ReadoutSpec()
+        FakeVariationalProgram(FakeRabiExperiment()), device="some_device", job_name="my_vp_job", readout=Readout()
     )
     assert handle.id == 88
 
@@ -203,7 +203,7 @@ def test_submit_dispatches_to_analog_evolution_handler(monkeypatch):
         raising=True,
     )
     q = speqtrum.SpeQtrum()
-    handle = q.submit(FakeAnalogEvolution(), device="some_device", job_name="te_job", readout=ReadoutSpec())
+    handle = q.submit(FakeAnalogEvolution(), device="some_device", job_name="te_job", readout=Readout())
     assert handle.id == 77
 
 
@@ -275,7 +275,7 @@ def test_submit_unknown_functional_raises(monkeypatch):
         pass
 
     with pytest.raises(NotImplementedError):
-        client.submit(SomethingElse(), device="some_device", readout=ReadoutSpec())
+        client.submit(SomethingElse(), device="some_device", readout=Readout())
 
 
 def test_wait_for_job_completes(monkeypatch):

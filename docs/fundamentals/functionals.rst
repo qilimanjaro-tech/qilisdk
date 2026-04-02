@@ -33,8 +33,8 @@ Result Objects
     The unified result type for all primitive functionals. Access results through:
     ``samples`` for shot counts, ``probabilities`` for measurement probabilities,
     ``state`` for the terminal :class:`~qilisdk.core.qtensor.QTensor` state (when using
-    :meth:`~qilisdk.readout.ReadoutSpec.with_state_tomography`), and ``expectation_values`` for
-    expectation values (when using :meth:`~qilisdk.readout.ReadoutSpec.with_expectation`).
+    :meth:`~qilisdk.readout.readout_spec.Readout.with_state_tomography`), and ``expectation_values`` for
+    expectation values (when using :meth:`~qilisdk.readout.readout_spec.Readout.with_expectation`).
     When ``store_intermediate_results=True``, intermediate results are available via
     ``intermediate_states``, ``intermediate_samples``, ``intermediate_probabilities``, and ``intermediate_expectation_values``.
 * :class:`~qilisdk.functionals.variational_program_result.VariationalProgramResult`
@@ -48,10 +48,10 @@ most likely bitstrings:
 
     from qilisdk.backends import QutipBackend
     from qilisdk.functionals import DigitalPropagation
-    from qilisdk.readout import ReadoutSpec
+    from qilisdk.readout import Readout
 
     backend = QutipBackend()
-    result = backend.execute(DigitalPropagation(circuit), ReadoutSpec().with_sampling(nshots=1_000))
+    result = backend.execute(DigitalPropagation(circuit), Readout().with_sampling(nshots=1_000))
     print("Most likely outcomes:", result.probabilities)
 
 Digital Propagation
@@ -99,11 +99,11 @@ This functional can be executed on any backend that supports digital circuits. F
 .. code-block:: python
 
     from qilisdk.backends import CudaBackend
-    from qilisdk.readout import ReadoutSpec
+    from qilisdk.readout import Readout
 
     # Run on CUDA backend and retrieve counts
     backend = CudaBackend()
-    results = backend.execute(digital_propagation, ReadoutSpec().with_sampling(nshots=100))
+    results = backend.execute(digital_propagation, Readout().with_sampling(nshots=100))
     print(results)
 
 **Output**
@@ -193,7 +193,7 @@ we can execute it on the Qutip backend:
     backend = QutipBackend()
     results = backend.execute(
         analog_evolution,
-        ReadoutSpec().with_expectation(observables=[Z(0), X(0), Y(0)]),
+        Readout().with_expectation(observables=[Z(0), X(0), Y(0)]),
     )
     print(results)
 
@@ -245,7 +245,7 @@ be driven by input data sequences rather than optimization loops.
     from qilisdk.digital import Circuit, U2
     from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
     from qilisdk.analog import Schedule, X, Z
-    from qilisdk.readout import ReadoutSpec
+    from qilisdk.readout import Readout
 
     pre_processing = Circuit(2)
     pre_processing.add(U2(1, phi=ReservoirInput("phi_1", 0.1), gamma=ReservoirInput("gamma_1", 0.1)))
@@ -273,7 +273,7 @@ be driven by input data sequences rather than optimization loops.
 
     results = CudaBackend().execute(
         reservoir,
-        ReadoutSpec().with_expectation(observables=[Z(0), Z(1), Z(0) * Z(1)]),
+        Readout().with_expectation(observables=[Z(0), Z(1), Z(0) * Z(1)]),
     )
     print(results.expectation_values)
 
@@ -443,7 +443,7 @@ Only parameters marked as trainable are optimized during this loop.
     from qilisdk.functionals import DigitalPropagation
     from qilisdk.functionals.variational_program import VariationalProgram
     from qilisdk.optimizers.scipy_optimizer import SciPyOptimizer
-    from qilisdk.readout import ReadoutSpec
+    from qilisdk.readout import Readout
 
 
     values = [2, 3, 7]
@@ -471,7 +471,7 @@ Only parameters marked as trainable are optimized during this loop.
             optimizer=optimizer,
             cost_function=ModelCostFunction(model),
         ),
-        ReadoutSpec().with_sampling(nshots=1000),
+        Readout().with_sampling(nshots=1000),
     )
 
     print(result)
@@ -510,7 +510,7 @@ This example optimizes a variational schedule under some parameter constraints.
     from qilisdk.core.variables import Parameter
     from qilisdk.core import ket, tensor_prod
     from qilisdk.backends import QutipBackend
-    from qilisdk.readout import ReadoutSpec
+    from qilisdk.readout import Readout
     import numpy as np
 
     from qilisdk.utils.visualization.style import ScheduleStyle
@@ -553,6 +553,6 @@ This example optimizes a variational schedule under some parameter constraints.
     print(vp.get_constraints()) # print the constraints of the variational program.
 
     backend = QutipBackend()
-    results = backend.execute(vp, ReadoutSpec().with_expectation(observables=[h1]).with_state_tomography().with_sampling(nshots=1000))
+    results = backend.execute(vp, Readout().with_expectation(observables=[h1]).with_state_tomography().with_sampling(nshots=1000))
     schedule.draw(ScheduleStyle(title="Schedule After Optimization"))
     print(results)

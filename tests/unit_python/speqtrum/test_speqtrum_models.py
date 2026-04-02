@@ -65,7 +65,7 @@ from qilisdk.digital import Circuit
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.functionals.variational_program_result import VariationalProgramResult
 from qilisdk.optimizers.optimizer_result import OptimizerResult
-from qilisdk.readout import ReadoutSpec
+from qilisdk.readout import Readout
 from qilisdk.readout.readout_result import ReadoutCompositeResults, SamplingReadoutResult, StateTomographyReadoutResult
 from qilisdk.speqtrum.speqtrum_models import (
     AnalogEvolutionPayload,
@@ -82,7 +82,7 @@ from qilisdk.speqtrum.speqtrum_models import (
 def test_digital_propagation_payload():
     circ = Circuit(2)
     digital_propagation = DigitalPropagation(circuit=circ)
-    payload = DigitalPropagationPayload(digital_propagation=digital_propagation, readout=ReadoutSpec())
+    payload = DigitalPropagationPayload(digital_propagation=digital_propagation, readout=Readout())
     serialized = payload._serialize_sampling(digital_propagation=digital_propagation, _info={})
     deserialized = payload._load_sampling(serialized)
     assert deserialized.circuit.nqubits == digital_propagation.circuit.nqubits
@@ -94,7 +94,7 @@ def test_analog_evolution_payload():
     schedule = Schedule(hamiltonians={"h": hamiltonian}, dt=0.1)
     initial_state = ket(0).unit()
     analog_evolution = AnalogEvolution(schedule=schedule, initial_state=initial_state)
-    payload = AnalogEvolutionPayload(analog_evolution=analog_evolution, readout=ReadoutSpec())
+    payload = AnalogEvolutionPayload(analog_evolution=analog_evolution, readout=Readout())
     serialized = payload._serialize_time_evolution(analog_evolution=analog_evolution, _info={})
     deserialized = payload._load_time_evolution(serialized)
     assert deserialized.initial_state == analog_evolution.initial_state
@@ -109,7 +109,7 @@ def test_variational_program_payload():
         functional=digital_propagation, optimizer=optimizer, cost_function=cost_function
     )
     payload = VariationalProgramPayload(
-        variational_program=variational_program, readout=ReadoutSpec().with_state_tomography()
+        variational_program=variational_program, readout=Readout().with_state_tomography()
     )
     serialized_variational_program = payload._serialize_variational_program(
         variational_program=variational_program, _info={}

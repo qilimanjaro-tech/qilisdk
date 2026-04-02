@@ -50,7 +50,7 @@ Example: expectation value from analog evolution
     from qilisdk.core.interpolator import Interpolation
     from qilisdk.backends import QutipBackend, CudaBackend
     from qilisdk.functionals import AnalogEvolution
-    from qilisdk.readout import ReadoutSpec
+    from qilisdk.readout import Readout
 
     # Define total time and timestep
     T = 10.0
@@ -80,7 +80,7 @@ Example: expectation value from analog evolution
     )
 
     backend = QutipBackend()
-    evolution_result = backend.execute(functional, readout=ReadoutSpec().with_expectation(observables=[Z(0)]))
+    evolution_result = backend.execute(functional, readout=Readout().with_expectation(observables=[Z(0)]))
 
 
     cost_fn = ObservableCostFunction(Z(0))
@@ -115,7 +115,7 @@ Example: scoring samples from a variational circuit
     from qilisdk.cost_functions import ModelCostFunction
     from qilisdk.digital import Circuit, RX, RZ, CNOT, M
     from qilisdk.functionals import DigitalPropagation
-    from qilisdk.readout import ReadoutSpec
+    from qilisdk.readout import Readout
     import numpy as np
 
     # Simple 2-qubit ansatz
@@ -137,7 +137,7 @@ Example: scoring samples from a variational circuit
     cost_fn = ModelCostFunction(model)
 
     backend = CudaBackend()
-    backend_result = backend.execute(functional, readout=ReadoutSpec().with_sampling(nshots=1_000))
+    backend_result = backend.execute(functional, readout=Readout().with_sampling(nshots=1_000))
     score = cost_fn.compute_cost(backend_result)
     print("Aggregated model evaluation =", score)
 
@@ -155,7 +155,7 @@ object, and feeds it into the configured cost function to obtain the scalar that
     from qilisdk.backends import CudaBackend
     from qilisdk.cost_functions import ModelCostFunction
     from qilisdk.functionals import VariationalProgram, DigitalPropagation
-    from qilisdk.readout import ReadoutSpec
+    from qilisdk.readout import Readout
     from qilisdk.optimizers import SciPyOptimizer
 
     variational_program = VariationalProgram(
@@ -165,7 +165,7 @@ object, and feeds it into the configured cost function to obtain the scalar that
     )
 
     backend = CudaBackend()
-    result = backend.execute(variational_program, readout=ReadoutSpec().with_sampling(nshots=1000))
+    result = backend.execute(variational_program, readout=Readout().with_sampling(nshots=1000))
     print("Optimal parameters:", result.optimal_parameters)
     print("Optimal cost:", result.optimal_cost)
 

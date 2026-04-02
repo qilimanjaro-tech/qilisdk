@@ -26,7 +26,7 @@ from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirLayer
 from qilisdk.noise import AmplitudeDamping, BitFlip, Dephasing, LindbladGenerator, NoiseModel
 from qilisdk.noise.offset_perturbation import OffsetPerturbation
-from qilisdk.readout import ExpectationReadout, ReadoutSpec, SamplingReadout, StateTomographyReadout
+from qilisdk.readout import ExpectationReadout, Readout, SamplingReadout, StateTomographyReadout
 
 pytest.importorskip(
     "cudaq",
@@ -196,7 +196,7 @@ swap_test_case: list[tuple[BasicGate, tuple]] = [(SWAP(0, 1), ("swap", "q0", "q1
 def test_state_vector_no_gpu(mock_sample, mock_make_kernel, mock_set_target, mock_num_gpus):
     backend = CudaBackend(sampling_method=CudaSamplingMethod.STATE_VECTOR)
     circuit = Circuit(nqubits=1)
-    result = backend.execute(DigitalPropagation(circuit=circuit), ReadoutSpec().with_sampling(nshots=10))
+    result = backend.execute(DigitalPropagation(circuit=circuit), Readout().with_sampling(nshots=10))
     mock_set_target.assert_called_with("qpp-cpu")
     assert isinstance(result, FunctionalResult)
     assert result.samples == {"0": 1000}
@@ -209,7 +209,7 @@ def test_state_vector_no_gpu(mock_sample, mock_make_kernel, mock_set_target, moc
 def test_state_vector_with_gpu(mock_sample, mock_make_kernel, mock_set_target, mock_num_gpus):
     backend = CudaBackend(sampling_method=CudaSamplingMethod.STATE_VECTOR)
     circuit = Circuit(nqubits=1)
-    result = backend.execute(DigitalPropagation(circuit), ReadoutSpec().with_sampling(nshots=10))
+    result = backend.execute(DigitalPropagation(circuit), Readout().with_sampling(nshots=10))
     float_precision = "fp32" if get_settings().complex_precision == Precision.COMPLEX_64 else "fp64"
     mock_set_target.assert_called_with("nvidia", option=float_precision)
     assert isinstance(result, FunctionalResult)
@@ -222,7 +222,7 @@ def test_state_vector_with_gpu(mock_sample, mock_make_kernel, mock_set_target, m
 def test_tensornet(mock_sample, mock_make_kernel, mock_set_target):
     backend = CudaBackend(sampling_method=CudaSamplingMethod.TENSOR_NETWORK)
     circuit = Circuit(nqubits=1)
-    result = backend.execute(DigitalPropagation(circuit), ReadoutSpec().with_sampling(nshots=10))
+    result = backend.execute(DigitalPropagation(circuit), Readout().with_sampling(nshots=10))
     mock_set_target.assert_called_with("tensornet")
     assert isinstance(result, FunctionalResult)
     assert result.samples == {"0": 1000}
@@ -234,7 +234,7 @@ def test_tensornet(mock_sample, mock_make_kernel, mock_set_target):
 def test_matrix_product_state(mock_sample, mock_make_kernel, mock_set_target):
     backend = CudaBackend(sampling_method=CudaSamplingMethod.MATRIX_PRODUCT_STATE)
     circuit = Circuit(nqubits=1)
-    result = backend.execute(DigitalPropagation(circuit), ReadoutSpec().with_sampling(nshots=10))
+    result = backend.execute(DigitalPropagation(circuit), Readout().with_sampling(nshots=10))
     mock_set_target.assert_called_with("tensornet-mps")
     assert isinstance(result, FunctionalResult)
     assert result.samples == {"0": 1000}
@@ -253,7 +253,7 @@ def test_execute_basic_gate_handler(mock_set_target, mock_sample, mock_make_kern
     backend = CudaBackend()
     circuit = Circuit(nqubits=2)
     circuit._gates.append(gate_instance)
-    backend.execute(DigitalPropagation(circuit), ReadoutSpec().with_sampling(nshots=10))
+    backend.execute(DigitalPropagation(circuit), Readout().with_sampling(nshots=10))
     calls = dummy_make_kernel.main_kernel.calls
     assert expected_call in calls
 
@@ -270,7 +270,7 @@ def test_execute_controlled_handler(mock_set_target, mock_sample, mock_make_kern
     circuit = Circuit(nqubits=2)
     controlled_gate = Controlled(1, basic_gate=gate_instance)
     circuit._gates.append(controlled_gate)
-    backend.execute(DigitalPropagation(circuit), ReadoutSpec().with_sampling(nshots=10))
+    backend.execute(DigitalPropagation(circuit), Readout().with_sampling(nshots=10))
     calls = dummy_make_kernel.main_kernel.calls
     assert ("control", "q1", "q0") in calls
 
@@ -287,7 +287,7 @@ def test_execute_adjoint_handler(mock_set_target, mock_sample, mock_make_kernel,
     circuit = Circuit(nqubits=1)
     adjoint_gate = Adjoint(gate_instance)
     circuit._gates.append(adjoint_gate)
-    backend.execute(DigitalPropagation(circuit), ReadoutSpec().with_sampling(nshots=10))
+    backend.execute(DigitalPropagation(circuit), Readout().with_sampling(nshots=10))
     calls = dummy_make_kernel.main_kernel.calls
     assert ("adjoint", "q0") in calls
 
@@ -304,7 +304,7 @@ def test_execute_measurement_full(mock_set_target, mock_sample, mock_make_kernel
     circuit = Circuit(nqubits=2)
     measurement_gate = M(0, 1)
     circuit._gates.append(measurement_gate)
-    backend.execute(DigitalPropagation(circuit), ReadoutSpec().with_sampling(nshots=10))
+    backend.execute(DigitalPropagation(circuit), Readout().with_sampling(nshots=10))
     calls = dummy_make_kernel.main_kernel.calls
     # Full measurement: kernel.mz is called once with the full qubit list.
     assert ("mz", dummy_make_kernel.main_kernel.qubits) in calls
@@ -319,7 +319,7 @@ def test_execute_measurement_partial(mock_set_target, mock_sample, mock_make_ker
     circuit = Circuit(nqubits=3)
     measurement_gate = M(1, 2)
     circuit._gates.append(measurement_gate)
-    backend.execute(DigitalPropagation(circuit), ReadoutSpec().with_sampling(nshots=10))
+    backend.execute(DigitalPropagation(circuit), Readout().with_sampling(nshots=10))
     calls = dummy_make_kernel.main_kernel.calls
     assert ("mz", dummy_make_kernel.main_kernel.qubits[1]) in calls
     assert ("mz", dummy_make_kernel.main_kernel.qubits[2]) in calls
@@ -336,7 +336,7 @@ def test_execute_unsupported_gate(mock_set_target, mock_sample, mock_make_kernel
     circuit = Circuit(nqubits=1)
     circuit._gates.append(DummyGate(0))
     with pytest.raises(UnsupportedGateError):
-        backend.execute(DigitalPropagation(circuit), ReadoutSpec().with_sampling(nshots=10))
+        backend.execute(DigitalPropagation(circuit), Readout().with_sampling(nshots=10))
 
 
 def test_controlled_with_unsupported_basic_gate_raises(monkeypatch):
@@ -354,7 +354,7 @@ def test_controlled_with_unsupported_basic_gate_raises(monkeypatch):
     circuit._gates.append(Controlled(1, basic_gate=BadGate(0)))
 
     with pytest.raises(UnsupportedGateError):
-        be.execute(DigitalPropagation(circuit=circuit), ReadoutSpec().with_sampling(nshots=10))
+        be.execute(DigitalPropagation(circuit=circuit), Readout().with_sampling(nshots=10))
 
 
 @patch("cudaq.make_kernel", side_effect=dummy_make_kernel)
@@ -374,7 +374,7 @@ def test_controlled_multiple_controls_are_transpiled(mock_set_target, mock_sampl
         if isinstance(gate, Controlled)
     ]
 
-    backend.execute(DigitalPropagation(circuit), ReadoutSpec().with_sampling(nshots=10))
+    backend.execute(DigitalPropagation(circuit), Readout().with_sampling(nshots=10))
     actual_control_calls = [call for call in dummy_make_kernel.main_kernel.calls if call[0] == "control"]
 
     assert actual_control_calls == expected_control_calls
@@ -389,7 +389,7 @@ def test_adjoint_unsupported_gate_error(mock_set_target, mock_sample, mock_make_
     adjoint_gate = Adjoint(DummyGate(0))
     circuit._gates.append(adjoint_gate)
     with pytest.raises(UnsupportedGateError):
-        backend.execute(DigitalPropagation(circuit), ReadoutSpec().with_sampling(nshots=10))
+        backend.execute(DigitalPropagation(circuit), Readout().with_sampling(nshots=10))
 
 
 def test_hamiltonian_to_cuda_computes_expected_sum(monkeypatch):
@@ -458,7 +458,7 @@ def test_real_example():
 
     output = backend.execute(
         VariationalProgram(DigitalPropagation(cr), SciPyOptimizer(), ModelCostFunction(model)),
-        ReadoutSpec().with_sampling(nshots=1000),
+        Readout().with_sampling(nshots=1000),
     )
     assert output.optimal_cost == -1
     assert output.optimal_execution_results.samples == {"0": 1000}
@@ -473,7 +473,7 @@ def test_integer_gates():
     circuit.add(U1(0, phi=1))
     circuit.add(U2(0, phi=1, gamma=1))
     circuit.add(U3(0, theta=1, phi=1, gamma=1))
-    result = backend.execute(DigitalPropagation(circuit), ReadoutSpec().with_sampling(nshots=1000))
+    result = backend.execute(DigitalPropagation(circuit), Readout().with_sampling(nshots=1000))
     assert isinstance(result, FunctionalResult)
 
 
@@ -489,7 +489,7 @@ def test_multi_qubit_controls_no_decompose(monkeypatch):
     assert gate.control_qubits == (0, 1)
     circuit.add(gate)
     with pytest.raises(UnsupportedGateError):
-        backend.execute(DigitalPropagation(circuit), ReadoutSpec().with_sampling(nshots=1000))
+        backend.execute(DigitalPropagation(circuit), Readout().with_sampling(nshots=1000))
 
 
 def test_time_dependent_hamiltonian_cuda(monkeypatch):
@@ -519,7 +519,7 @@ def test_time_dependent_hamiltonian_cuda(monkeypatch):
     backend = CudaBackend()
     res = backend.execute(
         AnalogEvolution(schedule=schedule, initial_state=psi0),
-        ReadoutSpec().with_expectation(observables=obs).with_state_tomography(),
+        Readout().with_expectation(observables=obs).with_state_tomography(),
     )
 
     assert isinstance(res, FunctionalResult)
@@ -547,7 +547,7 @@ def test_time_dependent_hamiltonian_cuda_qtensor_observable(monkeypatch):
     backend = CudaBackend()
     res = backend.execute(
         AnalogEvolution(schedule=schedule, initial_state=psi0),
-        ReadoutSpec().with_expectation(observables=obs).with_state_tomography(),
+        Readout().with_expectation(observables=obs).with_state_tomography(),
     )
 
     assert isinstance(res, FunctionalResult)
@@ -598,7 +598,7 @@ def test_time_dependent_hamiltonian_cuda_with_noise(monkeypatch):
     backend = CudaBackend(noise_model=noise_model)
     res = backend.execute(
         AnalogEvolution(schedule=schedule, initial_state=psi0),
-        ReadoutSpec().with_expectation(observables=obs).with_state_tomography(),
+        Readout().with_expectation(observables=obs).with_state_tomography(),
     )
 
     assert isinstance(res, FunctionalResult)
@@ -615,7 +615,7 @@ def test_execute_cuda_noise(mock_set_target, mock_sample, mock_make_kernel):
     noise_model = NoiseModel()
     noise_model.add(BitFlip(probability=0.3))
     backend = CudaBackend(noise_model=NoiseModel())
-    backend.execute(DigitalPropagation(circuit), ReadoutSpec().with_sampling(nshots=10))
+    backend.execute(DigitalPropagation(circuit), Readout().with_sampling(nshots=10))
 
 
 def test_time_dependent_hamiltonian_cuda_noise(monkeypatch):
@@ -652,7 +652,7 @@ def test_time_dependent_hamiltonian_cuda_noise(monkeypatch):
     backend = CudaBackend(noise_model=noise_model)
     res = backend.execute(
         AnalogEvolution(schedule=schedule, initial_state=psi0),
-        ReadoutSpec().with_expectation(observables=obs).with_state_tomography(),
+        Readout().with_expectation(observables=obs).with_state_tomography(),
     )
 
     assert isinstance(res, FunctionalResult)
@@ -688,7 +688,7 @@ def test_time_evolution_keeps_statevector_outputs_as_columns(monkeypatch):
     )
 
     backend = CudaBackend()
-    res = backend.execute(functional, ReadoutSpec().with_state_tomography())
+    res = backend.execute(functional, Readout().with_state_tomography())
 
     assert res.state is not None
     assert res.state.shape == (2, 1)
@@ -723,7 +723,7 @@ def test_time_evolution_preserves_density_matrix_shape(monkeypatch):
     )
 
     backend = CudaBackend()
-    res = backend.execute(functional, ReadoutSpec().with_state_tomography())
+    res = backend.execute(functional, Readout().with_state_tomography())
 
     assert res.state is not None
     assert res.state.shape == (2, 2)

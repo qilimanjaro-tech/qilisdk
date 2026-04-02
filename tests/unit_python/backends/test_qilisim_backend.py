@@ -28,7 +28,7 @@ from qilisdk.core import ket
 from qilisdk.functionals import AnalogEvolution, DigitalPropagation, QuantumReservoir, ReservoirLayer
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.noise import Dephasing, NoiseModel
-from qilisdk.readout import ReadoutSpec
+from qilisdk.readout import Readout
 from qilisdk.readout.readout_result import ReadoutCompositeResults, StateTomographyReadoutResult
 
 
@@ -113,7 +113,7 @@ def test_qilisim_sampling_dummy(monkeypatch):
     circuit = MagicMock()
     digital_propagation = DigitalPropagation(circuit)
     backend = QiliSim()
-    assert backend.execute(digital_propagation, ReadoutSpec().with_sampling(nshots=100)) == "mocked_sampling_result"
+    assert backend.execute(digital_propagation, Readout().with_sampling(nshots=100)) == "mocked_sampling_result"
 
 
 def test_qilisim_time_evolution_dummy(monkeypatch):
@@ -123,10 +123,7 @@ def test_qilisim_time_evolution_dummy(monkeypatch):
     initial_state = ket(0)
     func = AnalogEvolution(schedule=schedule, initial_state=initial_state)
     backend = QiliSim()
-    assert (
-        backend.execute(func, ReadoutSpec().with_expectation(observables=[pauli_z(0)]))
-        == "mocked_time_evolution_result"
-    )
+    assert backend.execute(func, Readout().with_expectation(observables=[pauli_z(0)])) == "mocked_time_evolution_result"
 
 
 def test_time_dependent_hamiltonian_bad_observable():
@@ -148,7 +145,7 @@ def test_time_dependent_hamiltonian_bad_observable():
 
     with pytest.raises(ValueError, match="Invalid Observable"):
         backend.execute(
-            AnalogEvolution(schedule=schedule, initial_state=psi0), ReadoutSpec().with_expectation(observables=obs)
+            AnalogEvolution(schedule=schedule, initial_state=psi0), Readout().with_expectation(observables=obs)
         )
 
 
@@ -165,7 +162,7 @@ def test_qilisim_dephasing_strength_changes_dynamics():
     weak_backend = QiliSim(noise_model=weak_noise, execution_config=ExecutionConfig(seed=42, num_threads=1))
     weak_result = weak_backend.execute(
         AnalogEvolution(schedule=schedule, initial_state=initial_state),
-        ReadoutSpec().with_expectation(observables=[pauli_x(0)]),
+        Readout().with_expectation(observables=[pauli_x(0)]),
     )
 
     strong_noise = NoiseModel()
@@ -173,7 +170,7 @@ def test_qilisim_dephasing_strength_changes_dynamics():
     strong_backend = QiliSim(noise_model=strong_noise, execution_config=ExecutionConfig(seed=42, num_threads=1))
     strong_result = strong_backend.execute(
         AnalogEvolution(schedule=schedule, initial_state=initial_state),
-        ReadoutSpec().with_expectation(observables=[pauli_x(0)]),
+        Readout().with_expectation(observables=[pauli_x(0)]),
     )
 
     weak_exp = float(np.real(weak_result.expectation_values[0]))
@@ -212,9 +209,7 @@ def test_execute_quantum_reservoir_qilisim(monkeypatch):
         _mock_execute_analog_evolution,
     )
 
-    result = backend.execute(
-        functional, ReadoutSpec().with_expectation(observables=[pauli_z(0)]).with_state_tomography()
-    )
+    result = backend.execute(functional, Readout().with_expectation(observables=[pauli_z(0)]).with_state_tomography())
 
     assert result.state is not None
     assert len(result.intermediate_expectation_values) == 2

@@ -13,20 +13,20 @@
 
 """Readout configuration and result types for quantum backend execution.
 
-The primary interface for specifying readout is :class:`ReadoutSpec`.  Build a specification by
+The primary interface for specifying readout is :class:`Readout`.  Build a specification by
 chaining ``with_*`` methods and pass it to :meth:`~qilisdk.backends.Backend.execute`::
 
     from qilisdk.analog import Z
-    from qilisdk.readout import ReadoutSpec
+    from qilisdk.readout import Readout
 
-    spec = ReadoutSpec().with_expectation(observables=[Z(0)])
+    spec = Readout().with_expectation(observables=[Z(0)])
     result = backend.execute(functional, readout=spec)
     ev = result.expectation_values  # list[float]
 
 Readout specification (primary API):
-    :class:`ReadoutSpec` -- builder for type-safe readout declarations.
+    :class:`Readout` -- builder for type-safe readout declarations.
 
-Readout method classes (constructed internally by :class:`ReadoutSpec`):
+Readout method classes (constructed internally by :class:`Readout`):
     :class:`ReadoutMethod` -- abstract base.
     :class:`SamplingReadout` -- measure in the computational basis.
     :class:`ExpectationReadout` -- compute observable expectation values.
@@ -54,7 +54,7 @@ from .readout_result import (
     has_sampling,
     has_state_tomography,
 )
-from .readout_spec import ReadoutSpec
+from .readout_spec import Readout
 
 __all__ = [
     "E",
@@ -63,7 +63,7 @@ __all__ = [
     "ReadoutCompositeResults",
     "ReadoutMethod",
     "ReadoutResult",
-    "ReadoutSpec",
+    "Readout",
     "S",
     "SamplingReadout",
     "SamplingReadoutResult",

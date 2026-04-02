@@ -17,8 +17,8 @@ This module defines the :class:`ReadoutMethod` base class and its concrete subcl
 :class:`SamplingReadout`, :class:`ExpectationReadout`, and :class:`StateTomographyReadout` — that
 describe *how* results are extracted from the quantum backend after execution.
 
-**The recommended way to compose readout for a functional is** :class:`~qilisdk.readout.ReadoutSpec`.
-The classes in this module are typically constructed internally by :class:`~qilisdk.readout.ReadoutSpec`
+**The recommended way to compose readout for a functional is** :class:`~qilisdk.readout.Readout`.
+The classes in this module are typically constructed internally by :class:`~qilisdk.readout.Readout`
 and do not need to be instantiated directly in user code.
 """
 
@@ -36,7 +36,7 @@ class ReadoutMethod:
     """Base type for readout configurations.
 
     :class:`ReadoutMethod` is not meant to be instantiated directly.  Use
-    :class:`~qilisdk.readout.ReadoutSpec` to compose a readout specification and pass it to
+    :class:`~qilisdk.readout.Readout` to compose a readout specification and pass it to
     :meth:`~qilisdk.backends.Backend.execute`.
     """
 
@@ -73,14 +73,14 @@ class SamplingReadout(ReadoutMethod):
     """Sampling readout configuration.
 
     Instructs the backend to perform repeated measurement shots and return bitstring counts.
-    Typically constructed via :meth:`ReadoutSpec.with_sampling <qilisdk.readout.ReadoutSpec.with_sampling>`.
+    Typically constructed via :meth:`Readout.with_sampling <qilisdk.readout.Readout.with_sampling>`.
 
     Args:
         nshots (int): Number of measurement shots.  Must be a positive integer.
 
     Examples:
-        >>> from qilisdk.readout import ReadoutSpec
-        >>> spec = ReadoutSpec().with_sampling(nshots=1000)
+        >>> from qilisdk.readout import Readout
+        >>> spec = Readout().with_sampling(nshots=1000)
     """
 
     def __init__(self, nshots: int) -> None:
@@ -107,7 +107,7 @@ class ExpectationReadout(ReadoutMethod):
 
     Instructs the backend to compute ``<psi|O|psi>`` for one or more observables.
     Typically constructed via
-    :meth:`ReadoutSpec.with_expectation <qilisdk.readout.ReadoutSpec.with_expectation>`.
+    :meth:`Readout.with_expectation <qilisdk.readout.Readout.with_expectation>`.
 
     Args:
         observables (list[Hamiltonian | QTensor]): Observables whose expectation values are requested.
@@ -120,8 +120,8 @@ class ExpectationReadout(ReadoutMethod):
 
     Examples:
         >>> from qilisdk.analog import Z
-        >>> from qilisdk.readout import ReadoutSpec
-        >>> spec = ReadoutSpec().with_expectation(observables=[Z(0)], nshots=0)
+        >>> from qilisdk.readout import Readout
+        >>> spec = Readout().with_expectation(observables=[Z(0)], nshots=0)
     """
 
     def __init__(self, observables: list[Hamiltonian | QTensor], nshots: int = 0) -> None:
@@ -171,14 +171,14 @@ class StateTomographyReadout(ReadoutMethod):
 
     Instructs the backend to return the full quantum state (ket or density matrix) after execution.
     Typically constructed via
-    :meth:`ReadoutSpec.with_state_tomography <qilisdk.readout.ReadoutSpec.with_state_tomography>`.
+    :meth:`Readout.with_state_tomography <qilisdk.readout.Readout.with_state_tomography>`.
 
     Args:
         method (Literal["exact"]): Tomography method identifier.  Currently only ``"exact"`` is supported.
 
     Examples:
-        >>> from qilisdk.readout import ReadoutSpec
-        >>> spec = ReadoutSpec().with_state_tomography()
+        >>> from qilisdk.readout import Readout
+        >>> spec = Readout().with_state_tomography()
     """
 
     def __init__(self, method: Literal["exact"] = "exact") -> None:

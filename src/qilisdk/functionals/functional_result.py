@@ -39,14 +39,14 @@ class FunctionalResult(Result, Generic[S, E, T]):
 
     Instances of this class are returned by :meth:`~qilisdk.backends.Backend.execute`.  The three type
     parameters correspond directly to the readout types declared in the
-    :class:`~qilisdk.readout.ReadoutSpec` passed at execution time:
+    :class:`~qilisdk.readout.Readout` passed at execution time:
 
-    * ``S``: :class:`~qilisdk.readout.SamplingReadoutResult` when :meth:`~qilisdk.readout.ReadoutSpec.with_sampling`
+    * ``S``: :class:`~qilisdk.readout.SamplingReadoutResult` when :meth:`~qilisdk.readout.Readout.with_sampling`
         was used, ``None`` otherwise.
     * ``E``: :class:`~qilisdk.readout.ExpectationReadoutResult` when
-        :meth:`~qilisdk.readout.ReadoutSpec.with_expectation` was used, ``None`` otherwise.
+        :meth:`~qilisdk.readout.Readout.with_expectation` was used, ``None`` otherwise.
     * ``T``: :class:`~qilisdk.readout.StateTomographyReadoutResult` when
-        :meth:`~qilisdk.readout.ReadoutSpec.with_state_tomography` was used, ``None`` otherwise.
+        :meth:`~qilisdk.readout.Readout.with_state_tomography` was used, ``None`` otherwise.
 
     **Typed access** — use the forwarding properties that return the readout result objects directly.
     The type checker knows whether each is ``None`` or populated based on the type parameters::

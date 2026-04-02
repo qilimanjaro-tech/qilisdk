@@ -39,7 +39,7 @@ from qilisdk.functionals import (
     VariationalProgram,
     VariationalProgramResult,
 )
-from qilisdk.readout import ReadoutSpec
+from qilisdk.readout import Readout
 from qilisdk.utils.serialization import deserialize, serialize
 
 
@@ -120,7 +120,7 @@ class DigitalPropagationPayload(SpeQtrumModel):
     """Payload model wrapping a ``DigitalPropagation`` and its readout methods for API submission."""
 
     digital_propagation: DigitalPropagation = Field(...)
-    readout: ReadoutSpec = Field(...)
+    readout: Readout = Field(...)
 
     @field_serializer("digital_propagation")
     def _serialize_sampling(self, digital_propagation: DigitalPropagation, _info):
@@ -133,13 +133,13 @@ class DigitalPropagationPayload(SpeQtrumModel):
         return v
 
     @field_serializer("readout")
-    def _serialize_readout(self, readout: ReadoutSpec, _info):
+    def _serialize_readout(self, readout: Readout, _info):
         return serialize(readout)
 
     @field_validator("readout", mode="before")
     def _load_readout(cls, v):
         if isinstance(v, str):
-            return deserialize(v, ReadoutSpec)
+            return deserialize(v, Readout)
         return v
 
 
@@ -147,7 +147,7 @@ class AnalogEvolutionPayload(SpeQtrumModel):
     """Payload model wrapping an ``AnalogEvolution`` and its readout methods for API submission."""
 
     analog_evolution: AnalogEvolution = Field(...)
-    readout: ReadoutSpec = Field(...)
+    readout: Readout = Field(...)
 
     @field_serializer("analog_evolution")
     def _serialize_time_evolution(self, analog_evolution: AnalogEvolution, _info):
@@ -160,13 +160,13 @@ class AnalogEvolutionPayload(SpeQtrumModel):
         return v
 
     @field_serializer("readout")
-    def _serialize_readout(self, readout: ReadoutSpec, _info):
+    def _serialize_readout(self, readout: Readout, _info):
         return serialize(readout)
 
     @field_validator("readout", mode="before")
     def _load_readout(cls, v):
         if isinstance(v, str):
-            return deserialize(v, ReadoutSpec)
+            return deserialize(v, Readout)
         return v
 
 
@@ -174,7 +174,7 @@ class QuantumReservoirPayload(SpeQtrumModel):
     """Payload model wrapping a ``QuantumReservoir`` and its readout methods for API submission."""
 
     quantum_reservoir: QuantumReservoir = Field(...)
-    readout: ReadoutSpec = Field(...)
+    readout: Readout = Field(...)
 
     @field_serializer("quantum_reservoir")
     def _serialize_time_evolution(self, quantum_reservoir: QuantumReservoir, _info):
@@ -187,13 +187,13 @@ class QuantumReservoirPayload(SpeQtrumModel):
         return v
 
     @field_serializer("readout")
-    def _serialize_readout(self, readout: ReadoutSpec, _info):
+    def _serialize_readout(self, readout: Readout, _info):
         return serialize(readout)
 
     @field_validator("readout", mode="before")
     def _load_readout(cls, v):
         if isinstance(v, str):
-            return deserialize(v, ReadoutSpec)
+            return deserialize(v, Readout)
         return v
 
 
@@ -201,7 +201,7 @@ class VariationalProgramPayload(SpeQtrumModel):
     """Payload model wrapping a ``VariationalProgram`` and its readout methods for API submission."""
 
     variational_program: VariationalProgram = Field(...)
-    readout: ReadoutSpec = Field(...)
+    readout: Readout = Field(...)
 
     @field_serializer("variational_program")
     def _serialize_variational_program(self, variational_program: VariationalProgram, _info):
@@ -214,13 +214,13 @@ class VariationalProgramPayload(SpeQtrumModel):
         return v
 
     @field_serializer("readout")
-    def _serialize_readout(self, readout: ReadoutSpec, _info):
+    def _serialize_readout(self, readout: Readout, _info):
         return serialize(readout)
 
     @field_validator("readout", mode="before")
     def _load_readout(cls, v):
         if isinstance(v, str):
-            return deserialize(v, ReadoutSpec)
+            return deserialize(v, Readout)
         return v
 
 

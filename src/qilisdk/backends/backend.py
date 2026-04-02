@@ -31,8 +31,8 @@ from qilisdk.readout import (
     E,
     ExpectationReadout,
     ExpectationReadoutResult,
+    Readout,
     ReadoutMethod,
-    ReadoutSpec,
     S,
     SamplingReadout,
     SamplingReadoutResult,
@@ -81,12 +81,12 @@ class Backend(ABC):
         self._noise_model = noise_model
 
     @overload
-    def execute(self, functional: VariationalProgram, readout: ReadoutSpec[S, E, T]) -> VariationalProgramResult: ...
+    def execute(self, functional: VariationalProgram, readout: Readout[S, E, T]) -> VariationalProgramResult: ...
 
     @overload
-    def execute(self, functional: PrimitiveFunctional, readout: ReadoutSpec[S, E, T]) -> FunctionalResult[S, E, T]: ...
+    def execute(self, functional: PrimitiveFunctional, readout: Readout[S, E, T]) -> FunctionalResult[S, E, T]: ...
 
-    def execute(self, functional: Functional, readout: ReadoutSpec[Any, Any, Any]) -> Result:
+    def execute(self, functional: Functional, readout: Readout[Any, Any, Any]) -> Result:
         """Execute a quantum functional with the specified readout methods.
 
         This is the main entry point for running any supported functional on
@@ -96,7 +96,7 @@ class Backend(ABC):
 
         Args:
             functional: The quantum functional to execute.
-            readout: A :class:`~qilisdk.readout.ReadoutSpec` built via
+            readout: A :class:`~qilisdk.readout.Readout` built via
                 the builder pattern.
 
         Returns:
@@ -117,7 +117,7 @@ class Backend(ABC):
 
         readout_list = readout.to_list()
         if not readout_list:
-            raise ValueError("At least one readout method must be provided in the ReadoutSpec.")
+            raise ValueError("At least one readout method must be provided in the Readout.")
         return handler(functional, readout_list)
 
     def _execute_digital_propagation(
@@ -265,15 +265,15 @@ class Backend(ABC):
         )
 
 
-def _readout_list_to_spec(readout: list[ReadoutMethod]) -> ReadoutSpec:
-    """Convert a flat readout list back to a :class:`ReadoutSpec`.
+def _readout_list_to_spec(readout: list[ReadoutMethod]) -> Readout:
+    """Convert a flat readout list back to a :class:`Readout`.
 
     Used internally when the variational program handler needs to reconstruct a spec from the list received from the dispatcher.
 
     Returns:
-        ReadoutSpec: the constructed ReadoutSpec.
+        Readout: the constructed Readout.
     """
-    spec: ReadoutSpec = ReadoutSpec()
+    spec: Readout = Readout()
     for ro in readout:
         if isinstance(ro, SamplingReadout):
             spec = spec.with_sampling(nshots=ro.nshots)

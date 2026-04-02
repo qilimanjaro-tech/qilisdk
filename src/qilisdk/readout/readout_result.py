@@ -372,7 +372,7 @@ class ReadoutCompositeResults(Result, Generic[S, E, T]):
     :class:`~qilisdk.functionals.FunctionalResult` instead.
 
     The three type parameters ``S``, ``E``, ``T`` encode at the type level which readout results are present
-    and correspond to the readout types declared in the :class:`~qilisdk.readout.ReadoutSpec`:
+    and correspond to the readout types declared in the :class:`~qilisdk.readout.Readout`:
 
     * ``S`` is :class:`SamplingReadoutResult` or ``None``
     * ``E`` is :class:`ExpectationReadoutResult` or ``None``

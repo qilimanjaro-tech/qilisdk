@@ -70,7 +70,7 @@ from .speqtrum_models import (
 
 if TYPE_CHECKING:
     from qilisdk.functionals.functional import Functional, PrimitiveFunctional
-    from qilisdk.readout import E, ReadoutSpec, S, T
+    from qilisdk.readout import E, Readout, S, T
 
 
 TFunctionalResult = TypeVar("TFunctionalResult", bound=FunctionalResult)
@@ -663,7 +663,7 @@ class SpeQtrum:
         self,
         functional: PrimitiveFunctional,
         device: str,
-        readout: ReadoutSpec[S, E, T],
+        readout: Readout[S, E, T],
         job_name: str | None = None,
     ) -> JobHandle[FunctionalResult[S, E, T]]: ...
 
@@ -672,7 +672,7 @@ class SpeQtrum:
         self,
         functional: VariationalProgram,
         device: str,
-        readout: ReadoutSpec[S, E, T],
+        readout: Readout[S, E, T],
         job_name: str | None = None,
     ) -> JobHandle[VariationalProgramResult]: ...
 
@@ -690,7 +690,7 @@ class SpeQtrum:
         self,
         functional: Functional,
         device: str,
-        readout: ReadoutSpec[S, E, T] | None = None,  # type: ignore[type-arg]
+        readout: Readout[S, E, T] | None = None,  # type: ignore[type-arg]
         job_name: str | None = None,
     ) -> JobHandle:
         """
@@ -756,14 +756,14 @@ class SpeQtrum:
         raise NotImplementedError(f"{type(self).__qualname__} does not support {type(functional).__qualname__}")
 
     def _submit_digital_propagation(
-        self, functional: DigitalPropagation, device: str, readout: ReadoutSpec[S, E, T], job_name: str | None = None
+        self, functional: DigitalPropagation, device: str, readout: Readout[S, E, T], job_name: str | None = None
     ) -> JobHandle[FunctionalResult]:
         """Submit a ``DigitalPropagation`` functional to the SpeQtrum API.
 
         Args:
             functional (DigitalPropagation): The digital propagation to execute.
             device (str): Target device code.
-            readout (ReadoutSpec[S, E, T]): Readout methods for measurement.
+            readout (Readout[S, E, T]): Readout methods for measurement.
             job_name (str | None): Optional human-readable job name.
 
         Returns:
@@ -936,14 +936,14 @@ class SpeQtrum:
         return JobHandle.two_tones_experiment(job.id)
 
     def _submit_analog_evolution(
-        self, functional: AnalogEvolution, device: str, readout: ReadoutSpec[S, E, T], job_name: str | None = None
+        self, functional: AnalogEvolution, device: str, readout: Readout[S, E, T], job_name: str | None = None
     ) -> JobHandle[FunctionalResult]:
         """Submit an ``AnalogEvolution`` functional to the SpeQtrum API.
 
         Args:
             functional (AnalogEvolution): The analog evolution to execute.
             device (str): Target device code.
-            readout (ReadoutSpec[S, E, T]): Readout methods for measurement.
+            readout (Readout[S, E, T]): Readout methods for measurement.
             job_name (str | None): Optional human-readable job name.
 
         Returns:
@@ -973,14 +973,14 @@ class SpeQtrum:
         return JobHandle.functional(job.id)
 
     def _submit_quantum_reservoir_functional(
-        self, functional: QuantumReservoir, device: str, readout: ReadoutSpec[S, E, T], job_name: str | None = None
+        self, functional: QuantumReservoir, device: str, readout: Readout[S, E, T], job_name: str | None = None
     ) -> JobHandle[FunctionalResult]:
         """Submit a ``QuantumReservoir`` functional to the SpeQtrum API.
 
         Args:
             functional (QuantumReservoir): The quantum reservoir to execute.
             device (str): Target device code.
-            readout (ReadoutSpec[S, E, T]): Readout methods for measurement.
+            readout (Readout[S, E, T]): Readout methods for measurement.
             job_name (str | None): Optional human-readable job name.
 
         Returns:
@@ -1013,7 +1013,7 @@ class SpeQtrum:
         self,
         variational_program: VariationalProgram,
         device: str,
-        readout: ReadoutSpec[S, E, T],
+        readout: Readout[S, E, T],
         job_name: str | None = None,
     ) -> JobHandle[VariationalProgramResult[S, E, T]]:
         """Submit a ``VariationalProgram`` to the SpeQtrum API.
@@ -1022,7 +1022,7 @@ class SpeQtrum:
             variational_program (VariationalProgram): The variational program
                 to execute.
             device (str): Target device code.
-            readout (ReadoutSpec[S, E, T]): Readout methods for measurement.
+            readout (Readout[S, E, T]): Readout methods for measurement.
             job_name (str | None): Optional human-readable job name.
 
         Returns:

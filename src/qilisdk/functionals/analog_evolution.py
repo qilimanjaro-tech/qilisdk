@@ -33,12 +33,12 @@ class AnalogEvolution(PrimitiveFunctional):
             from qilisdk.analog import Schedule, Z
             from qilisdk.core import ket
             from qilisdk.functionals import AnalogEvolution
-            from qilisdk.readout import ReadoutSpec
+            from qilisdk.readout import Readout
 
             h0 = Z(0)
             schedule = Schedule(hamiltonians={"h0": h0}, total_time=10.0)
             functional = AnalogEvolution(schedule, initial_state=ket(0))
-            result = backend.execute(functional, readout=ReadoutSpec().with_state_tomography())
+            result = backend.execute(functional, readout=Readout().with_state_tomography())
             state = result.state  # QTensor
     """
 

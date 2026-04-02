@@ -25,10 +25,10 @@ along with readout specifications:
 
     from qilisdk.backends import CudaBackend
     from qilisdk.functionals import DigitalPropagation
-    from qilisdk.readout import ReadoutSpec
+    from qilisdk.readout import Readout
 
     # ... build your circuit and DigitalPropagation functional ...
-    results = CudaBackend().execute(propagation, ReadoutSpec().with_sampling(nshots=1000))
+    results = CudaBackend().execute(propagation, Readout().with_sampling(nshots=1000))
     print(results)
 
 Architecture Overview
@@ -156,7 +156,7 @@ There is no need to install QiliSim separately, as it is included with the core 
     from qilisdk.digital import Circuit, H, CNOT
     from qilisdk.backends import QiliSim
     from qilisdk.functionals import DigitalPropagation
-    from qilisdk.readout import ReadoutSpec
+    from qilisdk.readout import Readout
 
     # Build a simple circuit
     circuit = Circuit(5)
@@ -168,7 +168,7 @@ There is no need to install QiliSim separately, as it is included with the core 
 
     # Execute with the QiliSim backend
     qilisim_backend = QiliSim()
-    result = qilisim_backend.execute(functional, ReadoutSpec().with_sampling(nshots=500))
+    result = qilisim_backend.execute(functional, Readout().with_sampling(nshots=500))
     print(result.samples)
 
 CUDA Backend
@@ -214,7 +214,7 @@ commodity hardware before moving to accelerated machines.
     from qilisdk.digital import Circuit, H, RX, CNOT
     from qilisdk.backends import CudaBackend, CudaSamplingMethod
     from qilisdk.functionals import DigitalPropagation
-    from qilisdk.readout import ReadoutSpec
+    from qilisdk.readout import Readout
 
     # Build a simple circuit
     circuit = Circuit(2)
@@ -227,7 +227,7 @@ commodity hardware before moving to accelerated machines.
 
     # Execute with the chosen sampling method (GPU if available)
     cuda_backend = CudaBackend(sampling_method=CudaSamplingMethod.STATE_VECTOR)
-    result = cuda_backend.execute(functional, ReadoutSpec().with_sampling(nshots=500))
+    result = cuda_backend.execute(functional, Readout().with_sampling(nshots=500))
     print(result.samples)
 
 **Output**
@@ -274,7 +274,7 @@ It is the most lightweight option, ideal for local development or environments w
     from qilisdk.backends import QutipBackend
     from qilisdk.core.interpolator import Interpolation
     from qilisdk.functionals import AnalogEvolution
-    from qilisdk.readout import ReadoutSpec
+    from qilisdk.readout import Readout
 
     # Define total time and timestep
     T = 10.0
@@ -309,7 +309,7 @@ It is the most lightweight option, ideal for local development or environments w
     backend = QutipBackend()
     results = backend.execute(
         analog_evolution,
-        ReadoutSpec().with_expectation(observables=[Z(0), X(0), Y(0)]).with_state_tomography(),
+        Readout().with_expectation(observables=[Z(0), X(0), Y(0)]).with_state_tomography(),
     )
     print(results)
 

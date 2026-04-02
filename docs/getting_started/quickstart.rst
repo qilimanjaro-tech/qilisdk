@@ -15,7 +15,7 @@ Build a 2-qubit circuit, propagate it using CUDA backend, and inspect measuremen
     from qilisdk.digital import Circuit, H, RX, CNOT
     from qilisdk.backends import CudaBackend, CudaSamplingMethod
     from qilisdk.functionals import DigitalPropagation
-    from qilisdk.readout import ReadoutSpec
+    from qilisdk.readout import Readout
 
     # 1. Define a simple 2‑qubit circuit
     circuit = Circuit(2)
@@ -28,7 +28,7 @@ Build a 2-qubit circuit, propagate it using CUDA backend, and inspect measuremen
 
     # 3. Execute on GPU with sampling readout
     backend = CudaBackend(sampling_method=CudaSamplingMethod.STATE_VECTOR)
-    results = backend.execute(propagation, ReadoutSpec().with_sampling(nshots=500))
+    results = backend.execute(propagation, Readout().with_sampling(nshots=500))
 
     print("Counts:", results.probabilities)
 
@@ -49,7 +49,7 @@ Define two Hamiltonians, build an interval-based interpolation schedule, and run
     from qilisdk.core import ket, tensor_prod
     from qilisdk.functionals import AnalogEvolution
     from qilisdk.backends import QutipBackend
-    from qilisdk.readout import ReadoutSpec
+    from qilisdk.readout import Readout
 
     # Total time and step
     T, dt = 5.0, 0.1
@@ -82,7 +82,7 @@ Define two Hamiltonians, build an interval-based interpolation schedule, and run
     # Execute on CPU with expectation readout
     results = QutipBackend().execute(
         evolution,
-        ReadoutSpec().with_expectation(observables=[Z(0)]).with_state_tomography(),
+        Readout().with_expectation(observables=[Z(0)]).with_state_tomography(),
     )
     print(results)
 

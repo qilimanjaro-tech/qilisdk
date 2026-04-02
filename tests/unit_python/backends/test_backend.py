@@ -33,7 +33,7 @@ from qilisdk.functionals import (
 )
 from qilisdk.functionals.variational_program import VariationalProgram
 from qilisdk.noise import NoiseModel
-from qilisdk.readout import ReadoutSpec, SamplingReadout, StateTomographyReadout
+from qilisdk.readout import Readout, SamplingReadout, StateTomographyReadout
 from qilisdk.readout.readout_result import ReadoutCompositeResults, SamplingReadoutResult, StateTomographyReadoutResult
 
 
@@ -45,7 +45,7 @@ def test_backend_initialization():
 def test_backend_execute():
     backend = Backend()
     functional = DigitalPropagation(Circuit(1))
-    readout = ReadoutSpec().with_sampling(nshots=10)
+    readout = Readout().with_sampling(nshots=10)
 
     with pytest.raises(NotImplementedError, match="has no DigitalPropagation"):
         backend.execute(functional, readout)
@@ -56,12 +56,12 @@ def test_backend_execute_empty_readout():
     functional = DigitalPropagation(Circuit(1))
 
     with pytest.raises(ValueError, match="At least one readout method must be provided"):
-        backend.execute(functional, ReadoutSpec())
+        backend.execute(functional, Readout())
 
 
 def test_backend_execute_duplicate_readout():
     with pytest.raises(ValueError, match="Sampling readout already set"):
-        ReadoutSpec().with_sampling(nshots=10).with_sampling(nshots=20)
+        Readout().with_sampling(nshots=10).with_sampling(nshots=20)
 
 
 def _make_mock_result(functional):
@@ -223,7 +223,7 @@ def test_backend_execute_unsupported_functional():
         pass
 
     with pytest.raises(NotImplementedError, match="does not support"):
-        backend.execute(UnknownFunctional(), ReadoutSpec().with_sampling(nshots=10))
+        backend.execute(UnknownFunctional(), Readout().with_sampling(nshots=10))
 
 
 def test_backend_analog_evolution_not_implemented():
@@ -231,7 +231,7 @@ def test_backend_analog_evolution_not_implemented():
     schedule = Schedule(dt=1, hamiltonians={"h": Z(0)}, coefficients={"h": {(0, 1): 1.0}})
     functional = AnalogEvolution(schedule=schedule, initial_state=ket(0))
     with pytest.raises(NotImplementedError, match="has no AnalogEvolution"):
-        backend.execute(functional, ReadoutSpec().with_state_tomography())
+        backend.execute(functional, Readout().with_state_tomography())
 
 
 def test_quantum_reservoir_with_noise_model_warns(monkeypatch):

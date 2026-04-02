@@ -119,7 +119,7 @@ must supply a ``device`` argument with the device code obtained from :meth:`~qil
 
     from qilisdk.digital import Circuit, H, CNOT
     from qilisdk.functionals import DigitalPropagation
-    from qilisdk.readout import ReadoutSpec
+    from qilisdk.readout import Readout
     from qilisdk.speqtrum import SpeQtrum
 
     circuit = Circuit(2)
@@ -129,7 +129,7 @@ must supply a ``device`` argument with the device code obtained from :meth:`~qil
 
     client = SpeQtrum()
     device = client.list_devices()[0].code
-    job_handle = client.submit(functional, readout=ReadoutSpec().with_sampling(nshots=1_000), device=device)
+    job_handle = client.submit(functional, readout=Readout().with_sampling(nshots=1_000), device=device)
     print("Submitted job:", job_handle.id)
 
     final_job = client.wait_for_job(job_handle, timeout=600)
@@ -157,7 +157,7 @@ function) and submit it as any other functional.
     from qilisdk.digital import CNOT, HardwareEfficientAnsatz, U2
     from qilisdk.functionals import DigitalPropagation
     from qilisdk.functionals.variational_program import VariationalProgram
-    from qilisdk.readout import ReadoutSpec
+    from qilisdk.readout import Readout
     from qilisdk.optimizers.scipy_optimizer import SciPyOptimizer
     from qilisdk.speqtrum import SpeQtrum
 
@@ -181,7 +181,7 @@ function) and submit it as any other functional.
 
     client = SpeQtrum()
     device = client.list_devices()[0].code
-    job_handle = client.submit(vprog, readout=ReadoutSpec().with_sampling(nshots=1024), device=device)
+    job_handle = client.submit(vprog, readout=Readout().with_sampling(nshots=1024), device=device)
 
 Pulse Experiments
 -----------------

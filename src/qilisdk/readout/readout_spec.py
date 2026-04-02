@@ -29,14 +29,14 @@ if TYPE_CHECKING:
 
 
 @yaml.register_class
-class ReadoutSpec(Generic[S, E, T]):
+class Readout(Generic[S, E, T]):
     """Type-safe specification of which readout methods to apply during execution.
 
-    :class:`ReadoutSpec` is the **primary interface** for declaring what information to extract from the quantum
+    :class:`Readout` is the **primary interface** for declaring what information to extract from the quantum
     backend after execution.  Build a specification by chaining ``with_*`` builder methods, then pass it to
     :meth:`~qilisdk.backends.Backend.execute`.
 
-    Each ``with_*`` method returns a **new** :class:`ReadoutSpec` whose type parameters encode which readout
+    Each ``with_*`` method returns a **new** :class:`Readout` whose type parameters encode which readout
     slots are populated, allowing the type checker to verify result access at compile time.  The original
     instance is not mutated.
 
@@ -51,7 +51,7 @@ class ReadoutSpec(Generic[S, E, T]):
     Examples:
         Sampling — measure in the computational basis and collect bitstring counts::
 
-            spec = ReadoutSpec().with_sampling(nshots=1000)
+            spec = Readout().with_sampling(nshots=1000)
             result = backend.execute(functional, readout=spec)
             counts = result.samples  # dict[str, int]
             probs = result.probabilities  # dict[str, float]
@@ -60,13 +60,13 @@ class ReadoutSpec(Generic[S, E, T]):
 
             from qilisdk.analog import Z
 
-            spec = ReadoutSpec().with_expectation(observables=[Z(0)], nshots=0)
+            spec = Readout().with_expectation(observables=[Z(0)], nshots=0)
             result = backend.execute(functional, readout=spec)
             ev = result.expectation_values  # list[float], one entry per observable
 
         State tomography — retrieve the full quantum state vector after execution::
 
-            spec = ReadoutSpec().with_state_tomography()
+            spec = Readout().with_state_tomography()
             result = backend.execute(functional, readout=spec)
             state = result.state  # QTensor
 
@@ -74,42 +74,41 @@ class ReadoutSpec(Generic[S, E, T]):
 
             from qilisdk.analog import Z
 
-            spec = ReadoutSpec().with_sampling(nshots=500).with_expectation(observables=[Z(0)])
+            spec = Readout().with_sampling(nshots=500).with_expectation(observables=[Z(0)])
             result = backend.execute(functional, readout=spec)
             counts = result.samples  # dict[str, int]
             ev = result.expectation_values  # list[float]
     """
 
-    def __init__(self: ReadoutSpec[None, None, None]) -> None:
+    def __init__(self: Readout[None, None, None]) -> None:
         self._sampling: SamplingReadout | None = None
         self._expectation: ExpectationReadout | None = None
         self._state_tomography: StateTomographyReadout | None = None
 
     # -- builder methods -- each one transforms one type parameter --------
 
-    def with_sampling(self, nshots: int = 100) -> ReadoutSpec[SamplingReadoutResult, E, T]:
+    def with_sampling(self, nshots: int = 100) -> Readout[SamplingReadoutResult, E, T]:
         """Add a sampling readout to the specification.
 
         Args:
             nshots (int): Number of measurement shots.  Must be >= 0.
 
         Returns:
-            A new :class:`ReadoutSpec` with the sampling slot populated.
+            A new :class:`Readout` with the sampling slot populated.
 
         Raises:
             ValueError: If a sampling readout was already set.
         """
         if self._sampling is not None:
             raise ValueError("Sampling readout already set in this specification.")
-        new: ReadoutSpec = copy(self)
-        new._sampling = SamplingReadout(nshots=nshots)
-        return new  # ty:ignore[invalid-return-type]
+        self._sampling = SamplingReadout(nshots=nshots)
+        return self  # ty:ignore[invalid-return-type]
 
     def with_expectation(
         self,
         observables: list[Hamiltonian | QTensor],
         nshots: int = 0,
-    ) -> ReadoutSpec[S, ExpectationReadoutResult, T]:
+    ) -> Readout[S, ExpectationReadoutResult, T]:
         """Add an expectation-value readout to the specification.
 
         Args:
@@ -117,36 +116,32 @@ class ReadoutSpec(Generic[S, E, T]):
             nshots (int): Number of measurement shots.  Use ``0`` for exact (state-vector-based) evaluation.
 
         Returns:
-            A new :class:`ReadoutSpec` with the expectation slot populated.
+            A new :class:`Readout` with the expectation slot populated.
 
         Raises:
             ValueError: If an expectation readout was already set.
         """
         if self._expectation is not None:
             raise ValueError("Expectation readout already set in this specification.")
-        new: ReadoutSpec = copy(self)
-        new._expectation = ExpectationReadout(observables=observables, nshots=nshots)
-        return new  # ty:ignore[invalid-return-type]
+        self._expectation = ExpectationReadout(observables=observables, nshots=nshots)
+        return self  # ty:ignore[invalid-return-type]
 
-    def with_state_tomography(
-        self, method: Literal["exact"] = "exact"
-    ) -> ReadoutSpec[S, E, StateTomographyReadoutResult]:
+    def with_state_tomography(self, method: Literal["exact"] = "exact") -> Readout[S, E, StateTomographyReadoutResult]:
         """Add a state-tomography readout to the specification.
 
         Args:
             method (Literal["exact"]): Tomography method identifier. Currently only ``"exact"`` is supported.
 
         Returns:
-            A new :class:`ReadoutSpec` with the state-tomography slot populated.
+            A new :class:`Readout` with the state-tomography slot populated.
 
         Raises:
             ValueError: If a state-tomography readout was already set.
         """
         if self._state_tomography is not None:
             raise ValueError("State-tomography readout already set in this specification.")
-        new: ReadoutSpec = copy(self)
-        new._state_tomography = StateTomographyReadout(method=method)
-        return new  # ty:ignore[invalid-return-type]
+        self._state_tomography = StateTomographyReadout(method=method)
+        return self  # ty:ignore[invalid-return-type]
 
     # -- accessors --------------------------------------------------------
 
@@ -181,7 +176,7 @@ class ReadoutSpec(Generic[S, E, T]):
             parts.append(f"expectation={self._expectation!r}")
         if self._state_tomography is not None:
             parts.append(f"state_tomography={self._state_tomography!r}")
-        return f"ReadoutSpec({', '.join(parts)})"
+        return f"Readout({', '.join(parts)})"
 
     def __bool__(self) -> bool:
         return self._sampling is not None or self._expectation is not None or self._state_tomography is not None

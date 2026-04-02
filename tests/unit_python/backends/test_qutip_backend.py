@@ -26,7 +26,7 @@ from qilisdk.core.qtensor import QTensor, tensor_prod
 from qilisdk.functionals.analog_evolution import AnalogEvolution
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirLayer
-from qilisdk.readout import ReadoutSpec, SamplingReadout
+from qilisdk.readout import Readout, SamplingReadout
 
 pytest.importorskip("qutip", reason="QuTiP backend tests require the 'qutip' optional dependency", exc_type=ImportError)
 pytest.importorskip(
@@ -81,7 +81,7 @@ def test_unsupported_gate_raises(backend):
     circuit = Circuit(nqubits=1)
     circuit.gates.append(DummyGate(0))
     with pytest.raises(UnsupportedGateError):
-        backend.execute(DigitalPropagation(circuit=circuit), ReadoutSpec().with_sampling(nshots=100))
+        backend.execute(DigitalPropagation(circuit=circuit), Readout().with_sampling(nshots=100))
 
 
 basic_gate_test_cases = [
@@ -172,7 +172,7 @@ def test_adjoint_fully(gate_instance):
     circuit = Circuit(nqubits=2)
     circuit.add(gate_instance)
     circuit.add(Adjoint(gate_instance))
-    result = backend.execute(DigitalPropagation(circuit=circuit), ReadoutSpec().with_sampling(nshots=100))
+    result = backend.execute(DigitalPropagation(circuit=circuit), Readout().with_sampling(nshots=100))
     assert isinstance(result, FunctionalResult)
     assert result.samples.get("00", 0) == 100
 
@@ -241,7 +241,7 @@ def test_obtain_cost_calls_backend(dummy_optimizer):
     parameterized_program = VariationalProgram(DigitalPropagation(circuit), dummy_optimizer, cost_function)
     # Call obtain_cost with a custom number of shots.
     backend = QutipBackend()
-    output = backend.execute(parameterized_program, ReadoutSpec().with_sampling(nshots=1000))
+    output = backend.execute(parameterized_program, Readout().with_sampling(nshots=1000))
 
     # The dummy_cost_function returns 0.7 regardless of input.
     assert np.isclose(output.optimal_cost, 0.2)
@@ -260,7 +260,7 @@ def test_measurement_gates():
     backend = QutipBackend()
     circuit = Circuit(nqubits=2)
     circuit.add(M(0))
-    result = backend.execute(DigitalPropagation(circuit=circuit), ReadoutSpec().with_sampling(nshots=10))
+    result = backend.execute(DigitalPropagation(circuit=circuit), Readout().with_sampling(nshots=10))
     assert isinstance(result, FunctionalResult)
     assert all(len(key) == 1 for key in result.samples)
 
@@ -278,7 +278,7 @@ def test_bad_probability(monkeypatch):
             return [Qobj([[1.2], [0.2]])]
 
     monkeypatch.setattr(CircuitSimulator, "run_statistics", lambda self, nshots: CircuitSimulatorMockResults())
-    result = backend.execute(DigitalPropagation(circuit=circuit), ReadoutSpec().with_sampling(nshots=10))
+    result = backend.execute(DigitalPropagation(circuit=circuit), Readout().with_sampling(nshots=10))
     assert isinstance(result, FunctionalResult)
     assert sum(result.samples.values()) == 10
 
@@ -344,7 +344,7 @@ def test_time_evolution(monkeypatch, initial_state, ob):
     hamiltonian = Hamiltonian({(PauliZ(0),): 1.0, (PauliZ(1),): 1.0})
     schedule = Schedule(hamiltonians={"h": hamiltonian}, dt=0.1)
     func = AnalogEvolution(schedule=schedule, initial_state=initial_state)
-    result = backend.execute(func, ReadoutSpec().with_expectation(observables=[ob]).with_state_tomography())
+    result = backend.execute(func, Readout().with_expectation(observables=[ob]).with_state_tomography())
     assert np.allclose(result.expectation_values, np.array([1]))
     assert isinstance(result.state, QTensor)
 
@@ -357,7 +357,7 @@ def test_time_evolution_bad_initial(monkeypatch):
     bad_state = QTensor(-np.eye(2))
     func = AnalogEvolution(schedule=schedule, initial_state=bad_state)
     with pytest.raises(ValueError, match="initial state"):
-        backend.execute(func, ReadoutSpec().with_state_tomography())
+        backend.execute(func, Readout().with_state_tomography())
 
 
 def test_time_evolution_bad_observable():
@@ -368,7 +368,7 @@ def test_time_evolution_bad_observable():
     ob = "bad"
     func = AnalogEvolution(schedule=schedule, initial_state=initial_state)
     with pytest.raises(ValueError, match="observable"):
-        backend.execute(func, ReadoutSpec().with_expectation(observables=[ob]))
+        backend.execute(func, Readout().with_expectation(observables=[ob]))
 
 
 def test_execute_quantum_reservoir_raises_if_time_evolution_returns_no_state(monkeypatch):
@@ -399,7 +399,7 @@ def test_get_qutip_observable_qtensor(monkeypatch):
     hamiltonian = Hamiltonian({(PauliZ(0),): 1.0})
     schedule = Schedule(hamiltonians={"h": hamiltonian}, dt=0.1)
     func = AnalogEvolution(schedule=schedule, initial_state=ket(0))
-    result = backend.execute(func, ReadoutSpec().with_expectation(observables=[z_matrix]).with_state_tomography())
+    result = backend.execute(func, Readout().with_expectation(observables=[z_matrix]).with_state_tomography())
     assert result.expectation_values is not None
 
 
@@ -413,9 +413,7 @@ def test_get_qutip_observable_hamiltonian_smaller_than_system(monkeypatch):
     system_hamiltonian = Hamiltonian({(PauliZ(0),): 1.0, (PauliZ(1),): 1.0})
     schedule = Schedule(hamiltonians={"h": system_hamiltonian}, dt=0.1)
     func = AnalogEvolution(schedule=schedule, initial_state=ket(0, 0))
-    result = backend.execute(
-        func, ReadoutSpec().with_expectation(observables=[small_hamiltonian]).with_state_tomography()
-    )
+    result = backend.execute(func, Readout().with_expectation(observables=[small_hamiltonian]).with_state_tomography())
     assert result.expectation_values is not None
 
 
