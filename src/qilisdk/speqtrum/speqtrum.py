@@ -690,7 +690,7 @@ class SpeQtrum:
         self,
         functional: Functional,
         device: str,
-        readout: ReadoutSpec | ReadoutMethod | list[ReadoutMethod] | None = None,  # type: ignore[type-arg]
+        readout: ReadoutSpec[S, E, T] | None = None,  # type: ignore[type-arg]
         job_name: str | None = None,
     ) -> JobHandle:
         """
@@ -720,19 +720,8 @@ class SpeQtrum:
             NotImplementedError: If *functional* is not of a supported type.
             ValueError: If *readout* is required but not provided, or contains invalid methods.
         """
-        _readout = self._validate_readout(readout) if readout is not None else []
 
-        if isinstance(functional, VariationalProgram):
-            return self._submit_variational_program(functional, device, _readout, job_name)
-
-        if isinstance(functional, DigitalPropagation):
-            return self._submit_digital_propagation(functional, device, _readout, job_name)
-
-        if isinstance(functional, AnalogEvolution):
-            return self._submit_analog_evolution(functional, device, _readout, job_name)
-
-        if isinstance(functional, QuantumReservoir):
-            return self._submit_quantum_reservoir_functional(functional, device, _readout, job_name)
+        # Experiments without readout
 
         if isinstance(functional, RabiExperiment):
             return self._submit_rabi(functional, device, job_name)
@@ -746,44 +735,35 @@ class SpeQtrum:
         if isinstance(functional, TwoTonesExperiment):
             return self._submit_two_tones(functional, device, job_name)
 
+        # Functionals with readout
+
+        if readout is None:
+            raise ValueError("Readout can't be none when submitting a functional")
+
+        if isinstance(functional, VariationalProgram):
+            return self._submit_variational_program(functional, device, readout, job_name)
+
+        if isinstance(functional, DigitalPropagation):
+            return self._submit_digital_propagation(functional, device, readout, job_name)
+
+        if isinstance(functional, AnalogEvolution):
+            return self._submit_analog_evolution(functional, device, readout, job_name)
+
+        if isinstance(functional, QuantumReservoir):
+            return self._submit_quantum_reservoir_functional(functional, device, readout, job_name)
+
         logger.error("Unsupported functional type: {}", type(functional).__qualname__)
         raise NotImplementedError(f"{type(self).__qualname__} does not support {type(functional).__qualname__}")
 
-    @staticmethod
-    def _validate_readout(readout: ReadoutSpec | ReadoutMethod | list[ReadoutMethod]) -> list[ReadoutMethod]:  # type: ignore[type-arg]
-        """Normalise and validate the readout method(s).
-
-        Args:
-            readout: A :class:`ReadoutSpec`, a single :class:`ReadoutMethod`,
-                or a list of readout methods to validate.
-
-        Returns:
-            list[ReadoutMethod]: The validated list of unique readout methods.
-
-        Raises:
-            ValueError: If any element is not a ``ReadoutMethod`` instance or if
-                duplicate readout types are supplied.
-        """
-        if isinstance(readout, ReadoutSpec):
-            return readout.to_list()
-        _readout = [readout] if isinstance(readout, ReadoutMethod) else list(readout)
-        if any(not isinstance(ro, ReadoutMethod) for ro in _readout):
-            raise ValueError(
-                f"One of the readout methods provided is not a valid readout method.\nProvided: {_readout}"
-            )
-        if len({ro.__class__ for ro in _readout}) != len(_readout):
-            raise ValueError(f"Each readout method can only be passed once.\nProvided: {_readout}")
-        return _readout
-
     def _submit_digital_propagation(
-        self, functional: DigitalPropagation, device: str, readout: list[ReadoutMethod], job_name: str | None = None
+        self, functional: DigitalPropagation, device: str, readout: ReadoutSpec[S, E, T], job_name: str | None = None
     ) -> JobHandle[FunctionalResult]:
         """Submit a ``DigitalPropagation`` functional to the SpeQtrum API.
 
         Args:
             functional (DigitalPropagation): The digital propagation to execute.
             device (str): Target device code.
-            readout (list[ReadoutMethod]): Readout methods for measurement.
+            readout (ReadoutSpec[S, E, T]): Readout methods for measurement.
             job_name (str | None): Optional human-readable job name.
 
         Returns:
@@ -956,14 +936,14 @@ class SpeQtrum:
         return JobHandle.two_tones_experiment(job.id)
 
     def _submit_analog_evolution(
-        self, functional: AnalogEvolution, device: str, readout: list[ReadoutMethod], job_name: str | None = None
+        self, functional: AnalogEvolution, device: str, readout: ReadoutSpec[S, E, T], job_name: str | None = None
     ) -> JobHandle[FunctionalResult]:
         """Submit an ``AnalogEvolution`` functional to the SpeQtrum API.
 
         Args:
             functional (AnalogEvolution): The analog evolution to execute.
             device (str): Target device code.
-            readout (list[ReadoutMethod]): Readout methods for measurement.
+            readout (ReadoutSpec[S, E, T]): Readout methods for measurement.
             job_name (str | None): Optional human-readable job name.
 
         Returns:
@@ -993,14 +973,14 @@ class SpeQtrum:
         return JobHandle.functional(job.id)
 
     def _submit_quantum_reservoir_functional(
-        self, functional: QuantumReservoir, device: str, readout: list[ReadoutMethod], job_name: str | None = None
+        self, functional: QuantumReservoir, device: str, readout: ReadoutSpec[S, E, T], job_name: str | None = None
     ) -> JobHandle[FunctionalResult]:
         """Submit a ``QuantumReservoir`` functional to the SpeQtrum API.
 
         Args:
             functional (QuantumReservoir): The quantum reservoir to execute.
             device (str): Target device code.
-            readout (list[ReadoutMethod]): Readout methods for measurement.
+            readout (ReadoutSpec[S, E, T]): Readout methods for measurement.
             job_name (str | None): Optional human-readable job name.
 
         Returns:
@@ -1033,16 +1013,16 @@ class SpeQtrum:
         self,
         variational_program: VariationalProgram,
         device: str,
-        readout: list[ReadoutMethod],
+        readout: ReadoutSpec[S, E, T],
         job_name: str | None = None,
-    ) -> JobHandle[VariationalProgramResult]:
+    ) -> JobHandle[VariationalProgramResult[S, E, T]]:
         """Submit a ``VariationalProgram`` to the SpeQtrum API.
 
         Args:
             variational_program (VariationalProgram): The variational program
                 to execute.
             device (str): Target device code.
-            readout (list[ReadoutMethod]): Readout methods for measurement.
+            readout (ReadoutSpec[S, E, T]): Readout methods for measurement.
             job_name (str | None): Optional human-readable job name.
 
         Returns:

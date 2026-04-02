@@ -35,23 +35,27 @@ if TYPE_CHECKING:
 class FunctionalResult(Result, Generic[S, E, T]):
     """Container for the outputs produced by executing a functional on a backend.
 
-    The three type parameters encode which readout results are present:
+    Instances of this class are returned by :meth:`~qilisdk.backends.Backend.execute`.  The three type
+    parameters correspond directly to the readout types declared in the
+    :class:`~qilisdk.readout.ReadoutSpec` passed at execution time:
 
-    * ``S``: :class:`SamplingReadoutResult` or ``None``
-    * ``E``: :class:`ExpectationReadoutResult` or ``None``
-    * ``T``: :class:`StateTomographyReadoutResult` or ``None``
+    * ``S``: :class:`~qilisdk.readout.SamplingReadoutResult` when :meth:`~qilisdk.readout.ReadoutSpec.with_sampling`
+        was used, ``None`` otherwise.
+    * ``E``: :class:`~qilisdk.readout.ExpectationReadoutResult` when
+        :meth:`~qilisdk.readout.ReadoutSpec.with_expectation` was used, ``None`` otherwise.
+    * ``T``: :class:`~qilisdk.readout.StateTomographyReadoutResult` when
+        :meth:`~qilisdk.readout.ReadoutSpec.with_state_tomography` was used, ``None`` otherwise.
 
-    **Typed access** — use the forwarding properties that return the readout
-    result objects directly.  The type checker knows whether each is ``None``
-    or populated based on the type parameters::
+    **Typed access** — use the forwarding properties that return the readout result objects directly.
+    The type checker knows whether each is ``None`` or populated based on the type parameters::
 
-        result.sampling.samples  # ✅ when S = SamplingReadoutResult
+        result.sampling.samples        # ✅ when S = SamplingReadoutResult
         result.state_tomography.state  # ✅ when T = StateTomographyReadoutResult
-        result.expectation  # None when E = None → .expectation_values is a type error
+        result.expectation             # None when E = None → .expectation_values is a type error
 
-    **Convenience shortcuts** — ``result.samples``, ``result.state``, etc.
-    remain available for interactive / notebook use.  They raise
-    ``ValueError`` at runtime when the corresponding readout is absent.
+    **Convenience shortcuts** — ``result.samples``, ``result.state``, ``result.expectation_values``,
+    etc. remain available for interactive / notebook use.  They raise ``ValueError`` at runtime when
+    the corresponding readout is absent.
     """
 
     def __init__(
@@ -259,7 +263,7 @@ class FunctionalResult(Result, Generic[S, E, T]):
     def has_expectation_values(self) -> bool:
         """Check whether the result contains expectation values.
         Returns:
-            bool: True if the Functional result has expectation  values. False Otherwise.
+            bool: True if the Functional result has expectation values. False Otherwise.
         """
         return has_expectation_values(self._readout_results)
 

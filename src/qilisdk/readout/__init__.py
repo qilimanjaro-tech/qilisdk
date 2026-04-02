@@ -13,12 +13,21 @@
 
 """Readout configuration and result types for quantum backend execution.
 
-This package exposes the readout method classes used to describe *how* results
-should be extracted from a quantum backend, together with the result containers
-that hold the extracted data.
+The primary interface for specifying readout is :class:`ReadoutSpec`.  Build a specification by
+chaining ``with_*`` methods and pass it to :meth:`~qilisdk.backends.Backend.execute`::
 
-Readout methods (see :mod:`qilisdk.readout.readout`):
-    :class:`ReadoutMethod` -- abstract base with factory helpers.
+    from qilisdk.analog import Z
+    from qilisdk.readout import ReadoutSpec
+
+    spec = ReadoutSpec().with_expectation(observables=[Z(0)])
+    result = backend.execute(functional, readout=spec)
+    ev = result.expectation_values  # list[float]
+
+Readout specification (primary API):
+    :class:`ReadoutSpec` -- builder for type-safe readout declarations.
+
+Readout method classes (constructed internally by :class:`ReadoutSpec`):
+    :class:`ReadoutMethod` -- abstract base.
     :class:`SamplingReadout` -- measure in the computational basis.
     :class:`ExpectationReadout` -- compute observable expectation values.
     :class:`StateTomographyReadout` -- return the full quantum state.
@@ -28,6 +37,7 @@ Result containers (see :mod:`qilisdk.readout.readout_result`):
     :class:`SamplingReadoutResult` -- bitstring counts and probabilities.
     :class:`ExpectationReadoutResult` -- expectation values.
     :class:`StateTomographyReadoutResult` -- quantum state and probabilities.
+    :class:`ReadoutCompositeResults` -- aggregated container for one execution step.
 """
 
 from .readout import ExpectationReadout, ReadoutMethod, SamplingReadout, StateTomographyReadout

@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from email.utils import parsedate_to_datetime
 from enum import Enum
-from typing import Any, Callable, Generic, TypeVar, cast, overload
+from typing import TYPE_CHECKING, Any, Callable, Generic, TypeVar, cast, overload
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_serializer, field_validator
 
@@ -39,8 +39,10 @@ from qilisdk.functionals import (
     VariationalProgram,
     VariationalProgramResult,
 )
-from qilisdk.readout import ReadoutMethod  # noqa: TC001
 from qilisdk.utils.serialization import deserialize, serialize
+
+if TYPE_CHECKING:
+    from qilisdk.readout import E, ReadoutMethod, ReadoutSpec, S, T
 
 
 class SpeQtrumModel(BaseModel):
@@ -120,7 +122,7 @@ class DigitalPropagationPayload(SpeQtrumModel):
     """Payload model wrapping a ``DigitalPropagation`` and its readout methods for API submission."""
 
     digital_propagation: DigitalPropagation = Field(...)
-    readout: list[ReadoutMethod]
+    readout: ReadoutSpec
 
     @field_serializer("digital_propagation")
     def _serialize_sampling(self, digital_propagation: DigitalPropagation, _info):
@@ -137,7 +139,7 @@ class AnalogEvolutionPayload(SpeQtrumModel):
     """Payload model wrapping an ``AnalogEvolution`` and its readout methods for API submission."""
 
     analog_evolution: AnalogEvolution = Field(...)
-    readout: list[ReadoutMethod]
+    readout: ReadoutSpec
 
     @field_serializer("analog_evolution")
     def _serialize_time_evolution(self, analog_evolution: AnalogEvolution, _info):
@@ -154,7 +156,7 @@ class QuantumReservoirPayload(SpeQtrumModel):
     """Payload model wrapping a ``QuantumReservoir`` and its readout methods for API submission."""
 
     quantum_reservoir: QuantumReservoir = Field(...)
-    readout: list[ReadoutMethod]
+    readout: ReadoutSpec
 
     @field_serializer("quantum_reservoir")
     def _serialize_time_evolution(self, quantum_reservoir: QuantumReservoir, _info):
@@ -171,7 +173,7 @@ class VariationalProgramPayload(SpeQtrumModel):
     """Payload model wrapping a ``VariationalProgram`` and its readout methods for API submission."""
 
     variational_program: VariationalProgram = Field(...)
-    readout: list[ReadoutMethod]
+    readout: ReadoutSpec
 
     @field_serializer("variational_program")
     def _serialize_variational_program(self, variational_program: VariationalProgram, _info):

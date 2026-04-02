@@ -185,7 +185,7 @@ class ExpectationReadoutResult(ReadoutResult[ExpectationReadout]):
     Contains the computed expectation values for each observable specified in
     the readout configuration.  The object can be constructed in two ways:
 
-    1. From pre-computed ``expected_values``.
+    1. From pre-computed ``expectation_values``.
     2. From a quantum ``state``, in which case the expectation values are derived via :func:`~qilisdk.core.expect_val`.
 
     Args:
@@ -360,15 +360,20 @@ def has_state_tomography(obj: ReadoutCompositeResults) -> TypeGuard[_HasStateTom
 class ReadoutCompositeResults(Result, Generic[S, E, T]):
     """Aggregated container for readout results from a single execution step.
 
-    The three type parameters ``S``, ``E``, ``T`` encode at the *type level*
-    which readout results are present:
+    This class is returned internally by the backend and is accessible via
+    :attr:`FunctionalResult.readout_results <qilisdk.functionals.FunctionalResult.readout_results>`.
+    Most users should access results through the convenience properties on
+    :class:`~qilisdk.functionals.FunctionalResult` instead.
+
+    The three type parameters ``S``, ``E``, ``T`` encode at the type level which readout results are present
+    and correspond to the readout types declared in the :class:`~qilisdk.readout.ReadoutSpec`:
 
     * ``S`` is :class:`SamplingReadoutResult` or ``None``
     * ``E`` is :class:`ExpectationReadoutResult` or ``None``
     * ``T`` is :class:`StateTomographyReadoutResult` or ``None``
 
-    When the concrete type parameter is the result class (not ``None``), the corresponding field is guaranteed to be
-    populated and the type checker can verify access without runtime guards.
+    When the concrete type parameter is the result class (not ``None``), the corresponding field is
+    guaranteed to be populated and the type checker can verify access without runtime guards.
     """
 
     sampling: S = None  # type: ignore[assignment]  # ty:ignore[invalid-assignment]

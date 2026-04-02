@@ -27,15 +27,58 @@ if TYPE_CHECKING:
 
 
 class ReadoutSpec(Generic[S, E, T]):
-    """Type-safe specification of which readout methods to apply.
+    """Type-safe specification of which readout methods to apply during execution.
 
-    Construct via chaining::
+    :class:`ReadoutSpec` is the **primary interface** for declaring what information to extract from the quantum
+    backend after execution.  Build a specification by chaining ``with_*`` builder methods, then pass it to
+    :meth:`~qilisdk.backends.Backend.execute`.
 
-        spec = ReadoutSpec().with_sampling(SamplingReadout(nshots=1000))
+    Each ``with_*`` method returns a **new** :class:`ReadoutSpec` whose type parameters encode which readout
+    slots are populated, allowing the type checker to verify result access at compile time.  The original
+    instance is not mutated.
 
-    Each ``with_*`` method returns a **new** :class:`ReadoutSpec` whose
-    type parameters reflect the added readout.  The original instance is
-    not mutated.
+    Type parameters:
+        S: :class:`~qilisdk.readout.SamplingReadoutResult` when :meth:`with_sampling` was called, ``None``
+            otherwise.
+        E: :class:`~qilisdk.readout.ExpectationReadoutResult` when :meth:`with_expectation` was called,
+            ``None`` otherwise.
+        T: :class:`~qilisdk.readout.StateTomographyReadoutResult` when :meth:`with_state_tomography` was
+            called, ``None`` otherwise.
+
+    Examples:
+        Sampling — measure in the computational basis and collect bitstring counts::
+
+            spec = ReadoutSpec().with_sampling(nshots=1000)
+            result = backend.execute(functional, readout=spec)
+            counts = result.samples        # dict[str, int]
+            probs  = result.probabilities  # dict[str, float]
+
+        Expectation values — compute ``<psi|O|psi>`` for one or more observables::
+
+            from qilisdk.analog import Z
+
+            spec = ReadoutSpec().with_expectation(observables=[Z(0)], nshots=0)
+            result = backend.execute(functional, readout=spec)
+            ev = result.expectation_values  # list[float], one entry per observable
+
+        State tomography — retrieve the full quantum state vector after execution::
+
+            spec = ReadoutSpec().with_state_tomography()
+            result = backend.execute(functional, readout=spec)
+            state = result.state  # QTensor
+
+        Multiple readout types can be combined in a single specification::
+
+            from qilisdk.analog import Z
+
+            spec = (
+                ReadoutSpec()
+                .with_sampling(nshots=500)
+                .with_expectation(observables=[Z(0)])
+            )
+            result = backend.execute(functional, readout=spec)
+            counts = result.samples           # dict[str, int]
+            ev     = result.expectation_values  # list[float]
     """
 
     def __init__(self: ReadoutSpec[None, None, None]) -> None:

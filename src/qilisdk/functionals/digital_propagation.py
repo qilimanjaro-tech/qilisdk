@@ -26,20 +26,21 @@ class DigitalPropagation(PrimitiveFunctional):
     """
     Propagate a quantum state through a digital circuit.
 
-    The circuit is executed and results are returned based on the readout
-    methods provided to the backend.
+    The circuit is executed and results are returned based on the :class:`~qilisdk.readout.ReadoutSpec`
+    passed to :meth:`~qilisdk.backends.Backend.execute`.
 
     Example:
         .. code-block:: python
 
             from qilisdk.digital.circuit import Circuit
             from qilisdk.functionals import DigitalPropagation
-            from qilisdk.readout import SamplingReadout
+            from qilisdk.readout import ReadoutSpec
 
             circuit = Circuit(nqubits=2)
             circuit.h(0)
             functional = DigitalPropagation(circuit)
-            result = backend.execute(functional, readout=[SamplingReadout(nshots=1024)])
+            result = backend.execute(functional, readout=ReadoutSpec().with_sampling(nshots=1024))
+            counts = result.samples  # dict[str, int]
     """
 
     result_type: ClassVar[type[FunctionalResult]] = FunctionalResult

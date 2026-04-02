@@ -33,10 +33,10 @@ Result Objects
     The unified result type for all primitive functionals. Access results through:
     ``samples`` for shot counts, ``probabilities`` for measurement probabilities,
     ``state`` for the terminal :class:`~qilisdk.core.qtensor.QTensor` state (when using
-    :class:`~qilisdk.readout.StateTomographyReadout`), and ``expected_values`` for expectation values
-    (when using :class:`~qilisdk.readout.ExpectationReadout`).
+    :meth:`~qilisdk.readout.ReadoutSpec.with_state_tomography`), and ``expectation_values`` for
+    expectation values (when using :meth:`~qilisdk.readout.ReadoutSpec.with_expectation`).
     When ``store_intermediate_results=True``, intermediate results are available via
-    ``intermediate_states``, ``intermediate_samples``, ``intermediate_probabilities``, and ``intermediate_expected_values``.
+    ``intermediate_states``, ``intermediate_samples``, ``intermediate_probabilities``, and ``intermediate_expectation_values``.
 * :class:`~qilisdk.functionals.variational_program_result.VariationalProgramResult`
     bundles the optimizer trajectory (optimal cost, parameters, intermediate steps) together with the functional result
     obtained at convergence.
@@ -82,7 +82,6 @@ Measurement details such as the number of shots are specified separately via rea
     import numpy as np
     from qilisdk.digital import Circuit, H, RX, CNOT
     from qilisdk.functionals import DigitalPropagation
-    from qilisdk.readout import SamplingReadout
 
     # Create a 2-qubit circuit
     circuit = Circuit(2)
@@ -141,9 +140,9 @@ Observables and shot counts are specified separately via readout objects passed 
 **Returns**
 
 - :class:`~qilisdk.functionals.functional_result.FunctionalResult`: Inspect
-  :attr:`expected_values` for measured observables,
+  :attr:`expectation_values` for measured observables,
   :attr:`state` for the closing state, and
-  :attr:`intermediate_states` and :attr:`intermediate_expected_values` when ``store_intermediate_results`` is enabled.
+  :attr:`intermediate_states` and :attr:`intermediate_expectation_values` when ``store_intermediate_results`` is enabled.
 
 **Usage Example**
 
@@ -155,7 +154,6 @@ Observables and shot counts are specified separately via readout objects passed 
     from qilisdk.core.interpolator import Interpolation
     from qilisdk.backends import QutipBackend, CudaBackend
     from qilisdk.functionals import AnalogEvolution
-    from qilisdk.readout import ExpectationReadout
 
     # Define total time and timestep
     T = 10.0
@@ -206,7 +204,7 @@ we can execute it on the Qutip backend:
     - Functional Results: [
 
     Expectation Value Results: (
-        expected_values=[-0.99388223, 0.0467696, -0.10005353],
+        expectation_values=[-0.99388223, 0.0467696, -0.10005353],
     )
 
     ]
@@ -235,7 +233,7 @@ be driven by input data sequences rather than optimization loops.
 **Returns**
 
 - :class:`~qilisdk.functionals.functional_result.FunctionalResult`: Access per-layer expectation values via
-  :attr:`expected_values`, plus optional states via :attr:`state`.
+  :attr:`expectation_values`, plus optional states via :attr:`state`.
 
 **Usage Example**
 
@@ -277,7 +275,7 @@ be driven by input data sequences rather than optimization loops.
         reservoir,
         ReadoutSpec().with_expectation(observables=[Z(0), Z(1), Z(0) * Z(1)]),
     )
-    print(results.expected_values)
+    print(results.expectation_values)
 
 
 Encoding Input Data

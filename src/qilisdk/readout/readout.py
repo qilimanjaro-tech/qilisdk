@@ -11,12 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Readout method definitions for quantum circuit execution.
+"""Low-level readout method classes for quantum backend execution.
 
-This module provides the :class:`ReadoutMethod` base class and its concrete
-subclasses -- :class:`SamplingReadout`, :class:`ExpectationReadout`, and
-:class:`StateTomographyReadout` -- that specify how results are extracted from
-a quantum backend after execution.
+This module defines the :class:`ReadoutMethod` base class and its concrete subclasses —
+:class:`SamplingReadout`, :class:`ExpectationReadout`, and :class:`StateTomographyReadout` — that
+describe *how* results are extracted from the quantum backend after execution.
+
+**The recommended way to compose readout for a functional is** :class:`~qilisdk.readout.ReadoutSpec`.
+The classes in this module are typically constructed internally by :class:`~qilisdk.readout.ReadoutSpec`
+and do not need to be instantiated directly in user code.
 """
 
 from __future__ import annotations
@@ -30,14 +33,9 @@ from qilisdk.core import QTensor
 class ReadoutMethod:
     """Base type for readout configurations.
 
-    :class:`ReadoutMethod` is not meant to be instantiated directly.  Use one
-    of the concrete subclasses (:class:`SamplingReadout`,
-    :class:`ExpectationReadout`, :class:`StateTomographyReadout`) or the
-    convenience factory methods defined on this class:
-
-    * :meth:`sampling` -- creates a :class:`SamplingReadout`
-    * :meth:`expectation` -- creates an :class:`ExpectationReadout`
-    * :meth:`state_tomography` -- creates a :class:`StateTomographyReadout`
+    :class:`ReadoutMethod` is not meant to be instantiated directly.  Use
+    :class:`~qilisdk.readout.ReadoutSpec` to compose a readout specification and pass it to
+    :meth:`~qilisdk.backends.Backend.execute`.
     """
 
     def is_sampling_readout(self) -> bool:
@@ -71,16 +69,15 @@ class ReadoutMethod:
 class SamplingReadout(ReadoutMethod):
     """Sampling readout configuration.
 
-    Instructs the backend to perform repeated measurement shots and return
-    bitstring counts.  Can also be created via
-    :meth:`ReadoutMethod.sample`.
+    Instructs the backend to perform repeated measurement shots and return bitstring counts.
+    Typically constructed via :meth:`ReadoutSpec.with_sampling <qilisdk.readout.ReadoutSpec.with_sampling>`.
 
     Args:
-        nshots (int): Number of measurement shots (must be >= 0).  Accepted
-            as a keyword argument or as the first positional argument.
+        nshots (int): Number of measurement shots.  Must be a positive integer.
 
     Examples:
-        >>> SamplingReadout(nshots=1000)
+        >>> from qilisdk.readout import ReadoutSpec
+        >>> spec = ReadoutSpec().with_sampling(nshots=1000)
     """
 
     def __init__(self, nshots: int) -> None:
@@ -104,26 +101,23 @@ class SamplingReadout(ReadoutMethod):
 class ExpectationReadout(ReadoutMethod):
     """Expectation-value readout configuration.
 
-    Instructs the backend to compute expectation values
-    ``<observable>`` for one or more observables.  Can also be created via
-    :meth:`ReadoutMethod.expectation_values`.
+    Instructs the backend to compute ``<psi|O|psi>`` for one or more observables.
+    Typically constructed via
+    :meth:`ReadoutSpec.with_expectation <qilisdk.readout.ReadoutSpec.with_expectation>`.
 
     Args:
-        observables (list[Hamiltonian | QTensor]): Observables whose
-            expectation values are requested.  Accepted as a keyword
-            argument or as the first positional argument.
-        nshots (int): Number of measurement shots.  Use ``0`` (the default)
-            for exact state-vector evaluation.  Accepted as a keyword
-            argument or as the second positional argument.
+        observables (list[Hamiltonian | QTensor]): Observables whose expectation values are requested.
+        nshots (int): Number of measurement shots.  Use ``0`` (the default) for exact state-vector
+            evaluation.
 
     Attributes:
-        qtensor_observables (list[QTensor]): The ``observables`` converted
-            to :class:`~qilisdk.core.QTensor` form.  Populated
-            automatically by a model validator; not intended to be set
-            manually.
+        qtensor_observables (list[QTensor]): The ``observables`` converted to
+            :class:`~qilisdk.core.QTensor` form, populated automatically; not intended to be set manually.
 
     Examples:
-        >>> ExpectationReadout(observables=[hamiltonian], nshots=0)
+        >>> from qilisdk.analog import Z
+        >>> from qilisdk.readout import ReadoutSpec
+        >>> spec = ReadoutSpec().with_expectation(observables=[Z(0)], nshots=0)
     """
 
     def __init__(self, observables: list[Hamiltonian | QTensor], nshots: int = 0) -> None:
@@ -170,17 +164,16 @@ class ExpectationReadout(ReadoutMethod):
 class StateTomographyReadout(ReadoutMethod):
     """State-tomography readout configuration.
 
-    Instructs the backend to return the full quantum state (ket or density
-    matrix) after execution.  Can also be created via
-    :meth:`ReadoutMethod.state_tomography`.
+    Instructs the backend to return the full quantum state (ket or density matrix) after execution.
+    Typically constructed via
+    :meth:`ReadoutSpec.with_state_tomography <qilisdk.readout.ReadoutSpec.with_state_tomography>`.
 
     Args:
-        state_tomography_method (Literal["exact"]): Tomography method
-            identifier.  Currently only ``"exact"`` is supported.  Accepted
-            as a keyword argument or as the first positional argument.
+        method (Literal["exact"]): Tomography method identifier.  Currently only ``"exact"`` is supported.
 
     Examples:
-        >>> StateTomographyReadout(state_tomography_method="exact")
+        >>> from qilisdk.readout import ReadoutSpec
+        >>> spec = ReadoutSpec().with_state_tomography()
     """
 
     def __init__(self, method: Literal["exact"] = "exact") -> None:
