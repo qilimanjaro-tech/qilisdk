@@ -83,13 +83,13 @@ Next Steps
 
 Once you've confirmed everything works, explore the tutorials section or check out each module for more details:
 
-- **Core primitives** (:doc:`/modules/core`) for state vectors, operators, and shared abstractions.
-- **Digital workflows** (:doc:`/modules/digital`) covering circuit construction, parameter sweeps, and QASM export.
-- **Analog workflows** (:doc:`/modules/analog`) for Hamiltonian builders, schedules, and time-evolution utilities.
-- **Functionals** (:doc:`/modules/functionals`) to see how experiments connect models with execution backends.
-- **Execution targets** (:doc:`/modules/backends`) to compare Qutip (CPU) and CUDA (CPU/GPU) runtimes.
-- **Noise models** (:doc:`/modules/noise_models`) to simulate hardware effects in both digital and analog contexts.
-- **Cost functions** (:doc:`/modules/cost_functions`) for common optimization objectives and metrics.
-- **SpeQtrum cloud** (:doc:`/modules/speqtrum`) for account setup, calibration-aware jobs, and result retrieval.
+- **Core primitives** (:doc:`/modules/core/core`) for state vectors, operators, and shared abstractions.
+- **Digital workflows** (:doc:`/modules/digital/digital`) covering circuit construction, parameter sweeps, and QASM export.
+- **Analog workflows** (:doc:`/modules/analog/analog`) for Hamiltonian builders, schedules, and time-evolution utilities.
+- **Functionals** (:doc:`/modules/functionals/functionals`) to see how experiments connect models with execution backends.
+- **Execution targets** (:doc:`/modules/backends/backends`) to compare Qutip (CPU) and CUDA (CPU/GPU) runtimes.
+- **Noise models** (:doc:`/modules/noise_models/noise_models`) to simulate hardware effects in both digital and analog contexts.
+- **Cost functions** (:doc:`/modules/cost_functions/cost_functions`) for common optimization objectives and metrics.
+- **SpeQtrum cloud** (:doc:`/modules/speqtrum/speqtrum`) for account setup, calibration-aware jobs, and result retrieval.
 
 Happy quantum coding!

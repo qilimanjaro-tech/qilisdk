@@ -1,4 +1,4 @@
-Introduction to Quantum Circuits
+Quantum Circuits
 ==================================
 
 TODO

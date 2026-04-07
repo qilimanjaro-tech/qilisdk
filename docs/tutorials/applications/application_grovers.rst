@@ -1,4 +1,4 @@
-Application: Quantum Search with Grover's Algorithm
+Quantum Search with Grover's Algorithm
 =====================================================
 
 TODO

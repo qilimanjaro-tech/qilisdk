@@ -1,4 +1,4 @@
-Application: Optimization using Quantum Annealing
+Optimization with Quantum Annealing
 ===================================================
 
 TODO

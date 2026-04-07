@@ -192,7 +192,7 @@ Pulse Experiments
 -----------------
 
 The SpeQtrum client also supports calibration-style experiments defined in :mod:`qilisdk.experiments.experiment_functional`. These
-functional objects mirror the interfaces described in the :doc:`functionals` chapter and return rich result types.
+functional objects mirror the interfaces described in the :doc:`/modules/functionals/functionals` chapter and return rich result types.
 
 .. SKIP
 .. code-block:: python

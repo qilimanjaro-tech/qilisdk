@@ -38,18 +38,21 @@ class QiliSim(Backend):
     time-evolution experiments using a custom C++ simulator.
 
     Setup Example:
+
     .. code-block:: python
 
-    from qilisdk.backends import AnalogMethod, DigitalMethod, ExecutionConfig, MonteCarloConfig,  QiliSim
+        from qilisdk.backends import AnalogMethod, DigitalMethod, ExecutionConfig, MonteCarloConfig, QiliSim
 
-    backend = QiliSim(
-        analog_simulation_method=AnalogMethod.arnoldi(
-            dim=16,
-            num_substeps=2
-        ),
-        digital_simulation_method=DigitalMethod.statevector(max_cache_size=2_000),
-        execution_config=ExecutionConfig(num_threads=4, seed=42, monte_carlo=MonteCarloConfig(trajectories=200),),
-    )
+        backend = QiliSim(
+            analog_simulation_method=AnalogMethod.arnoldi(dim=16, num_substeps=2),
+            digital_simulation_method=DigitalMethod.statevector(max_cache_size=2_000),
+            execution_config=ExecutionConfig(
+                num_threads=4,
+                seed=42,
+                monte_carlo=MonteCarloConfig(trajectories=200),
+            ),
+        )
+
     """
 
     def __init__(

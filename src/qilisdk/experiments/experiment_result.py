@@ -29,11 +29,6 @@ class Dimension:
     A `Dimension` defines one or more sweep parameters, such as drive
     amplitude, frequency, or delay time, together with their associated
     numerical values.
-
-    Attributes:
-        labels (list[str]): Human-readable labels for the sweep parameters.
-        values (list[np.ndarray]): Numeric arrays representing the values
-            corresponding to each label.
     """
 
     def __init__(self, labels: list[str], values: list[np.ndarray]) -> None:

@@ -1,6 +1,13 @@
 Cost Functions
 ==============
 
+.. toctree::
+   :maxdepth: 2
+   :hidden:
+
+   cost_functions_observable
+   cost_functions_model
+
 The :mod:`qilisdk.cost_functions` module turns the raw outputs returned by functionals into single scalar values that
 optimizers can minimize. Each cost function inspects the :class:`~qilisdk.functionals.functional_result.FunctionalResult`
 produced by a backend and evaluates a problem-specific metric such as an observable expectation value or the energy of

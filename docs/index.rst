@@ -43,25 +43,22 @@ Welcome to **QiliSDK**, a unified Python framework for developing, simulating, a
    :caption: Tutorials
    :hidden:
 
-   tutorials/intro_circuits
-   tutorials/intro_annealing
-   tutorials/application_grovers
-   tutorials/application_annealing
-   tutorials/application_qaoa
+   tutorials/introductions/index_intros
+   tutorials/applications/index_applications
 
 .. toctree::
    :maxdepth: 2
    :caption: Modules
    :hidden:
 
-   modules/analog
-   modules/digital
-   modules/core
-   modules/functionals
-   modules/cost_functions
-   modules/backends
-   modules/noise_models
-   modules/speqtrum
+   modules/core/core
+   modules/digital/digital
+   modules/analog/analog
+   modules/functionals/functionals
+   modules/cost_functions/cost_functions
+   modules/backends/backends
+   modules/noise_models/noise_models
+   modules/speqtrum/speqtrum
 
 .. toctree::
    :maxdepth: 4

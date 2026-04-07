@@ -1,38 +1,22 @@
 Analog
 =============
 
-The :mod:`qilisdk.analog` layer lets you build symbolic Hamiltonians and time-dependent schedules that can be simulated or submitted to Qili backends. Its core types are :class:`~qilisdk.analog.hamiltonian.Hamiltonian` and :class:`~qilisdk.analog.schedule.Schedule`.
+.. toctree::
+    :maxdepth: 2
+    :hidden:
 
+    analog_hamiltonian
+    analog_schedule
+
+The :mod:`qilisdk.analog` layer lets you build symbolic Hamiltonians and time-dependent schedules that can be simulated or submitted to Qili backends. Its core types are :class:`~qilisdk.analog.hamiltonian.Hamiltonian` and :class:`~qilisdk.analog.schedule.Schedule`.
 
 - :class:`~qilisdk.analog.hamiltonian.Hamiltonian`: Tools to build arbitrary Hamiltonians using symbolic Pauli operators.
 - :class:`~qilisdk.analog.schedule.Schedule`: Flexible time-dependent evolution with callable/interval coefficients and step/linear interpolation.
-
-Quick Start
------------
-
-.. code-block:: python
-
-    from qilisdk.analog import Hamiltonian, Schedule, X, Z
-
-    driver = sum(X(i) for i in range(2))
-    problem = Z(0) * Z(1)
-    T = 10
-
-    schedule = Schedule(
-        hamiltonians={"driver": driver, "problem": problem},
-        coefficients={
-            "driver": {(0.0, T): lambda t: 1 - t / T},
-            "problem": {(0.0, T): lambda t: t / T},
-        },
-        dt=1.0,
-    )
-
 
 Hamiltonian
 -----------
 
 The :class:`~qilisdk.analog.hamiltonian.Hamiltonian` class represents a symbolic Hamiltonian as a sum of weighted Pauli operators. You can create Hamiltonians using the built-in Pauli operators and combine them with standard arithmetic operations.
-
 
 **Common constructors**
 

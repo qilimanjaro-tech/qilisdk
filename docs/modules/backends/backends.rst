@@ -1,6 +1,14 @@
 Backends
 ========
 
+.. toctree::
+   :maxdepth: 2
+   :hidden:
+
+   backends_qilisim
+   backends_cuda
+   backends_qutip
+
 The :mod:`~qilisdk.backends` module provides concrete execution engines for running :mod:`~qilisdk.functionals` (quantum processes).  
 Currently, three backends are supported:
 
@@ -16,7 +24,7 @@ Currently, three backends are supported:
 
         pip install qilisdk[<backend_name>]
 
-    For more information check the :doc:`../getting_started/installation` page.
+    For more information check the :doc:`../../getting_started/installation` page.
 
 Once installed, any primitive functional can be executed by passing it to the backend's :meth:`~qilisdk.backends.backend.Backend.execute` method:
 
@@ -38,7 +46,7 @@ Architecture Overview
 All concrete backends subclass :class:`~qilisdk.backends.backend.Backend`, which centralizes the execution workflow used
 across the SDK. The :meth:`~qilisdk.backends.backend.Backend.execute` dispatches a primitive functional (e.g. :class:`~qilisdk.functionals.sampling.Sampling` or :class:`~qilisdk.functionals.time_evolution.TimeEvolution`)
 to the appropriate simulation routine and returns the functional-specific result object (see the :doc:`Functionals
-<functionals>` chapter). The Execute method is also used to optimize variational programs via repeated calls to 
+</modules/functionals/functionals>` chapter). The Execute method is also used to optimize variational programs via repeated calls to 
 the underlying parameterized primitive functional.
 
 Backends register handlers for the functionals they support. If a functional is not implemented, :meth:`~qilisdk.backends.backend.Backend.execute` raises
@@ -101,7 +109,7 @@ The table below summarizes which primitive :mod:`~qilisdk.functionals` each back
      - ✓
      - ✓
 
-QiliSim Backend
+QiliSim
 ----------------
 
 The **QiliSim** backend is a CPU-based simulator developed by Qilimanjaro and written in C++, providing 

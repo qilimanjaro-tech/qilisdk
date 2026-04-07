@@ -1,4 +1,4 @@
-Introduction to Quantum Annealing
+Quantum Annealing
 ==================================
 
 TODO

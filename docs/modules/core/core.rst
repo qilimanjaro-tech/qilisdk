@@ -1,6 +1,18 @@
 Core
 ======
 
+.. toctree::
+   :maxdepth: 2
+   :hidden:
+
+   core_variables
+   core_terms
+   core_parameters
+   core_math_map
+   core_comparison
+   core_model
+   core_qtensor
+
 The :mod:`qilisdk.core` layer underpins both the digital and analog stacks. It
 provides symbolic variables, optimization models, sparse quantum tensors, and
 the :mod:`~qilisdk.core.parameterizable.Parameterizable` mixin used throughout the SDK.

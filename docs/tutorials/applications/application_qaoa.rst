@@ -1,4 +1,4 @@
-Application: Optimization using QAOA
+Optimization with QAOA
 =======================================
 
 TODO

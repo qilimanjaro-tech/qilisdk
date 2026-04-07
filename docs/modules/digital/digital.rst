@@ -1,6 +1,18 @@
 Digital
 ==============
 
+.. toctree::
+    :maxdepth: 2
+    :hidden:
+    :glob:
+
+    digital_gates
+    digital_circuits
+    digital_vis
+    digital_ansatz
+    digital_qaoa
+    digital_trotter
+
 The :mod:`~qilisdk.digital` module in the Qili SDK facilitates the construction and simulation of digital quantum systems. It is composed of the following primary components:
 
 - :mod:`~qilisdk.digital.gates`: A collection of quantum gates and tools for gate construction.
@@ -77,24 +89,28 @@ Or alternatively, you can use the :meth:`.controlled()<qilisdk.digital.gates.Bas
 Adjoint Gates
 ^^^^^^^^^^^^^
 
-You can create the Hermitian conjugate (dagger) of a gate using the :class:`~qilisdk.digital.gates.Adjoint` class:
+You can create the Hermitian conjugate (dagger) of a gate either using the :class:`~qilisdk.digital.gates.Adjoint` class
+or using the :meth:`.adjoint()<qilisdk.digital.gates.BasicGate.adjoint>` method on any gate instance:
 
 .. code-block:: python
 
     from qilisdk.digital.gates import Adjoint, Y
 
     adjoint_y = Adjoint(basic_gate=Y(1))
+    adjoint y = Y(1).adjoint()
 
 Exponential Gates
 ^^^^^^^^^^^^^^^^^
 
-To apply a gate as an exponential operator, use the :class:`~qilisdk.digital.gates.Exponential` class:
+To apply a gate as an exponential operator, use either the :class:`~qilisdk.digital.gates.Exponential` class or 
+the :meth:`.exponential()<qilisdk.digital.gates.BasicGate.exponential>` method on any gate instance:
 
 .. code-block:: python
 
     from qilisdk.digital.gates import Exponential, Y
 
     exp_y = Exponential(basic_gate=Y(1))
+    exp_y = Y(1).exponential()
 
 Circuits
 --------
@@ -243,7 +259,7 @@ confines styling to the specific call without modifying global Matplotlib settin
 **Output**
 
 
-.. figure:: ../_static/circuit.png
+.. figure:: /_static/circuit.png
     :alt: Example digital circuit rendered with Circuit.draw
     :align: center
 
@@ -441,7 +457,7 @@ Configuration options:
 
 As with the :class:`~qilisdk.digital.ansatz.HardwareEfficientAnsatz`, this ansatz can then be used as per any QiliSDK circuit. 
 Or, to instead perform variational optimization over the parameters to minimize the 
-expectation value of the problem Hamiltonian, one can set up a :class:`~qilisdk.functionals.variational_program.VariationalProgram` (see :doc:`Functionals </fundamentals/functionals>` for more details):
+expectation value of the problem Hamiltonian, one can set up a :class:`~qilisdk.functionals.variational_program.VariationalProgram` (see :doc:`Functionals </modules/functionals/functionals>` for more details):
 
 .. code-block:: python 
 
@@ -526,40 +542,3 @@ optimization loops while keeping parameter metadata synchronized.
    Parameterized gates and circuits expose parameter information through
    ``get_parameter_names``, ``get_parameters``, ``get_parameter_values``, and
    the matching ``set_*`` methods.
-
-Gate Modifiers and Measurement
-------------------------------
-
-Every base gate inherits convenience methods to produce derived operations
-without manually instantiating :class:`~qilisdk.digital.gates.Controlled`,
-:class:`~qilisdk.digital.gates.Adjoint`, or
-:class:`~qilisdk.digital.gates.Exponential`. The measurement gate
-:class:`~qilisdk.digital.gates.M` lets you add classical readout at the end of
-the circuit.
-
-.. code-block:: python
-
-    import numpy as np
-
-    from qilisdk.digital import Circuit, H, X, RX, M
-
-    circuit = Circuit(2)
-    circuit.add(H(0))
-
-    # Promote a basic gate to a controlled version on the fly
-    circuit.add(X(1).controlled(0))
-
-    # Generate adjoint / exponential variants, preserving parameters
-    circuit.add(RX(1, theta=np.pi / 4).adjoint())
-    circuit.add(RX(0, theta=np.pi / 3).exponential())
-
-    # Record measurement results for both qubits
-    circuit.add(M(0, 1))
-
-Controlled gates validate that control and target qubits are disjoint, and all wrapper gates forward parameter accessors to the underlying operation.
-
-.. note::
-
-   - The measurement gate cannot be controlled, conjugated, or exponentiated.
-   - If a circuit ends without explicit measurements, the backend assumes all qubits are measured.
-   - Measuring only a subset of qubits returns samples for that subset.

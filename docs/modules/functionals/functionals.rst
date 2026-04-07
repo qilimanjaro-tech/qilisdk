@@ -1,6 +1,15 @@
 Functionals
 ===========
 
+.. toctree::
+    :maxdepth: 2
+    :hidden:
+
+    functionals_sampling
+    functionals_time_evolution
+    functionals_reservoirs
+    functionals_variational
+
 The :mod:`~qilisdk.functionals` module provides high-level quantum execution procedures by combining tools from the
 :mod:`~qilisdk.analog`, :mod:`~qilisdk.digital`, and :mod:`~qilisdk.core` modules. Currently, it includes the following execution functionals:
 

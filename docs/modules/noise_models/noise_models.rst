@@ -1,6 +1,13 @@
 Noise Models
 ==============
 
+.. toctree::
+    :maxdepth: 2
+    :hidden:
+
+    noise_models_config
+    noise_models_types
+
 The :mod:`qilisdk.noise` module contains classes that represent different types of noise in quantum systems.
 These noise models can be integrated into quantum simulations to account for real-world imperfections and
 decoherence effects. A :class:`~qilisdk.noise.noise_model.NoiseModel` can contains various types of noise, 
@@ -290,7 +297,7 @@ where :math:`\gamma` is the depolarizing rate.
     from qilisdk.noise import Depolarizing
     depolarizing_noise = Depolarizing(probability=0.1)
 
-AmplitudeDampingNoise
+AmplitudeDamping
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 :class:`~qilisdk.noise.amplitude_damping.AmplitudeDamping` represents an amplitude damping error model 
