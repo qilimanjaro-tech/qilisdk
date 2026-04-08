@@ -65,7 +65,7 @@ extract(sys.argv[1])
 PYEOF
 
     # Skip files with no Python code blocks
-    if [ ! -s "$TMPFILE" ]; then
+    if [[ ! -s "$TMPFILE" ]]; then
         echo "SKIP $file (no Python code blocks)"
         SKIP=$((SKIP + 1))
         continue
@@ -73,7 +73,7 @@ PYEOF
 
     # Run the combined script
     output=$(python3 "$TMPFILE" 2>&1)
-    if [ $? -eq 0 ]; then
+    if [[ $? -eq 0 ]]; then
         echo "PASS $file"
         PASS=$((PASS + 1))
     else
@@ -88,4 +88,4 @@ echo ""
 echo "Note: you can skip a code block by adding a '.. SKIP' line immediately before the '.. code-block:: python' directive." 
 echo "Results: $PASS passed, $FAIL failed, $SKIP skipped"
 
-[ $FAIL -eq 0 ]
+[[ $FAIL -eq 0 ]]

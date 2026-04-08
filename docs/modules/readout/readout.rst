@@ -1,6 +1,14 @@
 Readout
 =======
 
+.. toctree::
+   :maxdepth: 2
+   :hidden:
+
+   readout_bitstring
+   readout_expectation
+   readout_state
+
 Readout is the mechanism that controls **what information is extracted from the quantum backend** after a
 functional is executed.  It is specified separately from the functional itself, so the same circuit or
 schedule can be measured in different ways without any code change to the functional.
@@ -13,7 +21,7 @@ The entry point is always :class:`~qilisdk.readout.readout_spec.Readout`.
 
 ----
 
-Readout — the builder
+Readout Builder
 --------------------------
 
 :class:`~qilisdk.readout.readout_spec.Readout` is a builder that accumulates readout methods by
@@ -40,12 +48,12 @@ The finished spec is passed to :meth:`~qilisdk.backends.backend.Backend.execute`
 .. note::
 
     At least one readout method must be added before calling ``execute``.  Passing an empty
-    ``Readout()`` raises ``ValueError``.
+    ``Readout()`` raises a ``ValueError``.
 
-Readout types
+Readout Types
 -------------
 
-with_sampling — bitstring measurement
+Bitstring Measurement (with_sampling)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Instructs the backend to perform ``nshots`` projective measurements in the computational basis and
@@ -74,7 +82,7 @@ collect the bitstring counts.
 Use sampling when you need the full bitstring distribution — for instance to evaluate a combinatorial
 cost function, run QAOA post-processing, or compute error rates.
 
-with_expectation — expectation values
+Expectation Values (with_expectation)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Instructs the backend to compute ``⟨ψ|O|ψ⟩`` for each observable in the list.
@@ -103,7 +111,7 @@ Instructs the backend to compute ``⟨ψ|O|ψ⟩`` for each observable in the li
 Use expectation values when you need a scalar energy or observable readout — for example in
 variational algorithms (VQE, QAOA energy evaluation) or analog time-evolution studies.
 
-with_state_tomography — full quantum state
+Full Quantum State (with_state_tomography)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Instructs the backend to return the full quantum state vector (or density matrix) after execution.
@@ -136,7 +144,7 @@ multi-step algorithm.
 
 ----
 
-Combining multiple readout types
+Combining Multiple Readout Types
 ----------------------------------
 
 Any combination of the three readout types can be requested in a single execution by chaining the
@@ -161,14 +169,14 @@ Any combination of the three readout types can be requested in a single executio
 
 ----
 
-Accessing results
------------------
+Accessing Results
+--------------------
 
 :meth:`~qilisdk.backends.backend.Backend.execute` returns a
 :class:`~qilisdk.functionals.FunctionalResult`.  There are two ways to access the readout data.
 
-Convenience shortcuts
-^^^^^^^^^^^^^^^^^^^^^
+Convenience Shortcuts
+^^^^^^^^^^^^^^^^^^^^^^^
 
 The quickest way to access results for interactive use:
 
@@ -194,7 +202,7 @@ The quickest way to access results for interactive use:
 
 These raise ``ValueError`` at runtime if the corresponding readout was not requested.
 
-Typed forwarding properties
+Typed Forwarding Properties
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 For production code or when combining multiple readout types, use the typed forwarding properties.
@@ -233,7 +241,7 @@ These return the raw result objects and let the type checker verify access witho
 
 ----
 
-Intermediate results
+Intermediate Results
 --------------------
 
 When a functional is constructed with ``store_intermediate_results=True`` (currently supported by
@@ -281,8 +289,8 @@ for step ``i``.
 
 ----
 
-Complete example
-----------------
+Complete Example
+-------------------
 
 The following example runs an analog annealing schedule, collects expectation values and the final
 state at every time step, then plots the observable trajectory.

@@ -45,7 +45,7 @@ Architecture Overview
 All concrete backends subclass :class:`~qilisdk.backends.backend.Backend`, which centralizes the execution workflow used
 across the SDK. The :meth:`~qilisdk.backends.backend.Backend.execute` method dispatches a primitive functional (e.g. :class:`~qilisdk.functionals.digital_propagation.DigitalPropagation` or :class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`)
 to the appropriate simulation routine and returns a :class:`~qilisdk.functionals.functional_result.FunctionalResult` (see the :doc:`Functionals
-<functionals>` chapter). The execute method also accepts readout specifications that define how the quantum state is measured.
+</modules/functionals/functionals>` chapter). The execute method also accepts readout specifications that define how the quantum state is measured.
 The execute method is also used to optimize variational programs via repeated calls to
 the underlying parameterized primitive functional.
 
