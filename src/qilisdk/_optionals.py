@@ -185,7 +185,7 @@ def import_optional_dependencies(feature: OptionalFeature) -> ImportedFeature:
         ok, missing = _group_installed(all_dists)
         if not ok:
             # stubs
-            stubs = {s.name: make_stub(s.name) for s in feature.symbols}
+            stubs: dict[str, Any] = {s.name: make_stub(s.name) for s in feature.symbols}
             return ImportedFeature(name=feature.name, symbols=stubs)
         satisfied_group = feature.dependency_groups[0] if feature.dependency_groups else None
 
@@ -198,7 +198,7 @@ def import_optional_dependencies(feature: OptionalFeature) -> ImportedFeature:
             missing_by_group.append((g, missing))
 
         if satisfied_group is None:
-            stubs = {s.name: make_stub(s.name) for s in feature.symbols}
+            stubs: dict[str, Any] = {s.name: make_stub(s.name) for s in feature.symbols}
             return ImportedFeature(name=feature.name, symbols=stubs)
 
     # All good: import real symbols

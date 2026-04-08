@@ -283,7 +283,7 @@ def test_interpolator_get_coefficient(monkeypatch):
     # make it so we don't cache the time scaling between calls
     def new_get_coefficient_expression(self, time_step):
         return_val = self.old_get_coefficient_expression(time_step)
-        self._delete_cache()
+        self.delete_cache()
         return return_val
 
     interp.old_get_coefficient_expression = interp.get_coefficient_expression

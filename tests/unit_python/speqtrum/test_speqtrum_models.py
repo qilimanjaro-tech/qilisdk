@@ -36,18 +36,17 @@ from qilisdk.experiments.experiment_result import (
     T2ExperimentResult,
     TwoTonesExperimentResult,
 )
-from qilisdk.functionals.sampling import Sampling
-from qilisdk.functionals.time_evolution import TimeEvolution
+from qilisdk.functionals.analog_evolution import AnalogEvolution
+from qilisdk.functionals.digital_propagation import DigitalPropagation
 from qilisdk.functionals.variational_program import VariationalProgram
 from qilisdk.optimizers.scipy_optimizer import SciPyOptimizer
 from qilisdk.speqtrum.speqtrum_models import (
     ExecuteType,
     TypedJobDetail,
+    _require_functional_result,
     _require_rabi_experiment_result,
-    _require_sampling_result,
     _require_t1_experiment_result,
     _require_t2_experiment_result,
-    _require_time_evolution_result,
     _require_two_tones_experiment_result,
     _require_variational_program_result,
 )
@@ -63,53 +62,55 @@ pytest.importorskip(
 from unittest.mock import MagicMock
 
 from qilisdk.digital import Circuit
-from qilisdk.functionals.sampling_result import SamplingResult
-from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
+from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.functionals.variational_program_result import VariationalProgramResult
 from qilisdk.optimizers.optimizer_result import OptimizerResult
+from qilisdk.readout import Readout
+from qilisdk.readout.readout_result import ReadoutCompositeResults, SamplingReadoutResult, StateTomographyReadoutResult
 from qilisdk.speqtrum.speqtrum_models import (
+    AnalogEvolutionPayload,
+    DigitalPropagationPayload,
     ExecuteResult,
     RabiExperimentPayload,
-    SamplingPayload,
     T1ExperimentPayload,
     T2ExperimentPayload,
-    TimeEvolutionPayload,
     TwoTonesExperimentPayload,
     VariationalProgramPayload,
 )
 
 
-def test_sampling_payload():
+def test_digital_propagation_payload():
     circ = Circuit(2)
-    sampling = Sampling(nshots=1024, circuit=circ)
-    payload = SamplingPayload(sampling=sampling)
-    serialized_sampling = payload._serialize_sampling(sampling=sampling, _info={})
-    deserialized_sampling = payload._load_sampling(serialized_sampling)
-    assert deserialized_sampling.nshots == sampling.nshots
-    assert deserialized_sampling.circuit.nqubits == sampling.circuit.nqubits
+    digital_propagation = DigitalPropagation(circuit=circ)
+    payload = DigitalPropagationPayload(digital_propagation=digital_propagation, readout=Readout())
+    serialized = payload._serialize_sampling(digital_propagation=digital_propagation, _info={})
+    deserialized = payload._load_sampling(serialized)
+    assert deserialized.circuit.nqubits == digital_propagation.circuit.nqubits
 
 
-def test_time_evolution_payload():
+def test_analog_evolution_payload():
     # note: these can't be mocked because then YAML throws errors
     hamiltonian = Hamiltonian({(PauliZ(0),): 1})
     schedule = Schedule(hamiltonians={"h": hamiltonian}, dt=0.1)
     initial_state = ket(0).unit()
-    observables = [PauliZ(0)]
-    time_evolution = TimeEvolution(schedule=schedule, observables=observables, initial_state=initial_state)
-    payload = TimeEvolutionPayload(time_evolution=time_evolution)
-    serialized_time_evolution = payload._serialize_time_evolution(time_evolution=time_evolution, _info={})
-    deserialized_time_evolution = payload._load_time_evolution(serialized_time_evolution)
-    assert deserialized_time_evolution.initial_state == time_evolution.initial_state
-    assert deserialized_time_evolution.observables == time_evolution.observables
+    analog_evolution = AnalogEvolution(schedule=schedule, initial_state=initial_state)
+    payload = AnalogEvolutionPayload(analog_evolution=analog_evolution, readout=Readout())
+    serialized = payload._serialize_time_evolution(analog_evolution=analog_evolution, _info={})
+    deserialized = payload._load_time_evolution(serialized)
+    assert deserialized.initial_state == analog_evolution.initial_state
 
 
 def test_variational_program_payload():
     circ = Circuit(2)
-    sampling = Sampling(nshots=1024, circuit=circ)
+    digital_propagation = DigitalPropagation(circuit=circ)
     optimizer = SciPyOptimizer(method="Nelder-Mead")
     cost_function = ObservableCostFunction(observable=PauliZ(0))
-    variational_program = VariationalProgram(functional=sampling, optimizer=optimizer, cost_function=cost_function)
-    payload = VariationalProgramPayload(variational_program=variational_program)
+    variational_program = VariationalProgram(
+        functional=digital_propagation, optimizer=optimizer, cost_function=cost_function
+    )
+    payload = VariationalProgramPayload(
+        variational_program=variational_program, readout=Readout().with_state_tomography()
+    )
     serialized_variational_program = payload._serialize_variational_program(
         variational_program=variational_program, _info={}
     )
@@ -158,34 +159,29 @@ def test_two_tones_experiment_payload():
 
 
 def test_execute_result_sampling():
-    execute_type = ExecuteType.SAMPLING
-    sampling_result = SamplingResult(nshots=1024, samples={"0": 512, "1": 512})
+    execute_type = ExecuteType.DIGITAL_PROPAGATION
+    readout_result = SamplingReadoutResult.from_samples(samples={"0": 512, "1": 512})
+    functional_result = FunctionalResult(readout_results=ReadoutCompositeResults(sampling=readout_result))
     result = ExecuteResult(
         type=execute_type,
-        sampling_result=sampling_result,
+        functional_result=functional_result,
     )
-    serialized_result = result._serialize_sampling_result(sampling_result=result.sampling_result, _info={})
+    serialized_result = result._serialize_sampling_result(functional_result=result.functional_result, _info={})
     deserialized_result = result._load_sampling_result(serialized_result)
-    assert deserialized_result.nshots == sampling_result.nshots
-    assert deserialized_result.samples == sampling_result.samples
+    assert deserialized_result.get_samples() == functional_result.get_samples()
 
 
 def test_execute_result_time_evolution():
-    execute_type = ExecuteType.TIME_EVOLUTION
-    time_evolution_result = TimeEvolutionResult(
-        final_state=ket(0),
-        final_expected_values=[0.1],
-    )
+    execute_type = ExecuteType.ANALOG_EVOLUTION
+    readout_result = StateTomographyReadoutResult(state=ket(0))
+    functional_result = FunctionalResult(readout_results=ReadoutCompositeResults(state_tomography=readout_result))
     result = ExecuteResult(
         type=execute_type,
-        time_evolution_result=time_evolution_result,
+        functional_result=functional_result,
     )
-    serialized_result = result._serialize_time_evolution_result(
-        time_evolution_result=result.time_evolution_result, _info={}
-    )
-    deserialized_result = result._load_time_evolution_result(serialized_result)
-    assert deserialized_result.final_state == time_evolution_result.final_state
-    assert deserialized_result.final_expected_values[0] == time_evolution_result.final_expected_values[0]
+    serialized_result = result._serialize_sampling_result(functional_result=result.functional_result, _info={})
+    deserialized_result = result._load_sampling_result(serialized_result)
+    assert deserialized_result.get_state() == functional_result.get_state()
 
 
 def test_execute_result_variational_program():
@@ -289,8 +285,7 @@ def test_execute_result_two_tones_experiment():
 
 def test_requires():
     good_result = MagicMock()
-    good_result.sampling_result = MagicMock()
-    good_result.time_evolution_result = MagicMock()
+    good_result.functional_result = MagicMock()
     good_result.variational_program_result = MagicMock()
     good_result.rabi_experiment_result = MagicMock()
     good_result.t1_experiment_result = MagicMock()
@@ -298,8 +293,7 @@ def test_requires():
     good_result.two_tones_experiment_result = MagicMock()
 
     bad_result = MagicMock()
-    bad_result.sampling_result = None
-    bad_result.time_evolution_result = None
+    bad_result.functional_result = None
     bad_result.variational_program_result = None
     bad_result.rabi_experiment_result = None
     bad_result.t1_experiment_result = None
@@ -310,13 +304,9 @@ def test_requires():
     with pytest.raises(RuntimeError, match="did not return a variational_program_result"):
         _require_variational_program_result(bad_result)
 
-    assert _require_sampling_result(good_result) is good_result.sampling_result
-    with pytest.raises(RuntimeError, match="did not return a sampling_result"):
-        _require_sampling_result(bad_result)
-
-    assert _require_time_evolution_result(good_result) is good_result.time_evolution_result
-    with pytest.raises(RuntimeError, match="did not return a time_evolution_result"):
-        _require_time_evolution_result(bad_result)
+    assert _require_functional_result(good_result) is good_result.functional_result
+    with pytest.raises(RuntimeError, match="did not return a functional_result"):
+        _require_functional_result(bad_result)
 
     assert _require_rabi_experiment_result(good_result) is good_result.rabi_experiment_result
     with pytest.raises(RuntimeError, match="did not return a rabi_experiment_result"):
@@ -337,15 +327,15 @@ def test_requires():
 
 def test_typed_job_detail():
     bad_result = MagicMock()
-    bad_result.type = ExecuteType.TIME_EVOLUTION
+    bad_result.type = ExecuteType.ANALOG_EVOLUTION
 
     good_result = MagicMock()
-    good_result.type = ExecuteType.SAMPLING
+    good_result.type = ExecuteType.DIGITAL_PROPAGATION
 
     mock_extractor = MagicMock(return_value=good_result)
 
     job_detail = TypedJobDetail(
-        expected_type=ExecuteType.SAMPLING,
+        expected_type=ExecuteType.DIGITAL_PROPAGATION,
         id=3,
         name="Test Job",
         description="A test job",

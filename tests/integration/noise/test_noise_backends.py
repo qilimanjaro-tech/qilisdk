@@ -18,6 +18,7 @@ import pytest
 
 from qilisdk.backends.backend_config import ExecutionConfig
 
+pytest.importorskip("qilisim_module", reason="Noise integration tests require the 'qilisim_module' C++ extension")
 pytest.importorskip(
     "cudaq",
     reason="CUDA backend tests require the 'cuda' optional dependency",
@@ -26,15 +27,15 @@ pytest.importorskip(
 
 from qilisdk.analog import Schedule
 from qilisdk.analog import X as PauliX
+from qilisdk.analog import Y as PauliY
 from qilisdk.analog import Z as PauliZ
-from qilisdk.analog.hamiltonian import PauliY
 from qilisdk.backends import CudaBackend, QiliSim
 from qilisdk.core import Parameter, ket
 from qilisdk.core.interpolator import Interpolation
 from qilisdk.core.qtensor import QTensor, tensor_prod
 from qilisdk.digital.circuit import Circuit
 from qilisdk.digital.gates import RX, H, I, X, Z
-from qilisdk.functionals import Sampling, TimeEvolution
+from qilisdk.functionals import AnalogEvolution, DigitalPropagation
 from qilisdk.noise import (
     AmplitudeDamping,
     BitFlip,
@@ -46,6 +47,7 @@ from qilisdk.noise import (
     ReadoutAssignment,
 )
 from qilisdk.noise.representations import KrausChannel, LindbladGenerator
+from qilisdk.readout import Readout
 
 backends = [QiliSim, CudaBackend]
 args_per_backend = {QiliSim: {"execution_config": ExecutionConfig(seed=42, num_threads=1)}, CudaBackend: {}}
@@ -60,9 +62,9 @@ def test_qilisim_backend_bit_flip_sampling(backend_class):
     noise_model.add(BitFlip(probability=1.0))
 
     backend = backend_class(noise_model=noise_model, **args_per_backend[backend_class])
-    result = backend.execute(Sampling(circuit, nshots=100))
+    result = backend.execute(DigitalPropagation(circuit), readout=Readout().with_sampling(nshots=100))
 
-    assert result.samples == {"0": 100}
+    assert result.get_samples() == {"0": 100}
 
 
 @pytest.mark.parametrize("backend_class", backends)
@@ -75,9 +77,9 @@ def test_qilisim_backend_bit_flip_two_qubits_sampling(backend_class):
     noise_model.add(BitFlip(probability=1.0), qubits=[0])
 
     backend = backend_class(noise_model=noise_model, **args_per_backend[backend_class])
-    result = backend.execute(Sampling(circuit, nshots=100))
+    result = backend.execute(DigitalPropagation(circuit), readout=Readout().with_sampling(nshots=100))
 
-    assert result.samples == {"01": 100}
+    assert result.get_samples() == {"01": 100}
 
 
 @pytest.mark.parametrize("backend_class", backends)
@@ -90,9 +92,9 @@ def test_qilisim_backend_bit_flip_only_identity(backend_class):
     noise_model.add(BitFlip(probability=1.0), gate=I)
 
     backend = backend_class(noise_model=noise_model, **args_per_backend[backend_class])
-    result = backend.execute(Sampling(circuit, nshots=100))
+    result = backend.execute(DigitalPropagation(circuit), readout=Readout().with_sampling(nshots=100))
 
-    assert result.samples == {"11": 100}
+    assert result.get_samples() == {"11": 100}
 
 
 @pytest.mark.parametrize("backend_class", backends)
@@ -107,9 +109,9 @@ def test_qilisim_backend_bit_flip_gate_and_qubit(backend_class):
     noise_model.add(BitFlip(probability=1.0), gate=I, qubits=[1])
 
     backend = backend_class(noise_model=noise_model, **args_per_backend[backend_class])
-    result = backend.execute(Sampling(circuit, nshots=100))
+    result = backend.execute(DigitalPropagation(circuit), readout=Readout().with_sampling(nshots=100))
 
-    assert result.samples == {"01": 100}
+    assert result.get_samples() == {"01": 100}
 
 
 @pytest.mark.parametrize("backend_class", backends)
@@ -117,15 +119,15 @@ def test_qilisim_backend_static_kraus_sampling(backend_class):
     shots = 100
     circuit = Circuit(nqubits=1)
     circuit.add(I(0))
-    sampler = Sampling(circuit, nshots=shots)
+    functional = DigitalPropagation(circuit)
 
     noise_model = NoiseModel()
     noise_model.add(PauliChannel(pX=1.0))
 
     backend = backend_class(noise_model=noise_model, **args_per_backend[backend_class])
-    result = backend.execute(sampler)
+    result = backend.execute(functional, readout=Readout().with_sampling(nshots=shots))
 
-    assert result.samples == {"1": shots}
+    assert result.get_samples() == {"1": shots}
 
 
 @pytest.mark.parametrize("backend_class", backends)
@@ -133,15 +135,15 @@ def test_qilisim_backend_gate_parameter_perturbation(backend_class):
     shots = 100
     circuit = Circuit(nqubits=1)
     circuit.add(RX(0, theta=0.0))
-    sampler = Sampling(circuit, nshots=shots)
+    functional = DigitalPropagation(circuit)
 
     noise_model = NoiseModel()
     noise_model.add(OffsetPerturbation(offset=np.pi), gate=RX, parameter="theta")
 
     backend = backend_class(noise_model=noise_model, **args_per_backend[backend_class])
-    result = backend.execute(sampler)
+    result = backend.execute(functional, readout=Readout().with_sampling(nshots=shots))
 
-    assert result.samples == {"1": shots}
+    assert result.get_samples() == {"1": shots}
 
 
 @pytest.mark.parametrize("backend_class", backends)
@@ -153,20 +155,20 @@ def test_qilisim_backend_time_evolution_amplitude_damping(backend_class):
         dt=0.1,
         interpolation=Interpolation.LINEAR,
     )
-    time_evolution = TimeEvolution(
+    analog_evolution = AnalogEvolution(
         schedule=schedule,
         initial_state=ket(1),
-        observables=[PauliZ(0)],
-        store_intermediate_results=False,
     )
 
     noise_model = NoiseModel()
     noise_model.add(AmplitudeDamping(t1=0.1))
 
     backend = backend_class(noise_model=noise_model, **args_per_backend[backend_class])
-    result = backend.execute(time_evolution)
+    result = backend.execute(
+        analog_evolution, readout=Readout().with_expectation(observables=[PauliZ(0)]).with_state_tomography()
+    )
 
-    assert result.final_expected_values[0] > 0.9
+    assert result.get_expectation_values()[0] > 0.9
 
 
 @pytest.mark.parametrize("backend_class", backends)
@@ -179,20 +181,20 @@ def test_qilisim_backend_time_evolution_dephasing(backend_class):
         interpolation=Interpolation.LINEAR,
     )
     initial_state = (ket(0) + ket(1)).unit()
-    time_evolution = TimeEvolution(
+    analog_evolution = AnalogEvolution(
         schedule=schedule,
         initial_state=initial_state,
-        observables=[PauliX(0)],
-        store_intermediate_results=False,
     )
 
     noise_model = NoiseModel()
     noise_model.add(Dephasing(t_phi=0.1))
 
     backend = backend_class(noise_model=noise_model, **args_per_backend[backend_class])
-    result = backend.execute(time_evolution)
+    result = backend.execute(
+        analog_evolution, readout=Readout().with_expectation(observables=[PauliX(0)]).with_state_tomography()
+    )
 
-    assert abs(result.final_expected_values[0]) < 0.1
+    assert abs(result.get_expectation_values()[0]) < 0.1
 
 
 @pytest.mark.parametrize("backend_class", backends)
@@ -206,20 +208,20 @@ def test_qilisim_backend_schedule_parameter_perturbation(backend_class):
         interpolation=Interpolation.LINEAR,
     )
     initial_state = (ket(0) + ket(1)).unit()
-    time_evolution = TimeEvolution(
+    analog_evolution = AnalogEvolution(
         schedule=schedule,
         initial_state=initial_state,
-        observables=[PauliX(0)],
-        store_intermediate_results=False,
     )
 
     noise_model = NoiseModel()
     noise_model.add(OffsetPerturbation(offset=1.0), parameter="g")
 
     backend = backend_class(noise_model=noise_model, **args_per_backend[backend_class])
-    result = backend.execute(time_evolution)
+    result = backend.execute(
+        analog_evolution, readout=Readout().with_expectation(observables=[PauliX(0)]).with_state_tomography()
+    )
 
-    assert result.final_expected_values[0] < -0.8
+    assert np.real_if_close(result.get_expectation_values()[0]) < -0.8
 
 
 @pytest.mark.parametrize("backend_class", backends)
@@ -231,7 +233,7 @@ def test_depolarizing_noise(backend_class):
     c = Circuit(nqubits=nqubits)
     random.seed(42)
     c.add(X(0))
-    sampler = Sampling(c, nshots=shots)
+    functional = DigitalPropagation(c)
 
     # Define a simple noise model
     nm = NoiseModel()
@@ -239,10 +241,10 @@ def test_depolarizing_noise(backend_class):
 
     # Execute with QiliSim backend
     backend = backend_class(noise_model=nm, **args_per_backend[backend_class])
-    res = backend.execute(sampler)
+    res = backend.execute(functional, readout=Readout().with_sampling(nshots=shots))
 
     # With a probability p, the |1> state should flip to |0> or |1> with equal chance
-    prob_10 = res.samples.get("00", 0) / shots
+    prob_10 = res.get_samples().get("00", 0) / shots
     assert np.isclose(prob_10, p * 0.5, atol=0.2)
 
 
@@ -258,7 +260,7 @@ def test_digital_dephasing_noise(backend_class):
     c.add(H(0))
     c.add(X(0))
     c.add(H(0))
-    sampler = Sampling(c, nshots=shots)
+    functional = DigitalPropagation(c)
 
     # Define a simple noise model
     nm = NoiseModel()
@@ -266,10 +268,10 @@ def test_digital_dephasing_noise(backend_class):
 
     # Execute with QiliSim backend
     backend = backend_class(noise_model=nm, **args_per_backend[backend_class])
-    res = backend.execute(sampler)
+    res = backend.execute(functional, readout=Readout().with_sampling(nshots=shots))
 
     # With a probability p, the |+> state should flip to |-> (which maps to |1> after the basis change)
-    prob_10 = res.samples.get("10", 0) / shots
+    prob_10 = res.get_samples().get("10", 0) / shots
     assert np.isclose(prob_10, p, atol=0.2)
 
 
@@ -283,7 +285,7 @@ def test_amplitude_damping_noise(backend_class):
     c = Circuit(nqubits=nqubits)
     random.seed(42)
     c.add(X(0))
-    sampler = Sampling(c, nshots=shots)
+    functional = DigitalPropagation(c)
 
     # Define a simple noise model
     nm = NoiseModel()
@@ -291,10 +293,10 @@ def test_amplitude_damping_noise(backend_class):
 
     # Execute with QiliSim backend
     backend = backend_class(noise_model=nm, **args_per_backend[backend_class])
-    res = backend.execute(sampler)
+    res = backend.execute(functional, readout=Readout().with_sampling(nshots=shots))
 
     # With a probability gamma, the |1> state should decay to |0>
-    prob_00 = res.samples.get("00", 0) / shots
+    prob_00 = res.get_samples().get("00", 0) / shots
     assert np.isclose(prob_00, p, atol=0.2)
 
 
@@ -308,7 +310,7 @@ def test_kraus_noise_single_qubit_noise(backend_class):
     random.seed(42)
     c.add(X(0))
     c.add(X(1))
-    sampler = Sampling(c, nshots=shots)
+    functional = DigitalPropagation(c)
     kraus_ops = [np.sqrt(1 - p) * np.array([[1, 0], [0, 1]]), np.sqrt(p) * np.array([[0, 1], [1, 0]])]
     kraus_ops = [QTensor(K) for K in kraus_ops]
 
@@ -318,10 +320,10 @@ def test_kraus_noise_single_qubit_noise(backend_class):
 
     # Execute with QiliSim backend
     backend = backend_class(noise_model=nm, **args_per_backend[backend_class])
-    res = backend.execute(sampler)
+    res = backend.execute(functional, readout=Readout().with_sampling(nshots=shots))
 
     # With a probability p, the |1> state should flip to |0>
-    prob_10 = res.samples.get("10", 0) / shots
+    prob_10 = res.get_samples().get("10", 0) / shots
     assert np.isclose(prob_10, p, atol=0.2)
 
 
@@ -342,13 +344,11 @@ def time_evolution():
         interpolation=Interpolation.LINEAR,
     )
     initial_state = tensor_prod([(ket(0) - ket(1)).unit() for _ in range(nqubits)]).unit()
-    time_evolution = TimeEvolution(
+    analog_evolution = AnalogEvolution(
         schedule=schedule,
         initial_state=initial_state,
-        observables=[PauliZ(0), PauliX(0), PauliY(0)],
-        store_intermediate_results=False,
     )
-    return time_evolution
+    return analog_evolution
 
 
 @pytest.mark.parametrize("backend_class", backends)
@@ -362,9 +362,12 @@ def test_analog_dissapation_noise(backend_class, time_evolution):
 
     # Execute with the backend
     backend = backend_class(noise_model=noise_model, **args_per_backend[backend_class])
-    results = backend.execute(time_evolution)
+    results = backend.execute(
+        time_evolution,
+        readout=Readout().with_expectation(observables=[PauliZ(0), PauliX(0), PauliY(0)]).with_state_tomography(),
+    )
 
-    assert results.final_expected_values[0] > -0.8
+    assert results.get_expectation_values()[0] > -0.8
 
 
 @pytest.mark.parametrize("backend_class", backends)
@@ -376,9 +379,12 @@ def test_analog_amplitude_damping_noise(backend_class, time_evolution):
 
     # Execute with the backend
     backend = backend_class(noise_model=noise_model, **args_per_backend[backend_class])
-    results = backend.execute(time_evolution)
+    results = backend.execute(
+        time_evolution,
+        readout=Readout().with_expectation(observables=[PauliZ(0), PauliX(0), PauliY(0)]).with_state_tomography(),
+    )
 
-    assert results.final_expected_values[0] > -0.8
+    assert results.get_expectation_values()[0] > -0.8
 
 
 @pytest.mark.parametrize("backend_class", backends)
@@ -390,9 +396,12 @@ def test_analog_dephasing_noise(backend_class, time_evolution):
 
     # Execute with the backend
     backend = backend_class(noise_model=noise_model, **args_per_backend[backend_class])
-    results = backend.execute(time_evolution)
+    results = backend.execute(
+        time_evolution,
+        readout=Readout().with_expectation(observables=[PauliZ(0), PauliX(0), PauliY(0)]).with_state_tomography(),
+    )
 
-    assert results.final_expected_values[0] > -0.8
+    assert results.get_expectation_values()[0] > -0.8
 
 
 @pytest.mark.parametrize("backend_class", backends)
@@ -403,7 +412,7 @@ def test_readout_error_noise_01(backend_class):
     c = Circuit(nqubits=nqubits)
     random.seed(42)
     c.add(I(0))
-    sampler = Sampling(c, nshots=shots)
+    functional = DigitalPropagation(c)
 
     # Define a simple noise model
     nm = NoiseModel()
@@ -411,9 +420,9 @@ def test_readout_error_noise_01(backend_class):
 
     # Execute with QiliSim backend
     backend = backend_class(noise_model=nm, **args_per_backend[backend_class])
-    res = backend.execute(sampler)
+    res = backend.execute(functional, readout=Readout().with_sampling(nshots=shots))
 
-    assert res.samples == {"1": shots}
+    assert res.get_samples() == {"1": shots}
 
 
 @pytest.mark.parametrize("backend_class", backends)
@@ -424,7 +433,7 @@ def test_readout_error_qilisim_10(backend_class):
     c = Circuit(nqubits=nqubits)
     random.seed(42)
     c.add(X(0))
-    sampler = Sampling(c, nshots=shots)
+    functional = DigitalPropagation(c)
 
     # Define a simple noise model
     nm = NoiseModel()
@@ -432,6 +441,6 @@ def test_readout_error_qilisim_10(backend_class):
 
     # Execute with QiliSim backend
     backend = backend_class(noise_model=nm, **args_per_backend[backend_class])
-    res = backend.execute(sampler)
+    res = backend.execute(functional, readout=Readout().with_sampling(nshots=shots))
 
-    assert res.samples == {"0": shots}
+    assert res.get_samples() == {"0": shots}

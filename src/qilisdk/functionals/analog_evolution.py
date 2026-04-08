@@ -11,50 +11,49 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import ClassVar, Iterator
+from typing import Callable, ClassVar, Iterator
 
-from qilisdk.analog.hamiltonian import Hamiltonian, PauliOperator
 from qilisdk.analog.schedule import Schedule
+from qilisdk.core import Parameter
 from qilisdk.core.parameterizable import Parameterizable
 from qilisdk.core.qtensor import QTensor
 from qilisdk.functionals.functional import PrimitiveFunctional
-from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
+from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.yaml import yaml
 
 
 @yaml.register_class
-class TimeEvolution(PrimitiveFunctional[TimeEvolutionResult]):
+class AnalogEvolution(PrimitiveFunctional):
     """
     Simulate the dynamics induced by a time-dependent Hamiltonian schedule.
 
     Example:
         .. code-block:: python
 
-            from qilisdk.analog import Schedule, Hamiltonian, Z
+            from qilisdk.analog import Schedule, Z
             from qilisdk.core import ket
-            from qilisdk.functionals.time_evolution import TimeEvolution
+            from qilisdk.functionals import AnalogEvolution
+            from qilisdk.readout import Readout
 
             h0 = Z(0)
             schedule = Schedule(hamiltonians={"h0": h0}, total_time=10.0)
-            functional = TimeEvolution(schedule, observables=[Z(0), X(0)], initial_state=ket(0))
+            functional = AnalogEvolution(schedule, initial_state=ket(0))
+            result = backend.execute(functional, readout=Readout().with_state_tomography())
+            state = result.state  # QTensor
     """
 
-    result_type: ClassVar[type[TimeEvolutionResult]] = TimeEvolutionResult
+    result_type: ClassVar[type[FunctionalResult]] = FunctionalResult
 
     def __init__(
         self,
         schedule: Schedule,
-        observables: list[QTensor | PauliOperator | Hamiltonian],
         initial_state: QTensor,
-        nshots: int = 1000,
         store_intermediate_results: bool = False,
     ) -> None:
         """
         Args:
             schedule (Schedule): Annealing or control schedule describing the Hamiltonian evolution.
-            observables (list[QTensor | PauliOperator | Hamiltonian]): Observables measured at the end of the evolution.
             initial_state (QTensor): Quantum state used as the simulation starting point.
-            nshots (int, optional): Number of executions for statistical estimation. Defaults to 1000.
             store_intermediate_results (bool, optional): Keep intermediate states if produced by the backend. Defaults to False.
 
         Raises:
@@ -63,8 +62,6 @@ class TimeEvolution(PrimitiveFunctional[TimeEvolutionResult]):
         super().__init__()
         self.initial_state = initial_state
         self.schedule = schedule
-        self.observables = observables
-        self.nshots = nshots
         self.store_intermediate_results = store_intermediate_results
 
         if initial_state.nqubits != schedule.nqubits:
@@ -73,15 +70,50 @@ class TimeEvolution(PrimitiveFunctional[TimeEvolutionResult]):
             )
 
     def _iter_parameter_children(self) -> Iterator[Parameterizable]:
+        """Yield the schedule as the sole parameterizable child.
+
+        Yields:
+            Iterator[Parameterizable]: The underlying ``Schedule``.
+        """
         yield self.schedule
+
+    def set_parameter_values(
+        self,
+        values: list[float],
+        where: Callable[[Parameter], bool] | None = None,
+    ) -> None:
+        """
+        Assign parameter values by position and clear caches.
+
+        Args:
+            values (list[float]): New values ordered consistently with ``get_parameter_names()``.
+            where (Callable[[Parameter], bool] | None): Optional predicate selecting parameters to update.
+        """
+        self.schedule.set_parameter_values(values=values, where=where)
+
+    def set_parameters(self, parameters: dict[str, int | float]) -> None:
+        """
+        Assign parameter values by name and clear caches.
+
+        Args:
+            parameters (dict[str, int | float]): Mapping from parameter labels to numeric values.
+        """
+        self.schedule.set_parameters(parameters)
+
+    def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
+        """
+        Update parameter bounds and clear caches.
+
+        Args:
+            ranges (dict[str, tuple[float, float]]): Bounds keyed by parameter label.
+        """
+        self.schedule.set_parameter_bounds(ranges)
 
     def __repr__(self) -> str:
         lines = [
             f"{type(self).__qualname__}(",
             f"  schedule={self.schedule!r},",
-            f"  observables={self.observables!r},",
             f"  initial_state={self.initial_state!r},",
-            f"  nshots={self.nshots!r},",
             f"  store_intermediate_results={self.store_intermediate_results!r},",
             ")",
         ]

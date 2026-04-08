@@ -14,7 +14,7 @@
 from __future__ import annotations
 
 from copy import copy
-from typing import Iterator, Mapping, TypeAlias, overload
+from typing import Callable, Iterator, Mapping, TypeAlias, overload
 
 from numpy import linspace
 
@@ -436,3 +436,44 @@ class Schedule(Parameterizable):
             ")",
         ]
         return "\n".join(lines)
+
+    def set_parameter_values(
+        self,
+        values: list[float],
+        where: Callable[[Parameter], bool] | None = None,
+    ) -> None:
+        """
+        Assign parameter values by position and clear caches.
+
+        Args:
+            values (list[float]): New values ordered consistently with ``get_parameter_names()``.
+            where (Callable[[Parameter], bool] | None): Optional predicate selecting parameters to update.
+
+        Raises:
+            ValueError: if the length of the values is not the same as the number of parameters in this object.
+        """
+        for coeff in self.coefficients.values():
+            coeff.delete_cache()
+        super().set_parameter_values(values, where)
+
+    def set_parameters(self, parameters: dict[str, int | float]) -> None:
+        """
+        Assign parameter values by name and clear caches.
+
+        Args:
+            parameters (dict[str, int | float]): Mapping from parameter labels to numeric values.
+        """
+        for coeff in self.coefficients.values():
+            coeff.delete_cache()
+        super().set_parameters(parameters)
+
+    def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
+        """
+        Update parameter bounds and clear caches.
+
+        Args:
+            ranges (dict[str, tuple[float, float]]): Bounds keyed by parameter label.
+        """
+        for coeff in self.coefficients.values():
+            coeff.delete_cache()
+        super().set_parameter_bounds(ranges)

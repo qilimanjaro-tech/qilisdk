@@ -31,22 +31,23 @@ For example, to create a simple circuit and then simulate it with a CUDA backend
 
     from qilisdk.noise import NoiseModel, BitFlip
     from qilisdk.digital import X, Circuit
-    from qilisdk.functionals import Sampling
+    from qilisdk.functionals import DigitalPropagation
+    from qilisdk.readout import Readout
     from qilisdk.backends import CudaBackend
 
-    # Define the random circuit and sampler
+    # Define the random circuit and functional
     c = Circuit(nqubits=2)
     c.add(X(0))
     c.add(X(1))
-    sampler = Sampling(c, nshots=1000)
+    functional = DigitalPropagation(c)
 
     # Apply bit-flip noise with 50% probability to X gates on qubit 1
     nm = NoiseModel()
-    nm.add(BitFlip(probability=0.5), gate=X, qubits=[1]) 
+    nm.add(BitFlip(probability=0.5), gate=X, qubits=[1])
 
     # Execute with CUDA backend
     backend_cuda = CudaBackend(noise_model=nm)
-    res = backend_cuda.execute(sampler)
+    res = backend_cuda.execute(functional, readout=Readout().with_sampling(nshots=1000))
     print(res)
 
 Summary of Noise Types

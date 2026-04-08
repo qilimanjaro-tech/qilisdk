@@ -638,3 +638,63 @@ def test_print_schedule():
     as_str = str(sched)
     assert "Schedule" in as_str
     assert "hamiltonians=" in as_str
+
+
+# --- Parameter Cache Invalidation Tests ---
+
+
+def test_schedule_set_parameters_clears_interpolator_cache():
+    """set_parameters must clear the Interpolator's evaluated-coefficient cache.
+
+    The Interpolator pre-evaluates Parameter expressions at interpolated time
+    steps and stores the resulting float in _cached_time.  If set_parameters
+    only updates the Parameter value without calling _delete_cache, the stale
+    float is returned instead of the updated one.
+    """
+    p = Parameter("p", 2.0)
+    schedule = Schedule(
+        hamiltonians={"H": X(0)},
+        coefficients={"H": {0: p, 10: 0.0}},
+        dt=1.0,
+    )
+
+    # Populate _cached_time with the pre-evaluated float for t=5.
+    # Linear interpolation: p*(10-5)/10 + 0.0*(5/10) = p*0.5 = 1.0
+    assert _isclose(schedule.coefficients["H"][5.0], 1.0)
+
+    schedule.set_parameters({"p": 4.0})
+
+    # Without cache clearing the stale 1.0 would be returned; must be 2.0.
+    assert _isclose(schedule.coefficients["H"][5.0], 2.0)
+
+
+def test_schedule_set_parameter_values_clears_interpolator_cache():
+    """set_parameter_values must clear the Interpolator's evaluated-coefficient cache."""
+    p = Parameter("p", 2.0)
+    schedule = Schedule(
+        hamiltonians={"H": X(0)},
+        coefficients={"H": {0: p, 10: 0.0}},
+        dt=1.0,
+    )
+
+    assert _isclose(schedule.coefficients["H"][5.0], 1.0)
+
+    schedule.set_parameter_values([4.0])
+
+    assert _isclose(schedule.coefficients["H"][5.0], 2.0)
+
+
+def test_schedule_set_parameter_bounds_propagates_to_interpolator():
+    """set_parameter_bounds must update bounds accessible through the Interpolator."""
+    p = Parameter("p", 2.0, bounds=(0.0, 3.0))
+    schedule = Schedule(
+        hamiltonians={"H": X(0)},
+        coefficients={"H": {(0, 10): p}},
+        dt=1.0,
+    )
+
+    assert schedule.get_parameter_bounds()["p"] == (0.0, 3.0)
+
+    schedule.set_parameter_bounds({"p": (0.0, 5.0)})
+
+    assert schedule.get_parameter_bounds()["p"] == (0.0, 5.0)

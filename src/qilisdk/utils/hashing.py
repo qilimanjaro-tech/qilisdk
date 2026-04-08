@@ -77,7 +77,7 @@ def _encode_object_via_custom_hash(value: object) -> bytes:
         return b""
 
     class_name = f"{value.__class__.__module__}.{value.__class__.__qualname__}".encode("utf-8")
-    object_hash = object_hash_method(value)
+    object_hash = object_hash_method(value)  # ty:ignore[too-many-positional-arguments]
     return b"object-hash:" + class_name + b":" + str(object_hash).encode("utf-8")
 
 
