@@ -14,7 +14,7 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import ClassVar, Generic, TypeVar
+from typing import ClassVar, TypeVar
 
 from qilisdk.core.parameterizable import Parameterizable
 from qilisdk.functionals.functional_result import FunctionalResult
@@ -23,17 +23,21 @@ TResult_co = TypeVar("TResult_co", bound=FunctionalResult, covariant=True)
 
 
 class Functional(ABC):
-    """
-    Abstract interface for executable routines that return a :class:`FunctionalResult`.
+    """Abstract interface for executable routines that return a :class:`FunctionalResult`.
 
-    Subclasses detail the concrete `result_type` they generate.
+    Subclasses must define the concrete ``result_type`` class variable
+    indicating which :class:`~qilisdk.functionals.functional_result.FunctionalResult`
+    subclass they produce.
     """
 
     result_type: ClassVar[type[FunctionalResult]]
     """Concrete :class:`~qilisdk.functionals.functional_result.FunctionalResult` subclass returned."""
 
 
-class PrimitiveFunctional(Parameterizable, Functional, ABC, Generic[TResult_co]):
-    """
-    Base class for functionals backed by a :class:`~qilisdk.core.parameterizable.Parameterizable` object.
+class PrimitiveFunctional(Parameterizable, Functional, ABC):
+    """Base class for functionals backed by a :class:`~qilisdk.core.parameterizable.Parameterizable` object.
+
+    Primitive functionals expose tunable parameters via the
+    :class:`~qilisdk.core.parameterizable.Parameterizable` interface and
+    are directly executable by a backend.
     """

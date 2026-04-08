@@ -21,8 +21,9 @@
 
 class QiliSimCpp {
    public:
-    py::object execute_sampling(const py::object& functional, const py::object& noise_model, const py::object& initial_state, const py::dict& solver_params);
-    py::object execute_time_evolution(const py::object& functional, const py::object& noise_model, const py::dict& solver_params);
+    py::object execute_digital_propagation(const py::object& functional, const py::object& readout, const py::object& noise_model, const py::object& initial_state, const py::dict& solver_params);
+    py::object execute_analog_evolution(const py::object& functional, const py::object& readout, const py::object& noise_model, const py::dict& solver_params);
+    py::object execute_quantum_reservoir(const py::object& functional, const py::object& readout, const py::object& noise_model, const py::dict& solver_params);
 };
 
 #pragma GCC visibility pop

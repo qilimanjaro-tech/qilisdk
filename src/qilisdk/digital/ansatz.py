@@ -205,7 +205,7 @@ class HardwareEfficientAnsatz(Ansatz):
 
 
 @yaml.register_class
-class TrotterizedTimeEvolution(Ansatz):
+class TrotterizedSchedule(Ansatz):
     """
     Trotterized digital time evolution over a schedule of Hamiltonians.
 
@@ -215,10 +215,10 @@ class TrotterizedTimeEvolution(Ansatz):
     Example:
         .. code-block:: python
 
-            from qilisdk.digital.ansatz import TrotterizedTimeEvolution
+            from qilisdk.digital.ansatz import TrotterizedSchedule
             from qilisdk.analog.schedule import Schedule
 
-            ansatz = TrotterizedTimeEvolution(
+            ansatz = TrotterizedSchedule(
                 schedule=Schedule(...),
                 trotter_steps=2,
             )

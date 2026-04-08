@@ -16,6 +16,8 @@
 import numpy as np
 import pytest
 
+pytest.importorskip("cudaq", reason="CUDA noise tests require the 'cudaq' optional dependency")
+
 from qilisdk.analog import PauliX as pauli_x
 from qilisdk.analog import Schedule
 from qilisdk.backends.cuda_backend import CudaBackend, _to_cuda_noise, cudaq

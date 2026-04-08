@@ -1671,7 +1671,9 @@ class Term:
     def __add__(self, other: Number | BaseVariable | Term) -> Term:
         if not isinstance(other, (Number, BaseVariable, Term)):
             return NotImplemented
-        out = self.to_list() if self.operation == Operation.ADD else [copy.copy(self)]
+        out: list[BaseVariable | Term | Number] = (
+            self.to_list() if self.operation == Operation.ADD else [copy.copy(self)]
+        )
 
         if isinstance(other, np.generic):
             other = cast("Number", other.item())
@@ -1684,7 +1686,9 @@ class Term:
     def __radd__(self, other: Number | BaseVariable | Term) -> Term:
         if not isinstance(other, (Number, BaseVariable, Term)):
             return NotImplemented
-        out = self.to_list() if self.operation == Operation.ADD else [copy.copy(self)]
+        out: list[BaseVariable | Term | Number] = (
+            self.to_list() if self.operation == Operation.ADD else [copy.copy(self)]
+        )
 
         if isinstance(other, np.generic):
             other = cast("Number", other.item())
@@ -1694,7 +1698,9 @@ class Term:
     def __mul__(self, other: Number | BaseVariable | Term) -> Term:
         if not isinstance(other, (Number, BaseVariable, Term)):
             return NotImplemented
-        out = self.to_list() if self.operation == Operation.MUL else [copy.copy(self)]
+        out: list[BaseVariable | Term | Number] = (
+            self.to_list() if self.operation == Operation.MUL else [copy.copy(self)]
+        )
         if len(out) == 0:
             out = [0]
 
@@ -1709,7 +1715,9 @@ class Term:
     def __rmul__(self, other: Number | BaseVariable | Term) -> Term:
         if not isinstance(other, (Number, BaseVariable, Term)):
             return NotImplemented
-        out = self.to_list() if self.operation == Operation.MUL else [copy.copy(self)]
+        out: list[BaseVariable | Term | Number] = (
+            self.to_list() if self.operation == Operation.MUL else [copy.copy(self)]
+        )
         if len(out) == 0:
             out = [0]
 

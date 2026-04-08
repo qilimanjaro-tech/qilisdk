@@ -92,7 +92,7 @@ When you wait on a :class:`~qilisdk.speqtrum.speqtrum_models.JobHandle`, the ret
 
     job_handle = client.submit(sampling, device=device)
     final_job = client.wait_for_job(job_handle)
-    sampling_result = final_job.get_results()  # -> SamplingResult
+    result = final_job.get_results()  # -> FunctionalResult
 
 You can still call :meth:`~qilisdk.speqtrum.speqtrum.SpeQtrum.get_job` with a bare integer identifier. In that
 case a regular :class:`JobDetail <qilisdk.speqtrum.speqtrum_models.JobDetail>` object is returned and you can inspect the
@@ -118,26 +118,27 @@ must supply a ``device`` argument with the device code obtained from :meth:`~qil
 .. code-block:: python
 
     from qilisdk.digital import Circuit, H, CNOT
-    from qilisdk.functionals import Sampling
+    from qilisdk.functionals import DigitalPropagation
+    from qilisdk.readout import Readout
     from qilisdk.speqtrum import SpeQtrum
 
     circuit = Circuit(2)
     circuit.add(H(0))
     circuit.add(CNOT(0, 1))
-    sampling = Sampling(circuit=circuit, nshots=1_000)
+    functional = DigitalPropagation(circuit)
 
     client = SpeQtrum()
     device = client.list_devices()[0].code
-    job_handle = client.submit(sampling, device=device)
-    print("Submitted sampling job:", job_handle.id)
+    job_handle = client.submit(functional, readout=Readout().with_sampling(nshots=1_000), device=device)
+    print("Submitted job:", job_handle.id)
 
     final_job = client.wait_for_job(job_handle, timeout=600)
-    sampling_result = final_job.get_results()
-    print("Most frequent outcome:", sampling_result.get_probabilities(1))
+    result = final_job.get_results()
+    print("Most frequent outcome:", result.probabilities)
 
 .. Warning::
 
-    Physical QPUs currently do not support analog functionals built on :class:`~qilisdk.functionals.time_evolution.TimeEvolution`.TimeEvolution; 
+    Physical QPUs currently do not support analog functionals built on :class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`; 
     for now, analog hardware can run only pulse experiments from :mod:`~qilisdk.speqtrum.experiments`.
 
 
@@ -154,8 +155,9 @@ function) and submit it as any other functional.
     from qilisdk.core.variables import BinaryVariable, LEQ
     from qilisdk.cost_functions import ModelCostFunction
     from qilisdk.digital import CNOT, HardwareEfficientAnsatz, U2
-    from qilisdk.functionals import Sampling
+    from qilisdk.functionals import DigitalPropagation
     from qilisdk.functionals.variational_program import VariationalProgram
+    from qilisdk.readout import Readout
     from qilisdk.optimizers.scipy_optimizer import SciPyOptimizer
     from qilisdk.speqtrum import SpeQtrum
 
@@ -173,13 +175,13 @@ function) and submit it as any other functional.
         connectivity="linear",
         structure="grouped",
     )
-    functional = Sampling(circuit=ansatz, nshots=1024)
+    functional = DigitalPropagation(ansatz)
     optimizer = SciPyOptimizer(method="Powell")
     vprog = VariationalProgram(functional=functional, optimizer=optimizer, cost_function=ModelCostFunction(model))
 
     client = SpeQtrum()
     device = client.list_devices()[0].code
-    job_handle = client.submit(vprog, device=device)
+    job_handle = client.submit(vprog, readout=Readout().with_sampling(nshots=1024), device=device)
 
 Pulse Experiments
 -----------------

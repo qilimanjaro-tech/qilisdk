@@ -93,7 +93,7 @@ dev = [
     "loguru-caplog>=0.2.0",
     "pytest-cov>=7.0.0",
     "gcovr>=8.6",
-    "ty>=0.0.20",
+    "ty>=0.0.27",
 ]
 docs = [
     "astroid<3.2",
@@ -141,7 +141,7 @@ url = "https://urob.github.io/numpy-mkl"
 explicit = true
 
 [build-system]
-requires = ["scikit-build-core", "pybind11"]
+requires = ["scikit-build-core", "pybind11>=2.13,<3"]
 build-backend = "scikit_build_core.build"
 
 [tool.scikit-build.sdist]
