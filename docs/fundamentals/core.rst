@@ -732,8 +732,6 @@ As well as some quantum-specific transformations:
 - :meth:`.reset_qubits(qubits)<qilisdk.core.qtensor.QTensor.reset_qubits>`: reset specified qubits to |0⟩
 - :meth:`.dagger()<qilisdk.core.qtensor.QTensor.dagger>`: alias for adjoint
 
-You can also visualize single-qubit states on the Bloch sphere: :meth:`.draw()<qilisdk.core.qtensor.QTensor.draw>`.
-
 Examples:
 
 .. code-block:: python
@@ -826,3 +824,34 @@ Extra Utilities
     [ 0.5  0.5 -0.5 -0.5]
     [ 0.5 -0.5 -0.5  0.5]]
     ⟨ZZ⟩ on |00> = 1.0
+
+Visualization of Quantum States
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+You can also visualize single-qubit states on the Bloch sphere using :meth:`.draw()<qilisdk.core.qtensor.QTensor.draw>`:
+
+.. code-block:: python
+
+    from qilisdk.core import QTensor
+
+    state = QTensor.ket(0)
+    state.draw()
+
+The appearance of this plot can be customized using a :class:`~qilisdk.utils.visualization.style.QTensorStyle` object, 
+which allows you to set colors, point density, and other visual elements:
+
+.. code-block:: python
+
+    from qilisdk.core import QTensor
+    from qilisdk.utils.visualization import QTensorStyle
+
+    state = QTensor.ket(0)
+    style = QTensorStyle(
+                sphere_color="blue", 
+                arrow_color="lightblue", 
+                draw_center_circle=True, 
+                sphere_points=100, 
+                draw_reference_points=True,
+            )
+    state.draw(style=style)
+
