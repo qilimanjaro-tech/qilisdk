@@ -1,52 +1,56 @@
 <!DOCTYPE html>
-<html lang="en"
-      data-content_root="../../../"
-      x-data="{ darkMode: localStorage.getItem('darkMode') || localStorage.setItem('darkMode', 'system'), activeSection: '' }"
-      x-init="$watch('darkMode', val => localStorage.setItem('darkMode', val))"
-      class="scroll-smooth"
-      :class="{'dark': darkMode === 'dark' || (darkMode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)}"
->
+<html lang="en" data-content_root="../../../"
+  x-data="{ darkMode: $persist(window.matchMedia('(prefers-color-scheme: dark)').matches), activeSection: ''}"
+  :class="{ 'dark' : darkMode === true }">
+
 <head>
+  <script>
+    (function () {
+      // Set initial color scheme
+      if ((localStorage.getItem("_x_darkMode") === "true") || (window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+        document.documentElement.classList.add("dark");
+      }
+
+      // Watch for media preference changes
+      window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (event) => {
+        localStorage.setItem("_x_darkMode", event.matches);
+        document.documentElement.classList.toggle("dark", event.matches);
+      });
+    })();
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta charset="utf-8" />
-  <meta name="theme-color" media="(prefers-color-scheme: light)" content="white" />
-  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="black" />
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#030711" />
   
-    <title>qilisdk.core.variables | QiliSDK</title>
-    <meta property="og:title" content="qilisdk.core.variables | QiliSDK" />
-    <meta name="twitter:title" content="qilisdk.core.variables | QiliSDK" />
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=6aa05603" />
-      <link rel="stylesheet" type="text/css" href="../../../_static/theme.css?v=42baaae4" />
-      <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
-      <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
-      <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=8f6adc47" />
-      <link rel="stylesheet" type="text/css" href="../../../_static/awesome-sphinx-design.css?v=15e0fffa" />
-      <link rel="icon" href="../../../_static/q_trans.png" />
-        <link rel="search" title="Search" href="../../../search.html" />
-        <link rel="index" title="Index" href="../../../genindex.html" />
-
-    <script>
-    <!-- Prevent Flash of wrong theme -->
-      const userPreference = localStorage.getItem('darkMode');
-      let mode;
-      if (userPreference === 'dark' || window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        mode = 'dark';
-        document.documentElement.classList.add('dark');
-      } else {
-        mode = 'light';
-      }
-      if (!userPreference) {localStorage.setItem('darkMode', mode)}
-    </script>
+  <title>qilisdk.core.variables | QiliSDK</title>
+  <meta property="og:title" content="qilisdk.core.variables | QiliSDK" />
+  <meta name="twitter:title" content="qilisdk.core.variables | QiliSDK" />
+  <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=31f438d3" />
+  <link rel="stylesheet" type="text/css" href="../../../_static/theme.css?v=73505e79" />
+  <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+  <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
+  <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=8f6adc47" />
+  <link rel="stylesheet" type="text/css" href="../../../_static/awesome-sphinx-design.css?v=c54898a4" />
+  <link rel="icon" href="../../../_static/q_trans.png" />
+  <link rel="search" title="Search" href="../../../search.html" />
+  <link rel="index" title="Index" href="../../../genindex.html" />
 </head>
-  <body x-data="{ showSidebar: false, showScrollTop: false }" class="min-h-screen font-sans antialiased bg-background text-foreground" :class="{ 'overflow-hidden': showSidebar }">
-    <div x-cloak x-show="showSidebar" class="fixed inset-0 z-50 overflow-hidden bg-background/80 backdrop-blur-sm md:hidden" @click.self="showSidebar = false"></div><div id="page" class="relative flex flex-col min-h-screen"><a href="#content" class="absolute top-0 left-0 z-[100] block bg-background p-4 text-xl transition -translate-x-full opacity-0 focus:translate-x-0 focus:opacity-100">
+
+<body x-data="{ showSidebar: false, showScrollTop: false }"
+  class="min-h-screen font-sans antialiased bg-background text-foreground" :class="{ 'overflow-hidden': showSidebar }">
+  <div x-cloak x-show="showSidebar"
+    class="fixed inset-0 z-50 overflow-hidden bg-background/80 backdrop-blur-sm md:hidden"
+    @click.self="showSidebar = false"></div><div id="page" class="relative flex flex-col min-h-screen"><a href="#content"
+      class="absolute top-0 left-0 z-[100] block bg-background p-4 text-xl transition -translate-x-full opacity-0 focus:translate-x-0 focus:opacity-100">
       Skip to content
-    </a><header
-  class="sticky top-0 z-40 w-full border-b shadow-sm border-border supports-backdrop-blur:bg-background/60 bg-background/95 backdrop-blur"><div class="container flex items-center h-14">
+    </a><header class="sticky top-0 z-40 w-full border-b shadow-xs border-border bg-background/90 backdrop-blur"><div class="container flex items-center h-14">
     <div class="hidden mr-4 md:flex">
       <a href="../../../index.html" class="flex items-center mr-6">
-          <img width="24" height="24" class="mr-2 hidden dark:block" src="../../../_static/q_trans.png" alt="Logo" />
-        <img width="24" height="24" class="mr-2 dark:hidden" src="../../../_static/q_trans.png" alt="Logo" /><span class="hidden font-bold sm:inline-block text-clip whitespace-nowrap">QiliSDK</span>
+        <img width="24" height="24" class="mr-2 hidden dark:block" src="../../../_static/q_trans.png"
+          alt="Logo" />
+        <img width="24" height="24" class="mr-2 dark:hidden" src="../../../_static/q_trans.png"
+          alt="Logo" /><span class="hidden font-bold sm:inline-block text-clip whitespace-nowrap">QiliSDK</span>
       </a></div><button
       class="inline-flex items-center justify-center h-10 px-0 py-2 mr-2 text-base font-medium transition-colors rounded-md hover:text-accent-foreground hover:bg-transparent md:hidden"
       type="button" @click="showSidebar = true">
@@ -57,7 +61,7 @@
       </svg>
       <span class="sr-only">Toggle navigation menu</span>
     </button>
-    <div class="flex items-center justify-between flex-1 space-x-2 sm:space-x-4 md:justify-end">
+    <div class="flex items-center justify-between flex-1 gap-2 sm:gap-4 md:justify-end">
       <div class="flex-1 w-full md:w-auto md:flex-none"><form id="searchbox"
       action="../../../search.html"
       method="get"
@@ -76,17 +80,17 @@
   </kbd>
 </form>
       </div>
-      <nav class="flex items-center space-x-1">
-        <button @click="darkMode = darkMode === 'light' ? 'dark' : 'light'"
+      <nav class="flex items-center gap-1">
+        <button @click="darkMode = !darkMode"
           class="relative inline-flex items-center justify-center px-0 text-sm font-medium transition-colors rounded-md hover:bg-accent hover:text-accent-foreground h-9 w-9"
           type="button"
-          aria-label="Color theme switcher">
-          <svg xmlns="http://www.w3.org/2000/svg" height="24" width="24" viewBox="0 96 960 960" fill="currentColor"
+          title="Toggle color scheme">
+          <svg xmlns="http://www.w3.org/2000/svg" height="16" width="16" viewBox="0 96 960 960" fill="currentColor"
             class="absolute transition-all scale-100 rotate-0 dark:-rotate-90 dark:scale-0">
             <path
               d="M480 685q45.456 0 77.228-31.772Q589 621.456 589 576q0-45.456-31.772-77.228Q525.456 467 480 467q-45.456 0-77.228 31.772Q371 530.544 371 576q0 45.456 31.772 77.228Q434.544 685 480 685Zm0 91q-83 0-141.5-58.5T280 576q0-83 58.5-141.5T480 376q83 0 141.5 58.5T680 576q0 83-58.5 141.5T480 776ZM80 621.5q-19.152 0-32.326-13.174T34.5 576q0-19.152 13.174-32.326T80 530.5h80q19.152 0 32.326 13.174T205.5 576q0 19.152-13.174 32.326T160 621.5H80Zm720 0q-19.152 0-32.326-13.174T754.5 576q0-19.152 13.174-32.326T800 530.5h80q19.152 0 32.326 13.174T925.5 576q0 19.152-13.174 32.326T880 621.5h-80Zm-320-320q-19.152 0-32.326-13.174T434.5 256v-80q0-19.152 13.174-32.326T480 130.5q19.152 0 32.326 13.174T525.5 176v80q0 19.152-13.174 32.326T480 301.5Zm0 720q-19.152 0-32.326-13.17Q434.5 995.152 434.5 976v-80q0-19.152 13.174-32.326T480 850.5q19.152 0 32.326 13.174T525.5 896v80q0 19.152-13.174 32.33-13.174 13.17-32.326 13.17ZM222.174 382.065l-43-42Q165.5 327.391 166 308.239t13.174-33.065q13.435-13.674 32.587-13.674t32.065 13.674l42.239 43q12.674 13.435 12.555 31.706-.12 18.272-12.555 31.946-12.674 13.674-31.445 13.413-18.772-.261-32.446-13.174Zm494 494.761-42.239-43q-12.674-13.435-12.674-32.087t12.674-31.565Q686.609 756.5 705.38 757q18.772.5 32.446 13.174l43 41.761Q794.5 824.609 794 843.761t-13.174 33.065Q767.391 890.5 748.239 890.5t-32.065-13.674Zm-42-494.761Q660.5 369.391 661 350.62q.5-18.772 13.174-32.446l41.761-43Q728.609 261.5 747.761 262t33.065 13.174q13.674 13.435 13.674 32.587t-13.674 32.065l-43 42.239q-13.435 12.674-31.706 12.555-18.272-.12-31.946-12.555Zm-495 494.761Q165.5 863.391 165.5 844.239t13.674-32.065l43-42.239q13.435-12.674 32.087-12.674t31.565 12.674Q299.5 782.609 299 801.38q-.5 18.772-13.174 32.446l-41.761 43Q231.391 890.5 212.239 890t-33.065-13.174ZM480 576Z" />
           </svg>
-          <svg xmlns="http://www.w3.org/2000/svg" height="24" width="24" viewBox="0 96 960 960" fill="currentColor"
+          <svg xmlns="http://www.w3.org/2000/svg" height="16" width="16" viewBox="0 96 960 960" fill="currentColor"
             class="absolute transition-all scale-0 rotate-90 dark:rotate-0 dark:scale-100">
             <path
               d="M480 936q-151 0-255.5-104.5T120 576q0-138 90-239.5T440 218q25-3 39 18t-1 44q-17 26-25.5 55t-8.5 61q0 90 63 153t153 63q31 0 61.5-9t54.5-25q21-14 43-1.5t19 39.5q-14 138-117.5 229T480 936Zm0-80q88 0 158-48.5T740 681q-20 5-40 8t-40 3q-123 0-209.5-86.5T364 396q0-20 3-40t8-40q-78 32-126.5 102T200 576q0 116 82 198t198 82Zm-10-270Z" />
@@ -97,16 +101,19 @@
   </div>
 </header>
 
-    <div class="flex-1"><div class="container flex-1 items-start md:grid md:grid-cols-[220px_minmax(0,1fr)] md:gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10"><aside id="left-sidebar"
-  class="fixed inset-y-0 left-0 md:top-14 z-50 md:z-30 bg-background md:bg-transparent transition-all duration-100 -translate-x-full md:translate-x-0 ml-0 p-6 md:p-0 md:-ml-2 md:h-[calc(100vh-3.5rem)] w-5/6 md:w-full shrink-0 overflow-y-auto border-r border-border md:sticky"
+    <div class="flex-1"><div
+        class="container md:grid md:grid-cols-[220px_minmax(0,1fr)] md:gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10"><aside id="left-sidebar"
+  class="fixed inset-y-0 left-0 md:top-14 z-50 md:z-30 bg-background md:bg-transparent transition-all duration-100 -translate-x-full md:translate-x-0 ml-0 p-6 md:p-0 md:-ml-2 md:h-[calc(100vh-3.5rem)] w-5/6 md:w-full overflow-y-auto border-r border-border md:sticky"
   :aria-hidden="!showSidebar" :class="{ 'translate-x-0': showSidebar }">
 
-    <a href="../../../index.html" class="!justify-start text-sm md:!hidden bg-background">
-        <img width="16" height="16" class="mr-2 hidden dark:block" src="../../../_static/q_trans.png" alt="Logo" />
-        <img width="16" height="16" class="mr-2 dark:hidden" src="../../../_static/q_trans.png" alt="Logo" /><span class="font-bold text-clip whitespace-nowrap">QiliSDK</span>
+    <a href="../../../index.html" class="justify-start text-sm md:!hidden bg-background">
+      <img width="16" height="16" class="mr-2 hidden dark:block" src="../../../_static/q_trans.png"
+        alt="Logo" />
+      <img width="16" height="16" class="mr-2 dark:hidden" src="../../../_static/q_trans.png"
+        alt="Logo" /><span class="font-bold text-clip whitespace-nowrap">QiliSDK</span>
     </a>
 
-    <div class="relative overflow-hidden md:overflow-auto my-4 md:my-0 h-[calc(100vh-8rem)] md:h-auto">
+    <div class="relative overflow-hidden md:overflow-auto my-4 md:my-0">
       <div class="overflow-y-auto h-full w-full relative pr-6"><nav class="table w-full min-w-full my-6 lg:my-8">
   <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul>
@@ -120,6 +127,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/digital.html">Digital</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/core.html">Core</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/functionals.html">Functionals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/readout.html">Readout</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/cost_functions.html">Cost Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/backends.html">Backends</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/noise_models.html">Noise Models</a></li>
@@ -178,6 +186,8 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/digital/circuit_transpiler_passes/index.html">qilisdk.digital.circuit_transpiler_passes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/digital/exceptions/index.html">qilisdk.digital.exceptions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/digital/gates/index.html">qilisdk.digital.gates</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/digital/topology/index.html">qilisdk.digital.topology</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/digital/types/index.html">qilisdk.digital.types</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/experiments/index.html">qilisdk.experiments</a><ul>
@@ -186,14 +196,11 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/functionals/index.html">qilisdk.functionals</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/functionals/analog_evolution/index.html">qilisdk.functionals.analog_evolution</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/functionals/digital_propagation/index.html">qilisdk.functionals.digital_propagation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/functionals/functional/index.html">qilisdk.functionals.functional</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/functionals/functional_result/index.html">qilisdk.functionals.functional_result</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/functionals/quantum_reservoirs/index.html">qilisdk.functionals.quantum_reservoirs</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/functionals/quantum_reservoirs_result/index.html">qilisdk.functionals.quantum_reservoirs_result</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/functionals/sampling/index.html">qilisdk.functionals.sampling</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/functionals/sampling_result/index.html">qilisdk.functionals.sampling_result</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/functionals/time_evolution/index.html">qilisdk.functionals.time_evolution</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/functionals/time_evolution_result/index.html">qilisdk.functionals.time_evolution_result</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/functionals/variational_program/index.html">qilisdk.functionals.variational_program</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/functionals/variational_program_result/index.html">qilisdk.functionals.variational_program_result</a></li>
 </ul>
@@ -222,6 +229,12 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/optimizers/optimizer/index.html">qilisdk.optimizers.optimizer</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/optimizers/optimizer_result/index.html">qilisdk.optimizers.optimizer_result</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/optimizers/scipy_optimizer/index.html">qilisdk.optimizers.scipy_optimizer</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/readout/index.html">qilisdk.readout</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/readout/readout/index.html">qilisdk.readout.readout</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/readout/readout_result/index.html">qilisdk.readout.readout_result</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/readout/readout_spec/index.html">qilisdk.readout.readout_spec</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/settings/index.html">qilisdk.settings</a></li>
@@ -295,7 +308,7 @@
       </svg>
     </button>
   </aside>
-        <main class="relative py-6 lg:gap-10 lg:py-8 xl:grid xl:grid-cols-[1fr_300px]">
+          <main class="relative py-6 lg:gap-10 lg:py-8 xl:grid xl:grid-cols-[1fr_300px]">
 <div class="w-full min-w-0 mx-auto">
 <nav aria-label="breadcrumbs"
      class="flex items-center mb-4 space-x-1 text-sm text-muted-foreground">
@@ -2364,444 +2377,453 @@
 </span><span id="line-1671">    <span class="k">def</span><span class="w"> </span><span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Number</span> <span class="o">|</span> <span class="n">BaseVariable</span> <span class="o">|</span> <span class="n">Term</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Term</span><span class="p">:</span>
 </span><span id="line-1672">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="n">Number</span><span class="p">,</span> <span class="n">BaseVariable</span><span class="p">,</span> <span class="n">Term</span><span class="p">)):</span>
 </span><span id="line-1673">            <span class="k">return</span> <span class="bp">NotImplemented</span>
-</span><span id="line-1674">        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_list</span><span class="p">()</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">operation</span> <span class="o">==</span> <span class="n">Operation</span><span class="o">.</span><span class="n">ADD</span> <span class="k">else</span> <span class="p">[</span><span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)]</span>
-</span><span id="line-1675">
-</span><span id="line-1676">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">generic</span><span class="p">):</span>
-</span><span id="line-1677">            <span class="n">other</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="s2">&quot;Number&quot;</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
-</span><span id="line-1678">
-</span><span id="line-1679">        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
-</span><span id="line-1680">        <span class="k">return</span> <span class="n">Term</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">Operation</span><span class="o">.</span><span class="n">ADD</span><span class="p">)</span>
-</span><span id="line-1681">
-</span><span id="line-1682">    <span class="fm">__iadd__</span> <span class="o">=</span> <span class="fm">__add__</span>
+</span><span id="line-1674">        <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">BaseVariable</span> <span class="o">|</span> <span class="n">Term</span> <span class="o">|</span> <span class="n">Number</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+</span><span id="line-1675">            <span class="bp">self</span><span class="o">.</span><span class="n">to_list</span><span class="p">()</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">operation</span> <span class="o">==</span> <span class="n">Operation</span><span class="o">.</span><span class="n">ADD</span> <span class="k">else</span> <span class="p">[</span><span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)]</span>
+</span><span id="line-1676">        <span class="p">)</span>
+</span><span id="line-1677">
+</span><span id="line-1678">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">generic</span><span class="p">):</span>
+</span><span id="line-1679">            <span class="n">other</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="s2">&quot;Number&quot;</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+</span><span id="line-1680">
+</span><span id="line-1681">        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+</span><span id="line-1682">        <span class="k">return</span> <span class="n">Term</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">Operation</span><span class="o">.</span><span class="n">ADD</span><span class="p">)</span>
 </span><span id="line-1683">
-</span><span id="line-1684">    <span class="k">def</span><span class="w"> </span><span class="fm">__radd__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Number</span> <span class="o">|</span> <span class="n">BaseVariable</span> <span class="o">|</span> <span class="n">Term</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Term</span><span class="p">:</span>
-</span><span id="line-1685">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="n">Number</span><span class="p">,</span> <span class="n">BaseVariable</span><span class="p">,</span> <span class="n">Term</span><span class="p">)):</span>
-</span><span id="line-1686">            <span class="k">return</span> <span class="bp">NotImplemented</span>
-</span><span id="line-1687">        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_list</span><span class="p">()</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">operation</span> <span class="o">==</span> <span class="n">Operation</span><span class="o">.</span><span class="n">ADD</span> <span class="k">else</span> <span class="p">[</span><span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)]</span>
-</span><span id="line-1688">
-</span><span id="line-1689">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">generic</span><span class="p">):</span>
-</span><span id="line-1690">            <span class="n">other</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="s2">&quot;Number&quot;</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
-</span><span id="line-1691">        <span class="n">out</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span>
-</span><span id="line-1692">        <span class="k">return</span> <span class="n">Term</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">Operation</span><span class="o">.</span><span class="n">ADD</span><span class="p">)</span>
-</span><span id="line-1693">
-</span><span id="line-1694">    <span class="k">def</span><span class="w"> </span><span class="fm">__mul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Number</span> <span class="o">|</span> <span class="n">BaseVariable</span> <span class="o">|</span> <span class="n">Term</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Term</span><span class="p">:</span>
-</span><span id="line-1695">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="n">Number</span><span class="p">,</span> <span class="n">BaseVariable</span><span class="p">,</span> <span class="n">Term</span><span class="p">)):</span>
-</span><span id="line-1696">            <span class="k">return</span> <span class="bp">NotImplemented</span>
-</span><span id="line-1697">        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_list</span><span class="p">()</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">operation</span> <span class="o">==</span> <span class="n">Operation</span><span class="o">.</span><span class="n">MUL</span> <span class="k">else</span> <span class="p">[</span><span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)]</span>
-</span><span id="line-1698">        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">out</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-</span><span id="line-1699">            <span class="n">out</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-</span><span id="line-1700">
-</span><span id="line-1701">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">generic</span><span class="p">):</span>
-</span><span id="line-1702">            <span class="n">other</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="s2">&quot;Number&quot;</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
-</span><span id="line-1703">
-</span><span id="line-1704">        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
-</span><span id="line-1705">        <span class="k">return</span> <span class="n">Term</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">Operation</span><span class="o">.</span><span class="n">MUL</span><span class="p">)</span><span class="o">.</span><span class="n">_unfold_parentheses</span><span class="p">()</span>
+</span><span id="line-1684">    <span class="fm">__iadd__</span> <span class="o">=</span> <span class="fm">__add__</span>
+</span><span id="line-1685">
+</span><span id="line-1686">    <span class="k">def</span><span class="w"> </span><span class="fm">__radd__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Number</span> <span class="o">|</span> <span class="n">BaseVariable</span> <span class="o">|</span> <span class="n">Term</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Term</span><span class="p">:</span>
+</span><span id="line-1687">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="n">Number</span><span class="p">,</span> <span class="n">BaseVariable</span><span class="p">,</span> <span class="n">Term</span><span class="p">)):</span>
+</span><span id="line-1688">            <span class="k">return</span> <span class="bp">NotImplemented</span>
+</span><span id="line-1689">        <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">BaseVariable</span> <span class="o">|</span> <span class="n">Term</span> <span class="o">|</span> <span class="n">Number</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+</span><span id="line-1690">            <span class="bp">self</span><span class="o">.</span><span class="n">to_list</span><span class="p">()</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">operation</span> <span class="o">==</span> <span class="n">Operation</span><span class="o">.</span><span class="n">ADD</span> <span class="k">else</span> <span class="p">[</span><span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)]</span>
+</span><span id="line-1691">        <span class="p">)</span>
+</span><span id="line-1692">
+</span><span id="line-1693">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">generic</span><span class="p">):</span>
+</span><span id="line-1694">            <span class="n">other</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="s2">&quot;Number&quot;</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+</span><span id="line-1695">        <span class="n">out</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span>
+</span><span id="line-1696">        <span class="k">return</span> <span class="n">Term</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">Operation</span><span class="o">.</span><span class="n">ADD</span><span class="p">)</span>
+</span><span id="line-1697">
+</span><span id="line-1698">    <span class="k">def</span><span class="w"> </span><span class="fm">__mul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Number</span> <span class="o">|</span> <span class="n">BaseVariable</span> <span class="o">|</span> <span class="n">Term</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Term</span><span class="p">:</span>
+</span><span id="line-1699">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="n">Number</span><span class="p">,</span> <span class="n">BaseVariable</span><span class="p">,</span> <span class="n">Term</span><span class="p">)):</span>
+</span><span id="line-1700">            <span class="k">return</span> <span class="bp">NotImplemented</span>
+</span><span id="line-1701">        <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">BaseVariable</span> <span class="o">|</span> <span class="n">Term</span> <span class="o">|</span> <span class="n">Number</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+</span><span id="line-1702">            <span class="bp">self</span><span class="o">.</span><span class="n">to_list</span><span class="p">()</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">operation</span> <span class="o">==</span> <span class="n">Operation</span><span class="o">.</span><span class="n">MUL</span> <span class="k">else</span> <span class="p">[</span><span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)]</span>
+</span><span id="line-1703">        <span class="p">)</span>
+</span><span id="line-1704">        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">out</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+</span><span id="line-1705">            <span class="n">out</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 </span><span id="line-1706">
-</span><span id="line-1707">    <span class="fm">__imul__</span> <span class="o">=</span> <span class="fm">__mul__</span>
-</span><span id="line-1708">
-</span><span id="line-1709">    <span class="k">def</span><span class="w"> </span><span class="fm">__rmul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Number</span> <span class="o">|</span> <span class="n">BaseVariable</span> <span class="o">|</span> <span class="n">Term</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Term</span><span class="p">:</span>
-</span><span id="line-1710">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="n">Number</span><span class="p">,</span> <span class="n">BaseVariable</span><span class="p">,</span> <span class="n">Term</span><span class="p">)):</span>
-</span><span id="line-1711">            <span class="k">return</span> <span class="bp">NotImplemented</span>
-</span><span id="line-1712">        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_list</span><span class="p">()</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">operation</span> <span class="o">==</span> <span class="n">Operation</span><span class="o">.</span><span class="n">MUL</span> <span class="k">else</span> <span class="p">[</span><span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)]</span>
-</span><span id="line-1713">        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">out</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-</span><span id="line-1714">            <span class="n">out</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-</span><span id="line-1715">
-</span><span id="line-1716">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">generic</span><span class="p">):</span>
-</span><span id="line-1717">            <span class="n">other</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="s2">&quot;Number&quot;</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
-</span><span id="line-1718">
-</span><span id="line-1719">        <span class="n">out</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span>
-</span><span id="line-1720">        <span class="k">return</span> <span class="n">Term</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">Operation</span><span class="o">.</span><span class="n">MUL</span><span class="p">)</span><span class="o">.</span><span class="n">_unfold_parentheses</span><span class="p">()</span>
-</span><span id="line-1721">
-</span><span id="line-1722">    <span class="k">def</span><span class="w"> </span><span class="fm">__neg__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Term</span><span class="p">:</span>
-</span><span id="line-1723">        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="bp">self</span>
-</span><span id="line-1724">
-</span><span id="line-1725">    <span class="k">def</span><span class="w"> </span><span class="fm">__sub__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Number</span> <span class="o">|</span> <span class="n">BaseVariable</span> <span class="o">|</span> <span class="n">Term</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Term</span><span class="p">:</span>
-</span><span id="line-1726">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="n">Number</span><span class="p">,</span> <span class="n">BaseVariable</span><span class="p">,</span> <span class="n">Term</span><span class="p">)):</span>
-</span><span id="line-1727">            <span class="k">return</span> <span class="bp">NotImplemented</span>
-</span><span id="line-1728">
-</span><span id="line-1729">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">generic</span><span class="p">):</span>
-</span><span id="line-1730">            <span class="n">other</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="s2">&quot;Number&quot;</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
-</span><span id="line-1731">
-</span><span id="line-1732">        <span class="k">return</span> <span class="bp">self</span> <span class="o">+</span> <span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="n">other</span>
-</span><span id="line-1733">
-</span><span id="line-1734">    <span class="k">def</span><span class="w"> </span><span class="fm">__rsub__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Number</span> <span class="o">|</span> <span class="n">BaseVariable</span> <span class="o">|</span> <span class="n">Term</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Term</span><span class="p">:</span>
-</span><span id="line-1735">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="n">Number</span><span class="p">,</span> <span class="n">BaseVariable</span><span class="p">,</span> <span class="n">Term</span><span class="p">)):</span>
-</span><span id="line-1736">            <span class="k">return</span> <span class="bp">NotImplemented</span>
-</span><span id="line-1737">        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="bp">self</span> <span class="o">+</span> <span class="n">other</span>
-</span><span id="line-1738">
-</span><span id="line-1739">    <span class="fm">__isub__</span> <span class="o">=</span> <span class="fm">__sub__</span>
-</span><span id="line-1740">
-</span><span id="line-1741">    <span class="k">def</span><span class="w"> </span><span class="fm">__truediv__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Number</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Term</span><span class="p">:</span>
-</span><span id="line-1742">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Number</span><span class="p">):</span>
-</span><span id="line-1743">            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Only division by numbers is currently supported&quot;</span><span class="p">)</span>
-</span><span id="line-1744">
-</span><span id="line-1745">        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">other</span><span class="p">)</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">TOL</span><span class="p">:</span>
-</span><span id="line-1746">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Division by zero is not allowed&quot;</span><span class="p">)</span>
-</span><span id="line-1747">
-</span><span id="line-1748">        <span class="n">other</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">other</span>
-</span><span id="line-1749">        <span class="k">return</span> <span class="bp">self</span> <span class="o">*</span> <span class="n">other</span>
-</span><span id="line-1750">
-</span><span id="line-1751">    <span class="fm">__itruediv__</span> <span class="o">=</span> <span class="fm">__truediv__</span>
+</span><span id="line-1707">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">generic</span><span class="p">):</span>
+</span><span id="line-1708">            <span class="n">other</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="s2">&quot;Number&quot;</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+</span><span id="line-1709">
+</span><span id="line-1710">        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+</span><span id="line-1711">        <span class="k">return</span> <span class="n">Term</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">Operation</span><span class="o">.</span><span class="n">MUL</span><span class="p">)</span><span class="o">.</span><span class="n">_unfold_parentheses</span><span class="p">()</span>
+</span><span id="line-1712">
+</span><span id="line-1713">    <span class="fm">__imul__</span> <span class="o">=</span> <span class="fm">__mul__</span>
+</span><span id="line-1714">
+</span><span id="line-1715">    <span class="k">def</span><span class="w"> </span><span class="fm">__rmul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Number</span> <span class="o">|</span> <span class="n">BaseVariable</span> <span class="o">|</span> <span class="n">Term</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Term</span><span class="p">:</span>
+</span><span id="line-1716">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="n">Number</span><span class="p">,</span> <span class="n">BaseVariable</span><span class="p">,</span> <span class="n">Term</span><span class="p">)):</span>
+</span><span id="line-1717">            <span class="k">return</span> <span class="bp">NotImplemented</span>
+</span><span id="line-1718">        <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">BaseVariable</span> <span class="o">|</span> <span class="n">Term</span> <span class="o">|</span> <span class="n">Number</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+</span><span id="line-1719">            <span class="bp">self</span><span class="o">.</span><span class="n">to_list</span><span class="p">()</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">operation</span> <span class="o">==</span> <span class="n">Operation</span><span class="o">.</span><span class="n">MUL</span> <span class="k">else</span> <span class="p">[</span><span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)]</span>
+</span><span id="line-1720">        <span class="p">)</span>
+</span><span id="line-1721">        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">out</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+</span><span id="line-1722">            <span class="n">out</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</span><span id="line-1723">
+</span><span id="line-1724">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">generic</span><span class="p">):</span>
+</span><span id="line-1725">            <span class="n">other</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="s2">&quot;Number&quot;</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+</span><span id="line-1726">
+</span><span id="line-1727">        <span class="n">out</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span>
+</span><span id="line-1728">        <span class="k">return</span> <span class="n">Term</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">Operation</span><span class="o">.</span><span class="n">MUL</span><span class="p">)</span><span class="o">.</span><span class="n">_unfold_parentheses</span><span class="p">()</span>
+</span><span id="line-1729">
+</span><span id="line-1730">    <span class="k">def</span><span class="w"> </span><span class="fm">__neg__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Term</span><span class="p">:</span>
+</span><span id="line-1731">        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="bp">self</span>
+</span><span id="line-1732">
+</span><span id="line-1733">    <span class="k">def</span><span class="w"> </span><span class="fm">__sub__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Number</span> <span class="o">|</span> <span class="n">BaseVariable</span> <span class="o">|</span> <span class="n">Term</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Term</span><span class="p">:</span>
+</span><span id="line-1734">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="n">Number</span><span class="p">,</span> <span class="n">BaseVariable</span><span class="p">,</span> <span class="n">Term</span><span class="p">)):</span>
+</span><span id="line-1735">            <span class="k">return</span> <span class="bp">NotImplemented</span>
+</span><span id="line-1736">
+</span><span id="line-1737">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">generic</span><span class="p">):</span>
+</span><span id="line-1738">            <span class="n">other</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="s2">&quot;Number&quot;</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+</span><span id="line-1739">
+</span><span id="line-1740">        <span class="k">return</span> <span class="bp">self</span> <span class="o">+</span> <span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="n">other</span>
+</span><span id="line-1741">
+</span><span id="line-1742">    <span class="k">def</span><span class="w"> </span><span class="fm">__rsub__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Number</span> <span class="o">|</span> <span class="n">BaseVariable</span> <span class="o">|</span> <span class="n">Term</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Term</span><span class="p">:</span>
+</span><span id="line-1743">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="n">Number</span><span class="p">,</span> <span class="n">BaseVariable</span><span class="p">,</span> <span class="n">Term</span><span class="p">)):</span>
+</span><span id="line-1744">            <span class="k">return</span> <span class="bp">NotImplemented</span>
+</span><span id="line-1745">        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="bp">self</span> <span class="o">+</span> <span class="n">other</span>
+</span><span id="line-1746">
+</span><span id="line-1747">    <span class="fm">__isub__</span> <span class="o">=</span> <span class="fm">__sub__</span>
+</span><span id="line-1748">
+</span><span id="line-1749">    <span class="k">def</span><span class="w"> </span><span class="fm">__truediv__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Number</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Term</span><span class="p">:</span>
+</span><span id="line-1750">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Number</span><span class="p">):</span>
+</span><span id="line-1751">            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Only division by numbers is currently supported&quot;</span><span class="p">)</span>
 </span><span id="line-1752">
-</span><span id="line-1753">    <span class="k">def</span><span class="w"> </span><span class="fm">__rtruediv__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Number</span> <span class="o">|</span> <span class="n">BaseVariable</span> <span class="o">|</span> <span class="n">Term</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Term</span><span class="p">:</span>
-</span><span id="line-1754">        <span class="k">raise</span> <span class="n">NotSupportedOperation</span><span class="p">(</span><span class="s2">&quot;Only division by numbers is currently supported&quot;</span><span class="p">)</span>
+</span><span id="line-1753">        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">other</span><span class="p">)</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">TOL</span><span class="p">:</span>
+</span><span id="line-1754">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Division by zero is not allowed&quot;</span><span class="p">)</span>
 </span><span id="line-1755">
-</span><span id="line-1756">    <span class="k">def</span><span class="w"> </span><span class="fm">__rfloordiv__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Number</span> <span class="o">|</span> <span class="n">BaseVariable</span> <span class="o">|</span> <span class="n">Term</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Term</span><span class="p">:</span>
-</span><span id="line-1757">        <span class="k">raise</span> <span class="n">NotSupportedOperation</span><span class="p">(</span><span class="s2">&quot;Only division by numbers is currently supported&quot;</span><span class="p">)</span>
+</span><span id="line-1756">        <span class="n">other</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">other</span>
+</span><span id="line-1757">        <span class="k">return</span> <span class="bp">self</span> <span class="o">*</span> <span class="n">other</span>
 </span><span id="line-1758">
-</span><span id="line-1759">    <span class="k">def</span><span class="w"> </span><span class="fm">__pow__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Term</span><span class="p">:</span>
-</span><span id="line-1760">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
-</span><span id="line-1761">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Only integer exponents are allowed, but provided </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</span><span id="line-1762">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">operation</span> <span class="o">==</span> <span class="n">Operation</span><span class="o">.</span><span class="n">ADD</span><span class="p">:</span>
-</span><span id="line-1763">            <span class="n">out</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-</span><span id="line-1764">            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">a</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
-</span><span id="line-1765">                <span class="n">out_list</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span id="line-1766">                <span class="k">for</span> <span class="n">element</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
-</span><span id="line-1767">                    <span class="n">out_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">out</span> <span class="o">*</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">element</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="p">[</span><span class="n">element</span><span class="p">])</span>
-</span><span id="line-1768">                <span class="n">out</span> <span class="o">=</span> <span class="n">Term</span><span class="p">(</span><span class="n">out_list</span><span class="p">,</span> <span class="n">Operation</span><span class="o">.</span><span class="n">ADD</span><span class="p">)</span>
-</span><span id="line-1769">            <span class="k">return</span> <span class="n">out</span>
-</span><span id="line-1770">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">operation</span> <span class="o">==</span> <span class="n">Operation</span><span class="o">.</span><span class="n">MUL</span><span class="p">:</span>
+</span><span id="line-1759">    <span class="fm">__itruediv__</span> <span class="o">=</span> <span class="fm">__truediv__</span>
+</span><span id="line-1760">
+</span><span id="line-1761">    <span class="k">def</span><span class="w"> </span><span class="fm">__rtruediv__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Number</span> <span class="o">|</span> <span class="n">BaseVariable</span> <span class="o">|</span> <span class="n">Term</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Term</span><span class="p">:</span>
+</span><span id="line-1762">        <span class="k">raise</span> <span class="n">NotSupportedOperation</span><span class="p">(</span><span class="s2">&quot;Only division by numbers is currently supported&quot;</span><span class="p">)</span>
+</span><span id="line-1763">
+</span><span id="line-1764">    <span class="k">def</span><span class="w"> </span><span class="fm">__rfloordiv__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Number</span> <span class="o">|</span> <span class="n">BaseVariable</span> <span class="o">|</span> <span class="n">Term</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Term</span><span class="p">:</span>
+</span><span id="line-1765">        <span class="k">raise</span> <span class="n">NotSupportedOperation</span><span class="p">(</span><span class="s2">&quot;Only division by numbers is currently supported&quot;</span><span class="p">)</span>
+</span><span id="line-1766">
+</span><span id="line-1767">    <span class="k">def</span><span class="w"> </span><span class="fm">__pow__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Term</span><span class="p">:</span>
+</span><span id="line-1768">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+</span><span id="line-1769">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Only integer exponents are allowed, but provided </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span id="line-1770">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">operation</span> <span class="o">==</span> <span class="n">Operation</span><span class="o">.</span><span class="n">ADD</span><span class="p">:</span>
 </span><span id="line-1771">            <span class="n">out</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-</span><span id="line-1772">            <span class="k">for</span> <span class="n">element</span> <span class="ow">in</span> <span class="n">out</span><span class="p">:</span>
-</span><span id="line-1773">                <span class="k">if</span> <span class="n">element</span> <span class="ow">is</span> <span class="n">Term</span><span class="o">.</span><span class="n">CONST</span><span class="p">:</span>
-</span><span id="line-1774">                    <span class="n">out</span><span class="p">[</span><span class="n">element</span><span class="p">]</span> <span class="o">**=</span> <span class="n">a</span>
-</span><span id="line-1775">                <span class="k">else</span><span class="p">:</span>
-</span><span id="line-1776">                    <span class="n">out</span><span class="p">[</span><span class="n">element</span><span class="p">]</span> <span class="o">*=</span> <span class="n">a</span>
+</span><span id="line-1772">            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">a</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+</span><span id="line-1773">                <span class="n">out_list</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="line-1774">                <span class="k">for</span> <span class="n">element</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+</span><span id="line-1775">                    <span class="n">out_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">out</span> <span class="o">*</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">element</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="p">[</span><span class="n">element</span><span class="p">])</span>
+</span><span id="line-1776">                <span class="n">out</span> <span class="o">=</span> <span class="n">Term</span><span class="p">(</span><span class="n">out_list</span><span class="p">,</span> <span class="n">Operation</span><span class="o">.</span><span class="n">ADD</span><span class="p">)</span>
 </span><span id="line-1777">            <span class="k">return</span> <span class="n">out</span>
-</span><span id="line-1778">        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-</span><span id="line-1779">            <span class="s2">&quot;The power operation for terms that are not addition or multiplication is not supported.&quot;</span>
-</span><span id="line-1780">        <span class="p">)</span>
-</span><span id="line-1781">
-</span><span id="line-1782">    <span class="k">def</span><span class="w"> </span><span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-</span><span id="line-1783">        <span class="k">return</span> <span class="n">qili_hash</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operation</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_elements</span><span class="p">)</span>
-</span><span id="line-1784">
-</span><span id="line-1785">    <span class="k">def</span><span class="w"> </span><span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-</span><span id="line-1786">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Term</span><span class="p">):</span>
-</span><span id="line-1787">            <span class="k">return</span> <span class="kc">False</span>
-</span><span id="line-1788">        <span class="k">return</span> <span class="nb">hash</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">==</span> <span class="nb">hash</span><span class="p">(</span><span class="n">other</span><span class="p">)</span></div>
-
+</span><span id="line-1778">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">operation</span> <span class="o">==</span> <span class="n">Operation</span><span class="o">.</span><span class="n">MUL</span><span class="p">:</span>
+</span><span id="line-1779">            <span class="n">out</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+</span><span id="line-1780">            <span class="k">for</span> <span class="n">element</span> <span class="ow">in</span> <span class="n">out</span><span class="p">:</span>
+</span><span id="line-1781">                <span class="k">if</span> <span class="n">element</span> <span class="ow">is</span> <span class="n">Term</span><span class="o">.</span><span class="n">CONST</span><span class="p">:</span>
+</span><span id="line-1782">                    <span class="n">out</span><span class="p">[</span><span class="n">element</span><span class="p">]</span> <span class="o">**=</span> <span class="n">a</span>
+</span><span id="line-1783">                <span class="k">else</span><span class="p">:</span>
+</span><span id="line-1784">                    <span class="n">out</span><span class="p">[</span><span class="n">element</span><span class="p">]</span> <span class="o">*=</span> <span class="n">a</span>
+</span><span id="line-1785">            <span class="k">return</span> <span class="n">out</span>
+</span><span id="line-1786">        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+</span><span id="line-1787">            <span class="s2">&quot;The power operation for terms that are not addition or multiplication is not supported.&quot;</span>
+</span><span id="line-1788">        <span class="p">)</span>
 </span><span id="line-1789">
-</span><span id="line-1790">
-</span><span id="line-1791"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
+</span><span id="line-1790">    <span class="k">def</span><span class="w"> </span><span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+</span><span id="line-1791">        <span class="k">return</span> <span class="n">qili_hash</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">operation</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_elements</span><span class="p">)</span>
+</span><span id="line-1792">
+</span><span id="line-1793">    <span class="k">def</span><span class="w"> </span><span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+</span><span id="line-1794">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Term</span><span class="p">):</span>
+</span><span id="line-1795">            <span class="k">return</span> <span class="kc">False</span>
+</span><span id="line-1796">        <span class="k">return</span> <span class="nb">hash</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">==</span> <span class="nb">hash</span><span class="p">(</span><span class="n">other</span><span class="p">)</span></div>
+
+</span><span id="line-1797">
+</span><span id="line-1798">
+</span><span id="line-1799"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
 <div class="viewcode-block" id="ComparisonTerm">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.ComparisonTerm">[docs]</a>
-</span><span id="line-1792"><span class="k">class</span><span class="w"> </span><span class="nc">ComparisonTerm</span><span class="p">:</span>
-</span><span id="line-1793"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Represents a mathematical comparison Term, that can be an equality or an inequality between two ``Term`` objects</span>
-</span><span id="line-1794"><span class="sd">    (e.g. x+y&gt;0, x&gt;2, ...).</span>
-</span><span id="line-1795">
-</span><span id="line-1796"><span class="sd">    They are built from a left and a right hand part, each of which can contain:</span>
-</span><span id="line-1797"><span class="sd">    - ``Variable``&#39;s: The decision variables of the model (x, y, ...).</span>
-</span><span id="line-1798"><span class="sd">    - Other ``Term``&#39;s: Allowing for complex expressions to be constructed (x+y, ...)</span>
-</span><span id="line-1799"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-1800">
-</span><span id="line-1801">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
-</span><span id="line-1802">        <span class="bp">self</span><span class="p">,</span>
-</span><span id="line-1803">        <span class="n">lhs</span><span class="p">:</span> <span class="n">RealNumber</span> <span class="o">|</span> <span class="n">BaseVariable</span> <span class="o">|</span> <span class="n">Term</span><span class="p">,</span>
-</span><span id="line-1804">        <span class="n">rhs</span><span class="p">:</span> <span class="n">RealNumber</span> <span class="o">|</span> <span class="n">BaseVariable</span> <span class="o">|</span> <span class="n">Term</span><span class="p">,</span>
-</span><span id="line-1805">        <span class="n">operation</span><span class="p">:</span> <span class="n">ComparisonOperation</span><span class="p">,</span>
-</span><span id="line-1806">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-1807"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Initializes a new comparison term.</span>
+</span><span id="line-1800"><span class="k">class</span><span class="w"> </span><span class="nc">ComparisonTerm</span><span class="p">:</span>
+</span><span id="line-1801"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Represents a mathematical comparison Term, that can be an equality or an inequality between two ``Term`` objects</span>
+</span><span id="line-1802"><span class="sd">    (e.g. x+y&gt;0, x&gt;2, ...).</span>
+</span><span id="line-1803">
+</span><span id="line-1804"><span class="sd">    They are built from a left and a right hand part, each of which can contain:</span>
+</span><span id="line-1805"><span class="sd">    - ``Variable``&#39;s: The decision variables of the model (x, y, ...).</span>
+</span><span id="line-1806"><span class="sd">    - Other ``Term``&#39;s: Allowing for complex expressions to be constructed (x+y, ...)</span>
+</span><span id="line-1807"><span class="sd">    &quot;&quot;&quot;</span>
 </span><span id="line-1808">
-</span><span id="line-1809"><span class="sd">        Args:</span>
-</span><span id="line-1810"><span class="sd">            lhs (RealNumber | BaseVariable | Term): the left hand side of the comparison term.</span>
-</span><span id="line-1811"><span class="sd">            rhs (RealNumber | BaseVariable | Term): the right hand side of the comparison term.</span>
-</span><span id="line-1812"><span class="sd">            operation (ComparisonOperation): the comparison operations between the left and right hand sides.</span>
-</span><span id="line-1813"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-1814">        <span class="n">term</span> <span class="o">=</span> <span class="n">lhs</span> <span class="o">-</span> <span class="n">rhs</span>
-</span><span id="line-1815">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">term</span><span class="p">,</span> <span class="n">Term</span><span class="p">):</span>
-</span><span id="line-1816">            <span class="n">term</span> <span class="o">=</span> <span class="n">Term</span><span class="p">([</span><span class="n">term</span><span class="p">],</span> <span class="n">Operation</span><span class="o">.</span><span class="n">ADD</span><span class="p">)</span>
-</span><span id="line-1817">        <span class="n">const</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="n">term</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">Term</span><span class="o">.</span><span class="n">CONST</span><span class="p">)</span> <span class="k">if</span> <span class="n">Term</span><span class="o">.</span><span class="n">CONST</span> <span class="ow">in</span> <span class="n">term</span> <span class="k">else</span> <span class="mi">0</span>
-</span><span id="line-1818">        <span class="bp">self</span><span class="o">.</span><span class="n">_lhs</span> <span class="o">=</span> <span class="n">term</span>
-</span><span id="line-1819">        <span class="bp">self</span><span class="o">.</span><span class="n">_rhs</span> <span class="o">=</span> <span class="n">Term</span><span class="p">([</span><span class="n">const</span><span class="p">],</span> <span class="n">Operation</span><span class="o">.</span><span class="n">ADD</span><span class="p">)</span>
-</span><span id="line-1820">        <span class="bp">self</span><span class="o">.</span><span class="n">_operation</span> <span class="o">=</span> <span class="n">operation</span>
-</span><span id="line-1821">
-</span><span id="line-1822">    <span class="nd">@property</span>
-<div class="viewcode-block" id="ComparisonTerm.operation">
-<a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.ComparisonTerm.operation">[docs]</a>
-</span><span id="line-1823">    <span class="k">def</span><span class="w"> </span><span class="nf">operation</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ComparisonOperation</span><span class="p">:</span>
-</span><span id="line-1824"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-1825"><span class="sd">        Returns:</span>
-</span><span id="line-1826"><span class="sd">            ComparisonOperation: the comparison operation between the left and right hand sides.</span>
-</span><span id="line-1827"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-1828">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_operation</span></div>
-
+</span><span id="line-1809">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+</span><span id="line-1810">        <span class="bp">self</span><span class="p">,</span>
+</span><span id="line-1811">        <span class="n">lhs</span><span class="p">:</span> <span class="n">RealNumber</span> <span class="o">|</span> <span class="n">BaseVariable</span> <span class="o">|</span> <span class="n">Term</span><span class="p">,</span>
+</span><span id="line-1812">        <span class="n">rhs</span><span class="p">:</span> <span class="n">RealNumber</span> <span class="o">|</span> <span class="n">BaseVariable</span> <span class="o">|</span> <span class="n">Term</span><span class="p">,</span>
+</span><span id="line-1813">        <span class="n">operation</span><span class="p">:</span> <span class="n">ComparisonOperation</span><span class="p">,</span>
+</span><span id="line-1814">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-1815"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Initializes a new comparison term.</span>
+</span><span id="line-1816">
+</span><span id="line-1817"><span class="sd">        Args:</span>
+</span><span id="line-1818"><span class="sd">            lhs (RealNumber | BaseVariable | Term): the left hand side of the comparison term.</span>
+</span><span id="line-1819"><span class="sd">            rhs (RealNumber | BaseVariable | Term): the right hand side of the comparison term.</span>
+</span><span id="line-1820"><span class="sd">            operation (ComparisonOperation): the comparison operations between the left and right hand sides.</span>
+</span><span id="line-1821"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-1822">        <span class="n">term</span> <span class="o">=</span> <span class="n">lhs</span> <span class="o">-</span> <span class="n">rhs</span>
+</span><span id="line-1823">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">term</span><span class="p">,</span> <span class="n">Term</span><span class="p">):</span>
+</span><span id="line-1824">            <span class="n">term</span> <span class="o">=</span> <span class="n">Term</span><span class="p">([</span><span class="n">term</span><span class="p">],</span> <span class="n">Operation</span><span class="o">.</span><span class="n">ADD</span><span class="p">)</span>
+</span><span id="line-1825">        <span class="n">const</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="n">term</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">Term</span><span class="o">.</span><span class="n">CONST</span><span class="p">)</span> <span class="k">if</span> <span class="n">Term</span><span class="o">.</span><span class="n">CONST</span> <span class="ow">in</span> <span class="n">term</span> <span class="k">else</span> <span class="mi">0</span>
+</span><span id="line-1826">        <span class="bp">self</span><span class="o">.</span><span class="n">_lhs</span> <span class="o">=</span> <span class="n">term</span>
+</span><span id="line-1827">        <span class="bp">self</span><span class="o">.</span><span class="n">_rhs</span> <span class="o">=</span> <span class="n">Term</span><span class="p">([</span><span class="n">const</span><span class="p">],</span> <span class="n">Operation</span><span class="o">.</span><span class="n">ADD</span><span class="p">)</span>
+</span><span id="line-1828">        <span class="bp">self</span><span class="o">.</span><span class="n">_operation</span> <span class="o">=</span> <span class="n">operation</span>
 </span><span id="line-1829">
 </span><span id="line-1830">    <span class="nd">@property</span>
-<div class="viewcode-block" id="ComparisonTerm.lhs">
-<a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.ComparisonTerm.lhs">[docs]</a>
-</span><span id="line-1831">    <span class="k">def</span><span class="w"> </span><span class="nf">lhs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Term</span><span class="p">:</span>
+<div class="viewcode-block" id="ComparisonTerm.operation">
+<a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.ComparisonTerm.operation">[docs]</a>
+</span><span id="line-1831">    <span class="k">def</span><span class="w"> </span><span class="nf">operation</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ComparisonOperation</span><span class="p">:</span>
 </span><span id="line-1832"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="line-1833"><span class="sd">        Returns:</span>
-</span><span id="line-1834"><span class="sd">            Term: the left hand side of the comparison term.</span>
+</span><span id="line-1834"><span class="sd">            ComparisonOperation: the comparison operation between the left and right hand sides.</span>
 </span><span id="line-1835"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-1836">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lhs</span></div>
+</span><span id="line-1836">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_operation</span></div>
 
 </span><span id="line-1837">
 </span><span id="line-1838">    <span class="nd">@property</span>
-<div class="viewcode-block" id="ComparisonTerm.rhs">
-<a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.ComparisonTerm.rhs">[docs]</a>
-</span><span id="line-1839">    <span class="k">def</span><span class="w"> </span><span class="nf">rhs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Term</span><span class="p">:</span>
+<div class="viewcode-block" id="ComparisonTerm.lhs">
+<a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.ComparisonTerm.lhs">[docs]</a>
+</span><span id="line-1839">    <span class="k">def</span><span class="w"> </span><span class="nf">lhs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Term</span><span class="p">:</span>
 </span><span id="line-1840"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="line-1841"><span class="sd">        Returns:</span>
-</span><span id="line-1842"><span class="sd">            Term: the right hand side of the comparison term.</span>
+</span><span id="line-1842"><span class="sd">            Term: the left hand side of the comparison term.</span>
 </span><span id="line-1843"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-1844">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rhs</span></div>
+</span><span id="line-1844">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lhs</span></div>
 
 </span><span id="line-1845">
+</span><span id="line-1846">    <span class="nd">@property</span>
+<div class="viewcode-block" id="ComparisonTerm.rhs">
+<a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.ComparisonTerm.rhs">[docs]</a>
+</span><span id="line-1847">    <span class="k">def</span><span class="w"> </span><span class="nf">rhs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Term</span><span class="p">:</span>
+</span><span id="line-1848"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-1849"><span class="sd">        Returns:</span>
+</span><span id="line-1850"><span class="sd">            Term: the right hand side of the comparison term.</span>
+</span><span id="line-1851"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-1852">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rhs</span></div>
+
+</span><span id="line-1853">
 <div class="viewcode-block" id="ComparisonTerm.variables">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.ComparisonTerm.variables">[docs]</a>
-</span><span id="line-1846">    <span class="k">def</span><span class="w"> </span><span class="nf">variables</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">BaseVariable</span><span class="p">]:</span>
-</span><span id="line-1847"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the unique list of variables in the Term</span>
-</span><span id="line-1848">
-</span><span id="line-1849"><span class="sd">        Returns:</span>
-</span><span id="line-1850"><span class="sd">            list[Variable]: The unique list of variables in the Term.</span>
-</span><span id="line-1851"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-1852">        <span class="n">lhs_var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lhs</span><span class="o">.</span><span class="n">variables</span><span class="p">()</span>
-</span><span id="line-1853">        <span class="n">rhs_var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rhs</span><span class="o">.</span><span class="n">variables</span><span class="p">()</span>
-</span><span id="line-1854">
-</span><span id="line-1855">        <span class="n">var</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-</span><span id="line-1856">        <span class="n">var</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">lhs_var</span><span class="p">)</span>
-</span><span id="line-1857">        <span class="n">var</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">rhs_var</span><span class="p">)</span>
-</span><span id="line-1858">
-</span><span id="line-1859">        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">label</span><span class="p">)</span></div>
-
-</span><span id="line-1860">
-</span><span id="line-1861">    <span class="nd">@property</span>
-<div class="viewcode-block" id="ComparisonTerm.degree">
-<a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.ComparisonTerm.degree">[docs]</a>
-</span><span id="line-1862">    <span class="k">def</span><span class="w"> </span><span class="nf">degree</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-</span><span id="line-1863"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-1864"><span class="sd">        Returns:</span>
-</span><span id="line-1865"><span class="sd">            int: the maximum degree in the left and right hand sides of the comparison term.</span>
-</span><span id="line-1866"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-1867">        <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="o">.</span><span class="n">degree</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="o">.</span><span class="n">degree</span><span class="p">)</span></div>
+</span><span id="line-1854">    <span class="k">def</span><span class="w"> </span><span class="nf">variables</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">BaseVariable</span><span class="p">]:</span>
+</span><span id="line-1855"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the unique list of variables in the Term</span>
+</span><span id="line-1856">
+</span><span id="line-1857"><span class="sd">        Returns:</span>
+</span><span id="line-1858"><span class="sd">            list[Variable]: The unique list of variables in the Term.</span>
+</span><span id="line-1859"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-1860">        <span class="n">lhs_var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lhs</span><span class="o">.</span><span class="n">variables</span><span class="p">()</span>
+</span><span id="line-1861">        <span class="n">rhs_var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rhs</span><span class="o">.</span><span class="n">variables</span><span class="p">()</span>
+</span><span id="line-1862">
+</span><span id="line-1863">        <span class="n">var</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+</span><span id="line-1864">        <span class="n">var</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">lhs_var</span><span class="p">)</span>
+</span><span id="line-1865">        <span class="n">var</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">rhs_var</span><span class="p">)</span>
+</span><span id="line-1866">
+</span><span id="line-1867">        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">label</span><span class="p">)</span></div>
 
 </span><span id="line-1868">
+</span><span id="line-1869">    <span class="nd">@property</span>
+<div class="viewcode-block" id="ComparisonTerm.degree">
+<a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.ComparisonTerm.degree">[docs]</a>
+</span><span id="line-1870">    <span class="k">def</span><span class="w"> </span><span class="nf">degree</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+</span><span id="line-1871"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-1872"><span class="sd">        Returns:</span>
+</span><span id="line-1873"><span class="sd">            int: the maximum degree in the left and right hand sides of the comparison term.</span>
+</span><span id="line-1874"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-1875">        <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="o">.</span><span class="n">degree</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="o">.</span><span class="n">degree</span><span class="p">)</span></div>
+
+</span><span id="line-1876">
 <div class="viewcode-block" id="ComparisonTerm.to_list">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.ComparisonTerm.to_list">[docs]</a>
-</span><span id="line-1869">    <span class="k">def</span><span class="w"> </span><span class="nf">to_list</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
-</span><span id="line-1870"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Exports the comparison term into a list. The elements of the right hand side are first moved to the left hand</span>
-</span><span id="line-1871"><span class="sd">        side before the generation of the list. Therefore, you can assume that the right hand side will be zero.</span>
-</span><span id="line-1872">
-</span><span id="line-1873"><span class="sd">        Returns:</span>
-</span><span id="line-1874"><span class="sd">            list: a list constructed from all the elements in the left and right hand sides of the comparison term.</span>
-</span><span id="line-1875"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-1876">        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-</span><span id="line-1877">            <span class="s2">&quot;to_list(): The elements of output list assume the comparison term has been transformed &quot;</span>
-</span><span id="line-1878">            <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;from (lhs </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">operation</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2"> rhs) to (lhs - rhs </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">operation</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2"> 0).&quot;</span><span class="p">,</span>
-</span><span id="line-1879">        <span class="p">)</span>
-</span><span id="line-1880">        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="o">.</span><span class="n">to_list</span><span class="p">()</span>
-</span><span id="line-1881">        <span class="n">out</span><span class="o">.</span><span class="n">extend</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">)</span><span class="o">.</span><span class="n">to_list</span><span class="p">())</span>
-</span><span id="line-1882">        <span class="k">return</span> <span class="n">out</span></div>
+</span><span id="line-1877">    <span class="k">def</span><span class="w"> </span><span class="nf">to_list</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+</span><span id="line-1878"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Exports the comparison term into a list. The elements of the right hand side are first moved to the left hand</span>
+</span><span id="line-1879"><span class="sd">        side before the generation of the list. Therefore, you can assume that the right hand side will be zero.</span>
+</span><span id="line-1880">
+</span><span id="line-1881"><span class="sd">        Returns:</span>
+</span><span id="line-1882"><span class="sd">            list: a list constructed from all the elements in the left and right hand sides of the comparison term.</span>
+</span><span id="line-1883"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-1884">        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+</span><span id="line-1885">            <span class="s2">&quot;to_list(): The elements of output list assume the comparison term has been transformed &quot;</span>
+</span><span id="line-1886">            <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;from (lhs </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">operation</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2"> rhs) to (lhs - rhs </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">operation</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2"> 0).&quot;</span><span class="p">,</span>
+</span><span id="line-1887">        <span class="p">)</span>
+</span><span id="line-1888">        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="o">.</span><span class="n">to_list</span><span class="p">()</span>
+</span><span id="line-1889">        <span class="n">out</span><span class="o">.</span><span class="n">extend</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">)</span><span class="o">.</span><span class="n">to_list</span><span class="p">())</span>
+</span><span id="line-1890">        <span class="k">return</span> <span class="n">out</span></div>
 
-</span><span id="line-1883">
+</span><span id="line-1891">
 <div class="viewcode-block" id="ComparisonTerm.to_binary">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.ComparisonTerm.to_binary">[docs]</a>
-</span><span id="line-1884">    <span class="k">def</span><span class="w"> </span><span class="nf">to_binary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ComparisonTerm</span><span class="p">:</span>
-</span><span id="line-1885"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the comparison term in binary format. That is encoding all continuous variables into</span>
-</span><span id="line-1886"><span class="sd">            binary according to the encoding defined in the variable.</span>
-</span><span id="line-1887">
-</span><span id="line-1888"><span class="sd">        Returns:</span>
-</span><span id="line-1889"><span class="sd">            ComparisonTerm: the comparison term after transforming all the variables into binary.</span>
-</span><span id="line-1890"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-1891">        <span class="k">return</span> <span class="n">ComparisonTerm</span><span class="p">(</span><span class="n">rhs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="o">.</span><span class="n">to_binary</span><span class="p">(),</span> <span class="n">lhs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="o">.</span><span class="n">to_binary</span><span class="p">(),</span> <span class="n">operation</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">operation</span><span class="p">)</span></div>
-
-</span><span id="line-1892">
-</span><span id="line-1893">    <span class="k">def</span><span class="w"> </span><span class="nf">_apply_comparison_operation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v1</span><span class="p">:</span> <span class="n">RealNumber</span><span class="p">,</span> <span class="n">v2</span><span class="p">:</span> <span class="n">RealNumber</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-</span><span id="line-1894"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Compare two arguments.</span>
+</span><span id="line-1892">    <span class="k">def</span><span class="w"> </span><span class="nf">to_binary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ComparisonTerm</span><span class="p">:</span>
+</span><span id="line-1893"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the comparison term in binary format. That is encoding all continuous variables into</span>
+</span><span id="line-1894"><span class="sd">            binary according to the encoding defined in the variable.</span>
 </span><span id="line-1895">
-</span><span id="line-1896"><span class="sd">        Args:</span>
-</span><span id="line-1897"><span class="sd">            v1 (Number): the left hand side value.</span>
-</span><span id="line-1898"><span class="sd">            v2 (Number): the right hand side value.</span>
-</span><span id="line-1899">
-</span><span id="line-1900"><span class="sd">        Raises:</span>
-</span><span id="line-1901"><span class="sd">            ValueError: if the comparison term&#39;s operation is invalid.</span>
-</span><span id="line-1902">
-</span><span id="line-1903"><span class="sd">        Returns:</span>
-</span><span id="line-1904"><span class="sd">            bool: the result of the comparison between v1 and v2 assuming the</span>
-</span><span id="line-1905"><span class="sd">            comparison operation of the comparison term object.</span>
-</span><span id="line-1906"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-1907">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">operation</span> <span class="ow">is</span> <span class="n">ComparisonOperation</span><span class="o">.</span><span class="n">EQ</span><span class="p">:</span>
-</span><span id="line-1908">            <span class="k">return</span> <span class="n">v1</span> <span class="o">==</span> <span class="n">v2</span>
-</span><span id="line-1909">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">operation</span> <span class="ow">is</span> <span class="n">ComparisonOperation</span><span class="o">.</span><span class="n">GEQ</span><span class="p">:</span>
-</span><span id="line-1910">            <span class="k">return</span> <span class="n">v1</span> <span class="o">&gt;=</span> <span class="n">v2</span>
-</span><span id="line-1911">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">operation</span> <span class="ow">is</span> <span class="n">ComparisonOperation</span><span class="o">.</span><span class="n">GT</span><span class="p">:</span>
-</span><span id="line-1912">            <span class="k">return</span> <span class="n">v1</span> <span class="o">&gt;</span> <span class="n">v2</span>
-</span><span id="line-1913">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">operation</span> <span class="ow">is</span> <span class="n">ComparisonOperation</span><span class="o">.</span><span class="n">LEQ</span><span class="p">:</span>
-</span><span id="line-1914">            <span class="k">return</span> <span class="n">v1</span> <span class="o">&lt;=</span> <span class="n">v2</span>
-</span><span id="line-1915">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">operation</span> <span class="ow">is</span> <span class="n">ComparisonOperation</span><span class="o">.</span><span class="n">LT</span><span class="p">:</span>
-</span><span id="line-1916">            <span class="k">return</span> <span class="n">v1</span> <span class="o">&lt;</span> <span class="n">v2</span>
-</span><span id="line-1917">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">operation</span> <span class="ow">is</span> <span class="n">ComparisonOperation</span><span class="o">.</span><span class="n">NEQ</span><span class="p">:</span>
-</span><span id="line-1918">            <span class="k">return</span> <span class="n">v1</span> <span class="o">!=</span> <span class="n">v2</span>
-</span><span id="line-1919">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported Operation of type </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">operation</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</span><span id="line-1920">
+</span><span id="line-1896"><span class="sd">        Returns:</span>
+</span><span id="line-1897"><span class="sd">            ComparisonTerm: the comparison term after transforming all the variables into binary.</span>
+</span><span id="line-1898"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-1899">        <span class="k">return</span> <span class="n">ComparisonTerm</span><span class="p">(</span><span class="n">rhs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="o">.</span><span class="n">to_binary</span><span class="p">(),</span> <span class="n">lhs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="o">.</span><span class="n">to_binary</span><span class="p">(),</span> <span class="n">operation</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">operation</span><span class="p">)</span></div>
+
+</span><span id="line-1900">
+</span><span id="line-1901">    <span class="k">def</span><span class="w"> </span><span class="nf">_apply_comparison_operation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v1</span><span class="p">:</span> <span class="n">RealNumber</span><span class="p">,</span> <span class="n">v2</span><span class="p">:</span> <span class="n">RealNumber</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+</span><span id="line-1902"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Compare two arguments.</span>
+</span><span id="line-1903">
+</span><span id="line-1904"><span class="sd">        Args:</span>
+</span><span id="line-1905"><span class="sd">            v1 (Number): the left hand side value.</span>
+</span><span id="line-1906"><span class="sd">            v2 (Number): the right hand side value.</span>
+</span><span id="line-1907">
+</span><span id="line-1908"><span class="sd">        Raises:</span>
+</span><span id="line-1909"><span class="sd">            ValueError: if the comparison term&#39;s operation is invalid.</span>
+</span><span id="line-1910">
+</span><span id="line-1911"><span class="sd">        Returns:</span>
+</span><span id="line-1912"><span class="sd">            bool: the result of the comparison between v1 and v2 assuming the</span>
+</span><span id="line-1913"><span class="sd">            comparison operation of the comparison term object.</span>
+</span><span id="line-1914"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-1915">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">operation</span> <span class="ow">is</span> <span class="n">ComparisonOperation</span><span class="o">.</span><span class="n">EQ</span><span class="p">:</span>
+</span><span id="line-1916">            <span class="k">return</span> <span class="n">v1</span> <span class="o">==</span> <span class="n">v2</span>
+</span><span id="line-1917">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">operation</span> <span class="ow">is</span> <span class="n">ComparisonOperation</span><span class="o">.</span><span class="n">GEQ</span><span class="p">:</span>
+</span><span id="line-1918">            <span class="k">return</span> <span class="n">v1</span> <span class="o">&gt;=</span> <span class="n">v2</span>
+</span><span id="line-1919">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">operation</span> <span class="ow">is</span> <span class="n">ComparisonOperation</span><span class="o">.</span><span class="n">GT</span><span class="p">:</span>
+</span><span id="line-1920">            <span class="k">return</span> <span class="n">v1</span> <span class="o">&gt;</span> <span class="n">v2</span>
+</span><span id="line-1921">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">operation</span> <span class="ow">is</span> <span class="n">ComparisonOperation</span><span class="o">.</span><span class="n">LEQ</span><span class="p">:</span>
+</span><span id="line-1922">            <span class="k">return</span> <span class="n">v1</span> <span class="o">&lt;=</span> <span class="n">v2</span>
+</span><span id="line-1923">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">operation</span> <span class="ow">is</span> <span class="n">ComparisonOperation</span><span class="o">.</span><span class="n">LT</span><span class="p">:</span>
+</span><span id="line-1924">            <span class="k">return</span> <span class="n">v1</span> <span class="o">&lt;</span> <span class="n">v2</span>
+</span><span id="line-1925">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">operation</span> <span class="ow">is</span> <span class="n">ComparisonOperation</span><span class="o">.</span><span class="n">NEQ</span><span class="p">:</span>
+</span><span id="line-1926">            <span class="k">return</span> <span class="n">v1</span> <span class="o">!=</span> <span class="n">v2</span>
+</span><span id="line-1927">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported Operation of type </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">operation</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span id="line-1928">
 <div class="viewcode-block" id="ComparisonTerm.evaluate">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.ComparisonTerm.evaluate">[docs]</a>
-</span><span id="line-1921">    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var_values</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="n">BaseVariable</span><span class="p">,</span> <span class="n">RealNumber</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-</span><span id="line-1922"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Evaluates the comparison term given a set of values for the variables in the term.</span>
-</span><span id="line-1923">
-</span><span id="line-1924"><span class="sd">        Args:</span>
-</span><span id="line-1925"><span class="sd">            var_values (Mapping[BaseVariable, list[int]  |  RealNumber]): the values of the variables in the comparison term.</span>
-</span><span id="line-1926">
-</span><span id="line-1927"><span class="sd">        Returns:</span>
-</span><span id="line-1928"><span class="sd">            bool: the result from evaluating the comparison term.</span>
-</span><span id="line-1929">
-</span><span id="line-1930"><span class="sd">        Raises:</span>
-</span><span id="line-1931"><span class="sd">            ValueError: if the constraint contains imaginary numbers.</span>
-</span><span id="line-1932"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-1933">        <span class="n">lhs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lhs</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">var_values</span><span class="p">)</span>
-</span><span id="line-1934">        <span class="n">rhs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rhs</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">var_values</span><span class="p">)</span>
-</span><span id="line-1935">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">lhs</span><span class="p">,</span> <span class="nb">complex</span><span class="p">):</span>
-</span><span id="line-1936">            <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">lhs</span><span class="o">.</span><span class="n">imag</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">get_settings</span><span class="p">()</span><span class="o">.</span><span class="n">atol</span><span class="p">:</span>
-</span><span id="line-1937">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;evaluating inequality constraints with complex values is not allowed&quot;</span><span class="p">)</span>
-</span><span id="line-1938">            <span class="n">lhs</span> <span class="o">=</span> <span class="n">lhs</span><span class="o">.</span><span class="n">real</span>
-</span><span id="line-1939">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">rhs</span><span class="p">,</span> <span class="nb">complex</span><span class="p">):</span>
-</span><span id="line-1940">            <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">rhs</span><span class="o">.</span><span class="n">imag</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">get_settings</span><span class="p">()</span><span class="o">.</span><span class="n">atol</span><span class="p">:</span>
-</span><span id="line-1941">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;evaluating inequality constraints with complex values is not allowed&quot;</span><span class="p">)</span>
-</span><span id="line-1942">            <span class="n">rhs</span> <span class="o">=</span> <span class="n">rhs</span><span class="o">.</span><span class="n">real</span>
-</span><span id="line-1943">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_apply_comparison_operation</span><span class="p">(</span><span class="n">lhs</span><span class="p">,</span> <span class="n">rhs</span><span class="p">)</span></div>
+</span><span id="line-1929">    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var_values</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="n">BaseVariable</span><span class="p">,</span> <span class="n">RealNumber</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+</span><span id="line-1930"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Evaluates the comparison term given a set of values for the variables in the term.</span>
+</span><span id="line-1931">
+</span><span id="line-1932"><span class="sd">        Args:</span>
+</span><span id="line-1933"><span class="sd">            var_values (Mapping[BaseVariable, list[int]  |  RealNumber]): the values of the variables in the comparison term.</span>
+</span><span id="line-1934">
+</span><span id="line-1935"><span class="sd">        Returns:</span>
+</span><span id="line-1936"><span class="sd">            bool: the result from evaluating the comparison term.</span>
+</span><span id="line-1937">
+</span><span id="line-1938"><span class="sd">        Raises:</span>
+</span><span id="line-1939"><span class="sd">            ValueError: if the constraint contains imaginary numbers.</span>
+</span><span id="line-1940"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-1941">        <span class="n">lhs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lhs</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">var_values</span><span class="p">)</span>
+</span><span id="line-1942">        <span class="n">rhs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rhs</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">var_values</span><span class="p">)</span>
+</span><span id="line-1943">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">lhs</span><span class="p">,</span> <span class="nb">complex</span><span class="p">):</span>
+</span><span id="line-1944">            <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">lhs</span><span class="o">.</span><span class="n">imag</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">get_settings</span><span class="p">()</span><span class="o">.</span><span class="n">atol</span><span class="p">:</span>
+</span><span id="line-1945">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;evaluating inequality constraints with complex values is not allowed&quot;</span><span class="p">)</span>
+</span><span id="line-1946">            <span class="n">lhs</span> <span class="o">=</span> <span class="n">lhs</span><span class="o">.</span><span class="n">real</span>
+</span><span id="line-1947">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">rhs</span><span class="p">,</span> <span class="nb">complex</span><span class="p">):</span>
+</span><span id="line-1948">            <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">rhs</span><span class="o">.</span><span class="n">imag</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">get_settings</span><span class="p">()</span><span class="o">.</span><span class="n">atol</span><span class="p">:</span>
+</span><span id="line-1949">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;evaluating inequality constraints with complex values is not allowed&quot;</span><span class="p">)</span>
+</span><span id="line-1950">            <span class="n">rhs</span> <span class="o">=</span> <span class="n">rhs</span><span class="o">.</span><span class="n">real</span>
+</span><span id="line-1951">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_apply_comparison_operation</span><span class="p">(</span><span class="n">lhs</span><span class="p">,</span> <span class="n">rhs</span><span class="p">)</span></div>
 
-</span><span id="line-1944">
-</span><span id="line-1945">    <span class="k">def</span><span class="w"> </span><span class="nf">__copy__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ComparisonTerm</span><span class="p">:</span>
-</span><span id="line-1946">        <span class="k">return</span> <span class="n">ComparisonTerm</span><span class="p">(</span><span class="n">rhs</span><span class="o">=</span><span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">),</span> <span class="n">lhs</span><span class="o">=</span><span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">),</span> <span class="n">operation</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">operation</span><span class="p">)</span>
-</span><span id="line-1947">
-</span><span id="line-1948">    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="line-1949">        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">operation</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span>
-</span><span id="line-1950">
-</span><span id="line-1951">    <span class="fm">__str__</span> <span class="o">=</span> <span class="fm">__repr__</span>
 </span><span id="line-1952">
-</span><span id="line-1953">    <span class="k">def</span><span class="w"> </span><span class="fm">__bool__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-</span><span id="line-1954">        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-</span><span id="line-1955">            <span class="s2">&quot;Symbolic Constraint Term objects do not have an inherent truth value. &quot;</span>
-</span><span id="line-1956">            <span class="s2">&quot;Use a method like .evaluate() to obtain a Boolean value.&quot;</span>
-</span><span id="line-1957">        <span class="p">)</span>
+</span><span id="line-1953">    <span class="k">def</span><span class="w"> </span><span class="nf">__copy__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ComparisonTerm</span><span class="p">:</span>
+</span><span id="line-1954">        <span class="k">return</span> <span class="n">ComparisonTerm</span><span class="p">(</span><span class="n">rhs</span><span class="o">=</span><span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">),</span> <span class="n">lhs</span><span class="o">=</span><span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">),</span> <span class="n">operation</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">operation</span><span class="p">)</span>
+</span><span id="line-1955">
+</span><span id="line-1956">    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="line-1957">        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lhs</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">operation</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span>
 </span><span id="line-1958">
-</span><span id="line-1959">    <span class="k">def</span><span class="w"> </span><span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-</span><span id="line-1960">        <span class="k">return</span> <span class="n">qili_hash</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lhs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">operation</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rhs</span><span class="p">)</span>
-</span><span id="line-1961">
-</span><span id="line-1962">    <span class="k">def</span><span class="w"> </span><span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-</span><span id="line-1963">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">ComparisonTerm</span><span class="p">):</span>
-</span><span id="line-1964">            <span class="k">return</span> <span class="kc">False</span>
-</span><span id="line-1965">        <span class="k">return</span> <span class="nb">hash</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">==</span> <span class="nb">hash</span><span class="p">(</span><span class="n">other</span><span class="p">)</span></div>
-
+</span><span id="line-1959">    <span class="fm">__str__</span> <span class="o">=</span> <span class="fm">__repr__</span>
+</span><span id="line-1960">
+</span><span id="line-1961">    <span class="k">def</span><span class="w"> </span><span class="fm">__bool__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+</span><span id="line-1962">        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+</span><span id="line-1963">            <span class="s2">&quot;Symbolic Constraint Term objects do not have an inherent truth value. &quot;</span>
+</span><span id="line-1964">            <span class="s2">&quot;Use a method like .evaluate() to obtain a Boolean value.&quot;</span>
+</span><span id="line-1965">        <span class="p">)</span>
 </span><span id="line-1966">
-</span><span id="line-1967">
+</span><span id="line-1967">    <span class="k">def</span><span class="w"> </span><span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+</span><span id="line-1968">        <span class="k">return</span> <span class="n">qili_hash</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lhs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">operation</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rhs</span><span class="p">)</span>
+</span><span id="line-1969">
+</span><span id="line-1970">    <span class="k">def</span><span class="w"> </span><span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+</span><span id="line-1971">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">ComparisonTerm</span><span class="p">):</span>
+</span><span id="line-1972">            <span class="k">return</span> <span class="kc">False</span>
+</span><span id="line-1973">        <span class="k">return</span> <span class="nb">hash</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">==</span> <span class="nb">hash</span><span class="p">(</span><span class="n">other</span><span class="p">)</span></div>
+
+</span><span id="line-1974">
+</span><span id="line-1975">
 <div class="viewcode-block" id="MathematicalMap">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.MathematicalMap">[docs]</a>
-</span><span id="line-1968"><span class="k">class</span><span class="w"> </span><span class="nc">MathematicalMap</span><span class="p">(</span><span class="n">Term</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
-</span><span id="line-1969"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for applying a mathematical map (e.g., sin, cos) to a single term or parameter.&quot;&quot;&quot;</span>
-</span><span id="line-1970">
+</span><span id="line-1976"><span class="k">class</span><span class="w"> </span><span class="nc">MathematicalMap</span><span class="p">(</span><span class="n">Term</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+</span><span id="line-1977"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for applying a mathematical map (e.g., sin, cos) to a single term or parameter.&quot;&quot;&quot;</span>
+</span><span id="line-1978">
 <div class="viewcode-block" id="MathematicalMap.MATH_SYMBOL">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.MathematicalMap.MATH_SYMBOL">[docs]</a>
-</span><span id="line-1971">    <span class="n">MATH_SYMBOL</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span></div>
+</span><span id="line-1979">    <span class="n">MATH_SYMBOL</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span></div>
 
-</span><span id="line-1972">
-</span><span id="line-1973">    <span class="nd">@overload</span>
-</span><span id="line-1974">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arg</span><span class="p">:</span> <span class="n">Term</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
-</span><span id="line-1975">    <span class="nd">@overload</span>
-</span><span id="line-1976">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arg</span><span class="p">:</span> <span class="n">Parameter</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
-</span><span id="line-1977">    <span class="nd">@overload</span>
-</span><span id="line-1978">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arg</span><span class="p">:</span> <span class="n">BaseVariable</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
-</span><span id="line-1979">
-</span><span id="line-1980">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arg</span><span class="p">:</span> <span class="n">Term</span> <span class="o">|</span> <span class="n">Parameter</span> <span class="o">|</span> <span class="n">BaseVariable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-1981">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">Term</span><span class="p">):</span>
-</span><span id="line-1982">            <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_with_term</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
-</span><span id="line-1983">        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">):</span>
-</span><span id="line-1984">            <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_with_parameter</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
-</span><span id="line-1985">        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">BaseVariable</span><span class="p">):</span>
-</span><span id="line-1986">            <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_with_variable</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
-</span><span id="line-1987">        <span class="k">else</span><span class="p">:</span>
-</span><span id="line-1988">            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Sin expects Term | Parameter | BaseVariable&quot;</span><span class="p">)</span>
-</span><span id="line-1989">
-</span><span id="line-1990">    <span class="k">def</span><span class="w"> </span><span class="nf">_initialize_with_term</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">term</span><span class="p">:</span> <span class="n">Term</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-1991">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">elements</span><span class="o">=</span><span class="p">[</span><span class="n">term</span><span class="p">],</span> <span class="n">operation</span><span class="o">=</span><span class="n">Operation</span><span class="o">.</span><span class="n">MATH_MAP</span><span class="p">)</span>
-</span><span id="line-1992">
-</span><span id="line-1993">    <span class="k">def</span><span class="w"> </span><span class="nf">_initialize_with_parameter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameter</span><span class="p">:</span> <span class="n">Parameter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-1994">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">elements</span><span class="o">=</span><span class="p">[</span><span class="n">parameter</span><span class="p">],</span> <span class="n">operation</span><span class="o">=</span><span class="n">Operation</span><span class="o">.</span><span class="n">MATH_MAP</span><span class="p">)</span>
-</span><span id="line-1995">
-</span><span id="line-1996">    <span class="k">def</span><span class="w"> </span><span class="nf">_initialize_with_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable</span><span class="p">:</span> <span class="n">BaseVariable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-1997">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">elements</span><span class="o">=</span><span class="p">[</span><span class="n">variable</span><span class="p">],</span> <span class="n">operation</span><span class="o">=</span><span class="n">Operation</span><span class="o">.</span><span class="n">MATH_MAP</span><span class="p">)</span>
-</span><span id="line-1998">
-</span><span id="line-1999">    <span class="nd">@abstractmethod</span>
-</span><span id="line-2000">    <span class="k">def</span><span class="w"> </span><span class="nf">_apply_mathematical_map</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Number</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Number</span><span class="p">:</span> <span class="o">...</span>
-</span><span id="line-2001">
+</span><span id="line-1980">
+</span><span id="line-1981">    <span class="nd">@overload</span>
+</span><span id="line-1982">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arg</span><span class="p">:</span> <span class="n">Term</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
+</span><span id="line-1983">    <span class="nd">@overload</span>
+</span><span id="line-1984">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arg</span><span class="p">:</span> <span class="n">Parameter</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
+</span><span id="line-1985">    <span class="nd">@overload</span>
+</span><span id="line-1986">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arg</span><span class="p">:</span> <span class="n">BaseVariable</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
+</span><span id="line-1987">
+</span><span id="line-1988">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arg</span><span class="p">:</span> <span class="n">Term</span> <span class="o">|</span> <span class="n">Parameter</span> <span class="o">|</span> <span class="n">BaseVariable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-1989">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">Term</span><span class="p">):</span>
+</span><span id="line-1990">            <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_with_term</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
+</span><span id="line-1991">        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">):</span>
+</span><span id="line-1992">            <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_with_parameter</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
+</span><span id="line-1993">        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">BaseVariable</span><span class="p">):</span>
+</span><span id="line-1994">            <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_with_variable</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
+</span><span id="line-1995">        <span class="k">else</span><span class="p">:</span>
+</span><span id="line-1996">            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Sin expects Term | Parameter | BaseVariable&quot;</span><span class="p">)</span>
+</span><span id="line-1997">
+</span><span id="line-1998">    <span class="k">def</span><span class="w"> </span><span class="nf">_initialize_with_term</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">term</span><span class="p">:</span> <span class="n">Term</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-1999">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">elements</span><span class="o">=</span><span class="p">[</span><span class="n">term</span><span class="p">],</span> <span class="n">operation</span><span class="o">=</span><span class="n">Operation</span><span class="o">.</span><span class="n">MATH_MAP</span><span class="p">)</span>
+</span><span id="line-2000">
+</span><span id="line-2001">    <span class="k">def</span><span class="w"> </span><span class="nf">_initialize_with_parameter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameter</span><span class="p">:</span> <span class="n">Parameter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-2002">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">elements</span><span class="o">=</span><span class="p">[</span><span class="n">parameter</span><span class="p">],</span> <span class="n">operation</span><span class="o">=</span><span class="n">Operation</span><span class="o">.</span><span class="n">MATH_MAP</span><span class="p">)</span>
+</span><span id="line-2003">
+</span><span id="line-2004">    <span class="k">def</span><span class="w"> </span><span class="nf">_initialize_with_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable</span><span class="p">:</span> <span class="n">BaseVariable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-2005">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">elements</span><span class="o">=</span><span class="p">[</span><span class="n">variable</span><span class="p">],</span> <span class="n">operation</span><span class="o">=</span><span class="n">Operation</span><span class="o">.</span><span class="n">MATH_MAP</span><span class="p">)</span>
+</span><span id="line-2006">
+</span><span id="line-2007">    <span class="nd">@abstractmethod</span>
+</span><span id="line-2008">    <span class="k">def</span><span class="w"> </span><span class="nf">_apply_mathematical_map</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Number</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Number</span><span class="p">:</span> <span class="o">...</span>
+</span><span id="line-2009">
 <div class="viewcode-block" id="MathematicalMap.evaluate">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.MathematicalMap.evaluate">[docs]</a>
-</span><span id="line-2002">    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var_values</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="n">BaseVariable</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="n">RealNumber</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Number</span><span class="p">:</span>
-</span><span id="line-2003">        <span class="n">value</span><span class="p">:</span> <span class="n">Number</span> <span class="o">=</span> <span class="mi">0</span>
-</span><span id="line-2004">
-</span><span id="line-2005">        <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
-</span><span id="line-2006">            <span class="k">if</span> <span class="n">e</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">var_values</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">):</span>
-</span><span id="line-2007">                <span class="n">aux</span><span class="p">:</span> <span class="n">Number</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">evaluate</span><span class="p">()</span>
-</span><span id="line-2008">            <span class="k">else</span><span class="p">:</span>
-</span><span id="line-2009">                <span class="n">aux</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">var_values</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">Term</span><span class="p">)</span> <span class="k">else</span> <span class="n">e</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">var_values</span><span class="p">[</span><span class="n">e</span><span class="p">])</span>
-</span><span id="line-2010">
-</span><span id="line-2011">            <span class="n">value</span> <span class="o">+=</span> <span class="n">aux</span> <span class="o">*</span> <span class="bp">self</span><span class="p">[</span><span class="n">e</span><span class="p">]</span>
+</span><span id="line-2010">    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var_values</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="n">BaseVariable</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="n">RealNumber</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Number</span><span class="p">:</span>
+</span><span id="line-2011">        <span class="n">value</span><span class="p">:</span> <span class="n">Number</span> <span class="o">=</span> <span class="mi">0</span>
 </span><span id="line-2012">
-</span><span id="line-2013">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_apply_mathematical_map</span><span class="p">(</span><span class="n">value</span><span class="p">)</span></div>
-
-</span><span id="line-2014">
-</span><span id="line-2015">    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="line-2016">        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">MATH_SYMBOL</span><span class="si">}</span><span class="s2">[</span><span class="si">{</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__repr__</span><span class="p">()</span><span class="si">}</span><span class="s2">]&quot;</span>
-</span><span id="line-2017">
-</span><span id="line-2018">    <span class="fm">__str__</span> <span class="o">=</span> <span class="fm">__repr__</span></div>
-
-</span><span id="line-2019">
+</span><span id="line-2013">        <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+</span><span id="line-2014">            <span class="k">if</span> <span class="n">e</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">var_values</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">):</span>
+</span><span id="line-2015">                <span class="n">aux</span><span class="p">:</span> <span class="n">Number</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">evaluate</span><span class="p">()</span>
+</span><span id="line-2016">            <span class="k">else</span><span class="p">:</span>
+</span><span id="line-2017">                <span class="n">aux</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">var_values</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">Term</span><span class="p">)</span> <span class="k">else</span> <span class="n">e</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">var_values</span><span class="p">[</span><span class="n">e</span><span class="p">])</span>
+</span><span id="line-2018">
+</span><span id="line-2019">            <span class="n">value</span> <span class="o">+=</span> <span class="n">aux</span> <span class="o">*</span> <span class="bp">self</span><span class="p">[</span><span class="n">e</span><span class="p">]</span>
 </span><span id="line-2020">
+</span><span id="line-2021">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_apply_mathematical_map</span><span class="p">(</span><span class="n">value</span><span class="p">)</span></div>
+
+</span><span id="line-2022">
+</span><span id="line-2023">    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="line-2024">        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">MATH_SYMBOL</span><span class="si">}</span><span class="s2">[</span><span class="si">{</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__repr__</span><span class="p">()</span><span class="si">}</span><span class="s2">]&quot;</span>
+</span><span id="line-2025">
+</span><span id="line-2026">    <span class="fm">__str__</span> <span class="o">=</span> <span class="fm">__repr__</span></div>
+
+</span><span id="line-2027">
+</span><span id="line-2028">
 <div class="viewcode-block" id="Sin">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Sin">[docs]</a>
-</span><span id="line-2021"><span class="k">class</span><span class="w"> </span><span class="nc">Sin</span><span class="p">(</span><span class="n">MathematicalMap</span><span class="p">):</span>
-</span><span id="line-2022"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Apply a sine map to a parameter or term.&quot;&quot;&quot;</span>
-</span><span id="line-2023">
+</span><span id="line-2029"><span class="k">class</span><span class="w"> </span><span class="nc">Sin</span><span class="p">(</span><span class="n">MathematicalMap</span><span class="p">):</span>
+</span><span id="line-2030"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Apply a sine map to a parameter or term.&quot;&quot;&quot;</span>
+</span><span id="line-2031">
 <div class="viewcode-block" id="Sin.MATH_SYMBOL">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Sin.MATH_SYMBOL">[docs]</a>
-</span><span id="line-2024">    <span class="n">MATH_SYMBOL</span> <span class="o">=</span> <span class="s2">&quot;sin&quot;</span></div>
+</span><span id="line-2032">    <span class="n">MATH_SYMBOL</span> <span class="o">=</span> <span class="s2">&quot;sin&quot;</span></div>
 
-</span><span id="line-2025">
-</span><span id="line-2026">    <span class="k">def</span><span class="w"> </span><span class="nf">_apply_mathematical_map</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Number</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Number</span><span class="p">:</span>  <span class="c1"># noqa: PLR6301</span>
-</span><span id="line-2027">        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">_assert_real</span><span class="p">(</span><span class="n">value</span><span class="p">)))</span>
-</span><span id="line-2028">
-</span><span id="line-2029">    <span class="k">def</span><span class="w"> </span><span class="nf">__copy__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Sin</span><span class="p">:</span>
-</span><span id="line-2030">        <span class="k">return</span> <span class="n">Sin</span><span class="p">(</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__copy__</span><span class="p">())</span></div>
+</span><span id="line-2033">
+</span><span id="line-2034">    <span class="k">def</span><span class="w"> </span><span class="nf">_apply_mathematical_map</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Number</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Number</span><span class="p">:</span>  <span class="c1"># noqa: PLR6301</span>
+</span><span id="line-2035">        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">_assert_real</span><span class="p">(</span><span class="n">value</span><span class="p">)))</span>
+</span><span id="line-2036">
+</span><span id="line-2037">    <span class="k">def</span><span class="w"> </span><span class="nf">__copy__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Sin</span><span class="p">:</span>
+</span><span id="line-2038">        <span class="k">return</span> <span class="n">Sin</span><span class="p">(</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__copy__</span><span class="p">())</span></div>
 
-</span><span id="line-2031">
-</span><span id="line-2032">
+</span><span id="line-2039">
+</span><span id="line-2040">
 <div class="viewcode-block" id="Cos">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Cos">[docs]</a>
-</span><span id="line-2033"><span class="k">class</span><span class="w"> </span><span class="nc">Cos</span><span class="p">(</span><span class="n">MathematicalMap</span><span class="p">):</span>
-</span><span id="line-2034"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Apply a cosine map to a parameter or term.&quot;&quot;&quot;</span>
-</span><span id="line-2035">
+</span><span id="line-2041"><span class="k">class</span><span class="w"> </span><span class="nc">Cos</span><span class="p">(</span><span class="n">MathematicalMap</span><span class="p">):</span>
+</span><span id="line-2042"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Apply a cosine map to a parameter or term.&quot;&quot;&quot;</span>
+</span><span id="line-2043">
 <div class="viewcode-block" id="Cos.MATH_SYMBOL">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Cos.MATH_SYMBOL">[docs]</a>
-</span><span id="line-2036">    <span class="n">MATH_SYMBOL</span> <span class="o">=</span> <span class="s2">&quot;cos&quot;</span></div>
+</span><span id="line-2044">    <span class="n">MATH_SYMBOL</span> <span class="o">=</span> <span class="s2">&quot;cos&quot;</span></div>
 
-</span><span id="line-2037">
-</span><span id="line-2038">    <span class="k">def</span><span class="w"> </span><span class="nf">_apply_mathematical_map</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Number</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Number</span><span class="p">:</span>  <span class="c1"># noqa: PLR6301</span>
-</span><span id="line-2039">        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">_assert_real</span><span class="p">(</span><span class="n">value</span><span class="p">)))</span>
-</span><span id="line-2040">
-</span><span id="line-2041">    <span class="k">def</span><span class="w"> </span><span class="nf">__copy__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Cos</span><span class="p">:</span>
-</span><span id="line-2042">        <span class="k">return</span> <span class="n">Cos</span><span class="p">(</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__copy__</span><span class="p">())</span></div>
+</span><span id="line-2045">
+</span><span id="line-2046">    <span class="k">def</span><span class="w"> </span><span class="nf">_apply_mathematical_map</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Number</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Number</span><span class="p">:</span>  <span class="c1"># noqa: PLR6301</span>
+</span><span id="line-2047">        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">_assert_real</span><span class="p">(</span><span class="n">value</span><span class="p">)))</span>
+</span><span id="line-2048">
+</span><span id="line-2049">    <span class="k">def</span><span class="w"> </span><span class="nf">__copy__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Cos</span><span class="p">:</span>
+</span><span id="line-2050">        <span class="k">return</span> <span class="n">Cos</span><span class="p">(</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__copy__</span><span class="p">())</span></div>
 
 </span></code></pre></div>
     </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">
 </div></div>
-        </main>
-      </div>
-    </div><footer class="py-6 border-t border-border md:py-0">
+          </main>
+        </div>
+      </div><footer class="py-6 border-t border-border md:py-0">
     <div class="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
       <div class="flex flex-col items-center gap-4 px-8 md:flex-row md:gap-2 md:px-0">
         <p class="text-sm leading-loose text-center text-muted-foreground md:text-left">© 2025, Qilimanjaro Quantum Tech&nbsp;</p>
 </div>
 </div>
 </footer>
-  </div>
-  
+    </div>
+    
     <script src="../../../_static/documentation_options.js?v=7f41d439"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script defer="defer" src="../../../_static/theme.js?v=073f68d9"></script>
+    <script defer="defer" src="../../../_static/theme.js?v=582b20c5"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-  
+    
 </body>
+
 </html>
