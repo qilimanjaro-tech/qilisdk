@@ -97,7 +97,7 @@ or using the :meth:`.adjoint()<qilisdk.digital.gates.BasicGate.adjoint>` method 
     from qilisdk.digital.gates import Adjoint, Y
 
     adjoint_y = Adjoint(basic_gate=Y(1))
-    adjoint y = Y(1).adjoint()
+    adjoint_y = Y(1).adjoint()
 
 Exponential Gates
 ^^^^^^^^^^^^^^^^^

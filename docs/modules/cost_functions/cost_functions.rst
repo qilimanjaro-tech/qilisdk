@@ -58,6 +58,7 @@ Example: expectation value from analog evolution
     from qilisdk.backends import QiliSim
     from qilisdk.functionals import AnalogEvolution
     from qilisdk.readout import Readout
+    from qilisdk.cost_functions import ObservableCostFunction
 
     # Define total time and timestep
     T = 10.0
@@ -79,15 +80,13 @@ Example: expectation value from analog evolution
         interpolation=Interpolation.LINEAR,
     )
 
-    schedule.draw()
-
     functional = AnalogEvolution(
         schedule=schedule,
         initial_state=(ket(0) - ket(1)).unit(),
     )
 
     backend = QiliSim()
-    evolution_result = backend.execute(functional, readout=Readout().with_expectation(observables=[Z(0)]))
+    evolution_result = backend.execute(functional, readout=Readout().with_sampling(nshots=1000))
 
     cost_fn = ObservableCostFunction(Z(0))
     energy = cost_fn.compute_cost(evolution_result)

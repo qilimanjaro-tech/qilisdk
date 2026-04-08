@@ -31,10 +31,10 @@ if TYPE_CHECKING:
     from qilisdk.core.types import Number
 
 _TIME_PARAMETER_NAME = "t"
-PARAMETERIZED_NUMBER: TypeAlias = float | Parameter | Term
+PARAMETERIZED_NUM: TypeAlias = float | Parameter | Term
 
 # type aliases just to keep this short
-TimeDict = dict[PARAMETERIZED_NUMBER | tuple[float, float], PARAMETERIZED_NUMBER | Callable[..., PARAMETERIZED_NUMBER]]
+TimeDict = dict[PARAMETERIZED_NUM | tuple[float, float], PARAMETERIZED_NUM | Callable[..., PARAMETERIZED_NUM]]
 
 
 class Interpolation(str, Enum):
@@ -43,18 +43,18 @@ class Interpolation(str, Enum):
 
 
 def _process_callable(
-    function: Callable[[], PARAMETERIZED_NUMBER], current_time: Parameter, **kwargs: Any
-) -> tuple[PARAMETERIZED_NUMBER, dict[str, Parameter]]:
+    function: Callable[[], PARAMETERIZED_NUM], current_time: Parameter, **kwargs: Any
+) -> tuple[PARAMETERIZED_NUM, dict[str, Parameter]]:
     """
     Evaluate a coefficient-producing callable and collect any parameters it exposes.
 
     Args:
-        function (Callable[..., PARAMETERIZED_NUMBER]): Callable that returns a coefficient expression.
+        function (Callable[..., PARAMETERIZED_NUM]): Callable that returns a coefficient expression.
         current_time (Parameter): Time parameter to bind when evaluating the callable.
         **kwargs: Additional keyword arguments passed to the callable.
 
     Returns:
-        tuple[PARAMETERIZED_NUMBER, dict[str, Parameter]]: Evaluated expression and parameters discovered.
+        tuple[PARAMETERIZED_NUM, dict[str, Parameter]]: Evaluated expression and parameters discovered.
 
     Raises:
         ValueError: If the callable uses variables other than time or ``Parameter`` instances.
@@ -115,18 +115,18 @@ class Interpolator(Parameterizable):
         """
         super(Interpolator, self).__init__()
         self._interpolation = interpolation
-        self._time_dict: dict[PARAMETERIZED_NUMBER, PARAMETERIZED_NUMBER] = {}
+        self._time_dict: dict[PARAMETERIZED_NUM, PARAMETERIZED_NUM] = {}
         self._current_time = Parameter("t", 0)
         self._total_time: float | None = None
         self.iter_time_step = 0
         self._cached = False
-        self._cached_time: dict[PARAMETERIZED_NUMBER, PARAMETERIZED_NUMBER | Number] = {}
-        self._tlist: list[PARAMETERIZED_NUMBER] | None = None
+        self._cached_time: dict[PARAMETERIZED_NUM, PARAMETERIZED_NUM | Number] = {}
+        self._tlist: list[PARAMETERIZED_NUM] | None = None
         self._fixed_tlist: list[float] | None = None
-        self._max_time: PARAMETERIZED_NUMBER | None = None
+        self._max_time: PARAMETERIZED_NUM | None = None
         self._time_scale_cache: float | None = None
 
-        fixed_times: list[PARAMETERIZED_NUMBER | tuple[float, float]] = sorted(
+        fixed_times: list[PARAMETERIZED_NUM | tuple[float, float]] = sorted(
             time_dict.keys(),
             key=lambda t: self._get_value(
                 min(t, key=self._get_value)  # ty:ignore[no-matching-overload]
@@ -136,8 +136,8 @@ class Interpolator(Parameterizable):
         )
 
         for i in range(len(fixed_times) - 1):
-            ti: PARAMETERIZED_NUMBER | tuple[float, float] = fixed_times[i]
-            tj: PARAMETERIZED_NUMBER | tuple[float, float] = fixed_times[i + 1]
+            ti: PARAMETERIZED_NUM | tuple[float, float] = fixed_times[i]
+            tj: PARAMETERIZED_NUM | tuple[float, float] = fixed_times[i + 1]
             t0 = (
                 self._get_value(ti) if not isinstance(ti, tuple) else self._get_value(ti[1])  # ty:ignore[invalid-argument-type]
             )
@@ -178,12 +178,12 @@ class Interpolator(Parameterizable):
                     if term not in self._parameter_constraints:
                         self._parameter_constraints.append(term)
 
-    def _generate_tlist(self) -> list[PARAMETERIZED_NUMBER]:
+    def _generate_tlist(self) -> list[PARAMETERIZED_NUM]:
         """
         Generate a sorted list of the registered time keys.
 
         Returns:
-            list[PARAMETERIZED_NUMBER]: Sorted time indices based on their evaluated value.
+            list[PARAMETERIZED_NUM]: Sorted time indices based on their evaluated value.
         """
         return sorted((self._time_dict.keys()), key=self._get_value)  # ty:ignore[invalid-return-type]
 
@@ -221,12 +221,12 @@ class Interpolator(Parameterizable):
         return self._time_scale_cache
 
     @property
-    def tlist(self) -> list[PARAMETERIZED_NUMBER]:
+    def tlist(self) -> list[PARAMETERIZED_NUM]:
         """
         Return the (possibly rescaled) list of time points used for interpolation.
 
         Returns:
-            list[PARAMETERIZED_NUMBER]: Interpolation time points, rescaled if ``max_time`` is set.
+            list[PARAMETERIZED_NUM]: Interpolation time points, rescaled if ``max_time`` is set.
         """
         if self._tlist is None:
             self._tlist = self._generate_tlist()
@@ -259,12 +259,12 @@ class Interpolator(Parameterizable):
             self._total_time = max(self.fixed_tlist)
         return self._total_time
 
-    def items(self) -> list[tuple[PARAMETERIZED_NUMBER, PARAMETERIZED_NUMBER]]:
+    def items(self) -> list[tuple[PARAMETERIZED_NUM, PARAMETERIZED_NUM]]:
         """
         Return (time, coefficient) pairs, rescaling time if a max is set.
 
         Returns:
-            list[tuple[PARAMETERIZED_NUMBER, PARAMETERIZED_NUMBER]]: Time and coefficient pairs.
+            list[tuple[PARAMETERIZED_NUM, PARAMETERIZED_NUM]]: Time and coefficient pairs.
         """
         if self._max_time is not None:
             return [(k * self._time_scale, v) for k, v in self._time_dict.items()]
@@ -280,22 +280,22 @@ class Interpolator(Parameterizable):
         return [(t, self._get_value(self[t], t)) for t in self.fixed_tlist]
 
     @property
-    def coefficients(self) -> list[PARAMETERIZED_NUMBER]:
+    def coefficients(self) -> list[PARAMETERIZED_NUM]:
         """
         Return coefficients in the order of ``tlist`` without evaluation.
 
         Returns:
-            list[PARAMETERIZED_NUMBER]: Coefficients aligned with ``tlist``.
+            list[PARAMETERIZED_NUM]: Coefficients aligned with ``tlist``.
         """
         return list(self._time_dict.values())
 
     @property
-    def coefficients_dict(self) -> dict[PARAMETERIZED_NUMBER, PARAMETERIZED_NUMBER]:
+    def coefficients_dict(self) -> dict[PARAMETERIZED_NUM, PARAMETERIZED_NUM]:
         """
         Return a shallow copy of the internal time-to-coefficient mapping.
 
         Returns:
-            dict[PARAMETERIZED_NUMBER, PARAMETERIZED_NUMBER]: Mapping from time to coefficient expressions.
+            dict[PARAMETERIZED_NUM, PARAMETERIZED_NUM]: Mapping from time to coefficient expressions.
         """
         return copy(self._time_dict)
 
@@ -309,12 +309,12 @@ class Interpolator(Parameterizable):
         """
         return [self._get_value(self[t]) for t in self.fixed_tlist]
 
-    def set_max_time(self, max_time: PARAMETERIZED_NUMBER) -> None:
+    def set_max_time(self, max_time: PARAMETERIZED_NUM) -> None:
         """
         Rescale all time points to a new maximum duration while keeping relative spacing.
 
         Args:
-            max_time (PARAMETERIZED_NUMBER): Desired maximum time after rescaling.
+            max_time (PARAMETERIZED_NUM): Desired maximum time after rescaling.
 
         Raises:
             ValueError: If the max time is set to zero.
@@ -333,12 +333,12 @@ class Interpolator(Parameterizable):
         self._fixed_tlist = None
         self._time_scale_cache = None
 
-    def _get_value(self, value: PARAMETERIZED_NUMBER | complex, t: float | None = None) -> float:
+    def _get_value(self, value: PARAMETERIZED_NUM | complex, t: float | None = None) -> float:
         """
         Evaluate a numeric, parameter, or term into a concrete float.
 
         Args:
-            value (PARAMETERIZED_NUMBER | complex): Value or expression to evaluate.
+            value (PARAMETERIZED_NUM | complex): Value or expression to evaluate.
             t (float | None): Time value to bind when evaluating time-dependent expressions.
 
         Returns:
@@ -364,12 +364,12 @@ class Interpolator(Parameterizable):
             return aux.real if isinstance(aux, complex) else float(aux)
         raise ValueError(f"Invalid value of type {type(value)} is being evaluated.")
 
-    def _extract_parameters(self, element: PARAMETERIZED_NUMBER) -> None:
+    def _extract_parameters(self, element: PARAMETERIZED_NUM) -> None:
         """
         Collect parameters from an element, ensuring only allowed variables are used.
 
         Args:
-            element (PARAMETERIZED_NUMBER): Element to inspect for parameters.
+            element (PARAMETERIZED_NUM): Element to inspect for parameters.
 
         Raises:
             ValueError: If the element contains variables that are not parameters.
@@ -387,15 +387,15 @@ class Interpolator(Parameterizable):
 
     def add_time_point(
         self,
-        time: PARAMETERIZED_NUMBER,
-        coefficient: PARAMETERIZED_NUMBER | Callable[..., PARAMETERIZED_NUMBER],
+        time: PARAMETERIZED_NUM,
+        coefficient: PARAMETERIZED_NUM | Callable[..., PARAMETERIZED_NUM],
     ) -> None:
         """
         Add or update a coefficient associated with a time point, processing callables if needed.
 
         Args:
-            time (PARAMETERIZED_NUMBER): Time point for the coefficient.
-            coefficient (PARAMETERIZED_NUMBER | Callable[..., PARAMETERIZED_NUMBER]): Coefficient value or callable.
+            time (PARAMETERIZED_NUM): Time point for the coefficient.
+            coefficient (PARAMETERIZED_NUM | Callable[..., PARAMETERIZED_NUM]): Coefficient value or callable.
 
         Raises:
             ValueError: If the coefficient type is unsupported or the callable uses invalid variables.
@@ -544,8 +544,8 @@ class Interpolator(Parameterizable):
         insert_pos = bisect_right(self._tlist, time_step, key=self._get_value)
 
         def _linear_value(
-            t0: PARAMETERIZED_NUMBER, v0: PARAMETERIZED_NUMBER, t1: PARAMETERIZED_NUMBER, v1: PARAMETERIZED_NUMBER
-        ) -> PARAMETERIZED_NUMBER:
+            t0: PARAMETERIZED_NUM, v0: PARAMETERIZED_NUM, t1: PARAMETERIZED_NUM, v1: PARAMETERIZED_NUM
+        ) -> PARAMETERIZED_NUM:
             t0_val = self._get_value(t0)
             t1_val = self._get_value(t1)
             if t0_val == t1_val:

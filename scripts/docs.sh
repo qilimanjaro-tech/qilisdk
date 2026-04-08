@@ -11,6 +11,12 @@ PASS=0
 FAIL=0
 SKIP=0
 
+# Save the current directory so we can return to it later
+ORIG_DIR=$(pwd)
+
+# Change to the root directory of the project
+cd "$(dirname "$(dirname "$(realpath "$0")")")"
+
 TMPFILE=$(mktemp /tmp/docs_test_XXXXXX.py)
 trap "rm -f $TMPFILE" EXIT
 
@@ -88,4 +94,8 @@ echo ""
 echo "Note: you can skip a code block by adding a '.. SKIP' line immediately before the '.. code-block:: python' directive." 
 echo "Results: $PASS passed, $FAIL failed, $SKIP skipped"
 
+# Return to the original directory
+cd "$ORIG_DIR"
+
 [[ $FAIL -eq 0 ]]
+

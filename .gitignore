@@ -16,6 +16,10 @@ coverage/
 coverage*.info
 scripts/*.log
 
+# these are generated if you check the docs code
+circuit_custom_font.png
+my_circuit.svg
+
 # Virtual environments
 .venv
 

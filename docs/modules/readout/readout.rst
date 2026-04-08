@@ -25,6 +25,7 @@ object is never modified.
 .. code-block:: python
 
     from qilisdk.readout import Readout
+    from qilisdk.analog import Z
 
     spec = Readout()                                  # no readout selected yet
     spec = spec.with_sampling(nshots=1000)            # add sampling
@@ -38,6 +39,13 @@ The finished spec is passed to :meth:`~qilisdk.backends.backend.Backend.execute`
 
 .. code-block:: python
 
+    from qilisdk.backends import QiliSim
+    from qilisdk.digital import Circuit
+    from qilisdk.functionals import DigitalPropagation
+
+    backend = QiliSim()
+    circuit = Circuit(2)
+    functional = DigitalPropagation(circuit)
     result = backend.execute(functional, readout=spec)
 
 .. note::
@@ -62,8 +70,8 @@ collect the bitstring counts.
     result = backend.execute(functional, readout=spec)
 
     # Access the results
-    counts = result.samples           # dict[str, int]  e.g. {"00": 512, "11": 488}
-    probs  = result.probabilities     # dict[str, float] normalised to 1.0
+    counts = result.get_samples()                # dict[str, int]  e.g. {"00": 512, "11": 488}
+    probs  = result.get_probabilities()    # dict[str, float] normalised to 1.0
 
     # Top-k most probable outcomes
     top3 = result.readout_results.sampling.get_probabilities(n=3)
@@ -90,7 +98,7 @@ Instructs the backend to compute ``⟨ψ|O|ψ⟩`` for each observable in the li
     spec = Readout().with_expectation(observables=[Z(0), X(0), Y(0)], nshots=0)
     result = backend.execute(functional, readout=spec)
 
-    evs = result.expectation_values   # list[float], one entry per observable
+    evs = result.get_expectation_values()   # list[float], one entry per observable
     # e.g. [-0.994, 0.047, -0.100]
 
 **Parameters**
@@ -118,8 +126,8 @@ Instructs the backend to return the full quantum state vector (or density matrix
     spec = Readout().with_state_tomography()
     result = backend.execute(functional, readout=spec)
 
-    state = result.state              # The full ket or density matrix as a QTensor
-    probs = result.probabilities      # A dict[str, float] derived from |amplitudes|²
+    state = result.get_state()           # The full ket or density matrix as a QTensor
+    probs = result.get_probabilities()   # A dict[str, float] derived from |amplitudes|²
 
 **Parameters**
 
@@ -156,9 +164,9 @@ Any combination of the three readout types can be requested in a single executio
     )
     result = backend.execute(functional, readout=spec)
 
-    counts = result.samples              # from sampling
-    ev     = result.expectation_values   # from expectation
-    state  = result.state                # from state tomography
+    counts = result.get_samples()              # from sampling
+    ev     = result.get_expectation_values()   # from expectation
+    state  = result.get_state()                # from state tomography
 
 Accessing Results
 --------------------
@@ -178,16 +186,16 @@ The quickest way to access results:
    * - Property
      - Type
      - Requires
-   * - ``result.samples``
+   * - ``result.get_samples()``
      - ``dict[str, int]``
      - ``.with_sampling()``
-   * - ``result.probabilities``
+   * - ``result.get_probabilities()``
      - ``dict[str, float]``
      - ``.with_sampling()`` or ``.with_state_tomography()``
-   * - ``result.expectation_values``
+   * - ``result.get_expectation_values()``
      - ``list[float]``
      - ``.with_expectation()``
-   * - ``result.state``
+   * - ``result.get_state()``
      - ``QTensor``
      - ``.with_state_tomography()``
 
@@ -243,6 +251,16 @@ readout result for every time step.  The same readout methods apply at each step
     from qilisdk.core import ket
     from qilisdk.functionals import AnalogEvolution
     from qilisdk.readout import Readout
+
+    T = 5.0
+    schedule = Schedule(
+        hamiltonians={"driver": X(0), "problem": Z(0)},
+        coefficients={
+            "driver": {(0.0, T): lambda t: 1.0 - t / T},
+            "problem": {(0.0, T): lambda t: t / T},
+        },
+        dt=0.1,
+    )
 
     functional = AnalogEvolution(schedule, initial_state=ket(0), store_intermediate_results=True)
     spec = Readout().with_expectation(observables=[Z(0)]).with_state_tomography()
@@ -318,8 +336,8 @@ state at every time step, then plots the observable trajectory.
     result = QutipBackend().execute(functional, readout=spec)
 
     # Final results
-    print("Final <Z>:", result.expectation_values[0])
-    print("Final state:", result.state)
+    print("Final <Z>:", result.get_expectation_values()[0])
+    print("Final state:", result.get_state())
 
     # Time-resolved expectation values
     ev_trajectory = [step[0] for step in result.intermediate_expectation_values]

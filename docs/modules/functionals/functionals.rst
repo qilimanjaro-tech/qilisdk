@@ -61,8 +61,9 @@ most likely bitstrings:
     from qilisdk.readout import Readout
 
     backend = QiliSim()
+    circuit = Circuit(2)
     result = backend.execute(DigitalPropagation(circuit), Readout().with_sampling(nshots=1_000))
-    print("Most likely outcomes:", result.probabilities)
+    print("Most likely outcomes:", result.get_probabilities())
 
 Digital Propagation
 -------------------
@@ -266,7 +267,6 @@ be driven by input data sequences rather than optimization loops.
             total_time=1.0,
             dt=0.1,
         ),
-        observables=[Z(0), Z(1), Z(0) * Z(1)],
         input_encoding=pre_processing,
         qubits_to_reset=[1],
     )
@@ -285,7 +285,7 @@ be driven by input data sequences rather than optimization loops.
         reservoir,
         Readout().with_expectation(observables=[Z(0), Z(1), Z(0) * Z(1)]),
     )
-    print(results.expectation_values)
+    print(results.get_expectation_values())
 
 
 Encoding Input Data
@@ -319,7 +319,6 @@ place in the layer.
             total_time=1.0,
             dt=0.1,
         ),
-        observables=[Z(0), Z(1)],
         input_encoding=input_circuit,
         output_encoding=output_circuit,
     )
@@ -352,7 +351,6 @@ place in the layer.
             coefficients={"h": {(0.0, 1.0): 1.0}},
             dt=0.05,
         ),
-        observables=[Z(0)],
     )
 
     reservoir = QuantumReservoir(
@@ -389,7 +387,6 @@ place in the layer.
             total_time=duration,
             dt=0.05,
         ),
-        observables=[Z(0) * Z(1)],
     )
 
     reservoir = QuantumReservoir(

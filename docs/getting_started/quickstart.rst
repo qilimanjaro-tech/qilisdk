@@ -30,7 +30,7 @@ Build a 2-qubit circuit, sample it, and inspect measurement counts:
     backend = QiliSim()
     results = backend.execute(propagation, Readout().with_sampling(nshots=500))
 
-    print("Counts:", results.probabilities)
+    print("Counts:", results.get_probabilities())
 
 Analog Evolution Example
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

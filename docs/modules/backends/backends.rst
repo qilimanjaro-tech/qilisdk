@@ -34,9 +34,10 @@ along with readout specifications:
     from qilisdk.backends import QiliSim
     from qilisdk.functionals import DigitalPropagation
     from qilisdk.readout import Readout
+    from qilisdk.digital import Circuit
 
-    # ... build your circuit and DigitalPropagation functional ...
-    results = QiliSim().execute(propagation, Readout().with_sampling(nshots=1000))
+    circuit = Circuit(2)
+    results = QiliSim().execute(DigitalPropagation(circuit), Readout().with_sampling(nshots=1000))
     print(results)
 
 Architecture Overview
@@ -177,7 +178,7 @@ There is no need to install QiliSim separately, as it is included with the core 
     # Execute with the QiliSim backend
     qilisim_backend = QiliSim()
     result = qilisim_backend.execute(functional, Readout().with_sampling(nshots=500))
-    print(result.samples)
+    print(result.get_samples())
 
 CUDA Backend
 ------------
@@ -236,7 +237,7 @@ commodity hardware before moving to accelerated machines.
     # Execute with the chosen sampling method (GPU if available)
     cuda_backend = CudaBackend(sampling_method=CudaSamplingMethod.STATE_VECTOR)
     result = cuda_backend.execute(functional, Readout().with_sampling(nshots=500))
-    print(result.samples)
+    print(result.get_samples())
 
 **Output**
 
