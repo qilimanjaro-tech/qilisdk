@@ -20,6 +20,7 @@ from typing import Any, Callable, Generic, TypeVar, cast, overload
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_serializer, field_validator
 
+from qilisdk.core.result import Result
 from qilisdk.experiments import (
     RabiExperiment,
     RabiExperimentResult,
@@ -31,22 +32,29 @@ from qilisdk.experiments import (
     TwoTonesExperimentResult,
 )
 from qilisdk.functionals import (
-    Sampling,
-    SamplingResult,
-    TimeEvolution,
-    TimeEvolutionResult,
+    AnalogEvolution,
+    DigitalPropagation,
+    FunctionalResult,
+    QuantumReservoir,
     VariationalProgram,
     VariationalProgramResult,
 )
-from qilisdk.functionals.functional_result import FunctionalResult
+from qilisdk.readout import Readout
 from qilisdk.utils.serialization import deserialize, serialize
 
 
 class SpeQtrumModel(BaseModel):
+    """Base Pydantic model for all SpeQtrum API data structures.
+
+    Configures alias resolution and arbitrary-type support used throughout the
+    SpeQtrum payload and response models.
+    """
+
     model_config = ConfigDict(validate_by_name=True, validate_by_alias=True, arbitrary_types_allowed=True)
 
 
-class LoginPayload(BaseModel): ...
+class LoginPayload(BaseModel):
+    """Placeholder model for the login request payload."""
 
 
 class Token(SpeQtrumModel):
@@ -69,7 +77,7 @@ class Token(SpeQtrumModel):
 
 
 class DeviceStatus(str, Enum):
-    """Device status typing for posting"""
+    """Enumeration of possible device statuses reported by the SpeQtrum API."""
 
     ONLINE = "online"
     MAINTENANCE = "maintenance"
@@ -77,7 +85,7 @@ class DeviceStatus(str, Enum):
 
 
 class DeviceType(str, Enum):
-    """Device type"""
+    """Enumeration of hardware device types available in SpeQtrum."""
 
     QPU_ANALOG = "qpu.analog"
     QPU_DIGITAL = "qpu.digital"
@@ -85,6 +93,8 @@ class DeviceType(str, Enum):
 
 
 class Device(SpeQtrumModel):
+    """Description of a quantum device registered in SpeQtrum."""
+
     code: str = Field(...)
     nqubits: int = Field(...)
     name: str = Field(...)
@@ -94,8 +104,11 @@ class Device(SpeQtrumModel):
 
 
 class ExecuteType(str, Enum):
-    SAMPLING = "sampling"
-    TIME_EVOLUTION = "time_evolution"
+    """Discriminator for the type of functional or experiment being executed."""
+
+    DIGITAL_PROPAGATION = "digital_propagation"
+    ANALOG_EVOLUTION = "analog_evolution"
+    QUANTUM_RESERVOIR = "quantum_reservoir"
     VARIATIONAL_PROGRAM = "variational_program"
     RABI_EXPERIMENT = "rabi_experiment"
     T1_EXPERIMENT = "t1_experiment"
@@ -103,36 +116,92 @@ class ExecuteType(str, Enum):
     TWO_TONES_EXPERIMENT = "two_tones_experiment"
 
 
-class SamplingPayload(SpeQtrumModel):
-    sampling: Sampling = Field(...)
+class DigitalPropagationPayload(SpeQtrumModel):
+    """Payload model wrapping a ``DigitalPropagation`` and its readout methods for API submission."""
 
-    @field_serializer("sampling")
-    def _serialize_sampling(self, sampling: Sampling, _info):
-        return serialize(sampling)
+    digital_propagation: DigitalPropagation = Field(...)
+    readout: Readout = Field(...)
 
-    @field_validator("sampling", mode="before")
+    @field_serializer("digital_propagation")
+    def _serialize_sampling(self, digital_propagation: DigitalPropagation, _info):
+        return serialize(digital_propagation)
+
+    @field_validator("digital_propagation", mode="before")
     def _load_sampling(cls, v):
         if isinstance(v, str):
-            return deserialize(v, Sampling)
+            return deserialize(v, DigitalPropagation)
+        return v
+
+    @field_serializer("readout")
+    def _serialize_readout(self, readout: Readout, _info):
+        return serialize(readout)
+
+    @field_validator("readout", mode="before")
+    def _load_readout(cls, v):
+        if isinstance(v, str):
+            return deserialize(v, Readout)
         return v
 
 
-class TimeEvolutionPayload(SpeQtrumModel):
-    time_evolution: TimeEvolution = Field(...)
+class AnalogEvolutionPayload(SpeQtrumModel):
+    """Payload model wrapping an ``AnalogEvolution`` and its readout methods for API submission."""
 
-    @field_serializer("time_evolution")
-    def _serialize_time_evolution(self, time_evolution: TimeEvolution, _info):
-        return serialize(time_evolution)
+    analog_evolution: AnalogEvolution = Field(...)
+    readout: Readout = Field(...)
 
-    @field_validator("time_evolution", mode="before")
+    @field_serializer("analog_evolution")
+    def _serialize_time_evolution(self, analog_evolution: AnalogEvolution, _info):
+        return serialize(analog_evolution)
+
+    @field_validator("analog_evolution", mode="before")
     def _load_time_evolution(cls, v):
         if isinstance(v, str):
-            return deserialize(v, TimeEvolution)
+            return deserialize(v, AnalogEvolution)
+        return v
+
+    @field_serializer("readout")
+    def _serialize_readout(self, readout: Readout, _info):
+        return serialize(readout)
+
+    @field_validator("readout", mode="before")
+    def _load_readout(cls, v):
+        if isinstance(v, str):
+            return deserialize(v, Readout)
+        return v
+
+
+class QuantumReservoirPayload(SpeQtrumModel):
+    """Payload model wrapping a ``QuantumReservoir`` and its readout methods for API submission."""
+
+    quantum_reservoir: QuantumReservoir = Field(...)
+    readout: Readout = Field(...)
+
+    @field_serializer("quantum_reservoir")
+    def _serialize_time_evolution(self, quantum_reservoir: QuantumReservoir, _info):
+        return serialize(quantum_reservoir)
+
+    @field_validator("quantum_reservoir", mode="before")
+    def _load_time_evolution(cls, v):
+        if isinstance(v, str):
+            return deserialize(v, AnalogEvolution)
+        return v
+
+    @field_serializer("readout")
+    def _serialize_readout(self, readout: Readout, _info):
+        return serialize(readout)
+
+    @field_validator("readout", mode="before")
+    def _load_readout(cls, v):
+        if isinstance(v, str):
+            return deserialize(v, Readout)
         return v
 
 
 class VariationalProgramPayload(SpeQtrumModel):
+    """Payload model wrapping a ``VariationalProgram`` and its readout methods for API submission."""
+
     variational_program: VariationalProgram = Field(...)
+    readout: Readout = Field(...)
 
     @field_serializer("variational_program")
     def _serialize_variational_program(self, variational_program: VariationalProgram, _info):
@@ -144,8 +213,20 @@ class VariationalProgramPayload(SpeQtrumModel):
             return deserialize(v, VariationalProgram)
         return v
 
+    @field_serializer("readout")
+    def _serialize_readout(self, readout: Readout, _info):
+        return serialize(readout)
+
+    @field_validator("readout", mode="before")
+    def _load_readout(cls, v):
+        if isinstance(v, str):
+            return deserialize(v, Readout)
+        return v
+
 
 class RabiExperimentPayload(SpeQtrumModel):
+    """Payload model wrapping a ``RabiExperiment`` for API submission."""
+
     rabi_experiment: RabiExperiment = Field(...)
 
     @field_serializer("rabi_experiment")
@@ -160,6 +241,8 @@ class RabiExperimentPayload(SpeQtrumModel):
 
 
 class T1ExperimentPayload(SpeQtrumModel):
+    """Payload model wrapping a ``T1Experiment`` for API submission."""
+
     t1_experiment: T1Experiment = Field(...)
 
     @field_serializer("t1_experiment")
@@ -174,6 +257,8 @@ class T1ExperimentPayload(SpeQtrumModel):
 
 
 class T2ExperimentPayload(SpeQtrumModel):
+    """Payload model wrapping a ``T2Experiment`` for API submission."""
+
     t2_experiment: T2Experiment = Field(...)
 
     @field_serializer("t2_experiment")
@@ -188,6 +273,8 @@ class T2ExperimentPayload(SpeQtrumModel):
 
 
 class TwoTonesExperimentPayload(SpeQtrumModel):
+    """Payload model wrapping a ``TwoTonesExperiment`` for API submission."""
+
     two_tones_experiment: TwoTonesExperiment = Field(...)
 
     @field_serializer("two_tones_experiment")
@@ -202,9 +289,16 @@ class TwoTonesExperimentPayload(SpeQtrumModel):
 
 
 class ExecutePayload(SpeQtrumModel):
+    """Top-level execution payload sent to the SpeQtrum ``/execute`` endpoint.
+
+    Exactly one of the optional payload fields should be populated, matching
+    the discriminator stored in ``type``.
+    """
+
     type: ExecuteType = Field(...)
-    sampling_payload: SamplingPayload | None = None
-    time_evolution_payload: TimeEvolutionPayload | None = None
+    digital_propagation_payload: DigitalPropagationPayload | None = None
+    analog_evolution_payload: AnalogEvolutionPayload | None = None
+    quantum_reservoir_payload: QuantumReservoirPayload | None = None
     variational_program_payload: VariationalProgramPayload | None = None
     rabi_experiment_payload: RabiExperimentPayload | None = None
     t1_experiment_payload: T1ExperimentPayload | None = None
@@ -213,33 +307,29 @@ class ExecutePayload(SpeQtrumModel):
 
 
 class ExecuteResult(SpeQtrumModel):
+    """Deserialized execution result returned by the SpeQtrum API.
+
+    The ``type`` discriminator indicates which result field is populated.
+    Use the corresponding accessor (e.g. ``functional_result``,
+    ``variational_program_result``) to retrieve the typed payload.
+    """
+
     type: ExecuteType = Field(...)
-    sampling_result: SamplingResult | None = None
-    time_evolution_result: TimeEvolutionResult | None = None
+    functional_result: FunctionalResult | None = None
     variational_program_result: VariationalProgramResult | None = None
     rabi_experiment_result: RabiExperimentResult | None = None
     t1_experiment_result: T1ExperimentResult | None = None
     t2_experiment_result: T2ExperimentResult | None = None
     two_tones_experiment_result: TwoTonesExperimentResult | None = None
 
-    @field_serializer("sampling_result")
-    def _serialize_sampling_result(self, sampling_result: SamplingResult, _info):
-        return serialize(sampling_result) if sampling_result is not None else None
+    @field_serializer("functional_result")
+    def _serialize_sampling_result(self, functional_result: FunctionalResult, _info):
+        return serialize(functional_result) if functional_result is not None else None
 
-    @field_validator("sampling_result", mode="before")
+    @field_validator("functional_result", mode="before")
     def _load_sampling_result(cls, v):
         if isinstance(v, str) and v.startswith("!"):
-            return deserialize(v, SamplingResult)
-        return v
-
-    @field_serializer("time_evolution_result")
-    def _serialize_time_evolution_result(self, time_evolution_result: TimeEvolutionResult, _info):
-        return serialize(time_evolution_result) if time_evolution_result is not None else None
-
-    @field_validator("time_evolution_result", mode="before")
-    def _load_time_evolution_result(cls, v):
-        if isinstance(v, str) and v.startswith("!"):
-            return deserialize(v, TimeEvolutionResult)
+            return deserialize(v, FunctionalResult)
         return v
 
     @field_serializer("variational_program_result")
@@ -293,51 +383,112 @@ class ExecuteResult(SpeQtrumModel):
         return v
 
 
-TFunctionalResult_co = TypeVar("TFunctionalResult_co", bound=FunctionalResult, covariant=True)
+TFunctionalResult_co = TypeVar("TFunctionalResult_co", bound=Result, covariant=True)
 TVariationalInnerResult = TypeVar("TVariationalInnerResult", bound=FunctionalResult)
 
 
 ResultExtractor = Callable[[ExecuteResult], TFunctionalResult_co]
+"""Type alias for a callable that extracts a typed result from an ``ExecuteResult``."""
 
 
 # these helpers live outside the models so they can be referenced by default values
-def _require_sampling_result(result: ExecuteResult) -> SamplingResult:
-    if result.sampling_result is None:
-        raise RuntimeError("SpeQtrum did not return a sampling_result for a sampling execution.")
-    return result.sampling_result
+def _require_functional_result(result: ExecuteResult) -> FunctionalResult:
+    """Extract and return the ``FunctionalResult`` from *result*.
 
+    Args:
+        result (ExecuteResult): The execution result to inspect.
 
-def _require_time_evolution_result(result: ExecuteResult) -> TimeEvolutionResult:
-    if result.time_evolution_result is None:
-        raise RuntimeError("SpeQtrum did not return a time_evolution_result for a time evolution execution.")
-    return result.time_evolution_result
+    Returns:
+        FunctionalResult: The contained functional result.
+
+    Raises:
+        RuntimeError: If the ``functional_result`` field is ``None``.
+    """
+    if result.functional_result is None:
+        raise RuntimeError("SpeQtrum did not return a functional_result for the execution.")
+    return result.functional_result
 
 
 def _require_variational_program_result(result: ExecuteResult) -> VariationalProgramResult:
+    """Extract and return the ``VariationalProgramResult`` from *result*.
+
+    Args:
+        result (ExecuteResult): The execution result to inspect.
+
+    Returns:
+        VariationalProgramResult: The contained variational program result.
+
+    Raises:
+        RuntimeError: If the ``variational_program_result`` field is ``None``.
+    """
     if result.variational_program_result is None:
         raise RuntimeError("SpeQtrum did not return a variational_program_result for a variational program execution.")
     return result.variational_program_result
 
 
 def _require_rabi_experiment_result(result: ExecuteResult) -> RabiExperimentResult:
+    """Extract and return the ``RabiExperimentResult`` from *result*.
+
+    Args:
+        result (ExecuteResult): The execution result to inspect.
+
+    Returns:
+        RabiExperimentResult: The contained Rabi experiment result.
+
+    Raises:
+        RuntimeError: If the ``rabi_experiment_result`` field is ``None``.
+    """
     if result.rabi_experiment_result is None:
         raise RuntimeError("SpeQtrum did not return a rabi_experiment_result for a Rabi experiment execution.")
     return result.rabi_experiment_result
 
 
 def _require_t1_experiment_result(result: ExecuteResult) -> T1ExperimentResult:
+    """Extract and return the ``T1ExperimentResult`` from *result*.
+
+    Args:
+        result (ExecuteResult): The execution result to inspect.
+
+    Returns:
+        T1ExperimentResult: The contained T1 experiment result.
+
+    Raises:
+        RuntimeError: If the ``t1_experiment_result`` field is ``None``.
+    """
     if result.t1_experiment_result is None:
         raise RuntimeError("SpeQtrum did not return a t1_experiment_result for a T1 experiment execution.")
     return result.t1_experiment_result
 
 
 def _require_t2_experiment_result(result: ExecuteResult) -> T2ExperimentResult:
+    """Extract and return the ``T2ExperimentResult`` from *result*.
+
+    Args:
+        result (ExecuteResult): The execution result to inspect.
+
+    Returns:
+        T2ExperimentResult: The contained T2 experiment result.
+
+    Raises:
+        RuntimeError: If the ``t2_experiment_result`` field is ``None``.
+    """
     if result.t2_experiment_result is None:
         raise RuntimeError("SpeQtrum did not return a t2_experiment_result for a T2 experiment execution.")
     return result.t2_experiment_result
 
 
 def _require_two_tones_experiment_result(result: ExecuteResult) -> TwoTonesExperimentResult:
+    """Extract and return the ``TwoTonesExperimentResult`` from *result*.
+
+    Args:
+        result (ExecuteResult): The execution result to inspect.
+
+    Returns:
+        TwoTonesExperimentResult: The contained Two-Tones experiment result.
+
+    Raises:
+        RuntimeError: If the ``two_tones_experiment_result`` field is ``None``.
+    """
     if result.two_tones_experiment_result is None:
         raise RuntimeError(
             "SpeQtrum did not return a two_tones_experiment_result for a Two-Tones experiment execution."
@@ -348,6 +499,19 @@ def _require_two_tones_experiment_result(result: ExecuteResult) -> TwoTonesExper
 def _require_variational_program_result_typed(
     inner_result_type: type[TVariationalInnerResult],
 ) -> ResultExtractor[VariationalProgramResult[TVariationalInnerResult]]:
+    """Build a ``ResultExtractor`` that validates the inner result type of a variational program.
+
+    Args:
+        inner_result_type (type[TVariationalInnerResult]): Expected type of
+            the ``optimal_execution_results`` within the
+            ``VariationalProgramResult``.
+
+    Returns:
+        ResultExtractor[VariationalProgramResult[TVariationalInnerResult]]:
+        An extractor callable that raises ``RuntimeError`` when the inner
+        result type does not match.
+    """
+
     def _extractor(result: ExecuteResult) -> VariationalProgramResult[TVariationalInnerResult]:
         variational_result = _require_variational_program_result(result)
         optimal_results = variational_result.optimal_execution_results
@@ -370,12 +534,17 @@ class JobHandle(SpeQtrumModel, Generic[TFunctionalResult_co]):
     extractor: ResultExtractor[TFunctionalResult_co] = Field(repr=False, exclude=True)
 
     @classmethod
-    def sampling(cls: type[JobHandle[SamplingResult]], job_id: int) -> JobHandle[SamplingResult]:
-        return cls(id=job_id, execute_type=ExecuteType.SAMPLING, extractor=_require_sampling_result)
+    def functional(cls: type[JobHandle[FunctionalResult]], job_id: int) -> JobHandle[FunctionalResult]:
+        """Create a handle for a ``DigitalPropagation`` or ``AnalogEvolution`` job.
 
-    @classmethod
-    def time_evolution(cls: type[JobHandle[TimeEvolutionResult]], job_id: int) -> JobHandle[TimeEvolutionResult]:
-        return cls(id=job_id, execute_type=ExecuteType.TIME_EVOLUTION, extractor=_require_time_evolution_result)
+        Args:
+            job_id (int): Numeric identifier returned by the SpeQtrum service.
+
+        Returns:
+            JobHandle[FunctionalResult]: A handle whose result type is
+            ``FunctionalResult``.
+        """
+        return cls(id=job_id, execute_type=ExecuteType.DIGITAL_PROPAGATION, extractor=_require_functional_result)
 
     @overload
     @classmethod
@@ -418,20 +587,56 @@ class JobHandle(SpeQtrumModel, Generic[TFunctionalResult_co]):
 
     @classmethod
     def rabi_experiment(cls: type[JobHandle[RabiExperimentResult]], job_id: int) -> JobHandle[RabiExperimentResult]:
+        """Create a handle for a Rabi experiment job.
+
+        Args:
+            job_id (int): Numeric identifier returned by the SpeQtrum service.
+
+        Returns:
+            JobHandle[RabiExperimentResult]: A handle whose result type is
+            ``RabiExperimentResult``.
+        """
         return cls(id=job_id, execute_type=ExecuteType.RABI_EXPERIMENT, extractor=_require_rabi_experiment_result)
 
     @classmethod
     def t1_experiment(cls: type[JobHandle[T1ExperimentResult]], job_id: int) -> JobHandle[T1ExperimentResult]:
+        """Create a handle for a T1 experiment job.
+
+        Args:
+            job_id (int): Numeric identifier returned by the SpeQtrum service.
+
+        Returns:
+            JobHandle[T1ExperimentResult]: A handle whose result type is
+            ``T1ExperimentResult``.
+        """
         return cls(id=job_id, execute_type=ExecuteType.T1_EXPERIMENT, extractor=_require_t1_experiment_result)
 
     @classmethod
     def t2_experiment(cls: type[JobHandle[T2ExperimentResult]], job_id: int) -> JobHandle[T2ExperimentResult]:
+        """Create a handle for a T2 experiment job.
+
+        Args:
+            job_id (int): Numeric identifier returned by the SpeQtrum service.
+
+        Returns:
+            JobHandle[T2ExperimentResult]: A handle whose result type is
+            ``T2ExperimentResult``.
+        """
         return cls(id=job_id, execute_type=ExecuteType.T2_EXPERIMENT, extractor=_require_t2_experiment_result)
 
     @classmethod
     def two_tones_experiment(
         cls: type[JobHandle[TwoTonesExperimentResult]], job_id: int
     ) -> JobHandle[TwoTonesExperimentResult]:
+        """Create a handle for a Two-Tones experiment job.
+
+        Args:
+            job_id (int): Numeric identifier returned by the SpeQtrum service.
+
+        Returns:
+            JobHandle[TwoTonesExperimentResult]: A handle whose result type is
+            ``TwoTonesExperimentResult``.
+        """
         return cls(
             id=job_id,
             execute_type=ExecuteType.TWO_TONES_EXPERIMENT,
@@ -458,7 +663,7 @@ class JobHandle(SpeQtrumModel, Generic[TFunctionalResult_co]):
 
 
 class JobStatus(str, Enum):
-    "Job has not been submitted to the Lab api"
+    """Enumeration of possible job lifecycle states."""
 
     PENDING = "pending"
     "Job has been queued but not yet validated"
@@ -478,6 +683,8 @@ class JobStatus(str, Enum):
 
 
 class JobType(str, Enum):
+    """Enumeration of job categories used by the SpeQtrum scheduler."""
+
     DIGITAL = "digital"
     PULSE = "pulse"
     ANALOG = "analog"

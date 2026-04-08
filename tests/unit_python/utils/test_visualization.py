@@ -17,17 +17,20 @@ from unittest.mock import MagicMock
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pytest
 from matplotlib import font_manager as fm
 
 import qilisdk.utils.visualization.circuit_renderers
 import qilisdk.utils.visualization.schedule_renderers
 from qilisdk.analog import Schedule, X, Z
+from qilisdk.core import QTensor
 from qilisdk.digital import CNOT, RX, SWAP, Circuit, Controlled, M
 from qilisdk.digital import X as XGate
 from qilisdk.digital import Y as YGate
 from qilisdk.utils.visualization.circuit_renderers import MatplotlibCircuitRenderer
+from qilisdk.utils.visualization.qtensor_renderers import MatplotlibQTensorRenderer
 from qilisdk.utils.visualization.schedule_renderers import MatplotlibScheduleRenderer
-from qilisdk.utils.visualization.style import CircuitStyle, ScheduleStyle
+from qilisdk.utils.visualization.style import CircuitStyle, QTensorStyle, ScheduleStyle
 
 
 def mock_show():
@@ -217,3 +220,46 @@ def test_layer_stacking(monkeypatch):
     circuit.add(XGate(1))
     circuit.add(CNOT(0, 2))
     renderer.plot()
+
+
+def test_qtensor_draw_runs(monkeypatch):
+    monkeypatch.setattr(qilisdk.utils.visualization.qtensor_renderers.plt, "show", mock_show)
+    monkeypatch.setattr(qilisdk.utils.visualization.qtensor_renderers.plt.Figure, "savefig", mock_save)
+    qobj = QTensor.ket(0)
+    qobj.draw()
+
+
+def test_qtensor_draw_with_filepath_runs(monkeypatch):
+    monkeypatch.setattr(qilisdk.utils.visualization.qtensor_renderers.plt, "show", mock_show)
+    monkeypatch.setattr(qilisdk.utils.visualization.qtensor_renderers.plt.Figure, "savefig", mock_save)
+    qobj = QTensor.ket(0)
+    qobj.draw(filepath="test_output.png")
+
+
+def test_qtensor_draw_with_style_runs(monkeypatch):
+    monkeypatch.setattr(qilisdk.utils.visualization.qtensor_renderers.plt, "show", mock_show)
+    monkeypatch.setattr(qilisdk.utils.visualization.qtensor_renderers.plt.Figure, "savefig", mock_save)
+    qobj = QTensor.ket(0)
+    style = QTensorStyle(title="Custom Title")
+    qobj.draw(filepath="test_output.png", style=style)
+
+
+def test_qtensor_draw_many_qubits_raises():
+    qobj = QTensor.ket(0, 0, 0, 0)  # 4 qubits
+    with pytest.raises(ValueError, match="Drawing is only supported for single-qubit states"):
+        qobj.draw()
+
+
+def test_qtensor_draw_non_ket_raises():
+    qobj = QTensor(np.eye(2))  # Not a ket
+    with pytest.raises(ValueError, match="Drawing is only supported for state vectors"):
+        qobj.draw()
+
+
+def test_qtensor_make_axes_bad_type(monkeypatch):
+    mock_axes = MagicMock()
+    monkeypatch.setattr(
+        qilisdk.utils.visualization.qtensor_renderers.plt, "subplots", lambda *args, **kwargs: (MagicMock(), mock_axes)
+    )
+    with pytest.raises(TypeError, match="Expected axes of type"):
+        MatplotlibQTensorRenderer._make_axes(dpi=100)

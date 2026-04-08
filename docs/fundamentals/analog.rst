@@ -111,7 +111,7 @@ Schedule
 The :class:`~qilisdk.analog.schedule.Schedule` class maps time points to :class:`~qilisdk.analog.hamiltonian.Hamiltonian` coefficients. Coefficients can be numbers, parameters/terms, or callables of time, and you can define them at discrete points or over intervals that are sampled automatically.
 
 Key arguments
-~~~~~~~~~~~~~
+^^^^^^^^^^^^^
 
 - **dt** (float): resolution of time samples. Default is 0.1.
 - **hamiltonians** (dict[str, Hamiltonian]): Map of labels to :class:`~qilisdk.analog.hamiltonian.Hamiltonian` instances.
@@ -130,7 +130,7 @@ Key arguments
 
 
 Example 1: Callable coefficients with interval sampling
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: python
 

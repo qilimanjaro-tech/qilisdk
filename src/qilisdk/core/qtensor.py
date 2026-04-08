@@ -13,6 +13,7 @@
 # limitations under the License.
 from __future__ import annotations
 
+from copy import copy
 from typing import TYPE_CHECKING, Literal
 
 import numpy as np
@@ -21,6 +22,7 @@ from scipy.sparse import csr_matrix, sparray, spmatrix
 
 from qilisdk.settings import get_settings
 from qilisdk.utils.hashing import hash as qili_hash
+from qilisdk.utils.visualization.style import QTensorStyle
 from qilisdk.yaml import yaml
 
 if TYPE_CHECKING:
@@ -589,6 +591,15 @@ class QTensor:
         mat = csr_matrix(([1.0], ([n], [0])), shape=(N, 1))
         return QTensor(mat)
 
+    def expand(self, nqubits: int) -> QTensor:
+        if self.nqubits == nqubits:
+            return copy(self)
+        if self.nqubits > nqubits:
+            raise ValueError("Can't scale QTensor down, only can scale it up.")
+        added_qubits = nqubits - self.nqubits
+        identity = self.identity(added_qubits)
+        return tensor_prod([self, identity])
+
     def reset_qubits(self, qubits: set[int]) -> QTensor:
         """
         Reset the specified qubits to the |0⟩ state.
@@ -763,6 +774,28 @@ class QTensor:
             state (dict): A dictionary containing the state of the QTensor for deserialization.
         """
         self.__init__(state["data"])
+
+    def draw(self, style: QTensorStyle = QTensorStyle(), filepath: str | None = None) -> None:
+        """
+        Render the QTensor with Matplotlib and optionally save it to a file.
+
+        The circuit is rendered using the provided style configuration. If ``filepath`` is
+        given, the resulting figure is saved to disk (the output format is inferred
+        from the file extension, e.g. ``.png``, ``.pdf``, ``.svg``).
+
+        Args:
+            style (QTensorStyle): Visual style configuration applied to the plot.
+                If not provided, the default :class:`QTensorStyle` is used.
+            filepath (str | None): Destination file path for the rendered figure.
+                If ``None``, the figure is not saved.
+        """
+        from qilisdk.utils.visualization.qtensor_renderers import MatplotlibQTensorRenderer  # noqa: PLC0415
+
+        renderer = MatplotlibQTensorRenderer(self, style=style)
+        renderer.plot()
+        if filepath:
+            renderer.save(filepath)
+        renderer.show()
 
 
 def ket(*state: int) -> QTensor:

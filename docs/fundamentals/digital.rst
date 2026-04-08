@@ -259,7 +259,7 @@ Saving to a file
     circuit.draw(filepath="my_circuit.svg")
 
 Custom styling with :class:`~qilisdk.utils.visualization.style.CircuitStyle`
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Create a style object to control theme, fonts, spacing, DPI, labels, and more. Passing this object to :meth:`~qilisdk.digital.circuit.Circuit.draw` overrides the library defaults for this call.
 You can also change if the order of the draw follows the order they are added in or if it compacts the layers as much as possible by changing the parameter **layout** to *"normal"* (default) or *"compact"* respectively.
@@ -394,11 +394,12 @@ This ansatz can then be used as a circuit. For example, we can execute this ansa
 .. code-block:: python 
 
     from qilisdk.backends import QutipBackend
-    from qilisdk.functionals import Sampling
+    from qilisdk.functionals import DigitalPropagation
+    from qilisdk.readout import Readout
 
     backend = QutipBackend()
 
-    backend.execute(Sampling(ansatz))
+    backend.execute(DigitalPropagation(ansatz), readout=Readout().with_sampling(nshots=1000))
 
 QAOA
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -446,22 +447,24 @@ expectation value of the problem Hamiltonian, one can set up a :class:`~qilisdk.
 .. code-block:: python 
 
     from qilisdk.functionals.variational_program import VariationalProgram
+    from qilisdk.functionals import DigitalPropagation
     from qilisdk.optimizers.scipy_optimizer import SciPyOptimizer
     from qilisdk.cost_functions.observable_cost_function import ObservableCostFunction
+    from qilisdk.readout import Readout
 
-    vqa = VariationalProgram(functional=Sampling(ansatz), 
-                             optimizer=SciPyOptimizer(method="powell", tol=1e-7), 
+    vqa = VariationalProgram(functional=DigitalPropagation(ansatz),
+                             optimizer=SciPyOptimizer(method="powell", tol=1e-7),
                              cost_function=ObservableCostFunction(problem_hamiltonian))
 
     print(f"Running QAOA with {len(ansatz.get_parameters())} parameters...")
     backend = QutipBackend()
-    result = backend.execute(vqa)
+    result = backend.execute(vqa, readout=Readout().with_sampling(nshots=1000))
     print("VQA Result:", result)
 
-TrotterizedTimeEvolution
+TrotterizedSchedule
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-:class:`~qilisdk.digital.ansatz.TrotterizedTimeEvolution` builds a digital circuit that follows a
+:class:`~qilisdk.digital.ansatz.TrotterizedSchedule` builds a digital circuit that follows a
 time-ordered schedule of Hamiltonians. Each schedule slice is evolved using a fixed number of
 Trotter steps, and you may optionally prepend a state-initialization circuit or list of gates.
 
@@ -476,7 +479,7 @@ Configuration options:
 
     from qilisdk.analog.hamiltonian import Z as pauli_z
     from qilisdk.analog.schedule import Schedule
-    from qilisdk.digital.ansatz import TrotterizedTimeEvolution
+    from qilisdk.digital.ansatz import TrotterizedSchedule
 
     hamiltonian = pauli_z(0)
     schedule = Schedule(
@@ -484,7 +487,7 @@ Configuration options:
         dt=0.1,
         total_time=1
     )
-    ansatz = TrotterizedTimeEvolution(
+    ansatz = TrotterizedSchedule(
         schedule=schedule,
         trotter_steps=1,
     )

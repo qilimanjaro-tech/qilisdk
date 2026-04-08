@@ -94,18 +94,18 @@ dev = [
     "loguru-caplog>=0.2.0",
     "pytest-cov>=7.0.0",
     "gcovr>=8.6",
-    "ty>=0.0.20",
+    "ty>=0.0.27",
 ]
 docs = [
     "astroid<3.2",
     "nbsphinx>=0.9.7",
     "pypandoc>=1.15",
-    "sphinx>=8.2.3",
+    "sphinx==8.2.3",
     "sphinx-autoapi>=3.4.0",
     "sphinx-automodapi>=0.20.0",
     "sphinx-design>=0.7.0",
     "sphinx-mdinclude>=0.6.2",
-    "sphinx-multiversion",
+    "sphinx-multiversion>=0.2.4",
     "sphinxawesome-theme>=5.3.2",
 ]
 
@@ -142,7 +142,7 @@ url = "https://urob.github.io/numpy-mkl"
 explicit = true
 
 [build-system]
-requires = ["scikit-build-core", "pybind11"]
+requires = ["scikit-build-core", "pybind11>=2.13,<3"]
 build-backend = "scikit_build_core.build"
 
 [tool.scikit-build.sdist]

@@ -11,20 +11,3 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-import numpy as np
-
-from qilisdk.settings import get_settings
-from qilisdk.yaml import yaml
-
-from .time_evolution_result import TimeEvolutionResult
-
-
-def _complex_dtype() -> np.dtype:
-    """Return the configured complex dtype for reservoir result arrays."""
-    return get_settings().complex_precision.dtype
-
-
-@yaml.register_class
-class QuantumReservoirResult(TimeEvolutionResult):
-    """Container for expectation values and states produced by a reservoir simulation."""

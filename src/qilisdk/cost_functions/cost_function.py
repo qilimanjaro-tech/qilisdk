@@ -13,65 +13,32 @@
 # limitations under the License.
 from __future__ import annotations
 
-from abc import ABC
-from typing import TYPE_CHECKING, Callable, TypeVar, cast, overload
-
-from qilisdk.functionals.functional_result import FunctionalResult
-from qilisdk.functionals.sampling_result import SamplingResult
-from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
+from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from qilisdk.core.types import Number
-
-TResult = TypeVar("TResult", bound=FunctionalResult)
+    from qilisdk.functionals.functional_result import FunctionalResult
 
 
 class CostFunction(ABC):
+    """Abstract base class that maps a ``FunctionalResult`` into a scalar cost.
+
+    Subclasses must implement :meth:`compute_cost` to define how a
+    ``FunctionalResult`` is reduced to a single numeric value. This value is
+    typically consumed by an optimiser inside a
+    :class:`~qilisdk.functionals.variational_program.VariationalProgram`.
     """
-    Base class that maps functional results into scalar costs.
-    """
 
-    def __init__(self) -> None:
-        self._handlers: dict[type[FunctionalResult], Callable[[FunctionalResult], Number]] = {
-            SamplingResult: lambda f: self._compute_cost_sampling(cast("SamplingResult", f)),
-            TimeEvolutionResult: lambda f: self._compute_cost_time_evolution(cast("TimeEvolutionResult", f)),
-        }
-
-    @overload
-    def compute_cost(self, results: SamplingResult) -> Number: ...
-
-    @overload
-    def compute_cost(self, results: TimeEvolutionResult) -> Number: ...
-
-    @overload
-    def compute_cost(self, results: FunctionalResult) -> Number: ...
-
-    def compute_cost(self, results: TResult) -> Number:
-        """
-        Dispatch to the appropriate cost implementation based on the result type.
+    @abstractmethod
+    def compute_cost(self, results: FunctionalResult) -> Number:  # type: ignore[type-arg]
+        """Compute a scalar cost from functional execution results.
 
         Args:
-            results (FunctionalResult): Output of a functional execution.
+            results (FunctionalResult): Output of executing a
+                :class:`~qilisdk.functionals.functional.Functional` (e.g. a
+                ``DigitalPropagation`` or ``AnalogEvolution``).
 
         Returns:
             Number: Scalar cost extracted from the results.
-
-        Raises:
-            NotImplementedError: If the concrete cost function does not support the given result type.
         """
-        try:
-            handler = self._handlers[type(results)]
-        except KeyError as exc:
-            raise NotImplementedError(
-                f"{type(self).__qualname__} does not support {type(results).__qualname__}"
-            ) from exc
-
-        return handler(results)
-
-    def _compute_cost_sampling(self, results: SamplingResult) -> Number:
-        """Compute the cost associated with a :class:`SamplingResult`."""
-        raise NotImplementedError
-
-    def _compute_cost_time_evolution(self, results: TimeEvolutionResult) -> Number:
-        """Compute the cost associated with a :class:`TimeEvolutionResult`."""
-        raise NotImplementedError

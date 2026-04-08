@@ -577,3 +577,39 @@ def test_circuit_no_equality_different_gate_count():
     c2 = Circuit(nqubits=2)
     c1.add(X(0))
     assert c1 != c2
+    
+# --- Parameter Cache Invalidation Tests ---
+
+def test_circuit_set_parameters_clears_gate_matrix_cache():
+    """Circuit.set_parameters must invalidate each gate's cached_property matrix.
+
+    Gate.matrix is a @cached_property. If set_parameters only updates the
+    Parameter value without calling _invalidate_matrix, the stale matrix is
+    returned on the next access.
+    """
+    # Use a name that differs from the gate's slot name ("theta") so the
+    # circuit registers the parameter under the user-supplied label "angle".
+    gate = RX(0, theta=Parameter("angle", np.pi / 4))
+    c = Circuit(nqubits=1)
+    c.add(gate)
+
+    # Access matrix to populate the cached_property.
+    matrix_before = gate.matrix.copy()
+
+    c.set_parameters({"angle": np.pi / 2})
+
+    # Matrix must reflect the new angle, not the cached one.
+    assert not np.allclose(matrix_before, gate.matrix)
+
+
+def test_circuit_set_parameter_values_clears_gate_matrix_cache():
+    """Circuit.set_parameter_values must invalidate each gate's cached matrix."""
+    gate = RX(0, theta=Parameter("angle", np.pi / 4))
+    c = Circuit(nqubits=1)
+    c.add(gate)
+
+    matrix_before = gate.matrix.copy()
+
+    c.set_parameter_values([np.pi / 2])
+
+    assert not np.allclose(matrix_before, gate.matrix)

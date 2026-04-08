@@ -70,6 +70,44 @@ class Style(BaseModel):
         )
 
 
+class QTensorStyle(Style):
+    """All visual parameters controlling the appearance of a QTensor plot."""
+
+    sphere_points: int = Field(
+        default=50, description="Number of points to use when plotting the Bloch sphere surface."
+    )
+    sphere_color: str = Field(default="#1f77b4", description="Color for the Bloch sphere surface (hex or named color).")
+
+    arrow_color: str = Field(default="#1f77b4", description="Color for the state vector arrow (hex or named color).")
+    arrow_length_ratio: float = Field(
+        default=0.1,
+        description="Length of the arrow head as a fraction of the arrow length (e.g. 0.1 means the head is 10% of the total arrow length).",
+    )
+
+    draw_center_circle: bool = Field(
+        default=True,
+        description="Whether to draw a circle around the centre of the Bloch sphere for reference.",
+    )
+    centre_circle_color: str = Field(
+        default="#1f77b4",
+        description="Color for a circle drawn around the centre of the Bloch sphere for reference (hex or named color).",
+    )
+
+    draw_reference_points: bool = Field(
+        default=True,
+        description="Whether to draw reference points (|0⟩, |1⟩, |+⟩, |-⟩, |+i⟩, |-i⟩) on the Bloch sphere for orientation.",
+    )
+    reference_point_distance: float = Field(
+        default=1.2,
+        description="Distance from the origin to place the reference point labels (|0⟩, |1⟩, etc.) on the Bloch sphere.",
+    )
+
+    rotation_style: Literal["azel", "trackball", "sphere", "arcball"] = Field(
+        default="azel",
+        description="Mouse rotation style for 3D plots.",
+    )
+
+
 class CircuitStyle(Style):
     """All visual parameters controlling the appearance of a circuit plot."""
 

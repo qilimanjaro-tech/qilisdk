@@ -12,24 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from .analog_evolution import AnalogEvolution
+from .digital_propagation import DigitalPropagation
+from .functional_result import FunctionalResult
 from .quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
-from .quantum_reservoirs_result import QuantumReservoirResult
-from .sampling import Sampling
-from .sampling_result import SamplingResult
-from .time_evolution import TimeEvolution
-from .time_evolution_result import TimeEvolutionResult
 from .variational_program import VariationalProgram
 from .variational_program_result import VariationalProgramResult
 
 __all__ = [
+    "AnalogEvolution",
+    "DigitalPropagation",
+    "FunctionalResult",
     "QuantumReservoir",
-    "QuantumReservoirResult",
     "ReservoirInput",
     "ReservoirLayer",
-    "Sampling",
-    "SamplingResult",
-    "TimeEvolution",
-    "TimeEvolutionResult",
     "VariationalProgram",
     "VariationalProgramResult",
 ]

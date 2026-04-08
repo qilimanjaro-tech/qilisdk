@@ -24,13 +24,17 @@ from qilisdk.settings import get_settings
 
 if TYPE_CHECKING:
     from qilisdk.core.types import Number
-    from qilisdk.functionals.sampling_result import SamplingResult
-    from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
+    from qilisdk.functionals.functional_result import FunctionalResult  # type: ignore[type-arg]
 
 
 class ModelCostFunction(CostFunction):
-    """
-    Evaluate the cost of functional results with respect to a :class:`~qilisdk.core.model.Model`.
+    """Evaluate the cost of a ``FunctionalResult`` with respect to a :class:`~qilisdk.core.model.Model`.
+
+    The model encodes an objective function (and optional constraints) over
+    binary variables. This cost function maps a ``FunctionalResult`` -- obtained
+    from a ``DigitalPropagation`` or ``AnalogEvolution`` -- onto a scalar by
+    evaluating the model against either the final quantum state or the sampled
+    probability distribution.
 
     Example:
         .. code-block:: python
@@ -46,7 +50,8 @@ class ModelCostFunction(CostFunction):
     """
 
     def __init__(self, model: Model) -> None:
-        """
+        """Initialise a ``ModelCostFunction``.
+
         Args:
             model (Model): Classical model describing objective and constraints.
         """
@@ -55,30 +60,61 @@ class ModelCostFunction(CostFunction):
 
     @property
     def model(self) -> Model:
-        """Return the underlying optimisation model."""
-        return self._model
-
-    def _compute_cost_time_evolution(self, results: TimeEvolutionResult) -> Number:
-        """
-        Compute the expectation value of the model objective using a time-evolution result.
-
-        Evaluates the model on each computational basis state with probability extracted from the final state.
+        """Return the underlying optimisation model.
 
         Returns:
-            Number: Expectation value of the model objective.
+            Model: The :class:`~qilisdk.core.model.Model` instance passed at
+            construction time.
+        """
+        return self._model
+
+    def compute_cost(self, results: FunctionalResult) -> Number:
+        """Compute the cost from a ``FunctionalResult``.
+
+        Uses the final state if available (via ``StateTomography``), otherwise
+        falls back to sampling-based estimation.
+
+        Args:
+            results (FunctionalResult): The result from executing a functional.
+
+        Returns:
+            Number: Cost value computed from the results.
 
         Raises:
-            ValueError: If the final state is not provided in the results.
+            ValueError: If ``results`` contains neither a ``StateTomography``
+                nor a ``Sampling`` readout.
         """
-        if results.final_state is None:
-            raise ValueError(
-                "can't compute cost using Models from time evolution results when the state is not provided."
-            )
+        if results.has_state():
+            return self._compute_from_state(results)
+        if results.has_samples():
+            return self._compute_from_samples(results)
+        raise ValueError("ModelCostFunction requires either a StateTomography or Sampling readout in the results.")
+
+    def _compute_from_state(self, results: FunctionalResult) -> Number:
+        """Compute the cost using the full final quantum state.
+
+        Handles ket, bra, and density-matrix representations. For
+        :class:`~qilisdk.core.model.QUBO` models the Hamiltonian expectation
+        value is computed directly; for general models each computational-basis
+        component is evaluated individually.
+
+        Args:
+            results (FunctionalResult): A result whose ``final_state`` is
+                available.
+
+        Returns:
+            Number: The computed cost value.
+
+        Raises:
+            ValueError: If the final state is neither a ket, bra, nor a valid
+                density matrix.
+        """
+        final_state = results.get_state()
 
         if isinstance(self.model, QUBO):
             ham = self.model.to_hamiltonian()
             total_cost = complex(
-                np.real_if_close(expect_val(QTensor(ham.to_matrix()), results.final_state), tol=get_settings().atol)
+                np.real_if_close(expect_val(QTensor(ham.to_matrix()), final_state), tol=get_settings().atol)
             )
             if abs(total_cost.imag) < get_settings().atol:
                 return total_cost.real
@@ -86,9 +122,9 @@ class ModelCostFunction(CostFunction):
 
         total_cost = complex(0.0)
 
-        if results.final_state.is_density_matrix(tol=1e-5):
-            rho = results.final_state.dense()
-            n = results.final_state.nqubits
+        if final_state.is_density_matrix(tol=1e-5):
+            rho = final_state.dense()
+            n = final_state.nqubits
             for i in range(rho.shape[0]):
                 state = [int(b) for b in f"{i:0{n}b}"]
                 _ket_state = ket(*state)
@@ -105,10 +141,10 @@ class ModelCostFunction(CostFunction):
             return total_cost
 
         dense_state = None
-        if results.final_state.is_ket():
-            dense_state = results.final_state.dense().T[0]
-        elif results.final_state.is_bra():
-            dense_state = results.final_state.dense()[0]
+        if final_state.is_ket():
+            dense_state = final_state.dense().T[0]
+        elif final_state.is_bra():
+            dense_state = final_state.dense()[0]
 
         if dense_state is None:
             raise ValueError("The final state is invalid.")
@@ -126,20 +162,27 @@ class ModelCostFunction(CostFunction):
             return total_cost.real
         return total_cost
 
-    def _compute_cost_sampling(self, results: SamplingResult) -> Number:
-        """
-        Compute the model cost by averaging over sampled bitstrings.
+    def _compute_from_samples(self, results: FunctionalResult) -> Number:
+        """Compute the cost from sampled probability distributions.
 
-        Each sample is mapped onto the model variables and evaluated using ``model.evaluate``.
+        Each bitstring sample is mapped to the model's variables and the
+        model is evaluated; the total cost is the probability-weighted sum
+        of those evaluations.
+
+        Args:
+            results (FunctionalResult): A result whose ``probabilities``
+                are available.
 
         Returns:
-            Number: Average cost of the model objective over all samples.
+            Number: The probability-weighted cost value.
 
         Raises:
-            ValueError: If the number of model variables does not match the sample size.
+            ValueError: If the number of qubits in a sample does not match
+                the number of model variables.
         """
         total_cost = complex(0.0)
-        for sample, prob in results.get_probabilities():
+        probabilities = results.get_probabilities()
+        for sample, prob in probabilities.items():
             bit_configuration = [int(i) for i in sample]
             if len(self.model.variables()) != len(bit_configuration):
                 raise ValueError("Mapping samples to the model's variables is ambiguous.")
@@ -152,4 +195,9 @@ class ModelCostFunction(CostFunction):
         return total_cost
 
     def __repr__(self) -> str:
+        """Return a string representation of this cost function.
+
+        Returns:
+            str: A string of the form ``ModelCostFunction(model=...)``.
+        """
         return f"ModelCostFunction(model={self.model})"

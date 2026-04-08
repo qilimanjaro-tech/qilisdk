@@ -24,13 +24,21 @@ from qilisdk.settings import get_settings
 
 if TYPE_CHECKING:
     from qilisdk.core.types import Number
-    from qilisdk.functionals.sampling_result import SamplingResult
-    from qilisdk.functionals.time_evolution_result import TimeEvolutionResult
+    from qilisdk.functionals.functional_result import FunctionalResult  # type: ignore[type-arg]
 
 
 class ObservableCostFunction(CostFunction):
-    """
-    Compute costs by taking expectation values of observables.
+    """Compute costs by taking the expectation value of a quantum observable.
+
+    The observable can be supplied as a :class:`~qilisdk.core.qtensor.QTensor`,
+    a :class:`~qilisdk.analog.hamiltonian.Hamiltonian`, or a
+    :class:`~qilisdk.analog.hamiltonian.PauliOperator`. It is stored internally
+    as a ``QTensor``.
+
+    When a ``FunctionalResult`` (from a ``DigitalPropagation`` or
+    ``AnalogEvolution``) is passed to :meth:`compute_cost`, the expectation
+    value is computed either exactly from the final state or estimated from
+    sampled probabilities.
 
     Example:
         .. code-block:: python
@@ -42,9 +50,11 @@ class ObservableCostFunction(CostFunction):
     """
 
     def __init__(self, observable: QTensor | Hamiltonian | PauliOperator) -> None:
-        """
+        """Initialise an ``ObservableCostFunction``.
+
         Args:
-            observable (QTensor | Hamiltonian | PauliOperator): Quantum observable whose expectation value defines the cost.
+            observable (QTensor | Hamiltonian | PauliOperator): Quantum
+                observable whose expectation value defines the cost.
 
         Raises:
             ValueError: If the provided observable type is unsupported.
@@ -63,42 +73,74 @@ class ObservableCostFunction(CostFunction):
 
     @property
     def observable(self) -> QTensor:
-        """Return the observable in ``QTensor`` form."""
+        """Return the observable in ``QTensor`` form.
+
+        Returns:
+            QTensor: The matrix representation of the observable.
+        """
         return self._observable
 
-    def _compute_cost_time_evolution(self, results: TimeEvolutionResult) -> Number:
-        """
+    def compute_cost(self, results: FunctionalResult) -> Number:
+        """Compute the cost from a ``FunctionalResult``.
+
+        Uses the final state if available (exact expectation value via
+        ``StateTomography``), otherwise falls back to sampling-based estimation.
+
+        Args:
+            results (FunctionalResult): The result from executing a functional.
+
         Returns:
-            Number: the expectation value of ``observable`` given a final quantum state.
+            Number: The expectation value of the observable.
 
         Raises:
-            ValueError: If the final state is not provided in the results.
-
+            ValueError: If ``results`` contains neither a ``StateTomography``
+                nor a ``Sampling`` readout.
         """
-        if results.final_state is None:
-            raise ValueError(
-                "can't compute cost using Observables from time evolution results when the state is not provided."
-            )
-        total_cost = complex(
-            np.real_if_close(expect_val(self._observable, results.final_state), tol=get_settings().atol)
-        )
+        if results.has_state():
+            return self._compute_from_state(results)
+        if results.has_samples():
+            return self._compute_from_samples(results)
+        raise ValueError("ObservableCostFunction requires either a StateTomography or Sampling readout in the results.")
+
+    def _compute_from_state(self, results: FunctionalResult) -> Number:
+        """Compute the exact expectation value from the final quantum state.
+
+        Args:
+            results (FunctionalResult): A result whose ``final_state`` is
+                available.
+
+        Returns:
+            Number: The expectation value ``<psi|O|psi>`` (or ``Tr(rho O)``
+            for mixed states).
+        """
+        final_state = results.get_state()
+        total_cost = complex(np.real_if_close(expect_val(self._observable, final_state), tol=get_settings().atol))
         if abs(total_cost.imag) < get_settings().atol:
             return total_cost.real
         return total_cost
 
-    def _compute_cost_sampling(self, results: SamplingResult) -> Number:
-        """
-        Estimate the observable expectation value using measured bitstring probabilities.
+    def _compute_from_samples(self, results: FunctionalResult) -> Number:
+        """Estimate the expectation value from sampled probability distributions.
+
+        Each bitstring sample is converted to a computational-basis ket and the
+        observable is evaluated against it; the total is a probability-weighted
+        sum of those evaluations.
+
+        Args:
+            results (FunctionalResult): A result whose ``probabilities``
+                are available.
 
         Returns:
-            Number: the expectation value of ``observable`` estimated from sampled bitstrings.
+            Number: The probability-weighted expectation value.
 
         Raises:
-            ValueError: If the number of qubits in the observable does not match the sample size
+            ValueError: If the number of qubits in a sample does not match the
+                number of qubits of the observable.
         """
         total_cost = complex(0.0)
         nqubits = self._observable.nqubits
-        for sample, prob in results.get_probabilities():
+        probabilities = results.get_probabilities()
+        for sample, prob in probabilities.items():
             state = tensor_prod([ket(int(i)) for i in sample])
             if nqubits != state.nqubits:
                 raise ValueError(
@@ -112,4 +154,9 @@ class ObservableCostFunction(CostFunction):
         return total_cost
 
     def __repr__(self) -> str:
+        """Return a string representation of this cost function.
+
+        Returns:
+            str: A string of the form ``ObservableCostFunction(observable=...)``.
+        """
         return f"ObservableCostFunction(observable={self._observable})"

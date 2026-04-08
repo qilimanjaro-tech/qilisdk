@@ -16,6 +16,7 @@
 
 #include <gtest/gtest.h>
 #include "../../../src/qilisdk_cpp/backends/qilisim/analog/time_evolution.h"
+#include "../../../src/qilisdk_cpp/backends/qilisim/utils/matrix_utils.h"
 
 namespace {
 
@@ -78,7 +79,31 @@ struct TimeEvolutionOutputs {
 
 TimeEvolutionOutputs run_time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, NoiseModelCpp& noise_model, const std::vector<SparseMatrix>& observables, QiliSimConfig& config) {
     TimeEvolutionOutputs out;
-    time_evolution(rho_0, hamiltonians, parameters_list, step_list, noise_model, observables, config, out.rho_t, out.intermediate_rhos, out.expectation_values, out.intermediate_expectation_values);
+    time_evolution(rho_0, hamiltonians, parameters_list, step_list, noise_model, config, out.rho_t, out.intermediate_rhos);
+
+    for (const auto& O : observables) {
+        if (out.rho_t.cols() == 1) {
+            out.expectation_values.push_back(std::real(dot(out.rho_t, O * out.rho_t)));
+        } else {
+            out.expectation_values.push_back(std::real(dot(O, out.rho_t)));
+        }
+    }
+
+
+    if (config.get_store_intermediate_results()) {
+        for (const auto& rho_intermediate : out.intermediate_rhos) {
+            std::vector<double> step_expectation_values;
+            for (const auto& O : observables) {
+                if (rho_intermediate.cols() == 1) {
+                    DenseMatrix rho_dense(rho_intermediate);
+                    step_expectation_values.push_back(std::real(dot(rho_dense, O * rho_dense)));
+                } else {
+                    step_expectation_values.push_back(std::real(dot(O, rho_intermediate)));
+                }
+            }
+            out.intermediate_expectation_values.push_back(step_expectation_values);
+        }
+    }
     return out;
 }
 
@@ -91,7 +116,25 @@ struct MatrixFreeOutputs {
 
 MatrixFreeOutputs run_time_evolution_mf(SparseMatrix rho_0, const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, NoiseModelCpp& noise_model, const std::vector<MatrixFreeHamiltonian>& observables, QiliSimConfig& config) {
     MatrixFreeOutputs out;
-    time_evolution_matrix_free(rho_0, hamiltonians, parameters_list, step_list, noise_model, observables, config, out.rho_t, out.intermediate_rhos, out.expectation_values, out.intermediate_expectation_values);
+    time_evolution_matrix_free(rho_0, hamiltonians, parameters_list, step_list, noise_model, config, out.rho_t, out.intermediate_rhos);
+
+    // Apply the operators using the Born rule
+    for (const auto& O : observables) {
+        out.expectation_values.push_back(O.expectation_value(out.rho_t));
+    }
+
+    // If we have intermediates, process them too
+    if (config.get_store_intermediate_results()) {
+        out.intermediate_expectation_values.resize(out.intermediate_rhos.size());
+        for (size_t step = 0; step < out.intermediate_rhos.size(); ++step) {
+            const auto& rho_intermediate = out.intermediate_rhos[step];
+            std::vector<double> step_expectation_values(observables.size());
+            for (size_t i = 0; i < observables.size(); ++i) {
+                step_expectation_values[i] = observables[i].expectation_value(rho_intermediate);
+            }
+            out.intermediate_expectation_values[step] = step_expectation_values;
+        }
+    }
     return out;
 }
 

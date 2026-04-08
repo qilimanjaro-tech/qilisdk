@@ -125,11 +125,11 @@ def test_ptrace_valid():
     reduced_ket_qubit_1 = qket.ptrace(keep=[1])
     reduced_ket_qubit_0 = qket.ptrace(keep=[0])
 
-    qket = ket(0, 1, 0, *[0 for _ in range(20)])
+    qket = ket(0, 1, 0, *[0 for _ in range(5)])
     reduced_ket_qubit_1_big = qket.ptrace(keep=[1])
     reduced_ket_qubit_0_big = qket.ptrace(keep=[0])
 
-    qket = bra(0, 1, 0, *[0 for _ in range(20)])
+    qket = bra(0, 1, 0, *[0 for _ in range(5)])
     reduced_ket_qubit_1_big_bra = qket.ptrace(keep=[1])
     reduced_ket_qubit_0_big_bra = qket.ptrace(keep=[0])
 

@@ -17,14 +17,14 @@ from pathlib import Path
 import pytest
 
 import qilisdk.utils.serialization
-from qilisdk.analog.hamiltonian import Hamiltonian, PauliY, X, Y, Z
+from qilisdk.analog.hamiltonian import Hamiltonian, PauliY, X, Z
 from qilisdk.analog.schedule import Schedule
 from qilisdk.core.qtensor import ket, tensor_prod
-from qilisdk.functionals.time_evolution import TimeEvolution
+from qilisdk.functionals.analog_evolution import AnalogEvolution
 from qilisdk.utils.serialization import DeserializationError, deserialize, deserialize_from, serialize, serialize_to
 
 
-def test_time_evolution_algorithm_serialization():
+def test_analog_evolution_algorithm_serialization():
     T = 100
     dt = 1
 
@@ -44,21 +44,20 @@ def test_time_evolution_algorithm_serialization():
 
     state = tensor_prod([(ket(0) + ket(1)).unit() for _ in range(nqubits)]).unit()
 
-    time_evolution = TimeEvolution(
+    analog_evolution = AnalogEvolution(
         schedule=schedule,
         initial_state=state,
-        observables=[Z(0), X(0), Y(0), Z(nqubits - 1), X(nqubits - 1), Y(nqubits - 1)],
     )
 
-    serialized_time_evolution = serialize(time_evolution)
-    deserialized_time_evolution = deserialize(serialized_time_evolution, TimeEvolution)
-    assert isinstance(deserialized_time_evolution, TimeEvolution)
+    serialized_analog_evolution = serialize(analog_evolution)
+    deserialized_analog_evolution = deserialize(serialized_analog_evolution, AnalogEvolution)
+    assert isinstance(deserialized_analog_evolution, AnalogEvolution)
 
-    serialize_to(time_evolution, "time_evolution.yml")
-    deserialized_from_time_evolution = deserialize_from("time_evolution.yml", TimeEvolution)
-    assert isinstance(deserialized_from_time_evolution, TimeEvolution)
+    serialize_to(analog_evolution, "analog_evolution.yml")
+    deserialized_from_analog_evolution = deserialize_from("analog_evolution.yml", AnalogEvolution)
+    assert isinstance(deserialized_from_analog_evolution, AnalogEvolution)
 
-    Path("time_evolution.yml").unlink()
+    Path("analog_evolution.yml").unlink()
 
 
 def test_deserialization_with_wrong_yaml_raises_error():
