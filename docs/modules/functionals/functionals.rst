@@ -13,8 +13,8 @@ Functionals
 The :mod:`~qilisdk.functionals` module provides high-level quantum execution procedures by combining tools from the
 :mod:`~qilisdk.analog`, :mod:`~qilisdk.digital`, and :mod:`~qilisdk.core` modules. Currently, it includes the following execution functionals:
 
-- :class:`~qilisdk.functionals.sampling.Sampling` — Executes repeated sampling of a digital quantum circuit.
-- :class:`~qilisdk.functionals.time_evolution.TimeEvolution` — Simulates analog time evolution of one or more Hamiltonians according to a time-dependent schedule.
+- :class:`~qilisdk.functionals.digital_propagation.DigitalPropagation` — Propagates a digital quantum circuit through the backend.
+- :class:`~qilisdk.functionals.analog_evolution.AnalogEvolution` — Simulates analog time evolution of one or more Hamiltonians according to a time-dependent schedule.
 - :class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir` — Runs a quantum reservoir pipeline (pre-processing, reservoir dynamics, post-processing) across multiple input layers.
 
 Moreover, it provides more complex functionals that are used to execute more complex algorithms:
@@ -25,68 +25,65 @@ Architecture Overview
 ---------------------
 
 Every functional conforms to the abstract :class:`~qilisdk.functionals.functional.Functional` interface. Primitive
-functionals such as :class:`~qilisdk.functionals.sampling.Sampling` and
-:class:`~qilisdk.functionals.time_evolution.TimeEvolution` also inherit from
+functionals such as :class:`~qilisdk.functionals.digital_propagation.DigitalPropagation` and
+:class:`~qilisdk.functionals.analog_evolution.AnalogEvolution` also inherit from
 :class:`~qilisdk.functionals.functional.PrimitiveFunctional`, which mixes in the
 :class:`~qilisdk.core.parameterizable.Parameterizable` contract. This lets backends query and update symbolic
 parameters consistently before execution.
 
-Each functional advertises a matching :attr:`result_type` pointing to a concrete
-:class:`~qilisdk.functionals.functional_result.FunctionalResult` subclass. When you call
-:meth:`~qilisdk.backends.backend.Backend.execute`, backends dispatch by functional type
-(:class:`Sampling <qilisdk.functionals.sampling.Sampling>`,
-:class:`TimeEvolution <qilisdk.functionals.time_evolution.TimeEvolution>`, etc.) and return
-the corresponding result object.
+Readout is decoupled from functionals: measurement details (shots, observables, state tomography) are specified via
+:mod:`~qilisdk.readout` objects passed to the backend's :meth:`~qilisdk.backends.backend.Backend.execute` method.
+All primitive functionals return a unified :class:`~qilisdk.functionals.functional_result.FunctionalResult`.
 
 Result Objects
 --------------
 
-* :class:`~qilisdk.functionals.sampling_result.SamplingResult`
-    stores shot counts, probabilities and convenience helpers such as
-    :meth:`~qilisdk.functionals.sampling_result.SamplingResult.get_probabilities`.
-* :class:`~qilisdk.functionals.time_evolution_result.TimeEvolutionResult`
-    contains expectation values, the terminal :class:`~qilisdk.core.qtensor.QTensor` state, and (optionally) the list
-    of intermediate states when ``store_intermediate_results=True``.
-* :class:`~qilisdk.functionals.quantum_reservoirs_result.QuantumReservoirResult`
-    extends :class:`~qilisdk.functionals.time_evolution_result.TimeEvolutionResult` with the same data model,
-    returning per-layer expectation values and optional intermediate/final states.
+* :class:`~qilisdk.functionals.functional_result.FunctionalResult`
+    The unified result type for all primitive functionals. Access results through:
+    ``samples`` for shot counts, ``probabilities`` for measurement probabilities,
+    ``state`` for the terminal :class:`~qilisdk.core.qtensor.QTensor` state (when using
+    :meth:`~qilisdk.readout.readout_spec.Readout.with_state_tomography`), and ``expectation_values`` for
+    expectation values (when using :meth:`~qilisdk.readout.readout_spec.Readout.with_expectation`).
+    When ``store_intermediate_results=True``, intermediate results are available via
+    ``intermediate_states``, ``intermediate_samples``, ``intermediate_probabilities``, and ``intermediate_expectation_values``.
 * :class:`~qilisdk.functionals.variational_program_result.VariationalProgramResult`
     bundles the optimizer trajectory (optimal cost, parameters, intermediate steps) together with the functional result
     obtained at convergence.
 
-These objects make post-processing workflows ergonomic. For example, :class:`~qilisdk.functionals.sampling_result.SamplingResult` can surface the most likely
-bitstrings:
+These objects make post-processing workflows ergonomic. For example, after a digital propagation you can surface the
+most likely bitstrings:
 
 .. code-block:: python
 
     from qilisdk.digital import Circuit
-    from qilisdk.backends import QutipBackend
-    from qilisdk.functionals import Sampling
+    from qilisdk.backends import QiliSim
+    from qilisdk.functionals import DigitalPropagation
+    from qilisdk.readout import Readout
 
-    backend = QutipBackend()
-    circuit = Circuit(2)
-    sampling_result = backend.execute(Sampling(circuit, nshots=1_000))
-    top = sampling_result.get_probabilities(5)
-    print("Most likely outcomes:", top)
+    backend = QiliSim()
+    result = backend.execute(DigitalPropagation(circuit), Readout().with_sampling(nshots=1_000))
+    print("Most likely outcomes:", result.probabilities)
 
-Sampling
---------
+Digital Propagation
+-------------------
 
-The :class:`~qilisdk.functionals.sampling.Sampling` functional runs a digital quantum circuit multiple times (shots) and aggregates the measurement outcomes. Because it subclasses
+The :class:`~qilisdk.functionals.digital_propagation.DigitalPropagation` functional propagates a digital quantum circuit
+through the backend. Because it subclasses
 :class:`~qilisdk.functionals.functional.PrimitiveFunctional`, any symbolic parameters exposed by the underlying
 :class:`~qilisdk.digital.circuit.Circuit` can be queried or updated through helper methods such as
-:meth:`~qilisdk.functionals.sampling.Sampling.get_parameter_names`.
+:meth:`~qilisdk.functionals.digital_propagation.DigitalPropagation.get_parameter_names`.
+
+Measurement details such as the number of shots are specified separately via readout objects passed to
+:meth:`~qilisdk.backends.backend.Backend.execute`.
 
 **Parameters**
 
-- **circuit** (:class:`~qilisdk.digital.circuit.Circuit`): Circuit to be sampled.
-- **nshots** (int): Number of times to execute the circuit and collect measurement results.
+- **circuit** (:class:`~qilisdk.digital.circuit.Circuit`): Circuit to be propagated.
 
 **Returns**
 
-- :class:`~qilisdk.functionals.sampling_result.SamplingResult`: Access shot counts via :attr:`samples`, or probabilities
-  through :attr:`probabilities`. Convenience helpers like
-  :meth:`~qilisdk.functionals.sampling_result.SamplingResult.get_probability` ease downstream analyses.
+- :class:`~qilisdk.functionals.functional_result.FunctionalResult`: Access shot counts via :attr:`samples`, or
+  probabilities through :attr:`probabilities`.
 
 **Usage Example**
 
@@ -94,63 +91,68 @@ The :class:`~qilisdk.functionals.sampling.Sampling` functional runs a digital qu
 
     import numpy as np
     from qilisdk.digital import Circuit, H, RX, CNOT
-    from qilisdk.functionals import Sampling
+    from qilisdk.functionals import DigitalPropagation
 
-    # Create a 2‑qubit circuit
+    # Create a 2-qubit circuit
     circuit = Circuit(2)
     circuit.add(H(0))
     circuit.add(RX(0, theta=np.pi))
     circuit.add(CNOT(0, 1))
 
-    # Initialize the Sampling functional with 100 shots
-    sampling = Sampling(circuit=circuit, nshots=100)
+    # Initialize the DigitalPropagation functional
+    digital_propagation = DigitalPropagation(circuit)
 
 
-This functional can be executed on any backend that supports digital circuits. For we can execute it on the CUDA backend:
+This functional can be executed on any backend that supports digital circuits. For example, we can execute it on the CUDA backend:
 
 
 .. code-block:: python
 
     from qilisdk.backends import CudaBackend
+    from qilisdk.readout import Readout
 
-    # Run on Qutip backend and retrieve counts
+    # Run on CUDA backend and retrieve counts
     backend = CudaBackend()
-    results = backend.execute(sampling)
+    results = backend.execute(digital_propagation, Readout().with_sampling(nshots=100))
     print(results)
 
 **Output**
 
 ::
 
-    SamplingResult(
+    - Functional Results: [
+
+    Sampling Results: (
         nshots=100,
         samples={'00': 53, '11': 47}
     )
 
+    ]
 
 
-Time Evolution
---------------
 
-The :class:`~qilisdk.functionals.time_evolution.TimeEvolution` functional simulates analog evolution of a quantum system under one or more Hamiltonians, following a specified time‑dependent schedule. Its parameter interface mirrors that of
+Analog Evolution
+----------------
+
+The :class:`~qilisdk.functionals.analog_evolution.AnalogEvolution` functional simulates analog evolution of a quantum system under one or more Hamiltonians, following a specified time-dependent schedule. Its parameter interface mirrors that of
 :class:`~qilisdk.analog.schedule.Schedule`, making it straightforward to sweep control waveforms or pulse amplitudes from
 classical optimizers.
 
+Observables and shot counts are specified separately via readout objects passed to
+:meth:`~qilisdk.backends.backend.Backend.execute`.
+
 **Parameters**
 
-- **schedule** (:class:`~qilisdk.analog.schedule.Schedule`): Defines total evolution time, time steps, Hamiltonians, and their time‑dependent coefficients.
+- **schedule** (:class:`~qilisdk.analog.schedule.Schedule`): Defines total evolution time, time steps, Hamiltonians, and their time-dependent coefficients.
 - **initial_state** (:class:`~qilisdk.core.qtensor.QTensor`): Initial state of the system.
-- **observables** (List[:class:`~qilisdk.analog.hamiltonian.Hamiltonian` or :class:`~qilisdk.analog.hamiltonian.PauliOperator`]): Operators to measure after evolution.
-- **nshots** (int, optional): Number of repetitions for each observable measurement. Default is 1.
 - **store_intermediate_results** (bool, optional): If True, records the state at each time step. Default is False.
 
 **Returns**
 
-- :class:`~qilisdk.functionals.time_evolution_result.TimeEvolutionResult`: Inspect
-  :attr:`~qilisdk.functionals.time_evolution_result.TimeEvolutionResult.final_expected_values` for measured observables,
-  :attr:`~qilisdk.functionals.time_evolution_result.TimeEvolutionResult.final_state` for the closing state, and
-  :attr:`~qilisdk.functionals.time_evolution_result.TimeEvolutionResult.intermediate_states` when
-  ``store_intermediate_results`` is enabled.
+- :class:`~qilisdk.functionals.functional_result.FunctionalResult`: Inspect
+  :attr:`expectation_values` for measured observables,
+  :attr:`state` for the closing state, and
+  :attr:`intermediate_states` and :attr:`intermediate_expectation_values` when ``store_intermediate_results`` is enabled.
 
 **Usage Example**
 
@@ -161,7 +163,7 @@ classical optimizers.
     from qilisdk.core import ket, tensor_prod
     from qilisdk.core.interpolator import Interpolation
     from qilisdk.backends import QutipBackend, CudaBackend
-    from qilisdk.functionals import TimeEvolution
+    from qilisdk.functionals import AnalogEvolution
 
     # Define total time and timestep
     T = 10.0
@@ -172,7 +174,7 @@ classical optimizers.
     Hx = sum(X(i) for i in range(nqubits))
     Hz = sum(Z(i) for i in range(nqubits))
 
-    # Build a time‑dependent schedule
+    # Build a time-dependent schedule
     schedule = Schedule(
         hamiltonians={"driver": Hx, "problem": Hz},
         coefficients={
@@ -182,16 +184,14 @@ classical optimizers.
         dt=dt,
         interpolation=Interpolation.LINEAR,
     )
-    
+
     # Prepare an equal superposition initial state
     initial_state = tensor_prod([(ket(0) - ket(1)).unit() for _ in range(nqubits)]).unit()
 
-    # Create the TimeEvolution functional
-    time_evolution = TimeEvolution(
+    # Create the AnalogEvolution functional
+    analog_evolution = AnalogEvolution(
         schedule=schedule,
         initial_state=initial_state,
-        observables=[Z(0), X(0), Y(0)],
-        nshots=100,
         store_intermediate_results=False,
     )
 
@@ -201,19 +201,23 @@ we can execute it on the Qutip backend:
 
     # Execute on Qutip backend and inspect results
     backend = QutipBackend()
-    results = backend.execute(time_evolution)
+    results = backend.execute(
+        analog_evolution,
+        Readout().with_expectation(observables=[Z(0), X(0), Y(0)]),
+    )
     print(results)
 
 **Output**
 
 ::
 
-    TimeEvolutionResult(
-        final_expected_values=array([-0.99388223,  0.0467696 , -0.10005353]),
-        final_state=QTensor(shape=2x1, nnz=2, format='csr')
-        [[0.05506547-0.00516502j]
-        [0.3364973 -0.94005887j]]
+    - Functional Results: [
+
+    Expectation Value Results: (
+        expectation_values=[-0.99388223, 0.0467696, -0.10005353],
     )
+
+    ]
 
 
 Quantum Reservoirs
@@ -235,15 +239,11 @@ be driven by input data sequences rather than optimization loops.
   reservoir dynamics, observables, and reset policy.
 - **input_per_layer** (List[Dict[str, float]]): Input values to apply at each layer, keyed by input parameter names
   (typically the labels of :class:`~qilisdk.functionals.quantum_reservoirs.ReservoirInput`).
-- **store_final_state** (bool, optional): Whether to store the final state after the last layer. 
-- **store_intermediate_states** (bool, optional): Whether to store the state after each layer.  
-- **nshots** (int, optional): Number of shots to pass through to analog evolution steps within the reservoir.
 
 **Returns**
 
-- :class:`~qilisdk.functionals.quantum_reservoirs_result.QuantumReservoirResult`: Access per-layer expectation values via
-  :attr:`~qilisdk.functionals.time_evolution_result.TimeEvolutionResult.expected_values`, plus optional states when
-  ``store_intermediate_states`` or ``store_final_state`` are enabled.
+- :class:`~qilisdk.functionals.functional_result.FunctionalResult`: Access per-layer expectation values via
+  :attr:`expectation_values`, plus optional states via :attr:`state`.
 
 **Usage Example**
 
@@ -255,6 +255,7 @@ be driven by input data sequences rather than optimization loops.
     from qilisdk.digital import Circuit, U2
     from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
     from qilisdk.analog import Schedule, X, Z
+    from qilisdk.readout import Readout
 
     pre_processing = Circuit(2)
     pre_processing.add(U2(1, phi=ReservoirInput("phi_1", 0.1), gamma=ReservoirInput("gamma_1", 0.1)))
@@ -278,12 +279,13 @@ be driven by input data sequences rather than optimization loops.
             {"phi_1": 0.3, "gamma_1": 0.2},
             {"phi_1": 0.4, "gamma_1": 0.3},
         ],
-        store_final_state=True,
-        store_intermediate_states=True,
     )
 
-    results = CudaBackend().execute(reservoir)
-    print(results.expected_values)
+    results = CudaBackend().execute(
+        reservoir,
+        Readout().with_expectation(observables=[Z(0), Z(1), Z(0) * Z(1)]),
+    )
+    print(results.expectation_values)
 
 
 Encoding Input Data
@@ -417,8 +419,8 @@ Only parameters marked as trainable are optimized during this loop.
 **Parameters**
 
 - **functional** (:class:`~qilisdk.functionals.functional.PrimitiveFunctional`): Parameterized primitive to optimize
-  (for instance :class:`Sampling <qilisdk.functionals.sampling.Sampling>` or
-  :class:`TimeEvolution <qilisdk.functionals.time_evolution.TimeEvolution>`).
+  (for instance :class:`DigitalPropagation <qilisdk.functionals.digital_propagation.DigitalPropagation>` or
+  :class:`AnalogEvolution <qilisdk.functionals.analog_evolution.AnalogEvolution>`).
 - **optimizer** (:class:`~qilisdk.optimizers.optimizer.Optimizer`): Classical optimizer that proposes new parameter
   values and optionally stores intermediate iterates.
 - **cost_function** (:class:`~qilisdk.cost_functions.cost_function.CostFunction`): Object that maps the functional results
@@ -448,9 +450,10 @@ Only parameters marked as trainable are optimized during this loop.
     from qilisdk.core.variables import LEQ, BinaryVariable
     from qilisdk.cost_functions.model_cost_function import ModelCostFunction
     from qilisdk.digital import CNOT, U3, HardwareEfficientAnsatz
-    from qilisdk.functionals import Sampling
+    from qilisdk.functionals import DigitalPropagation
     from qilisdk.functionals.variational_program import VariationalProgram
     from qilisdk.optimizers.scipy_optimizer import SciPyOptimizer
+    from qilisdk.readout import Readout
 
 
     values = [2, 3, 7]
@@ -472,58 +475,34 @@ Only parameters marked as trainable are optimized during this loop.
     optimizer = SciPyOptimizer(method="COBYQA")
 
     backend = QutipBackend()
-    result = backend.execute(VariationalProgram(functional=Sampling(ansatz), optimizer=optimizer, cost_function=ModelCostFunction(model)))
+    result = backend.execute(
+        VariationalProgram(
+            functional=DigitalPropagation(ansatz),
+            optimizer=optimizer,
+            cost_function=ModelCostFunction(model),
+        ),
+        Readout().with_sampling(nshots=1000),
+    )
 
     print(result)
 
-**Output** 
+**Output**
 
 ::
 
     VariationalProgramResult(
-        Optimal Cost=-9.0,
-        Optimal Parameters=[-3.0255755774847164,
-        0.01887035500903607,
-        0.028664963343905215,
-        0.013368501054216147,
-        -0.08437636531417667,
-        -0.029660168083975074,
-        0.0025941436125639207,
-        -0.008258689086022116,
-        -1.0021850138459234,
-        0.028289669542409385,
-        0.05329311289872701,
-        0.012030731723947204,
-        -0.0016337384126663568,
-        0.03515665488520232,
-        -0.0872593072394056,
-        0.014530612025796379,
-        -0.020256728609650863,
-        -0.010675287925157617,
-        0.004923341397045154,
-        -0.09761909602332684,
-        -0.03415470841379532,
-        0.01903348186553671,
-        0.026432142345385774,
-        0.02904121692864865,
-        0.003957631926259311,
-        0.04161531214200481,
-        0.010449668427772792,
-        0.06987683584625945,
-        -0.008282611237782185,
-        -1.001211264562447,
-        -0.025240867130997865,
-        -0.04703717734032765,
-        -0.09092557977061645,
-        -0.03600273303052503,
-        -0.023439848552130913,
-        0.03346875504677889],
-        Intermediate Results=[],
-        Optimal Results=SamplingResult(
+      Optimal Cost=-9.0,
+      Optimal Parameters=[...],
+      Intermediate Results=[...],
+      Optimal Results=- Functional Results: [
+
+    Sampling Results: (
         nshots=1000,
         samples={'000': 2, '010': 3, '101': 994, '110': 1}
-        )
-        )
+    )
+
+    ]
+    )
 
 
 **Usage Example 2 (Using QuTiP Backend)**
@@ -534,13 +513,14 @@ This example optimizes a variational schedule under some parameter constraints.
 
     from qilisdk.core.variables import LT, GreaterThan
     from qilisdk.cost_functions.observable_cost_function import ObservableCostFunction
-    from qilisdk.functionals import VariationalProgram, TimeEvolution
+    from qilisdk.functionals import VariationalProgram, AnalogEvolution
     from qilisdk.optimizers.scipy_optimizer import SciPyOptimizer
     from qilisdk.analog import *
     from qilisdk.analog.schedule import Interpolation
     from qilisdk.core.variables import Parameter
     from qilisdk.core import ket, tensor_prod
     from qilisdk.backends import QutipBackend
+    from qilisdk.readout import Readout
     import numpy as np
 
     from qilisdk.utils.visualization.style import ScheduleStyle
@@ -566,9 +546,8 @@ This example optimizes a variational schedule under some parameter constraints.
 
     schedule.draw(ScheduleStyle(title="Schedule Before Optimization"))
 
-    te = TimeEvolution(
+    te = AnalogEvolution(
         schedule=schedule,
-        observables=[h1],
         initial_state=tensor_prod([ket(0) - ket(1) for _ in range(schedule.nqubits)]).unit(),
     )
 
@@ -584,6 +563,6 @@ This example optimizes a variational schedule under some parameter constraints.
     print(vp.get_constraints()) # print the constraints of the variational program.
 
     backend = QutipBackend()
-    results = backend.execute(vp)
+    results = backend.execute(vp, Readout().with_expectation(observables=[h1]).with_state_tomography().with_sampling(nshots=1000))
     schedule.draw(ScheduleStyle(title="Schedule After Optimization"))
     print(results)

@@ -23,11 +23,8 @@
 #include "../representations/matrix_free_operator.h"
 
 // Helper functions for sampling.cpp
-std::map<std::string, int> apply_readout_error(const std::map<std::string, int>& counts, const NoiseModelCpp& noise_model_cpp, int n_qubits);
-std::map<std::string, int> filter_counts(const std::map<std::string, int>& counts, const std::vector<bool>& qubits_to_measure);
+void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrix& initial_state, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, const QiliSimConfig& config);
 
-void sampling(const std::vector<Gate>& gates, const std::vector<bool>& qubits_to_measure, int n_qubits, int n_shots, const SparseMatrix& initial_state, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, std::map<std::string, int>& counts, const QiliSimConfig& config);
-
-void sampling_matrix_free(const std::vector<Gate>& gates, const std::vector<bool>& qubits_to_measure, int n_qubits, int n_shots, const SparseMatrix& initial_state, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, std::map<std::string, int>& counts, const QiliSimConfig& config);
+void sampling_matrix_free(const std::vector<Gate>& gates,  int n_qubits, const SparseMatrix& initial_state, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, const QiliSimConfig& config);
 
 // GCOV_EXCL_BR_STOP

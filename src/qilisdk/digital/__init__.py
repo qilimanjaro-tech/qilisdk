@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .ansatz import QAOA, HardwareEfficientAnsatz, TrotterizedTimeEvolution
+from .ansatz import QAOA, HardwareEfficientAnsatz, TrotterizedSchedule
 from .circuit import Circuit
 from .gates import (
     CNOT,
@@ -62,7 +62,7 @@ __all__ = [
     "M",
     "S",
     "T",
-    "TrotterizedTimeEvolution",
+    "TrotterizedSchedule",
     "X",
     "Y",
     "Z",

@@ -13,8 +13,8 @@ The :mod:`~qilisdk.backends` module provides concrete execution engines for runn
 Currently, three backends are supported:
 
 - :class:`~qilisdk.backends.qilisim.QiliSim`
-- :class:`~qilisdk.backends.cuda_backend.CudaBackend`  
-- :class:`~qilisdk.backends.qutip_backend.QutipBackend`  
+- :class:`~qilisdk.backends.cuda_backend.CudaBackend`
+- :class:`~qilisdk.backends.qutip_backend.QutipBackend`
 
 .. NOTE::
 
@@ -26,27 +26,27 @@ Currently, three backends are supported:
 
     For more information check the :doc:`../../getting_started/installation` page.
 
-Once installed, any primitive functional can be executed by passing it to the backend's :meth:`~qilisdk.backends.backend.Backend.execute` method:
+Once installed, any primitive functional can be executed by passing it to the backend's :meth:`~qilisdk.backends.backend.Backend.execute` method
+along with readout specifications:
 
 .. code-block:: python
 
     from qilisdk.backends import QiliSim
-    from qilisdk.digital import Circuit
-    from qilisdk.functionals import Sampling
+    from qilisdk.functionals import DigitalPropagation
+    from qilisdk.readout import Readout
 
-    circuit = Circuit(2)
-    sampling_functional = Sampling(circuit=circuit, nshots=100)
-    backend = QiliSim()
-    results = backend.execute(sampling_functional)
+    # ... build your circuit and DigitalPropagation functional ...
+    results = QiliSim().execute(propagation, Readout().with_sampling(nshots=1000))
     print(results)
 
 Architecture Overview
 ---------------------
 
 All concrete backends subclass :class:`~qilisdk.backends.backend.Backend`, which centralizes the execution workflow used
-across the SDK. The :meth:`~qilisdk.backends.backend.Backend.execute` dispatches a primitive functional (e.g. :class:`~qilisdk.functionals.sampling.Sampling` or :class:`~qilisdk.functionals.time_evolution.TimeEvolution`)
-to the appropriate simulation routine and returns the functional-specific result object (see the :doc:`Functionals
-</modules/functionals/functionals>` chapter). The Execute method is also used to optimize variational programs via repeated calls to 
+across the SDK. The :meth:`~qilisdk.backends.backend.Backend.execute` method dispatches a primitive functional (e.g. :class:`~qilisdk.functionals.digital_propagation.DigitalPropagation` or :class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`)
+to the appropriate simulation routine and returns a :class:`~qilisdk.functionals.functional_result.FunctionalResult` (see the :doc:`Functionals
+<functionals>` chapter). The execute method also accepts readout specifications that define how the quantum state is measured.
+The execute method is also used to optimize variational programs via repeated calls to
 the underlying parameterized primitive functional.
 
 Backends register handlers for the functionals they support. If a functional is not implemented, :meth:`~qilisdk.backends.backend.Backend.execute` raises
@@ -86,33 +86,35 @@ The table below summarizes which primitive :mod:`~qilisdk.functionals` each back
 
 .. list-table::
    :header-rows: 1
-   :widths: 30 16 16 18 20
+   :widths: 25 18 18 18 21
 
    * - Backend
-     - Sampling
-     - TimeEvolution
+     - DigitalPropagation
+     - AnalogEvolution
      - QuantumReservoir
      - VariationalProgram
    * - :class:`QiliSim <qilisdk.backends.qilisim.QiliSim>`
-     - ✓
-     - ✓
-     - ✓
-     - ✓
+     - |y|
+     - |y|
+     - |y|
+     - |y|
    * - :class:`CudaBackend <qilisdk.backends.cuda_backend.CudaBackend>`
-     - ✓
-     - ✓
-     - ✓
-     - ✓
+     - |y|
+     - |y|
+     - |y|
+     - |y|
    * - :class:`QutipBackend <qilisdk.backends.qutip_backend.QutipBackend>`
-     - ✓
-     - ✓
-     - ✓
-     - ✓
+     - |y|
+     - |y|
+     - |y|
+     - |y|
+
+.. |y| unicode:: U+2713
 
 QiliSim
 ----------------
 
-The **QiliSim** backend is a CPU-based simulator developed by Qilimanjaro and written in C++, providing 
+The **QiliSim** backend is a CPU-based simulator developed by Qilimanjaro and written in C++, providing
 efficient simulation of both digital and analog quantum functionals.
 It is designed for ease of use and does not require any special hardware or dependencies.
 There is no need to install QiliSim separately, as it is included with the core QILISDK installation.
@@ -127,8 +129,8 @@ There is no need to install QiliSim separately, as it is included with the core 
 
 **Capabilities**
 
-- **Sampling** of digital circuits with efficient state-vector simulation.
-- **TimeEvolution** driven by :class:`~qilisdk.analog.schedule.Schedule`.
+- **DigitalPropagation** of digital circuits with efficient state-vector simulation.
+- **AnalogEvolution** driven by :class:`~qilisdk.analog.schedule.Schedule`.
 - Compatible with :class:`~qilisdk.functionals.variational_program.VariationalProgram` for classical optimization loops.
 
 **Parameters**
@@ -161,19 +163,20 @@ There is no need to install QiliSim separately, as it is included with the core 
     import numpy as np
     from qilisdk.digital import Circuit, H, CNOT
     from qilisdk.backends import QiliSim
-    from qilisdk.functionals import Sampling
+    from qilisdk.functionals import DigitalPropagation
+    from qilisdk.readout import Readout
 
     # Build a simple circuit
     circuit = Circuit(5)
     circuit.add(H(0))
     circuit.add(CNOT(0, 1))
 
-    # Create Sampling functional
-    sampling = Sampling(circuit=circuit, nshots=500)
+    # Create DigitalPropagation functional
+    functional = DigitalPropagation(circuit)
 
     # Execute with the QiliSim backend
     qilisim_backend = QiliSim()
-    result = qilisim_backend.execute(sampling)
+    result = qilisim_backend.execute(functional, Readout().with_sampling(nshots=500))
     print(result.samples)
 
 CUDA Backend
@@ -201,14 +204,14 @@ commodity hardware before moving to accelerated machines.
 
 **Capabilities**
 
-- Digital circuits through :class:`~qilisdk.functionals.sampling.Sampling`.
-- Analog dynamics for :class:`~qilisdk.functionals.time_evolution.TimeEvolution`, powered by ``cudaq.evolve``.
+- Digital circuits through :class:`~qilisdk.functionals.digital_propagation.DigitalPropagation`.
+- Analog dynamics for :class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`, powered by ``cudaq.evolve``.
 - Hybrid execution when paired with :class:`~qilisdk.functionals.variational_program.VariationalProgram`.
 
 **Sampling methods**
 
-- :class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.STATE_VECTOR`: Full state-vector simulation (switches to CPU if a GPU is unavailable).  
-- :class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.TENSOR_NETWORK`: Tensor-network contraction, suited for shallow yet wide circuits.  
+- :class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.STATE_VECTOR`: Full state-vector simulation (switches to CPU if a GPU is unavailable).
+- :class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.TENSOR_NETWORK`: Tensor-network contraction, suited for shallow yet wide circuits.
 - :class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.MATRIX_PRODUCT_STATE`: Matrix-product-state simulation for low-entanglement workloads.
 
 **Example**
@@ -218,7 +221,8 @@ commodity hardware before moving to accelerated machines.
     import numpy as np
     from qilisdk.digital import Circuit, H, RX, CNOT
     from qilisdk.backends import CudaBackend, CudaSamplingMethod
-    from qilisdk.functionals import Sampling
+    from qilisdk.functionals import DigitalPropagation
+    from qilisdk.readout import Readout
 
     # Build a simple circuit
     circuit = Circuit(2)
@@ -226,15 +230,15 @@ commodity hardware before moving to accelerated machines.
     circuit.add(H(0))
     circuit.add(CNOT(0, 1))
 
-    # Create Sampling functional
-    sampling = Sampling(circuit=circuit, nshots=500)
+    # Create DigitalPropagation functional
+    functional = DigitalPropagation(circuit)
 
     # Execute with the chosen sampling method (GPU if available)
     cuda_backend = CudaBackend(sampling_method=CudaSamplingMethod.STATE_VECTOR)
-    result = cuda_backend.execute(sampling)
+    result = cuda_backend.execute(functional, Readout().with_sampling(nshots=500))
     print(result.samples)
 
-**Output**  
+**Output**
 
 ::
 
@@ -263,8 +267,8 @@ It is the most lightweight option, ideal for local development or environments w
 
 **Capabilities**
 
-- **Sampling** of digital circuits via QuTiP's state-vector solvers.
-- **TimeEvolution** driven by :class:`~qilisdk.analog.schedule.Schedule`.
+- **DigitalPropagation** of digital circuits via QuTiP's state-vector solvers.
+- **AnalogEvolution** driven by :class:`~qilisdk.analog.schedule.Schedule`.
 - Compatible with :class:`~qilisdk.functionals.variational_program.VariationalProgram` for fully classical
   optimization loops.
 
@@ -277,7 +281,8 @@ It is the most lightweight option, ideal for local development or environments w
     from qilisdk.core import ket, tensor_prod
     from qilisdk.backends import QutipBackend
     from qilisdk.core.interpolator import Interpolation
-    from qilisdk.functionals import TimeEvolution
+    from qilisdk.functionals import AnalogEvolution
+    from qilisdk.readout import Readout
 
     # Define total time and timestep
     T = 10.0
@@ -288,7 +293,7 @@ It is the most lightweight option, ideal for local development or environments w
     Hx = sum(X(i) for i in range(nqubits))
     Hz = sum(Z(i) for i in range(nqubits))
 
-    # Build a time‑dependent schedule
+    # Build a time-dependent schedule
     schedule = Schedule(
         hamiltonians={"driver": Hx, "problem": Hz},
         coefficients={
@@ -298,30 +303,30 @@ It is the most lightweight option, ideal for local development or environments w
         dt=dt,
         interpolation=Interpolation.LINEAR,
     )
-    
+
     # Prepare an equal superposition initial state
     initial_state = tensor_prod([(ket(0) - ket(1)).unit() for _ in range(nqubits)]).unit()
 
-    # Create the TimeEvolution functional
-    time_evolution = TimeEvolution(
+    # Create the AnalogEvolution functional
+    analog_evolution = AnalogEvolution(
         schedule=schedule,
         initial_state=initial_state,
-        observables=[Z(0), X(0), Y(0)],
-        nshots=100,
-        store_intermediate_results=False,
     )
 
     # Execute on Qutip backend and inspect results
     backend = QutipBackend()
-    results = backend.execute(time_evolution)
+    results = backend.execute(
+        analog_evolution,
+        Readout().with_expectation(observables=[Z(0), X(0), Y(0)]).with_state_tomography(),
+    )
     print(results)
 
 **Output**
 
-:: 
+::
 
-    TimeEvolutionResult(
-        final_expected_values=array([-0.99388223,  0.0467696 , -0.10005353]),
+    FunctionalResult(
+        expectation_values=array([-0.99388223,  0.0467696 , -0.10005353]),
         final_state=QTensor(shape=2x1, nnz=2, format='csr')
         [[0.05506547-0.00516502j]
         [0.3364973 -0.94005887j]]

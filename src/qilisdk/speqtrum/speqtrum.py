@@ -36,19 +36,20 @@ from qilisdk.experiments import (
     TwoTonesExperimentResult,
 )
 from qilisdk.functionals import (
-    Sampling,
-    SamplingResult,
-    TimeEvolution,
-    TimeEvolutionResult,
+    AnalogEvolution,
+    DigitalPropagation,
+    FunctionalResult,
+    QuantumReservoir,
     VariationalProgram,
     VariationalProgramResult,
 )
-from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.settings import get_settings
 
 from .keyring import delete_credentials, load_credentials, store_credentials
 from .speqtrum_models import (
+    AnalogEvolutionPayload,
     Device,
+    DigitalPropagationPayload,
     ExecutePayload,
     ExecuteType,
     JobDetail,
@@ -57,11 +58,10 @@ from .speqtrum_models import (
     JobInfo,
     JobStatus,
     JobType,
+    QuantumReservoirPayload,
     RabiExperimentPayload,
-    SamplingPayload,
     T1ExperimentPayload,
     T2ExperimentPayload,
-    TimeEvolutionPayload,
     Token,
     TwoTonesExperimentPayload,
     TypedJobDetail,
@@ -70,6 +70,7 @@ from .speqtrum_models import (
 
 if TYPE_CHECKING:
     from qilisdk.functionals.functional import Functional, PrimitiveFunctional
+    from qilisdk.readout import E, Readout, S, T
 
 
 TFunctionalResult = TypeVar("TFunctionalResult", bound=FunctionalResult)
@@ -77,16 +78,39 @@ JSONValue: TypeAlias = dict[str, "JSONValue"] | list["JSONValue"] | str | int | 
 
 _SKIP_ENSURE_OK_EXTENSION = "qilisdk.skip_ensure_ok"
 _CONTEXT_EXTENSION = "qilisdk.request_context"
+_EXECUTE_URL = "/execute"
 
 
 class SpeQtrumAPIError(httpx.HTTPStatusError):
-    """Raised when the SpeQtrum API responds with a non-success HTTP status."""
+    """Raised when the SpeQtrum API responds with a non-success HTTP status.
+
+    Wraps :class:`httpx.HTTPStatusError` with a human-readable error message
+    extracted from the response body when possible.
+    """
 
     def __init__(self, message: str, *, request: httpx.Request, response: httpx.Response) -> None:
+        """Initialise the error.
+
+        Args:
+            message (str): Human-readable description of the failure.
+            request (httpx.Request): The outgoing HTTP request that triggered
+                the error.
+            response (httpx.Response): The HTTP response carrying the error
+                status.
+        """
         super().__init__(message, request=request, response=response)
 
 
 def _safe_json_loads(value: str, *, context: str) -> JSONValue | None:
+    """Attempt to parse *value* as JSON, returning ``None`` on failure.
+
+    Args:
+        value (str): Raw JSON string.
+        context (str): Label used in warning messages on parse failure.
+
+    Returns:
+        JSONValue | None: Parsed JSON value, or ``None`` if decoding fails.
+    """
     try:
         result = json.loads(value)
         return cast("JSONValue", result)
@@ -96,6 +120,15 @@ def _safe_json_loads(value: str, *, context: str) -> JSONValue | None:
 
 
 def _safe_b64_decode(value: str, *, context: str) -> str | None:
+    """Base64-decode *value* and return the UTF-8 string, or ``None`` on failure.
+
+    Args:
+        value (str): Base64-encoded string.
+        context (str): Label used in warning messages on decode failure.
+
+    Returns:
+        str | None: Decoded UTF-8 string, or ``None`` if any decoding step fails.
+    """
     try:
         decoded_bytes = base64.b64decode(value)
     except (binascii.Error, ValueError) as exc:
@@ -109,6 +142,15 @@ def _safe_b64_decode(value: str, *, context: str) -> str | None:
 
 
 def _safe_b64_json(value: str, *, context: str) -> JSONValue | None:
+    """Base64-decode *value*, then JSON-parse the result.
+
+    Args:
+        value (str): Base64-encoded JSON string.
+        context (str): Label used in warning messages on failure.
+
+    Returns:
+        JSONValue | None: Parsed JSON value, or ``None`` if any step fails.
+    """
     decoded_text = _safe_b64_decode(value, context=context)
     if decoded_text is None:
         return None
@@ -116,6 +158,18 @@ def _safe_b64_json(value: str, *, context: str) -> JSONValue | None:
 
 
 def _request_extensions(*, context: str | None = None, skip_ensure_ok: bool = False) -> dict[str, Any] | None:
+    """Build an ``httpx`` request extensions dictionary.
+
+    Args:
+        context (str | None): Human-readable label attached to the request for
+            error reporting. ``None`` omits the key.
+        skip_ensure_ok (bool): When ``True``, the ``_ensure_ok`` event hook
+            will not raise on non-success status codes.
+
+    Returns:
+        dict[str, Any] | None: Extensions mapping, or ``None`` when no flags
+        are set.
+    """
     extensions: dict[str, Any] = {}
     if context:
         extensions[_CONTEXT_EXTENSION] = context
@@ -125,6 +179,15 @@ def _request_extensions(*, context: str | None = None, skip_ensure_ok: bool = Fa
 
 
 def _response_context(response: httpx.Response) -> str:
+    """Extract a human-readable context label from a response's originating request.
+
+    Args:
+        response (httpx.Response): The HTTP response to inspect.
+
+    Returns:
+        str: The context string stored in the request extensions, or a
+        fallback ``"METHOD URL"`` string.
+    """
     request = response.request
     if request is None:
         return "SpeQtrum API call"
@@ -135,6 +198,18 @@ def _response_context(response: httpx.Response) -> str:
 
 
 def _stringify_payload(payload: JSONValue | None) -> str | None:
+    """Convert a parsed JSON error payload into a one-line human-readable string.
+
+    Looks for common error-message keys (``message``, ``detail``, ``error``,
+    etc.) and falls back to ``json.dumps`` when none are found.
+
+    Args:
+        payload (JSONValue | None): Parsed JSON body of the error response.
+
+    Returns:
+        str | None: A concise error description, or ``None`` when *payload*
+        is ``None``.
+    """
     if payload is None:
         return None
     if isinstance(payload, dict):
@@ -157,6 +232,14 @@ def _stringify_payload(payload: JSONValue | None) -> str | None:
 
 
 def _summarize_error_payload(response: httpx.Response) -> str:
+    """Produce a single-line summary of the error body carried by *response*.
+
+    Args:
+        response (httpx.Response): The non-success HTTP response.
+
+    Returns:
+        str: A best-effort textual summary of the error payload.
+    """
     context = _response_context(response)
     try:
         body_text = response.text or ""
@@ -177,6 +260,18 @@ def _summarize_error_payload(response: httpx.Response) -> str:
 
 
 def _ensure_ok(response: httpx.Response) -> None:
+    """``httpx`` event hook that raises :class:`SpeQtrumAPIError` on non-success status codes.
+
+    Skips the check when the request carries the
+    ``_SKIP_ENSURE_OK_EXTENSION`` flag or when the status is
+    ``401 Unauthorized`` (handled separately by token refresh logic).
+
+    Args:
+        response (httpx.Response): The HTTP response to validate.
+
+    Raises:
+        SpeQtrumAPIError: If the response status indicates an error.
+    """
     request = response.request
     if request is not None and request.extensions.get(_SKIP_ENSURE_OK_EXTENSION):
         return
@@ -199,14 +294,37 @@ def _ensure_ok(response: httpx.Response) -> None:
 
 
 class _BearerAuth(httpx.Auth):
-    """Bearer token auth handler with automatic refresh support."""
+    """Bearer-token authentication handler with automatic token refresh.
+
+    Implements the ``httpx`` auth-flow protocol. On a ``401 Unauthorized``
+    response the handler transparently refreshes the access token using the
+    stored refresh token and retries the original request.
+    """
 
     requires_response_body = True
 
     def __init__(self, client: SpeQtrum) -> None:
+        """Initialise the auth handler.
+
+        Args:
+            client (SpeQtrum): The parent ``SpeQtrum`` client whose token
+                will be read and updated.
+        """
         self._client = client
 
     def auth_flow(self, request: httpx.Request) -> Generator[httpx.Request, httpx.Response, None]:
+        """Yield authenticated requests, refreshing the token on ``401``.
+
+        Args:
+            request (httpx.Request): The outgoing request to authenticate.
+
+        Yields:
+            httpx.Request: Requests decorated with an ``Authorization`` header.
+
+        Raises:
+            RuntimeError: if Speqtrum token refresh fails.
+            HTTPStatusError: if the refresh token fails.
+        """
         request.headers["Authorization"] = f"Bearer {self._client.token.access_token}"
         response = yield request
 
@@ -255,9 +373,27 @@ class _BearerAuth(httpx.Auth):
 
 
 class SpeQtrum:
-    """Synchronous client for the Qilimanjaro SpeQtrum API."""
+    """Synchronous client for the Qilimanjaro SpeQtrum API.
+
+    Provides methods for authentication, device discovery, job submission,
+    and result retrieval. Credentials are loaded from the system keyring;
+    call :meth:`login` first if no credentials have been cached.
+
+    Supported functional types for submission include
+    :class:`~qilisdk.functionals.digital_propagation.DigitalPropagation`,
+    :class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`,
+    :class:`~qilisdk.functionals.variational_program.VariationalProgram`,
+    :class:`~qilisdk.functionals.quantum_reservoir.QuantumReservoir`, and
+    various experiment types.
+    """
 
     def __init__(self) -> None:
+        """Initialise the ``SpeQtrum`` client using cached keyring credentials.
+
+        Raises:
+            RuntimeError: If no credentials are found in the keyring. Call
+                :meth:`login` before instantiation.
+        """
         logger.debug("Initializing SpeQtrum client")
         credentials = load_credentials()
         if credentials is None:
@@ -268,6 +404,11 @@ class SpeQtrum:
 
     @classmethod
     def _get_headers(cls) -> dict:
+        """Return default HTTP headers including the SDK ``User-Agent``.
+
+        Returns:
+            dict: Headers dictionary with at least the ``User-Agent`` key.
+        """
         from qilisdk import __version__  # noqa: PLC0415
 
         return {"User-Agent": f"qilisdk/{__version__}"}
@@ -518,30 +659,22 @@ class SpeQtrum:
             time.sleep(poll_interval)
 
     @overload
-    def submit(self, functional: Sampling, device: str, job_name: str | None = None) -> JobHandle[SamplingResult]: ...
-
-    @overload
     def submit(
-        self, functional: TimeEvolution, device: str, job_name: str | None = None
-    ) -> JobHandle[TimeEvolutionResult]: ...
-
-    @overload
-    def submit(
-        self, functional: VariationalProgram[Sampling], device: str, job_name: str | None = None
-    ) -> JobHandle[VariationalProgramResult[SamplingResult]]: ...
-
-    @overload
-    def submit(
-        self, functional: VariationalProgram[TimeEvolution], device: str, job_name: str | None = None
-    ) -> JobHandle[VariationalProgramResult[TimeEvolutionResult]]: ...
+        self,
+        functional: PrimitiveFunctional,
+        device: str,
+        readout: Readout[S, E, T],
+        job_name: str | None = None,
+    ) -> JobHandle[FunctionalResult[S, E, T]]: ...
 
     @overload
     def submit(
         self,
-        functional: VariationalProgram[PrimitiveFunctional[TFunctionalResult]],
+        functional: VariationalProgram,
         device: str,
+        readout: Readout[S, E, T],
         job_name: str | None = None,
-    ) -> JobHandle[VariationalProgramResult[TFunctionalResult]]: ...
+    ) -> JobHandle[VariationalProgramResult]: ...
 
     @overload
     def submit(
@@ -553,57 +686,42 @@ class SpeQtrum:
         self, functional: T1Experiment, device: str, job_name: str | None = None
     ) -> JobHandle[T1ExperimentResult]: ...
 
-    def submit(self, functional: Functional, device: str, job_name: str | None = None) -> JobHandle[FunctionalResult]:
+    def submit(
+        self,
+        functional: Functional,
+        device: str,
+        readout: Readout[S, E, T] | None = None,  # type: ignore[type-arg]
+        job_name: str | None = None,
+    ) -> JobHandle:
         """
         Submit a quantum functional for execution on the selected device.
 
-        The concrete subclass of
-        :class:`~qilisdk.functionals.functional.Functional` provided in
-        *functional* determines which private ``_execute_*`` routine is
-        invoked. Supported types are:
+        Supported types:
 
-        * :class:`~qilisdk.functionals.sampling.Sampling`
-        * :class:`~qilisdk.functionals.time_evolution.TimeEvolution`
+        * :class:`~qilisdk.functionals.digital_propagation.DigitalPropagation`
+        * :class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`
         * :class:`~qilisdk.functionals.variational_program.VariationalProgram`
-        * :class:`~qilisdk.speqtrum.experiments.experiment_functional.RabiExperiment`
-        * :class:`~qilisdk.speqtrum.experiments.experiment_functional.T1Experiment`
-
-        A backend device must be selected beforehand with
-        :py:meth:`set_device`.
+        * :class:`~qilisdk.experiments.experiment_functional.RabiExperiment`
+        * :class:`~qilisdk.experiments.experiment_functional.T1Experiment`
+        * :class:`~qilisdk.experiments.experiment_functional.T2Experiment`
+        * :class:`~qilisdk.experiments.experiment_functional.TwoTonesExperiment`
 
         Args:
-            functional: A fully configured functional instance (e.g.,
-                ``Sampling`` or ``TimeEvolution``) that defines the quantum
-                workload to be executed.
+            functional: A fully configured functional instance that defines the quantum workload.
             device: Device code returned by :py:meth:`list_devices`.
-            job_name (optional): The name of the job, this can help you identify different jobs easier. Default: None.
+            readout: Readout method(s) specifying how results should be measured.
+                Required for ``DigitalPropagation``, ``AnalogEvolution``, and ``VariationalProgram``.
+            job_name (optional): The name of the job. Default: None.
 
         Returns:
             JobHandle: A typed handle carrying the numeric job identifier and result type metadata.
 
         Raises:
             NotImplementedError: If *functional* is not of a supported type.
+            ValueError: If *readout* is required but not provided, or contains invalid methods.
         """
-        if isinstance(functional, VariationalProgram):
-            inner = functional.functional
-            if isinstance(inner, Sampling):
-                return self._submit_variational_program(
-                    cast("VariationalProgram[Sampling]", functional), device, job_name
-                )
-            if isinstance(inner, TimeEvolution):
-                return self._submit_variational_program(
-                    cast("VariationalProgram[TimeEvolution]", functional), device, job_name
-                )
 
-            # Fallback to untyped handle for custom primitives.
-            job_handle = self._submit_variational_program(cast("VariationalProgram[Any]", functional), device, job_name)
-            return cast("JobHandle[FunctionalResult]", job_handle)
-
-        if isinstance(functional, Sampling):
-            return self._submit_sampling(functional, device, job_name)
-
-        if isinstance(functional, TimeEvolution):
-            return self._submit_time_evolution(functional, device, job_name)
+        # Experiments without readout
 
         if isinstance(functional, RabiExperiment):
             return self._submit_rabi(functional, device, job_name)
@@ -617,15 +735,43 @@ class SpeQtrum:
         if isinstance(functional, TwoTonesExperiment):
             return self._submit_two_tones(functional, device, job_name)
 
+        # Functionals with readout
+
+        if readout is None:
+            raise ValueError("Readout can't be none when submitting a functional")
+
+        if isinstance(functional, VariationalProgram):
+            return self._submit_variational_program(functional, device, readout, job_name)
+
+        if isinstance(functional, DigitalPropagation):
+            return self._submit_digital_propagation(functional, device, readout, job_name)
+
+        if isinstance(functional, AnalogEvolution):
+            return self._submit_analog_evolution(functional, device, readout, job_name)
+
+        if isinstance(functional, QuantumReservoir):
+            return self._submit_quantum_reservoir_functional(functional, device, readout, job_name)
+
         logger.error("Unsupported functional type: {}", type(functional).__qualname__)
         raise NotImplementedError(f"{type(self).__qualname__} does not support {type(functional).__qualname__}")
 
-    def _submit_sampling(
-        self, sampling: Sampling, device: str, job_name: str | None = None
-    ) -> JobHandle[SamplingResult]:
+    def _submit_digital_propagation(
+        self, functional: DigitalPropagation, device: str, readout: Readout[S, E, T], job_name: str | None = None
+    ) -> JobHandle[FunctionalResult]:
+        """Submit a ``DigitalPropagation`` functional to the SpeQtrum API.
+
+        Args:
+            functional (DigitalPropagation): The digital propagation to execute.
+            device (str): Target device code.
+            readout (Readout[S, E, T]): Readout methods for measurement.
+            job_name (str | None): Optional human-readable job name.
+
+        Returns:
+            JobHandle[FunctionalResult]: A handle for tracking the submitted job.
+        """
         payload = ExecutePayload(
-            type=ExecuteType.SAMPLING,
-            sampling_payload=SamplingPayload(sampling=sampling),
+            type=ExecuteType.DIGITAL_PROPAGATION,
+            digital_propagation_payload=DigitalPropagationPayload(digital_propagation=functional, readout=readout),
         )
         json = {
             "device_code": device,
@@ -635,16 +781,28 @@ class SpeQtrum:
         }
         if job_name:
             json["name"] = job_name
-        logger.debug("Executing Sampling on device {}", device)
+        logger.debug("Executing DigitalPropagation on device {}", device)
         with self._create_client() as client:
-            response = client.post("/execute", json=json, extensions=_request_extensions(context="Executing Sampling"))
+            response = client.post(
+                _EXECUTE_URL, json=json, extensions=_request_extensions(context="Executing DigitalPropagation")
+            )
         job = JobId(**response.json())
-        logger.info("Sampling job submitted: {}", job.id)
-        return JobHandle.sampling(job.id)
+        logger.info("DigitalPropagation job submitted: {}", job.id)
+        return JobHandle.functional(job.id)
 
     def _submit_rabi(
         self, rabi_experiment: RabiExperiment, device: str, job_name: str | None = None
     ) -> JobHandle[RabiExperimentResult]:
+        """Submit a Rabi experiment to the SpeQtrum API.
+
+        Args:
+            rabi_experiment (RabiExperiment): The experiment to execute.
+            device (str): Target device code.
+            job_name (str | None): Optional human-readable job name.
+
+        Returns:
+            JobHandle[RabiExperimentResult]: A handle for tracking the submitted job.
+        """
         payload = ExecutePayload(
             type=ExecuteType.RABI_EXPERIMENT,
             rabi_experiment_payload=RabiExperimentPayload(rabi_experiment=rabi_experiment),
@@ -660,7 +818,7 @@ class SpeQtrum:
         logger.debug("Executing Rabi experiment on device {}", device)
         with self._create_client() as client:
             response = client.post(
-                "/execute",
+                _EXECUTE_URL,
                 json=json,
                 extensions=_request_extensions(context="Executing Rabi experiment"),
             )
@@ -671,6 +829,16 @@ class SpeQtrum:
     def _submit_t1(
         self, t1_experiment: T1Experiment, device: str, job_name: str | None = None
     ) -> JobHandle[T1ExperimentResult]:
+        """Submit a T1 experiment to the SpeQtrum API.
+
+        Args:
+            t1_experiment (T1Experiment): The experiment to execute.
+            device (str): Target device code.
+            job_name (str | None): Optional human-readable job name.
+
+        Returns:
+            JobHandle[T1ExperimentResult]: A handle for tracking the submitted job.
+        """
         payload = ExecutePayload(
             type=ExecuteType.T1_EXPERIMENT,
             t1_experiment_payload=T1ExperimentPayload(t1_experiment=t1_experiment),
@@ -686,7 +854,7 @@ class SpeQtrum:
         logger.debug("Executing T1 experiment on device {}", device)
         with self._create_client() as client:
             response = client.post(
-                "/execute",
+                _EXECUTE_URL,
                 json=json,
                 extensions=_request_extensions(context="Executing T1 experiment"),
             )
@@ -697,6 +865,16 @@ class SpeQtrum:
     def _submit_t2(
         self, t2_experiment: T2Experiment, device: str, job_name: str | None = None
     ) -> JobHandle[T2ExperimentResult]:
+        """Submit a T2 experiment to the SpeQtrum API.
+
+        Args:
+            t2_experiment (T2Experiment): The experiment to execute.
+            device (str): Target device code.
+            job_name (str | None): Optional human-readable job name.
+
+        Returns:
+            JobHandle[T2ExperimentResult]: A handle for tracking the submitted job.
+        """
         payload = ExecutePayload(
             type=ExecuteType.T2_EXPERIMENT,
             t2_experiment_payload=T2ExperimentPayload(t2_experiment=t2_experiment),
@@ -712,7 +890,7 @@ class SpeQtrum:
         logger.debug("Executing T2 experiment on device {}", device)
         with self._create_client() as client:
             response = client.post(
-                "/execute",
+                _EXECUTE_URL,
                 json=json,
                 extensions=_request_extensions(context="Executing T2 experiment"),
             )
@@ -723,6 +901,17 @@ class SpeQtrum:
     def _submit_two_tones(
         self, two_tones_experiment: TwoTonesExperiment, device: str, job_name: str | None = None
     ) -> JobHandle[TwoTonesExperimentResult]:
+        """Submit a Two-Tones experiment to the SpeQtrum API.
+
+        Args:
+            two_tones_experiment (TwoTonesExperiment): The experiment to execute.
+            device (str): Target device code.
+            job_name (str | None): Optional human-readable job name.
+
+        Returns:
+            JobHandle[TwoTonesExperimentResult]: A handle for tracking the
+            submitted job.
+        """
         payload = ExecutePayload(
             type=ExecuteType.TWO_TONES_EXPERIMENT,
             two_tones_experiment_payload=TwoTonesExperimentPayload(two_tones_experiment=two_tones_experiment),
@@ -738,7 +927,7 @@ class SpeQtrum:
         logger.debug("Executing Two-Tones experiment on device {}", device)
         with self._create_client() as client:
             response = client.post(
-                "/execute",
+                _EXECUTE_URL,
                 json=json,
                 extensions=_request_extensions(context="Executing Two-Tones experiment"),
             )
@@ -746,12 +935,23 @@ class SpeQtrum:
         logger.info("Two-Tones experiment job submitted: {}", job.id)
         return JobHandle.two_tones_experiment(job.id)
 
-    def _submit_time_evolution(
-        self, time_evolution: TimeEvolution, device: str, job_name: str | None = None
-    ) -> JobHandle[TimeEvolutionResult]:
+    def _submit_analog_evolution(
+        self, functional: AnalogEvolution, device: str, readout: Readout[S, E, T], job_name: str | None = None
+    ) -> JobHandle[FunctionalResult]:
+        """Submit an ``AnalogEvolution`` functional to the SpeQtrum API.
+
+        Args:
+            functional (AnalogEvolution): The analog evolution to execute.
+            device (str): Target device code.
+            readout (Readout[S, E, T]): Readout methods for measurement.
+            job_name (str | None): Optional human-readable job name.
+
+        Returns:
+            JobHandle[FunctionalResult]: A handle for tracking the submitted job.
+        """
         payload = ExecutePayload(
-            type=ExecuteType.TIME_EVOLUTION,
-            time_evolution_payload=TimeEvolutionPayload(time_evolution=time_evolution),
+            type=ExecuteType.ANALOG_EVOLUTION,
+            analog_evolution_payload=AnalogEvolutionPayload(analog_evolution=functional, readout=readout),
         )
         json = {
             "device_code": device,
@@ -761,38 +961,79 @@ class SpeQtrum:
         }
         if job_name:
             json["name"] = job_name
-        logger.debug("Executing time evolution on device {}", device)
+        logger.debug("Executing AnalogEvolution on device {}", device)
         with self._create_client() as client:
             response = client.post(
-                "/execute",
+                _EXECUTE_URL,
                 json=json,
-                extensions=_request_extensions(context="Executing time evolution"),
+                extensions=_request_extensions(context="Executing AnalogEvolution"),
             )
         job = JobId(**response.json())
-        logger.info("Time Evolution job submitted: {}", job.id)
-        return JobHandle.time_evolution(job.id)
+        logger.info("AnalogEvolution job submitted: {}", job.id)
+        return JobHandle.functional(job.id)
 
-    @overload
-    def _submit_variational_program(
-        self, variational_program: VariationalProgram[Sampling], device: str, job_name: str | None = None
-    ) -> JobHandle[VariationalProgramResult[SamplingResult]]: ...
+    def _submit_quantum_reservoir_functional(
+        self, functional: QuantumReservoir, device: str, readout: Readout[S, E, T], job_name: str | None = None
+    ) -> JobHandle[FunctionalResult]:
+        """Submit a ``QuantumReservoir`` functional to the SpeQtrum API.
 
-    @overload
-    def _submit_variational_program(
-        self, variational_program: VariationalProgram[TimeEvolution], device: str, job_name: str | None = None
-    ) -> JobHandle[VariationalProgramResult[TimeEvolutionResult]]: ...
+        Args:
+            functional (QuantumReservoir): The quantum reservoir to execute.
+            device (str): Target device code.
+            readout (Readout[S, E, T]): Readout methods for measurement.
+            job_name (str | None): Optional human-readable job name.
 
-    @overload
-    def _submit_variational_program(
-        self, variational_program: VariationalProgram[Any], device: str, job_name: str | None = None
-    ) -> JobHandle[VariationalProgramResult]: ...
+        Returns:
+            JobHandle[FunctionalResult]: A handle for tracking the submitted job.
+        """
+        payload = ExecutePayload(
+            type=ExecuteType.ANALOG_EVOLUTION,
+            quantum_reservoir_payload=QuantumReservoirPayload(quantum_reservoir=functional, readout=readout),
+        )
+        json = {
+            "device_code": device,
+            "payload": payload.model_dump_json(),
+            "job_type": JobType.ANALOG,
+            "meta": {},
+        }
+        if job_name:
+            json["name"] = job_name
+        logger.debug("Executing AnalogEvolution on device {}", device)
+        with self._create_client() as client:
+            response = client.post(
+                _EXECUTE_URL,
+                json=json,
+                extensions=_request_extensions(context="Executing AnalogEvolution"),
+            )
+        job = JobId(**response.json())
+        logger.info("AnalogEvolution job submitted: {}", job.id)
+        return JobHandle.functional(job.id)
 
     def _submit_variational_program(
-        self, variational_program: VariationalProgram[Any], device: str, job_name: str | None = None
-    ) -> JobHandle[VariationalProgramResult]:
+        self,
+        variational_program: VariationalProgram,
+        device: str,
+        readout: Readout[S, E, T],
+        job_name: str | None = None,
+    ) -> JobHandle[VariationalProgramResult[S, E, T]]:
+        """Submit a ``VariationalProgram`` to the SpeQtrum API.
+
+        Args:
+            variational_program (VariationalProgram): The variational program
+                to execute.
+            device (str): Target device code.
+            readout (Readout[S, E, T]): Readout methods for measurement.
+            job_name (str | None): Optional human-readable job name.
+
+        Returns:
+            JobHandle[VariationalProgramResult]: A handle for tracking the
+            submitted job.
+        """
         payload = ExecutePayload(
             type=ExecuteType.VARIATIONAL_PROGRAM,
-            variational_program_payload=VariationalProgramPayload(variational_program=variational_program),
+            variational_program_payload=VariationalProgramPayload(
+                variational_program=variational_program, readout=readout
+            ),
         )
         json = {
             "device_code": device,
@@ -805,18 +1046,18 @@ class SpeQtrum:
         logger.debug("Executing variational program on device {}", device)
         with self._create_client() as client:
             response = client.post(
-                "/execute",
+                _EXECUTE_URL,
                 json=json,
                 extensions=_request_extensions(context="Executing variational program"),
             )
         job = JobId(**response.json())
         logger.info("Variational program job submitted: {}", job.id)
-        inner = variational_program.functional
-        if isinstance(inner, Sampling):
-            return JobHandle.variational_program(job.id, result_type=SamplingResult)
-        if isinstance(inner, TimeEvolution):
-            return JobHandle.variational_program(job.id, result_type=TimeEvolutionResult)
         return JobHandle.variational_program(job.id)
 
     def __repr__(self) -> str:
+        """Return a string representation of the client.
+
+        Returns:
+            str: A string of the form ``SpeQtrum(username=...)``.
+        """
         return f"{type(self).__name__}(username={self.username})"
