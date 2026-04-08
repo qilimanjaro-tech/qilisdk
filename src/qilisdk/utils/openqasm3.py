@@ -438,7 +438,7 @@ class OpenQasmParser:
             raise ValueError(f"Invalid index expression: {expr}")  # pragma: no cover
         var_name = expr.collection.name
         var_indices = [self._evaluate_expression(index) for index in expr.index]
-        if var_name in self.var_list and "value" in self.var_list[var_name]:
+        if isinstance(var_name, str) and var_name in self.var_list and "value" in self.var_list[var_name]:
             value = self.var_list[var_name]["value"]
             for index in var_indices:
                 if isinstance(index, int) and isinstance(value, list) and index < len(value):
@@ -644,7 +644,7 @@ class OpenQasmParser:
             elif var_type in {"float", "angle", "duration", "stretch"}:
                 self.var_list[var_name]["value"] = float(self.var_list[var_name]["value"])
             elif var_type == "complex":
-                self.var_list[var_name]["value"] = complex(self.var_list[var_name]["value"])
+                self.var_list[var_name]["value"] = complex(self.var_list[var_name]["value"])  # ty: ignore[invalid-assignment]
             elif var_type == "bool":
                 self.var_list[var_name]["value"] = bool(self.var_list[var_name]["value"])
 
@@ -665,7 +665,7 @@ class OpenQasmParser:
             reg_size = self._evaluate_expression(statement.size)
         if isinstance(reg_size, int):
             self.reg_name_to_start_end[reg_name] = (self.nqubits, self.nqubits + reg_size - 1)
-            self.var_list[reg_name] = {"size": reg_size, "value": 0, "type": "qubit"}
+            self.var_list[reg_name] = {"size": reg_size, "value": 0, "type": "qubit"}  # ty: ignore[invalid-assignment]
             self.nqubits = max(self.nqubits, self.nqubits + reg_size)
 
     def _handle_statement_classical_declaration(self, statement: ClassicalDeclaration | ConstantDeclaration) -> None:
@@ -709,7 +709,7 @@ class OpenQasmParser:
                 raise ValueError(f"Unsupported variable type: {statement.type}")  # pragma: no cover
             if hasattr(statement.type, "size") and statement.type.size is not None:
                 var_size = self._evaluate_expression(statement.type.size)
-        self.var_list[var_name] = {"size": var_size, "value": var_value, "type": var_type}
+        self.var_list[var_name] = {"size": var_size, "value": var_value, "type": var_type}  # ty: ignore[invalid-assignment]
         self._cast_to_type(var_name)
 
     def _handle_statement_classical_assignment(self, statement: ClassicalAssignment) -> None:
@@ -717,12 +717,13 @@ class OpenQasmParser:
         new_value = self._evaluate_expression(statement.rvalue)
 
         # Depending on the assignment type
-        if statement.op == AssignmentOperator["="]:
-            self.var_list[var_name]["value"] = new_value
-        elif statement.op == AssignmentOperator["+="] and not isinstance(new_value, (str, list)):
-            self.var_list[var_name]["value"] += new_value
-        elif statement.op == AssignmentOperator["-="] and not isinstance(new_value, (str, list)):
-            self.var_list[var_name]["value"] -= new_value
+        if not isinstance(var_name, Identifier):
+            if statement.op == AssignmentOperator["="]:
+                self.var_list[var_name]["value"] = new_value  # ty: ignore[invalid-assignment]
+            elif statement.op == AssignmentOperator["+="] and not isinstance(new_value, (str, list)):
+                self.var_list[var_name]["value"] += new_value
+            elif statement.op == AssignmentOperator["-="] and not isinstance(new_value, (str, list)):
+                self.var_list[var_name]["value"] -= new_value
 
         # Cast to the variable type if needed
         self._cast_to_type(var_name)
@@ -921,7 +922,7 @@ class OpenQasmParser:
             raise ValueError(f"Unsupported for loop declaration: {statement.set_declaration}")  # pragma: no cover
 
         # Make the variable
-        self.var_list[loop_var_name] = {"size": loop_var_size, "value": 0, "type": loop_var_type}
+        self.var_list[loop_var_name] = {"size": loop_var_size, "value": 0, "type": loop_var_type}  # ty: ignore[invalid-assignment]
 
         # Loop through the values and process the body with the loop variable set to the current value
         res = None
@@ -1068,7 +1069,7 @@ class OpenQasmParser:
             # Otherwise, declare a parameter
             param_name = statement.identifier.name
             new_param = Parameter(param_name, 0.0)
-            self.var_list[param_name] = {"size": 1, "value": new_param, "type": "parameter"}
+            self.var_list[param_name] = {"size": 1, "value": new_param, "type": "parameter"}  # ty: ignore[invalid-assignment]
 
         # Otherwise raise an error for now - we can add more statement types later
         elif not isinstance(statement, (Include, AliasStatement)):

@@ -577,8 +577,10 @@ def test_circuit_no_equality_different_gate_count():
     c2 = Circuit(nqubits=2)
     c1.add(X(0))
     assert c1 != c2
-    
+
+
 # --- Parameter Cache Invalidation Tests ---
+
 
 def test_circuit_set_parameters_clears_gate_matrix_cache():
     """Circuit.set_parameters must invalidate each gate's cached_property matrix.
