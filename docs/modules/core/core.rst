@@ -36,7 +36,7 @@ This module offers tools to define different types of variables:
 
 - **Binary Variables** (:class:`~qilisdk.core.variables.BinaryVariable`)
 - **Spin Variables** (:class:`~qilisdk.core.variables.SpinVariable`)
-- **Continuous Variables** (:class:`~qilisdk.core.variables.Variable`) — with the following customizable parameters:
+- **Continuous Variables** (:class:`~qilisdk.core.variables.Variable`) with the following customizable parameters:
 
     - **Domain** (:class:`~qilisdk.core.variables.Domain`): Specifies the variable type:
 
@@ -154,7 +154,7 @@ schedules, models, and more.
 
 Parameters behave like symbolic variables in algebraic expressions, so you can
 combine them with other variables and evaluate terms without having to pass the
-parameter explicitly—its stored ``value`` is used automatically.
+parameter explicitly - its stored ``value`` is used automatically.
 
 Objects that inherit from :class:`~qilisdk.core.parameterizable.Parameterizable`
 collect all the :class:`~qilisdk.core.variables.Parameter` instances they encounter. For example:

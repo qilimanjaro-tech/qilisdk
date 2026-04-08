@@ -5,4 +5,4 @@ Noise Config
 
    <meta http-equiv="refresh" content="0; url=noise_models.html#noise-config">
 
-Go to a specfic subheading of a page.
+Go to a specific subheading of a page.

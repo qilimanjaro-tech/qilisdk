@@ -5,4 +5,4 @@ Full Quantum State
 
    <meta http-equiv="refresh" content="0; url=readout.html#full-quantum-state-with-state-tomography">
 
-Go to a specfic subheading of a page.
+Go to a specific subheading of a page.

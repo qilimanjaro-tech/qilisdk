@@ -5,4 +5,4 @@ Hamiltonian
 
    <meta http-equiv="refresh" content="0; url=analog.html#hamiltonian">
 
-Go to a specfic subheading of a page.
+Go to a specific subheading of a page.

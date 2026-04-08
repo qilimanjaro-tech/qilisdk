@@ -332,7 +332,7 @@ The :mod:`~qilisdk.digital.ansatz` submodule provides ready-to-use circuit templ
 
 1. Subclass :class:`~qilisdk.digital.ansatz.Ansatz` (which already inherits from :class:`~qilisdk.digital.circuit.Circuit`).
 2. Call ``super().__init__(nqubits=...)`` inside ``__init__`` to set the circuit width.
-3. Add gates in any order with ``self.add(gate)``—loops are fine, and you can keep references to any :class:`~qilisdk.core.variables.Parameter` objects you want to expose later.
+3. Add gates in any order with ``self.add(gate)``, loops are fine, and you can keep references to any :class:`~qilisdk.core.variables.Parameter` objects you want to expose later.
 
 **Example**
 
@@ -359,7 +359,7 @@ The :mod:`~qilisdk.digital.ansatz` submodule provides ready-to-use circuit templ
             for q in range(self.nqubits):
                 self.add(RX(q, theta=self.beta))
 
-Once defined, the subclass behaves exactly like any other circuit—you can draw it, bind parameters, or hand it off to backends.
+Once defined, the subclass behaves exactly like any other circuit: you can draw it, bind parameters, or hand it off to backends.
 
 For a prebuilt option, consider:
 

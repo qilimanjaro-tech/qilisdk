@@ -13,13 +13,13 @@ Functionals
 The :mod:`~qilisdk.functionals` module provides high-level quantum execution procedures by combining tools from the
 :mod:`~qilisdk.analog`, :mod:`~qilisdk.digital`, and :mod:`~qilisdk.core` modules. Currently, it includes the following execution functionals:
 
-- :class:`~qilisdk.functionals.digital_propagation.DigitalPropagation` — Propagates a digital quantum circuit through the backend.
-- :class:`~qilisdk.functionals.analog_evolution.AnalogEvolution` — Simulates analog time evolution of one or more Hamiltonians according to a time-dependent schedule.
-- :class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir` — Runs a quantum reservoir pipeline (pre-processing, reservoir dynamics, post-processing) across multiple input layers.
+- :class:`~qilisdk.functionals.digital_propagation.DigitalPropagation`: Propagates a digital quantum circuit through the backend.
+- :class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`: Simulates analog time evolution of one or more Hamiltonians according to a time-dependent schedule.
+- :class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir`: Runs a quantum reservoir pipeline (pre-processing, reservoir dynamics, post-processing) across multiple input layers.
 
 Moreover, it provides more complex functionals that are used to execute more complex algorithms:
 
-- :class:`~qilisdk.functionals.variational_program.VariationalProgram` — Builds parameterized program to be optimized in a hybrid quantum-classical environment.
+- :class:`~qilisdk.functionals.variational_program.VariationalProgram`: Builds parameterized program to be optimized in a hybrid quantum-classical environment.
 
 Architecture Overview
 ---------------------

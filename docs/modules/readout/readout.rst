@@ -13,13 +13,7 @@ Readout is the mechanism that controls **what information is extracted from the 
 functional is executed.  It is specified separately from the functional itself, so the same circuit or
 schedule can be measured in different ways without any code change to the functional.
 
-The entry point is always :class:`~qilisdk.readout.readout_spec.Readout`.
-
-.. contents::
-   :local:
-   :depth: 2
-
-----
+All uses start with an instance of the class :class:`~qilisdk.readout.readout_spec.Readout`.
 
 Readout Builder
 --------------------------
@@ -32,9 +26,10 @@ object is never modified.
 
     from qilisdk.readout import Readout
 
-    spec = Readout()                         # no readout selected yet
-    spec = spec.with_sampling(nshots=1000)       # add sampling
+    spec = Readout()                                  # no readout selected yet
+    spec = spec.with_sampling(nshots=1000)            # add sampling
     spec = spec.with_expectation(observables=[Z(0)])  # add expectation values
+
     # or in one line:
     spec = Readout().with_sampling(nshots=1000).with_expectation(observables=[Z(0)])
 
@@ -77,9 +72,9 @@ collect the bitstring counts.
 
 - **nshots** (``int``): Number of measurement shots.  Must be a positive integer.
 
-**When to use**
+**When to Use It**
 
-Use sampling when you need the full bitstring distribution — for instance to evaluate a combinatorial
+Use sampling when you need the full bitstring distribution, for instance to evaluate a combinatorial
 cost function, run QAOA post-processing, or compute error rates.
 
 Expectation Values (with_expectation)
@@ -104,11 +99,11 @@ Instructs the backend to compute ``⟨ψ|O|ψ⟩`` for each observable in the li
   requested.  Each entry can be a :class:`~qilisdk.analog.Hamiltonian` expression (e.g. ``Z(0) + Z(1)``)
   or a :class:`~qilisdk.core.QTensor` directly.
 - **nshots** (``int``, default ``0``): Number of shots for stochastic estimation.  ``0`` uses the
-  exact state-vector inner product — no sampling noise, only available on simulators.
+  exact state-vector inner product, meaning no sampling noise, only available on simulators.
 
-**When to use**
+**When to Use It**
 
-Use expectation values when you need a scalar energy or observable readout — for example in
+Use expectation values when you need a scalar energy or observable readout, for example in
 variational algorithms (VQE, QAOA energy evaluation) or analog time-evolution studies.
 
 Full Quantum State (with_state_tomography)
@@ -123,15 +118,15 @@ Instructs the backend to return the full quantum state vector (or density matrix
     spec = Readout().with_state_tomography()
     result = backend.execute(functional, readout=spec)
 
-    state = result.state              # QTensor — the full ket or density matrix
-    probs = result.probabilities      # dict[str, float] derived from |amplitudes|²
+    state = result.state              # The full ket or density matrix as a QTensor
+    probs = result.probabilities      # A dict[str, float] derived from |amplitudes|²
 
 **Parameters**
 
 - **method** (``Literal["exact"]``, default ``"exact"``): Tomography method.  Currently only
-  ``"exact"`` is supported — the backend returns the raw state vector.
+  ``"exact"`` is supported, such that the backend returns the raw state vector.
 
-**When to use**
+**When to Use It**
 
 Use state tomography when you need the complete quantum state for post-processing: computing custom
 observables offline, visualising the state, checking fidelity, or seeding the next step of a
@@ -141,8 +136,6 @@ multi-step algorithm.
 
     State tomography is only available on simulators.  Physical QPUs (accessed via
     :class:`~qilisdk.speqtrum.speqtrum.SpeQtrum`) do not support this readout type.
-
-----
 
 Combining Multiple Readout Types
 ----------------------------------
@@ -167,18 +160,16 @@ Any combination of the three readout types can be requested in a single executio
     ev     = result.expectation_values   # from expectation
     state  = result.state                # from state tomography
 
-----
-
 Accessing Results
 --------------------
 
 :meth:`~qilisdk.backends.backend.Backend.execute` returns a
 :class:`~qilisdk.functionals.FunctionalResult`.  There are two ways to access the readout data.
 
-Convenience Shortcuts
-^^^^^^^^^^^^^^^^^^^^^^^
+Convenient Shortcuts
+^^^^^^^^^^^^^^^^^^^^^^
 
-The quickest way to access results for interactive use:
+The quickest way to access results:
 
 .. list-table::
    :header-rows: 1
@@ -216,10 +207,10 @@ These return the raw result objects and let the type checker verify access witho
     spec = Readout().with_sampling(nshots=1000).with_expectation(observables=[Z(0)])
     result = backend.execute(functional, readout=spec)
 
-    # result.sampling is SamplingReadoutResult — type checker knows this
+    # result.sampling is SamplingReadoutResult - the type checker knows this
     top2 = result.sampling.get_probabilities(n=2)
 
-    # result.expectation is ExpectationReadoutResult — type checker knows this
+    # result.expectation is ExpectationReadoutResult - the type checker knows this
     raw_evs = result.expectation.expectation_values
 
 .. list-table::
@@ -238,8 +229,6 @@ These return the raw result objects and let the type checker verify access witho
    * - ``result.state_tomography``
      - ``StateTomographyReadoutResult | None``
      - ``.with_state_tomography()``
-
-----
 
 Intermediate Results
 --------------------
@@ -286,8 +275,6 @@ readout result for every time step.  The same readout methods apply at each step
 All intermediate lists contain one entry per time step in chronological order, with the **final**
 step appended last.  ``result[i]`` returns the :class:`~qilisdk.readout.readout_results.ReadoutCompositeResults`
 for step ``i``.
-
-----
 
 Complete Example
 -------------------
