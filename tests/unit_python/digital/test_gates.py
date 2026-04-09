@@ -19,7 +19,7 @@ from numpy.testing import assert_allclose
 from scipy.linalg import expm
 
 from qilisdk.core.variables import Domain, Parameter, Term, Variable
-from qilisdk.digital import CNOT, CZ, RX, RY, RZ, SWAP, U1, U2, U3, H, I, M, S, T, X, Y, Z
+from qilisdk.digital import CNOT, CZ, RX, RY, RZ, SWAP, U1, U2, U3, Circuit, H, I, M, S, T, X, Y, Z
 from qilisdk.digital.exceptions import GateHasNoMatrixError, InvalidParameterNameError, ParametersNotEqualError
 from qilisdk.digital.gates import Adjoint, BasicGate, Controlled, Exponential, Gate, GateNotParameterizedError
 from qilisdk.settings import get_settings
@@ -1036,3 +1036,17 @@ def test_repr_parameterized_gate():
     assert "RX" in repr_str
     assert "1.57" in repr_str
     assert str(np.pi / 2) in repr_str
+
+
+def test_gate_equals_gate():
+    qubit = 0
+    gate1 = RX(qubit, theta=np.pi / 2)
+    gate2 = RX(qubit, theta=np.pi / 2)
+    assert gate1 == gate2
+
+
+def test_gate_not_equals_circuit():
+    qubit = 0
+    gate = RX(qubit, theta=np.pi / 2)
+    circuit = Circuit(1)
+    assert gate != circuit

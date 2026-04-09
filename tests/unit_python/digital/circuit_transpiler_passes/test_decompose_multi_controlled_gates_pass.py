@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 import numpy as np
 import pytest
 
-from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, H, I, S, T, X, Y, Z
+from qilisdk.digital import RX, RY, RZ, U1, U2, U3, Circuit, H, I, S, T, X, Y, Z
 from qilisdk.digital.circuit_transpiler_passes import DecomposeMultiControlledGatesPass
 from qilisdk.digital.circuit_transpiler_passes.decompose_multi_controlled_gates_pass import _adjoint_of, _sqrt_of
 from qilisdk.digital.circuit_transpiler_passes.numeric_helpers import _wrap_angle, _zyz_from_unitary
@@ -191,7 +191,10 @@ def test_adjoint_of_generic_multi_qubit_gate():
 
 
 def test_decompose_pass_of_multi_controlled_generic_gate():
-    controlled_gate = Controlled(2, basic_gate=CNOT(0, 1))
+    multi_qubit_gate = MagicMock(spec=BasicGate)
+    multi_qubit_gate.nqubits = 2
+    multi_qubit_gate._parameters = {}
+    controlled_gate = Controlled(2, basic_gate=multi_qubit_gate)
     circuit = Circuit(3)
     circuit.add(controlled_gate)
     with pytest.raises(NotImplementedError, match="Controlled version of multi-qubit gates is not supported"):

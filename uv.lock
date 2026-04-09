@@ -43,6 +43,15 @@ wheels = [
 ]
 
 [[package]]
+name = "antlr4-python3-runtime"
+version = "4.13.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/33/5f/2cdf6f7aca3b20d3f316e9f505292e1f256a32089bd702034c29ebde6242/antlr4_python3_runtime-4.13.2.tar.gz", hash = "sha256:909b647e1d2fc2b70180ac586df3933e38919c85f98ccc656a96cd3f25ef3916", size = 117467, upload-time = "2024-08-03T19:00:12.757Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/89/03/a851e84fcbb85214dc637b6378121ef9a0dd61b4c65264675d8a5c9b1ae7/antlr4_python3_runtime-4.13.2-py3-none-any.whl", hash = "sha256:fe3835eb8d33daece0e799090eda89719dbccee7aa39ef94eed3818cafa5a7e8", size = 144462, upload-time = "2024-08-03T19:00:11.134Z" },
+]
+
+[[package]]
 name = "anyio"
 version = "4.12.1"
 source = { registry = "https://pypi.org/simple" }
@@ -2321,6 +2330,20 @@ wheels = [
 ]
 
 [[package]]
+name = "openqasm3"
+version = "1.0.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/92/a0/678ce1e4efbeb1cf06a7728b4056754e52bfd2c5cad174dae0f2a17b2d03/openqasm3-1.0.1.tar.gz", hash = "sha256:c589dc05d4ced50ca24167d14e0f2c916e717499ba0442e0ff2a3030ef312d0a", size = 536861, upload-time = "2025-02-19T22:51:06.204Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/75/dd/2aa7698341948f3229f7a1cb75e84d9677444d9c730632d1907716574dc5/openqasm3-1.0.1-py3-none-any.whl", hash = "sha256:0d3a1ebe3465e3ea619bcaa369858bba8944cbb0c49604b24f94662d3ec41d41", size = 541545, upload-time = "2025-02-19T22:51:01.852Z" },
+]
+
+[package.optional-dependencies]
+parser = [
+    { name = "antlr4-python3-runtime" },
+]
+
+[[package]]
 name = "packaging"
 version = "26.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2993,6 +3016,7 @@ dependencies = [
     { name = "mkl-service", marker = "sys_platform != 'darwin' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
     { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'darwin' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
     { name = "numpy", version = "2.4.3", source = { registry = "https://urob.github.io/numpy-mkl" }, marker = "sys_platform != 'darwin' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "openqasm3", extra = ["parser"] },
     { name = "py-cpuinfo" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
@@ -3095,6 +3119,7 @@ requires-dist = [
     { name = "numpy", marker = "sys_platform != 'darwin'", specifier = ">=2.4.1", index = "https://urob.github.io/numpy-mkl" },
     { name = "numpy", marker = "sys_platform == 'darwin'", specifier = ">=2.3,<2.4.1" },
     { name = "openfermion", marker = "extra == 'openfermion'", specifier = ">=1.7.1" },
+    { name = "openqasm3", extras = ["parser"], specifier = ">=1.0.1" },
     { name = "py-cpuinfo", specifier = ">=9.0.0" },
     { name = "pydantic", specifier = ">=2.12.3" },
     { name = "pydantic-settings", specifier = ">=2.11.0" },
