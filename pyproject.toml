@@ -38,6 +38,7 @@ dependencies = [
     "gputil>=1.4.0",
     "mkl-service>=2.6.1; sys_platform != 'darwin'",
     "rustworkx>=0.17.1",
+    "openqasm3[parser]>=1.0.1",
 ]
 
 [project.optional-dependencies]

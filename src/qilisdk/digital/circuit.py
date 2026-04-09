@@ -19,10 +19,10 @@ from typing import TYPE_CHECKING, Callable, Iterable
 import numpy as np
 from typing_extensions import Self
 
-from qilisdk.core import QTensor
+from qilisdk.core import Domain, Parameter, QTensor
 from qilisdk.core.parameterizable import Parameterizable
-from qilisdk.core.variables import Domain, Parameter
 from qilisdk.settings import get_settings
+from qilisdk.utils.hashing import hash as qili_hash
 from qilisdk.utils.visualization import CircuitStyle
 from qilisdk.yaml import yaml
 
@@ -300,6 +300,18 @@ class Circuit(Parameterizable):
         else:
             self.prepend(other)
         return self
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Circuit):
+            return NotImplemented
+        if self.nqubits != other.nqubits:
+            return False
+        if len(self.gates) != len(other.gates):
+            return False
+        return all(g1 == g2 for g1, g2 in zip(self.gates, other.gates))
+
+    def __hash__(self) -> int:
+        return qili_hash((self.nqubits, tuple(self.gates)))
 
     def draw(self, style: CircuitStyle = CircuitStyle(), filepath: str | None = None) -> None:
         """
