@@ -161,7 +161,7 @@ This creates a quantum circuit with 2 qubits. We can then add gates to our circu
    circuit.add(H(0))
    circuit.add(CNOT(0, 1))
 
-And finally we should also add some measurements to our circuit:
+And finally we should also add some measurements:
 
 .. code-block:: python
 
@@ -175,7 +175,7 @@ which creates a superposition on the first qubit,
 entangles it with the second qubit, and then measures both qubits.
 
 If we want to simulate this circuit, we can use the :doc:`QiliSim </modules/backends/backends_qilisim>` backend.
-To tell the QiliSim simulator that we want to simulate a circuit we use the
+To tell the simulator that we want to simulate a circuit we use the
 the :doc:`DigitalPropagation </modules/functionals/functionals_sampling>` class 
 and then use the :doc:`Readout </modules/readout/readout>` class to specify how we want to read out our results:
 
@@ -186,19 +186,19 @@ and then use the :doc:`Readout </modules/readout/readout>` class to specify how 
    from qilisdk.readout import Readout
 
    backend = QiliSim()
-   result = backend.execute(DigitalPropagation(circuit), Readout().with_sampling(nshots=500))
+   result = backend.execute(DigitalPropagation(circuit), Readout().with_sampling(nshots=100))
    print(result.get_samples())
 
 This will execute our circuit on the QiliSim simulator, as though we took ran 
-our quantum circuit 500 times and recorded all of our measurements.
+our quantum circuit 100 times and recorded all of our measurements.
 The output of this will be a dictionary of samples, where each key is a string representing the 
 measurement outcomes for each qubit, and each value is the number of times that outcome was observed:
 
 .. code-block:: python
 
    {
-   '00': 249,
-   '11': 251
+   '00': 49,
+   '11': 51
    }
 
 As you can see, we get approximately equal numbers of '00' and '11' outcomes, 

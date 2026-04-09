@@ -113,7 +113,8 @@ from the probability amplitudes :math:`α` and :math:`β` as follows:
 :math:`φ = \arg(β) - \arg(α)`
 
 We can then plot the point corresponding to these angles on the surface of the Bloch sphere, 
-which gives us a visual representation of the state of the qubit:
+which gives us a visual representation of the state of the qubit. 
+For example, the state :math:`|0⟩` corresponds to the point at the top of the sphere:
 
 .. image:: ../../_static/bloch_light.svg
    :align: left
@@ -133,9 +134,11 @@ Further Reading
 - `Superposition`_
 - `Entanglement`_
 - `Quantum Advantage`_
+- `Bloch Sphere`_
 
 .. _Quantum Advantage: https://en.wikipedia.org/wiki/Quantum_advantage
 .. _Superposition: https://en.wikipedia.org/wiki/Quantum_superposition
 .. _Entanglement: https://en.wikipedia.org/wiki/Quantum_entanglement
 .. _Qubit: https://en.wikipedia.org/wiki/Qubit
 .. _Bra-Ket Notation: https://en.wikipedia.org/wiki/Bra%E2%80%93ket_notation
+.. _Bloch Sphere: https://en.wikipedia.org/wiki/Bloch_sphere

@@ -7,5 +7,6 @@ Here you can find tutorials on how to use QiliSDK for various applications:
    :maxdepth: 1
 
    application_grovers
+   application_shors
    application_annealing
    application_qaoa
