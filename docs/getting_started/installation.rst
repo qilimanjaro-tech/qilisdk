@@ -51,8 +51,10 @@ You can combine extras:
 Compiling From Source
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The above method will install pre-built binaries of QiliSDK, of whenever we last did a release. 
-If you want to get the latest features, you can compile the library from source, but be warned that this might include unstable features.
+The above method will install the pre-built binaries of QiliSDK of the most recent release. 
+If you want to get the newest features (those that we're still working on), you can compile the library from source, 
+but be aware that this is not recommended for most users, and we make no promises that the latest code will be stable.
+
 Support for Windows is somewhat limited, so we recommend using WSL, which can be installed as per 
 `this guide <https://learn.microsoft.com/en-us/windows/wsl/install>`__.
 
@@ -90,7 +92,7 @@ If you want to install with extras, you can run the following, adjusting as need
 
     uv sync --extra cuda13 --extra qutip --extra speqtrum
 
-You then have an environment with the latest version of QiliSDK installed, and you can start using it in your Python scripts.
+You then have an environment with the latest version of QiliSDK installed.
 If you want to install other things to the environment you'll need to use pip with uv:
 
 .. code-block:: bash

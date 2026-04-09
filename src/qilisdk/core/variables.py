@@ -21,6 +21,7 @@ from typing import Iterator, Mapping, Sequence, TypeVar, cast, overload
 
 import numpy as np
 from loguru import logger
+from typing_extensions import TypeAlias
 
 from qilisdk.core.exceptions import EvaluationError, InvalidBoundsError, NotSupportedOperation, OutOfBoundsException
 from qilisdk.settings import get_settings
@@ -2048,3 +2049,6 @@ class Cos(MathematicalMap):
 
     def __copy__(self) -> Cos:
         return Cos(super().__copy__())
+
+
+PARAMETERIZED_NUMBER: TypeAlias = float | Parameter | Term
