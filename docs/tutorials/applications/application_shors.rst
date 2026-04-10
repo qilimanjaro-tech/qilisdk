@@ -35,7 +35,7 @@ The Implementation
 ----------------------
 
 As an example, let's consider the number 3. Whilst 15 is the smallest composite number, the quantum circuit for factoring it is quite large. 
-Instead, we will (fail to) factor 3, which is a prime number, to demonstrate the algorithm.
+Instead, we will factor 3 into 3 and 1 to demonstrate the algorithm.
 
 So, going through the steps of the algorithm:
 
@@ -43,7 +43,45 @@ So, going through the steps of the algorithm:
 2. We compute the GCD of :math:`2` and :math:`3`, which is 1, so we proceed to the next step.
 3. We need to find the period :math:`r` of the function :math:`f(x) = 2^x \mod 3`. To do this, we use the following quantum circuit:
 
-TODO
+.. code-block:: python
+
+    from qilisdk.digital import Circuit, X, H, Controlled, CNOT, SWAP, T, Adjoint, M
+    from qilisdk.backends import QiliSim, DigitalMethod
+    from qilisdk.functionals import DigitalPropagation
+    from qilisdk.readout import Readout
+
+    # Initialize the circuit with 4 qubits (2 for the input and 2 for the output)
+    shors = Circuit(4)
+    shors.add(X(3))
+    shors.add(H(0))
+    shors.add(H(1))
+
+    # Modulo exponentiation
+    shors.add(Controlled(1, basic_gate=SWAP(2, 3)))
+
+    # Inverse Quantum Fourier Transform
+    shors.add(H(0))
+    shors.add(Adjoint(T(0)))
+    shors.add(CNOT(1, 0))
+    shors.add(T(0))
+    shors.add(CNOT(1, 0))
+    shors.add(Adjoint(T(1)))
+    shors.add(H(1))
+    shors.add(SWAP(0, 1))
+
+    # We measure the first two qubits to find the period r
+    shors.add(M(0))
+    shors.add(M(1))
+
+    # Run the simulation
+    backend = QiliSim(digital_simulation_method=DigitalMethod.statevector(matrix_free=False))
+    res = backend.execute(DigitalPropagation(shors), Readout().with_sampling(1000))
+    print(res)
+
+This will output a 50/50 mix of 0 and 2, which corresponds to the period :math:`r = 2`.
+
+4. Since :math:`r` is even, we compute the GCD of :math:`a^{r/2} - 1 = 2^1 - 1 = 1` and :math:`3`, which is 1, so we do not find a non-trivial factor.
+5. We would then repeat the process with a different random integer :math:`a`, but since there are no other choices, we conclude that the factors of 3 are 3 and 1.
 
 Further Reading
 --------------------

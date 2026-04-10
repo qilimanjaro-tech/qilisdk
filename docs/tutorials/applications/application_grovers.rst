@@ -25,8 +25,8 @@ we measure our state.
 The Solution
 ----------------------
 
-Classically, you would have to check each item one by one, which would take O(N) time in the worst case.
-Grover's algorithm allows you to find the desired item in O(sqrt(N)) time, which is a significant improvement for large N.
+Classically, you would have to check each item one by one, which would take :math:`O(N)` time in the worst case.
+Grover's algorithm allows you to find the desired item in :math:`O(\sqrt{N})` time, which is a significant improvement for large N.
 It was invented by Lov Grover in 1996 and is one of the most well-known quantum algorithms.
 
 The algorithm is formed of two parts: the **oracle** and the **diffusion operator**. 
@@ -44,8 +44,8 @@ increasing the probability of measuring it. It can be represented as a unitary o
 where :math:`|\psi\rangle` is the equal superposition state and :math:`I` is the identity operator.
 
 By doing :math:`O` followed by :math:`D` repeatedly, we can amplify the amplitude of the marked state 
-and increase the probability of measuring it. More specifically, after :math:`\frac{\pi}{4} \sqrt{N}` iterations,
-the probability of measuring the marked state is close to 1.
+and increase the probability of measuring it. More specifically, after :math:`\text{floor}(\frac{\pi}{4} \sqrt{N})` iterations,
+the probability of measuring the marked state will be close to 1.
 
 The Implementation
 ----------------------
@@ -78,10 +78,10 @@ a controlled Z gate on all qubits, and then undoing the previous operations:
     diffusion.add(X(0))
     diffusion.add(X(1))
     diffusion.add(CZ(0, 1))
-    diffusion.add(X(0))
     diffusion.add(X(1))
-    diffusion.add(H(0))
+    diffusion.add(X(0))
     diffusion.add(H(1))
+    diffusion.add(H(0))
 
 Our initial state is going to be the equal superposition state, which can be prepared by applying a Hadamard gate to each qubit:
 

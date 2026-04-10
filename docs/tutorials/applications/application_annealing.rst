@@ -1,6 +1,9 @@
 Optimization with Quantum Annealing
 ===================================================
 
+In this tutorial, we will explore how to use Quantum Annealing to solve a simple
+optimization problem using QiliSDK.
+
 The Problem
 ----------------------
 
