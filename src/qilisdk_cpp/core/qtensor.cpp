@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// GCOV_EXCL_BR_START
-
 #include "qtensor.h"
 #include "../libs/numpy.h"
 #include "../libs/pybind.h"
 
 #include <random>
 #include <sstream>
+
+// GCOV_EXCL_BR_START
 
 DenseMatrix _get_dense_eigenvectors(const std::vector<SparseMatrix>& evecs) {
     /*
