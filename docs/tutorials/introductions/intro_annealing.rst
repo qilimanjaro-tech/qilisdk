@@ -4,7 +4,7 @@ Quantum Annealing
 In this tutorial, we will cover the basics of quantum annealing, and then show
 how to use QiliSDK to implement a simple quantum annealing algorithm.
 
-.. note:: If you don't have QiliSDK installed and want to run the examples yourself, you can follow the instructions in the :doc:`installation guide </getting_started/installation>`.
+.. include:: ../../shared/install_note.rst
 
 What is Quantum Annealing?
 -----------------------------

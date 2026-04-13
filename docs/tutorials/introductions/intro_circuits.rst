@@ -4,7 +4,7 @@ Quantum Circuits
 In this tutorial, we will cover the basics of quantum circuits, which are the fundamental building blocks of quantum computation. 
 We'll then also show how to use QiliSDK to build and simulate a simple quantum circuit.
 
-.. note:: If you don't have QiliSDK installed and want to run the examples yourself, you can follow the instructions in the :doc:`installation guide </getting_started/installation>`.
+.. include:: ../../shared/install_note.rst
 
 What is a Quantum Circuit?
 -----------------------------
@@ -86,7 +86,9 @@ What Does Each Quantum Gate Do?
 ----------------------------------
 
 We've just seen how the Hadamard gate behaves, but what other gates can we use in quantum circuits?
-The most common quantum gates are the following:
+Here we list all of the most-common quantum gates, their behavior, and their matrix representations.
+
+.. note:: Don't worry about memorizing anything here, but it's good to a vague idea of some of the names and behaviors
 
 .. list-table::
    :header-rows: 1

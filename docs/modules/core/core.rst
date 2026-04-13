@@ -11,6 +11,7 @@ Core
    core_math_map
    core_comparison
    core_model
+   core_qubo
    core_qtensor
 
 The :mod:`qilisdk.core` layer underpins both the digital and analog stacks. It
