@@ -21,11 +21,13 @@ msgstr ""
 
 #: ../../tutorials/applications/index_applications.rst:2
 msgid "Applications"
-msgstr ""
+msgstr "Aplicaciones"
 
 #: ../../tutorials/applications/index_applications.rst:4
 msgid ""
 "Here you can find tutorials on how to use QiliSDK for various "
 "applications:"
 msgstr ""
+"Aquí puedes encontrar tutoriales sobre cómo usar QiliSDK para diversas "
+"aplicaciones:"
 

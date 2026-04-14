@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../modules/cost_functions/cost_functions.rst:2
 msgid "Cost Functions"
-msgstr ""
+msgstr "Funcions de Cost"
 
 #: ../../modules/cost_functions/cost_functions.rst:11
 msgid ""
@@ -33,16 +33,24 @@ msgid ""
 "observable expectation value or the energy of an abstract optimization "
 "model."
 msgstr ""
+"El mòdul :mod:`qilisdk.cost_functions` converteix les sortides brutes "
+"retornades pels funcionals en valors escalars únics que els optimitzadors "
+"poden minimitzar. Cada funció de cost inspecciona el "
+":class:`~qilisdk.functionals.functional_result.FunctionalResult` produït "
+"per un backend i avalua una mètrica específica del problema, com ara un "
+"valor esperat d'un observable o l'energia d'un model d'optimització abstracte."
 
 #: ../../modules/cost_functions/cost_functions.rst:16
 msgid "You will typically use cost functions to:"
-msgstr ""
+msgstr "Típicament s'utilitzen les funcions de cost per:"
 
 #: ../../modules/cost_functions/cost_functions.rst:18
 msgid ""
 "score intermediate iterations inside a "
 ":class:`~qilisdk.functionals.variational_program.VariationalProgram`"
 msgstr ""
+"puntuar les iteracions intermèdies dins d'un "
+":class:`~qilisdk.functionals.variational_program.VariationalProgram`"
 
 #: ../../modules/cost_functions/cost_functions.rst:19
 msgid ""
@@ -50,6 +58,9 @@ msgid ""
 ":class:`~qilisdk.functionals.functional_result.FunctionalResult` samples "
 "into meaningful costs"
 msgstr ""
+"post-processar les mostres de "
+":class:`~qilisdk.functionals.functional_result.FunctionalResult` en costs "
+"significatius"
 
 #: ../../modules/cost_functions/cost_functions.rst:20
 msgid ""
@@ -57,10 +68,13 @@ msgid ""
 ":class:`~qilisdk.functionals.functional_result.FunctionalResult` states "
 "into expectation values"
 msgstr ""
+"traduir els estats de "
+":class:`~qilisdk.functionals.functional_result.FunctionalResult` en valors "
+"esperats"
 
 #: ../../modules/cost_functions/cost_functions.rst:24
 msgid "CostFunction Interface"
-msgstr ""
+msgstr "Interfície de CostFunction"
 
 #: ../../modules/cost_functions/cost_functions.rst:26
 msgid ""
@@ -70,6 +84,12 @@ msgid ""
 "It dispatches on the concrete type of the functional result and calls the"
 " appropriate protected hook:"
 msgstr ""
+"La classe base abstracta "
+":class:`~qilisdk.cost_functions.cost_function.CostFunction` exposa un únic "
+"mètode públic, "
+":meth:`~qilisdk.cost_functions.cost_function.CostFunction.compute_cost`. "
+"Distribueix en funció del tipus concret del resultat funcional i crida el "
+"ganxo protegit adequat:"
 
 #: ../../modules/cost_functions/cost_functions.rst:30
 msgid ""
@@ -78,6 +98,10 @@ msgid ""
 "inspecting the available readout results (samples, expectation values, "
 "final state) to compute the cost."
 msgstr ""
+"Distribueix en funció del contingut del "
+":class:`~qilisdk.functionals.functional_result.FunctionalResult`, "
+"inspeccionant els resultats de lectura disponibles (mostres, valors esperats, "
+"estat final) per calcular el cost."
 
 #: ../../modules/cost_functions/cost_functions.rst:33
 msgid ""
@@ -87,10 +111,16 @@ msgid ""
 "methods above. Custom implementations must return a real or complex "
 "number that represents the score you want to optimize."
 msgstr ""
+"Si el vostre flux de treball introdueix nous tipus de resultats funcionals, "
+"podeu crear una subclasse de "
+":class:`~qilisdk.cost_functions.cost_function.CostFunction` i registrar "
+"gestors addicionals a ``self._handlers`` o sobreescriure els mètodes "
+"protegits anteriors. Les implementacions personalitzades han de retornar un "
+"nombre real o complex que representi la puntuació que voleu optimitzar."
 
 #: ../../modules/cost_functions/cost_functions.rst:39
 msgid "ObservableCostFunction"
-msgstr ""
+msgstr "ObservableCostFunction"
 
 #: ../../modules/cost_functions/cost_functions.rst:41
 msgid ""
@@ -105,10 +135,21 @@ msgid ""
 "inputs are converted to :class:`~qilisdk.core.qtensor.QTensor` so the "
 "same numeric pipeline can be reused for both analog and digital results."
 msgstr ""
+"La "
+":class:`~qilisdk.cost_functions.observable_cost_function.ObservableCostFunction`"
+" avalua el valor esperat d'un observable respecte a un estat final (de "
+"l'evolució temporal) o a la distribució de probabilitats de les cadenes de "
+"bits mostrejades. Accepta tres representacions intercanviables per a "
+"l'observable: un :class:`~qilisdk.core.qtensor.QTensor`, un "
+":class:`~qilisdk.analog.hamiltonian.Hamiltonian` simbòlic, o un únic "
+":class:`~qilisdk.analog.hamiltonian.PauliOperator`. Internament, totes les "
+"entrades es converteixen a :class:`~qilisdk.core.qtensor.QTensor` perquè el "
+"mateix canal numèric es pugui reutilitzar tant per a resultats analògics com "
+"digitals."
 
 #: ../../modules/cost_functions/cost_functions.rst:50
 msgid "Example: expectation value from analog evolution"
-msgstr ""
+msgstr "Exemple: valor esperat de l'evolució analògica"
 
 #: ../../modules/cost_functions/cost_functions.rst:95
 msgid ""
@@ -117,10 +158,14 @@ msgid ""
 ":attr:`~qilisdk.functionals.functional_result.FunctionalResult.probabilities`"
 " and accumulates the expectation value in the computational basis."
 msgstr ""
+"Per als fluxos de treball de mostreig, la funció de cost itera a través de la "
+"distribució de probabilitats exposada per "
+":attr:`~qilisdk.functionals.functional_result.FunctionalResult.probabilities`"
+" i acumula el valor esperat en la base computacional."
 
 #: ../../modules/cost_functions/cost_functions.rst:101
 msgid "ModelCostFunction"
-msgstr ""
+msgstr "ModelCostFunction"
 
 #: ../../modules/cost_functions/cost_functions.rst:103
 msgid ""
@@ -131,6 +176,12 @@ msgid ""
 "subclasses such as :class:`~qilisdk.core.model.QUBO`) and evaluates it "
 "against measured bitstrings or the amplitudes of a final quantum state."
 msgstr ""
+"La "
+":class:`~qilisdk.cost_functions.model_cost_function.ModelCostFunction` "
+"connecta models d'optimització clàssica amb objectes de resultat quàntic. "
+"Accepta qualsevol :class:`~qilisdk.core.model.Model` (incloent subclasses de "
+"conveniència com ara :class:`~qilisdk.core.model.QUBO`) i l'avalua respecte "
+"a les cadenes de bits mesurades o les amplituds d'un estat quàntic final."
 
 #: ../../modules/cost_functions/cost_functions.rst:108
 msgid ""
@@ -140,14 +191,19 @@ msgid ""
 "variables, feeds them through :meth:`~qilisdk.core.model.Model.evaluate`,"
 " and aggregates the resulting objective and constraint values."
 msgstr ""
+"Quan el model proporcionat és un :class:`~qilisdk.core.model.QUBO`, la funció "
+"de cost el converteix automàticament en un Hamiltonià i calcula el valor "
+"esperat. En cas contrari, associa cada mostra a les variables del model, les "
+"passa per :meth:`~qilisdk.core.model.Model.evaluate` i agrega els valors "
+"resultants d'objectiu i restricció."
 
 #: ../../modules/cost_functions/cost_functions.rst:113
 msgid "Example: scoring samples from a variational circuit"
-msgstr ""
+msgstr "Exemple: puntuació de mostres d'un circuit variacional"
 
 #: ../../modules/cost_functions/cost_functions.rst:151
 msgid "Cost Functions in Variational Programs"
-msgstr ""
+msgstr "Funcions de Cost en Programes Variacionals"
 
 #: ../../modules/cost_functions/cost_functions.rst:153
 msgid ""
@@ -160,6 +216,14 @@ msgid ""
 "and feeds it into the configured cost function to obtain the scalar that "
 "drives the optimization loop."
 msgstr ""
+"Els fluxos de treball variacionals combinen un "
+":class:`~qilisdk.functionals.functional.Functional` parametritzat, un "
+"optimitzador clàssic i una "
+":class:`~qilisdk.cost_functions.cost_function.CostFunction`. En cada "
+"iteració de l'optimitzador, el backend executa el funcional, obté un objecte "
+":class:`~qilisdk.functionals.functional_result.FunctionalResult` i l'introdueix "
+"a la funció de cost configurada per obtenir l'escalar que dirigeix el bucle "
+"d'optimització."
 
 #: ../../modules/cost_functions/cost_functions.rst:188
 msgid ""
@@ -171,4 +235,11 @@ msgid ""
 ":class:`~qilisdk.cost_functions.model_cost_function.ModelCostFunction` to"
 " include constraint penalties from a combinatorial problem."
 msgstr ""
-
+"Intercanviar la funció de cost permet explorar definicions d'objectiu "
+"alternatives sense modificar el propi funcional. Per exemple, podeu "
+"començar amb "
+":class:`~qilisdk.cost_functions.observable_cost_function.ObservableCostFunction`"
+" per reproduir una expectativa d'energia inspirada en la física i posteriorment "
+"provar "
+":class:`~qilisdk.cost_functions.model_cost_function.ModelCostFunction` per "
+"incloure penalitzacions de restriccions d'un problema combinatori."

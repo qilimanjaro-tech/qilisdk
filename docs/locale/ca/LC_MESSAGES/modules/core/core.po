@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../modules/core/core.rst:2
 msgid "Core"
-msgstr ""
+msgstr "Core"
 
 #: ../../modules/core/core.rst:17
 msgid ""
@@ -31,10 +31,15 @@ msgid ""
 ":mod:`~qilisdk.core.parameterizable.Parameterizable` mixin used "
 "throughout the SDK."
 msgstr ""
+"La capa :mod:`qilisdk.core` és la base tant de les piles digital com "
+"analògica. Proporciona variables simbòliques, models d'optimització, "
+"tensors quàntics dispersos i el mixin "
+":mod:`~qilisdk.core.parameterizable.Parameterizable` utilitzat arreu "
+"del SDK."
 
 #: ../../modules/core/core.rst:21
 msgid "Highlights:"
-msgstr ""
+msgstr "Aspectes destacats:"
 
 #: ../../modules/core/core.rst:23
 msgid ""
@@ -42,6 +47,9 @@ msgid ""
 "parameter variables plus algebraic helpers "
 "(:class:`~qilisdk.core.variables.Term`, comparison factories, encodings)."
 msgstr ""
+":mod:`~qilisdk.core.variables` proporciona variables binàries, de spin, "
+"contínues i de paràmetre, a més d'assistents algebraics "
+"(:class:`~qilisdk.core.variables.Term`, fàbriques de comparació, codificacions)."
 
 #: ../../modules/core/core.rst:26
 msgid ""
@@ -49,6 +57,9 @@ msgid ""
 "offers tools to automatically convert the model to "
 ":class:`~qilisdk.core.model.QUBO` format if the constraints are linear."
 msgstr ""
+":mod:`~qilisdk.core.model` construeix programes d'optimització amb "
+"restriccions i ofereix eines per convertir automàticament el model al "
+"format :class:`~qilisdk.core.model.QUBO` si les restriccions són lineals."
 
 #: ../../modules/core/core.rst:28
 msgid ""
@@ -56,98 +67,114 @@ msgid ""
 " such as :func:`~qilisdk.core.qtensor.tensor_prod` and "
 ":func:`~qilisdk.core.qtensor.expect_val`."
 msgstr ""
+":mod:`~qilisdk.core.qtensor` gestiona objectes quàntics dispersos i "
+"utilitats com :func:`~qilisdk.core.qtensor.tensor_prod` i "
+":func:`~qilisdk.core.qtensor.expect_val`."
 
 #: ../../modules/core/core.rst:30
 msgid ""
 ":mod:`~qilisdk.core.parameterizable.Parameterizable` standardizes how "
 "objects expose symbolic parameters (shared by circuits, schedules, etc.)."
 msgstr ""
+":mod:`~qilisdk.core.parameterizable.Parameterizable` estandarditza la "
+"manera com els objectes exposen paràmetres simbòlics (compartits per "
+"circuits, esquemes, etc.)."
 
 #: ../../modules/core/core.rst:34
 msgid "Variables"
-msgstr ""
+msgstr "Variables"
 
 #: ../../modules/core/core.rst:36
 msgid "This module offers tools to define different types of variables:"
-msgstr ""
+msgstr "Aquest mòdul ofereix eines per definir diferents tipus de variables:"
 
 #: ../../modules/core/core.rst:38
 msgid "**Binary Variables** (:class:`~qilisdk.core.variables.BinaryVariable`)"
-msgstr ""
+msgstr "**Variables Binàries** (:class:`~qilisdk.core.variables.BinaryVariable`)"
 
 #: ../../modules/core/core.rst:39
 msgid "**Spin Variables** (:class:`~qilisdk.core.variables.SpinVariable`)"
-msgstr ""
+msgstr "**Variables de Spin** (:class:`~qilisdk.core.variables.SpinVariable`)"
 
 #: ../../modules/core/core.rst:40
 msgid ""
 "**Continuous Variables** (:class:`~qilisdk.core.variables.Variable`) with"
 " the following customizable parameters:"
 msgstr ""
+"**Variables Contínues** (:class:`~qilisdk.core.variables.Variable`) amb "
+"els paràmetres personalitzables següents:"
 
 #: ../../modules/core/core.rst:42
 msgid ""
 "**Domain** (:class:`~qilisdk.core.variables.Domain`): Specifies the "
 "variable type:"
 msgstr ""
+"**Domini** (:class:`~qilisdk.core.variables.Domain`): Especifica el "
+"tipus de variable:"
 
 #: ../../modules/core/core.rst:44
 msgid ":class:`~qilisdk.core.variables.Domain.REAL`"
-msgstr ""
+msgstr ":class:`~qilisdk.core.variables.Domain.REAL`"
 
 #: ../../modules/core/core.rst:45
 msgid ":class:`~qilisdk.core.variables.Domain.INTEGER`"
-msgstr ""
+msgstr ":class:`~qilisdk.core.variables.Domain.INTEGER`"
 
 #: ../../modules/core/core.rst:46
 msgid ":class:`~qilisdk.core.variables.Domain.POSITIVE_INTEGER`"
-msgstr ""
+msgstr ":class:`~qilisdk.core.variables.Domain.POSITIVE_INTEGER`"
 
 #: ../../modules/core/core.rst:47
 msgid ":class:`~qilisdk.core.variables.Domain.BINARY`"
-msgstr ""
+msgstr ":class:`~qilisdk.core.variables.Domain.BINARY`"
 
 #: ../../modules/core/core.rst:48
 msgid ":class:`~qilisdk.core.variables.Domain.SPIN`"
-msgstr ""
+msgstr ":class:`~qilisdk.core.variables.Domain.SPIN`"
 
 #: ../../modules/core/core.rst:49
 msgid "**Bounds**: Defines the allowed value range of the variable."
-msgstr ""
+msgstr "**Cotes**: Defineix el rang de valors permesos de la variable."
 
 #: ../../modules/core/core.rst:50
 msgid ""
 "**Encoding** (:class:`~qilisdk.core.variables.Encoding`): Specifies how "
 "the variable is represented using binary encodings:"
 msgstr ""
+"**Codificació** (:class:`~qilisdk.core.variables.Encoding`): Especifica "
+"com es representa la variable mitjançant codificacions binàries:"
 
 #: ../../modules/core/core.rst:52
 msgid "Bit-wise encoding (:class:`~qilisdk.core.variables.Bitwise`)"
-msgstr ""
+msgstr "Codificació bit a bit (:class:`~qilisdk.core.variables.Bitwise`)"
 
 #: ../../modules/core/core.rst:53
 msgid "Domain wall encoding (:class:`~qilisdk.core.variables.DomainWall`)"
-msgstr ""
+msgstr "Codificació de paret de domini (:class:`~qilisdk.core.variables.DomainWall`)"
 
 #: ../../modules/core/core.rst:54
 msgid "One-hot encoding (:class:`~qilisdk.core.variables.OneHot`)"
-msgstr ""
+msgstr "Codificació one-hot (:class:`~qilisdk.core.variables.OneHot`)"
 
 #: ../../modules/core/core.rst:55
 msgid ""
 "**Precision**: Applicable to ``REAL`` domain; defines the resolution "
 "(e.g., floating-point precision)."
 msgstr ""
+"**Precisió**: Aplicable al domini ``REAL``; defineix la resolució "
+"(p. ex., precisió de punt flotant)."
 
 #: ../../modules/core/core.rst:57
 msgid "An example of creating different types of variables:"
-msgstr ""
+msgstr "Un exemple de creació de diferents tipus de variables:"
 
 #: ../../modules/core/core.rst:67
 msgid ""
 "Continuous variables support indexing, where each index refers to a "
 "component of the binary-encoded form of the variable. For example:"
 msgstr ""
+"Les variables contínues admeten indexació, on cada índex fa referència a "
+"un component de la forma codificada en binari de la variable. Per exemple:"
 
 #: ../../modules/core/core.rst:73 ../../modules/core/core.rst:86
 #: ../../modules/core/core.rst:109 ../../modules/core/core.rst:127
@@ -155,7 +182,7 @@ msgstr ""
 #: ../../modules/core/core.rst:339 ../../modules/core/core.rst:365
 #: ../../modules/core/core.rst:398 ../../modules/core/core.rst:415
 msgid "**Output**:"
-msgstr ""
+msgstr "**Sortida**:"
 
 #: ../../modules/core/core.rst:79
 msgid ""
@@ -163,10 +190,13 @@ msgid ""
 "you can write: ``x[0]``. Each binary variable configuration generates a "
 "float within the bounds, based on the defined precision. For instance:"
 msgstr ""
+"Per indexar la primera variable binària de la representació binària de x "
+"podeu escriure: ``x[0]``. Cada configuració de variable binària genera un "
+"valor flotant dins de les cotes, basat en la precisió definida. Per exemple:"
 
 #: ../../modules/core/core.rst:93
 msgid "Terms"
-msgstr ""
+msgstr "Termes"
 
 #: ../../modules/core/core.rst:95
 msgid ""
@@ -174,20 +204,25 @@ msgid ""
 "algebraically to form expressions known as "
 ":class:`Terms<qilisdk.core.variables.Term>`. For example:"
 msgstr ""
+":class:`Variables<qilisdk.core.variables.Variable>` es poden combinar "
+"algebraicament per formar expressions conegudes com a "
+":class:`Termes<qilisdk.core.variables.Term>`. Per exemple:"
 
 #: ../../modules/core/core.rst:118
 msgid "Terms can be evaluated by providing values for the involved variables:"
-msgstr ""
+msgstr "Els termes es poden avaluar proporcionant valors per a les variables implicades:"
 
 #: ../../modules/core/core.rst:135
 msgid ""
 "To evaluate a term, all participating variables must be assigned valid "
 "values within their respective domains and bounds."
 msgstr ""
+"Per avaluar un terme, totes les variables participants han de tenir "
+"assignats valors vàlids dins dels seus dominis i cotes respectius."
 
 #: ../../modules/core/core.rst:138
 msgid "Parameters and Parameterizable Objects"
-msgstr ""
+msgstr "Paràmetres i Objectes Parametritzables"
 
 #: ../../modules/core/core.rst:140
 msgid ""
@@ -202,6 +237,16 @@ msgid ""
 ":meth:`~qilisdk.core.parameterizable.Parameterizable.set_parameter_values`…)"
 " implemented by circuits, schedules, models, and more."
 msgstr ""
+"Molts components de QiliSDK exposen paràmetres simbòlics que es poden "
+"optimitzar o reassignar en temps d'execució. La classe "
+":class:`~qilisdk.core.variables.Parameter` representa un símbol escalar "
+"amb cotes opcionals, i "
+":class:`~qilisdk.core.parameterizable.Parameterizable` proporciona una "
+"API uniforme "
+"(:meth:`~qilisdk.core.parameterizable.Parameterizable.get_parameter_names`,"
+" "
+":meth:`~qilisdk.core.parameterizable.Parameterizable.set_parameter_values`…)"
+" implementada per circuits, esquemes, models i més."
 
 #: ../../modules/core/core.rst:156
 msgid ""
@@ -210,6 +255,10 @@ msgid ""
 "having to pass the parameter explicitly - its stored ``value`` is used "
 "automatically."
 msgstr ""
+"Els paràmetres es comporten com a variables simbòliques en expressions "
+"algebraiques, de manera que podeu combinar-los amb altres variables i "
+"avaluar termes sense haver de passar el paràmetre explícitament: el seu "
+"``value`` emmagatzemat s'utilitza automàticament."
 
 #: ../../modules/core/core.rst:160
 msgid ""
@@ -218,6 +267,10 @@ msgid ""
 ":class:`~qilisdk.core.variables.Parameter` instances they encounter. For "
 "example:"
 msgstr ""
+"Els objectes que hereten de "
+":class:`~qilisdk.core.parameterizable.Parameterizable` recullen totes les "
+"instàncies de :class:`~qilisdk.core.variables.Parameter` que troben. Per "
+"exemple:"
 
 #: ../../modules/core/core.rst:174
 msgid ""
@@ -225,6 +278,9 @@ msgid ""
 "filter the exposed parameters. This is useful when you want to update "
 "only a subset, such as trainable parameters."
 msgstr ""
+"Tots els mètodes auxiliars de paràmetres accepten un predicat ``where`` "
+"opcional per filtrar els paràmetres exposats. Això és útil quan voleu "
+"actualitzar només un subconjunt, com ara els paràmetres entrenables."
 
 #: ../../modules/core/core.rst:185
 msgid ""
@@ -236,10 +292,17 @@ msgid ""
 " and the corresponding ``set_*`` methods. Accessing ``.parameters`` "
 "directly is not part of the public API."
 msgstr ""
+"Els objectes parametritzables exposen l'estat dels paràmetres mitjançant "
+":meth:`~qilisdk.core.parameterizable.Parameterizable.get_parameters`, "
+":meth:`~qilisdk.core.parameterizable.Parameterizable.get_parameter_names`,"
+" "
+":meth:`~qilisdk.core.parameterizable.Parameterizable.get_parameter_values`,"
+" i els mètodes ``set_*`` corresponents. Accedir directament a "
+"``.parameters`` no forma part de l'API pública."
 
 #: ../../modules/core/core.rst:194
 msgid "Mathematical Maps (sin, cos)"
-msgstr ""
+msgstr "Mapes Matemàtics (sin, cos)"
 
 #: ../../modules/core/core.rst:196
 msgid ""
@@ -251,6 +314,13 @@ msgid ""
 ":class:`~qilisdk.core.variables.Term`, or any other base variable and "
 "defer evaluation until values are provided."
 msgstr ""
+"Utilitzeu els assistents :class:`~qilisdk.core.variables.MathematicalMap` "
+"per aplicar funcions comunes a un paràmetre o terme mantenint les "
+"expressions simbòliques. :class:`~qilisdk.core.variables.Sin` i "
+":class:`~qilisdk.core.variables.Cos` emboliquen un "
+":class:`~qilisdk.core.variables.Parameter`, "
+":class:`~qilisdk.core.variables.Term`, o qualsevol altra variable base i "
+"difereixen l'avaluació fins que es proporcionin valors."
 
 #: ../../modules/core/core.rst:215
 msgid ""
@@ -258,10 +328,13 @@ msgid ""
 " constraints or objectives and rely on the same evaluation and encoding "
 "rules as other symbolic expressions."
 msgstr ""
+"Aquests mapes es componen de manera natural amb altres termes, de manera "
+"que podeu incloure'ls en restriccions o objectius i confiar en les "
+"mateixes regles d'avaluació i codificació que altres expressions simbòliques."
 
 #: ../../modules/core/core.rst:220
 msgid "Comparison Terms"
-msgstr ""
+msgstr "Termes de Comparació"
 
 #: ../../modules/core/core.rst:222
 msgid ""
@@ -269,144 +342,158 @@ msgid ""
 " using mathematical comparisons. Use the following operators to construct"
 " them:"
 msgstr ""
+"Cada :class:`~qilisdk.core.variables.ComparisonTerm` defineix una "
+"restricció mitjançant comparacions matemàtiques. Utilitzeu els operadors "
+"següents per construir-los:"
 
 #: ../../modules/core/core.rst:230
 msgid "Comparison Operation"
-msgstr ""
+msgstr "Operació de Comparació"
 
 #: ../../modules/core/core.rst:231
 msgid "QiliSDK Method"
-msgstr ""
+msgstr "Mètode de QiliSDK"
 
 #: ../../modules/core/core.rst:232
 msgid "Alias"
-msgstr ""
+msgstr "Àlies"
 
 #: ../../modules/core/core.rst:233
 msgid "Equality"
-msgstr ""
+msgstr "Igualtat"
 
 #: ../../modules/core/core.rst:234
 msgid ":meth:`Equal(lhs, rhs)<qilisdk.core.variables.Equal>`"
-msgstr ""
+msgstr ":meth:`Equal(lhs, rhs)<qilisdk.core.variables.Equal>`"
 
 #: ../../modules/core/core.rst:235
 msgid ":meth:`EQ(lhs, rhs)<qilisdk.core.variables.EQ>`"
-msgstr ""
+msgstr ":meth:`EQ(lhs, rhs)<qilisdk.core.variables.EQ>`"
 
 #: ../../modules/core/core.rst:236
 msgid "Not Equal"
-msgstr ""
+msgstr "Diferent de"
 
 #: ../../modules/core/core.rst:237
 msgid ":meth:`NotEqual(lhs, rhs)<qilisdk.core.variables.NotEqual>`"
-msgstr ""
+msgstr ":meth:`NotEqual(lhs, rhs)<qilisdk.core.variables.NotEqual>`"
 
 #: ../../modules/core/core.rst:238
 msgid ":meth:`NEQ(lhs, rhs)<qilisdk.core.variables.NEQ>`"
-msgstr ""
+msgstr ":meth:`NEQ(lhs, rhs)<qilisdk.core.variables.NEQ>`"
 
 #: ../../modules/core/core.rst:239
 msgid "Less Than"
-msgstr ""
+msgstr "Menor que"
 
 #: ../../modules/core/core.rst:240
 msgid ":meth:`LessThan(lhs, rhs)<qilisdk.core.variables.LessThan>`"
-msgstr ""
+msgstr ":meth:`LessThan(lhs, rhs)<qilisdk.core.variables.LessThan>`"
 
 #: ../../modules/core/core.rst:241
 msgid ":meth:`LT(lhs, rhs)<qilisdk.core.variables.LT>`"
-msgstr ""
+msgstr ":meth:`LT(lhs, rhs)<qilisdk.core.variables.LT>`"
 
 #: ../../modules/core/core.rst:242
 msgid "Less Than or Equal"
-msgstr ""
+msgstr "Menor o igual que"
 
 #: ../../modules/core/core.rst:243
 msgid ":meth:`LessThanOrEqual(lhs, rhs)<qilisdk.core.variables.LessThanOrEqual>`"
-msgstr ""
+msgstr ":meth:`LessThanOrEqual(lhs, rhs)<qilisdk.core.variables.LessThanOrEqual>`"
 
 #: ../../modules/core/core.rst:244
 msgid ":meth:`LEQ(lhs, rhs)<qilisdk.core.variables.LEQ>`"
-msgstr ""
+msgstr ":meth:`LEQ(lhs, rhs)<qilisdk.core.variables.LEQ>`"
 
 #: ../../modules/core/core.rst:245
 msgid "Greater Than"
-msgstr ""
+msgstr "Major que"
 
 #: ../../modules/core/core.rst:246
 msgid ":meth:`GreaterThan(lhs, rhs)<qilisdk.core.variables.GreaterThan>`"
-msgstr ""
+msgstr ":meth:`GreaterThan(lhs, rhs)<qilisdk.core.variables.GreaterThan>`"
 
 #: ../../modules/core/core.rst:247
 msgid ":meth:`GT(lhs, rhs)<qilisdk.core.variables.GT>`"
-msgstr ""
+msgstr ":meth:`GT(lhs, rhs)<qilisdk.core.variables.GT>`"
 
 #: ../../modules/core/core.rst:248
 msgid "Greater Than or Equal"
-msgstr ""
+msgstr "Major o igual que"
 
 #: ../../modules/core/core.rst:249
 msgid ""
 ":meth:`GreaterThanOrEqual(lhs, "
 "rhs)<qilisdk.core.variables.GreaterThanOrEqual>`"
 msgstr ""
+":meth:`GreaterThanOrEqual(lhs, "
+"rhs)<qilisdk.core.variables.GreaterThanOrEqual>`"
 
 #: ../../modules/core/core.rst:250
 msgid ":meth:`GEQ(lhs, rhs)<qilisdk.core.variables.GEQ>`"
-msgstr ""
+msgstr ":meth:`GEQ(lhs, rhs)<qilisdk.core.variables.GEQ>`"
 
 #: ../../modules/core/core.rst:252
 msgid ""
 "*Note*: `lhs` and `rhs` refer to the left-hand side and right-hand side "
 "expressions, respectively."
 msgstr ""
+"*Nota*: `lhs` i `rhs` fan referència a les expressions del costat "
+"esquerre i del costat dret, respectivament."
 
 #: ../../modules/core/core.rst:254
 msgid "Example:"
-msgstr ""
+msgstr "Exemple:"
 
 #: ../../modules/core/core.rst:267
 msgid ""
 "When a comparison term is created, constants are automatically moved to "
 "the right-hand side, and variable terms to the left-hand side."
 msgstr ""
+"Quan es crea un terme de comparació, les constants es mouen "
+"automàticament al costat dret i els termes variables al costat esquerre."
 
 #: ../../modules/core/core.rst:270
 msgid "Models"
-msgstr ""
+msgstr "Models"
 
 #: ../../modules/core/core.rst:272
 msgid ""
 "This minimal example introduces a binary optimization model, converts it "
 "to a QUBO penalty form, and exports the corresponding Hamiltonian:"
 msgstr ""
+"Aquest exemple mínim introdueix un model d'optimització binari, el "
+"converteix a una forma de penalització QUBO i exporta el Hamiltonià "
+"corresponent:"
 
 #: ../../modules/core/core.rst:295
 msgid "Objectives and Constraints"
-msgstr ""
+msgstr "Objectius i Restriccions"
 
 #: ../../modules/core/core.rst:297
 msgid "Each :class:`~qilisdk.core.model.Model` consists of:"
-msgstr ""
+msgstr "Cada :class:`~qilisdk.core.model.Model` consta de:"
 
 #: ../../modules/core/core.rst:299
 msgid "A single :class:`~qilisdk.core.model.Objective`"
-msgstr ""
+msgstr "Un únic :class:`~qilisdk.core.model.Objective`"
 
 #: ../../modules/core/core.rst:300
 msgid "Zero or more :class:`~qilisdk.core.model.Constraint` instances"
-msgstr ""
+msgstr "Zero o més instàncies de :class:`~qilisdk.core.model.Constraint`"
 
 #: ../../modules/core/core.rst:302 ../../modules/core/core.rst:523
 msgid "**Objective**"
-msgstr ""
+msgstr "**Objectiu**"
 
 #: ../../modules/core/core.rst:304
 msgid ""
 "The :class:`~qilisdk.core.model.Objective` defines the function the model"
 " aims to minimize or maximize. Example:"
 msgstr ""
+"El :class:`~qilisdk.core.model.Objective` defineix la funció que el model "
+"intenta minimitzar o maximitzar. Exemple:"
 
 #: ../../modules/core/core.rst:330
 msgid ""
@@ -414,30 +501,37 @@ msgid ""
 "variables. Each constraint has an associated Lagrange multiplier, which "
 "determines the penalty for violating it."
 msgstr ""
+"Les restriccions de codificació s'afegeixen automàticament per a variables "
+"contínues amb cotes. Cada restricció té un multiplicador de Lagrange "
+"associat, que determina la penalització per violar-la."
 
 #: ../../modules/core/core.rst:332
 msgid "You can update the multiplier like so:"
-msgstr ""
+msgstr "Podeu actualitzar el multiplicador de la manera següent:"
 
 #: ../../modules/core/core.rst:356
 msgid "**Constraints**"
-msgstr ""
+msgstr "**Restriccions**"
 
 #: ../../modules/core/core.rst:358
 msgid ""
 "Additional :class:`Constraints<qilisdk.core.model.Constraint>` can be "
 "added to restrict the solution space:"
 msgstr ""
+"Es poden afegir :class:`Restriccions<qilisdk.core.model.Constraint>` "
+"addicionals per restringir l'espai de solucions:"
 
 #: ../../modules/core/core.rst:388
 msgid "Evaluating a Model"
-msgstr ""
+msgstr "Avaluació d'un Model"
 
 #: ../../modules/core/core.rst:390
 msgid ""
 "To evaluate a :class:`~qilisdk.core.model.Model`, provide values for all "
 "involved variables:"
 msgstr ""
+"Per avaluar un :class:`~qilisdk.core.model.Model`, proporcioneu valors "
+"per a totes les variables implicades:"
 
 #: ../../modules/core/core.rst:404
 msgid ""
@@ -445,36 +539,48 @@ msgid ""
 "constraints. A constraint returns `0.0` if satisfied, or its Lagrange "
 "multiplier if violated."
 msgstr ""
+"L'avaluació retorna un diccionari amb valors per a l'objectiu i les "
+"restriccions. Una restricció retorna `0.0` si es compleix, o el seu "
+"multiplicador de Lagrange si es viola."
 
 #: ../../modules/core/core.rst:407
 msgid "For example:"
-msgstr ""
+msgstr "Per exemple:"
 
 #: ../../modules/core/core.rst:422
 msgid "QUBO Models"
-msgstr ""
+msgstr "Models QUBO"
 
 #: ../../modules/core/core.rst:424
 msgid ""
 "The :class:`~qilisdk.core.model.QUBO` subclass specializes in **Quadratic"
 " Unconstrained Binary Optimization** models, where every decision "
 "variable is binary and the objective function is at most quadratic. "
-"Unlike general models, “hard” constraints are not maintained separately "
+"Unlike general models, "hard" constraints are not maintained separately "
 "but are encoded directly into the objective as penalty terms. The "
 "strength of each penalty is controlled by its associated Lagrange "
 "multiplier."
 msgstr ""
+"La subclasse :class:`~qilisdk.core.model.QUBO` s'especialitza en models "
+"d'**Optimització Binària Quadràtica No Restringida**, on cada variable de "
+"decisió és binària i la funció objectiu és com a màxim quadràtica. A "
+"diferència dels models generals, les restriccions «dures» no es mantenen "
+"separadament sinó que es codifiquen directament en l'objectiu com a "
+"termes de penalització. La intensitat de cada penalització es controla "
+"pel seu multiplicador de Lagrange associat."
 
 #: ../../modules/core/core.rst:429
 msgid ""
 "The binary quadratic cost function that defines a QUBO problem is written"
 " as"
 msgstr ""
+"La funció de cost quadràtica binària que defineix un problema QUBO "
+"s'escriu com"
 
 #: ../../modules/core/core.rst:432
 #, python-brace-format
 msgid "f(x) = \\frac{1}{2} \\sum_{i=1}^{n} \\sum_{j=1}^{n} q_{ij} x_i x_j,"
-msgstr ""
+msgstr "f(x) = \\frac{1}{2} \\sum_{i=1}^{n} \\sum_{j=1}^{n} q_{ij} x_i x_j,"
 
 #: ../../modules/core/core.rst:436
 #, python-brace-format
@@ -483,6 +589,9 @@ msgid ""
 "coefficients :math:`q_{ij} = q_{ji} \\in \\mathbb{R}`. Separating the "
 "diagonal terms highlights the effective linear weights:"
 msgstr ""
+"amb variables de decisió :math:`x_i \\in \\{0, 1\\}` i coeficients "
+"simètrics :math:`q_{ij} = q_{ji} \\in \\mathbb{R}`. Separar els termes "
+"diagonals posa de relleu els pesos lineals efectius:"
 
 #: ../../modules/core/core.rst:440
 #, python-brace-format
@@ -490,10 +599,12 @@ msgid ""
 "f(x) = \\sum_{i=1}^{n-1} \\sum_{j>i} q_{ij} x_i x_j + \\sum_{i=1}^{n} "
 "q_{ii} x_i."
 msgstr ""
+"f(x) = \\sum_{i=1}^{n-1} \\sum_{j>i} q_{ij} x_i x_j + \\sum_{i=1}^{n} "
+"q_{ii} x_i."
 
 #: ../../modules/core/core.rst:446
 msgid "Adding Constraints as Penalties"
-msgstr ""
+msgstr "Afegir Restriccions com a Penalitzacions"
 
 #: ../../modules/core/core.rst:448
 msgid ""
@@ -501,21 +612,25 @@ msgid ""
 "objective via a **penalty term**. Linear equality constraints can be "
 "described as,"
 msgstr ""
+"Com que QUBO no té restriccions, cada restricció es converteix en "
+"l'objectiu mitjançant un **terme de penalització**. Les restriccions "
+"d'igualtat lineals es poden descriure com,"
 
 #: ../../modules/core/core.rst:451
 #, python-brace-format
 msgid "\\sum_{i=1}^{n} c_i x_i = C, \\quad c_i \\in \\mathbb{Z},"
-msgstr ""
+msgstr "\\sum_{i=1}^{n} c_i x_i = C, \\quad c_i \\in \\mathbb{Z},"
 
 #: ../../modules/core/core.rst:455
 msgid ""
 "where :math:`c_i` are integer coefficients and :math:`C` is an integer "
 "constant."
 msgstr ""
+"on :math:`c_i` són coeficients enters i :math:`C` és una constant entera."
 
 #: ../../modules/core/core.rst:457
 msgid "Embedded as penalties, these constraints give the penalized objective"
-msgstr ""
+msgstr "Incrustades com a penalitzacions, aquestes restriccions donen l'objectiu penalitzat"
 
 #: ../../modules/core/core.rst:459
 #, python-brace-format
@@ -526,27 +641,32 @@ msgid ""
 "    + \\lambda_0 \\left( \\sum_{i=1}^{n} q_i x_i - C \\right)^{2}\n"
 "\\right),"
 msgstr ""
+"\\min_{x,\\,s} \\left(\n"
+"    \\sum_{i=1}^{n-1} \\sum_{j>i} c_{ij} x_i x_j\n"
+"    + \\sum_{i=1}^{n} h_i x_i\n"
+"    + \\lambda_0 \\left( \\sum_{i=1}^{n} q_i x_i - C \\right)^{2}\n"
+"\\right),"
 
 #: ../../modules/core/core.rst:467
 msgid "where :math:`\\lambda_0 > 0` is a penalty strength parameter."
-msgstr ""
+msgstr "on :math:`\\lambda_0 > 0` és un paràmetre d'intensitat de penalització."
 
 #: ../../modules/core/core.rst:469
 msgid "Ineqaulity constraints can be defined as:"
-msgstr ""
+msgstr "Les restriccions d'inequació es poden definir com:"
 
 #: ../../modules/core/core.rst:471
 #, python-brace-format
 msgid "\\sum_{i=1}^{n} \\ell_i x_i \\leq B, \\quad \\ell_i \\in \\mathbb{Z}."
-msgstr ""
+msgstr "\\sum_{i=1}^{n} \\ell_i x_i \\leq B, \\quad \\ell_i \\in \\mathbb{Z}."
 
 #: ../../modules/core/core.rst:475
 msgid "To translate these into penalties, two strategies are supported:"
-msgstr ""
+msgstr "Per traduir-les a penalitzacions, s'admeten dues estratègies:"
 
 #: ../../modules/core/core.rst:477
 msgid "**Slack penalization** (default):"
-msgstr ""
+msgstr "**Penalització per holgura** (per defecte):"
 
 #: ../../modules/core/core.rst:478
 msgid ""
@@ -554,6 +674,9 @@ msgid ""
 "equalities, then square the residual. Therefore, the penalty term "
 "becomes:"
 msgstr ""
+"Introduir variables de holgura binàries addicionals per convertir les "
+"inequacions en igualtats, i després elevar al quadrat el residu. Per tant, "
+"el terme de penalització es converteix en:"
 
 #: ../../modules/core/core.rst:481
 #, python-brace-format
@@ -561,6 +684,8 @@ msgid ""
 "\\lambda_1 \\left( B - \\sum_{i=1}^{n} \\ell_i x_i - \\sum_{k=0}^{N-1} "
 "2^{k} s_k \\right)^{2}"
 msgstr ""
+"\\lambda_1 \\left( B - \\sum_{i=1}^{n} \\ell_i x_i - \\sum_{k=0}^{N-1} "
+"2^{k} s_k \\right)^{2}"
 
 #: ../../modules/core/core.rst:486
 #, python-brace-format
@@ -570,10 +695,14 @@ msgid ""
 "their binary expansion spans the admissible slack range) and "
 ":math:`\\lambda_{1}` control the penalty strength."
 msgstr ""
+"on :math:`s_k` són variables binàries de holgura introduïdes per codificar "
+"la restricció d'inequació (amb el nombre de bits :math:`N` triat de manera "
+"que la seva expansió binària abasti el rang de holgura admissible) i "
+":math:`\\lambda_{1}` controla la intensitat de la penalització."
 
 #: ../../modules/core/core.rst:490
 msgid "**Unbalanced penalization**:"
-msgstr ""
+msgstr "**Penalització no balancejada**:"
 
 #: ../../modules/core/core.rst:491
 #, python-brace-format
@@ -583,20 +712,27 @@ msgid ""
 " :math:`h(x) = B - \\sum_{i=1}^{n} \\ell_i x_i` as the signed residual of"
 " the constraint, and the penalty term becomes:"
 msgstr ""
+"Penalitzar directament la violació sense variables de holgura, usant dos "
+"pesos (a, b) per escalar les desviacions positives i negatives de manera "
+"diferent [1]_. Definim :math:`h(x) = B - \\sum_{i=1}^{n} \\ell_i x_i` "
+"com el residu amb signe de la restricció, i el terme de penalització "
+"es converteix en:"
 
 #: ../../modules/core/core.rst:494
 msgid "- a h(x) + b h(x)^2,"
-msgstr ""
+msgstr "- a h(x) + b h(x)^2,"
 
 #: ../../modules/core/core.rst:498
 msgid ""
 "where :math:`a, b > 0` are parameters that control the penalty strength "
 "for violations above and below the bound, respectively."
 msgstr ""
+"on :math:`a, b > 0` són paràmetres que controlen la intensitat de la "
+"penalització per a violacions per sobre i per sota de la cota, respectivament."
 
 #: ../../modules/core/core.rst:507
 msgid "Why QUBO?"
-msgstr ""
+msgstr "Per què QUBO?"
 
 #: ../../modules/core/core.rst:509
 msgid ""
@@ -604,6 +740,9 @@ msgid ""
 "accept only unconstrained binary quadratic forms, making QUBO the lingua "
 "franca of quantum optimization."
 msgstr ""
+"**Forma no restringida**: Molts recuitors quàntics i solvers especialitzats "
+"accepten únicament formes quadràtiques binàries no restringides, fent de "
+"QUBO la lingua franca de l'optimització quàntica."
 
 #: ../../modules/core/core.rst:510
 msgid ""
@@ -611,44 +750,53 @@ msgid ""
 "transform each constraint into a quadratic penalty, preserving problem "
 "fidelity."
 msgstr ""
+"**Codificació de penalitzacions**: En lloc de descartar l'estructura de "
+"restriccions, transformeu cada restricció en una penalització quadràtica, "
+"preservant la fidelitat del problema."
 
 #: ../../modules/core/core.rst:511
 msgid ""
 "**Direct mapping**: Once in QUBO form, you can directly translate the "
 "problem to Ising/Hamiltonian terms for hardware execution."
 msgstr ""
+"**Mapatge directe**: Un cop en forma QUBO, podeu traduir directament el "
+"problema a termes Ising/Hamiltonià per a l'execució en hardware."
 
 #: ../../modules/core/core.rst:514
 msgid "Defining a QUBO"
-msgstr ""
+msgstr "Definició d'un QUBO"
 
 #: ../../modules/core/core.rst:516
 msgid "**Model creation**"
-msgstr ""
+msgstr "**Creació del model**"
 
 #: ../../modules/core/core.rst:534
 msgid ""
 "If **transform_to_qubo=True**, your constraint **must be linear** (no "
 "quadratic terms), because it will be rewritten as (lhs-rhs)^2."
 msgstr ""
+"Si **transform_to_qubo=True**, la vostra restricció **ha de ser lineal** "
+"(sense termes quadràtics), perquè es reescriurà com (lhs-rhs)^2."
 
 #: ../../modules/core/core.rst:535
 msgid ""
 "If **transform_to_qubo=False**, you assume the constraint is already a "
 "valid quadratic penalty, and it will be added verbatim."
 msgstr ""
+"Si **transform_to_qubo=False**, assumiu que la restricció ja és una "
+"penalització quadràtica vàlida i s'afegirà literalment."
 
 #: ../../modules/core/core.rst:538
 msgid "Example: Slack Penalization"
-msgstr ""
+msgstr "Exemple: Penalització per Holgura"
 
 #: ../../modules/core/core.rst:554 ../../modules/core/core.rst:577
 msgid "**Output**::"
-msgstr ""
+msgstr "**Sortida**::"
 
 #: ../../modules/core/core.rst:561
 msgid "Example: Unbalanced Penalization"
-msgstr ""
+msgstr "Exemple: Penalització No Balancejada"
 
 #: ../../modules/core/core.rst:582
 msgid ""
@@ -657,24 +805,30 @@ msgid ""
 "quantum optimization algorithms.\" Quantum Science and Technology 9.2 "
 "(2024): 025022."
 msgstr ""
+"Montañez-Barrera, Jhon Alejandro, et al. \"Unbalanced penalization: A new"
+" approach to encode inequality constraints of combinatorial problems for "
+"quantum optimization algorithms.\" Quantum Science and Technology 9.2 "
+"(2024): 025022."
 
 #: ../../modules/core/core.rst:585
 msgid "Interoperability"
-msgstr ""
+msgstr "Interoperabilitat"
 
 #: ../../modules/core/core.rst:587
 msgid "**Convert any Model to QUBO**"
-msgstr ""
+msgstr "**Convertir qualsevol Model a QUBO**"
 
 #: ../../modules/core/core.rst:588
 msgid ""
 "If you have a generic :class:`~qilisdk.core.model.Model` with only "
 "linear/quadratic terms, you can automatically produce a QUBO:"
 msgstr ""
+"Si teniu un :class:`~qilisdk.core.model.Model` genèric amb només termes "
+"lineals/quadràtics, podeu produir automàticament un QUBO:"
 
 #: ../../modules/core/core.rst:594
 msgid "**Export to Hamiltonian**"
-msgstr ""
+msgstr "**Exportar a Hamiltonià**"
 
 #: ../../modules/core/core.rst:595
 msgid ""
@@ -682,10 +836,13 @@ msgid ""
 ":class:`~qilisdk.core.hamiltonian.Hamiltonian` for simulation or "
 "hardware:"
 msgstr ""
+"Un cop en forma QUBO, traduïu directament a un "
+":class:`~qilisdk.core.hamiltonian.Hamiltonian` Ising analògic per a "
+"simulació o hardware:"
 
 #: ../../modules/core/core.rst:602
 msgid "QTensor"
-msgstr ""
+msgstr "QTensor"
 
 #: ../../modules/core/core.rst:604
 msgid ""
@@ -694,211 +851,260 @@ msgid ""
 "representing and manipulating quantum states and operators in sparse "
 "form."
 msgstr ""
+"El mòdul :mod:`~qilisdk.core.qtensor` defineix la classe "
+":class:`~qilisdk.core.qtensor.QTensor` i els assistents relacionats per "
+"representar i manipular estats quàntics i operadors en forma dispersa."
 
 #: ../../modules/core/core.rst:608
 msgid ""
 "The :class:`~qilisdk.core.qtensor.QTensor` wraps a dense NumPy array or "
 "SciPy sparse matrix into a CSR-format sparse matrix, and can represent:"
 msgstr ""
+"El :class:`~qilisdk.core.qtensor.QTensor` embolica un array dens de NumPy "
+"o una matriu dispersa de SciPy en una matriu dispersa en format CSR, i "
+"pot representar:"
 
 #: ../../modules/core/core.rst:610
 msgid "**Kets** (column vectors of shape ``(2**N, 1)``)"
-msgstr ""
+msgstr "**Kets** (vectors columna de forma ``(2**N, 1)``)"
 
 #: ../../modules/core/core.rst:611
 msgid "**Bras** (row vectors of shape ``(1, 2**N)``)"
-msgstr ""
+msgstr "**Bras** (vectors fila de forma ``(1, 2**N)``)"
 
 #: ../../modules/core/core.rst:612
 msgid ""
 "**Operators / Density Matrices** (square matrices of shape ``(2**N, "
 "2**N)``)"
 msgstr ""
+"**Operadors / Matrius de Densitat** (matrius quadrades de forma ``(2**N, "
+"2**N)``)"
 
 #: ../../modules/core/core.rst:613
 msgid "**Scalars** (``(1, 1)`` matrices)"
-msgstr ""
+msgstr "**Escalars** (matrius ``(1, 1)``)"
 
 #: ../../modules/core/core.rst:615
 msgid "Examples of creating various quantum objects:"
-msgstr ""
+msgstr "Exemples de creació de diversos objectes quàntics:"
 
 #: ../../modules/core/core.rst:641 ../../modules/core/core.rst:686
 #: ../../modules/core/core.rst:773 ../../modules/core/core.rst:823
 msgid "**Output**"
-msgstr ""
+msgstr "**Sortida**"
 
 #: ../../modules/core/core.rst:657
 msgid "Helper constructors"
-msgstr ""
+msgstr "Constructors auxiliars"
 
 #: ../../modules/core/core.rst:659
 msgid "There are also several constructors for common quantum objects:"
-msgstr ""
+msgstr "Hi ha també diversos constructors per a objectes quàntics comuns:"
 
 #: ../../modules/core/core.rst:661
 msgid ":func:`~qilisdk.core.qtensor.ket` for computational basis kets"
-msgstr ""
+msgstr ":func:`~qilisdk.core.qtensor.ket` per a kets de base computacional"
 
 #: ../../modules/core/core.rst:662
 msgid ":func:`~qilisdk.core.qtensor.bra` for computational basis bras"
-msgstr ""
+msgstr ":func:`~qilisdk.core.qtensor.bra` per a bras de base computacional"
 
 #: ../../modules/core/core.rst:663
 msgid ""
 ":func:`~qilisdk.core.qtensor.basis_state` for N-dimensional basis states "
 "with a single 1 at the specified index"
 msgstr ""
+":func:`~qilisdk.core.qtensor.basis_state` per a estats de base "
+"N-dimensionals amb un únic 1 a l'índex especificat"
 
 #: ../../modules/core/core.rst:664
 msgid ""
 ":func:`~qilisdk.core.qtensor.identity` for identity operators of "
 "specified dimension"
 msgstr ""
+":func:`~qilisdk.core.qtensor.identity` per a operadors identitat de "
+"dimensió especificada"
 
 #: ../../modules/core/core.rst:665
 msgid ""
 ":func:`~qilisdk.core.qtensor.zero` for generating zero tensors of "
 "specified dimension"
 msgstr ""
+":func:`~qilisdk.core.qtensor.zero` per generar tensors zero de dimensió "
+"especificada"
 
 #: ../../modules/core/core.rst:666
 msgid ""
 ":func:`~qilisdk.core.qtensor.ghz` for generating GHZ states of specified "
 "number of qubits"
 msgstr ""
+":func:`~qilisdk.core.qtensor.ghz` per generar estats GHZ del nombre de "
+"qubits especificat"
 
 #: ../../modules/core/core.rst:705
 msgid "Quantum Object Properties & Operations"
-msgstr ""
+msgstr "Propietats i Operacions d'Objectes Quàntics"
 
 #: ../../modules/core/core.rst:707
 msgid "All data are stored sparsely, but you can retrieve dense or sparse views:"
-msgstr ""
+msgstr "Totes les dades s'emmagatzemen de manera dispersa, però podeu recuperar vistes denses o disperses:"
 
 #: ../../modules/core/core.rst:709
 msgid ""
 ":attr:`.data<qilisdk.core.qtensor.QTensor.data>`: get the underlying "
 "sparse matrix (SciPy CSR format)"
 msgstr ""
+":attr:`.data<qilisdk.core.qtensor.QTensor.data>`: obteniu la matriu "
+"dispersa subjacent (format CSR de SciPy)"
 
 #: ../../modules/core/core.rst:710
 msgid ""
 ":meth:`.dense()<qilisdk.core.qtensor.QTensor.dense>`: convert to a dense "
 "NumPy array (use with caution for large tensors)"
 msgstr ""
+":meth:`.dense()<qilisdk.core.qtensor.QTensor.dense>`: convertiu a un "
+"array dens de NumPy (useu amb precaució per a tensors grans)"
 
 #: ../../modules/core/core.rst:711
 msgid "or directly accessing elements by value with ``qtensor[i, j]``"
-msgstr ""
+msgstr "o accedint directament als elements per valor amb ``qtensor[i, j]``"
 
 #: ../../modules/core/core.rst:713
 msgid "Common matrix operations are also available:"
-msgstr ""
+msgstr "Les operacions matricials comunes també estan disponibles:"
 
 #: ../../modules/core/core.rst:715
 msgid ""
 ":meth:`.adjoint()<qilisdk.core.qtensor.QTensor.adjoint>`: conjugate "
 "transpose"
 msgstr ""
+":meth:`.adjoint()<qilisdk.core.qtensor.QTensor.adjoint>`: transposada "
+"conjugada"
 
 #: ../../modules/core/core.rst:716
 msgid ""
 ":meth:`.conjugate()<qilisdk.core.qtensor.QTensor.conjugate>`: element-"
 "wise complex conjugate"
 msgstr ""
+":meth:`.conjugate()<qilisdk.core.qtensor.QTensor.conjugate>`: conjugat "
+"complex element a element"
 
 #: ../../modules/core/core.rst:717
 msgid ""
 ":meth:`.transpose()<qilisdk.core.qtensor.QTensor.transpose>`: matrix "
 "transpose"
 msgstr ""
+":meth:`.transpose()<qilisdk.core.qtensor.QTensor.transpose>`: transposada "
+"de la matriu"
 
 #: ../../modules/core/core.rst:718
 msgid ":meth:`.exp()<qilisdk.core.qtensor.QTensor.exp>`: matrix exponential"
-msgstr ""
+msgstr ":meth:`.exp()<qilisdk.core.qtensor.QTensor.exp>`: exponencial de la matriu"
 
 #: ../../modules/core/core.rst:719
 msgid ":meth:`.log()<qilisdk.core.qtensor.QTensor.log>`: matrix logarithm"
-msgstr ""
+msgstr ":meth:`.log()<qilisdk.core.qtensor.QTensor.log>`: logaritme de la matriu"
 
 #: ../../modules/core/core.rst:720
 msgid ":meth:`.sqrt()<qilisdk.core.qtensor.QTensor.sqrt>`: matrix square root"
-msgstr ""
+msgstr ":meth:`.sqrt()<qilisdk.core.qtensor.QTensor.sqrt>`: arrel quadrada de la matriu"
 
 #: ../../modules/core/core.rst:721
 msgid ""
 ":meth:`.rank()<qilisdk.core.qtensor.QTensor.rank>`: compute the rank of "
 "the operator"
 msgstr ""
+":meth:`.rank()<qilisdk.core.qtensor.QTensor.rank>`: calcula el rang de "
+"l'operador"
 
 #: ../../modules/core/core.rst:722
 msgid ":meth:`.pow(exponent)<qilisdk.core.qtensor.QTensor.pow>`: matrix power"
-msgstr ""
+msgstr ":meth:`.pow(exponent)<qilisdk.core.qtensor.QTensor.pow>`: potència de la matriu"
 
 #: ../../modules/core/core.rst:723
 msgid ""
 ":meth:`.norm(order=\"l2\")<qilisdk.core.qtensor.QTensor.norm>`: vector or"
 " matrix norm"
 msgstr ""
+":meth:`.norm(order=\"l2\")<qilisdk.core.qtensor.QTensor.norm>`: norma "
+"de vector o matriu"
 
 #: ../../modules/core/core.rst:724
 msgid ""
 ":meth:`.normalized(order='l2')<qilisdk.core.qtensor.QTensor.normalized>`:"
 " normalize to unit norm"
 msgstr ""
+":meth:`.normalized(order='l2')<qilisdk.core.qtensor.QTensor.normalized>`:"
+" normalitzeu a norma unitària"
 
 #: ../../modules/core/core.rst:725
 msgid ""
 ":meth:`.eig()<qilisdk.core.qtensor.QTensor.eig>`: get the eigenvalues and"
 " eigenvectors"
 msgstr ""
+":meth:`.eig()<qilisdk.core.qtensor.QTensor.eig>`: obteniu els valors "
+"propis i els vectors propis"
 
 #: ../../modules/core/core.rst:726
 msgid ""
 ":meth:`.trace()<qilisdk.core.qtensor.QTensor.trace>`: compute the trace "
 "of an operator"
 msgstr ""
+":meth:`.trace()<qilisdk.core.qtensor.QTensor.trace>`: calcula la traça "
+"d'un operador"
 
 #: ../../modules/core/core.rst:727
 msgid ""
 ":meth:`.dot(other)<qilisdk.core.qtensor.QTensor.dot>`: Frobenius inner "
 "product with another QTensor"
 msgstr ""
+":meth:`.dot(other)<qilisdk.core.qtensor.QTensor.dot>`: producte interior "
+"de Frobenius amb un altre QTensor"
 
 #: ../../modules/core/core.rst:729
 msgid "As well as some quantum-specific transformations:"
-msgstr ""
+msgstr "Així com algunes transformacions específiques quàntiques:"
 
 #: ../../modules/core/core.rst:731
 msgid ""
 ":meth:`.entropy_von_neumann()<qilisdk.core.qtensor.QTensor.entropy_von_neumann>`:"
 " compute the von Neumann entropy of a density matrix"
 msgstr ""
+":meth:`.entropy_von_neumann()<qilisdk.core.qtensor.QTensor.entropy_von_neumann>`:"
+" calcula l'entropia de von Neumann d'una matriu de densitat"
 
 #: ../../modules/core/core.rst:732
 msgid ""
 ":meth:`.entropy_renyi(alpha)<qilisdk.core.qtensor.QTensor.entropy_renyi>`:"
 " compute the Rényi entropy of a density matrix for a given order alpha"
 msgstr ""
+":meth:`.entropy_renyi(alpha)<qilisdk.core.qtensor.QTensor.entropy_renyi>`:"
+" calcula l'entropia de Rényi d'una matriu de densitat per a un ordre "
+"alpha donat"
 
 #: ../../modules/core/core.rst:733
 msgid ""
 ":meth:`.commutator(other)<qilisdk.core.qtensor.QTensor.commutator>`: "
 "compute the commutator with another operator"
 msgstr ""
+":meth:`.commutator(other)<qilisdk.core.qtensor.QTensor.commutator>`: "
+"calcula el commutador amb un altre operador"
 
 #: ../../modules/core/core.rst:734
 msgid ""
 ":meth:`.anticommutator(other)<qilisdk.core.qtensor.QTensor.anticommutator>`:"
 " compute the anticommutator with another operator"
 msgstr ""
+":meth:`.anticommutator(other)<qilisdk.core.qtensor.QTensor.anticommutator>`:"
+" calcula l'anticommutador amb un altre operador"
 
 #: ../../modules/core/core.rst:735
 msgid ""
 ":meth:`.fidelity(other)<qilisdk.core.qtensor.QTensor.fidelity>`: compute "
 "the fidelity between two quantum states"
 msgstr ""
+":meth:`.fidelity(other)<qilisdk.core.qtensor.QTensor.fidelity>`: calcula "
+"la fidelitat entre dos estats quàntics"
 
 #: ../../modules/core/core.rst:736
 msgid ""
@@ -906,48 +1112,57 @@ msgid ""
 "compute the probability distribution of each state in the computational "
 "basis"
 msgstr ""
+":meth:`.probabilities()<qilisdk.core.qtensor.QTensor.probabilities>`: "
+"calcula la distribució de probabilitat de cada estat en la base "
+"computacional"
 
 #: ../../modules/core/core.rst:737
 msgid ""
 ":meth:`.partial_trace(keep)<qilisdk.core.qtensor.QTensor.ptrace>`: "
 "partial trace"
 msgstr ""
+":meth:`.partial_trace(keep)<qilisdk.core.qtensor.QTensor.ptrace>`: "
+"traça parcial"
 
 #: ../../modules/core/core.rst:738
 msgid ""
 ":meth:`.reset_qubits(qubits)<qilisdk.core.qtensor.QTensor.reset_qubits>`:"
 " reset specified qubits to 0"
 msgstr ""
+":meth:`.reset_qubits(qubits)<qilisdk.core.qtensor.QTensor.reset_qubits>`:"
+" reinicia els qubits especificats a 0"
 
 #: ../../modules/core/core.rst:739
 msgid ":meth:`.dagger()<qilisdk.core.qtensor.QTensor.dagger>`: alias for adjoint"
-msgstr ""
+msgstr ":meth:`.dagger()<qilisdk.core.qtensor.QTensor.dagger>`: àlies per a adjoint"
 
 #: ../../modules/core/core.rst:741
 msgid "Examples:"
-msgstr ""
+msgstr "Exemples:"
 
 #: ../../modules/core/core.rst:800
 msgid "Extra Utilities"
-msgstr ""
+msgstr "Utilitats Addicionals"
 
 #: ../../modules/core/core.rst:802
 msgid "**Tensor product** with :func:`~qilisdk.core.qtensor.tensor_prod`"
-msgstr ""
+msgstr "**Producte tensorial** amb :func:`~qilisdk.core.qtensor.tensor_prod`"
 
 #: ../../modules/core/core.rst:803
 msgid "**Expectation value** with :func:`~qilisdk.core.qtensor.expect_val`"
-msgstr ""
+msgstr "**Valor esperat** amb :func:`~qilisdk.core.qtensor.expect_val`"
 
 #: ../../modules/core/core.rst:835
 msgid "Visualization of Quantum States"
-msgstr ""
+msgstr "Visualització d'Estats Quàntics"
 
 #: ../../modules/core/core.rst:837
 msgid ""
 "You can also visualize single-qubit states on the Bloch sphere using "
 ":meth:`.draw()<qilisdk.core.qtensor.QTensor.draw>`:"
 msgstr ""
+"També podeu visualitzar estats d'un sol qubit a l'esfera de Bloch "
+"usant :meth:`.draw()<qilisdk.core.qtensor.QTensor.draw>`:"
 
 #: ../../modules/core/core.rst:846
 msgid ""
@@ -955,4 +1170,6 @@ msgid ""
 ":class:`~qilisdk.utils.visualization.style.QTensorStyle` object, which "
 "allows you to set colors, point density, and other visual elements:"
 msgstr ""
-
+"L'aparença d'aquesta representació es pot personalitzar usant un objecte "
+":class:`~qilisdk.utils.visualization.style.QTensorStyle`, que us permet "
+"establir colors, densitat de punts i altres elements visuals:"

@@ -21,9 +21,9 @@ msgstr ""
 
 #: ../../modules/readout/readout_state.rst:2
 msgid "Full Quantum State"
-msgstr ""
+msgstr "Estat Quàntic Complet"
 
 #: ../../modules/readout/readout_state.rst:8
 msgid "Go to a specific subheading of a page."
-msgstr ""
+msgstr "Aneu a un subapartat específic d'una pàgina."
 

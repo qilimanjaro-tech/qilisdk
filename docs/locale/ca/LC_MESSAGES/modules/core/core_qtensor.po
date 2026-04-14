@@ -21,9 +21,9 @@ msgstr ""
 
 #: ../../modules/core/core_qtensor.rst:2
 msgid "QTensor"
-msgstr ""
+msgstr "QTensor"
 
 #: ../../modules/core/core_qtensor.rst:8
 msgid "Go to a specific subheading of a page."
-msgstr ""
+msgstr "Aneu a un subapartat específic d'una pàgina."
 

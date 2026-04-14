@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../modules/digital/digital.rst:2
 msgid "Digital"
-msgstr ""
+msgstr "Digital"
 
 #: ../../modules/digital/digital.rst:16
 msgid ""
@@ -29,100 +29,129 @@ msgid ""
 "construction and simulation of digital quantum systems. It is composed of"
 " the following primary components:"
 msgstr ""
+"El mòdul :mod:`~qilisdk.digital` del Qili SDK facilita la construcció i "
+"la simulació de sistemes quàntics digitals. Està compost pels components "
+"principals següents:"
 
 #: ../../modules/digital/digital.rst:18
 msgid ""
 ":mod:`~qilisdk.digital.gates`: A collection of quantum gates and tools "
 "for gate construction."
 msgstr ""
+":mod:`~qilisdk.digital.gates`: Una col·lecció de portes quàntiques i "
+"eines per a la construcció de portes."
 
 #: ../../modules/digital/digital.rst:19
 msgid ""
 ":class:`~qilisdk.digital.circuit.Circuit`: A class to create and manage "
 "digital quantum circuits."
 msgstr ""
+":class:`~qilisdk.digital.circuit.Circuit`: Una classe per crear i "
+"gestionar circuits quàntics digitals."
 
 #: ../../modules/digital/digital.rst:20
 msgid ""
 ":mod:`~qilisdk.digital.ansatz`: Predefined circuits that can serve as "
 "Ansätze."
 msgstr ""
+":mod:`~qilisdk.digital.ansatz`: Circuits predefinits que poden servir "
+"com a Ansätze."
 
 #: ../../modules/digital/digital.rst:23
 msgid "Gates"
-msgstr ""
+msgstr "Portes"
 
 #: ../../modules/digital/digital.rst:25
 msgid ""
 "This submodule provides the necessary components to define and manipulate"
 " quantum gates for use in digital quantum circuits."
 msgstr ""
+"Aquest submòdul proporciona els components necessaris per definir i "
+"manipular portes quàntiques per al seu ús en circuits quàntics digitals."
 
 #: ../../modules/digital/digital.rst:28
 msgid "Simple Gates"
-msgstr ""
+msgstr "Portes Simples"
 
 #: ../../modules/digital/digital.rst:30
 msgid "Use these constructors to apply standard single- and two-qubit operations:"
-msgstr ""
+msgstr "Utilitzeu aquests constructors per aplicar operacions estàndard d'un i dos qubits:"
 
 #: ../../modules/digital/digital.rst:32
 msgid ""
 ":class:`X(qubit: int)<qilisdk.digital.gates.X>` Pauli X (bit-flip) on the"
 " specified qubit."
 msgstr ""
+":class:`X(qubit: int)<qilisdk.digital.gates.X>` Pauli X (inversió de bit) "
+"al qubit especificat."
 
 #: ../../modules/digital/digital.rst:34
 msgid ""
 ":class:`Y(qubit: int)<qilisdk.digital.gates.Y>` Pauli Y (bit-and-phase-"
 "flip)."
 msgstr ""
+":class:`Y(qubit: int)<qilisdk.digital.gates.Y>` Pauli Y (inversió de bit "
+"i fase)."
 
 #: ../../modules/digital/digital.rst:36
 msgid ":class:`Z(qubit: int)<qilisdk.digital.gates.Z>` Pauli Z (phase-flip)."
-msgstr ""
+msgstr ":class:`Z(qubit: int)<qilisdk.digital.gates.Z>` Pauli Z (inversió de fase)."
 
 #: ../../modules/digital/digital.rst:38
 msgid ""
 ":class:`H(qubit: int)<qilisdk.digital.gates.H>` Hadamard: creates "
 "superposition."
 msgstr ""
+":class:`H(qubit: int)<qilisdk.digital.gates.H>` Hadamard: crea "
+"superposició."
 
 #: ../../modules/digital/digital.rst:40
 msgid ""
 ":class:`I(qubit: int)<qilisdk.digital.gates.I>` Identity gate: leaves the"
 " qubit unchanged."
 msgstr ""
+":class:`I(qubit: int)<qilisdk.digital.gates.I>` Porta identitat: deixa el "
+"qubit sense canvis."
 
 #: ../../modules/digital/digital.rst:42
 msgid ""
 ":class:`S(qubit: int)<qilisdk.digital.gates.S>` Phase gate (π/2 rotation "
 "about Z)."
 msgstr ""
+":class:`S(qubit: int)<qilisdk.digital.gates.S>` Porta de fase (rotació "
+"π/2 al voltant de Z)."
 
 #: ../../modules/digital/digital.rst:44
 msgid ""
 ":class:`T(qubit: int)<qilisdk.digital.gates.T>` T gate (π/4 rotation "
 "about Z)."
 msgstr ""
+":class:`T(qubit: int)<qilisdk.digital.gates.T>` Porta T (rotació π/4 al "
+"voltant de Z)."
 
 #: ../../modules/digital/digital.rst:46
 msgid ""
 ":class:`RX(qubit: int, theta: float | Parameter | "
 "Term)<qilisdk.digital.gates.RX>` Rotation by angle `theta` around X."
 msgstr ""
+":class:`RX(qubit: int, theta: float | Parameter | "
+"Term)<qilisdk.digital.gates.RX>` Rotació per l'angle `theta` al voltant de X."
 
 #: ../../modules/digital/digital.rst:48
 msgid ""
 ":class:`RY(qubit: int, theta: float | Parameter | "
 "Term)<qilisdk.digital.gates.RY>` Rotation by angle `theta` around Y."
 msgstr ""
+":class:`RY(qubit: int, theta: float | Parameter | "
+"Term)<qilisdk.digital.gates.RY>` Rotació per l'angle `theta` al voltant de Y."
 
 #: ../../modules/digital/digital.rst:50
 msgid ""
 ":class:`RZ(qubit: int, phi: float | Parameter | "
 "Term)<qilisdk.digital.gates.RZ>` Rotation by angle `phi` around Z."
 msgstr ""
+":class:`RZ(qubit: int, phi: float | Parameter | "
+"Term)<qilisdk.digital.gates.RZ>` Rotació per l'angle `phi` al voltant de Z."
 
 #: ../../modules/digital/digital.rst:52
 msgid ""
@@ -130,6 +159,9 @@ msgid ""
 "Term)<qilisdk.digital.gates.U1>` Phase shift equivalent to RZ plus global"
 " phase."
 msgstr ""
+":class:`U1(qubit: int, *, phi: float | Parameter | "
+"Term)<qilisdk.digital.gates.U1>` Desplaçament de fase equivalent a RZ "
+"més fase global."
 
 #: ../../modules/digital/digital.rst:54
 msgid ""
@@ -137,6 +169,9 @@ msgid ""
 "Parameter | Term)<qilisdk.digital.gates.U2>` π/2 Y-rotation sandwiched by"
 " Z-rotations."
 msgstr ""
+":class:`U2(qubit: int, *, phi: float | Parameter | Term, gamma: float | "
+"Parameter | Term)<qilisdk.digital.gates.U2>` Rotació Y de π/2 entre "
+"dues rotacions Z."
 
 #: ../../modules/digital/digital.rst:56
 msgid ""
@@ -145,40 +180,54 @@ msgid ""
 "Term)<qilisdk.digital.gates.U3>` General single-qubit unitary: RZ-RY-RZ "
 "decomposition."
 msgstr ""
+":class:`U3(qubit: int, *, theta: float | Parameter | Term, phi: float | "
+"Parameter | Term, gamma: float | Parameter | "
+"Term)<qilisdk.digital.gates.U3>` Unitari general d'un sol qubit: "
+"descomposició RZ-RY-RZ."
 
 #: ../../modules/digital/digital.rst:58
 msgid ""
 ":class:`SWAP(a: int, b: int)<qilisdk.digital.gates.SWAP>` Exchanges the "
 "states of qubits ``a`` and ``b``."
 msgstr ""
+":class:`SWAP(a: int, b: int)<qilisdk.digital.gates.SWAP>` Intercanvia "
+"els estats dels qubits ``a`` i ``b``."
 
 #: ../../modules/digital/digital.rst:60
 msgid ""
 ":class:`CNOT(control: int, target: int)<qilisdk.digital.gates.CNOT>` "
 "Controlled-X: flips target if control is 1."
 msgstr ""
+":class:`CNOT(control: int, target: int)<qilisdk.digital.gates.CNOT>` "
+"X controlada: inverteix el target si el control és 1."
 
 #: ../../modules/digital/digital.rst:62
 msgid ""
 ":class:`CZ(control: int, target: int)<qilisdk.digital.gates.CZ>` "
 "Controlled-Z: applies Z on target if control is 1."
 msgstr ""
+":class:`CZ(control: int, target: int)<qilisdk.digital.gates.CZ>` "
+"Z controlada: aplica Z al target si el control és 1."
 
 #: ../../modules/digital/digital.rst:64
 msgid ""
 ":class:`M(*qubits: int)<qilisdk.digital.gates.M>` Measures the listed "
 "qubits in the computational basis."
 msgstr ""
+":class:`M(*qubits: int)<qilisdk.digital.gates.M>` Mesura els qubits "
+"llistats en la base computacional."
 
 #: ../../modules/digital/digital.rst:68
 msgid "Controlled Gates"
-msgstr ""
+msgstr "Portes Controlades"
 
 #: ../../modules/digital/digital.rst:70
 msgid ""
 "Any basic gate can be turned into a controlled gate using the "
 ":class:`~qilisdk.digital.gates.Controlled` class:"
 msgstr ""
+"Qualsevol porta bàsica es pot convertir en una porta controlada "
+"utilitzant la classe :class:`~qilisdk.digital.gates.Controlled`:"
 
 #: ../../modules/digital/digital.rst:79
 msgid ""
@@ -186,10 +235,13 @@ msgid ""
 ":meth:`.controlled()<qilisdk.digital.gates.BasicGate.controlled>` method "
 "on any gate instance:"
 msgstr ""
+"O, alternativament, podeu usar el mètode "
+":meth:`.controlled()<qilisdk.digital.gates.BasicGate.controlled>` en "
+"qualsevol instància de porta:"
 
 #: ../../modules/digital/digital.rst:90
 msgid "Adjoint Gates"
-msgstr ""
+msgstr "Portes Adjuntes"
 
 #: ../../modules/digital/digital.rst:92
 msgid ""
@@ -198,10 +250,14 @@ msgid ""
 ":meth:`.adjoint()<qilisdk.digital.gates.BasicGate.adjoint>` method on any"
 " gate instance:"
 msgstr ""
+"Podeu crear el conjugat hermític (dagger) d'una porta usant la classe "
+":class:`~qilisdk.digital.gates.Adjoint` o usant el mètode "
+":meth:`.adjoint()<qilisdk.digital.gates.BasicGate.adjoint>` en qualsevol "
+"instància de porta:"
 
 #: ../../modules/digital/digital.rst:103
 msgid "Exponential Gates"
-msgstr ""
+msgstr "Portes Exponencials"
 
 #: ../../modules/digital/digital.rst:105
 msgid ""
@@ -210,10 +266,14 @@ msgid ""
 ":meth:`.exponential()<qilisdk.digital.gates.BasicGate.exponential>` "
 "method on any gate instance:"
 msgstr ""
+"Per aplicar una porta com a operador exponencial, useu la classe "
+":class:`~qilisdk.digital.gates.Exponential` o el mètode "
+":meth:`.exponential()<qilisdk.digital.gates.BasicGate.exponential>` en "
+"qualsevol instància de porta:"
 
 #: ../../modules/digital/digital.rst:116
 msgid "Circuits"
-msgstr ""
+msgstr "Circuits"
 
 #: ../../modules/digital/digital.rst:118
 msgid ""
@@ -221,74 +281,85 @@ msgid ""
 ":class:`~qilisdk.digital.circuit.Circuit` class. You can sequentially add"
 " gates to define the circuit:"
 msgstr ""
+"Els circuits quàntics es poden construir usant la classe "
+":class:`~qilisdk.digital.circuit.Circuit`. Podeu afegir portes "
+"seqüencialment per definir el circuit:"
 
 #: ../../modules/digital/digital.rst:120
 msgid "**Initialization**"
-msgstr ""
+msgstr "**Inicialització**"
 
 #: ../../modules/digital/digital.rst:129
 msgid "**Adding Gates**"
-msgstr ""
+msgstr "**Afegir Portes**"
 
 #: ../../modules/digital/digital.rst:139
 msgid "You can also add or insert multiple gates at once:"
-msgstr ""
+msgstr "També podeu afegir o inserir múltiples portes alhora:"
 
 #: ../../modules/digital/digital.rst:150
 msgid ""
 "Circuits can be appended or prepended, and the ``+`` operator mirrors "
 "those behaviors:"
 msgstr ""
+"Els circuits es poden afegir al final o al principi, i l'operador ``+`` "
+"reflecteix aquests comportaments:"
 
 #: ../../modules/digital/digital.rst:167
 msgid "**Generating Random Circuits**"
-msgstr ""
+msgstr "**Generació de Circuits Aleatoris**"
 
 #: ../../modules/digital/digital.rst:169
 msgid ""
 "You can also initialize a random circuit with a specified number of gates"
 " using the :meth:`~qilisdk.digital.circuit.Circuit.random` method:"
 msgstr ""
+"També podeu inicialitzar un circuit aleatori amb un nombre especificat de "
+"portes usant el mètode :meth:`~qilisdk.digital.circuit.Circuit.random`:"
 
 #: ../../modules/digital/digital.rst:183
 msgid "Parameterized Circuits"
-msgstr ""
+msgstr "Circuits Parametritzats"
 
 #: ../../modules/digital/digital.rst:185
 msgid ""
 "Circuits can include parameterized gates. Adding them is similar to "
 "regular gates:"
 msgstr ""
+"Els circuits poden incloure portes parametritzades. Afegir-les és similar "
+"a les portes normals:"
 
 #: ../../modules/digital/digital.rst:195
 msgid "You can retrieve the current parameter using:"
-msgstr ""
+msgstr "Podeu recuperar el paràmetre actual usant:"
 
 #: ../../modules/digital/digital.rst:202 ../../modules/digital/digital.rst:216
 msgid "**Output:**"
-msgstr ""
+msgstr "**Sortida:**"
 
 #: ../../modules/digital/digital.rst:209
 msgid "You can also retrieve a list containing only the current parameter values:"
-msgstr ""
+msgstr "També podeu recuperar una llista que conté només els valors actuals dels paràmetres:"
 
 #: ../../modules/digital/digital.rst:223
 msgid "To update parameters by their keys:"
-msgstr ""
+msgstr "Per actualitzar els paràmetres per les seves claus:"
 
 #: ../../modules/digital/digital.rst:229
 msgid "To update all parameters with new values:"
-msgstr ""
+msgstr "Per actualitzar tots els paràmetres amb nous valors:"
 
 #: ../../modules/digital/digital.rst:237
 msgid ""
 "The order of parameters in the list passed to ``set_parameter_values`` "
 "must match the order in which the gates were added to the circuit."
 msgstr ""
+"L'ordre dels paràmetres en la llista passada a ``set_parameter_values`` "
+"ha de coincidir amb l'ordre en què les portes es van afegir al circuit."
 
 #: ../../modules/digital/digital.rst:240
 msgid "Visualization"
-msgstr ""
+msgstr "Visualització"
 
 #: ../../modules/digital/digital.rst:242
 msgid ""
@@ -300,28 +371,37 @@ msgid ""
 "styling to the specific call without modifying global Matplotlib "
 "settings."
 msgstr ""
+"Useu :meth:`~qilisdk.digital.circuit.Circuit.draw` per renderitzar un "
+"circuit amb Matplotlib. Per defecte, el renderitzador aplica l'estil "
+"integrat de la biblioteca (incloent la font predeterminada inclosa si "
+"està disponible). Podeu **ometre tots els valors predeterminats** passant "
+"un :class:`~qilisdk.utils.visualization.style.CircuitStyle` personalitzat, "
+"que limita l'estil a la crida específica sense modificar la configuració "
+"global de Matplotlib."
 
 #: ../../modules/digital/digital.rst:259
 msgid "**Output**"
-msgstr ""
+msgstr "**Sortida**"
 
 #: ../../modules/digital/digital.rst:262
 msgid "Example digital circuit rendered with Circuit.draw"
-msgstr ""
+msgstr "Circuit digital d'exemple renderitzat amb Circuit.draw"
 
 #: ../../modules/digital/digital.rst:266
 msgid "Example circuit produced by ``circuit.draw()``."
-msgstr ""
+msgstr "Circuit d'exemple produït per ``circuit.draw()``."
 
 #: ../../modules/digital/digital.rst:269
 msgid "Saving to a file"
-msgstr ""
+msgstr "Desar en un fitxer"
 
 #: ../../modules/digital/digital.rst:277
 msgid ""
 "Custom styling with "
 ":class:`~qilisdk.utils.visualization.style.CircuitStyle`"
 msgstr ""
+"Estil personalitzat amb "
+":class:`~qilisdk.utils.visualization.style.CircuitStyle`"
 
 #: ../../modules/digital/digital.rst:279
 msgid ""
@@ -333,6 +413,13 @@ msgid ""
 "as possible by changing the parameter **layout** to *\"normal\"* "
 "(default) or *\"compact\"* respectively."
 msgstr ""
+"Creeu un objecte d'estil per controlar el tema, les fonts, l'espaiat, "
+"el DPI, les etiquetes i més. Passar aquest objecte a "
+":meth:`~qilisdk.digital.circuit.Circuit.draw` anul·la els valors "
+"predeterminats de la biblioteca per a aquesta crida. També podeu canviar "
+"si l'ordre del dibuix segueix l'ordre en què es van afegir o si compacta "
+"les capes tant com sigui possible canviant el paràmetre **layout** a "
+"*\"normal\"* (per defecte) o *\"compact\"* respectivament."
 
 #: ../../modules/digital/digital.rst:323
 msgid ""
@@ -343,10 +430,17 @@ msgid ""
 "``fontfamily=[...]`` to use system-resolved fonts. Both approaches only "
 "affect the current draw call."
 msgstr ""
+"Els camps de ``CircuitStyle`` es mapegen directament a la configuració "
+"de disseny i font del renderitzador. En particular, podeu canviar les "
+"fonts de dues maneres: (1) proporcioneu un fitxer de font específic "
+"mitjançant ``fontfname=\"/path/to/MyFont.ttf\"``; o (2) establiu "
+"``fontfname=None`` i trieu una llista de famílies amb "
+"``fontfamily=[...]`` per usar fonts resoltes pel sistema. Tots dos "
+"enfocaments afecten únicament la crida de dibuix actual."
 
 #: ../../modules/digital/digital.rst:329
 msgid "Ansatz"
-msgstr ""
+msgstr "Ansatz"
 
 #: ../../modules/digital/digital.rst:331
 msgid ""
@@ -354,18 +448,25 @@ msgid ""
 "circuit templates (Ansätze) and a lightweight framework for writing your "
 "own. To author a custom template:"
 msgstr ""
+"El submòdul :mod:`~qilisdk.digital.ansatz` proporciona plantilles de "
+"circuit llestos per usar (Ansätze) i un framework lleuger per escriure "
+"els vostres propis. Per crear una plantilla personalitzada:"
 
 #: ../../modules/digital/digital.rst:333
 msgid ""
 "Subclass :class:`~qilisdk.digital.ansatz.Ansatz` (which already inherits "
 "from :class:`~qilisdk.digital.circuit.Circuit`)."
 msgstr ""
+"Creeu una subclasse de :class:`~qilisdk.digital.ansatz.Ansatz` (que ja "
+"hereta de :class:`~qilisdk.digital.circuit.Circuit`)."
 
 #: ../../modules/digital/digital.rst:334
 msgid ""
 "Call ``super().__init__(nqubits=...)`` inside ``__init__`` to set the "
 "circuit width."
 msgstr ""
+"Crideu ``super().__init__(nqubits=...)`` dins de ``__init__`` per "
+"establir l'amplada del circuit."
 
 #: ../../modules/digital/digital.rst:335
 msgid ""
@@ -373,25 +474,30 @@ msgid ""
 "can keep references to any :class:`~qilisdk.core.variables.Parameter` "
 "objects you want to expose later."
 msgstr ""
+"Afegiu portes en qualsevol ordre amb ``self.add(gate)``, els bucles "
+"estan permesos, i podeu mantenir referències a qualsevol objecte "
+":class:`~qilisdk.core.variables.Parameter` que vulgueu exposar més tard."
 
 #: ../../modules/digital/digital.rst:337 ../../modules/digital/digital.rst:387
 #: ../../modules/digital/digital.rst:441 ../../modules/digital/digital.rst:492
 msgid "**Example**"
-msgstr ""
+msgstr "**Exemple**"
 
 #: ../../modules/digital/digital.rst:362
 msgid ""
 "Once defined, the subclass behaves exactly like any other circuit: you "
 "can draw it, bind parameters, or hand it off to backends."
 msgstr ""
+"Un cop definida, la subclasse es comporta exactament com qualsevol altre "
+"circuit: podeu dibuixar-la, vincular paràmetres o passar-la als backends."
 
 #: ../../modules/digital/digital.rst:364
 msgid "For a prebuilt option, consider:"
-msgstr ""
+msgstr "Per a una opció preconstruïda, considereu:"
 
 #: ../../modules/digital/digital.rst:367
 msgid "HardwareEfficientAnsatz"
-msgstr ""
+msgstr "HardwareEfficientAnsatz"
 
 #: ../../modules/digital/digital.rst:369
 msgid ""
@@ -399,30 +505,33 @@ msgid ""
 "efficient ansatz tailored to quantum device topologies. Configuration "
 "options:"
 msgstr ""
+":class:`~qilisdk.digital.ansatz.HardwareEfficientAnsatz` és un ansatz "
+"eficient en hardware adaptat a les topologies dels dispositius quàntics. "
+"Opcions de configuració:"
 
 #: ../../modules/digital/digital.rst:372
 msgid "**layers**: Number of repeating layers of gates."
-msgstr ""
+msgstr "**layers**: Nombre de capes repetides de portes."
 
 #: ../../modules/digital/digital.rst:373
 msgid "**connectivity**:"
-msgstr ""
+msgstr "**connectivity**:"
 
 #: ../../modules/digital/digital.rst:375
 msgid "``circular``: Qubits form a ring."
-msgstr ""
+msgstr "``circular``: Els qubits formen un anell."
 
 #: ../../modules/digital/digital.rst:376
 msgid "``linear``: Qubits are connected linearly."
-msgstr ""
+msgstr "``linear``: Els qubits estan connectats de manera lineal."
 
 #: ../../modules/digital/digital.rst:377
 msgid "``full``: All-to-all connectivity."
-msgstr ""
+msgstr "``full``: Connectivitat total."
 
 #: ../../modules/digital/digital.rst:378
 msgid "Or a list of tuples explicitly specifying the connectivity."
-msgstr ""
+msgstr "O una llista de tuples que especifiquen explícitament la connectivitat."
 
 #: ../../modules/digital/digital.rst:379
 msgid ""
@@ -430,6 +539,9 @@ msgid ""
 ":class:`~qilisdk.digital.gates.U1`, :class:`~qilisdk.digital.gates.U2`, "
 ":class:`~qilisdk.digital.gates.U3`)."
 msgstr ""
+"**one_qubit_gate**: Trieu la porta parametritzada d'un sol qubit (p. ex., "
+":class:`~qilisdk.digital.gates.U1`, :class:`~qilisdk.digital.gates.U2`, "
+":class:`~qilisdk.digital.gates.U3`)."
 
 #: ../../modules/digital/digital.rst:380
 msgid ""
@@ -437,30 +549,38 @@ msgid ""
 ":class:`~qilisdk.digital.gates.CNOT`, "
 ":class:`~qilisdk.digital.gates.CZ`)."
 msgstr ""
+"**two_qubit_gate**: Trieu el tipus d'interacció de dos qubits (p. ex., "
+":class:`~qilisdk.digital.gates.CNOT`, "
+":class:`~qilisdk.digital.gates.CZ`)."
 
 #: ../../modules/digital/digital.rst:381
 msgid "**structure**:"
-msgstr ""
+msgstr "**structure**:"
 
 #: ../../modules/digital/digital.rst:383
 msgid ""
 "``grouped``: Applies all single-qubit gates first, followed by all two-"
 "qubit gates."
 msgstr ""
+"``grouped``: Aplica primer totes les portes d'un qubit, seguides de "
+"totes les portes de dos qubits."
 
 #: ../../modules/digital/digital.rst:384
 msgid "``interposed``: Interleaves single and two-qubit gates."
-msgstr ""
+msgstr "``interposed``: Intercala portes d'un i dos qubits."
 
 #: ../../modules/digital/digital.rst:406
 msgid ""
 "This ansatz can then be used as a circuit. For example, we can execute "
 "this ansatz using QuTiP backend (need to be installed separately):"
 msgstr ""
+"Aquest ansatz es pot usar llavors com a circuit. Per exemple, podem "
+"executar aquest ansatz usant el backend QuTiP (cal instal·lar-lo per "
+"separat):"
 
 #: ../../modules/digital/digital.rst:420
 msgid "QAOA"
-msgstr ""
+msgstr "QAOA"
 
 #: ../../modules/digital/digital.rst:422
 msgid ""
@@ -477,6 +597,19 @@ msgid ""
 "minimize the expectation value of the problem Hamiltonian and thus solve "
 "the encoded optimization problem."
 msgstr ""
+":class:`~qilisdk.digital.ansatz.QAOA` és un ansatz que aplica l'evolució "
+"temporal alternant d'un Hamiltonià del problema i un Hamiltonià mesclador "
+"[1]_. Inicialitzant el circuit com l'estat fonamental del Hamiltonià "
+"mesclador (sovint simplement la superposició uniforme) i aplicant després "
+"l'evolució alternant escalada pels paràmetres :math:`\\gamma_i` i "
+":math:`\\alpha_i`, la idea és que amb un determinat conjunt de paràmetres "
+"l'ansatz hauria d'aproximar l'evolució des de l'estat fonamental del "
+"Hamiltonià mesclador fins a l'estat fonamental del Hamiltonià del problema, "
+"d'acord amb el teorema adiabàtic quàntic. Tractant aquest circuit "
+"parametritzat com un ansatz per a un algoritme quàntic variacional, "
+"podem optimitzar per intentar minimitzar el valor esperat del Hamiltonià "
+"del problema i, d'aquesta manera, resoldre el problema d'optimització "
+"codificat."
 
 #: ../../modules/digital/digital.rst:430
 msgid ""
@@ -484,16 +617,21 @@ msgid ""
 "approximate optimization algorithm.\" arXiv preprint `arXiv:1411.4028 "
 "<https://arxiv.org/abs/1411.4028>`_ (2014)."
 msgstr ""
+"Farhi, Edward, Jeffrey Goldstone, and Sam Gutmann. \"A quantum "
+"approximate optimization algorithm.\" arXiv preprint `arXiv:1411.4028 "
+"<https://arxiv.org/abs/1411.4028>`_ (2014)."
 
 #: ../../modules/digital/digital.rst:432 ../../modules/digital/digital.rst:487
 msgid "Configuration options:"
-msgstr ""
+msgstr "Opcions de configuració:"
 
 #: ../../modules/digital/digital.rst:434
 msgid ""
 "**problem_hamiltonian**: The problem Hamiltonian encoding the cost "
 "function."
 msgstr ""
+"**problem_hamiltonian**: El Hamiltonià del problema que codifica la "
+"funció de cost."
 
 #: ../../modules/digital/digital.rst:435
 msgid ""
@@ -501,10 +639,13 @@ msgid ""
 "evolutions: one for the problem Hamiltonian and one for the mixer "
 "Hamiltonian."
 msgstr ""
+"**layers**: Nombre de capes repetides de portes. Cada capa aplica dues "
+"evolucions: una per al Hamiltonià del problema i una per al Hamiltonià "
+"mesclador."
 
 #: ../../modules/digital/digital.rst:436
 msgid "**mixer_hamiltonian**: The mixer Hamiltonian. Defaults to X mixer."
-msgstr ""
+msgstr "**mixer_hamiltonian**: El Hamiltonià mesclador. Per defecte és el mesclador X."
 
 #: ../../modules/digital/digital.rst:437
 msgid ""
@@ -512,18 +653,27 @@ msgid ""
 "approximation. Only used if the Hamiltonians contains non-commuting "
 "terms."
 msgstr ""
+"**trotter_steps**: Nombre de passos de Trotter a usar per a "
+"l'aproximació del Hamiltonià. Només s'usa si els Hamiltonians contenen "
+"termes no commutables."
 
 #: ../../modules/digital/digital.rst:438
 msgid ""
 "**problem_params**: Initial parameter values for the problem Hamiltonian "
 "evolution angles. Defaults to 0.0 for all layers."
 msgstr ""
+"**problem_params**: Valors inicials dels paràmetres per als angles "
+"d'evolució del Hamiltonià del problema. Per defecte és 0.0 per a totes "
+"les capes."
 
 #: ../../modules/digital/digital.rst:439
 msgid ""
 "**mixer_params**: Initial parameter values for the mixer Hamiltonian "
 "evolution angles. Defaults to 0.0 for all layers."
 msgstr ""
+"**mixer_params**: Valors inicials dels paràmetres per als angles "
+"d'evolució del Hamiltonià mesclador. Per defecte és 0.0 per a totes "
+"les capes."
 
 #: ../../modules/digital/digital.rst:459
 msgid ""
@@ -534,10 +684,17 @@ msgid ""
 ":class:`~qilisdk.functionals.variational_program.VariationalProgram` (see"
 " :doc:`Functionals </modules/functionals/functionals>` for more details):"
 msgstr ""
+"Com amb el :class:`~qilisdk.digital.ansatz.HardwareEfficientAnsatz`, "
+"aquest ansatz es pot usar llavors com qualsevol circuit de QiliSDK. O, "
+"per fer en canvi una optimització variacional sobre els paràmetres per "
+"minimitzar el valor esperat del Hamiltonià del problema, es pot configurar "
+"un :class:`~qilisdk.functionals.variational_program.VariationalProgram` "
+"(vegeu :doc:`Functionals </modules/functionals/functionals>` per a més "
+"detalls):"
 
 #: ../../modules/digital/digital.rst:481
 msgid "TrotterizedSchedule"
-msgstr ""
+msgstr "TrotterizedSchedule"
 
 #: ../../modules/digital/digital.rst:483
 msgid ""
@@ -546,22 +703,31 @@ msgid ""
 "schedule slice is evolved using a fixed number of Trotter steps, and you "
 "may optionally prepend a state-initialization circuit or list of gates."
 msgstr ""
+":class:`~qilisdk.digital.ansatz.TrotterizedSchedule` construeix un "
+"circuit digital que segueix un esquema ordenat temporalment de "
+"Hamiltonians. Cada tall de l'esquema s'evoluciona usant un nombre fix "
+"de passos de Trotter, i opcionalment podeu anteposar un circuit "
+"d'inicialització d'estat o una llista de portes."
 
 #: ../../modules/digital/digital.rst:489
 msgid ""
 "**schedule**: A :class:`~qilisdk.analog.schedule.Schedule` of "
 "Hamiltonians to trotterize."
 msgstr ""
+"**schedule**: Un :class:`~qilisdk.analog.schedule.Schedule` de "
+"Hamiltonians per trotteritzar."
 
 #: ../../modules/digital/digital.rst:490
 msgid ""
 "**trotter_steps**: Number of Trotter steps per schedule slice. Defaults "
 "to 1."
 msgstr ""
+"**trotter_steps**: Nombre de passos de Trotter per tall d'esquema. "
+"Per defecte és 1."
 
 #: ../../modules/digital/digital.rst:513
 msgid "Parameter Utilities"
-msgstr ""
+msgstr "Utilitats de Paràmetres"
 
 #: ../../modules/digital/digital.rst:515
 msgid ""
@@ -569,12 +735,18 @@ msgid ""
 " the quick examples above, you can query names, current values, and "
 "bounds, or update them selectively:"
 msgstr ""
+"Els circuits recullen els paràmetres simbòlics aportats per cada porta. "
+"Més enllà dels exemples ràpids anteriors, podeu consultar noms, valors "
+"actuals i cotes, o actualitzar-los de manera selectiva:"
 
 #: ../../modules/digital/digital.rst:540
 msgid ""
 "These helpers make it straightforward to plug the circuit into classical "
 "optimization loops while keeping parameter metadata synchronized."
 msgstr ""
+"Aquests assistents faciliten la connexió del circuit en bucles "
+"d'optimització clàssics mantenint sincronitzades les metadades dels "
+"paràmetres."
 
 #: ../../modules/digital/digital.rst:545
 msgid ""
@@ -582,4 +754,6 @@ msgid ""
 "``get_parameter_names``, ``get_parameters``, ``get_parameter_values``, "
 "and the matching ``set_*`` methods."
 msgstr ""
-
+"Les portes i circuits parametritzats exposen informació dels paràmetres "
+"mitjançant ``get_parameter_names``, ``get_parameters``, "
+"``get_parameter_values``, i els mètodes ``set_*`` corresponents."

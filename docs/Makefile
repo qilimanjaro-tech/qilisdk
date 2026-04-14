@@ -21,7 +21,8 @@ multiversion:
 
 # Run this to generate the files for translation
 gettext:
-	@$(SPHINXBUILD) -M gettext "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) -D exclude_patterns="code/**" $(O)
+	rm -rf "$(BUILDDIR)/gettext"
+	@$(SPHINXBUILD) -M gettext "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) -D exclude_patterns="code/**,shared/**" $(O)
 	LANGUAGE_FLAGS=""; \
 	for lang in $(LANGUAGES); do \
 		LANGUAGE_FLAGS="$$LANGUAGE_FLAGS -l $$lang"; \
@@ -30,8 +31,10 @@ gettext:
 
 # Build the translations
 translations:
+	rm -rf "$(BUILDDIR)/en"
 	$(SPHINXBUILD) -b html "$(SOURCEDIR)" "$(BUILDDIR)/en" $(SPHINXOPTS) $(O)
 	for lang in $(LANGUAGES); do \
+		rm -rf "$(BUILDDIR)/$$lang"; \
 		$(SPHINXBUILD) -b html "$(SOURCEDIR)" "$(BUILDDIR)/$$lang" $(SPHINXOPTS) -D language=$$lang $(O); \
 	done;
 

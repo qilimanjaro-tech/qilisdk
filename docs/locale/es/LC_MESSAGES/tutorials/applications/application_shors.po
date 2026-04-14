@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../tutorials/applications/application_shors.rst:2
 msgid "Factoring With Shor's Algorithm"
-msgstr ""
+msgstr "Factorización con el Algoritmo de Shor"
 
 #: ../../tutorials/applications/application_shors.rst:4
 msgid ""
@@ -29,6 +29,10 @@ msgid ""
 "quantum algorithm for factoring large integers efficiently, providing an "
 "exponential speedup compared to classical algorithms."
 msgstr ""
+"En este tutorial, aprenderemos sobre el algoritmo de Shor, que es un "
+"algoritmo cuántico para factorizar enteros grandes de manera eficiente, "
+"proporcionando una aceleración exponencial en comparación con los "
+"algoritmos clásicos."
 
 #: ../../tutorials/applications/application_shors.rst:7
 msgid ""
@@ -36,10 +40,13 @@ msgid ""
 "first: :doc:`Quantum Basics </tutorials/introductions/intro_quantum>` and"
 " :doc:`Quantum Circuits </tutorials/introductions/intro_circuits>`."
 msgstr ""
+"Si aún no lo has hecho, puede ser útil revisar primero estos tutoriales: "
+":doc:`Quantum Basics </tutorials/introductions/intro_quantum>` y"
+" :doc:`Quantum Circuits </tutorials/introductions/intro_circuits>`."
 
 #: ../../tutorials/applications/application_shors.rst:12
 msgid "The Problem"
-msgstr ""
+msgstr "El Problema"
 
 #: ../../tutorials/applications/application_shors.rst:14
 msgid ""
@@ -49,6 +56,11 @@ msgid ""
 " as many encryption schemes rely on the difficulty of factoring large "
 "integers."
 msgstr ""
+"El problema de la factorización de enteros consiste en encontrar los "
+"factores primos de un número compuesto dado. Por ejemplo, si tenemos el "
+"número 15, sus factores primos son 3 y 5. Este problema es de gran "
+"importancia en criptografía, ya que muchos esquemas de cifrado dependen de "
+"la dificultad de factorizar enteros grandes."
 
 #: ../../tutorials/applications/application_shors.rst:18
 msgid ""
@@ -56,10 +68,13 @@ msgid ""
 "in sub-exponential time, which makes it infeasible to factor large "
 "numbers in a reasonable time frame."
 msgstr ""
+"Clásicamente, los mejores algoritmos conocidos para factorizar enteros "
+"grandes se ejecutan en tiempo sub-exponencial, lo que hace inviable "
+"factorizar números grandes en un tiempo razonable."
 
 #: ../../tutorials/applications/application_shors.rst:22
 msgid "The Solution"
-msgstr ""
+msgstr "La Solución"
 
 #: ../../tutorials/applications/application_shors.rst:24
 msgid ""
@@ -71,16 +86,26 @@ msgid ""
 "the quantum part uses quantum Fourier transform to find this period "
 "efficiently."
 msgstr ""
+"El algoritmo de Shor, desarrollado por Peter Shor en 1994, proporciona "
+"una solución en tiempo polinomial al problema de factorización de enteros "
+"mediante la computación cuántica. El algoritmo consta de dos partes "
+"principales: una parte clásica y una parte cuántica. La parte clásica "
+"implica reducir el problema de factorización a un problema de encontrar el "
+"período de cierta función, mientras que la parte cuántica usa la "
+"transformada de Fourier cuántica para encontrar este período de manera "
+"eficiente."
 
 #: ../../tutorials/applications/application_shors.rst:30
 msgid ""
 "The algorithm can be summarized as follows, when trying to factor the "
 "number :math:`N`:"
 msgstr ""
+"El algoritmo puede resumirse como sigue, al intentar factorizar el número "
+":math:`N`:"
 
 #: ../../tutorials/applications/application_shors.rst:32
 msgid "Choose a random integer :math:`a` such that :math:`1 < a < N`"
-msgstr ""
+msgstr "Elige un entero aleatorio :math:`a` tal que :math:`1 < a < N`"
 
 #: ../../tutorials/applications/application_shors.rst:33
 msgid ""
@@ -88,6 +113,8 @@ msgid ""
 "the GCD is greater than 1, then we have found a non-trivial factor of "
 ":math:`N`."
 msgstr ""
+"Calcula el máximo común divisor (MCD) de :math:`a` y :math:`N`. Si el MCD "
+"es mayor que 1, hemos encontrado un factor no trivial de :math:`N`."
 
 #: ../../tutorials/applications/application_shors.rst:34
 msgid ""
@@ -95,6 +122,8 @@ msgid ""
 "function :math:`f(x) = a^x \\mod N` using the quantum part of the "
 "algorithm."
 msgstr ""
+"Si el MCD es 1, procedemos a encontrar el período :math:`r` de la función "
+":math:`f(x) = a^x \\mod N` usando la parte cuántica del algoritmo."
 
 #: ../../tutorials/applications/application_shors.rst:35
 #, python-brace-format
@@ -102,16 +131,20 @@ msgid ""
 "If :math:`r` is even and the GCD of :math:`a^{r/2} - 1` and :math:`N` is "
 "greater than 1, then we have found a non-trivial factor of :math:`N`."
 msgstr ""
+"Si :math:`r` es par y el MCD de :math:`a^{r/2} - 1` y :math:`N` es mayor "
+"que 1, hemos encontrado un factor no trivial de :math:`N`."
 
 #: ../../tutorials/applications/application_shors.rst:36
 msgid ""
 "Otherwise, we repeat the process with a different random integer "
 ":math:`a`."
 msgstr ""
+"De lo contrario, repetimos el proceso con un entero aleatorio :math:`a` "
+"diferente."
 
 #: ../../tutorials/applications/application_shors.rst:39
 msgid "The Implementation"
-msgstr ""
+msgstr "La Implementación"
 
 #: ../../tutorials/applications/application_shors.rst:41
 msgid ""
@@ -120,34 +153,46 @@ msgid ""
 " explain. Instead, we will factor 3 into 1 and 3 to demonstrate the "
 "algorithm."
 msgstr ""
+"Como ejemplo, consideremos el número 3. Aunque 15 se usa a menudo como "
+"ejemplo para la factorización, el circuito cuántico para factorizarlo es "
+"más difícil de explicar. En su lugar, factorizaremos 3 en 1 y 3 para "
+"demostrar el algoritmo."
 
 #: ../../tutorials/applications/application_shors.rst:45
 msgid "So, going through the steps:"
-msgstr ""
+msgstr "Entonces, siguiendo los pasos:"
 
 #: ../../tutorials/applications/application_shors.rst:47
 msgid ""
 "We choose a random integer :math:`a` such that :math:`1 < a < 3`. The "
 "only choice is :math:`a = 2`."
 msgstr ""
+"Elegimos un entero aleatorio :math:`a` tal que :math:`1 < a < 3`. La única "
+"opción es :math:`a = 2`."
 
 #: ../../tutorials/applications/application_shors.rst:48
 msgid ""
 "We compute the GCD of :math:`2` and :math:`3`, which is 1, so we proceed "
 "to the next step."
 msgstr ""
+"Calculamos el MCD de :math:`2` y :math:`3`, que es 1, por lo que procedemos "
+"al siguiente paso."
 
 #: ../../tutorials/applications/application_shors.rst:49
 msgid ""
 "We need to find the period :math:`r` of the function :math:`f(x) = 2^x "
 "\\mod 3`. To do this, we use the following quantum circuit:"
 msgstr ""
+"Necesitamos encontrar el período :math:`r` de la función :math:`f(x) = 2^x "
+"\\mod 3`. Para ello, usamos el siguiente circuito cuántico:"
 
 #: ../../tutorials/applications/application_shors.rst:86
 msgid ""
 "This will output a 50/50 mix of 0 and 2, which corresponds to the period "
 ":math:`r = 2`."
 msgstr ""
+"Esto dará como resultado una mezcla 50/50 de 0 y 2, que corresponde al "
+"período :math:`r = 2`."
 
 #: ../../tutorials/applications/application_shors.rst:88
 #, python-brace-format
@@ -156,6 +201,9 @@ msgid ""
 " 1 = 1` and :math:`3`, which is 1, so we do not find a non-trivial "
 "factor."
 msgstr ""
+"Como :math:`r` es par, calculamos el MCD de :math:`a^{r/2} - 1 = 2^1 -"
+" 1 = 1` y :math:`3`, que es 1, por lo que no encontramos un factor no "
+"trivial."
 
 #: ../../tutorials/applications/application_shors.rst:89
 msgid ""
@@ -163,12 +211,14 @@ msgid ""
 ":math:`a`, but since there are no other choices, we conclude that the "
 "factors of 3 are 3 and 1."
 msgstr ""
+"Repetiríamos el proceso con un entero aleatorio :math:`a` diferente, pero "
+"como no hay otras opciones, concluimos que los factores de 3 son 3 y 1."
 
 #: ../../tutorials/applications/application_shors.rst:92
 msgid "Further Reading"
-msgstr ""
+msgstr "Lectura Adicional"
 
 #: ../../tutorials/applications/application_shors.rst:94
 msgid "`Shor's Algorithm`_"
-msgstr ""
+msgstr "`Shor's Algorithm`_"
 

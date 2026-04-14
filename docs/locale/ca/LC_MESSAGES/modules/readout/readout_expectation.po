@@ -21,9 +21,9 @@ msgstr ""
 
 #: ../../modules/readout/readout_expectation.rst:2
 msgid "Expectation Values"
-msgstr ""
+msgstr "Valors Esperats"
 
 #: ../../modules/readout/readout_expectation.rst:8
 msgid "Go to a specific subheading of a page."
-msgstr ""
+msgstr "Aneu a un subapartat específic d'una pàgina."
 

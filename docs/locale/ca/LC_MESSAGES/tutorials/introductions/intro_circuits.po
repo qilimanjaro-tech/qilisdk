@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../tutorials/introductions/intro_circuits.rst:2
 msgid "Quantum Circuits"
-msgstr ""
+msgstr "Circuits Quàntics"
 
 #: ../../tutorials/introductions/intro_circuits.rst:4
 msgid ""
@@ -29,10 +29,14 @@ msgid ""
 " the fundamental building blocks of quantum computation. We'll then also "
 "show how to use QiliSDK to build and simulate a simple quantum circuit."
 msgstr ""
+"En aquest tutorial, cobrirem els fonaments dels circuits quàntics, que "
+"són els blocs de construcció fonamentals de la computació quàntica. "
+"També mostrarem com fer servir QiliSDK per construir i simular un circuit "
+"quàntic simple."
 
 #: ../../tutorials/introductions/intro_circuits.rst:8
 msgid "What is a Quantum Circuit?"
-msgstr ""
+msgstr "Què és un Circuit Quàntic?"
 
 #: ../../tutorials/introductions/intro_circuits.rst:10
 msgid ""
@@ -42,10 +46,16 @@ msgid ""
 "those bits and perform some computation. In quantum computing, we instead"
 " have *quantum gates* that operate on *qubits* to perform computations."
 msgstr ""
+"En la computació clàssica, tenim *portes lògiques* que operen sobre *bits* "
+"per realitzar càlculs. Podríem començar amb tots els nostres bits en l'estat "
+"0, i llavors apliquem una sèrie de portes lògiques (p. ex. AND, OR, NOT) "
+"per manipular aquests bits i realitzar algun càlcul. En la computació "
+"quàntica, en canvi tenim *portes quàntiques* que operen sobre *qubits* per "
+"realitzar càlculs."
 
 #: ../../tutorials/introductions/intro_circuits.rst:15
 msgid "Most quantum circuits look something like the following:"
-msgstr ""
+msgstr "La majoria dels circuits quàntics tenen un aspecte similar al següent:"
 
 #: ../../tutorials/introductions/intro_circuits.rst:27
 msgid ""
@@ -54,6 +64,10 @@ msgid ""
 "and the boxes and other symbols represent quantum gates that operate on "
 "those qubits."
 msgstr ""
+"En aquest cas particular, tenim un circuit quàntic amb 2 qubits: "
+":math:`q_0` i :math:`q_1`. Les línies horitzontals representen els qubits, "
+"i les caixes i altres símbols representen les portes quàntiques que operen "
+"sobre aquests qubits."
 
 #: ../../tutorials/introductions/intro_circuits.rst:31
 msgid ""
@@ -61,10 +75,13 @@ msgid ""
 " it into a superposition of states. Then we apply a CNOT gate, which "
 "entangles :math:`q_0` and :math:`q_1`. Finally, we measure both qubits."
 msgstr ""
+"La primera porta que apliquem és una porta Hadamard (H) sobre :math:`q_0`, "
+"que la posa en una superposició d'estats. Llavors apliquem una porta CNOT, "
+"que entrellaça :math:`q_0` i :math:`q_1`. Finalment, mesurem ambdós qubits."
 
 #: ../../tutorials/introductions/intro_circuits.rst:36
 msgid "What Are Quantum Gates?"
-msgstr ""
+msgstr "Què Són les Portes Quàntiques?"
 
 #: ../../tutorials/introductions/intro_circuits.rst:38
 #, python-brace-format
@@ -78,6 +95,14 @@ msgid ""
 "\\end{pmatrix}` and :math:`|1⟩` is represented as the vector "
 ":math:`\\begin{pmatrix} 0 \\\\ 1 \\end{pmatrix}`."
 msgstr ""
+"Llavors, què fan exactament aquestes portes? Una manera de representar "
+"tals operacions quàntiques és a través de la seva representació matricial. "
+"En convertir l'estat dels nostres qubits en un vector, podem representar "
+"les portes quàntiques com a matrius que actuen sobre aquests vectors per "
+"produir nous estats. Per convertir el nostre estat en un vector, podem fer "
+"servir la base computacional, on :math:`|0⟩` es representa com el vector "
+":math:`\\begin{pmatrix} 1 \\\\ 0 \\end{pmatrix}` i :math:`|1⟩` es "
+"representa com el vector :math:`\\begin{pmatrix} 0 \\\\ 1 \\end{pmatrix}`."
 
 #: ../../tutorials/introductions/intro_circuits.rst:45
 msgid ""
@@ -86,6 +111,10 @@ msgid ""
 " in a higher-dimensional space. So, if we have two qubits, we can "
 "represent the initial state :math:`|00⟩` as the vector:"
 msgstr ""
+"Quan tenim múltiples qubits, podem fer servir el producte tensorial com es "
+"va mencionar al tutorial anterior per representar l'estat del sistema com "
+"un vector en un espai de dimensió superior. Per tant, si tenim dos qubits, "
+"podem representar l'estat inicial :math:`|00⟩` com el vector:"
 
 #: ../../tutorials/introductions/intro_circuits.rst:49
 #, python-brace-format
@@ -96,14 +125,19 @@ msgid ""
 " \\end{pmatrix} \\end{pmatrix} = \\begin{pmatrix} 1 \\\\ 0 \\\\ 0 \\\\ 0 "
 "\\end{pmatrix}"
 msgstr ""
+"|00⟩ = |0⟩ \\otimes |0⟩ = \\begin{pmatrix} 1 \\\\ 0 \\end{pmatrix} "
+"\\otimes \\begin{pmatrix} 1 \\\\ 0 \\end{pmatrix} = \\begin{pmatrix} 1 "
+"\\begin{pmatrix} 1 \\\\ 0 \\end{pmatrix} \\\\ 0 \\begin{pmatrix} 1 \\\\ 0"
+" \\end{pmatrix} \\end{pmatrix} = \\begin{pmatrix} 1 \\\\ 0 \\\\ 0 \\\\ 0 "
+"\\end{pmatrix}"
 
 #: ../../tutorials/introductions/intro_circuits.rst:53
 msgid "Our Hadamard gate (H) can be represented as the matrix:"
-msgstr ""
+msgstr "La nostra porta Hadamard (H) es pot representar com la matriu:"
 
 #: ../../tutorials/introductions/intro_circuits.rst:55
 msgid "H = \\frac{1}{\\sqrt{2}} \\begin{pmatrix} 1 & 1 \\\\ 1 & -1 \\end{pmatrix}"
-msgstr ""
+msgstr "H = \\frac{1}{\\sqrt{2}} \\begin{pmatrix} 1 & 1 \\\\ 1 & -1 \\end{pmatrix}"
 
 #: ../../tutorials/introductions/intro_circuits.rst:59
 msgid ""
@@ -114,33 +148,45 @@ msgid ""
 "to create a 4x4 matrix that can operate on our 4-dimensional state "
 "vector. The identity matrix is:"
 msgstr ""
+"Ara volem fer l'operació :math:`H|00⟩`, però observeu que la nostra porta "
+"Hadamard és una matriu 2x2, mentre que el nostre estat és un vector de 4 "
+"dimensions. Per aplicar la porta Hadamard al nostre estat de dos qubits, "
+"primer hem de prendre el producte tensorial de la porta Hadamard amb la "
+"matriu identitat per crear una matriu 4x4 que pugui operar sobre el nostre "
+"vector d'estat de 4 dimensions. La matriu identitat és:"
 
 #: ../../tutorials/introductions/intro_circuits.rst:65
 #, python-brace-format
 msgid "I = \\begin{pmatrix} 1 & 0 \\\\ 0 & 1 \\end{pmatrix}"
-msgstr ""
+msgstr "I = \\begin{pmatrix} 1 & 0 \\\\ 0 & 1 \\end{pmatrix}"
 
 #: ../../tutorials/introductions/intro_circuits.rst:69
 msgid ""
 "So, we can represent the operation of applying the Hadamard gate to the "
 "first qubit as:"
 msgstr ""
+"Per tant, podem representar l'operació d'aplicar la porta Hadamard al "
+"primer qubit com:"
 
 #: ../../tutorials/introductions/intro_circuits.rst:71
 msgid ""
 "H \\otimes I = \\frac{1}{\\sqrt{2}} \\begin{pmatrix} 1 & 0 & 1 & 0 \\\\ 0"
 " & 1 & 0 & 1 \\\\ 1 & 0 & -1 & 0 \\\\ 0 & 1 & 0 & -1 \\end{pmatrix}"
 msgstr ""
+"H \\otimes I = \\frac{1}{\\sqrt{2}} \\begin{pmatrix} 1 & 0 & 1 & 0 \\\\ 0"
+" & 1 & 0 & 1 \\\\ 1 & 0 & -1 & 0 \\\\ 0 & 1 & 0 & -1 \\end{pmatrix}"
 
 #: ../../tutorials/introductions/intro_circuits.rst:75
 msgid "If we finally perform the operation :math:`(H \\otimes I)|00⟩`, we get:"
-msgstr ""
+msgstr "Si finalment realitzem l'operació :math:`(H \\otimes I)|00⟩`, obtenim:"
 
 #: ../../tutorials/introductions/intro_circuits.rst:77
 msgid ""
 "(H \\otimes I)|00⟩ = \\frac{1}{\\sqrt{2}} \\begin{pmatrix} 1 \\\\ 0 \\\\ "
 "1 \\\\ 0 \\end{pmatrix} = \\frac{1}{\\sqrt{2}}(|00⟩ + |10⟩)"
 msgstr ""
+"(H \\otimes I)|00⟩ = \\frac{1}{\\sqrt{2}} \\begin{pmatrix} 1 \\\\ 0 \\\\ "
+"1 \\\\ 0 \\end{pmatrix} = \\frac{1}{\\sqrt{2}}(|00⟩ + |10⟩)"
 
 #: ../../tutorials/introductions/intro_circuits.rst:81
 msgid ""
@@ -148,6 +194,9 @@ msgid ""
 "first qubit into a superposition of states, while leaving the second "
 "qubit unchanged."
 msgstr ""
+"Això és exactament el que esperaríem, ja que la porta Hadamard posa el "
+"primer qubit en una superposició d'estats, mentre deixa el segon qubit "
+"sense canvis."
 
 #: ../../tutorials/introductions/intro_circuits.rst:84
 msgid ""
@@ -155,6 +204,9 @@ msgid ""
 " gates, and this is how we can understand and simulate what each gate "
 "will do to our quantum state."
 msgstr ""
+"Es pot realitzar un procés similar per a totes les diferents portes i "
+"combinacions de portes, i és així com podem entendre i simular el que "
+"cada porta farà al nostre estat quàntic."
 
 #: ../../tutorials/introductions/intro_circuits.rst:87
 msgid ""
@@ -165,10 +217,16 @@ msgid ""
 "should be clear why simulating quantum circuits on classical computers "
 "can quickly become difficult."
 msgstr ""
+"Observeu que amb un únic qubit teníem un vector de dimensió 2, mentre que "
+"amb dos qubits tenim un vector de dimensió 4. En general, la mida del "
+"nostre vector d'estat creix exponencialment amb el nombre de qubits, de "
+"manera que si tinguéssim 20 qubits necessitaríem vectors de mida 1.048.576, "
+"per la qual cosa hauria de quedar clar per què simular circuits quàntics en "
+"ordinadors clàssics pot tornar-se difícil ràpidament."
 
 #: ../../tutorials/introductions/intro_circuits.rst:94
 msgid "What Does Each Quantum Gate Do?"
-msgstr ""
+msgstr "Què Fa Cada Porta Quàntica?"
 
 #: ../../tutorials/introductions/intro_circuits.rst:96
 msgid ""
@@ -176,104 +234,122 @@ msgid ""
 "we use in quantum circuits? Here we list all of the most-common quantum "
 "gates, their behavior, and their matrix representations."
 msgstr ""
+"Acabem de veure com es comporta la porta Hadamard, però quines altres "
+"portes podem fer servir en circuits quàntics? Aquí llistem totes les "
+"portes quàntiques més comunes, el seu comportament i les seves "
+"representacions matricials."
 
 #: ../../tutorials/introductions/intro_circuits.rst:99
 msgid ""
 "Don't worry about memorizing anything here, but it's good to have a vague"
 " idea of some of the names and behaviors."
 msgstr ""
+"No us preocupeu per memoritzar res aquí, però és bo tenir una idea vaga "
+"d'alguns dels noms i comportaments."
 
 #: ../../tutorials/introductions/intro_circuits.rst:105
 msgid "Gate Name/s"
-msgstr ""
+msgstr "Nom/s de la Porta"
 
 #: ../../tutorials/introductions/intro_circuits.rst:106
 msgid "Description"
-msgstr ""
+msgstr "Descripció"
 
 #: ../../tutorials/introductions/intro_circuits.rst:107
 msgid "Matrix Representation"
-msgstr ""
+msgstr "Representació Matricial"
 
 #: ../../tutorials/introductions/intro_circuits.rst:108
 msgid "X"
-msgstr ""
+msgstr "X"
 
 #: ../../tutorials/introductions/intro_circuits.rst:109
 msgid ""
 "Flips the state of a qubit: :math:`|0⟩` to :math:`|1⟩` and :math:`|1⟩` to"
 " :math:`|0⟩`"
 msgstr ""
+"Inverteix l'estat d'un qubit: :math:`|0⟩` a :math:`|1⟩` i :math:`|1⟩` "
+"a :math:`|0⟩`"
 
 #: ../../tutorials/introductions/intro_circuits.rst:110
 #, python-brace-format
 msgid ":math:`\\begin{pmatrix} 0 & 1 \\\\ 1 & 0 \\end{pmatrix}`"
-msgstr ""
+msgstr ":math:`\\begin{pmatrix} 0 & 1 \\\\ 1 & 0 \\end{pmatrix}`"
 
 #: ../../tutorials/introductions/intro_circuits.rst:111
 msgid "Y"
-msgstr ""
+msgstr "Y"
 
 #: ../../tutorials/introductions/intro_circuits.rst:112
 msgid ""
 "Flips the state of a qubit and applies a phase shift: :math:`|0⟩` to "
 ":math:`i|1⟩` and :math:`|1⟩` to :math:`-i|0⟩`"
 msgstr ""
+"Inverteix l'estat d'un qubit i aplica un desplaçament de fase: "
+":math:`|0⟩` a :math:`i|1⟩` i :math:`|1⟩` a :math:`-i|0⟩`"
 
 #: ../../tutorials/introductions/intro_circuits.rst:113
 #, python-brace-format
 msgid ":math:`\\begin{pmatrix} 0 & -i \\\\ i & 0 \\end{pmatrix}`"
-msgstr ""
+msgstr ":math:`\\begin{pmatrix} 0 & -i \\\\ i & 0 \\end{pmatrix}`"
 
 #: ../../tutorials/introductions/intro_circuits.rst:114
 msgid "Z"
-msgstr ""
+msgstr "Z"
 
 #: ../../tutorials/introductions/intro_circuits.rst:115
 msgid ""
 "Applies a phase shift of -1 to the :math:`|1⟩` state, leaving the "
 ":math:`|0⟩` state unchanged"
 msgstr ""
+"Aplica un desplaçament de fase de -1 a l'estat :math:`|1⟩`, deixant "
+"l'estat :math:`|0⟩` sense canvis"
 
 #: ../../tutorials/introductions/intro_circuits.rst:116
 #, python-brace-format
 msgid ":math:`\\begin{pmatrix} 1 & 0 \\\\ 0 & -1 \\end{pmatrix}`"
-msgstr ""
+msgstr ":math:`\\begin{pmatrix} 1 & 0 \\\\ 0 & -1 \\end{pmatrix}`"
 
 #: ../../tutorials/introductions/intro_circuits.rst:117
 msgid "H, Hadamard"
-msgstr ""
+msgstr "H, Hadamard"
 
 #: ../../tutorials/introductions/intro_circuits.rst:118
 msgid ""
 "Creates superpositions: :math:`|0⟩` to :math:`\\frac{1}{\\sqrt{2}}(|0⟩ + "
 "|1⟩)` and :math:`|1⟩` to :math:`\\frac{1}{\\sqrt{2}}(|0⟩ - |1⟩)`"
 msgstr ""
+"Crea superposicions: :math:`|0⟩` a :math:`\\frac{1}{\\sqrt{2}}(|0⟩ + "
+"|1⟩)` i :math:`|1⟩` a :math:`\\frac{1}{\\sqrt{2}}(|0⟩ - |1⟩)`"
 
 #: ../../tutorials/introductions/intro_circuits.rst:119
 msgid ""
 ":math:`\\frac{1}{\\sqrt{2}} \\begin{pmatrix} 1 & 1 \\\\ 1 & -1 "
 "\\end{pmatrix}`"
 msgstr ""
+":math:`\\frac{1}{\\sqrt{2}} \\begin{pmatrix} 1 & 1 \\\\ 1 & -1 "
+"\\end{pmatrix}`"
 
 #: ../../tutorials/introductions/intro_circuits.rst:120
 msgid "S"
-msgstr ""
+msgstr "S"
 
 #: ../../tutorials/introductions/intro_circuits.rst:121
 msgid ""
 "Applies a phase shift of :math:`i` to the :math:`|1⟩` state, leaving the "
 ":math:`|0⟩` state unchanged"
 msgstr ""
+"Aplica un desplaçament de fase de :math:`i` a l'estat :math:`|1⟩`, "
+"deixant l'estat :math:`|0⟩` sense canvis"
 
 #: ../../tutorials/introductions/intro_circuits.rst:122
 #, python-brace-format
 msgid ":math:`\\begin{pmatrix} 1 & 0 \\\\ 0 & i \\end{pmatrix}`"
-msgstr ""
+msgstr ":math:`\\begin{pmatrix} 1 & 0 \\\\ 0 & i \\end{pmatrix}`"
 
 #: ../../tutorials/introductions/intro_circuits.rst:123
 msgid "T"
-msgstr ""
+msgstr "T"
 
 #: ../../tutorials/introductions/intro_circuits.rst:124
 #, python-brace-format
@@ -281,21 +357,25 @@ msgid ""
 "Applies a phase shift of :math:`e^{i\\pi/4}` to the :math:`|1⟩` state, "
 "leaving the :math:`|0⟩` state unchanged"
 msgstr ""
+"Aplica un desplaçament de fase de :math:`e^{i\\pi/4}` a l'estat "
+":math:`|1⟩`, deixant l'estat :math:`|0⟩` sense canvis"
 
 #: ../../tutorials/introductions/intro_circuits.rst:125
 #, python-brace-format
 msgid ":math:`\\begin{pmatrix} 1 & 0 \\\\ 0 & e^{i\\pi/4} \\end{pmatrix}`"
-msgstr ""
+msgstr ":math:`\\begin{pmatrix} 1 & 0 \\\\ 0 & e^{i\\pi/4} \\end{pmatrix}`"
 
 #: ../../tutorials/introductions/intro_circuits.rst:126
 msgid "RX"
-msgstr ""
+msgstr "RX"
 
 #: ../../tutorials/introductions/intro_circuits.rst:127
 msgid ""
 "A single-qubit rotation around the X-axis of the Bloch sphere by an angle"
 " :math:`θ`"
 msgstr ""
+"Una rotació d'un sol qubit al voltant de l'eix X de l'esfera de Bloch "
+"per un angle :math:`θ`"
 
 #: ../../tutorials/introductions/intro_circuits.rst:128
 #, python-brace-format
@@ -303,16 +383,20 @@ msgid ""
 ":math:`\\begin{pmatrix} \\cos(\\frac{θ}{2}) & -i\\sin(\\frac{θ}{2}) \\\\ "
 "-i\\sin(\\frac{θ}{2}) & \\cos(\\frac{θ}{2}) \\end{pmatrix}`"
 msgstr ""
+":math:`\\begin{pmatrix} \\cos(\\frac{θ}{2}) & -i\\sin(\\frac{θ}{2}) \\\\ "
+"-i\\sin(\\frac{θ}{2}) & \\cos(\\frac{θ}{2}) \\end{pmatrix}`"
 
 #: ../../tutorials/introductions/intro_circuits.rst:129
 msgid "RY"
-msgstr ""
+msgstr "RY"
 
 #: ../../tutorials/introductions/intro_circuits.rst:130
 msgid ""
 "A single-qubit rotation around the Y-axis of the Bloch sphere by an angle"
 " :math:`θ`"
 msgstr ""
+"Una rotació d'un sol qubit al voltant de l'eix Y de l'esfera de Bloch "
+"per un angle :math:`θ`"
 
 #: ../../tutorials/introductions/intro_circuits.rst:131
 #, python-brace-format
@@ -320,32 +404,40 @@ msgid ""
 ":math:`\\begin{pmatrix} \\cos(\\frac{θ}{2}) & -\\sin(\\frac{θ}{2}) \\\\ "
 "\\sin(\\frac{θ}{2}) & \\cos(\\frac{θ}{2}) \\end{pmatrix}`"
 msgstr ""
+":math:`\\begin{pmatrix} \\cos(\\frac{θ}{2}) & -\\sin(\\frac{θ}{2}) \\\\ "
+"\\sin(\\frac{θ}{2}) & \\cos(\\frac{θ}{2}) \\end{pmatrix}`"
 
 #: ../../tutorials/introductions/intro_circuits.rst:132
 msgid "RZ"
-msgstr ""
+msgstr "RZ"
 
 #: ../../tutorials/introductions/intro_circuits.rst:133
 msgid ""
 "A single-qubit rotation around the Z-axis of the Bloch sphere by an angle"
 " :math:`θ`"
 msgstr ""
+"Una rotació d'un sol qubit al voltant de l'eix Z de l'esfera de Bloch "
+"per un angle :math:`θ`"
 
 #: ../../tutorials/introductions/intro_circuits.rst:134
 msgid ""
 ":math:`\\begin{pmatrix} e^{-i\\frac{θ}{2}} & 0 \\\\ 0 & e^{i\\frac{θ}{2}}"
 " \\end{pmatrix}`"
 msgstr ""
+":math:`\\begin{pmatrix} e^{-i\\frac{θ}{2}} & 0 \\\\ 0 & e^{i\\frac{θ}{2}}"
+" \\end{pmatrix}`"
 
 #: ../../tutorials/introductions/intro_circuits.rst:135
 msgid "CNOT, CX"
-msgstr ""
+msgstr "CNOT, CX"
 
 #: ../../tutorials/introductions/intro_circuits.rst:136
 msgid ""
 "A two-qubit gate that flips the second qubit if the first qubit is "
 ":math:`|1⟩`"
 msgstr ""
+"Una porta de dos qubits que inverteix el segon qubit si el primer qubit "
+"és :math:`|1⟩`"
 
 #: ../../tutorials/introductions/intro_circuits.rst:137
 #, python-brace-format
@@ -353,16 +445,20 @@ msgid ""
 ":math:`\\begin{pmatrix} 1 & 0 & 0 & 0 \\\\ 0 & 1 & 0 & 0 \\\\ 0 & 0 & 0 &"
 " 1 \\\\ 0 & 0 & 1 & 0 \\end{pmatrix}`"
 msgstr ""
+":math:`\\begin{pmatrix} 1 & 0 & 0 & 0 \\\\ 0 & 1 & 0 & 0 \\\\ 0 & 0 & 0 &"
+" 1 \\\\ 0 & 0 & 1 & 0 \\end{pmatrix}`"
 
 #: ../../tutorials/introductions/intro_circuits.rst:138
 msgid "CZ"
-msgstr ""
+msgstr "CZ"
 
 #: ../../tutorials/introductions/intro_circuits.rst:139
 msgid ""
 "A two-qubit gate that applies a phase shift of -1 to the :math:`|11⟩` "
 "state, leaving the other states unchanged"
 msgstr ""
+"Una porta de dos qubits que aplica un desplaçament de fase de -1 a l'estat "
+":math:`|11⟩`, deixant els altres estats sense canvis"
 
 #: ../../tutorials/introductions/intro_circuits.rst:140
 #, python-brace-format
@@ -370,14 +466,16 @@ msgid ""
 ":math:`\\begin{pmatrix} 1 & 0 & 0 & 0 \\\\ 0 & 1 & 0 & 0 \\\\ 0 & 0 & 1 &"
 " 0 \\\\ 0 & 0 & 0 & -1 \\end{pmatrix}`"
 msgstr ""
+":math:`\\begin{pmatrix} 1 & 0 & 0 & 0 \\\\ 0 & 1 & 0 & 0 \\\\ 0 & 0 & 1 &"
+" 0 \\\\ 0 & 0 & 0 & -1 \\end{pmatrix}`"
 
 #: ../../tutorials/introductions/intro_circuits.rst:141
 msgid "SWAP"
-msgstr ""
+msgstr "SWAP"
 
 #: ../../tutorials/introductions/intro_circuits.rst:142
 msgid "A two-qubit gate that swaps the states of the two qubits"
-msgstr ""
+msgstr "Una porta de dos qubits que intercanvia els estats dels dos qubits"
 
 #: ../../tutorials/introductions/intro_circuits.rst:143
 #, python-brace-format
@@ -385,16 +483,20 @@ msgid ""
 ":math:`\\begin{pmatrix} 1 & 0 & 0 & 0 \\\\ 0 & 0 & 1 & 0 \\\\ 0 & 1 & 0 &"
 " 0 \\\\ 0 & 0 & 0 & 1 \\end{pmatrix}`"
 msgstr ""
+":math:`\\begin{pmatrix} 1 & 0 & 0 & 0 \\\\ 0 & 0 & 1 & 0 \\\\ 0 & 1 & 0 &"
+" 0 \\\\ 0 & 0 & 0 & 1 \\end{pmatrix}`"
 
 #: ../../tutorials/introductions/intro_circuits.rst:144
 msgid "Generic Controlled Gates"
-msgstr ""
+msgstr "Portes Controlades Genèriques"
 
 #: ../../tutorials/introductions/intro_circuits.rst:145
 msgid ""
 "A controlled version of a generic gate U, such that U acts on the second "
 "qubit only if the first qubit is :math:`|1⟩`"
 msgstr ""
+"Una versió controlada d'una porta genèrica U, de manera que U actua sobre "
+"el segon qubit únicament si el primer qubit és :math:`|1⟩`"
 
 #: ../../tutorials/introductions/intro_circuits.rst:146
 #, python-brace-format
@@ -402,16 +504,20 @@ msgid ""
 ":math:`\\begin{pmatrix} 1 & 0 & 0 & 0 \\\\ 0 & 1 & 0 & 0 \\\\ 0 & 0 & "
 "U_{00} & U_{01} \\\\ 0 & 0 & U_{10} & U_{11} \\end{pmatrix}`"
 msgstr ""
+":math:`\\begin{pmatrix} 1 & 0 & 0 & 0 \\\\ 0 & 1 & 0 & 0 \\\\ 0 & 0 & "
+"U_{00} & U_{01} \\\\ 0 & 0 & U_{10} & U_{11} \\end{pmatrix}`"
 
 #: ../../tutorials/introductions/intro_circuits.rst:147
 msgid "Toffoli"
-msgstr ""
+msgstr "Toffoli"
 
 #: ../../tutorials/introductions/intro_circuits.rst:148
 msgid ""
 "A three-qubit gate that flips the third qubit if the first two qubits are"
 " both :math:`|1⟩`"
 msgstr ""
+"Una porta de tres qubits que inverteix el tercer qubit si els dos primers "
+"qubits són ambdós :math:`|1⟩`"
 
 #: ../../tutorials/introductions/intro_circuits.rst:149
 #, python-brace-format
@@ -422,10 +528,15 @@ msgid ""
 "1 & 0 & 0 \\\\ 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 \\\\ 0 & 0 & 0 & 0 & 0 & 0 &"
 " 1 & 0 \\end{pmatrix}`"
 msgstr ""
+":math:`\\begin{pmatrix} 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\\\ 0 & 1 & 0 & 0 "
+"& 0 & 0 & 0 & 0 \\\\ 0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 \\\\ 0 & 0 & 0 & 1 & 0"
+" & 0 & 0 & 0 \\\\ 0 & 0 & 0 & 0 & 1 & 0 & 0 & 0 \\\\ 0 & 0 & 0 & 0 & 0 & "
+"1 & 0 & 0 \\\\ 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 \\\\ 0 & 0 & 0 & 0 & 0 & 0 &"
+" 1 & 0 \\end{pmatrix}`"
 
 #: ../../tutorials/introductions/intro_circuits.rst:152
 msgid "How Can We Simulate These Circuits?"
-msgstr ""
+msgstr "Com Podem Simular Aquests Circuits?"
 
 #: ../../shared/install_note.rst:1
 msgid ""
@@ -433,6 +544,9 @@ msgid ""
 "examples yourself, you can follow the instructions in the "
 ":doc:`installation guide </getting_started/installation>`."
 msgstr ""
+"Si no teniu QiliSDK instal·lat i voleu executar els exemples següents "
+"vosaltres mateixos, podeu seguir les instruccions de la "
+":doc:`guia d'instal·lació </getting_started/installation>`."
 
 #: ../../tutorials/introductions/intro_circuits.rst:156
 msgid ""
@@ -441,16 +555,22 @@ msgid ""
 "quantum circuits. To create a quantum circuit in QiliSDK, we can use the "
 ":doc:`Circuit </modules/digital/digital_circuits>` class:"
 msgstr ""
+"Ara que entenem què són els circuits quàntics i què fan les portes "
+"quàntiques, podem fer servir QiliSDK per construir i simular els nostres "
+"propis circuits quàntics. Per crear un circuit quàntic a QiliSDK, podem "
+"fer servir la classe :doc:`Circuit </modules/digital/digital_circuits>`:"
 
 #: ../../tutorials/introductions/intro_circuits.rst:166
 msgid ""
 "This creates a quantum circuit with 2 qubits. We can then add gates to "
 "our circuit:"
 msgstr ""
+"Això crea un circuit quàntic amb 2 qubits. Llavors podem afegir portes "
+"al nostre circuit:"
 
 #: ../../tutorials/introductions/intro_circuits.rst:175
 msgid "And finally we should also add some measurements:"
-msgstr ""
+msgstr "I finalment també hauríem d'afegir algunes mesures:"
 
 #: ../../tutorials/introductions/intro_circuits.rst:184
 msgid ""
@@ -458,6 +578,9 @@ msgid ""
 "which creates a superposition on the first qubit, entangles it with the "
 "second qubit, and then measures both qubits."
 msgstr ""
+"Això dóna com a resultat el circuit que vam mostrar al principi d'aquest "
+"tutorial, que crea una superposició en el primer qubit, l'entrellaça amb "
+"el segon qubit i llavors mesura ambdós qubits."
 
 #: ../../tutorials/introductions/intro_circuits.rst:188
 msgid ""
@@ -468,6 +591,12 @@ msgid ""
 ":doc:`Readout </modules/readout/readout>` class to specify how we want to"
 " read out our results:"
 msgstr ""
+"Si volem simular aquest circuit, podem fer servir el backend :doc:`QiliSim "
+"</modules/backends/backends_qilisim>`. Per indicar al simulador que volem "
+"simular un circuit, fem servir la classe :doc:`DigitalPropagation "
+"</modules/functionals/functionals_sampling>` i llavors fem servir la "
+"classe :doc:`Readout </modules/readout/readout>` per especificar com volem "
+"llegir els nostres resultats:"
 
 #: ../../tutorials/introductions/intro_circuits.rst:203
 msgid ""
@@ -477,6 +606,11 @@ msgid ""
 "string representing the measurement outcomes for each qubit, and each "
 "value is the number of times that outcome was observed:"
 msgstr ""
+"Això executarà el nostre circuit al simulador QiliSim, com si haguéssim "
+"executat el nostre circuit quàntic 100 vegades i registrat totes les "
+"nostres mesures. La sortida d'això serà un diccionari de mostres, on cada "
+"clau és una cadena que representa els resultats de mesura per a cada qubit, "
+"i cada valor és el nombre de vegades que aquell resultat va ser observat:"
 
 #: ../../tutorials/introductions/intro_circuits.rst:215
 msgid ""
@@ -486,6 +620,11 @@ msgid ""
 "as we increase the number of samples we should see it get closer and "
 "closer to 50/50."
 msgstr ""
+"Com podeu veure, obtenim nombres aproximadament iguals de resultats '00' "
+"i '11', que és el que esperaríem del nostre circuit. Observeu que no és "
+"exactament 50/50 ja que estem mostrejant d'una distribució aleatòria, "
+"però a mesura que augmentem el nombre de mostres hauríem de veure com "
+"s'aproxima cada vegada més a 50/50."
 
 #: ../../tutorials/introductions/intro_circuits.rst:220
 msgid ""
@@ -496,20 +635,25 @@ msgid ""
 "how to do this in the :doc:`SpeQtrum </modules/speqtrum/speqtrum>` module"
 " guide."
 msgstr ""
+"Aquí hem fet servir un simulador per executar el nostre circuit, però "
+"també podríem executar-lo en un ordinador quàntic real. Per fer-ho, podeu "
+"fer servir SpeQtrum, el sistema per accedir al maquinari quàntic de "
+"Qilimanjaro, que està disponible a través de QiliSDK. Podeu trobar més "
+"informació sobre com fer-ho a la guia del mòdul "
+":doc:`SpeQtrum </modules/speqtrum/speqtrum>`."
 
 #: ../../tutorials/introductions/intro_circuits.rst:225
 msgid "Further Reading"
-msgstr ""
+msgstr "Lectures Addicionals"
 
 #: ../../tutorials/introductions/intro_circuits.rst:227
 msgid "`Quantum Circuit`_"
-msgstr ""
+msgstr "`Quantum Circuit`_"
 
 #: ../../tutorials/introductions/intro_circuits.rst:228
 msgid "`Quantum Gate`_"
-msgstr ""
+msgstr "`Quantum Gate`_"
 
 #: ../../tutorials/introductions/intro_circuits.rst:229
 msgid "`List of Quantum Gates`_"
-msgstr ""
-
+msgstr "`List of Quantum Gates`_"

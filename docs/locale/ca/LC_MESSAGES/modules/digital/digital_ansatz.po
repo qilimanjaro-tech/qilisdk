@@ -21,9 +21,9 @@ msgstr ""
 
 #: ../../modules/digital/digital_ansatz.rst:2
 msgid "Hardware Efficient Ansatz"
-msgstr ""
+msgstr "Ansatz Eficient en Hardware"
 
 #: ../../modules/digital/digital_ansatz.rst:8
 msgid "Go to a specific subheading of a page."
-msgstr ""
+msgstr "Aneu a un subapartat específic d'una pàgina."
 

@@ -21,11 +21,12 @@ msgstr ""
 
 #: ../../tutorials/introductions/index_intros.rst:2
 msgid "Introductions"
-msgstr ""
+msgstr "Introducciones"
 
 #: ../../tutorials/introductions/index_intros.rst:4
 msgid ""
 "Here you can find various introductions for people new to quantum "
 "computing:"
 msgstr ""
-
+"Aquí puedes encontrar varias introducciones para personas nuevas en la "
+"computación cuántica:"

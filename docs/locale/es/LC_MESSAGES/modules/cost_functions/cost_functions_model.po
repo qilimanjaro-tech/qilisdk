@@ -21,9 +21,9 @@ msgstr ""
 
 #: ../../modules/cost_functions/cost_functions_model.rst:2
 msgid "Model Cost Function"
-msgstr ""
+msgstr "Función de Coste del Modelo"
 
 #: ../../modules/cost_functions/cost_functions_model.rst:8
 msgid "Go to a specific subheading of a page."
-msgstr ""
+msgstr "Ir a un subtítulo específico de una página."
 

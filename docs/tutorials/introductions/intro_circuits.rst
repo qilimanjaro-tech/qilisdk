@@ -15,12 +15,12 @@ In quantum computing, we instead have *quantum gates* that operate on *qubits* t
 Most quantum circuits look something like the following:
 
 .. image:: ../../_static/general_circuit_light.svg
-   :align: left
+   :align: center
    :class: only-light
    :scale: 200%
 
 .. image:: ../../_static/general_circuit_dark.svg
-   :align: left
+   :align: center
    :class: only-dark
    :scale: 200%
 

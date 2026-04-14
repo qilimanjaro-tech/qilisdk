@@ -21,9 +21,9 @@ msgstr ""
 
 #: ../../modules/cost_functions/cost_functions_observable.rst:2
 msgid "Observable Cost Function"
-msgstr ""
+msgstr "Función de Coste de Observable"
 
 #: ../../modules/cost_functions/cost_functions_observable.rst:8
 msgid "Go to a specific subheading of a page."
-msgstr ""
+msgstr "Ir a un subtítulo específico de una página."
 

@@ -21,9 +21,9 @@ msgstr ""
 
 #: ../../modules/digital/digital_qaoa.rst:2
 msgid "QAOA"
-msgstr ""
+msgstr "QAOA"
 
 #: ../../modules/digital/digital_qaoa.rst:8
 msgid "Go to a specific subheading of a page."
-msgstr ""
+msgstr "Aneu a un subapartat específic d'una pàgina."
 

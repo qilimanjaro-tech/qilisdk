@@ -21,9 +21,9 @@ msgstr ""
 
 #: ../../modules/digital/digital_vis.rst:2
 msgid "Visualization"
-msgstr ""
+msgstr "Visualització"
 
 #: ../../modules/digital/digital_vis.rst:8
 msgid "Go to a specific subheading of a page."
-msgstr ""
+msgstr "Aneu a un subapartat específic d'una pàgina."
 

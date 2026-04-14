@@ -21,13 +21,15 @@ msgstr ""
 
 #: ../../tutorials/applications/application_annealing.rst:2
 msgid "Optimization with Quantum Annealing"
-msgstr ""
+msgstr "Optimització amb Recuita Quàntica"
 
 #: ../../tutorials/applications/application_annealing.rst:4
 msgid ""
 "In this tutorial, we will explore how to use Quantum Annealing to solve a"
 " simple optimization problem using QiliSDK."
 msgstr ""
+"En aquest tutorial, explorarem com usar la Recuita Quàntica per resoldre "
+"un problema d'optimització simple usant QiliSDK."
 
 #: ../../tutorials/applications/application_annealing.rst:7
 msgid ""
@@ -36,10 +38,14 @@ msgid ""
 ":doc:`Quantum Circuits </tutorials/introductions/intro_circuits>` and "
 ":doc:`Quantum Annealing </tutorials/introductions/intro_annealing>`."
 msgstr ""
+"Si encara no ho heu fet, pot ser útil consultar primer aquests tutorials: "
+":doc:`Quantum Basics </tutorials/introductions/intro_quantum>`, "
+":doc:`Quantum Circuits </tutorials/introductions/intro_circuits>` i "
+":doc:`Quantum Annealing </tutorials/introductions/intro_annealing>`."
 
 #: ../../tutorials/applications/application_annealing.rst:13
 msgid "The Problem"
-msgstr ""
+msgstr "El Problema"
 
 #: ../../shared/team_building.rst:1
 msgid ""
@@ -49,57 +55,64 @@ msgid ""
 "\"compatibility\" of the teams is maximized. The information about who "
 "likes who is as follows:"
 msgstr ""
+"Suposem que tenim quatre persones i necessitem formar dos equips de dues "
+"persones cadascun. Tenim informació sobre com de bé treballen juntes cada "
+"parella de persones, i volem formar els equips de manera que la "
+"\"compatibilitat\" total dels equips sigui màxima. La informació sobre qui "
+"s'entén amb qui és la següent:"
 
 #: ../../shared/team_building.rst:7 ../../shared/team_building.rst:9
 msgid "Alice"
-msgstr ""
+msgstr "Alice"
 
 #: ../../shared/team_building.rst:7 ../../shared/team_building.rst:11
 msgid "Bob"
-msgstr ""
+msgstr "Bob"
 
 #: ../../shared/team_building.rst:7 ../../shared/team_building.rst:13
 msgid "Carol"
-msgstr ""
+msgstr "Carol"
 
 #: ../../shared/team_building.rst:7 ../../shared/team_building.rst:15
 msgid "Dave"
-msgstr ""
+msgstr "Dave"
 
 #: ../../shared/team_building.rst:9 ../../shared/team_building.rst:11
 #: ../../shared/team_building.rst:13 ../../shared/team_building.rst:15
 msgid "N/A"
-msgstr ""
+msgstr "N/A"
 
 #: ../../shared/team_building.rst:9 ../../shared/team_building.rst:11
 msgid "1"
-msgstr ""
+msgstr "1"
 
 #: ../../shared/team_building.rst:9 ../../shared/team_building.rst:13
 msgid "3"
-msgstr ""
+msgstr "3"
 
 #: ../../shared/team_building.rst:9 ../../shared/team_building.rst:15
 msgid "4"
-msgstr ""
+msgstr "4"
 
 #: ../../shared/team_building.rst:11 ../../shared/team_building.rst:13
 msgid "5"
-msgstr ""
+msgstr "5"
 
 #: ../../shared/team_building.rst:11 ../../shared/team_building.rst:15
 msgid "2"
-msgstr ""
+msgstr "2"
 
 #: ../../shared/team_building.rst:13 ../../shared/team_building.rst:15
 msgid "6"
-msgstr ""
+msgstr "6"
 
 #: ../../shared/team_building.rst:18
 msgid ""
 "So this means that Alice would prefer to work with Dave, while Bob would "
 "prefer to work with Carol, and so on."
 msgstr ""
+"Això significa que Alice preferiria treballar amb Dave, mentre que Bob "
+"preferiria treballar amb Carol, i així successivament."
 
 #: ../../shared/team_building.rst:20
 msgid ""
@@ -107,11 +120,15 @@ msgid ""
 " :math:`x_i` is 0 if person :math:`i` is in team 0, and 1 if they are in "
 "team 1. The compatibility of team 0 can then be expressed as:"
 msgstr ""
+"Matemàticament, podem representar els nostres dos equips com a variables "
+"binàries, on :math:`x_i` és 0 si la persona :math:`i` està a l'equip 0, "
+"i 1 si està a l'equip 1. La compatibilitat de l'equip 0 es pot expressar "
+"llavors com:"
 
 #: ../../shared/team_building.rst:23
 #, python-brace-format
 msgid "C_0 = \\sum_{i=0,j=0}^3 p_{ij} (1 - x_i) (1 - x_j)"
-msgstr ""
+msgstr "C_0 = \\sum_{i=0,j=0}^3 p_{ij} (1 - x_i) (1 - x_j)"
 
 #: ../../shared/team_building.rst:27
 #, python-brace-format
@@ -121,11 +138,16 @@ msgid ""
 ":math:`x_i` and :math:`x_j` are 0, which means that both people are in "
 "team 0. Meanwhile the compatibility of team 1 can be expressed as:"
 msgstr ""
+"On :math:`p_{ij}` és la puntuació de compatibilitat entre la persona "
+":math:`i` i la persona :math:`j`. Cal observar que aquí cada terme només "
+"és diferent de zero si tant :math:`x_i` com :math:`x_j` són 0, la qual "
+"cosa significa que les dues persones estan a l'equip 0. Mentrestant, la "
+"compatibilitat de l'equip 1 es pot expressar com:"
 
 #: ../../shared/team_building.rst:31
 #, python-brace-format
 msgid "C_1 = \\sum_{i=0,j=0}^3 p_{ij} x_i x_j"
-msgstr ""
+msgstr "C_1 = \\sum_{i=0,j=0}^3 p_{ij} x_i x_j"
 
 #: ../../shared/team_building.rst:35
 msgid ""
@@ -133,15 +155,18 @@ msgid ""
 "subject to the constraint that team 1 (and thus team 0) has exactly two "
 "people:"
 msgstr ""
+"Per tant, volem maximitzar la compatibilitat total :math:`C = C_0 + C_1`, "
+"subjecte a la restricció que l'equip 1 (i per tant l'equip 0) tingui "
+"exactament dues persones:"
 
 #: ../../shared/team_building.rst:38
 msgid "\\max_{x_i \\in \\{0, 1\\}} C"
-msgstr ""
+msgstr "\\max_{x_i \\in \\{0, 1\\}} C"
 
 #: ../../shared/team_building.rst:42
 #, python-brace-format
 msgid "\\text{subject to} \\quad x_{Alice} + x_{Bob} + x_{Carol} + x_{Dave} = 2"
-msgstr ""
+msgstr "\\text{subjecte a} \\quad x_{Alice} + x_{Bob} + x_{Carol} + x_{Dave} = 2"
 
 #: ../../shared/team_building.rst:46
 msgid ""
@@ -156,10 +181,21 @@ msgid ""
 "</modules/core/core_qubo>`. Now we can assume that the problem has been "
 "reformulated into the following unconstrained optimization problem:"
 msgstr ""
+"Un problema amb aquesta formulació és que té una restricció, la qual cosa "
+"la fa més difícil de resoldre usant algorismes d'optimització quàntica. "
+"Per solucionar això, podem usar algunes tècniques per convertir-la en un "
+"problema QUBO (Optimització Binària Quadràtica Sense Restriccions). En "
+"aquest cas, com que només tenim una restricció d'igualtat, podem afegir "
+"una versió al quadrat d'aquesta a la funció objectiu com a terme de "
+"penalització, de manera que el terme de penalització sigui zero quan es "
+"satisfà la restricció i positiu en cas contrari. Per a més detalls sobre "
+"aquest procés, consulteu la :doc:`referència QUBO "
+"</modules/core/core_qubo>`. Ara podem assumir que el problema s'ha "
+"reformulat en el següent problema d'optimització sense restriccions:"
 
 #: ../../shared/team_building.rst:53
 msgid "\\min_{x_i \\in \\{0, 1\\}} \\sum_{i=0,j=0}^4 c_{ij} x_i x_j"
-msgstr ""
+msgstr "\\min_{x_i \\in \\{0, 1\\}} \\sum_{i=0,j=0}^4 c_{ij} x_i x_j"
 
 #: ../../shared/team_building.rst:57
 #, python-brace-format
@@ -167,10 +203,12 @@ msgid ""
 "Where :math:`c_{ij}` are coefficients that encode the objective function "
 "as well as the constraint."
 msgstr ""
+"On :math:`c_{ij}` són coeficients que codifiquen la funció objectiu així "
+"com la restricció."
 
 #: ../../tutorials/applications/application_annealing.rst:18
 msgid "The Solution"
-msgstr ""
+msgstr "La Solució"
 
 #: ../../tutorials/applications/application_annealing.rst:20
 msgid ""
@@ -187,17 +225,31 @@ msgid ""
 "final Hamiltonian, which corresponds to the optimal solution of our "
 "problem."
 msgstr ""
+"Ara que tenim el nostre problema formulat com un QUBO, podem usar la "
+"recuita quàntica per trobar una solució aproximada. La recuita quàntica és "
+"un algorisme d'optimització metaheurístic inspirat en el procés de recuita "
+"en metal·lúrgia, on un material s'escalfa i després es refreda lentament "
+"per eliminar defectes i trobar un estat de baixa energia. En la recuita "
+"quàntica, comencem amb un Hamiltonià simple el qual l'estat fonamental és "
+"fàcil de preparar i després l'evolucionem lentament cap a un Hamiltonià "
+"més complex que codifica el problema d'optimització que volem resoldre. "
+"L'esperança és que si fem això amb prou lentitud, el sistema romandrà en "
+"el seu estat fonamental durant tota l'evolució i així acabarà en l'estat "
+"fonamental del Hamiltonià final, que correspon a la solució òptima del "
+"nostre problema."
 
 #: ../../tutorials/applications/application_annealing.rst:29
 msgid ""
 "Assuming we have reformulated our problem into a QUBO, we can construct "
 "the problem Hamiltonian for quantum annealing, which is given by:"
 msgstr ""
+"Assumint que hem reformulat el nostre problema en un QUBO, podem construir "
+"el Hamiltonià del problema per a la recuita quàntica, que ve donat per:"
 
 #: ../../tutorials/applications/application_annealing.rst:32
 #, python-brace-format
 msgid "H_{prob} = \\sum_{i,j} c_{ij} Z(i) Z(j)"
-msgstr ""
+msgstr "H_{prob} = \\sum_{i,j} c_{ij} Z(i) Z(j)"
 
 #: ../../tutorials/applications/application_annealing.rst:36
 #, python-brace-format
@@ -205,26 +257,30 @@ msgid ""
 "Where :math:`Z(i)` is the Pauli-Z operator acting on qubit :math:`i`, and"
 " :math:`c_{ij}` are the coefficients from our QUBO formulation."
 msgstr ""
+"On :math:`Z(i)` és l'operador de Pauli-Z que actua sobre el qubit "
+":math:`i`, i :math:`c_{ij}` són els coeficients de la nostra formulació QUBO."
 
 #: ../../tutorials/applications/application_annealing.rst:38
 msgid ""
 "Our mixing Hamiltonian is typically chosen to be the transverse field "
 "Hamiltonian, which is given by:"
 msgstr ""
+"El nostre Hamiltonià de barreja s'escull típicament com el Hamiltonià de "
+"camp transversal, que ve donat per:"
 
 #: ../../tutorials/applications/application_annealing.rst:40
 #, python-brace-format
 msgid "H_{mix} = - \\sum_i X(i)"
-msgstr ""
+msgstr "H_{mix} = - \\sum_i X(i)"
 
 #: ../../tutorials/applications/application_annealing.rst:44
 msgid "The overall time-dependent Hamiltonian that we evolve is then given by:"
-msgstr ""
+msgstr "El Hamiltonià dependent del temps que evolucionem ve donat llavors per:"
 
 #: ../../tutorials/applications/application_annealing.rst:46
 #, python-brace-format
 msgid "H(t) = A(t) H_{mix} + B(t) H_{prob}"
-msgstr ""
+msgstr "H(t) = A(t) H_{mix} + B(t) H_{prob}"
 
 #: ../../tutorials/applications/application_annealing.rst:50
 msgid ""
@@ -234,44 +290,61 @@ msgid ""
 "interpolation, such that :math:`A(t) = 1 - t/T` and :math:`B(t) = t/T`, "
 "where :math:`T` is the total annealing time."
 msgstr ""
+"On :math:`A(t)` i :math:`B(t)` són funcions que determinen com "
+"interpolem entre el Hamiltonià de barreja i el Hamiltonià del problema al "
+"llarg del temps. Per simplicitat, aquí assumirem que fem una interpolació "
+"lineal, de manera que :math:`A(t) = 1 - t/T` i :math:`B(t) = t/T`, on "
+":math:`T` és el temps total de recuita."
 
 #: ../../tutorials/applications/application_annealing.rst:56
 msgid "The Implementation"
-msgstr ""
+msgstr "La Implementació"
 
 #: ../../tutorials/applications/application_annealing.rst:58
 msgid ""
 "To simulate the evolution of this time-dependent Hamiltonian, first we "
 "need to form our problem:"
 msgstr ""
+"Per simular l'evolució d'aquest Hamiltonià dependent del temps, primer "
+"necessitem formular el nostre problema:"
 
 #: ../../tutorials/applications/application_annealing.rst:77
 msgid ""
 "Then we use the model to form our problem Hamiltonian, and we can also "
 "define our mixing Hamiltonian and the schedule for our evolution:"
 msgstr ""
+"Després usem el model per formar el nostre Hamiltonià del problema, i "
+"també podem definir el nostre Hamiltonià de barreja i l'esquema de la "
+"nostra evolució:"
 
 #: ../../tutorials/applications/application_annealing.rst:89
 msgid ""
 "We also need to define the schedule - how the coefficients of the problem"
 " and mixing Hamiltonians change over time:"
 msgstr ""
+"També necessitem definir l'esquema: com canvien els coeficients dels "
+"Hamiltonians del problema i de barreja al llarg del temps:"
 
 #: ../../tutorials/applications/application_annealing.rst:103
 msgid ""
 "We will start in the ground state of our mixing Hamiltonian, which is the"
 " equal superposition state over all possible team assignments:"
 msgstr ""
+"Començarem en l'estat fonamental del nostre Hamiltonià de barreja, que és "
+"l'estat de superposició uniforme sobre totes les assignacions possibles "
+"d'equips:"
 
 #: ../../tutorials/applications/application_annealing.rst:109
 msgid ""
 "Finally, we initialize our quantum simulator, execute the evolution, and "
 "read out the results:"
 msgstr ""
+"Finalment, inicialitzem el nostre simulador quàntic, executem l'evolució i "
+"llegim els resultats:"
 
 #: ../../tutorials/applications/application_annealing.rst:123
 msgid "This will print something like the following:"
-msgstr ""
+msgstr "Això imprimirà quelcom semblant a lo següent:"
 
 #: ../../tutorials/applications/application_annealing.rst:140
 msgid ""
@@ -282,16 +355,22 @@ msgid ""
 "but this is expected since quantum annealing is a heuristic algorithm and"
 " does not always find the optimal solution."
 msgstr ""
+"Com podeu veure d'aquests resultats, les mostres més comunes són aquelles "
+"que satisfan la restricció (és a dir, tenen exactament dos 1's), i entre "
+"elles, les més comunes són les que tenen un valor objectiu alt. En aquest "
+"cas hi ha certa filtració cap a altres estats com 0000 i 1111, però això "
+"és esperat ja que la recuita quàntica és un algorisme heurístic i no sempre "
+"troba la solució òptima."
 
 #: ../../tutorials/applications/application_annealing.rst:145
 msgid "Further Reading"
-msgstr ""
+msgstr "Lectura Addicional"
 
 #: ../../tutorials/applications/application_annealing.rst:147
 msgid "`QUBO`_"
-msgstr ""
+msgstr "`QUBO`_"
 
 #: ../../tutorials/applications/application_annealing.rst:148
 msgid "`Quantum Annealing`_"
-msgstr ""
+msgstr "`Quantum Annealing`_"
 

@@ -21,9 +21,9 @@ msgstr ""
 
 #: ../../modules/functionals/functionals_time_evolution.rst:2
 msgid "Time Evolution"
-msgstr ""
+msgstr "Evolución Temporal"
 
 #: ../../modules/functionals/functionals_time_evolution.rst:8
 msgid "Go to a specific subheading of a page."
-msgstr ""
+msgstr "Ir a un subtítulo específico de una página."
 

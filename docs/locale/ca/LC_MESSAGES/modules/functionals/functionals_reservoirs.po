@@ -21,9 +21,9 @@ msgstr ""
 
 #: ../../modules/functionals/functionals_reservoirs.rst:2
 msgid "Quantum Reservoirs"
-msgstr ""
+msgstr "Reservoris Quàntics"
 
 #: ../../modules/functionals/functionals_reservoirs.rst:8
 msgid "Go to a specific subheading of a page."
-msgstr ""
+msgstr "Aneu a un subapartat específic d'una pàgina."
 

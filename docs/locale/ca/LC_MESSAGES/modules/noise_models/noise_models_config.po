@@ -21,9 +21,9 @@ msgstr ""
 
 #: ../../modules/noise_models/noise_models_config.rst:2
 msgid "Noise Config"
-msgstr ""
+msgstr "Configuració de Soroll"
 
 #: ../../modules/noise_models/noise_models_config.rst:8
 msgid "Go to a specific subheading of a page."
-msgstr ""
+msgstr "Aneu a un subapartat específic d'una pàgina."
 

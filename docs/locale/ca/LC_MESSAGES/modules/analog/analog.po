@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../modules/analog/analog.rst:2
 msgid "Analog"
-msgstr ""
+msgstr "Analògic"
 
 #: ../../modules/analog/analog.rst:11
 msgid ""
@@ -31,12 +31,19 @@ msgid ""
 ":class:`~qilisdk.analog.hamiltonian.Hamiltonian` and "
 ":class:`~qilisdk.analog.schedule.Schedule`."
 msgstr ""
+"La capa :mod:`qilisdk.analog` permet construir Hamiltonians simbòlics i "
+"esquemes dependents del temps que es poden simular o enviar als backends de "
+"Qili. Els seus tipus principals són "
+":class:`~qilisdk.analog.hamiltonian.Hamiltonian` i "
+":class:`~qilisdk.analog.schedule.Schedule`."
 
 #: ../../modules/analog/analog.rst:13
 msgid ""
 ":class:`~qilisdk.analog.hamiltonian.Hamiltonian`: Tools to build "
 "arbitrary Hamiltonians using symbolic Pauli operators."
 msgstr ""
+":class:`~qilisdk.analog.hamiltonian.Hamiltonian`: Eines per construir "
+"Hamiltonians arbitraris utilitzant operadors de Pauli simbòlics."
 
 #: ../../modules/analog/analog.rst:14
 msgid ""
@@ -44,10 +51,12 @@ msgid ""
 "evolution with callable/interval coefficients and step/linear "
 "interpolation."
 msgstr ""
+":class:`~qilisdk.analog.schedule.Schedule`: Evolució flexible dependent del "
+"temps amb coeficients callable/interval i interpolació escalonada/lineal."
 
 #: ../../modules/analog/analog.rst:17
 msgid "Hamiltonian"
-msgstr ""
+msgstr "Hamiltonià"
 
 #: ../../modules/analog/analog.rst:19
 msgid ""
@@ -56,16 +65,22 @@ msgid ""
 " Hamiltonians using the built-in Pauli operators and combine them with "
 "standard arithmetic operations."
 msgstr ""
+"La classe :class:`~qilisdk.analog.hamiltonian.Hamiltonian` representa un "
+"Hamiltonià simbòlic com una suma d'operadors de Pauli ponderats. Es poden "
+"crear Hamiltonians utilitzant els operadors de Pauli integrats i combinar-los "
+"amb operacions aritmètiques estàndard."
 
 #: ../../modules/analog/analog.rst:21
 msgid "**Common constructors**"
-msgstr ""
+msgstr "**Constructors comuns**"
 
 #: ../../modules/analog/analog.rst:23
 msgid ""
 "``X(i)``, ``Y(i)``, ``Z(i)``, ``I(i)`` produces a Hamiltonian with a "
 "single-qubit Pauli."
 msgstr ""
+"``X(i)``, ``Y(i)``, ``Z(i)``, ``I(i)`` produeix un Hamiltonià amb un Pauli "
+"d'un sol qubit."
 
 #: ../../modules/analog/analog.rst:24
 msgid ""
@@ -73,144 +88,165 @@ msgid ""
 "syntax, for example: ``2 * Z(0) + Z(1)`` and ``Z(0) * Z(1)`` build multi-"
 "qubit Hamiltonian."
 msgstr ""
+"Construcció mitjançant operacions aritmètiques. Les operacions segueixen la "
+"sintaxi de Python, per exemple: ``2 * Z(0) + Z(1)`` i ``Z(0) * Z(1)`` "
+"construeixen Hamiltonians multi-qubit."
 
 #: ../../modules/analog/analog.rst:26
 msgid "**Pauli operators**:"
-msgstr ""
+msgstr "**Operadors de Pauli**:"
 
 #: ../../modules/analog/analog.rst:28
 msgid ":func:`X(i)<qilisdk.analog.hamiltonian.X>` - Pauli X acting on qubit *i*"
-msgstr ""
+msgstr ":func:`X(i)<qilisdk.analog.hamiltonian.X>` - Pauli X actuant sobre el qubit *i*"
 
 #: ../../modules/analog/analog.rst:29
 msgid ":func:`Y(i)<qilisdk.analog.hamiltonian.Y>` - Pauli Y acting on qubit *i*"
-msgstr ""
+msgstr ":func:`Y(i)<qilisdk.analog.hamiltonian.Y>` - Pauli Y actuant sobre el qubit *i*"
 
 #: ../../modules/analog/analog.rst:30
 msgid ":func:`Z(i)<qilisdk.analog.hamiltonian.Z>` - Pauli Z acting on qubit *i*"
-msgstr ""
+msgstr ":func:`Z(i)<qilisdk.analog.hamiltonian.Z>` - Pauli Z actuant sobre el qubit *i*"
 
 #: ../../modules/analog/analog.rst:31
 msgid ":func:`I(i)<qilisdk.analog.hamiltonian.I>` - Identity acting on qubit *i*"
-msgstr ""
+msgstr ":func:`I(i)<qilisdk.analog.hamiltonian.I>` - Identitat actuant sobre el qubit *i*"
 
 #: ../../modules/analog/analog.rst:33
 msgid "**Arithmetic operations**:"
-msgstr ""
+msgstr "**Operacions aritmètiques**:"
 
 #: ../../modules/analog/analog.rst:35
 msgid "Addition: ``H1 + H2``"
-msgstr ""
+msgstr "Suma: ``H1 + H2``"
 
 #: ../../modules/analog/analog.rst:36
 msgid "Scalar multiplication: ``5 * H``"
-msgstr ""
+msgstr "Multiplicació escalar: ``5 * H``"
 
 #: ../../modules/analog/analog.rst:37
 msgid "multiplication: ``H0 * H1``"
-msgstr ""
+msgstr "Multiplicació: ``H0 * H1``"
 
 #: ../../modules/analog/analog.rst:38
 msgid "Subtraction: ``H1 - H2``"
-msgstr ""
+msgstr "Resta: ``H1 - H2``"
 
 #: ../../modules/analog/analog.rst:39
 msgid "Division by scalar: ``H / 5``"
-msgstr ""
+msgstr "Divisió per escalar: ``H / 5``"
 
 #: ../../modules/analog/analog.rst:40
 msgid "Negation: ``-H``"
-msgstr ""
+msgstr "Negació: ``-H``"
 
 #: ../../modules/analog/analog.rst:42
 msgid "**Extra Symbolic Operators**:"
-msgstr ""
+msgstr "**Operadors Simbòlics Addicionals**:"
 
 #: ../../modules/analog/analog.rst:44
 msgid ""
 "commutator: "
 ":meth:`H1.commutator(H2)<qilisdk.analog.hamiltonian.Hamiltonian.commutator>`"
 msgstr ""
+"commutador: "
+":meth:`H1.commutator(H2)<qilisdk.analog.hamiltonian.Hamiltonian.commutator>`"
 
 #: ../../modules/analog/analog.rst:45
 msgid ""
 "anticommutator: "
 ":meth:`H1.anticommutator(H2)<qilisdk.analog.hamiltonian.Hamiltonian.anticommutator>`"
 msgstr ""
+"anticommutador: "
+":meth:`H1.anticommutator(H2)<qilisdk.analog.hamiltonian.Hamiltonian.anticommutator>`"
 
 #: ../../modules/analog/analog.rst:46
 msgid ""
 "vector_norm: "
 ":meth:`H.vector_norm()<qilisdk.analog.hamiltonian.Hamiltonian.vector_norm>`"
 msgstr ""
+"vector_norm: "
+":meth:`H.vector_norm()<qilisdk.analog.hamiltonian.Hamiltonian.vector_norm>`"
 
 #: ../../modules/analog/analog.rst:47
 msgid ""
 "frobenius_norm: "
 ":meth:`H.frobenius_norm()<qilisdk.analog.hamiltonian.Hamiltonian.frobenius_norm>`"
 msgstr ""
+"frobenius_norm: "
+":meth:`H.frobenius_norm()<qilisdk.analog.hamiltonian.Hamiltonian.frobenius_norm>`"
 
 #: ../../modules/analog/analog.rst:48
 msgid "trace: :meth:`H.trace()<qilisdk.analog.hamiltonian.Hamiltonian.trace>`"
-msgstr ""
+msgstr "traça: :meth:`H.trace()<qilisdk.analog.hamiltonian.Hamiltonian.trace>`"
 
 #: ../../modules/analog/analog.rst:51
 msgid "**Exporting Hamiltonians**:"
-msgstr ""
+msgstr "**Exportar Hamiltonians**:"
 
 #: ../../modules/analog/analog.rst:53
 msgid ""
 "to matrix: "
 ":meth:`H.to_matrix(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.to_matrix>`"
 msgstr ""
+"a matriu: "
+":meth:`H.to_matrix(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.to_matrix>`"
 
 #: ../../modules/analog/analog.rst:54
 msgid ""
 "to qtensor: "
 ":meth:`H.to_qtensor(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.to_qtensor>`"
 msgstr ""
+"a qtensor: "
+":meth:`H.to_qtensor(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.to_qtensor>`"
 
 #: ../../modules/analog/analog.rst:56
 msgid "**Importing Hamiltonians**:"
-msgstr ""
+msgstr "**Importar Hamiltonians**:"
 
 #: ../../modules/analog/analog.rst:58
 msgid ""
 "from qtensor: "
 ":meth:`Hamiltonian.from_qtensor(qtensor)<qilisdk.analog.hamiltonian.Hamiltonian.from_qtensor>`"
 msgstr ""
+"des de qtensor: "
+":meth:`Hamiltonian.from_qtensor(qtensor)<qilisdk.analog.hamiltonian.Hamiltonian.from_qtensor>`"
 
 #: ../../modules/analog/analog.rst:59
 msgid ""
 "from string: "
 ":meth:`Hamiltonian.parse(hamiltonian_string)<qilisdk.analog.hamiltonian.Hamiltonian.parse>`"
 msgstr ""
+"des de cadena: "
+":meth:`Hamiltonian.parse(hamiltonian_string)<qilisdk.analog.hamiltonian.Hamiltonian.parse>`"
 
 #: ../../modules/analog/analog.rst:62
 msgid "Example: Ising Hamiltonian"
-msgstr ""
+msgstr "Exemple: Hamiltonià d'Ising"
 
 #: ../../modules/analog/analog.rst:64
 msgid "To define an Ising Hamiltonian of the form:"
-msgstr ""
+msgstr "Per definir un Hamiltonià d'Ising de la forma:"
 
 #: ../../modules/analog/analog.rst:66
 msgid ""
 "H_{\\text{Ising}}  =  - \\sum_{\\langle i, j \\rangle} J_{ij} \\sigma^Z_i"
 " \\sigma^Z_j - \\sum_j h_j \\sigma^Z_j"
 msgstr ""
+"H_{\\text{Ising}}  =  - \\sum_{\\langle i, j \\rangle} J_{ij} \\sigma^Z_i"
+" \\sigma^Z_j - \\sum_j h_j \\sigma^Z_j"
 
 #: ../../modules/analog/analog.rst:70
 msgid "you can use the Pauli ``Z`` operators from the library:"
-msgstr ""
+msgstr "podeu utilitzar els operadors de Pauli ``Z`` de la biblioteca:"
 
 #: ../../modules/analog/analog.rst:86
 msgid "**Output:**"
-msgstr ""
+msgstr "**Sortida:**"
 
 #: ../../modules/analog/analog.rst:93
 msgid "Schedule"
-msgstr ""
+msgstr "Esquema"
 
 #: ../../modules/analog/analog.rst:95
 msgid ""
@@ -220,20 +256,26 @@ msgid ""
 "you can define them at discrete points or over intervals that are sampled"
 " automatically."
 msgstr ""
+"La classe :class:`~qilisdk.analog.schedule.Schedule` associa punts de temps "
+"amb coeficients del :class:`~qilisdk.analog.hamiltonian.Hamiltonian`. Els "
+"coeficients poden ser nombres, paràmetres/termes o callables de temps, i es "
+"poden definir en punts discrets o en intervals que es mostreen automàticament."
 
 #: ../../modules/analog/analog.rst:98
 msgid "Key arguments"
-msgstr ""
+msgstr "Arguments principals"
 
 #: ../../modules/analog/analog.rst:100
 msgid "**dt** (float): resolution of time samples. Default is 0.1."
-msgstr ""
+msgstr "**dt** (float): resolució de les mostres de temps. El valor per defecte és 0.1."
 
 #: ../../modules/analog/analog.rst:101
 msgid ""
 "**hamiltonians** (dict[str, Hamiltonian]): Map of labels to "
 ":class:`~qilisdk.analog.hamiltonian.Hamiltonian` instances."
 msgstr ""
+"**hamiltonians** (dict[str, Hamiltonian]): Mapa d'etiquetes a instàncies de "
+":class:`~qilisdk.analog.hamiltonian.Hamiltonian`."
 
 #: ../../modules/analog/analog.rst:102
 msgid ""
@@ -242,10 +284,14 @@ msgid ""
 "(float/parameter/term) or a 2-tuple defining an interval; each value can "
 "be:"
 msgstr ""
+"**coefficients** (dict[str, dict]): Mapatge de l'etiqueta del Hamiltonià a un "
+"diccionari de definició temporal. Cada clau és un punt de temps "
+"(float/paràmetre/terme) o una 2-tupla que defineix un interval; cada valor "
+"pot ser:"
 
 #: ../../modules/analog/analog.rst:103
 msgid "the coefficient of the hamiltonian at that time"
-msgstr ""
+msgstr "el coeficient del Hamiltonià en aquell moment"
 
 #: ../../modules/analog/analog.rst:104
 msgid ""
@@ -254,18 +300,26 @@ msgid ""
 "passed to this callable need to have a default value or have their value "
 "specified in the ``**kwargs``."
 msgstr ""
+"o un callable que retorna un coeficient. Aquest callable pot acceptar un "
+"paràmetre ``t`` que serà substituït pel temps. A més, qualsevol altre "
+"paràmetre passat a aquest callable ha de tenir un valor per defecte o tenir "
+"el seu valor especificat als ``**kwargs``."
 
 #: ../../modules/analog/analog.rst:105
 msgid ""
 "**interpolation** (:class:`~qilisdk.core.interpolator.Interpolation`): "
 "``LINEAR`` (default) or ``STEP`` behavior between provided points."
 msgstr ""
+"**interpolation** (:class:`~qilisdk.core.interpolator.Interpolation`): "
+"comportament ``LINEAR`` (per defecte) o ``STEP`` entre els punts proporcionats."
 
 #: ../../modules/analog/analog.rst:106
 msgid ""
 "**total_time** (float | Parameter | Term | None): Optional max time that "
 "rescales all time points while preserving relative positions."
 msgstr ""
+"**total_time** (float | Parameter | Term | None): Temps màxim opcional que "
+"reescala tots els punts de temps preservant les posicions relatives."
 
 #: ../../modules/analog/analog.rst:111
 msgid ""
@@ -274,24 +328,30 @@ msgid ""
 "parameters to stay between their neighboring time points so the ordering "
 "of the timeline remains valid."
 msgstr ""
+"Quan es col·loquen paràmetres a l'eix temporal (per exemple, com a punts de "
+"temps o extrems d'interval), l'esquema restringeix automàticament aquests "
+"paràmetres perquè es mantinguin entre els punts de temps veïns, de manera que "
+"l'ordenació de la línia de temps roman vàlida."
 
 #: ../../modules/analog/analog.rst:116
 msgid "Example 1: Callable coefficients with interval sampling"
-msgstr ""
+msgstr "Exemple 1: Coeficients callable amb mostreig d'intervals"
 
 #: ../../modules/analog/analog.rst:138
 msgid "Example 2: Step interpolation and max-time rescaling"
-msgstr ""
+msgstr "Exemple 2: Interpolació escalonada i reescalat del temps màxim"
 
 #: ../../modules/analog/analog.rst:163
 msgid ""
 "The draw function samples 1/dt points from the schedule, therefore, for "
 "an increased resolution in the plot you can reduce dt."
 msgstr ""
+"La funció draw mostreia 1/dt punts de l'esquema; per tant, per augmentar la "
+"resolució del gràfic podeu reduir dt."
 
 #: ../../modules/analog/analog.rst:167
 msgid "Parameterized Schedules"
-msgstr ""
+msgstr "Esquemes Parametritzats"
 
 #: ../../modules/analog/analog.rst:168
 msgid ""
@@ -303,10 +363,18 @@ msgid ""
 "schedule tracks every parameter it encounters so you can query or set "
 "them later."
 msgstr ""
+"Els coeficients de :class:`~qilisdk.analog.schedule.Schedule` poden ser "
+"simbòlics, el que permet bucles d'optimització clàssica o experiments que "
+"escanegen una família de perfils temporals. Els coeficients poden ser "
+"instàncies de :class:`~qilisdk.core.variables.Parameter` o expressions "
+"algebraiques (:class:`~qilisdk.core.variables.Term`) construïdes a partir de "
+"paràmetres. L'esquema fa un seguiment de cada paràmetre que troba perquè "
+"pugueu consultar-los o establir-los més tard."
 
 #: ../../modules/analog/analog.rst:198
 msgid ""
 "For schedules, Hamiltonians, and interpolators, use ``get_parameters`` "
 "and related accessor methods to inspect parameter state."
 msgstr ""
-
+"Per a esquemes, Hamiltonians i interpoladors, useu ``get_parameters`` i els "
+"mètodes d'accés relacionats per inspeccionar l'estat dels paràmetres."

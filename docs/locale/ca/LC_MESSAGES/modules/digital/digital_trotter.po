@@ -21,9 +21,9 @@ msgstr ""
 
 #: ../../modules/digital/digital_trotter.rst:2
 msgid "Trotterization"
-msgstr ""
+msgstr "Trotterització"
 
 #: ../../modules/digital/digital_trotter.rst:8
 msgid "Go to a specific subheading of a page."
-msgstr ""
+msgstr "Aneu a un subapartat específic d'una pàgina."
 

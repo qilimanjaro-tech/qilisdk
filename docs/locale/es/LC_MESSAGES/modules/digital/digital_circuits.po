@@ -21,9 +21,9 @@ msgstr ""
 
 #: ../../modules/digital/digital_circuits.rst:2
 msgid "Circuits"
-msgstr ""
+msgstr "Circuitos"
 
 #: ../../modules/digital/digital_circuits.rst:8
 msgid "Go to a specific subheading of a page."
-msgstr ""
+msgstr "Ir a un subtítulo específico de una página."
 
