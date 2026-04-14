@@ -1,0 +1,18 @@
+{%- extends "!header.html" %}
+
+{{ super() }}
+
+{% block header_main_nav %}
+{{ super() }}
+<div class="language-switcher">
+  {% set langs = [("en", "EN"), ("es", "ES"), ("ca", "CA")] %}
+  {% set depth = pagename.split('/')|length %}
+  {% for code, label in langs %}
+    {% if language == code %}
+        <span class="lang-active">{{ label }}</span>
+    {% else %}
+        <a href="{{ '../' * depth }}{{ code }}/{{ pagename }}.html" class="lang-link">{{ label }}</a>
+    {% endif %}
+  {% endfor %}
+</div>
+{% endblock %}

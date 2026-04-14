@@ -23,6 +23,9 @@ my_circuit.svg
 # Virtual environments
 .venv
 
+# Translation stuff
+*.mo
+
 # Hypothesis-generated files
 .hypothesis
 

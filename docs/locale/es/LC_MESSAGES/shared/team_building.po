@@ -27,57 +27,64 @@ msgid ""
 "\"compatibility\" of the teams is maximized. The information about who "
 "likes who is as follows:"
 msgstr ""
+"Supongamos que tenemos cuatro personas y necesitamos formar dos equipos de "
+"dos personas cada uno. Tenemos información sobre qué tan bien trabaja juntas "
+"cada pareja de personas, y queremos formar los equipos de manera que la "
+"\"compatibilidad\" total de los equipos sea máxima. La información sobre "
+"quién se lleva bien con quién es la siguiente:"
 
 #: ../../shared/team_building.rst:7 ../../shared/team_building.rst:9
 msgid "Alice"
-msgstr ""
+msgstr "Alice"
 
 #: ../../shared/team_building.rst:7 ../../shared/team_building.rst:11
 msgid "Bob"
-msgstr ""
+msgstr "Bob"
 
 #: ../../shared/team_building.rst:7 ../../shared/team_building.rst:13
 msgid "Carol"
-msgstr ""
+msgstr "Carol"
 
 #: ../../shared/team_building.rst:7 ../../shared/team_building.rst:15
 msgid "Dave"
-msgstr ""
+msgstr "Dave"
 
 #: ../../shared/team_building.rst:9 ../../shared/team_building.rst:11
 #: ../../shared/team_building.rst:13 ../../shared/team_building.rst:15
 msgid "N/A"
-msgstr ""
+msgstr "N/A"
 
 #: ../../shared/team_building.rst:9 ../../shared/team_building.rst:11
 msgid "1"
-msgstr ""
+msgstr "1"
 
 #: ../../shared/team_building.rst:9 ../../shared/team_building.rst:13
 msgid "3"
-msgstr ""
+msgstr "3"
 
 #: ../../shared/team_building.rst:9 ../../shared/team_building.rst:15
 msgid "4"
-msgstr ""
+msgstr "4"
 
 #: ../../shared/team_building.rst:11 ../../shared/team_building.rst:13
 msgid "5"
-msgstr ""
+msgstr "5"
 
 #: ../../shared/team_building.rst:11 ../../shared/team_building.rst:15
 msgid "2"
-msgstr ""
+msgstr "2"
 
 #: ../../shared/team_building.rst:13 ../../shared/team_building.rst:15
 msgid "6"
-msgstr ""
+msgstr "6"
 
 #: ../../shared/team_building.rst:18
 msgid ""
 "So this means that Alice would prefer to work with Dave, while Bob would "
 "prefer to work with Carol, and so on."
 msgstr ""
+"Esto significa que Alice preferiría trabajar con Dave, mientras que Bob "
+"preferiría trabajar con Carol, y así sucesivamente."
 
 #: ../../shared/team_building.rst:20
 msgid ""
@@ -85,11 +92,15 @@ msgid ""
 " :math:`x_i` is 0 if person :math:`i` is in team 0, and 1 if they are in "
 "team 1. The compatibility of team 0 can then be expressed as:"
 msgstr ""
+"Matemáticamente, podemos representar nuestros dos equipos como variables "
+"binarias, donde :math:`x_i` es 0 si la persona :math:`i` está en el equipo "
+"0, y 1 si está en el equipo 1. La compatibilidad del equipo 0 puede entonces "
+"expresarse como:"
 
 #: ../../shared/team_building.rst:23
 #, python-brace-format
 msgid "C_0 = \\sum_{i=0,j=0}^3 p_{ij} (1 - x_i) (1 - x_j)"
-msgstr ""
+msgstr "C_0 = \\sum_{i=0,j=0}^3 p_{ij} (1 - x_i) (1 - x_j)"
 
 #: ../../shared/team_building.rst:27
 #, python-brace-format
@@ -99,11 +110,16 @@ msgid ""
 ":math:`x_i` and :math:`x_j` are 0, which means that both people are in "
 "team 0. Meanwhile the compatibility of team 1 can be expressed as:"
 msgstr ""
+"Donde :math:`p_{ij}` es la puntuación de compatibilidad entre la persona "
+":math:`i` y la persona :math:`j`. Nótese que aquí cada término es no nulo "
+"solo si tanto :math:`x_i` como :math:`x_j` son 0, lo que significa que "
+"ambas personas están en el equipo 0. Mientras tanto, la compatibilidad del "
+"equipo 1 puede expresarse como:"
 
 #: ../../shared/team_building.rst:31
 #, python-brace-format
 msgid "C_1 = \\sum_{i=0,j=0}^3 p_{ij} x_i x_j"
-msgstr ""
+msgstr "C_1 = \\sum_{i=0,j=0}^3 p_{ij} x_i x_j"
 
 #: ../../shared/team_building.rst:35
 msgid ""
@@ -111,15 +127,18 @@ msgid ""
 "subject to the constraint that team 1 (and thus team 0) has exactly two "
 "people:"
 msgstr ""
+"Por tanto, queremos maximizar la compatibilidad total :math:`C = C_0 + C_1`, "
+"sujeto a la restricción de que el equipo 1 (y por tanto el equipo 0) tenga "
+"exactamente dos personas:"
 
 #: ../../shared/team_building.rst:38
 msgid "\\max_{x_i \\in \\{0, 1\\}} C"
-msgstr ""
+msgstr "\\max_{x_i \\in \\{0, 1\\}} C"
 
 #: ../../shared/team_building.rst:42
 #, python-brace-format
 msgid "\\text{subject to} \\quad x_{Alice} + x_{Bob} + x_{Carol} + x_{Dave} = 2"
-msgstr ""
+msgstr "\\text{sujeto a} \\quad x_{Alice} + x_{Bob} + x_{Carol} + x_{Dave} = 2"
 
 #: ../../shared/team_building.rst:46
 msgid ""
@@ -134,10 +153,21 @@ msgid ""
 "</modules/core/core_qubo>`. Now we can assume that the problem has been "
 "reformulated into the following unconstrained optimization problem:"
 msgstr ""
+"Un problema con esta formulación es que tiene una restricción, lo que "
+"dificulta su resolución mediante algoritmos de optimización cuántica. Para "
+"solucionarlo, podemos usar algunas técnicas para convertirlo en un problema "
+"QUBO (Optimización Binaria Cuadrática Sin Restricciones). En este caso, como "
+"solo tenemos una restricción de igualdad, podemos añadir una versión al "
+"cuadrado de la misma a la función objetivo como término de penalización, de "
+"modo que dicho término sea cero cuando se satisface la restricción, y "
+"positivo en caso contrario. Para más detalles sobre este proceso, consulte la "
+":doc:`referencia QUBO </modules/core/core_qubo>`. Ahora podemos asumir que "
+"el problema ha sido reformulado en el siguiente problema de optimización sin "
+"restricciones:"
 
 #: ../../shared/team_building.rst:53
 msgid "\\min_{x_i \\in \\{0, 1\\}} \\sum_{i=0,j=0}^4 c_{ij} x_i x_j"
-msgstr ""
+msgstr "\\min_{x_i \\in \\{0, 1\\}} \\sum_{i=0,j=0}^4 c_{ij} x_i x_j"
 
 #: ../../shared/team_building.rst:57
 #, python-brace-format
@@ -145,4 +175,6 @@ msgid ""
 "Where :math:`c_{ij}` are coefficients that encode the objective function "
 "as well as the constraint."
 msgstr ""
+"Donde :math:`c_{ij}` son coeficientes que codifican tanto la función "
+"objetivo como la restricción."
 
