@@ -55,6 +55,10 @@ napoleon_google_docstring = True
 napoleon_numpy_docstring = False
 napoleon_preprocess_types = True
 
+# Internationalization settings
+locale_dirs = ['locale/']
+gettext_compact = False
+
 # AutoAPI settings
 autoapi_type = "python"
 autoapi_dirs = ["../src/qilisdk"]
