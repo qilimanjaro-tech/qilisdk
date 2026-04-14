@@ -32,11 +32,15 @@ Meanwhile the compatibility of team 1 can be expressed as:
 
     C_1 = \sum_{i=0,j=0}^3 p_{ij} x_i x_j
 
-Thus we want to maximize the total compatibility :math:`C = C_0 + C_1`, subject to the constraint that each person is in exactly one team:
+Thus we want to maximize the total compatibility :math:`C = C_0 + C_1`, subject to the constraint 
+that team 1 (and thus team 0) has exactly two people:
 
 .. math:: 
 
     \max_{x_i \in \{0, 1\}} C
+
+.. math:: 
+
     \text{subject to} \quad x_{Alice} + x_{Bob} + x_{Carol} + x_{Dave} = 2
 
 One issue with this formulation is that it has a constraint, which makes it more difficult to solve using quantum optimization algorithms.

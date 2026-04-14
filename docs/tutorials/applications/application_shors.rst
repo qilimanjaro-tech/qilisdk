@@ -4,6 +4,10 @@ Factoring With Shor's Algorithm
 In this tutorial, we will learn about Shor's algorithm, which is a quantum algorithm 
 for factoring large integers efficiently, providing an exponential speedup compared to classical algorithms.
 
+.. note:: If you haven't already, it might be useful to check out these tutorials first:
+    :doc:`Quantum Basics </tutorials/introductions/intro_quantum>` and
+    :doc:`Quantum Circuits </tutorials/introductions/intro_circuits>`.
+
 The Problem
 ----------------------
 
@@ -34,10 +38,11 @@ The algorithm can be summarized as follows, when trying to factor the number :ma
 The Implementation
 ----------------------
 
-As an example, let's consider the number 3. Whilst 15 is the smallest composite number, the quantum circuit for factoring it is quite large. 
-Instead, we will factor 3 into 3 and 1 to demonstrate the algorithm.
+As an example, let's consider the number 3. Whilst 15 is often used as an example for factoring, 
+the quantum circuit for factoring it is harder to explain. 
+Instead, we will factor 3 into 1 and 3 to demonstrate the algorithm.
 
-So, going through the steps of the algorithm:
+So, going through the steps:
 
 1. We choose a random integer :math:`a` such that :math:`1 < a < 3`. The only choice is :math:`a = 2`.
 2. We compute the GCD of :math:`2` and :math:`3`, which is 1, so we proceed to the next step.

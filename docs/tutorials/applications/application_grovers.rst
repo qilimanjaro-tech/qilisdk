@@ -4,22 +4,26 @@ Quantum Search with Grover's Algorithm
 In this tutorial, we will learn about Grover's algorithm, which is a quantum algorithm 
 for searching an unsorted database with quadratic speedup compared to classical algorithms.
 
+.. note:: If you haven't already, it might be useful to check out these tutorials first:
+    :doc:`Quantum Basics </tutorials/introductions/intro_quantum>` and
+    :doc:`Quantum Circuits </tutorials/introductions/intro_circuits>`.
+
 The Problem
 ----------------------
 
 Say you have a list of N items, and you want to find a specific item that satisfies a certain condition.
 For example, you might have a list of phone numbers and want to find the one that belongs to a specific person.
 
-This is the problem of searching an unsorted database. Classicially this would mean you have some
-sort of array and you want to interate through it. The quantum version of this problem is to 
+This is the problem of searching an unsorted database. Classically this would mean you have some
+array and you want to iterate through it. The quantum version of this problem is to
 find a specific state in a superposition of states that satisfies a certain condition.
 
 For instance, we might have the state:
 
-:math:`|\psi\rangle = \frac{1}{\sqrt{N}} \sum_{x=0}^{N-1} |x\rangle`
+:math:`|\psi\rangle = \frac{1}{\sqrt{N}} \sum_{i=0}^{N-1} |i\rangle`
 
-and we want to "find" the state :math:`|x_0\rangle` such that :math:`f(x_0) = 1` for some function :math:`f`.
-We therefore want to do some operation to increase the likelyhood of us measuring :math:`|x_0\rangle` when 
+and we want to "find" the state :math:`|x\rangle` such that :math:`f(x) = 1` for some function :math:`f`.
+We therefore want to do some operation to increase the likelihood of us measuring :math:`|x\rangle` when 
 we measure our state.
 
 The Solution
@@ -32,12 +36,12 @@ It was invented by Lov Grover in 1996 and is one of the most well-known quantum 
 The algorithm is formed of two parts: the **oracle** and the **diffusion operator**. 
 
 The **oracle** is a quantum operation that marks the desired state by flipping its phase, in this
-case corresponding to the function :math:`f` that we want to evaluate. It can be represented as a unitary operator :math:`O` such that:
+case corresponding to the function :math:`f` that we want to evaluate. It can be represented as an operator :math:`O` such that:
 
 :math:`O |x\rangle = (-1)^{f(x)} |x\rangle`
 
 The **diffusion operator** is a quantum operation that amplifies the amplitude of the marked state, 
-increasing the probability of measuring it. It can be represented as a unitary operator :math:`D` such that:
+increasing the probability of measuring it. It can be represented as an operator :math:`D` such that:
 
 :math:`D = 2|\psi\rangle\langle\psi| - I`
 
@@ -94,7 +98,7 @@ Our initial state is going to be the equal superposition state, which can be pre
     initial_state.add(H(1))
 
 Now we can combine these operations to implement Grover's algorithm. 
-We only need one repeat because we have 4 states and :math:`\text{floor}(\frac{\pi}{4} \sqrt{4}) = 1`.
+We only need one repeat because we have 4 elements in our state and :math:`\text{floor}(\frac{\pi}{4} \sqrt{4}) = 1`.
 
 .. code-block:: python
 

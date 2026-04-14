@@ -4,7 +4,7 @@ Optimization with Quantum Annealing
 In this tutorial, we will explore how to use Quantum Annealing to solve a simple
 optimization problem using QiliSDK.
 
-.. note:: If you haven't had a look at these, it might be useful to check them out first:
+.. note:: If you haven't already, it might be useful to check out these tutorials first:
     :doc:`Quantum Basics </tutorials/introductions/intro_quantum>`, 
     :doc:`Quantum Circuits </tutorials/introductions/intro_circuits>` and
     :doc:`Quantum Annealing </tutorials/introductions/intro_annealing>`.

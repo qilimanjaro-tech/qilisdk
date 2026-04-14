@@ -4,7 +4,7 @@ Optimization with QAOA
 In this tutorial, we will explore how to use the Quantum Approximate Optimization Algorithm (QAOA) to solve a simple
 optimization problem using QiliSDK.
 
-.. note:: If you haven't had a look at these, it might be useful to check them out first:
+.. note:: If you haven't already, it might be useful to check out these tutorials first:
     :doc:`Quantum Basics </tutorials/introductions/intro_quantum>`, 
     :doc:`Quantum Circuits </tutorials/introductions/intro_circuits>` and
     :doc:`Quantum Annealing </tutorials/introductions/intro_annealing>`.
@@ -47,6 +47,8 @@ we need to transform them into unitaries, which is determined by the parameters 
 .. math:: 
 
     U_{prob}(\gamma) = e^{-i \gamma H_{prob}}
+
+.. math:: 
 
     U_{mix}(\beta) = e^{-i \beta H_{mix}}
 

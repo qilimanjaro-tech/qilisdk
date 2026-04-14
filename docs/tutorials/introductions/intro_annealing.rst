@@ -4,8 +4,6 @@ Quantum Annealing
 In this tutorial, we will cover the basics of quantum annealing, and then show
 how to use QiliSDK to implement a simple quantum annealing algorithm.
 
-.. include:: ../../shared/install_note.rst
-
 What is Quantum Annealing?
 -----------------------------
 
@@ -32,7 +30,9 @@ In quantum annealing, we typically have two Hamiltonians: the initial Hamiltonia
 which is easy to prepare and manipulate, and the final Hamiltonian, which encodes the solution to our problem.
 These are combined into a single time-dependent Hamiltonian that evolves from the initial to the final Hamiltonian over time:
 
-:math:`H(t) = c_i(t) H_{initial} + c_f(t) H_{final}`
+.. math::
+
+    H(t) = c_i(t) H_{initial} + c_f(t) H_{final}
 
 where :math:`c_i(t)` and :math:`c_f(t)` are time-dependent coefficients that control how the two Hamiltonians mix over time.
 
@@ -40,13 +40,17 @@ These Hamiltonians are typically written in terms of the Pauli operators: I, X, 
 which are a set of matrices operating on qubits that form a basis for all possible quantum operations.
 So, for example, a simple two-qubit Hamiltonian might look like:
 
-:math:`H = X \otimes X - Z \otimes I`
+.. math::
+
+    H = X \otimes X - Z \otimes I
 
 where the first term represents an interaction between the two qubits, and the second term represents a local field on the first qubit.
 
 For simplicity, the tensor product symbol (⊗) is often omitted, and we can write the above Hamiltonian as:
 
-:math:`H = X(0)X(1) - Z(0)`
+.. math::
+    
+    H = X(0)X(1) - Z(0)
 
 What Do We Do Once We Have a Hamiltonian?
 ---------------------------------------------------------------
@@ -59,7 +63,9 @@ hopefully end up in the ground state of the final Hamiltonian, which encodes the
 
 Say our ground state is :math:`|ψ_0⟩`, we can represent the state of our system at the next time :math:`dt` as:
 
-:math:`|ψ(dt)⟩ = e^{-iH(dt)dt} |ψ_0⟩`
+.. math:: 
+
+    |ψ(dt)⟩ = e^{-iH(dt)dt} |ψ_0⟩
 
 This process is repeated until we reach the end of our annealing schedule. 
 Assuming the :math:`dt` is small enough, the final state of our system at the 
@@ -69,14 +75,16 @@ final Hamiltonian, which encodes the solution to our problem.
 How Do We Choose Our Hamiltonians?
 ---------------------------------------------------------------
 
-Determiniing what our initial and final Hamiltonians should be for a given optimization problem
+Determining what our initial and final Hamiltonians should be for a given optimization problem
 is a non-trivial task, and there are many different techniques for doing this.
 One common approach is to first represent our optimization problem as a quadratic unconstrained binary optimization (QUBO) problem,
 and then to convert this QUBO problem into our final Hamiltonian. 
 
 A common starting Hamiltonian is the transverse field Hamiltonian, which is given by:
 
-:math:`H_{initial} = - \sum_i X(i)`
+.. math::
+
+    H_{initial} = - \sum_i X(i)
 
 This Hamiltonian has a simple ground state that is easy to prepare, 
 which makes it a good choice for the initial Hamiltonian in quantum annealing.
@@ -99,6 +107,8 @@ The simplest choice is a linear schedule, the coefficients of which look as foll
 
 How Can We Simulate Annealing With QiliSDK?
 -------------------------------------------------------
+
+.. include:: ../../shared/install_note.rst
 
 In order to test out our quantum annealing algorithm, we can use the QiliSDK to simulate the annealing process on a classical computer.
 To do this, we first create our initial and final Hamiltonians using the :doc:`Hamiltonian </modules/analog/analog_hamiltonian>` class,
@@ -162,7 +172,7 @@ which in this case are the terms in our final Hamiltonian:
 These expectation values are close to the values we would expect for the ground state of our final Hamiltonian,
 since to minimize the energy of the final Hamiltonian we want to minimize the values of :math:`Z(0)` and :math:`Z(1)`,
 while maximizing the value of :math:`Z(0)Z(1)`. If we increase the total time and decrease the time step, 
-we can get these values even closer 1.0 and -1.0, at the cost of increasing the runtime of our simulation.
+we can get these values even closer to 1.0 and -1.0, at the cost of increasing the runtime of our simulation.
 
 Further Reading
 --------------------
