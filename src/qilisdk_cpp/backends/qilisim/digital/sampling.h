@@ -23,8 +23,8 @@
 #include "../representations/matrix_free_operator.h"
 
 // Helper functions for sampling.cpp
-void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrix& initial_state, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, const QiliSimConfig& config);
+void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrix& initial_state, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, std::vector<DenseMatrix>& intermediate_states, const QiliSimConfig& config, std::map<int, std::vector<bool>> qubits_to_measure = {});
 
-void sampling_matrix_free(const std::vector<Gate>& gates,  int n_qubits, const SparseMatrix& initial_state, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, const QiliSimConfig& config);
+void sampling_matrix_free(const std::vector<Gate>& gates,  int n_qubits, const SparseMatrix& initial_state, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, std::vector<DenseMatrix>& intermediate_states, const QiliSimConfig& config, std::map<int, std::vector<bool>> qubits_to_measure = {});
 
 // GCOV_EXCL_BR_STOP

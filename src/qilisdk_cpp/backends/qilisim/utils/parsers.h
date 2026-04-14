@@ -31,7 +31,7 @@ std::vector<std::vector<double>> parse_coefficients(const py::object& schedule, 
 std::vector<double> parse_time_steps(const py::object& steps);
 SparseMatrix parse_initial_state(const py::object& initial_state, double atol);
 std::vector<Gate> parse_gates(const py::object& circuit, double atol, const py::object& noise_model);
-std::vector<bool> parse_measurements(const py::object& circuit);
+std::map<int, std::vector<bool>> parse_measurements(const py::object& circuit);
 QiliSimConfig parse_solver_params(const py::dict& solver_params);
 
 // GCOV_EXCL_BR_STOP

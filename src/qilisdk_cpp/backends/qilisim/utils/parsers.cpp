@@ -580,7 +580,7 @@ std::vector<Gate> parse_gates(const py::object& circuit, double atol, const py::
     return gates;
 }
 
-std::vector<bool> parse_measurements(const py::object& circuit) {
+std::map<int, std::vector<bool>> parse_measurements(const py::object& circuit) {
     /*
     Extract measurement qubit information from a circuit object.
 
@@ -588,33 +588,67 @@ std::vector<bool> parse_measurements(const py::object& circuit) {
         circuit (py::object): The circuit object.
 
     Returns:
-        std::vector<bool>: A vector indicating which qubits are measured.
+        std::map<int, std::vector<bool>>: A map from gate index to a vector indicating which qubits are measured.
     */
+
+    // This is a map from the index at which the measurement should occur to the list of qubits to measure
+    std::map<int, std::vector<bool>> gate_measurements;
+
+    // Get info from the object
     int n_qubits = circuit.attr("nqubits").cast<int>();
-    std::vector<bool> qubits_to_measure(n_qubits, false);
     py::list py_gates = circuit.attr("gates");
+    int n_gates = py_gates.size();
+
+    // For each gate
+    std::vector<bool> measurement_used(n_gates, false);
     bool any_measurements = false;
+    int gate_index = 0;
     for (auto py_gate : py_gates) {
+
         // Get the name
         std::string gate_type_str = py_gate.attr("name").cast<std::string>();
 
-        // If it's a measurement, mark the qubits
-        if (gate_type_str == "M") {
-            py::list py_targets = py_gate.attr("target_qubits");
-            for (auto py_target : py_targets) {
-                int target = py_target.cast<int>();
-                qubits_to_measure[target] = true;
-                any_measurements = true;
+        // If it's a measurement
+        if (gate_type_str == "M" && !measurement_used[gate_index]) {
+            any_measurements = true;
+            std::vector<bool> qubits_to_measure(n_qubits, false);
+
+            // For each qubit, look ahead to collect all measurements
+            for (int q = 0; q < n_qubits; ++q) {
+                for (int i = gate_index; i < int(py_gates.size()); ++i) {
+                    py::object future_gate = py_gates[i];
+                    std::string future_gate_type_str = future_gate.attr("name").cast<std::string>();
+                    std::vector<int> future_targets;
+                    for (auto py_target : future_gate.attr("target_qubits")) {
+                        future_targets.push_back(py_target.cast<int>());
+                    }
+                    if (std::find(future_targets.begin(), future_targets.end(), q) != future_targets.end()) {
+                        if (future_gate_type_str == "M") {
+                            qubits_to_measure[q] = true;
+                            measurement_used[i] = true;
+                        } else if (std::find(future_targets.begin(), future_targets.end(), q) != future_targets.end()) {
+                            break;
+                        }
+                    }
+                }
             }
+
+            // Add this measurement to the list
+            gate_measurements.emplace(gate_index, qubits_to_measure);
+
         }
+
+        gate_index++;
+
     }
 
     // If we found no measurements, measure all
     if (!any_measurements) {
-        qubits_to_measure = std::vector<bool>(n_qubits, true);
+        std::vector<bool> qubits_to_measure(n_qubits, true);
+        gate_measurements.emplace(n_gates, qubits_to_measure);
     }
 
-    return qubits_to_measure;
+    return gate_measurements;
 }
 
 QiliSimConfig parse_solver_params(const py::dict& solver_params) {

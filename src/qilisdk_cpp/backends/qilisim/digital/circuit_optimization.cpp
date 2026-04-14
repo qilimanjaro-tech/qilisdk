@@ -45,12 +45,12 @@ std::vector<Gate> combine_single_qubit_gates(const std::vector<Gate>& gates) {
             for (size_t j = i + 1; j < gates.size(); ++j) {
                 const auto& next_gate = gates[j];
                 std::vector<int> next_gate_qubits = next_gate.get_qubits();
-                if (!already_used[j] && next_gate_qubits.size() == 1 && next_gate_qubits[0] == qubit) {
+                if (!already_used[j] && next_gate_qubits.size() == 1 && next_gate_qubits[0] == qubit && next_gate.get_name() != "M") {
                     gates_to_combine.push_back(next_gate);
                     already_used[j] = true;
 
                     // Stop if there's a gate that acts on the same qubit but we can't combine
-                } else if (next_gate_qubits.size() > 1 && std::find(next_gate_qubits.begin(), next_gate_qubits.end(), qubit) != next_gate_qubits.end()) {
+                } else if (std::find(next_gate_qubits.begin(), next_gate_qubits.end(), qubit) != next_gate_qubits.end()) {
                     break;
                 }
             }

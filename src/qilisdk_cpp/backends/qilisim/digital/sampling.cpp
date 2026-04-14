@@ -15,6 +15,7 @@
 #include <iomanip>
 #include <random>
 #include <sstream>
+#include <iostream>
 
 #include "../../../libs/pybind.h"
 #include "../digital/circuit_optimizations.h"
@@ -30,7 +31,7 @@
 // GCOV_EXCL_BR_START
 
 
-void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrix& initial_state, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, const QiliSimConfig& config) {
+void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrix& initial_state, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, std::vector<DenseMatrix>& intermediate_states, const QiliSimConfig& config, std::map<int, std::vector<bool>> qubits_to_measure) {
     /*
     Execute a sampling functional using a simple statevector simulator.
 
@@ -41,7 +42,8 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrix& 
         initial_state (SparseMatrix&): The initial state of the system (statevector or density matrix).
         noise_model_cpp (NoiseModelCpp&): The noise model to apply during simulation.
         state (DenseMatrix&): The final state after applying all gates (statevector or density matrix).
-        counts (std::map<std::string, int>&): A map to store the measurement counts.
+        intermediate_states (std::vector<DenseMatrix>&): A vector to store the intermediate states after each measurement.
+        qubits_to_measure (std::map<int, std::vector<bool>>&): A map indicating which qubits to measure after each gate.
         config (QiliSimConfig): The simulation configuration.
 
     Returns:
@@ -181,6 +183,11 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrix& 
             normalize_state(state, is_statevector, monte_carlo);
         }
 
+        // Add intermediate state if needed
+        if (qubits_to_measure.find(gate_count) != qubits_to_measure.end()) {
+            intermediate_states.push_back(state);
+        }
+
         // Clear the gate from the cache if this was its last use
         if (gate_first_last_use[gate_id].second <= gate_count) {
             gate_cache.erase(gate_id);
@@ -199,7 +206,7 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrix& 
     }
 }
 
-void sampling_matrix_free(const std::vector<Gate>& gates,  int n_qubits, const SparseMatrix& initial_state, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, const QiliSimConfig& config) {
+void sampling_matrix_free(const std::vector<Gate>& gates,  int n_qubits, const SparseMatrix& initial_state, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, std::vector<DenseMatrix>& intermediate_states, const QiliSimConfig& config, std::map<int, std::vector<bool>> qubits_to_measure) {
     /*
     Execute a sampling functional using a matrix-free simulator.
 
@@ -210,7 +217,8 @@ void sampling_matrix_free(const std::vector<Gate>& gates,  int n_qubits, const S
         initial_state (SparseMatrix&): The initial state of the system (statevector or density matrix).
         noise_model_cpp (NoiseModelCpp&): The noise model to apply during simulation.
         state (DenseMatrix&): The final state after applying all gates (statevector or density matrix).
-        counts (std::map<std::string, int>&): A map to store the measurement counts.
+        intermediate_states (std::vector<DenseMatrix>&): A vector to store intermediate states after each set of measurements.
+        qubits_to_measure (std::map<int, std::vector<bool>>&): A map indicating which qubits to measure after each gate.
         config (QiliSimConfig): The simulation configuration.
 
     Returns:
@@ -265,6 +273,7 @@ void sampling_matrix_free(const std::vector<Gate>& gates,  int n_qubits, const S
     }
 
     // Apply each gate
+    int gate_ind = 0;
     for (const auto& gate : optimized_gates) {
         // Convert gate to a stabilizer operator
         MatrixFreeOperator op(gate);
@@ -298,6 +307,14 @@ void sampling_matrix_free(const std::vector<Gate>& gates,  int n_qubits, const S
         if (config.get_normalize_after_gate()) {
             normalize_state(state, is_statevector, monte_carlo);
         }
+
+        // Store intermediate states if needed
+        std::cout << "Checking gate index " << gate_ind << " for measurements. Gates total: " << optimized_gates.size() << std::endl;
+        // if (qubits_to_measure.find(gate_ind) != qubits_to_measure.end()) {
+        //     intermediate_states.push_back(state);
+        // }
+        gate_ind++;
+
     }
 
     // If we have statevector/s but we should return a density matrix
