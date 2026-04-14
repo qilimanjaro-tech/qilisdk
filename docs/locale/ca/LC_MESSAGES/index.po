@@ -1,0 +1,70 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025, Qilimanjaro Quantum Tech
+# This file is distributed under the same license as the QiliSDK package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: QiliSDK \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-14 12:09+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ca\n"
+"Language-Team: ca <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../index.rst:10 ../../index.rst:32
+msgid "Getting Started"
+msgstr ""
+
+#: ../../index.rst:25 ../../index.rst:41
+msgid "Tutorials"
+msgstr ""
+
+#: ../../index.rst:18 ../../index.rst:49
+msgid "Modules"
+msgstr ""
+
+#: ../../index.rst:64
+msgid "API Reference"
+msgstr ""
+
+#: ../../index.rst:2
+msgid "QiliSDK"
+msgstr ""
+
+#: ../../index.rst:6
+msgid ""
+"Welcome to **QiliSDK**, a unified Python framework for developing, "
+"simulating, and running both digital and analog quantum algorithms across"
+" a variety of backends (QPU, CPU, GPU) and Qilimanjaro's SpeQtrum. Its "
+"modular design makes it easy to prototype circuits, build Hamiltonians, "
+"design variational workflows, and deploy them on local or remote quantum "
+"simulators and hardware."
+msgstr ""
+
+#: ../../index.rst:15
+msgid ""
+"New to QiliSDK? Here you will find a description of its main concepts, "
+"together with some tutorials on how to install and start using QiliSDK!"
+msgstr ""
+
+#: ../../index.rst:23
+msgid ""
+"This section contains in-depth information about each key module of "
+"QiliSDK."
+msgstr ""
+
+#: ../../index.rst:30
+msgid ""
+"This section contains a series of tutorials that cover the basics of "
+"quantum computing and how to use QiliSDK to implement various quantum "
+"algorithms."
+msgstr ""
+

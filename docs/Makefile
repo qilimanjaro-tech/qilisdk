@@ -22,12 +22,12 @@ multiversion:
 
 # Run this to generate the files for translation
 gettext:
-	@$(SPHINXBUILD) -M gettext "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
-	LANGUAGE_FLAGS=""
+	@$(SPHINXBUILD) -M gettext "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) -D exclude_patterns="code/**" $(O)
+	LANGUAGE_FLAGS=""; \
 	for lang in $(LANGUAGES); do \
 		LANGUAGE_FLAGS="$$LANGUAGE_FLAGS -l $$lang"; \
-	done;
-	sphinx-intl update -p "$(BUILDDIR)/gettext" $(LANGUAGE_FLAGS)
+	done; \
+	sphinx-intl update -p "$(BUILDDIR)/gettext" $$LANGUAGE_FLAGS
 
 .PHONY: gettext
 

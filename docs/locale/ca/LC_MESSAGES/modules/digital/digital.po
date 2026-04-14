@@ -1,0 +1,585 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025, Qilimanjaro Quantum Tech
+# This file is distributed under the same license as the QiliSDK package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: QiliSDK \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-14 12:09+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ca\n"
+"Language-Team: ca <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../modules/digital/digital.rst:2
+msgid "Digital"
+msgstr ""
+
+#: ../../modules/digital/digital.rst:16
+msgid ""
+"The :mod:`~qilisdk.digital` module in the Qili SDK facilitates the "
+"construction and simulation of digital quantum systems. It is composed of"
+" the following primary components:"
+msgstr ""
+
+#: ../../modules/digital/digital.rst:18
+msgid ""
+":mod:`~qilisdk.digital.gates`: A collection of quantum gates and tools "
+"for gate construction."
+msgstr ""
+
+#: ../../modules/digital/digital.rst:19
+msgid ""
+":class:`~qilisdk.digital.circuit.Circuit`: A class to create and manage "
+"digital quantum circuits."
+msgstr ""
+
+#: ../../modules/digital/digital.rst:20
+msgid ""
+":mod:`~qilisdk.digital.ansatz`: Predefined circuits that can serve as "
+"Ansätze."
+msgstr ""
+
+#: ../../modules/digital/digital.rst:23
+msgid "Gates"
+msgstr ""
+
+#: ../../modules/digital/digital.rst:25
+msgid ""
+"This submodule provides the necessary components to define and manipulate"
+" quantum gates for use in digital quantum circuits."
+msgstr ""
+
+#: ../../modules/digital/digital.rst:28
+msgid "Simple Gates"
+msgstr ""
+
+#: ../../modules/digital/digital.rst:30
+msgid "Use these constructors to apply standard single- and two-qubit operations:"
+msgstr ""
+
+#: ../../modules/digital/digital.rst:32
+msgid ""
+":class:`X(qubit: int)<qilisdk.digital.gates.X>` Pauli X (bit-flip) on the"
+" specified qubit."
+msgstr ""
+
+#: ../../modules/digital/digital.rst:34
+msgid ""
+":class:`Y(qubit: int)<qilisdk.digital.gates.Y>` Pauli Y (bit-and-phase-"
+"flip)."
+msgstr ""
+
+#: ../../modules/digital/digital.rst:36
+msgid ":class:`Z(qubit: int)<qilisdk.digital.gates.Z>` Pauli Z (phase-flip)."
+msgstr ""
+
+#: ../../modules/digital/digital.rst:38
+msgid ""
+":class:`H(qubit: int)<qilisdk.digital.gates.H>` Hadamard: creates "
+"superposition."
+msgstr ""
+
+#: ../../modules/digital/digital.rst:40
+msgid ""
+":class:`I(qubit: int)<qilisdk.digital.gates.I>` Identity gate: leaves the"
+" qubit unchanged."
+msgstr ""
+
+#: ../../modules/digital/digital.rst:42
+msgid ""
+":class:`S(qubit: int)<qilisdk.digital.gates.S>` Phase gate (π/2 rotation "
+"about Z)."
+msgstr ""
+
+#: ../../modules/digital/digital.rst:44
+msgid ""
+":class:`T(qubit: int)<qilisdk.digital.gates.T>` T gate (π/4 rotation "
+"about Z)."
+msgstr ""
+
+#: ../../modules/digital/digital.rst:46
+msgid ""
+":class:`RX(qubit: int, theta: float | Parameter | "
+"Term)<qilisdk.digital.gates.RX>` Rotation by angle `theta` around X."
+msgstr ""
+
+#: ../../modules/digital/digital.rst:48
+msgid ""
+":class:`RY(qubit: int, theta: float | Parameter | "
+"Term)<qilisdk.digital.gates.RY>` Rotation by angle `theta` around Y."
+msgstr ""
+
+#: ../../modules/digital/digital.rst:50
+msgid ""
+":class:`RZ(qubit: int, phi: float | Parameter | "
+"Term)<qilisdk.digital.gates.RZ>` Rotation by angle `phi` around Z."
+msgstr ""
+
+#: ../../modules/digital/digital.rst:52
+msgid ""
+":class:`U1(qubit: int, *, phi: float | Parameter | "
+"Term)<qilisdk.digital.gates.U1>` Phase shift equivalent to RZ plus global"
+" phase."
+msgstr ""
+
+#: ../../modules/digital/digital.rst:54
+msgid ""
+":class:`U2(qubit: int, *, phi: float | Parameter | Term, gamma: float | "
+"Parameter | Term)<qilisdk.digital.gates.U2>` π/2 Y-rotation sandwiched by"
+" Z-rotations."
+msgstr ""
+
+#: ../../modules/digital/digital.rst:56
+msgid ""
+":class:`U3(qubit: int, *, theta: float | Parameter | Term, phi: float | "
+"Parameter | Term, gamma: float | Parameter | "
+"Term)<qilisdk.digital.gates.U3>` General single-qubit unitary: RZ-RY-RZ "
+"decomposition."
+msgstr ""
+
+#: ../../modules/digital/digital.rst:58
+msgid ""
+":class:`SWAP(a: int, b: int)<qilisdk.digital.gates.SWAP>` Exchanges the "
+"states of qubits ``a`` and ``b``."
+msgstr ""
+
+#: ../../modules/digital/digital.rst:60
+msgid ""
+":class:`CNOT(control: int, target: int)<qilisdk.digital.gates.CNOT>` "
+"Controlled-X: flips target if control is 1."
+msgstr ""
+
+#: ../../modules/digital/digital.rst:62
+msgid ""
+":class:`CZ(control: int, target: int)<qilisdk.digital.gates.CZ>` "
+"Controlled-Z: applies Z on target if control is 1."
+msgstr ""
+
+#: ../../modules/digital/digital.rst:64
+msgid ""
+":class:`M(*qubits: int)<qilisdk.digital.gates.M>` Measures the listed "
+"qubits in the computational basis."
+msgstr ""
+
+#: ../../modules/digital/digital.rst:68
+msgid "Controlled Gates"
+msgstr ""
+
+#: ../../modules/digital/digital.rst:70
+msgid ""
+"Any basic gate can be turned into a controlled gate using the "
+":class:`~qilisdk.digital.gates.Controlled` class:"
+msgstr ""
+
+#: ../../modules/digital/digital.rst:79
+msgid ""
+"Or alternatively, you can use the "
+":meth:`.controlled()<qilisdk.digital.gates.BasicGate.controlled>` method "
+"on any gate instance:"
+msgstr ""
+
+#: ../../modules/digital/digital.rst:90
+msgid "Adjoint Gates"
+msgstr ""
+
+#: ../../modules/digital/digital.rst:92
+msgid ""
+"You can create the Hermitian conjugate (dagger) of a gate either using "
+"the :class:`~qilisdk.digital.gates.Adjoint` class or using the "
+":meth:`.adjoint()<qilisdk.digital.gates.BasicGate.adjoint>` method on any"
+" gate instance:"
+msgstr ""
+
+#: ../../modules/digital/digital.rst:103
+msgid "Exponential Gates"
+msgstr ""
+
+#: ../../modules/digital/digital.rst:105
+msgid ""
+"To apply a gate as an exponential operator, use either the "
+":class:`~qilisdk.digital.gates.Exponential` class or the "
+":meth:`.exponential()<qilisdk.digital.gates.BasicGate.exponential>` "
+"method on any gate instance:"
+msgstr ""
+
+#: ../../modules/digital/digital.rst:116
+msgid "Circuits"
+msgstr ""
+
+#: ../../modules/digital/digital.rst:118
+msgid ""
+"Quantum circuits can be built using the "
+":class:`~qilisdk.digital.circuit.Circuit` class. You can sequentially add"
+" gates to define the circuit:"
+msgstr ""
+
+#: ../../modules/digital/digital.rst:120
+msgid "**Initialization**"
+msgstr ""
+
+#: ../../modules/digital/digital.rst:129
+msgid "**Adding Gates**"
+msgstr ""
+
+#: ../../modules/digital/digital.rst:139
+msgid "You can also add or insert multiple gates at once:"
+msgstr ""
+
+#: ../../modules/digital/digital.rst:150
+msgid ""
+"Circuits can be appended or prepended, and the ``+`` operator mirrors "
+"those behaviors:"
+msgstr ""
+
+#: ../../modules/digital/digital.rst:167
+msgid "**Generating Random Circuits**"
+msgstr ""
+
+#: ../../modules/digital/digital.rst:169
+msgid ""
+"You can also initialize a random circuit with a specified number of gates"
+" using the :meth:`~qilisdk.digital.circuit.Circuit.random` method:"
+msgstr ""
+
+#: ../../modules/digital/digital.rst:183
+msgid "Parameterized Circuits"
+msgstr ""
+
+#: ../../modules/digital/digital.rst:185
+msgid ""
+"Circuits can include parameterized gates. Adding them is similar to "
+"regular gates:"
+msgstr ""
+
+#: ../../modules/digital/digital.rst:195
+msgid "You can retrieve the current parameter using:"
+msgstr ""
+
+#: ../../modules/digital/digital.rst:202 ../../modules/digital/digital.rst:216
+msgid "**Output:**"
+msgstr ""
+
+#: ../../modules/digital/digital.rst:209
+msgid "You can also retrieve a list containing only the current parameter values:"
+msgstr ""
+
+#: ../../modules/digital/digital.rst:223
+msgid "To update parameters by their keys:"
+msgstr ""
+
+#: ../../modules/digital/digital.rst:229
+msgid "To update all parameters with new values:"
+msgstr ""
+
+#: ../../modules/digital/digital.rst:237
+msgid ""
+"The order of parameters in the list passed to ``set_parameter_values`` "
+"must match the order in which the gates were added to the circuit."
+msgstr ""
+
+#: ../../modules/digital/digital.rst:240
+msgid "Visualization"
+msgstr ""
+
+#: ../../modules/digital/digital.rst:242
+msgid ""
+"Use :meth:`~qilisdk.digital.circuit.Circuit.draw` to render a circuit "
+"with Matplotlib. By default, the renderer applies the library's built-in "
+"styling (including the bundled default font if available). You can "
+"**bypass all defaults** by passing a custom "
+":class:`~qilisdk.utils.visualization.style.CircuitStyle`, which confines "
+"styling to the specific call without modifying global Matplotlib "
+"settings."
+msgstr ""
+
+#: ../../modules/digital/digital.rst:259
+msgid "**Output**"
+msgstr ""
+
+#: ../../modules/digital/digital.rst:262
+msgid "Example digital circuit rendered with Circuit.draw"
+msgstr ""
+
+#: ../../modules/digital/digital.rst:266
+msgid "Example circuit produced by ``circuit.draw()``."
+msgstr ""
+
+#: ../../modules/digital/digital.rst:269
+msgid "Saving to a file"
+msgstr ""
+
+#: ../../modules/digital/digital.rst:277
+msgid ""
+"Custom styling with "
+":class:`~qilisdk.utils.visualization.style.CircuitStyle`"
+msgstr ""
+
+#: ../../modules/digital/digital.rst:279
+msgid ""
+"Create a style object to control theme, fonts, spacing, DPI, labels, and "
+"more. Passing this object to "
+":meth:`~qilisdk.digital.circuit.Circuit.draw` overrides the library "
+"defaults for this call. You can also change if the order of the draw "
+"follows the order they are added in or if it compacts the layers as much "
+"as possible by changing the parameter **layout** to *\"normal\"* "
+"(default) or *\"compact\"* respectively."
+msgstr ""
+
+#: ../../modules/digital/digital.rst:323
+msgid ""
+"``CircuitStyle`` fields map directly to the renderer's layout and font "
+"configuration. In particular, you can switch fonts in two ways: (1) "
+"provide a specific font file via ``fontfname=\"/path/to/MyFont.ttf\"``; "
+"or (2) set ``fontfname=None`` and choose a family list with "
+"``fontfamily=[...]`` to use system-resolved fonts. Both approaches only "
+"affect the current draw call."
+msgstr ""
+
+#: ../../modules/digital/digital.rst:329
+msgid "Ansatz"
+msgstr ""
+
+#: ../../modules/digital/digital.rst:331
+msgid ""
+"The :mod:`~qilisdk.digital.ansatz` submodule provides ready-to-use "
+"circuit templates (Ansätze) and a lightweight framework for writing your "
+"own. To author a custom template:"
+msgstr ""
+
+#: ../../modules/digital/digital.rst:333
+msgid ""
+"Subclass :class:`~qilisdk.digital.ansatz.Ansatz` (which already inherits "
+"from :class:`~qilisdk.digital.circuit.Circuit`)."
+msgstr ""
+
+#: ../../modules/digital/digital.rst:334
+msgid ""
+"Call ``super().__init__(nqubits=...)`` inside ``__init__`` to set the "
+"circuit width."
+msgstr ""
+
+#: ../../modules/digital/digital.rst:335
+msgid ""
+"Add gates in any order with ``self.add(gate)``, loops are fine, and you "
+"can keep references to any :class:`~qilisdk.core.variables.Parameter` "
+"objects you want to expose later."
+msgstr ""
+
+#: ../../modules/digital/digital.rst:337 ../../modules/digital/digital.rst:387
+#: ../../modules/digital/digital.rst:441 ../../modules/digital/digital.rst:492
+msgid "**Example**"
+msgstr ""
+
+#: ../../modules/digital/digital.rst:362
+msgid ""
+"Once defined, the subclass behaves exactly like any other circuit: you "
+"can draw it, bind parameters, or hand it off to backends."
+msgstr ""
+
+#: ../../modules/digital/digital.rst:364
+msgid "For a prebuilt option, consider:"
+msgstr ""
+
+#: ../../modules/digital/digital.rst:367
+msgid "HardwareEfficientAnsatz"
+msgstr ""
+
+#: ../../modules/digital/digital.rst:369
+msgid ""
+":class:`~qilisdk.digital.ansatz.HardwareEfficientAnsatz` is a hardware-"
+"efficient ansatz tailored to quantum device topologies. Configuration "
+"options:"
+msgstr ""
+
+#: ../../modules/digital/digital.rst:372
+msgid "**layers**: Number of repeating layers of gates."
+msgstr ""
+
+#: ../../modules/digital/digital.rst:373
+msgid "**connectivity**:"
+msgstr ""
+
+#: ../../modules/digital/digital.rst:375
+msgid "``circular``: Qubits form a ring."
+msgstr ""
+
+#: ../../modules/digital/digital.rst:376
+msgid "``linear``: Qubits are connected linearly."
+msgstr ""
+
+#: ../../modules/digital/digital.rst:377
+msgid "``full``: All-to-all connectivity."
+msgstr ""
+
+#: ../../modules/digital/digital.rst:378
+msgid "Or a list of tuples explicitly specifying the connectivity."
+msgstr ""
+
+#: ../../modules/digital/digital.rst:379
+msgid ""
+"**one_qubit_gate**: Choose the parameterized single-qubit gate (e.g., "
+":class:`~qilisdk.digital.gates.U1`, :class:`~qilisdk.digital.gates.U2`, "
+":class:`~qilisdk.digital.gates.U3`)."
+msgstr ""
+
+#: ../../modules/digital/digital.rst:380
+msgid ""
+"**two_qubit_gate**: Choose the two-qubit interaction type (e.g., "
+":class:`~qilisdk.digital.gates.CNOT`, "
+":class:`~qilisdk.digital.gates.CZ`)."
+msgstr ""
+
+#: ../../modules/digital/digital.rst:381
+msgid "**structure**:"
+msgstr ""
+
+#: ../../modules/digital/digital.rst:383
+msgid ""
+"``grouped``: Applies all single-qubit gates first, followed by all two-"
+"qubit gates."
+msgstr ""
+
+#: ../../modules/digital/digital.rst:384
+msgid "``interposed``: Interleaves single and two-qubit gates."
+msgstr ""
+
+#: ../../modules/digital/digital.rst:406
+msgid ""
+"This ansatz can then be used as a circuit. For example, we can execute "
+"this ansatz using QuTiP backend (need to be installed separately):"
+msgstr ""
+
+#: ../../modules/digital/digital.rst:420
+msgid "QAOA"
+msgstr ""
+
+#: ../../modules/digital/digital.rst:422
+msgid ""
+":class:`~qilisdk.digital.ansatz.QAOA` is an ansatz applying the "
+"alternating time evolution of a problem Hamiltonian and a mixer "
+"Hamiltonian [1]_. By initializing the circuit as the ground state of the "
+"mixer Hamiltonian (often simply the uniform superposition) and then "
+"applying the alternating evolution scaled by parameters :math:`\\gamma_i`"
+" and :math:`\\alpha_i`, the idea is that at a certain set of parameters "
+"the ansatz should approximate the evolution from the ground state of the "
+"mixer Hamiltonian to the ground state of the problem Hamiltonian, as per "
+"the quantum adiabatic theorem. By treating this parameterized circuit as "
+"an ansatz for a variational quantum algorithm, we can optimize to try to "
+"minimize the expectation value of the problem Hamiltonian and thus solve "
+"the encoded optimization problem."
+msgstr ""
+
+#: ../../modules/digital/digital.rst:430
+msgid ""
+"Farhi, Edward, Jeffrey Goldstone, and Sam Gutmann. \"A quantum "
+"approximate optimization algorithm.\" arXiv preprint `arXiv:1411.4028 "
+"<https://arxiv.org/abs/1411.4028>`_ (2014)."
+msgstr ""
+
+#: ../../modules/digital/digital.rst:432 ../../modules/digital/digital.rst:487
+msgid "Configuration options:"
+msgstr ""
+
+#: ../../modules/digital/digital.rst:434
+msgid ""
+"**problem_hamiltonian**: The problem Hamiltonian encoding the cost "
+"function."
+msgstr ""
+
+#: ../../modules/digital/digital.rst:435
+msgid ""
+"**layers**: Number of repeating layers of gates. Each layer applies two "
+"evolutions: one for the problem Hamiltonian and one for the mixer "
+"Hamiltonian."
+msgstr ""
+
+#: ../../modules/digital/digital.rst:436
+msgid "**mixer_hamiltonian**: The mixer Hamiltonian. Defaults to X mixer."
+msgstr ""
+
+#: ../../modules/digital/digital.rst:437
+msgid ""
+"**trotter_steps**: Number of Trotter steps to use for Hamiltonian "
+"approximation. Only used if the Hamiltonians contains non-commuting "
+"terms."
+msgstr ""
+
+#: ../../modules/digital/digital.rst:438
+msgid ""
+"**problem_params**: Initial parameter values for the problem Hamiltonian "
+"evolution angles. Defaults to 0.0 for all layers."
+msgstr ""
+
+#: ../../modules/digital/digital.rst:439
+msgid ""
+"**mixer_params**: Initial parameter values for the mixer Hamiltonian "
+"evolution angles. Defaults to 0.0 for all layers."
+msgstr ""
+
+#: ../../modules/digital/digital.rst:459
+msgid ""
+"As with the :class:`~qilisdk.digital.ansatz.HardwareEfficientAnsatz`, "
+"this ansatz can then be used as per any QiliSDK circuit. Or, to instead "
+"perform variational optimization over the parameters to minimize the "
+"expectation value of the problem Hamiltonian, one can set up a "
+":class:`~qilisdk.functionals.variational_program.VariationalProgram` (see"
+" :doc:`Functionals </modules/functionals/functionals>` for more details):"
+msgstr ""
+
+#: ../../modules/digital/digital.rst:481
+msgid "TrotterizedSchedule"
+msgstr ""
+
+#: ../../modules/digital/digital.rst:483
+msgid ""
+":class:`~qilisdk.digital.ansatz.TrotterizedSchedule` builds a digital "
+"circuit that follows a time-ordered schedule of Hamiltonians. Each "
+"schedule slice is evolved using a fixed number of Trotter steps, and you "
+"may optionally prepend a state-initialization circuit or list of gates."
+msgstr ""
+
+#: ../../modules/digital/digital.rst:489
+msgid ""
+"**schedule**: A :class:`~qilisdk.analog.schedule.Schedule` of "
+"Hamiltonians to trotterize."
+msgstr ""
+
+#: ../../modules/digital/digital.rst:490
+msgid ""
+"**trotter_steps**: Number of Trotter steps per schedule slice. Defaults "
+"to 1."
+msgstr ""
+
+#: ../../modules/digital/digital.rst:513
+msgid "Parameter Utilities"
+msgstr ""
+
+#: ../../modules/digital/digital.rst:515
+msgid ""
+"Circuits collect the symbolic parameters contributed by each gate. Beyond"
+" the quick examples above, you can query names, current values, and "
+"bounds, or update them selectively:"
+msgstr ""
+
+#: ../../modules/digital/digital.rst:540
+msgid ""
+"These helpers make it straightforward to plug the circuit into classical "
+"optimization loops while keeping parameter metadata synchronized."
+msgstr ""
+
+#: ../../modules/digital/digital.rst:545
+msgid ""
+"Parameterized gates and circuits expose parameter information through "
+"``get_parameter_names``, ``get_parameters``, ``get_parameter_values``, "
+"and the matching ``set_*`` methods."
+msgstr ""
+

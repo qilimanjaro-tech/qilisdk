@@ -1,0 +1,142 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025, Qilimanjaro Quantum Tech
+# This file is distributed under the same license as the QiliSDK package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: QiliSDK \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-14 12:09+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ca\n"
+"Language-Team: ca <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../getting_started/installation.rst:2
+msgid "Installation"
+msgstr ""
+
+#: ../../getting_started/installation.rst:4
+msgid ""
+"QiliSDK and its optional extras are distributed via PyPI. Use pip to "
+"install the core package, plus any extra modules you need."
+msgstr ""
+
+#: ../../getting_started/installation.rst:6
+msgid "**Base package**"
+msgstr ""
+
+#: ../../getting_started/installation.rst:12
+msgid "**Optional extras**"
+msgstr ""
+
+#: ../../getting_started/installation.rst:14
+msgid ""
+"**CUDA acceleration** (NVIDIA GPU support with "
+":mod:`~qilisdk.backends.cuda_backend.CudaBackend`):"
+msgstr ""
+
+#: ../../getting_started/installation.rst:21
+msgid ""
+"The CUDA backend requires a CUDA accelerated GPU to be available on your "
+"system and proper drivers to be installed. More information can be found "
+"on their official website: https://nvidia.github.io/cuda-"
+"quantum/latest/using/quick_start.html#install-cuda-q"
+msgstr ""
+
+#: ../../getting_started/installation.rst:24
+msgid ""
+"**Qutip CPU backend** (CPU simulation with "
+":mod:`~qilisdk.backends.qutip_backend.QutipBackend`):"
+msgstr ""
+
+#: ../../getting_started/installation.rst:30
+msgid "**SpeQtrum** (cloud submission via :class:`~qilisdk.speqtrum`):"
+msgstr ""
+
+#: ../../getting_started/installation.rst:36
+msgid "You can combine extras:"
+msgstr ""
+
+#: ../../getting_started/installation.rst:44
+msgid "QiliSDK requires a python version 3.11 or higher."
+msgstr ""
+
+#: ../../getting_started/installation.rst:46
+msgid "Minimum OS requiremnets:"
+msgstr ""
+
+#: ../../getting_started/installation.rst:47
+msgid "Linux: Ubuntu 22.04 or higher"
+msgstr ""
+
+#: ../../getting_started/installation.rst:48
+msgid "Windows: Windows 11 or higher"
+msgstr ""
+
+#: ../../getting_started/installation.rst:49
+msgid "MacOS: MacOS 14 or higher"
+msgstr ""
+
+#: ../../getting_started/installation.rst:52
+msgid "Compiling From Source"
+msgstr ""
+
+#: ../../getting_started/installation.rst:54
+msgid ""
+"The above method will install the pre-built binaries of QiliSDK of the "
+"most recent release. If you want to get the newest features (those that "
+"we're still working on), you can compile the library from source, but be "
+"aware that this is not recommended for most users, and we make no "
+"promises that the latest code will be stable."
+msgstr ""
+
+#: ../../getting_started/installation.rst:58
+msgid ""
+"Support for Windows is somewhat limited, so we recommend using WSL, which"
+" can be installed as per `this guide <https://learn.microsoft.com/en-"
+"us/windows/wsl/install>`__."
+msgstr ""
+
+#: ../../getting_started/installation.rst:61
+msgid ""
+"First, make sure you have a Python, pip, git, uv and build-essentials "
+"installed. For Ubuntu/Debian, you can run:"
+msgstr ""
+
+#: ../../getting_started/installation.rst:69
+msgid "Then, clone (i.e. download) and enter the repository:"
+msgstr ""
+
+#: ../../getting_started/installation.rst:76
+msgid "Create a new virtual environment using uv and activate it:"
+msgstr ""
+
+#: ../../getting_started/installation.rst:83
+msgid "To then install QiliSDK into this new environment, run:"
+msgstr ""
+
+#: ../../getting_started/installation.rst:89
+msgid ""
+"If you want to install with extras, you can run the following, adjusting "
+"as needed:"
+msgstr ""
+
+#: ../../getting_started/installation.rst:95
+msgid ""
+"You then have an environment with the latest version of QiliSDK "
+"installed. If you want to install other things to the environment you'll "
+"need to use pip with uv:"
+msgstr ""
+
+#: ../../getting_started/installation.rst:102
+msgid "And then to run a Python script within the environment, you can use:"
+msgstr ""
+

@@ -1,0 +1,148 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025, Qilimanjaro Quantum Tech
+# This file is distributed under the same license as the QiliSDK package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: QiliSDK \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-14 12:09+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: es\n"
+"Language-Team: es <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../shared/team_building.rst:1
+msgid ""
+"Say we have four people and we need to form two teams of two people each."
+" We have some information about how well each pair of people work "
+"together, and we want to form the teams such that the total "
+"\"compatibility\" of the teams is maximized. The information about who "
+"likes who is as follows:"
+msgstr ""
+
+#: ../../shared/team_building.rst:7 ../../shared/team_building.rst:9
+msgid "Alice"
+msgstr ""
+
+#: ../../shared/team_building.rst:7 ../../shared/team_building.rst:11
+msgid "Bob"
+msgstr ""
+
+#: ../../shared/team_building.rst:7 ../../shared/team_building.rst:13
+msgid "Carol"
+msgstr ""
+
+#: ../../shared/team_building.rst:7 ../../shared/team_building.rst:15
+msgid "Dave"
+msgstr ""
+
+#: ../../shared/team_building.rst:9 ../../shared/team_building.rst:11
+#: ../../shared/team_building.rst:13 ../../shared/team_building.rst:15
+msgid "N/A"
+msgstr ""
+
+#: ../../shared/team_building.rst:9 ../../shared/team_building.rst:11
+msgid "1"
+msgstr ""
+
+#: ../../shared/team_building.rst:9 ../../shared/team_building.rst:13
+msgid "3"
+msgstr ""
+
+#: ../../shared/team_building.rst:9 ../../shared/team_building.rst:15
+msgid "4"
+msgstr ""
+
+#: ../../shared/team_building.rst:11 ../../shared/team_building.rst:13
+msgid "5"
+msgstr ""
+
+#: ../../shared/team_building.rst:11 ../../shared/team_building.rst:15
+msgid "2"
+msgstr ""
+
+#: ../../shared/team_building.rst:13 ../../shared/team_building.rst:15
+msgid "6"
+msgstr ""
+
+#: ../../shared/team_building.rst:18
+msgid ""
+"So this means that Alice would prefer to work with Dave, while Bob would "
+"prefer to work with Carol, and so on."
+msgstr ""
+
+#: ../../shared/team_building.rst:20
+msgid ""
+"Mathematically, we can represent our two teams as binary variables, where"
+" :math:`x_i` is 0 if person :math:`i` is in team 0, and 1 if they are in "
+"team 1. The compatibility of team 0 can then be expressed as:"
+msgstr ""
+
+#: ../../shared/team_building.rst:23
+#, python-brace-format
+msgid "C_0 = \\sum_{i=0,j=0}^3 p_{ij} (1 - x_i) (1 - x_j)"
+msgstr ""
+
+#: ../../shared/team_building.rst:27
+#, python-brace-format
+msgid ""
+"Where :math:`p_{ij}` is the compatibility score between person :math:`i` "
+"and person :math:`j`. Note that here each term is only non-zero if both "
+":math:`x_i` and :math:`x_j` are 0, which means that both people are in "
+"team 0. Meanwhile the compatibility of team 1 can be expressed as:"
+msgstr ""
+
+#: ../../shared/team_building.rst:31
+#, python-brace-format
+msgid "C_1 = \\sum_{i=0,j=0}^3 p_{ij} x_i x_j"
+msgstr ""
+
+#: ../../shared/team_building.rst:35
+msgid ""
+"Thus we want to maximize the total compatibility :math:`C = C_0 + C_1`, "
+"subject to the constraint that team 1 (and thus team 0) has exactly two "
+"people:"
+msgstr ""
+
+#: ../../shared/team_building.rst:38
+msgid "\\max_{x_i \\in \\{0, 1\\}} C"
+msgstr ""
+
+#: ../../shared/team_building.rst:42
+#, python-brace-format
+msgid "\\text{subject to} \\quad x_{Alice} + x_{Bob} + x_{Carol} + x_{Dave} = 2"
+msgstr ""
+
+#: ../../shared/team_building.rst:46
+msgid ""
+"One issue with this formulation is that it has a constraint, which makes "
+"it more difficult to solve using quantum optimization algorithms. To fix "
+"this, we can use some techniques to turn this into a QUBO (Quadratic "
+"Unconstrained Binary Optimization) problem. In this case, since we just "
+"have a single equality constraint, we can add a squared version of it to "
+"the objective function as a penalty term, such that the penalty term is "
+"zero when the constraint is satisfied, and positive otherwise. For more "
+"details on this process, check out the :doc:`QUBO reference "
+"</modules/core/core_qubo>`. Now we can assume that the problem has been "
+"reformulated into the following unconstrained optimization problem:"
+msgstr ""
+
+#: ../../shared/team_building.rst:53
+msgid "\\min_{x_i \\in \\{0, 1\\}} \\sum_{i=0,j=0}^4 c_{ij} x_i x_j"
+msgstr ""
+
+#: ../../shared/team_building.rst:57
+#, python-brace-format
+msgid ""
+"Where :math:`c_{ij}` are coefficients that encode the objective function "
+"as well as the constraint."
+msgstr ""
+

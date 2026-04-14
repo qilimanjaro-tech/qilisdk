@@ -1,0 +1,174 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025, Qilimanjaro Quantum Tech
+# This file is distributed under the same license as the QiliSDK package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: QiliSDK \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-14 12:09+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ca\n"
+"Language-Team: ca <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../modules/cost_functions/cost_functions.rst:2
+msgid "Cost Functions"
+msgstr ""
+
+#: ../../modules/cost_functions/cost_functions.rst:11
+msgid ""
+"The :mod:`qilisdk.cost_functions` module turns the raw outputs returned "
+"by functionals into single scalar values that optimizers can minimize. "
+"Each cost function inspects the "
+":class:`~qilisdk.functionals.functional_result.FunctionalResult` produced"
+" by a backend and evaluates a problem-specific metric such as an "
+"observable expectation value or the energy of an abstract optimization "
+"model."
+msgstr ""
+
+#: ../../modules/cost_functions/cost_functions.rst:16
+msgid "You will typically use cost functions to:"
+msgstr ""
+
+#: ../../modules/cost_functions/cost_functions.rst:18
+msgid ""
+"score intermediate iterations inside a "
+":class:`~qilisdk.functionals.variational_program.VariationalProgram`"
+msgstr ""
+
+#: ../../modules/cost_functions/cost_functions.rst:19
+msgid ""
+"post-process "
+":class:`~qilisdk.functionals.functional_result.FunctionalResult` samples "
+"into meaningful costs"
+msgstr ""
+
+#: ../../modules/cost_functions/cost_functions.rst:20
+msgid ""
+"translate "
+":class:`~qilisdk.functionals.functional_result.FunctionalResult` states "
+"into expectation values"
+msgstr ""
+
+#: ../../modules/cost_functions/cost_functions.rst:24
+msgid "CostFunction Interface"
+msgstr ""
+
+#: ../../modules/cost_functions/cost_functions.rst:26
+msgid ""
+"The abstract :class:`~qilisdk.cost_functions.cost_function.CostFunction` "
+"base class exposes a single public method, "
+":meth:`~qilisdk.cost_functions.cost_function.CostFunction.compute_cost`. "
+"It dispatches on the concrete type of the functional result and calls the"
+" appropriate protected hook:"
+msgstr ""
+
+#: ../../modules/cost_functions/cost_functions.rst:30
+msgid ""
+"It dispatches on the content of the "
+":class:`~qilisdk.functionals.functional_result.FunctionalResult`, "
+"inspecting the available readout results (samples, expectation values, "
+"final state) to compute the cost."
+msgstr ""
+
+#: ../../modules/cost_functions/cost_functions.rst:33
+msgid ""
+"If your workflow introduces new functional result types you can subclass "
+":class:`~qilisdk.cost_functions.cost_function.CostFunction` and register "
+"additional handlers in ``self._handlers`` or override the protected "
+"methods above. Custom implementations must return a real or complex "
+"number that represents the score you want to optimize."
+msgstr ""
+
+#: ../../modules/cost_functions/cost_functions.rst:39
+msgid "ObservableCostFunction"
+msgstr ""
+
+#: ../../modules/cost_functions/cost_functions.rst:41
+msgid ""
+"The "
+":class:`~qilisdk.cost_functions.observable_cost_function.ObservableCostFunction`"
+" evaluates the expectation value of an observable against either a final "
+"state (from time evolution) or the probability distribution of sampled "
+"bitstrings. It accepts three interchangeable representations for the "
+"observable: a :class:`~qilisdk.core.qtensor.QTensor`, a symbolic "
+":class:`~qilisdk.analog.hamiltonian.Hamiltonian`, or a single "
+":class:`~qilisdk.analog.hamiltonian.PauliOperator`. Internally, all "
+"inputs are converted to :class:`~qilisdk.core.qtensor.QTensor` so the "
+"same numeric pipeline can be reused for both analog and digital results."
+msgstr ""
+
+#: ../../modules/cost_functions/cost_functions.rst:50
+msgid "Example: expectation value from analog evolution"
+msgstr ""
+
+#: ../../modules/cost_functions/cost_functions.rst:95
+msgid ""
+"For sampling workflows, the cost function iterates through the "
+"probability distribution exposed by "
+":attr:`~qilisdk.functionals.functional_result.FunctionalResult.probabilities`"
+" and accumulates the expectation value in the computational basis."
+msgstr ""
+
+#: ../../modules/cost_functions/cost_functions.rst:101
+msgid "ModelCostFunction"
+msgstr ""
+
+#: ../../modules/cost_functions/cost_functions.rst:103
+msgid ""
+"The "
+":class:`~qilisdk.cost_functions.model_cost_function.ModelCostFunction` "
+"bridges classical optimization models with quantum result objects. It "
+"accepts any :class:`~qilisdk.core.model.Model` (including convenience "
+"subclasses such as :class:`~qilisdk.core.model.QUBO`) and evaluates it "
+"against measured bitstrings or the amplitudes of a final quantum state."
+msgstr ""
+
+#: ../../modules/cost_functions/cost_functions.rst:108
+msgid ""
+"When the provided model is a :class:`~qilisdk.core.model.QUBO`, the cost "
+"function automatically converts it into a Hamiltonian and computes the "
+"expectation value. Otherwise, it maps each sample to the model's "
+"variables, feeds them through :meth:`~qilisdk.core.model.Model.evaluate`,"
+" and aggregates the resulting objective and constraint values."
+msgstr ""
+
+#: ../../modules/cost_functions/cost_functions.rst:113
+msgid "Example: scoring samples from a variational circuit"
+msgstr ""
+
+#: ../../modules/cost_functions/cost_functions.rst:151
+msgid "Cost Functions in Variational Programs"
+msgstr ""
+
+#: ../../modules/cost_functions/cost_functions.rst:153
+msgid ""
+"Variational workflows combine a parameterized "
+":class:`~qilisdk.functionals.functional.Functional`, a classical "
+"optimizer, and a "
+":class:`~qilisdk.cost_functions.cost_function.CostFunction`. At each "
+"optimizer iteration the backend executes the functional, obtains a "
+":class:`~qilisdk.functionals.functional_result.FunctionalResult` object, "
+"and feeds it into the configured cost function to obtain the scalar that "
+"drives the optimization loop."
+msgstr ""
+
+#: ../../modules/cost_functions/cost_functions.rst:188
+msgid ""
+"Swapping the cost function lets you explore alternative objective "
+"definitions without touching the functional itself. For example, you can "
+"start with "
+":class:`~qilisdk.cost_functions.observable_cost_function.ObservableCostFunction`"
+" to reproduce a physics-inspired energy expectation and later try "
+":class:`~qilisdk.cost_functions.model_cost_function.ModelCostFunction` to"
+" include constraint penalties from a combinatorial problem."
+msgstr ""
+

@@ -1,0 +1,197 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025, Qilimanjaro Quantum Tech
+# This file is distributed under the same license as the QiliSDK package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: QiliSDK \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-14 12:09+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: es\n"
+"Language-Team: es <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../tutorials/applications/application_grovers.rst:2
+msgid "Quantum Search with Grover's Algorithm"
+msgstr ""
+
+#: ../../tutorials/applications/application_grovers.rst:4
+msgid ""
+"In this tutorial, we will learn about Grover's algorithm, which is a "
+"quantum algorithm for searching an unsorted database with quadratic "
+"speedup compared to classical algorithms."
+msgstr ""
+
+#: ../../tutorials/applications/application_grovers.rst:7
+msgid ""
+"If you haven't already, it might be useful to check out these tutorials "
+"first: :doc:`Quantum Basics </tutorials/introductions/intro_quantum>` and"
+" :doc:`Quantum Circuits </tutorials/introductions/intro_circuits>`."
+msgstr ""
+
+#: ../../tutorials/applications/application_grovers.rst:12
+msgid "The Problem"
+msgstr ""
+
+#: ../../tutorials/applications/application_grovers.rst:14
+msgid ""
+"Say you have a list of N items, and you want to find a specific item that"
+" satisfies a certain condition. For example, you might have a list of "
+"phone numbers and want to find the one that belongs to a specific person."
+msgstr ""
+
+#: ../../tutorials/applications/application_grovers.rst:17
+msgid ""
+"This is the problem of searching an unsorted database. Classically this "
+"would mean you have some array and you want to iterate through it. The "
+"quantum version of this problem is to find a specific state in a "
+"superposition of states that satisfies a certain condition."
+msgstr ""
+
+#: ../../tutorials/applications/application_grovers.rst:21
+msgid "For instance, we might have the state:"
+msgstr ""
+
+#: ../../tutorials/applications/application_grovers.rst:23
+msgid ":math:`|\\psi\\rangle = \\frac{1}{\\sqrt{N}} \\sum_{i=0}^{N-1} |i\\rangle`"
+msgstr ""
+
+#: ../../tutorials/applications/application_grovers.rst:25
+msgid ""
+"and we want to \"find\" the state :math:`|x\\rangle` such that "
+":math:`f(x) = 1` for some function :math:`f`. We therefore want to do "
+"some operation to increase the likelihood of us measuring "
+":math:`|x\\rangle` when we measure our state."
+msgstr ""
+
+#: ../../tutorials/applications/application_grovers.rst:30
+msgid "The Solution"
+msgstr ""
+
+#: ../../tutorials/applications/application_grovers.rst:32
+#, python-brace-format
+msgid ""
+"Classically, you would have to check each item one by one, which would "
+"take :math:`O(N)` time in the worst case. Grover's algorithm allows you "
+"to find the desired item in :math:`O(\\sqrt{N})` time, which is a "
+"significant improvement for large N. It was invented by Lov Grover in "
+"1996 and is one of the most well-known quantum algorithms."
+msgstr ""
+
+#: ../../tutorials/applications/application_grovers.rst:36
+msgid ""
+"The algorithm is formed of two parts: the **oracle** and the **diffusion "
+"operator**."
+msgstr ""
+
+#: ../../tutorials/applications/application_grovers.rst:38
+msgid ""
+"The **oracle** is a quantum operation that marks the desired state by "
+"flipping its phase, in this case corresponding to the function :math:`f` "
+"that we want to evaluate. It can be represented as an operator :math:`O` "
+"such that:"
+msgstr ""
+
+#: ../../tutorials/applications/application_grovers.rst:41
+#, python-brace-format
+msgid ":math:`O |x\\rangle = (-1)^{f(x)} |x\\rangle`"
+msgstr ""
+
+#: ../../tutorials/applications/application_grovers.rst:43
+msgid ""
+"The **diffusion operator** is a quantum operation that amplifies the "
+"amplitude of the marked state, increasing the probability of measuring "
+"it. It can be represented as an operator :math:`D` such that:"
+msgstr ""
+
+#: ../../tutorials/applications/application_grovers.rst:46
+msgid ":math:`D = 2|\\psi\\rangle\\langle\\psi| - I`"
+msgstr ""
+
+#: ../../tutorials/applications/application_grovers.rst:48
+msgid ""
+"where :math:`|\\psi\\rangle` is the equal superposition state and "
+":math:`I` is the identity operator."
+msgstr ""
+
+#: ../../tutorials/applications/application_grovers.rst:50
+#, python-brace-format
+msgid ""
+"By doing :math:`O` followed by :math:`D` repeatedly, we can amplify the "
+"amplitude of the marked state and increase the probability of measuring "
+"it. More specifically, after :math:`\\text{floor}(\\frac{\\pi}{4} "
+"\\sqrt{N})` iterations, the probability of measuring the marked state "
+"will be close to 1."
+msgstr ""
+
+#: ../../tutorials/applications/application_grovers.rst:55
+msgid "The Implementation"
+msgstr ""
+
+#: ../../tutorials/applications/application_grovers.rst:57
+msgid ""
+"So what do these operators actually look like? Well, the oracle depends "
+"on the specific problem you are trying to solve, but for cases like "
+"searching for a specific bitstring it can be implemented with X and "
+"controlled Z gates. For instance, if we want to search for the bitstring "
+"\"01\" in a 2-qubit system, we can implement the oracle as follows:"
+msgstr ""
+
+#: ../../tutorials/applications/application_grovers.rst:70
+msgid ""
+"This flips the bit of the first qubit (so now our target state is "
+"\"11\"), applies a controlled Z gate that flips the phase of the \"11\" "
+"state, and then flips the bit of the first qubit back to its original "
+"state."
+msgstr ""
+
+#: ../../tutorials/applications/application_grovers.rst:72
+msgid ""
+"The diffusion operator is a little more complicated, but it can be "
+"implemented as follows by doing a Hadamard and then X on all qubits, a "
+"controlled Z gate on all qubits, and then undoing the previous "
+"operations:"
+msgstr ""
+
+#: ../../tutorials/applications/application_grovers.rst:90
+msgid ""
+"Our initial state is going to be the equal superposition state, which can"
+" be prepared by applying a Hadamard gate to each qubit:"
+msgstr ""
+
+#: ../../tutorials/applications/application_grovers.rst:100
+#, python-brace-format
+msgid ""
+"Now we can combine these operations to implement Grover's algorithm. We "
+"only need one repeat because we have 4 elements in our state and "
+":math:`\\text{floor}(\\frac{\\pi}{4} \\sqrt{4}) = 1`."
+msgstr ""
+
+#: ../../tutorials/applications/application_grovers.rst:111
+msgid "Simulating the result using QiliSim:"
+msgstr ""
+
+#: ../../tutorials/applications/application_grovers.rst:123
+msgid "This gives us:"
+msgstr ""
+
+#: ../../tutorials/applications/application_grovers.rst:129
+msgid "This is the expected result since we were searching for the state \"01\"."
+msgstr ""
+
+#: ../../tutorials/applications/application_grovers.rst:132
+msgid "Further Reading"
+msgstr ""
+
+#: ../../tutorials/applications/application_grovers.rst:134
+msgid "`Grover's Algorithm`_"
+msgstr ""
+

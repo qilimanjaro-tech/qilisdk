@@ -1,0 +1,111 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025, Qilimanjaro Quantum Tech
+# This file is distributed under the same license as the QiliSDK package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: QiliSDK \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-14 12:09+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ca\n"
+"Language-Team: ca <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../getting_started/quickstart.rst:3
+msgid "Quickstart"
+msgstr ""
+
+#: ../../getting_started/quickstart.rst:5
+msgid ""
+"Below are minimal examples to get you running digital circuits and analog"
+" evolutions."
+msgstr ""
+
+#: ../../getting_started/quickstart.rst:8
+msgid "Digital Circuit Example"
+msgstr ""
+
+#: ../../getting_started/quickstart.rst:10
+msgid "Build a 2-qubit circuit, sample it, and inspect measurement counts:"
+msgstr ""
+
+#: ../../getting_started/quickstart.rst:36
+msgid "Analog Evolution Example"
+msgstr ""
+
+#: ../../getting_started/quickstart.rst:38
+msgid ""
+"Define two Hamiltonians, build an interval-based interpolation schedule, "
+"and simulate:"
+msgstr ""
+
+#: ../../getting_started/quickstart.rst:84
+msgid "Next Steps"
+msgstr ""
+
+#: ../../getting_started/quickstart.rst:86
+msgid ""
+"Once you've confirmed everything works, explore the tutorials section or "
+"check out each module for more details:"
+msgstr ""
+
+#: ../../getting_started/quickstart.rst:88
+msgid ""
+"**Core primitives** (:doc:`/modules/core/core`) for state vectors, "
+"operators, and shared abstractions."
+msgstr ""
+
+#: ../../getting_started/quickstart.rst:89
+msgid ""
+"**Digital workflows** (:doc:`/modules/digital/digital`) covering circuit "
+"construction, parameter sweeps, and QASM export."
+msgstr ""
+
+#: ../../getting_started/quickstart.rst:90
+msgid ""
+"**Analog workflows** (:doc:`/modules/analog/analog`) for Hamiltonian "
+"builders, schedules, and time-evolution utilities."
+msgstr ""
+
+#: ../../getting_started/quickstart.rst:91
+msgid ""
+"**Functionals** (:doc:`/modules/functionals/functionals`) to see how "
+"experiments connect models with execution backends."
+msgstr ""
+
+#: ../../getting_started/quickstart.rst:92
+msgid ""
+"**Execution targets** (:doc:`/modules/backends/backends`) to compare "
+"Qutip (CPU) and CUDA (CPU/GPU) runtimes."
+msgstr ""
+
+#: ../../getting_started/quickstart.rst:93
+msgid ""
+"**Noise models** (:doc:`/modules/noise_models/noise_models`) to simulate "
+"hardware effects in both digital and analog contexts."
+msgstr ""
+
+#: ../../getting_started/quickstart.rst:94
+msgid ""
+"**Cost functions** (:doc:`/modules/cost_functions/cost_functions`) for "
+"common optimization objectives and metrics."
+msgstr ""
+
+#: ../../getting_started/quickstart.rst:95
+msgid ""
+"**SpeQtrum cloud** (:doc:`/modules/speqtrum/speqtrum`) for account setup,"
+" calibration-aware jobs, and result retrieval."
+msgstr ""
+
+#: ../../getting_started/quickstart.rst:97
+msgid "Happy quantum coding!"
+msgstr ""
+

@@ -1,0 +1,383 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025, Qilimanjaro Quantum Tech
+# This file is distributed under the same license as the QiliSDK package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: QiliSDK \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-14 12:09+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ca\n"
+"Language-Team: ca <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../modules/backends/backends.rst:2
+msgid "Backends"
+msgstr ""
+
+#: ../../modules/backends/backends.rst:12
+msgid ""
+"The :mod:`~qilisdk.backends` module provides concrete execution engines "
+"for running :mod:`~qilisdk.functionals` (quantum processes). Currently, "
+"three backends are supported:"
+msgstr ""
+
+#: ../../modules/backends/backends.rst:15
+msgid ":class:`~qilisdk.backends.qilisim.QiliSim`"
+msgstr ""
+
+#: ../../modules/backends/backends.rst:16
+msgid ":class:`~qilisdk.backends.cuda_backend.CudaBackend`"
+msgstr ""
+
+#: ../../modules/backends/backends.rst:17
+msgid ":class:`~qilisdk.backends.qutip_backend.QutipBackend`"
+msgstr ""
+
+#: ../../modules/backends/backends.rst:21
+msgid ""
+"Backends other than QiliSim are optional; to install one, include its "
+"extra when installing QILISDK:"
+msgstr ""
+
+#: ../../modules/backends/backends.rst:27
+msgid ""
+"For more information check the :doc:`../../getting_started/installation` "
+"page."
+msgstr ""
+
+#: ../../modules/backends/backends.rst:29
+msgid ""
+"Once installed, any primitive functional can be executed by passing it to"
+" the backend's :meth:`~qilisdk.backends.backend.Backend.execute` method "
+"along with readout specifications:"
+msgstr ""
+
+#: ../../modules/backends/backends.rst:44
+msgid "Architecture Overview"
+msgstr ""
+
+#: ../../modules/backends/backends.rst:46
+msgid ""
+"All concrete backends subclass "
+":class:`~qilisdk.backends.backend.Backend`, which centralizes the "
+"execution workflow used across the SDK. The "
+":meth:`~qilisdk.backends.backend.Backend.execute` method dispatches a "
+"primitive functional (e.g. "
+":class:`~qilisdk.functionals.digital_propagation.DigitalPropagation` or "
+":class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`) to the "
+"appropriate simulation routine and returns a "
+":class:`~qilisdk.functionals.functional_result.FunctionalResult` (see the"
+" :doc:`Functionals </modules/functionals/functionals>` chapter). The "
+"execute method also accepts readout specifications that define how the "
+"quantum state is measured. The execute method is also used to optimize "
+"variational programs via repeated calls to the underlying parameterized "
+"primitive functional."
+msgstr ""
+
+#: ../../modules/backends/backends.rst:53
+msgid ""
+"Backends register handlers for the functionals they support. If a "
+"functional is not implemented, "
+":meth:`~qilisdk.backends.backend.Backend.execute` raises "
+"``NotImplementedError`` to surface the mismatch early."
+msgstr ""
+
+#: ../../modules/backends/backends.rst:57
+msgid "Hardware & Dependencies"
+msgstr ""
+
+#: ../../modules/backends/backends.rst:59
+msgid ""
+"Installing a backend extra pulls in the library stack required for that "
+"simulator. GPU backends also expect compatible drivers to be present on "
+"the system."
+msgstr ""
+
+#: ../../modules/backends/backends.rst:66
+#: ../../modules/backends/backends.rst:92
+msgid "Backend"
+msgstr ""
+
+#: ../../modules/backends/backends.rst:67
+msgid "Extra"
+msgstr ""
+
+#: ../../modules/backends/backends.rst:68
+msgid "Key dependency"
+msgstr ""
+
+#: ../../modules/backends/backends.rst:69
+msgid "Notes"
+msgstr ""
+
+#: ../../modules/backends/backends.rst:70
+#: ../../modules/backends/backends.rst:97
+msgid ":class:`QiliSim <qilisdk.backends.qilisim.QiliSim>`"
+msgstr ""
+
+#: ../../modules/backends/backends.rst:71
+msgid "``qilisim``"
+msgstr ""
+
+#: ../../modules/backends/backends.rst:72
+msgid "None"
+msgstr ""
+
+#: ../../modules/backends/backends.rst:73
+#: ../../modules/backends/backends.rst:81
+msgid "CPU based; no special hardware needs."
+msgstr ""
+
+#: ../../modules/backends/backends.rst:74
+#: ../../modules/backends/backends.rst:102
+msgid ":class:`CudaBackend <qilisdk.backends.cuda_backend.CudaBackend>`"
+msgstr ""
+
+#: ../../modules/backends/backends.rst:75
+msgid "``cuda``"
+msgstr ""
+
+#: ../../modules/backends/backends.rst:76
+msgid "`cuda-quantum <https://github.com/NVIDIA/cuda-quantum>`_"
+msgstr ""
+
+#: ../../modules/backends/backends.rst:77
+msgid "Requires NVIDIA hardware with recent drivers."
+msgstr ""
+
+#: ../../modules/backends/backends.rst:78
+#: ../../modules/backends/backends.rst:107
+msgid ":class:`QutipBackend <qilisdk.backends.qutip_backend.QutipBackend>`"
+msgstr ""
+
+#: ../../modules/backends/backends.rst:79
+msgid "``qutip``"
+msgstr ""
+
+#: ../../modules/backends/backends.rst:80
+msgid "`QuTiP <https://qutip.org/>`_"
+msgstr ""
+
+#: ../../modules/backends/backends.rst:84
+msgid "Functional Support"
+msgstr ""
+
+#: ../../modules/backends/backends.rst:86
+msgid ""
+"The table below summarizes which primitive :mod:`~qilisdk.functionals` "
+"each backend can execute."
+msgstr ""
+
+#: ../../modules/backends/backends.rst:93
+msgid "DigitalPropagation"
+msgstr ""
+
+#: ../../modules/backends/backends.rst:94
+msgid "AnalogEvolution"
+msgstr ""
+
+#: ../../modules/backends/backends.rst:95
+msgid "QuantumReservoir"
+msgstr ""
+
+#: ../../modules/backends/backends.rst:96
+msgid "VariationalProgram"
+msgstr ""
+
+#: ../../modules/backends/backends.rst:98
+#: ../../modules/backends/backends.rst:99
+#: ../../modules/backends/backends.rst:100
+#: ../../modules/backends/backends.rst:101
+#: ../../modules/backends/backends.rst:103
+#: ../../modules/backends/backends.rst:104
+#: ../../modules/backends/backends.rst:105
+#: ../../modules/backends/backends.rst:106
+#: ../../modules/backends/backends.rst:108
+#: ../../modules/backends/backends.rst:109
+#: ../../modules/backends/backends.rst:110
+#: ../../modules/backends/backends.rst:111
+msgid "|y|"
+msgstr ""
+
+#: ../../modules/backends/backends.rst:116
+msgid "QiliSim"
+msgstr ""
+
+#: ../../modules/backends/backends.rst:118
+msgid ""
+"The **QiliSim** backend is a CPU-based simulator developed by Qilimanjaro"
+" and written in C++, providing efficient simulation of both digital and "
+"analog quantum functionals. It is designed for ease of use and does not "
+"require any special hardware or dependencies. There is no need to install"
+" QiliSim separately, as it is included with the core QILISDK "
+"installation."
+msgstr ""
+
+#: ../../modules/backends/backends.rst:123
+#: ../../modules/backends/backends.rst:196
+#: ../../modules/backends/backends.rst:261
+msgid "**Initialization**"
+msgstr ""
+
+#: ../../modules/backends/backends.rst:131
+#: ../../modules/backends/backends.rst:206
+#: ../../modules/backends/backends.rst:269
+msgid "**Capabilities**"
+msgstr ""
+
+#: ../../modules/backends/backends.rst:133
+msgid ""
+"**DigitalPropagation** of digital circuits with efficient state-vector "
+"simulation."
+msgstr ""
+
+#: ../../modules/backends/backends.rst:134
+#: ../../modules/backends/backends.rst:272
+msgid "**AnalogEvolution** driven by :class:`~qilisdk.analog.schedule.Schedule`."
+msgstr ""
+
+#: ../../modules/backends/backends.rst:135
+msgid ""
+"Compatible with "
+":class:`~qilisdk.functionals.variational_program.VariationalProgram` for "
+"classical optimization loops."
+msgstr ""
+
+#: ../../modules/backends/backends.rst:137
+msgid "**Parameters**"
+msgstr ""
+
+#: ../../modules/backends/backends.rst:139
+msgid ""
+"``noise_model`` (:class:`~qilisdk.noise.noise_model.NoiseModel`, "
+"optional): Noise model applied during simulation."
+msgstr ""
+
+#: ../../modules/backends/backends.rst:140
+msgid ""
+"``analog_simulation_method`` "
+"(:class:`~qilisdk.backends.backend_config.AnalogMethod`, optional): "
+"Analog simulation method and method-specific options."
+msgstr ""
+
+#: ../../modules/backends/backends.rst:141
+msgid ""
+"``digital_simulation_method`` "
+"(:class:`~qilisdk.backends.backend_config.DigitalMethod`, optional): "
+"Digital simulation options."
+msgstr ""
+
+#: ../../modules/backends/backends.rst:142
+msgid ""
+"``execution_config`` "
+"(:class:`~qilisdk.backends.backend_config.ExecutionConfig`, optional): "
+"Runtime execution options such as thread count and random seed."
+msgstr ""
+
+#: ../../modules/backends/backends.rst:144
+msgid "**Configuration example**"
+msgstr ""
+
+#: ../../modules/backends/backends.rst:160
+#: ../../modules/backends/backends.rst:218
+#: ../../modules/backends/backends.rst:276
+msgid "**Example**"
+msgstr ""
+
+#: ../../modules/backends/backends.rst:184
+msgid "CUDA Backend"
+msgstr ""
+
+#: ../../modules/backends/backends.rst:186
+msgid ""
+"The **CUDA** backend leverages NVIDIA GPUs via the :mod:`cuda-quantum` "
+"framework for both digital and analog simulations. When no compatible GPU"
+" is detected it automatically falls back to cpu-based targets, so you can"
+" prototype on commodity hardware before moving to accelerated machines."
+msgstr ""
+
+#: ../../modules/backends/backends.rst:190
+#: ../../modules/backends/backends.rst:255
+msgid "**Installation**"
+msgstr ""
+
+#: ../../modules/backends/backends.rst:208
+msgid ""
+"Digital circuits through "
+":class:`~qilisdk.functionals.digital_propagation.DigitalPropagation`."
+msgstr ""
+
+#: ../../modules/backends/backends.rst:209
+msgid ""
+"Analog dynamics for "
+":class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`, powered "
+"by ``cudaq.evolve``."
+msgstr ""
+
+#: ../../modules/backends/backends.rst:210
+msgid ""
+"Hybrid execution when paired with "
+":class:`~qilisdk.functionals.variational_program.VariationalProgram`."
+msgstr ""
+
+#: ../../modules/backends/backends.rst:212
+msgid "**Sampling methods**"
+msgstr ""
+
+#: ../../modules/backends/backends.rst:214
+msgid ""
+":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.STATE_VECTOR`: "
+"Full state-vector simulation (switches to CPU if a GPU is unavailable)."
+msgstr ""
+
+#: ../../modules/backends/backends.rst:215
+msgid ""
+":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.TENSOR_NETWORK`:"
+" Tensor-network contraction, suited for shallow yet wide circuits."
+msgstr ""
+
+#: ../../modules/backends/backends.rst:216
+msgid ""
+":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.MATRIX_PRODUCT_STATE`:"
+" Matrix-product-state simulation for low-entanglement workloads."
+msgstr ""
+
+#: ../../modules/backends/backends.rst:242
+#: ../../modules/backends/backends.rst:325
+msgid "**Output**"
+msgstr ""
+
+#: ../../modules/backends/backends.rst:250
+msgid "Qutip Backend"
+msgstr ""
+
+#: ../../modules/backends/backends.rst:252
+msgid ""
+"The **Qutip** backend uses the :mod:`qutip` library for simulation on "
+"CPU, supporting both digital and analog functionals. It is the most "
+"lightweight option, ideal for local development or environments without "
+"NVIDIA GPUs."
+msgstr ""
+
+#: ../../modules/backends/backends.rst:271
+msgid ""
+"**DigitalPropagation** of digital circuits via QuTiP's state-vector "
+"solvers."
+msgstr ""
+
+#: ../../modules/backends/backends.rst:273
+msgid ""
+"Compatible with "
+":class:`~qilisdk.functionals.variational_program.VariationalProgram` for "
+"fully classical optimization loops."
+msgstr ""
+

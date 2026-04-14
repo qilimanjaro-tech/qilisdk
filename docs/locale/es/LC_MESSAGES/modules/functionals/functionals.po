@@ -1,0 +1,416 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025, Qilimanjaro Quantum Tech
+# This file is distributed under the same license as the QiliSDK package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: QiliSDK \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-14 12:09+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: es\n"
+"Language-Team: es <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../modules/functionals/functionals.rst:2
+msgid "Functionals"
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:13
+msgid ""
+"The :mod:`~qilisdk.functionals` module provides high-level quantum "
+"execution procedures by combining tools from the :mod:`~qilisdk.analog`, "
+":mod:`~qilisdk.digital`, and :mod:`~qilisdk.core` modules. Currently, it "
+"includes the following execution functionals:"
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:16
+msgid ""
+":class:`~qilisdk.functionals.digital_propagation.DigitalPropagation`: "
+"Propagates a digital quantum circuit through the backend."
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:17
+msgid ""
+":class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`: Simulates"
+" analog time evolution of one or more Hamiltonians according to a time-"
+"dependent schedule."
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:18
+msgid ""
+":class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir`: Runs a"
+" quantum reservoir pipeline (pre-processing, reservoir dynamics, post-"
+"processing) across multiple input layers."
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:20
+msgid ""
+"Moreover, it provides more complex functionals that are used to execute "
+"more complex algorithms:"
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:22
+msgid ""
+":class:`~qilisdk.functionals.variational_program.VariationalProgram`: "
+"Builds parameterized program to be optimized in a hybrid quantum-"
+"classical environment."
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:25
+msgid "Architecture Overview"
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:27
+msgid ""
+"Every functional conforms to the abstract "
+":class:`~qilisdk.functionals.functional.Functional` interface. Primitive "
+"functionals such as "
+":class:`~qilisdk.functionals.digital_propagation.DigitalPropagation` and "
+":class:`~qilisdk.functionals.analog_evolution.AnalogEvolution` also "
+"inherit from "
+":class:`~qilisdk.functionals.functional.PrimitiveFunctional`, which mixes"
+" in the :class:`~qilisdk.core.parameterizable.Parameterizable` contract. "
+"This lets backends query and update symbolic parameters consistently "
+"before execution."
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:34
+msgid ""
+"Readout is decoupled from functionals: measurement details (shots, "
+"observables, state tomography) are specified via :mod:`~qilisdk.readout` "
+"objects passed to the backend's "
+":meth:`~qilisdk.backends.backend.Backend.execute` method. All primitive "
+"functionals return a unified "
+":class:`~qilisdk.functionals.functional_result.FunctionalResult`."
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:39
+msgid "Result Objects"
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:41
+msgid ":class:`~qilisdk.functionals.functional_result.FunctionalResult`"
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:42
+msgid ""
+"The unified result type for all primitive functionals. Access results "
+"through: ``samples`` for shot counts, ``probabilities`` for measurement "
+"probabilities, ``state`` for the terminal "
+":class:`~qilisdk.core.qtensor.QTensor` state (when using "
+":meth:`~qilisdk.readout.readout_spec.Readout.with_state_tomography`), and"
+" ``expectation_values`` for expectation values (when using "
+":meth:`~qilisdk.readout.readout_spec.Readout.with_expectation`). When "
+"``store_intermediate_results=True``, intermediate results are available "
+"via ``intermediate_states``, ``intermediate_samples``, "
+"``intermediate_probabilities``, and ``intermediate_expectation_values``."
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:49
+msgid ":class:`~qilisdk.functionals.variational_program_result.VariationalProgramResult`"
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:50
+msgid ""
+"bundles the optimizer trajectory (optimal cost, parameters, intermediate "
+"steps) together with the functional result obtained at convergence."
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:53
+msgid ""
+"These objects make post-processing workflows ergonomic. For example, "
+"after a digital propagation you can surface the most likely bitstrings:"
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:69
+msgid "Digital Propagation"
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:71
+msgid ""
+"The :class:`~qilisdk.functionals.digital_propagation.DigitalPropagation` "
+"functional propagates a digital quantum circuit through the backend. "
+"Because it subclasses "
+":class:`~qilisdk.functionals.functional.PrimitiveFunctional`, any "
+"symbolic parameters exposed by the underlying "
+":class:`~qilisdk.digital.circuit.Circuit` can be queried or updated "
+"through helper methods such as "
+":meth:`~qilisdk.functionals.digital_propagation.DigitalPropagation.get_parameter_names`."
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:77
+msgid ""
+"Measurement details such as the number of shots are specified separately "
+"via readout objects passed to "
+":meth:`~qilisdk.backends.backend.Backend.execute`."
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:80
+#: ../../modules/functionals/functionals.rst:145
+#: ../../modules/functionals/functionals.rst:236
+#: ../../modules/functionals/functionals.rst:416
+msgid "**Parameters**"
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:82
+msgid ""
+"**circuit** (:class:`~qilisdk.digital.circuit.Circuit`): Circuit to be "
+"propagated."
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:84
+#: ../../modules/functionals/functionals.rst:151
+#: ../../modules/functionals/functionals.rst:244
+#: ../../modules/functionals/functionals.rst:431
+msgid "**Returns**"
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:86
+msgid ""
+":class:`~qilisdk.functionals.functional_result.FunctionalResult`: Access "
+"shot counts via :attr:`samples`, or probabilities through "
+":attr:`probabilities`."
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:89
+#: ../../modules/functionals/functionals.rst:158
+#: ../../modules/functionals/functionals.rst:249
+msgid "**Usage Example**"
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:107
+msgid ""
+"This functional can be executed on any backend that supports digital "
+"circuits. For example, we can execute it on the CUDA backend:"
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:120
+#: ../../modules/functionals/functionals.rst:211
+#: ../../modules/functionals/functionals.rst:486
+msgid "**Output**"
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:136
+msgid "Analog Evolution"
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:138
+msgid ""
+"The :class:`~qilisdk.functionals.analog_evolution.AnalogEvolution` "
+"functional simulates analog evolution of a quantum system under one or "
+"more Hamiltonians, following a specified time-dependent schedule. Its "
+"parameter interface mirrors that of "
+":class:`~qilisdk.analog.schedule.Schedule`, making it straightforward to "
+"sweep control waveforms or pulse amplitudes from classical optimizers."
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:142
+msgid ""
+"Observables and shot counts are specified separately via readout objects "
+"passed to :meth:`~qilisdk.backends.backend.Backend.execute`."
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:147
+msgid ""
+"**schedule** (:class:`~qilisdk.analog.schedule.Schedule`): Defines total "
+"evolution time, time steps, Hamiltonians, and their time-dependent "
+"coefficients."
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:148
+msgid ""
+"**initial_state** (:class:`~qilisdk.core.qtensor.QTensor`): Initial state"
+" of the system."
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:149
+msgid ""
+"**store_intermediate_results** (bool, optional): If True, records the "
+"state at each time step. Default is False."
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:153
+msgid ""
+":class:`~qilisdk.functionals.functional_result.FunctionalResult`: Inspect"
+" :attr:`expectation_values` for measured observables, :attr:`state` for "
+"the closing state, and :attr:`intermediate_states` and "
+":attr:`intermediate_expectation_values` when "
+"``store_intermediate_results`` is enabled."
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:199
+msgid "we can execute it on the Qutip backend:"
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:225
+msgid "Quantum Reservoirs"
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:227
+msgid ""
+"The :class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir` "
+"functional executes a reservoir pipeline over a sequence of inputs. Each "
+"layer applies an optional pre-processing circuit, an analog reservoir "
+"dynamics block (:class:`~qilisdk.analog.schedule.Schedule`), and an "
+"optional post-processing circuit, followed by measurements of one or more"
+" observables. The optional ``qubits_to_reset`` list can be used to reset "
+"selected qubits between layers."
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:232
+msgid ""
+"The reservoir inputs are represented using "
+":class:`~qilisdk.functionals.quantum_reservoirs.ReservoirInput` "
+"parameters. These behave like standard "
+":class:`~qilisdk.core.variables.Parameter` objects but are marked as non-"
+"trainable so they can be driven by input data sequences rather than "
+"optimization loops."
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:238
+msgid ""
+"**initial_state** (:class:`~qilisdk.core.qtensor.QTensor`): Initial state"
+" of the reservoir."
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:239
+msgid ""
+"**reservoir_layer** "
+"(:class:`~qilisdk.functionals.quantum_reservoirs.ReservoirLayer`): "
+"Defines pre/post-processing, reservoir dynamics, observables, and reset "
+"policy."
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:241
+msgid ""
+"**input_per_layer** (List[Dict[str, float]]): Input values to apply at "
+"each layer, keyed by input parameter names (typically the labels of "
+":class:`~qilisdk.functionals.quantum_reservoirs.ReservoirInput`)."
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:246
+msgid ""
+":class:`~qilisdk.functionals.functional_result.FunctionalResult`: Access "
+"per-layer expectation values via :attr:`expectation_values`, plus "
+"optional states via :attr:`state`."
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:292
+msgid "Encoding Input Data"
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:294
+msgid ""
+"You can inject classical data into a reservoir layer in multiple places. "
+"The only requirement is that the keys in ``input_per_layer`` match the "
+"labels of the "
+":class:`~qilisdk.functionals.quantum_reservoirs.ReservoirInput` objects "
+"you place in the layer."
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:298
+msgid "**1. Encode with input and output circuits**"
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:335
+msgid "**2. Encode directly in Hamiltonian parameters**"
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:366
+msgid "**3. Encode in the schedule profile and duration**"
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:404
+msgid "Variational Programs"
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:406
+msgid ""
+"The :class:`~qilisdk.functionals.variational_program.VariationalProgram` "
+"functional gathers the pieces required for a variational quantum "
+"algorithm. It accepts a parameterized primitive functional, an optimizer,"
+" and a cost function. When you call "
+":meth:`~qilisdk.backends.backend.Backend.execute` it evaluates the "
+"functional repeatedly with updated parameters, feeds the resulting "
+":class:`~qilisdk.functionals.functional_result.FunctionalResult` into the"
+" supplied cost function, and finally returns a "
+":class:`~qilisdk.functionals.variational_program_result.VariationalProgramResult`."
+" Parameter constraints (inequalities/equalities on parameters) are "
+"attached at this level via the ``parameter_constraints`` argument; this "
+"is the place to enforce relations like ``theta >= phi`` or cross-"
+"parameter bounds across all QiliSDK functionals. Only parameters marked "
+"as trainable are optimized during this loop."
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:418
+msgid ""
+"**functional** "
+"(:class:`~qilisdk.functionals.functional.PrimitiveFunctional`): "
+"Parameterized primitive to optimize (for instance "
+":class:`DigitalPropagation "
+"<qilisdk.functionals.digital_propagation.DigitalPropagation>` or "
+":class:`AnalogEvolution "
+"<qilisdk.functionals.analog_evolution.AnalogEvolution>`)."
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:421
+msgid ""
+"**optimizer** (:class:`~qilisdk.optimizers.optimizer.Optimizer`): "
+"Classical optimizer that proposes new parameter values and optionally "
+"stores intermediate iterates."
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:423
+msgid ""
+"**cost_function** "
+"(:class:`~qilisdk.cost_functions.cost_function.CostFunction`): Object "
+"that maps the functional results to a scalar cost; frequently constructed"
+" from a :class:`~qilisdk.core.model.Model`."
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:425
+msgid ""
+"**store_intermediate_results** (bool, optional): When True, the optimizer"
+" keeps the intermediate steps, which are exposed through "
+":attr:`~qilisdk.functionals.variational_program_result.VariationalProgramResult.intermediate_results`."
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:427
+msgid ""
+"**parameter_constraints** "
+"(list[:class:`~qilisdk.core.variables.ComparisonTerm`], optional): "
+"Constraints on functional parameters (e.g., ``theta >= 0.5``) evaluated "
+"before each optimizer update. This is the supported entry point for "
+"enforcing parameter relations in QiliSDK."
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:433
+msgid ""
+":class:`~qilisdk.functionals.variational_program_result.VariationalProgramResult`:"
+" Retrieve :attr:`optimal_cost "
+"<qilisdk.functionals.variational_program_result.VariationalProgramResult.optimal_cost>`,"
+" :attr:`optimal_parameters "
+"<qilisdk.functionals.variational_program_result.VariationalProgramResult.optimal_parameters>`,"
+" and the final functional output packaged in "
+":attr:`optimal_execution_results "
+"<qilisdk.functionals.variational_program_result.VariationalProgramResult.optimal_execution_results>`."
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:439
+msgid "**Usage Example (Using QuTiP Backend)**"
+msgstr ""
+
+#: ../../modules/functionals/functionals.rst:505
+msgid ""
+"**Usage Example 2 (Using QuTiP Backend)** This example optimizes a "
+"variational schedule under some parameter constraints."
+msgstr ""
+
