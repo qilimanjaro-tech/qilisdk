@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "parsers.h"
+#include "sample.h"
 #include "../../../libs/numpy.h"
 #include "../digital/gate.h"
 #include "../representations/matrix_free_hamiltonian.h"
@@ -21,6 +22,64 @@
 // GCOV_EXCL_BR_START
 
 #pragma GCC visibility push(default)
+
+py::object construct_result_object(const DenseMatrix& state_dense, const py::object& readout, NoiseModelCpp& noise_model_cpp, int n_qubits, const QiliSimConfig& config, const std::vector<bool>& qubits_to_measure) {
+    /*
+    Construct a result object for a given state and readout.
+
+    Args:
+        state_dense (DenseMatrix&): The state for which to construct the result.
+        readout (py::object): A list with readout
+        noise_model_cpp (NoiseModelCpp&): The noise model to apply during simulation.
+        n_qubits (int): The number of qubits in the circuit.
+        config (QiliSimConfig): The simulation configuration.
+        qubits_to_measure (std::map<int, std::vector<bool>>&): A map indicating which qubits to measure after each gate.
+        gate_ind (int): The index of the gate after which this state was obtained.
+
+    Returns:
+        py::object: The result object for the given state and readout.
+    */
+    py::list results;
+    py::array final_state_numpy = to_numpy(state_dense);
+    
+    for (py::handle ro_handle : readout) {
+        py::object ro = py::reinterpret_borrow<py::object>(ro_handle);
+
+        if (py::isinstance(ro, StateTomographyReadout)) {
+            std::string method = ro.attr("method").cast<std::string>();
+            if (method != "exact") {
+                throw py::value_error("State Tomography methods that are not exact are not supported yet.");
+            }
+            results.append(StateTomographyReadoutResult(
+                "state"_a = QTensor(final_state_numpy)
+            ));
+
+        } else if (py::isinstance(ro, ExpectationReadout)) {
+            results.append(ExpectationReadoutResult.attr("from_state")(
+                "expectation_readout"_a     = py::module_::import("copy").attr("copy")(ro),
+                "state"_a = QTensor(final_state_numpy)
+            ));
+
+        } else if (py::isinstance(ro, SamplingReadout)) {
+            int n_shots = ro.attr("nshots").cast<int>();
+            std::map<std::string, int> counts = construct_samples(state_dense, n_qubits, n_shots, noise_model_cpp, config, qubits_to_measure);
+            py::dict samples;
+            for (const auto& pair : counts) {
+                samples[py::cast(pair.first)] = py::cast(pair.second);
+            }
+            results.append(SamplingReadoutResult.attr("from_samples")(
+                "samples"_a  = samples
+            ));
+
+        } else {
+            std::string ro_repr = py::repr(ro).cast<std::string>();
+            throw py::value_error("Unsupported Readout Method provided: " + ro_repr);
+        }
+    }
+
+    return ReadoutCompositeResults.attr("from_list")(results);
+
+}
 
 std::vector<MatrixFreeHamiltonian> parse_hamiltonians_matrix_free(const py::object& Hs) {
     /*
@@ -471,11 +530,6 @@ std::vector<Gate> parse_gates(const py::object& circuit, double atol, const py::
         // Get the name
         std::string gate_type_str = py_gate.attr("name").cast<std::string>();
 
-        // If it's a measurement, skip it
-        if (gate_type_str == "M") {
-            continue;
-        }
-
         // If we have a noise model, check if this gate has parameter perturbation noise and apply if so
         if (!noise_model.is_none() && py_gate.attr("is_parameterized").cast<bool>()) {
             // Get the parameters and noise maps
@@ -528,9 +582,17 @@ std::vector<Gate> parse_gates(const py::object& circuit, double atol, const py::
             py_gate.attr("set_parameters")(gate_parameters);
         }
 
-        // Get the matrix
-        py::buffer matrix = py_gate.attr("_generate_matrix")();
-        SparseMatrix base_matrix = from_numpy(matrix, atol);
+        // Get the matrix (if it's not a measurement, since those don't have matrices)
+        SparseMatrix base_matrix;
+        if (gate_type_str != "M") {
+            py::buffer matrix = py_gate.attr("matrix");
+            base_matrix = from_numpy(matrix, atol);
+        } else {
+            base_matrix = SparseMatrix(2, 2);
+            base_matrix.coeffRef(0, 0) = 1.0;
+            base_matrix.coeffRef(1, 1) = 1.0;
+            base_matrix.makeCompressed();
+        }
 
         // Get the controls
         std::vector<int> controls;
@@ -580,7 +642,7 @@ std::vector<Gate> parse_gates(const py::object& circuit, double atol, const py::
     return gates;
 }
 
-std::map<int, std::vector<bool>> parse_measurements(const py::object& circuit) {
+std::vector<bool> parse_measurements(const py::object& circuit) {
     /*
     Extract measurement qubit information from a circuit object.
 
@@ -588,67 +650,38 @@ std::map<int, std::vector<bool>> parse_measurements(const py::object& circuit) {
         circuit (py::object): The circuit object.
 
     Returns:
-        std::map<int, std::vector<bool>>: A map from gate index to a vector indicating which qubits are measured.
+        std::vector<bool>: A vector indicating which qubits are measured at the end of the circuit.
     */
-
-    // This is a map from the index at which the measurement should occur to the list of qubits to measure
-    std::map<int, std::vector<bool>> gate_measurements;
 
     // Get info from the object
     int n_qubits = circuit.attr("nqubits").cast<int>();
+    std::vector<bool> final_qubits_to_measure(n_qubits, false);
     py::list py_gates = circuit.attr("gates");
     int n_gates = py_gates.size();
-
-    // For each gate
-    std::vector<bool> measurement_used(n_gates, false);
     bool any_measurements = false;
-    int gate_index = 0;
-    for (auto py_gate : py_gates) {
 
-        // Get the name
+    // Start at the last gate and look backwards to find measurements, stopping when we find a non-measurement gate
+    for (int gate_index = n_gates - 1; gate_index >= 0; --gate_index) {
+        auto py_gate = py_gates[gate_index];
         std::string gate_type_str = py_gate.attr("name").cast<std::string>();
-
-        // If it's a measurement
-        if (gate_type_str == "M" && !measurement_used[gate_index]) {
+        if (gate_type_str == "M") {
             any_measurements = true;
-            std::vector<bool> qubits_to_measure(n_qubits, false);
-
-            // For each qubit, look ahead to collect all measurements
-            for (int q = 0; q < n_qubits; ++q) {
-                for (int i = gate_index; i < int(py_gates.size()); ++i) {
-                    py::object future_gate = py_gates[i];
-                    std::string future_gate_type_str = future_gate.attr("name").cast<std::string>();
-                    std::vector<int> future_targets;
-                    for (auto py_target : future_gate.attr("target_qubits")) {
-                        future_targets.push_back(py_target.cast<int>());
-                    }
-                    if (std::find(future_targets.begin(), future_targets.end(), q) != future_targets.end()) {
-                        if (future_gate_type_str == "M") {
-                            qubits_to_measure[q] = true;
-                            measurement_used[i] = true;
-                        } else if (std::find(future_targets.begin(), future_targets.end(), q) != future_targets.end()) {
-                            break;
-                        }
-                    }
-                }
+            py::list py_targets = py_gate.attr("target_qubits");
+            for (auto py_target : py_targets) {
+                int target = py_target.cast<int>();
+                final_qubits_to_measure[target] = true;
             }
-
-            // Add this measurement to the list
-            gate_measurements.emplace(gate_index, qubits_to_measure);
-
+        } else {
+            break;
         }
-
-        gate_index++;
-
     }
 
     // If we found no measurements, measure all
     if (!any_measurements) {
-        std::vector<bool> qubits_to_measure(n_qubits, true);
-        gate_measurements.emplace(n_gates, qubits_to_measure);
+        final_qubits_to_measure = std::vector<bool>(n_qubits, true);
     }
 
-    return gate_measurements;
+    return final_qubits_to_measure;
 }
 
 QiliSimConfig parse_solver_params(const py::dict& solver_params) {
