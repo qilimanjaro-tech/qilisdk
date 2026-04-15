@@ -68,7 +68,7 @@ and analog schedules, while others are specific to one or the other:
    :widths: auto
 
    ========================================================================== ==================== ======================
-   Noise Type                                                                 Digital Circuits     Analog Schedules
+   Noise Type                                                                 Digital Propogation  Analog Evolution
    ========================================================================== ==================== ======================
    :class:`~qilisdk.noise.representations.KrausChannel`                       ✔                                
    -------------------------------------------------------------------------- -------------------- ----------------------

@@ -20,18 +20,39 @@ cd "$(dirname "$(dirname "$(realpath "$0")")")"
 TMPFILE=$(mktemp /tmp/docs_test_XXXXXX.py)
 trap "rm -f $TMPFILE" EXIT
 
-for file in $(find docs/ -name "*.rst" | sort); do
+for file in $( { find docs/ -name "*.rst"; find . -maxdepth 2 -name "*.md" -not -path './.venv/*' -not -path './node_modules/*'; } | sort ); do
 
-    # Use Python to extract and concatenate all code-block:: python blocks
+    # Use Python to extract and concatenate all Python code blocks, then run them.
+    # RST: code-block:: python, skip with '.. SKIP' on the preceding line.
+    # MD:  ```python fenced blocks, skip with '<!-- SKIP -->' on the preceding line.
+    # Also resolves .. include:: directives recursively for RST files.
     python3 - "$file" > "$TMPFILE" <<'PYEOF'
 import re, sys
 
-def extract(filename):
+import os
+
+def extract_blocks_rst(filename, seen=None):
+    if seen is None:
+        seen = set()
+    filename = os.path.realpath(filename)
+    if filename in seen:
+        return []
+    seen.add(filename)
+
     with open(filename) as f:
         lines = f.readlines()
     blocks = []
     i = 0
     while i < len(lines):
+        # Resolve .. include:: directives recursively
+        inc = re.match(r'^\s*\.\. include::\s+(.+?)\s*$', lines[i])
+        if inc:
+            inc_path = os.path.join(os.path.dirname(filename), inc.group(1))
+            if os.path.isfile(inc_path):
+                blocks.extend(extract_blocks_rst(inc_path, seen))
+            i += 1
+            continue
+
         # Match a code-block:: python directive at any indent level
         m = re.match(r'^(\s*).. code-block:: python\s*$', lines[i])
         if m and (i == 0 or lines[i-1].strip() != '.. SKIP'):
@@ -64,6 +85,39 @@ def extract(filename):
         else:
             i += 1
 
+    return blocks
+
+def extract_blocks_md(filename):
+    with open(filename) as f:
+        lines = f.readlines()
+    blocks = []
+    i = 0
+    while i < len(lines):
+        if re.match(r'^```python\s*$', lines[i]):
+            # Check if the previous non-empty line is a SKIP marker
+            j = i - 1
+            while j >= 0 and lines[j].strip() == '':
+                j -= 1
+            skip = j >= 0 and lines[j].strip() == '<!-- SKIP -->'
+            i += 1
+            code_lines = []
+            while i < len(lines) and not re.match(r'^```\s*$', lines[i]):
+                if not skip:
+                    code_lines.append(lines[i].rstrip('\n'))
+                i += 1
+            if not skip:
+                while code_lines and code_lines[-1] == '':
+                    code_lines.pop()
+                if code_lines:
+                    blocks.append('\n'.join(code_lines))
+        i += 1
+    return blocks
+
+def extract(filename):
+    if filename.endswith('.md'):
+        blocks = extract_blocks_md(filename)
+    else:
+        blocks = extract_blocks_rst(filename)
     header = "import matplotlib\nmatplotlib.use('Agg')\n"
     print(header + '\n\n'.join(blocks))
 
@@ -91,7 +145,7 @@ PYEOF
 done
 
 echo ""
-echo "Note: you can skip a code block by adding a '.. SKIP' line immediately before the '.. code-block:: python' directive." 
+echo "Note: skip a code block by adding '.. SKIP' immediately before a '.. code-block:: python' directive (RST), or '<!-- SKIP -->' immediately before a '\`\`\`python' fence (MD)."
 echo "Results: $PASS passed, $FAIL failed, $SKIP skipped"
 
 # Return to the original directory

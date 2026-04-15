@@ -9,422 +9,56 @@
 
 **QiliSDK** is an open-source Python framework for designing and executing **analog, digital, and hybrid quantum algorithms**. Its modular structure unifies circuit-based and Hamiltonian-based workflows within a single API. It provides high-level abstractions for gates, circuits, Hamiltonians, and optimizers, while remaining fully backend-agnostic allowing a seamless switch between CPU, GPU, or QPU execution.
 
----
-
-## Table of Contents
-- [QiliSDK](#qilisdk)
-  - [Table of Contents](#table-of-contents)
-  - [Installation](#installation)
-    - [Base Installation](#base-installation)
-    - [Optional Dependencies: speqtrum, cuda, qutip](#optional-dependencies-speqtrum-cuda-qutip)
-  - [Usage](#usage)
-    - [Digital Quantum Circuits](#digital-quantum-circuits)
-    - [Hamiltonians](#hamiltonians)
-    - [Optimizers](#optimizers)
-    - [Qilimanjaro SpeQtrum](#qilimanjaro-speqtrum)
-    - [Sample a quantum Circuit Using a CUDA-Accelerated Simulator](#sample-a-quantum-circuit-using-a-cuda-accelerated-simulator)
-    - [Time Evolution using Qutip](#time-evolution-using-qutip)
-    - [Variational Programs](#variational-programs)
-    - [Open QASM Serialization](#open-qasm-serialization)
-    - [YAML Serialization](#yaml-serialization)
-    - [OpenFermion Integration](#openfermion-integration)
-  - [Development](#development)
-    - [Prerequisites](#prerequisites)
-    - [Setup \& Dependency Management](#setup--dependency-management)
-    - [Testing](#testing)
-    - [Linting \& Formatting](#linting--formatting)
-    - [Type Checking](#type-checking)
-    - [Changelog Management](#changelog-management)
-    - [Contributing](#contributing)
-  - [License](#license)
-  - [Acknowledgments](#acknowledgments)
-
----
-
 ## Installation
 
-QiliSDK is available via [PyPI](https://pypi.org/project/qilisdk/). You can install the core package as well as optional extras for additional features.
-
-### Base Installation
-
-Install the core QiliSDK package using pip:
+QiliSDK is available via [PyPI](https://pypi.org/project/qilisdk/):
 
 ```bash
 pip install qilisdk
 ```
 
-### Optional Dependencies: speqtrum, cuda, qutip
-
-QiliSDK supports optional modules for additional functionality:
-
-- **SpeQtrum:**
-  To interface with Qilimanjaro’s cloud-based quantum services, install the Speqtrum optional dependency:
-
-  ```bash
-  pip install qilisdk[speqtrum]
-  ```
-
-- **CUDA Accelerated Simulator Backend:**
-  For GPU-accelerated quantum simulation using NVIDIA GPUs, install the CUDA extra:
-
-  ```bash
-  pip install qilisdk[cuda]
-  ```
-
-- **Qutip Simulator Backend:**
-  For GPU-accelerated quantum simulation using NVIDIA GPUs, install the CUDA extra:
-
-  ```bash
-  pip install qilisdk[qutip]
-  ```
-
-   **Note:**  You can also install both optional dependencies using a single command:
-
-  ```bash
-  pip install qilisdk[cuda,qutip,speqtrum]
-  ```
-
----
+For other installaton options, see the [docs](https://qilimanjaro-tech.github.io/qilisdk).
 
 ## Usage
 
-QiliSDK is designed to simplify both digital and analog quantum computing workflows. This guide provides example code snippets for creating quantum circuits, performing Hamiltonian arithmetic, optimization, simulation on various backends (including CUDA and cloud-based using Speqtrum), and using additional utility functions.
+Here are just a few examples to get you started, for tutorials and full documentation, please see the [docs](https://qilimanjaro-tech.github.io/qilisdk).
 
-### Digital Quantum Circuits
+### Digital Circuits
 
-Create and simulate quantum circuits with a flexible gate framework. The following example demonstrates how to assemble a circuit, adjust gate parameters:
+To create a simple quantum circuit:
 
 ```python
-import numpy as np
-from qilisdk.digital import Circuit, H, RX, CNOT, M
+from qilisdk.digital import Circuit, H, RX, CNOT
 
-# Create a circuit with 2 qubits
-circuit = Circuit(2)
-circuit.add(H(0))  # Apply Hadamard on qubit 0
-circuit.add(RX(0, theta=np.pi))  # Apply RX rotation on qubit 0
-circuit.add(CNOT(0, 1))  # Add a CNOT gate between qubit 0 and 1
-
-# Retrieve the current gate parameters
-print("Initial parameters:", circuit.get_parameter_values())
-
-# Update circuit parameters (e.g., update RX rotation angle)
-circuit.set_parameter_values([2 * np.pi])
+circuit = Circuit(2)             # Create a circuit with 2 qubits
+circuit.add(H(0))                # Apply Hadamard on qubit 0
+circuit.add(RX(1, theta=3.14))   # Apply RX rotation on qubit 1
+circuit.add(CNOT(0, 1))          # Add a CNOT gate between qubit 0 and 1
 ```
 
-### Hamiltonians
+### Analog Evolution
 
-Utilize the `Hamiltonian` class for Pauli operator arithmetic. Build expressions, iterate through terms:
-
-```python
-from qilisdk.analog import Hamiltonian, X, Y, Z, I
-
-# Build a Hamiltonian expression using Pauli operators
-H_expr = (Z(0) + X(0)) * (Z(0) - X(0))
-print("Hamiltonian Expression:", H_expr)
-
-# Iterate over Hamiltonian terms
-for coeff, ops in H_expr:
-    print("Coefficient:", coeff, "Operators:", ops)
-
-print("-"*10)
-# export hamiltonians to matrices
-print("Sparse Matrix from Hamiltonian: \n", H_expr.to_matrix()) # sparse matrix  
-# the returned matrix is sparse by default to get the dense representation call .toarray()
-```
-
-
-### Optimizers
-
-Run optimization routines using the `SciPyOptimizer` and integrate them with a variational algorithm (VQE). In the example below, a simple quadratic cost function is minimized:
+To create a linear interpolation between an initial and final Hamiltonian:
 
 ```python
-from qilisdk.optimizers import SciPyOptimizer
+from qilisdk.analog import Schedule, X, Z
+from qilisdk.core import Interpolation
 
+initial_hamiltonian = - X(0) - X(1)
+final_hamiltonian = Z(0) + Z(1) + 0.5 * Z(0) * Z(1)
 
-def cost_function(params):
-    # A simple quadratic cost: minimum at [1, 1, 1]
-    return sum((p - 1) ** 2 for p in params)
-
-
-# Initialize the optimizer with the BFGS method
-optimizer = SciPyOptimizer(method="BFGS")
-initial_parameters = [0, 0, 0]
-parameter_bounds = [(0, 1), (0, 1), (0, 1)]
-result = optimizer.optimize(cost_function, initial_parameters, parameter_bounds)
-
-print("Optimal cost:", result.optimal_cost)
-print("Optimal Parameters:", result.optimal_parameters)
-```
-
-### Qilimanjaro SpeQtrum
-
-QiliSDK includes a client for interacting with Qilimanjaro's SpeQtrum platform. This module supports secure login and a unified interface for both digital circuits and analog evolutions:
-
-```python
-from qilisdk.backends import CudaBackend, CudaSamplingMethod
-from qilisdk.digital import Circuit, H, M
-from qilisdk.functionals import Sampling
-from qilisdk.speqtrum import SpeQtrum
-
-
-# Build a single-qubit circuit
-circuit = Circuit(nqubits=1)
-circuit.add(H(0))
-circuit.add(M(0))
-
-# Login to QaaSBackend with credentials (or use environment variables)
-# This only needs to be run once.
-SpeQtrum.login(username="YOUR_USERNAME", apikey="YOUR_APIKEY")
-
-# Instantiate QaaSBackend
-client = SpeQtrum()
-
-# Execute a pre-built circuit (see Digital Quantum Circuits section)
-# make sure to select the device (you can list available devices using ``client.list_devices()``)
-job_id = client.submit(Sampling(circuit, 1000), device="SELECTED_DEVICE")
-print("job id:", job_id)
-print("job status:", client.get_job(job_id).status)
-print("job result:", client.get_job(job_id).result)
-```
-
-### Sample a quantum Circuit Using a CUDA-Accelerated Simulator
-
-For users with NVIDIA GPUs, the `CudaBackend` provides GPU-accelerated simulation using several simulation methods. For example, using the TENSOR_NETWORK method:
-
-```python
-from qilisdk.backends import CudaBackend, CudaSamplingMethod
-from qilisdk.digital import Circuit, H, M
-from qilisdk.functionals import Sampling
-
-# Build a single-qubit circuit
-circuit = Circuit(nqubits=1)
-circuit.add(H(0))
-circuit.add(M(0))
-
-# Initialize CudaBackend with the TENSOR_NETWORK simulation method
-backend = CudaBackend(sampling_method=CudaSamplingMethod.TENSOR_NETWORK)
-results = backend.execute(Sampling(circuit))
-print("CUDA Backend Results:", results)
-```
-
-### Time Evolution using Qutip
-
-For analog simulations, the `TimeEvolution` and unified `Schedule` classes allow you to simulate time-dependent quantum dynamics. The following example uses callable coefficients defined over an interval to interpolate between two Hamiltonians on a Qutip backend:
-
-```python
-from qilisdk.analog import Schedule, X, Z, Y
-from qilisdk.core import ket, tensor_prod
-from qilisdk.backends import QutipBackend
-from qilisdk.functionals import TimeEvolution
-
-# Define total time and timestep
-T = 100.0
-dt = 0.1
-nqubits = 1
-
-# Define Hamiltonians
-Hx = sum(X(i) for i in range(nqubits))
-Hz = sum(Z(i) for i in range(nqubits))
-
-# Build a time‑dependent schedule
 schedule = Schedule(
-    hamiltonians={"hx": Hx, "hz": Hz},
+    hamiltonians={"driver": initial_hamiltonian, "problem": final_hamiltonian},
     coefficients={
-        "hx": {(0.0, T): lambda t: 1 - t / T},
-        "hz": {(0.0, T): lambda t: t / T},
+        "driver": {(0.0, 10.0): lambda t: 1 - t / 10.0},
+        "problem": {(0.0, 10.0): lambda t: t / 10.0},
     },
-    dt=dt,
+    dt=0.5,
+    interpolation=Interpolation.LINEAR,
 )
-
-# draw the schedule
-schedule.draw()
-
-# Prepare an equal superposition initial state
-initial_state = tensor_prod([(ket(0) - ket(1)).unit() for _ in range(nqubits)]).unit()
-
-# Create the TimeEvolution functional
-time_evolution = TimeEvolution(
-    schedule=schedule,
-    initial_state=initial_state,
-    observables=[Z(0), X(0), Y(0)],
-    nshots=100,
-    store_intermediate_results=False,
-)
-
-# Execute on Qutip backend and inspect results
-backend = QutipBackend()
-results = backend.execute(time_evolution)
-print(results)
 ```
 
-### Variational Programs
-
-The `VariationalProgram` allows the user to optimized parameterized functionals, including `Sampling` and `TimeEvolution`.
-
-
-Here you find an example of building a Variational Quantum Eigensolver (VQE). To do this we need a circuit ansatz, cost function to optimize, and classical optimizer. Below is an illustrative example that sets up a VQE instance using a hardware-efficient ansatz and the SciPy optimizer:
-
-```python
-from qilisdk.digital.gates import U2, CNOT
-from qilisdk.optimizers import SciPyOptimizer
-from qilisdk.core.model import Model
-from qilisdk.core.variables import LEQ, BinaryVariable
-from qilisdk.digital.ansatz import HardwareEfficientAnsatz
-from qilisdk.functionals import VariationalProgram, Sampling
-from qilisdk.backends import CudaBackend
-from qilisdk.cost_functions import ModelCostFunction
-
-
-## Define the model
-
-model = Model("Knapsack")
-
-values = [2, 3, 7]
-weights = [1, 3, 3]
-max_weight = 4
-b = [BinaryVariable(f"b{i}") for i in range(len(values))]
-
-obj = sum(b[i] * values[i] for i in range(len(values)))
-model.set_objective(obj, "obj")
-
-con = LEQ(sum(b[i] * weights[i] for i in range(len(weights))), max_weight)
-
-model.add_constraint("max_weight", con)
-
-## Define the Ansatz:
-nqubits = 3
-ansatz = HardwareEfficientAnsatz(
-    nqubits=nqubits, layers=2, connectivity="Linear", structure="grouped", one_qubit_gate=U2, two_qubit_gate=CNOT
-)
-
-## Define the Optimizer
-optimizer = SciPyOptimizer(method="Powell")
-
-## Build the VQE object
-vqe = VariationalProgram(
-    functional=Sampling(ansatz),
-    optimizer=optimizer,
-    cost_function=ModelCostFunction(model),
-)
-
-## Define the Backend 
-backend = CudaBackend()
-
-## Execute the VQE to find the optimal parameters
-result = backend.execute(vqe)
-
-## Sample the circuit using the optimal parameters
-ansatz.set_parameter_values(result.optimal_parameters)
-results = backend.execute(Sampling(ansatz))
-
-## Print the probabilities
-print(results.get_probabilities())
-```
-
-### Open QASM Serialization
-
-Serialize and deserialize quantum circuits using Open QASM 2.0 grammar. The utility functions below allow conversion to a QASM string or file and vice versa:
-
-```python
-from qilisdk.digital import Circuit, CNOT, RX, H, M
-from qilisdk.utils.openqasm2 import to_qasm2, from_qasm2, to_qasm2_file, from_qasm2_file
-
-# Create a sample circuit
-circuit = Circuit(3)
-circuit.add(H(0))
-circuit.add(CNOT(0, 1))
-circuit.add(RX(2, theta=3.1415))
-circuit.add(M(0, 1, 2))
-
-print("Initial Circuit:")
-circuit.draw()
-# Serialize to QASM string
-qasm_code = to_qasm2(circuit)
-print("Generated QASM:")
-print(qasm_code)
-
-# Deserialize back to a circuit
-reconstructed_circuit = from_qasm2(qasm_code)
-
-# Save to and load from a file
-to_qasm2_file(circuit, "circuit.qasm")
-reconstructed_circuit = from_qasm2_file("circuit.qasm")
-print()
-print("Reconstructed Circuit:")
-reconstructed_circuit.draw()
-
-
-```
-
-### YAML Serialization
-
-Easily save and restore circuits, Hamiltonians, simulation and execution results, and virtually any other class in YAML format using the provided serialization functions:
-
-```python
-from qilisdk.digital import Circuit, H, CNOT, M
-from qilisdk.utils.serialization import serialize, deserialize, serialize_to, deserialize_from
-
-circuit = Circuit(2)
-circuit.add(H(0))
-circuit.add(CNOT(0, 1))
-circuit.add(M(0, 1))
-
-print("Initial Circuit:")
-circuit.draw()
-
-# Serialize a circuit to a YAML string
-yaml_string = serialize(circuit)
-
-# Deserialize back into a Circuit object
-restored_circuit = deserialize(yaml_string, cls=Circuit)
-
-# Alternatively, work with files:
-serialize_to(circuit, "circuit.yml")
-restored_circuit = deserialize_from("circuit.yml", cls=Circuit)
-print()
-print("Reconstructed Circuit:")
-restored_circuit.draw()
-```
-
-### OpenFermion Integration
-
-`QiliSDK` can translate ``QubitOperator`` objects from ``OpenFermion`` to ``QiliSDK``'s ``Hamiltonian`` Objects and vice versa.
-
-This code is available under an optional dependency that can be installed using ``pip install qilisdk[openfermion]``.
-
-here is an example of the usage: 
-```python
-from openfermion.hamiltonians import jellium_model
-from openfermion.transforms import fourier_transform, jordan_wigner
-from openfermion.utils import Grid
-
-from qilisdk.utils.openfermion import openfermion_to_qilisdk, qilisdk_to_openfermion
-
-# Let's look at a very small model of jellium in 1D.
-grid = Grid(dimensions=1, length=3, scale=1.0)
-spinless = True
-
-# Get the momentum Hamiltonian.
-momentum_hamiltonian = jellium_model(grid, spinless)
-momentum_qubit_operator = jordan_wigner(momentum_hamiltonian)
-momentum_qubit_operator.compress()
-
-# Fourier transform the Hamiltonian to the position basis.
-position_hamiltonian = fourier_transform(momentum_hamiltonian, grid, spinless)
-position_qubit_operator = jordan_wigner(position_hamiltonian)
-position_qubit_operator.compress()
-
-qilisdk_ham = openfermion_to_qilisdk(position_qubit_operator)
-openfermion_ham = qilisdk_to_openfermion(qilisdk_ham)
-
-```
-
-
-
-
----
-
-## Development
+## Development Guide
 
 This section covers how to set up a local development environment for qilisdk, run tests, enforce code style, manage dependencies, and contribute to the project. We use a number of tools to maintain code quality and consistency:
 
@@ -437,7 +71,6 @@ This section covers how to set up a local development environment for qilisdk, r
 
 - Python **3.10+** (we test against multiple versions, but 3.10 is the minimum for local dev).
 - [Git](https://git-scm.com/) for version control.
-- [uv](https://pypi.org/project/uv/) for dependency management.
 - A C++ compiler and CMake, which can be installed together on Ubuntu/Debian using:
   ```bash
   sudo apt install build-essential
@@ -587,13 +220,9 @@ We welcome contributions! Here’s the workflow:
 
 Our CI will run tests, linting, and type checks. Please make sure your branch passes these checks before requesting a review.
 
----
-
 ## License
 
 This project is licensed under the [Apache License](LICENSE).
-
----
 
 ## Acknowledgments
 
@@ -603,4 +232,4 @@ This project is licensed under the [Apache License](LICENSE).
 
 ---
 
-Feel free to open [issues](https://github.com/qilimanjaro-tech/qilisdk/issues) or [pull requests](https://github.com/qilimanjaro-tech/qilisdk/pulls) if you have questions or contributions. Happy coding!
+Feel free to open [issues](https://github.com/qilimanjaro-tech/qilisdk/issues) or [pull requests](https://github.com/qilimanjaro-tech/qilisdk/pulls) if you have questions or contributions. Happy quantum coding!

@@ -27,13 +27,14 @@ and thus end up in the ground state of the final Hamiltonian, which corresponds
 to the optimal solution of our problem.
 
 Assuming we have reformulated our problem into a QUBO, we can construct the problem Hamiltonian for quantum annealing,
-which is given by:
+which is in the form:
 
 .. math:: 
 
     H_{prob} = \sum_{i,j} c_{ij} Z(i) Z(j)
 
 Where :math:`Z(i)` is the Pauli-Z operator acting on qubit :math:`i`, and :math:`c_{ij}` are the coefficients from our QUBO formulation.
+Note that these variables :math:`Z(i)` are related to the binary variables in our original problem by the transformation :math:`x_i = (1 - Z(i))/2`,
 
 Our mixing Hamiltonian is typically chosen to be the transverse field Hamiltonian, which is given by:
 
@@ -57,25 +58,9 @@ The Implementation
 
 To simulate the evolution of this time-dependent Hamiltonian, first we need to form our problem:
 
-.. code-block:: python
-
-    from qilisdk.core.model import QUBO, ObjectiveSense
-    from qilisdk.core.variables import BinaryVariable, EQ
-
-    num_people = 4
-    vars = [BinaryVariable(f"x{i}") for i in range(num_people)]
-    preferences = [[0, 1, 3, 4],
-                  [1, 0, 5, 2],
-                  [3, 5, 0, 6],
-                  [4, 2, 6, 0]]
-    model = QUBO("team_formation_example")
-    team_1 = sum(preferences[i][j] * vars[i] * vars[j] for i in range(num_people) for j in range(i+1, num_people))
-    team_0 = sum(preferences[i][j] * (1 - vars[i]) * (1 - vars[j]) for i in range(num_people) for j in range(i+1, num_people))
-    model.set_objective(team_0 + team_1, label="obj", sense=ObjectiveSense.MAXIMIZE)
-    model.add_constraint("team_size_constraint", EQ(sum(vars[i] for i in range(num_people)), 2), lagrange_multiplier=10)
+.. include:: ../../shared/team_building_model.rst
 
 Then we use the model to form our problem Hamiltonian, and we can also define our mixing Hamiltonian and the schedule for our evolution:
-
 
 .. code-block:: python
 
@@ -83,7 +68,7 @@ Then we use the model to form our problem Hamiltonian, and we can also define ou
     from qilisdk.analog import Schedule
     from qilisdk.core import QTensor
 
-    problem_hamiltonian = -model.to_hamiltonian()
+    problem_hamiltonian = model.to_hamiltonian()
     mixer_hamiltonian = sum(-1.0 * X(i) for i in range(num_people))
 
 We also need to define the schedule - how the coefficients of the problem and mixing Hamiltonians change over time:
@@ -97,14 +82,14 @@ We also need to define the schedule - how the coefficients of the problem and mi
                         "mixer": {(0, T): lambda t: 1 - t / T},
                         "problem": {(0, T): lambda t: t / T},
                     },
-                    dt=0.01,
+                    dt=0.1,
                 )
 
 We will start in the ground state of our mixing Hamiltonian, which is the equal superposition state over all possible team assignments:
 
 .. code-block:: python
 
-    initial_state = (QTensor.ket(1, 0, 0, 0) + QTensor.ket(0, 1, 0, 0) + QTensor.ket(0, 0, 1, 0) + QTensor.ket(0, 0, 0, 1)).normalized()
+    initial_state = QTensor.tensor_product([QTensor.ket(0) + QTensor.ket(1) for _ in range(num_people)]).normalized()  
 
 Finally, we initialize our quantum simulator, execute the evolution, and read out the results:
 
@@ -124,22 +109,22 @@ This will print something like the following:
 
 .. code-block:: none
 
-    samples={
-        '0000': 316,
-        '0100': 49,
-        '0110': 129,
-        '0111': 51,
-        '1000': 91,
-        '1001': 162,
-        '1011': 48,
-        '1110': 5,
-        '1111': 149
-    }
+    Functional Results: [
 
+        Sampling Results: (
+                nshots=1000,
+                samples={'0110': 513, '1001': 487}
+        )
 
-As you can see from these results, the most common samples are those which satisfy the constraint (i.e. have exactly two 1's), 
-and among those, the most common ones are those which have a high objective value. In this case there is some leakage into other
-states like 0000 and 1111, but this is expected since quantum annealing is a heuristic algorithm and does not always find the optimal solution.
+        Expectation Value Results: (
+                expectation_values=[8.999696720325046],
+        )
+
+    ]
+
+As you can see from these results, the samples satisfy the constraint (i.e. have exactly two 1's). 
+More specifically, the two samples "0110" and "1001" (corresponding to Alice/Dave on a team and Bob/Carol on the other team) are
+the optimal solutions to our problem, with 9 being the highest obtainable compatibility score.
 
 Further Reading
 --------------------

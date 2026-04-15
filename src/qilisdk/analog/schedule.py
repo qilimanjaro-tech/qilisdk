@@ -19,9 +19,9 @@ from typing import Callable, Iterator, Mapping, overload
 from numpy import linspace
 
 from qilisdk.analog.hamiltonian import Hamiltonian
-from qilisdk.core.interpolator import Interpolation, Interpolator, TimeDict
+from qilisdk.core.interpolator import PARAMETERIZED_NUMBER, Interpolation, Interpolator, TimeDict
 from qilisdk.core.parameterizable import Parameterizable
-from qilisdk.core.variables import PARAMETERIZED_NUMBER, BaseVariable, Domain, Parameter, Term
+from qilisdk.core.variables import BaseVariable, Domain, Parameter, Term
 from qilisdk.settings import get_settings
 from qilisdk.utils.visualization import ScheduleStyle
 from qilisdk.yaml import yaml
