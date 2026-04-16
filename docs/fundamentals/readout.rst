@@ -237,8 +237,9 @@ Intermediate results
 --------------------
 
 When a functional is constructed with ``store_intermediate_results=True`` (currently supported by
-:class:`~qilisdk.functionals.AnalogEvolution` and :class:`~qilisdk.functionals.QuantumReservoir`), the backend stores a 
-readout result for every time step.  The same readout methods apply at each step.
+:class:`~qilisdk.functionals.AnalogEvolution` and :class:`~qilisdk.functionals.QuantumReservoir`), or via 
+mid-circuit measurements in a :class:`~qilisdk.circuit.Circuit`,
+the backend stores a readout result for every time step.  The same readout methods apply at each step.
 
 .. code-block:: python
 
@@ -252,8 +253,10 @@ readout result for every time step.  The same readout methods apply at each step
     result = backend.execute(functional, readout=spec)
 
     # Per-step expectation values (intermediate steps + final step)
-    all_evs    = result.intermediate_expectation_values  # list[list[float]]
-    all_states = result.intermediate_states              # list[QTensor]
+    all_evs    = result.get_intermediate_expectation_values()  # list[list[float]]
+    all_states = result.get_intermediate_states()              # list[QTensor]
+    all_probs  = result.get_intermediate_probabilities()     # list[dict[str, float]]
+    all_samples = result.get_intermediate_samples()         # list[dict[str, int]]
 
 .. list-table::
    :header-rows: 1
@@ -262,16 +265,16 @@ readout result for every time step.  The same readout methods apply at each step
    * - Property
      - Type
      - Requires
-   * - ``result.intermediate_samples``
+   * - ``result.get_intermediate_samples()``
      - ``list[dict[str, int]]``
      - ``.with_sampling()``
-   * - ``result.intermediate_probabilities``
+   * - ``result.get_intermediate_probabilities()``
      - ``list[dict[str, float]]``
      - ``.with_sampling()`` or ``.with_state_tomography()``
-   * - ``result.intermediate_expectation_values``
+   * - ``result.get_intermediate_expectation_values()``
      - ``list[list[float]]``
      - ``.with_expectation()``
-   * - ``result.intermediate_states``
+   * - ``result.get_intermediate_states()``
      - ``list[QTensor]``
      - ``.with_state_tomography()``
 
@@ -327,7 +330,7 @@ state at every time step, then plots the observable trajectory.
     print("Final state:", result.state)
 
     # Time-resolved expectation values
-    ev_trajectory = [step[0] for step in result.intermediate_expectation_values]
+    ev_trajectory = [step[0] for step in result.get_intermediate_expectation_values()]
     plt.plot(np.linspace(0, T, len(ev_trajectory)), ev_trajectory)
     plt.xlabel("Time")
     plt.ylabel("⟨Z⟩")
