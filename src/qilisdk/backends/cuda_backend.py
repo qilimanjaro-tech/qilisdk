@@ -308,6 +308,8 @@ class CudaBackend(Backend):
                 ReadoutCompositeResults(
                     sampling=SamplingReadoutResult.from_samples(
                         samples=dict(cudaq_result.items()),
+                        qubits_to_measure=list(measured_qubits) if len(measured_qubits) > 0 else None,
+                        nqubits=functional.circuit.nqubits,
                     ),
                     expectation_values=None,
                     state_tomography=None,
@@ -324,13 +326,12 @@ class CudaBackend(Backend):
         if len(final_state.shape) == 1:
             final_state = final_state.reshape(-1, 1)
         final_state = QTensor((final_state))
-        if len(measured_qubits) > 0:
-            final_state = final_state.ptrace(list(measured_qubits))
 
         return FunctionalResult(
             readout_results=CudaBackend._construct_results_list(
                 final_state=final_state,
                 readout=readout,
+                qubits_to_measure=list(measured_qubits) if len(measured_qubits) > 0 else None,
             )
         )
 

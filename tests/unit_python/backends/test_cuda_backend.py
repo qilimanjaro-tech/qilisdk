@@ -296,7 +296,7 @@ def test_execute_adjoint_handler(mock_set_target, mock_sample, mock_make_kernel,
 
 
 @patch("cudaq.make_kernel", side_effect=dummy_make_kernel)
-@patch("cudaq.sample", return_value={"0": 1000})
+@patch("cudaq.sample", return_value={"00": 1000})
 @patch("cudaq.set_target")
 def test_execute_measurement_full(mock_set_target, mock_sample, mock_make_kernel):
     dummy_make_kernel.main_kernel = DummyKernel()
@@ -311,7 +311,7 @@ def test_execute_measurement_full(mock_set_target, mock_sample, mock_make_kernel
 
 
 @patch("cudaq.make_kernel", side_effect=dummy_make_kernel)
-@patch("cudaq.sample", return_value={"0": 1000})
+@patch("cudaq.sample", return_value={"00": 1000})
 @patch("cudaq.set_target")
 def test_execute_measurement_partial(mock_set_target, mock_sample, mock_make_kernel):
     dummy_make_kernel.main_kernel = DummyKernel()
@@ -323,6 +323,19 @@ def test_execute_measurement_partial(mock_set_target, mock_sample, mock_make_ker
     calls = dummy_make_kernel.main_kernel.calls
     assert ("mz", dummy_make_kernel.main_kernel.qubits[1]) in calls
     assert ("mz", dummy_make_kernel.main_kernel.qubits[2]) in calls
+
+
+@patch("cudaq.make_kernel", side_effect=dummy_make_kernel)
+@patch("cudaq.sample", return_value={"0": 1000})
+@patch("cudaq.set_target")
+def test_execute_measurement_partial_with_bad_samples_raises(mock_set_target, mock_sample, mock_make_kernel):
+    dummy_make_kernel.main_kernel = DummyKernel()
+    backend = CudaBackend()
+    circuit = Circuit(nqubits=3)
+    measurement_gate = M(1, 2)
+    circuit._gates.append(measurement_gate)
+    with pytest.raises(ValueError, match="filter samples for more qubits"):
+        backend.execute(DigitalPropagation(circuit), Readout().with_sampling(nshots=10))
 
 
 # --- Tests for unsupported gate errors ---
@@ -692,8 +705,8 @@ def test_time_evolution_keeps_statevector_outputs_as_columns(monkeypatch):
 
     assert res.get_state() is not None
     assert res.get_state().shape == (2, 1)
-    assert len(res.intermediate_states) == 3  # 2 intermediate + 1 final
-    assert all(s.shape == (2, 1) for s in res.intermediate_states)
+    assert len(res.get_intermediate_states()) == 2
+    assert all(s.shape == (2, 1) for s in res.get_intermediate_states())
 
 
 def test_time_evolution_preserves_density_matrix_shape(monkeypatch):
@@ -728,8 +741,8 @@ def test_time_evolution_preserves_density_matrix_shape(monkeypatch):
     assert res.get_state() is not None
     assert res.get_state().shape == (2, 2)
     assert not res.get_state().is_ket()
-    assert len(res.intermediate_states) == 2  # 1 intermediate + 1 final
-    assert all(s.shape == (2, 2) for s in res.intermediate_states)
+    assert len(res.get_intermediate_states()) == 1
+    assert all(s.shape == (2, 2) for s in res.get_intermediate_states())
 
 
 def test_get_cuda_hamiltonian_raises_with_empty_schedule():

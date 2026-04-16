@@ -15,7 +15,6 @@
 #include <iomanip>
 #include <random>
 #include <sstream>
-#include <iostream>
 
 #include "../../../libs/pybind.h"
 #include "../digital/circuit_optimizations.h"
@@ -268,8 +267,6 @@ void sampling_matrix_free(const std::vector<Gate>& gates,  int n_qubits, const S
         optimized_gates = combine_single_qubit_gates(optimized_gates);
     }
 
-    std::cout << 
-
     // Apply each gate
     for (int i = 0; i < int(optimized_gates.size()); ++i) {
         const auto& gate = optimized_gates[i];
@@ -281,30 +278,31 @@ void sampling_matrix_free(const std::vector<Gate>& gates,  int n_qubits, const S
         if (gate.get_name() == "M") {
 
             // Check for adjacent measurements and if we have any, do them all at once
+            int num_measurements = 0;
+            bool are_final_measurements = false;
             std::vector<bool> qubits_to_measure_after_gate(n_qubits, false);
-            for (int j = i; j >= 0; --j) {
+            for (int j = i; j < int(optimized_gates.size()); ++j) {
                 if (optimized_gates[j].get_name() == "M") {
                     for (int target : optimized_gates[j].get_target_qubits()) {
                         qubits_to_measure_after_gate[target] = true;
+                    }
+                    num_measurements++;
+                    if (j == int(optimized_gates.size()) - 1) {
+                        are_final_measurements = true;
                     }
                 } else {
                     break;
                 }
             }
 
-            std::cout << "Measuring qubits: ";
-            for (int q = 0; q < n_qubits; ++q) {
-                if (qubits_to_measure_after_gate[q]) {
-                    std::cout << q << " ";
-                }            }
-            std::cout << std::endl;
-
-            std::cout << "State before measurement: " << state.transpose() << std::endl;
-
             // Construct the result
-            py::object result = construct_result_object(state, readout, noise_model_cpp, n_qubits, config, qubits_to_measure_after_gate);
-            intermediate_results.push_back(result);
+            if (!are_final_measurements) {
+                py::object result = construct_result_object(state, readout, noise_model_cpp, n_qubits, config, qubits_to_measure_after_gate);
+                intermediate_results.push_back(result);
+            }
 
+            // Skip the next measurements since we did them all at once
+            i += (num_measurements - 1); 
             continue;
 
         }

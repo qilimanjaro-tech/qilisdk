@@ -92,6 +92,8 @@ std::map<std::string, int> filter_counts(const std::map<std::string, int>& count
         for (size_t q = 0; q < qubits_to_measure.size(); ++q) {
             if (qubits_to_measure[q]) {
                 filtered_bitstring += bitstring[q];
+            } else {
+                filtered_bitstring += '_';
             }
         }
         filtered_counts[filtered_bitstring] += count;

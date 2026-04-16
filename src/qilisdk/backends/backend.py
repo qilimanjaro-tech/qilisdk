@@ -233,7 +233,11 @@ class Backend(ABC):
 
     @classmethod
     def _construct_results_list(
-        cls, final_state: QTensor, readout: list[ReadoutMethod], seed: int | None = None
+        cls,
+        final_state: QTensor,
+        readout: list[ReadoutMethod],
+        seed: int | None = None,
+        qubits_to_measure: list[int] | None = None,
     ) -> ReadoutCompositeResults:
         sampling_result: SamplingReadoutResult | None = None
         expectation_result: ExpectationReadoutResult | None = None
@@ -244,7 +248,9 @@ class Backend(ABC):
                 if ro.method != "exact":
                     raise ValueError("State Tomography methods that are not exact are not supported yet.")
                 state_tomography_result: StateTomographyReadoutResult = StateTomographyReadoutResult.from_state(
-                    state=final_state
+                    state=final_state.partial_trace(set(qubits_to_measure))
+                    if qubits_to_measure is not None
+                    else final_state
                 )
             elif isinstance(ro, ExpectationReadout):
                 ro.expand_observables(nqubits=final_state.nqubits)
@@ -253,7 +259,7 @@ class Backend(ABC):
                 )
             elif isinstance(ro, SamplingReadout):
                 sampling_result: SamplingReadoutResult = SamplingReadoutResult.from_state(
-                    sampling_readout=ro, state=final_state
+                    sampling_readout=ro, state=final_state, qubits_to_measure=qubits_to_measure
                 )
             else:
                 raise ValueError(f"Unsupported Readout Method provided: {ro}")

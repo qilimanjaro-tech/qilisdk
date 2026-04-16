@@ -452,8 +452,8 @@ def test_measurement_gates(backend):
     result = backend.execute(DigitalPropagation(circuit=circuit), Readout().with_sampling(nshots=50))
     assert isinstance(result, FunctionalResult)
     samples = result.get_samples()
-    assert "1" in samples
-    assert samples["1"] == 50
+    assert "1_" in samples
+    assert samples["1_"] == 50
 
 
 @pytest.mark.parametrize("backend", backends_no_cuda)

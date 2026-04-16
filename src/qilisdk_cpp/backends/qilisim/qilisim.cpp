@@ -17,7 +17,6 @@
 #include <random>
 #include <cstdint>
 #include <sstream>
-#include <iostream>
 
 #include "qilisim.h"
 #include "../../libs/numpy.h"
@@ -79,15 +78,6 @@ py::object QiliSimCpp::execute_digital_propagation(const py::object& functional,
     NoiseModelCpp noise_model_cpp = parse_noise_model(noise_model, n_qubits, config.get_atol());
     std::vector<Gate> gates = parse_gates(functional.attr("circuit"), config.get_atol(), noise_model);
 
-    // output qubits to measure TODO(luke): remove
-    std::cout << "Measuring final qubits: ";
-    for (size_t i = 0; i < final_qubits_to_measure.size(); ++i) {
-        if (final_qubits_to_measure[i]) {
-            std::cout << i << " ";
-        }
-    }
-    std::cout << std::endl;
-
     // If we have any exponential gates, we need to force renormalization
     for (const auto& gate : gates) {
         if (!gate.is_normalized()) {
@@ -115,10 +105,10 @@ py::object QiliSimCpp::execute_digital_propagation(const py::object& functional,
         sampling(gates, n_qubits, initial_state_cpp, noise_model_cpp, state_dense, intermediate_results, config, readout);
     }
 
-    // Construct the result object
+    // Construct the final result object
     py::object result = construct_result_object(state_dense, readout, noise_model_cpp, n_qubits, config, final_qubits_to_measure);
 
-    // If we have intermediate states, construct intermediate results as well
+    // If we have intermediate results, return them as well
     if (intermediate_results.size() > 0) {
         py::list intermediate_results_py;
         for (size_t i = 0; i < intermediate_results.size(); ++i) {

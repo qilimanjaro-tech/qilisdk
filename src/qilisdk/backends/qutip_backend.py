@@ -125,6 +125,9 @@ class QutipBackend(Backend):
         Returns:
             FunctionalResult: The execution result containing the
                 requested readout data.
+
+        Raises:
+            ValueError: If the circuit contains mid-circuit measurements.
         """
         logger.info("Executing Sampling")
 
@@ -132,6 +135,17 @@ class QutipBackend(Backend):
 
         measurements_set = {q for g in functional.circuit.gates if isinstance(g, M) for q in g.qubits}
         measurements = sorted(measurements_set)
+
+        # Check for mid-circuit measurements
+        for i in range(len(functional.circuit.gates)):
+            gate = functional.circuit.gates[i]
+            if isinstance(gate, M):
+                # If there are gates after this measurement that act on the same qubits, we have mid-circuit measurements
+                for later_gate in functional.circuit.gates[i + 1 :]:
+                    if not isinstance(later_gate, M):
+                        raise ValueError(
+                            "Mid-circuit measurements are not supported in the QutipBackend. All measurements must be at the end of the circuit."
+                        )
 
         transpiled_circuit = DecomposeMultiControlledGatesPass().run(functional.circuit)
         qutip_circuit = self._get_qutip_circuit(transpiled_circuit)
@@ -143,7 +157,7 @@ class QutipBackend(Backend):
         if len(measurements) > 0 and len(measurements) != functional.circuit.nqubits:
             return FunctionalResult(
                 readout_results=QutipBackend._construct_results_list(
-                    final_state=final_state.ptrace(measurements), readout=readout
+                    final_state=final_state, readout=readout, qubits_to_measure=measurements
                 )
             )
         return FunctionalResult(

@@ -36,7 +36,7 @@ std::vector<Gate> combine_single_qubit_gates(const std::vector<Gate>& gates) {
         already_used[i] = true;
 
         // Find a single-qubit gate
-        if (gate.get_qubits().size() == 1) {
+        if (gate.get_qubits().size() == 1 && gate.get_name() != "M") {
             // Start with the current gate
             int qubit = gate.get_qubits()[0];
             std::vector<Gate> gates_to_combine = {gate};

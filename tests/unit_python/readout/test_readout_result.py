@@ -356,7 +356,7 @@ class TestFunctionalResult:
         inter1 = _make_tomography_composite(ket(1))
         inter2 = _make_tomography_composite((ket(0) + ket(1)).unit())
         result = FunctionalResult(readout_results=final, intermediate_results=[inter1, inter2])
-        assert len(result.intermediate_states) == 3  # 2 intermediate + 1 final
+        assert len(result.get_intermediate_states()) == 2
         assert len(result.intermediate_results) == 2
 
     def test_states_no_intermediate_raises(self):
@@ -364,13 +364,13 @@ class TestFunctionalResult:
         with pytest.raises(
             ValueError, match=r"Can't find intermediate states because intermediate Results were not stored."
         ):
-            _ = result.intermediate_states
+            _ = result.get_intermediate_states()
 
     def test_samples_intermediate(self):
         final = _make_sampling_composite(10, {"0": 10})
         inter = _make_sampling_composite(10, {"1": 10})
         result = FunctionalResult(readout_results=final, intermediate_results=[inter])
-        assert len(result.intermediate_samples) == 2
+        assert len(result.get_intermediate_samples()) == 1
 
     def test_len_no_intermediate(self):
         result = FunctionalResult(readout_results=_make_sampling_composite(10, {"0": 10}))
@@ -395,39 +395,37 @@ class TestFunctionalResult:
         final = _make_tomography_composite(ket(0))
         inter = _make_tomography_composite(ket(1))
         result = FunctionalResult(readout_results=final, intermediate_results=[inter])
-        probs = result.intermediate_probabilities
-        assert len(probs) == 2
+        probs = result.get_intermediate_probabilities()
+        assert len(probs) == 1
         assert np.isclose(probs[0]["1"], 1.0)
-        assert np.isclose(probs[1]["0"], 1.0)
 
     def test_intermediate_probabilities_no_intermediate_raises(self):
         result = FunctionalResult(readout_results=_make_tomography_composite(ket(0)))
         with pytest.raises(ValueError, match="intermediate probabilities"):
-            _ = result.intermediate_probabilities
+            _ = result.get_intermediate_probabilities()
 
     def test_intermediate_expectation_values(self):
         final = _make_expectation_composite([1.0])
         inter = _make_expectation_composite([-1.0])
         result = FunctionalResult(readout_results=final, intermediate_results=[inter])
-        vals = result.intermediate_expectation_values
-        assert len(vals) == 2
+        vals = result.get_intermediate_expectation_values()
+        assert len(vals) == 1
         assert np.isclose(vals[0][0], -1.0)
-        assert np.isclose(vals[1][0], 1.0)
 
     def test_intermediate_expectation_values_no_intermediate_raises(self):
         result = FunctionalResult(readout_results=_make_expectation_composite([1.0]))
         with pytest.raises(ValueError, match="intermediate expectation values"):
-            _ = result.intermediate_expectation_values
+            _ = result.get_intermediate_expectation_values()
 
     def test_intermediate_expectation_values_no_readout_returns_empty(self):
         cr = _make_sampling_composite(10, {"0": 10})
         result = FunctionalResult(readout_results=cr, intermediate_results=[cr])
-        assert result.intermediate_expectation_values == []
+        assert result.get_intermediate_expectation_values() == []
 
     def test_intermediate_samples_no_readout_returns_empty(self):
         cr = _make_tomography_composite(ket(0))
         result = FunctionalResult(readout_results=cr, intermediate_results=[cr])
-        assert result.intermediate_samples == []
+        assert result.get_intermediate_samples() == []
 
     def test_getitem_returns_intermediate(self):
         final = _make_sampling_composite(10, {"0": 10})

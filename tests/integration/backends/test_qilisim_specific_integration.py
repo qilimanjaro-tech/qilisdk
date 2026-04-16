@@ -24,7 +24,7 @@ from qilisdk.analog.schedule import Schedule
 from qilisdk.backends.backend_config import AnalogMethod, DigitalMethod, ExecutionConfig, MonteCarloConfig
 from qilisdk.backends.qilisim import QiliSim
 from qilisdk.core.qtensor import ket
-from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, H, X, Y, Z
+from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, H, M, X, Y, Z
 from qilisdk.functionals import AnalogEvolution, DigitalPropagation, FunctionalResult
 from qilisdk.readout import Readout, SamplingReadout
 
@@ -241,3 +241,19 @@ def test_matrix_free_time_evolution_versus_normal():
         AnalogEvolution(schedule=schedule, initial_state=psi0), readout=readout
     )
     assert np.isclose(res_normal.get_expectation_values()[0], res_matrix_free.get_expectation_values()[0], rtol=0.01)
+
+
+def test_mid_circuit_samples():
+    backend = QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1))
+    c = Circuit(2)
+    c.add(X(0))
+    c.add(M(0))
+    c.add(X(0))
+    c.add(M(0))
+    result = backend.execute(DigitalPropagation(circuit=c), Readout().with_sampling(nshots=50))
+    assert isinstance(result, FunctionalResult)
+    samples = result.get_samples()
+    assert "0_" in samples
+    assert samples["0_"] == 50
+    inter = result.get_intermediate_samples()
+    assert len(inter) == 1

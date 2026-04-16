@@ -18,7 +18,7 @@ import heapq
 import operator
 from dataclasses import dataclass
 from pprint import pformat
-from typing import TYPE_CHECKING, Generic, Protocol, Self, TypeGuard, TypeVar
+from typing import TYPE_CHECKING, Generic, Protocol, Self, TypeGuard, TypeVar, cast
 
 import numpy as np
 from loguru import logger
@@ -100,21 +100,57 @@ class SamplingReadoutResult(ReadoutResult[SamplingReadout]):
             is provided.
     """
 
+    @staticmethod
+    def _filter_samples(
+        samples_to_filter: dict[str, int], qubits_to_measure: list[int], nqubits: int | None = None
+    ) -> dict[str, int]:
+        filtered_samples: dict[str, int] = {}
+        if len(samples_to_filter) >= 1:
+            nqubits_samples = len(next(iter(samples_to_filter.keys())))
+            nqubits_total = nqubits if nqubits is not None else nqubits_samples
+            # Assuming 3 qubits, if asked for 0 and 1 and we have xxx, return xx_
+            if nqubits_samples >= nqubits_total:
+                for bitstring, count in samples_to_filter.items():
+                    filtered_bitstring = "".join(
+                        "_" if i not in qubits_to_measure else bit for i, bit in enumerate(bitstring)
+                    )
+                    filtered_samples[filtered_bitstring] = filtered_samples.get(filtered_bitstring, 0) + count
+            # Assuming 3 qubits, if asked for 0 and 1 and we have xx, return xx_
+            elif nqubits_samples < nqubits_total:
+                for bitstring, count in samples_to_filter.items():
+                    bitstring_remaining = bitstring
+                    filtered_bitstring = ""
+                    for i in range(nqubits_total):
+                        if i in qubits_to_measure:
+                            filtered_bitstring += bitstring_remaining[0]
+                            bitstring_remaining = bitstring_remaining[1:]
+                        else:
+                            filtered_bitstring += "_"
+                    filtered_samples[filtered_bitstring] = filtered_samples.get(filtered_bitstring, 0) + count
+        return filtered_samples
+
     @classmethod
-    def from_samples(cls, samples: dict[str, int]) -> Self:
+    def from_samples(
+        cls, samples: dict[str, int], qubits_to_measure: list[int] | None = None, nqubits: int | None = None
+    ) -> Self:
         if not samples:
             raise ValueError("can't initialize Sampling Results if samples are not provided.")
 
         nshots = sum(samples.values())
         bitstrings = list(samples.keys())
-        nqubits = len(bitstrings[0])
-        if not all(len(bitstring) == nqubits for bitstring in bitstrings):
+        nqubits_samples = len(bitstrings[0])
+        nqubits_total = nqubits if nqubits is not None else nqubits_samples
+        if not all(len(bitstring) == nqubits_samples for bitstring in bitstrings):
             raise ValueError("Not all bitstring keys have the same length.")
+        if qubits_to_measure and len(qubits_to_measure) > nqubits_samples:
+            raise ValueError("Can't filter samples for more qubits than are present in the bitstrings.")
 
         # Calculate probabilities
         probabilities: dict[str, float] = {
             bitstring: (counts / nshots if nshots and nshots > 0 else 0.0) for bitstring, counts in samples.items()
         }
+        if qubits_to_measure is not None:
+            samples = cls._filter_samples(samples, qubits_to_measure, nqubits_total)
         return cls(samples=samples, probabilities=probabilities)
 
     @classmethod
@@ -122,10 +158,13 @@ class SamplingReadoutResult(ReadoutResult[SamplingReadout]):
         cls,
         sampling_readout: SamplingReadout,
         state: QTensor,
+        qubits_to_measure: list[int] | None = None,
     ) -> Self:
         f_string = "{:0" + str(state.nqubits) + "b}"
         probabilities: dict[str, float] = {(f_string).format(i): p for i, p in enumerate(state.probabilities())}
         samples: dict[str, int] = _samples_from_probabilities(probabilities, nshots=sampling_readout.nshots)
+        if qubits_to_measure is not None:
+            samples = cls._filter_samples(samples, qubits_to_measure)
         return cls(samples=samples, probabilities=probabilities)
 
     def __init__(self, samples: dict[str, int], probabilities: dict[str, float] | None = None) -> None:
@@ -438,6 +477,64 @@ class ReadoutCompositeResults(Result, Generic[S, E, T]):
             raise TypeError("state_tomography must be StateTomographyReadoutResult or None")
 
         return cls(sampling=sampling, expectation_values=expectation_values, state_tomography=state_tomography)
+
+    def get_samples(self) -> dict[str, int]:
+        """Return the sampling results as a bitstring-to-count mapping.
+
+        Returns:
+            dict[str, int]: Mapping of measured bitstring to count.
+
+        Raises:
+            ValueError: If no sampling results are present.
+        """
+        if self.sampling is not None:
+            return self.sampling.samples
+        raise ValueError("Can't find samples because no SamplingReadoutResult is present in this composite.")
+
+    def get_probabilities(self) -> dict[str, float]:
+        """Return the probability distribution as a bitstring-to-probability mapping.
+
+        Returns:
+            dict[str, float]: Mapping of bitstring to probability.
+
+        Raises:
+            ValueError: If no sampling or state-tomography results are present.
+        """
+        if self.sampling is not None:
+            return self.sampling.probabilities
+        if self.state_tomography is not None:
+            return self.state_tomography.probabilities
+        raise ValueError(
+            "Can't find probabilities because neither SamplingReadoutResult nor StateTomographyReadoutResult is present in this composite."
+        )
+
+    def get_expectation_values(self) -> list[float]:
+        """Return the expectation values as a list of numbers.
+
+        Returns:
+            list[float]: Expectation values, one per observable, in the same order as specified in the readout.
+
+        Raises:
+            ValueError: If no expectation-value results are present.
+        """
+        if self.expectation_values is not None and hasattr(self.expectation_values, "values"):
+            return cast("list[float]", self.expectation_values.values)
+        raise ValueError(
+            "Can't find expectation values because no ExpectationReadoutResult is present in this composite."
+        )
+
+    def get_state(self) -> QTensor:
+        """Return the reconstructed quantum state.
+
+        Returns:
+            QTensor: The reconstructed quantum state (ket or density matrix).
+
+        Raises:
+            ValueError: If no state-tomography results are present.
+        """
+        if self.state_tomography is not None:
+            return self.state_tomography.state
+        raise ValueError("Can't find the state because no StateTomographyReadoutResult is present in this composite.")
 
     def __repr__(self) -> str:
         out = ""
