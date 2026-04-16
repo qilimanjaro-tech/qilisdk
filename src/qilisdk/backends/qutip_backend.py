@@ -140,7 +140,6 @@ class QutipBackend(Backend):
         for i in range(len(functional.circuit.gates)):
             gate = functional.circuit.gates[i]
             if isinstance(gate, M):
-                # If there are gates after this measurement that act on the same qubits, we have mid-circuit measurements
                 for later_gate in functional.circuit.gates[i + 1 :]:
                     if not isinstance(later_gate, M):
                         raise ValueError(

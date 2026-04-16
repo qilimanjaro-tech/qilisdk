@@ -194,7 +194,10 @@ class SamplingReadoutResult(ReadoutResult[SamplingReadout]):
             SamplingReadoutResult: The constructed result object.
 
         Raises:
-            ValueError: If ``qubits_to_measure`` is provided but the input samples are not compatible with filtering (e.g. if the bitstrings in ``samples`` have different lengths, or if they include bits for unmeasured qubits but ``nqubits`` is not provided).
+            ValueError: If samples are not provided.
+            ValueError: If not all bitstring keys have the same length.
+            ValueError: If qubits_to_measure is provided and has more qubits than are present in the bitstrings.
+
         """
         if not samples:
             raise ValueError("can't initialize Sampling Results if samples are not provided.")

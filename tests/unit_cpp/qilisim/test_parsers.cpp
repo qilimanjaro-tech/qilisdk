@@ -1175,7 +1175,8 @@ TEST(ParseGates, BasicGate) {
             control_qubits = []
             target_qubits = [0]
             is_parameterized = False
-            def _generate_matrix(self):
+            @property
+            def matrix(self):
                 s = 1 / np.sqrt(2)
                 return np.array([[s, s], [s, -s]], dtype=complex)
             def get_parameters(self):
@@ -1198,7 +1199,7 @@ TEST(ParseGates, BasicGate) {
     EXPECT_EQ(result[0].get_target_qubits()[0], 0);
 }
 
-TEST(ParseGates, MeasurementGateIsSkipped) {
+TEST(ParseGates, MeasurementGateIsNotSkipped) {
     py::gil_scoped_acquire gil;
     py::exec(R"(
         import numpy as np
@@ -1208,7 +1209,9 @@ TEST(ParseGates, MeasurementGateIsSkipped) {
             target_qubits = [0]
             control_qubits = []
             is_parameterized = False
-            def _generate_matrix(self): return np.eye(2, dtype=complex)
+            @property
+            def matrix(self): 
+                return np.eye(2, dtype=complex)
             def get_parameters(self): return {}
 
         class FakeCircuitMGate:
@@ -1221,7 +1224,7 @@ TEST(ParseGates, MeasurementGateIsSkipped) {
     py::object fake_circuit = py::globals()["fake_circuit_m_gate"];
     auto result = parse_gates(fake_circuit, 1e-10, py::none());
 
-    EXPECT_TRUE(result.empty());
+    EXPECT_FALSE(result.empty());
 }
 
 TEST(ParseGates, ParameterizedGate) {
@@ -1235,7 +1238,8 @@ TEST(ParseGates, ParameterizedGate) {
             target_qubits = [0]
             is_parameterized = True
             _theta = 0.5
-            def _generate_matrix(self):
+            @property
+            def matrix(self):
                 return np.array([
                     [np.exp(-1j * self._theta / 2), 0],
                     [0, np.exp(1j * self._theta / 2)]
@@ -1272,7 +1276,8 @@ TEST(ParseGates, ControlledGate) {
             control_qubits = [0]
             target_qubits = [1]
             is_parameterized = False
-            def _generate_matrix(self):
+            @property
+            def matrix(self):
                 return np.array([[1,0,0,0],[0,1,0,0],[0,0,0,1],[0,0,1,0]], dtype=complex)
             def get_parameters(self): return {}
 
@@ -1305,7 +1310,8 @@ TEST(ParseGates, ControlledYGate) {
             control_qubits = [0]
             target_qubits = [1]
             is_parameterized = False
-            def _generate_matrix(self):
+            @property
+            def matrix(self):
                 return np.array([[1,0,0,0],[0,1,0,0],[0,0,0,-1j],[0,0,1j,0]], dtype=complex)
             def get_parameters(self): return {}
 
@@ -1337,7 +1343,8 @@ TEST(ParseGates, ControlledZGate) {
             control_qubits = [0]
             target_qubits = [1]
             is_parameterized = False
-            def _generate_matrix(self):
+            @property
+            def matrix(self):
                 return np.array([[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,-1]], dtype=complex)
             def get_parameters(self): return {}
 
@@ -1389,7 +1396,8 @@ TEST(ParseGates, ParameterPerturbationAppliedGlobalNoise) {
             target_qubits = [0]
             is_parameterized = True
             _theta = 0.5
-            def _generate_matrix(self):
+            @property
+            def matrix(self):
                 return np.eye(2, dtype=complex)
             def get_parameters(self):
                 return {'theta': self._theta}
@@ -1431,7 +1439,8 @@ TEST(ParseGates, ParameterPerturbationAppliedPerGate) {
             target_qubits = [0]
             is_parameterized = True
             _theta = 0.25
-            def _generate_matrix(self):
+            @property
+            def matrix(self):
                 return np.eye(2, dtype=complex)
             def get_parameters(self):
                 return {'theta': self._theta}

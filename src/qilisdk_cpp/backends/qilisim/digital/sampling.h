@@ -17,13 +17,14 @@
 #include <string>
 #include <vector>
 #include "../../../libs/eigen.h"
+#include "../../../libs/pybind.h"
 #include "../config/qilisim_config.h"
 #include "../digital/gate.h"
 #include "../noise/noise_model.h"
 #include "../representations/matrix_free_operator.h"
 
 // Helper functions for sampling.cpp
-void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrix& initial_state, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, std::vector<py::object>& intermediate_states, const QiliSimConfig& config, const py::object& readout);
-void sampling_matrix_free(const std::vector<Gate>& gates,  int n_qubits, const SparseMatrix& initial_state, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, std::vector<py::object>& intermediate_states, const QiliSimConfig& config, const py::object& readout);
+void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrix& initial_state, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, std::vector<py::object>& intermediate_results, const QiliSimConfig& config, const py::object& readout);
+void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const SparseMatrix& initial_state, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, std::vector<py::object>& intermediate_results, const QiliSimConfig& config, const py::object& readout);
 
 // GCOV_EXCL_BR_STOP

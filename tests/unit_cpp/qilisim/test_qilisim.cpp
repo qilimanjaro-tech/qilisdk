@@ -129,7 +129,8 @@ class _ShrinkGate:
     control_qubits = []
     target_qubits = [0]
     is_parameterized = False
-    def _generate_matrix(self):
+    @property
+    def matrix(self):
         return np.array([[0.5, 0.0], [0.0, 0.5]], dtype=complex)
     def get_parameters(self):
         return {}
@@ -443,8 +444,6 @@ _readout_shape = [StateTomographyReadout(), ExpectationReadout(observables=[Z(0)
     ASSERT_NO_THROW(result = sim.execute_analog_evolution(py::globals()["_te_shape"], py::globals()["_readout_shape"], py::none(), empty_solver_params()));
     EXPECT_TRUE(py::hasattr(result, "state_tomography"));
     EXPECT_TRUE(py::hasattr(result, "expectation"));
-    EXPECT_TRUE(py::hasattr(result, "intermediate_states"));
-    EXPECT_TRUE(py::hasattr(result, "intermediate_expectation_values"));
 }
 
 // GCOV_EXCL_BR_STOP

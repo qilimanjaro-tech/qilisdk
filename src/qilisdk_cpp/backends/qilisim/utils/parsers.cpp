@@ -13,11 +13,11 @@
 // limitations under the License.
 
 #include "parsers.h"
-#include "sample.h"
 #include "../../../libs/numpy.h"
 #include "../digital/gate.h"
 #include "../representations/matrix_free_hamiltonian.h"
 #include "../utils/matrix_utils.h"
+#include "sample.h"
 
 // GCOV_EXCL_BR_START
 
@@ -41,7 +41,7 @@ py::object construct_result_object(const DenseMatrix& state_dense, const py::obj
     */
     py::list results;
     py::array final_state_numpy = to_numpy(state_dense);
-    
+
     for (py::handle ro_handle : readout) {
         py::object ro = py::reinterpret_borrow<py::object>(ro_handle);
 
@@ -50,15 +50,10 @@ py::object construct_result_object(const DenseMatrix& state_dense, const py::obj
             if (method != "exact") {
                 throw py::value_error("State Tomography methods that are not exact are not supported yet.");
             }
-            results.append(StateTomographyReadoutResult(
-                "state"_a = QTensor(final_state_numpy)
-            ));
+            results.append(StateTomographyReadoutResult("state"_a = QTensor(final_state_numpy)));
 
         } else if (py::isinstance(ro, ExpectationReadout)) {
-            results.append(ExpectationReadoutResult.attr("from_state")(
-                "expectation_readout"_a     = py::module_::import("copy").attr("copy")(ro),
-                "state"_a = QTensor(final_state_numpy)
-            ));
+            results.append(ExpectationReadoutResult.attr("from_state")("expectation_readout"_a = py::module_::import("copy").attr("copy")(ro), "state"_a = QTensor(final_state_numpy)));
 
         } else if (py::isinstance(ro, SamplingReadout)) {
             int n_shots = ro.attr("nshots").cast<int>();
@@ -67,9 +62,7 @@ py::object construct_result_object(const DenseMatrix& state_dense, const py::obj
             for (const auto& pair : counts) {
                 samples[py::cast(pair.first)] = py::cast(pair.second);
             }
-            results.append(SamplingReadoutResult.attr("from_samples")(
-                "samples"_a  = samples
-            ));
+            results.append(SamplingReadoutResult.attr("from_samples")("samples"_a = samples));
 
         } else {
             std::string ro_repr = py::repr(ro).cast<std::string>();
@@ -78,7 +71,6 @@ py::object construct_result_object(const DenseMatrix& state_dense, const py::obj
     }
 
     return ReadoutCompositeResults.attr("from_list")(results);
-
 }
 
 std::vector<MatrixFreeHamiltonian> parse_hamiltonians_matrix_free(const py::object& Hs) {

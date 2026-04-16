@@ -20,8 +20,8 @@
 #include "../digital/circuit_optimizations.h"
 #include "../noise/noise_model.h"
 #include "../utils/matrix_utils.h"
-#include "../utils/random.h"
 #include "../utils/parsers.h"
+#include "../utils/random.h"
 #include "sampling.h"
 
 #if defined(_OPENMP)
@@ -30,6 +30,7 @@
 
 // GCOV_EXCL_BR_START
 
+#pragma GCC visibility push(default)
 
 void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrix& initial_state, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, std::vector<py::object>& intermediate_results, const QiliSimConfig& config, const py::object& readout) {
     /*
@@ -141,7 +142,40 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrix& 
     std::string gate_id = "";
     int gate_count = 0;
     bool gate_is_new = false;
-    for (const auto& gate : optimized_gates) {
+    for (int i = 0; i < int(optimized_gates.size()); ++i) {
+        const auto& gate = optimized_gates[i];
+
+        // If it's a measurement
+        if (gate.get_name() == "M") {
+            // Check for adjacent measurements and if we have any, do them all at once
+            int num_measurements = 0;
+            bool are_final_measurements = false;
+            std::vector<bool> qubits_to_measure_after_gate(n_qubits, false);
+            for (int j = i; j < int(optimized_gates.size()); ++j) {
+                if (optimized_gates[j].get_name() == "M") {
+                    for (int target : optimized_gates[j].get_target_qubits()) {
+                        qubits_to_measure_after_gate[target] = true;
+                    }
+                    num_measurements++;
+                    if (j == int(optimized_gates.size()) - 1) {
+                        are_final_measurements = true;
+                    }
+                } else {
+                    break;
+                }
+            }
+
+            // Construct the result
+            if (!are_final_measurements) {
+                py::object result = construct_result_object(state, readout, noise_model_cpp, n_qubits, config, qubits_to_measure_after_gate);
+                intermediate_results.push_back(result);
+            }
+
+            // Skip the next measurements since we did them all at once
+            i += (num_measurements - 1);
+            continue;
+        }
+
         // Get the id of the gate
         gate_id = gate.get_id();
 
@@ -201,7 +235,7 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrix& 
     }
 }
 
-void sampling_matrix_free(const std::vector<Gate>& gates,  int n_qubits, const SparseMatrix& initial_state, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, std::vector<py::object>& intermediate_results, const QiliSimConfig& config, const py::object& readout) {
+void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const SparseMatrix& initial_state, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, std::vector<py::object>& intermediate_results, const QiliSimConfig& config, const py::object& readout) {
     /*
     Execute a sampling functional using a matrix-free simulator.
 
@@ -274,9 +308,8 @@ void sampling_matrix_free(const std::vector<Gate>& gates,  int n_qubits, const S
         // Convert gate to a matrix-free operator
         MatrixFreeOperator op(gate);
 
-        // If it's a measurement TODO(luke)
+        // If it's a measurement
         if (gate.get_name() == "M") {
-
             // Check for adjacent measurements and if we have any, do them all at once
             int num_measurements = 0;
             bool are_final_measurements = false;
@@ -302,9 +335,8 @@ void sampling_matrix_free(const std::vector<Gate>& gates,  int n_qubits, const S
             }
 
             // Skip the next measurements since we did them all at once
-            i += (num_measurements - 1); 
+            i += (num_measurements - 1);
             continue;
-
         }
 
         // Apply the gate
@@ -336,7 +368,6 @@ void sampling_matrix_free(const std::vector<Gate>& gates,  int n_qubits, const S
         if (config.get_normalize_after_gate()) {
             normalize_state(state, is_statevector, monte_carlo);
         }
-
     }
 
     // If we have statevector/s but we should return a density matrix
