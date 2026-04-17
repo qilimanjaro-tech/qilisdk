@@ -1,0 +1,224 @@
+SpeQtrum
+========
+
+The :mod:`~qilisdk.speqtrum` package provides an optional, synchronous client for the Qilimanjaro SpeQtrum cloud.
+Through the :class:`~qilisdk.speqtrum.speqtrum.SpeQtrum` class you can authenticate, inspect devices and jobs, and submit
+digital, analog, or pulse experiments for remote execution.
+
+Installation
+------------
+
+SpeQtrum support is shipped as an optional dependency group. Install it alongside QiliSDK with:
+
+.. code-block:: console
+
+    pip install "qilisdk[speqtrum]"
+
+Authentication
+--------------
+
+The API uses short-lived OAuth tokens that are cached in the system keyring. Call
+:meth:`SpeQtrum.login <qilisdk.speqtrum.speqtrum.SpeQtrum.login>` once and the credentials will be reused for subsequent
+sessions.
+
+.. SKIP
+.. code-block:: python
+
+    from qilisdk.speqtrum import SpeQtrum
+
+    # Credentials can be provided explicitly…
+    logged_in = SpeQtrum.login(username="alice", apikey="MY_SECRET_KEY")
+
+    # …or read from the environment (QILISDK_SPEQTRUM_USERNAME / QILISDK_SPEQTRUM_APIKEY)
+    logged_in = SpeQtrum.login()
+
+    if not logged_in:
+        raise RuntimeError("Authentication failed")
+
+    # Remove cached credentials when they are no longer needed
+    SpeQtrum.logout()
+
+Client Construction
+-------------------
+
+Once credentials are stored, instantiate :class:`~qilisdk.speqtrum.speqtrum.SpeQtrum` to start issuing requests. Construction fails with a 
+``RuntimeError`` if no cached credentials exist.
+
+.. SKIP
+.. code-block:: python
+
+    from qilisdk.speqtrum import SpeQtrum
+
+    client = SpeQtrum()
+
+Device Catalogue
+----------------
+
+Devices are represented by :class:`~qilisdk.speqtrum.speqtrum_models.Device` models containing the device code, number of
+qubits, hardware type, and status. Use :meth:`SpeQtrum.list_devices
+<qilisdk.speqtrum.speqtrum.SpeQtrum.list_devices>` to enumerate them. An optional ``where`` predicate allows client-side
+filtering.
+
+.. SKIP
+.. code-block:: python
+
+    from qilisdk.speqtrum import SpeQtrum, DeviceStatus
+
+    client = SpeQtrum()
+    for device in client.list_devices(where=lambda d: d.status == DeviceStatus.ONLINE):
+        print(f"{device.code}: {device.name} ({device.type}) – {device.nqubits} qubits")
+
+Remote Jobs
+-----------
+
+:meth:`SpeQtrum.list_jobs <qilisdk.speqtrum.speqtrum.SpeQtrum.list_jobs>` returns lightweight :class:`JobInfo
+<qilisdk.speqtrum.speqtrum_models.JobInfo>` records. The ``where`` predicate works the same way as with devices.
+
+.. SKIP
+.. code-block:: python
+
+    from qilisdk.speqtrum import SpeQtrum
+    from qilisdk.speqtrum.speqtrum_models import JobStatus
+
+    client = SpeQtrum()
+    running = client.list_jobs(where=lambda job: job.status == JobStatus.RUNNING)
+    for job in running:
+        print(f"{job.id}: {job.status.value} on {job.device_id}")
+
+To inspect complete job metadata (payload, result, logs, decoded errors) call
+:meth:`SpeQtrum.get_job <qilisdk.speqtrum.speqtrum.SpeQtrum.get_job>`. Binary fields are returned as
+decoded strings or structured :class:`~qilisdk.speqtrum.speqtrum_models.ExecuteResult` objects.
+
+When you wait on a :class:`~qilisdk.speqtrum.speqtrum_models.JobHandle`, the returned object is a
+:class:`~qilisdk.speqtrum.speqtrum_models.TypedJobDetail` that exposes a strongly typed :meth:`~qilisdk.speqtrum.speqtrum_models.TypedJobDetail.get_results` helper.
+
+.. SKIP
+.. code-block:: python
+
+    job_handle = client.submit(sampling, device=device)
+    final_job = client.wait_for_job(job_handle)
+    result = final_job.get_results()  # -> FunctionalResult
+
+You can still call :meth:`~qilisdk.speqtrum.speqtrum.SpeQtrum.get_job` with a bare integer identifier. In that
+case a regular :class:`JobDetail <qilisdk.speqtrum.speqtrum_models.JobDetail>` object is returned and you can inspect the
+individual ``*.result`` fields manually when needed.
+
+Waiting for Completion
+----------------------
+
+Use :meth:`SpeQtrum.wait_for_job <qilisdk.speqtrum.speqtrum.SpeQtrum.wait_for_job>` to poll until a job reaches a
+terminal state (``completed``, ``error``, or ``cancelled``). Passing a :class:`JobHandle
+<qilisdk.speqtrum.speqtrum_models.JobHandle>` yields a :class:`TypedJobDetail
+<qilisdk.speqtrum.speqtrum_models.TypedJobDetail>` with typed result access, while raw integer identifiers continue to
+return a plain :class:`JobDetail <qilisdk.speqtrum.speqtrum_models.JobDetail>`. The helper raises a :class:`TimeoutError` if
+the optional timeout elapses first.
+
+Functional Submission
+---------------------
+
+SpeQtrum accepts the same primitive functionals used by local backends. The :meth:`SpeQtrum.submit
+<qilisdk.speqtrum.speqtrum.SpeQtrum.submit>` method inspects the functional type and serializes the correct payload. You
+must supply a ``device`` argument with the device code obtained from :meth:`~qilisdk.speqtrum.speqtrum.SpeQtrum.list_devices`.
+
+.. SKIP
+.. code-block:: python
+
+    from qilisdk.digital import Circuit, H, CNOT
+    from qilisdk.functionals import DigitalPropagation
+    from qilisdk.readout import Readout
+    from qilisdk.speqtrum import SpeQtrum
+
+    circuit = Circuit(2)
+    circuit.add(H(0))
+    circuit.add(CNOT(0, 1))
+    functional = DigitalPropagation(circuit)
+
+    client = SpeQtrum()
+    device = client.list_devices()[0].code
+    job_handle = client.submit(functional, readout=Readout().with_sampling(nshots=1_000), device=device)
+    print("Submitted job:", job_handle.id)
+
+    final_job = client.wait_for_job(job_handle, timeout=600)
+    result = final_job.get_results()
+    print("Most frequent outcome:", result.probabilities)
+
+.. Warning::
+
+    Physical QPUs currently do not support analog functionals built on :class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`; 
+    for now, analog hardware can run only pulse experiments from :mod:`~qilisdk.speqtrum.experiments`.
+
+
+Variational Programs
+--------------------
+
+Hybrid optimization is handled through the same :class:`~qilisdk.functionals.variational_program.VariationalProgram`
+functional used with local backends. Serialize the fully-configured variational program (ansatz, optimizer, cost
+function) and submit it as any other functional.
+
+.. SKIP
+.. code-block:: python
+
+    from qilisdk.core.model import Model, ObjectiveSense
+    from qilisdk.core.variables import BinaryVariable, LEQ
+    from qilisdk.cost_functions import ModelCostFunction
+    from qilisdk.digital import CNOT, HardwareEfficientAnsatz, U2
+    from qilisdk.functionals import DigitalPropagation
+    from qilisdk.functionals.variational_program import VariationalProgram
+    from qilisdk.readout import Readout
+    from qilisdk.optimizers.scipy_optimizer import SciPyOptimizer
+    from qilisdk.speqtrum import SpeQtrum
+
+    # Build a small cost model
+    vars = [BinaryVariable(f"x{i}") for i in range(3)]
+    model = Model("toy")
+    model.set_objective(sum(vars), sense=ObjectiveSense.MAXIMIZE)
+    model.add_constraint("budget", LEQ(vars[0] + vars[1], 1))
+
+    ansatz = HardwareEfficientAnsatz(
+        nqubits=3,
+        layers=2,
+        one_qubit_gate=U2,
+        two_qubit_gate=CNOT,
+        connectivity="linear",
+        structure="grouped",
+    )
+    functional = DigitalPropagation(ansatz)
+    optimizer = SciPyOptimizer(method="Powell")
+    vprog = VariationalProgram(functional=functional, optimizer=optimizer, cost_function=ModelCostFunction(model))
+
+    client = SpeQtrum()
+    device = client.list_devices()[0].code
+    job_handle = client.submit(vprog, readout=Readout().with_sampling(nshots=1024), device=device)
+
+Pulse Experiments
+-----------------
+
+The SpeQtrum client also supports calibration-style experiments defined in :mod:`qilisdk.experiments.experiment_functional`. These
+functional objects mirror the interfaces described in the :doc:`/modules/functionals/functionals` chapter and return rich result types.
+
+.. SKIP
+.. code-block:: python
+
+    import numpy as np
+    from qilisdk.speqtrum import DeviceType, SpeQtrum
+    from qilisdk.experiments import RabiExperiment, T1Experiment
+
+    client = SpeQtrum()
+    device = client.list_devices(
+        where=lambda d: d.type in (DeviceType.QPU_ANALOG, DeviceType.QPU_DIGITAL)
+    )[0].code
+
+    # Rabi experiment: sweep drive durations
+    rabi = RabiExperiment(qubit=0, drive_duration_values=np.linspace(0, 200, 21))
+    rabi_handle = client.submit(rabi, device=device)
+    rabi_response = client.wait_for_job(rabi_handle, timeout=600)
+    rabi_result = rabi_response.get_results()
+
+    # T1 relaxation experiment: sweep wait durations
+    t1 = T1Experiment(qubit=0, wait_duration_values=np.linspace(0, 400, 41))
+    t1_handle = client.submit(t1, device=device)
+    t1_response = client.wait_for_job(t1_handle, timeout=600)
+    t1_result = t1_response.get_results()
+
+The resulting :class:`~qilisdk.experiments.experiment_result.RabiExperimentResult` and
+:class:`~qilisdk.experiments.experiment_result.T1ExperimentResult` objects can then be used directly.

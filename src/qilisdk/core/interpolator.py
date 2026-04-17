@@ -18,9 +18,10 @@ from bisect import bisect_right
 from collections.abc import Callable
 from copy import copy
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Mapping, TypeAlias
+from typing import TYPE_CHECKING, Any, Mapping
 
 import numpy as np
+from typing_extensions import TypeAlias
 
 from qilisdk.core.parameterizable import Parameterizable
 from qilisdk.core.variables import LEQ, BaseVariable, Parameter, Term
@@ -31,9 +32,9 @@ if TYPE_CHECKING:
     from qilisdk.core.types import Number
 
 _TIME_PARAMETER_NAME = "t"
-PARAMETERIZED_NUMBER: TypeAlias = float | Parameter | Term
 
 # type aliases just to keep this short
+PARAMETERIZED_NUMBER: TypeAlias = float | Parameter | Term
 TimeDict = dict[PARAMETERIZED_NUMBER | tuple[float, float], PARAMETERIZED_NUMBER | Callable[..., PARAMETERIZED_NUMBER]]
 
 

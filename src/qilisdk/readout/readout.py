@@ -13,12 +13,12 @@
 # limitations under the License.
 """Low-level readout method classes for quantum backend execution.
 
-This module defines the :class:`ReadoutMethod` base class and its concrete subclasses —
-:class:`SamplingReadout`, :class:`ExpectationReadout`, and :class:`StateTomographyReadout` — that
+This module defines the :class:`ReadoutMethod` base class and its concrete subclasses -
+:class:`SamplingReadout`, :class:`ExpectationReadout`, and :class:`StateTomographyReadout` - that
 describe *how* results are extracted from the quantum backend after execution.
 
-**The recommended way to compose readout for a functional is** :class:`~qilisdk.readout.Readout`.
-The classes in this module are typically constructed internally by :class:`~qilisdk.readout.Readout`
+**The recommended way to compose readout for a functional is** :class:`~qilisdk.readout.readout_spec.Readout`.
+The classes in this module are typically constructed internally by :class:`~qilisdk.readout.readout_spec.Readout`
 and do not need to be instantiated directly in user code.
 """
 
@@ -114,10 +114,6 @@ class ExpectationReadout(ReadoutMethod):
         nshots (int): Number of measurement shots.  Use ``0`` (the default) for exact state-vector
             evaluation.
 
-    Attributes:
-        qtensor_observables (list[QTensor]): The ``observables`` converted to
-            :class:`~qilisdk.core.QTensor` form, populated automatically; not intended to be set manually.
-
     Examples:
         >>> from qilisdk.analog import Z
         >>> from qilisdk.readout import Readout
@@ -138,14 +134,23 @@ class ExpectationReadout(ReadoutMethod):
 
     @property
     def nshots(self) -> int:
+        """
+        The number of shots to use when estimating the expectation values.
+        """
         return self._nshots
 
     @property
     def observables(self) -> list[Hamiltonian | QTensor]:
+        """
+        The observables whose expectation values are requested, in their original form as provided by the user.
+        """
         return self._observables
 
     @property
     def qtensor_observables(self) -> list[QTensor]:
+        """
+        The observables converted to :class:`~qilisdk.core.QTensor` form, populated automatically; not intended to be set manually.
+        """
         return self._qtensor_observables
 
     def expand_observables(self, nqubits: int) -> None:
@@ -174,7 +179,7 @@ class StateTomographyReadout(ReadoutMethod):
     :meth:`Readout.with_state_tomography <qilisdk.readout.Readout.with_state_tomography>`.
 
     Args:
-        method (Literal["exact"]): Tomography method identifier.  Currently only ``"exact"`` is supported.
+        method (Literal): Tomography method identifier.  Currently only 'exact' is supported.
 
     Examples:
         >>> from qilisdk.readout import Readout

@@ -69,6 +69,9 @@ autoapi_options = [
 ]
 autoapi_python_class_content = "both"
 autoapi_python_use_implicit_namespaces = False
+suppress_warnings = [
+    "ref.python"
+]  # I tested, this doesn't supress the actual useful errors (i.e. errors with our docs/docstrings)
 
 add_module_names = False
 autoapi_keep_files = False
@@ -110,7 +113,9 @@ html_sidebars = {
 }
 
 theme_options = ThemeOptions(
-    logo_light="_static/q_trans.png", logo_dark="_static/q_trans.png", awesome_external_links=True
+    logo_light="_static/q_trans.png",
+    logo_dark="_static/q_trans.png",
+    awesome_external_links=True,
 )
 
 html_theme_options = asdict(theme_options)

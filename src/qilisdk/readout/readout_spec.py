@@ -129,7 +129,7 @@ class Readout(Generic[S, E, T]):
         """Add a state-tomography readout to the specification.
 
         Args:
-            method (Literal["exact"]): Tomography method identifier. Currently only ``"exact"`` is supported.
+            method (Literal): Tomography method identifier. Currently only 'exact' is supported.
 
         Returns:
             A new :class:`Readout` with the state-tomography slot populated.

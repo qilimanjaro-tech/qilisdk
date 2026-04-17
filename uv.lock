@@ -650,22 +650,22 @@ name = "cuda-quantum-cu12"
 version = "0.14.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "astpretty", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13')" },
-    { name = "cudensitymat-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13')" },
-    { name = "cupy-cuda12x", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13')" },
-    { name = "custatevec-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13')" },
-    { name = "cutensornet-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13')" },
-    { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu12') or (sys_platform == 'darwin' and extra != 'extra-7-qilisdk-all-cu13') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "numpy", version = "2.4.3", source = { registry = "https://urob.github.io/numpy-mkl" }, marker = "(sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all-cu12') or (sys_platform != 'darwin' and extra != 'extra-7-qilisdk-all-cu13') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "nvidia-cublas-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13')" },
-    { name = "nvidia-cuda-nvrtc-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13')" },
-    { name = "nvidia-cuda-runtime-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13')" },
-    { name = "nvidia-curand-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13')" },
-    { name = "nvidia-cusolver-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13')" },
-    { name = "nvidia-cusparse-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13')" },
-    { name = "requests", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13')" },
-    { name = "scipy", version = "1.16.2", source = { registry = "https://urob.github.io/numpy-mkl" }, marker = "(sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all-cu12') or (sys_platform != 'darwin' and extra != 'extra-7-qilisdk-all-cu13') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu12') or (sys_platform == 'darwin' and extra != 'extra-7-qilisdk-all-cu13') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "astpretty", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
+    { name = "cudensitymat-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
+    { name = "cupy-cuda12x", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
+    { name = "custatevec-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
+    { name = "cutensornet-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
+    { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu12') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "numpy", version = "2.4.3", source = { registry = "https://urob.github.io/numpy-mkl" }, marker = "(sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all-cu12') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-cuda') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "nvidia-cublas-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
+    { name = "nvidia-cuda-nvrtc-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
+    { name = "nvidia-cuda-runtime-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
+    { name = "nvidia-curand-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
+    { name = "nvidia-cusolver-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
+    { name = "nvidia-cusparse-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
+    { name = "requests", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
+    { name = "scipy", version = "1.16.2", source = { registry = "https://urob.github.io/numpy-mkl" }, marker = "(sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all-cu12') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-cuda') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu12') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/73/22/249c2ba99b8c4e1c11df2be8bed80912e03f8be34a17c0cf162f80d9fc24/cuda_quantum_cu12-0.14.0.tar.gz", hash = "sha256:dddce110648e0450ff2df6709f7af021a67656de33218848e90814ae6c29025d", size = 6502, upload-time = "2026-03-16T20:51:31.022Z" }
 wheels = [
@@ -716,8 +716,8 @@ name = "cudensitymat-cu12"
 version = "0.4.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cutensor-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13')" },
-    { name = "cutensornet-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13')" },
+    { name = "cutensor-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
+    { name = "cutensornet-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/41/59/25a3c75bfb206de3a2406428c27164eb16f2b06d4651bbac72537e053d7a/cudensitymat_cu12-0.4.0-py3-none-manylinux2014_aarch64.whl", hash = "sha256:6a55c8e41f07280f8f34ae6d186289232128e0d42a6987634505b3f333acbdd4", size = 15847824, upload-time = "2026-01-26T19:48:54.755Z" },
@@ -742,9 +742,9 @@ name = "cupy-cuda12x"
 version = "13.6.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "fastrlock", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13')" },
-    { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu12') or (sys_platform == 'darwin' and extra != 'extra-7-qilisdk-all-cu13') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "numpy", version = "2.4.3", source = { registry = "https://urob.github.io/numpy-mkl" }, marker = "(sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all-cu12') or (sys_platform != 'darwin' and extra != 'extra-7-qilisdk-all-cu13') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "fastrlock", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
+    { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu12') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "numpy", version = "2.4.3", source = { registry = "https://urob.github.io/numpy-mkl" }, marker = "(sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all-cu12') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-cuda') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/54/64/71c6e08f76c06639e5112f69ee3bc1129be00054ad5f906d7fd3138af579/cupy_cuda12x-13.6.0-cp311-cp311-manylinux2014_aarch64.whl", hash = "sha256:c790d012fd4d86872b9c89af9f5f15d91c30b8e3a4aa4dd04c2610f45f06ac44", size = 128016458, upload-time = "2025-08-18T08:24:26.394Z" },
@@ -821,7 +821,7 @@ name = "cutensornet-cu12"
 version = "2.11.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cutensor-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13')" },
+    { name = "cutensor-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/7e/92/7fc84e05589f92dd2186fe2214e997212b4898c0151209f8eb932b591e35/cutensornet_cu12-2.11.0-py3-none-manylinux2014_aarch64.whl", hash = "sha256:99d0f3580006e9aec5d7f9b364df1d66bf9fefc21e9bdc77da71a1f2fa9c01af", size = 3029608, upload-time = "2026-01-26T19:50:27.283Z" },
@@ -924,11 +924,11 @@ wheels = [
 
 [[package]]
 name = "docutils"
-version = "0.22.4"
+version = "0.21.2"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/ae/b6/03bb70946330e88ffec97aefd3ea75ba575cb2e762061e0e62a213befee8/docutils-0.22.4.tar.gz", hash = "sha256:4db53b1fde9abecbb74d91230d32ab626d94f6badfc575d6db9194a49df29968", size = 2291750, upload-time = "2025-12-18T19:00:26.443Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ae/ed/aefcc8cd0ba62a0560c3c18c33925362d46c6075480bfa4df87b28e169a9/docutils-0.21.2.tar.gz", hash = "sha256:3a6b18732edf182daa3cd12775bbb338cf5691468f91eeeb109deff6ebfa986f", size = 2204444, upload-time = "2024-04-23T18:57:18.24Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/02/10/5da547df7a391dcde17f59520a231527b8571e6f46fc8efb02ccb370ab12/docutils-0.22.4-py3-none-any.whl", hash = "sha256:d0013f540772d1420576855455d050a2180186c91c15779301ac2ccb3eeb68de", size = 633196, upload-time = "2025-12-18T19:00:18.077Z" },
+    { url = "https://files.pythonhosted.org/packages/8f/d7/9322c609343d929e75e7e5e6255e614fcc67572cfd083959cdef3b7aad79/docutils-0.21.2-py3-none-any.whl", hash = "sha256:dafca5b9e384f0e419294eb4d2ff9fa826435bf15f15b7bd45723e8ad76811b2", size = 587408, upload-time = "2024-04-23T18:57:14.835Z" },
 ]
 
 [[package]]
@@ -1999,8 +1999,7 @@ dependencies = [
     { name = "jinja2" },
     { name = "nbconvert" },
     { name = "nbformat" },
-    { name = "sphinx", version = "9.0.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "sphinx", version = "9.1.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "sphinx" },
     { name = "traitlets" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/e7/d1/82081750f8a78ad0399c6ed831d42623b891904e8e7b8a75878225cf1dce/nbsphinx-0.9.8.tar.gz", hash = "sha256:d0765908399a8ee2b57be7ae881cf2ea58d66db3af7bbf33e6eb48f83bea5495", size = 417469, upload-time = "2025-11-28T17:41:02.336Z" }
@@ -2243,9 +2242,9 @@ name = "nvidia-cusolver-cu12"
 version = "11.7.5.82"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-cublas-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13')" },
-    { name = "nvidia-cusparse-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13')" },
-    { name = "nvidia-nvjitlink-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13')" },
+    { name = "nvidia-cublas-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
+    { name = "nvidia-cusparse-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
+    { name = "nvidia-nvjitlink-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/03/99/686ff9bf3a82a531c62b1a5c614476e8dfa24a9d89067aeedf3592ee4538/nvidia_cusolver_cu12-11.7.5.82-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:62efa83e4ace59a4c734d052bb72158e888aa7b770e1a5f601682f16fe5b4fd2", size = 337869834, upload-time = "2025-06-05T20:06:53.125Z" },
@@ -2271,7 +2270,7 @@ name = "nvidia-cusparse-cu12"
 version = "12.5.10.65"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-nvjitlink-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13')" },
+    { name = "nvidia-nvjitlink-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/5e/6f/8710fbd17cdd1d0fc3fea7d36d5b65ce1933611c31e1861da330206b253a/nvidia_cusparse_cu12-12.5.10.65-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:221c73e7482dd93eda44e65ce567c031c07e2f93f6fa0ecd3ba876a195023e83", size = 366359408, upload-time = "2025-06-05T20:07:42.501Z" },
@@ -3096,8 +3095,7 @@ docs = [
     { name = "astroid" },
     { name = "nbsphinx" },
     { name = "pypandoc" },
-    { name = "sphinx", version = "9.0.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "sphinx", version = "9.1.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "sphinx" },
     { name = "sphinx-autoapi" },
     { name = "sphinx-automodapi" },
     { name = "sphinx-design" },
@@ -3166,7 +3164,7 @@ docs = [
     { name = "astroid", specifier = "<3.2" },
     { name = "nbsphinx", specifier = ">=0.9.7" },
     { name = "pypandoc", specifier = ">=1.15" },
-    { name = "sphinx", specifier = ">=8.2.3" },
+    { name = "sphinx", specifier = "==8.2.3" },
     { name = "sphinx-autoapi", specifier = ">=3.4.0" },
     { name = "sphinx-automodapi", specifier = ">=0.20.0" },
     { name = "sphinx-design", specifier = ">=0.7.0" },
@@ -3259,6 +3257,18 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/ae/f9/41dc953bbeb056c17d5f7a519f50fdf010bd0553be2d630bc69d1e022703/roman_numerals-4.1.0.tar.gz", hash = "sha256:1af8b147eb1405d5839e78aeb93131690495fe9da5c91856cb33ad55a7f1e5b2", size = 9077, upload-time = "2025-12-17T18:25:34.381Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/04/54/6f679c435d28e0a568d8e8a7c0a93a09010818634c3c3907fc98d8983770/roman_numerals-4.1.0-py3-none-any.whl", hash = "sha256:647ba99caddc2cc1e55a51e4360689115551bf4476d90e8162cf8c345fe233c7", size = 7676, upload-time = "2025-12-17T18:25:33.098Z" },
+]
+
+[[package]]
+name = "roman-numerals-py"
+version = "4.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "roman-numerals" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/cb/b5/de96fca640f4f656eb79bbee0e79aeec52e3e0e359f8a3e6a0d366378b64/roman_numerals_py-4.1.0.tar.gz", hash = "sha256:f5d7b2b4ca52dd855ef7ab8eb3590f428c0b1ea480736ce32b01fef2a5f8daf9", size = 4274, upload-time = "2025-12-17T18:25:41.153Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/27/2c/daca29684cbe9fd4bc711f8246da3c10adca1ccc4d24436b17572eb2590e/roman_numerals_py-4.1.0-py3-none-any.whl", hash = "sha256:553114c1167141c1283a51743759723ecd05604a1b6b507225e91dc1a6df0780", size = 4547, upload-time = "2025-12-17T18:25:40.136Z" },
 ]
 
 [[package]]
@@ -3585,66 +3595,30 @@ wheels = [
 
 [[package]]
 name = "sphinx"
-version = "9.0.4"
+version = "8.2.3"
 source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version < '3.12' and sys_platform == 'darwin'",
-    "python_full_version < '3.12' and sys_platform != 'darwin'",
-]
 dependencies = [
-    { name = "alabaster", marker = "python_full_version < '3.12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "babel", marker = "python_full_version < '3.12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "colorama", marker = "(python_full_version < '3.12' and sys_platform == 'win32') or (python_full_version >= '3.12' and extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version >= '3.12' and extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version >= '3.12' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (python_full_version >= '3.12' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform != 'win32' and extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform != 'win32' and extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform != 'win32' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform != 'win32' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "docutils", marker = "python_full_version < '3.12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "imagesize", marker = "python_full_version < '3.12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "jinja2", marker = "python_full_version < '3.12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "packaging", marker = "python_full_version < '3.12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "pygments", marker = "python_full_version < '3.12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "requests", marker = "python_full_version < '3.12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "roman-numerals", marker = "python_full_version < '3.12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "snowballstemmer", marker = "python_full_version < '3.12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "sphinxcontrib-applehelp", marker = "python_full_version < '3.12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "sphinxcontrib-devhelp", marker = "python_full_version < '3.12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "sphinxcontrib-htmlhelp", marker = "python_full_version < '3.12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "sphinxcontrib-jsmath", marker = "python_full_version < '3.12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "sphinxcontrib-qthelp", marker = "python_full_version < '3.12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "sphinxcontrib-serializinghtml", marker = "python_full_version < '3.12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "alabaster" },
+    { name = "babel" },
+    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "docutils" },
+    { name = "imagesize" },
+    { name = "jinja2" },
+    { name = "packaging" },
+    { name = "pygments" },
+    { name = "requests" },
+    { name = "roman-numerals-py" },
+    { name = "snowballstemmer" },
+    { name = "sphinxcontrib-applehelp" },
+    { name = "sphinxcontrib-devhelp" },
+    { name = "sphinxcontrib-htmlhelp" },
+    { name = "sphinxcontrib-jsmath" },
+    { name = "sphinxcontrib-qthelp" },
+    { name = "sphinxcontrib-serializinghtml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/42/50/a8c6ccc36d5eacdfd7913ddccd15a9cee03ecafc5ee2bc40e1f168d85022/sphinx-9.0.4.tar.gz", hash = "sha256:594ef59d042972abbc581d8baa577404abe4e6c3b04ef61bd7fc2acbd51f3fa3", size = 8710502, upload-time = "2025-12-04T07:45:27.343Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/38/ad/4360e50ed56cb483667b8e6dadf2d3fda62359593faabbe749a27c4eaca6/sphinx-8.2.3.tar.gz", hash = "sha256:398ad29dee7f63a75888314e9424d40f52ce5a6a87ae88e7071e80af296ec348", size = 8321876, upload-time = "2025-03-02T22:31:59.658Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c6/3f/4bbd76424c393caead2e1eb89777f575dee5c8653e2d4b6afd7a564f5974/sphinx-9.0.4-py3-none-any.whl", hash = "sha256:5bebc595a5e943ea248b99c13814c1c5e10b3ece718976824ffa7959ff95fffb", size = 3917713, upload-time = "2025-12-04T07:45:24.944Z" },
-]
-
-[[package]]
-name = "sphinx"
-version = "9.1.0"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version >= '3.12' and sys_platform == 'darwin'",
-    "python_full_version >= '3.12' and sys_platform != 'darwin'",
-]
-dependencies = [
-    { name = "alabaster", marker = "python_full_version >= '3.12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "babel", marker = "python_full_version >= '3.12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "colorama", marker = "(python_full_version >= '3.12' and sys_platform == 'win32') or (python_full_version < '3.12' and extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version < '3.12' and extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version < '3.12' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (python_full_version < '3.12' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform != 'win32' and extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform != 'win32' and extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform != 'win32' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform != 'win32' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "docutils", marker = "python_full_version >= '3.12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "imagesize", marker = "python_full_version >= '3.12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "jinja2", marker = "python_full_version >= '3.12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "packaging", marker = "python_full_version >= '3.12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "pygments", marker = "python_full_version >= '3.12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "requests", marker = "python_full_version >= '3.12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "roman-numerals", marker = "python_full_version >= '3.12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "snowballstemmer", marker = "python_full_version >= '3.12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "sphinxcontrib-applehelp", marker = "python_full_version >= '3.12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "sphinxcontrib-devhelp", marker = "python_full_version >= '3.12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "sphinxcontrib-htmlhelp", marker = "python_full_version >= '3.12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "sphinxcontrib-jsmath", marker = "python_full_version >= '3.12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "sphinxcontrib-qthelp", marker = "python_full_version >= '3.12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "sphinxcontrib-serializinghtml", marker = "python_full_version >= '3.12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/cd/bd/f08eb0f4eed5c83f1ba2a3bd18f7745a2b1525fad70660a1c00224ec468a/sphinx-9.1.0.tar.gz", hash = "sha256:7741722357dd75f8190766926071fed3bdc211c74dd2d7d4df5404da95930ddb", size = 8718324, upload-time = "2025-12-31T15:09:27.646Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/73/f7/b1884cb3188ab181fc81fa00c266699dab600f927a964df02ec3d5d1916a/sphinx-9.1.0-py3-none-any.whl", hash = "sha256:c84fdd4e782504495fe4f2c0b3413d6c2bf388589bb352d439b2a3bb99991978", size = 3921742, upload-time = "2025-12-31T15:09:25.561Z" },
+    { url = "https://files.pythonhosted.org/packages/31/53/136e9eca6e0b9dc0e1962e2c908fbea2e5ac000c2a2fbd9a35797958c48b/sphinx-8.2.3-py3-none-any.whl", hash = "sha256:4405915165f13521d875a8c29c8970800a0141c14cc5416a38feca4ea5d9b9c3", size = 3589741, upload-time = "2025-03-02T22:31:56.836Z" },
 ]
 
 [[package]]
@@ -3655,8 +3629,7 @@ dependencies = [
     { name = "astroid" },
     { name = "jinja2" },
     { name = "pyyaml" },
-    { name = "sphinx", version = "9.0.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "sphinx", version = "9.1.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "sphinx" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/f8/25/386d851320bc306e9d7d41b8cecf113f638e205a99595c481c146622de94/sphinx_autoapi-3.8.0.tar.gz", hash = "sha256:9f8ac7d43baf28a0831ac0e392fab6a095b875af07e52d135a5f716cc3cf1142", size = 58418, upload-time = "2026-03-08T03:49:52.931Z" }
 wheels = [
@@ -3669,8 +3642,7 @@ version = "0.22.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "packaging" },
-    { name = "sphinx", version = "9.0.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "sphinx", version = "9.1.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "sphinx" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/3f/9f/16c79a06f4c6772124f03f1d69a0394bc1f52c154202db5d5905cb3579c7/sphinx_automodapi-0.22.0.tar.gz", hash = "sha256:9a6745d606eb948321f0bb7bd4511dc6d8481da8819caa1604d7138910173b38", size = 56683, upload-time = "2025-12-13T00:19:52.962Z" }
 wheels = [
@@ -3682,8 +3654,7 @@ name = "sphinx-design"
 version = "0.7.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "sphinx", version = "9.0.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "sphinx", version = "9.1.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "sphinx" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/13/7b/804f311da4663a4aecc6cf7abd83443f3d4ded970826d0c958edc77d4527/sphinx_design-0.7.0.tar.gz", hash = "sha256:d2a3f5b19c24b916adb52f97c5f00efab4009ca337812001109084a740ec9b7a", size = 2203582, upload-time = "2026-01-19T13:12:53.297Z" }
 wheels = [
@@ -3698,8 +3669,7 @@ dependencies = [
     { name = "docutils" },
     { name = "mistune" },
     { name = "pygments" },
-    { name = "sphinx", version = "9.0.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "sphinx", version = "9.1.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "sphinx" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/b6/a7/c9a7888bb2187fdb06955d71e75f6f266b7e179b356ac76138d160a5b7eb/sphinx_mdinclude-0.6.2.tar.gz", hash = "sha256:447462e82cb8be61404a2204227f920769eb923d2f57608e3325f3bb88286b4c", size = 65257, upload-time = "2024-08-03T19:07:37.643Z" }
 wheels = [
@@ -3711,8 +3681,7 @@ name = "sphinx-multiversion"
 version = "0.2.5"
 source = { git = "https://github.com/sphinx-contrib/multiversion?branch=main#cd4c0db66473f04d7e037188f5f13444574b4b0e" }
 dependencies = [
-    { name = "sphinx", version = "9.0.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "sphinx", version = "9.1.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "sphinx" },
 ]
 
 [[package]]
@@ -3721,8 +3690,7 @@ version = "6.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "beautifulsoup4" },
-    { name = "sphinx", version = "9.0.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "sphinx", version = "9.1.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "sphinx" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/d3/0e/6b8fc5e645c995c669c6895127703993f76dce2417018c09b2c6e92591dd/sphinxawesome_theme-6.0.0.tar.gz", hash = "sha256:b76e41fc56fcbf6691172530e61bcf352623eb3298114ba3e323fec5d792e07b", size = 342940, upload-time = "2026-01-22T07:01:56.482Z" }
 wheels = [

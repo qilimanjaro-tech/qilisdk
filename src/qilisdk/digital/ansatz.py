@@ -254,11 +254,12 @@ class QAOA(Ansatz):
             from qilisdk.digital.ansatz import QAOA
 
             ansatz = QAOA(
-                nqubits=4,
-                hamiltonian=your_problem_hamiltonian,
+                problem_hamiltonian=your_problem_hamiltonian,
                 layers=3,
-                mixer_type=None,
+                mixer_hamiltonian=None,
                 trotter_steps=1,
+                problem_params=[0.1, 0.2, 0.3],
+                mixer_params=[0.4, 0.5, 0.6],
             )
             ansatz.draw()
 

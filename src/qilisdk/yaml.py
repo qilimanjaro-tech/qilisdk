@@ -26,7 +26,9 @@ from scipy import sparse
 
 
 def csr_representer(representer, data: sparse.csr_matrix):
-    """Representer for CSR matrix."""
+    """
+    Representer for CSR matrix.
+    """
     value = {
         "data": data.data.tolist(),
         "indices": data.indices.tolist(),
@@ -37,7 +39,9 @@ def csr_representer(representer, data: sparse.csr_matrix):
 
 
 def csr_constructor(constructor, node):
-    """Constructor for CSR matrix."""
+    """
+    Constructor for CSR matrix.
+    """
     mapping = constructor.construct_mapping(node, deep=True)
     return sparse.csr_matrix(
         (mapping["data"], mapping["indices"], mapping["indptr"]),
@@ -46,13 +50,17 @@ def csr_constructor(constructor, node):
 
 
 def ndarray_representer(representer, data):
-    """Representer for ndarray"""
+    """
+    Representer for ndarray.
+    """
     value = {"dtype": str(data.dtype), "shape": data.shape, "data": data.ravel().tolist()}
     return representer.represent_mapping("!ndarray", value)
 
 
 def ndarray_constructor(constructor, node):
-    """Constructor for ndarray"""
+    """
+    Constructor for ndarray.
+    """
     mapping = constructor.construct_mapping(node, deep=True)
     dtype = np.dtype(mapping["dtype"])
     shape = tuple(mapping["shape"])
@@ -61,7 +69,9 @@ def ndarray_constructor(constructor, node):
 
 
 def np_scalar_representer(representer, data: np.generic):
-    """Represent any NumPy scalar (e.g. np.int64, np.float32)."""
+    """
+    Represent any NumPy scalar (e.g. np.int64, np.float32).
+    """
     return representer.represent_mapping(
         "!np_scalar",
         {"dtype": str(data.dtype), "value": data.item()},
@@ -69,7 +79,9 @@ def np_scalar_representer(representer, data: np.generic):
 
 
 def np_scalar_constructor(constructor, node):
-    """Reconstruct a NumPy scalar."""
+    """
+    Reconstruct a NumPy scalar.
+    """
     mapping = constructor.construct_mapping(node, deep=True)
     dtype = np.dtype(mapping["dtype"])
     return dtype.type(mapping["value"])
@@ -93,7 +105,9 @@ def defaultdict_representer(representer, data: defaultdict):
 
 
 def defaultdict_constructor(constructor, node):
-    """Reconstruct a defaultdict, restoring its factory and contents."""
+    """
+    Reconstruct a defaultdict, restoring its factory and contents.
+    """
     mapping = constructor.construct_mapping(node, deep=True)
     fname = mapping["default_factory"]
     if fname is None:
@@ -108,38 +122,50 @@ def defaultdict_constructor(constructor, node):
 
 
 def function_representer(representer, data):
-    """Represent a non-lambda function by serializing it."""
+    """
+    Represent a non-lambda function by serializing it.
+    """
     serialized_function = base64.b64encode(dumps(data, recurse=True)).decode("utf-8")
     return representer.represent_scalar("!function", serialized_function)
 
 
 def function_constructor(constructor, node):
-    """Reconstruct a function from the serialized data."""
+    """
+    Reconstruct a function from the serialized data.
+    """
     serialized_function = base64.b64decode(node.value)
     return loads(serialized_function)  # noqa: S301
 
 
 def lambda_representer(representer, data):
-    """Represent a lambda function by serializing its code."""
+    """
+    Represent a lambda function by serializing its code.
+    """
     serialized_lambda = base64.b64encode(dumps(data, recurse=True)).decode("utf-8")
     return representer.represent_scalar("!lambda", serialized_lambda)
 
 
 def lambda_constructor(constructor, node):
-    """Reconstruct a lambda function from the serialized data."""
+    """
+    Reconstruct a lambda function from the serialized data.
+    """
     # Decode the base64-encoded string and load the lambda function
     serialized_lambda = base64.b64decode(node.value)
     return loads(serialized_lambda)  # noqa: S301
 
 
 def pydantic_model_representer(representer, data):
-    """Representer for Pydantic Models."""
+    """
+    Representer for Pydantic Models.
+    """
     value = {"type": f"{data.__class__.__module__}.{data.__class__.__name__}", "data": data.model_dump()}
     return representer.represent_mapping("!PydanticModel", value)
 
 
 def pydantic_model_constructor(constructor, node):
-    """Constructor for Pydantic Models."""
+    """
+    Constructor for Pydantic Models.
+    """
     mapping = constructor.construct_mapping(node, deep=True)
     model_type_str = mapping["type"]
     data = mapping["data"]
@@ -150,23 +176,33 @@ def pydantic_model_constructor(constructor, node):
 
 
 def complex_representer(representer, data: complex):
+    """
+    Representer for built-in Python complex numbers.
+    """
     value = {"real": data.real, "imag": data.imag}
     return representer.represent_mapping("!complex", value)
 
 
 def complex_constructor(constructor, node):
+    """
+    Constructor for built-in Python complex numbers.
+    """
     mapping = constructor.construct_mapping(node, deep=True)
     return complex(mapping["real"], mapping["imag"])
 
 
 def tuple_representer(representer, data: tuple):
-    """Representer for built-in Python tuple."""
+    """
+    Representer for built-in Python tuple.
+    """
     # Emit a tuple as a YAML sequence with tag !tuple
     return representer.represent_sequence("!tuple", list(data))
 
 
 def tuple_constructor(constructor, node):
-    """Constructor for built-in Python tuple."""
+    """
+    Constructor for built-in Python tuple.
+    """
     seq = constructor.construct_sequence(node, deep=True)
     return tuple(seq)
 
@@ -192,18 +228,35 @@ def type_constructor(constructor, node):
 
 
 def deque_representer(representer, data):
-    """Representer for deque"""
+    """
+    Representer for deque
+    """
     return representer.represent_sequence("!deque", list(data))
 
 
 def deque_constructor(constructor, node):
-    """Constructor for ndarray"""
+    """
+    Constructor for ndarray
+    """
     return deque(constructor.construct_sequence(node))
 
 
 # Create YAML handler and register all custom types
 class QiliYAML(YAML):
+    """
+    Custom YAML handler for QiliSDK.
+    """
+
+    def __init__(self, **kwargs: list[str] | str | None) -> None:
+        """
+        Initialize the YAML handler with custom settings.
+        """
+        super().__init__(**kwargs)
+
     def register_class(self, cls=None, *, shared: bool = False):
+        """
+        Register a class with the YAML handler, assigning it a unique tag.
+        """
         if cls is None:
 
             def decorator(target_cls):  # noqa: ANN202
