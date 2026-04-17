@@ -284,12 +284,15 @@ TEST_F(FilterCountsTest, CollapsingDistinctBitstrings_CountsMerge) {
     EXPECT_EQ(result.at("_0"), 1000);
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
 class SamplingTest : public ::testing::Test {
    protected:
     QiliSimConfig cfg = defaultConfig();
     NoiseModelCpp noNoise = emptyNoise();
     py::list readout = py::list();
 };
+#pragma GCC diagnostic pop
 
 TEST_F(SamplingTest, ZeroState_NoGates_AllCountsAreZeroString) {
     int n = 2;
@@ -499,12 +502,15 @@ TEST_F(SamplingTest, CombineSingleQubitGates_SameResultAsWithout) {
     EXPECT_EQ(countsA, countsB);
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
 class SamplingMatrixFreeTest : public ::testing::Test {
    protected:
     QiliSimConfig cfg = defaultConfig();
     NoiseModelCpp noNoise = emptyNoise();
     py::list readout = py::list();
 };
+#pragma GCC diagnostic pop
 
 TEST_F(SamplingMatrixFreeTest, ZeroState_NoGates_AllCountsAreZeroString) {
     int n = 2;
@@ -661,12 +667,15 @@ TEST_F(SamplingMatrixFreeTest, DensityMatrixInitialState_ZeroState_AllCountsAreZ
     EXPECT_EQ(counts.at("00"), 1000);
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
 class SamplingMonteCarloTest : public ::testing::Test {
    protected:
     QiliSimConfig cfg = defaultConfig();
     NoiseModelCpp noNoise = emptyNoise();
     py::list readout = py::list();
 };
+#pragma GCC diagnostic pop
 
 TEST_F(SamplingMonteCarloTest, MonteCarloEnabled_ProducesNonDeterministicCounts) {
     int n = 1;

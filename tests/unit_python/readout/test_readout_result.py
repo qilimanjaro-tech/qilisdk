@@ -493,3 +493,30 @@ class TestBackendConstructResultsList:
     def test_unsupported_readout_raises(self):
         with pytest.raises(ValueError, match="Unsupported Readout Method"):
             Backend._construct_results_list(final_state=ket(0), readout=[ReadoutMethod()])
+
+
+def test_expand_samples():
+    result = SamplingReadoutResult.from_samples(samples={"00": 60, "10": 40}, qubits_to_measure=[0, 2], nqubits=3)
+    assert result.samples == {"0_0": 60, "1_0": 40}
+
+
+def test_filter_samples():
+    result = SamplingReadoutResult.from_samples(samples={"00": 60, "10": 40}, qubits_to_measure=[0])
+    assert result.samples == {"0_": 60, "1_": 40}
+
+
+def test_composite_readout_get_samples():
+    sampling_result = SamplingReadoutResult.from_samples(samples={"00": 60, "10": 40})
+    expectation_result = ExpectationReadoutResult.from_expectations(expectation_values=[1.0])
+    state_result = StateTomographyReadoutResult.from_state(state=ket(0))
+    composite = ReadoutCompositeResults(
+        sampling=sampling_result, expectation_values=expectation_result, state_tomography=state_result
+    )
+    samples = composite.get_samples()
+    state = composite.get_state()
+    probabilities = composite.get_probabilities()
+    expectations = composite.get_expectation_values()
+    assert samples == {"00": 60, "10": 40}
+    assert state is not None
+    assert np.isclose(probabilities["00"], 0.6)
+    assert np.isclose(expectations[0], 1.0)

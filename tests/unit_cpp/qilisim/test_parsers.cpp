@@ -1540,4 +1540,51 @@ TEST(ParseSolverParams, PartialFieldsParsed) {
     EXPECT_EQ(config.get_num_threads(), 2);
 }
 
+// py::object construct_result_object(const DenseMatrix& state_dense, const py::object& readout, NoiseModelCpp& noise_model_cpp, int n_qubits, const QiliSimConfig& config, const std::vector<bool>& qubits_to_measure) {
+TEST(ConstructResults, EmptyResults) {
+    DenseMatrix state = DenseMatrix::Zero(2, 1);
+    py::list readout = py::list();
+    NoiseModelCpp noise_model_cpp;
+    int n_qubits = 1;
+    QiliSimConfig config;
+    std::vector<bool> qubits_to_measure = {true};
+    EXPECT_NO_THROW({
+        auto results = construct_result_object(state, readout, noise_model_cpp, n_qubits, config, qubits_to_measure);
+    });
+}
+
+TEST(ConstructResults, StateTomographyNotExactThrows) {
+    DenseMatrix state = DenseMatrix::Zero(2, 1);
+
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.readout import StateTomographyReadout
+        readout = [StateTomographyReadout(method="not_exact")]
+    )");
+    py::list readout = py::globals()["readout"];
+
+    NoiseModelCpp noise_model_cpp;
+    int n_qubits = 1;
+    QiliSimConfig config;
+    std::vector<bool> qubits_to_measure = {true};
+    EXPECT_THROW({
+        auto results = construct_result_object(state, readout, noise_model_cpp, n_qubits, config, qubits_to_measure);
+    }, py::value_error);
+}
+
+TEST(ConstructResults, BadReadoutTypeThrows) {
+    DenseMatrix state = DenseMatrix::Zero(2, 1);
+
+    py::list readout = py::list();  // should be a Readout object, not a list
+    readout.append(42);  // just to make it non-empty
+
+    NoiseModelCpp noise_model_cpp;
+    int n_qubits = 1;
+    QiliSimConfig config;
+    std::vector<bool> qubits_to_measure = {true};
+    EXPECT_THROW({
+        auto results = construct_result_object(state, readout, noise_model_cpp, n_qubits, config, qubits_to_measure);
+    }, py::value_error);
+}
+
 // GCOV_EXCL_BR_STOP

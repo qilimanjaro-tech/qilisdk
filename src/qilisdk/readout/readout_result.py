@@ -18,7 +18,7 @@ import heapq
 import operator
 from dataclasses import dataclass
 from pprint import pformat
-from typing import TYPE_CHECKING, Generic, Protocol, Self, TypeGuard, TypeVar, cast
+from typing import TYPE_CHECKING, Generic, Protocol, Self, TypeGuard, TypeVar
 
 import numpy as np
 from loguru import logger
@@ -583,8 +583,8 @@ class ReadoutCompositeResults(Result, Generic[S, E, T]):
         Raises:
             ValueError: If no expectation-value results are present.
         """
-        if self.expectation_values is not None and hasattr(self.expectation_values, "values"):
-            return cast("list[float]", self.expectation_values.values)
+        if self.expectation_values is not None:
+            return self.expectation_values.expectation_values
         raise ValueError(
             "Can't find expectation values because no ExpectationReadoutResult is present in this composite."
         )
