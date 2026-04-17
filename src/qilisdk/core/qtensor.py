@@ -45,6 +45,7 @@ class QTensor:
 
     The internal data is stored as an Eigen CSR (Compressed Sparse Row) matrix for
     efficient arithmetic and manipulation. The expected shapes for the data are:
+
     - (2**N, 2**N) for operators or density matrices (or scalars),
     - (2**N, 1) for ket states,
     - (1, 2**N) for bra states.
@@ -414,8 +415,8 @@ class QTensor:
         Compute the fidelity between this QTensor and another QTensor.
 
         The fidelity is a measure of similarity between two quantum states or operators.
-        For state vectors, it is defined as F(psi, phi) = |⟨psi|phi⟩|^2.
-        For density matrices, it is defined as F(rho, sigma) = (Tr(sqrt(sqrt(rho) sigma sqrt(rho))))^2.
+        For state vectors, it is defined as :math:`F(\\psi, \\phi) = |⟨\\psi|\\phi⟩|^2`.
+        For density matrices, it is defined as :math:`F(\\rho, \\sigma) = (\\text{tr}(\\sqrt{\\sqrt{\\rho} \\sigma \\sqrt{\\rho}}))^2`.
 
         Args:
             other (QTensor): The other QTensor to compute the fidelity with.
@@ -573,7 +574,7 @@ class QTensor:
         r"""
         Generate the n'th basis vector representation, on a N-size Hilbert space (N=2**num_qubits).
 
-        This function creates a column vector (ket) representing the Fock state \|n⟩ in a Hilbert space of dimension N.
+        This function creates a column vector (ket) representing the Fock state :math:`|n⟩` in a Hilbert space of dimension N.
 
         Args:
             n (int): The desired number state (from 0 to N-1).
@@ -583,7 +584,7 @@ class QTensor:
             ValueError: If n >= N.
 
         Returns:
-            QTensor: A QTensor representing the \|n⟩'th basis state on a N-size Hilbert space (N=2**num_qubits).
+            QTensor: A QTensor representing the n'th basis state on a N-size Hilbert space (N=2**num_qubits).
         """
         if not (0 <= n < N):
             raise ValueError(f"n must be in [0, {N - 1}]")
@@ -602,9 +603,9 @@ class QTensor:
 
     def reset_qubits(self, qubits: set[int]) -> QTensor:
         """
-        Reset the specified qubits to the |0⟩ state.
+        Reset the specified qubits to the :math:`|0⟩` state.
 
-        This method applies a reset operation to the specified qubits, effectively tracing out those qubits and replacing them with |0⟩ states.
+        This method applies a reset operation to the specified qubits, effectively tracing out those qubits and replacing them with :math:`|0⟩` states.
 
         Args:
             qubits (set[int]): A set of indices corresponding to the qubits to reset.
@@ -640,7 +641,8 @@ class QTensor:
         """
         Compute the Rényi entropy of the QTensor for a given order alpha.
 
-        This method calculates the Rényi entropy, which is defined as S_alpha(rho) = (1/(1-alpha)) log(Tr(rho^alpha)), where rho is the density matrix represented by the QTensor and alpha is the order of the entropy.
+        This method calculates the Rényi entropy, which is defined as :math:`S_\\text{alpha}(\\rho) = (1/(1-\\alpha)) \\text{log}(\\text{tr}(\\rho^\\alpha))`,
+        where rho is the density matrix represented by the QTensor and alpha is the order of the entropy.
 
         Args:
             alpha (float): The order of the Rényi entropy. Must be greater than 0 and not equal to 1.
@@ -746,7 +748,7 @@ class QTensor:
         """
         Compute the expectation value of another QTensor with respect to this QTensor.
 
-        For state vectors, this corresponds to ⟨psi|O|psi⟩. For operators, it corresponds to Tr(rho O).
+        For state vectors, this corresponds to :math:`⟨\\psi|O|\\psi⟩`. For operators, it corresponds to :math:`\\text{tr}(\\rho O)`.
 
         Args:
             other (QTensor): The other QTensor to compute the expectation value with.

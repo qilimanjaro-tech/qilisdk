@@ -132,7 +132,7 @@ def reverse_bits(x: int, n: int) -> int:
 def cudaq_to_standard(statevector: np.ndarray) -> np.ndarray:
     """
     Convert a CUDA-Q style statevector to the more common qubit-ordering
-    convention where [0,1,0,0] corresponds to |01> for 2 qubits.
+    convention where [0,1,0,0] corresponds to :math:`|01>` for 2 qubits.
 
     Args:
         statevector: 1D array-like of length 2^n

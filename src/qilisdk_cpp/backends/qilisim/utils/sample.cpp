@@ -20,6 +20,8 @@
 #include "parsers.h"
 #include "random.h"
 
+// GCOV_EXCL_BR_START
+
 std::map<std::string, int> apply_readout_error(const std::map<std::string, int>& counts, const NoiseModelCpp& noise_model_cpp, int n_qubits) {
     /*
     Apply readout error to the measurement counts.
@@ -154,3 +156,5 @@ std::map<std::string, int> construct_samples(const DenseMatrix& state, int n_qub
     // Only keep measured qubits in the counts
     return filter_counts(counts, qubits_to_measure);
 }
+
+// GCOV_EXCL_BR_STOP

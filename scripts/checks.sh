@@ -39,3 +39,7 @@ echo "Running C++ unit tests..." | tee -a $LOG_FILE
 ./tests/unit_cpp/test_cpp 2>&1 | tee -a $LOG_FILE
 echo "Running integration tests..." | tee -a $LOG_FILE
 pytest tests/integration 2>&1 | tee -a $LOG_FILE
+
+# Check the docs
+echo "Running docs checks..." | tee -a $LOG_FILE
+bash scripts/docs.sh 2>&1 | tee -a $LOG_FILE

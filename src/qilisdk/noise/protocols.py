@@ -21,12 +21,8 @@ if TYPE_CHECKING:
 
 
 class AttachmentScope(str, Enum):
-    """Scope describing where a noise or perturbation can be attached.
-
-    Attributes:
-        GLOBAL: Applies to all operations or parameters.
-        PER_QUBIT: Applies only to a specific qubit.
-        PER_GATE_TYPE: Applies only to a specific gate type.
+    """
+    Scope describing where a noise or perturbation can be attached.
     """
 
     GLOBAL = "global"
