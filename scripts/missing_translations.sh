@@ -16,8 +16,8 @@ cd "$(dirname "$(dirname "$(realpath "$0")")")"
 MISSING=0
 
 for file in $(find ./docs/ -name "*.po"); do
-    # match non-empty msgid followed immediately by empty msgstr
-    if grep -Pzo 'msgid ".+"\nmsgstr ""\n' "$file" > /dev/null 2>&1; then
+    # match non-empty msgid followed immediately by empty msgstr (not a multiline continuation)
+    if grep -Pzo 'msgid ".+"\nmsgstr ""\n(?!")' "$file" > /dev/null 2>&1; then
         echo "Missing translations in $file"
         MISSING=$((MISSING + 1))
     fi

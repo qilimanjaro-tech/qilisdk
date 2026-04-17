@@ -17,7 +17,12 @@ help:
 
 # Build for all versions of the documentation
 multiversion:
-	@sphinx-multiversion "$(SOURCEDIR)" "$(BUILDDIR)/html"
+	rm -rf "$(BUILDDIR)/en"
+	@sphinx-multiversion "$(SOURCEDIR)" "$(BUILDDIR)/en"
+	@for lang in $(LANGUAGES); do \
+		rm -rf "$(BUILDDIR)/$$lang"; \
+		SPHINX_LOCALE_DIR="$(CURDIR)/locale" sphinx-multiversion "$(SOURCEDIR)" "$(BUILDDIR)/$$lang" -D language=$$lang; \
+	done
 
 # Run this to generate the files for translation
 gettext:
@@ -31,19 +36,19 @@ gettext:
 
 # Build the translations
 translations:
-	rm -rf "$(BUILDDIR)/en"
-	$(SPHINXBUILD) -b html "$(SOURCEDIR)" "$(BUILDDIR)/en" $(SPHINXOPTS) $(O)
+	rm -rf "$(BUILDDIR)/en/main"
+	$(SPHINXBUILD) -b html "$(SOURCEDIR)" "$(BUILDDIR)/en/main" $(SPHINXOPTS) $(O)
 	for lang in $(LANGUAGES); do \
-		rm -rf "$(BUILDDIR)/$$lang"; \
-		$(SPHINXBUILD) -b html "$(SOURCEDIR)" "$(BUILDDIR)/$$lang" $(SPHINXOPTS) -D language=$$lang $(O); \
+		rm -rf "$(BUILDDIR)/$$lang/main"; \
+		$(SPHINXBUILD) -b html "$(SOURCEDIR)" "$(BUILDDIR)/$$lang/main" $(SPHINXOPTS) -D language=$$lang $(O); \
 	done;
 
 # Just build the English version, clearing the cache first
 html:
-	rm -rf "$(BUILDDIR)/en"
-	@$(SPHINXBUILD) -b html "$(SOURCEDIR)" "$(BUILDDIR)/en" $(SPHINXOPTS) $(O)
+	rm -rf "$(BUILDDIR)/en/main"
+	@$(SPHINXBUILD) -b html "$(SOURCEDIR)" "$(BUILDDIR)/en/main" $(SPHINXOPTS) $(O)
 
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
 %: Makefile
-	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)/en" $(SPHINXOPTS) $(O)
+	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)/en/main" $(SPHINXOPTS) $(O)

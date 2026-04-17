@@ -1,4 +1,4 @@
-Noise Models
+Noise
 ==============
 
 .. toctree::

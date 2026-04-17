@@ -7,6 +7,7 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 import operator
+import os
 import posixpath
 import sys
 from dataclasses import asdict
@@ -56,7 +57,8 @@ napoleon_numpy_docstring = False
 napoleon_preprocess_types = True
 
 # Internationalization settings
-locale_dirs = ["locale/"]
+# SPHINX_LOCALE_DIR can be set to an absolute path so multiversion builds use current translations
+locale_dirs = [os.environ["SPHINX_LOCALE_DIR"]] if "SPHINX_LOCALE_DIR" in os.environ else ["locale/"]
 gettext_compact = False
 
 # AutoAPI settings

@@ -6,12 +6,13 @@
 {{ super() }}
 <div class="language-switcher">
   {% set langs = [("en", "EN"), ("es", "ES"), ("ca", "CA")] %}
-  {% set depth = pagename.split('/')|length %}
+  {% set depth = pagename.split('/')|length - 1 %}
+  {% set vfolder = current_version.name if current_version is defined else "main" %}
   {% for code, label in langs %}
     {% if language == code %}
         <span class="lang-active">{{ label }}</span>
     {% else %}
-        <a href="{{ '../' * depth }}{{ code }}/{{ pagename }}.html" class="lang-link">{{ label }}</a>
+        <a href="{{ '../' * (depth + 2) }}{{ code }}/{{ vfolder }}/{{ pagename }}.html" class="lang-link">{{ label }}</a>
     {% endif %}
   {% endfor %}
 </div>

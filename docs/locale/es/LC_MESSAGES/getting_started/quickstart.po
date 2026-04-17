@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-14 12:09+0200\n"
+"POT-Creation-Date: 2026-04-17 15:30+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -28,8 +28,8 @@ msgid ""
 "Below are minimal examples to get you running digital circuits and analog"
 " evolutions."
 msgstr ""
-"A continuación se muestran ejemplos mínimos para poner en marcha circuitos"
-" digitales y evoluciones analógicas."
+"A continuación se muestran ejemplos mínimos para poner en marcha "
+"circuitos digitales y evoluciones analógicas."
 
 #: ../../getting_started/quickstart.rst:8
 msgid "Digital Circuit Example"
@@ -37,7 +37,9 @@ msgstr "Ejemplo de Circuito Digital"
 
 #: ../../getting_started/quickstart.rst:10
 msgid "Build a 2-qubit circuit, sample it, and inspect measurement counts:"
-msgstr "Construya un circuito de 2 qubits, muestréelo e inspeccione los recuentos de medición:"
+msgstr ""
+"Construya un circuito de 2 qubits, muestréelo e inspeccione los recuentos"
+" de medición:"
 
 #: ../../getting_started/quickstart.rst:36
 msgid "Analog Evolution Example"
@@ -48,8 +50,8 @@ msgid ""
 "Define two Hamiltonians, build an interval-based interpolation schedule, "
 "and simulate:"
 msgstr ""
-"Defina dos Hamiltonianos, construya una programación de interpolación"
-" basada en intervalos y simule:"
+"Defina dos Hamiltonianos, construya una programación de interpolación "
+"basada en intervalos y simule:"
 
 #: ../../getting_started/quickstart.rst:84
 msgid "Next Steps"
@@ -60,24 +62,24 @@ msgid ""
 "Once you've confirmed everything works, explore the tutorials section or "
 "check out each module for more details:"
 msgstr ""
-"Una vez que haya confirmado que todo funciona, explore la sección de"
-" tutoriales o consulte cada módulo para obtener más detalles:"
+"Una vez que haya confirmado que todo funciona, explore la sección de "
+"tutoriales o consulte cada módulo para obtener más detalles:"
 
 #: ../../getting_started/quickstart.rst:88
 msgid ""
 "**Core primitives** (:doc:`/modules/core/core`) for state vectors, "
 "operators, and shared abstractions."
 msgstr ""
-"**Primitivas del núcleo** (:doc:`/modules/core/core`) para vectores de"
-" estado, operadores y abstracciones compartidas."
+"**Primitivas del núcleo** (:doc:`/modules/core/core`) para vectores de "
+"estado, operadores y abstracciones compartidas."
 
 #: ../../getting_started/quickstart.rst:89
 msgid ""
 "**Digital workflows** (:doc:`/modules/digital/digital`) covering circuit "
 "construction, parameter sweeps, and QASM export."
 msgstr ""
-"**Flujos de trabajo digitales** (:doc:`/modules/digital/digital`) que"
-" cubren la construcción de circuitos, barridos de parámetros y exportación"
+"**Flujos de trabajo digitales** (:doc:`/modules/digital/digital`) que "
+"cubren la construcción de circuitos, barridos de parámetros y exportación"
 " QASM."
 
 #: ../../getting_started/quickstart.rst:90
@@ -85,51 +87,53 @@ msgid ""
 "**Analog workflows** (:doc:`/modules/analog/analog`) for Hamiltonian "
 "builders, schedules, and time-evolution utilities."
 msgstr ""
-"**Flujos de trabajo analógicos** (:doc:`/modules/analog/analog`) para"
-" constructores de Hamiltonianos, programaciones y utilidades de evolución"
-" temporal."
+"**Flujos de trabajo analógicos** (:doc:`/modules/analog/analog`) para "
+"constructores de Hamiltonianos, programaciones y utilidades de evolución "
+"temporal."
 
 #: ../../getting_started/quickstart.rst:91
 msgid ""
 "**Functionals** (:doc:`/modules/functionals/functionals`) to see how "
 "experiments connect models with execution backends."
 msgstr ""
-"**Funcionales** (:doc:`/modules/functionals/functionals`) para ver cómo"
-" los experimentos conectan modelos con backends de ejecución."
+"**Funcionales** (:doc:`/modules/functionals/functionals`) para ver cómo "
+"los experimentos conectan modelos con backends de ejecución."
 
 #: ../../getting_started/quickstart.rst:92
 msgid ""
 "**Execution targets** (:doc:`/modules/backends/backends`) to compare "
 "Qutip (CPU) and CUDA (CPU/GPU) runtimes."
 msgstr ""
-"**Objetivos de ejecución** (:doc:`/modules/backends/backends`) para"
-" comparar los tiempos de ejecución de Qutip (CPU) y CUDA (CPU/GPU)."
+"**Objetivos de ejecución** (:doc:`/modules/backends/backends`) para "
+"comparar los tiempos de ejecución de Qutip (CPU) y CUDA (CPU/GPU)."
 
 #: ../../getting_started/quickstart.rst:93
+#, fuzzy
 msgid ""
-"**Noise models** (:doc:`/modules/noise_models/noise_models`) to simulate "
-"hardware effects in both digital and analog contexts."
+"**Noise models** (:doc:`/modules/noise/noise`) to simulate hardware "
+"effects in both digital and analog contexts."
 msgstr ""
-"**Modelos de ruido** (:doc:`/modules/noise_models/noise_models`) para"
-" simular efectos de hardware en contextos tanto digitales como analógicos."
+"**Modelos de ruido** (:doc:`/modules/noise/noise`) para "
+"simular efectos de hardware en contextos tanto digitales como analógicos."
 
 #: ../../getting_started/quickstart.rst:94
 msgid ""
 "**Cost functions** (:doc:`/modules/cost_functions/cost_functions`) for "
 "common optimization objectives and metrics."
 msgstr ""
-"**Funciones de coste** (:doc:`/modules/cost_functions/cost_functions`)"
-" para objetivos de optimización y métricas comunes."
+"**Funciones de coste** (:doc:`/modules/cost_functions/cost_functions`) "
+"para objetivos de optimización y métricas comunes."
 
 #: ../../getting_started/quickstart.rst:95
 msgid ""
 "**SpeQtrum cloud** (:doc:`/modules/speqtrum/speqtrum`) for account setup,"
 " calibration-aware jobs, and result retrieval."
 msgstr ""
-"**Nube SpeQtrum** (:doc:`/modules/speqtrum/speqtrum`) para la"
-" configuración de cuentas, trabajos con calibración y recuperación de"
-" resultados."
+"**Nube SpeQtrum** (:doc:`/modules/speqtrum/speqtrum`) para la "
+"configuración de cuentas, trabajos con calibración y recuperación de "
+"resultados."
 
 #: ../../getting_started/quickstart.rst:97
 msgid "Happy quantum coding!"
 msgstr "¡Feliz programación cuántica!"
+
