@@ -569,6 +569,19 @@ class QTensor:
         return QTensor(QTensorCpp.ghz(nqubits))
 
     @classmethod
+    def uniform(cls, nqubits: int) -> QTensor:
+        """
+        Create a uniform superposition state for the specified number of qubits.
+
+        Args:
+            nqubits (int): The number of qubits in the uniform superposition state.
+
+        Returns:
+            QTensor: A new QTensor representing the uniform superposition state.
+        """
+        return QTensor(QTensorCpp.uniform(nqubits))
+
+    @classmethod
     def basis_state(cls, n: int, N: int) -> QTensor:
         r"""
         Generate the n'th basis vector representation, on a N-size Hilbert space (N=2**num_qubits).

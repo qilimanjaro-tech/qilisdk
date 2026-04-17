@@ -12,30 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
+#include <cstdint>
 #include <iomanip>
 #include <random>
-#include <cstdint>
 #include <sstream>
 
-#include "qilisim.h"
 #include "../../libs/numpy.h"
 #include "analog/time_evolution.h"
 #include "config/qilisim_config.h"
 #include "digital/gate.h"
 #include "digital/sampling.h"
 #include "noise/noise_model.h"
+#include "qilisim.h"
 #include "representations/matrix_free_hamiltonian.h"
 #include "utils/parsers.h"
 #include "utils/random.h"
 #include "utils/sample.h"
 
-
 py::object construct_result_object(const DenseMatrix& state_dense, const py::object& readout, NoiseModelCpp& noise_model_cpp, int n_qubits, const QiliSimConfig& config, const std::vector<bool>& qubits_to_measure) {
     py::list results;
     py::array final_state_numpy = to_numpy(state_dense);
-    
-    
+
     for (py::handle ro_handle : readout) {
         py::object ro = py::reinterpret_borrow<py::object>(ro_handle);
 
@@ -45,15 +42,10 @@ py::object construct_result_object(const DenseMatrix& state_dense, const py::obj
             if (method != "exact") {
                 throw py::value_error("State Tomography methods that are not exact are not supported yet.");
             }
-            results.append(StateTomographyReadoutResult(
-                "state"_a = QTensor(final_state_numpy)
-            ));
+            results.append(StateTomographyReadoutResult("state"_a = QTensor(final_state_numpy)));
 
         } else if (py::isinstance(ro, ExpectationReadout)) {
-            results.append(ExpectationReadoutResult.attr("from_state")(
-                "expectation_readout"_a     = py::module_::import("copy").attr("copy")(ro),
-                "state"_a = QTensor(final_state_numpy)
-            ));
+            results.append(ExpectationReadoutResult.attr("from_state")("expectation_readout"_a = py::module_::import("copy").attr("copy")(ro), "state"_a = QTensor(final_state_numpy)));
 
         } else if (py::isinstance(ro, SamplingReadout)) {
             int n_shots = ro.attr("nshots").cast<int>();
@@ -62,9 +54,7 @@ py::object construct_result_object(const DenseMatrix& state_dense, const py::obj
             for (const auto& pair : counts) {
                 samples[py::cast(pair.first)] = py::cast(pair.second);
             }
-            results.append(SamplingReadoutResult.attr("from_samples")(
-                "samples"_a  = samples
-            ));
+            results.append(SamplingReadoutResult.attr("from_samples")("samples"_a = samples));
 
         } else {
             // Replicate: raise ValueError(f"Unsupported Readout Method provided: {ro}")
@@ -74,9 +64,7 @@ py::object construct_result_object(const DenseMatrix& state_dense, const py::obj
     }
 
     return ReadoutCompositeResults.attr("from_list")(results);
-
 }
-
 
 // GCOV_EXCL_BR_START
 
@@ -152,15 +140,11 @@ py::object QiliSimCpp::execute_digital_propagation(const py::object& functional,
         sampling(gates, n_qubits, initial_state_cpp, noise_model_cpp, state_dense, config);
     }
 
-
     // Construct the result object
     py::object result = construct_result_object(state_dense, readout, noise_model_cpp, n_qubits, config, qubits_to_measure);
 
-    return FunctionalResult(
-        "readout_results"_a = result
-    );
+    return FunctionalResult("readout_results"_a = result);
 }
-
 
 // The public execute_time_evolution
 py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, const py::object& readout, const py::object& noise_model, const py::dict& solver_params) {
@@ -250,14 +234,14 @@ py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, co
         }
 
         // Call the implementation
-        time_evolution(rho_0, hamiltonians, parameters_list, step_list, noise_model_cpp,  config, rho_t, intermediate_rhos);
+        time_evolution(rho_0, hamiltonians, parameters_list, step_list, noise_model_cpp, config, rho_t, intermediate_rhos);
     }
 
     // Construct the result object
     int n_qubits = functional.attr("schedule").attr("nqubits").cast<int>();
     std::vector<bool> qubits_to_measure(n_qubits, true);
     py::object result = construct_result_object(rho_t, readout, noise_model_cpp, n_qubits, config, qubits_to_measure);
-    
+
     bool store_intermediate_results = functional.attr("store_intermediate_results").cast<bool>();
     // If we have intermediates, process them too
     if (store_intermediate_results) {
@@ -266,16 +250,10 @@ py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, co
             auto& rho_intermediate = intermediate_rhos[step];
             inter_results.append(construct_result_object(rho_intermediate, readout, noise_model_cpp, n_qubits, config, qubits_to_measure));
         }
-        return FunctionalResult(
-            "readout_results"_a = result,
-            "intermediate_results"_a = inter_results
-        );
+        return FunctionalResult("readout_results"_a = result, "intermediate_results"_a = inter_results);
     }
-    return FunctionalResult(
-        "readout_results"_a = result
-    );
+    return FunctionalResult("readout_results"_a = result);
 }
-
 
 // The public execute_sampling
 py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, const py::object& readout, const py::object& noise_model, const py::dict& solver_params) {
@@ -319,7 +297,7 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
     // Parse the Python objects into C++ objects
     std::vector<bool> qubits_to_measure(n_qubits, true);
     NoiseModelCpp noise_model_cpp = parse_noise_model(noise_model, n_qubits, config.get_atol());
-    
+
     py::object initial_state = functional.attr("initial_state");
     SparseMatrix rho_0 = parse_initial_state(initial_state, config.get_atol());
     // Ensure state is always a density matrix (matching Python's to_density_matrix())
@@ -355,9 +333,7 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
                 } else {
                     sampling(gates, n_qubits, state.sparseView(), noise_model_cpp, state, config);
                 }
-            }
-            else if (py::isinstance(step, Schedule)) {
-
+            } else if (py::isinstance(step, Schedule)) {
                 // Check if we need to perturb the parameters
                 if (!noise_model.is_none()) {
                     py::dict schedule_parameters = step.attr("get_parameters")();
@@ -380,7 +356,7 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
                 py::list hamiltonians_keys = hamiltonians_full.attr("keys")();
                 py::list hamiltonians_values = hamiltonians_full.attr("values")();
                 py::object steps = step.attr("tlist");
-                
+
                 std::vector<std::vector<double>> parameters_list = parse_coefficients(step, hamiltonians_keys, steps);
                 std::vector<double> step_list = parse_time_steps(steps);
 
@@ -414,67 +390,61 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
                     }
 
                     // Call the implementation
-                    time_evolution(state.sparseView(), hamiltonians, parameters_list, step_list, noise_model_cpp,  config, state, intermediate_rhos);
+                    time_evolution(state.sparseView(), hamiltonians, parameters_list, step_list, noise_model_cpp, config, state, intermediate_rhos);
                 }
             }
         }
-    // Ensure state is a density matrix after each layer (matching Python's to_density_matrix())
-    if (state.cols() == 1) {
-        state = state * state.adjoint();
-    }
-
-    inter_results.append(construct_result_object(state, readout, noise_model_cpp, n_qubits, config, qubits_to_measure));
-    if (!functional.attr("reservoir_layer").attr("qubits_to_reset").is_none()){
-        std::set<int> qubits_set;
-        for (const auto& item : functional.attr("reservoir_layer").attr("qubits_to_reset")) {
-            qubits_set.insert(item.cast<int>());
+        // Ensure state is a density matrix after each layer (matching Python's to_density_matrix())
+        if (state.cols() == 1) {
+            state = state * state.adjoint();
         }
 
-        if (!qubits_set.empty()) {
-            uint64_t reset_mask = 0ULL;
-            for (int q : qubits_set) {
-                if (q < 0 || q >= n_qubits) {
-                    throw py::value_error("Invalid qubit indices in qubits_to_reset");
-                }
-                reset_mask |= (1ULL << q);
+        inter_results.append(construct_result_object(state, readout, noise_model_cpp, n_qubits, config, qubits_to_measure));
+        if (!functional.attr("reservoir_layer").attr("qubits_to_reset").is_none()) {
+            std::set<int> qubits_set;
+            for (const auto& item : functional.attr("reservoir_layer").attr("qubits_to_reset")) {
+                qubits_set.insert(item.cast<int>());
             }
 
-            DenseMatrix reset_rho = DenseMatrix::Zero(state.rows(), state.cols());
-
-            for (Eigen::Index row = 0; row < state.rows(); ++row) {
-                for (Eigen::Index col = 0; col < state.cols(); ++col) {
-                    if (state(row, col) == std::complex<double>(0.0, 0.0)) {
-                        continue;
+            if (!qubits_set.empty()) {
+                uint64_t reset_mask = 0ULL;
+                for (int q : qubits_set) {
+                    if (q < 0 || q >= n_qubits) {
+                        throw py::value_error("Invalid qubit indices in qubits_to_reset");
                     }
-
-                    const uint64_t urow = static_cast<uint64_t>(row);
-                    const uint64_t ucol = static_cast<uint64_t>(col);
-
-                    if (((urow ^ ucol) & reset_mask) != 0ULL) {
-                        continue;
-                    }
-
-                    const Eigen::Index out_row =
-                        static_cast<Eigen::Index>(urow & ~reset_mask);
-                    const Eigen::Index out_col =
-                        static_cast<Eigen::Index>(ucol & ~reset_mask);
-
-                    reset_rho(out_row, out_col) += state(row, col);
+                    reset_mask |= (1ULL << q);
                 }
+
+                DenseMatrix reset_rho = DenseMatrix::Zero(state.rows(), state.cols());
+
+                for (Eigen::Index row = 0; row < state.rows(); ++row) {
+                    for (Eigen::Index col = 0; col < state.cols(); ++col) {
+                        if (state(row, col) == std::complex<double>(0.0, 0.0)) {
+                            continue;
+                        }
+
+                        const uint64_t urow = static_cast<uint64_t>(row);
+                        const uint64_t ucol = static_cast<uint64_t>(col);
+
+                        if (((urow ^ ucol) & reset_mask) != 0ULL) {
+                            continue;
+                        }
+
+                        const Eigen::Index out_row = static_cast<Eigen::Index>(urow & ~reset_mask);
+                        const Eigen::Index out_col = static_cast<Eigen::Index>(ucol & ~reset_mask);
+
+                        reset_rho(out_row, out_col) += state(row, col);
+                    }
+                }
+
+                state = std::move(reset_rho);
             }
-
-            state = std::move(reset_rho);
         }
-    }
-
     }
 
     py::slice slice(0, -1, 1);
 
-    return FunctionalResult(
-        py::arg("readout_results") = inter_results[py::int_(-1)],
-        py::arg("intermediate_results") = inter_results[slice]
-    );
+    return FunctionalResult(py::arg("readout_results") = inter_results[py::int_(-1)], py::arg("intermediate_results") = inter_results[slice]);
 }
 
 #pragma GCC visibility pop
