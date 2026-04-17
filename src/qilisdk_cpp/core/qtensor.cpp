@@ -1940,6 +1940,26 @@ QTensorCpp QTensorCpp::ghz(int nqubits) {
     return result;
 }
 
+QTensorCpp QTensorCpp::uniform(int nqubits) {
+    /*
+    Create a uniform superposition state for the specified number of qubits, returning a new QTensor as the result.
+
+    Args:
+        nqubits (int): The number of qubits in the uniform superposition state.
+
+    Returns:
+        QTensorCpp: A new QTensor that is the uniform superposition state for the specified number of qubits.
+    */
+    int dim = 1 << nqubits;
+    QTensorCpp result(dim, 1);
+    double amplitude = 1.0 / std::sqrt(static_cast<double>(dim));
+    for (int i = 0; i < dim; ++i) {
+        result._data.insert(i, 0) = amplitude;
+    }
+    result._data.makeCompressed();
+    return result;
+}
+
 QTensorCpp QTensorCpp::reset_qubits_python(const py::object& qubits) {
     /*
     Reset the specified qubits in this QTensor, returning a new QTensor as the result.

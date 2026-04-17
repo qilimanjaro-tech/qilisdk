@@ -807,6 +807,12 @@ def test_qtensor_ghz():
     np.testing.assert_allclose(qghz2.dense(), expected.dense(), atol=1e-8)
 
 
+def test_qtensor_uniform():
+    qunif = QTensor.uniform(2)
+    expected = (ket(0, 0) + ket(0, 1) + ket(1, 0) + ket(1, 1)) * (0.5)
+    np.testing.assert_allclose(qunif.dense(), expected.dense(), atol=1e-8)
+
+
 def test_qtensor_entropies():
     qket = ket(0, 1)
     qdm = qket.to_density_matrix()

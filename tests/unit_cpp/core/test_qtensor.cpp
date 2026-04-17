@@ -787,6 +787,16 @@ TEST(GhzTest, TwoQubits_SuperpositionOf00And11) {
     EXPECT_NEAR(q.get_data().coeff(3, 0).real(), c, 1e-10);
 }
 
+TEST(UniformTest, ThreeQubits_EqualAmplitudes) {
+    QTensorCpp q = QTensorCpp::uniform(3);
+    EXPECT_EQ(q.get_shape().first, 8);
+    EXPECT_EQ(q.get_shape().second, 1);
+    double c = 1.0 / std::sqrt(8.0);
+    for (int i = 0; i < 8; i++) {
+        EXPECT_NEAR(q.get_data().coeff(i, 0).real(), c, 1e-10);
+    }
+}
+
 TEST(TensorProductTest, Empty_Throws) {
     EXPECT_THROW(QTensorCpp::tensor_product({}), py::value_error);
 }

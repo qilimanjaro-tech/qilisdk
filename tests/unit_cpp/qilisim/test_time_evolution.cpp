@@ -89,7 +89,6 @@ TimeEvolutionOutputs run_time_evolution(SparseMatrix rho_0, const std::vector<Sp
         }
     }
 
-
     if (config.get_store_intermediate_results()) {
         for (const auto& rho_intermediate : out.intermediate_rhos) {
             std::vector<double> step_expectation_values;
