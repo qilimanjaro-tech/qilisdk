@@ -67,65 +67,33 @@ This section covers how to set up a local development environment for qilisdk, r
 - **[ty](https://docs.astral.sh/ty/)** for language server and static type checking.
 - **[towncrier](https://github.com/twisted/towncrier)** for automated changelog generation.
 
-### Prerequisites
-
-- Python **3.10+** (we test against multiple versions, but 3.10 is the minimum for local dev).
-- [Git](https://git-scm.com/) for version control.
-- A C++ compiler and CMake, which can be installed together on Ubuntu/Debian using:
-  ```bash
-  sudo apt install build-essential
-  ```
-  or on Windows via [this guide](https://code.visualstudio.com/docs/cpp/cmake-linux).
-
 ### Setup & Dependency Management
 
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/qilimanjaro-tech/qilisdk.git
-   cd qilisdk
-   ```
-
-2. **Install [uv](https://pypi.org/project/uv/) globally** (if not already):
-   ```bash
-   curl -LsSf https://astral.sh/uv/install.sh | sh
-   ```
-
-3. **Sync dependencies**:
-   - We maintain a `pyproject.toml` listing all dev and optional requirements.
-   - To install the dev environment locally, run:
-     ```bash
-     uv sync
-     ```
-     This sets up a virtual environment and installs all pinned dependencies (including `ruff`, `ty`, `towncrier`, etc.).
-   - To install extra dependencies such as `CudaBackend`, run:
-     ```bash
-     uv sync --extra cuda -extra ...
-     ```
-     This sets up a virtual environment and installs all pinned dependencies (previous), plus the specified extras.
-     you can also install all the optional dependencies and groups by running;
-     ```bash
-     uv sync --all-extras --all-groups
-     ```
-
-4. **Activate the virtual environment**:
-   - uv typically creates and manages its own environment, e.g., `.venv/`.
-   - Run:
-     ```bash
-     source .venv/bin/activate
-     ```
-     *(Exact command can vary depending on your shell and OS.)*
-
-Now you can run all development commands (tests, linting, etc.) within this environment.
+For instructions on how to compile from source and set up the development environment, see the [docs](https://qilimanjaro-tech.github.io/qilisdk/main/getting_started/installation#compiling-from-source). Following those instructions will setup a virtual environment (venv) in which you can run all other development tools (e.g. tests, linting).
 
 ### Testing
 
-We use **pytest** for the test suite. After syncing dependencies and activating `.venv`, run:
+We use **pytest** for the test suite. Once you have your venv set up, run the Python unit tests using:
 
 ```bash
-pytest tests
+pytest tests/unit_python
 ```
 
-To exercise the CUDA, qutip, and SpeQtrum backend tests, install the optional extras first (e.g., `uv sync --all-extras`).
+To run the integration tests (bigger tests which use the full QiliSDK stack and might take a bit longer):
+```bash
+pytest tests/integration
+```
+
+To run the CUDA, qutip, and SpeQtrum backend tests, install the optional extras first (e.g., `uv sync --all-groups --extra all-cu13`).
+
+To run the C++ tests, you first need to recompile with C++ testing enabled:
+```bash
+uv sync --reinstall -Ccmake.define.tests=ON
+```
+The C++ testing suite can then be ran using:
+```bash
+./tests/unit_cpp/test_cpp
+```
 
 ### Linting & Formatting
 
@@ -167,7 +135,6 @@ It may also throw an error about not being able to find `omp.h`, if so, try:
 ```bash
 sudo apt-get install libomp-dev
 ```
-For easy of use there are also a number of bash scripts in the "scripts" folder, for instance to generate coverage reports or to run all pre-commit checks.
 
 ### Type Checking
 
@@ -178,6 +145,26 @@ ty check
 ```
 
 *(We encourage developers to annotate new functions, classes, and methods with type hints.)*
+
+### Helpful Scripts
+
+For ease of use there are also a number of scripts in the `scripts/` directory. Each of these generates a .log file with the same name as the script (`checks.sh` generates `checks.log` and so on).
+
+To run all pre-commit checks (e.g. linting/tests):
+```bash
+bash scripts/checks.sh
+```
+
+To check all of the code blocks in the documentaton:
+```bash
+bash scripts/docs.sh
+```
+
+To generate a full coverage report of all code, run:
+```bash
+bash scripts/cov.sh
+```
+This will generate a html file which you can open in your browser to see which lines (in both the C++ and Python) are covered by the tests. We aim for 100% coverage!
 
 ### Changelog Management
 
