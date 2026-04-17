@@ -19,29 +19,6 @@
 
 // GCOV_EXCL_BR_START
 
-void MatrixFreeHamiltonian::apply(DenseMatrix& output_state, MatrixFreeApplicationType application_type) const {
-    /*
-    Applies the matrix-free Hamiltonian to the given output state.
-    It iterates through each term in the Hamiltonian, applies the corresponding operators
-    to the output state, and accumulates the results. The final result is stored back in the output state.
-
-    Args:
-        output_state: The state to which the Hamiltonian will be applied. This state will be modified in-place to contain the result.
-        application_type: The type of application (Left, Right, or LeftAndRight) that determines how the operators are applied to the state.
-    */
-    m_new_state.resizeLike(output_state);
-    m_new_state.setZero();
-    m_temp_state.resizeLike(output_state);
-    for (const auto& [coefficient, ops] : operators) {
-        m_temp_state = output_state;
-        for (const auto& op : ops) {
-            op.apply(m_temp_state, application_type);
-        }
-        m_new_state.noalias() += coefficient * m_temp_state;
-    }
-    output_state.swap(m_new_state);
-}
-
 void MatrixFreeHamiltonian::apply(const DenseMatrix& input_state, MatrixFreeApplicationType application_type, DenseMatrix& output_state) const {
     /*
     Applies the matrix-free Hamiltonian to the given input state and writes the result to a separate output state.
@@ -51,13 +28,88 @@ void MatrixFreeHamiltonian::apply(const DenseMatrix& input_state, MatrixFreeAppl
         application_type: The type of application (Left, Right, or LeftAndRight).
         output_state: The state where the result will be stored.
     */
-    m_temp_state.resizeLike(output_state);
+    // m_temp_state.resizeLike(output_state);
+    // for (const auto& [coefficient, ops] : operators) {
+    //     m_temp_state = input_state;
+    //     for (const auto& op : ops) {
+    //         op.apply(m_temp_state, application_type);
+    //     }
+    //     output_state += m_temp_state * coefficient;
+    // }
+
+    // precompute per-operator: (flip_mask, sign_mask, phase_if_bit0, phase_if_bit1)
+    // flip_mask: XOR into index (0 = no flip); sign_mask: which bit to check for phase selection
+    // X: always flip, phase always 1
+    // Z: never flip, phase is +1 (bit=0) or -1 (bit=1)
+    // Y: always flip, phase is -i (bit=0) or +i (bit=1)
+    // using OpEffect = std::tuple<long, long, std::complex<double>, std::complex<double>>;
+    // std::vector<std::pair<std::complex<double>, std::vector<OpEffect>>> precomputed_ops;
+    // for (const auto& [coefficient, ops] : operators) {
+    //     std::vector<OpEffect> op_effects;
+    //     for (const auto& op : ops) {
+    //         int num_qubits = static_cast<int>(std::log2(input_state.rows()));
+    //         long mask = 1LL << (num_qubits - 1 - op.get_target_qubits()[0]);
+    //         if (op.get_name() == "X") {
+    //             op_effects.push_back({mask, 0L, {1.0, 0.0}, {1.0, 0.0}});
+    //         } else if (op.get_name() == "Z") {
+    //             op_effects.push_back({0L, mask, {1.0, 0.0}, {-1.0, 0.0}});
+    //         } else if (op.get_name() == "Y") {
+    //             op_effects.push_back({mask, mask, {0.0, -1.0}, {0.0, 1.0}});
+    //         } else {
+    //             throw std::invalid_argument("Unsupported operator in Hamiltonian: " + op.get_name());
+    //         }
+    //     }
+    //     precomputed_ops.push_back({coefficient, op_effects});
+    // }
+    // instead, compute X, Y and Z ops seperately
+    using XOp = long;
+    using YOp = long;
+    using ZOp = long;
+    std::vector<std::pair<std::complex<double>, std::tuple<std::vector<XOp>, std::vector<YOp>, std::vector<ZOp>>>> precomputed_ops;
     for (const auto& [coefficient, ops] : operators) {
-        m_temp_state = input_state;
+        std::vector<XOp> x_masks;
+        std::vector<YOp> y_masks;
+        std::vector<ZOp> z_masks;
         for (const auto& op : ops) {
-            op.apply(m_temp_state, application_type);
+            int num_qubits = static_cast<int>(std::log2(input_state.rows()));
+            long mask = 1LL << (num_qubits - 1 - op.get_target_qubits()[0]);
+            if (op.get_name() == "X") {
+                x_masks.push_back(mask);
+            } else if (op.get_name() == "Z") {
+                z_masks.push_back(mask);
+            } else if (op.get_name() == "Y") {
+                y_masks.push_back(mask);
+            } else {
+                throw std::invalid_argument("Unsupported operator in Hamiltonian: " + op.get_name());
+            }
         }
-        output_state += m_temp_state * coefficient;
+        precomputed_ops.push_back({coefficient, {x_masks, y_masks, z_masks}});
+    }
+
+    // new approach, do each coefficient of the output state separately to avoid unnecessary additions
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+    for (int i = 0; i < output_state.size(); ++i) {
+        std::complex<double> coeff = 0.0;
+        for (const auto& [coefficient, op_effects] : precomputed_ops) {
+            long index = i;
+            std::complex<double> phase = coefficient;
+            for (const auto& x_mask : std::get<0>(op_effects)) {
+                index ^= x_mask;
+            }
+            for (const auto& y_mask : std::get<1>(op_effects)) {
+                int bit = (index & y_mask) != 0;
+                index ^= y_mask;
+                phase *= std::complex<double>(0.0, 2 * bit - 1);
+            }
+            for (const auto& z_mask : std::get<2>(op_effects)) {
+                int bit = (index & z_mask) != 0;
+                phase *= std::complex<double>(2 * bit - 1, 0.0);
+            }
+            coeff += phase * input_state(index);
+        }
+        output_state(i) = coeff;
     }
 }
 
