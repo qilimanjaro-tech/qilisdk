@@ -56,7 +56,7 @@ napoleon_numpy_docstring = False
 napoleon_preprocess_types = True
 
 # Internationalization settings
-locale_dirs = ['locale/']
+locale_dirs = ["locale/"]
 gettext_compact = False
 
 # AutoAPI settings

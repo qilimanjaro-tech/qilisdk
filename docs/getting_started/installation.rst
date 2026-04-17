@@ -55,15 +55,27 @@ The above method will install the pre-built binaries of QiliSDK of the most rece
 If you want to get the newest features (those that we're still working on), you can compile the library from source, 
 but be aware that this is not recommended for most users, and we make no promises that the latest code will be stable.
 
-Support for Windows is somewhat limited, so we recommend using WSL, which can be installed as per 
+Support for Windows is limited, so we recommend using WSL, which can be installed as per 
 `this guide <https://learn.microsoft.com/en-us/windows/wsl/install>`__.
 
-First, make sure you have a Python, pip, git, uv and build-essentials installed. For Ubuntu/Debian, you can run:
+First, make sure you have a Python, pip, git, and build-essentials installed. For Ubuntu/Debian, you can run:
 
 .. code-block:: bash
 
     sudo apt update
     sudo apt install python3 python3-pip git build-essential
+
+or on MacOS with:
+
+.. code-block:: bash
+
+    xcode-select --install
+    brew install python git ninja cmake
+
+Install uv globally with:
+
+.. code-block:: bash
+
     curl -LsSf https://astral.sh/uv/install.sh | sh
 
 Then, clone (i.e. download) and enter the repository:

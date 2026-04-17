@@ -21,9 +21,10 @@ from enum import Enum
 from typing import TYPE_CHECKING, Any, Mapping
 
 import numpy as np
+from typing_extensions import TypeAlias
 
 from qilisdk.core.parameterizable import Parameterizable
-from qilisdk.core.variables import LEQ, PARAMETERIZED_NUMBER, BaseVariable, Parameter, Term
+from qilisdk.core.variables import LEQ, BaseVariable, Parameter, Term
 from qilisdk.settings import get_settings
 from qilisdk.yaml import yaml
 
@@ -33,6 +34,7 @@ if TYPE_CHECKING:
 _TIME_PARAMETER_NAME = "t"
 
 # type aliases just to keep this short
+PARAMETERIZED_NUMBER: TypeAlias = float | Parameter | Term
 TimeDict = dict[PARAMETERIZED_NUMBER | tuple[float, float], PARAMETERIZED_NUMBER | Callable[..., PARAMETERIZED_NUMBER]]
 
 

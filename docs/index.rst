@@ -58,7 +58,7 @@ Welcome to **QiliSDK**, a unified Python framework for developing, simulating, a
    modules/readout/readout
    modules/backends/backends
    modules/cost_functions/cost_functions
-   modules/noise_models/noise_models
+   modules/noise/noise
    modules/speqtrum/speqtrum
 
 .. toctree::

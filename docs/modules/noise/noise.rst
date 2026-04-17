@@ -5,8 +5,8 @@ Noise Models
     :maxdepth: 2
     :hidden:
 
-    noise_models_config
-    noise_models_types
+    noise_config
+    noise_types
 
 The :mod:`qilisdk.noise` module contains classes that represent different types of noise in quantum systems.
 These noise models can be integrated into quantum simulations to account for real-world imperfections and
@@ -68,7 +68,7 @@ and analog schedules, while others are specific to one or the other:
    :widths: auto
 
    ========================================================================== ==================== ======================
-   Noise Type                                                                 Digital Circuits     Analog Schedules
+   Noise Type                                                                 Digital Propogation  Analog Evolution
    ========================================================================== ==================== ======================
    :class:`~qilisdk.noise.representations.KrausChannel`                       ✔                                
    -------------------------------------------------------------------------- -------------------- ----------------------

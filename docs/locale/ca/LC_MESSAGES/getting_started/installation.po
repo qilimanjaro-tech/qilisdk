@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-14 12:09+0200\n"
+"POT-Creation-Date: 2026-04-17 14:50+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -100,43 +100,66 @@ msgstr ""
 
 #: ../../getting_started/installation.rst:58
 msgid ""
-"Support for Windows is somewhat limited, so we recommend using WSL, which"
-" can be installed as per `this guide <https://learn.microsoft.com/en-"
+"Support for Windows is limited, so we recommend using WSL, which can be "
+"installed as per `this guide <https://learn.microsoft.com/en-"
 "us/windows/wsl/install>`__."
 msgstr ""
 
 #: ../../getting_started/installation.rst:61
 msgid ""
-"First, make sure you have a Python, pip, git, uv and build-essentials "
+"First, make sure you have a Python, pip, git, and build-essentials "
 "installed. For Ubuntu/Debian, you can run:"
 msgstr ""
 
-#: ../../getting_started/installation.rst:69
+#: ../../getting_started/installation.rst:68
+msgid "or on MacOS with:"
+msgstr ""
+
+#: ../../getting_started/installation.rst:75
+msgid "Install uv globally with:"
+msgstr ""
+
+#: ../../getting_started/installation.rst:81
 msgid "Then, clone (i.e. download) and enter the repository:"
 msgstr ""
 
-#: ../../getting_started/installation.rst:76
+#: ../../getting_started/installation.rst:88
 msgid "Create a new virtual environment using uv and activate it:"
 msgstr ""
 
-#: ../../getting_started/installation.rst:83
+#: ../../getting_started/installation.rst:95
 msgid "To then install QiliSDK into this new environment, run:"
 msgstr ""
 
-#: ../../getting_started/installation.rst:89
+#: ../../getting_started/installation.rst:101
 msgid ""
 "If you want to install with extras, you can run the following, adjusting "
 "as needed:"
 msgstr ""
 
-#: ../../getting_started/installation.rst:95
+#: ../../getting_started/installation.rst:107
 msgid ""
 "You then have an environment with the latest version of QiliSDK "
 "installed. If you want to install other things to the environment you'll "
 "need to use pip with uv:"
 msgstr ""
 
-#: ../../getting_started/installation.rst:102
+#: ../../getting_started/installation.rst:114
 msgid "And then to run a Python script within the environment, you can use:"
 msgstr ""
+
+#~ msgid ""
+#~ "Support for Windows is somewhat limited,"
+#~ " so we recommend using WSL, which "
+#~ "can be installed as per `this "
+#~ "guide <https://learn.microsoft.com/en-"
+#~ "us/windows/wsl/install>`__."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "First, make sure you have a "
+#~ "Python, pip, git, uv and build-"
+#~ "essentials installed. For Ubuntu/Debian, you"
+#~ " can run:"
+#~ msgstr ""
 

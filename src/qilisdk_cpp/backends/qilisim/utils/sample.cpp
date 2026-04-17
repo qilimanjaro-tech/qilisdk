@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "sample.h"
 #include <iomanip>
 #include <random>
 #include <sstream>
-#include "sample.h"
 #include "../representations/matrix_free_hamiltonian.h"
 #include "parsers.h"
 #include "random.h"
@@ -98,7 +98,7 @@ std::map<std::string, int> filter_counts(const std::map<std::string, int>& count
     return filtered_counts;
 }
 
-std::map<std::string, int> construct_samples(const DenseMatrix& state, int n_qubits, int n_shots, NoiseModelCpp& noise_model_cpp, const QiliSimConfig& config, const std::vector<bool>& qubits_to_measure){
+std::map<std::string, int> construct_samples(const DenseMatrix& state, int n_qubits, int n_shots, NoiseModelCpp& noise_model_cpp, const QiliSimConfig& config, const std::vector<bool>& qubits_to_measure) {
     /*
     Sample a quantum state, given a noise model and a set of qubits to measure.
 
@@ -108,11 +108,11 @@ std::map<std::string, int> construct_samples(const DenseMatrix& state, int n_qub
         nshots (int): the number of shots used for the sampling.
         noise_model_cpp (NoiseModelCpp&): the noise model to be considered when computing the samples.
         config (QiliSimConfig&): QiliSim configuration.
-        qubits_to_measure (vector<boo>&): a list of boolean specifying which qubits to measure. 
+        qubits_to_measure (vector<boo>&): a list of boolean specifying which qubits to measure.
 
     Returns:
-        std::map<std::string, int>: a map containing the state and the number of samples obtained of that state. 
-    
+        std::map<std::string, int>: a map containing the state and the number of samples obtained of that state.
+
     */
     std::map<std::string, int> counts;
     bool has_noise = !noise_model_cpp.is_empty();
@@ -152,8 +152,7 @@ std::map<std::string, int> construct_samples(const DenseMatrix& state, int n_qub
     }
 
     // Only keep measured qubits in the counts
-    return  filter_counts(counts, qubits_to_measure);
-
+    return filter_counts(counts, qubits_to_measure);
 }
 
 // GCOV_EXCL_BR_STOP
