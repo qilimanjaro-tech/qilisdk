@@ -30,7 +30,7 @@
   <link rel="stylesheet" type="text/css" href="../../../_static/theme.css?v=73505e79" />
   <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
   <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
-  <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=8f6adc47" />
+  <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=c047bc51" />
   <link rel="stylesheet" type="text/css" href="../../../_static/awesome-sphinx-design.css?v=c54898a4" />
   <link rel="icon" href="../../../_static/q_trans.png" />
   <link rel="search" title="Search" href="../../../search.html" />
@@ -121,28 +121,79 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../getting_started/installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../getting_started/quickstart.html">Quickstart</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">Fundamentals</span></p>
+<p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/analog.html">Analog</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/digital.html">Digital</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/core.html">Core</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/functionals.html">Functionals</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/readout.html">Readout</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/cost_functions.html">Cost Functions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/backends.html">Backends</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/noise_models.html">Noise Models</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/speqtrum.html">SpeQtrum</a></li>
-</ul>
-<p class="caption" role="heading"><span class="caption-text">Code Examples</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../examples/code_examples.html">Code Examples</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../../examples/circuits.html">Circuits</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../examples/hamiltonians.html">Hamiltonians</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../examples/time_evolution.html">Time Evolution</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../examples/quantum_objects.html">Quantum Objects</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../examples/models.html">Models and Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../tutorials/introductions/index_intros.html">Introductions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/introductions/intro_quantum.html">Quantum Basics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/introductions/intro_circuits.html">Quantum Circuits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/introductions/intro_annealing.html">Quantum Annealing</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../../../tutorials/applications/index_applications.html">Applications</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/applications/application_grovers.html">Quantum Search with Grover’s Algorithm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/applications/application_shors.html">Factoring With Shor’s Algorithm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/applications/application_annealing.html">Optimization with Quantum Annealing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/applications/application_qaoa.html">Optimization with QAOA</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Modules</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/core/core.html">Core</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core/core_variables.html">Variables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core/core_terms.html">Terms</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core/core_parameters.html">Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core/core_math_map.html">Mathematical Maps</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core/core_comparison.html">Comparison Terms</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core/core_model.html">Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core/core_qubo.html">QUBO</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core/core_qtensor.html">QTensor</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/digital/digital.html">Digital</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/digital/digital_gates.html">Gates</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/digital/digital_circuits.html">Circuits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/digital/digital_vis.html">Visualization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/digital/digital_ansatz.html">Hardware Efficient Ansatz</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/digital/digital_qaoa.html">QAOA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/digital/digital_trotter.html">Trotterization</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/analog/analog.html">Analog</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/analog/analog_hamiltonian.html">Hamiltonian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/analog/analog_schedule.html">Schedule</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/functionals/functionals.html">Functionals</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/functionals/functionals_sampling.html">Digital Propogation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/functionals/functionals_time_evolution.html">Time Evolution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/functionals/functionals_reservoirs.html">Quantum Reservoirs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/functionals/functionals_variational.html">Variational Programs</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/readout/readout.html">Readout</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/readout/readout_bitstring.html">Bitstring Measurement</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/readout/readout_expectation.html">Expectation Values</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/readout/readout_state.html">Full Quantum State</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/backends/backends.html">Backends</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/backends/backends_qilisim.html">QiliSim</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/backends/backends_cuda.html">CUDA Backend</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/backends/backends_qutip.html">QuTiP Backend</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/cost_functions/cost_functions.html">Cost Functions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/cost_functions/cost_functions_observable.html">Observable Cost Function</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/cost_functions/cost_functions_model.html">Model Cost Function</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/noise_models/noise_models.html">Noise Models</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/noise_models/noise_models_config.html">Noise Config</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/noise_models/noise_models_types.html">Noise Types</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/speqtrum/speqtrum.html">SpeQtrum</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
@@ -248,6 +299,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/hashing/index.html">qilisdk.utils.hashing</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/openfermion/index.html">qilisdk.utils.openfermion</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/openqasm2/index.html">qilisdk.utils.openqasm2</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/openqasm3/index.html">qilisdk.utils.openqasm3</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/serialization/index.html">qilisdk.utils.serialization</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/trotterization/index.html">qilisdk.utils.trotterization</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/visualization/index.html">qilisdk.utils.visualization</a></li>
@@ -357,10 +409,10 @@
 </span><span id="line-19"><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 </span><span id="line-20"><span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Self</span>
 </span><span id="line-21">
-</span><span id="line-22"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">QTensor</span>
+</span><span id="line-22"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Domain</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">,</span> <span class="n">QTensor</span>
 </span><span id="line-23"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core.parameterizable</span><span class="w"> </span><span class="kn">import</span> <span class="n">Parameterizable</span>
-</span><span id="line-24"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core.variables</span><span class="w"> </span><span class="kn">import</span> <span class="n">Domain</span><span class="p">,</span> <span class="n">Parameter</span>
-</span><span id="line-25"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.settings</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_settings</span>
+</span><span id="line-24"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.settings</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_settings</span>
+</span><span id="line-25"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.utils.hashing</span><span class="w"> </span><span class="kn">import</span> <span class="nb">hash</span> <span class="k">as</span> <span class="n">qili_hash</span>
 </span><span id="line-26"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.utils.visualization</span><span class="w"> </span><span class="kn">import</span> <span class="n">CircuitStyle</span>
 </span><span id="line-27"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.yaml</span><span class="w"> </span><span class="kn">import</span> <span class="n">yaml</span>
 </span><span id="line-28">
@@ -677,110 +729,122 @@
 </span><span id="line-301">            <span class="bp">self</span><span class="o">.</span><span class="n">prepend</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
 </span><span id="line-302">        <span class="k">return</span> <span class="bp">self</span>
 </span><span id="line-303">
+</span><span id="line-304">    <span class="k">def</span><span class="w"> </span><span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+</span><span id="line-305">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Circuit</span><span class="p">):</span>
+</span><span id="line-306">            <span class="k">return</span> <span class="bp">NotImplemented</span>
+</span><span id="line-307">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span> <span class="o">!=</span> <span class="n">other</span><span class="o">.</span><span class="n">nqubits</span><span class="p">:</span>
+</span><span id="line-308">            <span class="k">return</span> <span class="kc">False</span>
+</span><span id="line-309">        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gates</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">gates</span><span class="p">):</span>
+</span><span id="line-310">            <span class="k">return</span> <span class="kc">False</span>
+</span><span id="line-311">        <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="n">g1</span> <span class="o">==</span> <span class="n">g2</span> <span class="k">for</span> <span class="n">g1</span><span class="p">,</span> <span class="n">g2</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gates</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">gates</span><span class="p">))</span>
+</span><span id="line-312">
+</span><span id="line-313">    <span class="k">def</span><span class="w"> </span><span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+</span><span id="line-314">        <span class="k">return</span> <span class="n">qili_hash</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gates</span><span class="p">)))</span>
+</span><span id="line-315">
 <div class="viewcode-block" id="Circuit.draw">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/circuit/index.html#qilisdk.digital.circuit.Circuit.draw">[docs]</a>
-</span><span id="line-304">    <span class="k">def</span><span class="w"> </span><span class="nf">draw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">style</span><span class="p">:</span> <span class="n">CircuitStyle</span> <span class="o">=</span> <span class="n">CircuitStyle</span><span class="p">(),</span> <span class="n">filepath</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-305"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-306"><span class="sd">        Render this circuit with Matplotlib and optionally save it to a file.</span>
-</span><span id="line-307">
-</span><span id="line-308"><span class="sd">        The circuit is rendered using the provided style configuration. If ``filepath`` is</span>
-</span><span id="line-309"><span class="sd">        given, the resulting figure is saved to disk (the output format is inferred</span>
-</span><span id="line-310"><span class="sd">        from the file extension, e.g. ``.png``, ``.pdf``, ``.svg``).</span>
-</span><span id="line-311">
-</span><span id="line-312"><span class="sd">        Args:</span>
-</span><span id="line-313"><span class="sd">            style (CircuitStyle): Visual style configuration applied to the plot.</span>
-</span><span id="line-314"><span class="sd">                If not provided, the default :class:`CircuitStyle` is used.</span>
-</span><span id="line-315"><span class="sd">            filepath (str | None): Destination file path for the rendered figure.</span>
-</span><span id="line-316"><span class="sd">                If ``None``, the figure is not saved.</span>
-</span><span id="line-317"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-318">        <span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.utils.visualization.circuit_renderers</span><span class="w"> </span><span class="kn">import</span> <span class="n">MatplotlibCircuitRenderer</span>  <span class="c1"># noqa: PLC0415</span>
+</span><span id="line-316">    <span class="k">def</span><span class="w"> </span><span class="nf">draw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">style</span><span class="p">:</span> <span class="n">CircuitStyle</span> <span class="o">=</span> <span class="n">CircuitStyle</span><span class="p">(),</span> <span class="n">filepath</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-317"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-318"><span class="sd">        Render this circuit with Matplotlib and optionally save it to a file.</span>
 </span><span id="line-319">
-</span><span id="line-320">        <span class="n">renderer</span> <span class="o">=</span> <span class="n">MatplotlibCircuitRenderer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="n">style</span><span class="p">)</span>
-</span><span id="line-321">        <span class="n">renderer</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
-</span><span id="line-322">        <span class="k">if</span> <span class="n">filepath</span><span class="p">:</span>
-</span><span id="line-323">            <span class="n">renderer</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span></div>
+</span><span id="line-320"><span class="sd">        The circuit is rendered using the provided style configuration. If ``filepath`` is</span>
+</span><span id="line-321"><span class="sd">        given, the resulting figure is saved to disk (the output format is inferred</span>
+</span><span id="line-322"><span class="sd">        from the file extension, e.g. ``.png``, ``.pdf``, ``.svg``).</span>
+</span><span id="line-323">
+</span><span id="line-324"><span class="sd">        Args:</span>
+</span><span id="line-325"><span class="sd">            style (CircuitStyle): Visual style configuration applied to the plot.</span>
+</span><span id="line-326"><span class="sd">                If not provided, the default :class:`CircuitStyle` is used.</span>
+</span><span id="line-327"><span class="sd">            filepath (str | None): Destination file path for the rendered figure.</span>
+</span><span id="line-328"><span class="sd">                If ``None``, the figure is not saved.</span>
+</span><span id="line-329"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-330">        <span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.utils.visualization.circuit_renderers</span><span class="w"> </span><span class="kn">import</span> <span class="n">MatplotlibCircuitRenderer</span>  <span class="c1"># noqa: PLC0415</span>
+</span><span id="line-331">
+</span><span id="line-332">        <span class="n">renderer</span> <span class="o">=</span> <span class="n">MatplotlibCircuitRenderer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="n">style</span><span class="p">)</span>
+</span><span id="line-333">        <span class="n">renderer</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
+</span><span id="line-334">        <span class="k">if</span> <span class="n">filepath</span><span class="p">:</span>
+</span><span id="line-335">            <span class="n">renderer</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span></div>
 
-</span><span id="line-324">
-</span><span id="line-325">    <span class="nd">@classmethod</span>
+</span><span id="line-336">
+</span><span id="line-337">    <span class="nd">@classmethod</span>
 <div class="viewcode-block" id="Circuit.random">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/circuit/index.html#qilisdk.digital.circuit.Circuit.random">[docs]</a>
-</span><span id="line-326">    <span class="k">def</span><span class="w"> </span><span class="nf">random</span><span class="p">(</span>
-</span><span id="line-327">        <span class="bp">cls</span><span class="p">,</span> <span class="n">nqubits</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">single_qubit_gates</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">BasicGate</span><span class="p">]],</span> <span class="n">two_qubit_gates</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">BasicGate</span><span class="p">]],</span> <span class="n">ngates</span><span class="p">:</span> <span class="nb">int</span>
-</span><span id="line-328">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
-</span><span id="line-329"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-330"><span class="sd">        Generate a random quantum circuit from a given set of gates.</span>
-</span><span id="line-331">
-</span><span id="line-332"><span class="sd">        Args:</span>
-</span><span id="line-333"><span class="sd">            nqubits (int): The number of qubits in the circuit.</span>
-</span><span id="line-334"><span class="sd">            single_qubit_gates (set[Gate]): A set of single-qubit gate classes to choose from.</span>
-</span><span id="line-335"><span class="sd">            two_qubit_gates (set[Gate]): A set of two-qubit gate classes to choose from.</span>
-</span><span id="line-336"><span class="sd">            ngates (int): The number of gates to include in the circuit.</span>
-</span><span id="line-337">
-</span><span id="line-338"><span class="sd">        Returns:</span>
-</span><span id="line-339"><span class="sd">            Circuit: A randomly generated quantum circuit.</span>
-</span><span id="line-340">
-</span><span id="line-341"><span class="sd">        Raises:</span>
-</span><span id="line-342"><span class="sd">            ValueError: If it is not possible to generate a full random circuit with the provided parameters</span>
+</span><span id="line-338">    <span class="k">def</span><span class="w"> </span><span class="nf">random</span><span class="p">(</span>
+</span><span id="line-339">        <span class="bp">cls</span><span class="p">,</span> <span class="n">nqubits</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">single_qubit_gates</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">BasicGate</span><span class="p">]],</span> <span class="n">two_qubit_gates</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">BasicGate</span><span class="p">]],</span> <span class="n">ngates</span><span class="p">:</span> <span class="nb">int</span>
+</span><span id="line-340">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
+</span><span id="line-341"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-342"><span class="sd">        Generate a random quantum circuit from a given set of gates.</span>
 </span><span id="line-343">
-</span><span id="line-344"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-345">
-</span><span id="line-346">        <span class="c1"># If we only have one gate and one qubit, throw an error</span>
-</span><span id="line-347">        <span class="k">if</span> <span class="n">nqubits</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">single_qubit_gates</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-</span><span id="line-348">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Cannot generate a full random circuit with only one qubit and one gate.&quot;</span><span class="p">)</span>
+</span><span id="line-344"><span class="sd">        Args:</span>
+</span><span id="line-345"><span class="sd">            nqubits (int): The number of qubits in the circuit.</span>
+</span><span id="line-346"><span class="sd">            single_qubit_gates (set[Gate]): A set of single-qubit gate classes to choose from.</span>
+</span><span id="line-347"><span class="sd">            two_qubit_gates (set[Gate]): A set of two-qubit gate classes to choose from.</span>
+</span><span id="line-348"><span class="sd">            ngates (int): The number of gates to include in the circuit.</span>
 </span><span id="line-349">
-</span><span id="line-350">        <span class="c1"># Make sure we have given gates</span>
-</span><span id="line-351">        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">single_qubit_gates</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">two_qubit_gates</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-</span><span id="line-352">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;At least one gate must be provided to generate a random circuit.&quot;</span><span class="p">)</span>
-</span><span id="line-353">
-</span><span id="line-354">        <span class="n">new_circuit</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">nqubits</span><span class="p">)</span>
-</span><span id="line-355">        <span class="n">gate_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">BasicGate</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">single_qubit_gates</span><span class="p">)</span>
-</span><span id="line-356">        <span class="k">if</span> <span class="n">nqubits</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-</span><span id="line-357">            <span class="n">gate_list</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">two_qubit_gates</span><span class="p">))</span>
-</span><span id="line-358">        <span class="n">prev_gate_type</span> <span class="o">=</span> <span class="kc">None</span>
-</span><span id="line-359">        <span class="n">prev_qubits</span> <span class="o">=</span> <span class="kc">None</span>
-</span><span id="line-360">        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ngates</span><span class="p">):</span>
-</span><span id="line-361">            <span class="n">gate_class</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">gate_list</span><span class="p">)</span>
-</span><span id="line-362">            <span class="n">gate_nqubits</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">gate_class</span> <span class="ow">in</span> <span class="n">single_qubit_gates</span> <span class="k">else</span> <span class="mi">2</span>
-</span><span id="line-363">            <span class="n">qubits</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">nqubits</span><span class="p">),</span> <span class="n">gate_nqubits</span><span class="p">))</span>
-</span><span id="line-364">
-</span><span id="line-365">            <span class="c1"># Avoid adding the same gate on the same qubits consecutively</span>
-</span><span id="line-366">            <span class="k">if</span> <span class="n">gate_class</span> <span class="o">==</span> <span class="n">prev_gate_type</span> <span class="ow">and</span> <span class="n">qubits</span> <span class="o">==</span> <span class="n">prev_qubits</span><span class="p">:</span>
-</span><span id="line-367">                <span class="c1"># If we only have one qubit, pick a different gate</span>
-</span><span id="line-368">                <span class="k">if</span> <span class="n">nqubits</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-</span><span id="line-369">                    <span class="n">possible_new_gates</span> <span class="o">=</span> <span class="p">[</span><span class="n">g</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">single_qubit_gates</span> <span class="k">if</span> <span class="n">g</span> <span class="o">!=</span> <span class="n">gate_class</span><span class="p">]</span>
-</span><span id="line-370">                    <span class="n">gate_class</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">possible_new_gates</span><span class="p">)</span>
-</span><span id="line-371">
-</span><span id="line-372">                <span class="c1"># If the gate list does not include all qubits, change the first to be a different qubit</span>
-</span><span id="line-373">                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">qubits</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">nqubits</span><span class="p">:</span>
-</span><span id="line-374">                    <span class="n">possible_new_qubits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">q</span> <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nqubits</span><span class="p">)</span> <span class="k">if</span> <span class="n">q</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">qubits</span><span class="p">]</span>
-</span><span id="line-375">                    <span class="n">new_qubit</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">possible_new_qubits</span><span class="p">)</span>
-</span><span id="line-376">                    <span class="n">qubits</span> <span class="o">=</span> <span class="p">(</span><span class="n">new_qubit</span><span class="p">,</span> <span class="o">*</span><span class="n">qubits</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
-</span><span id="line-377">
-</span><span id="line-378">                <span class="c1"># Otherwise, flip the order of the qubits</span>
-</span><span id="line-379">                <span class="k">else</span><span class="p">:</span>
-</span><span id="line-380">                    <span class="n">qubits</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">qubits</span><span class="p">))</span>
-</span><span id="line-381">
-</span><span id="line-382">            <span class="c1"># Update previous gate info</span>
-</span><span id="line-383">            <span class="n">prev_gate_type</span> <span class="o">=</span> <span class="n">gate_class</span>
-</span><span id="line-384">            <span class="n">prev_qubits</span> <span class="o">=</span> <span class="n">qubits</span>
-</span><span id="line-385">
-</span><span id="line-386">            <span class="c1"># Generate random parameters if needed</span>
-</span><span id="line-387">            <span class="n">params</span> <span class="o">=</span> <span class="p">{}</span>
-</span><span id="line-388">            <span class="k">if</span> <span class="n">gate_class</span><span class="o">.</span><span class="n">PARAMETER_NAMES</span><span class="p">:</span>
-</span><span id="line-389">                <span class="k">for</span> <span class="n">param_name</span> <span class="ow">in</span> <span class="n">gate_class</span><span class="o">.</span><span class="n">PARAMETER_NAMES</span><span class="p">:</span>
-</span><span id="line-390">                    <span class="n">val</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
-</span><span id="line-391">                    <span class="n">params</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">Parameter</span><span class="p">(</span>
-</span><span id="line-392">                        <span class="n">label</span><span class="o">=</span><span class="n">param_name</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">val</span><span class="p">),</span> <span class="n">value</span><span class="o">=</span><span class="n">val</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">Domain</span><span class="o">.</span><span class="n">REAL</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
-</span><span id="line-393">                    <span class="p">)</span>
-</span><span id="line-394">
-</span><span id="line-395">            <span class="c1"># Add the gate to the circuit</span>
-</span><span id="line-396">            <span class="n">new_circuit</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">gate_class</span><span class="p">(</span><span class="o">*</span><span class="n">qubits</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">))</span>  <span class="c1"># ty:ignore[invalid-argument-type]</span>
+</span><span id="line-350"><span class="sd">        Returns:</span>
+</span><span id="line-351"><span class="sd">            Circuit: A randomly generated quantum circuit.</span>
+</span><span id="line-352">
+</span><span id="line-353"><span class="sd">        Raises:</span>
+</span><span id="line-354"><span class="sd">            ValueError: If it is not possible to generate a full random circuit with the provided parameters</span>
+</span><span id="line-355">
+</span><span id="line-356"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-357">
+</span><span id="line-358">        <span class="c1"># If we only have one gate and one qubit, throw an error</span>
+</span><span id="line-359">        <span class="k">if</span> <span class="n">nqubits</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">single_qubit_gates</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+</span><span id="line-360">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Cannot generate a full random circuit with only one qubit and one gate.&quot;</span><span class="p">)</span>
+</span><span id="line-361">
+</span><span id="line-362">        <span class="c1"># Make sure we have given gates</span>
+</span><span id="line-363">        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">single_qubit_gates</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">two_qubit_gates</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+</span><span id="line-364">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;At least one gate must be provided to generate a random circuit.&quot;</span><span class="p">)</span>
+</span><span id="line-365">
+</span><span id="line-366">        <span class="n">new_circuit</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">nqubits</span><span class="p">)</span>
+</span><span id="line-367">        <span class="n">gate_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">BasicGate</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">single_qubit_gates</span><span class="p">)</span>
+</span><span id="line-368">        <span class="k">if</span> <span class="n">nqubits</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+</span><span id="line-369">            <span class="n">gate_list</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">two_qubit_gates</span><span class="p">))</span>
+</span><span id="line-370">        <span class="n">prev_gate_type</span> <span class="o">=</span> <span class="kc">None</span>
+</span><span id="line-371">        <span class="n">prev_qubits</span> <span class="o">=</span> <span class="kc">None</span>
+</span><span id="line-372">        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ngates</span><span class="p">):</span>
+</span><span id="line-373">            <span class="n">gate_class</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">gate_list</span><span class="p">)</span>
+</span><span id="line-374">            <span class="n">gate_nqubits</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">gate_class</span> <span class="ow">in</span> <span class="n">single_qubit_gates</span> <span class="k">else</span> <span class="mi">2</span>
+</span><span id="line-375">            <span class="n">qubits</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">nqubits</span><span class="p">),</span> <span class="n">gate_nqubits</span><span class="p">))</span>
+</span><span id="line-376">
+</span><span id="line-377">            <span class="c1"># Avoid adding the same gate on the same qubits consecutively</span>
+</span><span id="line-378">            <span class="k">if</span> <span class="n">gate_class</span> <span class="o">==</span> <span class="n">prev_gate_type</span> <span class="ow">and</span> <span class="n">qubits</span> <span class="o">==</span> <span class="n">prev_qubits</span><span class="p">:</span>
+</span><span id="line-379">                <span class="c1"># If we only have one qubit, pick a different gate</span>
+</span><span id="line-380">                <span class="k">if</span> <span class="n">nqubits</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+</span><span id="line-381">                    <span class="n">possible_new_gates</span> <span class="o">=</span> <span class="p">[</span><span class="n">g</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">single_qubit_gates</span> <span class="k">if</span> <span class="n">g</span> <span class="o">!=</span> <span class="n">gate_class</span><span class="p">]</span>
+</span><span id="line-382">                    <span class="n">gate_class</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">possible_new_gates</span><span class="p">)</span>
+</span><span id="line-383">
+</span><span id="line-384">                <span class="c1"># If the gate list does not include all qubits, change the first to be a different qubit</span>
+</span><span id="line-385">                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">qubits</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">nqubits</span><span class="p">:</span>
+</span><span id="line-386">                    <span class="n">possible_new_qubits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">q</span> <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nqubits</span><span class="p">)</span> <span class="k">if</span> <span class="n">q</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">qubits</span><span class="p">]</span>
+</span><span id="line-387">                    <span class="n">new_qubit</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">possible_new_qubits</span><span class="p">)</span>
+</span><span id="line-388">                    <span class="n">qubits</span> <span class="o">=</span> <span class="p">(</span><span class="n">new_qubit</span><span class="p">,</span> <span class="o">*</span><span class="n">qubits</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+</span><span id="line-389">
+</span><span id="line-390">                <span class="c1"># Otherwise, flip the order of the qubits</span>
+</span><span id="line-391">                <span class="k">else</span><span class="p">:</span>
+</span><span id="line-392">                    <span class="n">qubits</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">qubits</span><span class="p">))</span>
+</span><span id="line-393">
+</span><span id="line-394">            <span class="c1"># Update previous gate info</span>
+</span><span id="line-395">            <span class="n">prev_gate_type</span> <span class="o">=</span> <span class="n">gate_class</span>
+</span><span id="line-396">            <span class="n">prev_qubits</span> <span class="o">=</span> <span class="n">qubits</span>
 </span><span id="line-397">
-</span><span id="line-398">        <span class="k">return</span> <span class="n">new_circuit</span></div>
+</span><span id="line-398">            <span class="c1"># Generate random parameters if needed</span>
+</span><span id="line-399">            <span class="n">params</span> <span class="o">=</span> <span class="p">{}</span>
+</span><span id="line-400">            <span class="k">if</span> <span class="n">gate_class</span><span class="o">.</span><span class="n">PARAMETER_NAMES</span><span class="p">:</span>
+</span><span id="line-401">                <span class="k">for</span> <span class="n">param_name</span> <span class="ow">in</span> <span class="n">gate_class</span><span class="o">.</span><span class="n">PARAMETER_NAMES</span><span class="p">:</span>
+</span><span id="line-402">                    <span class="n">val</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+</span><span id="line-403">                    <span class="n">params</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">Parameter</span><span class="p">(</span>
+</span><span id="line-404">                        <span class="n">label</span><span class="o">=</span><span class="n">param_name</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">val</span><span class="p">),</span> <span class="n">value</span><span class="o">=</span><span class="n">val</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">Domain</span><span class="o">.</span><span class="n">REAL</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
+</span><span id="line-405">                    <span class="p">)</span>
+</span><span id="line-406">
+</span><span id="line-407">            <span class="c1"># Add the gate to the circuit</span>
+</span><span id="line-408">            <span class="n">new_circuit</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">gate_class</span><span class="p">(</span><span class="o">*</span><span class="n">qubits</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">))</span>  <span class="c1"># ty:ignore[invalid-argument-type]</span>
+</span><span id="line-409">
+</span><span id="line-410">        <span class="k">return</span> <span class="n">new_circuit</span></div>
 
-</span><span id="line-399">
-</span><span id="line-400">    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="line-401">        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Circuit(nqubits=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span><span class="si">}</span><span class="s2">, gates=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">gates</span><span class="si">}</span><span class="s2">)&quot;</span></div>
+</span><span id="line-411">
+</span><span id="line-412">    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="line-413">        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Circuit(nqubits=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span><span class="si">}</span><span class="s2">, gates=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">gates</span><span class="si">}</span><span class="s2">)&quot;</span></div>
 
 </span></code></pre></div>
     </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">

@@ -30,7 +30,7 @@
   <link rel="stylesheet" type="text/css" href="../../../_static/theme.css?v=73505e79" />
   <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
   <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
-  <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=8f6adc47" />
+  <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=c047bc51" />
   <link rel="stylesheet" type="text/css" href="../../../_static/awesome-sphinx-design.css?v=c54898a4" />
   <link rel="icon" href="../../../_static/q_trans.png" />
   <link rel="search" title="Search" href="../../../search.html" />
@@ -121,28 +121,79 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../getting_started/installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../getting_started/quickstart.html">Quickstart</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">Fundamentals</span></p>
+<p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/analog.html">Analog</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/digital.html">Digital</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/core.html">Core</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/functionals.html">Functionals</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/readout.html">Readout</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/cost_functions.html">Cost Functions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/backends.html">Backends</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/noise_models.html">Noise Models</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../fundamentals/speqtrum.html">SpeQtrum</a></li>
-</ul>
-<p class="caption" role="heading"><span class="caption-text">Code Examples</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../examples/code_examples.html">Code Examples</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../../examples/circuits.html">Circuits</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../examples/hamiltonians.html">Hamiltonians</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../examples/time_evolution.html">Time Evolution</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../examples/quantum_objects.html">Quantum Objects</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../examples/models.html">Models and Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../tutorials/introductions/index_intros.html">Introductions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/introductions/intro_quantum.html">Quantum Basics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/introductions/intro_circuits.html">Quantum Circuits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/introductions/intro_annealing.html">Quantum Annealing</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../../../tutorials/applications/index_applications.html">Applications</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/applications/application_grovers.html">Quantum Search with Grover’s Algorithm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/applications/application_shors.html">Factoring With Shor’s Algorithm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/applications/application_annealing.html">Optimization with Quantum Annealing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/applications/application_qaoa.html">Optimization with QAOA</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Modules</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/core/core.html">Core</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core/core_variables.html">Variables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core/core_terms.html">Terms</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core/core_parameters.html">Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core/core_math_map.html">Mathematical Maps</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core/core_comparison.html">Comparison Terms</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core/core_model.html">Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core/core_qubo.html">QUBO</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core/core_qtensor.html">QTensor</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/digital/digital.html">Digital</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/digital/digital_gates.html">Gates</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/digital/digital_circuits.html">Circuits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/digital/digital_vis.html">Visualization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/digital/digital_ansatz.html">Hardware Efficient Ansatz</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/digital/digital_qaoa.html">QAOA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/digital/digital_trotter.html">Trotterization</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/analog/analog.html">Analog</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/analog/analog_hamiltonian.html">Hamiltonian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/analog/analog_schedule.html">Schedule</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/functionals/functionals.html">Functionals</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/functionals/functionals_sampling.html">Digital Propogation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/functionals/functionals_time_evolution.html">Time Evolution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/functionals/functionals_reservoirs.html">Quantum Reservoirs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/functionals/functionals_variational.html">Variational Programs</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/readout/readout.html">Readout</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/readout/readout_bitstring.html">Bitstring Measurement</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/readout/readout_expectation.html">Expectation Values</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/readout/readout_state.html">Full Quantum State</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/backends/backends.html">Backends</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/backends/backends_qilisim.html">QiliSim</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/backends/backends_cuda.html">CUDA Backend</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/backends/backends_qutip.html">QuTiP Backend</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/cost_functions/cost_functions.html">Cost Functions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/cost_functions/cost_functions_observable.html">Observable Cost Function</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/cost_functions/cost_functions_model.html">Model Cost Function</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/noise_models/noise_models.html">Noise Models</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/noise_models/noise_models_config.html">Noise Config</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/noise_models/noise_models_types.html">Noise Types</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/speqtrum/speqtrum.html">SpeQtrum</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
@@ -248,6 +299,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/hashing/index.html">qilisdk.utils.hashing</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/openfermion/index.html">qilisdk.utils.openfermion</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/openqasm2/index.html">qilisdk.utils.openqasm2</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/openqasm3/index.html">qilisdk.utils.openqasm3</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/serialization/index.html">qilisdk.utils.serialization</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/trotterization/index.html">qilisdk.utils.trotterization</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/visualization/index.html">qilisdk.utils.visualization</a></li>
@@ -361,131 +413,127 @@
 <div class="viewcode-block" id="AttachmentScope">
 <a class="viewcode-back" href="../../../code/api/qilisdk/noise/protocols/index.html#qilisdk.noise.protocols.AttachmentScope">[docs]</a>
 </span><span id="line-23"><span class="k">class</span><span class="w"> </span><span class="nc">AttachmentScope</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
-</span><span id="line-24"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Scope describing where a noise or perturbation can be attached.</span>
-</span><span id="line-25">
-</span><span id="line-26"><span class="sd">    Attributes:</span>
-</span><span id="line-27"><span class="sd">        GLOBAL: Applies to all operations or parameters.</span>
-</span><span id="line-28"><span class="sd">        PER_QUBIT: Applies only to a specific qubit.</span>
-</span><span id="line-29"><span class="sd">        PER_GATE_TYPE: Applies only to a specific gate type.</span>
-</span><span id="line-30"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-31">
+</span><span id="line-24"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-25"><span class="sd">    Scope describing where a noise or perturbation can be attached.</span>
+</span><span id="line-26"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-27">
 <div class="viewcode-block" id="AttachmentScope.GLOBAL">
 <a class="viewcode-back" href="../../../code/api/qilisdk/noise/protocols/index.html#qilisdk.noise.protocols.AttachmentScope.GLOBAL">[docs]</a>
-</span><span id="line-32">    <span class="n">GLOBAL</span> <span class="o">=</span> <span class="s2">&quot;global&quot;</span></div>
+</span><span id="line-28">    <span class="n">GLOBAL</span> <span class="o">=</span> <span class="s2">&quot;global&quot;</span></div>
 
 <div class="viewcode-block" id="AttachmentScope.PER_QUBIT">
 <a class="viewcode-back" href="../../../code/api/qilisdk/noise/protocols/index.html#qilisdk.noise.protocols.AttachmentScope.PER_QUBIT">[docs]</a>
-</span><span id="line-33">    <span class="n">PER_QUBIT</span> <span class="o">=</span> <span class="s2">&quot;per_qubit&quot;</span></div>
+</span><span id="line-29">    <span class="n">PER_QUBIT</span> <span class="o">=</span> <span class="s2">&quot;per_qubit&quot;</span></div>
 
 <div class="viewcode-block" id="AttachmentScope.PER_GATE_TYPE">
 <a class="viewcode-back" href="../../../code/api/qilisdk/noise/protocols/index.html#qilisdk.noise.protocols.AttachmentScope.PER_GATE_TYPE">[docs]</a>
-</span><span id="line-34">    <span class="n">PER_GATE_TYPE</span> <span class="o">=</span> <span class="s2">&quot;per_gate_type&quot;</span></div>
+</span><span id="line-30">    <span class="n">PER_GATE_TYPE</span> <span class="o">=</span> <span class="s2">&quot;per_gate_type&quot;</span></div>
 
 <div class="viewcode-block" id="AttachmentScope.PER_GATE_TYPE_PER_QUBIT">
 <a class="viewcode-back" href="../../../code/api/qilisdk/noise/protocols/index.html#qilisdk.noise.protocols.AttachmentScope.PER_GATE_TYPE_PER_QUBIT">[docs]</a>
-</span><span id="line-35">    <span class="n">PER_GATE_TYPE_PER_QUBIT</span> <span class="o">=</span> <span class="s2">&quot;per_gate_type_per_qubit&quot;</span></div>
+</span><span id="line-31">    <span class="n">PER_GATE_TYPE_PER_QUBIT</span> <span class="o">=</span> <span class="s2">&quot;per_gate_type_per_qubit&quot;</span></div>
 </div>
 
-</span><span id="line-36">
-</span><span id="line-37">
-</span><span id="line-38"><span class="nd">@runtime_checkable</span>
+</span><span id="line-32">
+</span><span id="line-33">
+</span><span id="line-34"><span class="nd">@runtime_checkable</span>
 <div class="viewcode-block" id="HasAllowedScopes">
 <a class="viewcode-back" href="../../../code/api/qilisdk/noise/protocols/index.html#qilisdk.noise.protocols.HasAllowedScopes">[docs]</a>
-</span><span id="line-39"><span class="k">class</span><span class="w"> </span><span class="nc">HasAllowedScopes</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
-</span><span id="line-40"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Protocol for types that declare their allowed attachment scopes.&quot;&quot;&quot;</span>
-</span><span id="line-41">
-</span><span id="line-42">    <span class="nd">@classmethod</span>
+</span><span id="line-35"><span class="k">class</span><span class="w"> </span><span class="nc">HasAllowedScopes</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+</span><span id="line-36"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Protocol for types that declare their allowed attachment scopes.&quot;&quot;&quot;</span>
+</span><span id="line-37">
+</span><span id="line-38">    <span class="nd">@classmethod</span>
 <div class="viewcode-block" id="HasAllowedScopes.allowed_scopes">
 <a class="viewcode-back" href="../../../code/api/qilisdk/noise/protocols/index.html#qilisdk.noise.protocols.HasAllowedScopes.allowed_scopes">[docs]</a>
-</span><span id="line-43">    <span class="k">def</span><span class="w"> </span><span class="nf">allowed_scopes</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">frozenset</span><span class="p">[</span><span class="n">AttachmentScope</span><span class="p">]:</span>
-</span><span id="line-44"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the attachment scopes supported by the type.</span>
-</span><span id="line-45">
-</span><span id="line-46"><span class="sd">        Returns:</span>
-</span><span id="line-47"><span class="sd">            The set of scopes where the type can be attached.</span>
-</span><span id="line-48"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-49">        <span class="o">...</span></div>
+</span><span id="line-39">    <span class="k">def</span><span class="w"> </span><span class="nf">allowed_scopes</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">frozenset</span><span class="p">[</span><span class="n">AttachmentScope</span><span class="p">]:</span>
+</span><span id="line-40"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the attachment scopes supported by the type.</span>
+</span><span id="line-41">
+</span><span id="line-42"><span class="sd">        Returns:</span>
+</span><span id="line-43"><span class="sd">            The set of scopes where the type can be attached.</span>
+</span><span id="line-44"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-45">        <span class="o">...</span></div>
 </div>
 
-</span><span id="line-50">
-</span><span id="line-51">
-</span><span id="line-52"><span class="nd">@runtime_checkable</span>
+</span><span id="line-46">
+</span><span id="line-47">
+</span><span id="line-48"><span class="nd">@runtime_checkable</span>
 <div class="viewcode-block" id="SupportsTimeDerivedKraus">
 <a class="viewcode-back" href="../../../code/api/qilisdk/noise/protocols/index.html#qilisdk.noise.protocols.SupportsTimeDerivedKraus">[docs]</a>
-</span><span id="line-53"><span class="k">class</span><span class="w"> </span><span class="nc">SupportsTimeDerivedKraus</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
-</span><span id="line-54"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Protocol for types that produce duration-dependent Kraus channels.&quot;&quot;&quot;</span>
-</span><span id="line-55">
+</span><span id="line-49"><span class="k">class</span><span class="w"> </span><span class="nc">SupportsTimeDerivedKraus</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+</span><span id="line-50"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Protocol for types that produce duration-dependent Kraus channels.&quot;&quot;&quot;</span>
+</span><span id="line-51">
 <div class="viewcode-block" id="SupportsTimeDerivedKraus.as_kraus_from_duration">
 <a class="viewcode-back" href="../../../code/api/qilisdk/noise/protocols/index.html#qilisdk.noise.protocols.SupportsTimeDerivedKraus.as_kraus_from_duration">[docs]</a>
-</span><span id="line-56">    <span class="k">def</span><span class="w"> </span><span class="nf">as_kraus_from_duration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">duration</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">KrausChannel</span><span class="p">:</span>
-</span><span id="line-57"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a Kraus channel derived for a specific duration.</span>
-</span><span id="line-58">
-</span><span id="line-59"><span class="sd">        Args:</span>
-</span><span id="line-60"><span class="sd">            duration (float): Duration over which the noise acts.</span>
-</span><span id="line-61">
-</span><span id="line-62"><span class="sd">        Returns:</span>
-</span><span id="line-63"><span class="sd">            The Kraus channel for the given duration.</span>
-</span><span id="line-64"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-65">        <span class="o">...</span></div>
+</span><span id="line-52">    <span class="k">def</span><span class="w"> </span><span class="nf">as_kraus_from_duration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">duration</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">KrausChannel</span><span class="p">:</span>
+</span><span id="line-53"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a Kraus channel derived for a specific duration.</span>
+</span><span id="line-54">
+</span><span id="line-55"><span class="sd">        Args:</span>
+</span><span id="line-56"><span class="sd">            duration (float): Duration over which the noise acts.</span>
+</span><span id="line-57">
+</span><span id="line-58"><span class="sd">        Returns:</span>
+</span><span id="line-59"><span class="sd">            The Kraus channel for the given duration.</span>
+</span><span id="line-60"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-61">        <span class="o">...</span></div>
 </div>
 
-</span><span id="line-66">
-</span><span id="line-67">
-</span><span id="line-68"><span class="nd">@runtime_checkable</span>
+</span><span id="line-62">
+</span><span id="line-63">
+</span><span id="line-64"><span class="nd">@runtime_checkable</span>
 <div class="viewcode-block" id="SupportsStaticKraus">
 <a class="viewcode-back" href="../../../code/api/qilisdk/noise/protocols/index.html#qilisdk.noise.protocols.SupportsStaticKraus">[docs]</a>
-</span><span id="line-69"><span class="k">class</span><span class="w"> </span><span class="nc">SupportsStaticKraus</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
-</span><span id="line-70"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Protocol for types that expose a fixed Kraus channel.&quot;&quot;&quot;</span>
-</span><span id="line-71">
+</span><span id="line-65"><span class="k">class</span><span class="w"> </span><span class="nc">SupportsStaticKraus</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+</span><span id="line-66"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Protocol for types that expose a fixed Kraus channel.&quot;&quot;&quot;</span>
+</span><span id="line-67">
 <div class="viewcode-block" id="SupportsStaticKraus.as_kraus">
 <a class="viewcode-back" href="../../../code/api/qilisdk/noise/protocols/index.html#qilisdk.noise.protocols.SupportsStaticKraus.as_kraus">[docs]</a>
-</span><span id="line-72">    <span class="k">def</span><span class="w"> </span><span class="nf">as_kraus</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">KrausChannel</span><span class="p">:</span>
-</span><span id="line-73"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the static Kraus channel for this noise.</span>
-</span><span id="line-74">
-</span><span id="line-75"><span class="sd">        Returns:</span>
-</span><span id="line-76"><span class="sd">            The Kraus channel representation.</span>
-</span><span id="line-77"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-78">        <span class="o">...</span></div>
+</span><span id="line-68">    <span class="k">def</span><span class="w"> </span><span class="nf">as_kraus</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">KrausChannel</span><span class="p">:</span>
+</span><span id="line-69"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the static Kraus channel for this noise.</span>
+</span><span id="line-70">
+</span><span id="line-71"><span class="sd">        Returns:</span>
+</span><span id="line-72"><span class="sd">            The Kraus channel representation.</span>
+</span><span id="line-73"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-74">        <span class="o">...</span></div>
 </div>
 
-</span><span id="line-79">
-</span><span id="line-80">
-</span><span id="line-81"><span class="nd">@runtime_checkable</span>
+</span><span id="line-75">
+</span><span id="line-76">
+</span><span id="line-77"><span class="nd">@runtime_checkable</span>
 <div class="viewcode-block" id="SupportsStaticLindblad">
 <a class="viewcode-back" href="../../../code/api/qilisdk/noise/protocols/index.html#qilisdk.noise.protocols.SupportsStaticLindblad">[docs]</a>
-</span><span id="line-82"><span class="k">class</span><span class="w"> </span><span class="nc">SupportsStaticLindblad</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
-</span><span id="line-83"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Protocol for types that expose a fixed Lindblad generator.&quot;&quot;&quot;</span>
-</span><span id="line-84">
+</span><span id="line-78"><span class="k">class</span><span class="w"> </span><span class="nc">SupportsStaticLindblad</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+</span><span id="line-79"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Protocol for types that expose a fixed Lindblad generator.&quot;&quot;&quot;</span>
+</span><span id="line-80">
 <div class="viewcode-block" id="SupportsStaticLindblad.as_lindblad">
 <a class="viewcode-back" href="../../../code/api/qilisdk/noise/protocols/index.html#qilisdk.noise.protocols.SupportsStaticLindblad.as_lindblad">[docs]</a>
-</span><span id="line-85">    <span class="k">def</span><span class="w"> </span><span class="nf">as_lindblad</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LindbladGenerator</span><span class="p">:</span>
-</span><span id="line-86"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the Lindblad generator for this noise.</span>
-</span><span id="line-87">
-</span><span id="line-88"><span class="sd">        Returns:</span>
-</span><span id="line-89"><span class="sd">            The Lindblad generator representation.</span>
-</span><span id="line-90"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-91">        <span class="o">...</span></div>
+</span><span id="line-81">    <span class="k">def</span><span class="w"> </span><span class="nf">as_lindblad</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LindbladGenerator</span><span class="p">:</span>
+</span><span id="line-82"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the Lindblad generator for this noise.</span>
+</span><span id="line-83">
+</span><span id="line-84"><span class="sd">        Returns:</span>
+</span><span id="line-85"><span class="sd">            The Lindblad generator representation.</span>
+</span><span id="line-86"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-87">        <span class="o">...</span></div>
 </div>
 
-</span><span id="line-92">
-</span><span id="line-93">
-</span><span id="line-94"><span class="nd">@runtime_checkable</span>
+</span><span id="line-88">
+</span><span id="line-89">
+</span><span id="line-90"><span class="nd">@runtime_checkable</span>
 <div class="viewcode-block" id="SupportsTimeDerivedLindblad">
 <a class="viewcode-back" href="../../../code/api/qilisdk/noise/protocols/index.html#qilisdk.noise.protocols.SupportsTimeDerivedLindblad">[docs]</a>
-</span><span id="line-95"><span class="k">class</span><span class="w"> </span><span class="nc">SupportsTimeDerivedLindblad</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
-</span><span id="line-96"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Protocol for types that expose a Lindblad generator derived from time.&quot;&quot;&quot;</span>
-</span><span id="line-97">
+</span><span id="line-91"><span class="k">class</span><span class="w"> </span><span class="nc">SupportsTimeDerivedLindblad</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+</span><span id="line-92"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Protocol for types that expose a Lindblad generator derived from time.&quot;&quot;&quot;</span>
+</span><span id="line-93">
 <div class="viewcode-block" id="SupportsTimeDerivedLindblad.as_lindblad_from_duration">
 <a class="viewcode-back" href="../../../code/api/qilisdk/noise/protocols/index.html#qilisdk.noise.protocols.SupportsTimeDerivedLindblad.as_lindblad_from_duration">[docs]</a>
-</span><span id="line-98">    <span class="k">def</span><span class="w"> </span><span class="nf">as_lindblad_from_duration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">duration</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LindbladGenerator</span><span class="p">:</span>
-</span><span id="line-99"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the Lindblad generator for this noise.</span>
-</span><span id="line-100">
-</span><span id="line-101"><span class="sd">        Args:</span>
-</span><span id="line-102"><span class="sd">            duration (float): Duration over which the noise acts.</span>
-</span><span id="line-103">
-</span><span id="line-104"><span class="sd">        Returns:</span>
-</span><span id="line-105"><span class="sd">            The Lindblad generator representation.</span>
-</span><span id="line-106"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-107">        <span class="o">...</span></div>
+</span><span id="line-94">    <span class="k">def</span><span class="w"> </span><span class="nf">as_lindblad_from_duration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">duration</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LindbladGenerator</span><span class="p">:</span>
+</span><span id="line-95"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the Lindblad generator for this noise.</span>
+</span><span id="line-96">
+</span><span id="line-97"><span class="sd">        Args:</span>
+</span><span id="line-98"><span class="sd">            duration (float): Duration over which the noise acts.</span>
+</span><span id="line-99">
+</span><span id="line-100"><span class="sd">        Returns:</span>
+</span><span id="line-101"><span class="sd">            The Lindblad generator representation.</span>
+</span><span id="line-102"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-103">        <span class="o">...</span></div>
 </div>
 
 </span></code></pre></div>

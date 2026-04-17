@@ -28,7 +28,7 @@
 <link href="../../../../../../_static/theme.css?v=73505e79" rel="stylesheet" type="text/css"/>
 <link href="../../../../../../_static/graphviz.css?v=4ae1632d" rel="stylesheet" type="text/css"/>
 <link href="../../../../../../_static/sphinx-design.min.css?v=95c83b7e" rel="stylesheet" type="text/css"/>
-<link href="../../../../../../_static/custom.css?v=8f6adc47" rel="stylesheet" type="text/css"/>
+<link href="../../../../../../_static/custom.css?v=c047bc51" rel="stylesheet" type="text/css"/>
 <link href="../../../../../../_static/awesome-sphinx-design.css?v=c54898a4" rel="stylesheet" type="text/css"/>
 <link href="../../../../../../_static/q_trans.png" rel="icon"/>
 <link href="../../../../../../search.html" rel="search" title="Search"/>
@@ -85,28 +85,79 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../../../getting_started/installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../../getting_started/quickstart.html">Quickstart</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">Fundamentals</span></p>
+<p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../../fundamentals/analog.html">Analog</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../../fundamentals/digital.html">Digital</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../../fundamentals/core.html">Core</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../../fundamentals/functionals.html">Functionals</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../../fundamentals/readout.html">Readout</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../../fundamentals/cost_functions.html">Cost Functions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../../fundamentals/backends.html">Backends</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../../fundamentals/noise_models.html">Noise Models</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../../fundamentals/speqtrum.html">SpeQtrum</a></li>
-</ul>
-<p class="caption" role="heading"><span class="caption-text">Code Examples</span></p>
-<ul>
-<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../../../../../examples/code_examples.html">Code Examples<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
-<li class="toctree-l2"><a class="reference internal" href="../../../../../../examples/circuits.html">Circuits</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../../../../examples/hamiltonians.html">Hamiltonians</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../../../../examples/time_evolution.html">Time Evolution</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../../../../examples/quantum_objects.html">Quantum Objects</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../../../../examples/models.html">Models and Variables</a></li>
+<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../../../../../tutorials/introductions/index_intros.html">Introductions<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../../../../../../tutorials/introductions/intro_quantum.html">Quantum Basics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../../tutorials/introductions/intro_circuits.html">Quantum Circuits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../../tutorials/introductions/intro_annealing.html">Quantum Annealing</a></li>
 </ul>
 </li>
+<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../../../../../tutorials/applications/index_applications.html">Applications<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../../../../../../tutorials/applications/application_grovers.html">Quantum Search with Grover’s Algorithm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../../tutorials/applications/application_shors.html">Factoring With Shor’s Algorithm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../../tutorials/applications/application_annealing.html">Optimization with Quantum Annealing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../../tutorials/applications/application_qaoa.html">Optimization with QAOA</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Modules</span></p>
+<ul>
+<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../../../../../modules/core/core.html">Core<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../../../../../../modules/core/core_variables.html">Variables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../../modules/core/core_terms.html">Terms</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../../modules/core/core_parameters.html">Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../../modules/core/core_math_map.html">Mathematical Maps</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../../modules/core/core_comparison.html">Comparison Terms</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../../modules/core/core_model.html">Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../../modules/core/core_qubo.html">QUBO</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../../modules/core/core_qtensor.html">QTensor</a></li>
+</ul>
+</li>
+<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../../../../../modules/digital/digital.html">Digital<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../../../../../../modules/digital/digital_gates.html">Gates</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../../modules/digital/digital_circuits.html">Circuits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../../modules/digital/digital_vis.html">Visualization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../../modules/digital/digital_ansatz.html">Hardware Efficient Ansatz</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../../modules/digital/digital_qaoa.html">QAOA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../../modules/digital/digital_trotter.html">Trotterization</a></li>
+</ul>
+</li>
+<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../../../../../modules/analog/analog.html">Analog<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../../../../../../modules/analog/analog_hamiltonian.html">Hamiltonian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../../modules/analog/analog_schedule.html">Schedule</a></li>
+</ul>
+</li>
+<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../../../../../modules/functionals/functionals.html">Functionals<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../../../../../../modules/functionals/functionals_sampling.html">Digital Propogation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../../modules/functionals/functionals_time_evolution.html">Time Evolution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../../modules/functionals/functionals_reservoirs.html">Quantum Reservoirs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../../modules/functionals/functionals_variational.html">Variational Programs</a></li>
+</ul>
+</li>
+<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../../../../../modules/readout/readout.html">Readout<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../../../../../../modules/readout/readout_bitstring.html">Bitstring Measurement</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../../modules/readout/readout_expectation.html">Expectation Values</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../../modules/readout/readout_state.html">Full Quantum State</a></li>
+</ul>
+</li>
+<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../../../../../modules/backends/backends.html">Backends<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../../../../../../modules/backends/backends_qilisim.html">QiliSim</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../../modules/backends/backends_cuda.html">CUDA Backend</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../../modules/backends/backends_qutip.html">QuTiP Backend</a></li>
+</ul>
+</li>
+<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../../../../../modules/cost_functions/cost_functions.html">Cost Functions<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../../../../../../modules/cost_functions/cost_functions_observable.html">Observable Cost Function</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../../modules/cost_functions/cost_functions_model.html">Model Cost Function</a></li>
+</ul>
+</li>
+<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../../../../../modules/noise_models/noise_models.html">Noise Models<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../../../../../../modules/noise_models/noise_models_config.html">Noise Config</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../../modules/noise_models/noise_models_types.html">Noise Types</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../modules/speqtrum/speqtrum.html">SpeQtrum</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul class="current">
@@ -212,6 +263,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../hashing/index.html">qilisdk.utils.hashing</a></li>
 <li class="toctree-l4 current"><a class="reference internal" href="../index.html">qilisdk.utils.openfermion</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../openqasm2/index.html">qilisdk.utils.openqasm2</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../openqasm3/index.html">qilisdk.utils.openqasm3</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../serialization/index.html">qilisdk.utils.serialization</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../trotterization/index.html">qilisdk.utils.trotterization</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../visualization/index.html">qilisdk.utils.visualization</a></li>

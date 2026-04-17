@@ -28,7 +28,7 @@
 <link href="../../../../_static/theme.css?v=73505e79" rel="stylesheet" type="text/css"/>
 <link href="../../../../_static/graphviz.css?v=4ae1632d" rel="stylesheet" type="text/css"/>
 <link href="../../../../_static/sphinx-design.min.css?v=95c83b7e" rel="stylesheet" type="text/css"/>
-<link href="../../../../_static/custom.css?v=8f6adc47" rel="stylesheet" type="text/css"/>
+<link href="../../../../_static/custom.css?v=c047bc51" rel="stylesheet" type="text/css"/>
 <link href="../../../../_static/awesome-sphinx-design.css?v=c54898a4" rel="stylesheet" type="text/css"/>
 <link href="../../../../_static/q_trans.png" rel="icon"/>
 <link href="../../../../search.html" rel="search" title="Search"/>
@@ -84,28 +84,79 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../getting_started/installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../getting_started/quickstart.html">Quickstart</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">Fundamentals</span></p>
+<p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../fundamentals/analog.html">Analog</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../fundamentals/digital.html">Digital</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../fundamentals/core.html">Core</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../fundamentals/functionals.html">Functionals</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../fundamentals/readout.html">Readout</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../fundamentals/cost_functions.html">Cost Functions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../fundamentals/backends.html">Backends</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../fundamentals/noise_models.html">Noise Models</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../fundamentals/speqtrum.html">SpeQtrum</a></li>
-</ul>
-<p class="caption" role="heading"><span class="caption-text">Code Examples</span></p>
-<ul>
-<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../../../examples/code_examples.html">Code Examples<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
-<li class="toctree-l2"><a class="reference internal" href="../../../../examples/circuits.html">Circuits</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../../examples/hamiltonians.html">Hamiltonians</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../../examples/time_evolution.html">Time Evolution</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../../examples/quantum_objects.html">Quantum Objects</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../../examples/models.html">Models and Variables</a></li>
+<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../../../tutorials/introductions/index_intros.html">Introductions<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../../../../tutorials/introductions/intro_quantum.html">Quantum Basics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../tutorials/introductions/intro_circuits.html">Quantum Circuits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../tutorials/introductions/intro_annealing.html">Quantum Annealing</a></li>
 </ul>
 </li>
+<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../../../tutorials/applications/index_applications.html">Applications<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../../../../tutorials/applications/application_grovers.html">Quantum Search with Grover’s Algorithm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../tutorials/applications/application_shors.html">Factoring With Shor’s Algorithm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../tutorials/applications/application_annealing.html">Optimization with Quantum Annealing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../tutorials/applications/application_qaoa.html">Optimization with QAOA</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Modules</span></p>
+<ul>
+<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../../../modules/core/core.html">Core<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../../../../modules/core/core_variables.html">Variables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../modules/core/core_terms.html">Terms</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../modules/core/core_parameters.html">Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../modules/core/core_math_map.html">Mathematical Maps</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../modules/core/core_comparison.html">Comparison Terms</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../modules/core/core_model.html">Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../modules/core/core_qubo.html">QUBO</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../modules/core/core_qtensor.html">QTensor</a></li>
+</ul>
+</li>
+<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../../../modules/digital/digital.html">Digital<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../../../../modules/digital/digital_gates.html">Gates</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../modules/digital/digital_circuits.html">Circuits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../modules/digital/digital_vis.html">Visualization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../modules/digital/digital_ansatz.html">Hardware Efficient Ansatz</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../modules/digital/digital_qaoa.html">QAOA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../modules/digital/digital_trotter.html">Trotterization</a></li>
+</ul>
+</li>
+<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../../../modules/analog/analog.html">Analog<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../../../../modules/analog/analog_hamiltonian.html">Hamiltonian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../modules/analog/analog_schedule.html">Schedule</a></li>
+</ul>
+</li>
+<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../../../modules/functionals/functionals.html">Functionals<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../../../../modules/functionals/functionals_sampling.html">Digital Propogation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../modules/functionals/functionals_time_evolution.html">Time Evolution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../modules/functionals/functionals_reservoirs.html">Quantum Reservoirs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../modules/functionals/functionals_variational.html">Variational Programs</a></li>
+</ul>
+</li>
+<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../../../modules/readout/readout.html">Readout<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../../../../modules/readout/readout_bitstring.html">Bitstring Measurement</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../modules/readout/readout_expectation.html">Expectation Values</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../modules/readout/readout_state.html">Full Quantum State</a></li>
+</ul>
+</li>
+<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../../../modules/backends/backends.html">Backends<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../../../../modules/backends/backends_qilisim.html">QiliSim</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../modules/backends/backends_cuda.html">CUDA Backend</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../modules/backends/backends_qutip.html">QuTiP Backend</a></li>
+</ul>
+</li>
+<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../../../modules/cost_functions/cost_functions.html">Cost Functions<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../../../../modules/cost_functions/cost_functions_observable.html">Observable Cost Function</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../modules/cost_functions/cost_functions_model.html">Model Cost Function</a></li>
+</ul>
+</li>
+<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../../../modules/noise_models/noise_models.html">Noise Models<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../../../../modules/noise_models/noise_models_config.html">Noise Config</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../modules/noise_models/noise_models_types.html">Noise Types</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/speqtrum/speqtrum.html">SpeQtrum</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul class="current">
@@ -211,6 +262,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../utils/hashing/index.html">qilisdk.utils.hashing</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../utils/openfermion/index.html">qilisdk.utils.openfermion</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../utils/openqasm2/index.html">qilisdk.utils.openqasm2</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../utils/openqasm3/index.html">qilisdk.utils.openqasm3</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../utils/serialization/index.html">qilisdk.utils.serialization</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../utils/trotterization/index.html">qilisdk.utils.trotterization</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../utils/visualization/index.html">qilisdk.utils.visualization</a></li>
@@ -289,7 +341,7 @@
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#qilisdk.yaml.QiliYAML" title="qilisdk.yaml.QiliYAML"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QiliYAML</span></code></a></p></td>
-<td><p>typ: 'rt'/None -&gt; RoundTripLoader/RoundTripDumper,  (default)</p></td>
+<td><p>Custom YAML handler for QiliSDK.</p></td>
 </tr>
 </tbody>
 </table>
@@ -305,10 +357,10 @@
 <td><p>Constructor for CSR matrix.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#qilisdk.yaml.ndarray_representer" title="qilisdk.yaml.ndarray_representer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ndarray_representer</span></code></a>(representer, data)</p></td>
-<td><p>Representer for ndarray</p></td>
+<td><p>Representer for ndarray.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#qilisdk.yaml.ndarray_constructor" title="qilisdk.yaml.ndarray_constructor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ndarray_constructor</span></code></a>(constructor, node)</p></td>
-<td><p>Constructor for ndarray</p></td>
+<td><p>Constructor for ndarray.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#qilisdk.yaml.np_scalar_representer" title="qilisdk.yaml.np_scalar_representer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">np_scalar_representer</span></code></a>(representer, data)</p></td>
 <td><p>Represent any NumPy scalar (e.g. np.int64, np.float32).</p></td>
@@ -341,10 +393,10 @@
 <td><p>Constructor for Pydantic Models.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#qilisdk.yaml.complex_representer" title="qilisdk.yaml.complex_representer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">complex_representer</span></code></a>(representer, data)</p></td>
-<td><p></p></td>
+<td><p>Representer for built-in Python complex numbers.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#qilisdk.yaml.complex_constructor" title="qilisdk.yaml.complex_constructor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">complex_constructor</span></code></a>(constructor, node)</p></td>
-<td><p></p></td>
+<td><p>Constructor for built-in Python complex numbers.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#qilisdk.yaml.tuple_representer" title="qilisdk.yaml.tuple_representer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tuple_representer</span></code></a>(representer, data)</p></td>
 <td><p>Representer for built-in Python tuple.</p></td>
@@ -382,12 +434,12 @@
 <dl class="py function">
 <dt class="sig sig-object py" id="qilisdk.yaml.ndarray_representer">
 <span class="sig-name descname"><span class="pre">ndarray_representer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">representer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/qilisdk/yaml.html#ndarray_representer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.yaml.ndarray_representer" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.yaml.ndarray_representer'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Representer for ndarray</p>
+<dd><p>Representer for ndarray.</p>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="qilisdk.yaml.ndarray_constructor">
 <span class="sig-name descname"><span class="pre">ndarray_constructor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">constructor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/qilisdk/yaml.html#ndarray_constructor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.yaml.ndarray_constructor" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.yaml.ndarray_constructor'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Constructor for ndarray</p>
+<dd><p>Constructor for ndarray.</p>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="qilisdk.yaml.np_scalar_representer">
@@ -443,11 +495,13 @@
 <dl class="py function">
 <dt class="sig sig-object py" id="qilisdk.yaml.complex_representer">
 <span class="sig-name descname"><span class="pre">complex_representer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">representer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">complex</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/qilisdk/yaml.html#complex_representer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.yaml.complex_representer" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.yaml.complex_representer'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd></dd></dl>
+<dd><p>Representer for built-in Python complex numbers.</p>
+</dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="qilisdk.yaml.complex_constructor">
 <span class="sig-name descname"><span class="pre">complex_constructor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">constructor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/qilisdk/yaml.html#complex_constructor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.yaml.complex_constructor" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.yaml.complex_constructor'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd></dd></dl>
+<dd><p>Constructor for built-in Python complex numbers.</p>
+</dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="qilisdk.yaml.tuple_representer">
 <span class="sig-name descname"><span class="pre">tuple_representer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">representer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/qilisdk/yaml.html#tuple_representer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.yaml.tuple_representer" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.yaml.tuple_representer'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
@@ -481,30 +535,14 @@ E.g. datetime.datetime → ‘datetime.datetime’</p>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="qilisdk.yaml.QiliYAML">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">QiliYAML</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">typ</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Text</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Text</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pure</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plug_ins</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/qilisdk/yaml.html#QiliYAML"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.yaml.QiliYAML" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.yaml.QiliYAML'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">QiliYAML</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/qilisdk/yaml.html#QiliYAML"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.yaml.QiliYAML" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.yaml.QiliYAML'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
 <dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">ruamel.yaml.YAML</span></code></p>
-<dl>
-<dt>typ: ‘rt’/None -&gt; RoundTripLoader/RoundTripDumper,  (default)</dt><dd><p>‘safe’    -&gt; SafeLoader/SafeDumper,
-‘unsafe’  -&gt; normal/unsafe Loader/Dumper (pending deprecation)
-‘full’    -&gt; full Dumper only, including python built-ins that are</p>
-<blockquote>
-<div><p>potentially unsafe to load</p>
-</div></blockquote>
-<p>‘base’    -&gt; baseloader</p>
-</dd>
-</dl>
-<p>pure: if True only use Python modules
-input/output: needed to work as context manager
-plug_ins: a list of plug-in files</p>
+<p>Custom YAML handler for QiliSDK.</p>
+<p>Initialize the YAML handler with custom settings.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="qilisdk.yaml.QiliYAML.register_class">
 <span class="sig-name descname"><span class="pre">register_class</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cls</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">shared</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/qilisdk/yaml.html#QiliYAML.register_class"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.yaml.QiliYAML.register_class" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.yaml.QiliYAML.register_class'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>register a class for dumping/loading
-- if it has attribute yaml_tag use that to register, else use class name
-- if it has methods to_yaml/from_yaml use those to dump/load else dump attributes</p>
-<blockquote>
-<div><p>as mapping</p>
-</div></blockquote>
+<dd><p>Register a class with the YAML handler, assigning it a unique tag.</p>
 </dd></dl>
 </dd></dl>
 <dl class="py data">

@@ -30,7 +30,7 @@
   <link rel="stylesheet" type="text/css" href="_static/theme.css?v=73505e79" />
   <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
   <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
-  <link rel="stylesheet" type="text/css" href="_static/custom.css?v=8f6adc47" />
+  <link rel="stylesheet" type="text/css" href="_static/custom.css?v=c047bc51" />
   <link rel="stylesheet" type="text/css" href="_static/awesome-sphinx-design.css?v=c54898a4" />
   <link rel="icon" href="_static/q_trans.png" />
   <link rel="search" title="Search" href="search.html" />
@@ -121,28 +121,79 @@
 <li class="toctree-l1"><a class="reference internal" href="getting_started/installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="getting_started/quickstart.html">Quickstart</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">Fundamentals</span></p>
+<p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="fundamentals/analog.html">Analog</a></li>
-<li class="toctree-l1"><a class="reference internal" href="fundamentals/digital.html">Digital</a></li>
-<li class="toctree-l1"><a class="reference internal" href="fundamentals/core.html">Core</a></li>
-<li class="toctree-l1"><a class="reference internal" href="fundamentals/functionals.html">Functionals</a></li>
-<li class="toctree-l1"><a class="reference internal" href="fundamentals/readout.html">Readout</a></li>
-<li class="toctree-l1"><a class="reference internal" href="fundamentals/cost_functions.html">Cost Functions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="fundamentals/backends.html">Backends</a></li>
-<li class="toctree-l1"><a class="reference internal" href="fundamentals/noise_models.html">Noise Models</a></li>
-<li class="toctree-l1"><a class="reference internal" href="fundamentals/speqtrum.html">SpeQtrum</a></li>
-</ul>
-<p class="caption" role="heading"><span class="caption-text">Code Examples</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="examples/code_examples.html">Code Examples</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="examples/circuits.html">Circuits</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples/hamiltonians.html">Hamiltonians</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples/time_evolution.html">Time Evolution</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples/quantum_objects.html">Quantum Objects</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples/models.html">Models and Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/introductions/index_intros.html">Introductions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/introductions/intro_quantum.html">Quantum Basics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/introductions/intro_circuits.html">Quantum Circuits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/introductions/intro_annealing.html">Quantum Annealing</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/applications/index_applications.html">Applications</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/applications/application_grovers.html">Quantum Search with Grover’s Algorithm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/applications/application_shors.html">Factoring With Shor’s Algorithm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/applications/application_annealing.html">Optimization with Quantum Annealing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/applications/application_qaoa.html">Optimization with QAOA</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Modules</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="modules/core/core.html">Core</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="modules/core/core_variables.html">Variables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/core/core_terms.html">Terms</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/core/core_parameters.html">Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/core/core_math_map.html">Mathematical Maps</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/core/core_comparison.html">Comparison Terms</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/core/core_model.html">Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/core/core_qubo.html">QUBO</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/core/core_qtensor.html">QTensor</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="modules/digital/digital.html">Digital</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="modules/digital/digital_gates.html">Gates</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/digital/digital_circuits.html">Circuits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/digital/digital_vis.html">Visualization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/digital/digital_ansatz.html">Hardware Efficient Ansatz</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/digital/digital_qaoa.html">QAOA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/digital/digital_trotter.html">Trotterization</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="modules/analog/analog.html">Analog</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="modules/analog/analog_hamiltonian.html">Hamiltonian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/analog/analog_schedule.html">Schedule</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="modules/functionals/functionals.html">Functionals</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="modules/functionals/functionals_sampling.html">Digital Propogation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/functionals/functionals_time_evolution.html">Time Evolution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/functionals/functionals_reservoirs.html">Quantum Reservoirs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/functionals/functionals_variational.html">Variational Programs</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="modules/readout/readout.html">Readout</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="modules/readout/readout_bitstring.html">Bitstring Measurement</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/readout/readout_expectation.html">Expectation Values</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/readout/readout_state.html">Full Quantum State</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="modules/backends/backends.html">Backends</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="modules/backends/backends_qilisim.html">QiliSim</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/backends/backends_cuda.html">CUDA Backend</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/backends/backends_qutip.html">QuTiP Backend</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="modules/cost_functions/cost_functions.html">Cost Functions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="modules/cost_functions/cost_functions_observable.html">Observable Cost Function</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/cost_functions/cost_functions_model.html">Model Cost Function</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="modules/noise_models/noise_models.html">Noise Models</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="modules/noise_models/noise_models_config.html">Noise Config</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/noise_models/noise_models_types.html">Noise Types</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="modules/speqtrum/speqtrum.html">SpeQtrum</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
@@ -248,6 +299,7 @@
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/utils/hashing/index.html">qilisdk.utils.hashing</a></li>
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/utils/openfermion/index.html">qilisdk.utils.openfermion</a></li>
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/utils/openqasm2/index.html">qilisdk.utils.openqasm2</a></li>
+<li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/utils/openqasm3/index.html">qilisdk.utils.openqasm3</a></li>
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/utils/serialization/index.html">qilisdk.utils.serialization</a></li>
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/utils/trotterization/index.html">qilisdk.utils.trotterization</a></li>
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/utils/visualization/index.html">qilisdk.utils.visualization</a></li>
@@ -446,12 +498,12 @@
 </li>
       <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteType.ANALOG_EVOLUTION">ANALOG_EVOLUTION (ExecuteType attribute)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.analog_evolution_payload">analog_evolution_payload (ExecutePayload attribute)</a>
 </li>
       <li><a href="code/api/qilisdk/functionals/analog_evolution/index.html#qilisdk.functionals.analog_evolution.AnalogEvolution">AnalogEvolution (class in qilisdk.functionals.analog_evolution)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.AnalogEvolutionPayload">AnalogEvolutionPayload (class in qilisdk.speqtrum.speqtrum_models)</a>
 </li>
       <li><a href="code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.AnalogMethod">AnalogMethod (class in qilisdk.backends.backend_config)</a>
@@ -471,6 +523,10 @@
       <li><a href="code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.AnalogMethod.arnoldi">arnoldi() (AnalogMethod class method)</a>
 </li>
       <li><a href="code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.AnalogMethod.arnoldi_dim">arnoldi_dim (AnalogMethod attribute)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.QTensorStyle.arrow_color">arrow_color (QTensorStyle attribute)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.QTensorStyle.arrow_length_ratio">arrow_length_ratio (QTensorStyle attribute)</a>
 </li>
       <li><a href="code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.as_density_matrix">as_density_matrix() (QTensor method)</a>
 </li>
@@ -515,6 +571,12 @@
       <li><a href="code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer.ax">ax (MatplotlibScheduleRenderer attribute)</a>
 </li>
       <li><a href="code/api/qilisdk/utils/visualization/circuit_renderers/index.html#qilisdk.utils.visualization.circuit_renderers.MatplotlibCircuitRenderer.axes">axes (MatplotlibCircuitRenderer property)</a>
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/utils/visualization/qtensor_renderers/index.html#qilisdk.utils.visualization.qtensor_renderers.MatplotlibQTensorRenderer.axes">(MatplotlibQTensorRenderer property)</a>
+</li>
+      </ul></li>
+      <li><a href="code/api/qilisdk/utils/visualization/qtensor_renderers/index.html#qilisdk.utils.visualization.qtensor_renderers.AXIS_TYPE">AXIS_TYPE (in module qilisdk.utils.visualization.qtensor_renderers)</a>
 </li>
   </ul></td>
   </tr>
@@ -595,6 +657,8 @@
       <li><a href="code/api/qilisdk/digital/circuit_transpiler_passes/cancel_identity_pairs_pass/index.html#qilisdk.digital.circuit_transpiler_passes.cancel_identity_pairs_pass.CancelIdentityPairsPass">CancelIdentityPairsPass (class in qilisdk.digital.circuit_transpiler_passes.cancel_identity_pairs_pass)</a>
 </li>
       <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobStatus.CANCELLED">CANCELLED (JobStatus attribute)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.QTensorStyle.centre_circle_color">centre_circle_color (QTensorStyle attribute)</a>
 </li>
       <li><a href="code/api/qilisdk/core/parameterizable/index.html#qilisdk.core.parameterizable.Parameterizable.check_constraints">check_constraints() (Parameterizable method)</a>
 </li>
@@ -756,6 +820,8 @@
 </li>
       <li><a href="code/api/qilisdk/backends/cuda_backend/index.html#qilisdk.backends.cuda_backend.CudaSamplingMethod">CudaSamplingMethod (class in qilisdk.backends.cuda_backend)</a>
 </li>
+      <li><a href="code/api/qilisdk/utils/openqasm3/index.html#qilisdk.utils.openqasm3.OpenQasmParser.custom_gate_definitions">custom_gate_definitions (OpenQasmParser attribute)</a>
+</li>
       <li><a href="code/api/qilisdk/digital/circuit_transpiler_passes/custom_layout_pass/index.html#qilisdk.digital.circuit_transpiler_passes.custom_layout_pass.CustomLayoutPass">CustomLayoutPass (class in qilisdk.digital.circuit_transpiler_passes.custom_layout_pass)</a>
 </li>
       <li><a href="code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.CZ">CZ (class in qilisdk.digital.gates)</a>
@@ -837,10 +903,10 @@
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobInfo.description">(JobInfo attribute)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="code/api/qilisdk/utils/serialization/index.html#qilisdk.utils.serialization.DeserializationError">DeserializationError</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="code/api/qilisdk/utils/serialization/index.html#qilisdk.utils.serialization.deserialize">deserialize() (in module qilisdk.utils.serialization)</a>
 </li>
       <li><a href="code/api/qilisdk/utils/serialization/index.html#qilisdk.utils.serialization.deserialize_from">deserialize_from() (in module qilisdk.utils.serialization)</a>
@@ -888,9 +954,15 @@
       <li><a href="code/api/qilisdk/digital/circuit/index.html#qilisdk.digital.circuit.Circuit.draw">draw() (Circuit method)</a>
 
       <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.draw">(QTensor method)</a>
+</li>
         <li><a href="code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule.draw">(Schedule method)</a>
 </li>
       </ul></li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.QTensorStyle.draw_center_circle">draw_center_circle (QTensorStyle attribute)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.QTensorStyle.draw_reference_points">draw_reference_points (QTensorStyle attribute)</a>
+</li>
       <li><a href="code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.RabiExperiment.drive_duration_values">drive_duration_values (RabiExperiment property)</a>
 </li>
       <li><a href="code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule.dt">dt (Schedule property)</a>
@@ -1103,10 +1175,10 @@
 </li>
       <li><a href="code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.ReadoutCompositeResults.from_dict">from_dict() (ReadoutCompositeResults class method)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.ExpectationReadoutResult.from_expectations">from_expectations() (ExpectationReadoutResult class method)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.ReadoutCompositeResults.from_list">from_list() (ReadoutCompositeResults class method)</a>
 </li>
       <li><a href="code/api/qilisdk/core/model/index.html#qilisdk.core.model.QUBO.from_model">from_model() (QUBO class method)</a>
@@ -1114,6 +1186,14 @@
       <li><a href="code/api/qilisdk/utils/openqasm2/index.html#qilisdk.utils.openqasm2.from_qasm2">from_qasm2() (in module qilisdk.utils.openqasm2)</a>
 </li>
       <li><a href="code/api/qilisdk/utils/openqasm2/index.html#qilisdk.utils.openqasm2.from_qasm2_file">from_qasm2_file() (in module qilisdk.utils.openqasm2)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/openqasm3/index.html#qilisdk.utils.openqasm3.from_qasm3">from_qasm3() (in module qilisdk.utils.openqasm3)</a>
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/utils/openqasm3/index.html#qilisdk.utils.openqasm3.OpenQasmParser.from_qasm3">(OpenQasmParser method)</a>
+</li>
+      </ul></li>
+      <li><a href="code/api/qilisdk/utils/openqasm3/index.html#qilisdk.utils.openqasm3.from_qasm3_file">from_qasm3_file() (in module qilisdk.utils.openqasm3)</a>
 </li>
       <li><a href="code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian.from_qtensor">from_qtensor() (Hamiltonian class method)</a>
 </li>
@@ -1171,6 +1251,8 @@
       <li><a href="code/api/qilisdk/digital/exceptions/index.html#qilisdk.digital.exceptions.GateNotParameterizedError">GateNotParameterizedError</a>
 </li>
       <li><a href="code/api/qilisdk/digital/circuit/index.html#qilisdk.digital.circuit.Circuit.gates">gates (Circuit property)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/openqasm3/index.html#qilisdk.utils.openqasm3.OpenQasmParser.gates_to_add">gates_to_add (OpenQasmParser attribute)</a>
 </li>
       <li><a href="code/api/qilisdk/noise/noise_model/index.html#qilisdk.noise.noise_model.GateType">GateType (in module qilisdk.noise.noise_model)</a>
 </li>
@@ -1284,7 +1366,7 @@
         <li><a href="code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.ghz">(QTensor class method)</a>
 </li>
       </ul></li>
-      <li><a href="code/api/qilisdk/noise/protocols/index.html#id0">GLOBAL (AttachmentScope attribute)</a>, <a href="code/api/qilisdk/noise/protocols/index.html#qilisdk.noise.protocols.AttachmentScope.GLOBAL">[1]</a>
+      <li><a href="code/api/qilisdk/noise/protocols/index.html#qilisdk.noise.protocols.AttachmentScope.GLOBAL">GLOBAL (AttachmentScope attribute)</a>
 </li>
       <li><a href="code/api/qilisdk/noise/noise_model/index.html#qilisdk.noise.noise_model.NoiseModel.global_noise">global_noise (NoiseModel property)</a>
 </li>
@@ -1541,7 +1623,7 @@
 </li>
       <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.CircuitStyle.label_pad">label_pad (CircuitStyle attribute)</a>
 </li>
-      <li><a href="code/api/qilisdk/experiments/experiment_result/index.html#id0">labels (Dimension attribute)</a>, <a href="code/api/qilisdk/experiments/experiment_result/index.html#qilisdk.experiments.experiment_result.Dimension.labels">[1]</a>
+      <li><a href="code/api/qilisdk/experiments/experiment_result/index.html#qilisdk.experiments.experiment_result.Dimension.labels">labels (Dimension attribute)</a>
 </li>
       <li><a href="code/api/qilisdk/core/model/index.html#qilisdk.core.model.Model.lagrange_multipliers">lagrange_multipliers (Model property)</a>
 </li>
@@ -1669,6 +1751,8 @@
       <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.MathematicalMap">MathematicalMap (class in qilisdk.core.variables)</a>
 </li>
       <li><a href="code/api/qilisdk/utils/visualization/circuit_renderers/index.html#qilisdk.utils.visualization.circuit_renderers.MatplotlibCircuitRenderer">MatplotlibCircuitRenderer (class in qilisdk.utils.visualization.circuit_renderers)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/qtensor_renderers/index.html#qilisdk.utils.visualization.qtensor_renderers.MatplotlibQTensorRenderer">MatplotlibQTensorRenderer (class in qilisdk.utils.visualization.qtensor_renderers)</a>
 </li>
       <li><a href="code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer">MatplotlibScheduleRenderer (class in qilisdk.utils.visualization.schedule_renderers)</a>
 </li>
@@ -1930,6 +2014,8 @@
 </li>
         <li><a href="code/api/qilisdk/utils/openqasm2/index.html#module-qilisdk.utils.openqasm2">qilisdk.utils.openqasm2</a>
 </li>
+        <li><a href="code/api/qilisdk/utils/openqasm3/index.html#module-qilisdk.utils.openqasm3">qilisdk.utils.openqasm3</a>
+</li>
         <li><a href="code/api/qilisdk/utils/serialization/index.html#module-qilisdk.utils.serialization">qilisdk.utils.serialization</a>
 </li>
         <li><a href="code/api/qilisdk/utils/trotterization/index.html#module-qilisdk.utils.trotterization">qilisdk.utils.trotterization</a>
@@ -1939,6 +2025,8 @@
         <li><a href="code/api/qilisdk/utils/visualization/index.html#module-qilisdk.utils.visualization">qilisdk.utils.visualization</a>
 </li>
         <li><a href="code/api/qilisdk/utils/visualization/circuit_renderers/index.html#module-qilisdk.utils.visualization.circuit_renderers">qilisdk.utils.visualization.circuit_renderers</a>
+</li>
+        <li><a href="code/api/qilisdk/utils/visualization/qtensor_renderers/index.html#module-qilisdk.utils.visualization.qtensor_renderers">qilisdk.utils.visualization.qtensor_renderers</a>
 </li>
         <li><a href="code/api/qilisdk/utils/visualization/schedule_renderers/index.html#module-qilisdk.utils.visualization.schedule_renderers">qilisdk.utils.visualization.schedule_renderers</a>
 </li>
@@ -2048,10 +2136,10 @@
 </li>
       <li><a href="code/api/qilisdk/noise/noise/index.html#qilisdk.noise.noise.Noise">Noise (class in qilisdk.noise.noise)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="code/api/qilisdk/noise/noise_model/index.html#qilisdk.noise.noise_model.NoiseModel.noise_config">noise_config (NoiseModel property)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="code/api/qilisdk/noise/noise_abc/index.html#qilisdk.noise.noise_abc.NoiseABC">NoiseABC (class in qilisdk.noise.noise_abc)</a>
 </li>
       <li><a href="code/api/qilisdk/noise/noise_config/index.html#qilisdk.noise.noise_config.NoiseConfig">NoiseConfig (class in qilisdk.noise.noise_config)</a>
@@ -2094,6 +2182,8 @@
         <li><a href="code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.Gate.nqubits">(Gate property)</a>
 </li>
         <li><a href="code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian.nqubits">(Hamiltonian property)</a>
+</li>
+        <li><a href="code/api/qilisdk/utils/openqasm3/index.html#qilisdk.utils.openqasm3.OpenQasmParser.nqubits">(OpenQasmParser attribute)</a>
 </li>
         <li><a href="code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.nqubits">(QTensor property)</a>
 </li>
@@ -2189,6 +2279,8 @@
   <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="code/api/qilisdk/utils/openqasm2/index.html#qilisdk.utils.openqasm2.OPENQASM2_MAP">OPENQASM2_MAP (in module qilisdk.utils.openqasm2)</a>
 </li>
+      <li><a href="code/api/qilisdk/utils/openqasm3/index.html#qilisdk.utils.openqasm3.OpenQasmParser">OpenQasmParser (class in qilisdk.utils.openqasm3)</a>
+</li>
       <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Operation">Operation (class in qilisdk.core.variables)</a>
 </li>
       <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.ComparisonTerm.operation">operation (ComparisonTerm property)</a>
@@ -2264,12 +2356,8 @@
       </ul></li>
       <li><a href="code/api/qilisdk/core/parameterizable/index.html#qilisdk.core.parameterizable.Parameterizable">Parameterizable (class in qilisdk.core.parameterizable)</a>
 </li>
-      <li><a href="code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.PARAMETERIZED_NUMBER">PARAMETERIZED_NUMBER (in module qilisdk.analog.schedule)</a>
-
-      <ul style="list-style-type:none">
-        <li><a href="code/api/qilisdk/core/interpolator/index.html#qilisdk.core.interpolator.PARAMETERIZED_NUMBER">(in module qilisdk.core.interpolator)</a>
+      <li><a href="code/api/qilisdk/core/interpolator/index.html#qilisdk.core.interpolator.PARAMETERIZED_NUMBER">PARAMETERIZED_NUMBER (in module qilisdk.core.interpolator)</a>
 </li>
-      </ul></li>
       <li><a href="code/api/qilisdk/noise/noise_model/index.html#qilisdk.noise.noise_model.ParameterName">ParameterName (in module qilisdk.noise.noise_model)</a>
 </li>
       <li><a href="code/api/qilisdk/noise/parameter_perturbation/index.html#qilisdk.noise.parameter_perturbation.ParameterPerturbation">ParameterPerturbation (class in qilisdk.noise.parameter_perturbation)</a>
@@ -2310,16 +2398,14 @@
 </li>
       <li><a href="code/api/qilisdk/noise/noise_model/index.html#qilisdk.noise.noise_model.NoiseModel.per_gate_perturbations">per_gate_perturbations (NoiseModel property)</a>
 </li>
-      <li><a href="code/api/qilisdk/noise/protocols/index.html#id2">PER_GATE_TYPE (AttachmentScope attribute)</a>, <a href="code/api/qilisdk/noise/protocols/index.html#qilisdk.noise.protocols.AttachmentScope.PER_GATE_TYPE">[1]</a>
+      <li><a href="code/api/qilisdk/noise/protocols/index.html#qilisdk.noise.protocols.AttachmentScope.PER_GATE_TYPE">PER_GATE_TYPE (AttachmentScope attribute)</a>
 </li>
       <li><a href="code/api/qilisdk/noise/protocols/index.html#qilisdk.noise.protocols.AttachmentScope.PER_GATE_TYPE_PER_QUBIT">PER_GATE_TYPE_PER_QUBIT (AttachmentScope attribute)</a>
 </li>
-      <li><a href="code/api/qilisdk/noise/protocols/index.html#id1">PER_QUBIT (AttachmentScope attribute)</a>, <a href="code/api/qilisdk/noise/protocols/index.html#qilisdk.noise.protocols.AttachmentScope.PER_QUBIT">[1]</a>
+      <li><a href="code/api/qilisdk/noise/protocols/index.html#qilisdk.noise.protocols.AttachmentScope.PER_QUBIT">PER_QUBIT (AttachmentScope attribute)</a>
 </li>
       <li><a href="code/api/qilisdk/noise/noise_model/index.html#qilisdk.noise.noise_model.NoiseModel.per_qubit_noise">per_qubit_noise (NoiseModel property)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="code/api/qilisdk/noise/gaussian_perturbation/index.html#qilisdk.noise.gaussian_perturbation.GaussianPerturbation.perturb">perturb() (GaussianPerturbation method)</a>
 
       <ul style="list-style-type:none">
@@ -2328,6 +2414,8 @@
         <li><a href="code/api/qilisdk/noise/parameter_perturbation/index.html#qilisdk.noise.parameter_perturbation.ParameterPerturbation.perturb">(ParameterPerturbation method)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="code/api/qilisdk/noise/phase_flip/index.html#qilisdk.noise.phase_flip.PhaseFlip">PhaseFlip (class in qilisdk.noise.phase_flip)</a>
 </li>
       <li><a href="code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.RZ.phi">phi (RZ property)</a>
@@ -2344,6 +2432,8 @@
 
       <ul style="list-style-type:none">
         <li><a href="code/api/qilisdk/utils/visualization/circuit_renderers/index.html#qilisdk.utils.visualization.circuit_renderers.MatplotlibCircuitRenderer.plot">(MatplotlibCircuitRenderer method)</a>
+</li>
+        <li><a href="code/api/qilisdk/utils/visualization/qtensor_renderers/index.html#qilisdk.utils.visualization.qtensor_renderers.MatplotlibQTensorRenderer.plot">(MatplotlibQTensorRenderer method)</a>
 </li>
         <li><a href="code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer.plot">(MatplotlibScheduleRenderer method)</a>
 </li>
@@ -2813,8 +2903,6 @@
         <li><a href="code/api/qilisdk/noise/amplitude_damping/index.html#module-qilisdk.noise.amplitude_damping">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li>
     qilisdk.noise.bit_flip
 
@@ -2822,6 +2910,8 @@
         <li><a href="code/api/qilisdk/noise/bit_flip/index.html#module-qilisdk.noise.bit_flip">module</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li>
     qilisdk.noise.dephasing
 
@@ -3054,6 +3144,13 @@
 </li>
       </ul></li>
       <li>
+    qilisdk.utils.openqasm3
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/utils/openqasm3/index.html#module-qilisdk.utils.openqasm3">module</a>
+</li>
+      </ul></li>
+      <li>
     qilisdk.utils.serialization
 
       <ul style="list-style-type:none">
@@ -3086,6 +3183,13 @@
 
       <ul style="list-style-type:none">
         <li><a href="code/api/qilisdk/utils/visualization/circuit_renderers/index.html#module-qilisdk.utils.visualization.circuit_renderers">module</a>
+</li>
+      </ul></li>
+      <li>
+    qilisdk.utils.visualization.qtensor_renderers
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/utils/visualization/qtensor_renderers/index.html#module-qilisdk.utils.visualization.qtensor_renderers">module</a>
 </li>
       </ul></li>
       <li>
@@ -3130,12 +3234,12 @@
 </li>
       <li><a href="code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor">QTensor (class in qilisdk.core.qtensor)</a>
 </li>
-      <li><a href="code/api/qilisdk/readout/readout/index.html#qilisdk.readout.readout.ExpectationReadout.qtensor_observables">qtensor_observables (ExpectationReadout attribute)</a>
-
-      <ul style="list-style-type:none">
-        <li><a href="code/api/qilisdk/readout/readout/index.html#id0">(ExpectationReadout property)</a>
+      <li><a href="code/api/qilisdk/utils/visualization/qtensor_renderers/index.html#qilisdk.utils.visualization.qtensor_renderers.MatplotlibQTensorRenderer.qtensor">qtensor (MatplotlibQTensorRenderer attribute)</a>
 </li>
-      </ul></li>
+      <li><a href="code/api/qilisdk/readout/readout/index.html#qilisdk.readout.readout.ExpectationReadout.qtensor_observables">qtensor_observables (ExpectationReadout property)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.QTensorStyle">QTensorStyle (class in qilisdk.utils.visualization.style)</a>
+</li>
       <li><a href="code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensorType">QTensorType (in module qilisdk.core.qtensor)</a>
 </li>
       <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteType.QUANTUM_RESERVOIR">QUANTUM_RESERVOIR (ExecuteType attribute)</a>
@@ -3229,7 +3333,11 @@
 </li>
       <li><a href="code/api/qilisdk/core/types/index.html#qilisdk.core.types.RealNumber">RealNumber (in module qilisdk.core.types)</a>
 </li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.QTensorStyle.reference_point_distance">reference_point_distance (QTensorStyle attribute)</a>
+</li>
       <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Token.refresh_token">refresh_token (Token attribute)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/openqasm3/index.html#qilisdk.utils.openqasm3.OpenQasmParser.reg_name_to_start_end">reg_name_to_start_end (OpenQasmParser attribute)</a>
 </li>
       <li><a href="code/api/qilisdk/yaml/index.html#qilisdk.yaml.QiliYAML.register_class">register_class() (QiliYAML method)</a>
 </li>
@@ -3281,6 +3389,8 @@
         <li><a href="code/api/qilisdk/core/model/index.html#qilisdk.core.model.Constraint.rhs">(Constraint property)</a>
 </li>
       </ul></li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.QTensorStyle.rotation_style">rotation_style (QTensorStyle attribute)</a>
+</li>
       <li><a href="code/api/qilisdk/settings/index.html#qilisdk.settings.QiliSDKSettings.rtol">rtol (QiliSDKSettings attribute)</a>
 </li>
       <li><a href="code/api/qilisdk/digital/circuit_transpiler_passes/cancel_identity_pairs_pass/index.html#qilisdk.digital.circuit_transpiler_passes.cancel_identity_pairs_pass.CancelIdentityPairsPass.run">run() (CancelIdentityPairsPass method)</a>
@@ -3353,6 +3463,8 @@
       <li><a href="code/api/qilisdk/utils/visualization/circuit_renderers/index.html#qilisdk.utils.visualization.circuit_renderers.MatplotlibCircuitRenderer.save">save() (MatplotlibCircuitRenderer method)</a>
 
       <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/utils/visualization/qtensor_renderers/index.html#qilisdk.utils.visualization.qtensor_renderers.MatplotlibQTensorRenderer.save">(MatplotlibQTensorRenderer method)</a>
+</li>
         <li><a href="code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer.save">(MatplotlibScheduleRenderer method)</a>
 </li>
       </ul></li>
@@ -3480,8 +3592,12 @@
 </li>
       <li><a href="code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.shape">shape (QTensor property)</a>
 </li>
-      <li><a href="code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer.show">show() (MatplotlibScheduleRenderer method)</a>
+      <li><a href="code/api/qilisdk/utils/visualization/qtensor_renderers/index.html#qilisdk.utils.visualization.qtensor_renderers.MatplotlibQTensorRenderer.show">show() (MatplotlibQTensorRenderer method)</a>
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer.show">(MatplotlibScheduleRenderer method)</a>
 </li>
+      </ul></li>
       <li><a href="code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian.simplify">simplify() (Hamiltonian method)</a>
 </li>
       <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.DeviceType.SIMULATOR">SIMULATOR (DeviceType attribute)</a>
@@ -3515,6 +3631,10 @@
       <li><a href="code/api/qilisdk/speqtrum/speqtrum/index.html#qilisdk.speqtrum.speqtrum.SpeQtrumAPIError">SpeQtrumAPIError (class in qilisdk.speqtrum.speqtrum)</a>
 </li>
       <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SpeQtrumModel">SpeQtrumModel (class in qilisdk.speqtrum.speqtrum_models)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.QTensorStyle.sphere_color">sphere_color (QTensorStyle attribute)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.QTensorStyle.sphere_points">sphere_points (QTensorStyle attribute)</a>
 </li>
       <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Domain.SPIN">SPIN (Domain attribute)</a>
 </li>
@@ -3569,12 +3689,16 @@
       <li><a href="code/api/qilisdk/utils/visualization/circuit_renderers/index.html#qilisdk.utils.visualization.circuit_renderers.MatplotlibCircuitRenderer.style">style (MatplotlibCircuitRenderer attribute)</a>
 
       <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/utils/visualization/qtensor_renderers/index.html#qilisdk.utils.visualization.qtensor_renderers.MatplotlibQTensorRenderer.style">(MatplotlibQTensorRenderer attribute)</a>
+</li>
         <li><a href="code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer.style">(MatplotlibScheduleRenderer attribute)</a>
 </li>
       </ul></li>
       <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Operation.SUB">SUB (Operation attribute)</a>
 </li>
       <li><a href="code/api/qilisdk/speqtrum/speqtrum/index.html#qilisdk.speqtrum.speqtrum.SpeQtrum.submit">submit() (SpeQtrum method)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/openqasm3/index.html#qilisdk.utils.openqasm3.OpenQasmParser.subroutine_definitions">subroutine_definitions (OpenQasmParser attribute)</a>
 </li>
       <li><a href="code/api/qilisdk/noise/protocols/index.html#qilisdk.noise.protocols.SupportsStaticKraus">SupportsStaticKraus (class in qilisdk.noise.protocols)</a>
 </li>
@@ -3761,6 +3885,14 @@
 </li>
       <li><a href="code/api/qilisdk/utils/openqasm2/index.html#qilisdk.utils.openqasm2.to_qasm2_file">to_qasm2_file() (in module qilisdk.utils.openqasm2)</a>
 </li>
+      <li><a href="code/api/qilisdk/utils/openqasm3/index.html#qilisdk.utils.openqasm3.to_qasm3">to_qasm3() (in module qilisdk.utils.openqasm3)</a>
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/utils/openqasm3/index.html#qilisdk.utils.openqasm3.OpenQasmParser.to_qasm3">(OpenQasmParser static method)</a>
+</li>
+      </ul></li>
+      <li><a href="code/api/qilisdk/utils/openqasm3/index.html#qilisdk.utils.openqasm3.to_qasm3_file">to_qasm3_file() (in module qilisdk.utils.openqasm3)</a>
+</li>
       <li><a href="code/api/qilisdk/digital/circuit/index.html#qilisdk.digital.circuit.Circuit.to_qtensor">to_qtensor() (Circuit method)</a>
 
       <ul style="list-style-type:none">
@@ -3925,7 +4057,9 @@
 </li>
       <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Parameter.value">value (Parameter property)</a>
 </li>
-      <li><a href="code/api/qilisdk/experiments/experiment_result/index.html#id1">values (Dimension attribute)</a>, <a href="code/api/qilisdk/experiments/experiment_result/index.html#qilisdk.experiments.experiment_result.Dimension.values">[1]</a>
+      <li><a href="code/api/qilisdk/experiments/experiment_result/index.html#qilisdk.experiments.experiment_result.Dimension.values">values (Dimension attribute)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/openqasm3/index.html#qilisdk.utils.openqasm3.OpenQasmParser.var_list">var_list (OpenQasmParser attribute)</a>
 </li>
       <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Variable">Variable (class in qilisdk.core.variables)</a>
 </li>
@@ -3941,10 +4075,10 @@
         <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Term.variables">(Term method)</a>
 </li>
       </ul></li>
-      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobType.VARIATIONAL">VARIATIONAL (JobType attribute)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobType.VARIATIONAL">VARIATIONAL (JobType attribute)</a>
+</li>
       <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteType.VARIATIONAL_PROGRAM">VARIATIONAL_PROGRAM (ExecuteType attribute)</a>
 </li>
       <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.variational_program">variational_program (VariationalProgramPayload attribute)</a>

@@ -81,6 +81,12 @@ code, pre {
   position: static;
 }
 
+/* Dark/light image switching */
+.only-dark { display: none; }
+.only-light { display: block; }
+.dark .only-dark { display: block; }
+.dark .only-light { display: none; }
+
 .dark :not(pre) > code {
   color: hsl(var(--inline-code-text));
   background-color: hsl(var(--inline-code-bg));
