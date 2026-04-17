@@ -36,6 +36,6 @@ uv -v sync --all-groups --extra all-cu13 --reinstall -Ccmake.define.tests=ON 2>&
 echo "Running Python unit tests..." | tee -a $LOG_FILE
 pytest tests/unit_python 2>&1 | tee -a $LOG_FILE
 echo "Running C++ unit tests..." | tee -a $LOG_FILE
-./tests/unit_cpp/test_cpp --gtest_brief=1 2>&1 | tee -a $LOG_FILE
+./tests/unit_cpp/test_cpp 2>&1 | tee -a $LOG_FILE
 echo "Running integration tests..." | tee -a $LOG_FILE
 pytest tests/integration 2>&1 | tee -a $LOG_FILE
