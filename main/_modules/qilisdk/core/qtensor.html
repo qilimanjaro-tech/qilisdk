@@ -166,7 +166,7 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/functionals/functionals.html">Functionals</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/functionals/functionals_sampling.html">Digital Propogation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../modules/functionals/functionals_time_evolution.html">Time Evolution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/functionals/functionals_time_evolution.html">Analog Evolution</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/functionals/functionals_reservoirs.html">Quantum Reservoirs</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/functionals/functionals_variational.html">Variational Programs</a></li>
 </ul>
@@ -1082,430 +1082,446 @@
 
 </span><span id="line-571">
 </span><span id="line-572">    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="QTensor.uniform">
+<a class="viewcode-back" href="../../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.uniform">[docs]</a>
+</span><span id="line-573">    <span class="k">def</span><span class="w"> </span><span class="nf">uniform</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">nqubits</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QTensor</span><span class="p">:</span>
+</span><span id="line-574"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-575"><span class="sd">        Create a uniform superposition state for the specified number of qubits.</span>
+</span><span id="line-576">
+</span><span id="line-577"><span class="sd">        Args:</span>
+</span><span id="line-578"><span class="sd">            nqubits (int): The number of qubits in the uniform superposition state.</span>
+</span><span id="line-579">
+</span><span id="line-580"><span class="sd">        Returns:</span>
+</span><span id="line-581"><span class="sd">            QTensor: A new QTensor representing the uniform superposition state.</span>
+</span><span id="line-582"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-583">        <span class="k">return</span> <span class="n">QTensor</span><span class="p">(</span><span class="n">QTensorCpp</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">nqubits</span><span class="p">))</span></div>
+
+</span><span id="line-584">
+</span><span id="line-585">    <span class="nd">@classmethod</span>
 <div class="viewcode-block" id="QTensor.basis_state">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.basis_state">[docs]</a>
-</span><span id="line-573">    <span class="k">def</span><span class="w"> </span><span class="nf">basis_state</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">N</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QTensor</span><span class="p">:</span>
-</span><span id="line-574"><span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-575"><span class="sd">        Generate the n&#39;th basis vector representation, on a N-size Hilbert space (N=2**num_qubits).</span>
-</span><span id="line-576">
-</span><span id="line-577"><span class="sd">        This function creates a column vector (ket) representing the Fock state :math:`|n⟩` in a Hilbert space of dimension N.</span>
-</span><span id="line-578">
-</span><span id="line-579"><span class="sd">        Args:</span>
-</span><span id="line-580"><span class="sd">            n (int): The desired number state (from 0 to N-1).</span>
-</span><span id="line-581"><span class="sd">            N (int): The dimension of the Hilbert space, has a value 2**num_qubits.</span>
-</span><span id="line-582">
-</span><span id="line-583"><span class="sd">        Raises:</span>
-</span><span id="line-584"><span class="sd">            ValueError: If n &gt;= N.</span>
-</span><span id="line-585">
-</span><span id="line-586"><span class="sd">        Returns:</span>
-</span><span id="line-587"><span class="sd">            QTensor: A QTensor representing the n&#39;th basis state on a N-size Hilbert space (N=2**num_qubits).</span>
-</span><span id="line-588"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-589">        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="n">N</span><span class="p">):</span>
-</span><span id="line-590">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;n must be in [0, </span><span class="si">{</span><span class="n">N</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">)</span>
-</span><span id="line-591">        <span class="c1"># one nonzero at (row=n, col=0), value=1.0</span>
-</span><span id="line-592">        <span class="n">mat</span> <span class="o">=</span> <span class="n">csr_matrix</span><span class="p">(([</span><span class="mf">1.0</span><span class="p">],</span> <span class="p">([</span><span class="n">n</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">])),</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
-</span><span id="line-593">        <span class="k">return</span> <span class="n">QTensor</span><span class="p">(</span><span class="n">mat</span><span class="p">)</span></div>
+</span><span id="line-586">    <span class="k">def</span><span class="w"> </span><span class="nf">basis_state</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">N</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QTensor</span><span class="p">:</span>
+</span><span id="line-587"><span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-588"><span class="sd">        Generate the n&#39;th basis vector representation, on a N-size Hilbert space (N=2**num_qubits).</span>
+</span><span id="line-589">
+</span><span id="line-590"><span class="sd">        This function creates a column vector (ket) representing the Fock state :math:`|n⟩` in a Hilbert space of dimension N.</span>
+</span><span id="line-591">
+</span><span id="line-592"><span class="sd">        Args:</span>
+</span><span id="line-593"><span class="sd">            n (int): The desired number state (from 0 to N-1).</span>
+</span><span id="line-594"><span class="sd">            N (int): The dimension of the Hilbert space, has a value 2**num_qubits.</span>
+</span><span id="line-595">
+</span><span id="line-596"><span class="sd">        Raises:</span>
+</span><span id="line-597"><span class="sd">            ValueError: If n &gt;= N.</span>
+</span><span id="line-598">
+</span><span id="line-599"><span class="sd">        Returns:</span>
+</span><span id="line-600"><span class="sd">            QTensor: A QTensor representing the n&#39;th basis state on a N-size Hilbert space (N=2**num_qubits).</span>
+</span><span id="line-601"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-602">        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="n">N</span><span class="p">):</span>
+</span><span id="line-603">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;n must be in [0, </span><span class="si">{</span><span class="n">N</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">)</span>
+</span><span id="line-604">        <span class="c1"># one nonzero at (row=n, col=0), value=1.0</span>
+</span><span id="line-605">        <span class="n">mat</span> <span class="o">=</span> <span class="n">csr_matrix</span><span class="p">(([</span><span class="mf">1.0</span><span class="p">],</span> <span class="p">([</span><span class="n">n</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">])),</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+</span><span id="line-606">        <span class="k">return</span> <span class="n">QTensor</span><span class="p">(</span><span class="n">mat</span><span class="p">)</span></div>
 
-</span><span id="line-594">
+</span><span id="line-607">
 <div class="viewcode-block" id="QTensor.expand">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.expand">[docs]</a>
-</span><span id="line-595">    <span class="k">def</span><span class="w"> </span><span class="nf">expand</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nqubits</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QTensor</span><span class="p">:</span>
-</span><span id="line-596">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span> <span class="o">==</span> <span class="n">nqubits</span><span class="p">:</span>
-</span><span id="line-597">            <span class="k">return</span> <span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-</span><span id="line-598">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span> <span class="o">&gt;</span> <span class="n">nqubits</span><span class="p">:</span>
-</span><span id="line-599">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Can&#39;t scale QTensor down, only can scale it up.&quot;</span><span class="p">)</span>
-</span><span id="line-600">        <span class="n">added_qubits</span> <span class="o">=</span> <span class="n">nqubits</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span>
-</span><span id="line-601">        <span class="n">identity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">identity</span><span class="p">(</span><span class="n">added_qubits</span><span class="p">)</span>
-</span><span id="line-602">        <span class="k">return</span> <span class="n">tensor_prod</span><span class="p">([</span><span class="bp">self</span><span class="p">,</span> <span class="n">identity</span><span class="p">])</span></div>
+</span><span id="line-608">    <span class="k">def</span><span class="w"> </span><span class="nf">expand</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nqubits</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QTensor</span><span class="p">:</span>
+</span><span id="line-609">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span> <span class="o">==</span> <span class="n">nqubits</span><span class="p">:</span>
+</span><span id="line-610">            <span class="k">return</span> <span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+</span><span id="line-611">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span> <span class="o">&gt;</span> <span class="n">nqubits</span><span class="p">:</span>
+</span><span id="line-612">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Can&#39;t scale QTensor down, only can scale it up.&quot;</span><span class="p">)</span>
+</span><span id="line-613">        <span class="n">added_qubits</span> <span class="o">=</span> <span class="n">nqubits</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span>
+</span><span id="line-614">        <span class="n">identity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">identity</span><span class="p">(</span><span class="n">added_qubits</span><span class="p">)</span>
+</span><span id="line-615">        <span class="k">return</span> <span class="n">tensor_prod</span><span class="p">([</span><span class="bp">self</span><span class="p">,</span> <span class="n">identity</span><span class="p">])</span></div>
 
-</span><span id="line-603">
+</span><span id="line-616">
 <div class="viewcode-block" id="QTensor.reset_qubits">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.reset_qubits">[docs]</a>
-</span><span id="line-604">    <span class="k">def</span><span class="w"> </span><span class="nf">reset_qubits</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubits</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">QTensor</span><span class="p">:</span>
-</span><span id="line-605"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-606"><span class="sd">        Reset the specified qubits to the :math:`|0⟩` state.</span>
-</span><span id="line-607">
-</span><span id="line-608"><span class="sd">        This method applies a reset operation to the specified qubits, effectively tracing out those qubits and replacing them with :math:`|0⟩` states.</span>
-</span><span id="line-609">
-</span><span id="line-610"><span class="sd">        Args:</span>
-</span><span id="line-611"><span class="sd">            qubits (set[int]): A set of indices corresponding to the qubits to reset.</span>
-</span><span id="line-612">
-</span><span id="line-613"><span class="sd">        Returns:</span>
-</span><span id="line-614"><span class="sd">            QTensor: A new QTensor representing the state after resetting the specified qubits.</span>
-</span><span id="line-615"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-616">        <span class="k">return</span> <span class="n">QTensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_qtensor_cpp</span><span class="o">.</span><span class="n">reset_qubits_python</span><span class="p">(</span><span class="n">qubits</span><span class="p">))</span></div>
+</span><span id="line-617">    <span class="k">def</span><span class="w"> </span><span class="nf">reset_qubits</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubits</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">QTensor</span><span class="p">:</span>
+</span><span id="line-618"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-619"><span class="sd">        Reset the specified qubits to the :math:`|0⟩` state.</span>
+</span><span id="line-620">
+</span><span id="line-621"><span class="sd">        This method applies a reset operation to the specified qubits, effectively tracing out those qubits and replacing them with :math:`|0⟩` states.</span>
+</span><span id="line-622">
+</span><span id="line-623"><span class="sd">        Args:</span>
+</span><span id="line-624"><span class="sd">            qubits (set[int]): A set of indices corresponding to the qubits to reset.</span>
+</span><span id="line-625">
+</span><span id="line-626"><span class="sd">        Returns:</span>
+</span><span id="line-627"><span class="sd">            QTensor: A new QTensor representing the state after resetting the specified qubits.</span>
+</span><span id="line-628"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-629">        <span class="k">return</span> <span class="n">QTensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_qtensor_cpp</span><span class="o">.</span><span class="n">reset_qubits_python</span><span class="p">(</span><span class="n">qubits</span><span class="p">))</span></div>
 
-</span><span id="line-617">
+</span><span id="line-630">
 <div class="viewcode-block" id="QTensor.probabilities">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.probabilities">[docs]</a>
-</span><span id="line-618">    <span class="k">def</span><span class="w"> </span><span class="nf">probabilities</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
-</span><span id="line-619"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-620"><span class="sd">        Compute the probabilities of measuring each basis state.</span>
-</span><span id="line-621">
-</span><span id="line-622"><span class="sd">        This method calculates the probabilities of obtaining each basis state upon measurement, which is given by the squared magnitudes of the coefficients in the state vector (for kets) or the diagonal elements (for density matrices).</span>
-</span><span id="line-623">
-</span><span id="line-624"><span class="sd">        Returns:</span>
-</span><span id="line-625"><span class="sd">            np.ndarray: A 1D array containing the probabilities of measuring each basis state.</span>
-</span><span id="line-626"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-627">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_qtensor_cpp</span><span class="o">.</span><span class="n">probabilities_python</span><span class="p">()</span></div>
+</span><span id="line-631">    <span class="k">def</span><span class="w"> </span><span class="nf">probabilities</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+</span><span id="line-632"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-633"><span class="sd">        Compute the probabilities of measuring each basis state.</span>
+</span><span id="line-634">
+</span><span id="line-635"><span class="sd">        This method calculates the probabilities of obtaining each basis state upon measurement, which is given by the squared magnitudes of the coefficients in the state vector (for kets) or the diagonal elements (for density matrices).</span>
+</span><span id="line-636">
+</span><span id="line-637"><span class="sd">        Returns:</span>
+</span><span id="line-638"><span class="sd">            np.ndarray: A 1D array containing the probabilities of measuring each basis state.</span>
+</span><span id="line-639"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-640">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_qtensor_cpp</span><span class="o">.</span><span class="n">probabilities_python</span><span class="p">()</span></div>
 
-</span><span id="line-628">
+</span><span id="line-641">
 <div class="viewcode-block" id="QTensor.entropy_von_neumann">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.entropy_von_neumann">[docs]</a>
-</span><span id="line-629">    <span class="k">def</span><span class="w"> </span><span class="nf">entropy_von_neumann</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-</span><span id="line-630"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-631"><span class="sd">        Compute the von Neumann entropy of the QTensor.</span>
-</span><span id="line-632">
-</span><span id="line-633"><span class="sd">        This method calculates the von Neumann entropy, which is defined as S(rho) = -Tr(rho log(rho)), where rho is the density matrix represented by the QTensor.</span>
-</span><span id="line-634">
-</span><span id="line-635"><span class="sd">        Returns:</span>
-</span><span id="line-636"><span class="sd">            float: The von Neumann entropy of the QTensor.</span>
-</span><span id="line-637"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-638">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_qtensor_cpp</span><span class="o">.</span><span class="n">entropy_von_neumann</span><span class="p">()</span></div>
+</span><span id="line-642">    <span class="k">def</span><span class="w"> </span><span class="nf">entropy_von_neumann</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="line-643"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-644"><span class="sd">        Compute the von Neumann entropy of the QTensor.</span>
+</span><span id="line-645">
+</span><span id="line-646"><span class="sd">        This method calculates the von Neumann entropy, which is defined as S(rho) = -Tr(rho log(rho)), where rho is the density matrix represented by the QTensor.</span>
+</span><span id="line-647">
+</span><span id="line-648"><span class="sd">        Returns:</span>
+</span><span id="line-649"><span class="sd">            float: The von Neumann entropy of the QTensor.</span>
+</span><span id="line-650"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-651">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_qtensor_cpp</span><span class="o">.</span><span class="n">entropy_von_neumann</span><span class="p">()</span></div>
 
-</span><span id="line-639">
+</span><span id="line-652">
 <div class="viewcode-block" id="QTensor.entropy_renyi">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.entropy_renyi">[docs]</a>
-</span><span id="line-640">    <span class="k">def</span><span class="w"> </span><span class="nf">entropy_renyi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-</span><span id="line-641"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-642"><span class="sd">        Compute the Rényi entropy of the QTensor for a given order alpha.</span>
-</span><span id="line-643">
-</span><span id="line-644"><span class="sd">        This method calculates the Rényi entropy, which is defined as :math:`S_\\text{alpha}(\\rho) = (1/(1-\\alpha)) \\text{log}(\\text{tr}(\\rho^\\alpha))`,</span>
-</span><span id="line-645"><span class="sd">        where rho is the density matrix represented by the QTensor and alpha is the order of the entropy.</span>
-</span><span id="line-646">
-</span><span id="line-647"><span class="sd">        Args:</span>
-</span><span id="line-648"><span class="sd">            alpha (float): The order of the Rényi entropy. Must be greater than 0 and not equal to 1.</span>
-</span><span id="line-649">
-</span><span id="line-650"><span class="sd">        Returns:</span>
-</span><span id="line-651"><span class="sd">            float: The Rényi entropy of the QTensor for the specified order alpha.</span>
-</span><span id="line-652"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-653">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_qtensor_cpp</span><span class="o">.</span><span class="n">entropy_renyi</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span></div>
+</span><span id="line-653">    <span class="k">def</span><span class="w"> </span><span class="nf">entropy_renyi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="line-654"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-655"><span class="sd">        Compute the Rényi entropy of the QTensor for a given order alpha.</span>
+</span><span id="line-656">
+</span><span id="line-657"><span class="sd">        This method calculates the Rényi entropy, which is defined as :math:`S_\\text{alpha}(\\rho) = (1/(1-\\alpha)) \\text{log}(\\text{tr}(\\rho^\\alpha))`,</span>
+</span><span id="line-658"><span class="sd">        where rho is the density matrix represented by the QTensor and alpha is the order of the entropy.</span>
+</span><span id="line-659">
+</span><span id="line-660"><span class="sd">        Args:</span>
+</span><span id="line-661"><span class="sd">            alpha (float): The order of the Rényi entropy. Must be greater than 0 and not equal to 1.</span>
+</span><span id="line-662">
+</span><span id="line-663"><span class="sd">        Returns:</span>
+</span><span id="line-664"><span class="sd">            float: The Rényi entropy of the QTensor for the specified order alpha.</span>
+</span><span id="line-665"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-666">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_qtensor_cpp</span><span class="o">.</span><span class="n">entropy_renyi</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span></div>
 
-</span><span id="line-654">
+</span><span id="line-667">
 <div class="viewcode-block" id="QTensor.commutator">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.commutator">[docs]</a>
-</span><span id="line-655">    <span class="k">def</span><span class="w"> </span><span class="nf">commutator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">QTensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QTensor</span><span class="p">:</span>
-</span><span id="line-656"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-657"><span class="sd">        Compute the commutator [A, B] = AB - BA with another QTensor.</span>
-</span><span id="line-658">
-</span><span id="line-659"><span class="sd">        Args:</span>
-</span><span id="line-660"><span class="sd">            other (QTensor): The other QTensor to compute the commutator with.</span>
-</span><span id="line-661">
-</span><span id="line-662"><span class="sd">        Returns:</span>
-</span><span id="line-663"><span class="sd">            QTensor: A new QTensor representing the commutator.</span>
-</span><span id="line-664"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-665">        <span class="k">return</span> <span class="n">QTensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_qtensor_cpp</span><span class="o">.</span><span class="n">commutator_python</span><span class="p">(</span><span class="n">other</span><span class="p">))</span></div>
+</span><span id="line-668">    <span class="k">def</span><span class="w"> </span><span class="nf">commutator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">QTensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QTensor</span><span class="p">:</span>
+</span><span id="line-669"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-670"><span class="sd">        Compute the commutator [A, B] = AB - BA with another QTensor.</span>
+</span><span id="line-671">
+</span><span id="line-672"><span class="sd">        Args:</span>
+</span><span id="line-673"><span class="sd">            other (QTensor): The other QTensor to compute the commutator with.</span>
+</span><span id="line-674">
+</span><span id="line-675"><span class="sd">        Returns:</span>
+</span><span id="line-676"><span class="sd">            QTensor: A new QTensor representing the commutator.</span>
+</span><span id="line-677"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-678">        <span class="k">return</span> <span class="n">QTensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_qtensor_cpp</span><span class="o">.</span><span class="n">commutator_python</span><span class="p">(</span><span class="n">other</span><span class="p">))</span></div>
 
-</span><span id="line-666">
+</span><span id="line-679">
 <div class="viewcode-block" id="QTensor.anticommutator">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.anticommutator">[docs]</a>
-</span><span id="line-667">    <span class="k">def</span><span class="w"> </span><span class="nf">anticommutator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">QTensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QTensor</span><span class="p">:</span>
-</span><span id="line-668"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-669"><span class="sd">        Compute the anticommutator {A, B} = AB + BA with another QTensor.</span>
-</span><span id="line-670">
-</span><span id="line-671"><span class="sd">        Args:</span>
-</span><span id="line-672"><span class="sd">            other (QTensor): The other QTensor to compute the anticommutator with.</span>
-</span><span id="line-673">
-</span><span id="line-674"><span class="sd">        Returns:</span>
-</span><span id="line-675"><span class="sd">            QTensor: A new QTensor representing the anticommutator.</span>
-</span><span id="line-676"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-677">        <span class="k">return</span> <span class="n">QTensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_qtensor_cpp</span><span class="o">.</span><span class="n">anticommutator_python</span><span class="p">(</span><span class="n">other</span><span class="p">))</span></div>
+</span><span id="line-680">    <span class="k">def</span><span class="w"> </span><span class="nf">anticommutator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">QTensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QTensor</span><span class="p">:</span>
+</span><span id="line-681"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-682"><span class="sd">        Compute the anticommutator {A, B} = AB + BA with another QTensor.</span>
+</span><span id="line-683">
+</span><span id="line-684"><span class="sd">        Args:</span>
+</span><span id="line-685"><span class="sd">            other (QTensor): The other QTensor to compute the anticommutator with.</span>
+</span><span id="line-686">
+</span><span id="line-687"><span class="sd">        Returns:</span>
+</span><span id="line-688"><span class="sd">            QTensor: A new QTensor representing the anticommutator.</span>
+</span><span id="line-689"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-690">        <span class="k">return</span> <span class="n">QTensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_qtensor_cpp</span><span class="o">.</span><span class="n">anticommutator_python</span><span class="p">(</span><span class="n">other</span><span class="p">))</span></div>
 
-</span><span id="line-678">
+</span><span id="line-691">
 <div class="viewcode-block" id="QTensor.pow">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.pow">[docs]</a>
-</span><span id="line-679">    <span class="k">def</span><span class="w"> </span><span class="nf">pow</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exponent</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QTensor</span><span class="p">:</span>
-</span><span id="line-680"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-681"><span class="sd">        Compute the integer power of the QTensor.</span>
-</span><span id="line-682">
-</span><span id="line-683"><span class="sd">        Args:</span>
-</span><span id="line-684"><span class="sd">            exponent (float): The exponent to raise the QTensor to.</span>
-</span><span id="line-685">
-</span><span id="line-686"><span class="sd">        Returns:</span>
-</span><span id="line-687"><span class="sd">            QTensor: A new QTensor representing the result of raising this QTensor to the given power.</span>
-</span><span id="line-688">
-</span><span id="line-689"><span class="sd">        Raises:</span>
-</span><span id="line-690"><span class="sd">            ValueError: If the exponent is not a real number.</span>
-</span><span id="line-691"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-692">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">exponent</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
-</span><span id="line-693">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Exponent must be a real number&quot;</span><span class="p">)</span>
-</span><span id="line-694">        <span class="k">return</span> <span class="n">QTensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_qtensor_cpp</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="n">exponent</span><span class="p">))</span></div>
-
+</span><span id="line-692">    <span class="k">def</span><span class="w"> </span><span class="nf">pow</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exponent</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QTensor</span><span class="p">:</span>
+</span><span id="line-693"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-694"><span class="sd">        Compute the integer power of the QTensor.</span>
 </span><span id="line-695">
+</span><span id="line-696"><span class="sd">        Args:</span>
+</span><span id="line-697"><span class="sd">            exponent (float): The exponent to raise the QTensor to.</span>
+</span><span id="line-698">
+</span><span id="line-699"><span class="sd">        Returns:</span>
+</span><span id="line-700"><span class="sd">            QTensor: A new QTensor representing the result of raising this QTensor to the given power.</span>
+</span><span id="line-701">
+</span><span id="line-702"><span class="sd">        Raises:</span>
+</span><span id="line-703"><span class="sd">            ValueError: If the exponent is not a real number.</span>
+</span><span id="line-704"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-705">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">exponent</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
+</span><span id="line-706">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Exponent must be a real number&quot;</span><span class="p">)</span>
+</span><span id="line-707">        <span class="k">return</span> <span class="n">QTensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_qtensor_cpp</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="n">exponent</span><span class="p">))</span></div>
+
+</span><span id="line-708">
 <div class="viewcode-block" id="QTensor.sqrt">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.sqrt">[docs]</a>
-</span><span id="line-696">    <span class="k">def</span><span class="w"> </span><span class="nf">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QTensor</span><span class="p">:</span>
-</span><span id="line-697"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-698"><span class="sd">        Compute the matrix square root of the QTensor.</span>
-</span><span id="line-699">
-</span><span id="line-700"><span class="sd">        Returns:</span>
-</span><span id="line-701"><span class="sd">            QTensor: A new QTensor representing the matrix square root.</span>
-</span><span id="line-702"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-703">        <span class="k">return</span> <span class="n">QTensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_qtensor_cpp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">())</span></div>
+</span><span id="line-709">    <span class="k">def</span><span class="w"> </span><span class="nf">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QTensor</span><span class="p">:</span>
+</span><span id="line-710"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-711"><span class="sd">        Compute the matrix square root of the QTensor.</span>
+</span><span id="line-712">
+</span><span id="line-713"><span class="sd">        Returns:</span>
+</span><span id="line-714"><span class="sd">            QTensor: A new QTensor representing the matrix square root.</span>
+</span><span id="line-715"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-716">        <span class="k">return</span> <span class="n">QTensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_qtensor_cpp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">())</span></div>
 
-</span><span id="line-704">
+</span><span id="line-717">
 <div class="viewcode-block" id="QTensor.rank">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.rank">[docs]</a>
-</span><span id="line-705">    <span class="k">def</span><span class="w"> </span><span class="nf">rank</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-</span><span id="line-706"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-707"><span class="sd">        Compute the rank of the QTensor.</span>
-</span><span id="line-708">
-</span><span id="line-709"><span class="sd">        Returns:</span>
-</span><span id="line-710"><span class="sd">            int: The rank of the QTensor.</span>
-</span><span id="line-711"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-712">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_qtensor_cpp</span><span class="o">.</span><span class="n">rank</span><span class="p">()</span></div>
+</span><span id="line-718">    <span class="k">def</span><span class="w"> </span><span class="nf">rank</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+</span><span id="line-719"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-720"><span class="sd">        Compute the rank of the QTensor.</span>
+</span><span id="line-721">
+</span><span id="line-722"><span class="sd">        Returns:</span>
+</span><span id="line-723"><span class="sd">            int: The rank of the QTensor.</span>
+</span><span id="line-724"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-725">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_qtensor_cpp</span><span class="o">.</span><span class="n">rank</span><span class="p">()</span></div>
 
-</span><span id="line-713">
+</span><span id="line-726">
 <div class="viewcode-block" id="QTensor.log">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.log">[docs]</a>
-</span><span id="line-714">    <span class="k">def</span><span class="w"> </span><span class="nf">log</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QTensor</span><span class="p">:</span>
-</span><span id="line-715"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-716"><span class="sd">        Compute the matrix logarithm of the QTensor.</span>
-</span><span id="line-717">
-</span><span id="line-718"><span class="sd">        Returns:</span>
-</span><span id="line-719"><span class="sd">            QTensor: A new QTensor representing the matrix logarithm.</span>
-</span><span id="line-720"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-721">        <span class="k">return</span> <span class="n">QTensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_qtensor_cpp</span><span class="o">.</span><span class="n">log</span><span class="p">())</span></div>
+</span><span id="line-727">    <span class="k">def</span><span class="w"> </span><span class="nf">log</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QTensor</span><span class="p">:</span>
+</span><span id="line-728"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-729"><span class="sd">        Compute the matrix logarithm of the QTensor.</span>
+</span><span id="line-730">
+</span><span id="line-731"><span class="sd">        Returns:</span>
+</span><span id="line-732"><span class="sd">            QTensor: A new QTensor representing the matrix logarithm.</span>
+</span><span id="line-733"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-734">        <span class="k">return</span> <span class="n">QTensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_qtensor_cpp</span><span class="o">.</span><span class="n">log</span><span class="p">())</span></div>
 
-</span><span id="line-722">
-</span><span id="line-723">    <span class="nd">@property</span>
+</span><span id="line-735">
+</span><span id="line-736">    <span class="nd">@property</span>
 <div class="viewcode-block" id="QTensor.eigenvalues">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.eigenvalues">[docs]</a>
-</span><span id="line-724">    <span class="k">def</span><span class="w"> </span><span class="nf">eigenvalues</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Number</span><span class="p">]:</span>
-</span><span id="line-725"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-726"><span class="sd">        Get the eigenvalues of the QTensor.</span>
-</span><span id="line-727"><span class="sd">        Note that this computes the eigendecomposition if it has not already been computed and cached.</span>
-</span><span id="line-728">
-</span><span id="line-729"><span class="sd">        Returns:</span>
-</span><span id="line-730"><span class="sd">            list[Number]: A list of eigenvalues of the QTensor.</span>
-</span><span id="line-731"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-732">        <span class="bp">self</span><span class="o">.</span><span class="n">_qtensor_cpp</span><span class="o">.</span><span class="n">compute_eigendecomposition</span><span class="p">()</span>
-</span><span id="line-733">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_qtensor_cpp</span><span class="o">.</span><span class="n">get_eigenvalues_python</span><span class="p">()</span></div>
+</span><span id="line-737">    <span class="k">def</span><span class="w"> </span><span class="nf">eigenvalues</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Number</span><span class="p">]:</span>
+</span><span id="line-738"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-739"><span class="sd">        Get the eigenvalues of the QTensor.</span>
+</span><span id="line-740"><span class="sd">        Note that this computes the eigendecomposition if it has not already been computed and cached.</span>
+</span><span id="line-741">
+</span><span id="line-742"><span class="sd">        Returns:</span>
+</span><span id="line-743"><span class="sd">            list[Number]: A list of eigenvalues of the QTensor.</span>
+</span><span id="line-744"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-745">        <span class="bp">self</span><span class="o">.</span><span class="n">_qtensor_cpp</span><span class="o">.</span><span class="n">compute_eigendecomposition</span><span class="p">()</span>
+</span><span id="line-746">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_qtensor_cpp</span><span class="o">.</span><span class="n">get_eigenvalues_python</span><span class="p">()</span></div>
 
-</span><span id="line-734">
-</span><span id="line-735">    <span class="nd">@property</span>
+</span><span id="line-747">
+</span><span id="line-748">    <span class="nd">@property</span>
 <div class="viewcode-block" id="QTensor.eigenvectors">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.eigenvectors">[docs]</a>
-</span><span id="line-736">    <span class="k">def</span><span class="w"> </span><span class="nf">eigenvectors</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">QTensor</span><span class="p">]:</span>
-</span><span id="line-737"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-738"><span class="sd">        Get the eigenvectors of the QTensor.</span>
-</span><span id="line-739"><span class="sd">        Note that this computes the eigendecomposition if it has not already been computed and cached.</span>
-</span><span id="line-740">
-</span><span id="line-741"><span class="sd">        Returns:</span>
-</span><span id="line-742"><span class="sd">            list[QTensor]: A list of QTensor objects representing the eigenvectors of the QTensor.</span>
-</span><span id="line-743"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-744">        <span class="bp">self</span><span class="o">.</span><span class="n">_qtensor_cpp</span><span class="o">.</span><span class="n">compute_eigendecomposition</span><span class="p">()</span>
-</span><span id="line-745">        <span class="k">return</span> <span class="p">[</span><span class="n">QTensor</span><span class="p">(</span><span class="n">vec</span><span class="p">)</span> <span class="k">for</span> <span class="n">vec</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_qtensor_cpp</span><span class="o">.</span><span class="n">get_eigenvectors_python</span><span class="p">()]</span></div>
+</span><span id="line-749">    <span class="k">def</span><span class="w"> </span><span class="nf">eigenvectors</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">QTensor</span><span class="p">]:</span>
+</span><span id="line-750"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-751"><span class="sd">        Get the eigenvectors of the QTensor.</span>
+</span><span id="line-752"><span class="sd">        Note that this computes the eigendecomposition if it has not already been computed and cached.</span>
+</span><span id="line-753">
+</span><span id="line-754"><span class="sd">        Returns:</span>
+</span><span id="line-755"><span class="sd">            list[QTensor]: A list of QTensor objects representing the eigenvectors of the QTensor.</span>
+</span><span id="line-756"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-757">        <span class="bp">self</span><span class="o">.</span><span class="n">_qtensor_cpp</span><span class="o">.</span><span class="n">compute_eigendecomposition</span><span class="p">()</span>
+</span><span id="line-758">        <span class="k">return</span> <span class="p">[</span><span class="n">QTensor</span><span class="p">(</span><span class="n">vec</span><span class="p">)</span> <span class="k">for</span> <span class="n">vec</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_qtensor_cpp</span><span class="o">.</span><span class="n">get_eigenvectors_python</span><span class="p">()]</span></div>
 
-</span><span id="line-746">
+</span><span id="line-759">
 <div class="viewcode-block" id="QTensor.expectation_value">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.expectation_value">[docs]</a>
-</span><span id="line-747">    <span class="k">def</span><span class="w"> </span><span class="nf">expectation_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">QTensor</span><span class="p">,</span> <span class="n">nshots</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">complex</span><span class="p">:</span>
-</span><span id="line-748"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-749"><span class="sd">        Compute the expectation value of another QTensor with respect to this QTensor.</span>
-</span><span id="line-750">
-</span><span id="line-751"><span class="sd">        For state vectors, this corresponds to :math:`⟨\\psi|O|\\psi⟩`. For operators, it corresponds to :math:`\\text{tr}(\\rho O)`.</span>
-</span><span id="line-752">
-</span><span id="line-753"><span class="sd">        Args:</span>
-</span><span id="line-754"><span class="sd">            other (QTensor): The other QTensor to compute the expectation value with.</span>
-</span><span id="line-755"><span class="sd">            nshots (int, optional): The number of shots to use for a stochastic estimation of the expectation value. If 0 or negative, the exact expectation value is computed using the trace formula.</span>
-</span><span id="line-756">
-</span><span id="line-757"><span class="sd">        Returns:</span>
-</span><span id="line-758"><span class="sd">            complex: The computed expectation value, which may be a complex number.</span>
-</span><span id="line-759"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-760">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_qtensor_cpp</span><span class="o">.</span><span class="n">expectation_value_python</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">nshots</span><span class="p">)</span></div>
-
-</span><span id="line-761">
-</span><span id="line-762">    <span class="k">def</span><span class="w"> </span><span class="nf">__getstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">csr_matrix</span><span class="p">]:</span>
-</span><span id="line-763"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-764"><span class="sd">        Get the state of the QTensor for pickling.</span>
+</span><span id="line-760">    <span class="k">def</span><span class="w"> </span><span class="nf">expectation_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">QTensor</span><span class="p">,</span> <span class="n">nshots</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">complex</span><span class="p">:</span>
+</span><span id="line-761"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-762"><span class="sd">        Compute the expectation value of another QTensor with respect to this QTensor.</span>
+</span><span id="line-763">
+</span><span id="line-764"><span class="sd">        For state vectors, this corresponds to :math:`⟨\\psi|O|\\psi⟩`. For operators, it corresponds to :math:`\\text{tr}(\\rho O)`.</span>
 </span><span id="line-765">
-</span><span id="line-766"><span class="sd">        Returns:</span>
-</span><span id="line-767"><span class="sd">            dict: A dictionary containing the state of the QTensor for serialization.</span>
-</span><span id="line-768"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-769">        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">}</span>
-</span><span id="line-770">
-</span><span id="line-771">    <span class="k">def</span><span class="w"> </span><span class="nf">__setstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">csr_matrix</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-772"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-773"><span class="sd">        Set the state of the QTensor from a pickled state.</span>
+</span><span id="line-766"><span class="sd">        Args:</span>
+</span><span id="line-767"><span class="sd">            other (QTensor): The other QTensor to compute the expectation value with.</span>
+</span><span id="line-768"><span class="sd">            nshots (int, optional): The number of shots to use for a stochastic estimation of the expectation value. If 0 or negative, the exact expectation value is computed using the trace formula.</span>
+</span><span id="line-769">
+</span><span id="line-770"><span class="sd">        Returns:</span>
+</span><span id="line-771"><span class="sd">            complex: The computed expectation value, which may be a complex number.</span>
+</span><span id="line-772"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-773">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_qtensor_cpp</span><span class="o">.</span><span class="n">expectation_value_python</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">nshots</span><span class="p">)</span></div>
+
 </span><span id="line-774">
-</span><span id="line-775"><span class="sd">        Args:</span>
-</span><span id="line-776"><span class="sd">            state (dict): A dictionary containing the state of the QTensor for deserialization.</span>
-</span><span id="line-777"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-778">        <span class="bp">self</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">])</span>
-</span><span id="line-779">
-<div class="viewcode-block" id="QTensor.draw">
-<a class="viewcode-back" href="../../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.draw">[docs]</a>
-</span><span id="line-780">    <span class="k">def</span><span class="w"> </span><span class="nf">draw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">style</span><span class="p">:</span> <span class="n">QTensorStyle</span> <span class="o">=</span> <span class="n">QTensorStyle</span><span class="p">(),</span> <span class="n">filepath</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-781"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-782"><span class="sd">        Render the QTensor with Matplotlib and optionally save it to a file.</span>
+</span><span id="line-775">    <span class="k">def</span><span class="w"> </span><span class="nf">__getstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">csr_matrix</span><span class="p">]:</span>
+</span><span id="line-776"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-777"><span class="sd">        Get the state of the QTensor for pickling.</span>
+</span><span id="line-778">
+</span><span id="line-779"><span class="sd">        Returns:</span>
+</span><span id="line-780"><span class="sd">            dict: A dictionary containing the state of the QTensor for serialization.</span>
+</span><span id="line-781"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-782">        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">}</span>
 </span><span id="line-783">
-</span><span id="line-784"><span class="sd">        The circuit is rendered using the provided style configuration. If ``filepath`` is</span>
-</span><span id="line-785"><span class="sd">        given, the resulting figure is saved to disk (the output format is inferred</span>
-</span><span id="line-786"><span class="sd">        from the file extension, e.g. ``.png``, ``.pdf``, ``.svg``).</span>
+</span><span id="line-784">    <span class="k">def</span><span class="w"> </span><span class="nf">__setstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">csr_matrix</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-785"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-786"><span class="sd">        Set the state of the QTensor from a pickled state.</span>
 </span><span id="line-787">
 </span><span id="line-788"><span class="sd">        Args:</span>
-</span><span id="line-789"><span class="sd">            style (QTensorStyle): Visual style configuration applied to the plot.</span>
-</span><span id="line-790"><span class="sd">                If not provided, the default :class:`QTensorStyle` is used.</span>
-</span><span id="line-791"><span class="sd">            filepath (str | None): Destination file path for the rendered figure.</span>
-</span><span id="line-792"><span class="sd">                If ``None``, the figure is not saved.</span>
-</span><span id="line-793"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-794">        <span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.utils.visualization.qtensor_renderers</span><span class="w"> </span><span class="kn">import</span> <span class="n">MatplotlibQTensorRenderer</span>  <span class="c1"># noqa: PLC0415</span>
-</span><span id="line-795">
-</span><span id="line-796">        <span class="n">renderer</span> <span class="o">=</span> <span class="n">MatplotlibQTensorRenderer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="n">style</span><span class="p">)</span>
-</span><span id="line-797">        <span class="n">renderer</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
-</span><span id="line-798">        <span class="k">if</span> <span class="n">filepath</span><span class="p">:</span>
-</span><span id="line-799">            <span class="n">renderer</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span>
-</span><span id="line-800">        <span class="n">renderer</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></div>
+</span><span id="line-789"><span class="sd">            state (dict): A dictionary containing the state of the QTensor for deserialization.</span>
+</span><span id="line-790"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-791">        <span class="bp">self</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">])</span>
+</span><span id="line-792">
+<div class="viewcode-block" id="QTensor.draw">
+<a class="viewcode-back" href="../../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.draw">[docs]</a>
+</span><span id="line-793">    <span class="k">def</span><span class="w"> </span><span class="nf">draw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">style</span><span class="p">:</span> <span class="n">QTensorStyle</span> <span class="o">=</span> <span class="n">QTensorStyle</span><span class="p">(),</span> <span class="n">filepath</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-794"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-795"><span class="sd">        Render the QTensor with Matplotlib and optionally save it to a file.</span>
+</span><span id="line-796">
+</span><span id="line-797"><span class="sd">        The circuit is rendered using the provided style configuration. If ``filepath`` is</span>
+</span><span id="line-798"><span class="sd">        given, the resulting figure is saved to disk (the output format is inferred</span>
+</span><span id="line-799"><span class="sd">        from the file extension, e.g. ``.png``, ``.pdf``, ``.svg``).</span>
+</span><span id="line-800">
+</span><span id="line-801"><span class="sd">        Args:</span>
+</span><span id="line-802"><span class="sd">            style (QTensorStyle): Visual style configuration applied to the plot.</span>
+</span><span id="line-803"><span class="sd">                If not provided, the default :class:`QTensorStyle` is used.</span>
+</span><span id="line-804"><span class="sd">            filepath (str | None): Destination file path for the rendered figure.</span>
+</span><span id="line-805"><span class="sd">                If ``None``, the figure is not saved.</span>
+</span><span id="line-806"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-807">        <span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.utils.visualization.qtensor_renderers</span><span class="w"> </span><span class="kn">import</span> <span class="n">MatplotlibQTensorRenderer</span>  <span class="c1"># noqa: PLC0415</span>
+</span><span id="line-808">
+</span><span id="line-809">        <span class="n">renderer</span> <span class="o">=</span> <span class="n">MatplotlibQTensorRenderer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="n">style</span><span class="p">)</span>
+</span><span id="line-810">        <span class="n">renderer</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
+</span><span id="line-811">        <span class="k">if</span> <span class="n">filepath</span><span class="p">:</span>
+</span><span id="line-812">            <span class="n">renderer</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span>
+</span><span id="line-813">        <span class="n">renderer</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></div>
 </div>
-
-</span><span id="line-801">
-</span><span id="line-802">
-<div class="viewcode-block" id="ket">
-<a class="viewcode-back" href="../../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.ket">[docs]</a>
-</span><span id="line-803"><span class="k">def</span><span class="w"> </span><span class="nf">ket</span><span class="p">(</span><span class="o">*</span><span class="n">state</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QTensor</span><span class="p">:</span>
-</span><span id="line-804"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-805"><span class="sd">    Wrapper for backwards compatibility: see QTensor.ket().</span>
-</span><span id="line-806">
-</span><span id="line-807"><span class="sd">    Args:</span>
-</span><span id="line-808"><span class="sd">        state (int): A sequence of integers representing the state of each qubit (e.g., 0, 1, 0, 1 for a 4-qubit state).</span>
-</span><span id="line-809">
-</span><span id="line-810"><span class="sd">    Returns:</span>
-</span><span id="line-811"><span class="sd">        QTensor: A new QTensor representing the ket state.</span>
-</span><span id="line-812"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-813">    <span class="k">return</span> <span class="n">QTensor</span><span class="o">.</span><span class="n">ket</span><span class="p">(</span><span class="o">*</span><span class="n">state</span><span class="p">)</span></div>
 
 </span><span id="line-814">
 </span><span id="line-815">
-<div class="viewcode-block" id="bra">
-<a class="viewcode-back" href="../../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.bra">[docs]</a>
-</span><span id="line-816"><span class="k">def</span><span class="w"> </span><span class="nf">bra</span><span class="p">(</span><span class="o">*</span><span class="n">state</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QTensor</span><span class="p">:</span>
+<div class="viewcode-block" id="ket">
+<a class="viewcode-back" href="../../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.ket">[docs]</a>
+</span><span id="line-816"><span class="k">def</span><span class="w"> </span><span class="nf">ket</span><span class="p">(</span><span class="o">*</span><span class="n">state</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QTensor</span><span class="p">:</span>
 </span><span id="line-817"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-818"><span class="sd">    Wrapper for backwards compatibility: see QTensor.bra().</span>
+</span><span id="line-818"><span class="sd">    Wrapper for backwards compatibility: see QTensor.ket().</span>
 </span><span id="line-819">
 </span><span id="line-820"><span class="sd">    Args:</span>
 </span><span id="line-821"><span class="sd">        state (int): A sequence of integers representing the state of each qubit (e.g., 0, 1, 0, 1 for a 4-qubit state).</span>
 </span><span id="line-822">
 </span><span id="line-823"><span class="sd">    Returns:</span>
-</span><span id="line-824"><span class="sd">        QTensor: A new QTensor representing the bra state.</span>
+</span><span id="line-824"><span class="sd">        QTensor: A new QTensor representing the ket state.</span>
 </span><span id="line-825"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-826">    <span class="k">return</span> <span class="n">QTensor</span><span class="o">.</span><span class="n">bra</span><span class="p">(</span><span class="o">*</span><span class="n">state</span><span class="p">)</span></div>
+</span><span id="line-826">    <span class="k">return</span> <span class="n">QTensor</span><span class="o">.</span><span class="n">ket</span><span class="p">(</span><span class="o">*</span><span class="n">state</span><span class="p">)</span></div>
 
 </span><span id="line-827">
 </span><span id="line-828">
-<div class="viewcode-block" id="expect_val">
-<a class="viewcode-back" href="../../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.expect_val">[docs]</a>
-</span><span id="line-829"><span class="k">def</span><span class="w"> </span><span class="nf">expect_val</span><span class="p">(</span><span class="n">operator</span><span class="p">:</span> <span class="n">QTensor</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">QTensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">complex</span><span class="p">:</span>
+<div class="viewcode-block" id="bra">
+<a class="viewcode-back" href="../../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.bra">[docs]</a>
+</span><span id="line-829"><span class="k">def</span><span class="w"> </span><span class="nf">bra</span><span class="p">(</span><span class="o">*</span><span class="n">state</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QTensor</span><span class="p">:</span>
 </span><span id="line-830"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-831"><span class="sd">    Wrapper for backwards compatibility: see QTensor.expectation_value().</span>
+</span><span id="line-831"><span class="sd">    Wrapper for backwards compatibility: see QTensor.bra().</span>
 </span><span id="line-832">
 </span><span id="line-833"><span class="sd">    Args:</span>
-</span><span id="line-834"><span class="sd">        state (QTensor): The state vector or density matrix to compute the expectation value with respect to.</span>
-</span><span id="line-835"><span class="sd">        operator (QTensor): The operator for which to compute the expectation value.</span>
-</span><span id="line-836">
-</span><span id="line-837"><span class="sd">    Returns:</span>
-</span><span id="line-838"><span class="sd">        complex: The computed expectation value, which may be a complex number.</span>
-</span><span id="line-839"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-840">    <span class="k">return</span> <span class="n">state</span><span class="o">.</span><span class="n">expectation_value</span><span class="p">(</span><span class="n">operator</span><span class="p">)</span></div>
+</span><span id="line-834"><span class="sd">        state (int): A sequence of integers representing the state of each qubit (e.g., 0, 1, 0, 1 for a 4-qubit state).</span>
+</span><span id="line-835">
+</span><span id="line-836"><span class="sd">    Returns:</span>
+</span><span id="line-837"><span class="sd">        QTensor: A new QTensor representing the bra state.</span>
+</span><span id="line-838"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-839">    <span class="k">return</span> <span class="n">QTensor</span><span class="o">.</span><span class="n">bra</span><span class="p">(</span><span class="o">*</span><span class="n">state</span><span class="p">)</span></div>
 
+</span><span id="line-840">
 </span><span id="line-841">
-</span><span id="line-842">
-<div class="viewcode-block" id="tensor_prod">
-<a class="viewcode-back" href="../../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.tensor_prod">[docs]</a>
-</span><span id="line-843"><span class="k">def</span><span class="w"> </span><span class="nf">tensor_prod</span><span class="p">(</span><span class="n">states</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">QTensor</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">QTensor</span><span class="p">:</span>
-</span><span id="line-844"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-845"><span class="sd">    Wrapper for backwards compatibility: see QTensor.tensor_product().</span>
-</span><span id="line-846">
-</span><span id="line-847"><span class="sd">    Args:</span>
-</span><span id="line-848"><span class="sd">        states (list[QTensor]): A list of QTensors to tensor product.</span>
+<div class="viewcode-block" id="expect_val">
+<a class="viewcode-back" href="../../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.expect_val">[docs]</a>
+</span><span id="line-842"><span class="k">def</span><span class="w"> </span><span class="nf">expect_val</span><span class="p">(</span><span class="n">operator</span><span class="p">:</span> <span class="n">QTensor</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">QTensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">complex</span><span class="p">:</span>
+</span><span id="line-843"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-844"><span class="sd">    Wrapper for backwards compatibility: see QTensor.expectation_value().</span>
+</span><span id="line-845">
+</span><span id="line-846"><span class="sd">    Args:</span>
+</span><span id="line-847"><span class="sd">        state (QTensor): The state vector or density matrix to compute the expectation value with respect to.</span>
+</span><span id="line-848"><span class="sd">        operator (QTensor): The operator for which to compute the expectation value.</span>
 </span><span id="line-849">
 </span><span id="line-850"><span class="sd">    Returns:</span>
-</span><span id="line-851"><span class="sd">        QTensor: A new QTensor representing the tensor product.</span>
+</span><span id="line-851"><span class="sd">        complex: The computed expectation value, which may be a complex number.</span>
 </span><span id="line-852"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-853">    <span class="k">return</span> <span class="n">QTensor</span><span class="o">.</span><span class="n">tensor_product</span><span class="p">(</span><span class="n">states</span><span class="p">)</span></div>
+</span><span id="line-853">    <span class="k">return</span> <span class="n">state</span><span class="o">.</span><span class="n">expectation_value</span><span class="p">(</span><span class="n">operator</span><span class="p">)</span></div>
 
 </span><span id="line-854">
 </span><span id="line-855">
-<div class="viewcode-block" id="reset_qubits">
-<a class="viewcode-back" href="../../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.reset_qubits">[docs]</a>
-</span><span id="line-856"><span class="k">def</span><span class="w"> </span><span class="nf">reset_qubits</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">QTensor</span><span class="p">,</span> <span class="n">qubits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">QTensor</span><span class="p">:</span>
+<div class="viewcode-block" id="tensor_prod">
+<a class="viewcode-back" href="../../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.tensor_prod">[docs]</a>
+</span><span id="line-856"><span class="k">def</span><span class="w"> </span><span class="nf">tensor_prod</span><span class="p">(</span><span class="n">states</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">QTensor</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">QTensor</span><span class="p">:</span>
 </span><span id="line-857"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-858"><span class="sd">    Wrapper for backwards compatibility: see QTensor.reset_qubits().</span>
+</span><span id="line-858"><span class="sd">    Wrapper for backwards compatibility: see QTensor.tensor_product().</span>
 </span><span id="line-859">
 </span><span id="line-860"><span class="sd">    Args:</span>
-</span><span id="line-861"><span class="sd">        state (QTensor): The quantum state to reset qubits in.</span>
-</span><span id="line-862"><span class="sd">        qubits (list[int]): A list of indices corresponding to the qubits to reset.</span>
-</span><span id="line-863">
-</span><span id="line-864"><span class="sd">    Returns:</span>
-</span><span id="line-865"><span class="sd">        QTensor: A new QTensor representing the state after resetting the specified qubits.</span>
-</span><span id="line-866"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-867">    <span class="k">return</span> <span class="n">state</span><span class="o">.</span><span class="n">reset_qubits</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">qubits</span><span class="p">))</span></div>
+</span><span id="line-861"><span class="sd">        states (list[QTensor]): A list of QTensors to tensor product.</span>
+</span><span id="line-862">
+</span><span id="line-863"><span class="sd">    Returns:</span>
+</span><span id="line-864"><span class="sd">        QTensor: A new QTensor representing the tensor product.</span>
+</span><span id="line-865"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-866">    <span class="k">return</span> <span class="n">QTensor</span><span class="o">.</span><span class="n">tensor_product</span><span class="p">(</span><span class="n">states</span><span class="p">)</span></div>
 
+</span><span id="line-867">
 </span><span id="line-868">
-</span><span id="line-869">
+<div class="viewcode-block" id="reset_qubits">
+<a class="viewcode-back" href="../../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.reset_qubits">[docs]</a>
+</span><span id="line-869"><span class="k">def</span><span class="w"> </span><span class="nf">reset_qubits</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">QTensor</span><span class="p">,</span> <span class="n">qubits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">QTensor</span><span class="p">:</span>
+</span><span id="line-870"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-871"><span class="sd">    Wrapper for backwards compatibility: see QTensor.reset_qubits().</span>
+</span><span id="line-872">
+</span><span id="line-873"><span class="sd">    Args:</span>
+</span><span id="line-874"><span class="sd">        state (QTensor): The quantum state to reset qubits in.</span>
+</span><span id="line-875"><span class="sd">        qubits (list[int]): A list of indices corresponding to the qubits to reset.</span>
+</span><span id="line-876">
+</span><span id="line-877"><span class="sd">    Returns:</span>
+</span><span id="line-878"><span class="sd">        QTensor: A new QTensor representing the state after resetting the specified qubits.</span>
+</span><span id="line-879"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-880">    <span class="k">return</span> <span class="n">state</span><span class="o">.</span><span class="n">reset_qubits</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">qubits</span><span class="p">))</span></div>
+
+</span><span id="line-881">
+</span><span id="line-882">
 <div class="viewcode-block" id="zero">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.zero">[docs]</a>
-</span><span id="line-870"><span class="k">def</span><span class="w"> </span><span class="nf">zero</span><span class="p">(</span><span class="n">nqubits</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">qtensor_type</span><span class="p">:</span> <span class="n">QTensorType</span> <span class="o">=</span> <span class="s2">&quot;operator&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QTensor</span><span class="p">:</span>
-</span><span id="line-871"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-872"><span class="sd">    Wrapper for backwards compatibility: see QTensor.zero().</span>
-</span><span id="line-873">
-</span><span id="line-874"><span class="sd">    Args:</span>
-</span><span id="line-875"><span class="sd">        nqubits (int): The number of qubits, which determines the size of the zero matrix (2^nqubits x 2^nqubits).</span>
-</span><span id="line-876"><span class="sd">        qtensor_type (QTensorType): The type of QTensor to create (&quot;ket&quot;, &quot;bra&quot;, or &quot;operator&quot;), which determines the shape of the zero matrix.</span>
-</span><span id="line-877">
-</span><span id="line-878"><span class="sd">    Returns:</span>
-</span><span id="line-879"><span class="sd">        QTensor: A new QTensor representing the zero matrix.</span>
-</span><span id="line-880"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-881">    <span class="k">return</span> <span class="n">QTensor</span><span class="o">.</span><span class="n">zero</span><span class="p">(</span><span class="n">nqubits</span><span class="p">,</span> <span class="n">qtensor_type</span><span class="p">)</span></div>
+</span><span id="line-883"><span class="k">def</span><span class="w"> </span><span class="nf">zero</span><span class="p">(</span><span class="n">nqubits</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">qtensor_type</span><span class="p">:</span> <span class="n">QTensorType</span> <span class="o">=</span> <span class="s2">&quot;operator&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QTensor</span><span class="p">:</span>
+</span><span id="line-884"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-885"><span class="sd">    Wrapper for backwards compatibility: see QTensor.zero().</span>
+</span><span id="line-886">
+</span><span id="line-887"><span class="sd">    Args:</span>
+</span><span id="line-888"><span class="sd">        nqubits (int): The number of qubits, which determines the size of the zero matrix (2^nqubits x 2^nqubits).</span>
+</span><span id="line-889"><span class="sd">        qtensor_type (QTensorType): The type of QTensor to create (&quot;ket&quot;, &quot;bra&quot;, or &quot;operator&quot;), which determines the shape of the zero matrix.</span>
+</span><span id="line-890">
+</span><span id="line-891"><span class="sd">    Returns:</span>
+</span><span id="line-892"><span class="sd">        QTensor: A new QTensor representing the zero matrix.</span>
+</span><span id="line-893"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-894">    <span class="k">return</span> <span class="n">QTensor</span><span class="o">.</span><span class="n">zero</span><span class="p">(</span><span class="n">nqubits</span><span class="p">,</span> <span class="n">qtensor_type</span><span class="p">)</span></div>
 
-</span><span id="line-882">
-</span><span id="line-883">
+</span><span id="line-895">
+</span><span id="line-896">
 <div class="viewcode-block" id="basis_state">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.basis_state">[docs]</a>
-</span><span id="line-884"><span class="k">def</span><span class="w"> </span><span class="nf">basis_state</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">N</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QTensor</span><span class="p">:</span>
-</span><span id="line-885"><span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-886"><span class="sd">    Wrapper for backwards compatibility: see QTensor.basis_state().</span>
-</span><span id="line-887">
-</span><span id="line-888"><span class="sd">    Args:</span>
-</span><span id="line-889"><span class="sd">        n (int): The desired number state (from 0 to N-1).</span>
-</span><span id="line-890"><span class="sd">        N (int): The dimension of the Hilbert space, has a value 2**num_qubits.</span>
-</span><span id="line-891">
-</span><span id="line-892"><span class="sd">    Returns:</span>
-</span><span id="line-893"><span class="sd">        QTensor: A QTensor representing the \|n⟩&#39;th basis state on a N-size Hilbert space (N=2**num_qubits).</span>
-</span><span id="line-894"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-895">    <span class="k">return</span> <span class="n">QTensor</span><span class="o">.</span><span class="n">basis_state</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">N</span><span class="p">)</span></div>
-
-</span><span id="line-896">
-</span><span id="line-897">
-<div class="viewcode-block" id="identity">
-<a class="viewcode-back" href="../../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.identity">[docs]</a>
-</span><span id="line-898"><span class="k">def</span><span class="w"> </span><span class="nf">identity</span><span class="p">(</span><span class="n">nqubits</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QTensor</span><span class="p">:</span>
-</span><span id="line-899"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-900"><span class="sd">    Wrapper for QTensor.identity().</span>
-</span><span id="line-901">
-</span><span id="line-902"><span class="sd">    Args:</span>
-</span><span id="line-903"><span class="sd">        nqubits (int): The number of qubits in the identity operator.</span>
+</span><span id="line-897"><span class="k">def</span><span class="w"> </span><span class="nf">basis_state</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">N</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QTensor</span><span class="p">:</span>
+</span><span id="line-898"><span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-899"><span class="sd">    Wrapper for backwards compatibility: see QTensor.basis_state().</span>
+</span><span id="line-900">
+</span><span id="line-901"><span class="sd">    Args:</span>
+</span><span id="line-902"><span class="sd">        n (int): The desired number state (from 0 to N-1).</span>
+</span><span id="line-903"><span class="sd">        N (int): The dimension of the Hilbert space, has a value 2**num_qubits.</span>
 </span><span id="line-904">
 </span><span id="line-905"><span class="sd">    Returns:</span>
-</span><span id="line-906"><span class="sd">        QTensor: A QTensor representing the identity operator of the specified dimension.</span>
+</span><span id="line-906"><span class="sd">        QTensor: A QTensor representing the \|n⟩&#39;th basis state on a N-size Hilbert space (N=2**num_qubits).</span>
 </span><span id="line-907"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-908">    <span class="k">return</span> <span class="n">QTensor</span><span class="p">(</span><span class="n">QTensorCpp</span><span class="o">.</span><span class="n">identity</span><span class="p">(</span><span class="n">nqubits</span><span class="p">))</span></div>
+</span><span id="line-908">    <span class="k">return</span> <span class="n">QTensor</span><span class="o">.</span><span class="n">basis_state</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">N</span><span class="p">)</span></div>
 
 </span><span id="line-909">
 </span><span id="line-910">
-<div class="viewcode-block" id="ghz">
-<a class="viewcode-back" href="../../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.ghz">[docs]</a>
-</span><span id="line-911"><span class="k">def</span><span class="w"> </span><span class="nf">ghz</span><span class="p">(</span><span class="n">nqubits</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QTensor</span><span class="p">:</span>
+<div class="viewcode-block" id="identity">
+<a class="viewcode-back" href="../../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.identity">[docs]</a>
+</span><span id="line-911"><span class="k">def</span><span class="w"> </span><span class="nf">identity</span><span class="p">(</span><span class="n">nqubits</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QTensor</span><span class="p">:</span>
 </span><span id="line-912"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-913"><span class="sd">    Wrapper for QTensor.ghz().</span>
+</span><span id="line-913"><span class="sd">    Wrapper for QTensor.identity().</span>
 </span><span id="line-914">
 </span><span id="line-915"><span class="sd">    Args:</span>
-</span><span id="line-916"><span class="sd">        nqubits (int): The number of qubits in the GHZ state.</span>
+</span><span id="line-916"><span class="sd">        nqubits (int): The number of qubits in the identity operator.</span>
 </span><span id="line-917">
 </span><span id="line-918"><span class="sd">    Returns:</span>
-</span><span id="line-919"><span class="sd">        QTensor: A QTensor representing the GHZ state for the specified number of qubits.</span>
+</span><span id="line-919"><span class="sd">        QTensor: A QTensor representing the identity operator of the specified dimension.</span>
 </span><span id="line-920"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-921">    <span class="k">return</span> <span class="n">QTensor</span><span class="p">(</span><span class="n">QTensorCpp</span><span class="o">.</span><span class="n">ghz</span><span class="p">(</span><span class="n">nqubits</span><span class="p">))</span></div>
+</span><span id="line-921">    <span class="k">return</span> <span class="n">QTensor</span><span class="p">(</span><span class="n">QTensorCpp</span><span class="o">.</span><span class="n">identity</span><span class="p">(</span><span class="n">nqubits</span><span class="p">))</span></div>
+
+</span><span id="line-922">
+</span><span id="line-923">
+<div class="viewcode-block" id="ghz">
+<a class="viewcode-back" href="../../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.ghz">[docs]</a>
+</span><span id="line-924"><span class="k">def</span><span class="w"> </span><span class="nf">ghz</span><span class="p">(</span><span class="n">nqubits</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QTensor</span><span class="p">:</span>
+</span><span id="line-925"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-926"><span class="sd">    Wrapper for QTensor.ghz().</span>
+</span><span id="line-927">
+</span><span id="line-928"><span class="sd">    Args:</span>
+</span><span id="line-929"><span class="sd">        nqubits (int): The number of qubits in the GHZ state.</span>
+</span><span id="line-930">
+</span><span id="line-931"><span class="sd">    Returns:</span>
+</span><span id="line-932"><span class="sd">        QTensor: A QTensor representing the GHZ state for the specified number of qubits.</span>
+</span><span id="line-933"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-934">    <span class="k">return</span> <span class="n">QTensor</span><span class="p">(</span><span class="n">QTensorCpp</span><span class="o">.</span><span class="n">ghz</span><span class="p">(</span><span class="n">nqubits</span><span class="p">))</span></div>
 
 </span></code></pre></div>
     </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">

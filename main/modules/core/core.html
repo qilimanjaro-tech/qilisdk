@@ -130,7 +130,7 @@
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../functionals/functionals.html">Functionals<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
 <li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_sampling.html">Digital Propogation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_time_evolution.html">Time Evolution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_time_evolution.html">Analog Evolution</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_reservoirs.html">Quantum Reservoirs</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_variational.html">Variational Programs</a></li>
 </ul>
@@ -912,6 +912,7 @@ operators in sparse form.</p>
 <li><p><a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.identity" title="qilisdk.core.qtensor.identity"><code class="xref py py-func docutils literal notranslate"><span class="pre">identity()</span></code></a> for identity operators of specified dimension</p></li>
 <li><p><a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.zero" title="qilisdk.core.qtensor.zero"><code class="xref py py-func docutils literal notranslate"><span class="pre">zero()</span></code></a> for generating zero tensors of specified dimension</p></li>
 <li><p><a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.ghz" title="qilisdk.core.qtensor.ghz"><code class="xref py py-func docutils literal notranslate"><span class="pre">ghz()</span></code></a> for generating GHZ states of specified number of qubits</p></li>
+<li><p><code class="xref py py-func docutils literal notranslate"><span class="pre">uniform()</span></code> for generating uniform superposition states of specified number of qubits</p></li>
 </ul>
 </div></blockquote>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core.qtensor</span><span class="w"> </span><span class="kn">import</span> <span class="n">QTensor</span>
