@@ -21,9 +21,8 @@ msgstr ""
 
 #: ../../_templates/versioning.html:8
 msgid "Releases"
-msgstr ""
+msgstr "Llançaments"
 
 #: ../../_templates/versioning.html:21
 msgid "Development"
-msgstr ""
-
+msgstr "Desenvolupament"

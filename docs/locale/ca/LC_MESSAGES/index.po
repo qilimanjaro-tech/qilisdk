@@ -21,23 +21,23 @@ msgstr ""
 
 #: ../../index.rst:10 ../../index.rst:32
 msgid "Getting Started"
-msgstr ""
+msgstr "Primers passos"
 
 #: ../../index.rst:25 ../../index.rst:41
 msgid "Tutorials"
-msgstr ""
+msgstr "Tutorials"
 
 #: ../../index.rst:18 ../../index.rst:49
 msgid "Modules"
-msgstr ""
+msgstr "Mòduls"
 
 #: ../../index.rst:64
 msgid "API Reference"
-msgstr ""
+msgstr "Referència de l'API"
 
 #: ../../index.rst:2
 msgid "QiliSDK"
-msgstr ""
+msgstr "QiliSDK"
 
 #: ../../index.rst:6
 msgid ""
@@ -48,18 +48,28 @@ msgid ""
 "design variational workflows, and deploy them on local or remote quantum "
 "simulators and hardware."
 msgstr ""
+"Benvingut a **QiliSDK**, un framework unificat de Python per desenvolupar,"
+" simular i executar algoritmes quàntics tant digitals com analògics en una"
+" varietat de backends (QPU, CPU, GPU) i el SpeQtrum de Qilimanjaro. El seu"
+" disseny modular facilita la creació de prototips de circuits, la"
+" construcció de Hamiltonians, el disseny de fluxos de treball variacionals"
+" i el seu desplegament en simuladors i maquinari quàntic locals o remots."
 
 #: ../../index.rst:15
 msgid ""
 "New to QiliSDK? Here you will find a description of its main concepts, "
 "together with some tutorials on how to install and start using QiliSDK!"
 msgstr ""
+"Nou a QiliSDK? Aquí trobareu una descripció dels seus conceptes principals,"
+" juntament amb alguns tutorials sobre com instal·lar i començar a usar"
+" QiliSDK!"
 
 #: ../../index.rst:23
 msgid ""
 "This section contains in-depth information about each key module of "
 "QiliSDK."
 msgstr ""
+"Aquesta secció conté informació detallada sobre cada mòdul clau de QiliSDK."
 
 #: ../../index.rst:30
 msgid ""
@@ -67,4 +77,6 @@ msgid ""
 "quantum computing and how to use QiliSDK to implement various quantum "
 "algorithms."
 msgstr ""
-
+"Aquesta secció conté una sèrie de tutorials que cobreixen els fonaments de"
+" la computació quàntica i com usar QiliSDK per implementar diversos"
+" algoritmes quàntics."

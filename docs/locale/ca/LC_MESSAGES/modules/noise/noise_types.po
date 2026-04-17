@@ -21,9 +21,8 @@ msgstr ""
 
 #: ../../modules/noise/noise_types.rst:2
 msgid "Noise Types"
-msgstr ""
+msgstr "Tipus de Soroll"
 
 #: ../../modules/noise/noise_types.rst:8
 msgid "Go to a specific subheading of a page."
-msgstr ""
-
+msgstr "Aneu a un subtítol específic d'una pàgina."

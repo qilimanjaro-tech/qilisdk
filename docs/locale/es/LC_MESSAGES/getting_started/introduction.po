@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../getting_started/introduction.rst:2
 msgid "Introduction"
-msgstr ""
+msgstr "Introducción"
 
 #: ../../getting_started/introduction.rst:4
 msgid ""
@@ -32,4 +32,9 @@ msgid ""
 "variational workflows, and deploy them on local or remote quantum "
 "simulators."
 msgstr ""
-
+"Bienvenido a **QiliSDK**, un framework unificado de Python para "
+"desarrollar, simular y ejecutar algoritmos cuánticos tanto digitales como"
+" analógicos en una variedad de backends (CPU, GPU y QaaS basado en la "
+"nube). Su diseño modular facilita la creación de prototipos de circuitos,"
+" la construcción de Hamiltonianos, el diseño de flujos de trabajo "
+"variacionales y su despliegue en simuladores cuánticos locales o remotos."
