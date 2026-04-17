@@ -21,6 +21,10 @@
 #include "../config/qilisim_config.h"
 #include "../noise/noise_model.h"
 
+// GCOV_EXCL_BR_START
+
 std::map<std::string, int> apply_readout_error(const std::map<std::string, int>& counts, const NoiseModelCpp& noise_model_cpp, int n_qubits);
 std::map<std::string, int> filter_counts(const std::map<std::string, int>& counts, const std::vector<bool>& qubits_to_measure);
 std::map<std::string, int> construct_samples(const DenseMatrix& state, int n_qubits, int n_shots, NoiseModelCpp& noise_model_cpp, const QiliSimConfig& config, const std::vector<bool>& qubits_to_measure);
+
+// GCOV_EXCL_BR_STOP

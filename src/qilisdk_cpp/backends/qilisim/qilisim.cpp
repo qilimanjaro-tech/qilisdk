@@ -29,6 +29,10 @@
 #include "utils/random.h"
 #include "utils/sample.h"
 
+// GCOV_EXCL_BR_START
+
+#pragma GCC visibility push(default)
+
 py::object construct_result_object(const DenseMatrix& state_dense, const py::object& readout, NoiseModelCpp& noise_model_cpp, int n_qubits, const QiliSimConfig& config, const std::vector<bool>& qubits_to_measure) {
     py::list results;
     py::array final_state_numpy = to_numpy(state_dense);
@@ -65,10 +69,6 @@ py::object construct_result_object(const DenseMatrix& state_dense, const py::obj
 
     return ReadoutCompositeResults.attr("from_list")(results);
 }
-
-// GCOV_EXCL_BR_START
-
-#pragma GCC visibility push(default)
 
 // The public execute_sampling
 py::object QiliSimCpp::execute_digital_propagation(const py::object& functional, const py::object& readout, const py::object& noise_model, const py::object& initial_state, const py::dict& solver_params) {

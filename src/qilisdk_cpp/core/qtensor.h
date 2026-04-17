@@ -13,11 +13,11 @@
 // limitations under the License.
 #pragma once
 
-// GCOV_EXCL_BR_START
-
 #include <set>
 #include "../libs/eigen.h"
 #include "../libs/pybind.h"
+
+// GCOV_EXCL_BR_START
 
 const double default_atol = 1e-12;
 

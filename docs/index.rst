@@ -15,12 +15,19 @@ Welcome to **QiliSDK**, a unified Python framework for developing, simulating, a
       New to QiliSDK? Here you will find a description of its main concepts, together
       with some tutorials on how to install and start using QiliSDK!
 
-   .. grid-item-card:: Fundamentals
-      :link: fundamentals/analog.html
+   .. grid-item-card:: Modules
+      :link: modules/analog.html
       :text-align: center
       :img-top: _static/book.png
 
-      This section contains in-depth information about the key concepts of QiliSDK.
+      This section contains in-depth information about each key module of QiliSDK.
+
+   .. grid-item-card:: Tutorials
+      :link: tutorials/intro_circuits.html
+      :text-align: center
+      :img-top: _static/book.png
+
+      This section contains a series of tutorials that cover the basics of quantum computing and how to use QiliSDK to implement various quantum algorithms.
 
 .. toctree::
    :maxdepth: 2
@@ -33,25 +40,26 @@ Welcome to **QiliSDK**, a unified Python framework for developing, simulating, a
 
 .. toctree::
    :maxdepth: 2
-   :caption: Fundamentals
+   :caption: Tutorials
    :hidden:
 
-   fundamentals/analog
-   fundamentals/digital
-   fundamentals/core
-   fundamentals/functionals
-   fundamentals/readout
-   fundamentals/cost_functions
-   fundamentals/backends
-   fundamentals/noise_models
-   fundamentals/speqtrum
+   tutorials/introductions/index_intros
+   tutorials/applications/index_applications
 
 .. toctree::
    :maxdepth: 2
-   :caption: Code Examples
+   :caption: Modules
    :hidden:
 
-   examples/code_examples
+   modules/core/core
+   modules/digital/digital
+   modules/analog/analog
+   modules/functionals/functionals
+   modules/readout/readout
+   modules/backends/backends
+   modules/cost_functions/cost_functions
+   modules/noise_models/noise_models
+   modules/speqtrum/speqtrum
 
 .. toctree::
    :maxdepth: 4

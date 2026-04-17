@@ -1,7 +1,7 @@
 Installation
 ============
 
-QiliSDK and its optional extras are distributed via PyPI. Install the core package first, then add any backend or feature modules you need.
+QiliSDK and its optional extras are distributed via PyPI. Use pip to install the core package, plus any extra modules you need.
 
 **Base package**
 
@@ -39,8 +39,6 @@ You can combine extras:
 
     pip install qilisdk[cuda,qutip,speqtrum]
 
-
-
 .. NOTE::
 
     QiliSDK requires a python version 3.11 or higher.
@@ -49,3 +47,72 @@ You can combine extras:
         - Linux: Ubuntu 22.04 or higher
         - Windows: Windows 11 or higher
         - MacOS: MacOS 14 or higher
+
+Compiling From Source
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The above method will install the pre-built binaries of QiliSDK of the most recent release. 
+If you want to get the newest features (those that we're still working on), you can compile the library from source, 
+but be aware that this is not recommended for most users, and we make no promises that the latest code will be stable.
+
+Support for Windows is limited, so we recommend using WSL, which can be installed as per 
+`this guide <https://learn.microsoft.com/en-us/windows/wsl/install>`__.
+
+First, make sure you have a Python, pip, git, and build-essentials installed. For Ubuntu/Debian, you can run:
+
+.. code-block:: bash
+
+    sudo apt update
+    sudo apt install python3 python3-pip git build-essential
+
+or on MacOS with:
+
+.. code-block:: bash
+
+    xcode-select --install
+    brew install python git ninja cmake
+
+Install uv globally with:
+
+.. code-block:: bash
+
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+
+Then, clone (i.e. download) and enter the repository:
+
+.. code-block:: bash
+
+    git clone https://github.com/qilimanjaro-tech/qilisdk
+    cd qilisdk
+
+Create a new virtual environment using uv and activate it:
+
+.. code-block:: bash
+
+    uv venv
+    source .venv/bin/activate
+
+To then install QiliSDK into this new environment, run:
+
+.. code-block:: bash
+
+    uv sync
+
+If you want to install with extras, you can run the following, adjusting as needed:
+
+.. code-block:: bash
+
+    uv sync --extra cuda13 --extra qutip --extra speqtrum
+
+You then have an environment with the latest version of QiliSDK installed.
+If you want to install other things to the environment you'll need to use pip with uv:
+
+.. code-block:: bash
+
+    uv pip install <package_name>
+
+And then to run a Python script within the environment, you can use:
+
+.. code-block:: bash
+
+    uv run python3 <script_name.py>
