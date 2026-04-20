@@ -245,7 +245,7 @@ def test_matrix_product_state(mock_sample, mock_make_kernel, mock_set_target):
 
 @pytest.mark.parametrize(("gate_instance", "expected_call"), basic_gate_test_cases + swap_test_case)
 @patch("cudaq.make_kernel", side_effect=dummy_make_kernel)
-@patch("cudaq.sample", return_value={"0": 1000})
+@patch("cudaq.sample", return_value={"00": 1000})
 @patch("cudaq.set_target")
 def test_execute_basic_gate_handler(mock_set_target, mock_sample, mock_make_kernel, gate_instance, expected_call):
     # Reset the main dummy kernel for a clean slate.
@@ -262,7 +262,7 @@ def test_execute_basic_gate_handler(mock_set_target, mock_sample, mock_make_kern
 # In controlled mode the main kernel should receive a ('control', 'q0', 'q1') call.
 @pytest.mark.parametrize("gate_instance", [case[0] for case in basic_gate_test_cases])
 @patch("cudaq.make_kernel", side_effect=dummy_make_kernel)
-@patch("cudaq.sample", return_value={"0": 1000})
+@patch("cudaq.sample", return_value={"00": 1000})
 @patch("cudaq.set_target")
 def test_execute_controlled_handler(mock_set_target, mock_sample, mock_make_kernel, gate_instance):
     dummy_make_kernel.main_kernel = DummyKernel()
@@ -371,7 +371,7 @@ def test_controlled_with_unsupported_basic_gate_raises(monkeypatch):
 
 
 @patch("cudaq.make_kernel", side_effect=dummy_make_kernel)
-@patch("cudaq.sample", return_value={"0": 1000})
+@patch("cudaq.sample", return_value={"000": 1000})
 @patch("cudaq.set_target")
 def test_controlled_multiple_controls_are_transpiled(mock_set_target, mock_sample, mock_make_kernel):
     dummy_make_kernel.main_kernel = DummyKernel()

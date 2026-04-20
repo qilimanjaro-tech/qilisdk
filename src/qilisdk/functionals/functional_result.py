@@ -203,6 +203,10 @@ class FunctionalResult(Result, Generic[S, E, T]):
 
     # -- intermediate accessors (runtime-checked) -------------------------
 
+    @overload
+    def get_intermediate_samples(self: FunctionalResult[SamplingReadoutResult, Any, Any]) -> list[dict[str, int]]: ...
+    @overload
+    def get_intermediate_samples(self: FunctionalResult[None, Any, Any]) -> Never: ...
     def get_intermediate_samples(self) -> list[dict[str, int]]:
         """Measurement samples for every intermediate time-step.
 
@@ -221,6 +225,12 @@ class FunctionalResult(Result, Generic[S, E, T]):
             return results
         raise ValueError("Can't find intermediate samples because intermediate Results were not stored.")
 
+    @overload
+    def get_intermediate_probabilities(
+        self: FunctionalResult[SamplingReadoutResult | None, Any, StateTomographyReadoutResult | None],
+    ) -> list[dict[str, float]]: ...
+    @overload
+    def get_intermediate_probabilities(self: FunctionalResult[None, Any, None]) -> Never: ...
     def get_intermediate_probabilities(self) -> list[dict[str, float]]:
         """Outcome probabilities for every intermediate time-step.
 
@@ -241,6 +251,10 @@ class FunctionalResult(Result, Generic[S, E, T]):
             return results
         raise ValueError("Can't find intermediate probabilities because intermediate Results were not stored.")
 
+    @overload
+    def get_intermediate_states(self: FunctionalResult[Any, Any, StateTomographyReadoutResult]) -> list[QTensor]: ...
+    @overload
+    def get_intermediate_states(self: FunctionalResult[Any, Any, None]) -> Never: ...
     def get_intermediate_states(self) -> list[QTensor]:
         """Quantum state vectors for every intermediate time-step.
 
@@ -259,6 +273,12 @@ class FunctionalResult(Result, Generic[S, E, T]):
             return results
         raise ValueError("Can't find intermediate states because intermediate Results were not stored.")
 
+    @overload
+    def get_intermediate_expectation_values(
+        self: FunctionalResult[Any, ExpectationReadoutResult, Any],
+    ) -> list[list[float]]: ...
+    @overload
+    def get_intermediate_expectation_values(self: FunctionalResult[Any, None, Any]) -> Never: ...
     def get_intermediate_expectation_values(self) -> list[list[float]]:
         """Expectation values for every intermediate time-step.
 

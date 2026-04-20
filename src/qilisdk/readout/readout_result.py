@@ -18,7 +18,7 @@ import heapq
 import operator
 from dataclasses import dataclass
 from pprint import pformat
-from typing import TYPE_CHECKING, Generic, Protocol, Self, TypeGuard, TypeVar
+from typing import TYPE_CHECKING, Any, Generic, Never, Protocol, Self, TypeGuard, TypeVar, overload
 
 import numpy as np
 from loguru import logger
@@ -210,6 +210,10 @@ class SamplingReadoutResult(ReadoutResult[SamplingReadout]):
             raise ValueError("Not all bitstring keys have the same length.")
         if qubits_to_measure and len(qubits_to_measure) > nqubits_samples:
             raise ValueError("Can't filter samples for more qubits than are present in the bitstrings.")
+        if nqubits_total != nqubits_samples and qubits_to_measure is None:
+            raise ValueError(
+                "Must provide qubits_to_measure if nqubits is different from the number of qubits in the samples."
+            )
 
         # Calculate probabilities
         probabilities: dict[str, float] = {
@@ -544,6 +548,10 @@ class ReadoutCompositeResults(Result, Generic[S, E, T]):
 
         return cls(sampling=sampling, expectation_values=expectation_values, state_tomography=state_tomography)
 
+    @overload
+    def get_samples(self: ReadoutCompositeResults[SamplingReadoutResult, Any, Any]) -> dict[str, int]: ...
+    @overload
+    def get_samples(self: ReadoutCompositeResults[None, Any, Any]) -> Never: ...
     def get_samples(self) -> dict[str, int]:
         """Return the sampling results as a bitstring-to-count mapping.
 
@@ -557,6 +565,12 @@ class ReadoutCompositeResults(Result, Generic[S, E, T]):
             return self.sampling.samples
         raise ValueError("Can't find samples because no SamplingReadoutResult is present in this composite.")
 
+    @overload
+    def get_probabilities(
+        self: ReadoutCompositeResults[SamplingReadoutResult | None, Any, StateTomographyReadoutResult | None],
+    ) -> dict[str, float]: ...
+    @overload
+    def get_probabilities(self: ReadoutCompositeResults[None, Any, None]) -> Never: ...
     def get_probabilities(self) -> dict[str, float]:
         """Return the probability distribution as a bitstring-to-probability mapping.
 
@@ -574,6 +588,10 @@ class ReadoutCompositeResults(Result, Generic[S, E, T]):
             "Can't find probabilities because neither SamplingReadoutResult nor StateTomographyReadoutResult is present in this composite."
         )
 
+    @overload
+    def get_expectation_values(self: ReadoutCompositeResults[Any, ExpectationReadoutResult, Any]) -> list[float]: ...
+    @overload
+    def get_expectation_values(self: ReadoutCompositeResults[Any, None, Any]) -> Never: ...
     def get_expectation_values(self) -> list[float]:
         """Return the expectation values as a list of numbers.
 
@@ -589,6 +607,10 @@ class ReadoutCompositeResults(Result, Generic[S, E, T]):
             "Can't find expectation values because no ExpectationReadoutResult is present in this composite."
         )
 
+    @overload
+    def get_state(self: ReadoutCompositeResults[Any, Any, StateTomographyReadoutResult]) -> QTensor: ...
+    @overload
+    def get_state(self: ReadoutCompositeResults[Any, Any, None]) -> Never: ...
     def get_state(self) -> QTensor:
         """Return the reconstructed quantum state.
 

@@ -544,6 +544,11 @@ def test_filter_samples():
     assert result.samples == {"0_": 60, "1_": 40}
 
 
+def test_filter_no_qubits_to_measure_throws():
+    with pytest.raises(ValueError, match="if nqubits is different"):
+        SamplingReadoutResult.from_samples(samples={"00": 60, "10": 40}, nqubits=3, qubits_to_measure=None)
+
+
 def test_filter_empty_samples():
     # need to create an object that "is obj" is True, but behaves like an empty dict for the methods used in from_samples
     samples_dict = MagicMock()

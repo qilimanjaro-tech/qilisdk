@@ -139,12 +139,12 @@ class QutipBackend(Backend):
         # Check for mid-circuit measurements
         for i in range(len(functional.circuit.gates)):
             gate = functional.circuit.gates[i]
-            if isinstance(gate, M):
-                for later_gate in functional.circuit.gates[i + 1 :]:
-                    if not isinstance(later_gate, M):
-                        raise ValueError(
-                            "Mid-circuit measurements are not supported in the QutipBackend. All measurements must be at the end of the circuit."
-                        )
+            if isinstance(gate, M) and any(
+                not isinstance(later_gate, M) for later_gate in functional.circuit.gates[i + 1 :]
+            ):
+                raise ValueError(
+                    "Mid-circuit measurements are not supported in the QutipBackend. All measurements must be at the end of the circuit."
+                )
 
         transpiled_circuit = DecomposeMultiControlledGatesPass().run(functional.circuit)
         qutip_circuit = self._get_qutip_circuit(transpiled_circuit)
