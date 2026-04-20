@@ -427,8 +427,12 @@ class TestFunctionalResult:
         assert len(items) == 2
 
     def test_repr(self):
-        result = FunctionalResult(readout_results=_make_sampling_composite(10, {"0": 10}))
+        result = FunctionalResult(
+            readout_results=_make_sampling_composite(10, {"0": 10}),
+            intermediate_results=[_make_sampling_composite(10, {"1": 10})],
+        )
         assert "Functional Results" in repr(result)
+        assert "Intermediate Results" in repr(result)
 
     def test_intermediate_probabilities(self):
         final = _make_tomography_composite(ket(0))

@@ -190,6 +190,60 @@ _readout_intermediate = [SamplingReadout(nshots=50)]
     EXPECT_TRUE(inter_results.size() > 0);
 }
 
+TEST_F(ExecuteSamplingTest, CollapseTest) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.functionals.digital_propagation import DigitalPropagation
+from qilisdk.readout import SamplingReadout
+from qilisdk.digital.circuit import Circuit
+from qilisdk.digital.gates import H, M
+
+_c_intermediate = Circuit(nqubits=1)
+_c_intermediate.add(H(0))
+_c_intermediate.add(M(0))
+_c_intermediate.add(H(0))
+_c_intermediate.add(M(0))
+_samp_intermediate = DigitalPropagation(circuit=_c_intermediate)
+_solver_params = {"collapse_measurements": True}
+_readout_intermediate = [SamplingReadout(nshots=1000)]
+    )");
+    py::object result;
+    ASSERT_NO_THROW(result = sim.execute_digital_propagation(py::globals()["_samp_intermediate"], py::globals()["_readout_intermediate"], py::none(), py::none(), py::globals()["_solver_params"]));
+    EXPECT_TRUE(py::hasattr(result, "intermediate_results"));
+    py::list inter_results = result.attr("intermediate_results");
+    EXPECT_TRUE(inter_results.size() > 0);
+    EXPECT_LT(result.attr("get_samples")().cast<py::dict>()["0"].cast<int>(), 999);
+}
+
+TEST_F(ExecuteSamplingTest, CollapseTestDensityMatrix) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.functionals.digital_propagation import DigitalPropagation
+from qilisdk.readout import SamplingReadout
+from qilisdk.digital.circuit import Circuit
+from qilisdk.digital.gates import H, M
+from qilisdk.core.qtensor import QTensor
+import scipy.sparse as sp, numpy as np
+
+_initial_state = QTensor(sp.csr_matrix(np.array([[0.5+0j, 0], [0, 0.5+0j]], dtype=complex)))
+
+_c_intermediate = Circuit(nqubits=1)
+_c_intermediate.add(H(0))
+_c_intermediate.add(M(0))
+_c_intermediate.add(H(0))
+_c_intermediate.add(M(0))
+_samp_intermediate = DigitalPropagation(circuit=_c_intermediate)
+_solver_params = {"collapse_measurements": True}
+_readout_intermediate = [SamplingReadout(nshots=1000)]
+    )");
+    py::object result;
+    ASSERT_NO_THROW(result = sim.execute_digital_propagation(py::globals()["_samp_intermediate"], py::globals()["_readout_intermediate"], py::none(), py::globals()["_initial_state"], py::globals()["_solver_params"]));
+    EXPECT_TRUE(py::hasattr(result, "intermediate_results"));
+    py::list inter_results = result.attr("intermediate_results");
+    EXPECT_TRUE(inter_results.size() > 0);
+    EXPECT_LT(result.attr("get_samples")().cast<py::dict>()["0"].cast<int>(), 999);
+}
+
 class ExecuteTimeEvolutionTest : public ::testing::Test {
    protected:
     QiliSimCpp sim;
