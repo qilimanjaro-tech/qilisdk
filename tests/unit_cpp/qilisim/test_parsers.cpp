@@ -1509,6 +1509,7 @@ TEST(ParseSolverParams, AllFieldsParsedCorrectly) {
     params["store_intermediate_results"] = py::bool_(true);
     params["normalize_after_each_gate"] = py::bool_(true);
     params["combine_single_qubit_gates"] = py::bool_(false);
+    params["measurement_collapse"] = py::bool_(true);
 
     auto config = parse_solver_params(params);
 
@@ -1526,6 +1527,7 @@ TEST(ParseSolverParams, AllFieldsParsedCorrectly) {
     EXPECT_TRUE(config.get_store_intermediate_results());
     EXPECT_TRUE(config.get_normalize_after_gate());
     EXPECT_FALSE(config.get_combine_single_qubit_gates());
+    EXPECT_TRUE(config.get_measurement_collapse());
 }
 
 TEST(ParseSolverParams, PartialFieldsParsed) {

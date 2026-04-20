@@ -553,6 +553,20 @@ def test_filter_no_qubits_to_measure_throws():
         SamplingReadoutResult.from_samples(samples={"00": 60, "10": 40}, nqubits=3, qubits_to_measure=None)
 
 
+def test_filter_samples_no_expand():
+    result = SamplingReadoutResult.from_samples(
+        samples={"00": 60, "10": 40}, qubits_to_measure=[0], expand_samples=False
+    )
+    assert result.samples == {"0": 60, "1": 40}
+
+
+def test_expand_samples_no_expand():
+    result = SamplingReadoutResult.from_samples(
+        samples={"0": 60, "1": 40}, qubits_to_measure=[0], nqubits=2, expand_samples=False
+    )
+    assert result.samples == {"0": 60, "1": 40}
+
+
 def test_filter_empty_samples():
     # need to create an object that "is obj" is True, but behaves like an empty dict for the methods used in from_samples
     samples_dict = MagicMock()
