@@ -224,7 +224,7 @@ TEST_F(FilterCountsTest, NoQubitsSelected_SingleEmptyKey) {
     std::vector<bool> mask = {false, false};
     auto result = filter_counts(counts, mask);
     ASSERT_EQ(result.size(), 1u);
-    EXPECT_EQ(result.at("__"), 1000);
+    EXPECT_EQ(result.at(""), 1000);
 }
 
 TEST_F(FilterCountsTest, FirstQubitOnly_ProjectsCorrectly) {
@@ -232,8 +232,8 @@ TEST_F(FilterCountsTest, FirstQubitOnly_ProjectsCorrectly) {
     std::vector<bool> mask = {true, false};
     auto result = filter_counts(counts, mask);
     ASSERT_EQ(result.size(), 2u);
-    EXPECT_EQ(result.at("0_"), 500);
-    EXPECT_EQ(result.at("1_"), 500);
+    EXPECT_EQ(result.at("0"), 500);
+    EXPECT_EQ(result.at("1"), 500);
 }
 
 TEST_F(FilterCountsTest, SecondQubitOnly_ProjectsCorrectly) {
@@ -241,8 +241,8 @@ TEST_F(FilterCountsTest, SecondQubitOnly_ProjectsCorrectly) {
     std::vector<bool> mask = {false, true};
     auto result = filter_counts(counts, mask);
     ASSERT_EQ(result.size(), 2u);
-    EXPECT_EQ(result.at("_0"), 300);
-    EXPECT_EQ(result.at("_1"), 700);
+    EXPECT_EQ(result.at("0"), 300);
+    EXPECT_EQ(result.at("1"), 700);
 }
 
 TEST_F(FilterCountsTest, TotalCountPreserved) {
@@ -257,8 +257,8 @@ TEST_F(FilterCountsTest, MiddleQubitSelected_ThreeQubits) {
     std::vector<bool> mask = {false, true, false};
     auto result = filter_counts(counts, mask);
     ASSERT_EQ(result.size(), 2u);
-    EXPECT_EQ(result.at("_0_"), 500);
-    EXPECT_EQ(result.at("_1_"), 500);
+    EXPECT_EQ(result.at("0"), 500);
+    EXPECT_EQ(result.at("1"), 500);
 }
 
 TEST_F(FilterCountsTest, EmptyInput_ReturnsEmpty) {
@@ -281,7 +281,7 @@ TEST_F(FilterCountsTest, CollapsingDistinctBitstrings_CountsMerge) {
     std::vector<bool> mask = {false, true};
     auto result = filter_counts(counts, mask);
     ASSERT_EQ(result.size(), 1u);
-    EXPECT_EQ(result.at("_0"), 1000);
+    EXPECT_EQ(result.at("0"), 1000);
 }
 
 #pragma GCC diagnostic push
@@ -411,7 +411,7 @@ TEST_F(SamplingTest, MeasureOnlyQubit0_OutputKeysAreSingleBit) {
     sampling(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfg, readout);
     std::map<std::string, int> counts = construct_samples(state, n, 1000, noNoise, cfg, measure);
     for (const auto& p : counts) {
-        EXPECT_EQ(p.first.size(), 2u);
+        EXPECT_EQ(p.first.size(), 1u);
     }
     EXPECT_EQ(totalCounts(counts), 1000);
 }
@@ -425,7 +425,7 @@ TEST_F(SamplingTest, MeasureNoQubits_SingleEmptyKeyWithAllShots) {
     sampling(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfg, readout);
     std::map<std::string, int> counts = construct_samples(state, n, 500, noNoise, cfg, measure);
     ASSERT_EQ(counts.size(), 1u);
-    EXPECT_EQ(counts.at("__"), 500);
+    EXPECT_EQ(counts.at(""), 500);
 }
 
 TEST_F(SamplingTest, StateVectorHasCorrectDimension) {
@@ -584,7 +584,7 @@ TEST_F(SamplingMatrixFreeTest, MeasureOnlyQubit0_OutputKeysAreSingleBit) {
     sampling_matrix_free(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfg, readout);
     std::map<std::string, int> counts = construct_samples(state, n, 1000, noNoise, cfg, measure);
     for (const auto& p : counts) {
-        EXPECT_EQ(p.first.size(), 2u);
+        EXPECT_EQ(p.first.size(), 1u);
     }
     EXPECT_EQ(totalCounts(counts), 1000);
 }

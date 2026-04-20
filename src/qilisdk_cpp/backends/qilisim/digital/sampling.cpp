@@ -13,9 +13,9 @@
 // limitations under the License.
 
 #include <iomanip>
+#include <iostream>
 #include <random>
 #include <sstream>
-#include <iostream>
 
 #include "../../../libs/pybind.h"
 #include "../digital/circuit_optimizations.h"
@@ -220,12 +220,10 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrix& 
                 intermediate_results.push_back(result);
 
                 // If we have measurement_collapse enabled, apply the measurement and collapse the state
-                std::cout << "Should collapse: " << config.get_measurement_collapse() << std::endl;
                 if (config.get_measurement_collapse()) {
                     state = collapse_state(state, qubits_to_measure_after_gate);
                     is_statevector = false;
                 }
-
             }
 
             // Skip the next measurements since we did them all at once
@@ -391,12 +389,10 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const Sp
                 intermediate_results.push_back(result);
 
                 // If we have measurement_collapse enabled, apply the measurement and collapse the state
-                std::cout << "Should collapse: " << config.get_measurement_collapse() << std::endl;
                 if (config.get_measurement_collapse()) {
                     state = collapse_state(state, qubits_to_measure_after_gate);
                     is_statevector = false;
                 }
-
             }
 
             // Skip the next measurements since we did them all at once

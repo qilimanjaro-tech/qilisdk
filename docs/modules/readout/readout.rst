@@ -79,6 +79,9 @@ collect the bitstring counts.
 **Parameters**
 
 - **nshots** (``int``): Number of measurement shots.  Must be a positive integer.
+- **expand_samples** (``bool``): Whether to expand the samples, by default True. If this is True, 
+  partial measurements will be returned as "0_" where the "_" indicates an unmeasured qubit. 
+  If False, the unmeasured qubits will be dropped from the bitstring, so "0_" would be returned as "0".
 
 **When to Use It**
 
