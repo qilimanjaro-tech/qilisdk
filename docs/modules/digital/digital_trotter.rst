@@ -3,6 +3,6 @@ Trotterization
 
 .. raw:: html
 
-   <meta http-equiv="refresh" content="0; url=digital.html#trotterizedtimeevolution">
+   <meta http-equiv="refresh" content="0; url=digital.html#trotterizedschedule">
 
 Go to a specific subheading of a page.
