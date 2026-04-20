@@ -57,12 +57,19 @@ py::object construct_result_object(const DenseMatrix& state_dense, const py::obj
 
         } else if (py::isinstance(ro, SamplingReadout)) {
             int n_shots = ro.attr("nshots").cast<int>();
+            bool expand_samples = ro.attr("expand_samples").cast<bool>();
             std::map<std::string, int> counts = construct_samples(state_dense, n_qubits, n_shots, noise_model_cpp, config, qubits_to_measure);
             py::dict samples;
             for (const auto& pair : counts) {
                 samples[py::cast(pair.first)] = py::cast(pair.second);
             }
-            results.append(SamplingReadoutResult.attr("from_samples")("samples"_a = samples));
+            py::list qubits_to_measure_list;
+            for (size_t i = 0; i < qubits_to_measure.size(); ++i) {
+                if (qubits_to_measure[i]) {
+                    qubits_to_measure_list.append(i);
+                }
+            }
+            results.append(SamplingReadoutResult.attr("from_samples")("samples"_a = samples, "qubits_to_measure"_a = qubits_to_measure_list, "nqubits"_a = n_qubits, "expand_samples"_a = expand_samples));
 
         } else {
             std::string ro_repr = py::repr(ro).cast<std::string>();
@@ -728,6 +735,9 @@ QiliSimConfig parse_solver_params(const py::dict& solver_params) {
     }
     if (solver_params.contains("combine_single_qubit_gates")) {
         config.set_combine_single_qubit_gates(solver_params["combine_single_qubit_gates"].cast<bool>());
+    }
+    if (solver_params.contains("measurement_collapse")) {
+        config.set_measurement_collapse(solver_params["measurement_collapse"].cast<bool>());
     }
     if (config.get_num_threads() <= 0) {
         config.set_num_threads(1);

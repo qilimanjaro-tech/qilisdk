@@ -257,3 +257,18 @@ def test_mid_circuit_samples():
     assert samples["0_"] == 50
     inter = result.get_intermediate_samples()
     assert len(inter) == 1
+
+
+def test_mid_circuit_measurement_collapse():
+    backend = QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1, measurement_collapse=True))
+    c = Circuit(2)
+    c.add(H(0))
+    c.add(M(0))
+    c.add(H(0))
+    c.add(M(0, 1))
+    result = backend.execute(DigitalPropagation(circuit=c), Readout().with_sampling(nshots=50))
+    assert isinstance(result, FunctionalResult)
+    samples = result.get_samples()
+    assert "00" in samples
+    assert "10" in samples
+    assert samples["00"] + samples["10"] == 50

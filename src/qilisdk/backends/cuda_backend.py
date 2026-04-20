@@ -288,10 +288,15 @@ class CudaBackend(Backend):
             if og_param:
                 functional.set_parameters(og_param)
             logger.success("Sampling finished; {} distinct bitstrings", len(cudaq_result))
+            sampling_readout = next((ro for ro in readout if isinstance(ro, SamplingReadout)), None)
+            expand_samples = sampling_readout.expand_samples if sampling_readout else True
             return FunctionalResult(
                 ReadoutCompositeResults(
                     sampling=SamplingReadoutResult.from_samples(
                         samples=dict(cudaq_result.items()),
+                        qubits_to_measure=list(measured_qubits) if len(measured_qubits) > 0 else None,
+                        nqubits=functional.circuit.nqubits,
+                        expand_samples=expand_samples,
                     ),
                     expectation_values=None,
                     state_tomography=None,
@@ -310,6 +315,7 @@ class CudaBackend(Backend):
                         samples=dict(cudaq_result.items()),
                         qubits_to_measure=list(measured_qubits) if len(measured_qubits) > 0 else None,
                         nqubits=functional.circuit.nqubits,
+                        expand_samples=sampling_readout.expand_samples,
                     ),
                     expectation_values=None,
                     state_tomography=None,

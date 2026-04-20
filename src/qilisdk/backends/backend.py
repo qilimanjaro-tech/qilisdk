@@ -259,7 +259,10 @@ class Backend(ABC):
                 )
             elif isinstance(ro, SamplingReadout):
                 sampling_result: SamplingReadoutResult = SamplingReadoutResult.from_state(
-                    sampling_readout=ro, state=final_state, qubits_to_measure=qubits_to_measure
+                    sampling_readout=ro,
+                    state=final_state,
+                    qubits_to_measure=qubits_to_measure,
+                    expand_samples=ro.expand_samples,
                 )
             else:
                 raise ValueError(f"Unsupported Readout Method provided: {ro}")

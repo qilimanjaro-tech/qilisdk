@@ -15,6 +15,7 @@
 #include <iomanip>
 #include <random>
 #include <sstream>
+#include <iostream>
 
 #include "../../../libs/pybind.h"
 #include "../digital/circuit_optimizations.h"
@@ -31,6 +32,54 @@
 // GCOV_EXCL_BR_START
 
 #pragma GCC visibility push(default)
+
+DenseMatrix collapse_state(const DenseMatrix& state, const std::vector<bool>& qubits_measured) {
+    /*
+    Collapse the state based on the measurement result.
+
+    Args:
+        state (DenseMatrix&): the state to be collapsed, either as a statevector or density matrix.
+        qubits_measured (std::vector<bool>): which qubits were measured.
+
+    Returns:
+        DenseMatrix: the collapsed state as a density matrix
+    */
+
+    // Determine if we are working with a statevector or density matrix
+    bool is_statevector = (state.cols() == 1);
+
+    // If it's a statevector, convert to density matrix
+    DenseMatrix density_matrix;
+    if (is_statevector) {
+        density_matrix = state * state.adjoint();
+    } else {
+        density_matrix = state;
+    }
+
+    // For each measured qubit, apply the non-selective measurement:
+    // rho -> P0 * rho * P0 + P1 * rho * P1
+    // Since P0 and P1 are diagonal projectors, this is equivalent to zeroing all entries
+    // where the row and column indices differ in that qubit's bit position.
+    long dim = density_matrix.rows();
+    int nqubits = static_cast<int>(std::ceil(std::log2(dim)));
+    for (int qubit = 0; qubit < int(qubits_measured.size()); ++qubit) {
+        if (!qubits_measured[qubit]) {
+            continue;
+        }
+        long mask = 1L << (nqubits - 1 - qubit);
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+        for (long j = 0; j < dim; ++j) {
+            long opposite_start = (j & mask) ? 0 : mask;
+            for (long base = 0; base < dim; base += 2 * mask) {
+                density_matrix.col(j).segment(base + opposite_start, mask).setZero();
+            }
+        }
+    }
+
+    return density_matrix;
+}
 
 void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrix& initial_state, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, std::vector<py::object>& intermediate_results, const QiliSimConfig& config, const py::object& readout) {
     /*
@@ -169,6 +218,14 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrix& 
             if (!are_final_measurements) {
                 py::object result = construct_result_object(state, readout, noise_model_cpp, n_qubits, config, qubits_to_measure_after_gate);
                 intermediate_results.push_back(result);
+
+                // If we have measurement_collapse enabled, apply the measurement and collapse the state
+                std::cout << "Should collapse: " << config.get_measurement_collapse() << std::endl;
+                if (config.get_measurement_collapse()) {
+                    state = collapse_state(state, qubits_to_measure_after_gate);
+                    is_statevector = false;
+                }
+
             }
 
             // Skip the next measurements since we did them all at once
@@ -332,6 +389,14 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const Sp
             if (!are_final_measurements) {
                 py::object result = construct_result_object(state, readout, noise_model_cpp, n_qubits, config, qubits_to_measure_after_gate);
                 intermediate_results.push_back(result);
+
+                // If we have measurement_collapse enabled, apply the measurement and collapse the state
+                std::cout << "Should collapse: " << config.get_measurement_collapse() << std::endl;
+                if (config.get_measurement_collapse()) {
+                    state = collapse_state(state, qubits_to_measure_after_gate);
+                    is_statevector = false;
+                }
+
             }
 
             // Skip the next measurements since we did them all at once

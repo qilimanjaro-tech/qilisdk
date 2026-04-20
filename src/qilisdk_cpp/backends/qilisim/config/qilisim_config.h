@@ -34,6 +34,7 @@ class QiliSimConfig {
     int max_cache_size = 1000;
     bool combine_single_qubit_gates = true;
     bool normalize_after_each_gate = false;
+    bool measurement_collapse = true;
 
    public:
     // Getters
@@ -51,6 +52,7 @@ class QiliSimConfig {
     int get_max_cache_size() const { return max_cache_size; }
     bool get_normalize_after_gate() const { return normalize_after_each_gate; }
     bool get_combine_single_qubit_gates() const { return combine_single_qubit_gates; }
+    bool get_measurement_collapse() const { return measurement_collapse; }
 
     // Setters
     void set_monte_carlo(bool value) { monte_carlo = value; }
@@ -67,6 +69,7 @@ class QiliSimConfig {
     void set_max_cache_size(int value) { max_cache_size = value; }
     void set_normalize_after_gate(bool value) { normalize_after_each_gate = value; }
     void set_combine_single_qubit_gates(bool value) { combine_single_qubit_gates = value; }
+    void set_measurement_collapse(bool value) { measurement_collapse = value; }
 
     // Initialize with default values
     QiliSimConfig() = default;

@@ -535,3 +535,17 @@ def test_toffoli(backend):
     result = backend.execute(DigitalPropagation(circuit=circuit), Readout().with_sampling(nshots=10))
     assert isinstance(result, FunctionalResult)
     assert result.get_samples() == {"111": 10}
+
+
+@pytest.mark.parametrize("backend", backends)
+def test_partial_measurements_no_expansion(backend):
+    circuit = Circuit(nqubits=2)
+    circuit.add(X(0))
+    circuit.add(M(0))
+    result = backend.execute(
+        DigitalPropagation(circuit=circuit), Readout().with_sampling(nshots=50, expand_samples=False)
+    )
+    assert isinstance(result, FunctionalResult)
+    samples = result.get_samples()
+    assert "1" in samples
+    assert samples["1"] == 50

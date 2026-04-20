@@ -101,20 +101,28 @@ class SamplingReadoutResult(ReadoutResult[SamplingReadout]):
     """
 
     @staticmethod
-    def _filter_samples(samples_to_filter: dict[str, int], qubits_to_measure: list[int]) -> dict[str, int]:
+    def _filter_samples(
+        samples_to_filter: dict[str, int], qubits_to_measure: list[int], expand_samples: bool = True
+    ) -> dict[str, int]:
         """
         Filter the input samples to include only the requested qubits.
 
         Args:
             samples_to_filter (dict[str, int]): The original samples to be filtered.
             qubits_to_measure (list[int]): The list of qubit indices that were measured.
+            expand_samples (bool): Whether to include placeholders for unmeasured qubits in the filtered results.
 
         Returns:
             dict[str, int]: The filtered samples containing only the requested qubits.
         """
         filtered_samples: dict[str, int] = {}
         for bitstring, count in samples_to_filter.items():
-            filtered_bitstring = "".join("_" if i not in qubits_to_measure else bit for i, bit in enumerate(bitstring))
+            if expand_samples:
+                filtered_bitstring = "".join(
+                    "_" if i not in qubits_to_measure else bit for i, bit in enumerate(bitstring)
+                )
+            else:
+                filtered_bitstring = "".join(bit for i, bit in enumerate(bitstring) if i in qubits_to_measure)
             filtered_samples[filtered_bitstring] = filtered_samples.get(filtered_bitstring, 0) + count
         return filtered_samples
 
@@ -148,7 +156,11 @@ class SamplingReadoutResult(ReadoutResult[SamplingReadout]):
 
     @classmethod
     def _adjust_samples(
-        cls, samples_to_filter: dict[str, int], qubits_to_measure: list[int], nqubits: int | None = None
+        cls,
+        samples_to_filter: dict[str, int],
+        qubits_to_measure: list[int],
+        nqubits: int | None = None,
+        expand_samples: bool = True,
     ) -> dict[str, int]:
         """
         Adjust the input samples to match the requested qubits to measure and total number of qubits.
@@ -163,6 +175,7 @@ class SamplingReadoutResult(ReadoutResult[SamplingReadout]):
             samples_to_filter (dict[str, int]): The original samples to be adjusted.
             qubits_to_measure (list[int]): The list of qubit indices that were measured.
             nqubits (int | None): The total number of qubits in the system.
+            expand_samples (bool): Whether to expand samples with placeholders for unmeasured qubits.
 
         Returns:
             dict[str, int]: The adjusted samples matching the requested qubits and total number of qubits.
@@ -172,15 +185,19 @@ class SamplingReadoutResult(ReadoutResult[SamplingReadout]):
             nqubits_total = nqubits if nqubits is not None else nqubits_samples
             # Assuming 3 qubits, if asked for 0 and 1 and we have xxx, return xx_
             if nqubits_samples >= nqubits_total:
-                return cls._filter_samples(samples_to_filter, qubits_to_measure)
+                return cls._filter_samples(samples_to_filter, qubits_to_measure, expand_samples=expand_samples)
             # Assuming 3 qubits, if asked for 0 and 1 and we have xx, return xx_
-            if nqubits_samples < nqubits_total:
+            if nqubits_samples < nqubits_total and expand_samples:
                 return cls._expand_samples(samples_to_filter, qubits_to_measure, nqubits_total)
         return samples_to_filter
 
     @classmethod
     def from_samples(
-        cls, samples: dict[str, int], qubits_to_measure: list[int] | None = None, nqubits: int | None = None
+        cls,
+        samples: dict[str, int],
+        qubits_to_measure: list[int] | None = None,
+        nqubits: int | None = None,
+        expand_samples: bool = True,
     ) -> Self:
         """
         Construct a SamplingReadoutResult from raw samples.
@@ -189,6 +206,7 @@ class SamplingReadoutResult(ReadoutResult[SamplingReadout]):
             samples (dict[str, int]): Mapping of bitstring to measurement count.
             qubits_to_measure (list[int] | None): Optional list of qubit indices that were measured.
             nqubits (int | None): Total number of qubits in the system.
+            expand_samples (bool): Whether to expand samples with placeholders for unmeasured qubits.
 
         Returns:
             SamplingReadoutResult: The constructed result object.
@@ -220,7 +238,7 @@ class SamplingReadoutResult(ReadoutResult[SamplingReadout]):
             bitstring: (counts / nshots if nshots and nshots > 0 else 0.0) for bitstring, counts in samples.items()
         }
         if qubits_to_measure is not None:
-            samples = cls._adjust_samples(samples, qubits_to_measure, nqubits_total)
+            samples = cls._adjust_samples(samples, qubits_to_measure, nqubits_total, expand_samples=expand_samples)
         return cls(samples=samples, probabilities=probabilities)
 
     @classmethod
@@ -229,12 +247,13 @@ class SamplingReadoutResult(ReadoutResult[SamplingReadout]):
         sampling_readout: SamplingReadout,
         state: QTensor,
         qubits_to_measure: list[int] | None = None,
+        expand_samples: bool = True,
     ) -> Self:
         f_string = "{:0" + str(state.nqubits) + "b}"
         probabilities: dict[str, float] = {(f_string).format(i): p for i, p in enumerate(state.probabilities())}
         samples: dict[str, int] = _samples_from_probabilities(probabilities, nshots=sampling_readout.nshots)
         if qubits_to_measure is not None:
-            samples = cls._adjust_samples(samples, qubits_to_measure)
+            samples = cls._adjust_samples(samples, qubits_to_measure, state.nqubits, expand_samples=expand_samples)
         return cls(samples=samples, probabilities=probabilities)
 
     def __init__(self, samples: dict[str, int], probabilities: dict[str, float] | None = None) -> None:
