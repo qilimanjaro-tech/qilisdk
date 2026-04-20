@@ -197,7 +197,7 @@ class SamplingReadoutResult(ReadoutResult[SamplingReadout]):
         samples: dict[str, int],
         qubits_to_measure: list[int] | None = None,
         nqubits: int | None = None,
-        expand_samples: bool = True,
+        expand_samples: bool | None = None,
     ) -> Self:
         """
         Construct a SamplingReadoutResult from raw samples.
@@ -206,7 +206,7 @@ class SamplingReadoutResult(ReadoutResult[SamplingReadout]):
             samples (dict[str, int]): Mapping of bitstring to measurement count.
             qubits_to_measure (list[int] | None): Optional list of qubit indices that were measured.
             nqubits (int | None): Total number of qubits in the system.
-            expand_samples (bool): Whether to expand samples with placeholders for unmeasured qubits.
+            expand_samples (bool | None): Whether to expand samples with placeholders for unmeasured qubits.
 
         Returns:
             SamplingReadoutResult: The constructed result object.
@@ -232,6 +232,8 @@ class SamplingReadoutResult(ReadoutResult[SamplingReadout]):
             raise ValueError(
                 "Must provide qubits_to_measure if nqubits is different from the number of qubits in the samples."
             )
+
+        expand_samples = expand_samples if expand_samples is not None else True
 
         # Calculate probabilities
         probabilities: dict[str, float] = {
