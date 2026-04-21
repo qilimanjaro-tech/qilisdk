@@ -24,9 +24,9 @@ class QiliSimConfig {
     int num_monte_carlo_trajectories = 1000;
     int arnoldi_dim = 10;
     int num_arnoldi_substeps = 10;
-    int num_integrate_substeps = 2;
-    std::string time_evolution_method = "integrate";
-    std::string sampling_method = "statevector";
+    int num_integrate_substeps = 1;
+    std::string time_evolution_method = "integrate_rk4_matrix_free";
+    std::string sampling_method = "statevector_matrix_free";
     bool store_intermediate_results = false;
     int num_threads = 1;
     int seed = 42;

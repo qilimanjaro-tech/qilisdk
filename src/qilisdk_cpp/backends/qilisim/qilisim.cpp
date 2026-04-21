@@ -216,7 +216,7 @@ py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, co
     std::vector<DenseMatrix> intermediate_rhos;
     DenseMatrix rho_t;
     std::vector<double> expectation_values;
-    if (config.get_time_evolution_method() == "integrate_matrix_free") {
+    if (config.get_time_evolution_method() == "integrate_rk4_matrix_free" || config.get_time_evolution_method() == "integrate_rk45_matrix_free") {
         // Parse the Hamiltonians
         std::vector<MatrixFreeHamiltonian> hamiltonians = parse_hamiltonians_matrix_free(hamiltonians_values);
         if (hamiltonians.size() != parameters_list.size()) {
@@ -362,7 +362,7 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
 
                 // Depending on the method, call the internal implementation
                 std::vector<DenseMatrix> intermediate_rhos;
-                if (config.get_time_evolution_method() == "integrate_matrix_free") {
+                if (config.get_time_evolution_method() == "integrate_rk4_matrix_free") {
                     // Parse the Hamiltonians
                     std::vector<MatrixFreeHamiltonian> hamiltonians = parse_hamiltonians_matrix_free(hamiltonians_values);
                     if (hamiltonians.size() != parameters_list.size()) {

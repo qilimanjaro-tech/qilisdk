@@ -89,8 +89,8 @@ class AnalogMethod(BaseSimulatorConfig):
 
     Args:
         evolution_method (str): Analog time-evolution method to use:
-            ``"direct"``, ``"arnoldi"``, ``"integrate"``, or
-            ``"integrate_matrix_free"``. Defaults to ``"integrate"``.
+            ``"direct"``, ``"arnoldi"``, ``"integrate_rk4"``, ``"integrate_rk45_matrix_free"``, or 
+            ``"integrate_rk4_matrix_free"``. Defaults to ``"integrate_rk4_matrix_free"``.
         arnoldi_dim (int): Dimension of the Arnoldi Krylov subspace used
             when ``evolution_method="arnoldi"``. Defaults to ``10``.
         num_arnoldi_substeps (int): Number of integration substeps per
@@ -99,9 +99,9 @@ class AnalogMethod(BaseSimulatorConfig):
             schedule step for the Integrate method. Defaults to ``2``.
     """
 
-    evolution_method: Literal["direct", "arnoldi", "integrate", "integrate_matrix_free"] = Field(
-        default="integrate",
-        description="Analog time-evolution method to use: 'direct', 'arnoldi', 'integrate', or 'integrate_matrix_free'.",
+    evolution_method: Literal["direct", "arnoldi", "integrate_rk4", "integrate_rk45_matrix_free", "integrate_rk4_matrix_free"] = Field(
+        default="integrate_rk4_matrix_free",
+        description="Analog time-evolution method to use: 'direct', 'arnoldi', 'integrate_rk4', 'integrate_rk45_matrix_free', or 'integrate_rk4_matrix_free'.",
     )
     arnoldi_dim: int = Field(
         default=10,
@@ -114,7 +114,7 @@ class AnalogMethod(BaseSimulatorConfig):
         description="Number of integration substeps per schedule step when using the Arnoldi method.",
     )
     num_integrate_substeps: int = Field(
-        default=2,
+        default=1,
         gt=0,
         description="Number of integration substeps per schedule step when using the Integrate method.",
     )
@@ -144,8 +144,17 @@ class AnalogMethod(BaseSimulatorConfig):
         Returns:
             AnalogMethod: Configured integrate-method analog configuration.
         """
-        evolution_method = "integrate_matrix_free" if matrix_free else "integrate"
+        evolution_method = "integrate_rk4_matrix_free" if matrix_free else "integrate_rk4"
         return cls(evolution_method=evolution_method, num_integrate_substeps=num_substeps)
+
+    @classmethod
+    def adaptive_integrator(cls) -> AnalogMethod:
+        """Build an ``integrate`` analog method configuration.
+
+        Returns:
+            AnalogMethod: Configured integrate-method analog configuration.
+        """
+        return cls(evolution_method="integrate_rk45_matrix_free")
 
     @classmethod
     def arnoldi(
@@ -278,7 +287,7 @@ class DigitalMethod(BaseSimulatorConfig):
         description="Maximum number of cached gate representations used by the digital simulator.",
     )
     normalize_after_each_gate: bool = Field(
-        default=True,
+        default=False,
         description="Whether to normalize the statevector after each gate application to mitigate numerical errors at the cost of increased runtime.",
     )
     combine_single_qubit_gates: bool = Field(

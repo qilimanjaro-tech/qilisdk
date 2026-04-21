@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <iostream>
 #include "time_evolution.h"
 #include "../noise/noise_model.h"
 #include "../utils/matrix_utils.h"
@@ -135,7 +136,7 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
         }
 
         // Perform the iteration depending on the method
-        if (config.get_time_evolution_method() == "integrate") {
+        if (config.get_time_evolution_method() == "integrate_rk4") {
             rho_t = iter_rk4(rho_t, dt, currentH, jump_operators, config.get_num_integrate_substeps(), is_unitary_on_statevector);
         } else if (config.get_time_evolution_method() == "direct") {
             rho_t = iter_direct(rho_t, dt, currentH, jump_operators, is_unitary_on_statevector);
@@ -245,34 +246,85 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
     // Init rho_0
     rho_t = rho_0;
 
-    // For each time step
-    for (size_t step_ind = 0; step_ind < step_list.size(); ++step_ind) {
-        // Get the current Hamiltonian
-        MatrixFreeHamiltonian currentH;
-        for (size_t h = 0; h < hamiltonians.size(); ++h) {
-            double c = parameters_list[h][step_ind];
-            currentH += hamiltonians[h] * c;
+    // If doing adaptive step size with rk45
+    if (config.get_time_evolution_method() == "integrate_rk45_matrix_free") {
+
+        // Initial step size
+        double dt = 1.0;
+        if (step_list.size() > 1) {
+            dt = step_list[1];
         }
 
-        // Determine the time step
-        double dt = step_list[step_ind];
-        if (step_ind > 0) {
-            dt = (step_list[step_ind] - step_list[step_ind - 1]);
-        }
+        // Loop until we reach the max time
+        double current_time = 0.0;
+        size_t step_ind = 0;
+        size_t iters = 0;
+        while (current_time < step_list.back()) {
 
-        // Perform the iteration depending on the method
-        iter_rk4(rho_t, dt, currentH, jump_operators, config.get_num_integrate_substeps(), is_unitary_on_statevector);
-        // TODO(luke)
-        // iter_rk45(rho_t, dt, currentH, jump_operators, config.get_num_integrate_substeps(), is_unitary_on_statevector);
+            // Get the current Hamiltonian
+            MatrixFreeHamiltonian currentH;
+            for (size_t h = 0; h < hamiltonians.size(); ++h) {
+                double c = parameters_list[h][step_ind];
+                currentH += hamiltonians[h] * c;
+            }
 
-        // If we should store intermediates, do it here
-        if (config.get_store_intermediate_results()) {
-            if (use_monte_carlo || (!input_was_vector && rho_t.cols() == 1)) {
-                intermediate_rhos.push_back(trajectories_to_density_matrix(rho_t));
-            } else {
-                intermediate_rhos.push_back(rho_t);
+            // Make sure the next step doesn't go beyond the final time point
+            dt = std::min(dt, step_list.back() - current_time);
+
+            std::cout << "Iters: " << iters << ", Current time: " << current_time << ", dt: " << dt << ", step index: " << step_ind << std::endl;
+
+            // Perform the iteration depending on the method
+            // dt is updated to the suggested next step; dt_taken is what was actually stepped
+            double dt_taken = iter_rk45(rho_t, dt, currentH, jump_operators, is_unitary_on_statevector);
+
+            // If we should store intermediates, do it here
+            if (config.get_store_intermediate_results()) {
+                if (use_monte_carlo || (!input_was_vector && rho_t.cols() == 1)) {
+                    intermediate_rhos.push_back(trajectories_to_density_matrix(rho_t));
+                } else {
+                    intermediate_rhos.push_back(rho_t);
+                }
+            }
+
+            // Update the time and step index
+            current_time += dt_taken;
+            iters++;
+            while (step_ind < step_list.size() && current_time >= step_list[step_ind]) {
+                step_ind++;
             }
         }
+
+    // If doing fixed step size with rk4
+    } else {
+
+        // For each time step
+        for (size_t step_ind = 0; step_ind < step_list.size(); ++step_ind) {
+            // Get the current Hamiltonian
+            MatrixFreeHamiltonian currentH;
+            for (size_t h = 0; h < hamiltonians.size(); ++h) {
+                double c = parameters_list[h][step_ind];
+                currentH += hamiltonians[h] * c;
+            }
+
+            // Determine the time step
+            double dt = step_list[step_ind];
+            if (step_ind > 0) {
+                dt = (step_list[step_ind] - step_list[step_ind - 1]);
+            }
+
+            // Perform the iteration depending on the method
+            iter_rk4(rho_t, dt, currentH, jump_operators, config.get_num_integrate_substeps(), is_unitary_on_statevector);
+
+            // If we should store intermediates, do it here
+            if (config.get_store_intermediate_results()) {
+                if (use_monte_carlo || (!input_was_vector && rho_t.cols() == 1)) {
+                    intermediate_rhos.push_back(trajectories_to_density_matrix(rho_t));
+                } else {
+                    intermediate_rhos.push_back(rho_t);
+                }
+            }
+        }
+
     }
 
     // If we have statevector/s but we should return a density matrix
