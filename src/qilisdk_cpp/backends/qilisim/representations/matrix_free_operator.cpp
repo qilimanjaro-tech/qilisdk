@@ -969,8 +969,8 @@ MatrixFreeOperator::MatrixFreeOperator(const std::string& name, const std::vecto
     if (this->control_qubits.size() > 1 && !(this->name == "X" && this->control_qubits.size() == 2)) {
         throw py::value_error("MatrixFreeOperator only supports gates with 1 or fewer total control qubits (other than CCX).");
     }
-    if (this->target_qubits.size() != 1 && this->name != "SWAP") {
-        throw py::value_error("MatrixFreeOperator requires a gate with exactly 1 target qubit (other than SWAP).");
+    if (this->target_qubits.size() != 1 && this->name != "SWAP" && this->name != "M") {
+        throw py::value_error("MatrixFreeOperator requires a gate with exactly 1 target qubit (other than SWAP or M).");
     }
 }
 

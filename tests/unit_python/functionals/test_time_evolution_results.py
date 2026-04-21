@@ -65,11 +65,10 @@ def test_functional_result_with_intermediate_results():
     assert result.has_state()
     assert result.get_state() == state3
 
-    states = result.intermediate_states
-    assert len(states) == 3
+    states = result.get_intermediate_states()
+    assert len(states) == 2
     assert states[0] == state1
     assert states[1] == state2
-    assert states[2] == state3
 
 
 def test_functional_result_no_intermediate_raises():
@@ -78,7 +77,7 @@ def test_functional_result_no_intermediate_raises():
     with pytest.raises(
         ValueError, match=r"Can't find intermediate states because intermediate Results were not stored."
     ):
-        _ = result.intermediate_states
+        _ = result.get_intermediate_states()
 
 
 def test_functional_result_output():

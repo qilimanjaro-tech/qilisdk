@@ -129,7 +129,8 @@ class _ShrinkGate:
     control_qubits = []
     target_qubits = [0]
     is_parameterized = False
-    def _generate_matrix(self):
+    @property
+    def matrix(self):
         return np.array([[0.5, 0.0], [0.0, 0.5]], dtype=complex)
     def get_parameters(self):
         return {}
@@ -164,6 +165,83 @@ _readout_res = [SamplingReadout(nshots=50)]
     py::object result;
     ASSERT_NO_THROW(result = sim.execute_digital_propagation(py::globals()["_samp_res"], py::globals()["_readout_res"], py::none(), py::none(), empty_solver_params()));
     EXPECT_TRUE(py::hasattr(result, "sampling"));
+}
+
+TEST_F(ExecuteSamplingTest, Result_HasIntermediateSamples) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.functionals.digital_propagation import DigitalPropagation
+from qilisdk.readout import SamplingReadout
+from qilisdk.digital.circuit import Circuit
+from qilisdk.digital.gates import X, M
+
+_c_intermediate = Circuit(nqubits=1)
+_c_intermediate.add(X(0))
+_c_intermediate.add(M(0))
+_c_intermediate.add(X(0))
+_c_intermediate.add(M(0))
+_samp_intermediate = DigitalPropagation(circuit=_c_intermediate)
+_readout_intermediate = [SamplingReadout(nshots=50)]
+    )");
+    py::object result;
+    ASSERT_NO_THROW(result = sim.execute_digital_propagation(py::globals()["_samp_intermediate"], py::globals()["_readout_intermediate"], py::none(), py::none(), empty_solver_params()));
+    EXPECT_TRUE(py::hasattr(result, "intermediate_results"));
+    py::list inter_results = result.attr("intermediate_results");
+    EXPECT_TRUE(inter_results.size() > 0);
+}
+
+TEST_F(ExecuteSamplingTest, CollapseTest) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.functionals.digital_propagation import DigitalPropagation
+from qilisdk.readout import SamplingReadout
+from qilisdk.digital.circuit import Circuit
+from qilisdk.digital.gates import H, M
+
+_c_intermediate = Circuit(nqubits=1)
+_c_intermediate.add(H(0))
+_c_intermediate.add(M(0))
+_c_intermediate.add(H(0))
+_c_intermediate.add(M(0))
+_samp_intermediate = DigitalPropagation(circuit=_c_intermediate)
+_solver_params = {"collapse_measurements": True}
+_readout_intermediate = [SamplingReadout(nshots=1000)]
+    )");
+    py::object result;
+    ASSERT_NO_THROW(result = sim.execute_digital_propagation(py::globals()["_samp_intermediate"], py::globals()["_readout_intermediate"], py::none(), py::none(), py::globals()["_solver_params"]));
+    EXPECT_TRUE(py::hasattr(result, "intermediate_results"));
+    py::list inter_results = result.attr("intermediate_results");
+    EXPECT_TRUE(inter_results.size() > 0);
+    EXPECT_LT(result.attr("get_samples")().cast<py::dict>()["0"].cast<int>(), 999);
+}
+
+TEST_F(ExecuteSamplingTest, CollapseTestDensityMatrix) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.functionals.digital_propagation import DigitalPropagation
+from qilisdk.readout import SamplingReadout
+from qilisdk.digital.circuit import Circuit
+from qilisdk.digital.gates import H, M
+from qilisdk.core.qtensor import QTensor
+import scipy.sparse as sp, numpy as np
+
+_initial_state = QTensor(sp.csr_matrix(np.array([[0.5+0j, 0], [0, 0.5+0j]], dtype=complex)))
+
+_c_intermediate = Circuit(nqubits=1)
+_c_intermediate.add(H(0))
+_c_intermediate.add(M(0))
+_c_intermediate.add(H(0))
+_c_intermediate.add(M(0))
+_samp_intermediate = DigitalPropagation(circuit=_c_intermediate)
+_solver_params = {"collapse_measurements": True}
+_readout_intermediate = [SamplingReadout(nshots=1000)]
+    )");
+    py::object result;
+    ASSERT_NO_THROW(result = sim.execute_digital_propagation(py::globals()["_samp_intermediate"], py::globals()["_readout_intermediate"], py::none(), py::globals()["_initial_state"], py::globals()["_solver_params"]));
+    EXPECT_TRUE(py::hasattr(result, "intermediate_results"));
+    py::list inter_results = result.attr("intermediate_results");
+    EXPECT_TRUE(inter_results.size() > 0);
+    EXPECT_LT(result.attr("get_samples")().cast<py::dict>()["0"].cast<int>(), 999);
 }
 
 class ExecuteTimeEvolutionTest : public ::testing::Test {
@@ -443,8 +521,35 @@ _readout_shape = [StateTomographyReadout(), ExpectationReadout(observables=[Z(0)
     ASSERT_NO_THROW(result = sim.execute_analog_evolution(py::globals()["_te_shape"], py::globals()["_readout_shape"], py::none(), empty_solver_params()));
     EXPECT_TRUE(py::hasattr(result, "state_tomography"));
     EXPECT_TRUE(py::hasattr(result, "expectation"));
-    EXPECT_TRUE(py::hasattr(result, "intermediate_states"));
-    EXPECT_TRUE(py::hasattr(result, "intermediate_expectation_values"));
+}
+
+class ExecuteReservoirTest : public ::testing::Test {
+   protected:
+    QiliSimCpp sim;
+};
+
+TEST_F(ExecuteReservoirTest, ReservoirRuns) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirLayer
+from qilisdk.analog.schedule import Schedule
+from qilisdk.analog.hamiltonian import Z
+from qilisdk.core.qtensor import QTensor
+import scipy.sparse as sp, numpy as np
+
+_sched_res = Schedule(hamiltonians={"h0": Z(0)}, dt=0.1, total_time=0.3)
+_layer_res = ReservoirLayer(evolution_dynamics=_sched_res)
+_rho_res = QTensor(sp.csr_matrix(np.array([[1.+0j, 0], [0, 0]], dtype=complex)))
+_reservoir = QuantumReservoir(
+    initial_state=_rho_res,
+    reservoir_layer=_layer_res,
+    input_per_layer=[{}]
+)
+    )");
+    py::object result;
+    ASSERT_NO_THROW(result = sim.execute_quantum_reservoir(py::globals()["_reservoir"], py::list(), py::none(), empty_solver_params()));
+    EXPECT_TRUE(py::hasattr(result, "readout_results"));
+    EXPECT_TRUE(py::hasattr(result, "intermediate_results"));
 }
 
 // GCOV_EXCL_BR_STOP
