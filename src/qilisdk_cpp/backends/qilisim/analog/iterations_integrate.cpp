@@ -18,7 +18,7 @@
 
 // GCOV_EXCL_BR_START
 
-DenseMatrix iter_integrate(const DenseMatrix& rho_0, double dt, const SparseMatrix& currentH, const std::vector<SparseMatrix>& jump_operators, int num_substeps, bool is_unitary_on_statevector) {
+DenseMatrix iter_rk4(const DenseMatrix& rho_0, double dt, const SparseMatrix& currentH, const std::vector<SparseMatrix>& jump_operators, int num_substeps, bool is_unitary_on_statevector) {
     /*
     4th-order Runge–Kutta integration of the Lindblad master equation
 
@@ -103,7 +103,7 @@ DenseMatrix iter_integrate(const DenseMatrix& rho_0, double dt, const SparseMatr
     return rho;
 }
 
-void iter_integrate(DenseMatrix& rho_t, double dt, const MatrixFreeHamiltonian& currentH, const std::vector<SparseMatrix>& jump_operators, int num_substeps, bool is_unitary_on_statevector) {
+void iter_rk4(DenseMatrix& rho_t, double dt, const MatrixFreeHamiltonian& currentH, const std::vector<SparseMatrix>& jump_operators, int num_substeps, bool is_unitary_on_statevector) {
     /*
     4th-order Runge–Kutta integration of the Lindblad master equation using matrix-free methods.
 

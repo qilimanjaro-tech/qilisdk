@@ -131,12 +131,12 @@ class AnalogMethod(BaseSimulatorConfig):
         return d
 
     @classmethod
-    def integrator(cls, *, num_substeps: int = 2, matrix_free: bool = False) -> AnalogMethod:
+    def integrator(cls, *, num_substeps: int = 1, matrix_free: bool = False) -> AnalogMethod:
         """Build an ``integrate`` analog method configuration.
 
         Args:
             num_substeps (int): Number of integration substeps per schedule
-                step when using the Integrate method. Defaults to ``2``.
+                step when using the Integrate method. Defaults to ``1``.
             matrix_free (bool): Whether to use the matrix-free
                 implementation for the Integrate method. Defaults to
                 ``False``.

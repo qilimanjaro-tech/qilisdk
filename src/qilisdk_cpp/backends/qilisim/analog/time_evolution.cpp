@@ -137,7 +137,7 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
 
         // Perform the iteration depending on the method
         if (config.get_time_evolution_method() == "integrate") {
-            rho_t = iter_integrate(rho_t, dt, currentH, jump_operators, config.get_num_integrate_substeps(), is_unitary_on_statevector);
+            rho_t = iter_rk4(rho_t, dt, currentH, jump_operators, config.get_num_integrate_substeps(), is_unitary_on_statevector);
         } else if (config.get_time_evolution_method() == "direct") {
             rho_t = iter_direct(rho_t, dt, currentH, jump_operators, is_unitary_on_statevector);
         } else if (config.get_time_evolution_method() == "arnoldi") {
@@ -262,7 +262,9 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
         }
 
         // Perform the iteration depending on the method
-        iter_integrate(rho_t, dt, currentH, jump_operators, config.get_num_integrate_substeps(), is_unitary_on_statevector);
+        iter_rk4(rho_t, dt, currentH, jump_operators, config.get_num_integrate_substeps(), is_unitary_on_statevector);
+        // TODO(luke)
+        // iter_rk45(rho_t, dt, currentH, jump_operators, config.get_num_integrate_substeps(), is_unitary_on_statevector);
 
         // If we should store intermediates, do it here
         if (config.get_store_intermediate_results()) {
