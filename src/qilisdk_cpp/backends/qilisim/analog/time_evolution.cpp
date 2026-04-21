@@ -18,7 +18,6 @@
 #include "../utils/random.h"
 #include "iterations.h"
 
-
 // GCOV_EXCL_BR_START
 
 void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, NoiseModelCpp& noise_model_cpp, QiliSimConfig& config, DenseMatrix& rho_t, std::vector<DenseMatrix>& intermediate_rhos) {
@@ -280,8 +279,6 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
     if (use_monte_carlo || (!input_was_vector && rho_t.cols() == 1)) {
         rho_t = trajectories_to_density_matrix(rho_t);
     }
-
 }
 
 // GCOV_EXCL_BR_STOP
-

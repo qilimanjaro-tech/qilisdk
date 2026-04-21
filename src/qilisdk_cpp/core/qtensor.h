@@ -138,6 +138,7 @@ class QTensorCpp {
     static QTensorCpp bra_python(const py::object& state);
     static QTensorCpp bra(const std::vector<int>& qubit_values);
     static QTensorCpp ghz(int nqubits);
+    static QTensorCpp uniform(int nqubits);
     static QTensorCpp tensor_product_python(const py::list& others);
     static QTensorCpp tensor_product(const std::vector<QTensorCpp>& others);
 

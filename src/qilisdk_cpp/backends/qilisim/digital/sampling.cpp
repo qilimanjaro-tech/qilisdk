@@ -29,7 +29,6 @@
 
 // GCOV_EXCL_BR_START
 
-
 void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrix& initial_state, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, const QiliSimConfig& config) {
     /*
     Execute a sampling functional using a simple statevector simulator.
@@ -199,7 +198,7 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrix& 
     }
 }
 
-void sampling_matrix_free(const std::vector<Gate>& gates,  int n_qubits, const SparseMatrix& initial_state, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, const QiliSimConfig& config) {
+void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const SparseMatrix& initial_state, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, const QiliSimConfig& config) {
     /*
     Execute a sampling functional using a matrix-free simulator.
 
