@@ -6,4 +6,5 @@
 # Time estimate: 1 minute
 # --------------------------------------------------------------------------
 
+rm -rf build
 uv pip install --config-settings=editable.rebuild=true -Ccmake.build_type=Debug -Cbuild-dir=build -ve .

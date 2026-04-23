@@ -68,6 +68,7 @@ PYBIND11_MODULE(qtensor_module, m) {
         .def("div", &QTensorCpp::div)
         .def("inverse", &QTensorCpp::inverse)
         .def("ghz", &QTensorCpp::ghz)
+        .def("uniform", &QTensorCpp::uniform)
         .def("commutator_python", &QTensorCpp::commutator_python)
         .def("is_symmetric", &QTensorCpp::is_symmetric)
         .def("anticommutator_python", &QTensorCpp::anticommutator_python)

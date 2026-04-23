@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <iomanip>
+#include <iostream>
 #include <random>
 #include <sstream>
 
@@ -20,6 +21,7 @@
 #include "../digital/circuit_optimizations.h"
 #include "../noise/noise_model.h"
 #include "../utils/matrix_utils.h"
+#include "../utils/parsers.h"
 #include "../utils/random.h"
 #include "sampling.h"
 
@@ -29,7 +31,57 @@
 
 // GCOV_EXCL_BR_START
 
-void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrix& initial_state, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, const QiliSimConfig& config) {
+#pragma GCC visibility push(default)
+
+DenseMatrix collapse_state(const DenseMatrix& state, const std::vector<bool>& qubits_measured) {
+    /*
+    Collapse the state based on the measurement result.
+
+    Args:
+        state (DenseMatrix&): the state to be collapsed, either as a statevector or density matrix.
+        qubits_measured (std::vector<bool>): which qubits were measured.
+
+    Returns:
+        DenseMatrix: the collapsed state as a density matrix
+    */
+
+    // Determine if we are working with a statevector or density matrix
+    bool is_statevector = (state.cols() == 1);
+
+    // If it's a statevector, convert to density matrix
+    DenseMatrix density_matrix;
+    if (is_statevector) {
+        density_matrix = state * state.adjoint();
+    } else {
+        density_matrix = state;
+    }
+
+    // For each measured qubit, apply the non-selective measurement:
+    // rho -> P0 * rho * P0 + P1 * rho * P1
+    // Since P0 and P1 are diagonal projectors, this is equivalent to zeroing all entries
+    // where the row and column indices differ in that qubit's bit position.
+    long dim = density_matrix.rows();
+    int nqubits = static_cast<int>(std::ceil(std::log2(dim)));
+    for (int qubit = 0; qubit < int(qubits_measured.size()); ++qubit) {
+        if (!qubits_measured[qubit]) {
+            continue;
+        }
+        long mask = 1L << (nqubits - 1 - qubit);
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+        for (long j = 0; j < dim; ++j) {
+            long opposite_start = (j & mask) ? 0 : mask;
+            for (long base = 0; base < dim; base += 2 * mask) {
+                density_matrix.col(j).segment(base + opposite_start, mask).setZero();
+            }
+        }
+    }
+
+    return density_matrix;
+}
+
+void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrix& initial_state, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, std::vector<py::object>& intermediate_results, const QiliSimConfig& config, const py::object& readout) {
     /*
     Execute a sampling functional using a simple statevector simulator.
 
@@ -40,8 +92,9 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrix& 
         initial_state (SparseMatrix&): The initial state of the system (statevector or density matrix).
         noise_model_cpp (NoiseModelCpp&): The noise model to apply during simulation.
         state (DenseMatrix&): The final state after applying all gates (statevector or density matrix).
-        counts (std::map<std::string, int>&): A map to store the measurement counts.
+        intermediate_results (std::vector<py::object>&): A vector to store the intermediate results after each measurement.
         config (QiliSimConfig): The simulation configuration.
+        readout (py::object): A list with readout information to determine when and what to measure.
 
     Returns:
         SamplingResult: A result object containing the measurement samples and computed probabilities.
@@ -138,7 +191,46 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrix& 
     std::string gate_id = "";
     int gate_count = 0;
     bool gate_is_new = false;
-    for (const auto& gate : optimized_gates) {
+    for (int i = 0; i < int(optimized_gates.size()); ++i) {
+        const auto& gate = optimized_gates[i];
+
+        // If it's a measurement
+        if (gate.get_name() == "M") {
+            // Check for adjacent measurements and if we have any, do them all at once
+            int num_measurements = 0;
+            bool are_final_measurements = false;
+            std::vector<bool> qubits_to_measure_after_gate(n_qubits, false);
+            for (int j = i; j < int(optimized_gates.size()); ++j) {
+                if (optimized_gates[j].get_name() == "M") {
+                    for (int target : optimized_gates[j].get_target_qubits()) {
+                        qubits_to_measure_after_gate[target] = true;
+                    }
+                    num_measurements++;
+                    if (j == int(optimized_gates.size()) - 1) {
+                        are_final_measurements = true;
+                    }
+                } else {
+                    break;
+                }
+            }
+
+            // Construct the result
+            if (!are_final_measurements) {
+                py::object result = construct_result_object(state, readout, noise_model_cpp, n_qubits, config, qubits_to_measure_after_gate);
+                intermediate_results.push_back(result);
+
+                // If we have measurement_collapse enabled, apply the measurement and collapse the state
+                if (config.get_measurement_collapse()) {
+                    state = collapse_state(state, qubits_to_measure_after_gate);
+                    is_statevector = false;
+                }
+            }
+
+            // Skip the next measurements since we did them all at once
+            i += (num_measurements - 1);
+            continue;
+        }
+
         // Get the id of the gate
         gate_id = gate.get_id();
 
@@ -198,7 +290,7 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrix& 
     }
 }
 
-void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const SparseMatrix& initial_state, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, const QiliSimConfig& config) {
+void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const SparseMatrix& initial_state, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, std::vector<py::object>& intermediate_results, const QiliSimConfig& config, const py::object& readout) {
     /*
     Execute a sampling functional using a matrix-free simulator.
 
@@ -209,8 +301,9 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const Sp
         initial_state (SparseMatrix&): The initial state of the system (statevector or density matrix).
         noise_model_cpp (NoiseModelCpp&): The noise model to apply during simulation.
         state (DenseMatrix&): The final state after applying all gates (statevector or density matrix).
-        counts (std::map<std::string, int>&): A map to store the measurement counts.
+        intermediate_results (std::vector<py::object>&): A vector to store intermediate results after each set of measurements.
         config (QiliSimConfig): The simulation configuration.
+        readout (py::object): A list with readout information to determine when and what to measure.
 
     Returns:
         SamplingResult: A result object containing the measurement samples and computed probabilities.
@@ -264,9 +357,48 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const Sp
     }
 
     // Apply each gate
-    for (const auto& gate : optimized_gates) {
-        // Convert gate to a stabilizer operator
+    for (int i = 0; i < int(optimized_gates.size()); ++i) {
+        const auto& gate = optimized_gates[i];
+
+        // Convert gate to a matrix-free operator
         MatrixFreeOperator op(gate);
+
+        // If it's a measurement
+        if (gate.get_name() == "M") {
+            // Check for adjacent measurements and if we have any, do them all at once
+            int num_measurements = 0;
+            bool are_final_measurements = false;
+            std::vector<bool> qubits_to_measure_after_gate(n_qubits, false);
+            for (int j = i; j < int(optimized_gates.size()); ++j) {
+                if (optimized_gates[j].get_name() == "M") {
+                    for (int target : optimized_gates[j].get_target_qubits()) {
+                        qubits_to_measure_after_gate[target] = true;
+                    }
+                    num_measurements++;
+                    if (j == int(optimized_gates.size()) - 1) {
+                        are_final_measurements = true;
+                    }
+                } else {
+                    break;
+                }
+            }
+
+            // Construct the result
+            if (!are_final_measurements) {
+                py::object result = construct_result_object(state, readout, noise_model_cpp, n_qubits, config, qubits_to_measure_after_gate);
+                intermediate_results.push_back(result);
+
+                // If we have measurement_collapse enabled, apply the measurement and collapse the state
+                if (config.get_measurement_collapse()) {
+                    state = collapse_state(state, qubits_to_measure_after_gate);
+                    is_statevector = false;
+                }
+            }
+
+            // Skip the next measurements since we did them all at once
+            i += (num_measurements - 1);
+            continue;
+        }
 
         // Apply the gate
         if (monte_carlo) {

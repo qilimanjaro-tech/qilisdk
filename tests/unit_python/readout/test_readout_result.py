@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import math
+from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
@@ -69,6 +70,12 @@ class TestSamplesFromProbabilities:
         probs = {"0": 0.5, "1": 0.5}
         samples = _samples_from_probabilities(probs, nshots=1000, seed=42)
         assert sum(samples.values()) == 1000
+
+    def test_not_normalized_probabilities(self):
+        probs = {"0": 2.0, "1": 3.0}
+        samples = _samples_from_probabilities(probs, nshots=1000, seed=42)
+        assert sum(samples.values()) == 1000
+        assert samples["0"] + samples["1"] == 1000
 
     def test_seed_reproducibility(self):
         probs = {"0": 0.5, "1": 0.5}
@@ -139,9 +146,18 @@ class TestExpectationReadoutResult:
         assert len(result.expectation_values) == 1
         assert np.isclose(result.expectation_values[0], 1.0)
 
+    def test_from_state_imag_raises(self):
+        readout = ExpectationReadout(observables=[1j * pauli_z(0)])
+        with pytest.raises(ValueError, match="imaginary expectation"):
+            ExpectationReadoutResult.from_state(expectation_readout=readout, state=ket(0))
+
     def test_init_from_expectation_values(self):
         result = ExpectationReadoutResult(expectation_values=[0.5])
         assert result.expectation_values == [0.5]
+
+    def test_init_no_args_raises(self):
+        with pytest.raises(ValueError, match="expectation values are not provided"):
+            ExpectationReadoutResult(expectation_values=None)
 
     def test_ket_one_z_expectation(self):
         readout = ExpectationReadout(observables=[pauli_z(0)])
@@ -256,6 +272,12 @@ class TestReadoutCompositeResults:
         assert composite.expectation_values.expectation_values == [1.0]
         assert composite.state_tomography.state is not None
 
+    def test_from_list(self, sampling_result, expectation_result, tomography_result):
+        composite = ReadoutCompositeResults.from_list([sampling_result, expectation_result, tomography_result])
+        assert has_sampling(composite)
+        assert has_expectation_values(composite)
+        assert has_state_tomography(composite)
+
     def test_from_dict(self, sampling_result, expectation_result, tomography_result):
         composite = ReadoutCompositeResults.from_dict(
             {
@@ -268,12 +290,22 @@ class TestReadoutCompositeResults:
         assert has_expectation_values(composite)
         assert has_state_tomography(composite)
 
-    def test_from_dict_type_validation(self, sampling_result):
+    def test_from_dict_sampling_type_validation(self):
         with pytest.raises(TypeError, match="sampling must be SamplingReadoutResult"):
             ReadoutCompositeResults.from_dict({"sampling": "not_a_result"})
 
-    def test_repr(self, sampling_result):
-        composite = ReadoutCompositeResults(sampling=sampling_result)
+    def test_from_dict_expectation_values_type_validation(self):
+        with pytest.raises(TypeError, match="expectation_values must be ExpectationReadoutResult"):
+            ReadoutCompositeResults.from_dict({"expectation_values": "not_a_result"})
+
+    def test_from_dict_state_tomography_type_validation(self):
+        with pytest.raises(TypeError, match="state_tomography must be StateTomographyReadoutResult"):
+            ReadoutCompositeResults.from_dict({"state_tomography": "not_a_result"})
+
+    def test_repr(self, sampling_result, expectation_result, tomography_result):
+        composite = ReadoutCompositeResults(
+            sampling=sampling_result, expectation_values=expectation_result, state_tomography=tomography_result
+        )
         text = repr(composite)
         assert isinstance(text, str)
         assert len(text) > 0
@@ -295,6 +327,13 @@ class TestStateTomographyEdgeCases:
         top = result.get_probabilities(n=1)
         assert len(top) == 1
         assert top[0][0] == "0"
+
+    def test_get_probabilities_all(self):
+        result = StateTomographyReadoutResult(state=ket(0))
+        top = result.get_probabilities()
+        assert len(top) == 2
+        assert top[0][0] == "0"
+        assert top[1][0] == "1"
 
     def test_repr(self):
         result = StateTomographyReadoutResult(state=ket(0))
@@ -356,7 +395,7 @@ class TestFunctionalResult:
         inter1 = _make_tomography_composite(ket(1))
         inter2 = _make_tomography_composite((ket(0) + ket(1)).unit())
         result = FunctionalResult(readout_results=final, intermediate_results=[inter1, inter2])
-        assert len(result.intermediate_states) == 3  # 2 intermediate + 1 final
+        assert len(result.get_intermediate_states()) == 2
         assert len(result.intermediate_results) == 2
 
     def test_states_no_intermediate_raises(self):
@@ -364,13 +403,13 @@ class TestFunctionalResult:
         with pytest.raises(
             ValueError, match=r"Can't find intermediate states because intermediate Results were not stored."
         ):
-            _ = result.intermediate_states
+            _ = result.get_intermediate_states()
 
     def test_samples_intermediate(self):
         final = _make_sampling_composite(10, {"0": 10})
         inter = _make_sampling_composite(10, {"1": 10})
         result = FunctionalResult(readout_results=final, intermediate_results=[inter])
-        assert len(result.intermediate_samples) == 2
+        assert len(result.get_intermediate_samples()) == 1
 
     def test_len_no_intermediate(self):
         result = FunctionalResult(readout_results=_make_sampling_composite(10, {"0": 10}))
@@ -388,46 +427,48 @@ class TestFunctionalResult:
         assert len(items) == 2
 
     def test_repr(self):
-        result = FunctionalResult(readout_results=_make_sampling_composite(10, {"0": 10}))
+        result = FunctionalResult(
+            readout_results=_make_sampling_composite(10, {"0": 10}),
+            intermediate_results=[_make_sampling_composite(10, {"1": 10})],
+        )
         assert "Functional Results" in repr(result)
+        assert "Intermediate Results" in repr(result)
 
     def test_intermediate_probabilities(self):
         final = _make_tomography_composite(ket(0))
         inter = _make_tomography_composite(ket(1))
         result = FunctionalResult(readout_results=final, intermediate_results=[inter])
-        probs = result.intermediate_probabilities
-        assert len(probs) == 2
+        probs = result.get_intermediate_probabilities()
+        assert len(probs) == 1
         assert np.isclose(probs[0]["1"], 1.0)
-        assert np.isclose(probs[1]["0"], 1.0)
 
     def test_intermediate_probabilities_no_intermediate_raises(self):
         result = FunctionalResult(readout_results=_make_tomography_composite(ket(0)))
         with pytest.raises(ValueError, match="intermediate probabilities"):
-            _ = result.intermediate_probabilities
+            _ = result.get_intermediate_probabilities()
 
     def test_intermediate_expectation_values(self):
         final = _make_expectation_composite([1.0])
         inter = _make_expectation_composite([-1.0])
         result = FunctionalResult(readout_results=final, intermediate_results=[inter])
-        vals = result.intermediate_expectation_values
-        assert len(vals) == 2
+        vals = result.get_intermediate_expectation_values()
+        assert len(vals) == 1
         assert np.isclose(vals[0][0], -1.0)
-        assert np.isclose(vals[1][0], 1.0)
 
     def test_intermediate_expectation_values_no_intermediate_raises(self):
         result = FunctionalResult(readout_results=_make_expectation_composite([1.0]))
         with pytest.raises(ValueError, match="intermediate expectation values"):
-            _ = result.intermediate_expectation_values
+            _ = result.get_intermediate_expectation_values()
 
     def test_intermediate_expectation_values_no_readout_returns_empty(self):
         cr = _make_sampling_composite(10, {"0": 10})
         result = FunctionalResult(readout_results=cr, intermediate_results=[cr])
-        assert result.intermediate_expectation_values == []
+        assert result.get_intermediate_expectation_values() == []
 
     def test_intermediate_samples_no_readout_returns_empty(self):
         cr = _make_tomography_composite(ket(0))
         result = FunctionalResult(readout_results=cr, intermediate_results=[cr])
-        assert result.intermediate_samples == []
+        assert result.get_intermediate_samples() == []
 
     def test_getitem_returns_intermediate(self):
         final = _make_sampling_composite(10, {"0": 10})
@@ -495,3 +536,111 @@ class TestBackendConstructResultsList:
     def test_unsupported_readout_raises(self):
         with pytest.raises(ValueError, match="Unsupported Readout Method"):
             Backend._construct_results_list(final_state=ket(0), readout=[ReadoutMethod()])
+
+
+def test_expand_samples():
+    result = SamplingReadoutResult.from_samples(samples={"00": 60, "10": 40}, qubits_to_measure=[0, 2], nqubits=3)
+    assert result.samples == {"0_0": 60, "1_0": 40}
+
+
+def test_filter_samples():
+    result = SamplingReadoutResult.from_samples(samples={"00": 60, "10": 40}, qubits_to_measure=[0])
+    assert result.samples == {"0_": 60, "1_": 40}
+
+
+def test_filter_no_qubits_to_measure_throws():
+    with pytest.raises(ValueError, match="if nqubits is different"):
+        SamplingReadoutResult.from_samples(samples={"00": 60, "10": 40}, nqubits=3, qubits_to_measure=None)
+
+
+def test_filter_samples_no_expand():
+    result = SamplingReadoutResult.from_samples(
+        samples={"00": 60, "10": 40}, qubits_to_measure=[0], expand_samples=False
+    )
+    assert result.samples == {"0": 60, "1": 40}
+
+
+def test_expand_samples_no_expand():
+    result = SamplingReadoutResult.from_samples(
+        samples={"0": 60, "1": 40}, qubits_to_measure=[0], nqubits=2, expand_samples=False
+    )
+    assert result.samples == {"0": 60, "1": 40}
+
+
+def test_filter_empty_samples():
+    # need to create an object that "is obj" is True, but behaves like an empty dict for the methods used in from_samples
+    samples_dict = MagicMock()
+    samples_dict.__bool__.return_value = True
+    samples_dict.__len__.return_value = 0
+    samples_dict.keys.return_value = ["0"]
+    result = SamplingReadoutResult.from_samples(samples=samples_dict, qubits_to_measure=[0])
+    assert result.samples == samples_dict
+
+
+def test_composite_readout_get_samples():
+    sampling_result = SamplingReadoutResult.from_samples(samples={"00": 60, "10": 40})
+    composite = ReadoutCompositeResults(
+        sampling=sampling_result,
+    )
+    samples = composite.get_samples()
+    assert samples == {"00": 60, "10": 40}
+
+
+def test_composite_readout_get_expectatons():
+    expectation_result = ExpectationReadoutResult.from_expectations(expectation_values=[1.0])
+    composite = ReadoutCompositeResults(
+        expectation_values=expectation_result,
+    )
+    expectations = composite.get_expectation_values()
+    assert np.isclose(expectations[0], 1.0)
+
+
+def test_composite_readout_get_probabilities_from_samples():
+    sampling_result = SamplingReadoutResult.from_samples(samples={"00": 60, "10": 40})
+    composite = ReadoutCompositeResults(
+        sampling=sampling_result,
+    )
+    probabilities = composite.get_probabilities()
+    assert np.isclose(probabilities["00"], 0.6)
+
+
+def test_composite_readout_get_probabilities_from_state():
+    state_result = StateTomographyReadoutResult.from_state(state=ket(0))
+    composite = ReadoutCompositeResults(
+        state_tomography=state_result,
+    )
+    probabilities = composite.get_probabilities()
+    assert np.isclose(probabilities["0"], 1.0)
+
+
+def test_composite_readout_get_state():
+    state_result = StateTomographyReadoutResult.from_state(state=ket(0))
+    composite = ReadoutCompositeResults(
+        state_tomography=state_result,
+    )
+    state = composite.get_state()
+    assert state is not None
+
+
+def test_no_samples_available():
+    composite = ReadoutCompositeResults()
+    with pytest.raises(ValueError, match="find samples"):
+        composite.get_samples()
+
+
+def test_no_expectation_values_available():
+    composite = ReadoutCompositeResults()
+    with pytest.raises(ValueError, match="find expectation values"):
+        composite.get_expectation_values()
+
+
+def test_no_probabilities_available():
+    composite = ReadoutCompositeResults()
+    with pytest.raises(ValueError, match="find probabilities"):
+        composite.get_probabilities()
+
+
+def test_no_state_available():
+    composite = ReadoutCompositeResults()
+    with pytest.raises(ValueError, match="find the state"):
+        composite.get_state()

@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import numpy as np
+import pytest
 
 from qilisdk.core.model import Model, ObjectiveSense
 from qilisdk.core.variables import EQ, BinaryVariable
@@ -59,3 +60,26 @@ def test_sample_results_printable_representation():
     sr = _make_sampling_result(10, {"00": 3, "01": 2, "10": 4, "11": 1})
     output = str(sr)
     assert "Functional Results" in output
+
+
+def test_sample_results_with_intermediate_results():
+    readout_result = SamplingReadoutResult.from_samples(samples={"00": 5, "01": 5})
+    intermediate_results = [
+        ReadoutCompositeResults(sampling=SamplingReadoutResult.from_samples(samples={"00": 1, "01": 1}))
+    ]
+    sr = FunctionalResult(
+        readout_results=ReadoutCompositeResults(sampling=readout_result),
+        intermediate_results=intermediate_results,
+    )
+    assert sr.get_probabilities() == {"00": 0.5, "01": 0.5}
+    assert sr.get_samples() == {"00": 5, "01": 5}
+    assert len(sr.intermediate_results) == 1
+    assert sr.intermediate_results[0].get_samples() == {"00": 1, "01": 1}
+    assert sr.get_intermediate_samples() == [{"00": 1, "01": 1}]
+    assert sr.get_intermediate_probabilities() == [{"00": 0.5, "01": 0.5}]
+
+
+def test_no_intermediate_results_by_default():
+    sr = _make_sampling_result(10, {"00": 10})
+    with pytest.raises(ValueError, match="intermediate samples"):
+        _ = sr.get_intermediate_samples()

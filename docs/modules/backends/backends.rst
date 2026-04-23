@@ -154,7 +154,7 @@ There is no need to install QiliSim separately, as it is included with the core 
             num_substeps=2
         ),
         digital_simulation_method=DigitalMethod.statevector(max_cache_size=2_000),
-        execution_config=ExecutionConfig(num_threads=4, seed=42, monte_carlo=MonteCarloConfig(trajectories=200)),
+        execution_config=ExecutionConfig(num_threads=4, seed=42, monte_carlo=MonteCarloConfig(trajectories=200), measurement_collapse=False),
     )
 
 **Example**

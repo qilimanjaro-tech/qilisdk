@@ -83,11 +83,12 @@ class SamplingReadout(ReadoutMethod):
         >>> spec = Readout().with_sampling(nshots=1000)
     """
 
-    def __init__(self, nshots: int) -> None:
+    def __init__(self, nshots: int, expand_samples: bool = True) -> None:
         """
 
         Args:
             nshots (int): The number of shots to use during sampling. Needs to be a positive integer.
+            expand_samples (bool): Whether to display partial samples as "00_0" instead of "000" for better readability.
 
         Raises:
             ValueError: If the number of shots is not a positive integer.
@@ -95,10 +96,15 @@ class SamplingReadout(ReadoutMethod):
         if nshots <= 0 or not isinstance(nshots, int):
             raise ValueError("The number of shots has to be a positive integer")
         self._nshots: int = nshots
+        self._expand_samples: bool = expand_samples
 
     @property
     def nshots(self) -> int:
         return self._nshots
+
+    @property
+    def expand_samples(self) -> bool:
+        return self._expand_samples
 
 
 @yaml.register_class
