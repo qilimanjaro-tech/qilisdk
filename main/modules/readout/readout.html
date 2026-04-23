@@ -386,6 +386,9 @@ collect the bitstring counts.</p>
 <p><strong>Parameters</strong></p>
 <ul class="simple">
 <li><p><strong>nshots</strong> (<code class="docutils literal notranslate"><span class="pre">int</span></code>): Number of measurement shots.  Must be a positive integer.</p></li>
+<li><p><strong>expand_samples</strong> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>): Whether to expand the samples, by default True. If this is True,
+partial measurements will be returned as “<a href="#id1"><span class="problematic" id="id2">0_</span></a>” where the “_” indicates an unmeasured qubit.
+If False, the unmeasured qubits will be dropped from the bitstring, so “<a href="#id3"><span class="problematic" id="id4">0_</span></a>” would be returned as “0”.</p></li>
 </ul>
 <p><strong>When to Use It</strong></p>
 <p>Use sampling when you need the full bitstring distribution, for instance to evaluate a combinatorial
@@ -554,8 +557,9 @@ These return the raw result objects and let the type checker verify access witho
 <section id="intermediate-results">
 <h2>Intermediate Results<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#intermediate-results" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#intermediate-results'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
 <p>When a functional is constructed with <code class="docutils literal notranslate"><span class="pre">store_intermediate_results=True</span></code> (currently supported by
-<code class="xref py py-class docutils literal notranslate"><span class="pre">AnalogEvolution</span></code> and <code class="xref py py-class docutils literal notranslate"><span class="pre">QuantumReservoir</span></code>), the backend stores a
-readout result for every time step.  The same readout methods apply at each step.</p>
+<code class="xref py py-class docutils literal notranslate"><span class="pre">AnalogEvolution</span></code> and <code class="xref py py-class docutils literal notranslate"><span class="pre">QuantumReservoir</span></code>), or via
+mid-circuit measurements in a <code class="xref py py-class docutils literal notranslate"><span class="pre">Circuit</span></code>,
+the backend stores a readout result for every time step.  The same readout methods apply at each step.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.analog</span><span class="w"> </span><span class="kn">import</span> <span class="n">Schedule</span><span class="p">,</span> <span class="n">Z</span>
 </span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">ket</span>
 </span><span id="line-3"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.functionals</span><span class="w"> </span><span class="kn">import</span> <span class="n">AnalogEvolution</span>
@@ -576,8 +580,10 @@ readout result for every time step.  The same readout methods apply at each step
 </span><span id="line-18"><span class="n">result</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">functional</span><span class="p">,</span> <span class="n">readout</span><span class="o">=</span><span class="n">spec</span><span class="p">)</span>
 </span><span id="line-19">
 </span><span id="line-20"><span class="c1"># Per-step expectation values (intermediate steps + final step)</span>
-</span><span id="line-21"><span class="n">all_evs</span>    <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">intermediate_expectation_values</span>  <span class="c1"># list[list[float]]</span>
-</span><span id="line-22"><span class="n">all_states</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">intermediate_states</span>              <span class="c1"># list[QTensor]</span>
+</span><span id="line-21"><span class="n">all_evs</span>    <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">get_intermediate_expectation_values</span><span class="p">()</span>  <span class="c1"># list[list[float]]</span>
+</span><span id="line-22"><span class="n">all_states</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">get_intermediate_states</span><span class="p">()</span>              <span class="c1"># list[QTensor]</span>
+</span><span id="line-23"><span class="n">all_probs</span>  <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">get_intermediate_probabilities</span><span class="p">()</span>     <span class="c1"># list[dict[str, float]]</span>
+</span><span id="line-24"><span class="n">all_samples</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">get_intermediate_samples</span><span class="p">()</span>         <span class="c1"># list[dict[str, int]]</span>
 </span></code></pre></div>
 </div>
 <table class="docutils align-default">
@@ -593,19 +599,19 @@ readout result for every time step.  The same readout methods apply at each step
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">result.intermediate_samples</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">result.get_intermediate_samples()</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">list[dict[str,</span> <span class="pre">int]]</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">.with_sampling()</span></code></p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">result.intermediate_probabilities</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">result.get_intermediate_probabilities()</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">list[dict[str,</span> <span class="pre">float]]</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">.with_sampling()</span></code> or <code class="docutils literal notranslate"><span class="pre">.with_state_tomography()</span></code></p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">result.intermediate_expectation_values</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">result.get_intermediate_expectation_values()</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">list[list[float]]</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">.with_expectation()</span></code></p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">result.intermediate_states</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">result.get_intermediate_states()</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">list[QTensor]</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">.with_state_tomography()</span></code></p></td>
 </tr>
@@ -657,7 +663,7 @@ state at every time step, then plots the observable trajectory.</p>
 </span><span id="line-36"><span class="nb">print</span><span class="p">(</span><span class="s2">"Final state:"</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">get_state</span><span class="p">())</span>
 </span><span id="line-37">
 </span><span id="line-38"><span class="c1"># Time-resolved expectation values</span>
-</span><span id="line-39"><span class="n">ev_trajectory</span> <span class="o">=</span> <span class="p">[</span><span class="n">step</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">intermediate_expectation_values</span><span class="p">]</span>
+</span><span id="line-39"><span class="n">ev_trajectory</span> <span class="o">=</span> <span class="p">[</span><span class="n">step</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">get_intermediate_expectation_values</span><span class="p">()]</span>
 </span><span id="line-40"><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">ev_trajectory</span><span class="p">)),</span> <span class="n">ev_trajectory</span><span class="p">)</span>
 </span><span id="line-41"><span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"Time"</span><span class="p">)</span>
 </span><span id="line-42"><span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">"⟨Z⟩"</span><span class="p">)</span>

@@ -408,7 +408,7 @@
 </span><span id="line-18"><span class="kn">import</span><span class="w"> </span><span class="nn">operator</span>
 </span><span id="line-19"><span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 </span><span id="line-20"><span class="kn">from</span><span class="w"> </span><span class="nn">pprint</span><span class="w"> </span><span class="kn">import</span> <span class="n">pformat</span>
-</span><span id="line-21"><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Generic</span><span class="p">,</span> <span class="n">Protocol</span><span class="p">,</span> <span class="n">Self</span><span class="p">,</span> <span class="n">TypeGuard</span><span class="p">,</span> <span class="n">TypeVar</span>
+</span><span id="line-21"><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Generic</span><span class="p">,</span> <span class="n">Never</span><span class="p">,</span> <span class="n">Protocol</span><span class="p">,</span> <span class="n">Self</span><span class="p">,</span> <span class="n">TypeGuard</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">overload</span>
 </span><span id="line-22">
 </span><span id="line-23"><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 </span><span id="line-24"><span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
@@ -501,228 +501,198 @@
 </span><span id="line-100"><span class="sd">            is provided.</span>
 </span><span id="line-101"><span class="sd">    &quot;&quot;&quot;</span>
 </span><span id="line-102">
-</span><span id="line-103">    <span class="nd">@classmethod</span>
+</span><span id="line-103">    <span class="nd">@staticmethod</span>
+</span><span id="line-104">    <span class="k">def</span><span class="w"> </span><span class="nf">_filter_samples</span><span class="p">(</span>
+</span><span id="line-105">        <span class="n">samples_to_filter</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">qubits_to_measure</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">expand_samples</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+</span><span id="line-106">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+</span><span id="line-107"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-108"><span class="sd">        Filter the input samples to include only the requested qubits.</span>
+</span><span id="line-109">
+</span><span id="line-110"><span class="sd">        Args:</span>
+</span><span id="line-111"><span class="sd">            samples_to_filter (dict[str, int]): The original samples to be filtered.</span>
+</span><span id="line-112"><span class="sd">            qubits_to_measure (list[int]): The list of qubit indices that were measured.</span>
+</span><span id="line-113"><span class="sd">            expand_samples (bool): Whether to include placeholders for unmeasured qubits in the filtered results.</span>
+</span><span id="line-114">
+</span><span id="line-115"><span class="sd">        Returns:</span>
+</span><span id="line-116"><span class="sd">            dict[str, int]: The filtered samples containing only the requested qubits.</span>
+</span><span id="line-117"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-118">        <span class="n">filtered_samples</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+</span><span id="line-119">        <span class="k">for</span> <span class="n">bitstring</span><span class="p">,</span> <span class="n">count</span> <span class="ow">in</span> <span class="n">samples_to_filter</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+</span><span id="line-120">            <span class="k">if</span> <span class="n">expand_samples</span><span class="p">:</span>
+</span><span id="line-121">                <span class="n">filtered_bitstring</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+</span><span id="line-122">                    <span class="s2">&quot;_&quot;</span> <span class="k">if</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">qubits_to_measure</span> <span class="k">else</span> <span class="n">bit</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">bit</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">bitstring</span><span class="p">)</span>
+</span><span id="line-123">                <span class="p">)</span>
+</span><span id="line-124">            <span class="k">else</span><span class="p">:</span>
+</span><span id="line-125">                <span class="n">filtered_bitstring</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">bit</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">bit</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">bitstring</span><span class="p">)</span> <span class="k">if</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">qubits_to_measure</span><span class="p">)</span>
+</span><span id="line-126">            <span class="n">filtered_samples</span><span class="p">[</span><span class="n">filtered_bitstring</span><span class="p">]</span> <span class="o">=</span> <span class="n">filtered_samples</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">filtered_bitstring</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">count</span>
+</span><span id="line-127">        <span class="k">return</span> <span class="n">filtered_samples</span>
+</span><span id="line-128">
+</span><span id="line-129">    <span class="nd">@staticmethod</span>
+</span><span id="line-130">    <span class="k">def</span><span class="w"> </span><span class="nf">_expand_samples</span><span class="p">(</span>
+</span><span id="line-131">        <span class="n">samples_to_expand</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">qubits_to_measure</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">nqubits_total</span><span class="p">:</span> <span class="nb">int</span>
+</span><span id="line-132">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+</span><span id="line-133"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-134"><span class="sd">        Expand the input samples to include placeholders for unmeasured qubits.</span>
+</span><span id="line-135">
+</span><span id="line-136"><span class="sd">        Args:</span>
+</span><span id="line-137"><span class="sd">            samples_to_expand (dict[str, int]): The original samples to be expanded.</span>
+</span><span id="line-138"><span class="sd">            qubits_to_measure (list[int]): The list of qubit indices that were measured.</span>
+</span><span id="line-139"><span class="sd">            nqubits_total (int): The total number of qubits in the system.</span>
+</span><span id="line-140">
+</span><span id="line-141"><span class="sd">        Returns:</span>
+</span><span id="line-142"><span class="sd">            dict[str, int]: The expanded samples containing placeholders for unmeasured qubits.</span>
+</span><span id="line-143"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-144">        <span class="n">expanded_samples</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+</span><span id="line-145">        <span class="k">for</span> <span class="n">bitstring</span><span class="p">,</span> <span class="n">count</span> <span class="ow">in</span> <span class="n">samples_to_expand</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+</span><span id="line-146">            <span class="n">bitstring_remaining</span> <span class="o">=</span> <span class="n">bitstring</span>
+</span><span id="line-147">            <span class="n">expanded_bitstring</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+</span><span id="line-148">            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nqubits_total</span><span class="p">):</span>
+</span><span id="line-149">                <span class="k">if</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">qubits_to_measure</span><span class="p">:</span>
+</span><span id="line-150">                    <span class="n">expanded_bitstring</span> <span class="o">+=</span> <span class="n">bitstring_remaining</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</span><span id="line-151">                    <span class="n">bitstring_remaining</span> <span class="o">=</span> <span class="n">bitstring_remaining</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+</span><span id="line-152">                <span class="k">else</span><span class="p">:</span>
+</span><span id="line-153">                    <span class="n">expanded_bitstring</span> <span class="o">+=</span> <span class="s2">&quot;_&quot;</span>
+</span><span id="line-154">            <span class="n">expanded_samples</span><span class="p">[</span><span class="n">expanded_bitstring</span><span class="p">]</span> <span class="o">=</span> <span class="n">expanded_samples</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">expanded_bitstring</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">count</span>
+</span><span id="line-155">        <span class="k">return</span> <span class="n">expanded_samples</span>
+</span><span id="line-156">
+</span><span id="line-157">    <span class="nd">@classmethod</span>
+</span><span id="line-158">    <span class="k">def</span><span class="w"> </span><span class="nf">_adjust_samples</span><span class="p">(</span>
+</span><span id="line-159">        <span class="bp">cls</span><span class="p">,</span>
+</span><span id="line-160">        <span class="n">samples_to_filter</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
+</span><span id="line-161">        <span class="n">qubits_to_measure</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+</span><span id="line-162">        <span class="n">nqubits</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-163">        <span class="n">expand_samples</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+</span><span id="line-164">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+</span><span id="line-165"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-166"><span class="sd">        Adjust the input samples to match the requested qubits to measure and total number of qubits.</span>
+</span><span id="line-167">
+</span><span id="line-168"><span class="sd">        This method handles both filtering and expansion of samples based on the relationship between</span>
+</span><span id="line-169"><span class="sd">        the number of qubits in the input samples and the requested total number of qubits.</span>
+</span><span id="line-170">
+</span><span id="line-171"><span class="sd">        - If the input samples have more qubits than requested, it filters out the unmeasured qubits.</span>
+</span><span id="line-172"><span class="sd">        - If the input samples have fewer qubits than requested, it expands them by adding placeholders for the unmeasured qubits.</span>
+</span><span id="line-173">
+</span><span id="line-174"><span class="sd">        Args:</span>
+</span><span id="line-175"><span class="sd">            samples_to_filter (dict[str, int]): The original samples to be adjusted.</span>
+</span><span id="line-176"><span class="sd">            qubits_to_measure (list[int]): The list of qubit indices that were measured.</span>
+</span><span id="line-177"><span class="sd">            nqubits (int | None): The total number of qubits in the system.</span>
+</span><span id="line-178"><span class="sd">            expand_samples (bool): Whether to expand samples with placeholders for unmeasured qubits.</span>
+</span><span id="line-179">
+</span><span id="line-180"><span class="sd">        Returns:</span>
+</span><span id="line-181"><span class="sd">            dict[str, int]: The adjusted samples matching the requested qubits and total number of qubits.</span>
+</span><span id="line-182"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-183">        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">samples_to_filter</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
+</span><span id="line-184">            <span class="n">nqubits_samples</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">samples_to_filter</span><span class="o">.</span><span class="n">keys</span><span class="p">())))</span>
+</span><span id="line-185">            <span class="n">nqubits_total</span> <span class="o">=</span> <span class="n">nqubits</span> <span class="k">if</span> <span class="n">nqubits</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">nqubits_samples</span>
+</span><span id="line-186">            <span class="c1"># Assuming 3 qubits, if asked for 0 and 1 and we have xxx, return xx_</span>
+</span><span id="line-187">            <span class="k">if</span> <span class="n">nqubits_samples</span> <span class="o">&gt;=</span> <span class="n">nqubits_total</span><span class="p">:</span>
+</span><span id="line-188">                <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_filter_samples</span><span class="p">(</span><span class="n">samples_to_filter</span><span class="p">,</span> <span class="n">qubits_to_measure</span><span class="p">,</span> <span class="n">expand_samples</span><span class="o">=</span><span class="n">expand_samples</span><span class="p">)</span>
+</span><span id="line-189">            <span class="c1"># Assuming 3 qubits, if asked for 0 and 1 and we have xx, return xx_</span>
+</span><span id="line-190">            <span class="k">if</span> <span class="n">nqubits_samples</span> <span class="o">&lt;</span> <span class="n">nqubits_total</span> <span class="ow">and</span> <span class="n">expand_samples</span><span class="p">:</span>
+</span><span id="line-191">                <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_expand_samples</span><span class="p">(</span><span class="n">samples_to_filter</span><span class="p">,</span> <span class="n">qubits_to_measure</span><span class="p">,</span> <span class="n">nqubits_total</span><span class="p">)</span>
+</span><span id="line-192">        <span class="k">return</span> <span class="n">samples_to_filter</span>
+</span><span id="line-193">
+</span><span id="line-194">    <span class="nd">@classmethod</span>
 <div class="viewcode-block" id="SamplingReadoutResult.from_samples">
 <a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.SamplingReadoutResult.from_samples">[docs]</a>
-</span><span id="line-104">    <span class="k">def</span><span class="w"> </span><span class="nf">from_samples</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
-</span><span id="line-105">        <span class="k">if</span> <span class="ow">not</span> <span class="n">samples</span><span class="p">:</span>
-</span><span id="line-106">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;can&#39;t initialize Sampling Results if samples are not provided.&quot;</span><span class="p">)</span>
-</span><span id="line-107">
-</span><span id="line-108">        <span class="n">nshots</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">samples</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
-</span><span id="line-109">        <span class="n">bitstrings</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">samples</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
-</span><span id="line-110">        <span class="n">nqubits</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">bitstrings</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-</span><span id="line-111">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bitstring</span><span class="p">)</span> <span class="o">==</span> <span class="n">nqubits</span> <span class="k">for</span> <span class="n">bitstring</span> <span class="ow">in</span> <span class="n">bitstrings</span><span class="p">):</span>
-</span><span id="line-112">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Not all bitstring keys have the same length.&quot;</span><span class="p">)</span>
-</span><span id="line-113">
-</span><span id="line-114">        <span class="c1"># Calculate probabilities</span>
-</span><span id="line-115">        <span class="n">probabilities</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-</span><span id="line-116">            <span class="n">bitstring</span><span class="p">:</span> <span class="p">(</span><span class="n">counts</span> <span class="o">/</span> <span class="n">nshots</span> <span class="k">if</span> <span class="n">nshots</span> <span class="ow">and</span> <span class="n">nshots</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mf">0.0</span><span class="p">)</span> <span class="k">for</span> <span class="n">bitstring</span><span class="p">,</span> <span class="n">counts</span> <span class="ow">in</span> <span class="n">samples</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-</span><span id="line-117">        <span class="p">}</span>
-</span><span id="line-118">        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">samples</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">probabilities</span><span class="o">=</span><span class="n">probabilities</span><span class="p">)</span></div>
+</span><span id="line-195">    <span class="k">def</span><span class="w"> </span><span class="nf">from_samples</span><span class="p">(</span>
+</span><span id="line-196">        <span class="bp">cls</span><span class="p">,</span>
+</span><span id="line-197">        <span class="n">samples</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
+</span><span id="line-198">        <span class="n">qubits_to_measure</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-199">        <span class="n">nqubits</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-200">        <span class="n">expand_samples</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-201">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
+</span><span id="line-202"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-203"><span class="sd">        Construct a SamplingReadoutResult from raw samples.</span>
+</span><span id="line-204">
+</span><span id="line-205"><span class="sd">        Args:</span>
+</span><span id="line-206"><span class="sd">            samples (dict[str, int]): Mapping of bitstring to measurement count.</span>
+</span><span id="line-207"><span class="sd">            qubits_to_measure (list[int] | None): Optional list of qubit indices that were measured.</span>
+</span><span id="line-208"><span class="sd">            nqubits (int | None): Total number of qubits in the system.</span>
+</span><span id="line-209"><span class="sd">            expand_samples (bool | None): Whether to expand samples with placeholders for unmeasured qubits.</span>
+</span><span id="line-210">
+</span><span id="line-211"><span class="sd">        Returns:</span>
+</span><span id="line-212"><span class="sd">            SamplingReadoutResult: The constructed result object.</span>
+</span><span id="line-213">
+</span><span id="line-214"><span class="sd">        Raises:</span>
+</span><span id="line-215"><span class="sd">            ValueError: If samples are not provided.</span>
+</span><span id="line-216"><span class="sd">            ValueError: If not all bitstring keys have the same length.</span>
+</span><span id="line-217"><span class="sd">            ValueError: If qubits_to_measure is provided and has more qubits than are present in the bitstrings.</span>
+</span><span id="line-218">
+</span><span id="line-219"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-220">        <span class="k">if</span> <span class="ow">not</span> <span class="n">samples</span><span class="p">:</span>
+</span><span id="line-221">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;can&#39;t initialize Sampling Results if samples are not provided.&quot;</span><span class="p">)</span>
+</span><span id="line-222">
+</span><span id="line-223">        <span class="n">nshots</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">samples</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+</span><span id="line-224">        <span class="n">bitstrings</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">samples</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+</span><span id="line-225">        <span class="n">nqubits_samples</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">bitstrings</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+</span><span id="line-226">        <span class="n">nqubits_total</span> <span class="o">=</span> <span class="n">nqubits</span> <span class="k">if</span> <span class="n">nqubits</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">nqubits_samples</span>
+</span><span id="line-227">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bitstring</span><span class="p">)</span> <span class="o">==</span> <span class="n">nqubits_samples</span> <span class="k">for</span> <span class="n">bitstring</span> <span class="ow">in</span> <span class="n">bitstrings</span><span class="p">):</span>
+</span><span id="line-228">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Not all bitstring keys have the same length.&quot;</span><span class="p">)</span>
+</span><span id="line-229">        <span class="k">if</span> <span class="n">qubits_to_measure</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">qubits_to_measure</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">nqubits_samples</span><span class="p">:</span>
+</span><span id="line-230">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Can&#39;t filter samples for more qubits than are present in the bitstrings.&quot;</span><span class="p">)</span>
+</span><span id="line-231">        <span class="k">if</span> <span class="n">nqubits_total</span> <span class="o">!=</span> <span class="n">nqubits_samples</span> <span class="ow">and</span> <span class="n">qubits_to_measure</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-232">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="line-233">                <span class="s2">&quot;Must provide qubits_to_measure if nqubits is different from the number of qubits in the samples.&quot;</span>
+</span><span id="line-234">            <span class="p">)</span>
+</span><span id="line-235">
+</span><span id="line-236">        <span class="n">expand_samples</span> <span class="o">=</span> <span class="n">expand_samples</span> <span class="k">if</span> <span class="n">expand_samples</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">True</span>
+</span><span id="line-237">
+</span><span id="line-238">        <span class="c1"># Calculate probabilities</span>
+</span><span id="line-239">        <span class="n">probabilities</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+</span><span id="line-240">            <span class="n">bitstring</span><span class="p">:</span> <span class="p">(</span><span class="n">counts</span> <span class="o">/</span> <span class="n">nshots</span> <span class="k">if</span> <span class="n">nshots</span> <span class="ow">and</span> <span class="n">nshots</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mf">0.0</span><span class="p">)</span> <span class="k">for</span> <span class="n">bitstring</span><span class="p">,</span> <span class="n">counts</span> <span class="ow">in</span> <span class="n">samples</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+</span><span id="line-241">        <span class="p">}</span>
+</span><span id="line-242">        <span class="k">if</span> <span class="n">qubits_to_measure</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-243">            <span class="n">samples</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_adjust_samples</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">qubits_to_measure</span><span class="p">,</span> <span class="n">nqubits_total</span><span class="p">,</span> <span class="n">expand_samples</span><span class="o">=</span><span class="n">expand_samples</span><span class="p">)</span>
+</span><span id="line-244">        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">samples</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">probabilities</span><span class="o">=</span><span class="n">probabilities</span><span class="p">)</span></div>
 
-</span><span id="line-119">
-</span><span id="line-120">    <span class="nd">@classmethod</span>
+</span><span id="line-245">
+</span><span id="line-246">    <span class="nd">@classmethod</span>
 <div class="viewcode-block" id="SamplingReadoutResult.from_state">
 <a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.SamplingReadoutResult.from_state">[docs]</a>
-</span><span id="line-121">    <span class="k">def</span><span class="w"> </span><span class="nf">from_state</span><span class="p">(</span>
-</span><span id="line-122">        <span class="bp">cls</span><span class="p">,</span>
-</span><span id="line-123">        <span class="n">sampling_readout</span><span class="p">:</span> <span class="n">SamplingReadout</span><span class="p">,</span>
-</span><span id="line-124">        <span class="n">state</span><span class="p">:</span> <span class="n">QTensor</span><span class="p">,</span>
-</span><span id="line-125">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
-</span><span id="line-126">        <span class="n">f_string</span> <span class="o">=</span> <span class="s2">&quot;{:0&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">nqubits</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;b}&quot;</span>
-</span><span id="line-127">        <span class="n">probabilities</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{(</span><span class="n">f_string</span><span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">):</span> <span class="n">p</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">probabilities</span><span class="p">())}</span>
-</span><span id="line-128">        <span class="n">samples</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">_samples_from_probabilities</span><span class="p">(</span><span class="n">probabilities</span><span class="p">,</span> <span class="n">nshots</span><span class="o">=</span><span class="n">sampling_readout</span><span class="o">.</span><span class="n">nshots</span><span class="p">)</span>
-</span><span id="line-129">        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">samples</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">probabilities</span><span class="o">=</span><span class="n">probabilities</span><span class="p">)</span></div>
+</span><span id="line-247">    <span class="k">def</span><span class="w"> </span><span class="nf">from_state</span><span class="p">(</span>
+</span><span id="line-248">        <span class="bp">cls</span><span class="p">,</span>
+</span><span id="line-249">        <span class="n">sampling_readout</span><span class="p">:</span> <span class="n">SamplingReadout</span><span class="p">,</span>
+</span><span id="line-250">        <span class="n">state</span><span class="p">:</span> <span class="n">QTensor</span><span class="p">,</span>
+</span><span id="line-251">        <span class="n">qubits_to_measure</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-252">        <span class="n">expand_samples</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+</span><span id="line-253">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
+</span><span id="line-254">        <span class="n">f_string</span> <span class="o">=</span> <span class="s2">&quot;{:0&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">nqubits</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;b}&quot;</span>
+</span><span id="line-255">        <span class="n">probabilities</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{(</span><span class="n">f_string</span><span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">):</span> <span class="n">p</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">probabilities</span><span class="p">())}</span>
+</span><span id="line-256">        <span class="n">samples</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">_samples_from_probabilities</span><span class="p">(</span><span class="n">probabilities</span><span class="p">,</span> <span class="n">nshots</span><span class="o">=</span><span class="n">sampling_readout</span><span class="o">.</span><span class="n">nshots</span><span class="p">)</span>
+</span><span id="line-257">        <span class="k">if</span> <span class="n">qubits_to_measure</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-258">            <span class="n">samples</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_adjust_samples</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">qubits_to_measure</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">nqubits</span><span class="p">,</span> <span class="n">expand_samples</span><span class="o">=</span><span class="n">expand_samples</span><span class="p">)</span>
+</span><span id="line-259">        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">samples</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">probabilities</span><span class="o">=</span><span class="n">probabilities</span><span class="p">)</span></div>
 
-</span><span id="line-130">
-</span><span id="line-131">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">probabilities</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-132">        <span class="k">if</span> <span class="n">samples</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-133">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Can&#39;t construct the Sampling results if samples are not provided.&quot;</span><span class="p">)</span>
-</span><span id="line-134">        <span class="bp">self</span><span class="o">.</span><span class="n">_samples</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">samples</span> <span class="ow">or</span> <span class="p">{}</span>
-</span><span id="line-135">        <span class="bp">self</span><span class="o">.</span><span class="n">_probabilities</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">probabilities</span> <span class="ow">or</span> <span class="p">{}</span>
-</span><span id="line-136">
-</span><span id="line-137">    <span class="nd">@property</span>
+</span><span id="line-260">
+</span><span id="line-261">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">probabilities</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-262">        <span class="k">if</span> <span class="n">samples</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-263">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Can&#39;t construct the Sampling results if samples are not provided.&quot;</span><span class="p">)</span>
+</span><span id="line-264">        <span class="bp">self</span><span class="o">.</span><span class="n">_samples</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">samples</span> <span class="ow">or</span> <span class="p">{}</span>
+</span><span id="line-265">        <span class="bp">self</span><span class="o">.</span><span class="n">_probabilities</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">probabilities</span> <span class="ow">or</span> <span class="p">{}</span>
+</span><span id="line-266">
+</span><span id="line-267">    <span class="nd">@property</span>
 <div class="viewcode-block" id="SamplingReadoutResult.samples">
 <a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.SamplingReadoutResult.samples">[docs]</a>
-</span><span id="line-138">    <span class="k">def</span><span class="w"> </span><span class="nf">samples</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
-</span><span id="line-139"><span class="w">        </span><span class="sd">&quot;&quot;&quot;dict[str, int]: Mapping of measured bitstring to count.&quot;&quot;&quot;</span>
-</span><span id="line-140">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_samples</span></div>
+</span><span id="line-268">    <span class="k">def</span><span class="w"> </span><span class="nf">samples</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+</span><span id="line-269"><span class="w">        </span><span class="sd">&quot;&quot;&quot;dict[str, int]: Mapping of measured bitstring to count.&quot;&quot;&quot;</span>
+</span><span id="line-270">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_samples</span></div>
 
-</span><span id="line-141">
-</span><span id="line-142">    <span class="nd">@property</span>
+</span><span id="line-271">
+</span><span id="line-272">    <span class="nd">@property</span>
 <div class="viewcode-block" id="SamplingReadoutResult.probabilities">
 <a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.SamplingReadoutResult.probabilities">[docs]</a>
-</span><span id="line-143">    <span class="k">def</span><span class="w"> </span><span class="nf">probabilities</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
-</span><span id="line-144"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Estimated probability distribution over bitstrings.</span>
-</span><span id="line-145">
-</span><span id="line-146"><span class="sd">        Returns:</span>
-</span><span id="line-147"><span class="sd">            dict[str, float]: Mapping of bitstring to probability.</span>
-</span><span id="line-148"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-149">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_probabilities</span></div>
-
-</span><span id="line-150">
-<div class="viewcode-block" id="SamplingReadoutResult.get_probability">
-<a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.SamplingReadoutResult.get_probability">[docs]</a>
-</span><span id="line-151">    <span class="k">def</span><span class="w"> </span><span class="nf">get_probability</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bitstring</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-</span><span id="line-152"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the probability for a single bitstring.</span>
-</span><span id="line-153">
-</span><span id="line-154"><span class="sd">        Args:</span>
-</span><span id="line-155"><span class="sd">            bitstring (str): The bitstring to look up (e.g. ``&quot;010&quot;``).</span>
-</span><span id="line-156">
-</span><span id="line-157"><span class="sd">        Returns:</span>
-</span><span id="line-158"><span class="sd">            float: The probability associated with ``bitstring``, or ``0.0``</span>
-</span><span id="line-159"><span class="sd">            if it was not observed.</span>
-</span><span id="line-160"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-161">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_probabilities</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">bitstring</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span></div>
-
-</span><span id="line-162">
-<div class="viewcode-block" id="SamplingReadoutResult.get_probabilities">
-<a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.SamplingReadoutResult.get_probabilities">[docs]</a>
-</span><span id="line-163">    <span class="k">def</span><span class="w"> </span><span class="nf">get_probabilities</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
-</span><span id="line-164"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the most probable bitstrings in descending order.</span>
-</span><span id="line-165">
-</span><span id="line-166"><span class="sd">        Args:</span>
-</span><span id="line-167"><span class="sd">            n (int | None): Maximum number of entries to return.  ``None``</span>
-</span><span id="line-168"><span class="sd">                (the default) returns all outcomes.</span>
-</span><span id="line-169">
-</span><span id="line-170"><span class="sd">        Returns:</span>
-</span><span id="line-171"><span class="sd">            list[tuple[str, float]]: Up to ``n`` ``(bitstring, probability)``</span>
-</span><span id="line-172"><span class="sd">            pairs sorted by probability in descending order.</span>
-</span><span id="line-173"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-174">        <span class="k">if</span> <span class="n">n</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-175">            <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_probabilities</span><span class="p">)</span>
-</span><span id="line-176">        <span class="k">return</span> <span class="n">heapq</span><span class="o">.</span><span class="n">nlargest</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_probabilities</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="n">operator</span><span class="o">.</span><span class="n">itemgetter</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span></div>
-
-</span><span id="line-177">
-</span><span id="line-178">    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="line-179">
-</span><span id="line-180">        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Sampling Results: (</span><span class="se">\n\t</span><span class="s2">nshots=</span><span class="si">{</span><span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">samples</span><span class="o">.</span><span class="n">values</span><span class="p">())</span><span class="si">}</span><span class="s2">,</span><span class="se">\n\t</span><span class="s2">samples=</span><span class="si">{</span><span class="n">pformat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">samples</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s2">)</span><span class="se">\n\n</span><span class="s2">&quot;</span>
-</span><span id="line-181">
-</span><span id="line-182">    <span class="fm">__str__</span> <span class="o">=</span> <span class="fm">__repr__</span></div>
-
-</span><span id="line-183">
-</span><span id="line-184">
-</span><span id="line-185"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
-<div class="viewcode-block" id="ExpectationReadoutResult">
-<a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.ExpectationReadoutResult">[docs]</a>
-</span><span id="line-186"><span class="k">class</span><span class="w"> </span><span class="nc">ExpectationReadoutResult</span><span class="p">(</span><span class="n">ReadoutResult</span><span class="p">[</span><span class="n">ExpectationReadout</span><span class="p">]):</span>
-</span><span id="line-187"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Result produced by an :class:`~qilisdk.readout.ExpectationReadout`.</span>
-</span><span id="line-188">
-</span><span id="line-189"><span class="sd">    Contains the computed expectation values for each observable specified in</span>
-</span><span id="line-190"><span class="sd">    the readout configuration.  The object can be constructed in two ways:</span>
-</span><span id="line-191">
-</span><span id="line-192"><span class="sd">    1. From pre-computed ``expectation_values``.</span>
-</span><span id="line-193"><span class="sd">    2. From a quantum ``state``, in which case the expectation values are derived via :func:`~qilisdk.core.expect_val`.</span>
-</span><span id="line-194">
-</span><span id="line-195"><span class="sd">    Args:</span>
-</span><span id="line-196"><span class="sd">        readout (ExpectationReadout): The readout configuration that produced this result.</span>
-</span><span id="line-197"><span class="sd">        expectation_values (list[Number] | None): Pre-computed expectation values, one per observable.</span>
-</span><span id="line-198"><span class="sd">            Mutually exclusive with ``state``.</span>
-</span><span id="line-199"><span class="sd">        state (QTensor | None): Quantum state used to compute expectation values on-the-fly.  Mutually exclusive with</span>
-</span><span id="line-200"><span class="sd">            ``expectation_values``.</span>
-</span><span id="line-201">
-</span><span id="line-202"><span class="sd">    Raises:</span>
-</span><span id="line-203"><span class="sd">        ValueError: If neither ``expectation_values`` nor ``state`` is provided.</span>
-</span><span id="line-204"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-205">
-</span><span id="line-206">    <span class="nd">@classmethod</span>
-<div class="viewcode-block" id="ExpectationReadoutResult.from_expectations">
-<a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.ExpectationReadoutResult.from_expectations">[docs]</a>
-</span><span id="line-207">    <span class="k">def</span><span class="w"> </span><span class="nf">from_expectations</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">expectation_values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">nshots</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
-</span><span id="line-208">        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">expectation_values</span><span class="o">=</span><span class="n">expectation_values</span><span class="p">,</span> <span class="n">nshots</span><span class="o">=</span><span class="n">nshots</span><span class="p">)</span></div>
-
-</span><span id="line-209">
-</span><span id="line-210">    <span class="nd">@classmethod</span>
-<div class="viewcode-block" id="ExpectationReadoutResult.from_state">
-<a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.ExpectationReadoutResult.from_state">[docs]</a>
-</span><span id="line-211">    <span class="k">def</span><span class="w"> </span><span class="nf">from_state</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">expectation_readout</span><span class="p">:</span> <span class="n">ExpectationReadout</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">QTensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
-</span><span id="line-212">        <span class="n">expectation_readout</span><span class="o">.</span><span class="n">expand_observables</span><span class="p">(</span><span class="n">nqubits</span><span class="o">=</span><span class="n">state</span><span class="o">.</span><span class="n">nqubits</span><span class="p">)</span>
-</span><span id="line-213">        <span class="k">try</span><span class="p">:</span>
-</span><span id="line-214">            <span class="n">expectation_values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
-</span><span id="line-215">                <span class="n">_assert_real</span><span class="p">((</span><span class="n">expect_val</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="n">state</span><span class="p">)))</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">expectation_readout</span><span class="o">.</span><span class="n">qtensor_observables</span>
-</span><span id="line-216">            <span class="p">]</span>
-</span><span id="line-217">        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
-</span><span id="line-218">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-</span><span id="line-219">                <span class="s2">&quot;Encountered an imaginary expectation value while computing the expectation values, try reducing the total tolerance or improving simulation precision.&quot;</span>
-</span><span id="line-220">            <span class="p">)</span>
-</span><span id="line-221">        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">expectation_values</span><span class="o">=</span><span class="n">expectation_values</span><span class="p">,</span> <span class="n">nshots</span><span class="o">=</span><span class="n">expectation_readout</span><span class="o">.</span><span class="n">nshots</span><span class="p">)</span></div>
-
-</span><span id="line-222">
-</span><span id="line-223">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expectation_values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">nshots</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-224">        <span class="k">if</span> <span class="n">expectation_values</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-225">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Can&#39;t initialize Expectation Readout if the expectation values are not provided.&quot;</span><span class="p">)</span>
-</span><span id="line-226">        <span class="bp">self</span><span class="o">.</span><span class="n">_expectation_values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">expectation_values</span>
-</span><span id="line-227">        <span class="bp">self</span><span class="o">.</span><span class="n">_nshots</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">nshots</span>
-</span><span id="line-228">
-</span><span id="line-229">    <span class="nd">@property</span>
-<div class="viewcode-block" id="ExpectationReadoutResult.expectation_values">
-<a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.ExpectationReadoutResult.expectation_values">[docs]</a>
-</span><span id="line-230">    <span class="k">def</span><span class="w"> </span><span class="nf">expectation_values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
-</span><span id="line-231"><span class="w">        </span><span class="sd">&quot;&quot;&quot;list[Number]: Expectation values, one per observable, in the same order as specified in the readout.&quot;&quot;&quot;</span>
-</span><span id="line-232">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expectation_values</span></div>
-
-</span><span id="line-233">
-</span><span id="line-234">    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="line-235">        <span class="k">return</span> <span class="p">(</span>
-</span><span id="line-236">            <span class="s2">&quot;Expectation Value Results: (</span><span class="se">\n</span><span class="s2">&quot;</span>
-</span><span id="line-237">            <span class="o">+</span> <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">nshots = </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_nshots</span><span class="si">}</span><span class="s2">,</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nshots</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nshots</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
-</span><span id="line-238">            <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">expectation_values=</span><span class="si">{</span><span class="n">pformat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_expectation_values</span><span class="p">)</span><span class="si">}</span><span class="s2">,</span><span class="se">\n</span><span class="s2">&quot;</span>
-</span><span id="line-239">            <span class="o">+</span> <span class="s2">&quot;)</span><span class="se">\n\n</span><span class="s2">&quot;</span>
-</span><span id="line-240">        <span class="p">)</span>
-</span><span id="line-241">
-</span><span id="line-242">    <span class="fm">__str__</span> <span class="o">=</span> <span class="fm">__repr__</span></div>
-
-</span><span id="line-243">
-</span><span id="line-244">
-</span><span id="line-245"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
-<div class="viewcode-block" id="StateTomographyReadoutResult">
-<a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.StateTomographyReadoutResult">[docs]</a>
-</span><span id="line-246"><span class="k">class</span><span class="w"> </span><span class="nc">StateTomographyReadoutResult</span><span class="p">(</span><span class="n">ReadoutResult</span><span class="p">[</span><span class="n">StateTomographyReadout</span><span class="p">]):</span>
-</span><span id="line-247"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Result produced by a :class:`~qilisdk.readout.StateTomographyReadout`.</span>
-</span><span id="line-248">
-</span><span id="line-249"><span class="sd">    Contains the full quantum state after execution and, optionally, the computational-basis probability distribution derived from it.</span>
-</span><span id="line-250">
-</span><span id="line-251"><span class="sd">    Args:</span>
-</span><span id="line-252"><span class="sd">        readout (StateTomographyReadout): The readout configuration that produced this result.</span>
-</span><span id="line-253"><span class="sd">        state (QTensor): The reconstructed quantum state (ket or density matrix).</span>
-</span><span id="line-254"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-255">
-</span><span id="line-256">    <span class="nd">@classmethod</span>
-<div class="viewcode-block" id="StateTomographyReadoutResult.from_state">
-<a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.StateTomographyReadoutResult.from_state">[docs]</a>
-</span><span id="line-257">    <span class="k">def</span><span class="w"> </span><span class="nf">from_state</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">QTensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
-</span><span id="line-258">        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">)</span></div>
-
-</span><span id="line-259">
-</span><span id="line-260">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
-</span><span id="line-261">        <span class="bp">self</span><span class="p">,</span>
-</span><span id="line-262">        <span class="n">state</span><span class="p">:</span> <span class="n">QTensor</span><span class="p">,</span>
-</span><span id="line-263">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-264">        <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="p">:</span> <span class="n">QTensor</span> <span class="o">=</span> <span class="n">state</span>
-</span><span id="line-265">
-</span><span id="line-266">    <span class="nd">@property</span>
-<div class="viewcode-block" id="StateTomographyReadoutResult.state">
-<a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.StateTomographyReadoutResult.state">[docs]</a>
-</span><span id="line-267">    <span class="k">def</span><span class="w"> </span><span class="nf">state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QTensor</span><span class="p">:</span>
-</span><span id="line-268"><span class="w">        </span><span class="sd">&quot;&quot;&quot;QTensor: The reconstructed quantum state (ket or density matrix).&quot;&quot;&quot;</span>
-</span><span id="line-269">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span></div>
-
-</span><span id="line-270">
-</span><span id="line-271">    <span class="nd">@property</span>
-<div class="viewcode-block" id="StateTomographyReadoutResult.probabilities">
-<a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.StateTomographyReadoutResult.probabilities">[docs]</a>
-</span><span id="line-272">    <span class="k">def</span><span class="w"> </span><span class="nf">probabilities</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
-</span><span id="line-273"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Computational-basis probability distribution derived from the state.</span>
-</span><span id="line-274">
-</span><span id="line-275"><span class="sd">        Returns:</span>
-</span><span id="line-276"><span class="sd">            dict[str, float]: Mapping of bitstring to probability.</span>
-</span><span id="line-277"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-278">        <span class="n">f_string</span> <span class="o">=</span> <span class="s2">&quot;{:0&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">nqubits</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;b}&quot;</span>
-</span><span id="line-279">        <span class="k">return</span> <span class="p">{(</span><span class="n">f_string</span><span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">):</span> <span class="n">p</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">probabilities</span><span class="p">())}</span></div>
+</span><span id="line-273">    <span class="k">def</span><span class="w"> </span><span class="nf">probabilities</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+</span><span id="line-274"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Estimated probability distribution over bitstrings.</span>
+</span><span id="line-275">
+</span><span id="line-276"><span class="sd">        Returns:</span>
+</span><span id="line-277"><span class="sd">            dict[str, float]: Mapping of bitstring to probability.</span>
+</span><span id="line-278"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-279">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_probabilities</span></div>
 
 </span><span id="line-280">
-<div class="viewcode-block" id="StateTomographyReadoutResult.get_probability">
-<a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.StateTomographyReadoutResult.get_probability">[docs]</a>
+<div class="viewcode-block" id="SamplingReadoutResult.get_probability">
+<a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.SamplingReadoutResult.get_probability">[docs]</a>
 </span><span id="line-281">    <span class="k">def</span><span class="w"> </span><span class="nf">get_probability</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bitstring</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 </span><span id="line-282"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the probability for a single bitstring.</span>
 </span><span id="line-283">
@@ -733,234 +703,482 @@
 </span><span id="line-288"><span class="sd">            float: The probability associated with ``bitstring``, or ``0.0``</span>
 </span><span id="line-289"><span class="sd">            if it was not observed.</span>
 </span><span id="line-290"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-291">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">probabilities</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">bitstring</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span></div>
+</span><span id="line-291">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_probabilities</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">bitstring</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span></div>
 
 </span><span id="line-292">
-<div class="viewcode-block" id="StateTomographyReadoutResult.get_probabilities">
-<a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.StateTomographyReadoutResult.get_probabilities">[docs]</a>
+<div class="viewcode-block" id="SamplingReadoutResult.get_probabilities">
+<a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.SamplingReadoutResult.get_probabilities">[docs]</a>
 </span><span id="line-293">    <span class="k">def</span><span class="w"> </span><span class="nf">get_probabilities</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
 </span><span id="line-294"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the most probable bitstrings in descending order.</span>
 </span><span id="line-295">
 </span><span id="line-296"><span class="sd">        Args:</span>
-</span><span id="line-297"><span class="sd">            n (int | None): Maximum number of entries to return.  ``None`` (the default) returns all outcomes.</span>
-</span><span id="line-298">
-</span><span id="line-299"><span class="sd">        Returns:</span>
-</span><span id="line-300"><span class="sd">            list[tuple[str, float]]: Up to ``n`` ``(bitstring, probability)`` pairs sorted by probability in descending order.</span>
-</span><span id="line-301"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-302">        <span class="n">probs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">probabilities</span>
-</span><span id="line-303">        <span class="k">if</span> <span class="n">n</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-304">            <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">probs</span><span class="p">)</span>
-</span><span id="line-305">        <span class="k">return</span> <span class="n">heapq</span><span class="o">.</span><span class="n">nlargest</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">probs</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="n">operator</span><span class="o">.</span><span class="n">itemgetter</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span></div>
+</span><span id="line-297"><span class="sd">            n (int | None): Maximum number of entries to return.  ``None``</span>
+</span><span id="line-298"><span class="sd">                (the default) returns all outcomes.</span>
+</span><span id="line-299">
+</span><span id="line-300"><span class="sd">        Returns:</span>
+</span><span id="line-301"><span class="sd">            list[tuple[str, float]]: Up to ``n`` ``(bitstring, probability)``</span>
+</span><span id="line-302"><span class="sd">            pairs sorted by probability in descending order.</span>
+</span><span id="line-303"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-304">        <span class="k">if</span> <span class="n">n</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-305">            <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_probabilities</span><span class="p">)</span>
+</span><span id="line-306">        <span class="k">return</span> <span class="n">heapq</span><span class="o">.</span><span class="n">nlargest</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_probabilities</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="n">operator</span><span class="o">.</span><span class="n">itemgetter</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span></div>
 
-</span><span id="line-306">
-</span><span id="line-307">    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="line-308">        <span class="k">return</span> <span class="s2">&quot;State Tomography Results: (</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">final_state=</span><span class="si">{</span><span class="n">pformat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;)</span><span class="se">\n\n</span><span class="s2">&quot;</span>
+</span><span id="line-307">
+</span><span id="line-308">    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 </span><span id="line-309">
-</span><span id="line-310">    <span class="fm">__str__</span> <span class="o">=</span> <span class="fm">__repr__</span></div>
-
+</span><span id="line-310">        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Sampling Results: (</span><span class="se">\n\t</span><span class="s2">nshots=</span><span class="si">{</span><span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">samples</span><span class="o">.</span><span class="n">values</span><span class="p">())</span><span class="si">}</span><span class="s2">,</span><span class="se">\n\t</span><span class="s2">samples=</span><span class="si">{</span><span class="n">pformat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">samples</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s2">)</span><span class="se">\n\n</span><span class="s2">&quot;</span>
 </span><span id="line-311">
-</span><span id="line-312">
-</span><span id="line-313"><span class="c1"># ---------------------------------------------------------------------------</span>
-</span><span id="line-314"><span class="c1"># Type variables for generic readout result containers</span>
-</span><span id="line-315"><span class="c1">#</span>
-</span><span id="line-316"><span class="c1"># Defined AFTER the concrete result classes so the constraints reference</span>
-</span><span id="line-317"><span class="c1"># real types, not string literals.  TypeVar arguments are evaluated at</span>
-</span><span id="line-318"><span class="c1"># runtime (they are function parameters, not annotations), so forward</span>
-</span><span id="line-319"><span class="c1"># references via strings would silently pass as literal strings.</span>
-</span><span id="line-320"><span class="c1"># ---------------------------------------------------------------------------</span>
+</span><span id="line-312">    <span class="fm">__str__</span> <span class="o">=</span> <span class="fm">__repr__</span></div>
+
+</span><span id="line-313">
+</span><span id="line-314">
+</span><span id="line-315"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
+<div class="viewcode-block" id="ExpectationReadoutResult">
+<a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.ExpectationReadoutResult">[docs]</a>
+</span><span id="line-316"><span class="k">class</span><span class="w"> </span><span class="nc">ExpectationReadoutResult</span><span class="p">(</span><span class="n">ReadoutResult</span><span class="p">[</span><span class="n">ExpectationReadout</span><span class="p">]):</span>
+</span><span id="line-317"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Result produced by an :class:`~qilisdk.readout.ExpectationReadout`.</span>
+</span><span id="line-318">
+</span><span id="line-319"><span class="sd">    Contains the computed expectation values for each observable specified in</span>
+</span><span id="line-320"><span class="sd">    the readout configuration.  The object can be constructed in two ways:</span>
 </span><span id="line-321">
-</span><span id="line-322"><span class="c1">#: Type variable tracking whether sampling results are present.</span>
+</span><span id="line-322"><span class="sd">    1. From pre-computed ``expectation_values``.</span>
+</span><span id="line-323"><span class="sd">    2. From a quantum ``state``, in which case the expectation values are derived via :func:`~qilisdk.core.expect_val`.</span>
+</span><span id="line-324">
+</span><span id="line-325"><span class="sd">    Args:</span>
+</span><span id="line-326"><span class="sd">        readout (ExpectationReadout): The readout configuration that produced this result.</span>
+</span><span id="line-327"><span class="sd">        expectation_values (list[Number] | None): Pre-computed expectation values, one per observable.</span>
+</span><span id="line-328"><span class="sd">            Mutually exclusive with ``state``.</span>
+</span><span id="line-329"><span class="sd">        state (QTensor | None): Quantum state used to compute expectation values on-the-fly.  Mutually exclusive with</span>
+</span><span id="line-330"><span class="sd">            ``expectation_values``.</span>
+</span><span id="line-331">
+</span><span id="line-332"><span class="sd">    Raises:</span>
+</span><span id="line-333"><span class="sd">        ValueError: If neither ``expectation_values`` nor ``state`` is provided.</span>
+</span><span id="line-334"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-335">
+</span><span id="line-336">    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="ExpectationReadoutResult.from_expectations">
+<a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.ExpectationReadoutResult.from_expectations">[docs]</a>
+</span><span id="line-337">    <span class="k">def</span><span class="w"> </span><span class="nf">from_expectations</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">expectation_values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">nshots</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
+</span><span id="line-338">        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">expectation_values</span><span class="o">=</span><span class="n">expectation_values</span><span class="p">,</span> <span class="n">nshots</span><span class="o">=</span><span class="n">nshots</span><span class="p">)</span></div>
+
+</span><span id="line-339">
+</span><span id="line-340">    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="ExpectationReadoutResult.from_state">
+<a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.ExpectationReadoutResult.from_state">[docs]</a>
+</span><span id="line-341">    <span class="k">def</span><span class="w"> </span><span class="nf">from_state</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">expectation_readout</span><span class="p">:</span> <span class="n">ExpectationReadout</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">QTensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
+</span><span id="line-342">        <span class="n">expectation_readout</span><span class="o">.</span><span class="n">expand_observables</span><span class="p">(</span><span class="n">nqubits</span><span class="o">=</span><span class="n">state</span><span class="o">.</span><span class="n">nqubits</span><span class="p">)</span>
+</span><span id="line-343">        <span class="k">try</span><span class="p">:</span>
+</span><span id="line-344">            <span class="n">expectation_values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+</span><span id="line-345">                <span class="n">_assert_real</span><span class="p">((</span><span class="n">expect_val</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="n">state</span><span class="p">)))</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">expectation_readout</span><span class="o">.</span><span class="n">qtensor_observables</span>
+</span><span id="line-346">            <span class="p">]</span>
+</span><span id="line-347">        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+</span><span id="line-348">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="line-349">                <span class="s2">&quot;Encountered an imaginary expectation value while computing the expectation values, try reducing the total tolerance or improving simulation precision.&quot;</span>
+</span><span id="line-350">            <span class="p">)</span>
+</span><span id="line-351">        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">expectation_values</span><span class="o">=</span><span class="n">expectation_values</span><span class="p">,</span> <span class="n">nshots</span><span class="o">=</span><span class="n">expectation_readout</span><span class="o">.</span><span class="n">nshots</span><span class="p">)</span></div>
+
+</span><span id="line-352">
+</span><span id="line-353">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expectation_values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">nshots</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-354">        <span class="k">if</span> <span class="n">expectation_values</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-355">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Can&#39;t initialize Expectation Readout if the expectation values are not provided.&quot;</span><span class="p">)</span>
+</span><span id="line-356">        <span class="bp">self</span><span class="o">.</span><span class="n">_expectation_values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">expectation_values</span>
+</span><span id="line-357">        <span class="bp">self</span><span class="o">.</span><span class="n">_nshots</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">nshots</span>
+</span><span id="line-358">
+</span><span id="line-359">    <span class="nd">@property</span>
+<div class="viewcode-block" id="ExpectationReadoutResult.expectation_values">
+<a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.ExpectationReadoutResult.expectation_values">[docs]</a>
+</span><span id="line-360">    <span class="k">def</span><span class="w"> </span><span class="nf">expectation_values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+</span><span id="line-361"><span class="w">        </span><span class="sd">&quot;&quot;&quot;list[Number]: Expectation values, one per observable, in the same order as specified in the readout.&quot;&quot;&quot;</span>
+</span><span id="line-362">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expectation_values</span></div>
+
+</span><span id="line-363">
+</span><span id="line-364">    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="line-365">        <span class="k">return</span> <span class="p">(</span>
+</span><span id="line-366">            <span class="s2">&quot;Expectation Value Results: (</span><span class="se">\n</span><span class="s2">&quot;</span>
+</span><span id="line-367">            <span class="o">+</span> <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">nshots = </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_nshots</span><span class="si">}</span><span class="s2">,</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nshots</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nshots</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+</span><span id="line-368">            <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">expectation_values=</span><span class="si">{</span><span class="n">pformat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_expectation_values</span><span class="p">)</span><span class="si">}</span><span class="s2">,</span><span class="se">\n</span><span class="s2">&quot;</span>
+</span><span id="line-369">            <span class="o">+</span> <span class="s2">&quot;)</span><span class="se">\n\n</span><span class="s2">&quot;</span>
+</span><span id="line-370">        <span class="p">)</span>
+</span><span id="line-371">
+</span><span id="line-372">    <span class="fm">__str__</span> <span class="o">=</span> <span class="fm">__repr__</span></div>
+
+</span><span id="line-373">
+</span><span id="line-374">
+</span><span id="line-375"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
+<div class="viewcode-block" id="StateTomographyReadoutResult">
+<a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.StateTomographyReadoutResult">[docs]</a>
+</span><span id="line-376"><span class="k">class</span><span class="w"> </span><span class="nc">StateTomographyReadoutResult</span><span class="p">(</span><span class="n">ReadoutResult</span><span class="p">[</span><span class="n">StateTomographyReadout</span><span class="p">]):</span>
+</span><span id="line-377"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Result produced by a :class:`~qilisdk.readout.StateTomographyReadout`.</span>
+</span><span id="line-378">
+</span><span id="line-379"><span class="sd">    Contains the full quantum state after execution and, optionally, the computational-basis probability distribution derived from it.</span>
+</span><span id="line-380">
+</span><span id="line-381"><span class="sd">    Args:</span>
+</span><span id="line-382"><span class="sd">        readout (StateTomographyReadout): The readout configuration that produced this result.</span>
+</span><span id="line-383"><span class="sd">        state (QTensor): The reconstructed quantum state (ket or density matrix).</span>
+</span><span id="line-384"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-385">
+</span><span id="line-386">    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="StateTomographyReadoutResult.from_state">
+<a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.StateTomographyReadoutResult.from_state">[docs]</a>
+</span><span id="line-387">    <span class="k">def</span><span class="w"> </span><span class="nf">from_state</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">QTensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
+</span><span id="line-388">        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">)</span></div>
+
+</span><span id="line-389">
+</span><span id="line-390">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+</span><span id="line-391">        <span class="bp">self</span><span class="p">,</span>
+</span><span id="line-392">        <span class="n">state</span><span class="p">:</span> <span class="n">QTensor</span><span class="p">,</span>
+</span><span id="line-393">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-394">        <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="p">:</span> <span class="n">QTensor</span> <span class="o">=</span> <span class="n">state</span>
+</span><span id="line-395">
+</span><span id="line-396">    <span class="nd">@property</span>
+<div class="viewcode-block" id="StateTomographyReadoutResult.state">
+<a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.StateTomographyReadoutResult.state">[docs]</a>
+</span><span id="line-397">    <span class="k">def</span><span class="w"> </span><span class="nf">state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QTensor</span><span class="p">:</span>
+</span><span id="line-398"><span class="w">        </span><span class="sd">&quot;&quot;&quot;QTensor: The reconstructed quantum state (ket or density matrix).&quot;&quot;&quot;</span>
+</span><span id="line-399">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span></div>
+
+</span><span id="line-400">
+</span><span id="line-401">    <span class="nd">@property</span>
+<div class="viewcode-block" id="StateTomographyReadoutResult.probabilities">
+<a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.StateTomographyReadoutResult.probabilities">[docs]</a>
+</span><span id="line-402">    <span class="k">def</span><span class="w"> </span><span class="nf">probabilities</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+</span><span id="line-403"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Computational-basis probability distribution derived from the state.</span>
+</span><span id="line-404">
+</span><span id="line-405"><span class="sd">        Returns:</span>
+</span><span id="line-406"><span class="sd">            dict[str, float]: Mapping of bitstring to probability.</span>
+</span><span id="line-407"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-408">        <span class="n">f_string</span> <span class="o">=</span> <span class="s2">&quot;{:0&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">nqubits</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;b}&quot;</span>
+</span><span id="line-409">        <span class="k">return</span> <span class="p">{(</span><span class="n">f_string</span><span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">):</span> <span class="n">p</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">probabilities</span><span class="p">())}</span></div>
+
+</span><span id="line-410">
+<div class="viewcode-block" id="StateTomographyReadoutResult.get_probability">
+<a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.StateTomographyReadoutResult.get_probability">[docs]</a>
+</span><span id="line-411">    <span class="k">def</span><span class="w"> </span><span class="nf">get_probability</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bitstring</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="line-412"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the probability for a single bitstring.</span>
+</span><span id="line-413">
+</span><span id="line-414"><span class="sd">        Args:</span>
+</span><span id="line-415"><span class="sd">            bitstring (str): The bitstring to look up (e.g. ``&quot;010&quot;``).</span>
+</span><span id="line-416">
+</span><span id="line-417"><span class="sd">        Returns:</span>
+</span><span id="line-418"><span class="sd">            float: The probability associated with ``bitstring``, or ``0.0``</span>
+</span><span id="line-419"><span class="sd">            if it was not observed.</span>
+</span><span id="line-420"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-421">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">probabilities</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">bitstring</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span></div>
+
+</span><span id="line-422">
+<div class="viewcode-block" id="StateTomographyReadoutResult.get_probabilities">
+<a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.StateTomographyReadoutResult.get_probabilities">[docs]</a>
+</span><span id="line-423">    <span class="k">def</span><span class="w"> </span><span class="nf">get_probabilities</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
+</span><span id="line-424"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the most probable bitstrings in descending order.</span>
+</span><span id="line-425">
+</span><span id="line-426"><span class="sd">        Args:</span>
+</span><span id="line-427"><span class="sd">            n (int | None): Maximum number of entries to return.  ``None`` (the default) returns all outcomes.</span>
+</span><span id="line-428">
+</span><span id="line-429"><span class="sd">        Returns:</span>
+</span><span id="line-430"><span class="sd">            list[tuple[str, float]]: Up to ``n`` ``(bitstring, probability)`` pairs sorted by probability in descending order.</span>
+</span><span id="line-431"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-432">        <span class="n">probs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">probabilities</span>
+</span><span id="line-433">        <span class="k">if</span> <span class="n">n</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-434">            <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">probs</span><span class="p">)</span>
+</span><span id="line-435">        <span class="k">return</span> <span class="n">heapq</span><span class="o">.</span><span class="n">nlargest</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">probs</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="n">operator</span><span class="o">.</span><span class="n">itemgetter</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span></div>
+
+</span><span id="line-436">
+</span><span id="line-437">    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="line-438">        <span class="k">return</span> <span class="s2">&quot;State Tomography Results: (</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">final_state=</span><span class="si">{</span><span class="n">pformat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;)</span><span class="se">\n\n</span><span class="s2">&quot;</span>
+</span><span id="line-439">
+</span><span id="line-440">    <span class="fm">__str__</span> <span class="o">=</span> <span class="fm">__repr__</span></div>
+
+</span><span id="line-441">
+</span><span id="line-442">
+</span><span id="line-443"><span class="c1"># ---------------------------------------------------------------------------</span>
+</span><span id="line-444"><span class="c1"># Type variables for generic readout result containers</span>
+</span><span id="line-445"><span class="c1">#</span>
+</span><span id="line-446"><span class="c1"># Defined AFTER the concrete result classes so the constraints reference</span>
+</span><span id="line-447"><span class="c1"># real types, not string literals.  TypeVar arguments are evaluated at</span>
+</span><span id="line-448"><span class="c1"># runtime (they are function parameters, not annotations), so forward</span>
+</span><span id="line-449"><span class="c1"># references via strings would silently pass as literal strings.</span>
+</span><span id="line-450"><span class="c1"># ---------------------------------------------------------------------------</span>
+</span><span id="line-451">
+</span><span id="line-452"><span class="c1">#: Type variable tracking whether sampling results are present.</span>
 <div class="viewcode-block" id="S">
 <a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.S">[docs]</a>
-</span><span id="line-323"><span class="n">S</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;S&quot;</span><span class="p">,</span> <span class="n">SamplingReadoutResult</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
+</span><span id="line-453"><span class="n">S</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;S&quot;</span><span class="p">,</span> <span class="n">SamplingReadoutResult</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
 
-</span><span id="line-324">
-</span><span id="line-325"><span class="c1">#: Type variable tracking whether expectation-value results are present.</span>
+</span><span id="line-454">
+</span><span id="line-455"><span class="c1">#: Type variable tracking whether expectation-value results are present.</span>
 <div class="viewcode-block" id="E">
 <a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.E">[docs]</a>
-</span><span id="line-326"><span class="n">E</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;E&quot;</span><span class="p">,</span> <span class="n">ExpectationReadoutResult</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
+</span><span id="line-456"><span class="n">E</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;E&quot;</span><span class="p">,</span> <span class="n">ExpectationReadoutResult</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
 
-</span><span id="line-327">
-</span><span id="line-328"><span class="c1">#: Type variable tracking whether state-tomography results are present.</span>
+</span><span id="line-457">
+</span><span id="line-458"><span class="c1">#: Type variable tracking whether state-tomography results are present.</span>
 <div class="viewcode-block" id="T">
 <a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.T">[docs]</a>
-</span><span id="line-329"><span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;T&quot;</span><span class="p">,</span> <span class="n">StateTomographyReadoutResult</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
+</span><span id="line-459"><span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;T&quot;</span><span class="p">,</span> <span class="n">StateTomographyReadoutResult</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
 
-</span><span id="line-330">
-</span><span id="line-331">
-</span><span id="line-332"><span class="c1"># ---------------------------------------------------------------------------</span>
-</span><span id="line-333"><span class="c1"># ReadoutCompositeResults — generic aggregate container</span>
-</span><span id="line-334"><span class="c1"># ---------------------------------------------------------------------------</span>
-</span><span id="line-335">
-</span><span id="line-336">
-</span><span id="line-337"><span class="k">class</span><span class="w"> </span><span class="nc">_HasSampling</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
-</span><span id="line-338">    <span class="n">sampling</span><span class="p">:</span> <span class="n">SamplingReadoutResult</span>
-</span><span id="line-339">
-</span><span id="line-340">
+</span><span id="line-460">
+</span><span id="line-461">
+</span><span id="line-462"><span class="c1"># ---------------------------------------------------------------------------</span>
+</span><span id="line-463"><span class="c1"># ReadoutCompositeResults — generic aggregate container</span>
+</span><span id="line-464"><span class="c1"># ---------------------------------------------------------------------------</span>
+</span><span id="line-465">
+</span><span id="line-466">
+</span><span id="line-467"><span class="k">class</span><span class="w"> </span><span class="nc">_HasSampling</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+</span><span id="line-468">    <span class="n">sampling</span><span class="p">:</span> <span class="n">SamplingReadoutResult</span>
+</span><span id="line-469">
+</span><span id="line-470">
 <div class="viewcode-block" id="has_sampling">
 <a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.has_sampling">[docs]</a>
-</span><span id="line-341"><span class="k">def</span><span class="w"> </span><span class="nf">has_sampling</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">ReadoutCompositeResults</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TypeGuard</span><span class="p">[</span><span class="n">_HasSampling</span><span class="p">]:</span>
-</span><span id="line-342"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return ``True`` if the composite contains a sampling result.&quot;&quot;&quot;</span>
-</span><span id="line-343">    <span class="k">return</span> <span class="n">obj</span><span class="o">.</span><span class="n">sampling</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span></div>
+</span><span id="line-471"><span class="k">def</span><span class="w"> </span><span class="nf">has_sampling</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">ReadoutCompositeResults</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TypeGuard</span><span class="p">[</span><span class="n">_HasSampling</span><span class="p">]:</span>
+</span><span id="line-472"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return ``True`` if the composite contains a sampling result.&quot;&quot;&quot;</span>
+</span><span id="line-473">    <span class="k">return</span> <span class="n">obj</span><span class="o">.</span><span class="n">sampling</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span></div>
 
-</span><span id="line-344">
-</span><span id="line-345">
-</span><span id="line-346"><span class="k">class</span><span class="w"> </span><span class="nc">_HasExpectation</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
-</span><span id="line-347">    <span class="n">expectation_values</span><span class="p">:</span> <span class="n">ExpectationReadoutResult</span>
-</span><span id="line-348">
-</span><span id="line-349">
+</span><span id="line-474">
+</span><span id="line-475">
+</span><span id="line-476"><span class="k">class</span><span class="w"> </span><span class="nc">_HasExpectation</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+</span><span id="line-477">    <span class="n">expectation_values</span><span class="p">:</span> <span class="n">ExpectationReadoutResult</span>
+</span><span id="line-478">
+</span><span id="line-479">
 <div class="viewcode-block" id="has_expectation_values">
 <a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.has_expectation_values">[docs]</a>
-</span><span id="line-350"><span class="k">def</span><span class="w"> </span><span class="nf">has_expectation_values</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">ReadoutCompositeResults</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TypeGuard</span><span class="p">[</span><span class="n">_HasExpectation</span><span class="p">]:</span>
-</span><span id="line-351"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return ``True`` if the composite contains an expectation-value result.&quot;&quot;&quot;</span>
-</span><span id="line-352">    <span class="k">return</span> <span class="n">obj</span><span class="o">.</span><span class="n">expectation_values</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span></div>
+</span><span id="line-480"><span class="k">def</span><span class="w"> </span><span class="nf">has_expectation_values</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">ReadoutCompositeResults</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TypeGuard</span><span class="p">[</span><span class="n">_HasExpectation</span><span class="p">]:</span>
+</span><span id="line-481"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return ``True`` if the composite contains an expectation-value result.&quot;&quot;&quot;</span>
+</span><span id="line-482">    <span class="k">return</span> <span class="n">obj</span><span class="o">.</span><span class="n">expectation_values</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span></div>
 
-</span><span id="line-353">
-</span><span id="line-354">
-</span><span id="line-355"><span class="k">class</span><span class="w"> </span><span class="nc">_HasStateTomography</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
-</span><span id="line-356">    <span class="n">state_tomography</span><span class="p">:</span> <span class="n">StateTomographyReadoutResult</span>
-</span><span id="line-357">
-</span><span id="line-358">
+</span><span id="line-483">
+</span><span id="line-484">
+</span><span id="line-485"><span class="k">class</span><span class="w"> </span><span class="nc">_HasStateTomography</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+</span><span id="line-486">    <span class="n">state_tomography</span><span class="p">:</span> <span class="n">StateTomographyReadoutResult</span>
+</span><span id="line-487">
+</span><span id="line-488">
 <div class="viewcode-block" id="has_state_tomography">
 <a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.has_state_tomography">[docs]</a>
-</span><span id="line-359"><span class="k">def</span><span class="w"> </span><span class="nf">has_state_tomography</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">ReadoutCompositeResults</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TypeGuard</span><span class="p">[</span><span class="n">_HasStateTomography</span><span class="p">]:</span>
-</span><span id="line-360"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return ``True`` if the composite contains a state-tomography result.&quot;&quot;&quot;</span>
-</span><span id="line-361">    <span class="k">return</span> <span class="n">obj</span><span class="o">.</span><span class="n">state_tomography</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span></div>
+</span><span id="line-489"><span class="k">def</span><span class="w"> </span><span class="nf">has_state_tomography</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">ReadoutCompositeResults</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TypeGuard</span><span class="p">[</span><span class="n">_HasStateTomography</span><span class="p">]:</span>
+</span><span id="line-490"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return ``True`` if the composite contains a state-tomography result.&quot;&quot;&quot;</span>
+</span><span id="line-491">    <span class="k">return</span> <span class="n">obj</span><span class="o">.</span><span class="n">state_tomography</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span></div>
 
-</span><span id="line-362">
-</span><span id="line-363">
-</span><span id="line-364"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
-</span><span id="line-365"><span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="line-492">
+</span><span id="line-493">
+</span><span id="line-494"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
+</span><span id="line-495"><span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <div class="viewcode-block" id="ReadoutCompositeResults">
 <a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.ReadoutCompositeResults">[docs]</a>
-</span><span id="line-366"><span class="k">class</span><span class="w"> </span><span class="nc">ReadoutCompositeResults</span><span class="p">(</span><span class="n">Result</span><span class="p">,</span> <span class="n">Generic</span><span class="p">[</span><span class="n">S</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">T</span><span class="p">]):</span>
-</span><span id="line-367"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Aggregated container for readout results from a single execution step.</span>
-</span><span id="line-368">
-</span><span id="line-369"><span class="sd">    This class is returned internally by the backend and is accessible via</span>
-</span><span id="line-370"><span class="sd">    :attr:`FunctionalResult.readout_results &lt;qilisdk.functionals.FunctionalResult.readout_results&gt;`.</span>
-</span><span id="line-371"><span class="sd">    Most users should access results through the convenience properties on</span>
-</span><span id="line-372"><span class="sd">    :class:`~qilisdk.functionals.FunctionalResult` instead.</span>
-</span><span id="line-373">
-</span><span id="line-374"><span class="sd">    The three type parameters ``S``, ``E``, ``T`` encode at the type level which readout results are present</span>
-</span><span id="line-375"><span class="sd">    and correspond to the readout types declared in the :class:`~qilisdk.readout.Readout`:</span>
-</span><span id="line-376">
-</span><span id="line-377"><span class="sd">    * ``S`` is :class:`SamplingReadoutResult` or ``None``</span>
-</span><span id="line-378"><span class="sd">    * ``E`` is :class:`ExpectationReadoutResult` or ``None``</span>
-</span><span id="line-379"><span class="sd">    * ``T`` is :class:`StateTomographyReadoutResult` or ``None``</span>
-</span><span id="line-380">
-</span><span id="line-381"><span class="sd">    When the concrete type parameter is the result class (not ``None``), the corresponding field is</span>
-</span><span id="line-382"><span class="sd">    guaranteed to be populated and the type checker can verify access without runtime guards.</span>
-</span><span id="line-383"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-384">
+</span><span id="line-496"><span class="k">class</span><span class="w"> </span><span class="nc">ReadoutCompositeResults</span><span class="p">(</span><span class="n">Result</span><span class="p">,</span> <span class="n">Generic</span><span class="p">[</span><span class="n">S</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">T</span><span class="p">]):</span>
+</span><span id="line-497"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Aggregated container for readout results from a single execution step.</span>
+</span><span id="line-498">
+</span><span id="line-499"><span class="sd">    This class is returned internally by the backend and is accessible via</span>
+</span><span id="line-500"><span class="sd">    :attr:`FunctionalResult.readout_results &lt;qilisdk.functionals.FunctionalResult.readout_results&gt;`.</span>
+</span><span id="line-501"><span class="sd">    Most users should access results through the convenience properties on</span>
+</span><span id="line-502"><span class="sd">    :class:`~qilisdk.functionals.FunctionalResult` instead.</span>
+</span><span id="line-503">
+</span><span id="line-504"><span class="sd">    The three type parameters ``S``, ``E``, ``T`` encode at the type level which readout results are present</span>
+</span><span id="line-505"><span class="sd">    and correspond to the readout types declared in the :class:`~qilisdk.readout.Readout`:</span>
+</span><span id="line-506">
+</span><span id="line-507"><span class="sd">    * ``S`` is :class:`SamplingReadoutResult` or ``None``</span>
+</span><span id="line-508"><span class="sd">    * ``E`` is :class:`ExpectationReadoutResult` or ``None``</span>
+</span><span id="line-509"><span class="sd">    * ``T`` is :class:`StateTomographyReadoutResult` or ``None``</span>
+</span><span id="line-510">
+</span><span id="line-511"><span class="sd">    When the concrete type parameter is the result class (not ``None``), the corresponding field is</span>
+</span><span id="line-512"><span class="sd">    guaranteed to be populated and the type checker can verify access without runtime guards.</span>
+</span><span id="line-513"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-514">
 <div class="viewcode-block" id="ReadoutCompositeResults.sampling">
 <a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.ReadoutCompositeResults.sampling">[docs]</a>
-</span><span id="line-385">    <span class="n">sampling</span><span class="p">:</span> <span class="n">S</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment]  # ty:ignore[invalid-assignment]</span></div>
+</span><span id="line-515">    <span class="n">sampling</span><span class="p">:</span> <span class="n">S</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment]  # ty:ignore[invalid-assignment]</span></div>
 
 <div class="viewcode-block" id="ReadoutCompositeResults.expectation_values">
 <a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.ReadoutCompositeResults.expectation_values">[docs]</a>
-</span><span id="line-386">    <span class="n">expectation_values</span><span class="p">:</span> <span class="n">E</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment]  # ty:ignore[invalid-assignment]</span></div>
+</span><span id="line-516">    <span class="n">expectation_values</span><span class="p">:</span> <span class="n">E</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment]  # ty:ignore[invalid-assignment]</span></div>
 
 <div class="viewcode-block" id="ReadoutCompositeResults.state_tomography">
 <a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.ReadoutCompositeResults.state_tomography">[docs]</a>
-</span><span id="line-387">    <span class="n">state_tomography</span><span class="p">:</span> <span class="n">T</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment]  # ty:ignore[invalid-assignment]</span></div>
+</span><span id="line-517">    <span class="n">state_tomography</span><span class="p">:</span> <span class="n">T</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment]  # ty:ignore[invalid-assignment]</span></div>
 
-</span><span id="line-388">
-</span><span id="line-389">    <span class="nd">@classmethod</span>
+</span><span id="line-518">
+</span><span id="line-519">    <span class="nd">@classmethod</span>
 <div class="viewcode-block" id="ReadoutCompositeResults.from_list">
 <a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.ReadoutCompositeResults.from_list">[docs]</a>
-</span><span id="line-390">    <span class="k">def</span><span class="w"> </span><span class="nf">from_list</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ReadoutCompositeResults</span><span class="p">:</span>
-</span><span id="line-391"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Construct a :class:`ReadoutCompositeResults` from a flat list of readout results.</span>
-</span><span id="line-392">
-</span><span id="line-393"><span class="sd">        Each element is matched by type to the appropriate field.</span>
-</span><span id="line-394">
-</span><span id="line-395"><span class="sd">        Args:</span>
-</span><span id="line-396"><span class="sd">            results (list): A list containing any combination of</span>
-</span><span id="line-397"><span class="sd">                :class:`SamplingReadoutResult`, :class:`ExpectationReadoutResult`,</span>
-</span><span id="line-398"><span class="sd">                and :class:`StateTomographyReadoutResult` instances.</span>
-</span><span id="line-399">
-</span><span id="line-400"><span class="sd">        Returns:</span>
-</span><span id="line-401"><span class="sd">            ReadoutCompositeResults: The constructed result container.</span>
-</span><span id="line-402"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-403">        <span class="n">sampling</span> <span class="o">=</span> <span class="kc">None</span>
-</span><span id="line-404">        <span class="n">expectation_values</span> <span class="o">=</span> <span class="kc">None</span>
-</span><span id="line-405">        <span class="n">state_tomography</span> <span class="o">=</span> <span class="kc">None</span>
-</span><span id="line-406">        <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
-</span><span id="line-407">            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">SamplingReadoutResult</span><span class="p">):</span>
-</span><span id="line-408">                <span class="n">sampling</span> <span class="o">=</span> <span class="n">result</span>
-</span><span id="line-409">            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">ExpectationReadoutResult</span><span class="p">):</span>
-</span><span id="line-410">                <span class="n">expectation_values</span> <span class="o">=</span> <span class="n">result</span>
-</span><span id="line-411">            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">StateTomographyReadoutResult</span><span class="p">):</span>
-</span><span id="line-412">                <span class="n">state_tomography</span> <span class="o">=</span> <span class="n">result</span>
-</span><span id="line-413">        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">sampling</span><span class="o">=</span><span class="n">sampling</span><span class="p">,</span> <span class="n">expectation_values</span><span class="o">=</span><span class="n">expectation_values</span><span class="p">,</span> <span class="n">state_tomography</span><span class="o">=</span><span class="n">state_tomography</span><span class="p">)</span></div>
+</span><span id="line-520">    <span class="k">def</span><span class="w"> </span><span class="nf">from_list</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ReadoutCompositeResults</span><span class="p">:</span>
+</span><span id="line-521"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Construct a :class:`ReadoutCompositeResults` from a flat list of readout results.</span>
+</span><span id="line-522">
+</span><span id="line-523"><span class="sd">        Each element is matched by type to the appropriate field.</span>
+</span><span id="line-524">
+</span><span id="line-525"><span class="sd">        Args:</span>
+</span><span id="line-526"><span class="sd">            results (list): A list containing any combination of</span>
+</span><span id="line-527"><span class="sd">                :class:`SamplingReadoutResult`, :class:`ExpectationReadoutResult`,</span>
+</span><span id="line-528"><span class="sd">                and :class:`StateTomographyReadoutResult` instances.</span>
+</span><span id="line-529">
+</span><span id="line-530"><span class="sd">        Returns:</span>
+</span><span id="line-531"><span class="sd">            ReadoutCompositeResults: The constructed result container.</span>
+</span><span id="line-532"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-533">        <span class="n">sampling</span> <span class="o">=</span> <span class="kc">None</span>
+</span><span id="line-534">        <span class="n">expectation_values</span> <span class="o">=</span> <span class="kc">None</span>
+</span><span id="line-535">        <span class="n">state_tomography</span> <span class="o">=</span> <span class="kc">None</span>
+</span><span id="line-536">        <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+</span><span id="line-537">            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">SamplingReadoutResult</span><span class="p">):</span>
+</span><span id="line-538">                <span class="n">sampling</span> <span class="o">=</span> <span class="n">result</span>
+</span><span id="line-539">            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">ExpectationReadoutResult</span><span class="p">):</span>
+</span><span id="line-540">                <span class="n">expectation_values</span> <span class="o">=</span> <span class="n">result</span>
+</span><span id="line-541">            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">StateTomographyReadoutResult</span><span class="p">):</span>
+</span><span id="line-542">                <span class="n">state_tomography</span> <span class="o">=</span> <span class="n">result</span>
+</span><span id="line-543">        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">sampling</span><span class="o">=</span><span class="n">sampling</span><span class="p">,</span> <span class="n">expectation_values</span><span class="o">=</span><span class="n">expectation_values</span><span class="p">,</span> <span class="n">state_tomography</span><span class="o">=</span><span class="n">state_tomography</span><span class="p">)</span></div>
 
-</span><span id="line-414">
-</span><span id="line-415">    <span class="nd">@classmethod</span>
+</span><span id="line-544">
+</span><span id="line-545">    <span class="nd">@classmethod</span>
 <div class="viewcode-block" id="ReadoutCompositeResults.from_dict">
 <a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.ReadoutCompositeResults.from_dict">[docs]</a>
-</span><span id="line-416">    <span class="k">def</span><span class="w"> </span><span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ReadoutCompositeResults</span><span class="p">:</span>
-</span><span id="line-417"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Construct a :class:`ReadoutCompositeResults` from a plain dictionary.</span>
-</span><span id="line-418">
-</span><span id="line-419"><span class="sd">        Args:</span>
-</span><span id="line-420"><span class="sd">            data (dict): Mapping with optional keys ``&quot;sampling&quot;``,</span>
-</span><span id="line-421"><span class="sd">                ``&quot;expectation_values&quot;``, and ``&quot;state_tomography&quot;``.</span>
-</span><span id="line-422">
-</span><span id="line-423"><span class="sd">        Returns:</span>
-</span><span id="line-424"><span class="sd">            ReadoutCompositeResults: The constructed result container.</span>
-</span><span id="line-425">
-</span><span id="line-426"><span class="sd">        Raises:</span>
-</span><span id="line-427"><span class="sd">            TypeError: If any provided value has the wrong type.</span>
-</span><span id="line-428"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-429">        <span class="n">sampling</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;sampling&quot;</span><span class="p">)</span>
-</span><span id="line-430">        <span class="n">expectation_values</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;expectation_values&quot;</span><span class="p">)</span>
-</span><span id="line-431">        <span class="n">state_tomography</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;state_tomography&quot;</span><span class="p">)</span>
-</span><span id="line-432">
-</span><span id="line-433">        <span class="k">if</span> <span class="n">sampling</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sampling</span><span class="p">,</span> <span class="n">SamplingReadoutResult</span><span class="p">):</span>
-</span><span id="line-434">            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;sampling must be SamplingReadoutResult or None&quot;</span><span class="p">)</span>
-</span><span id="line-435">        <span class="k">if</span> <span class="n">expectation_values</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expectation_values</span><span class="p">,</span> <span class="n">ExpectationReadoutResult</span><span class="p">):</span>
-</span><span id="line-436">            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;expectation_values must be ExpectationReadoutResult or None&quot;</span><span class="p">)</span>
-</span><span id="line-437">        <span class="k">if</span> <span class="n">state_tomography</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">state_tomography</span><span class="p">,</span> <span class="n">StateTomographyReadoutResult</span><span class="p">):</span>
-</span><span id="line-438">            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;state_tomography must be StateTomographyReadoutResult or None&quot;</span><span class="p">)</span>
-</span><span id="line-439">
-</span><span id="line-440">        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">sampling</span><span class="o">=</span><span class="n">sampling</span><span class="p">,</span> <span class="n">expectation_values</span><span class="o">=</span><span class="n">expectation_values</span><span class="p">,</span> <span class="n">state_tomography</span><span class="o">=</span><span class="n">state_tomography</span><span class="p">)</span></div>
+</span><span id="line-546">    <span class="k">def</span><span class="w"> </span><span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ReadoutCompositeResults</span><span class="p">:</span>
+</span><span id="line-547"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Construct a :class:`ReadoutCompositeResults` from a plain dictionary.</span>
+</span><span id="line-548">
+</span><span id="line-549"><span class="sd">        Args:</span>
+</span><span id="line-550"><span class="sd">            data (dict): Mapping with optional keys ``&quot;sampling&quot;``,</span>
+</span><span id="line-551"><span class="sd">                ``&quot;expectation_values&quot;``, and ``&quot;state_tomography&quot;``.</span>
+</span><span id="line-552">
+</span><span id="line-553"><span class="sd">        Returns:</span>
+</span><span id="line-554"><span class="sd">            ReadoutCompositeResults: The constructed result container.</span>
+</span><span id="line-555">
+</span><span id="line-556"><span class="sd">        Raises:</span>
+</span><span id="line-557"><span class="sd">            TypeError: If any provided value has the wrong type.</span>
+</span><span id="line-558"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-559">        <span class="n">sampling</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;sampling&quot;</span><span class="p">)</span>
+</span><span id="line-560">        <span class="n">expectation_values</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;expectation_values&quot;</span><span class="p">)</span>
+</span><span id="line-561">        <span class="n">state_tomography</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;state_tomography&quot;</span><span class="p">)</span>
+</span><span id="line-562">
+</span><span id="line-563">        <span class="k">if</span> <span class="n">sampling</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sampling</span><span class="p">,</span> <span class="n">SamplingReadoutResult</span><span class="p">):</span>
+</span><span id="line-564">            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;sampling must be SamplingReadoutResult or None&quot;</span><span class="p">)</span>
+</span><span id="line-565">        <span class="k">if</span> <span class="n">expectation_values</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expectation_values</span><span class="p">,</span> <span class="n">ExpectationReadoutResult</span><span class="p">):</span>
+</span><span id="line-566">            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;expectation_values must be ExpectationReadoutResult or None&quot;</span><span class="p">)</span>
+</span><span id="line-567">        <span class="k">if</span> <span class="n">state_tomography</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">state_tomography</span><span class="p">,</span> <span class="n">StateTomographyReadoutResult</span><span class="p">):</span>
+</span><span id="line-568">            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;state_tomography must be StateTomographyReadoutResult or None&quot;</span><span class="p">)</span>
+</span><span id="line-569">
+</span><span id="line-570">        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">sampling</span><span class="o">=</span><span class="n">sampling</span><span class="p">,</span> <span class="n">expectation_values</span><span class="o">=</span><span class="n">expectation_values</span><span class="p">,</span> <span class="n">state_tomography</span><span class="o">=</span><span class="n">state_tomography</span><span class="p">)</span></div>
 
-</span><span id="line-441">
-</span><span id="line-442">    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="line-443">        <span class="n">out</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-</span><span id="line-444">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampling</span><span class="p">:</span>
-</span><span id="line-445">            <span class="n">out</span> <span class="o">+=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sampling</span><span class="p">)</span>
-</span><span id="line-446">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">expectation_values</span><span class="p">:</span>
-</span><span id="line-447">            <span class="n">out</span> <span class="o">+=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">expectation_values</span><span class="p">)</span>
-</span><span id="line-448">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_tomography</span><span class="p">:</span>
-</span><span id="line-449">            <span class="n">out</span> <span class="o">+=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state_tomography</span><span class="p">)</span>
-</span><span id="line-450">        <span class="k">return</span> <span class="n">out</span> <span class="ow">or</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">(empty)&quot;</span></div>
+</span><span id="line-571">
+</span><span id="line-572">    <span class="nd">@overload</span>
+<div class="viewcode-block" id="ReadoutCompositeResults.get_samples">
+<a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.ReadoutCompositeResults.get_samples">[docs]</a>
+</span><span id="line-573">    <span class="k">def</span><span class="w"> </span><span class="nf">get_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">ReadoutCompositeResults</span><span class="p">[</span><span class="n">SamplingReadoutResult</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span> <span class="o">...</span></div>
 
-</span><span id="line-451">
-</span><span id="line-452">
-</span><span id="line-453"><span class="c1"># ---------------------------------------------------------------------------</span>
-</span><span id="line-454"><span class="c1"># Utility functions</span>
-</span><span id="line-455"><span class="c1"># ---------------------------------------------------------------------------</span>
-</span><span id="line-456">
-</span><span id="line-457">
-</span><span id="line-458"><span class="k">def</span><span class="w"> </span><span class="nf">_samples_from_state</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">QTensor</span><span class="p">,</span> <span class="n">nshots</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
-</span><span id="line-459">    <span class="n">f_string</span> <span class="o">=</span> <span class="s2">&quot;{:0&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">nqubits</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;b}&quot;</span>
-</span><span id="line-460">    <span class="n">probabilities</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{(</span><span class="n">f_string</span><span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">):</span> <span class="n">p</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">probabilities</span><span class="p">())}</span>
-</span><span id="line-461">    <span class="k">return</span> <span class="n">_samples_from_probabilities</span><span class="p">(</span><span class="n">probabilities</span><span class="o">=</span><span class="n">probabilities</span><span class="p">,</span> <span class="n">nshots</span><span class="o">=</span><span class="n">nshots</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
-</span><span id="line-462">
-</span><span id="line-463">
-</span><span id="line-464"><span class="k">def</span><span class="w"> </span><span class="nf">_samples_from_probabilities</span><span class="p">(</span>
-</span><span id="line-465">    <span class="n">probabilities</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">nshots</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-</span><span id="line-466"><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
-</span><span id="line-467">    <span class="n">states</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">probabilities</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
-</span><span id="line-468">    <span class="n">probs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">probabilities</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-</span><span id="line-469">    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">probs</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span> <span class="mi">1</span><span class="p">):</span>
-</span><span id="line-470">        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Renormalizing probabilities obtained as they don&#39;t sum up to 1.&quot;</span><span class="p">)</span>
-</span><span id="line-471">        <span class="n">probs</span> <span class="o">/=</span> <span class="n">probs</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
-</span><span id="line-472">
-</span><span id="line-473">    <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
-</span><span id="line-474">    <span class="n">draws</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">states</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="n">nshots</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="n">probs</span><span class="p">)</span>
-</span><span id="line-475">
-</span><span id="line-476">    <span class="n">counts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">bincount</span><span class="p">(</span><span class="n">draws</span><span class="p">,</span> <span class="n">minlength</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">states</span><span class="p">))</span>
-</span><span id="line-477">    <span class="k">return</span> <span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">states</span><span class="p">[</span><span class="n">i</span><span class="p">]):</span> <span class="nb">int</span><span class="p">(</span><span class="n">counts</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">states</span><span class="p">))</span> <span class="k">if</span> <span class="n">counts</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">}</span>
+</span><span id="line-574">    <span class="nd">@overload</span>
+</span><span id="line-575">    <span class="k">def</span><span class="w"> </span><span class="nf">get_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">ReadoutCompositeResults</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Never</span><span class="p">:</span> <span class="o">...</span>
+</span><span id="line-576">    <span class="k">def</span><span class="w"> </span><span class="nf">get_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+</span><span id="line-577"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the sampling results as a bitstring-to-count mapping.</span>
+</span><span id="line-578">
+</span><span id="line-579"><span class="sd">        Returns:</span>
+</span><span id="line-580"><span class="sd">            dict[str, int]: Mapping of measured bitstring to count.</span>
+</span><span id="line-581">
+</span><span id="line-582"><span class="sd">        Raises:</span>
+</span><span id="line-583"><span class="sd">            ValueError: If no sampling results are present.</span>
+</span><span id="line-584"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-585">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampling</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-586">            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampling</span><span class="o">.</span><span class="n">samples</span>
+</span><span id="line-587">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Can&#39;t find samples because no SamplingReadoutResult is present in this composite.&quot;</span><span class="p">)</span>
+</span><span id="line-588">
+</span><span id="line-589">    <span class="nd">@overload</span>
+<div class="viewcode-block" id="ReadoutCompositeResults.get_probabilities">
+<a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.ReadoutCompositeResults.get_probabilities">[docs]</a>
+</span><span id="line-590">    <span class="k">def</span><span class="w"> </span><span class="nf">get_probabilities</span><span class="p">(</span>
+</span><span id="line-591">        <span class="bp">self</span><span class="p">:</span> <span class="n">ReadoutCompositeResults</span><span class="p">[</span><span class="n">SamplingReadoutResult</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">StateTomographyReadoutResult</span> <span class="o">|</span> <span class="kc">None</span><span class="p">],</span>
+</span><span id="line-592">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span> <span class="o">...</span></div>
+
+</span><span id="line-593">    <span class="nd">@overload</span>
+</span><span id="line-594">    <span class="k">def</span><span class="w"> </span><span class="nf">get_probabilities</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">ReadoutCompositeResults</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Never</span><span class="p">:</span> <span class="o">...</span>
+</span><span id="line-595">    <span class="k">def</span><span class="w"> </span><span class="nf">get_probabilities</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+</span><span id="line-596"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the probability distribution as a bitstring-to-probability mapping.</span>
+</span><span id="line-597">
+</span><span id="line-598"><span class="sd">        Returns:</span>
+</span><span id="line-599"><span class="sd">            dict[str, float]: Mapping of bitstring to probability.</span>
+</span><span id="line-600">
+</span><span id="line-601"><span class="sd">        Raises:</span>
+</span><span id="line-602"><span class="sd">            ValueError: If no sampling or state-tomography results are present.</span>
+</span><span id="line-603"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-604">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampling</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-605">            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampling</span><span class="o">.</span><span class="n">probabilities</span>
+</span><span id="line-606">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_tomography</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-607">            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_tomography</span><span class="o">.</span><span class="n">probabilities</span>
+</span><span id="line-608">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="line-609">            <span class="s2">&quot;Can&#39;t find probabilities because neither SamplingReadoutResult nor StateTomographyReadoutResult is present in this composite.&quot;</span>
+</span><span id="line-610">        <span class="p">)</span>
+</span><span id="line-611">
+</span><span id="line-612">    <span class="nd">@overload</span>
+<div class="viewcode-block" id="ReadoutCompositeResults.get_expectation_values">
+<a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.ReadoutCompositeResults.get_expectation_values">[docs]</a>
+</span><span id="line-613">    <span class="k">def</span><span class="w"> </span><span class="nf">get_expectation_values</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">ReadoutCompositeResults</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">ExpectationReadoutResult</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span> <span class="o">...</span></div>
+
+</span><span id="line-614">    <span class="nd">@overload</span>
+</span><span id="line-615">    <span class="k">def</span><span class="w"> </span><span class="nf">get_expectation_values</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">ReadoutCompositeResults</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Never</span><span class="p">:</span> <span class="o">...</span>
+</span><span id="line-616">    <span class="k">def</span><span class="w"> </span><span class="nf">get_expectation_values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+</span><span id="line-617"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the expectation values as a list of numbers.</span>
+</span><span id="line-618">
+</span><span id="line-619"><span class="sd">        Returns:</span>
+</span><span id="line-620"><span class="sd">            list[float]: Expectation values, one per observable, in the same order as specified in the readout.</span>
+</span><span id="line-621">
+</span><span id="line-622"><span class="sd">        Raises:</span>
+</span><span id="line-623"><span class="sd">            ValueError: If no expectation-value results are present.</span>
+</span><span id="line-624"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-625">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">expectation_values</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-626">            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">expectation_values</span><span class="o">.</span><span class="n">expectation_values</span>
+</span><span id="line-627">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="line-628">            <span class="s2">&quot;Can&#39;t find expectation values because no ExpectationReadoutResult is present in this composite.&quot;</span>
+</span><span id="line-629">        <span class="p">)</span>
+</span><span id="line-630">
+</span><span id="line-631">    <span class="nd">@overload</span>
+<div class="viewcode-block" id="ReadoutCompositeResults.get_state">
+<a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.ReadoutCompositeResults.get_state">[docs]</a>
+</span><span id="line-632">    <span class="k">def</span><span class="w"> </span><span class="nf">get_state</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">ReadoutCompositeResults</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">StateTomographyReadoutResult</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">QTensor</span><span class="p">:</span> <span class="o">...</span></div>
+
+</span><span id="line-633">    <span class="nd">@overload</span>
+</span><span id="line-634">    <span class="k">def</span><span class="w"> </span><span class="nf">get_state</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">ReadoutCompositeResults</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Never</span><span class="p">:</span> <span class="o">...</span>
+</span><span id="line-635">    <span class="k">def</span><span class="w"> </span><span class="nf">get_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QTensor</span><span class="p">:</span>
+</span><span id="line-636"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the reconstructed quantum state.</span>
+</span><span id="line-637">
+</span><span id="line-638"><span class="sd">        Returns:</span>
+</span><span id="line-639"><span class="sd">            QTensor: The reconstructed quantum state (ket or density matrix).</span>
+</span><span id="line-640">
+</span><span id="line-641"><span class="sd">        Raises:</span>
+</span><span id="line-642"><span class="sd">            ValueError: If no state-tomography results are present.</span>
+</span><span id="line-643"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-644">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_tomography</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-645">            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_tomography</span><span class="o">.</span><span class="n">state</span>
+</span><span id="line-646">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Can&#39;t find the state because no StateTomographyReadoutResult is present in this composite.&quot;</span><span class="p">)</span>
+</span><span id="line-647">
+</span><span id="line-648">    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="line-649">        <span class="n">out</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+</span><span id="line-650">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampling</span><span class="p">:</span>
+</span><span id="line-651">            <span class="n">out</span> <span class="o">+=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sampling</span><span class="p">)</span>
+</span><span id="line-652">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">expectation_values</span><span class="p">:</span>
+</span><span id="line-653">            <span class="n">out</span> <span class="o">+=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">expectation_values</span><span class="p">)</span>
+</span><span id="line-654">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_tomography</span><span class="p">:</span>
+</span><span id="line-655">            <span class="n">out</span> <span class="o">+=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state_tomography</span><span class="p">)</span>
+</span><span id="line-656">        <span class="k">return</span> <span class="n">out</span> <span class="ow">or</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">(empty)&quot;</span></div>
+
+</span><span id="line-657">
+</span><span id="line-658">
+</span><span id="line-659"><span class="c1"># ---------------------------------------------------------------------------</span>
+</span><span id="line-660"><span class="c1"># Utility functions</span>
+</span><span id="line-661"><span class="c1"># ---------------------------------------------------------------------------</span>
+</span><span id="line-662">
+</span><span id="line-663">
+</span><span id="line-664"><span class="k">def</span><span class="w"> </span><span class="nf">_samples_from_state</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">QTensor</span><span class="p">,</span> <span class="n">nshots</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+</span><span id="line-665">    <span class="n">f_string</span> <span class="o">=</span> <span class="s2">&quot;{:0&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">nqubits</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;b}&quot;</span>
+</span><span id="line-666">    <span class="n">probabilities</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{(</span><span class="n">f_string</span><span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">):</span> <span class="n">p</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">probabilities</span><span class="p">())}</span>
+</span><span id="line-667">    <span class="k">return</span> <span class="n">_samples_from_probabilities</span><span class="p">(</span><span class="n">probabilities</span><span class="o">=</span><span class="n">probabilities</span><span class="p">,</span> <span class="n">nshots</span><span class="o">=</span><span class="n">nshots</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
+</span><span id="line-668">
+</span><span id="line-669">
+</span><span id="line-670"><span class="k">def</span><span class="w"> </span><span class="nf">_samples_from_probabilities</span><span class="p">(</span>
+</span><span id="line-671">    <span class="n">probabilities</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">nshots</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</span><span id="line-672"><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+</span><span id="line-673">    <span class="n">states</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">probabilities</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+</span><span id="line-674">    <span class="n">probs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">probabilities</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+</span><span id="line-675">    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">probs</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span> <span class="mi">1</span><span class="p">):</span>
+</span><span id="line-676">        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Renormalizing probabilities obtained as they don&#39;t sum up to 1.&quot;</span><span class="p">)</span>
+</span><span id="line-677">        <span class="n">probs</span> <span class="o">/=</span> <span class="n">probs</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+</span><span id="line-678">
+</span><span id="line-679">    <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+</span><span id="line-680">    <span class="n">draws</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">states</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="n">nshots</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="n">probs</span><span class="p">)</span>
+</span><span id="line-681">
+</span><span id="line-682">    <span class="n">counts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">bincount</span><span class="p">(</span><span class="n">draws</span><span class="p">,</span> <span class="n">minlength</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">states</span><span class="p">))</span>
+</span><span id="line-683">    <span class="k">return</span> <span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">states</span><span class="p">[</span><span class="n">i</span><span class="p">]):</span> <span class="nb">int</span><span class="p">(</span><span class="n">counts</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">states</span><span class="p">))</span> <span class="k">if</span> <span class="n">counts</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">}</span>
 </span></code></pre></div>
     </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">
 </div></div>

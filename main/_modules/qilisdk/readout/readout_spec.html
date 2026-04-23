@@ -480,118 +480,119 @@
 </span><span id="line-88">
 <div class="viewcode-block" id="Readout.with_sampling">
 <a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout_spec/index.html#qilisdk.readout.readout_spec.Readout.with_sampling">[docs]</a>
-</span><span id="line-89">    <span class="k">def</span><span class="w"> </span><span class="nf">with_sampling</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nshots</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Readout</span><span class="p">[</span><span class="n">SamplingReadoutResult</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">T</span><span class="p">]:</span>
+</span><span id="line-89">    <span class="k">def</span><span class="w"> </span><span class="nf">with_sampling</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nshots</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span> <span class="n">expand_samples</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Readout</span><span class="p">[</span><span class="n">SamplingReadoutResult</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">T</span><span class="p">]:</span>
 </span><span id="line-90"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a sampling readout to the specification.</span>
 </span><span id="line-91">
 </span><span id="line-92"><span class="sd">        Args:</span>
 </span><span id="line-93"><span class="sd">            nshots (int): Number of measurement shots.  Must be &gt;= 0.</span>
-</span><span id="line-94">
-</span><span id="line-95"><span class="sd">        Returns:</span>
-</span><span id="line-96"><span class="sd">            A new :class:`Readout` with the sampling slot populated.</span>
-</span><span id="line-97">
-</span><span id="line-98"><span class="sd">        Raises:</span>
-</span><span id="line-99"><span class="sd">            ValueError: If a sampling readout was already set.</span>
-</span><span id="line-100"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-101">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sampling</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-102">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Sampling readout already set in this specification.&quot;</span><span class="p">)</span>
-</span><span id="line-103">        <span class="bp">self</span><span class="o">.</span><span class="n">_sampling</span> <span class="o">=</span> <span class="n">SamplingReadout</span><span class="p">(</span><span class="n">nshots</span><span class="o">=</span><span class="n">nshots</span><span class="p">)</span>
-</span><span id="line-104">        <span class="k">return</span> <span class="bp">self</span>  <span class="c1"># ty:ignore[invalid-return-type]</span></div>
+</span><span id="line-94"><span class="sd">            expand_samples (bool): Whether to display partial samples as &quot;00_0&quot; instead of &quot;000&quot; for better readability.</span>
+</span><span id="line-95">
+</span><span id="line-96"><span class="sd">        Returns:</span>
+</span><span id="line-97"><span class="sd">            A new :class:`Readout` with the sampling slot populated.</span>
+</span><span id="line-98">
+</span><span id="line-99"><span class="sd">        Raises:</span>
+</span><span id="line-100"><span class="sd">            ValueError: If a sampling readout was already set.</span>
+</span><span id="line-101"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-102">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sampling</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-103">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Sampling readout already set in this specification.&quot;</span><span class="p">)</span>
+</span><span id="line-104">        <span class="bp">self</span><span class="o">.</span><span class="n">_sampling</span> <span class="o">=</span> <span class="n">SamplingReadout</span><span class="p">(</span><span class="n">nshots</span><span class="o">=</span><span class="n">nshots</span><span class="p">,</span> <span class="n">expand_samples</span><span class="o">=</span><span class="n">expand_samples</span><span class="p">)</span>
+</span><span id="line-105">        <span class="k">return</span> <span class="bp">self</span>  <span class="c1"># ty:ignore[invalid-return-type]</span></div>
 
-</span><span id="line-105">
+</span><span id="line-106">
 <div class="viewcode-block" id="Readout.with_expectation">
 <a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout_spec/index.html#qilisdk.readout.readout_spec.Readout.with_expectation">[docs]</a>
-</span><span id="line-106">    <span class="k">def</span><span class="w"> </span><span class="nf">with_expectation</span><span class="p">(</span>
-</span><span id="line-107">        <span class="bp">self</span><span class="p">,</span>
-</span><span id="line-108">        <span class="n">observables</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Hamiltonian</span> <span class="o">|</span> <span class="n">QTensor</span><span class="p">],</span>
-</span><span id="line-109">        <span class="n">nshots</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-</span><span id="line-110">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Readout</span><span class="p">[</span><span class="n">S</span><span class="p">,</span> <span class="n">ExpectationReadoutResult</span><span class="p">,</span> <span class="n">T</span><span class="p">]:</span>
-</span><span id="line-111"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Add an expectation-value readout to the specification.</span>
-</span><span id="line-112">
-</span><span id="line-113"><span class="sd">        Args:</span>
-</span><span id="line-114"><span class="sd">            observables (list[Hamiltonian | QTensor]): Observables whose expectation values will be evaluated.</span>
-</span><span id="line-115"><span class="sd">            nshots (int): Number of measurement shots.  Use ``0`` for exact (state-vector-based) evaluation.</span>
-</span><span id="line-116">
-</span><span id="line-117"><span class="sd">        Returns:</span>
-</span><span id="line-118"><span class="sd">            A new :class:`Readout` with the expectation slot populated.</span>
-</span><span id="line-119">
-</span><span id="line-120"><span class="sd">        Raises:</span>
-</span><span id="line-121"><span class="sd">            ValueError: If an expectation readout was already set.</span>
-</span><span id="line-122"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-123">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expectation</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-124">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Expectation readout already set in this specification.&quot;</span><span class="p">)</span>
-</span><span id="line-125">        <span class="bp">self</span><span class="o">.</span><span class="n">_expectation</span> <span class="o">=</span> <span class="n">ExpectationReadout</span><span class="p">(</span><span class="n">observables</span><span class="o">=</span><span class="n">observables</span><span class="p">,</span> <span class="n">nshots</span><span class="o">=</span><span class="n">nshots</span><span class="p">)</span>
-</span><span id="line-126">        <span class="k">return</span> <span class="bp">self</span>  <span class="c1"># ty:ignore[invalid-return-type]</span></div>
+</span><span id="line-107">    <span class="k">def</span><span class="w"> </span><span class="nf">with_expectation</span><span class="p">(</span>
+</span><span id="line-108">        <span class="bp">self</span><span class="p">,</span>
+</span><span id="line-109">        <span class="n">observables</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Hamiltonian</span> <span class="o">|</span> <span class="n">QTensor</span><span class="p">],</span>
+</span><span id="line-110">        <span class="n">nshots</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+</span><span id="line-111">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Readout</span><span class="p">[</span><span class="n">S</span><span class="p">,</span> <span class="n">ExpectationReadoutResult</span><span class="p">,</span> <span class="n">T</span><span class="p">]:</span>
+</span><span id="line-112"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Add an expectation-value readout to the specification.</span>
+</span><span id="line-113">
+</span><span id="line-114"><span class="sd">        Args:</span>
+</span><span id="line-115"><span class="sd">            observables (list[Hamiltonian | QTensor]): Observables whose expectation values will be evaluated.</span>
+</span><span id="line-116"><span class="sd">            nshots (int): Number of measurement shots.  Use ``0`` for exact (state-vector-based) evaluation.</span>
+</span><span id="line-117">
+</span><span id="line-118"><span class="sd">        Returns:</span>
+</span><span id="line-119"><span class="sd">            A new :class:`Readout` with the expectation slot populated.</span>
+</span><span id="line-120">
+</span><span id="line-121"><span class="sd">        Raises:</span>
+</span><span id="line-122"><span class="sd">            ValueError: If an expectation readout was already set.</span>
+</span><span id="line-123"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-124">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expectation</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-125">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Expectation readout already set in this specification.&quot;</span><span class="p">)</span>
+</span><span id="line-126">        <span class="bp">self</span><span class="o">.</span><span class="n">_expectation</span> <span class="o">=</span> <span class="n">ExpectationReadout</span><span class="p">(</span><span class="n">observables</span><span class="o">=</span><span class="n">observables</span><span class="p">,</span> <span class="n">nshots</span><span class="o">=</span><span class="n">nshots</span><span class="p">)</span>
+</span><span id="line-127">        <span class="k">return</span> <span class="bp">self</span>  <span class="c1"># ty:ignore[invalid-return-type]</span></div>
 
-</span><span id="line-127">
+</span><span id="line-128">
 <div class="viewcode-block" id="Readout.with_state_tomography">
 <a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout_spec/index.html#qilisdk.readout.readout_spec.Readout.with_state_tomography">[docs]</a>
-</span><span id="line-128">    <span class="k">def</span><span class="w"> </span><span class="nf">with_state_tomography</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;exact&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;exact&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Readout</span><span class="p">[</span><span class="n">S</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">StateTomographyReadoutResult</span><span class="p">]:</span>
-</span><span id="line-129"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a state-tomography readout to the specification.</span>
-</span><span id="line-130">
-</span><span id="line-131"><span class="sd">        Args:</span>
-</span><span id="line-132"><span class="sd">            method (Literal): Tomography method identifier. Currently only &#39;exact&#39; is supported.</span>
-</span><span id="line-133">
-</span><span id="line-134"><span class="sd">        Returns:</span>
-</span><span id="line-135"><span class="sd">            A new :class:`Readout` with the state-tomography slot populated.</span>
-</span><span id="line-136">
-</span><span id="line-137"><span class="sd">        Raises:</span>
-</span><span id="line-138"><span class="sd">            ValueError: If a state-tomography readout was already set.</span>
-</span><span id="line-139"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-140">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_tomography</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-141">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;State-tomography readout already set in this specification.&quot;</span><span class="p">)</span>
-</span><span id="line-142">        <span class="bp">self</span><span class="o">.</span><span class="n">_state_tomography</span> <span class="o">=</span> <span class="n">StateTomographyReadout</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">)</span>
-</span><span id="line-143">        <span class="k">return</span> <span class="bp">self</span>  <span class="c1"># ty:ignore[invalid-return-type]</span></div>
+</span><span id="line-129">    <span class="k">def</span><span class="w"> </span><span class="nf">with_state_tomography</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;exact&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;exact&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Readout</span><span class="p">[</span><span class="n">S</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">StateTomographyReadoutResult</span><span class="p">]:</span>
+</span><span id="line-130"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a state-tomography readout to the specification.</span>
+</span><span id="line-131">
+</span><span id="line-132"><span class="sd">        Args:</span>
+</span><span id="line-133"><span class="sd">            method (Literal): Tomography method identifier. Currently only &#39;exact&#39; is supported.</span>
+</span><span id="line-134">
+</span><span id="line-135"><span class="sd">        Returns:</span>
+</span><span id="line-136"><span class="sd">            A new :class:`Readout` with the state-tomography slot populated.</span>
+</span><span id="line-137">
+</span><span id="line-138"><span class="sd">        Raises:</span>
+</span><span id="line-139"><span class="sd">            ValueError: If a state-tomography readout was already set.</span>
+</span><span id="line-140"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-141">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_tomography</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-142">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;State-tomography readout already set in this specification.&quot;</span><span class="p">)</span>
+</span><span id="line-143">        <span class="bp">self</span><span class="o">.</span><span class="n">_state_tomography</span> <span class="o">=</span> <span class="n">StateTomographyReadout</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">)</span>
+</span><span id="line-144">        <span class="k">return</span> <span class="bp">self</span>  <span class="c1"># ty:ignore[invalid-return-type]</span></div>
 
-</span><span id="line-144">
-</span><span id="line-145">    <span class="c1"># -- accessors --------------------------------------------------------</span>
-</span><span id="line-146">
-</span><span id="line-147">    <span class="nd">@property</span>
+</span><span id="line-145">
+</span><span id="line-146">    <span class="c1"># -- accessors --------------------------------------------------------</span>
+</span><span id="line-147">
+</span><span id="line-148">    <span class="nd">@property</span>
 <div class="viewcode-block" id="Readout.sampling">
 <a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout_spec/index.html#qilisdk.readout.readout_spec.Readout.sampling">[docs]</a>
-</span><span id="line-148">    <span class="k">def</span><span class="w"> </span><span class="nf">sampling</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SamplingReadout</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-149"><span class="w">        </span><span class="sd">&quot;&quot;&quot;The sampling readout, or ``None`` if not set.&quot;&quot;&quot;</span>
-</span><span id="line-150">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sampling</span></div>
+</span><span id="line-149">    <span class="k">def</span><span class="w"> </span><span class="nf">sampling</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SamplingReadout</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-150"><span class="w">        </span><span class="sd">&quot;&quot;&quot;The sampling readout, or ``None`` if not set.&quot;&quot;&quot;</span>
+</span><span id="line-151">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sampling</span></div>
 
-</span><span id="line-151">
-</span><span id="line-152">    <span class="nd">@property</span>
+</span><span id="line-152">
+</span><span id="line-153">    <span class="nd">@property</span>
 <div class="viewcode-block" id="Readout.expectation">
 <a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout_spec/index.html#qilisdk.readout.readout_spec.Readout.expectation">[docs]</a>
-</span><span id="line-153">    <span class="k">def</span><span class="w"> </span><span class="nf">expectation</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ExpectationReadout</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-154"><span class="w">        </span><span class="sd">&quot;&quot;&quot;The expectation-value readout, or ``None`` if not set.&quot;&quot;&quot;</span>
-</span><span id="line-155">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expectation</span></div>
+</span><span id="line-154">    <span class="k">def</span><span class="w"> </span><span class="nf">expectation</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ExpectationReadout</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-155"><span class="w">        </span><span class="sd">&quot;&quot;&quot;The expectation-value readout, or ``None`` if not set.&quot;&quot;&quot;</span>
+</span><span id="line-156">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expectation</span></div>
 
-</span><span id="line-156">
-</span><span id="line-157">    <span class="nd">@property</span>
+</span><span id="line-157">
+</span><span id="line-158">    <span class="nd">@property</span>
 <div class="viewcode-block" id="Readout.state_tomography">
 <a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout_spec/index.html#qilisdk.readout.readout_spec.Readout.state_tomography">[docs]</a>
-</span><span id="line-158">    <span class="k">def</span><span class="w"> </span><span class="nf">state_tomography</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StateTomographyReadout</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-159"><span class="w">        </span><span class="sd">&quot;&quot;&quot;The state-tomography readout, or ``None`` if not set.&quot;&quot;&quot;</span>
-</span><span id="line-160">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_tomography</span></div>
+</span><span id="line-159">    <span class="k">def</span><span class="w"> </span><span class="nf">state_tomography</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StateTomographyReadout</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-160"><span class="w">        </span><span class="sd">&quot;&quot;&quot;The state-tomography readout, or ``None`` if not set.&quot;&quot;&quot;</span>
+</span><span id="line-161">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_tomography</span></div>
 
-</span><span id="line-161">
+</span><span id="line-162">
 <div class="viewcode-block" id="Readout.to_list">
 <a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout_spec/index.html#qilisdk.readout.readout_spec.Readout.to_list">[docs]</a>
-</span><span id="line-162">    <span class="k">def</span><span class="w"> </span><span class="nf">to_list</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ReadoutMethod</span><span class="p">]:</span>
-</span><span id="line-163"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the readout methods as a flat list.</span>
-</span><span id="line-164">
-</span><span id="line-165"><span class="sd">        Useful for backward compatibility with APIs that accept</span>
-</span><span id="line-166"><span class="sd">        ``list[ReadoutMethod]``.</span>
-</span><span id="line-167"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-168">        <span class="k">return</span> <span class="p">[</span><span class="n">ro</span> <span class="k">for</span> <span class="n">ro</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sampling</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expectation</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_tomography</span><span class="p">)</span> <span class="k">if</span> <span class="n">ro</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span></div>
+</span><span id="line-163">    <span class="k">def</span><span class="w"> </span><span class="nf">to_list</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ReadoutMethod</span><span class="p">]:</span>
+</span><span id="line-164"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the readout methods as a flat list.</span>
+</span><span id="line-165">
+</span><span id="line-166"><span class="sd">        Useful for backward compatibility with APIs that accept</span>
+</span><span id="line-167"><span class="sd">        ``list[ReadoutMethod]``.</span>
+</span><span id="line-168"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-169">        <span class="k">return</span> <span class="p">[</span><span class="n">ro</span> <span class="k">for</span> <span class="n">ro</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sampling</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expectation</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_tomography</span><span class="p">)</span> <span class="k">if</span> <span class="n">ro</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span></div>
 
-</span><span id="line-169">
-</span><span id="line-170">    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="line-171">        <span class="n">parts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span id="line-172">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sampling</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-173">            <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;sampling=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_sampling</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
-</span><span id="line-174">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expectation</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-175">            <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;expectation=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_expectation</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
-</span><span id="line-176">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_tomography</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-177">            <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;state_tomography=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_state_tomography</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
-</span><span id="line-178">        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Readout(</span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span>
-</span><span id="line-179">
-</span><span id="line-180">    <span class="k">def</span><span class="w"> </span><span class="fm">__bool__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-</span><span id="line-181">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sampling</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expectation</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_tomography</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span></div>
+</span><span id="line-170">
+</span><span id="line-171">    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="line-172">        <span class="n">parts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="line-173">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sampling</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-174">            <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;sampling=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_sampling</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span id="line-175">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expectation</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-176">            <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;expectation=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_expectation</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span id="line-177">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_tomography</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-178">            <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;state_tomography=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_state_tomography</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span id="line-179">        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Readout(</span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span>
+</span><span id="line-180">
+</span><span id="line-181">    <span class="k">def</span><span class="w"> </span><span class="fm">__bool__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+</span><span id="line-182">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sampling</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expectation</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_tomography</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span></div>
 
 </span></code></pre></div>
     </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">

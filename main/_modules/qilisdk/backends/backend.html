@@ -628,56 +628,65 @@
 </span><span id="line-233">
 </span><span id="line-234">    <span class="nd">@classmethod</span>
 </span><span id="line-235">    <span class="k">def</span><span class="w"> </span><span class="nf">_construct_results_list</span><span class="p">(</span>
-</span><span id="line-236">        <span class="bp">cls</span><span class="p">,</span> <span class="n">final_state</span><span class="p">:</span> <span class="n">QTensor</span><span class="p">,</span> <span class="n">readout</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ReadoutMethod</span><span class="p">],</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-</span><span id="line-237">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ReadoutCompositeResults</span><span class="p">:</span>
-</span><span id="line-238">        <span class="n">sampling_result</span><span class="p">:</span> <span class="n">SamplingReadoutResult</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-</span><span id="line-239">        <span class="n">expectation_result</span><span class="p">:</span> <span class="n">ExpectationReadoutResult</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-</span><span id="line-240">        <span class="n">state_tomography_result</span><span class="p">:</span> <span class="n">StateTomographyReadoutResult</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-</span><span id="line-241">
-</span><span id="line-242">        <span class="k">for</span> <span class="n">ro</span> <span class="ow">in</span> <span class="n">readout</span><span class="p">:</span>
-</span><span id="line-243">            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ro</span><span class="p">,</span> <span class="n">StateTomographyReadout</span><span class="p">):</span>
-</span><span id="line-244">                <span class="k">if</span> <span class="n">ro</span><span class="o">.</span><span class="n">method</span> <span class="o">!=</span> <span class="s2">&quot;exact&quot;</span><span class="p">:</span>
-</span><span id="line-245">                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;State Tomography methods that are not exact are not supported yet.&quot;</span><span class="p">)</span>
-</span><span id="line-246">                <span class="n">state_tomography_result</span><span class="p">:</span> <span class="n">StateTomographyReadoutResult</span> <span class="o">=</span> <span class="n">StateTomographyReadoutResult</span><span class="o">.</span><span class="n">from_state</span><span class="p">(</span>
-</span><span id="line-247">                    <span class="n">state</span><span class="o">=</span><span class="n">final_state</span>
-</span><span id="line-248">                <span class="p">)</span>
-</span><span id="line-249">            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ro</span><span class="p">,</span> <span class="n">ExpectationReadout</span><span class="p">):</span>
-</span><span id="line-250">                <span class="n">ro</span><span class="o">.</span><span class="n">expand_observables</span><span class="p">(</span><span class="n">nqubits</span><span class="o">=</span><span class="n">final_state</span><span class="o">.</span><span class="n">nqubits</span><span class="p">)</span>
-</span><span id="line-251">                <span class="n">expectation_result</span><span class="p">:</span> <span class="n">ExpectationReadoutResult</span> <span class="o">=</span> <span class="n">ExpectationReadoutResult</span><span class="o">.</span><span class="n">from_state</span><span class="p">(</span>
-</span><span id="line-252">                    <span class="n">expectation_readout</span><span class="o">=</span><span class="n">ro</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="n">final_state</span>
-</span><span id="line-253">                <span class="p">)</span>
-</span><span id="line-254">            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ro</span><span class="p">,</span> <span class="n">SamplingReadout</span><span class="p">):</span>
-</span><span id="line-255">                <span class="n">sampling_result</span><span class="p">:</span> <span class="n">SamplingReadoutResult</span> <span class="o">=</span> <span class="n">SamplingReadoutResult</span><span class="o">.</span><span class="n">from_state</span><span class="p">(</span>
-</span><span id="line-256">                    <span class="n">sampling_readout</span><span class="o">=</span><span class="n">ro</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="n">final_state</span>
-</span><span id="line-257">                <span class="p">)</span>
-</span><span id="line-258">            <span class="k">else</span><span class="p">:</span>
-</span><span id="line-259">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported Readout Method provided: </span><span class="si">{</span><span class="n">ro</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</span><span id="line-260">
-</span><span id="line-261">        <span class="k">return</span> <span class="n">ReadoutCompositeResults</span><span class="p">(</span>
-</span><span id="line-262">            <span class="n">sampling</span><span class="o">=</span><span class="n">sampling_result</span><span class="p">,</span>  <span class="c1"># ty:ignore[invalid-argument-type]</span>
-</span><span id="line-263">            <span class="n">expectation_values</span><span class="o">=</span><span class="n">expectation_result</span><span class="p">,</span>  <span class="c1"># ty:ignore[invalid-argument-type]</span>
-</span><span id="line-264">            <span class="n">state_tomography</span><span class="o">=</span><span class="n">state_tomography_result</span><span class="p">,</span>  <span class="c1"># ty:ignore[invalid-argument-type]</span>
-</span><span id="line-265">        <span class="p">)</span></div>
+</span><span id="line-236">        <span class="bp">cls</span><span class="p">,</span>
+</span><span id="line-237">        <span class="n">final_state</span><span class="p">:</span> <span class="n">QTensor</span><span class="p">,</span>
+</span><span id="line-238">        <span class="n">readout</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ReadoutMethod</span><span class="p">],</span>
+</span><span id="line-239">        <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-240">        <span class="n">qubits_to_measure</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-241">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ReadoutCompositeResults</span><span class="p">:</span>
+</span><span id="line-242">        <span class="n">sampling_result</span><span class="p">:</span> <span class="n">SamplingReadoutResult</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</span><span id="line-243">        <span class="n">expectation_result</span><span class="p">:</span> <span class="n">ExpectationReadoutResult</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</span><span id="line-244">        <span class="n">state_tomography_result</span><span class="p">:</span> <span class="n">StateTomographyReadoutResult</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</span><span id="line-245">
+</span><span id="line-246">        <span class="k">for</span> <span class="n">ro</span> <span class="ow">in</span> <span class="n">readout</span><span class="p">:</span>
+</span><span id="line-247">            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ro</span><span class="p">,</span> <span class="n">StateTomographyReadout</span><span class="p">):</span>
+</span><span id="line-248">                <span class="k">if</span> <span class="n">ro</span><span class="o">.</span><span class="n">method</span> <span class="o">!=</span> <span class="s2">&quot;exact&quot;</span><span class="p">:</span>
+</span><span id="line-249">                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;State Tomography methods that are not exact are not supported yet.&quot;</span><span class="p">)</span>
+</span><span id="line-250">                <span class="n">state_tomography_result</span><span class="p">:</span> <span class="n">StateTomographyReadoutResult</span> <span class="o">=</span> <span class="n">StateTomographyReadoutResult</span><span class="o">.</span><span class="n">from_state</span><span class="p">(</span>
+</span><span id="line-251">                    <span class="n">state</span><span class="o">=</span><span class="n">final_state</span><span class="o">.</span><span class="n">partial_trace</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">qubits_to_measure</span><span class="p">))</span>
+</span><span id="line-252">                    <span class="k">if</span> <span class="n">qubits_to_measure</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+</span><span id="line-253">                    <span class="k">else</span> <span class="n">final_state</span>
+</span><span id="line-254">                <span class="p">)</span>
+</span><span id="line-255">            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ro</span><span class="p">,</span> <span class="n">ExpectationReadout</span><span class="p">):</span>
+</span><span id="line-256">                <span class="n">ro</span><span class="o">.</span><span class="n">expand_observables</span><span class="p">(</span><span class="n">nqubits</span><span class="o">=</span><span class="n">final_state</span><span class="o">.</span><span class="n">nqubits</span><span class="p">)</span>
+</span><span id="line-257">                <span class="n">expectation_result</span><span class="p">:</span> <span class="n">ExpectationReadoutResult</span> <span class="o">=</span> <span class="n">ExpectationReadoutResult</span><span class="o">.</span><span class="n">from_state</span><span class="p">(</span>
+</span><span id="line-258">                    <span class="n">expectation_readout</span><span class="o">=</span><span class="n">ro</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="n">final_state</span>
+</span><span id="line-259">                <span class="p">)</span>
+</span><span id="line-260">            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ro</span><span class="p">,</span> <span class="n">SamplingReadout</span><span class="p">):</span>
+</span><span id="line-261">                <span class="n">sampling_result</span><span class="p">:</span> <span class="n">SamplingReadoutResult</span> <span class="o">=</span> <span class="n">SamplingReadoutResult</span><span class="o">.</span><span class="n">from_state</span><span class="p">(</span>
+</span><span id="line-262">                    <span class="n">sampling_readout</span><span class="o">=</span><span class="n">ro</span><span class="p">,</span>
+</span><span id="line-263">                    <span class="n">state</span><span class="o">=</span><span class="n">final_state</span><span class="p">,</span>
+</span><span id="line-264">                    <span class="n">qubits_to_measure</span><span class="o">=</span><span class="n">qubits_to_measure</span><span class="p">,</span>
+</span><span id="line-265">                    <span class="n">expand_samples</span><span class="o">=</span><span class="n">ro</span><span class="o">.</span><span class="n">expand_samples</span><span class="p">,</span>
+</span><span id="line-266">                <span class="p">)</span>
+</span><span id="line-267">            <span class="k">else</span><span class="p">:</span>
+</span><span id="line-268">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported Readout Method provided: </span><span class="si">{</span><span class="n">ro</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span id="line-269">
+</span><span id="line-270">        <span class="k">return</span> <span class="n">ReadoutCompositeResults</span><span class="p">(</span>
+</span><span id="line-271">            <span class="n">sampling</span><span class="o">=</span><span class="n">sampling_result</span><span class="p">,</span>  <span class="c1"># ty:ignore[invalid-argument-type]</span>
+</span><span id="line-272">            <span class="n">expectation_values</span><span class="o">=</span><span class="n">expectation_result</span><span class="p">,</span>  <span class="c1"># ty:ignore[invalid-argument-type]</span>
+</span><span id="line-273">            <span class="n">state_tomography</span><span class="o">=</span><span class="n">state_tomography_result</span><span class="p">,</span>  <span class="c1"># ty:ignore[invalid-argument-type]</span>
+</span><span id="line-274">        <span class="p">)</span></div>
 
-</span><span id="line-266">
-</span><span id="line-267">
-</span><span id="line-268"><span class="k">def</span><span class="w"> </span><span class="nf">_readout_list_to_spec</span><span class="p">(</span><span class="n">readout</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ReadoutMethod</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Readout</span><span class="p">:</span>
-</span><span id="line-269"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert a flat readout list back to a :class:`Readout`.</span>
-</span><span id="line-270">
-</span><span id="line-271"><span class="sd">    Used internally when the variational program handler needs to reconstruct a spec from the list received from the dispatcher.</span>
-</span><span id="line-272">
-</span><span id="line-273"><span class="sd">    Returns:</span>
-</span><span id="line-274"><span class="sd">        Readout: the constructed Readout.</span>
-</span><span id="line-275"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-276">    <span class="n">spec</span><span class="p">:</span> <span class="n">Readout</span> <span class="o">=</span> <span class="n">Readout</span><span class="p">()</span>
-</span><span id="line-277">    <span class="k">for</span> <span class="n">ro</span> <span class="ow">in</span> <span class="n">readout</span><span class="p">:</span>
-</span><span id="line-278">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ro</span><span class="p">,</span> <span class="n">SamplingReadout</span><span class="p">):</span>
-</span><span id="line-279">            <span class="n">spec</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">with_sampling</span><span class="p">(</span><span class="n">nshots</span><span class="o">=</span><span class="n">ro</span><span class="o">.</span><span class="n">nshots</span><span class="p">)</span>
-</span><span id="line-280">        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ro</span><span class="p">,</span> <span class="n">ExpectationReadout</span><span class="p">):</span>
-</span><span id="line-281">            <span class="n">spec</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">with_expectation</span><span class="p">(</span><span class="n">observables</span><span class="o">=</span><span class="n">ro</span><span class="o">.</span><span class="n">observables</span><span class="p">,</span> <span class="n">nshots</span><span class="o">=</span><span class="n">ro</span><span class="o">.</span><span class="n">nshots</span><span class="p">)</span>
-</span><span id="line-282">        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ro</span><span class="p">,</span> <span class="n">StateTomographyReadout</span><span class="p">):</span>
-</span><span id="line-283">            <span class="n">spec</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">with_state_tomography</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="n">ro</span><span class="o">.</span><span class="n">method</span><span class="p">)</span>
-</span><span id="line-284">    <span class="k">return</span> <span class="n">spec</span>
+</span><span id="line-275">
+</span><span id="line-276">
+</span><span id="line-277"><span class="k">def</span><span class="w"> </span><span class="nf">_readout_list_to_spec</span><span class="p">(</span><span class="n">readout</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ReadoutMethod</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Readout</span><span class="p">:</span>
+</span><span id="line-278"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert a flat readout list back to a :class:`Readout`.</span>
+</span><span id="line-279">
+</span><span id="line-280"><span class="sd">    Used internally when the variational program handler needs to reconstruct a spec from the list received from the dispatcher.</span>
+</span><span id="line-281">
+</span><span id="line-282"><span class="sd">    Returns:</span>
+</span><span id="line-283"><span class="sd">        Readout: the constructed Readout.</span>
+</span><span id="line-284"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-285">    <span class="n">spec</span><span class="p">:</span> <span class="n">Readout</span> <span class="o">=</span> <span class="n">Readout</span><span class="p">()</span>
+</span><span id="line-286">    <span class="k">for</span> <span class="n">ro</span> <span class="ow">in</span> <span class="n">readout</span><span class="p">:</span>
+</span><span id="line-287">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ro</span><span class="p">,</span> <span class="n">SamplingReadout</span><span class="p">):</span>
+</span><span id="line-288">            <span class="n">spec</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">with_sampling</span><span class="p">(</span><span class="n">nshots</span><span class="o">=</span><span class="n">ro</span><span class="o">.</span><span class="n">nshots</span><span class="p">)</span>
+</span><span id="line-289">        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ro</span><span class="p">,</span> <span class="n">ExpectationReadout</span><span class="p">):</span>
+</span><span id="line-290">            <span class="n">spec</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">with_expectation</span><span class="p">(</span><span class="n">observables</span><span class="o">=</span><span class="n">ro</span><span class="o">.</span><span class="n">observables</span><span class="p">,</span> <span class="n">nshots</span><span class="o">=</span><span class="n">ro</span><span class="o">.</span><span class="n">nshots</span><span class="p">)</span>
+</span><span id="line-291">        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ro</span><span class="p">,</span> <span class="n">StateTomographyReadout</span><span class="p">):</span>
+</span><span id="line-292">            <span class="n">spec</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">with_state_tomography</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="n">ro</span><span class="o">.</span><span class="n">method</span><span class="p">)</span>
+</span><span id="line-293">    <span class="k">return</span> <span class="n">spec</span>
 </span></code></pre></div>
     </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">
 </div></div>

@@ -670,140 +670,150 @@
 </span><span id="line-219">        <span class="p">),</span>
 </span><span id="line-220">    <span class="p">)</span></div>
 
-</span><span id="line-221">
+<div class="viewcode-block" id="ExecutionConfig.measurement_collapse">
+<a class="viewcode-back" href="../../../code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.ExecutionConfig.measurement_collapse">[docs]</a>
+</span><span id="line-221">    <span class="n">measurement_collapse</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+</span><span id="line-222">        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+</span><span id="line-223">        <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+</span><span id="line-224">            <span class="s2">&quot;Whether to apply state collapse immediately after measurements. If `False`, measurements are recorded but the state is not collapsed.&quot;</span>
+</span><span id="line-225">        <span class="p">),</span>
+</span><span id="line-226">    <span class="p">)</span></div>
+
+</span><span id="line-227">
 <div class="viewcode-block" id="ExecutionConfig.get_config">
 <a class="viewcode-back" href="../../../code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.ExecutionConfig.get_config">[docs]</a>
-</span><span id="line-222">    <span class="k">def</span><span class="w"> </span><span class="nf">get_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SolverConfigDict</span><span class="p">:</span>
-</span><span id="line-223"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return execution settings with resolved defaults.&quot;&quot;&quot;</span>
-</span><span id="line-224">        <span class="n">d</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-</span><span id="line-225">            <span class="s2">&quot;num_threads&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_threads</span><span class="p">,</span>
-</span><span id="line-226">            <span class="s2">&quot;seed&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">seed</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">seed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">0</span><span class="p">,</span>  <span class="c1"># defensive</span>
-</span><span id="line-227">            <span class="s2">&quot;monte_carlo&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">monte_carlo</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="line-228">        <span class="p">}</span>
-</span><span id="line-229">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">monte_carlo</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-230">            <span class="n">d</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">monte_carlo</span><span class="o">.</span><span class="n">get_config</span><span class="p">())</span>
-</span><span id="line-231">        <span class="k">else</span><span class="p">:</span>
-</span><span id="line-232">            <span class="n">d</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;num_monte_carlo_trajectories&quot;</span><span class="p">:</span> <span class="mi">100</span><span class="p">})</span>
-</span><span id="line-233">        <span class="k">return</span> <span class="n">d</span></div>
+</span><span id="line-228">    <span class="k">def</span><span class="w"> </span><span class="nf">get_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SolverConfigDict</span><span class="p">:</span>
+</span><span id="line-229"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return execution settings with resolved defaults.&quot;&quot;&quot;</span>
+</span><span id="line-230">        <span class="n">d</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+</span><span id="line-231">            <span class="s2">&quot;num_threads&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_threads</span><span class="p">,</span>
+</span><span id="line-232">            <span class="s2">&quot;seed&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">seed</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">seed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">0</span><span class="p">,</span>  <span class="c1"># defensive</span>
+</span><span id="line-233">            <span class="s2">&quot;monte_carlo&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">monte_carlo</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-234">            <span class="s2">&quot;measurement_collapse&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_collapse</span><span class="p">,</span>
+</span><span id="line-235">        <span class="p">}</span>
+</span><span id="line-236">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">monte_carlo</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-237">            <span class="n">d</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">monte_carlo</span><span class="o">.</span><span class="n">get_config</span><span class="p">())</span>
+</span><span id="line-238">        <span class="k">else</span><span class="p">:</span>
+</span><span id="line-239">            <span class="n">d</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;num_monte_carlo_trajectories&quot;</span><span class="p">:</span> <span class="mi">100</span><span class="p">})</span>
+</span><span id="line-240">        <span class="k">return</span> <span class="n">d</span></div>
 
-</span><span id="line-234">
-</span><span id="line-235">    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;num_threads&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;after&quot;</span><span class="p">)</span>
-</span><span id="line-236">    <span class="nd">@classmethod</span>
-</span><span id="line-237">    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_num_threads</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">num_threads</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-</span><span id="line-238">        <span class="k">if</span> <span class="n">num_threads</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
-</span><span id="line-239">            <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span> <span class="ow">or</span> <span class="mi">1</span>
-</span><span id="line-240">        <span class="k">return</span> <span class="n">num_threads</span>
 </span><span id="line-241">
-</span><span id="line-242">    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;seed&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;after&quot;</span><span class="p">)</span>
+</span><span id="line-242">    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;num_threads&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;after&quot;</span><span class="p">)</span>
 </span><span id="line-243">    <span class="nd">@classmethod</span>
-</span><span id="line-244">    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_seed</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-</span><span id="line-245">        <span class="k">if</span> <span class="n">seed</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-246">            <span class="k">return</span> <span class="n">secrets</span><span class="o">.</span><span class="n">randbelow</span><span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="mi">15</span><span class="p">)</span>
-</span><span id="line-247">        <span class="k">return</span> <span class="n">seed</span></div>
-
+</span><span id="line-244">    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_num_threads</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">num_threads</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+</span><span id="line-245">        <span class="k">if</span> <span class="n">num_threads</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+</span><span id="line-246">            <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span> <span class="ow">or</span> <span class="mi">1</span>
+</span><span id="line-247">        <span class="k">return</span> <span class="n">num_threads</span>
 </span><span id="line-248">
-</span><span id="line-249">
-</span><span id="line-250"><span class="c1"># ----------------------------</span>
-</span><span id="line-251"><span class="c1"># Digital config</span>
-</span><span id="line-252"><span class="c1"># ----------------------------</span>
-</span><span id="line-253">
-</span><span id="line-254">
+</span><span id="line-249">    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;seed&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;after&quot;</span><span class="p">)</span>
+</span><span id="line-250">    <span class="nd">@classmethod</span>
+</span><span id="line-251">    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_seed</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+</span><span id="line-252">        <span class="k">if</span> <span class="n">seed</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-253">            <span class="k">return</span> <span class="n">secrets</span><span class="o">.</span><span class="n">randbelow</span><span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="mi">15</span><span class="p">)</span>
+</span><span id="line-254">        <span class="k">return</span> <span class="n">seed</span></div>
+
+</span><span id="line-255">
+</span><span id="line-256">
+</span><span id="line-257"><span class="c1"># ----------------------------</span>
+</span><span id="line-258"><span class="c1"># Digital config</span>
+</span><span id="line-259"><span class="c1"># ----------------------------</span>
+</span><span id="line-260">
+</span><span id="line-261">
 <div class="viewcode-block" id="DigitalMethod">
 <a class="viewcode-back" href="../../../code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.DigitalMethod">[docs]</a>
-</span><span id="line-255"><span class="k">class</span><span class="w"> </span><span class="nc">DigitalMethod</span><span class="p">(</span><span class="n">BaseSimulatorConfig</span><span class="p">):</span>
-</span><span id="line-256"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration for digital-circuit simulation options.</span>
-</span><span id="line-257">
-</span><span id="line-258"><span class="sd">    Preferred constructors:</span>
-</span><span id="line-259"><span class="sd">        - :meth:`statevector` for standard state-vector simulation settings.</span>
-</span><span id="line-260">
-</span><span id="line-261"><span class="sd">    Args:</span>
-</span><span id="line-262"><span class="sd">        max_cache_size (int): Maximum number of cached gate</span>
-</span><span id="line-263"><span class="sd">            representations used by the digital simulator. Defaults to</span>
-</span><span id="line-264"><span class="sd">            ``1000``.</span>
-</span><span id="line-265"><span class="sd">        normalize_after_each_gate (bool): Whether to normalize the</span>
-</span><span id="line-266"><span class="sd">            statevector after each gate application to mitigate numerical</span>
-</span><span id="line-267"><span class="sd">            errors at the cost of increased runtime. Defaults to ``True``.</span>
-</span><span id="line-268"><span class="sd">        combine_single_qubit_gates (bool): Whether to combine consecutive</span>
-</span><span id="line-269"><span class="sd">            single-qubit gates into a single operation to reduce overhead</span>
-</span><span id="line-270"><span class="sd">            at the cost of increased memory usage. Defaults to ``True``.</span>
-</span><span id="line-271"><span class="sd">        matrix_free (bool): Whether to use the matrix-free implementation</span>
-</span><span id="line-272"><span class="sd">            for statevector simulation. Defaults to ``True``.</span>
-</span><span id="line-273"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-274">
+</span><span id="line-262"><span class="k">class</span><span class="w"> </span><span class="nc">DigitalMethod</span><span class="p">(</span><span class="n">BaseSimulatorConfig</span><span class="p">):</span>
+</span><span id="line-263"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration for digital-circuit simulation options.</span>
+</span><span id="line-264">
+</span><span id="line-265"><span class="sd">    Preferred constructors:</span>
+</span><span id="line-266"><span class="sd">        - :meth:`statevector` for standard state-vector simulation settings.</span>
+</span><span id="line-267">
+</span><span id="line-268"><span class="sd">    Args:</span>
+</span><span id="line-269"><span class="sd">        max_cache_size (int): Maximum number of cached gate</span>
+</span><span id="line-270"><span class="sd">            representations used by the digital simulator. Defaults to</span>
+</span><span id="line-271"><span class="sd">            ``1000``.</span>
+</span><span id="line-272"><span class="sd">        normalize_after_each_gate (bool): Whether to normalize the</span>
+</span><span id="line-273"><span class="sd">            statevector after each gate application to mitigate numerical</span>
+</span><span id="line-274"><span class="sd">            errors at the cost of increased runtime. Defaults to ``True``.</span>
+</span><span id="line-275"><span class="sd">        combine_single_qubit_gates (bool): Whether to combine consecutive</span>
+</span><span id="line-276"><span class="sd">            single-qubit gates into a single operation to reduce overhead</span>
+</span><span id="line-277"><span class="sd">            at the cost of increased memory usage. Defaults to ``True``.</span>
+</span><span id="line-278"><span class="sd">        matrix_free (bool): Whether to use the matrix-free implementation</span>
+</span><span id="line-279"><span class="sd">            for statevector simulation. Defaults to ``True``.</span>
+</span><span id="line-280"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-281">
 <div class="viewcode-block" id="DigitalMethod.max_cache_size">
 <a class="viewcode-back" href="../../../code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.DigitalMethod.max_cache_size">[docs]</a>
-</span><span id="line-275">    <span class="n">max_cache_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-</span><span id="line-276">        <span class="n">default</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
-</span><span id="line-277">        <span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-</span><span id="line-278">        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Maximum number of cached gate representations used by the digital simulator.&quot;</span><span class="p">,</span>
-</span><span id="line-279">    <span class="p">)</span></div>
+</span><span id="line-282">    <span class="n">max_cache_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+</span><span id="line-283">        <span class="n">default</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+</span><span id="line-284">        <span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+</span><span id="line-285">        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Maximum number of cached gate representations used by the digital simulator.&quot;</span><span class="p">,</span>
+</span><span id="line-286">    <span class="p">)</span></div>
 
 <div class="viewcode-block" id="DigitalMethod.normalize_after_each_gate">
 <a class="viewcode-back" href="../../../code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.DigitalMethod.normalize_after_each_gate">[docs]</a>
-</span><span id="line-280">    <span class="n">normalize_after_each_gate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-</span><span id="line-281">        <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-</span><span id="line-282">        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether to normalize the statevector after each gate application to mitigate numerical errors at the cost of increased runtime.&quot;</span><span class="p">,</span>
-</span><span id="line-283">    <span class="p">)</span></div>
+</span><span id="line-287">    <span class="n">normalize_after_each_gate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+</span><span id="line-288">        <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+</span><span id="line-289">        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether to normalize the statevector after each gate application to mitigate numerical errors at the cost of increased runtime.&quot;</span><span class="p">,</span>
+</span><span id="line-290">    <span class="p">)</span></div>
 
 <div class="viewcode-block" id="DigitalMethod.combine_single_qubit_gates">
 <a class="viewcode-back" href="../../../code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.DigitalMethod.combine_single_qubit_gates">[docs]</a>
-</span><span id="line-284">    <span class="n">combine_single_qubit_gates</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-</span><span id="line-285">        <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-</span><span id="line-286">        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether to combine consecutive single-qubit gates into a single operation to reduce overhead at the cost of increased memory usage.&quot;</span><span class="p">,</span>
-</span><span id="line-287">    <span class="p">)</span></div>
+</span><span id="line-291">    <span class="n">combine_single_qubit_gates</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+</span><span id="line-292">        <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+</span><span id="line-293">        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether to combine consecutive single-qubit gates into a single operation to reduce overhead at the cost of increased memory usage.&quot;</span><span class="p">,</span>
+</span><span id="line-294">    <span class="p">)</span></div>
 
 <div class="viewcode-block" id="DigitalMethod.matrix_free">
 <a class="viewcode-back" href="../../../code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.DigitalMethod.matrix_free">[docs]</a>
-</span><span id="line-288">    <span class="n">matrix_free</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-</span><span id="line-289">        <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-</span><span id="line-290">        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether to use the matrix-free implementation for statevector simulation.&quot;</span><span class="p">,</span>
-</span><span id="line-291">    <span class="p">)</span></div>
+</span><span id="line-295">    <span class="n">matrix_free</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+</span><span id="line-296">        <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+</span><span id="line-297">        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether to use the matrix-free implementation for statevector simulation.&quot;</span><span class="p">,</span>
+</span><span id="line-298">    <span class="p">)</span></div>
 
-</span><span id="line-292">
+</span><span id="line-299">
 <div class="viewcode-block" id="DigitalMethod.get_config">
 <a class="viewcode-back" href="../../../code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.DigitalMethod.get_config">[docs]</a>
-</span><span id="line-293">    <span class="k">def</span><span class="w"> </span><span class="nf">get_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SolverConfigDict</span><span class="p">:</span>
-</span><span id="line-294"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return digital simulation settings in backend-compatible key names.&quot;&quot;&quot;</span>
-</span><span id="line-295">        <span class="k">return</span> <span class="p">{</span>
-</span><span id="line-296">            <span class="s2">&quot;max_cache_size&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_cache_size</span><span class="p">,</span>
-</span><span id="line-297">            <span class="s2">&quot;sampling_method&quot;</span><span class="p">:</span> <span class="s2">&quot;statevector_matrix_free&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">matrix_free</span> <span class="k">else</span> <span class="s2">&quot;statevector&quot;</span><span class="p">,</span>
-</span><span id="line-298">            <span class="s2">&quot;normalize_after_each_gate&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">normalize_after_each_gate</span><span class="p">,</span>
-</span><span id="line-299">            <span class="s2">&quot;combine_single_qubit_gates&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">combine_single_qubit_gates</span><span class="p">,</span>
-</span><span id="line-300">        <span class="p">}</span></div>
+</span><span id="line-300">    <span class="k">def</span><span class="w"> </span><span class="nf">get_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SolverConfigDict</span><span class="p">:</span>
+</span><span id="line-301"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return digital simulation settings in backend-compatible key names.&quot;&quot;&quot;</span>
+</span><span id="line-302">        <span class="k">return</span> <span class="p">{</span>
+</span><span id="line-303">            <span class="s2">&quot;max_cache_size&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_cache_size</span><span class="p">,</span>
+</span><span id="line-304">            <span class="s2">&quot;sampling_method&quot;</span><span class="p">:</span> <span class="s2">&quot;statevector_matrix_free&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">matrix_free</span> <span class="k">else</span> <span class="s2">&quot;statevector&quot;</span><span class="p">,</span>
+</span><span id="line-305">            <span class="s2">&quot;normalize_after_each_gate&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">normalize_after_each_gate</span><span class="p">,</span>
+</span><span id="line-306">            <span class="s2">&quot;combine_single_qubit_gates&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">combine_single_qubit_gates</span><span class="p">,</span>
+</span><span id="line-307">        <span class="p">}</span></div>
 
-</span><span id="line-301">
-</span><span id="line-302">    <span class="nd">@classmethod</span>
+</span><span id="line-308">
+</span><span id="line-309">    <span class="nd">@classmethod</span>
 <div class="viewcode-block" id="DigitalMethod.statevector">
 <a class="viewcode-back" href="../../../code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.DigitalMethod.statevector">[docs]</a>
-</span><span id="line-303">    <span class="k">def</span><span class="w"> </span><span class="nf">statevector</span><span class="p">(</span>
-</span><span id="line-304">        <span class="bp">cls</span><span class="p">,</span>
-</span><span id="line-305">        <span class="o">*</span><span class="p">,</span>
-</span><span id="line-306">        <span class="n">max_cache_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
-</span><span id="line-307">        <span class="n">normalize_after_each_gate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-</span><span id="line-308">        <span class="n">matrix_free</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-</span><span id="line-309">        <span class="n">combine_single_qubit_gates</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-</span><span id="line-310">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DigitalMethod</span><span class="p">:</span>
-</span><span id="line-311"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Build the standard statevector simulation configuration.</span>
-</span><span id="line-312">
-</span><span id="line-313"><span class="sd">        Args:</span>
-</span><span id="line-314"><span class="sd">            max_cache_size (int): Maximum number of cached gate representations used by the digital simulator.</span>
-</span><span id="line-315"><span class="sd">                Defaults to ``1000``.</span>
-</span><span id="line-316"><span class="sd">            normalize_after_each_gate (bool): Whether to normalize the statevector after each gate application to</span>
-</span><span id="line-317"><span class="sd">                mitigate numerical errors at the cost of increased runtime. Defaults to ``False``.</span>
-</span><span id="line-318"><span class="sd">            matrix_free (bool): Whether to use the matrix-free implementation for statevector simulation.</span>
-</span><span id="line-319"><span class="sd">                Defaults to ``True``.</span>
-</span><span id="line-320"><span class="sd">            combine_single_qubit_gates (bool): Whether to combine consecutive single-qubit gates into a single operation.</span>
-</span><span id="line-321"><span class="sd">                Defaults to ``True``.</span>
-</span><span id="line-322">
-</span><span id="line-323"><span class="sd">        Returns:</span>
-</span><span id="line-324"><span class="sd">            DigitalMethod: Configured statevector digital configuration.</span>
-</span><span id="line-325"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-326">        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
-</span><span id="line-327">            <span class="n">max_cache_size</span><span class="o">=</span><span class="n">max_cache_size</span><span class="p">,</span>
-</span><span id="line-328">            <span class="n">normalize_after_each_gate</span><span class="o">=</span><span class="n">normalize_after_each_gate</span><span class="p">,</span>
-</span><span id="line-329">            <span class="n">combine_single_qubit_gates</span><span class="o">=</span><span class="n">combine_single_qubit_gates</span><span class="p">,</span>
-</span><span id="line-330">            <span class="n">matrix_free</span><span class="o">=</span><span class="n">matrix_free</span><span class="p">,</span>
-</span><span id="line-331">        <span class="p">)</span></div>
+</span><span id="line-310">    <span class="k">def</span><span class="w"> </span><span class="nf">statevector</span><span class="p">(</span>
+</span><span id="line-311">        <span class="bp">cls</span><span class="p">,</span>
+</span><span id="line-312">        <span class="o">*</span><span class="p">,</span>
+</span><span id="line-313">        <span class="n">max_cache_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+</span><span id="line-314">        <span class="n">normalize_after_each_gate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+</span><span id="line-315">        <span class="n">matrix_free</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+</span><span id="line-316">        <span class="n">combine_single_qubit_gates</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+</span><span id="line-317">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DigitalMethod</span><span class="p">:</span>
+</span><span id="line-318"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Build the standard statevector simulation configuration.</span>
+</span><span id="line-319">
+</span><span id="line-320"><span class="sd">        Args:</span>
+</span><span id="line-321"><span class="sd">            max_cache_size (int): Maximum number of cached gate representations used by the digital simulator.</span>
+</span><span id="line-322"><span class="sd">                Defaults to ``1000``.</span>
+</span><span id="line-323"><span class="sd">            normalize_after_each_gate (bool): Whether to normalize the statevector after each gate application to</span>
+</span><span id="line-324"><span class="sd">                mitigate numerical errors at the cost of increased runtime. Defaults to ``False``.</span>
+</span><span id="line-325"><span class="sd">            matrix_free (bool): Whether to use the matrix-free implementation for statevector simulation.</span>
+</span><span id="line-326"><span class="sd">                Defaults to ``True``.</span>
+</span><span id="line-327"><span class="sd">            combine_single_qubit_gates (bool): Whether to combine consecutive single-qubit gates into a single operation.</span>
+</span><span id="line-328"><span class="sd">                Defaults to ``True``.</span>
+</span><span id="line-329">
+</span><span id="line-330"><span class="sd">        Returns:</span>
+</span><span id="line-331"><span class="sd">            DigitalMethod: Configured statevector digital configuration.</span>
+</span><span id="line-332"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-333">        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
+</span><span id="line-334">            <span class="n">max_cache_size</span><span class="o">=</span><span class="n">max_cache_size</span><span class="p">,</span>
+</span><span id="line-335">            <span class="n">normalize_after_each_gate</span><span class="o">=</span><span class="n">normalize_after_each_gate</span><span class="p">,</span>
+</span><span id="line-336">            <span class="n">combine_single_qubit_gates</span><span class="o">=</span><span class="n">combine_single_qubit_gates</span><span class="p">,</span>
+</span><span id="line-337">            <span class="n">matrix_free</span><span class="o">=</span><span class="n">matrix_free</span><span class="p">,</span>
+</span><span id="line-338">        <span class="p">)</span></div>
 </div>
 
 </span></code></pre></div>
