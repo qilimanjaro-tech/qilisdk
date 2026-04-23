@@ -640,6 +640,9 @@ QiliSimConfig parse_solver_params(const py::dict& solver_params) {
     if (solver_params.contains("arnoldi_dim")) {
         config.set_arnoldi_dim(solver_params["arnoldi_dim"].cast<int>());
     }
+    if (solver_params.contains("adaptive_tol")) {
+        config.set_adaptive_tol(solver_params["adaptive_tol"].cast<double>());
+    }
     if (solver_params.contains("num_arnoldi_substeps")) {
         config.set_num_arnoldi_substeps(solver_params["num_arnoldi_substeps"].cast<int>());
     }

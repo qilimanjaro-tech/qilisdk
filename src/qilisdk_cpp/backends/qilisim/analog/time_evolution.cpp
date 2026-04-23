@@ -13,6 +13,8 @@
 // limitations under the License.
 
 #include <iostream>
+#include <chrono>
+
 #include "time_evolution.h"
 #include "../noise/noise_model.h"
 #include "../utils/matrix_utils.h"
@@ -249,6 +251,9 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
     // If doing adaptive step size with rk45
     if (config.get_time_evolution_method() == "integrate_rk45_matrix_free") {
 
+        // Start a timer
+        auto start_time = std::chrono::high_resolution_clock::now();
+
         // Initial step size
         double dt = 1.0;
         if (step_list.size() > 1) {
@@ -257,28 +262,18 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
 
         // Loop until we reach the max time
         double current_time = 0.0;
-        size_t step_ind = 0;
         size_t iters = 0;
+        DenseMatrix k_saved;
         while (current_time < step_list.back()) {
-
-            // Get the current Hamiltonian
-            MatrixFreeHamiltonian currentH;
-            for (size_t h = 0; h < hamiltonians.size(); ++h) {
-                double c = parameters_list[h][step_ind];
-                currentH += hamiltonians[h] * c;
-            }
 
             // Make sure the next step doesn't go beyond the final time point
             dt = std::min(dt, step_list.back() - current_time);
 
-            std::cout << "Iters: " << iters << ", Current time: " << current_time << ", dt: " << dt << ", step index: " << step_ind << std::endl;
-
-            // Perform the iteration depending on the method
-            // dt is updated to the suggested next step; dt_taken is what was actually stepped
-            double dt_taken = iter_rk45(rho_t, dt, currentH, jump_operators, is_unitary_on_statevector);
+            // dt is updated to the suggested next step; dt_taken is what was actually stepped0
+            double dt_taken = iter_rk45(rho_t, current_time, dt, step_list, hamiltonians, parameters_list, jump_operators, is_unitary_on_statevector, config.get_adaptive_tol(), k_saved);
 
             // If we should store intermediates, do it here
-            if (config.get_store_intermediate_results()) {
+            if (config.get_store_intermediate_results() && dt_taken > 0) {
                 if (use_monte_carlo || (!input_was_vector && rho_t.cols() == 1)) {
                     intermediate_rhos.push_back(trajectories_to_density_matrix(rho_t));
                 } else {
@@ -289,31 +284,24 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
             // Update the time and step index
             current_time += dt_taken;
             iters++;
-            while (step_ind < step_list.size() && current_time >= step_list[step_ind]) {
-                step_ind++;
-            }
         }
+
+        std::cout << "Adaptive RK45 took " << iters << " iterations" << std::endl;
+        auto end_time = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> elapsed = end_time - start_time;
+        std::cout << "Adaptive RK45 took " << elapsed.count() << " seconds" << std::endl;
 
     // If doing fixed step size with rk4
     } else {
 
         // For each time step
         for (size_t step_ind = 0; step_ind < step_list.size(); ++step_ind) {
-            // Get the current Hamiltonian
-            MatrixFreeHamiltonian currentH;
-            for (size_t h = 0; h < hamiltonians.size(); ++h) {
-                double c = parameters_list[h][step_ind];
-                currentH += hamiltonians[h] * c;
-            }
-
-            // Determine the time step
-            double dt = step_list[step_ind];
-            if (step_ind > 0) {
-                dt = (step_list[step_ind] - step_list[step_ind - 1]);
-            }
+            // Determine the time step and starting time
+            double t_start = (step_ind > 0) ? step_list[step_ind - 1] : 0.0;
+            double dt = step_list[step_ind] - t_start;
 
             // Perform the iteration depending on the method
-            iter_rk4(rho_t, dt, currentH, jump_operators, config.get_num_integrate_substeps(), is_unitary_on_statevector);
+            iter_rk4(rho_t, t_start, dt, step_list, hamiltonians, parameters_list, jump_operators, config.get_num_integrate_substeps(), is_unitary_on_statevector);
 
             // If we should store intermediates, do it here
             if (config.get_store_intermediate_results()) {

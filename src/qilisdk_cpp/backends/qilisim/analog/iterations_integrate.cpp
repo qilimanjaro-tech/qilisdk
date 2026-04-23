@@ -18,6 +18,11 @@
 
 #include <iostream>
 
+#if defined(_OPENMP)
+#pragma omp declare reduction(complex_double_reduction : std::complex<double> : omp_out += omp_in) \
+    initializer(omp_priv = std::complex<double>(0.0, 0.0))
+#endif
+
 // GCOV_EXCL_BR_START
 
 DenseMatrix iter_rk4(const DenseMatrix& rho_0, double dt, const SparseMatrix& currentH, const std::vector<SparseMatrix>& jump_operators, int num_substeps, bool is_unitary_on_statevector) {
@@ -105,18 +110,54 @@ DenseMatrix iter_rk4(const DenseMatrix& rho_0, double dt, const SparseMatrix& cu
     return rho;
 }
 
-void iter_rk4(DenseMatrix& rho_t, double dt, const MatrixFreeHamiltonian& currentH, const std::vector<SparseMatrix>& jump_operators, int num_substeps, bool is_unitary_on_statevector) {
+MatrixFreeHamiltonian construct_current_hamiltonian(double t, const std::vector<double>& step_list, const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list) {
+    /*
+    Use linear interpolation to construct the current Hamiltonian at time t
+    based on the provided list of Hamiltonians and their corresponding parameters.
+
+    Args:
+        hamiltonians (std::vector<MatrixFreeHamiltonian>): The list of Hamiltonians.
+        step_list (std::vector<double>): The list of time points corresponding to the parameters.
+        parameters_list (std::vector<std::vector<double>>): The list of parameters for each Hamiltonian.
+        t (double): The current time.
+
+    Returns:
+        MatrixFreeHamiltonian: The interpolated Hamiltonian at time t.
+    */
+    size_t ind = 0;
+    while (ind < step_list.size() && step_list[ind] < t) {
+        ind++;
+    }
+    MatrixFreeHamiltonian currentH;
+    for (size_t h = 0; h < hamiltonians.size(); ++h) {
+        if (ind == 0) {
+            currentH += hamiltonians[h] * parameters_list[h][0];
+        } else {
+            double t1 = step_list[ind - 1];
+            double t2 = step_list[ind];
+            double p1 = parameters_list[h][ind - 1];
+            double p2 = parameters_list[h][ind];
+            double c = (t - t1) / (t2 - t1);
+            currentH += hamiltonians[h] * ((1.0 - c) * p1 + c * p2);
+        }
+    }
+    return currentH;
+}
+
+void iter_rk4(DenseMatrix& rho_t, double t, double dt, const std::vector<double>& step_list, const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<SparseMatrix>& jump_operators, int num_substeps, bool is_unitary_on_statevector) {
     /*
     4th-order Runge–Kutta integration of the Lindblad master equation using matrix-free methods.
 
     Args:
         rho_t (DenseMatrix&): The density matrix to be evolved.
+        t (double): The current time.
         dt (double): The total time step.
-        currentH (MatrixFreeHamiltonian): The current Hamiltonian.
+        step_list (std::vector<double>): The list of time points corresponding to the parameters.
+        hamiltonians (std::vector<MatrixFreeHamiltonian>): The list of Hamiltonians.
+        parameters_list (std::vector<std::vector<double>>): The list of parameters for each Hamiltonian.
         jump_operators (std::vector<SparseMatrix>): The list of jump operators.
         num_substeps (int): Number of substeps to divide the time step into.
         is_unitary_on_statevector (bool): If the evolution should be treated as a unitary acting on a state vector.
-        atol (double): Absolute tolerance for numerical operations.
 
     Raises:
         py::value_error: If rho_0 is not square (and evolution is not unitary on state vector).
@@ -143,21 +184,22 @@ void iter_rk4(DenseMatrix& rho_t, double dt, const MatrixFreeHamiltonian& curren
     DenseMatrix rho_old(rho_rows, rho_cols);
     double dt_sub = dt / static_cast<double>(num_substeps);
     for (int step = 0; step < num_substeps; ++step) {
+        double t_step = t + step * dt_sub;
         rho_old = rho_t;
 
-        lindblad_rhs(k, rho_t, currentH, jump_operators, is_unitary_on_statevector);
+        lindblad_rhs(k, rho_t, construct_current_hamiltonian(t_step, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
         rho_t += (dt_sub / 6.0) * k;
 
         rho_tmp = rho_old + 0.5 * dt_sub * k;
-        lindblad_rhs(k, rho_tmp, currentH, jump_operators, is_unitary_on_statevector);
+        lindblad_rhs(k, rho_tmp, construct_current_hamiltonian(t_step + 0.5 * dt_sub, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
         rho_t += (dt_sub / 3.0) * k;
 
         rho_tmp = rho_old + 0.5 * dt_sub * k;
-        lindblad_rhs(k, rho_tmp, currentH, jump_operators, is_unitary_on_statevector);
+        lindblad_rhs(k, rho_tmp, construct_current_hamiltonian(t_step + 0.5 * dt_sub, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
         rho_t += (dt_sub / 3.0) * k;
 
         rho_tmp = rho_old + dt_sub * k;
-        lindblad_rhs(k, rho_tmp, currentH, jump_operators, is_unitary_on_statevector);
+        lindblad_rhs(k, rho_tmp, construct_current_hamiltonian(t_step + dt_sub, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
         rho_t += (dt_sub / 6.0) * k;
 
         // Normalize the density matrix
@@ -173,17 +215,21 @@ void iter_rk4(DenseMatrix& rho_t, double dt, const MatrixFreeHamiltonian& curren
     }
 }
 
-double iter_rk45(DenseMatrix& rho_t, double& dt, const MatrixFreeHamiltonian& currentH, const std::vector<SparseMatrix>& jump_operators, bool is_unitary_on_statevector) {
+double iter_rk45(DenseMatrix& rho_t, double t, double& dt, const std::vector<double>& step_list, const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<SparseMatrix>& jump_operators, bool is_unitary_on_statevector, double tol, DenseMatrix& k_saved) {
     /*
     Adaptive 4th/5th-order Runge–Kutta integration of the Lindblad master equation using matrix-free methods.
 
     Args:
         rho_t (DenseMatrix&): The density matrix to be evolved.
+        t (double): The current time.
         dt (double&): The time step, which will be modified based on the adaptive algorithm.
-        currentH (MatrixFreeHamiltonian): The current Hamiltonian.
+        step_list (std::vector<double>): The list of time points corresponding to the parameters.
+        hamiltonians (std::vector<MatrixFreeHamiltonian>): The list of Hamiltonians.
+        parameters_list (std::vector<std::vector<double>>): The list of parameters for each Hamiltonian.
         jump_operators (std::vector<SparseMatrix>): The list of jump operators.
         is_unitary_on_statevector (bool): If the evolution should be treated as a unitary acting on a state vector.
-        atol (double): Absolute tolerance for numerical operations.
+        tol (double): Tolerance for the adaptive algorithm.
+        k_saved (DenseMatrix&): The first Runge-Kutta matrix, which is the same as the last one from the previous step.
 
     Raises:
         py::value_error: If rho_0 is not square (and evolution is not unitary on state vector).
@@ -201,92 +247,179 @@ double iter_rk45(DenseMatrix& rho_t, double& dt, const MatrixFreeHamiltonian& cu
         }
     }
 
-    // https://en.wikipedia.org/wiki/Runge%E2%80%93Kutta%E2%80%93Fehlberg_method
+    // https://en.wikipedia.org/wiki/Dormand%E2%80%93Prince_method
     
-    // For scaling the k's
-    static constexpr double b21 = 2.0/9.0;
-    static constexpr double b31 = 1.0/12.0,       b32 = 1.0/4.0;
-    static constexpr double b41 = 69.0/128.0,      b42 = -243.0/128.0,      b43 = 135.0/64.0;
-    static constexpr double b51 = -17.0/12.0, b52 = 27.0/4.0, b53 = -27.0/4.0, b54 = 16.0/15.0;
-    static constexpr double b61 = 65.0/432.0,  b62 = -5.0/16.0,     b63 = 13.0/16.0,  b64 = 4.0/27.0,   b65 = 5.0/144.0;
+    // Coefficients for adjusting the solution
+    static constexpr double b21 = 1.0 / 5.0;
+    static constexpr double b31 = 3.0 / 40.0, b32   = 9.0 / 40.0;
+    static constexpr double b41 = 44.0 / 45.0, b42 = -56.0 / 15.0, b43 = 32.0 / 9.0;
+    static constexpr double b51 = 19372.0 / 6561.0, b52 = -25360.0 / 2187.0, b53 = 64448.0 / 6561.0, b54 = -212.0 / 729.0;
+    static constexpr double b61 = 9017.0 / 3168.0, b62 = -355.0 / 33.0, b63 = 46732.0 / 5247.0, b64 = 49.0 / 176.0, b65 = -5103.0 / 18656.0;
+    static constexpr double b71 = 35.0 / 384.0, b73 = 500.0 / 1113.0, b74 = 125.0 / 192.0, b75 = -2187.0 / 6784.0, b76 = 11.0 / 84.0;
 
-    // For scaling the t (unused)
-    static constexpr double a2 = 2.0/9.0, a3 = 1.0/3.0, a4 = 3.0/4.0, a5 = 1.0, a6 = 5.0/6.0;
+    // Coefficients for adjusting the time step
+    static constexpr double a2 = 1.0 / 5.0, a3 = 3.0 / 10.0, a4 = 4.0 / 5.0, a5 = 8.0 / 9.0, a6 = 1.0, a7 = 1.0;
 
-    // For calculating the rk4
-    static constexpr double c1  = 1.0/9.0,           c3  = 9.0/20.0,         c4  = 16.0/45.0,          c5  = 1.0/12.0;
-    
-    // For calculating the rk5
-    static constexpr double c1_prime  = 47.0/450.0,  c3_prime  = 12.0/25.0,  c4_prime  = 32.0/225.0,   c5_prime  = 1.0/30.0,   c6_prime = 6.0/25.0;
+    // Coefficients for forming the 4th order solution
+    static constexpr double c41 = 5179.0 / 57600.0,  c43 = 7571.0 / 16695.0,  c44 = 393.0 / 640.0,   c45 = -92097.0 / 339200.0, c46 = 187.0 / 2100.0, c47 = 1.0 / 40.0;
 
-    // For calculating the error
-    static constexpr double e1 = c1 - c1_prime;
-    static constexpr double e3 = c3 - c3_prime;
-    static constexpr double e4 = c4 - c4_prime;
-    static constexpr double e5 = c5 - c5_prime;
-    static constexpr double e6 = -c6_prime;
+    // For dt scaling
+    static constexpr double min_factor = 0.1;
+    static constexpr double max_factor = 20.0;
 
-    static constexpr double atol       = 1e-5;
-    static constexpr double rtol       = 1e-3;
-    static constexpr double safety     = 0.9;
-    static constexpr double min_factor = 0.2;
-    static constexpr double max_factor = 10.0;
+    // Check that everything in the Butcher tableau is consistent
+    static_assert(std::abs(a2 - (b21)) < 1e-12, "Inconsistent Butcher tableau");
+    static_assert(std::abs(a3 - (b31 + b32)) < 1e-12, "Inconsistent Butcher tableau");
+    static_assert(std::abs(a4 - (b41 + b42 + b43)) < 1e-12, "Inconsistent Butcher tableau");
+    static_assert(std::abs(a5 - (b51 + b52 + b53 + b54)) < 1e-12, "Inconsistent Butcher tableau");
+    static_assert(std::abs(a6 - (b61 + b62 + b63 + b64 + b65)) < 1e-12, "Inconsistent Butcher tableau");
+    static_assert(std::abs(a7 - (b71 + b73 + b74 + b75 + b76)) < 1e-12, "Inconsistent Butcher tableau");
+    static_assert(std::abs(1.0 - (b71 + b73 + b74 + b75 + b76)) < 1e-12, "Inconsistent Butcher tableau");
+    static_assert(std::abs(1.0 - (c41 + c43 + c44 + c45 + c46 + c47)) < 1e-12, "Inconsistent Butcher tableau");
 
+    // Sadly we need to do a lot of matrix allocations :(
     long rho_rows = rho_t.rows();
     long rho_cols = rho_t.cols();
-
-    DenseMatrix k1(rho_rows, rho_cols), k2(rho_rows, rho_cols), k3(rho_rows, rho_cols);
-    DenseMatrix k4(rho_rows, rho_cols), k5(rho_rows, rho_cols), k6(rho_rows, rho_cols);
+    bool already_have_first_step = (k_saved.rows() != 0);
+    DenseMatrix k1 = already_have_first_step ? k_saved : DenseMatrix(rho_rows, rho_cols);
+    DenseMatrix k2(rho_rows, rho_cols);
+    DenseMatrix k3(rho_rows, rho_cols);
+    DenseMatrix k4(rho_rows, rho_cols); 
+    DenseMatrix k5(rho_rows, rho_cols);
+    DenseMatrix k6(rho_rows, rho_cols);
     DenseMatrix k7(rho_rows, rho_cols);
     DenseMatrix rho_tmp(rho_rows, rho_cols);
+    DenseMatrix rho_4(rho_rows, rho_cols);
     DenseMatrix rho_5(rho_rows, rho_cols);
 
-    lindblad_rhs(k1, rho_t, currentH, jump_operators, is_unitary_on_statevector);
+    if (!already_have_first_step) {
+        std::cout << "Calculating first step for RK45..." << std::endl;
+        double t_1 = t; 
+        lindblad_rhs(k1, rho_t, construct_current_hamiltonian(t_1, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
+    }
 
-    rho_tmp = rho_t + dt * b21 * k1;
-    lindblad_rhs(k2, rho_tmp, currentH, jump_operators, is_unitary_on_statevector);
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+    for (long i = 0; i < rho_rows; ++i) {
+        for (long j = 0; j < rho_cols; ++j) {
+            rho_tmp(i, j) = rho_t(i, j) + dt * b21 * k1(i, j);
+        }
+    }
+    double t_2 = t + a2 * dt;
+    lindblad_rhs(k2, rho_tmp, construct_current_hamiltonian(t_2, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
 
-    rho_tmp = rho_t + dt * (b31 * k1 + b32 * k2);
-    lindblad_rhs(k3, rho_tmp, currentH, jump_operators, is_unitary_on_statevector);
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+    for (long i = 0; i < rho_rows; ++i) {
+        for (long j = 0; j < rho_cols; ++j) {
+            rho_tmp(i, j) = rho_t(i, j) + dt * (b31 * k1(i, j) + b32 * k2(i, j));
+        }
+    }
+    double t_3 = t + a3 * dt;
+    lindblad_rhs(k3, rho_tmp, construct_current_hamiltonian(t_3, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
 
-    rho_tmp = rho_t + dt * (b41 * k1 + b42 * k2 + b43 * k3);
-    lindblad_rhs(k4, rho_tmp, currentH, jump_operators, is_unitary_on_statevector);
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+    for (long i = 0; i < rho_rows; ++i) {
+        for (long j = 0; j < rho_cols; ++j) {
+            rho_tmp(i, j) = rho_t(i, j) + dt * (b41 * k1(i, j) + b42 * k2(i, j) + b43 * k3(i, j));
+        }
+    }
+    double t_4 = t + a4 * dt;
+    lindblad_rhs(k4, rho_tmp, construct_current_hamiltonian(t_4, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
 
-    rho_tmp = rho_t + dt * (b51 * k1 + b52 * k2 + b53 * k3 + b54 * k4);
-    lindblad_rhs(k5, rho_tmp, currentH, jump_operators, is_unitary_on_statevector);
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+    for (long i = 0; i < rho_rows; ++i) {
+        for (long j = 0; j < rho_cols; ++j) {
+            rho_tmp(i, j) = rho_t(i, j) + dt * (b51 * k1(i, j) + b52 * k2(i, j) + b53 * k3(i, j) + b54 * k4(i, j));
+        }
+    }
+    double t_5 = t + a5 * dt;
+    lindblad_rhs(k5, rho_tmp, construct_current_hamiltonian(t_5, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
 
-    rho_tmp = rho_t + dt * (b61 * k1 + b62 * k2 + b63 * k3 + b64 * k4 + b65 * k5);
-    lindblad_rhs(k6, rho_tmp, currentH, jump_operators, is_unitary_on_statevector);
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+    for (long i = 0; i < rho_rows; ++i) {
+        for (long j = 0; j < rho_cols; ++j) {
+            rho_tmp(i, j) = rho_t(i, j) + dt * (b61 * k1(i, j) + b62 * k2(i, j) + b63 * k3(i, j) + b64 * k4(i, j) + b65 * k5(i, j));
+        }
+    }
+    double t_6 = t + a6 * dt;
+    lindblad_rhs(k6, rho_tmp, construct_current_hamiltonian(t_6, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
 
-    // 4th-order solution
-    DenseMatrix rho_4 = rho_t + dt * (c1 * k1 + c3 * k3 + c4 * k4 + c5 * k5);
-    rho_4 /= rho_4.norm();
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+    for (long i = 0; i < rho_rows; ++i) {
+        for (long j = 0; j < rho_cols; ++j) {
+            rho_tmp(i, j) = rho_t(i, j) + dt * (b71 * k1(i, j) + b73 * k3(i, j) + b74 * k4(i, j) + b75 * k5(i, j) + b76 * k6(i, j));
+        }
+    }
+    double t_7 = t + a7 * dt;
+    lindblad_rhs(k7, rho_tmp, construct_current_hamiltonian(t_7, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
 
-    // 5th-order solution
-    rho_5 = rho_t + dt * (c1_prime * k1 + c3_prime * k3 + c4_prime * k4 + c5_prime * k5 + c6_prime * k6);
-    rho_5 /= rho_5.norm();
+    // All these loops combined into one
+    double rho_4_norm = 0.0;
+    double rho_5_norm = 0.0;
+    std::complex<double> overlap = 0.0;
+#if defined(_OPENMP)
+#pragma omp parallel for reduction(+:rho_4_norm, rho_5_norm) reduction(complex_double_reduction:overlap) schedule(static)
+#endif
+    for (long i = 0; i < rho_rows; ++i) {
+        for (long j = 0; j < rho_cols; ++j) {
+            rho_4(i, j) = rho_t(i, j) + dt * (c41 * k1(i, j) + c43 * k3(i, j) + c44 * k4(i, j) + c45 * k5(i, j) + c46 * k6(i, j) + c47 * k7(i, j));
+            rho_5(i, j) = rho_tmp(i, j);
+            rho_4_norm += std::norm(rho_4(i, j));
+            rho_5_norm += std::norm(rho_5(i, j));
+            overlap += std::conj(rho_4(i, j)) * rho_5(i, j);
+        }
+    }
+    rho_4_norm = std::sqrt(rho_4_norm);
+    rho_5_norm = std::sqrt(rho_5_norm);
+    overlap /= rho_4_norm;
+    overlap /= rho_5_norm;
+    double err_norm = std::sqrt(std::abs(1.0 - std::pow(std::abs(overlap), 2)));
+    err_norm /= tol;
 
-    // The error
-    std::complex<double> dot = (rho_4.adjoint() * rho_5).sum();
-    double err_norm = std::sqrt(1.0 - std::pow(std::abs(dot), 2));
-    err_norm /= (atol + rtol * std::max(rho_4.norm(), rho_5.norm()));
+    // Normalize the 5th order solution
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+    for (long i = 0; i < rho_rows; ++i) {
+        for (long j = 0; j < rho_cols; ++j) {
+            rho_5(i, j) /= rho_5_norm;
+        }
+    }
 
-    double factor_up = safety * std::pow(err_norm, -0.2);
-    factor_up = std::min(max_factor, std::max(min_factor, factor_up));
-    double factor_down = safety * std::pow(err_norm, -0.25);
-    factor_down = std::min(max_factor, std::max(min_factor, factor_down));
-    double factor = (err_norm <= 1.0) ? factor_up : factor_down;
-
-    std::cout << "Error norm: " << err_norm << ", factor: " << factor << std::endl;
-
+    // Whether we accept the time step or not
     double dt_taken = 0.0;
-
     if (err_norm <= 1.0) {
         rho_t = rho_5;
+        k_saved.resize(rho_rows, rho_cols);
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+        for (long i = 0; i < rho_rows; ++i) {
+            for (long j = 0; j < rho_cols; ++j) {
+                k_saved(i, j) = k7(i, j) / rho_5_norm;
+            }
+        }
         dt_taken = dt;
     }
 
+    std::cout << "RK45 step: t = " << t << ", dt = " << dt << ", err_norm = " << err_norm << ", accepted = " << (err_norm <= 1.0) << std::endl;
+
+    // Scale the time step
+    double factor = 0.9 * std::pow(err_norm, -0.2);
+    factor = std::max(min_factor, std::min(max_factor, factor));
     dt *= factor;
+
     return dt_taken;
 
 }

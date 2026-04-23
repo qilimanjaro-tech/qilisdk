@@ -34,12 +34,14 @@ class QiliSimConfig {
     int max_cache_size = 1000;
     bool combine_single_qubit_gates = true;
     bool normalize_after_each_gate = false;
+    double adaptive_tol = 1e-2;
 
    public:
     // Getters
     bool get_monte_carlo() const { return monte_carlo; }
     int get_num_monte_carlo_trajectories() const { return num_monte_carlo_trajectories; }
     int get_arnoldi_dim() const { return arnoldi_dim; }
+    double get_adaptive_tol() const { return adaptive_tol; }
     int get_num_arnoldi_substeps() const { return num_arnoldi_substeps; }
     int get_num_integrate_substeps() const { return num_integrate_substeps; }
     std::string get_time_evolution_method() const { return time_evolution_method; }
@@ -56,6 +58,7 @@ class QiliSimConfig {
     void set_monte_carlo(bool value) { monte_carlo = value; }
     void set_num_monte_carlo_trajectories(int value) { num_monte_carlo_trajectories = value; }
     void set_arnoldi_dim(int value) { arnoldi_dim = value; }
+    void set_adaptive_tol(double value) { adaptive_tol = value; }
     void set_num_arnoldi_substeps(int value) { num_arnoldi_substeps = value; }
     void set_num_integrate_substeps(int value) { num_integrate_substeps = value; }
     void set_time_evolution_method(const std::string& value) { time_evolution_method = value; }

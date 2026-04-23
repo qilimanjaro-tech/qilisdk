@@ -108,7 +108,12 @@ void lindblad_rhs(DenseMatrix& drho, const DenseMatrix& rho, const MatrixFreeHam
         drho.resizeLike(rho);
         drho.setZero();
         H.apply(rho, MatrixFreeApplicationType::Left, drho);
-        drho *= -imag;
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+        for (int i = 0; i < drho.size(); ++i) {
+            drho(i) *= -imag;
+        }
     } else {
         drho.resizeLike(rho);
         drho.setZero();

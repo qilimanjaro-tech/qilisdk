@@ -17,6 +17,7 @@ import os
 import secrets
 from abc import ABC, abstractmethod
 from typing import Any, Literal
+import psutil
 
 from pydantic import BaseModel, Field, field_validator
 from pydantic import ConfigDict as PydanticConfigDict
@@ -118,6 +119,11 @@ class AnalogMethod(BaseSimulatorConfig):
         gt=0,
         description="Number of integration substeps per schedule step when using the Integrate method.",
     )
+    adaptive_tol: float = Field(
+        default=1e-2,
+        gt=0,        
+        description="Tolerance for the adaptive integrator method when `evolution_method='integrate_rk45_matrix_free'`.",
+    )
 
     def get_config(self) -> SolverConfigDict:
         """Return a complete analog solver configuration for the C++ backend."""
@@ -126,12 +132,13 @@ class AnalogMethod(BaseSimulatorConfig):
             "arnoldi_dim": self.arnoldi_dim,
             "num_arnoldi_substeps": self.num_arnoldi_substeps,
             "num_integrate_substeps": self.num_integrate_substeps,
+            "adaptive_tol": self.adaptive_tol,
         }
 
         return d
 
     @classmethod
-    def integrator(cls, *, num_substeps: int = 1, matrix_free: bool = False) -> AnalogMethod:
+    def integrator(cls, *, num_substeps: int = 1, matrix_free: bool = True) -> AnalogMethod:
         """Build an ``integrate`` analog method configuration.
 
         Args:
@@ -148,13 +155,16 @@ class AnalogMethod(BaseSimulatorConfig):
         return cls(evolution_method=evolution_method, num_integrate_substeps=num_substeps)
 
     @classmethod
-    def adaptive_integrator(cls) -> AnalogMethod:
+    def adaptive_integrator(cls, *, tol: float = 1e-2) -> AnalogMethod:
         """Build an ``integrate`` analog method configuration.
+
+        Args:
+            tol (float): Tolerance for the adaptive algorithm. Defaults to ``1e-2``.
 
         Returns:
             AnalogMethod: Configured integrate-method analog configuration.
         """
-        return cls(evolution_method="integrate_rk45_matrix_free")
+        return cls(evolution_method="integrate_rk45_matrix_free", adaptive_tol=tol)
 
     @classmethod
     def arnoldi(
@@ -245,7 +255,7 @@ class ExecutionConfig(BaseSimulatorConfig):
     @classmethod
     def _validate_num_threads(cls, num_threads: int) -> int:
         if num_threads <= 0:
-            return os.cpu_count() or 1
+            return psutil.cpu_count(logical=False) or 1
         return num_threads
 
     @field_validator("seed", mode="after")
