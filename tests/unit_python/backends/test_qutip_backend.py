@@ -262,7 +262,16 @@ def test_measurement_gates():
     circuit.add(M(0))
     result = backend.execute(DigitalPropagation(circuit=circuit), Readout().with_sampling(nshots=10))
     assert isinstance(result, FunctionalResult)
-    assert all(len(key) == 1 for key in result.get_samples())
+    assert all(len(key) == 2 for key in result.get_samples())
+
+
+def test_measurement_gates_mid_circuit():
+    backend = QutipBackend()
+    circuit = Circuit(nqubits=2)
+    circuit.add(M(0))
+    circuit.add(X(0))  # Add a gate after the measurement to trigger the error
+    with pytest.raises(ValueError, match="Mid-circuit measurements are not supported"):
+        backend.execute(DigitalPropagation(circuit=circuit), Readout().with_sampling(nshots=10))
 
 
 def test_bad_probability(monkeypatch):

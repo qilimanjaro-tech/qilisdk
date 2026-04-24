@@ -59,7 +59,7 @@ class FunctionalResult(Result, Generic[S, E, T]):
         result.state_tomography.state  # ✅ when T = StateTomographyReadoutResult
         result.expectation  # None when E = None → .expectation_values is a type error
 
-    **Convenience shortcuts** — ``result.samples``, ``result.state``, ``result.expectation_values``,
+    **Convenience shortcuts** — ``result.get_samples()``, ``result.get_state()``, ``result.get_expectation_values()``,
     etc. remain available for interactive / notebook use.  They raise ``ValueError`` at runtime when
     the corresponding readout is absent.
     """
@@ -203,33 +203,47 @@ class FunctionalResult(Result, Generic[S, E, T]):
 
     # -- intermediate accessors (runtime-checked) -------------------------
 
-    @property
-    def intermediate_samples(self) -> list[dict[str, int]]:
-        """Measurement samples for every time-step (intermediate + final).
+    @overload
+    def get_intermediate_samples(self: FunctionalResult[SamplingReadoutResult, Any, Any]) -> list[dict[str, int]]: ...
+    @overload
+    def get_intermediate_samples(self: FunctionalResult[None, Any, Any]) -> Never: ...
+    def get_intermediate_samples(self) -> list[dict[str, int]]:
+        """Measurement samples for every intermediate time-step.
 
         Raises:
             ValueError: If no intermediate results were stored or no
                 ``SamplingReadout`` was provided.
+
+        Returns:
+            list[dict[str, int]]: List of mappings of measured bitstring to count, one per intermediate step.
         """
         if self._intermediate_results:
             results = []
-            for res in self:
+            for res in self._intermediate_results:
                 if has_sampling(res):
                     results.append(res.sampling.samples)
             return results
         raise ValueError("Can't find intermediate samples because intermediate Results were not stored.")
 
-    @property
-    def intermediate_probabilities(self) -> list[dict[str, float]]:
-        """Outcome probabilities for every time-step (intermediate + final).
+    @overload
+    def get_intermediate_probabilities(
+        self: FunctionalResult[SamplingReadoutResult | None, Any, StateTomographyReadoutResult | None],
+    ) -> list[dict[str, float]]: ...
+    @overload
+    def get_intermediate_probabilities(self: FunctionalResult[None, Any, None]) -> Never: ...
+    def get_intermediate_probabilities(self) -> list[dict[str, float]]:
+        """Outcome probabilities for every intermediate time-step.
 
         Raises:
             ValueError: If no intermediate results were stored or no
                 ``SamplingReadout`` / ``StateTomographyReadout`` was provided.
+
+        Returns:
+            list[dict[str, float]]: List of mappings of bitstring to probability, one per intermediate step.
         """
         if self._intermediate_results:
             results = []
-            for res in self:
+            for res in self._intermediate_results:
                 if has_state_tomography(res):
                     results.append(res.state_tomography.probabilities)
                 elif has_sampling(res):
@@ -237,33 +251,47 @@ class FunctionalResult(Result, Generic[S, E, T]):
             return results
         raise ValueError("Can't find intermediate probabilities because intermediate Results were not stored.")
 
-    @property
-    def intermediate_states(self) -> list[QTensor]:
-        """Quantum state vectors for every time-step (intermediate + final).
+    @overload
+    def get_intermediate_states(self: FunctionalResult[Any, Any, StateTomographyReadoutResult]) -> list[QTensor]: ...
+    @overload
+    def get_intermediate_states(self: FunctionalResult[Any, Any, None]) -> Never: ...
+    def get_intermediate_states(self) -> list[QTensor]:
+        """Quantum state vectors for every intermediate time-step.
 
         Raises:
             ValueError: If no intermediate results were stored or no
                 ``StateTomographyReadout`` was provided.
+
+        Returns:
+            list[QTensor]: List of quantum states, one per intermediate step.
         """
         if self._intermediate_results:
             results = []
-            for res in self:
+            for res in self._intermediate_results:
                 if has_state_tomography(res):
                     results.append(res.state_tomography.state)
             return results
         raise ValueError("Can't find intermediate states because intermediate Results were not stored.")
 
-    @property
-    def intermediate_expectation_values(self) -> list[list[float]]:
-        """Expectation values for every time-step (intermediate + final).
+    @overload
+    def get_intermediate_expectation_values(
+        self: FunctionalResult[Any, ExpectationReadoutResult, Any],
+    ) -> list[list[float]]: ...
+    @overload
+    def get_intermediate_expectation_values(self: FunctionalResult[Any, None, Any]) -> Never: ...
+    def get_intermediate_expectation_values(self) -> list[list[float]]:
+        """Expectation values for every intermediate time-step.
 
         Raises:
             ValueError: If no intermediate results were stored or no
                 ``ExpectationReadout`` was provided.
+
+        Returns:
+            list[list[float]]: List of expectation values, one per intermediate step.
         """
         if self._intermediate_results:
             results = []
-            for res in self:
+            for res in self._intermediate_results:
                 if has_expectation_values(res):
                     results.append(res.expectation_values.expectation_values)
             return results
@@ -325,7 +353,7 @@ class FunctionalResult(Result, Generic[S, E, T]):
             out += "\n\n\n- Intermediate Results: [\n\n"
             for i, res in enumerate(self._intermediate_results[:LIMIT]):
                 out += str(res)
-                if i < LIMIT - 1:
+                if i < len(self._intermediate_results) - 1 and i < LIMIT - 1:
                     out += "\n" + "-" * 20 + "\n"
             if len(self._intermediate_results) > LIMIT:
                 out += "\n...\n\n"

@@ -211,8 +211,8 @@ def test_execute_quantum_reservoir_qilisim(monkeypatch):
     result = backend.execute(functional, Readout().with_expectation(observables=[pauli_z(0)]).with_state_tomography())
 
     assert result.get_state() is not None
-    assert len(result.intermediate_expectation_values) == 2
-    assert len(result.intermediate_states) == 2
+    assert len(result.get_intermediate_expectation_values()) == 1
+    assert len(result.get_intermediate_states()) == 1
 
 
 def test_qilisim_repr():

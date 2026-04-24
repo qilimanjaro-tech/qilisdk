@@ -277,6 +277,8 @@ class CudaBackend(Backend):
                     raise UnsupportedGateError(f"Unsupported gate {type(gate).__name__}")
                 handler(kernel, gate, *(qubits[gate.target_qubits[i]] for i in range(len(gate.target_qubits))))
 
+        qubits_to_measure = list(measured_qubits) if len(measured_qubits) > 0 else None
+
         if self._noise_model:
             cuda_noise_model = self._noise_model_to_cudaq(self._noise_model, functional.circuit.nqubits)
             cudaq_result = cudaq.sample(
@@ -288,10 +290,15 @@ class CudaBackend(Backend):
             if og_param:
                 functional.set_parameters(og_param)
             logger.success("Sampling finished; {} distinct bitstrings", len(cudaq_result))
+            sampling_readout = next((ro for ro in readout if isinstance(ro, SamplingReadout)), None)
+            expand_samples = sampling_readout.expand_samples if sampling_readout else True
             return FunctionalResult(
                 ReadoutCompositeResults(
                     sampling=SamplingReadoutResult.from_samples(
                         samples=dict(cudaq_result.items()),
+                        qubits_to_measure=qubits_to_measure,
+                        nqubits=functional.circuit.nqubits,
+                        expand_samples=expand_samples,
                     ),
                     expectation_values=None,
                     state_tomography=None,
@@ -308,6 +315,9 @@ class CudaBackend(Backend):
                 ReadoutCompositeResults(
                     sampling=SamplingReadoutResult.from_samples(
                         samples=dict(cudaq_result.items()),
+                        qubits_to_measure=qubits_to_measure,
+                        nqubits=functional.circuit.nqubits,
+                        expand_samples=sampling_readout.expand_samples,
                     ),
                     expectation_values=None,
                     state_tomography=None,
@@ -324,13 +334,12 @@ class CudaBackend(Backend):
         if len(final_state.shape) == 1:
             final_state = final_state.reshape(-1, 1)
         final_state = QTensor((final_state))
-        if len(measured_qubits) > 0:
-            final_state = final_state.ptrace(list(measured_qubits))
 
         return FunctionalResult(
             readout_results=CudaBackend._construct_results_list(
                 final_state=final_state,
                 readout=readout,
+                qubits_to_measure=qubits_to_measure,
             )
         )
 

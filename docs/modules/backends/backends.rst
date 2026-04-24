@@ -127,7 +127,27 @@ There is no need to install QiliSim separately, as it is included with the core 
 - ``digital_simulation_method`` (:class:`~qilisdk.backends.backend_config.DigitalMethod`, optional): Digital simulation options.
 - ``execution_config`` (:class:`~qilisdk.backends.backend_config.ExecutionConfig`, optional): Runtime execution options such as thread count and random seed.
 
+<<<<<<< sdk-260-make-qilisim-faster
 **Usage Example**
+=======
+**Configuration example**
+
+.. code-block:: python
+
+    from qilisdk.backends import QiliSim
+    from qilisdk.backends.backend_config import AnalogMethod, DigitalMethod, ExecutionConfig, MonteCarloConfig
+
+    backend = QiliSim(
+        analog_simulation_method=AnalogMethod.arnoldi(
+            dim=16,
+            num_substeps=2
+        ),
+        digital_simulation_method=DigitalMethod.statevector(max_cache_size=2_000),
+        execution_config=ExecutionConfig(num_threads=4, seed=42, monte_carlo=MonteCarloConfig(trajectories=200), measurement_collapse=False),
+    )
+
+**Example**
+>>>>>>> main
 
 .. code-block:: python
 

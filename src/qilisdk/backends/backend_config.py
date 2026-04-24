@@ -232,6 +232,12 @@ class ExecutionConfig(BaseSimulatorConfig):
             "Monte Carlo configuration. If `None`, Monte Carlo is disabled and deterministic evolution is used."
         ),
     )
+    measurement_collapse: bool = Field(
+        default=False,
+        description=(
+            "Whether to apply state collapse immediately after measurements. If `False`, measurements are recorded but the state is not collapsed."
+        ),
+    )
 
     def get_config(self) -> SolverConfigDict:
         """Return execution settings with resolved defaults."""
@@ -239,6 +245,7 @@ class ExecutionConfig(BaseSimulatorConfig):
             "num_threads": self.num_threads,
             "seed": int(self.seed) if self.seed is not None else 0,  # defensive
             "monte_carlo": self.monte_carlo is not None,
+            "measurement_collapse": self.measurement_collapse,
         }
         if self.monte_carlo is not None:
             d.update(self.monte_carlo.get_config())
