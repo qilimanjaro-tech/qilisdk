@@ -65,14 +65,8 @@ void MatrixFreeHamiltonian::apply(const DenseMatrix& input_state, MatrixFreeAppl
     }
 
     // Make sure output_state has the right shape and is initialized to zero
-    if (output_state.rows() != input_state.rows() || output_state.cols() != input_state.cols()) {
-        output_state.resizeLike(input_state);
-    }
-
-    // For everything other than a statevector, we need to initialize to zero because we'll be doing +=
-    if (input_state.cols() != 1) {
-        output_state.setZero();
-    }
+    output_state.resizeLike(input_state);
+    output_state.setZero();
 
     // Cache some pointers
     const std::complex<double>* in_ptr = input_state.data();

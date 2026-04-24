@@ -147,9 +147,7 @@ class TimeEvolutionTest : public ::testing::Test {
     std::vector<double> steps = {0.1, 0.2, 0.3};
     NoiseModelCpp empty_noise;
     QiliSimConfig config;
-    virtual void SetUp() override {
-        config.set_time_evolution_method("integrate_rk4");
-    }
+    virtual void SetUp() override { config.set_time_evolution_method("integrate_rk4"); }
 };
 
 class TimeEvolutionMatrixFreeTest : public ::testing::Test {
@@ -160,9 +158,7 @@ class TimeEvolutionMatrixFreeTest : public ::testing::Test {
     std::vector<double> steps = {0.1, 0.2, 0.3};
     NoiseModelCpp empty_noise;
     QiliSimConfig config;
-    virtual void SetUp() override {
-        config.set_time_evolution_method("integrate_rk4_matrix_free");
-    }
+    virtual void SetUp() override { config.set_time_evolution_method("integrate_rk4_matrix_free"); }
 };
 
 TEST_F(TimeEvolutionTest, DefaultConfigDoesNotThrow) {

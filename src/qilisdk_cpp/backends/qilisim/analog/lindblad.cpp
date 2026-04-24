@@ -105,8 +105,6 @@ void lindblad_rhs(DenseMatrix& drho, const DenseMatrix& rho, const MatrixFreeHam
         is_unitary_on_statevector (bool): Whether the evolution is unitary on a state vector.
     */
     if (is_unitary_on_statevector) {
-        drho.resizeLike(rho);
-        drho.setZero();
         H.apply(rho, MatrixFreeApplicationType::Left, drho);
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
@@ -115,8 +113,6 @@ void lindblad_rhs(DenseMatrix& drho, const DenseMatrix& rho, const MatrixFreeHam
             drho(i) *= -imag;
         }
     } else {
-        drho.resizeLike(rho);
-        drho.setZero();
         H.apply(rho, MatrixFreeApplicationType::Left, drho);
         drho -= drho.adjoint().eval();
         drho *= -imag;

@@ -122,6 +122,7 @@ MatrixFreeHamiltonian construct_current_hamiltonian(double t, const std::vector<
     while (ind < step_list.size() && step_list[ind] < t) {
         ind++;
     }
+    ind = std::min(ind, step_list.size() - 1);
     MatrixFreeHamiltonian currentH;
     for (size_t h = 0; h < hamiltonians.size(); ++h) {
         if (ind == 0) {
@@ -175,7 +176,7 @@ void iter_rk4(DenseMatrix& rho_t, double t, double dt, const std::vector<double>
     DenseMatrix k(rho_rows, rho_cols);
     DenseMatrix rho_tmp(rho_rows, rho_cols);
     DenseMatrix rho_old(rho_rows, rho_cols);
-    double t_step = t + dt;
+    double t_step = t;
     rho_old = rho_t;
 
     lindblad_rhs(k, rho_t, construct_current_hamiltonian(t_step, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);

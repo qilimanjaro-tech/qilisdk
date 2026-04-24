@@ -58,7 +58,6 @@ MatrixFreeHamiltonian make_matrix_free_H(std::complex<double> coeff, int qubit, 
     return MatrixFreeHamiltonian({{coeff, {op}}});
 }
 
-
 SparseMatrix amp_damp_jump() {
     DenseMatrix j = DenseMatrix::Zero(2, 2);
     j(0, 1) = 1.0;

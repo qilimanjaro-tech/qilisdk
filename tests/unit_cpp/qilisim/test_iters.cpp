@@ -69,7 +69,6 @@ MatrixFreeHamiltonian make_matrix_free_H(std::complex<double> coeff, int qubit, 
     return MatrixFreeHamiltonian({{coeff, {op}}});
 }
 
-
 }  // namespace
 
 class IterDirectValidationTest : public ::testing::Test {
