@@ -93,7 +93,15 @@ foreach(module ${MODULES_TO_BUILD})
     set (CMAKE_CXX_STANDARD 17)
     if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         message(STATUS "[QiliSDK C++] Using GCC/Clang specific compile options")
-        target_compile_options(${module} PRIVATE -Wall -Wextra -Wpedantic)
+
+        # Required for py-spy / Pyroscope native stack unwinding
+        target_compile_options(${module} PRIVATE
+            -Wall -Wextra -Wpedantic
+            -fno-omit-frame-pointer
+            -fno-optimize-sibling-calls
+            -g
+            -fno-lto
+    )
     endif()
 
     # Make everything visible, so that the test suite can access internal functions
