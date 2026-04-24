@@ -525,4 +525,40 @@ TEST(MatrixFreeHamiltonian, StreamOutputEmptyHamiltonian) {
     EXPECT_NO_THROW(oss << h);
 }
 
+TEST(MatrixFreeHamiltonian, YActingOnKet0GivesKet1TimesI) {
+    MatrixFreeHamiltonian h;
+    h.add({1.0, 0.0}, MatrixFreeOperator("Y", 0));
+    DenseMatrix state = ket0();
+    DenseMatrix output_state;
+    h.apply(state, MatrixFreeApplicationType::Left, output_state);
+    expectMatrixNear(output_state, ket1() * std::complex<double>(0.0, 1.0));
+}
+
+TEST(MatrixFreeHamiltonian, YActingOnKet1GivesKet0TimesMinusI) {
+    MatrixFreeHamiltonian h;
+    h.add({1.0, 0.0}, MatrixFreeOperator("Y", 0));
+    DenseMatrix state = ket1();
+    DenseMatrix output_state;
+    h.apply(state, MatrixFreeApplicationType::Left, output_state);
+    expectMatrixNear(output_state, ket0() * std::complex<double>(0.0, -1.0));
+}
+
+TEST(MatrixFreeHamiltonian, IActingOnKet0GivesKet0) {
+    MatrixFreeHamiltonian h;
+    h.add({1.0, 0.0}, MatrixFreeOperator("I", 0));
+    DenseMatrix state = ket0();
+    DenseMatrix output_state;
+    h.apply(state, MatrixFreeApplicationType::Left, output_state);
+    expectMatrixNear(output_state, ket0());
+}
+
+TEST(MatrixFreeHamiltonian, IActingOnKet1GivesKet1) {
+    MatrixFreeHamiltonian h;
+    h.add({1.0, 0.0}, MatrixFreeOperator("I", 0));
+    DenseMatrix state = ket1();
+    DenseMatrix output_state;
+    h.apply(state, MatrixFreeApplicationType::Left, output_state);
+    expectMatrixNear(output_state, ket1());
+}
+
 // GCOV_EXCL_BR_STOP

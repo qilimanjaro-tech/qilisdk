@@ -258,6 +258,7 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
         // Loop until we reach the max time
         double current_time = 0.0;
         size_t iters = 0;
+        const size_t max_iters = 1000000; // Just in case to prevent infinite loops
         DenseMatrix k_saved;
         while (current_time < step_list.back()) {
             // Make sure the next step doesn't go beyond the final time point
@@ -278,10 +279,16 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
             // Update the time and step index
             current_time += dt_taken;
             iters++;
+            if (iters >= max_iters) {
+                throw std::runtime_error("Maximum number of iterations reached in adaptive RK45 integration.");
+            }
+            if (dt < config.get_atol()) {
+                throw std::runtime_error("Minimum step size reached in adaptive RK45 integration.");
+            }
         }
 
         // If doing fixed step size with rk4
-    } else {
+    } else if (config.get_time_evolution_method() == "integrate_rk4_matrix_free") {
         // For each time step
         for (size_t step_ind = 0; step_ind < step_list.size(); ++step_ind) {
             // Determine the time step and starting time
@@ -300,6 +307,8 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
                 }
             }
         }
+    } else {
+        throw std::invalid_argument("Invalid matrix-free time evolution method: " + config.get_time_evolution_method());
     }
 
     // If we have statevector/s but we should return a density matrix

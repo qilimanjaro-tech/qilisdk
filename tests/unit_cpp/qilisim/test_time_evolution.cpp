@@ -677,4 +677,173 @@ TEST_F(TimeEvolutionMonteCarloMatrixFreeTest, GroundStateRemainsGroundStateMF) {
     EXPECT_NEAR(std::real(out.rho_t(0, 0)), 1.0, kTolLoose);
 }
 
+TEST_F(TimeEvolutionMethodTest, BadMethodThrows) {
+    QiliSimConfig cfg;
+    cfg.set_time_evolution_method("not_a_real_method");
+    EXPECT_ANY_THROW(run_time_evolution(pure_plus_sparse(), hamiltonians, params, steps, empty_noise, obs, cfg));
+}
+
+class TimeEvolutionAdaptiveTest : public ::testing::Test {
+   protected:
+    MatrixFreeHamiltonian H_mf = make_matrix_free_H(0.5, 0, "Z");
+    std::vector<MatrixFreeHamiltonian> hamiltonians = {H_mf};
+    std::vector<std::vector<double>> params = {{1.0, 1.0, 1.0}};
+    std::vector<double> steps = {0.1, 0.2, 0.3};
+    NoiseModelCpp empty_noise;
+    QiliSimConfig config;
+    virtual void SetUp() override { config.set_time_evolution_method("integrate_rk45_matrix_free"); }
+};
+
+TEST_F(TimeEvolutionAdaptiveTest, DefaultConfigDoesNotThrow) {
+    auto out = run_time_evolution_mf(pure_zero_sparse(), hamiltonians, params, steps, empty_noise, {}, config);
+    SUCCEED();
+}
+
+TEST_F(TimeEvolutionAdaptiveTest, FinalStateDimensionMatchesDensityMatrixInput) {
+    auto out = run_time_evolution_mf(pure_zero_sparse(), hamiltonians, params, steps, empty_noise, {}, config);
+    EXPECT_EQ(out.rho_t.rows(), 2);
+    EXPECT_EQ(out.rho_t.cols(), 2);
+}
+
+TEST_F(TimeEvolutionAdaptiveTest, FinalStateDimensionMatchesStatevectorInputBra) {
+    SparseMatrix bra = statevector_zero_sparse().adjoint();
+    auto out = run_time_evolution_mf(bra, hamiltonians, params, steps, empty_noise, {}, config);
+    EXPECT_EQ(out.rho_t.rows(), 2);
+}
+
+TEST_F(TimeEvolutionAdaptiveTest, TracePreservedUnitaryDensityMatrix) {
+    auto out = run_time_evolution_mf(pure_plus_sparse(), hamiltonians, params, steps, empty_noise, {}, config);
+    EXPECT_NEAR(std::real(out.rho_t.trace()), 1.0, kTol);
+}
+
+TEST_F(TimeEvolutionAdaptiveTest, TracePreservedWithJumpOperators) {
+    NoiseModelCpp noise;
+    noise.add_jump_operator(amp_damp_jump());
+    auto out = run_time_evolution_mf(pure_plus_sparse(), hamiltonians, params, steps, noise, {}, config);
+    EXPECT_NEAR(std::real(out.rho_t.trace()), 1.0, kTol);
+}
+
+TEST_F(TimeEvolutionAdaptiveTest, HermiticityPreservedUnitaryDensityMatrix) {
+    auto out = run_time_evolution_mf(pure_plus_sparse(), hamiltonians, params, steps, empty_noise, {}, config);
+    EXPECT_TRUE((out.rho_t - out.rho_t.adjoint()).isZero(kTol));
+}
+
+TEST_F(TimeEvolutionAdaptiveTest, HermiticityPreservedWithJumpOperators) {
+    NoiseModelCpp noise;
+    noise.add_jump_operator(amp_damp_jump());
+    auto out = run_time_evolution_mf(pure_plus_sparse(), hamiltonians, params, steps, noise, {}, config);
+    EXPECT_TRUE((out.rho_t - out.rho_t.adjoint()).isZero(kTol));
+}
+
+TEST_F(TimeEvolutionAdaptiveTest, ZeroTimeStepReturnsInitialDensityMatrix) {
+    std::vector<double> zero_steps = {0.0};
+    std::vector<std::vector<double>> one_param = {{1.0}};
+    DenseMatrix rho_0_dense = DenseMatrix(pure_plus_sparse());
+    auto out = run_time_evolution_mf(pure_plus_sparse(), hamiltonians, one_param, zero_steps, empty_noise, {}, config);
+    EXPECT_TRUE(out.rho_t.isApprox(rho_0_dense, kTol));
+}
+
+TEST_F(TimeEvolutionAdaptiveTest, EigenstatePopulationsUnchangedUnderHZ) {
+    auto out = run_time_evolution_mf(pure_zero_sparse(), hamiltonians, params, steps, empty_noise, {}, config);
+    EXPECT_NEAR(std::real(out.rho_t(0, 0)), 1.0, kTol);
+    EXPECT_NEAR(std::real(out.rho_t(1, 1)), 0.0, kTol);
+}
+
+TEST_F(TimeEvolutionAdaptiveTest, GroundStateIsFixedPointOfAmpDamping) {
+    NoiseModelCpp noise;
+    noise.add_jump_operator(amp_damp_jump());
+    auto out = run_time_evolution_mf(pure_zero_sparse(), hamiltonians, params, steps, noise, {}, config);
+    DenseMatrix rho_0_dense = DenseMatrix(pure_zero_sparse());
+    EXPECT_TRUE(out.rho_t.isApprox(rho_0_dense, kTol));
+}
+
+TEST_F(TimeEvolutionAdaptiveTest, ExcitedStateDecaysTowardGroundStateWithAmpDamping) {
+    NoiseModelCpp noise;
+    noise.add_jump_operator(amp_damp_jump());
+    DenseMatrix excited = DenseMatrix::Zero(2, 2);
+    excited(1, 1) = 1.0;
+    auto out = run_time_evolution_mf(to_sparse(excited), hamiltonians, params, steps, noise, {}, config);
+    EXPECT_GT(std::real(out.rho_t(0, 0)), 0.0);
+    EXPECT_LT(std::real(out.rho_t(1, 1)), 1.0);
+}
+
+TEST_F(TimeEvolutionAdaptiveTest, StatevectorInputProducesValidStatevectorOutput) {
+    auto out = run_time_evolution_mf(statevector_zero_sparse(), hamiltonians, params, steps, empty_noise, {}, config);
+    EXPECT_NEAR(out.rho_t.norm(), 1.0, kTol);
+}
+
+TEST_F(TimeEvolutionAdaptiveTest, StatevectorInputWithJumpsProducesDensityMatrix) {
+    NoiseModelCpp noise;
+    noise.add_jump_operator(amp_damp_jump());
+    auto out = run_time_evolution_mf(statevector_zero_sparse(), hamiltonians, params, steps, noise, {}, config);
+    EXPECT_EQ(out.rho_t.rows(), 2);
+    EXPECT_EQ(out.rho_t.cols(), 2);
+    EXPECT_NEAR(std::real(out.rho_t.trace()), 1.0, kTol);
+}
+
+TEST_F(TimeEvolutionAdaptiveTest, NoObservablesProducesEmptyExpectationValues) {
+    auto out = run_time_evolution_mf(pure_zero_sparse(), hamiltonians, params, steps, empty_noise, {}, config);
+    EXPECT_TRUE(out.expectation_values.empty());
+}
+
+TEST_F(TimeEvolutionAdaptiveTest, ExpectationValueCountMatchesObservableCount) {
+    MatrixFreeHamiltonian obs_z = make_matrix_free_H(1.0, 0, "Z");
+    MatrixFreeHamiltonian obs_x = make_matrix_free_H(1.0, 0, "X");
+    std::vector<MatrixFreeHamiltonian> obs = {obs_z, obs_x};
+    auto out = run_time_evolution_mf(pure_zero_sparse(), hamiltonians, params, steps, empty_noise, obs, config);
+    EXPECT_EQ(int(out.expectation_values.size()), 2);
+}
+
+TEST_F(TimeEvolutionAdaptiveTest, PauliZExpectationValueOnEigenstateIsOne) {
+    MatrixFreeHamiltonian obs_z = make_matrix_free_H(1.0, 0, "Z");
+    auto out = run_time_evolution_mf(pure_zero_sparse(), hamiltonians, params, steps, empty_noise, {obs_z}, config);
+    EXPECT_NEAR(out.expectation_values[0], 1.0, kTol);
+}
+
+TEST_F(TimeEvolutionAdaptiveTest, NoIntermediatesStoredByDefault) {
+    auto out = run_time_evolution_mf(pure_zero_sparse(), hamiltonians, params, steps, empty_noise, {}, config);
+    EXPECT_TRUE(out.intermediate_rhos.empty());
+    EXPECT_TRUE(out.intermediate_expectation_values.empty());
+}
+
+TEST_F(TimeEvolutionAdaptiveTest, EachIntermediateRhoHasUnitTrace) {
+    config.set_store_intermediate_results(true);
+    auto out = run_time_evolution_mf(pure_plus_sparse(), hamiltonians, params, steps, empty_noise, {}, config);
+    for (const auto& rho_int : out.intermediate_rhos) {
+        EXPECT_NEAR(std::real(rho_int.trace()), 1.0, kTol);
+    }
+}
+
+TEST_F(TimeEvolutionAdaptiveTest, ZeroParameterLeavesStateUnchanged) {
+    std::vector<std::vector<double>> zero_params = {{0.0, 0.0, 0.0}};
+    DenseMatrix rho_0_dense = DenseMatrix(pure_plus_sparse());
+    auto out = run_time_evolution_mf(pure_plus_sparse(), hamiltonians, zero_params, steps, empty_noise, {}, config);
+    EXPECT_TRUE(out.rho_t.isApprox(rho_0_dense, kTol));
+}
+
+TEST_F(TimeEvolutionAdaptiveTest, IntermediateResultsWithStatevectorInput) {
+    config.set_store_intermediate_results(true);
+    auto out = run_time_evolution_mf(statevector_zero_sparse(), hamiltonians, params, steps, empty_noise, {}, config);
+    for (const auto& rho_int : out.intermediate_rhos) {
+        EXPECT_EQ(rho_int.rows(), 2);
+        EXPECT_EQ(rho_int.cols(), 1);
+        EXPECT_NEAR(std::real(rho_int.norm()), 1.0, kTol);
+    }
+}
+
+TEST_F(TimeEvolutionAdaptiveTest, AgreesWithRK4MatrixFreeOnEigenstate) {
+    QiliSimConfig cfg_rk4;
+    cfg_rk4.set_time_evolution_method("integrate_rk4_matrix_free");
+    MatrixFreeHamiltonian obs_z = make_matrix_free_H(1.0, 0, "Z");
+    auto out_rk45 = run_time_evolution_mf(pure_zero_sparse(), hamiltonians, params, steps, empty_noise, {obs_z}, config);
+    auto out_rk4 = run_time_evolution_mf(pure_zero_sparse(), hamiltonians, params, steps, empty_noise, {obs_z}, cfg_rk4);
+    EXPECT_NEAR(out_rk45.expectation_values[0], out_rk4.expectation_values[0], kTolLoose);
+}
+
+TEST_F(TimeEvolutionAdaptiveTest, TighterAdaptiveTolDoesNotThrow) {
+    config.set_adaptive_tol(1e-6);
+    auto out = run_time_evolution_mf(pure_plus_sparse(), hamiltonians, params, steps, empty_noise, {}, config);
+    EXPECT_NEAR(std::real(out.rho_t.trace()), 1.0, kTol);
+}
+
 // GCOV_EXCL_BR_STOP

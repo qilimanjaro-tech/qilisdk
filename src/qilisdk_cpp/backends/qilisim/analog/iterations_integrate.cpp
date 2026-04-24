@@ -16,6 +16,8 @@
 #include "iterations.h"
 #include "lindblad.h"
 
+#include <iostream>
+
 #if defined(_OPENMP)
 #pragma omp declare reduction(complex_double_reduction : std::complex <double> : omp_out += omp_in) initializer(omp_priv = std::complex <double>(0.0, 0.0))
 #endif
@@ -355,29 +357,63 @@ double iter_rk45(DenseMatrix& rho_t, double t, double& dt, const std::vector<dou
     lindblad_rhs(k7, rho_tmp, construct_current_hamiltonian(t_7, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
 
     // All these loops combined into one
-    double rho_4_norm = 0.0;
-    double rho_5_norm = 0.0;
+    std::complex<double> rho_4_norm = 0.0;
+    std::complex<double> rho_5_norm = 0.0;
+    std::complex<double> rho_5_trace = 0.0;
     std::complex<double> overlap = 0.0;
+    
+    // Normalizing statevectors is by the full norm
+    if (is_unitary_on_statevector) {
 #if defined(_OPENMP)
-#pragma omp parallel for reduction(+ : rho_4_norm, rho_5_norm) reduction(complex_double_reduction : overlap) schedule(static)
+#pragma omp parallel for reduction(complex_double_reduction : overlap, rho_4_norm, rho_5_norm) schedule(static)
 #endif
-    for (long i = 0; i < rho_rows; ++i) {
-        for (long j = 0; j < rho_cols; ++j) {
-            rho_4(i, j) = rho_t(i, j) + dt * (c41 * k1(i, j) + c43 * k3(i, j) + c44 * k4(i, j) + c45 * k5(i, j) + c46 * k6(i, j) + c47 * k7(i, j));
-            rho_5(i, j) = rho_tmp(i, j);
-            rho_4_norm += std::norm(rho_4(i, j));
-            rho_5_norm += std::norm(rho_5(i, j));
-            overlap += std::conj(rho_4(i, j)) * rho_5(i, j);
+        for (long i = 0; i < rho_rows; ++i) {
+            for (long j = 0; j < rho_cols; ++j) {
+                rho_4(i, j) = rho_t(i, j) + dt * (c41 * k1(i, j) + c43 * k3(i, j) + c44 * k4(i, j) + c45 * k5(i, j) + c46 * k6(i, j) + c47 * k7(i, j));
+                rho_5(i, j) = rho_tmp(i, j);
+                rho_4_norm += std::norm(rho_4(i, j));
+                rho_5_norm += std::norm(rho_5(i, j));
+                overlap += std::conj(rho_4(i, j)) * rho_5(i, j);
+            }
         }
+        rho_4_norm = std::sqrt(std::abs(rho_4_norm));
+        rho_5_norm = std::sqrt(std::abs(rho_5_norm));
+    } else {
+    // Whilst for density matrices we just use the trace
+    #if defined(_OPENMP)
+    #pragma omp parallel for reduction(complex_double_reduction : overlap, rho_4_norm, rho_5_norm, rho_5_trace) schedule(static)
+    #endif
+        for (long i = 0; i < rho_rows; ++i) {
+            for (long j = 0; j < rho_cols; ++j) {
+                rho_4(i, j) = rho_t(i, j) + dt * (c41 * k1(i, j) + c43 * k3(i, j) + c44 * k4(i, j) + c45 * k5(i, j) + c46 * k6(i, j) + c47 * k7(i, j));
+                rho_5(i, j) = rho_tmp(i, j);
+                overlap += std::conj(rho_4(i, j)) * rho_5(i, j);
+                rho_4_norm += std::norm(rho_4(i, j));
+                rho_5_norm += std::norm(rho_5(i, j));
+            }
+            rho_5_trace += rho_5(i, i);
+        }
+        rho_4_norm = std::sqrt(std::abs(rho_4_norm));
+        rho_5_norm = std::sqrt(std::abs(rho_5_norm));
     }
-    rho_4_norm = std::sqrt(rho_4_norm);
-    rho_5_norm = std::sqrt(rho_5_norm);
+
+    std::cout << "rho4: \n" << rho_4 << "\nrho5: \n" << rho_5 << "\n";
+    std::cout << "overlap: " << overlap << ", rho_4_norm: " << rho_4_norm << ", rho_5_norm: " << rho_5_norm << std::endl;
+
+    // Make sure it's not zero
+    if (std::abs(rho_4_norm) < 1e-14 || std::abs(rho_5_norm) < 1e-14) {
+        throw py::value_error("4th order solution has zero norm, cannot perform adaptive step.");
+    }
+
     overlap /= rho_4_norm;
     overlap /= rho_5_norm;
     double err_norm = std::sqrt(std::abs(1.0 - std::pow(std::abs(overlap), 2)));
     err_norm /= tol;
 
     // Normalize the 5th order solution
+    // if (!is_unitary_on_statevector) {
+    //     rho_5_norm *= std::abs(rho_5_trace);
+    // }
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
 #endif
@@ -407,6 +443,8 @@ double iter_rk45(DenseMatrix& rho_t, double t, double& dt, const std::vector<dou
     double factor = 0.9 * std::pow(err_norm, -0.2);
     factor = std::max(min_factor, std::min(max_factor, factor));
     dt *= factor;
+
+    std::cout << "err_norm: " << err_norm << ", factor: " << factor << ", new dt: " << dt << ", dt taken: " << dt_taken << std::endl;
 
     return dt_taken;
 }

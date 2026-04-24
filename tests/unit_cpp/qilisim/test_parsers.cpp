@@ -1503,6 +1503,7 @@ TEST(ParseSolverParams, AllFieldsParsedCorrectly) {
     params["evolution_method"] = py::str("arnoldi");
     params["sampling_method"] = py::str("statevector");
     params["monte_carlo"] = py::bool_(true);
+    params["adaptive_tol"] = py::float_(1e-2);
     params["num_monte_carlo_trajectories"] = py::int_(500);
     params["num_threads"] = py::int_(4);
     params["store_intermediate_results"] = py::bool_(true);
@@ -1526,6 +1527,7 @@ TEST(ParseSolverParams, AllFieldsParsedCorrectly) {
     EXPECT_TRUE(config.get_normalize_after_gate());
     EXPECT_FALSE(config.get_combine_single_qubit_gates());
     EXPECT_TRUE(config.get_measurement_collapse());
+    EXPECT_NEAR(config.get_adaptive_tol(), 1e-2, 1e-15);
 }
 
 TEST(ParseSolverParams, PartialFieldsParsed) {

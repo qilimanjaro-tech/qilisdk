@@ -88,6 +88,12 @@ def test_qilisim_config_builders_and_validation():
         ExecutionConfig(1)
 
 
+def test_adaptive_creates_okay():
+    method = AnalogMethod.adaptive_integrator(tol=1e-2)
+    assert method.evolution_method == "integrate_rk45_matrix_free"
+    assert np.isclose(method.adaptive_tol, 1e-2)
+
+
 def test_qilisim_invalid_config_types():
     with pytest.raises(ValueError, match="not a valid analog simulation method"):
         QiliSim(analog_simulation_method=DigitalMethod())  # type:ignore[arg-type]

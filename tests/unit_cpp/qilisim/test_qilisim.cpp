@@ -552,4 +552,5 @@ _reservoir = QuantumReservoir(
     EXPECT_TRUE(py::hasattr(result, "intermediate_results"));
 }
 
+
 // GCOV_EXCL_BR_STOP
