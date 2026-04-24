@@ -13,12 +13,11 @@
 # limitations under the License.
 from __future__ import annotations
 
-import os
 import secrets
 from abc import ABC, abstractmethod
 from typing import Any, Literal
-import psutil
 
+import psutil
 from pydantic import BaseModel, Field, field_validator
 from pydantic import ConfigDict as PydanticConfigDict
 
@@ -90,17 +89,17 @@ class AnalogMethod(BaseSimulatorConfig):
 
     Args:
         evolution_method (str): Analog time-evolution method to use:
-            ``"direct"``, ``"arnoldi"``, ``"integrate_rk4"``, ``"integrate_rk45_matrix_free"``, or 
+            ``"direct"``, ``"arnoldi"``, ``"integrate_rk4"``, ``"integrate_rk45_matrix_free"``, or
             ``"integrate_rk4_matrix_free"``. Defaults to ``"integrate_rk4_matrix_free"``.
         arnoldi_dim (int): Dimension of the Arnoldi Krylov subspace used
             when ``evolution_method="arnoldi"``. Defaults to ``10``.
         num_arnoldi_substeps (int): Number of integration substeps per
             schedule step for the Arnoldi method. Defaults to ``1``.
-        num_integrate_substeps (int): Number of integration substeps per
-            schedule step for the Integrate method. Defaults to ``2``.
     """
 
-    evolution_method: Literal["direct", "arnoldi", "integrate_rk4", "integrate_rk45_matrix_free", "integrate_rk4_matrix_free"] = Field(
+    evolution_method: Literal[
+        "direct", "arnoldi", "integrate_rk4", "integrate_rk45_matrix_free", "integrate_rk4_matrix_free"
+    ] = Field(
         default="integrate_rk4_matrix_free",
         description="Analog time-evolution method to use: 'direct', 'arnoldi', 'integrate_rk4', 'integrate_rk45_matrix_free', or 'integrate_rk4_matrix_free'.",
     )
@@ -114,14 +113,9 @@ class AnalogMethod(BaseSimulatorConfig):
         gt=0,
         description="Number of integration substeps per schedule step when using the Arnoldi method.",
     )
-    num_integrate_substeps: int = Field(
-        default=1,
-        gt=0,
-        description="Number of integration substeps per schedule step when using the Integrate method.",
-    )
     adaptive_tol: float = Field(
         default=1e-2,
-        gt=0,        
+        gt=0,
         description="Tolerance for the adaptive integrator method when `evolution_method='integrate_rk45_matrix_free'`.",
     )
 
@@ -131,19 +125,16 @@ class AnalogMethod(BaseSimulatorConfig):
             "evolution_method": self.evolution_method,
             "arnoldi_dim": self.arnoldi_dim,
             "num_arnoldi_substeps": self.num_arnoldi_substeps,
-            "num_integrate_substeps": self.num_integrate_substeps,
             "adaptive_tol": self.adaptive_tol,
         }
 
         return d
 
     @classmethod
-    def integrator(cls, *, num_substeps: int = 1, matrix_free: bool = True) -> AnalogMethod:
+    def integrator(cls, *, matrix_free: bool = True) -> AnalogMethod:
         """Build an ``integrate`` analog method configuration.
 
         Args:
-            num_substeps (int): Number of integration substeps per schedule
-                step when using the Integrate method. Defaults to ``1``.
             matrix_free (bool): Whether to use the matrix-free
                 implementation for the Integrate method. Defaults to
                 ``False``.
@@ -152,14 +143,18 @@ class AnalogMethod(BaseSimulatorConfig):
             AnalogMethod: Configured integrate-method analog configuration.
         """
         evolution_method = "integrate_rk4_matrix_free" if matrix_free else "integrate_rk4"
-        return cls(evolution_method=evolution_method, num_integrate_substeps=num_substeps)
+        return cls(evolution_method=evolution_method)
 
     @classmethod
     def adaptive_integrator(cls, *, tol: float = 1e-2) -> AnalogMethod:
-        """Build an ``integrate`` analog method configuration.
+        """Build an ``adaptive_integrate`` analog method configuration.
+
+        This uses a Dormand-Prince Runge-Kutta 4/5 method with adaptive step size control.
+        It automatically adjusts the integration timestep to maintain a local error estimate
+        below the specified tolerance, which can improve efficiency for problems with varying timescales.
 
         Args:
-            tol (float): Tolerance for the adaptive algorithm. Defaults to ``1e-2``.
+            tol (float): Tolerance for the adaptive algorithm. Defaults to ``1e-2``. This relates to the allowed fidelity error between the RK4 and RK5 estimates.
 
         Returns:
             AnalogMethod: Configured integrate-method analog configuration.

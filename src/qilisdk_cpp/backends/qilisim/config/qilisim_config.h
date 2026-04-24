@@ -24,7 +24,6 @@ class QiliSimConfig {
     int num_monte_carlo_trajectories = 1000;
     int arnoldi_dim = 10;
     int num_arnoldi_substeps = 10;
-    int num_integrate_substeps = 1;
     std::string time_evolution_method = "integrate_rk4_matrix_free";
     std::string sampling_method = "statevector_matrix_free";
     bool store_intermediate_results = false;
@@ -43,7 +42,6 @@ class QiliSimConfig {
     int get_arnoldi_dim() const { return arnoldi_dim; }
     double get_adaptive_tol() const { return adaptive_tol; }
     int get_num_arnoldi_substeps() const { return num_arnoldi_substeps; }
-    int get_num_integrate_substeps() const { return num_integrate_substeps; }
     std::string get_time_evolution_method() const { return time_evolution_method; }
     std::string get_sampling_method() const { return sampling_method; }
     bool get_store_intermediate_results() const { return store_intermediate_results; }
@@ -60,7 +58,6 @@ class QiliSimConfig {
     void set_arnoldi_dim(int value) { arnoldi_dim = value; }
     void set_adaptive_tol(double value) { adaptive_tol = value; }
     void set_num_arnoldi_substeps(int value) { num_arnoldi_substeps = value; }
-    void set_num_integrate_substeps(int value) { num_integrate_substeps = value; }
     void set_time_evolution_method(const std::string& value) { time_evolution_method = value; }
     void set_sampling_method(const std::string& value) { sampling_method = value; }
     void set_store_intermediate_results(bool value) { store_intermediate_results = value; }

@@ -22,8 +22,7 @@
 // GCOV_EXCL_BR_START
 
 #if defined(_OPENMP)
-#pragma omp declare reduction(complex_double_reduction : std::complex<double> : omp_out += omp_in) \
-    initializer(omp_priv = std::complex<double>(0.0, 0.0))
+#pragma omp declare reduction(complex_double_reduction : std::complex <double> : omp_out += omp_in) initializer(omp_priv = std::complex <double>(0.0, 0.0))
 #endif
 
 DenseMatrix _get_dense_eigenvectors(const std::vector<SparseMatrix>& evecs) {

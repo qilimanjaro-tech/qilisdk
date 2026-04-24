@@ -30,10 +30,6 @@ TEST(QilisimConfig, BadValidateThrows) {
     EXPECT_ANY_THROW(config.validate());
 
     config = default_config;
-    config.set_num_integrate_substeps(-5);
-    EXPECT_ANY_THROW(config.validate());
-
-    config = default_config;
     config.set_time_evolution_method("invalid_method");
     EXPECT_ANY_THROW(config.validate());
 

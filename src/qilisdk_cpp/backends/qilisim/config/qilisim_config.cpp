@@ -31,14 +31,7 @@ void QiliSimConfig::validate() const {
     if (num_arnoldi_substeps <= 0) {
         throw py::value_error("Number of Arnoldi substeps must be positive.");
     }
-    if (num_integrate_substeps <= 0) {
-        throw py::value_error("Number of integration substeps must be positive.");
-    }
-    if (time_evolution_method != "arnoldi" 
-        && time_evolution_method != "direct" 
-        && time_evolution_method != "integrate_rk4" 
-        && time_evolution_method != "integrate_rk45_matrix_free" 
-        && time_evolution_method != "integrate_rk4_matrix_free") {
+    if (time_evolution_method != "arnoldi" && time_evolution_method != "direct" && time_evolution_method != "integrate_rk4" && time_evolution_method != "integrate_rk45_matrix_free" && time_evolution_method != "integrate_rk4_matrix_free") {
         throw py::value_error("Evolution method must be one of 'direct', 'arnoldi', 'integrate_rk4', 'integrate_rk45_matrix_free', or 'integrate_rk4_matrix_free'.");
     }
     if (sampling_method != "statevector" && sampling_method != "statevector_matrix_free") {

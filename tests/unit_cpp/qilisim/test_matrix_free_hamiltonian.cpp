@@ -65,9 +65,11 @@ DenseMatrix dm1() {
 void expectMatrixNear(const DenseMatrix& a, const DenseMatrix& b, double tol = 1e-10) {
     ASSERT_EQ(a.rows(), b.rows());
     ASSERT_EQ(a.cols(), b.cols());
-    for (int r = 0; r < a.rows(); ++r)
-        for (int c = 0; c < a.cols(); ++c)
-            EXPECT_NEAR(std::abs(a(r, c)), std::abs(b(r, c)), tol) << "Mismatch at (" << r << ", " << c << ")";
+    for (int r = 0; r < a.rows(); ++r) {
+        for (int c = 0; c < a.cols(); ++c) {
+            EXPECT_NEAR(std::abs(a(r, c)), std::abs(b(r, c)), tol) << "Expected \n" << a << "\nto be near \n" << b << ",\nbut mismatch at (" << r << ", " << c << ") with values " << a(r, c) << " and " << b(r, c);
+        }
+    }
 }
 
 }  // namespace
@@ -277,44 +279,49 @@ TEST(MatrixFreeHamiltonian, ApplyZtoKet0GivesKet0) {
     MatrixFreeHamiltonian h;
     h.add({1.0, 0.0}, MatrixFreeOperator("Z", 0));
     DenseMatrix state = ket0();
-    h.apply(state, MatrixFreeApplicationType::Left);
-    expectMatrixNear(state, ket0());
+    DenseMatrix output_state;
+    h.apply(state, MatrixFreeApplicationType::Left, output_state);
+    expectMatrixNear(output_state, ket0());
 }
 
 TEST(MatrixFreeHamiltonian, ApplyZtoKet1GivesMinusKet1) {
     MatrixFreeHamiltonian h;
     h.add({1.0, 0.0}, MatrixFreeOperator("Z", 0));
     DenseMatrix state = ket1();
-    h.apply(state, MatrixFreeApplicationType::Left);
+    DenseMatrix output_state;
+    h.apply(state, MatrixFreeApplicationType::Left, output_state);
     DenseMatrix expected = ket1();
     expected *= -1.0;
-    expectMatrixNear(state, expected);
+    expectMatrixNear(output_state, expected);
 }
 
 TEST(MatrixFreeHamiltonian, ApplyXtoKet0GivesKet1) {
     MatrixFreeHamiltonian h;
     h.add({1.0, 0.0}, MatrixFreeOperator("X", 0));
     DenseMatrix state = ket0();
-    h.apply(state, MatrixFreeApplicationType::Left);
-    expectMatrixNear(state, ket1());
+    DenseMatrix output_state;
+    h.apply(state, MatrixFreeApplicationType::Left, output_state);
+    expectMatrixNear(output_state, ket1());
 }
 
 TEST(MatrixFreeHamiltonian, ApplyXtoKet1GivesKet0) {
     MatrixFreeHamiltonian h;
     h.add({1.0, 0.0}, MatrixFreeOperator("X", 0));
     DenseMatrix state = ket1();
-    h.apply(state, MatrixFreeApplicationType::Left);
-    expectMatrixNear(state, ket0());
+    DenseMatrix output_state;
+    h.apply(state, MatrixFreeApplicationType::Left, output_state);
+    expectMatrixNear(output_state, ket0());
 }
 
 TEST(MatrixFreeHamiltonian, ApplyWithCoefficientScalesOutput) {
     MatrixFreeHamiltonian h;
     h.add({3.0, 0.0}, MatrixFreeOperator("Z", 0));
     DenseMatrix state = ket0();
-    h.apply(state, MatrixFreeApplicationType::Left);
+    DenseMatrix output_state;
+    h.apply(state, MatrixFreeApplicationType::Left, output_state);
     DenseMatrix expected = ket0();
     expected *= 3.0;
-    expectMatrixNear(state, expected);
+    expectMatrixNear(output_state, expected);
 }
 
 TEST(MatrixFreeHamiltonian, ApplyTwoTermsSummed) {
@@ -322,79 +329,77 @@ TEST(MatrixFreeHamiltonian, ApplyTwoTermsSummed) {
     h.add({1.0, 0.0}, MatrixFreeOperator("Z", 0));
     h.add({1.0, 0.0}, MatrixFreeOperator("X", 0));
     DenseMatrix state = ket0();
-    h.apply(state, MatrixFreeApplicationType::Left);
+    DenseMatrix output_state;
+    h.apply(state, MatrixFreeApplicationType::Left, output_state);
     DenseMatrix expected(2, 1);
     expected(0, 0) = 1.0;
     expected(1, 0) = 1.0;
-    expectMatrixNear(state, expected);
+    expectMatrixNear(output_state, expected);
 }
 
 TEST(MatrixFreeHamiltonian, ApplyProductOfTwoOperators) {
     MatrixFreeHamiltonian h;
     h.add({1.0, 0.0}, std::vector<MatrixFreeOperator>{MatrixFreeOperator("X", 0), MatrixFreeOperator("X", 1)});
     DenseMatrix state = ket00();
-    h.apply(state, MatrixFreeApplicationType::Left);
-    expectMatrixNear(state, ket11());
+    DenseMatrix output_state;
+    h.apply(state, MatrixFreeApplicationType::Left, output_state);
+    expectMatrixNear(output_state, ket11());
 }
 
 TEST(MatrixFreeHamiltonian, ApplyProductXZtoKet00) {
     MatrixFreeHamiltonian h;
     h.add({1.0, 0.0}, std::vector<MatrixFreeOperator>{MatrixFreeOperator("X", 0), MatrixFreeOperator("Z", 1)});
     DenseMatrix state = ket00();
-    h.apply(state, MatrixFreeApplicationType::Left);
-    expectMatrixNear(state, ket10());
+    DenseMatrix output_state;
+    h.apply(state, MatrixFreeApplicationType::Left, output_state);
+    expectMatrixNear(output_state, ket10());
 }
 
 TEST(MatrixFreeHamiltonian, ApplyProductZXtoKet10) {
     MatrixFreeHamiltonian h;
     h.add({1.0, 0.0}, std::vector<MatrixFreeOperator>{MatrixFreeOperator("Z", 0), MatrixFreeOperator("X", 1)});
     DenseMatrix state = ket10();
-    h.apply(state, MatrixFreeApplicationType::Left);
+    DenseMatrix output_state;
+    h.apply(state, MatrixFreeApplicationType::Left, output_state);
     DenseMatrix expected = ket11();
     expected *= -1.0;
-    expectMatrixNear(state, expected);
-}
-
-TEST(MatrixFreeHamiltonian, ApplyModifiesStateInPlace) {
-    MatrixFreeHamiltonian h;
-    h.add({1.0, 0.0}, MatrixFreeOperator("X", 0));
-    DenseMatrix state = ket0();
-    const DenseMatrix* ptr_before = &state;
-    h.apply(state, MatrixFreeApplicationType::Left);
-    EXPECT_EQ(&state, ptr_before);
-    expectMatrixNear(state, ket1());
+    expectMatrixNear(output_state, expected);
 }
 
 TEST(MatrixFreeHamiltonian, ApplyLeftToDensityMatrix) {
     MatrixFreeHamiltonian h;
     h.add({1.0, 0.0}, MatrixFreeOperator("Z", 0));
     DenseMatrix rho = dm0();
-    h.apply(rho, MatrixFreeApplicationType::Left);
-    expectMatrixNear(rho, dm0());
+    DenseMatrix output_state;
+    h.apply(rho, MatrixFreeApplicationType::Left, output_state);
+    expectMatrixNear(output_state, dm0());
 }
 
 TEST(MatrixFreeHamiltonian, ApplyRightToDensityMatrix) {
     MatrixFreeHamiltonian h;
     h.add({1.0, 0.0}, MatrixFreeOperator("Z", 0));
     DenseMatrix rho = dm0();
-    h.apply(rho, MatrixFreeApplicationType::Right);
-    expectMatrixNear(rho, dm0());
+    DenseMatrix output_state;
+    h.apply(rho, MatrixFreeApplicationType::Right, output_state);
+    expectMatrixNear(output_state, dm0());
 }
 
 TEST(MatrixFreeHamiltonian, ApplyLeftAndRightToDensityMatrix) {
     MatrixFreeHamiltonian h;
     h.add({1.0, 0.0}, MatrixFreeOperator("Z", 0));
     DenseMatrix rho = dm0();
-    h.apply(rho, MatrixFreeApplicationType::LeftAndRight);
-    expectMatrixNear(rho, dm0());
+    DenseMatrix output_state;
+    h.apply(rho, MatrixFreeApplicationType::LeftAndRight, output_state);
+    expectMatrixNear(output_state, dm0());
 }
 
 TEST(MatrixFreeHamiltonian, ApplyLeftAndRightXonDm0) {
     MatrixFreeHamiltonian h;
     h.add({1.0, 0.0}, MatrixFreeOperator("X", 0));
     DenseMatrix rho = dm0();
-    h.apply(rho, MatrixFreeApplicationType::LeftAndRight);
-    expectMatrixNear(rho, dm1());
+    DenseMatrix output_state;
+    h.apply(rho, MatrixFreeApplicationType::LeftAndRight, output_state);
+    expectMatrixNear(output_state, dm1());
 }
 
 TEST(MatrixFreeHamiltonian, ApplyTwoArgOverloadWritesToOutput) {
@@ -417,14 +422,13 @@ TEST(MatrixFreeHamiltonian, ApplyTwoArgOverloadDoesNotMutateInput) {
     expectMatrixNear(input, ket0());
 }
 
-TEST(MatrixFreeHamiltonian, ApplyTwoArgOverloadAccumulatesIntoOutput) {
+TEST(MatrixFreeHamiltonian, ApplyTwoArgOverloadResetsOutput) {
     MatrixFreeHamiltonian h;
     h.add({1.0, 0.0}, MatrixFreeOperator("Z", 0));
     DenseMatrix input = ket0();
     DenseMatrix output = ket0();
     h.apply(input, MatrixFreeApplicationType::Left, output);
     DenseMatrix expected = ket0();
-    expected *= 2.0;
     expectMatrixNear(output, expected);
 }
 

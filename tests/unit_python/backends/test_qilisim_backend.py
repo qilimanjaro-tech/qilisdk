@@ -37,8 +37,7 @@ def test_qilisim_init():
     config = backend.get_config()
 
     assert backend.solver_params is not None
-    assert config["evolution_method"] == "integrate"
-    assert config["num_integrate_substeps"] == 2
+    assert config["evolution_method"] == "integrate_rk4_matrix_free"
     assert config["monte_carlo"] is False
     assert config["num_monte_carlo_trajectories"] == 100
     assert config["max_cache_size"] == 1000

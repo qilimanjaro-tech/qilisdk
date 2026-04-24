@@ -65,9 +65,9 @@ SparseMatrix amp_damp_jump() {
     return to_sparse(j);
 }
 
-MatrixFreeHamiltonian make_matrix_free_H(const DenseMatrix& base_matrix) {
-    MatrixFreeOperator op("custom", {}, {0}, base_matrix);
-    return MatrixFreeHamiltonian(op);
+MatrixFreeHamiltonian make_matrix_free_H(std::complex<double> coeff, int target_qubit, std::string name) {
+    MatrixFreeOperator op(name, {}, {target_qubit}, DenseMatrix());
+    return MatrixFreeHamiltonian({{coeff, {op}}});
 }
 
 struct TimeEvolutionOutputs {
@@ -147,16 +147,22 @@ class TimeEvolutionTest : public ::testing::Test {
     std::vector<double> steps = {0.1, 0.2, 0.3};
     NoiseModelCpp empty_noise;
     QiliSimConfig config;
+    virtual void SetUp() override {
+        config.set_time_evolution_method("integrate_rk4");
+    }
 };
 
 class TimeEvolutionMatrixFreeTest : public ::testing::Test {
    protected:
-    MatrixFreeHamiltonian H_mf = make_matrix_free_H(0.5 * pauli_z());
+    MatrixFreeHamiltonian H_mf = make_matrix_free_H(0.5, 0, "Z");
     std::vector<MatrixFreeHamiltonian> hamiltonians = {H_mf};
     std::vector<std::vector<double>> params = {{1.0, 1.0, 1.0}};
     std::vector<double> steps = {0.1, 0.2, 0.3};
     NoiseModelCpp empty_noise;
     QiliSimConfig config;
+    virtual void SetUp() override {
+        config.set_time_evolution_method("integrate_rk4_matrix_free");
+    }
 };
 
 TEST_F(TimeEvolutionTest, DefaultConfigDoesNotThrow) {
@@ -398,15 +404,15 @@ TEST_F(TimeEvolutionMatrixFreeTest, NoObservablesProducesEmptyExpectationValues)
 }
 
 TEST_F(TimeEvolutionMatrixFreeTest, ExpectationValueCountMatchesObservableCount) {
-    MatrixFreeHamiltonian obs_z = make_matrix_free_H(pauli_z());
-    MatrixFreeHamiltonian obs_x = make_matrix_free_H(pauli_x());
+    MatrixFreeHamiltonian obs_z = make_matrix_free_H(1.0, 0, "Z");
+    MatrixFreeHamiltonian obs_x = make_matrix_free_H(1.0, 0, "X");
     std::vector<MatrixFreeHamiltonian> obs = {obs_z, obs_x};
     auto out = run_time_evolution_mf(pure_zero_sparse(), hamiltonians, params, steps, empty_noise, obs, config);
     EXPECT_EQ(int(out.expectation_values.size()), 2);
 }
 
 TEST_F(TimeEvolutionMatrixFreeTest, PauliZExpectationValueOnEigenstateIsOne) {
-    MatrixFreeHamiltonian obs_z = make_matrix_free_H(pauli_z());
+    MatrixFreeHamiltonian obs_z = make_matrix_free_H(1.0, 0, "Z");
     auto out = run_time_evolution_mf(pure_zero_sparse(), hamiltonians, params, steps, empty_noise, {obs_z}, config);
     EXPECT_NEAR(out.expectation_values[0], 1.0, kTol);
 }
@@ -480,7 +486,7 @@ TEST_F(TimeEvolutionMatrixFreeTest, IntermediateCountMatchesStepCount) {
 
 TEST_F(TimeEvolutionMatrixFreeTest, IntermediateExpectationValueCountMatchesStepsAndObservables) {
     config.set_store_intermediate_results(true);
-    MatrixFreeHamiltonian obs_z = make_matrix_free_H(pauli_z());
+    MatrixFreeHamiltonian obs_z = make_matrix_free_H(1.0, 0, "Z");
     auto out = run_time_evolution_mf(pure_zero_sparse(), hamiltonians, params, steps, empty_noise, {obs_z}, config);
     EXPECT_EQ(int(out.intermediate_expectation_values.size()), int(steps.size()));
     for (const auto& step_vals : out.intermediate_expectation_values) {
@@ -509,7 +515,7 @@ class TimeEvolutionMethodTest : public ::testing::Test {
 TEST_F(TimeEvolutionMethodTest, IntegrateMethodProducesValidStateWithMultipleThreads) {
     QiliSimConfig cfg;
     cfg.set_num_threads(2);
-    cfg.set_time_evolution_method("integrate");
+    cfg.set_time_evolution_method("integrate_rk4");
     auto out = run_time_evolution(pure_plus_sparse(), hamiltonians, params, steps, empty_noise, obs, cfg);
     EXPECT_NEAR(std::real(out.rho_t.trace()), 1.0, kTol);
 }
@@ -530,7 +536,7 @@ TEST_F(TimeEvolutionMethodTest, ArnoldiMethodProducesValidState) {
 
 TEST_F(TimeEvolutionMethodTest, AllMethodsAgreeToPauliZExpectationValueOnEigenstate) {
     QiliSimConfig cfg_int, cfg_dir, cfg_arn;
-    cfg_int.set_time_evolution_method("integrate");
+    cfg_int.set_time_evolution_method("integrate_rk4");
     cfg_dir.set_time_evolution_method("direct");
     cfg_arn.set_time_evolution_method("arnoldi");
 
@@ -599,6 +605,7 @@ class TimeEvolutionMonteCarloTest : public ::testing::Test {
         noise.add_jump_operator(amp_damp_jump());
         config.set_monte_carlo(true);
         config.set_num_monte_carlo_trajectories(200);
+        config.set_time_evolution_method("integrate_rk4");
         config.set_seed(0);
     }
 };
@@ -632,7 +639,7 @@ TEST_F(TimeEvolutionMonteCarloTest, GroundStateRemainsGroundState) {
 
 class TimeEvolutionMonteCarloMatrixFreeTest : public ::testing::Test {
    protected:
-    MatrixFreeHamiltonian H_mf = make_matrix_free_H(0.5 * pauli_z());
+    MatrixFreeHamiltonian H_mf = make_matrix_free_H(0.5, 0, "Z");
     std::vector<MatrixFreeHamiltonian> hamiltonians = {H_mf};
     std::vector<std::vector<double>> params = {{1.0}};
     std::vector<double> steps = {0.1};
@@ -642,6 +649,7 @@ class TimeEvolutionMonteCarloMatrixFreeTest : public ::testing::Test {
         noise.add_jump_operator(amp_damp_jump());
         config.set_monte_carlo(true);
         config.set_num_monte_carlo_trajectories(200);
+        config.set_time_evolution_method("integrate_rk4_matrix_free");
         config.set_seed(0);
     }
 };

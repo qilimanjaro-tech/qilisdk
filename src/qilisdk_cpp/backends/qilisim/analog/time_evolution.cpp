@@ -12,9 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <iostream>
-#include <chrono>
-
 #include "time_evolution.h"
 #include "../noise/noise_model.h"
 #include "../utils/matrix_utils.h"
@@ -139,11 +136,13 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
 
         // Perform the iteration depending on the method
         if (config.get_time_evolution_method() == "integrate_rk4") {
-            rho_t = iter_rk4(rho_t, dt, currentH, jump_operators, config.get_num_integrate_substeps(), is_unitary_on_statevector);
+            rho_t = iter_rk4_matrix(rho_t, dt, currentH, jump_operators, is_unitary_on_statevector);
         } else if (config.get_time_evolution_method() == "direct") {
             rho_t = iter_direct(rho_t, dt, currentH, jump_operators, is_unitary_on_statevector);
         } else if (config.get_time_evolution_method() == "arnoldi") {
             rho_t = iter_arnoldi(rho_t, dt, currentH, jump_operators, config.get_arnoldi_dim(), config.get_num_arnoldi_substeps(), is_unitary_on_statevector, config.get_atol());
+        } else {
+            throw std::invalid_argument("Invalid time evolution method: " + config.get_time_evolution_method());
         }
 
         // If we should store intermediates, do it here
@@ -250,10 +249,6 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
 
     // If doing adaptive step size with rk45
     if (config.get_time_evolution_method() == "integrate_rk45_matrix_free") {
-
-        // Start a timer
-        auto start_time = std::chrono::high_resolution_clock::now();
-
         // Initial step size
         double dt = 1.0;
         if (step_list.size() > 1) {
@@ -265,7 +260,6 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
         size_t iters = 0;
         DenseMatrix k_saved;
         while (current_time < step_list.back()) {
-
             // Make sure the next step doesn't go beyond the final time point
             dt = std::min(dt, step_list.back() - current_time);
 
@@ -286,14 +280,8 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
             iters++;
         }
 
-        std::cout << "Adaptive RK45 took " << iters << " iterations" << std::endl;
-        auto end_time = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double> elapsed = end_time - start_time;
-        std::cout << "Adaptive RK45 took " << elapsed.count() << " seconds" << std::endl;
-
-    // If doing fixed step size with rk4
+        // If doing fixed step size with rk4
     } else {
-
         // For each time step
         for (size_t step_ind = 0; step_ind < step_list.size(); ++step_ind) {
             // Determine the time step and starting time
@@ -301,7 +289,7 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
             double dt = step_list[step_ind] - t_start;
 
             // Perform the iteration depending on the method
-            iter_rk4(rho_t, t_start, dt, step_list, hamiltonians, parameters_list, jump_operators, config.get_num_integrate_substeps(), is_unitary_on_statevector);
+            iter_rk4(rho_t, t_start, dt, step_list, hamiltonians, parameters_list, jump_operators, is_unitary_on_statevector);
 
             // If we should store intermediates, do it here
             if (config.get_store_intermediate_results()) {
@@ -312,7 +300,6 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
                 }
             }
         }
-
     }
 
     // If we have statevector/s but we should return a density matrix

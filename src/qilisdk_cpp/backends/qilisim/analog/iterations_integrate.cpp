@@ -16,33 +16,28 @@
 #include "iterations.h"
 #include "lindblad.h"
 
-#include <iostream>
-
 #if defined(_OPENMP)
-#pragma omp declare reduction(complex_double_reduction : std::complex<double> : omp_out += omp_in) \
-    initializer(omp_priv = std::complex<double>(0.0, 0.0))
+#pragma omp declare reduction(complex_double_reduction : std::complex <double> : omp_out += omp_in) initializer(omp_priv = std::complex <double>(0.0, 0.0))
 #endif
 
 // GCOV_EXCL_BR_START
 
-DenseMatrix iter_rk4(const DenseMatrix& rho_0, double dt, const SparseMatrix& currentH, const std::vector<SparseMatrix>& jump_operators, int num_substeps, bool is_unitary_on_statevector) {
+DenseMatrix iter_rk4_matrix(const DenseMatrix& rho_0, double dt, const SparseMatrix& currentH, const std::vector<SparseMatrix>& jump_operators, bool is_unitary_on_statevector) {
     /*
     4th-order Runge–Kutta integration of the Lindblad master equation
 
     Args:
-        rho_0 (SparseMatrix): The initial density matrix.
+        rho_0 (DenseMatrix): The initial density matrix.
         dt (double): The total time step.
         currentH (SparseMatrix): The current Hamiltonian.
         jump_operators (std::vector<SparseMatrix>): The list of jump operators.
-        num_substeps (int): Number of substeps to divide the time step into.
         is_unitary_on_statevector (bool): If the evolution should be treated as a unitary acting on a state vector.
         atol (double): Absolute tolerance for numerical operations.
 
     Returns:
-        SparseMatrix: The evolved density matrix after time dt.
+        DenseMatrix: The evolved density matrix after time dt.
 
     Raises:
-        py::value_error: If num_substeps is non-positive.
         py::value_error: If currentH is not square.
         py::value_error: If rho_0 is not square (and evolution is not unitary on state vector).
         py::value_error: If Hamiltonian and initial density matrix dimensions do not match.
@@ -74,39 +69,38 @@ DenseMatrix iter_rk4(const DenseMatrix& rho_0, double dt, const SparseMatrix& cu
     DenseMatrix k(rho_rows, rho_cols);
     DenseMatrix rho_tmp(rho_rows, rho_cols);
     DenseMatrix rho_old(rho_rows, rho_cols);
-    double dt_sub = dt / static_cast<double>(num_substeps);
-    for (int step = 0; step < num_substeps; ++step) {
-        rho_old = rho;
 
-        lindblad_rhs(k, rho, currentH, jump_operators, is_unitary_on_statevector);
-        rho += (dt_sub / 6.0) * k;
+    rho_old = rho;
 
-        rho_tmp = rho_old;
-        rho_tmp += 0.5 * dt_sub * k;
-        lindblad_rhs(k, rho_tmp, currentH, jump_operators, is_unitary_on_statevector);
-        rho += (dt_sub / 3.0) * k;
+    lindblad_rhs(k, rho, currentH, jump_operators, is_unitary_on_statevector);
+    rho += (dt / 6.0) * k;
 
-        rho_tmp = rho_old;
-        rho_tmp += 0.5 * dt_sub * k;
-        lindblad_rhs(k, rho_tmp, currentH, jump_operators, is_unitary_on_statevector);
-        rho += (dt_sub / 3.0) * k;
+    rho_tmp = rho_old;
+    rho_tmp += 0.5 * dt * k;
+    lindblad_rhs(k, rho_tmp, currentH, jump_operators, is_unitary_on_statevector);
+    rho += (dt / 3.0) * k;
 
-        rho_tmp = rho_old;
-        rho_tmp += dt_sub * k;
-        lindblad_rhs(k, rho_tmp, currentH, jump_operators, is_unitary_on_statevector);
-        rho += (dt_sub / 6.0) * k;
+    rho_tmp = rho_old;
+    rho_tmp += 0.5 * dt * k;
+    lindblad_rhs(k, rho_tmp, currentH, jump_operators, is_unitary_on_statevector);
+    rho += (dt / 3.0) * k;
 
-        // Normalize the density matrix
-        if (is_unitary_on_statevector) {
-            rho /= rho.norm();
-        } else {
-            std::complex<double> tr = 0;
-            for (int i = 0; i < dim; ++i) {
-                tr += rho(i, i);
-            }
-            rho /= tr;
+    rho_tmp = rho_old;
+    rho_tmp += dt * k;
+    lindblad_rhs(k, rho_tmp, currentH, jump_operators, is_unitary_on_statevector);
+    rho += (dt / 6.0) * k;
+
+    // Normalize the density matrix
+    if (is_unitary_on_statevector) {
+        rho /= rho.norm();
+    } else {
+        std::complex<double> tr = 0;
+        for (int i = 0; i < dim; ++i) {
+            tr += rho(i, i);
         }
+        rho /= tr;
     }
+
     return rho;
 }
 
@@ -144,7 +138,7 @@ MatrixFreeHamiltonian construct_current_hamiltonian(double t, const std::vector<
     return currentH;
 }
 
-void iter_rk4(DenseMatrix& rho_t, double t, double dt, const std::vector<double>& step_list, const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<SparseMatrix>& jump_operators, int num_substeps, bool is_unitary_on_statevector) {
+void iter_rk4(DenseMatrix& rho_t, double t, double dt, const std::vector<double>& step_list, const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<SparseMatrix>& jump_operators, bool is_unitary_on_statevector) {
     /*
     4th-order Runge–Kutta integration of the Lindblad master equation using matrix-free methods.
 
@@ -156,11 +150,10 @@ void iter_rk4(DenseMatrix& rho_t, double t, double dt, const std::vector<double>
         hamiltonians (std::vector<MatrixFreeHamiltonian>): The list of Hamiltonians.
         parameters_list (std::vector<std::vector<double>>): The list of parameters for each Hamiltonian.
         jump_operators (std::vector<SparseMatrix>): The list of jump operators.
-        num_substeps (int): Number of substeps to divide the time step into.
         is_unitary_on_statevector (bool): If the evolution should be treated as a unitary acting on a state vector.
 
     Raises:
-        py::value_error: If rho_0 is not square (and evolution is not unitary on state vector).
+        py::value_error: If rho_t is not square (and evolution is not unitary on state vector).
         py::value_error: If any jump operator dimension does not match Hamiltonian dimension.
     */
 
@@ -182,36 +175,33 @@ void iter_rk4(DenseMatrix& rho_t, double t, double dt, const std::vector<double>
     DenseMatrix k(rho_rows, rho_cols);
     DenseMatrix rho_tmp(rho_rows, rho_cols);
     DenseMatrix rho_old(rho_rows, rho_cols);
-    double dt_sub = dt / static_cast<double>(num_substeps);
-    for (int step = 0; step < num_substeps; ++step) {
-        double t_step = t + step * dt_sub;
-        rho_old = rho_t;
+    double t_step = t + dt;
+    rho_old = rho_t;
 
-        lindblad_rhs(k, rho_t, construct_current_hamiltonian(t_step, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
-        rho_t += (dt_sub / 6.0) * k;
+    lindblad_rhs(k, rho_t, construct_current_hamiltonian(t_step, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
+    rho_t += (dt / 6.0) * k;
 
-        rho_tmp = rho_old + 0.5 * dt_sub * k;
-        lindblad_rhs(k, rho_tmp, construct_current_hamiltonian(t_step + 0.5 * dt_sub, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
-        rho_t += (dt_sub / 3.0) * k;
+    rho_tmp = rho_old + 0.5 * dt * k;
+    lindblad_rhs(k, rho_tmp, construct_current_hamiltonian(t_step + 0.5 * dt, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
+    rho_t += (dt / 3.0) * k;
 
-        rho_tmp = rho_old + 0.5 * dt_sub * k;
-        lindblad_rhs(k, rho_tmp, construct_current_hamiltonian(t_step + 0.5 * dt_sub, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
-        rho_t += (dt_sub / 3.0) * k;
+    rho_tmp = rho_old + 0.5 * dt * k;
+    lindblad_rhs(k, rho_tmp, construct_current_hamiltonian(t_step + 0.5 * dt, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
+    rho_t += (dt / 3.0) * k;
 
-        rho_tmp = rho_old + dt_sub * k;
-        lindblad_rhs(k, rho_tmp, construct_current_hamiltonian(t_step + dt_sub, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
-        rho_t += (dt_sub / 6.0) * k;
+    rho_tmp = rho_old + dt * k;
+    lindblad_rhs(k, rho_tmp, construct_current_hamiltonian(t_step + dt, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
+    rho_t += (dt / 6.0) * k;
 
-        // Normalize the density matrix
-        if (is_unitary_on_statevector) {
-            rho_t /= rho_t.norm();
-        } else {
-            std::complex<double> tr = 0;
-            for (int i = 0; i < dim; ++i) {
-                tr += rho_t(i, i);
-            }
-            rho_t /= tr;
+    // Normalize the density matrix
+    if (is_unitary_on_statevector) {
+        rho_t /= rho_t.norm();
+    } else {
+        std::complex<double> tr = 0;
+        for (int i = 0; i < dim; ++i) {
+            tr += rho_t(i, i);
         }
+        rho_t /= tr;
     }
 }
 
@@ -232,7 +222,7 @@ double iter_rk45(DenseMatrix& rho_t, double t, double& dt, const std::vector<dou
         k_saved (DenseMatrix&): The first Runge-Kutta matrix, which is the same as the last one from the previous step.
 
     Raises:
-        py::value_error: If rho_0 is not square (and evolution is not unitary on state vector).
+        py::value_error: If rho_t is not square (and evolution is not unitary on state vector).
         py::value_error: If any jump operator dimension does not match Hamiltonian dimension.
     */
 
@@ -248,10 +238,10 @@ double iter_rk45(DenseMatrix& rho_t, double t, double& dt, const std::vector<dou
     }
 
     // https://en.wikipedia.org/wiki/Dormand%E2%80%93Prince_method
-    
+
     // Coefficients for adjusting the solution
     static constexpr double b21 = 1.0 / 5.0;
-    static constexpr double b31 = 3.0 / 40.0, b32   = 9.0 / 40.0;
+    static constexpr double b31 = 3.0 / 40.0, b32 = 9.0 / 40.0;
     static constexpr double b41 = 44.0 / 45.0, b42 = -56.0 / 15.0, b43 = 32.0 / 9.0;
     static constexpr double b51 = 19372.0 / 6561.0, b52 = -25360.0 / 2187.0, b53 = 64448.0 / 6561.0, b54 = -212.0 / 729.0;
     static constexpr double b61 = 9017.0 / 3168.0, b62 = -355.0 / 33.0, b63 = 46732.0 / 5247.0, b64 = 49.0 / 176.0, b65 = -5103.0 / 18656.0;
@@ -261,7 +251,7 @@ double iter_rk45(DenseMatrix& rho_t, double t, double& dt, const std::vector<dou
     static constexpr double a2 = 1.0 / 5.0, a3 = 3.0 / 10.0, a4 = 4.0 / 5.0, a5 = 8.0 / 9.0, a6 = 1.0, a7 = 1.0;
 
     // Coefficients for forming the 4th order solution
-    static constexpr double c41 = 5179.0 / 57600.0,  c43 = 7571.0 / 16695.0,  c44 = 393.0 / 640.0,   c45 = -92097.0 / 339200.0, c46 = 187.0 / 2100.0, c47 = 1.0 / 40.0;
+    static constexpr double c41 = 5179.0 / 57600.0, c43 = 7571.0 / 16695.0, c44 = 393.0 / 640.0, c45 = -92097.0 / 339200.0, c46 = 187.0 / 2100.0, c47 = 1.0 / 40.0;
 
     // For dt scaling
     static constexpr double min_factor = 0.1;
@@ -284,7 +274,7 @@ double iter_rk45(DenseMatrix& rho_t, double t, double& dt, const std::vector<dou
     DenseMatrix k1 = already_have_first_step ? k_saved : DenseMatrix(rho_rows, rho_cols);
     DenseMatrix k2(rho_rows, rho_cols);
     DenseMatrix k3(rho_rows, rho_cols);
-    DenseMatrix k4(rho_rows, rho_cols); 
+    DenseMatrix k4(rho_rows, rho_cols);
     DenseMatrix k5(rho_rows, rho_cols);
     DenseMatrix k6(rho_rows, rho_cols);
     DenseMatrix k7(rho_rows, rho_cols);
@@ -293,8 +283,7 @@ double iter_rk45(DenseMatrix& rho_t, double t, double& dt, const std::vector<dou
     DenseMatrix rho_5(rho_rows, rho_cols);
 
     if (!already_have_first_step) {
-        std::cout << "Calculating first step for RK45..." << std::endl;
-        double t_1 = t; 
+        double t_1 = t;
         lindblad_rhs(k1, rho_t, construct_current_hamiltonian(t_1, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
     }
 
@@ -369,7 +358,7 @@ double iter_rk45(DenseMatrix& rho_t, double t, double& dt, const std::vector<dou
     double rho_5_norm = 0.0;
     std::complex<double> overlap = 0.0;
 #if defined(_OPENMP)
-#pragma omp parallel for reduction(+:rho_4_norm, rho_5_norm) reduction(complex_double_reduction:overlap) schedule(static)
+#pragma omp parallel for reduction(+ : rho_4_norm, rho_5_norm) reduction(complex_double_reduction : overlap) schedule(static)
 #endif
     for (long i = 0; i < rho_rows; ++i) {
         for (long j = 0; j < rho_cols; ++j) {
@@ -413,15 +402,12 @@ double iter_rk45(DenseMatrix& rho_t, double t, double& dt, const std::vector<dou
         dt_taken = dt;
     }
 
-    std::cout << "RK45 step: t = " << t << ", dt = " << dt << ", err_norm = " << err_norm << ", accepted = " << (err_norm <= 1.0) << std::endl;
-
     // Scale the time step
     double factor = 0.9 * std::pow(err_norm, -0.2);
     factor = std::max(min_factor, std::min(max_factor, factor));
     dt *= factor;
 
     return dt_taken;
-
 }
 
 // GCOV_EXCL_BR_STOP

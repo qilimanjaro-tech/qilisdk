@@ -1491,7 +1491,6 @@ TEST(ParseSolverParams, AllFieldsParsedCorrectly) {
     params["atol"] = py::float_(1e-8);
     params["arnoldi_dim"] = py::int_(20);
     params["num_arnoldi_substeps"] = py::int_(4);
-    params["num_integrate_substeps"] = py::int_(8);
     params["evolution_method"] = py::str("arnoldi");
     params["sampling_method"] = py::str("statevector");
     params["monte_carlo"] = py::bool_(true);
@@ -1508,7 +1507,6 @@ TEST(ParseSolverParams, AllFieldsParsedCorrectly) {
     EXPECT_NEAR(config.get_atol(), 1e-8, 1e-15);
     EXPECT_EQ(config.get_arnoldi_dim(), 20);
     EXPECT_EQ(config.get_num_arnoldi_substeps(), 4);
-    EXPECT_EQ(config.get_num_integrate_substeps(), 8);
     EXPECT_EQ(config.get_time_evolution_method(), "arnoldi");
     EXPECT_EQ(config.get_sampling_method(), "statevector");
     EXPECT_TRUE(config.get_monte_carlo());
