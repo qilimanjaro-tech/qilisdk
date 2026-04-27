@@ -8,7 +8,7 @@
 # --------------------------------------------------------------------------
 
 # Stop if any command fails
-set -e
+set -euo pipefail
 
 # Keep a log file in same directory as this script
 LOG_FILE=$(dirname "$0")/checks.log
