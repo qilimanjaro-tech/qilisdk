@@ -166,6 +166,11 @@ TEST_F(TimeEvolutionTest, DefaultConfigDoesNotThrow) {
     SUCCEED();
 }
 
+TEST_F(TimeEvolutionTest, BadMethodThrows) {
+    config.set_time_evolution_method("non_existent_method");
+    EXPECT_ANY_THROW(run_time_evolution(pure_zero_sparse(), hamiltonians, params, steps, empty_noise, {}, config));
+}
+
 TEST_F(TimeEvolutionMatrixFreeTest, DefaultConfigDoesNotThrow) {
     auto out = run_time_evolution_mf(pure_zero_sparse(), hamiltonians, params, steps, empty_noise, {}, config);
     SUCCEED();

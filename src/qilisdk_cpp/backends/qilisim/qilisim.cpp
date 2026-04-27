@@ -199,7 +199,7 @@ py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, co
         // Call the implementation
         time_evolution_matrix_free(rho_0, hamiltonians, parameters_list, step_list, noise_model_cpp, config, rho_t, intermediate_rhos);
 
-    } else {
+    } else if (config.get_time_evolution_method() == "integrate_rk4" || config.get_time_evolution_method() == "arnoldi" || config.get_time_evolution_method() == "direct") {
         // Parse the Hamiltonians
         std::vector<SparseMatrix> hamiltonians = parse_hamiltonians(hamiltonians_values, config.get_atol());
         if (hamiltonians.size() != parameters_list.size()) {
@@ -208,6 +208,9 @@ py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, co
 
         // Call the implementation
         time_evolution(rho_0, hamiltonians, parameters_list, step_list, noise_model_cpp, config, rho_t, intermediate_rhos);
+
+    } else {
+        throw py::value_error("Unknown time evolution method: " + config.get_time_evolution_method());
     }
 
     // Construct the result object

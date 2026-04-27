@@ -793,6 +793,23 @@ TEST_F(IterIntegrateMatrixFreeValidationTest, MismatchedJumpOperatorDimensionThr
     EXPECT_ANY_THROW(iter_rk4(rho, 0.0, 0.1, {}, {H_mf}, {{1.0}}, {bad_jump}, false));
 }
 
+TEST_F(IterIntegrateMatrixFreeValidationTest, NonSquareDensityMatrixThrowsRk45) {
+    DenseMatrix rho_rect(2, 3);
+    rho_rect.setZero();
+    double dt = 0.1;
+    DenseMatrix k_saved;
+    EXPECT_ANY_THROW(iter_rk45(rho_rect, 0.0, dt, {}, {H_mf}, {{1.0}}, {}, false, 0.1, k_saved));
+}
+
+TEST_F(IterIntegrateMatrixFreeValidationTest, MismatchedJumpOperatorDimensionThrowsRk45) {
+    DenseMatrix rho = pure_zero();
+    SparseMatrix bad_jump(4, 4);
+    double dt = 0.1;
+    DenseMatrix k_saved;
+    // double iter_rk45(DenseMatrix& rho_t, double t, double& dt, const std::vector<double>& step_list, const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<SparseMatrix>& jump_operators, bool is_unitary_on_statevector, double tol, DenseMatrix& k_saved) {
+    EXPECT_ANY_THROW(iter_rk45(rho, 0.0, dt, {}, {H_mf}, {{1.0}}, {bad_jump}, false, 0.1, k_saved));
+}
+
 class IterIntegrateMatrixFreeUnitaryStatevectorTest : public ::testing::Test {
    protected:
     MatrixFreeHamiltonian H_mf = make_matrix_free_H(0.5, 0, "Z");

@@ -561,4 +561,12 @@ TEST(MatrixFreeHamiltonian, IActingOnKet1GivesKet1) {
     expectMatrixNear(output_state, ket1());
 }
 
+TEST(MatrixFreeHamiltonian, UnsupportedPauliThrowsError) {
+    MatrixFreeHamiltonian h;
+    h.add({1.0, 0.0}, MatrixFreeOperator("Q", 0));
+    DenseMatrix state = ket0();
+    DenseMatrix output_state;
+    EXPECT_ANY_THROW(h.apply(state, MatrixFreeApplicationType::Left, output_state));
+}
+
 // GCOV_EXCL_BR_STOP
