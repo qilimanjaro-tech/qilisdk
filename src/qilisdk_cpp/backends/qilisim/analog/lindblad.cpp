@@ -114,10 +114,10 @@ void lindblad_rhs(DenseMatrix& drho, const DenseMatrix& rho, const MatrixFreeHam
         }
     } else {
         DenseMatrix Hrho(rho.rows(), rho.cols());
+        DenseMatrix rhoH(rho.rows(), rho.cols());
         H.apply(rho, MatrixFreeApplicationType::Left, Hrho);
-        drho = Hrho;
-        drho -= Hrho.adjoint();
-        drho *= -imag;
+        H.apply(rho, MatrixFreeApplicationType::Right, rhoH);
+        drho = -imag * (Hrho - rhoH);
         for (const auto& J : jumps) {
             SparseMatrix Jdag = J.adjoint();
             SparseMatrix JdagJ = Jdag * J;

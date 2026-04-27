@@ -258,7 +258,7 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
         // Loop until we reach the max time
         double current_time = 0.0;
         size_t iters = 0;
-        const size_t max_iters = 1000000; // Just in case to prevent infinite loops
+        const size_t max_iters = 1000000;  // Just in case to prevent infinite loops
         DenseMatrix k_saved;
         while (current_time < step_list.back()) {
             // Make sure the next step doesn't go beyond the final time point

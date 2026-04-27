@@ -16,8 +16,6 @@
 #include "iterations.h"
 #include "lindblad.h"
 
-#include <iostream>
-
 #if defined(_OPENMP)
 #pragma omp declare reduction(complex_double_reduction : std::complex <double> : omp_out += omp_in) initializer(omp_priv = std::complex <double>(0.0, 0.0))
 #endif
@@ -171,40 +169,122 @@ void iter_rk4(DenseMatrix& rho_t, double t, double dt, const std::vector<double>
         }
     }
 
+    // Cache some things
     long rho_rows = long(rho_t.rows());
     long rho_cols = long(rho_t.cols());
+    double dt_over_2 = 0.5 * dt;
+    double dt_over_3 = dt / 3.0;
+    double dt_over_6 = dt / 6.0;
 
     // Standard RK4 loop
     DenseMatrix k(rho_rows, rho_cols);
     DenseMatrix rho_tmp(rho_rows, rho_cols);
     DenseMatrix rho_old(rho_rows, rho_cols);
     double t_step = t;
-    rho_old = rho_t;
 
-    lindblad_rhs(k, rho_t, construct_current_hamiltonian(t_step, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
-    rho_t += (dt / 6.0) * k;
-
-    rho_tmp = rho_old + 0.5 * dt * k;
-    lindblad_rhs(k, rho_tmp, construct_current_hamiltonian(t_step + 0.5 * dt, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
-    rho_t += (dt / 3.0) * k;
-
-    rho_tmp = rho_old + 0.5 * dt * k;
-    lindblad_rhs(k, rho_tmp, construct_current_hamiltonian(t_step + 0.5 * dt, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
-    rho_t += (dt / 3.0) * k;
-
-    rho_tmp = rho_old + dt * k;
-    lindblad_rhs(k, rho_tmp, construct_current_hamiltonian(t_step + dt, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
-    rho_t += (dt / 6.0) * k;
-
-    // Normalize the density matrix
-    if (is_unitary_on_statevector) {
-        rho_t /= rho_t.norm();
-    } else {
-        std::complex<double> tr = 0;
-        for (int i = 0; i < dim; ++i) {
-            tr += rho_t(i, i);
+// Store the previous rho, we'll reuse it for the intermediate steps
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+    for (int i = 0; i < rho_old.rows(); ++i) {
+        for (int j = 0; j < rho_old.cols(); ++j) {
+            rho_old(i, j) = rho_t(i, j);
         }
-        rho_t /= tr;
+    }
+
+    // First step: compute k1 at time t
+    lindblad_rhs(k, rho_t, construct_current_hamiltonian(t_step, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+    for (int i = 0; i < rho_t.rows(); ++i) {
+        for (int j = 0; j < rho_t.cols(); ++j) {
+            rho_t(i, j) += dt_over_6 * k(i, j);
+        }
+    }
+
+// Second step: compute k2 at time t + dt/2
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+    for (int i = 0; i < rho_tmp.rows(); ++i) {
+        for (int j = 0; j < rho_tmp.cols(); ++j) {
+            rho_tmp(i, j) = rho_old(i, j) + dt_over_2 * k(i, j);
+        }
+    }
+    lindblad_rhs(k, rho_tmp, construct_current_hamiltonian(t_step + 0.5 * dt, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+    for (int i = 0; i < rho_t.rows(); ++i) {
+        for (int j = 0; j < rho_t.cols(); ++j) {
+            rho_t(i, j) += dt_over_3 * k(i, j);
+        }
+    }
+
+// Third step: compute k3 at time t + dt/2
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+    for (int i = 0; i < rho_tmp.rows(); ++i) {
+        for (int j = 0; j < rho_tmp.cols(); ++j) {
+            rho_tmp(i, j) = rho_old(i, j) + dt_over_2 * k(i, j);
+        }
+    }
+    lindblad_rhs(k, rho_tmp, construct_current_hamiltonian(t_step + 0.5 * dt, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+    for (int i = 0; i < rho_t.rows(); ++i) {
+        for (int j = 0; j < rho_t.cols(); ++j) {
+            rho_t(i, j) += dt_over_3 * k(i, j);
+        }
+    }
+
+// Fourth step: compute k4 at time t + dt
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+    for (int i = 0; i < rho_tmp.rows(); ++i) {
+        for (int j = 0; j < rho_tmp.cols(); ++j) {
+            rho_tmp(i, j) = rho_old(i, j) + dt * k(i, j);
+        }
+    }
+    lindblad_rhs(k, rho_tmp, construct_current_hamiltonian(t_step + dt, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+    for (int i = 0; i < rho_t.rows(); ++i) {
+        for (int j = 0; j < rho_t.cols(); ++j) {
+            rho_t(i, j) += dt_over_6 * k(i, j);
+        }
+    }
+
+    // Normalize the state
+    std::complex<double> norm = 0;
+    if (is_unitary_on_statevector) {
+#if defined(_OPENMP)
+#pragma omp parallel for reduction(complex_double_reduction : norm) schedule(static)
+#endif
+        for (int i = 0; i < rho_t.rows(); ++i) {
+            norm += std::norm(rho_t(i, 0));
+        }
+        norm = std::sqrt(norm);
+    } else {
+#if defined(_OPENMP)
+#pragma omp parallel for reduction(complex_double_reduction : norm) schedule(static)
+#endif
+        for (int i = 0; i < dim; ++i) {
+            norm += rho_t(i, i);
+        }
+    }
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+    for (int i = 0; i < rho_t.rows(); ++i) {
+        for (int j = 0; j < rho_t.cols(); ++j) {
+            rho_t(i, j) /= norm;
+        }
     }
 }
 
@@ -359,10 +439,11 @@ double iter_rk45(DenseMatrix& rho_t, double t, double& dt, const std::vector<dou
     // All these loops combined into one
     std::complex<double> rho_4_norm = 0.0;
     std::complex<double> rho_5_norm = 0.0;
-    std::complex<double> rho_5_trace = 0.0;
     std::complex<double> overlap = 0.0;
-    
-    // Normalizing statevectors is by the full norm
+    double rho_5_frob_sq = 0.0;
+    double err_norm = 0.0;
+
+    // Comparing statevectors we use their fidelity, since it's phase invariant
     if (is_unitary_on_statevector) {
 #if defined(_OPENMP)
 #pragma omp parallel for reduction(complex_double_reduction : overlap, rho_4_norm, rho_5_norm) schedule(static)
@@ -378,42 +459,36 @@ double iter_rk45(DenseMatrix& rho_t, double t, double& dt, const std::vector<dou
         }
         rho_4_norm = std::sqrt(std::abs(rho_4_norm));
         rho_5_norm = std::sqrt(std::abs(rho_5_norm));
+        overlap /= rho_4_norm;
+        overlap /= rho_5_norm;
+        err_norm = std::sqrt(std::abs(1.0 - std::pow(std::abs(overlap), 2)));
     } else {
-    // Whilst for density matrices we just use the trace
-    #if defined(_OPENMP)
-    #pragma omp parallel for reduction(complex_double_reduction : overlap, rho_4_norm, rho_5_norm, rho_5_trace) schedule(static)
-    #endif
+// For density matrices use the relative Frobenius distance: ||rho4-rho5||_F / ||rho5||_F
+#if defined(_OPENMP)
+#pragma omp parallel for reduction(+ : rho_5_frob_sq) reduction(complex_double_reduction : overlap, rho_4_norm, rho_5_norm) schedule(static)
+#endif
         for (long i = 0; i < rho_rows; ++i) {
             for (long j = 0; j < rho_cols; ++j) {
                 rho_4(i, j) = rho_t(i, j) + dt * (c41 * k1(i, j) + c43 * k3(i, j) + c44 * k4(i, j) + c45 * k5(i, j) + c46 * k6(i, j) + c47 * k7(i, j));
                 rho_5(i, j) = rho_tmp(i, j);
-                overlap += std::conj(rho_4(i, j)) * rho_5(i, j);
-                rho_4_norm += std::norm(rho_4(i, j));
-                rho_5_norm += std::norm(rho_5(i, j));
+                overlap += std::pow(std::abs(rho_4(i, j) - rho_5(i, j)), 2);
+                rho_5_frob_sq += std::norm(rho_5(i, j));
             }
-            rho_5_trace += rho_5(i, i);
+            rho_4_norm += rho_4(i, i);
+            rho_5_norm += rho_5(i, i);
         }
-        rho_4_norm = std::sqrt(std::abs(rho_4_norm));
-        rho_5_norm = std::sqrt(std::abs(rho_5_norm));
+        err_norm = std::sqrt(std::abs(overlap)) / std::sqrt(rho_5_frob_sq);
     }
 
-    std::cout << "rho4: \n" << rho_4 << "\nrho5: \n" << rho_5 << "\n";
-    std::cout << "overlap: " << overlap << ", rho_4_norm: " << rho_4_norm << ", rho_5_norm: " << rho_5_norm << std::endl;
+    // Scale the error by the tolerance
+    err_norm /= tol;
 
     // Make sure it's not zero
     if (std::abs(rho_4_norm) < 1e-14 || std::abs(rho_5_norm) < 1e-14) {
-        throw py::value_error("4th order solution has zero norm, cannot perform adaptive step.");
+        throw py::value_error("Density matrix has zero norm, cannot perform adaptive step.");
     }
 
-    overlap /= rho_4_norm;
-    overlap /= rho_5_norm;
-    double err_norm = std::sqrt(std::abs(1.0 - std::pow(std::abs(overlap), 2)));
-    err_norm /= tol;
-
     // Normalize the 5th order solution
-    // if (!is_unitary_on_statevector) {
-    //     rho_5_norm *= std::abs(rho_5_trace);
-    // }
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
 #endif
@@ -443,8 +518,6 @@ double iter_rk45(DenseMatrix& rho_t, double t, double& dt, const std::vector<dou
     double factor = 0.9 * std::pow(err_norm, -0.2);
     factor = std::max(min_factor, std::min(max_factor, factor));
     dt *= factor;
-
-    std::cout << "err_norm: " << err_norm << ", factor: " << factor << ", new dt: " << dt << ", dt taken: " << dt_taken << std::endl;
 
     return dt_taken;
 }

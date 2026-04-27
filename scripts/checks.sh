@@ -43,3 +43,9 @@ pytest tests/integration 2>&1 | tee -a $LOG_FILE
 # Check the docs
 echo "Running docs checks..." | tee -a $LOG_FILE
 bash scripts/docs.sh 2>&1 | tee -a $LOG_FILE
+
+# Check for any failures
+if grep -q "FAIL" $LOG_FILE; then
+    echo "Some checks failed. Please review the log file at $LOG_FILE"
+    exit 1
+fi
