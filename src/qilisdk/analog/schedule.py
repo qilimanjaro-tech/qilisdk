@@ -13,6 +13,7 @@
 # limitations under the License.
 from __future__ import annotations
 
+import math
 from copy import copy
 from typing import Callable, Iterator, Mapping, overload
 
@@ -21,7 +22,7 @@ from numpy import linspace
 from qilisdk.analog.hamiltonian import Hamiltonian
 from qilisdk.core.interpolator import PARAMETERIZED_NUMBER, Interpolation, Interpolator, TimeDict
 from qilisdk.core.parameterizable import Parameterizable
-from qilisdk.core.variables import BaseVariable, Domain, Parameter, Term
+from qilisdk.core.variables import BaseVariable, Cos, Domain, Parameter, Term
 from qilisdk.settings import get_settings
 from qilisdk.utils.visualization import ScheduleStyle
 from qilisdk.yaml import yaml
@@ -31,6 +32,8 @@ _TIME_PARAMETER_NAME = "t"
 # type aliases just to keep this short
 CoeffDict = dict[str, TimeDict]
 InterpDict = dict[str, "Interpolator"]
+
+_DEFAULT_DT = 0.1
 
 
 @yaml.register_class
@@ -68,7 +71,7 @@ class Schedule(Parameterizable):
         self,
         hamiltonians: dict[str, Hamiltonian] | None = None,
         coefficients: InterpDict | CoeffDict | None = None,
-        dt: float = 0.1,
+        dt: float = _DEFAULT_DT,
         total_time: PARAMETERIZED_NUMBER | None = None,
         interpolation: Interpolation = Interpolation.LINEAR,
     ) -> None:
@@ -116,6 +119,113 @@ class Schedule(Parameterizable):
 
         if total_time is not None:
             self.scale_max_time(total_time)
+
+    @classmethod
+    def polynomial(
+        cls,
+        initial_hamiltonian: Hamiltonian,
+        final_hamiltonian: Hamiltonian,
+        total_time: float,
+        dt: float = _DEFAULT_DT,
+        degree: int = 3,
+    ) -> Schedule:
+        """Convenience constructor for a simple polynomial annealing schedule with two Hamiltonians.
+
+        Args:
+            initial_hamiltonian (Hamiltonian): The "driver" Hamiltonian that is dominant at the start of the anneal.
+            final_hamiltonian (Hamiltonian): The "problem" Hamiltonian that is dominant at the end of the anneal.
+            total_time (float): Total annealing time.
+            dt (float): Time resolution used for sampling callable/interval definitions and plotting. Must be positive.
+            degree (int): Degree of the polynomial interpolation. Must be at least 1. Defaults to 3.
+
+        Returns:
+            Schedule: A schedule instance with polynomially interpolated coefficients for the driver and problem Hamiltonians.
+
+        Raises:
+            ValueError: If the degree is less than 1.
+        """
+        if degree < 1:
+            raise ValueError("Degree of polynomial must be at least 1.")
+        return cls(
+            hamiltonians={"driver": initial_hamiltonian, "problem": final_hamiltonian},
+            coefficients={
+                "driver": {(0.0, total_time): lambda t: 1 - (t / total_time) ** degree},
+                "problem": {(0.0, total_time): lambda t: (t / total_time) ** degree},
+            },
+            dt=dt,
+            interpolation=Interpolation.LINEAR,
+        )
+
+    @classmethod
+    def linear(
+        cls,
+        initial_hamiltonian: Hamiltonian,
+        final_hamiltonian: Hamiltonian,
+        total_time: float,
+        dt: float = _DEFAULT_DT,
+    ) -> Schedule:
+        """Convenience constructor for a simple linear annealing schedule with two Hamiltonians.
+
+        Args:
+            initial_hamiltonian (Hamiltonian): The "driver" Hamiltonian that is dominant at the start of the anneal.
+            final_hamiltonian (Hamiltonian): The "problem" Hamiltonian that is dominant at the end of the anneal.
+            total_time (float): Total annealing time.
+            dt (float): Time resolution used for sampling callable/interval definitions and plotting. Must be positive.
+
+        Returns:
+            Schedule: A schedule instance with linearly interpolated coefficients for the driver and problem Hamiltonians.
+        """
+        return cls.polynomial(initial_hamiltonian, final_hamiltonian, total_time, dt, degree=1)
+
+    @classmethod
+    def quadratic(
+        cls,
+        initial_hamiltonian: Hamiltonian,
+        final_hamiltonian: Hamiltonian,
+        total_time: float,
+        dt: float = _DEFAULT_DT,
+    ) -> Schedule:
+        """Convenience constructor for a simple quadratic annealing schedule with two Hamiltonians.
+
+        Args:
+            initial_hamiltonian (Hamiltonian): The "driver" Hamiltonian that is dominant at the start of the anneal.
+            final_hamiltonian (Hamiltonian): The "problem" Hamiltonian that is dominant at the end of the anneal.
+            total_time (float): Total annealing time.
+            dt (float): Time resolution used for sampling callable/interval definitions and plotting. Must be positive.
+
+        Returns:
+            Schedule: A schedule instance with quadratically interpolated coefficients for the driver and problem Hamiltonians.
+        """
+        return cls.polynomial(initial_hamiltonian, final_hamiltonian, total_time, dt, degree=2)
+
+    @classmethod
+    def sinusoidal(
+        cls,
+        initial_hamiltonian: Hamiltonian,
+        final_hamiltonian: Hamiltonian,
+        total_time: float,
+        dt: float = _DEFAULT_DT,
+    ) -> Schedule:
+        """Convenience constructor for a simple sinusoidal annealing schedule with two Hamiltonians.
+
+        Args:
+            initial_hamiltonian (Hamiltonian): The "driver" Hamiltonian that is dominant at the start of the anneal.
+            final_hamiltonian (Hamiltonian): The "problem" Hamiltonian that is dominant at the end of the anneal.
+            total_time (float): Total annealing time.
+            dt (float): Time resolution used for sampling callable/interval definitions and plotting. Must be positive.
+
+        Returns:
+            Schedule: A schedule instance with sinusoidally interpolated coefficients for the driver and problem Hamiltonians.
+        """
+        return cls(
+            hamiltonians={"driver": initial_hamiltonian, "problem": final_hamiltonian},
+            coefficients={
+                "driver": {(0.0, total_time): lambda t: Cos((t / total_time) * math.pi / 2)},
+                "problem": {(0.0, total_time): lambda t: 1 - Cos((t / total_time) * math.pi / 2)},
+            },
+            dt=dt,
+            interpolation=Interpolation.LINEAR,
+        )
 
     @property
     def hamiltonians(self) -> dict[str, Hamiltonian]:

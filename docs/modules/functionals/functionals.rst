@@ -161,9 +161,9 @@ Observables and shot counts are specified separately via readout objects passed 
 
     import numpy as np
     from qilisdk.analog import Schedule, X, Z, Y
-    from qilisdk.core import ket, tensor_prod
+    from qilisdk.core import QTensor
     from qilisdk.core.interpolator import Interpolation
-    from qilisdk.backends import QutipBackend, CudaBackend
+    from qilisdk.backends import QiliSim, CudaBackend
     from qilisdk.functionals import AnalogEvolution
 
     # Define total time and timestep
@@ -172,36 +172,22 @@ Observables and shot counts are specified separately via readout objects passed 
     nqubits = 1
 
     # Define Hamiltonians
-    Hx = sum(X(i) for i in range(nqubits))
+    Hx = -sum(X(i) for i in range(nqubits))
     Hz = sum(Z(i) for i in range(nqubits))
-
-    # Build a time-dependent schedule
-    schedule = Schedule(
-        hamiltonians={"driver": Hx, "problem": Hz},
-        coefficients={
-            "driver": {(0.0, T): lambda t: 1 - t / T},
-            "problem": {(0.0, T): lambda t: t / T},
-        },
-        dt=dt,
-        interpolation=Interpolation.LINEAR,
-    )
-
-    # Prepare an equal superposition initial state
-    initial_state = tensor_prod([(ket(0) - ket(1)).unit() for _ in range(nqubits)]).unit()
 
     # Create the AnalogEvolution functional
     analog_evolution = AnalogEvolution(
-        schedule=schedule,
-        initial_state=initial_state,
+        schedule=Schedule.linear(Hx, Hz, total_time=T, dt=dt),
+        initial_state=QTensor.uniform(nqubits),
         store_intermediate_results=False,
     )
 
-we can execute it on the Qutip backend:
+we can execute it on the QiliSim backend:
 
 .. code-block:: python
 
-    # Execute on Qutip backend and inspect results
-    backend = QutipBackend()
+    # Execute on QiliSim backend and inspect results
+    backend = QiliSim()
     results = backend.execute(
         analog_evolution,
         Readout().with_expectation(observables=[Z(0), X(0), Y(0)]),
@@ -436,13 +422,13 @@ Only parameters marked as trainable are optimized during this loop.
   and the final functional output packaged in
   :attr:`optimal_execution_results <qilisdk.functionals.variational_program_result.VariationalProgramResult.optimal_execution_results>`.
 
-**Usage Example (Using QuTiP Backend)**
+**Usage Example (Using QiliSim Backend)**
 
 .. code-block:: python
 
     import numpy as np
 
-    from qilisdk.backends import QutipBackend
+    from qilisdk.backends import QiliSim
     from qilisdk.core.model import Model, ObjectiveSense
     from qilisdk.core.variables import LEQ, BinaryVariable
     from qilisdk.cost_functions.model_cost_function import ModelCostFunction
@@ -471,7 +457,7 @@ Only parameters marked as trainable are optimized during this loop.
 
     optimizer = SciPyOptimizer(method="COBYQA")
 
-    backend = QutipBackend()
+    backend = QiliSim()
     result = backend.execute(
         VariationalProgram(
             functional=DigitalPropagation(ansatz),
@@ -502,7 +488,7 @@ Only parameters marked as trainable are optimized during this loop.
     )
 
 
-**Usage Example 2 (Using QuTiP Backend)**
+**Usage Example 2 (Using QiliSim Backend)**
 This example optimizes a variational schedule under some parameter constraints.
 
 
@@ -516,7 +502,7 @@ This example optimizes a variational schedule under some parameter constraints.
     from qilisdk.analog.schedule import Interpolation
     from qilisdk.core.variables import Parameter
     from qilisdk.core import ket, tensor_prod
-    from qilisdk.backends import QutipBackend
+    from qilisdk.backends import QiliSim
     from qilisdk.readout import Readout
     import numpy as np
 
@@ -559,7 +545,7 @@ This example optimizes a variational schedule under some parameter constraints.
 
     print(vp.get_constraints()) # print the constraints of the variational program.
 
-    backend = QutipBackend()
+    backend = QiliSim()
     results = backend.execute(vp, Readout().with_expectation(observables=[h1]).with_state_tomography().with_sampling(nshots=1000))
     schedule.draw(ScheduleStyle(title="Schedule After Optimization"))
     print(results)
