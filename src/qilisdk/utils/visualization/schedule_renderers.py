@@ -95,6 +95,26 @@ class MatplotlibScheduleRenderer:
         if style.tight_layout:
             plt.tight_layout()
 
+    # Generate gradient colors between primary and accent
+    @staticmethod
+    def hex_to_rgb(hex_color: str) -> tuple[int, ...]:
+        hex_color = hex_color.lstrip("#")
+        return tuple(int(hex_color[i : i + 2], 16) for i in (0, 2, 4))
+
+    @staticmethod
+    def rgb_to_hex(rgb: tuple[int, ...]) -> str:
+        return "#{:02x}{:02x}{:02x}".format(*rgb)
+
+    def gradient_colors(self, start_hex: str, end_hex: str, n: int) -> list[str]:
+        start_rgb = self.hex_to_rgb(start_hex)
+        end_rgb = self.hex_to_rgb(end_hex)
+        colors = []
+        for i in range(n):
+            ratio = i / max(n - 1, 1)
+            rgb = tuple(int(start_rgb[j] + (end_rgb[j] - start_rgb[j]) * ratio) for j in range(3))
+            colors.append(self.rgb_to_hex(rgb))
+        return colors
+
     def plot(self, ax: plt.Axes | None = None) -> None:
         """
         Plot the schedule coefficients for each Hamiltonian over time.
@@ -116,26 +136,8 @@ class MatplotlibScheduleRenderer:
             coef = self.schedule.coefficients[h]
             plots[h] = [coef[float(t)] for t in times]
 
-        # Generate gradient colors between primary and accent
-        def hex_to_rgb(hex_color: str) -> tuple[int, ...]:
-            hex_color = hex_color.lstrip("#")
-            return tuple(int(hex_color[i : i + 2], 16) for i in (0, 2, 4))
-
-        def rgb_to_hex(rgb: tuple[int, ...]) -> str:
-            return "#{:02x}{:02x}{:02x}".format(*rgb)
-
-        def gradient_colors(start_hex: str, end_hex: str, n: int) -> list[str]:
-            start_rgb = hex_to_rgb(start_hex)
-            end_rgb = hex_to_rgb(end_hex)
-            colors = []
-            for i in range(n):
-                ratio = i / max(n - 1, 1)
-                rgb = tuple(int(start_rgb[j] + (end_rgb[j] - start_rgb[j]) * ratio) for j in range(3))
-                colors.append(rgb_to_hex(rgb))
-            return colors
-
         n_hams = len(hamiltonians)
-        grad_colors = gradient_colors(theme.primary, theme.accent, n_hams)
+        grad_colors = self.gradient_colors(theme.primary, theme.accent, n_hams)
 
         for idx, h in enumerate(hamiltonians):
             line_style = style.line_styles.get(h, style.default_line_style)
@@ -290,26 +292,8 @@ class MatplotlibEigenvalueRenderer(MatplotlibScheduleRenderer):
             coef = self.schedule.coefficients[h]
             plots[h] = [coef[float(t)] for t in times]
 
-        # Generate gradient colors between primary and accent
-        def hex_to_rgb(hex_color: str) -> tuple[int, ...]:
-            hex_color = hex_color.lstrip("#")
-            return tuple(int(hex_color[i : i + 2], 16) for i in (0, 2, 4))
-
-        def rgb_to_hex(rgb: tuple[int, ...]) -> str:
-            return "#{:02x}{:02x}{:02x}".format(*rgb)
-
-        def gradient_colors(start_hex: str, end_hex: str, n: int) -> list[str]:
-            start_rgb = hex_to_rgb(start_hex)
-            end_rgb = hex_to_rgb(end_hex)
-            colors = []
-            for i in range(n):
-                ratio = i / max(n - 1, 1)
-                rgb = tuple(int(start_rgb[j] + (end_rgb[j] - start_rgb[j]) * ratio) for j in range(3))
-                colors.append(rgb_to_hex(rgb))
-            return colors
-
         n_hams = len(hamiltonians)
-        grad_colors = gradient_colors(theme.primary, theme.accent, n_hams)
+        grad_colors = self.gradient_colors(theme.primary, theme.accent, n_hams)
 
         # Plot the eigenvalues of the full Hamiltonian as solid lines
         full_eigenvalues, full_eigenstates, actual_expectation_values = self._calculate_eigenvalues_and_overlaps(
