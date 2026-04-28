@@ -324,12 +324,12 @@ def test_schedule_draw_eigenvalues_calculate_overlaps(monkeypatch):
     H0 = X(1) + X(0)
     H1 = Z(1) + Z(0)
     schedule = Schedule(total_time=10, hamiltonians={"H0": H0, "H1": H1}, coefficients={}, dt=1.0)
-    states = [QTensor.ket(0, 0) for _ in range(11)]
+    states = [QTensor.uniform(2) for _ in range(11)]
     renderer = MatplotlibEigenvalueRenderer(schedule=schedule, style=ScheduleStyle())
     overlaps = renderer._calculate_overlaps(
         state=states[0],
-        eigenstates=[QTensor.ket(0, 0), QTensor.ket(0, 1)],
-        eigenvalues=[[0.5], [0.5]],
+        eigenstates=[QTensor.ket(0, 0), QTensor.ket(0, 1), QTensor.ket(1, 0), QTensor.ket(1, 1)],
+        eigenvalues=[[0.5], [0.5], [0.5], [0.5]],
         time_index=0,
         eigen_range=4.0,
         sig_figs=2,
