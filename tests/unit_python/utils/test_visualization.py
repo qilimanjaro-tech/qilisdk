@@ -29,7 +29,7 @@ from qilisdk.digital import X as XGate
 from qilisdk.digital import Y as YGate
 from qilisdk.utils.visualization.circuit_renderers import MatplotlibCircuitRenderer
 from qilisdk.utils.visualization.qtensor_renderers import MatplotlibQTensorRenderer
-from qilisdk.utils.visualization.schedule_renderers import MatplotlibScheduleRenderer
+from qilisdk.utils.visualization.schedule_renderers import MatplotlibEigenvalueRenderer, MatplotlibScheduleRenderer
 from qilisdk.utils.visualization.style import CircuitStyle, QTensorStyle, ScheduleStyle
 
 
@@ -288,3 +288,84 @@ def test_schedule_draw_eigenvalues_with_no_state_but_overlaps_raises(monkeypatch
     schedule = Schedule(total_time=10, hamiltonians={"H0": H0, "H1": H1}, coefficients={})
     with pytest.raises(ValueError, match="without intermediate states"):
         schedule.draw_eigenvalues(show_overlaps=True)
+
+
+def test_schedule_draw_eigenvalues_too_many_qubits_raises(monkeypatch):
+    monkeypatch.setattr(qilisdk.utils.visualization.schedule_renderers.plt, "show", mock_show)
+    monkeypatch.setattr(qilisdk.utils.visualization.schedule_renderers.plt.Figure, "savefig", mock_save)
+
+    # Create a schedule with many qubits
+    H0 = sum(X(i) for i in range(10))
+    schedule = Schedule(total_time=10, hamiltonians={"H0": H0}, coefficients={})
+    states = [QTensor.ket(0, 0, 0) for _ in range(11)]
+    with pytest.raises(ValueError, match="with more than"):
+        schedule.draw_eigenvalues(intermediate_states=states)
+
+
+def test_schedule_draw_eigenvalues_not_hamiltonian_raises(monkeypatch):
+    monkeypatch.setattr(qilisdk.utils.visualization.schedule_renderers.plt, "show", mock_show)
+    monkeypatch.setattr(qilisdk.utils.visualization.schedule_renderers.plt.Figure, "savefig", mock_save)
+
+    fake_h = MagicMock()
+    fake_h.nqubits = 2
+
+    # Create a schedule with a non-Hamiltonian functional
+    schedule = Schedule(total_time=10, hamiltonians={"H0": fake_h}, coefficients={})
+    states = [QTensor.ket(0) for _ in range(11)]
+    with pytest.raises(ValueError, match="to be a Hamiltonian"):
+        schedule.draw_eigenvalues(intermediate_states=states)
+
+
+# icmethod
+#     def _calculate_overlaps(
+#         state: QTensor,
+#         eigenstates: list[QTensor],
+#         eigenvalues: list[list[float]],
+#         time_index: int,
+#         eigen_range: float,
+#         sig_figs: int,
+#     ) -> list[tuple[float, float]]:
+#         overlaps = []
+#         for j, eig in enumerate(eigenstates):
+#             overlap = 100.0 * state.fidelity(eig)
+#             y_loc = eigenvalues[j][time_index]
+#             if overlap > 10 ** (-sig_figs):
+#                 overlaps.append((y_loc, overlap))
+
+#         # Group nearby overlaps together to avoid clutter
+#         grouped_overlaps: list[tuple[float, float]] = []
+#         for overlap in overlaps:
+#             found_group = False
+#             for idx, grouped_overlap in enumerate(grouped_overlaps):
+#                 if abs(grouped_overlap[0] - overlap[0]) < 0.05 * eigen_range:
+#                     # If within 5% of the eigenvalue range, group them together by averaging the y location and summing the overlap percentage
+#                     new_y_loc = (grouped_overlap[0] + overlap[0]) / 2
+#                     new_overlap = grouped_overlap[1] + overlap[1]
+#                     grouped_overlaps[idx] = (new_y_loc, new_overlap)
+#                     found_group = True
+#                     break
+#             if not found_group:
+#                 grouped_overlaps.append(overlap)
+
+#         return grouped_overlaps
+
+
+def test_schedule_draw_eigenvalues_calculate_overlaps(monkeypatch):
+    monkeypatch.setattr(qilisdk.utils.visualization.schedule_renderers.plt, "show", mock_show)
+    monkeypatch.setattr(qilisdk.utils.visualization.schedule_renderers.plt.Figure, "savefig", mock_save)
+
+    # Create a simple schedule for testing
+    H0 = X(1) + X(0)
+    H1 = Z(1) + Z(0)
+    schedule = Schedule(total_time=10, hamiltonians={"H0": H0, "H1": H1}, coefficients={}, dt=1.0)
+    states = [QTensor.ket(0, 0) for _ in range(11)]
+    renderer = MatplotlibEigenvalueRenderer(schedule=schedule, style=ScheduleStyle())
+    overlaps = renderer._calculate_overlaps(
+        state=states[0],
+        eigenstates=[QTensor.ket(0, 0), QTensor.ket(0, 1)],
+        eigenvalues=[[0.5], [0.5]],
+        time_index=0,
+        eigen_range=4.0,
+        sig_figs=2,
+    )
+    assert overlaps == [(0.5, 100.0)]

@@ -53,6 +53,12 @@ class MatplotlibScheduleRenderer:
         legend_edgecolor = theme.border
         tick_color = theme.on_background
 
+        # Set axes and figure background to theme
+        facecolor = theme.background
+        self.ax.set_facecolor(facecolor)
+        if hasattr(self.ax, "figure"):
+            self.ax.figure.set_facecolor(facecolor)
+
         if style.grid:
             grid_style = dict(style.grid_style)
             if "color" not in grid_style:
@@ -123,12 +129,7 @@ class MatplotlibScheduleRenderer:
         """
         style = self.style
         theme = style.theme
-        facecolor = theme.background
 
-        # Set axes and figure background to theme
-        self.ax.set_facecolor(facecolor)
-        if hasattr(ax, "figure"):
-            self.ax.figure.set_facecolor(facecolor)
         plots: dict[str, list[Number]] = {}
         hamiltonians = self.schedule.hamiltonians
         times = self.schedule.tlist
@@ -208,7 +209,7 @@ class MatplotlibEigenvalueRenderer(MatplotlibScheduleRenderer):
         self.intermediate_states = intermediate_states
         self.show_overlaps = show_overlaps
 
-    def _calculate_eigenvalues_and_overlaps(
+    def _calculate_eigenvalues(
         self, hamiltonians: dict[str, Hamiltonian], times: list[float]
     ) -> tuple[list[list[float]], list[list[QTensor]], list[float]]:
         full_eigenvalues = []
@@ -279,12 +280,7 @@ class MatplotlibEigenvalueRenderer(MatplotlibScheduleRenderer):
         """
         style = self.style
         theme = style.theme
-        facecolor = theme.background
 
-        # Set axes and figure background to theme
-        self.ax.set_facecolor(facecolor)
-        if hasattr(ax, "figure"):
-            self.ax.figure.set_facecolor(facecolor)
         plots: dict[str, list[Number]] = {}
         hamiltonians: dict[str, Hamiltonian] = self.schedule.hamiltonians
         times = self.schedule.tlist
@@ -296,9 +292,7 @@ class MatplotlibEigenvalueRenderer(MatplotlibScheduleRenderer):
         grad_colors = self.gradient_colors(theme.primary, theme.accent, n_hams)
 
         # Plot the eigenvalues of the full Hamiltonian as solid lines
-        full_eigenvalues, full_eigenstates, actual_expectation_values = self._calculate_eigenvalues_and_overlaps(
-            hamiltonians, times
-        )
+        full_eigenvalues, full_eigenstates, actual_expectation_values = self._calculate_eigenvalues(hamiltonians, times)
 
         min_eigenvalue = min(min(evs) for evs in full_eigenvalues)
         max_eigenvalue = max(max(evs) for evs in full_eigenvalues)
