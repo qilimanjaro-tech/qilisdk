@@ -14,7 +14,7 @@
 from __future__ import annotations
 
 from copy import copy
-from typing import Callable, Iterator, Mapping, overload
+from typing import TYPE_CHECKING, Callable, Iterator, Mapping, overload
 
 from numpy import linspace
 
@@ -25,6 +25,9 @@ from qilisdk.core.variables import BaseVariable, Domain, Parameter, Term
 from qilisdk.settings import get_settings
 from qilisdk.utils.visualization import ScheduleStyle
 from qilisdk.yaml import yaml
+
+if TYPE_CHECKING:
+    from qilisdk.core.qtensor import QTensor
 
 _TIME_PARAMETER_NAME = "t"
 
@@ -414,6 +417,56 @@ class Schedule(Parameterizable):
 
         style = style or ScheduleStyle()
         renderer = MatplotlibScheduleRenderer(self, style=style)
+        renderer.plot()
+        if filepath:
+            renderer.save(filepath)
+        else:
+            renderer.show()
+
+    def draw_eigenvalues(
+        self,
+        levels: int = 50,
+        style: ScheduleStyle | None = None,
+        filepath: str | None = None,
+        intermediate_states: list[QTensor] | None = None,
+        show_overlaps: bool = False,
+    ) -> None:
+        """
+        Render a plot of the lowest eigenvalues of the schedule's Hamiltonians over time.
+
+        For each Hamiltonian in the schedule, as well as the total Hamiltonian, the specified number of lowest eigenvalues
+        are computed at each time step and plotted.
+
+        Args:
+            levels (int): The number of lowest eigenvalues to compute and plot for each Hamiltonian.
+            style (ScheduleStyle, optional): Customization options for the plot appearance.
+            filepath (str | None, optional): If provided, saves the plot to the specified file path.
+            intermediate_states (list[QTensor] | None, optional): If provided, these states will be used for additional visualization.
+            show_overlaps (bool): Whether to annotate the plot with the overlaps between the intermediate states and the eigenstates.
+
+        Raises:
+            ValueError: If the number of qubits exceeds the supported limit for eigenvalue plotting.
+            ValueError: If show_overlaps is True but intermediate_states is not provided.
+
+        """
+        from qilisdk.utils.visualization.schedule_renderers import MatplotlibEigenvalueRenderer  # noqa: PLC0415
+
+        # Don't allow big systems
+        _MAX_QUBITS_FOR_EIGENVALUE_PLOTTING = 7
+        if self.nqubits > _MAX_QUBITS_FOR_EIGENVALUE_PLOTTING:
+            raise ValueError(
+                f"Eigenvalue plotting is not supported for schedules with more than {_MAX_QUBITS_FOR_EIGENVALUE_PLOTTING} qubits due to computational complexity."
+            )
+
+        # If we try to show overlaps but haven't given intermediate states, raise an error
+        if show_overlaps and intermediate_states is None:
+            raise ValueError(
+                "Overlaps can't be shown without intermediate states. Please provide intermediate_states or set show_overlaps to False."
+            )
+
+        renderer = MatplotlibEigenvalueRenderer(
+            self, levels=levels, style=style, intermediate_states=intermediate_states, show_overlaps=show_overlaps
+        )
         renderer.plot()
         if filepath:
             renderer.save(filepath)

@@ -20,8 +20,11 @@ from typing import TYPE_CHECKING
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 
+from qilisdk.analog.hamiltonian import Hamiltonian
+
 if TYPE_CHECKING:
     from qilisdk.analog.schedule import Schedule
+    from qilisdk.core import QTensor
     from qilisdk.core.types import Number
 
 from qilisdk.utils.visualization.style import ScheduleStyle
@@ -121,6 +124,244 @@ class MatplotlibScheduleRenderer:
                 text.set_color(title_color)
         self.ax.set_title(
             self.style.title or "Schedule Plot",
+            fontsize=style.title_fontsize,
+            color=title_color,
+            fontweight=style.fontweight,
+            family=style.fontfamily,
+        )
+        self.ax.set_xlabel(
+            style.xlabel,
+            fontsize=style.label_fontsize,
+            color=label_color,
+            fontweight=style.fontweight,
+            family=style.fontfamily,
+        )
+        self.ax.set_ylabel(
+            style.ylabel,
+            fontsize=style.label_fontsize,
+            color=label_color,
+            fontweight=style.fontweight,
+            family=style.fontfamily,
+        )
+        self.ax.tick_params(axis="x", labelsize=style.xtick_fontsize, colors=tick_color)
+        self.ax.tick_params(axis="y", labelsize=style.ytick_fontsize, colors=tick_color)
+        if style.tight_layout:
+            plt.tight_layout()
+        plt.draw()
+
+    def save(self, filename: str) -> None:  # thin wrapper
+        """Save current figure to disk.
+
+        Args:
+            filename: Path to save the figure (e.g., 'circuit.png').
+        """
+        if isinstance(self.ax.figure, Figure):
+            self.ax.figure.savefig(filename, bbox_inches="tight")
+
+    def show(self) -> None:  # noqa: PLR6301
+        """Show the current figure."""
+
+        plt.show()
+
+    @staticmethod
+    def _make_axes(dpi: int, style: ScheduleStyle) -> plt.Axes:
+        """
+        Create a new figure and axes with the given DPI.
+
+        Args:
+            style: Optional style configuration (for DPI).
+
+        Returns:
+            A newly created Matplotlib Axes.
+        """
+        _, ax = plt.subplots(figsize=style.figsize, dpi=dpi or style.dpi, facecolor=style.theme.background)
+        return ax
+
+
+class MatplotlibEigenvalueRenderer:
+    """Render a Schedule using matplotlib, with theme support."""
+
+    def __init__(
+        self,
+        schedule: Schedule,
+        ax: plt.Axes | None = None,
+        *,
+        style: ScheduleStyle | None = None,
+        levels: int = 2,
+        intermediate_states: list[QTensor] | None = None,
+        show_overlaps: bool = True,
+    ) -> None:
+        self.schedule: Schedule = schedule
+        self.style = style or ScheduleStyle(xlabel="Time", ylabel="Eigenvalue")
+        self.ax = ax or self._make_axes(self.style.dpi, self.style)
+        self.levels = levels
+        self.intermediate_states = intermediate_states
+        self.show_overlaps = show_overlaps
+
+    def plot(self, ax: plt.Axes | None = None) -> None:
+        """
+        Plot the schedule coefficients for each Hamiltonian over time.
+
+        Args:
+            ax (plt.Axes | None): The matplotlib axes to plot on. Default is None.
+
+        Raises:
+            ValueError: If the full Hamiltonian cannot be constructed or is not a Hamiltonian instance.
+        """
+        style = self.style
+        theme = style.theme
+        facecolor = theme.background
+        title_color = theme.on_background
+        label_color = theme.on_background
+        legend_facecolor = theme.surface
+        legend_edgecolor = theme.border
+        tick_color = theme.on_background
+
+        # Set axes and figure background to theme
+        self.ax.set_facecolor(facecolor)
+        if hasattr(ax, "figure"):
+            self.ax.figure.set_facecolor(facecolor)
+        plots: dict[str, list[Number]] = {}
+        hamiltonians: dict[str, Hamiltonian] = self.schedule.hamiltonians
+        times = self.schedule.tlist
+        for h in hamiltonians:
+            coef = self.schedule.coefficients[h]
+            plots[h] = [coef[float(t)] for t in times]
+
+        # Generate gradient colors between primary and accent
+        def hex_to_rgb(hex_color: str) -> tuple[int, ...]:
+            hex_color = hex_color.lstrip("#")
+            return tuple(int(hex_color[i : i + 2], 16) for i in (0, 2, 4))
+
+        def rgb_to_hex(rgb: tuple[int, ...]) -> str:
+            return "#{:02x}{:02x}{:02x}".format(*rgb)
+
+        def gradient_colors(start_hex: str, end_hex: str, n: int) -> list[str]:
+            start_rgb = hex_to_rgb(start_hex)
+            end_rgb = hex_to_rgb(end_hex)
+            colors = []
+            for i in range(n):
+                ratio = i / max(n - 1, 1)
+                rgb = tuple(int(start_rgb[j] + (end_rgb[j] - start_rgb[j]) * ratio) for j in range(3))
+                colors.append(rgb_to_hex(rgb))
+            return colors
+
+        n_hams = len(hamiltonians)
+        grad_colors = gradient_colors(theme.primary, theme.accent, n_hams + 2)
+
+        # Plot the eigenvalues of the full Hamiltonian as solid lines
+        full_eigenvalues = []
+        full_eigenstates = []
+        actual_expectation_values = []
+        for i, t in enumerate(times):
+            full_hamiltonian = sum(
+                self.schedule.coefficients[h][float(t)] * self.schedule.hamiltonians[h] for h in hamiltonians
+            )
+            if not isinstance(full_hamiltonian, Hamiltonian):
+                raise ValueError(f"Expected full_hamiltonian to be a Hamiltonian, got {type(full_hamiltonian)}")
+            as_qtensor = full_hamiltonian.to_qtensor()
+            vals, vecs = as_qtensor.eig()
+
+            full_eigenvalues.append([float(ev.real) for ev in vals[: self.levels]])
+            full_eigenstates.append(list(vecs[: self.levels]))
+
+            # Also plot the expectation value if we have intermediate states
+            if self.intermediate_states:
+                state = self.intermediate_states[i]
+                exp_val = state.expectation_value(as_qtensor)
+                actual_expectation_values.append(float(exp_val.real))
+
+        min_eigenvalue = min(min(evs) for evs in full_eigenvalues)
+        max_eigenvalue = max(max(evs) for evs in full_eigenvalues)
+        eigen_range = max_eigenvalue - min_eigenvalue
+
+        color = grad_colors[-1] if grad_colors else theme.accent
+        full_eigenvalues = list(zip(*full_eigenvalues))  # transpose to get eigenvalues over time
+        # only show the id for the first one
+        for idx, evs in enumerate(full_eigenvalues):
+            label = "Eigenvalues" if idx == 0 and self.intermediate_states else None
+            self.ax.plot(
+                times,
+                evs,
+                label=label,
+                linestyle="--",
+                color=color,
+            )
+
+        if self.intermediate_states and actual_expectation_values:
+            color = grad_colors[-2] if grad_colors else theme.accent
+            self.ax.plot(
+                times,
+                actual_expectation_values,
+                label="State Expectation Value",
+                linestyle="-",
+                color="black",
+                zorder=10,
+            )
+
+            # Every 10% of the way through, write the overlap with each of the eigenstates at that time
+            if self.show_overlaps:
+                time_steps = list(range(0, len(times), max(1, len(times) // 9)))
+                time_steps.append(len(times) - 1)
+                for i in time_steps:
+                    t = times[i]
+                    eigenstates = full_eigenstates[i]
+                    state = self.intermediate_states[i]
+                    overlaps = []
+                    for j, eig in enumerate(eigenstates[: self.levels]):
+                        overlap = 100.0 * state.fidelity(eig)
+                        y_loc = full_eigenvalues[j][i]
+                        overlaps.append([y_loc, overlap])
+
+                    # Group nearby overlaps together to avoid clutter
+                    grouped_overlaps = []
+                    for overlap in overlaps:
+                        found_group = False
+                        for grouped_overlap in grouped_overlaps:
+                            if abs(grouped_overlap[0] - overlap[0]) < 0.05 * eigen_range:
+                                grouped_overlap[1] += overlap[1]
+                                found_group = True
+                                break
+                        if not found_group:
+                            grouped_overlaps.append(overlap)
+
+                    # Plot each overlap with an arrow pointing to the eigenvalue, and annotate with the percentage
+                    _sig_figs = 3
+                    for overlap in grouped_overlaps:
+                        if overlap[1] > 10**-(_sig_figs):
+                            overlap_text = f"{overlap[1]:.{_sig_figs}f}%"
+                            y_loc = overlap[0]
+                            self.ax.annotate(
+                                overlap_text,
+                                xy=(t, y_loc),
+                                xytext=(t, y_loc + 0.5),
+                                arrowprops={"arrowstyle": "->", "color": theme.on_background},
+                                color=theme.on_background,
+                                bbox={"boxstyle": "round,pad=0.2", "fc": theme.surface, "ec": "none", "alpha": 0.8},
+                                fontsize=style.label_fontsize * 0.4,
+                                ha="center",
+                                va="bottom",
+                                zorder=15,
+                            )
+
+        if style.grid:
+            grid_style = dict(style.grid_style)
+            if "color" not in grid_style:
+                grid_style["color"] = theme.surface_muted
+            self.ax.grid(**grid_style)
+        leg = self.ax.legend(
+            loc=style.legend_loc,
+            fontsize=style.legend_fontsize,
+            frameon=style.legend_frame,
+            facecolor=legend_facecolor,
+            edgecolor=legend_edgecolor,
+        )
+        # Set legend text color to match theme text color
+        if leg:
+            for text in leg.get_texts():
+                text.set_color(title_color)
+        self.ax.set_title(
+            self.style.title or "Schedule Eigenvalues",
             fontsize=style.title_fontsize,
             color=title_color,
             fontweight=style.fontweight,

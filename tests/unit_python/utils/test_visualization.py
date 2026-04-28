@@ -263,3 +263,15 @@ def test_qtensor_make_axes_bad_type(monkeypatch):
     )
     with pytest.raises(TypeError, match="Expected axes of type"):
         MatplotlibQTensorRenderer._make_axes(dpi=100)
+
+def test_schedule_draw_eigenvalues(monkeypatch):
+    monkeypatch.setattr(qilisdk.utils.visualization.schedule_renderers.plt, "show", mock_show)
+    monkeypatch.setattr(qilisdk.utils.visualization.schedule_renderers.plt.Figure, "savefig", mock_save)
+
+    # Create a simple schedule for testing
+    H0 = X(1) + X(0)
+    H1 = Z(1) + Z(0)
+    schedule = Schedule(total_time=10, hamiltonians={"H0": H0, "H1": H1}, coefficients={})
+    schedule.draw_eigenvalues()
+    schedule.draw_eigenvalues(filepath="test_schedule.png")
+
