@@ -198,6 +198,65 @@ class MatplotlibEigenvalueRenderer:
         self.intermediate_states = intermediate_states
         self.show_overlaps = show_overlaps
 
+    def _calculate_eigenvalues_and_overlaps(
+        self, hamiltonians: dict[str, Hamiltonian], times: list[float]
+    ) -> tuple[list[list[float]], list[list[QTensor]], list[float]]:
+        full_eigenvalues = []
+        full_eigenstates = []
+        actual_expectation_values = []
+        for i, t in enumerate(times):
+            full_hamiltonian = sum(
+                self.schedule.coefficients[h][float(t)] * self.schedule.hamiltonians[h] for h in hamiltonians
+            )
+            if not isinstance(full_hamiltonian, Hamiltonian):
+                raise ValueError(f"Expected full_hamiltonian to be a Hamiltonian, got {type(full_hamiltonian)}")
+            as_qtensor = full_hamiltonian.to_qtensor()
+            vals, vecs = as_qtensor.eig()
+
+            full_eigenvalues.append([float(ev.real) for ev in vals[: self.levels]])
+            full_eigenstates.append(list(vecs[: self.levels]))
+
+            # Also plot the expectation value if we have intermediate states
+            if self.intermediate_states:
+                state = self.intermediate_states[i]
+                exp_val = state.expectation_value(as_qtensor)
+                actual_expectation_values.append(float(exp_val.real))
+
+        return full_eigenvalues, full_eigenstates, actual_expectation_values
+
+    @staticmethod
+    def _calculate_overlaps(
+        state: QTensor,
+        eigenstates: list[QTensor],
+        eigenvalues: list[list[float]],
+        time_index: int,
+        eigen_range: float,
+        sig_figs: int,
+    ) -> list[tuple[float, float]]:
+        overlaps = []
+        for j, eig in enumerate(eigenstates):
+            overlap = 100.0 * state.fidelity(eig)
+            y_loc = eigenvalues[j][time_index]
+            if overlap > 10 ** (-sig_figs):
+                overlaps.append((y_loc, overlap))
+
+        # Group nearby overlaps together to avoid clutter
+        grouped_overlaps: list[tuple[float, float]] = []
+        for overlap in overlaps:
+            found_group = False
+            for idx, grouped_overlap in enumerate(grouped_overlaps):
+                if abs(grouped_overlap[0] - overlap[0]) < 0.05 * eigen_range:
+                    # If within 5% of the eigenvalue range, group them together by averaging the y location and summing the overlap percentage
+                    new_y_loc = (grouped_overlap[0] + overlap[0]) / 2
+                    new_overlap = grouped_overlap[1] + overlap[1]
+                    grouped_overlaps[idx] = (new_y_loc, new_overlap)
+                    found_group = True
+                    break
+            if not found_group:
+                grouped_overlaps.append(overlap)
+
+        return grouped_overlaps
+
     def plot(self, ax: plt.Axes | None = None) -> None:
         """
         Plot the schedule coefficients for each Hamiltonian over time.
@@ -250,26 +309,9 @@ class MatplotlibEigenvalueRenderer:
         grad_colors = gradient_colors(theme.primary, theme.accent, n_hams + 2)
 
         # Plot the eigenvalues of the full Hamiltonian as solid lines
-        full_eigenvalues = []
-        full_eigenstates = []
-        actual_expectation_values = []
-        for i, t in enumerate(times):
-            full_hamiltonian = sum(
-                self.schedule.coefficients[h][float(t)] * self.schedule.hamiltonians[h] for h in hamiltonians
-            )
-            if not isinstance(full_hamiltonian, Hamiltonian):
-                raise ValueError(f"Expected full_hamiltonian to be a Hamiltonian, got {type(full_hamiltonian)}")
-            as_qtensor = full_hamiltonian.to_qtensor()
-            vals, vecs = as_qtensor.eig()
-
-            full_eigenvalues.append([float(ev.real) for ev in vals[: self.levels]])
-            full_eigenstates.append(list(vecs[: self.levels]))
-
-            # Also plot the expectation value if we have intermediate states
-            if self.intermediate_states:
-                state = self.intermediate_states[i]
-                exp_val = state.expectation_value(as_qtensor)
-                actual_expectation_values.append(float(exp_val.real))
+        full_eigenvalues, full_eigenstates, actual_expectation_values = self._calculate_eigenvalues_and_overlaps(
+            hamiltonians, times
+        )
 
         min_eigenvalue = min(min(evs) for evs in full_eigenvalues)
         max_eigenvalue = max(max(evs) for evs in full_eigenvalues)
@@ -307,42 +349,28 @@ class MatplotlibEigenvalueRenderer:
                     t = times[i]
                     eigenstates = full_eigenstates[i]
                     state = self.intermediate_states[i]
-                    overlaps = []
-                    for j, eig in enumerate(eigenstates[: self.levels]):
-                        overlap = 100.0 * state.fidelity(eig)
-                        y_loc = full_eigenvalues[j][i]
-                        overlaps.append([y_loc, overlap])
 
-                    # Group nearby overlaps together to avoid clutter
-                    grouped_overlaps = []
-                    for overlap in overlaps:
-                        found_group = False
-                        for grouped_overlap in grouped_overlaps:
-                            if abs(grouped_overlap[0] - overlap[0]) < 0.05 * eigen_range:
-                                grouped_overlap[1] += overlap[1]
-                                found_group = True
-                                break
-                        if not found_group:
-                            grouped_overlaps.append(overlap)
+                    _sig_figs = 3
+                    grouped_overlaps = self._calculate_overlaps(
+                        state, eigenstates[: self.levels], full_eigenvalues[: self.levels], i, eigen_range, _sig_figs
+                    )
 
                     # Plot each overlap with an arrow pointing to the eigenvalue, and annotate with the percentage
-                    _sig_figs = 3
                     for overlap in grouped_overlaps:
-                        if overlap[1] > 10**-(_sig_figs):
-                            overlap_text = f"{overlap[1]:.{_sig_figs}f}%"
-                            y_loc = overlap[0]
-                            self.ax.annotate(
-                                overlap_text,
-                                xy=(t, y_loc),
-                                xytext=(t, y_loc + 0.5),
-                                arrowprops={"arrowstyle": "->", "color": theme.on_background},
-                                color=theme.on_background,
-                                bbox={"boxstyle": "round,pad=0.2", "fc": theme.surface, "ec": "none", "alpha": 0.8},
-                                fontsize=style.label_fontsize * 0.4,
-                                ha="center",
-                                va="bottom",
-                                zorder=15,
-                            )
+                        overlap_text = f"{overlap[1]:.{_sig_figs}f}%"
+                        y_loc = overlap[0]
+                        self.ax.annotate(
+                            overlap_text,
+                            xy=(t, y_loc),
+                            xytext=(t, y_loc + 0.5),
+                            arrowprops={"arrowstyle": "->", "color": theme.on_background},
+                            color=theme.on_background,
+                            bbox={"boxstyle": "round,pad=0.2", "fc": theme.surface, "ec": "none", "alpha": 0.8},
+                            fontsize=style.label_fontsize * 0.4,
+                            ha="center",
+                            va="bottom",
+                            zorder=15,
+                        )
 
         if style.grid:
             grid_style = dict(style.grid_style)
