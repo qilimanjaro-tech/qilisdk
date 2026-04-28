@@ -178,8 +178,8 @@ class MatplotlibScheduleRenderer:
         return ax
 
 
-class MatplotlibEigenvalueRenderer:
-    """Render a Schedule using matplotlib, with theme support."""
+class MatplotlibEigenvalueRenderer(MatplotlibScheduleRenderer):
+    """Render the eigenvalues Schedule using matplotlib, with theme support."""
 
     def __init__(
         self,
@@ -306,7 +306,7 @@ class MatplotlibEigenvalueRenderer:
             return colors
 
         n_hams = len(hamiltonians)
-        grad_colors = gradient_colors(theme.primary, theme.accent, n_hams + 2)
+        grad_colors = gradient_colors(theme.primary, theme.accent, n_hams)
 
         # Plot the eigenvalues of the full Hamiltonian as solid lines
         full_eigenvalues, full_eigenstates, actual_expectation_values = self._calculate_eigenvalues_and_overlaps(
@@ -331,7 +331,6 @@ class MatplotlibEigenvalueRenderer:
             )
 
         if self.intermediate_states and actual_expectation_values:
-            color = grad_colors[-2] if grad_colors else theme.accent
             self.ax.plot(
                 times,
                 actual_expectation_values,
@@ -414,31 +413,3 @@ class MatplotlibEigenvalueRenderer:
         if style.tight_layout:
             plt.tight_layout()
         plt.draw()
-
-    def save(self, filename: str) -> None:  # thin wrapper
-        """Save current figure to disk.
-
-        Args:
-            filename: Path to save the figure (e.g., 'circuit.png').
-        """
-        if isinstance(self.ax.figure, Figure):
-            self.ax.figure.savefig(filename, bbox_inches="tight")
-
-    def show(self) -> None:  # noqa: PLR6301
-        """Show the current figure."""
-
-        plt.show()
-
-    @staticmethod
-    def _make_axes(dpi: int, style: ScheduleStyle) -> plt.Axes:
-        """
-        Create a new figure and axes with the given DPI.
-
-        Args:
-            style: Optional style configuration (for DPI).
-
-        Returns:
-            A newly created Matplotlib Axes.
-        """
-        _, ax = plt.subplots(figsize=style.figsize, dpi=dpi or style.dpi, facecolor=style.theme.background)
-        return ax
