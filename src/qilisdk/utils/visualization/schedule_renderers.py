@@ -44,6 +44,57 @@ class MatplotlibScheduleRenderer:
         self.style = style or ScheduleStyle()
         self.ax = ax or self._make_axes(self.style.dpi, self.style)
 
+    def setup_axes(self) -> None:
+        style = self.style
+        theme = style.theme
+        title_color = theme.on_background
+        label_color = theme.on_background
+        legend_facecolor = theme.surface
+        legend_edgecolor = theme.border
+        tick_color = theme.on_background
+
+        if style.grid:
+            grid_style = dict(style.grid_style)
+            if "color" not in grid_style:
+                grid_style["color"] = theme.surface_muted
+            self.ax.grid(**grid_style)
+        leg = self.ax.legend(
+            loc=style.legend_loc,
+            fontsize=style.legend_fontsize,
+            frameon=style.legend_frame,
+            facecolor=legend_facecolor,
+            edgecolor=legend_edgecolor,
+        )
+        # Set legend text color to match theme text color
+        if leg:
+            for text in leg.get_texts():
+                text.set_color(title_color)
+        self.ax.set_title(
+            self.style.title or "Schedule Eigenvalues",
+            fontsize=style.title_fontsize,
+            color=title_color,
+            fontweight=style.fontweight,
+            family=style.fontfamily,
+        )
+        self.ax.set_xlabel(
+            style.xlabel,
+            fontsize=style.label_fontsize,
+            color=label_color,
+            fontweight=style.fontweight,
+            family=style.fontfamily,
+        )
+        self.ax.set_ylabel(
+            style.ylabel,
+            fontsize=style.label_fontsize,
+            color=label_color,
+            fontweight=style.fontweight,
+            family=style.fontfamily,
+        )
+        self.ax.tick_params(axis="x", labelsize=style.xtick_fontsize, colors=tick_color)
+        self.ax.tick_params(axis="y", labelsize=style.ytick_fontsize, colors=tick_color)
+        if style.tight_layout:
+            plt.tight_layout()
+
     def plot(self, ax: plt.Axes | None = None) -> None:
         """
         Plot the schedule coefficients for each Hamiltonian over time.
@@ -53,11 +104,6 @@ class MatplotlibScheduleRenderer:
         style = self.style
         theme = style.theme
         facecolor = theme.background
-        title_color = theme.on_background
-        label_color = theme.on_background
-        legend_facecolor = theme.surface
-        legend_edgecolor = theme.border
-        tick_color = theme.on_background
 
         # Set axes and figure background to theme
         self.ax.set_facecolor(facecolor)
@@ -106,47 +152,9 @@ class MatplotlibScheduleRenderer:
                 markersize=style.marker_size,
                 **line_style,  # ty:ignore[invalid-argument-type]
             )
-        if style.grid:
-            grid_style = dict(style.grid_style)
-            if "color" not in grid_style:
-                grid_style["color"] = theme.surface_muted
-            self.ax.grid(**grid_style)
-        leg = self.ax.legend(
-            loc=style.legend_loc,
-            fontsize=style.legend_fontsize,
-            frameon=style.legend_frame,
-            facecolor=legend_facecolor,
-            edgecolor=legend_edgecolor,
-        )
-        # Set legend text color to match theme text color
-        if leg:
-            for text in leg.get_texts():
-                text.set_color(title_color)
-        self.ax.set_title(
-            self.style.title or "Schedule Plot",
-            fontsize=style.title_fontsize,
-            color=title_color,
-            fontweight=style.fontweight,
-            family=style.fontfamily,
-        )
-        self.ax.set_xlabel(
-            style.xlabel,
-            fontsize=style.label_fontsize,
-            color=label_color,
-            fontweight=style.fontweight,
-            family=style.fontfamily,
-        )
-        self.ax.set_ylabel(
-            style.ylabel,
-            fontsize=style.label_fontsize,
-            color=label_color,
-            fontweight=style.fontweight,
-            family=style.fontfamily,
-        )
-        self.ax.tick_params(axis="x", labelsize=style.xtick_fontsize, colors=tick_color)
-        self.ax.tick_params(axis="y", labelsize=style.ytick_fontsize, colors=tick_color)
-        if style.tight_layout:
-            plt.tight_layout()
+
+        self.setup_axes()
+
         plt.draw()
 
     def save(self, filename: str) -> None:  # thin wrapper
@@ -270,11 +278,6 @@ class MatplotlibEigenvalueRenderer(MatplotlibScheduleRenderer):
         style = self.style
         theme = style.theme
         facecolor = theme.background
-        title_color = theme.on_background
-        label_color = theme.on_background
-        legend_facecolor = theme.surface
-        legend_edgecolor = theme.border
-        tick_color = theme.on_background
 
         # Set axes and figure background to theme
         self.ax.set_facecolor(facecolor)
@@ -371,45 +374,5 @@ class MatplotlibEigenvalueRenderer(MatplotlibScheduleRenderer):
                             zorder=15,
                         )
 
-        if style.grid:
-            grid_style = dict(style.grid_style)
-            if "color" not in grid_style:
-                grid_style["color"] = theme.surface_muted
-            self.ax.grid(**grid_style)
-        leg = self.ax.legend(
-            loc=style.legend_loc,
-            fontsize=style.legend_fontsize,
-            frameon=style.legend_frame,
-            facecolor=legend_facecolor,
-            edgecolor=legend_edgecolor,
-        )
-        # Set legend text color to match theme text color
-        if leg:
-            for text in leg.get_texts():
-                text.set_color(title_color)
-        self.ax.set_title(
-            self.style.title or "Schedule Eigenvalues",
-            fontsize=style.title_fontsize,
-            color=title_color,
-            fontweight=style.fontweight,
-            family=style.fontfamily,
-        )
-        self.ax.set_xlabel(
-            style.xlabel,
-            fontsize=style.label_fontsize,
-            color=label_color,
-            fontweight=style.fontweight,
-            family=style.fontfamily,
-        )
-        self.ax.set_ylabel(
-            style.ylabel,
-            fontsize=style.label_fontsize,
-            color=label_color,
-            fontweight=style.fontweight,
-            family=style.fontfamily,
-        )
-        self.ax.tick_params(axis="x", labelsize=style.xtick_fontsize, colors=tick_color)
-        self.ax.tick_params(axis="y", labelsize=style.ytick_fontsize, colors=tick_color)
-        if style.tight_layout:
-            plt.tight_layout()
+        self.setup_axes()
         plt.draw()
