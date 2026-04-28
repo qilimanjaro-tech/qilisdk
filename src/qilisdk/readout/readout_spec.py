@@ -86,11 +86,12 @@ class Readout(Generic[S, E, T]):
 
     # -- builder methods -- each one transforms one type parameter --------
 
-    def with_sampling(self, nshots: int = 1000) -> Readout[SamplingReadoutResult, E, T]:
+    def with_sampling(self, nshots: int = 1000, expand_samples: bool = True) -> Readout[SamplingReadoutResult, E, T]:
         """Add a sampling readout to the specification.
 
         Args:
             nshots (int): Number of measurement shots.  Must be >= 0.
+            expand_samples (bool): Whether to display partial samples as "00_0" instead of "000" for better readability.
 
         Returns:
             A new :class:`Readout` with the sampling slot populated.
@@ -100,7 +101,7 @@ class Readout(Generic[S, E, T]):
         """
         if self._sampling is not None:
             raise ValueError("Sampling readout already set in this specification.")
-        self._sampling = SamplingReadout(nshots=nshots)
+        self._sampling = SamplingReadout(nshots=nshots, expand_samples=expand_samples)
         return self  # ty:ignore[invalid-return-type]
 
     def with_expectation(

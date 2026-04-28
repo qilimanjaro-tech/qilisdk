@@ -30,6 +30,9 @@ my_circuit.svg
 .tmp
 .env
 
+# Translation stuff
+*.mo
+
 # development environment files
 .vscode
 .coverage

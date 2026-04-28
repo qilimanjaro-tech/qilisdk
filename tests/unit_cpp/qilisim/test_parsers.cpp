@@ -1175,7 +1175,8 @@ TEST(ParseGates, BasicGate) {
             control_qubits = []
             target_qubits = [0]
             is_parameterized = False
-            def _generate_matrix(self):
+            @property
+            def matrix(self):
                 s = 1 / np.sqrt(2)
                 return np.array([[s, s], [s, -s]], dtype=complex)
             def get_parameters(self):
@@ -1198,7 +1199,7 @@ TEST(ParseGates, BasicGate) {
     EXPECT_EQ(result[0].get_target_qubits()[0], 0);
 }
 
-TEST(ParseGates, MeasurementGateIsSkipped) {
+TEST(ParseGates, MeasurementGateIsNotSkipped) {
     py::gil_scoped_acquire gil;
     py::exec(R"(
         import numpy as np
@@ -1208,7 +1209,9 @@ TEST(ParseGates, MeasurementGateIsSkipped) {
             target_qubits = [0]
             control_qubits = []
             is_parameterized = False
-            def _generate_matrix(self): return np.eye(2, dtype=complex)
+            @property
+            def matrix(self): 
+                return np.eye(2, dtype=complex)
             def get_parameters(self): return {}
 
         class FakeCircuitMGate:
@@ -1221,7 +1224,7 @@ TEST(ParseGates, MeasurementGateIsSkipped) {
     py::object fake_circuit = py::globals()["fake_circuit_m_gate"];
     auto result = parse_gates(fake_circuit, 1e-10, py::none());
 
-    EXPECT_TRUE(result.empty());
+    EXPECT_FALSE(result.empty());
 }
 
 TEST(ParseGates, ParameterizedGate) {
@@ -1235,7 +1238,8 @@ TEST(ParseGates, ParameterizedGate) {
             target_qubits = [0]
             is_parameterized = True
             _theta = 0.5
-            def _generate_matrix(self):
+            @property
+            def matrix(self):
                 return np.array([
                     [np.exp(-1j * self._theta / 2), 0],
                     [0, np.exp(1j * self._theta / 2)]
@@ -1272,7 +1276,8 @@ TEST(ParseGates, ControlledGate) {
             control_qubits = [0]
             target_qubits = [1]
             is_parameterized = False
-            def _generate_matrix(self):
+            @property
+            def matrix(self):
                 return np.array([[1,0,0,0],[0,1,0,0],[0,0,0,1],[0,0,1,0]], dtype=complex)
             def get_parameters(self): return {}
 
@@ -1305,7 +1310,8 @@ TEST(ParseGates, ControlledYGate) {
             control_qubits = [0]
             target_qubits = [1]
             is_parameterized = False
-            def _generate_matrix(self):
+            @property
+            def matrix(self):
                 return np.array([[1,0,0,0],[0,1,0,0],[0,0,0,-1j],[0,0,1j,0]], dtype=complex)
             def get_parameters(self): return {}
 
@@ -1337,7 +1343,8 @@ TEST(ParseGates, ControlledZGate) {
             control_qubits = [0]
             target_qubits = [1]
             is_parameterized = False
-            def _generate_matrix(self):
+            @property
+            def matrix(self):
                 return np.array([[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,-1]], dtype=complex)
             def get_parameters(self): return {}
 
@@ -1389,7 +1396,8 @@ TEST(ParseGates, ParameterPerturbationAppliedGlobalNoise) {
             target_qubits = [0]
             is_parameterized = True
             _theta = 0.5
-            def _generate_matrix(self):
+            @property
+            def matrix(self):
                 return np.eye(2, dtype=complex)
             def get_parameters(self):
                 return {'theta': self._theta}
@@ -1431,7 +1439,8 @@ TEST(ParseGates, ParameterPerturbationAppliedPerGate) {
             target_qubits = [0]
             is_parameterized = True
             _theta = 0.25
-            def _generate_matrix(self):
+            @property
+            def matrix(self):
                 return np.eye(2, dtype=complex)
             def get_parameters(self):
                 return {'theta': self._theta}
@@ -1500,6 +1509,7 @@ TEST(ParseSolverParams, AllFieldsParsedCorrectly) {
     params["store_intermediate_results"] = py::bool_(true);
     params["normalize_after_each_gate"] = py::bool_(true);
     params["combine_single_qubit_gates"] = py::bool_(false);
+    params["measurement_collapse"] = py::bool_(true);
 
     auto config = parse_solver_params(params);
 
@@ -1517,6 +1527,7 @@ TEST(ParseSolverParams, AllFieldsParsedCorrectly) {
     EXPECT_TRUE(config.get_store_intermediate_results());
     EXPECT_TRUE(config.get_normalize_after_gate());
     EXPECT_FALSE(config.get_combine_single_qubit_gates());
+    EXPECT_TRUE(config.get_measurement_collapse());
 }
 
 TEST(ParseSolverParams, PartialFieldsParsed) {
@@ -1529,6 +1540,47 @@ TEST(ParseSolverParams, PartialFieldsParsed) {
 
     EXPECT_EQ(config.get_seed(), 99);
     EXPECT_EQ(config.get_num_threads(), 2);
+}
+
+// py::object construct_result_object(const DenseMatrix& state_dense, const py::object& readout, NoiseModelCpp& noise_model_cpp, int n_qubits, const QiliSimConfig& config, const std::vector<bool>& qubits_to_measure) {
+TEST(ConstructResults, EmptyResults) {
+    DenseMatrix state = DenseMatrix::Zero(2, 1);
+    py::list readout = py::list();
+    NoiseModelCpp noise_model_cpp;
+    int n_qubits = 1;
+    QiliSimConfig config;
+    std::vector<bool> qubits_to_measure = {true};
+    EXPECT_NO_THROW({ auto results = construct_result_object(state, readout, noise_model_cpp, n_qubits, config, qubits_to_measure); });
+}
+
+TEST(ConstructResults, StateTomographyNotExactThrows) {
+    DenseMatrix state = DenseMatrix::Zero(2, 1);
+
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.readout import StateTomographyReadout
+        readout = [StateTomographyReadout(method="not_exact")]
+    )");
+    py::list readout = py::globals()["readout"];
+
+    NoiseModelCpp noise_model_cpp;
+    int n_qubits = 1;
+    QiliSimConfig config;
+    std::vector<bool> qubits_to_measure = {true};
+    EXPECT_THROW({ auto results = construct_result_object(state, readout, noise_model_cpp, n_qubits, config, qubits_to_measure); }, py::value_error);
+}
+
+TEST(ConstructResults, BadReadoutTypeThrows) {
+    DenseMatrix state = DenseMatrix::Zero(2, 1);
+
+    py::list readout = py::list();  // should be a Readout object, not a list
+    readout.append(42);             // just to make it non-empty
+
+    NoiseModelCpp noise_model_cpp;
+    int n_qubits = 1;
+    QiliSimConfig config;
+    std::vector<bool> qubits_to_measure = {true};
+    EXPECT_THROW({ auto results = construct_result_object(state, readout, noise_model_cpp, n_qubits, config, qubits_to_measure); }, py::value_error);
 }
 
 // GCOV_EXCL_BR_STOP

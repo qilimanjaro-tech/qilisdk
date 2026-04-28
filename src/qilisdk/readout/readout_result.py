@@ -18,7 +18,7 @@ import heapq
 import operator
 from dataclasses import dataclass
 from pprint import pformat
-from typing import TYPE_CHECKING, Generic, Protocol, Self, TypeGuard, TypeVar
+from typing import TYPE_CHECKING, Any, Generic, Never, Protocol, Self, TypeGuard, TypeVar, overload
 
 import numpy as np
 from loguru import logger
@@ -100,21 +100,147 @@ class SamplingReadoutResult(ReadoutResult[SamplingReadout]):
             is provided.
     """
 
+    @staticmethod
+    def _filter_samples(
+        samples_to_filter: dict[str, int], qubits_to_measure: list[int], expand_samples: bool = True
+    ) -> dict[str, int]:
+        """
+        Filter the input samples to include only the requested qubits.
+
+        Args:
+            samples_to_filter (dict[str, int]): The original samples to be filtered.
+            qubits_to_measure (list[int]): The list of qubit indices that were measured.
+            expand_samples (bool): Whether to include placeholders for unmeasured qubits in the filtered results.
+
+        Returns:
+            dict[str, int]: The filtered samples containing only the requested qubits.
+        """
+        filtered_samples: dict[str, int] = {}
+        for bitstring, count in samples_to_filter.items():
+            if expand_samples:
+                filtered_bitstring = "".join(
+                    "_" if i not in qubits_to_measure else bit for i, bit in enumerate(bitstring)
+                )
+            else:
+                filtered_bitstring = "".join(bit for i, bit in enumerate(bitstring) if i in qubits_to_measure)
+            filtered_samples[filtered_bitstring] = filtered_samples.get(filtered_bitstring, 0) + count
+        return filtered_samples
+
+    @staticmethod
+    def _expand_samples(
+        samples_to_expand: dict[str, int], qubits_to_measure: list[int], nqubits_total: int
+    ) -> dict[str, int]:
+        """
+        Expand the input samples to include placeholders for unmeasured qubits.
+
+        Args:
+            samples_to_expand (dict[str, int]): The original samples to be expanded.
+            qubits_to_measure (list[int]): The list of qubit indices that were measured.
+            nqubits_total (int): The total number of qubits in the system.
+
+        Returns:
+            dict[str, int]: The expanded samples containing placeholders for unmeasured qubits.
+        """
+        expanded_samples: dict[str, int] = {}
+        for bitstring, count in samples_to_expand.items():
+            bitstring_remaining = bitstring
+            expanded_bitstring = ""
+            for i in range(nqubits_total):
+                if i in qubits_to_measure:
+                    expanded_bitstring += bitstring_remaining[0]
+                    bitstring_remaining = bitstring_remaining[1:]
+                else:
+                    expanded_bitstring += "_"
+            expanded_samples[expanded_bitstring] = expanded_samples.get(expanded_bitstring, 0) + count
+        return expanded_samples
+
     @classmethod
-    def from_samples(cls, samples: dict[str, int]) -> Self:
+    def _adjust_samples(
+        cls,
+        samples_to_filter: dict[str, int],
+        qubits_to_measure: list[int],
+        nqubits: int | None = None,
+        expand_samples: bool = True,
+    ) -> dict[str, int]:
+        """
+        Adjust the input samples to match the requested qubits to measure and total number of qubits.
+
+        This method handles both filtering and expansion of samples based on the relationship between
+        the number of qubits in the input samples and the requested total number of qubits.
+
+        - If the input samples have more qubits than requested, it filters out the unmeasured qubits.
+        - If the input samples have fewer qubits than requested, it expands them by adding placeholders for the unmeasured qubits.
+
+        Args:
+            samples_to_filter (dict[str, int]): The original samples to be adjusted.
+            qubits_to_measure (list[int]): The list of qubit indices that were measured.
+            nqubits (int | None): The total number of qubits in the system.
+            expand_samples (bool): Whether to expand samples with placeholders for unmeasured qubits.
+
+        Returns:
+            dict[str, int]: The adjusted samples matching the requested qubits and total number of qubits.
+        """
+        if len(samples_to_filter) >= 1:
+            nqubits_samples = len(next(iter(samples_to_filter.keys())))
+            nqubits_total = nqubits if nqubits is not None else nqubits_samples
+            # Assuming 3 qubits, if asked for 0 and 1 and we have xxx, return xx_
+            if nqubits_samples >= nqubits_total:
+                return cls._filter_samples(samples_to_filter, qubits_to_measure, expand_samples=expand_samples)
+            # Assuming 3 qubits, if asked for 0 and 1 and we have xx, return xx_
+            if nqubits_samples < nqubits_total and expand_samples:
+                return cls._expand_samples(samples_to_filter, qubits_to_measure, nqubits_total)
+        return samples_to_filter
+
+    @classmethod
+    def from_samples(
+        cls,
+        samples: dict[str, int],
+        qubits_to_measure: list[int] | None = None,
+        nqubits: int | None = None,
+        expand_samples: bool | None = None,
+    ) -> Self:
+        """
+        Construct a SamplingReadoutResult from raw samples.
+
+        Args:
+            samples (dict[str, int]): Mapping of bitstring to measurement count.
+            qubits_to_measure (list[int] | None): Optional list of qubit indices that were measured.
+            nqubits (int | None): Total number of qubits in the system.
+            expand_samples (bool | None): Whether to expand samples with placeholders for unmeasured qubits.
+
+        Returns:
+            SamplingReadoutResult: The constructed result object.
+
+        Raises:
+            ValueError: If samples are not provided.
+            ValueError: If not all bitstring keys have the same length.
+            ValueError: If qubits_to_measure is provided and has more qubits than are present in the bitstrings.
+
+        """
         if not samples:
             raise ValueError("can't initialize Sampling Results if samples are not provided.")
 
         nshots = sum(samples.values())
         bitstrings = list(samples.keys())
-        nqubits = len(bitstrings[0])
-        if not all(len(bitstring) == nqubits for bitstring in bitstrings):
+        nqubits_samples = len(bitstrings[0])
+        nqubits_total = nqubits if nqubits is not None else nqubits_samples
+        if not all(len(bitstring) == nqubits_samples for bitstring in bitstrings):
             raise ValueError("Not all bitstring keys have the same length.")
+        if qubits_to_measure and len(qubits_to_measure) > nqubits_samples:
+            raise ValueError("Can't filter samples for more qubits than are present in the bitstrings.")
+        if nqubits_total != nqubits_samples and qubits_to_measure is None:
+            raise ValueError(
+                "Must provide qubits_to_measure if nqubits is different from the number of qubits in the samples."
+            )
+
+        expand_samples = expand_samples if expand_samples is not None else True
 
         # Calculate probabilities
         probabilities: dict[str, float] = {
             bitstring: (counts / nshots if nshots and nshots > 0 else 0.0) for bitstring, counts in samples.items()
         }
+        if qubits_to_measure is not None:
+            samples = cls._adjust_samples(samples, qubits_to_measure, nqubits_total, expand_samples=expand_samples)
         return cls(samples=samples, probabilities=probabilities)
 
     @classmethod
@@ -122,10 +248,14 @@ class SamplingReadoutResult(ReadoutResult[SamplingReadout]):
         cls,
         sampling_readout: SamplingReadout,
         state: QTensor,
+        qubits_to_measure: list[int] | None = None,
+        expand_samples: bool = True,
     ) -> Self:
         f_string = "{:0" + str(state.nqubits) + "b}"
         probabilities: dict[str, float] = {(f_string).format(i): p for i, p in enumerate(state.probabilities())}
         samples: dict[str, int] = _samples_from_probabilities(probabilities, nshots=sampling_readout.nshots)
+        if qubits_to_measure is not None:
+            samples = cls._adjust_samples(samples, qubits_to_measure, state.nqubits, expand_samples=expand_samples)
         return cls(samples=samples, probabilities=probabilities)
 
     def __init__(self, samples: dict[str, int], probabilities: dict[str, float] | None = None) -> None:
@@ -438,6 +568,82 @@ class ReadoutCompositeResults(Result, Generic[S, E, T]):
             raise TypeError("state_tomography must be StateTomographyReadoutResult or None")
 
         return cls(sampling=sampling, expectation_values=expectation_values, state_tomography=state_tomography)
+
+    @overload
+    def get_samples(self: ReadoutCompositeResults[SamplingReadoutResult, Any, Any]) -> dict[str, int]: ...
+    @overload
+    def get_samples(self: ReadoutCompositeResults[None, Any, Any]) -> Never: ...
+    def get_samples(self) -> dict[str, int]:
+        """Return the sampling results as a bitstring-to-count mapping.
+
+        Returns:
+            dict[str, int]: Mapping of measured bitstring to count.
+
+        Raises:
+            ValueError: If no sampling results are present.
+        """
+        if self.sampling is not None:
+            return self.sampling.samples
+        raise ValueError("Can't find samples because no SamplingReadoutResult is present in this composite.")
+
+    @overload
+    def get_probabilities(
+        self: ReadoutCompositeResults[SamplingReadoutResult | None, Any, StateTomographyReadoutResult | None],
+    ) -> dict[str, float]: ...
+    @overload
+    def get_probabilities(self: ReadoutCompositeResults[None, Any, None]) -> Never: ...
+    def get_probabilities(self) -> dict[str, float]:
+        """Return the probability distribution as a bitstring-to-probability mapping.
+
+        Returns:
+            dict[str, float]: Mapping of bitstring to probability.
+
+        Raises:
+            ValueError: If no sampling or state-tomography results are present.
+        """
+        if self.sampling is not None:
+            return self.sampling.probabilities
+        if self.state_tomography is not None:
+            return self.state_tomography.probabilities
+        raise ValueError(
+            "Can't find probabilities because neither SamplingReadoutResult nor StateTomographyReadoutResult is present in this composite."
+        )
+
+    @overload
+    def get_expectation_values(self: ReadoutCompositeResults[Any, ExpectationReadoutResult, Any]) -> list[float]: ...
+    @overload
+    def get_expectation_values(self: ReadoutCompositeResults[Any, None, Any]) -> Never: ...
+    def get_expectation_values(self) -> list[float]:
+        """Return the expectation values as a list of numbers.
+
+        Returns:
+            list[float]: Expectation values, one per observable, in the same order as specified in the readout.
+
+        Raises:
+            ValueError: If no expectation-value results are present.
+        """
+        if self.expectation_values is not None:
+            return self.expectation_values.expectation_values
+        raise ValueError(
+            "Can't find expectation values because no ExpectationReadoutResult is present in this composite."
+        )
+
+    @overload
+    def get_state(self: ReadoutCompositeResults[Any, Any, StateTomographyReadoutResult]) -> QTensor: ...
+    @overload
+    def get_state(self: ReadoutCompositeResults[Any, Any, None]) -> Never: ...
+    def get_state(self) -> QTensor:
+        """Return the reconstructed quantum state.
+
+        Returns:
+            QTensor: The reconstructed quantum state (ket or density matrix).
+
+        Raises:
+            ValueError: If no state-tomography results are present.
+        """
+        if self.state_tomography is not None:
+            return self.state_tomography.state
+        raise ValueError("Can't find the state because no StateTomographyReadoutResult is present in this composite.")
 
     def __repr__(self) -> str:
         out = ""

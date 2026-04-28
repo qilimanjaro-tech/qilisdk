@@ -33,43 +33,6 @@
 
 #pragma GCC visibility push(default)
 
-py::object construct_result_object(const DenseMatrix& state_dense, const py::object& readout, NoiseModelCpp& noise_model_cpp, int n_qubits, const QiliSimConfig& config, const std::vector<bool>& qubits_to_measure) {
-    py::list results;
-    py::array final_state_numpy = to_numpy(state_dense);
-
-    for (py::handle ro_handle : readout) {
-        py::object ro = py::reinterpret_borrow<py::object>(ro_handle);
-
-        if (py::isinstance(ro, StateTomographyReadout)) {
-            // Check state_tomography_method != "exact"
-            std::string method = ro.attr("method").cast<std::string>();
-            if (method != "exact") {
-                throw py::value_error("State Tomography methods that are not exact are not supported yet.");
-            }
-            results.append(StateTomographyReadoutResult("state"_a = QTensor(final_state_numpy)));
-
-        } else if (py::isinstance(ro, ExpectationReadout)) {
-            results.append(ExpectationReadoutResult.attr("from_state")("expectation_readout"_a = py::module_::import("copy").attr("copy")(ro), "state"_a = QTensor(final_state_numpy)));
-
-        } else if (py::isinstance(ro, SamplingReadout)) {
-            int n_shots = ro.attr("nshots").cast<int>();
-            std::map<std::string, int> counts = construct_samples(state_dense, n_qubits, n_shots, noise_model_cpp, config, qubits_to_measure);
-            py::dict samples;
-            for (const auto& pair : counts) {
-                samples[py::cast(pair.first)] = py::cast(pair.second);
-            }
-            results.append(SamplingReadoutResult.attr("from_samples")("samples"_a = samples));
-
-        } else {
-            // Replicate: raise ValueError(f"Unsupported Readout Method provided: {ro}")
-            std::string ro_repr = py::repr(ro).cast<std::string>();
-            throw py::value_error("Unsupported Readout Method provided: " + ro_repr);
-        }
-    }
-
-    return ReadoutCompositeResults.attr("from_list")(results);
-}
-
 // The public execute_sampling
 py::object QiliSimCpp::execute_digital_propagation(const py::object& functional, const py::object& readout, const py::object& noise_model, const py::object& initial_state, const py::dict& solver_params) {
     /*
@@ -110,7 +73,7 @@ py::object QiliSimCpp::execute_digital_propagation(const py::object& functional,
     }
 
     // Parse the Python objects into C++ objects
-    std::vector<bool> qubits_to_measure = parse_measurements(functional.attr("circuit"));
+    std::vector<bool> final_qubits_to_measure = parse_measurements(functional.attr("circuit"));
     NoiseModelCpp noise_model_cpp = parse_noise_model(noise_model, n_qubits, config.get_atol());
     std::vector<Gate> gates = parse_gates(functional.attr("circuit"), config.get_atol(), noise_model);
 
@@ -125,6 +88,7 @@ py::object QiliSimCpp::execute_digital_propagation(const py::object& functional,
     // Pass everything to the internal implementation
     std::map<std::string, int> counts;
     DenseMatrix state_dense;
+    std::vector<py::object> intermediate_results;
     SparseMatrix initial_state_cpp;
     if (initial_state.is_none()) {
         long dim = 1L << n_qubits;
@@ -135,13 +99,22 @@ py::object QiliSimCpp::execute_digital_propagation(const py::object& functional,
         initial_state_cpp = parse_initial_state(initial_state, config.get_atol());
     }
     if (config.get_sampling_method() == "statevector_matrix_free") {
-        sampling_matrix_free(gates, n_qubits, initial_state_cpp, noise_model_cpp, state_dense, config);
+        sampling_matrix_free(gates, n_qubits, initial_state_cpp, noise_model_cpp, state_dense, intermediate_results, config, readout);
     } else {
-        sampling(gates, n_qubits, initial_state_cpp, noise_model_cpp, state_dense, config);
+        sampling(gates, n_qubits, initial_state_cpp, noise_model_cpp, state_dense, intermediate_results, config, readout);
     }
 
-    // Construct the result object
-    py::object result = construct_result_object(state_dense, readout, noise_model_cpp, n_qubits, config, qubits_to_measure);
+    // Construct the final result object
+    py::object result = construct_result_object(state_dense, readout, noise_model_cpp, n_qubits, config, final_qubits_to_measure);
+
+    // If we have intermediate results, return them as well
+    if (intermediate_results.size() > 0) {
+        py::list intermediate_results_py;
+        for (size_t i = 0; i < intermediate_results.size(); ++i) {
+            intermediate_results_py.append(intermediate_results[i]);
+        }
+        return FunctionalResult("readout_results"_a = result, "intermediate_results"_a = intermediate_results_py);
+    }
 
     return FunctionalResult("readout_results"_a = result);
 }
@@ -241,8 +214,8 @@ py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, co
     int n_qubits = functional.attr("schedule").attr("nqubits").cast<int>();
     std::vector<bool> qubits_to_measure(n_qubits, true);
     py::object result = construct_result_object(rho_t, readout, noise_model_cpp, n_qubits, config, qubits_to_measure);
-
     bool store_intermediate_results = functional.attr("store_intermediate_results").cast<bool>();
+
     // If we have intermediates, process them too
     if (store_intermediate_results) {
         py::list inter_results;
@@ -328,10 +301,11 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
 
                 // Pass everything to the internal implementation
                 std::map<std::string, int> counts;
+                std::vector<py::object> intermediate_results;
                 if (config.get_sampling_method() == "statevector_matrix_free") {
-                    sampling_matrix_free(gates, n_qubits, state.sparseView(), noise_model_cpp, state, config);
+                    sampling_matrix_free(gates, n_qubits, state.sparseView(), noise_model_cpp, state, intermediate_results, config, readout);
                 } else {
-                    sampling(gates, n_qubits, state.sparseView(), noise_model_cpp, state, config);
+                    sampling(gates, n_qubits, state.sparseView(), noise_model_cpp, state, intermediate_results, config, readout);
                 }
             } else if (py::isinstance(step, Schedule)) {
                 // Check if we need to perturb the parameters

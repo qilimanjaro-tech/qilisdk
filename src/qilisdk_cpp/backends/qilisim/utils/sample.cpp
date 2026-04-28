@@ -106,6 +106,7 @@ std::map<std::string, int> construct_samples(const DenseMatrix& state, int n_qub
         state (DenseMatrix&): the state to be sampled.
         nqubits (int): the number of qubits in the quantum state.
         nshots (int): the number of shots used for the sampling.
+        expand_samples (bool): Whether to display partial samples as "00_0" instead of "000" for better readability.
         noise_model_cpp (NoiseModelCpp&): the noise model to be considered when computing the samples.
         config (QiliSimConfig&): QiliSim configuration.
         qubits_to_measure (vector<boo>&): a list of boolean specifying which qubits to measure.
