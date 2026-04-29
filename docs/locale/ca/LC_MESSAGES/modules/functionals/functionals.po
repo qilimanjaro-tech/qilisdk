@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-14 12:09+0200\n"
+"POT-Creation-Date: 2026-04-29 11:34+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -31,8 +31,8 @@ msgid ""
 "includes the following execution functionals:"
 msgstr ""
 "El mòdul :mod:`~qilisdk.functionals` proporciona procediments d'execució "
-"quàntica d'alt nivell combinant eines dels mòduls :mod:`~qilisdk.analog`, "
-":mod:`~qilisdk.digital` i :mod:`~qilisdk.core`. Actualment, inclou els "
+"quàntica d'alt nivell combinant eines dels mòduls :mod:`~qilisdk.analog`,"
+" :mod:`~qilisdk.digital` i :mod:`~qilisdk.core`. Actualment, inclou els "
 "següents funcionals d'execució:"
 
 #: ../../modules/functionals/functionals.rst:16
@@ -50,8 +50,8 @@ msgid ""
 "dependent schedule."
 msgstr ""
 ":class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`: Simula "
-"l'evolució temporal analògica d'un o més Hamiltonians d'acord amb un esquema "
-"dependent del temps."
+"l'evolució temporal analògica d'un o més Hamiltonians d'acord amb un "
+"esquema dependent del temps."
 
 #: ../../modules/functionals/functionals.rst:18
 msgid ""
@@ -59,9 +59,9 @@ msgid ""
 " quantum reservoir pipeline (pre-processing, reservoir dynamics, post-"
 "processing) across multiple input layers."
 msgstr ""
-":class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir`: Executa "
-"una cadena de reservori quàntic (pre-processament, dinàmica del reservori, "
-"post-processament) a través de múltiples capes d'entrada."
+":class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir`: "
+"Executa una cadena de reservori quàntic (pre-processament, dinàmica del "
+"reservori, post-processament) a través de múltiples capes d'entrada."
 
 #: ../../modules/functionals/functionals.rst:20
 msgid ""
@@ -103,11 +103,11 @@ msgstr ""
 "primitius com ara "
 ":class:`~qilisdk.functionals.digital_propagation.DigitalPropagation` i "
 ":class:`~qilisdk.functionals.analog_evolution.AnalogEvolution` també "
-"hereten de "
-":class:`~qilisdk.functionals.functional.PrimitiveFunctional`, que incorpora "
-"el contracte :class:`~qilisdk.core.parameterizable.Parameterizable`. "
-"Això permet que els backends consultin i actualitzin paràmetres simbòlics de "
-"manera coherent abans de l'execució."
+"hereten de :class:`~qilisdk.functionals.functional.PrimitiveFunctional`, "
+"que incorpora el contracte "
+":class:`~qilisdk.core.parameterizable.Parameterizable`. Això permet que "
+"els backends consultin i actualitzin paràmetres simbòlics de manera "
+"coherent abans de l'execució."
 
 #: ../../modules/functionals/functionals.rst:34
 msgid ""
@@ -118,12 +118,13 @@ msgid ""
 "functionals return a unified "
 ":class:`~qilisdk.functionals.functional_result.FunctionalResult`."
 msgstr ""
-"La lectura està desacoblada dels funcionals: els detalls de la mesura (shots, "
-"observables, tomografia d'estat) s'especifiquen mitjançant objectes "
-":mod:`~qilisdk.readout` passats al mètode "
+"La lectura està desacoblada dels funcionals: els detalls de la mesura "
+"(shots, observables, tomografia d'estat) s'especifiquen mitjançant "
+"objectes :mod:`~qilisdk.readout` passats al mètode "
 ":meth:`~qilisdk.backends.backend.Backend.execute` del backend. Tots els "
 "funcionals primitius retornen un "
-":class:`~qilisdk.functionals.functional_result.FunctionalResult` unificat."
+":class:`~qilisdk.functionals.functional_result.FunctionalResult` "
+"unificat."
 
 #: ../../modules/functionals/functionals.rst:39
 msgid "Result Objects"
@@ -146,16 +147,16 @@ msgid ""
 "via ``intermediate_states``, ``intermediate_samples``, "
 "``intermediate_probabilities``, and ``intermediate_expectation_values``."
 msgstr ""
-"El tipus de resultat unificat per a tots els funcionals primitius. Accediu "
-"als resultats mitjançant: ``samples`` per als comptadors de shots, "
-"``probabilities`` per a les probabilitats de mesura, ``state`` per a l'estat "
-"final :class:`~qilisdk.core.qtensor.QTensor` (quan s'utilitza "
+"El tipus de resultat unificat per a tots els funcionals primitius. "
+"Accediu als resultats mitjançant: ``samples`` per als comptadors de "
+"shots, ``probabilities`` per a les probabilitats de mesura, ``state`` per"
+" a l'estat final :class:`~qilisdk.core.qtensor.QTensor` (quan s'utilitza "
 ":meth:`~qilisdk.readout.readout_spec.Readout.with_state_tomography`), i "
 "``expectation_values`` per als valors esperats (quan s'utilitza "
 ":meth:`~qilisdk.readout.readout_spec.Readout.with_expectation`). Quan "
-"``store_intermediate_results=True``, els resultats intermedis estan disponibles "
-"mitjançant ``intermediate_states``, ``intermediate_samples``, "
-"``intermediate_probabilities`` i ``intermediate_expectation_values``."
+"``store_intermediate_results=True``, els resultats intermedis estan "
+"disponibles mitjançant ``intermediate_states``, ``intermediate_samples``,"
+" ``intermediate_probabilities`` i ``intermediate_expectation_values``."
 
 #: ../../modules/functionals/functionals.rst:49
 msgid ":class:`~qilisdk.functionals.variational_program_result.VariationalProgramResult`"
@@ -167,16 +168,17 @@ msgid ""
 "steps) together with the functional result obtained at convergence."
 msgstr ""
 "agrupa la trajectòria de l'optimitzador (cost òptim, paràmetres, passos "
-"intermedis) juntament amb el resultat funcional obtingut en la convergència."
+"intermedis) juntament amb el resultat funcional obtingut en la "
+"convergència."
 
 #: ../../modules/functionals/functionals.rst:53
 msgid ""
 "These objects make post-processing workflows ergonomic. For example, "
 "after a digital propagation you can surface the most likely bitstrings:"
 msgstr ""
-"Aquests objectes fan que els fluxos de treball de post-processament siguin "
-"ergonòmics. Per exemple, després d'una propagació digital podeu extreure les "
-"cadenes de bits més probables:"
+"Aquests objectes fan que els fluxos de treball de post-processament "
+"siguin ergonòmics. Per exemple, després d'una propagació digital podeu "
+"extreure les cadenes de bits més probables:"
 
 #: ../../modules/functionals/functionals.rst:69
 msgid "Digital Propagation"
@@ -198,9 +200,9 @@ msgstr ""
 "propaga un circuit quàntic digital a través del backend. Com que és una "
 "subclasse de "
 ":class:`~qilisdk.functionals.functional.PrimitiveFunctional`, qualsevol "
-"paràmetre simbòlic exposat pel "
-":class:`~qilisdk.digital.circuit.Circuit` subjacent es pot consultar o "
-"actualitzar mitjançant mètodes auxiliars com ara "
+"paràmetre simbòlic exposat pel :class:`~qilisdk.digital.circuit.Circuit` "
+"subjacent es pot consultar o actualitzar mitjançant mètodes auxiliars com"
+" ara "
 ":meth:`~qilisdk.functionals.digital_propagation.DigitalPropagation.get_parameter_names`."
 
 #: ../../modules/functionals/functionals.rst:77
@@ -215,8 +217,8 @@ msgstr ""
 
 #: ../../modules/functionals/functionals.rst:80
 #: ../../modules/functionals/functionals.rst:145
-#: ../../modules/functionals/functionals.rst:236
-#: ../../modules/functionals/functionals.rst:416
+#: ../../modules/functionals/functionals.rst:222
+#: ../../modules/functionals/functionals.rst:402
 msgid "**Parameters**"
 msgstr "**Paràmetres**"
 
@@ -225,12 +227,13 @@ msgid ""
 "**circuit** (:class:`~qilisdk.digital.circuit.Circuit`): Circuit to be "
 "propagated."
 msgstr ""
-"**circuit** (:class:`~qilisdk.digital.circuit.Circuit`): Circuit a propagar."
+"**circuit** (:class:`~qilisdk.digital.circuit.Circuit`): Circuit a "
+"propagar."
 
 #: ../../modules/functionals/functionals.rst:84
 #: ../../modules/functionals/functionals.rst:151
-#: ../../modules/functionals/functionals.rst:244
-#: ../../modules/functionals/functionals.rst:431
+#: ../../modules/functionals/functionals.rst:230
+#: ../../modules/functionals/functionals.rst:417
 msgid "**Returns**"
 msgstr "**Retorna**"
 
@@ -240,13 +243,13 @@ msgid ""
 "shot counts via :attr:`samples`, or probabilities through "
 ":attr:`probabilities`."
 msgstr ""
-":class:`~qilisdk.functionals.functional_result.FunctionalResult`: Accediu "
-"als comptadors de shots mitjançant :attr:`samples`, o a les probabilitats "
-"mitjançant :attr:`probabilities`."
+":class:`~qilisdk.functionals.functional_result.FunctionalResult`: Accediu"
+" als comptadors de shots mitjançant :attr:`samples`, o a les "
+"probabilitats mitjançant :attr:`probabilities`."
 
 #: ../../modules/functionals/functionals.rst:89
 #: ../../modules/functionals/functionals.rst:158
-#: ../../modules/functionals/functionals.rst:249
+#: ../../modules/functionals/functionals.rst:235
 msgid "**Usage Example**"
 msgstr "**Exemple d'Ús**"
 
@@ -255,12 +258,12 @@ msgid ""
 "This functional can be executed on any backend that supports digital "
 "circuits. For example, we can execute it on the CUDA backend:"
 msgstr ""
-"Aquest funcional es pot executar en qualsevol backend que admeti circuits "
-"digitals. Per exemple, el podem executar al backend CUDA:"
+"Aquest funcional es pot executar en qualsevol backend que admeti circuits"
+" digitals. Per exemple, el podem executar al backend CUDA:"
 
 #: ../../modules/functionals/functionals.rst:120
-#: ../../modules/functionals/functionals.rst:211
-#: ../../modules/functionals/functionals.rst:486
+#: ../../modules/functionals/functionals.rst:197
+#: ../../modules/functionals/functionals.rst:472
 msgid "**Output**"
 msgstr "**Sortida**"
 
@@ -277,12 +280,13 @@ msgid ""
 ":class:`~qilisdk.analog.schedule.Schedule`, making it straightforward to "
 "sweep control waveforms or pulse amplitudes from classical optimizers."
 msgstr ""
-"El funcional :class:`~qilisdk.functionals.analog_evolution.AnalogEvolution` "
-"simula l'evolució analògica d'un sistema quàntic sota un o més Hamiltonians, "
-"seguint un esquema especificat dependent del temps. La seva interfície de "
-"paràmetres reflecteix la de :class:`~qilisdk.analog.schedule.Schedule`, el "
-"que facilita escanejar formes d'ona de control o amplituds de pols des "
-"d'optimitzadors clàssics."
+"El funcional "
+":class:`~qilisdk.functionals.analog_evolution.AnalogEvolution` simula "
+"l'evolució analògica d'un sistema quàntic sota un o més Hamiltonians, "
+"seguint un esquema especificat dependent del temps. La seva interfície de"
+" paràmetres reflecteix la de :class:`~qilisdk.analog.schedule.Schedule`, "
+"el que facilita escanejar formes d'ona de control o amplituds de pols des"
+" d'optimitzadors clàssics."
 
 #: ../../modules/functionals/functionals.rst:142
 msgid ""
@@ -299,8 +303,8 @@ msgid ""
 "evolution time, time steps, Hamiltonians, and their time-dependent "
 "coefficients."
 msgstr ""
-"**schedule** (:class:`~qilisdk.analog.schedule.Schedule`): Defineix el temps "
-"total d'evolució, els passos de temps, els Hamiltonians i els seus "
+"**schedule** (:class:`~qilisdk.analog.schedule.Schedule`): Defineix el "
+"temps total d'evolució, els passos de temps, els Hamiltonians i els seus "
 "coeficients dependents del temps."
 
 #: ../../modules/functionals/functionals.rst:148
@@ -308,16 +312,16 @@ msgid ""
 "**initial_state** (:class:`~qilisdk.core.qtensor.QTensor`): Initial state"
 " of the system."
 msgstr ""
-"**initial_state** (:class:`~qilisdk.core.qtensor.QTensor`): Estat inicial "
-"del sistema."
+"**initial_state** (:class:`~qilisdk.core.qtensor.QTensor`): Estat inicial"
+" del sistema."
 
 #: ../../modules/functionals/functionals.rst:149
 msgid ""
 "**store_intermediate_results** (bool, optional): If True, records the "
 "state at each time step. Default is False."
 msgstr ""
-"**store_intermediate_results** (bool, opcional): Si és True, registra l'estat "
-"a cada pas de temps. El valor per defecte és False."
+"**store_intermediate_results** (bool, opcional): Si és True, registra "
+"l'estat a cada pas de temps. El valor per defecte és False."
 
 #: ../../modules/functionals/functionals.rst:153
 msgid ""
@@ -333,15 +337,16 @@ msgstr ""
 ":attr:`intermediate_expectation_values` quan "
 "``store_intermediate_results`` està activat."
 
-#: ../../modules/functionals/functionals.rst:199
-msgid "we can execute it on the Qutip backend:"
+#: ../../modules/functionals/functionals.rst:185
+#, fuzzy
+msgid "we can execute it on the QiliSim backend:"
 msgstr "el podem executar al backend QuTiP:"
 
-#: ../../modules/functionals/functionals.rst:225
+#: ../../modules/functionals/functionals.rst:211
 msgid "Quantum Reservoirs"
 msgstr "Reservoris Quàntics"
 
-#: ../../modules/functionals/functionals.rst:227
+#: ../../modules/functionals/functionals.rst:213
 msgid ""
 "The :class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir` "
 "functional executes a reservoir pipeline over a sequence of inputs. Each "
@@ -352,15 +357,15 @@ msgid ""
 "selected qubits between layers."
 msgstr ""
 "El funcional "
-":class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir` executa "
-"una cadena de reservori sobre una seqüència d'entrades. Cada capa aplica un "
-"circuit de pre-processament opcional, un bloc de dinàmica del reservori "
-"analògic (:class:`~qilisdk.analog.schedule.Schedule`), i un circuit de "
-"post-processament opcional, seguit de mesures d'un o més observables. La "
-"llista opcional ``qubits_to_reset`` es pot utilitzar per restablir qubits "
-"seleccionats entre capes."
+":class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir` executa"
+" una cadena de reservori sobre una seqüència d'entrades. Cada capa aplica"
+" un circuit de pre-processament opcional, un bloc de dinàmica del "
+"reservori analògic (:class:`~qilisdk.analog.schedule.Schedule`), i un "
+"circuit de post-processament opcional, seguit de mesures d'un o més "
+"observables. La llista opcional ``qubits_to_reset`` es pot utilitzar per "
+"restablir qubits seleccionats entre capes."
 
-#: ../../modules/functionals/functionals.rst:232
+#: ../../modules/functionals/functionals.rst:218
 msgid ""
 "The reservoir inputs are represented using "
 ":class:`~qilisdk.functionals.quantum_reservoirs.ReservoirInput` "
@@ -370,20 +375,21 @@ msgid ""
 "optimization loops."
 msgstr ""
 "Les entrades del reservori es representen mitjançant paràmetres "
-":class:`~qilisdk.functionals.quantum_reservoirs.ReservoirInput`. Aquests es "
-"comporten com objectes :class:`~qilisdk.core.variables.Parameter` estàndard "
-"però estan marcats com a no entrenables perquè puguin ser dirigits per "
-"seqüències de dades d'entrada en lloc de bucles d'optimització."
+":class:`~qilisdk.functionals.quantum_reservoirs.ReservoirInput`. Aquests "
+"es comporten com objectes :class:`~qilisdk.core.variables.Parameter` "
+"estàndard però estan marcats com a no entrenables perquè puguin ser "
+"dirigits per seqüències de dades d'entrada en lloc de bucles "
+"d'optimització."
 
-#: ../../modules/functionals/functionals.rst:238
+#: ../../modules/functionals/functionals.rst:224
 msgid ""
 "**initial_state** (:class:`~qilisdk.core.qtensor.QTensor`): Initial state"
 " of the reservoir."
 msgstr ""
-"**initial_state** (:class:`~qilisdk.core.qtensor.QTensor`): Estat inicial "
-"del reservori."
+"**initial_state** (:class:`~qilisdk.core.qtensor.QTensor`): Estat inicial"
+" del reservori."
 
-#: ../../modules/functionals/functionals.rst:239
+#: ../../modules/functionals/functionals.rst:225
 msgid ""
 "**reservoir_layer** "
 "(:class:`~qilisdk.functionals.quantum_reservoirs.ReservoirLayer`): "
@@ -392,35 +398,35 @@ msgid ""
 msgstr ""
 "**reservoir_layer** "
 "(:class:`~qilisdk.functionals.quantum_reservoirs.ReservoirLayer`): "
-"Defineix el pre/post-processament, la dinàmica del reservori, els observables "
-"i la política de restabliment."
+"Defineix el pre/post-processament, la dinàmica del reservori, els "
+"observables i la política de restabliment."
 
-#: ../../modules/functionals/functionals.rst:241
+#: ../../modules/functionals/functionals.rst:227
 msgid ""
 "**input_per_layer** (List[Dict[str, float]]): Input values to apply at "
 "each layer, keyed by input parameter names (typically the labels of "
 ":class:`~qilisdk.functionals.quantum_reservoirs.ReservoirInput`)."
 msgstr ""
-"**input_per_layer** (List[Dict[str, float]]): Valors d'entrada a aplicar a "
-"cada capa, indexats pels noms dels paràmetres d'entrada (típicament les "
-"etiquetes de "
+"**input_per_layer** (List[Dict[str, float]]): Valors d'entrada a aplicar "
+"a cada capa, indexats pels noms dels paràmetres d'entrada (típicament les"
+" etiquetes de "
 ":class:`~qilisdk.functionals.quantum_reservoirs.ReservoirInput`)."
 
-#: ../../modules/functionals/functionals.rst:246
+#: ../../modules/functionals/functionals.rst:232
 msgid ""
 ":class:`~qilisdk.functionals.functional_result.FunctionalResult`: Access "
 "per-layer expectation values via :attr:`expectation_values`, plus "
 "optional states via :attr:`state`."
 msgstr ""
-":class:`~qilisdk.functionals.functional_result.FunctionalResult`: Accediu "
-"als valors esperats per capa mitjançant :attr:`expectation_values`, més els "
-"estats opcionals mitjançant :attr:`state`."
+":class:`~qilisdk.functionals.functional_result.FunctionalResult`: Accediu"
+" als valors esperats per capa mitjançant :attr:`expectation_values`, més "
+"els estats opcionals mitjançant :attr:`state`."
 
-#: ../../modules/functionals/functionals.rst:292
+#: ../../modules/functionals/functionals.rst:278
 msgid "Encoding Input Data"
 msgstr "Codificació de Dades d'Entrada"
 
-#: ../../modules/functionals/functionals.rst:294
+#: ../../modules/functionals/functionals.rst:280
 msgid ""
 "You can inject classical data into a reservoir layer in multiple places. "
 "The only requirement is that the keys in ``input_per_layer`` match the "
@@ -428,29 +434,29 @@ msgid ""
 ":class:`~qilisdk.functionals.quantum_reservoirs.ReservoirInput` objects "
 "you place in the layer."
 msgstr ""
-"Podeu injectar dades clàssiques en una capa de reservori en múltiples llocs. "
-"L'únic requisit és que les claus a ``input_per_layer`` coincideixin amb les "
-"etiquetes dels objectes "
+"Podeu injectar dades clàssiques en una capa de reservori en múltiples "
+"llocs. L'únic requisit és que les claus a ``input_per_layer`` "
+"coincideixin amb les etiquetes dels objectes "
 ":class:`~qilisdk.functionals.quantum_reservoirs.ReservoirInput` que "
 "col·loqueu a la capa."
 
-#: ../../modules/functionals/functionals.rst:298
+#: ../../modules/functionals/functionals.rst:284
 msgid "**1. Encode with input and output circuits**"
 msgstr "**1. Codificar amb circuits d'entrada i sortida**"
 
-#: ../../modules/functionals/functionals.rst:335
+#: ../../modules/functionals/functionals.rst:321
 msgid "**2. Encode directly in Hamiltonian parameters**"
 msgstr "**2. Codificar directament en paràmetres del Hamiltonià**"
 
-#: ../../modules/functionals/functionals.rst:366
+#: ../../modules/functionals/functionals.rst:352
 msgid "**3. Encode in the schedule profile and duration**"
 msgstr "**3. Codificar en el perfil de l'esquema i la durada**"
 
-#: ../../modules/functionals/functionals.rst:404
+#: ../../modules/functionals/functionals.rst:390
 msgid "Variational Programs"
 msgstr "Programes Variacionals"
 
-#: ../../modules/functionals/functionals.rst:406
+#: ../../modules/functionals/functionals.rst:392
 msgid ""
 "The :class:`~qilisdk.functionals.variational_program.VariationalProgram` "
 "functional gathers the pieces required for a variational quantum "
@@ -469,21 +475,22 @@ msgid ""
 msgstr ""
 "El funcional "
 ":class:`~qilisdk.functionals.variational_program.VariationalProgram` "
-"reuneix les peces necessàries per a un algorisme quàntic variacional. Accepta "
-"un funcional primitiu parametritzat, un optimitzador i una funció de cost. "
-"Quan es crida "
+"reuneix les peces necessàries per a un algorisme quàntic variacional. "
+"Accepta un funcional primitiu parametritzat, un optimitzador i una funció"
+" de cost. Quan es crida "
 ":meth:`~qilisdk.backends.backend.Backend.execute`, avalua el funcional "
 "repetidament amb paràmetres actualitzats, introdueix el "
-":class:`~qilisdk.functionals.functional_result.FunctionalResult` resultant "
-"a la funció de cost subministrada, i finalment retorna un "
+":class:`~qilisdk.functionals.functional_result.FunctionalResult` "
+"resultant a la funció de cost subministrada, i finalment retorna un "
 ":class:`~qilisdk.functionals.variational_program_result.VariationalProgramResult`."
-" Les restriccions de paràmetres (desigualtats/igualtats sobre paràmetres) "
-"s'adjunten a aquest nivell mitjançant l'argument ``parameter_constraints``; "
-"aquest és el lloc per imposar relacions com ``theta >= phi`` o límits "
-"creuats entre paràmetres en tots els funcionals de QiliSDK. Només els "
-"paràmetres marcats com a entrenables s'optimitzen durant aquest bucle."
+" Les restriccions de paràmetres (desigualtats/igualtats sobre paràmetres)"
+" s'adjunten a aquest nivell mitjançant l'argument "
+"``parameter_constraints``; aquest és el lloc per imposar relacions com "
+"``theta >= phi`` o límits creuats entre paràmetres en tots els funcionals"
+" de QiliSDK. Només els paràmetres marcats com a entrenables s'optimitzen "
+"durant aquest bucle."
 
-#: ../../modules/functionals/functionals.rst:418
+#: ../../modules/functionals/functionals.rst:404
 msgid ""
 "**functional** "
 "(:class:`~qilisdk.functionals.functional.PrimitiveFunctional`): "
@@ -494,24 +501,23 @@ msgid ""
 "<qilisdk.functionals.analog_evolution.AnalogEvolution>`)."
 msgstr ""
 "**functional** "
-"(:class:`~qilisdk.functionals.functional.PrimitiveFunctional`): "
-"Primitiu parametritzat a optimitzar (per exemple "
-":class:`DigitalPropagation "
+"(:class:`~qilisdk.functionals.functional.PrimitiveFunctional`): Primitiu "
+"parametritzat a optimitzar (per exemple :class:`DigitalPropagation "
 "<qilisdk.functionals.digital_propagation.DigitalPropagation>` o "
 ":class:`AnalogEvolution "
 "<qilisdk.functionals.analog_evolution.AnalogEvolution>`)."
 
-#: ../../modules/functionals/functionals.rst:421
+#: ../../modules/functionals/functionals.rst:407
 msgid ""
 "**optimizer** (:class:`~qilisdk.optimizers.optimizer.Optimizer`): "
 "Classical optimizer that proposes new parameter values and optionally "
 "stores intermediate iterates."
 msgstr ""
 "**optimizer** (:class:`~qilisdk.optimizers.optimizer.Optimizer`): "
-"Optimitzador clàssic que proposa nous valors de paràmetres i opcionalment "
-"emmagatzema els iterats intermedis."
+"Optimitzador clàssic que proposa nous valors de paràmetres i opcionalment"
+" emmagatzema els iterats intermedis."
 
-#: ../../modules/functionals/functionals.rst:423
+#: ../../modules/functionals/functionals.rst:409
 msgid ""
 "**cost_function** "
 "(:class:`~qilisdk.cost_functions.cost_function.CostFunction`): Object "
@@ -519,21 +525,21 @@ msgid ""
 " from a :class:`~qilisdk.core.model.Model`."
 msgstr ""
 "**cost_function** "
-"(:class:`~qilisdk.cost_functions.cost_function.CostFunction`): Objecte que "
-"associa els resultats del funcional a un cost escalar; freqüentment construït "
-"a partir d'un :class:`~qilisdk.core.model.Model`."
+"(:class:`~qilisdk.cost_functions.cost_function.CostFunction`): Objecte "
+"que associa els resultats del funcional a un cost escalar; freqüentment "
+"construït a partir d'un :class:`~qilisdk.core.model.Model`."
 
-#: ../../modules/functionals/functionals.rst:425
+#: ../../modules/functionals/functionals.rst:411
 msgid ""
 "**store_intermediate_results** (bool, optional): When True, the optimizer"
 " keeps the intermediate steps, which are exposed through "
 ":attr:`~qilisdk.functionals.variational_program_result.VariationalProgramResult.intermediate_results`."
 msgstr ""
-"**store_intermediate_results** (bool, opcional): Quan és True, l'optimitzador "
-"conserva els passos intermedis, que s'exposen mitjançant "
+"**store_intermediate_results** (bool, opcional): Quan és True, "
+"l'optimitzador conserva els passos intermedis, que s'exposen mitjançant "
 ":attr:`~qilisdk.functionals.variational_program_result.VariationalProgramResult.intermediate_results`."
 
-#: ../../modules/functionals/functionals.rst:427
+#: ../../modules/functionals/functionals.rst:413
 msgid ""
 "**parameter_constraints** "
 "(list[:class:`~qilisdk.core.variables.ComparisonTerm`], optional): "
@@ -543,11 +549,12 @@ msgid ""
 msgstr ""
 "**parameter_constraints** "
 "(list[:class:`~qilisdk.core.variables.ComparisonTerm`], opcional): "
-"Restriccions sobre els paràmetres del funcional (per exemple, ``theta >= 0.5``) "
-"avaluades abans de cada actualització de l'optimitzador. Aquest és el punt "
-"d'entrada admès per imposar relacions entre paràmetres a QiliSDK."
+"Restriccions sobre els paràmetres del funcional (per exemple, ``theta >= "
+"0.5``) avaluades abans de cada actualització de l'optimitzador. Aquest és"
+" el punt d'entrada admès per imposar relacions entre paràmetres a "
+"QiliSDK."
 
-#: ../../modules/functionals/functionals.rst:433
+#: ../../modules/functionals/functionals.rst:419
 msgid ""
 ":class:`~qilisdk.functionals.variational_program_result.VariationalProgramResult`:"
 " Retrieve :attr:`optimal_cost "
@@ -567,13 +574,17 @@ msgstr ""
 ":attr:`optimal_execution_results "
 "<qilisdk.functionals.variational_program_result.VariationalProgramResult.optimal_execution_results>`."
 
-#: ../../modules/functionals/functionals.rst:439
-msgid "**Usage Example (Using QuTiP Backend)**"
+#: ../../modules/functionals/functionals.rst:425
+#, fuzzy
+msgid "**Usage Example (Using QiliSim Backend)**"
 msgstr "**Exemple d'Ús (amb Backend QuTiP)**"
 
-#: ../../modules/functionals/functionals.rst:505
+#: ../../modules/functionals/functionals.rst:491
+#, fuzzy
 msgid ""
-"**Usage Example 2 (Using QuTiP Backend)** This example optimizes a "
+"**Usage Example 2 (Using QiliSim Backend)** This example optimizes a "
 "variational schedule under some parameter constraints."
 msgstr ""
-"**Exemple d'Ús 2 (amb Backend QuTiP)** Aquest exemple optimitza un esquema variacional sota certes restriccions de paràmetres."
+"**Exemple d'Ús 2 (amb Backend QuTiP)** Aquest exemple optimitza un "
+"esquema variacional sota certes restriccions de paràmetres."
+

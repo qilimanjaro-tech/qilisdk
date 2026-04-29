@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-17 14:50+0200\n"
+"POT-Creation-Date: 2026-04-29 11:34+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -281,7 +281,9 @@ msgstr "H_{mix} = - \\sum_i X(i)"
 
 #: ../../tutorials/applications/application_annealing.rst:45
 msgid "The overall time-dependent Hamiltonian that we evolve is then given by:"
-msgstr "El Hamiltoniano dependiente del tiempo que evolucionamos está dado entonces por:"
+msgstr ""
+"El Hamiltoniano dependiente del tiempo que evolucionamos está dado "
+"entonces por:"
 
 #: ../../tutorials/applications/application_annealing.rst:47
 #, python-brace-format
@@ -324,14 +326,16 @@ msgstr ""
 "nuestra evolución:"
 
 #: ../../tutorials/applications/application_annealing.rst:74
+#, fuzzy
 msgid ""
 "We also need to define the schedule - how the coefficients of the problem"
-" and mixing Hamiltonians change over time:"
+" and mixing Hamiltonians change over time. In this case we'll just use a "
+"simple linear mixing:"
 msgstr ""
 "También necesitamos definir el esquema: cómo cambian los coeficientes de "
 "los Hamiltonianos del problema y de mezcla a lo largo del tiempo:"
 
-#: ../../tutorials/applications/application_annealing.rst:88
+#: ../../tutorials/applications/application_annealing.rst:81
 msgid ""
 "We will start in the ground state of our mixing Hamiltonian, which is the"
 " equal superposition state over all possible team assignments:"
@@ -340,7 +344,7 @@ msgstr ""
 "que es el estado de superposición uniforme sobre todas las posibles "
 "asignaciones de equipos:"
 
-#: ../../tutorials/applications/application_annealing.rst:94
+#: ../../tutorials/applications/application_annealing.rst:87
 msgid ""
 "Finally, we initialize our quantum simulator, execute the evolution, and "
 "read out the results:"
@@ -348,11 +352,11 @@ msgstr ""
 "Finalmente, inicializamos nuestro simulador cuántico, ejecutamos la "
 "evolución y leemos los resultados:"
 
-#: ../../tutorials/applications/application_annealing.rst:108
+#: ../../tutorials/applications/application_annealing.rst:101
 msgid "This will print something like the following:"
 msgstr "Esto imprimirá algo parecido a lo siguiente:"
 
-#: ../../tutorials/applications/application_annealing.rst:125
+#: ../../tutorials/applications/application_annealing.rst:118
 msgid ""
 "As you can see from these results, the samples satisfy the constraint "
 "(i.e. have exactly two 1's). More specifically, the two samples \"0110\" "
@@ -361,15 +365,15 @@ msgid ""
 "highest obtainable compatibility score."
 msgstr ""
 
-#: ../../tutorials/applications/application_annealing.rst:130
+#: ../../tutorials/applications/application_annealing.rst:123
 msgid "Further Reading"
 msgstr "Lectura Adicional"
 
-#: ../../tutorials/applications/application_annealing.rst:132
+#: ../../tutorials/applications/application_annealing.rst:125
 msgid "`QUBO`_"
 msgstr "`QUBO`_"
 
-#: ../../tutorials/applications/application_annealing.rst:133
+#: ../../tutorials/applications/application_annealing.rst:126
 msgid "`Quantum Annealing`_"
 msgstr "`Quantum Annealing`_"
 

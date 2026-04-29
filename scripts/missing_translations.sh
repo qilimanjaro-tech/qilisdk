@@ -14,6 +14,7 @@ ORIG_DIR=$(pwd)
 cd "$(dirname "$(dirname "$(realpath "$0")")")"
 
 MISSING=0
+FUZZY=0
 
 for file in $(find ./docs/ -name "*.po"); do
     # match non-empty msgid followed immediately by empty msgstr (not a multiline continuation)
@@ -21,6 +22,12 @@ for file in $(find ./docs/ -name "*.po"); do
         echo "Missing translations in $file"
         MISSING=$((MISSING + 1))
     fi
+    # match fuzzy translations (lines starting with #, followed by a line containing "fuzzy")
+    if grep -Pzo '#.*\nfuzzy' "$file" > /dev/null 2>&1; then
+        echo "Fuzzy translations in $file"
+        FUZZY=$((FUZZY + 1))
+    fi
 done
 
 echo "Total files with missing translations: $MISSING"
+echo "Total files with fuzzy translations: $FUZZY"

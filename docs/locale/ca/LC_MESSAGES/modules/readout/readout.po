@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-14 12:09+0200\n"
+"POT-Creation-Date: 2026-04-29 11:34+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -33,8 +33,9 @@ msgid ""
 msgstr ""
 "La lectura és el mecanisme que controla **quina informació s'extreu del "
 "backend quàntic** després que s'executi un funcional. S'especifica "
-"separadament del propi funcional, de manera que el mateix circuit o esquema "
-"es pot mesurar de maneres diferents sense cap canvi al codi del funcional."
+"separadament del propi funcional, de manera que el mateix circuit o "
+"esquema es pot mesurar de maneres diferents sense cap canvi al codi del "
+"funcional."
 
 #: ../../modules/readout/readout.rst:16
 msgid ""
@@ -56,9 +57,9 @@ msgid ""
 " is never modified."
 msgstr ""
 ":class:`~qilisdk.readout.readout_spec.Readout` és un constructor que "
-"acumula mètodes de lectura encadenant crides ``with_*``. Cada crida retorna "
-"una *nova* especificació amb un slot addicional omplert; l'objecte original "
-"mai es modifica."
+"acumula mètodes de lectura encadenant crides ``with_*``. Cada crida "
+"retorna una *nova* especificació amb un slot addicional omplert; "
+"l'objecte original mai es modifica."
 
 #: ../../modules/readout/readout.rst:37
 msgid ""
@@ -68,7 +69,8 @@ msgid ""
 msgstr ""
 "L'especificació acabada es passa a "
 ":meth:`~qilisdk.backends.backend.Backend.execute` (o "
-":meth:`~qilisdk.speqtrum.speqtrum.SpeQtrum.submit` per al maquinari remot):"
+":meth:`~qilisdk.speqtrum.speqtrum.SpeQtrum.submit` per al maquinari "
+"remot):"
 
 #: ../../modules/readout/readout.rst:53
 msgid ""
@@ -94,8 +96,8 @@ msgstr ""
 "Indica al backend que realitzi ``nshots`` mesures projectives a la base "
 "computacional i reculli els comptadors de cadenes de bits."
 
-#: ../../modules/readout/readout.rst:79 ../../modules/readout/readout.rst:104
-#: ../../modules/readout/readout.rst:132
+#: ../../modules/readout/readout.rst:79 ../../modules/readout/readout.rst:107
+#: ../../modules/readout/readout.rst:135
 msgid "**Parameters**"
 msgstr "**Paràmetres**"
 
@@ -104,57 +106,69 @@ msgid ""
 "**nshots** (``int``): Number of measurement shots.  Must be a positive "
 "integer."
 msgstr ""
-"**nshots** (``int``): Nombre de shots de mesura. Ha de ser un enter positiu."
+"**nshots** (``int``): Nombre de shots de mesura. Ha de ser un enter "
+"positiu."
 
-#: ../../modules/readout/readout.rst:83 ../../modules/readout/readout.rst:112
-#: ../../modules/readout/readout.rst:137
+#: ../../modules/readout/readout.rst:82
+msgid ""
+"**expand_samples** (``bool``): Whether to expand the samples, by default "
+"True. If this is True, partial measurements will be returned as \"0_\" "
+"where the \"_\" indicates an unmeasured qubit. If False, the unmeasured "
+"qubits will be dropped from the bitstring, so \"0_\" would be returned as"
+" \"0\"."
+msgstr ""
+
+#: ../../modules/readout/readout.rst:86 ../../modules/readout/readout.rst:115
+#: ../../modules/readout/readout.rst:140
 msgid "**When to Use It**"
 msgstr "**Quan Usar-lo**"
 
-#: ../../modules/readout/readout.rst:85
+#: ../../modules/readout/readout.rst:88
 msgid ""
 "Use sampling when you need the full bitstring distribution, for instance "
 "to evaluate a combinatorial cost function, run QAOA post-processing, or "
 "compute error rates."
 msgstr ""
-"Useu el mostreig quan necessiteu la distribució completa de cadenes de bits, "
-"per exemple per avaluar una funció de cost combinatòria, executar el "
-"post-processament QAOA o calcular taxes d'error."
+"Useu el mostreig quan necessiteu la distribució completa de cadenes de "
+"bits, per exemple per avaluar una funció de cost combinatòria, executar "
+"el post-processament QAOA o calcular taxes d'error."
 
-#: ../../modules/readout/readout.rst:89
+#: ../../modules/readout/readout.rst:92
 msgid "Expectation Values (with_expectation)"
 msgstr "Valors Esperats (with_expectation)"
 
-#: ../../modules/readout/readout.rst:91
+#: ../../modules/readout/readout.rst:94
 msgid ""
 "Instructs the backend to compute ``⟨ψ|O|ψ⟩`` for each observable in the "
 "list."
 msgstr ""
-"Indica al backend que calculi ``⟨ψ|O|ψ⟩`` per a cada observable de la llista."
+"Indica al backend que calculi ``⟨ψ|O|ψ⟩`` per a cada observable de la "
+"llista."
 
-#: ../../modules/readout/readout.rst:106
+#: ../../modules/readout/readout.rst:109
 msgid ""
 "**observables** (``list[Hamiltonian | QTensor]``): The operators whose "
 "expectation values are requested.  Each entry can be a "
 ":class:`~qilisdk.analog.Hamiltonian` expression (e.g. ``Z(0) + Z(1)``) or"
 " a :class:`~qilisdk.core.QTensor` directly."
 msgstr ""
-"**observables** (``list[Hamiltonian | QTensor]``): Els operadors dels quals "
-"es demanen els valors esperats. Cada entrada pot ser una expressió "
+"**observables** (``list[Hamiltonian | QTensor]``): Els operadors dels "
+"quals es demanen els valors esperats. Cada entrada pot ser una expressió "
 ":class:`~qilisdk.analog.Hamiltonian` (per exemple ``Z(0) + Z(1)``) o un "
 ":class:`~qilisdk.core.QTensor` directament."
 
-#: ../../modules/readout/readout.rst:109
+#: ../../modules/readout/readout.rst:112
 msgid ""
 "**nshots** (``int``, default ``0``): Number of shots for stochastic "
 "estimation.  ``0`` uses the exact state-vector inner product, meaning no "
 "sampling noise, only available on simulators."
 msgstr ""
-"**nshots** (``int``, per defecte ``0``): Nombre de shots per a l'estimació "
-"estocàstica. ``0`` utilitza el producte intern exacte del vector d'estat, "
-"sense soroll de mostreig, disponible únicament en simuladors."
+"**nshots** (``int``, per defecte ``0``): Nombre de shots per a "
+"l'estimació estocàstica. ``0`` utilitza el producte intern exacte del "
+"vector d'estat, sense soroll de mostreig, disponible únicament en "
+"simuladors."
 
-#: ../../modules/readout/readout.rst:114
+#: ../../modules/readout/readout.rst:117
 msgid ""
 "Use expectation values when you need a scalar energy or observable "
 "readout, for example in variational algorithms (VQE, QAOA energy "
@@ -164,151 +178,152 @@ msgstr ""
 "d'observable, per exemple en algorismes variacionals (VQE, avaluació "
 "d'energia QAOA) o estudis d'evolució temporal analògica."
 
-#: ../../modules/readout/readout.rst:118
+#: ../../modules/readout/readout.rst:121
 msgid "Full Quantum State (with_state_tomography)"
 msgstr "Estat Quàntic Complet (with_state_tomography)"
 
-#: ../../modules/readout/readout.rst:120
+#: ../../modules/readout/readout.rst:123
 msgid ""
 "Instructs the backend to return the full quantum state vector (or density"
 " matrix) after execution."
 msgstr ""
-"Indica al backend que retorni el vector d'estat quàntic complet (o la matriu "
-"de densitat) després de l'execució."
+"Indica al backend que retorni el vector d'estat quàntic complet (o la "
+"matriu de densitat) després de l'execució."
 
-#: ../../modules/readout/readout.rst:134
+#: ../../modules/readout/readout.rst:137
 msgid ""
 "**method** (``Literal[\"exact\"]``, default ``\"exact\"``): Tomography "
 "method.  Currently only ``\"exact\"`` is supported, such that the backend"
 " returns the raw state vector."
 msgstr ""
-"**method** (``Literal[\"exact\"]``, per defecte ``\"exact\"``): Mètode de "
-"tomografia. Actualment només s'admet ``\"exact\"``, de manera que el backend "
-"retorna el vector d'estat brut."
+"**method** (``Literal[\"exact\"]``, per defecte ``\"exact\"``): Mètode de"
+" tomografia. Actualment només s'admet ``\"exact\"``, de manera que el "
+"backend retorna el vector d'estat brut."
 
-#: ../../modules/readout/readout.rst:139
+#: ../../modules/readout/readout.rst:142
 msgid ""
 "Use state tomography when you need the complete quantum state for post-"
 "processing: computing custom observables offline, visualising the state, "
 "checking fidelity, or seeding the next step of a multi-step algorithm."
 msgstr ""
-"Useu la tomografia d'estat quan necessiteu l'estat quàntic complet per al "
-"post-processament: calcular observables personalitzats fora de línia, "
-"visualitzar l'estat, verificar la fidelitat o alimentar el següent pas d'un "
-"algorisme de múltiples passos."
+"Useu la tomografia d'estat quan necessiteu l'estat quàntic complet per al"
+" post-processament: calcular observables personalitzats fora de línia, "
+"visualitzar l'estat, verificar la fidelitat o alimentar el següent pas "
+"d'un algorisme de múltiples passos."
 
-#: ../../modules/readout/readout.rst:145
+#: ../../modules/readout/readout.rst:148
 msgid ""
 "State tomography is only available on simulators.  Physical QPUs "
 "(accessed via :class:`~qilisdk.speqtrum.speqtrum.SpeQtrum`) do not "
 "support this readout type."
 msgstr ""
-"La tomografia d'estat només està disponible en simuladors. Les QPU físiques "
-"(a les quals s'accedeix mitjançant :class:`~qilisdk.speqtrum.speqtrum.SpeQtrum`) "
-"no admeten aquest tipus de lectura."
+"La tomografia d'estat només està disponible en simuladors. Les QPU "
+"físiques (a les quals s'accedeix mitjançant "
+":class:`~qilisdk.speqtrum.speqtrum.SpeQtrum`) no admeten aquest tipus de "
+"lectura."
 
-#: ../../modules/readout/readout.rst:149
+#: ../../modules/readout/readout.rst:152
 msgid "Combining Multiple Readout Types"
 msgstr "Combinació de Múltiples Tipus de Lectura"
 
-#: ../../modules/readout/readout.rst:151
+#: ../../modules/readout/readout.rst:154
 msgid ""
 "Any combination of the three readout types can be requested in a single "
 "execution by chaining the ``with_*`` calls.  The backend performs one "
 "circuit run and extracts all requested outputs."
 msgstr ""
-"Es pot demanar qualsevol combinació dels tres tipus de lectura en una única "
-"execució encadenant les crides ``with_*``. El backend realitza una sola "
-"execució del circuit i extreu totes les sortides sol·licitades."
+"Es pot demanar qualsevol combinació dels tres tipus de lectura en una "
+"única execució encadenant les crides ``with_*``. El backend realitza una "
+"sola execució del circuit i extreu totes les sortides sol·licitades."
 
-#: ../../modules/readout/readout.rst:172
+#: ../../modules/readout/readout.rst:175
 msgid "Accessing Results"
 msgstr "Accés als Resultats"
 
-#: ../../modules/readout/readout.rst:174
+#: ../../modules/readout/readout.rst:177
 msgid ""
 ":meth:`~qilisdk.backends.backend.Backend.execute` returns a "
 ":class:`~qilisdk.functionals.FunctionalResult`.  There are two ways to "
 "access the readout data."
 msgstr ""
 ":meth:`~qilisdk.backends.backend.Backend.execute` retorna un "
-":class:`~qilisdk.functionals.FunctionalResult`. Hi ha dues maneres d'accedir "
-"a les dades de lectura."
+":class:`~qilisdk.functionals.FunctionalResult`. Hi ha dues maneres "
+"d'accedir a les dades de lectura."
 
-#: ../../modules/readout/readout.rst:178
+#: ../../modules/readout/readout.rst:181
 msgid "Convenient Shortcuts"
 msgstr "Dreceres Convenients"
 
-#: ../../modules/readout/readout.rst:180
+#: ../../modules/readout/readout.rst:183
 msgid "The quickest way to access results:"
 msgstr "La manera més ràpida d'accedir als resultats:"
 
-#: ../../modules/readout/readout.rst:186 ../../modules/readout/readout.rst:228
-#: ../../modules/readout/readout.rst:277
+#: ../../modules/readout/readout.rst:189 ../../modules/readout/readout.rst:231
+#: ../../modules/readout/readout.rst:283
 msgid "Property"
 msgstr "Propietat"
 
-#: ../../modules/readout/readout.rst:187 ../../modules/readout/readout.rst:278
+#: ../../modules/readout/readout.rst:190 ../../modules/readout/readout.rst:284
 msgid "Type"
 msgstr "Tipus"
 
-#: ../../modules/readout/readout.rst:188 ../../modules/readout/readout.rst:230
-#: ../../modules/readout/readout.rst:279
+#: ../../modules/readout/readout.rst:191 ../../modules/readout/readout.rst:233
+#: ../../modules/readout/readout.rst:285
 msgid "Requires"
 msgstr "Requereix"
 
-#: ../../modules/readout/readout.rst:189
+#: ../../modules/readout/readout.rst:192
 msgid "``result.get_samples()``"
 msgstr "``result.get_samples()``"
 
-#: ../../modules/readout/readout.rst:190
+#: ../../modules/readout/readout.rst:193
 msgid "``dict[str, int]``"
 msgstr "``dict[str, int]``"
 
-#: ../../modules/readout/readout.rst:191 ../../modules/readout/readout.rst:233
-#: ../../modules/readout/readout.rst:282
+#: ../../modules/readout/readout.rst:194 ../../modules/readout/readout.rst:236
+#: ../../modules/readout/readout.rst:288
 msgid "``.with_sampling()``"
 msgstr "``.with_sampling()``"
 
-#: ../../modules/readout/readout.rst:192
+#: ../../modules/readout/readout.rst:195
 msgid "``result.get_probabilities()``"
 msgstr "``result.get_probabilities()``"
 
-#: ../../modules/readout/readout.rst:193
+#: ../../modules/readout/readout.rst:196
 msgid "``dict[str, float]``"
 msgstr "``dict[str, float]``"
 
-#: ../../modules/readout/readout.rst:194 ../../modules/readout/readout.rst:285
+#: ../../modules/readout/readout.rst:197 ../../modules/readout/readout.rst:291
 msgid "``.with_sampling()`` or ``.with_state_tomography()``"
 msgstr "``.with_sampling()`` o ``.with_state_tomography()``"
 
-#: ../../modules/readout/readout.rst:195
+#: ../../modules/readout/readout.rst:198
 msgid "``result.get_expectation_values()``"
 msgstr "``result.get_expectation_values()``"
 
-#: ../../modules/readout/readout.rst:196
+#: ../../modules/readout/readout.rst:199
 msgid "``list[float]``"
 msgstr "``list[float]``"
 
-#: ../../modules/readout/readout.rst:197 ../../modules/readout/readout.rst:236
-#: ../../modules/readout/readout.rst:288
+#: ../../modules/readout/readout.rst:200 ../../modules/readout/readout.rst:239
+#: ../../modules/readout/readout.rst:294
 msgid "``.with_expectation()``"
 msgstr "``.with_expectation()``"
 
-#: ../../modules/readout/readout.rst:198
+#: ../../modules/readout/readout.rst:201
 msgid "``result.get_state()``"
 msgstr "``result.get_state()``"
 
-#: ../../modules/readout/readout.rst:199
+#: ../../modules/readout/readout.rst:202
 msgid "``QTensor``"
 msgstr "``QTensor``"
 
-#: ../../modules/readout/readout.rst:200 ../../modules/readout/readout.rst:239
-#: ../../modules/readout/readout.rst:291
+#: ../../modules/readout/readout.rst:203 ../../modules/readout/readout.rst:242
+#: ../../modules/readout/readout.rst:297
 msgid "``.with_state_tomography()``"
 msgstr "``.with_state_tomography()``"
 
-#: ../../modules/readout/readout.rst:202
+#: ../../modules/readout/readout.rst:205
 msgid ""
 "These raise ``ValueError`` at runtime if the corresponding readout was "
 "not requested."
@@ -316,121 +331,129 @@ msgstr ""
 "Aquests generen un ``ValueError`` en temps d'execució si la lectura "
 "corresponent no va ser sol·licitada."
 
-#: ../../modules/readout/readout.rst:205
+#: ../../modules/readout/readout.rst:208
 msgid "Typed Forwarding Properties"
 msgstr "Propietats de Reenvío Tipades"
 
-#: ../../modules/readout/readout.rst:207
+#: ../../modules/readout/readout.rst:210
 msgid ""
 "For production code or when combining multiple readout types, use the "
 "typed forwarding properties. These return the raw result objects and let "
 "the type checker verify access without runtime guards:"
 msgstr ""
-"Per al codi de producció o quan es combinen múltiples tipus de lectura, useu "
-"les propietats de reenvío tipades. Aquestes retornen els objectes de resultat "
-"bruts i permeten que el verificador de tipus validi l'accés sense guardes en "
-"temps d'execució:"
+"Per al codi de producció o quan es combinen múltiples tipus de lectura, "
+"useu les propietats de reenvío tipades. Aquestes retornen els objectes de"
+" resultat bruts i permeten que el verificador de tipus validi l'accés "
+"sense guardes en temps d'execució:"
 
-#: ../../modules/readout/readout.rst:229
+#: ../../modules/readout/readout.rst:232
 msgid "Returns"
 msgstr "Retorna"
 
-#: ../../modules/readout/readout.rst:231
+#: ../../modules/readout/readout.rst:234
 msgid "``result.sampling``"
 msgstr "``result.sampling``"
 
-#: ../../modules/readout/readout.rst:232
+#: ../../modules/readout/readout.rst:235
 msgid "``SamplingReadoutResult | None``"
 msgstr "``SamplingReadoutResult | None``"
 
-#: ../../modules/readout/readout.rst:234
+#: ../../modules/readout/readout.rst:237
 msgid "``result.expectation``"
 msgstr "``result.expectation``"
 
-#: ../../modules/readout/readout.rst:235
+#: ../../modules/readout/readout.rst:238
 msgid "``ExpectationReadoutResult | None``"
 msgstr "``ExpectationReadoutResult | None``"
 
-#: ../../modules/readout/readout.rst:237
+#: ../../modules/readout/readout.rst:240
 msgid "``result.state_tomography``"
 msgstr "``result.state_tomography``"
 
-#: ../../modules/readout/readout.rst:238
+#: ../../modules/readout/readout.rst:241
 msgid "``StateTomographyReadoutResult | None``"
 msgstr "``StateTomographyReadoutResult | None``"
 
-#: ../../modules/readout/readout.rst:242
+#: ../../modules/readout/readout.rst:245
 msgid "Intermediate Results"
 msgstr "Resultats Intermedis"
 
-#: ../../modules/readout/readout.rst:244
+#: ../../modules/readout/readout.rst:247
+#, fuzzy
 msgid ""
 "When a functional is constructed with ``store_intermediate_results=True``"
 " (currently supported by :class:`~qilisdk.functionals.AnalogEvolution` "
-"and :class:`~qilisdk.functionals.QuantumReservoir`), the backend stores a"
+"and :class:`~qilisdk.functionals.QuantumReservoir`), or via mid-circuit "
+"measurements in a :class:`~qilisdk.circuit.Circuit`, the backend stores a"
 " readout result for every time step.  The same readout methods apply at "
 "each step."
 msgstr ""
 "Quan un funcional es construeix amb ``store_intermediate_results=True`` "
 "(actualment admès per :class:`~qilisdk.functionals.AnalogEvolution` i "
-":class:`~qilisdk.functionals.QuantumReservoir`), el backend emmagatzema un "
-"resultat de lectura per a cada pas de temps. Els mateixos mètodes de lectura "
-"s'apliquen a cada pas."
+":class:`~qilisdk.functionals.QuantumReservoir`), el backend emmagatzema "
+"un resultat de lectura per a cada pas de temps. Els mateixos mètodes de "
+"lectura s'apliquen a cada pas."
 
-#: ../../modules/readout/readout.rst:280
-msgid "``result.intermediate_samples``"
+#: ../../modules/readout/readout.rst:286
+#, fuzzy
+msgid "``result.get_intermediate_samples()``"
 msgstr "``result.intermediate_samples``"
 
-#: ../../modules/readout/readout.rst:281
+#: ../../modules/readout/readout.rst:287
 msgid "``list[dict[str, int]]``"
 msgstr "``list[dict[str, int]]``"
 
-#: ../../modules/readout/readout.rst:283
-msgid "``result.intermediate_probabilities``"
+#: ../../modules/readout/readout.rst:289
+#, fuzzy
+msgid "``result.get_intermediate_probabilities()``"
 msgstr "``result.intermediate_probabilities``"
 
-#: ../../modules/readout/readout.rst:284
+#: ../../modules/readout/readout.rst:290
 msgid "``list[dict[str, float]]``"
 msgstr "``list[dict[str, float]]``"
 
-#: ../../modules/readout/readout.rst:286
-msgid "``result.intermediate_expectation_values``"
+#: ../../modules/readout/readout.rst:292
+#, fuzzy
+msgid "``result.get_intermediate_expectation_values()``"
 msgstr "``result.intermediate_expectation_values``"
 
-#: ../../modules/readout/readout.rst:287
+#: ../../modules/readout/readout.rst:293
 msgid "``list[list[float]]``"
 msgstr "``list[list[float]]``"
 
-#: ../../modules/readout/readout.rst:289
-msgid "``result.intermediate_states``"
+#: ../../modules/readout/readout.rst:295
+#, fuzzy
+msgid "``result.get_intermediate_states()``"
 msgstr "``result.intermediate_states``"
 
-#: ../../modules/readout/readout.rst:290
+#: ../../modules/readout/readout.rst:296
 msgid "``list[QTensor]``"
 msgstr "``list[QTensor]``"
 
-#: ../../modules/readout/readout.rst:293
+#: ../../modules/readout/readout.rst:299
 msgid ""
 "All intermediate lists contain one entry per time step in chronological "
 "order, with the **final** step appended last.  ``result[i]`` returns the "
 ":class:`~qilisdk.readout.readout_results.ReadoutCompositeResults` for "
 "step ``i``."
 msgstr ""
-"Totes les llistes intermèdies contenen una entrada per pas de temps en ordre "
-"cronològic, amb el pas **final** annexat al final. ``result[i]`` retorna el "
+"Totes les llistes intermèdies contenen una entrada per pas de temps en "
+"ordre cronològic, amb el pas **final** annexat al final. ``result[i]`` "
+"retorna el "
 ":class:`~qilisdk.readout.readout_results.ReadoutCompositeResults` per al "
 "pas ``i``."
 
-#: ../../modules/readout/readout.rst:298
+#: ../../modules/readout/readout.rst:304
 msgid "Complete Example"
 msgstr "Exemple Complet"
 
-#: ../../modules/readout/readout.rst:300
+#: ../../modules/readout/readout.rst:306
 msgid ""
 "The following example runs an analog annealing schedule, collects "
 "expectation values and the final state at every time step, then plots the"
 " observable trajectory."
 msgstr ""
-"L'exemple següent executa un esquema d'annealing analògic, recull els valors "
-"esperats i l'estat final a cada pas de temps, i després representa la "
-"trajectòria de l'observable."
+"L'exemple següent executa un esquema d'annealing analògic, recull els "
+"valors esperats i l'estat final a cada pas de temps, i després representa"
+" la trajectòria de l'observable."
+

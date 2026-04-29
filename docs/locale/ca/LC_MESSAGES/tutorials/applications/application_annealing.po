@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-17 14:50+0200\n"
+"POT-Creation-Date: 2026-04-29 11:34+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -323,14 +323,16 @@ msgstr ""
 "nostra evolució:"
 
 #: ../../tutorials/applications/application_annealing.rst:74
+#, fuzzy
 msgid ""
 "We also need to define the schedule - how the coefficients of the problem"
-" and mixing Hamiltonians change over time:"
+" and mixing Hamiltonians change over time. In this case we'll just use a "
+"simple linear mixing:"
 msgstr ""
 "També necessitem definir l'esquema: com canvien els coeficients dels "
 "Hamiltonians del problema i de barreja al llarg del temps:"
 
-#: ../../tutorials/applications/application_annealing.rst:88
+#: ../../tutorials/applications/application_annealing.rst:81
 msgid ""
 "We will start in the ground state of our mixing Hamiltonian, which is the"
 " equal superposition state over all possible team assignments:"
@@ -339,7 +341,7 @@ msgstr ""
 " l'estat de superposició uniforme sobre totes les assignacions possibles "
 "d'equips:"
 
-#: ../../tutorials/applications/application_annealing.rst:94
+#: ../../tutorials/applications/application_annealing.rst:87
 msgid ""
 "Finally, we initialize our quantum simulator, execute the evolution, and "
 "read out the results:"
@@ -347,11 +349,11 @@ msgstr ""
 "Finalment, inicialitzem el nostre simulador quàntic, executem l'evolució "
 "i llegim els resultats:"
 
-#: ../../tutorials/applications/application_annealing.rst:108
+#: ../../tutorials/applications/application_annealing.rst:101
 msgid "This will print something like the following:"
 msgstr "Això imprimirà quelcom semblant a lo següent:"
 
-#: ../../tutorials/applications/application_annealing.rst:125
+#: ../../tutorials/applications/application_annealing.rst:118
 msgid ""
 "As you can see from these results, the samples satisfy the constraint "
 "(i.e. have exactly two 1's). More specifically, the two samples \"0110\" "
@@ -360,15 +362,15 @@ msgid ""
 "highest obtainable compatibility score."
 msgstr ""
 
-#: ../../tutorials/applications/application_annealing.rst:130
+#: ../../tutorials/applications/application_annealing.rst:123
 msgid "Further Reading"
 msgstr "Lectura Addicional"
 
-#: ../../tutorials/applications/application_annealing.rst:132
+#: ../../tutorials/applications/application_annealing.rst:125
 msgid "`QUBO`_"
 msgstr "`QUBO`_"
 
-#: ../../tutorials/applications/application_annealing.rst:133
+#: ../../tutorials/applications/application_annealing.rst:126
 msgid "`Quantum Annealing`_"
 msgstr "`Quantum Annealing`_"
 

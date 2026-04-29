@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-14 12:09+0200\n"
+"POT-Creation-Date: 2026-04-29 11:34+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -30,8 +30,8 @@ msgid ""
 "three backends are supported:"
 msgstr ""
 "El mòdul :mod:`~qilisdk.backends` proporciona motors d'execució concrets "
-"per executar :mod:`~qilisdk.functionals` (processos quàntics). Actualment, "
-"s'admeten tres backends:"
+"per executar :mod:`~qilisdk.functionals` (processos quàntics). "
+"Actualment, s'admeten tres backends:"
 
 #: ../../modules/backends/backends.rst:15
 msgid ":class:`~qilisdk.backends.qilisim.QiliSim`"
@@ -67,9 +67,9 @@ msgid ""
 " the backend's :meth:`~qilisdk.backends.backend.Backend.execute` method "
 "along with readout specifications:"
 msgstr ""
-"Un cop instal·lat, qualsevol funcional primitiu es pot executar passant-lo "
-"al mètode :meth:`~qilisdk.backends.backend.Backend.execute` del backend "
-"juntament amb les especificacions de lectura:"
+"Un cop instal·lat, qualsevol funcional primitiu es pot executar passant-"
+"lo al mètode :meth:`~qilisdk.backends.backend.Backend.execute` del "
+"backend juntament amb les especificacions de lectura:"
 
 #: ../../modules/backends/backends.rst:44
 msgid "Architecture Overview"
@@ -104,8 +104,8 @@ msgstr ""
 "el capítol :doc:`Functionals </modules/functionals/functionals>`). El "
 "mètode execute també accepta especificacions de lectura que defineixen "
 "com es mesura l'estat quàntic. El mètode execute també s'utilitza per "
-"optimitzar programes variacionals mitjançant crides repetides al funcional "
-"primitiu parametritzat subjacent."
+"optimitzar programes variacionals mitjançant crides repetides al "
+"funcional primitiu parametritzat subjacent."
 
 #: ../../modules/backends/backends.rst:53
 msgid ""
@@ -129,9 +129,9 @@ msgid ""
 "simulator. GPU backends also expect compatible drivers to be present on "
 "the system."
 msgstr ""
-"Instal·lar un extra de backend incorpora la pila de biblioteques requerida "
-"per a aquell simulador. Els backends de GPU també esperen que hi hagi "
-"controladors compatibles al sistema."
+"Instal·lar un extra de backend incorpora la pila de biblioteques "
+"requerida per a aquell simulador. Els backends de GPU també esperen que "
+"hi hagi controladors compatibles al sistema."
 
 #: ../../modules/backends/backends.rst:66
 #: ../../modules/backends/backends.rst:92
@@ -207,8 +207,8 @@ msgid ""
 "The table below summarizes which primitive :mod:`~qilisdk.functionals` "
 "each backend can execute."
 msgstr ""
-"La taula següent resumeix quins :mod:`~qilisdk.functionals` primitius "
-"pot executar cada backend."
+"La taula següent resumeix quins :mod:`~qilisdk.functionals` primitius pot"
+" executar cada backend."
 
 #: ../../modules/backends/backends.rst:93
 msgid "DigitalPropagation"
@@ -262,45 +262,10 @@ msgstr ""
 "principal de QILISDK."
 
 #: ../../modules/backends/backends.rst:123
-#: ../../modules/backends/backends.rst:196
-#: ../../modules/backends/backends.rst:261
-msgid "**Initialization**"
-msgstr "**Inicialització**"
-
-#: ../../modules/backends/backends.rst:131
-#: ../../modules/backends/backends.rst:206
-#: ../../modules/backends/backends.rst:269
-msgid "**Capabilities**"
-msgstr "**Capacitats**"
-
-#: ../../modules/backends/backends.rst:133
-msgid ""
-"**DigitalPropagation** of digital circuits with efficient state-vector "
-"simulation."
-msgstr ""
-"**DigitalPropagation** de circuits digitals amb simulació eficient de "
-"vector d'estat."
-
-#: ../../modules/backends/backends.rst:134
-#: ../../modules/backends/backends.rst:272
-msgid "**AnalogEvolution** driven by :class:`~qilisdk.analog.schedule.Schedule`."
-msgstr "**AnalogEvolution** dirigida per :class:`~qilisdk.analog.schedule.Schedule`."
-
-#: ../../modules/backends/backends.rst:135
-msgid ""
-"Compatible with "
-":class:`~qilisdk.functionals.variational_program.VariationalProgram` for "
-"classical optimization loops."
-msgstr ""
-"Compatible amb "
-":class:`~qilisdk.functionals.variational_program.VariationalProgram` per "
-"a bucles d'optimització clàssics."
-
-#: ../../modules/backends/backends.rst:137
 msgid "**Parameters**"
 msgstr "**Paràmetres**"
 
-#: ../../modules/backends/backends.rst:139
+#: ../../modules/backends/backends.rst:125
 msgid ""
 "``noise_model`` (:class:`~qilisdk.noise.noise_model.NoiseModel`, "
 "optional): Noise model applied during simulation."
@@ -308,7 +273,7 @@ msgstr ""
 "``noise_model`` (:class:`~qilisdk.noise.noise_model.NoiseModel`, "
 "opcional): Model de soroll aplicat durant la simulació."
 
-#: ../../modules/backends/backends.rst:140
+#: ../../modules/backends/backends.rst:126
 msgid ""
 "``analog_simulation_method`` "
 "(:class:`~qilisdk.backends.backend_config.AnalogMethod`, optional): "
@@ -318,7 +283,7 @@ msgstr ""
 "(:class:`~qilisdk.backends.backend_config.AnalogMethod`, opcional): "
 "Mètode de simulació analògica i opcions específiques del mètode."
 
-#: ../../modules/backends/backends.rst:141
+#: ../../modules/backends/backends.rst:127
 msgid ""
 "``digital_simulation_method`` "
 "(:class:`~qilisdk.backends.backend_config.DigitalMethod`, optional): "
@@ -328,7 +293,7 @@ msgstr ""
 "(:class:`~qilisdk.backends.backend_config.DigitalMethod`, opcional): "
 "Opcions de simulació digital."
 
-#: ../../modules/backends/backends.rst:142
+#: ../../modules/backends/backends.rst:128
 msgid ""
 "``execution_config`` "
 "(:class:`~qilisdk.backends.backend_config.ExecutionConfig`, optional): "
@@ -339,21 +304,88 @@ msgstr ""
 "Opcions d'execució en temps d'execució, com ara el nombre de fils i la "
 "llavor aleatòria."
 
-#: ../../modules/backends/backends.rst:144
-msgid "**Configuration example**"
-msgstr "**Exemple de configuració**"
+#: ../../modules/backends/backends.rst:130
+msgid ""
+"<<<<<<< sdk-260-make-qilisim-faster **Usage Example** ======= "
+"**Configuration example**"
+msgstr ""
+"<<<<<<< sdk-260-make-qilisim-faster **Exemple d'ús** ======= "
+"**Exemple de configuració**"
 
-#: ../../modules/backends/backends.rst:160
-#: ../../modules/backends/backends.rst:218
-#: ../../modules/backends/backends.rst:276
-msgid "**Example**"
-msgstr "**Exemple**"
+#: ../../modules/backends/backends.rst:149
+msgid "**Example** >>>>>>> main"
+msgstr "**Exemple** >>>>>>> main"
 
-#: ../../modules/backends/backends.rst:184
+#: ../../modules/backends/backends.rst:173
+msgid "**Configuration**"
+msgstr "**Configuració**"
+
+#: ../../modules/backends/backends.rst:175
+msgid ""
+"QiliSim has a variety of configuration options to customize the "
+"simulation methods and performance characteristics. These can be set at "
+"initialization via the ``analog_simulation_method``, "
+"``digital_simulation_method``, and ``execution_config`` parameters:"
+msgstr ""
+"QiliSim té diverses opcions de configuració per personalitzar els mètodes"
+" de simulació i les característiques de rendiment. Aquestes es poden "
+"establir durant la inicialització mitjançant els paràmetres "
+"``analog_simulation_method``, ``digital_simulation_method`` i "
+"``execution_config``:"
+
+#: ../../modules/backends/backends.rst:192
+msgid "Possible analog simulation methods:"
+msgstr "Mètodes de simulació analògica possibles:"
+
+#: ../../modules/backends/backends.rst:194
+msgid ""
+":class:`~qilisdk.backends.backend_config.AnalogMethod.integrator`: "
+"General-purpose RK4 integrator."
+msgstr ""
+":class:`~qilisdk.backends.backend_config.AnalogMethod.integrator`: "
+"Integrador RK4 de propòsit general."
+
+#: ../../modules/backends/backends.rst:195
+msgid ""
+":class:`~qilisdk.backends.backend_config.AnalogMethod.adaptive_integrator`:"
+" Adaptive RK45 integrator, faster for some systems."
+msgstr ""
+":class:`~qilisdk.backends.backend_config.AnalogMethod.adaptive_integrator`:"
+" Integrador adaptatiu RK45, més ràpid per a alguns sistemes."
+
+#: ../../modules/backends/backends.rst:196
+msgid ""
+":class:`~qilisdk.backends.backend_config.AnalogMethod.direct`: Matrix "
+"exponential method for small systems."
+msgstr ""
+":class:`~qilisdk.backends.backend_config.AnalogMethod.direct`: Mètode "
+"d'exponencial matricial per a sistemes petits."
+
+#: ../../modules/backends/backends.rst:197
+msgid ""
+":class:`~qilisdk.backends.backend_config.AnalogMethod.arnoldi`: Krylov "
+"subspace method."
+msgstr ""
+":class:`~qilisdk.backends.backend_config.AnalogMethod.arnoldi`: Mètode "
+"del subespai de Krylov."
+
+#: ../../modules/backends/backends.rst:199
+msgid "Possible digital simulation methods:"
+msgstr "Mètodes de simulació digital possibles:"
+
+#: ../../modules/backends/backends.rst:201
+msgid ""
+":class:`~qilisdk.backends.backend_config.DigitalMethod.statevector`: "
+"Exact state-vector simulation with optional caching."
+msgstr ""
+":class:`~qilisdk.backends.backend_config.DigitalMethod.statevector`: "
+"Simulació exacta de vector d'estat amb memòria cau opcional."
+
+#: ../../modules/backends/backends.rst:204
 msgid "CUDA Backend"
 msgstr "Backend CUDA"
 
-#: ../../modules/backends/backends.rst:186
+#: ../../modules/backends/backends.rst:206
 msgid ""
 "The **CUDA** backend leverages NVIDIA GPUs via the :mod:`cuda-quantum` "
 "framework for both digital and analog simulations. When no compatible GPU"
@@ -366,12 +398,22 @@ msgstr ""
 "CPU, de manera que podeu fer prototips en hardware convencional abans de "
 "passar a màquines accelerades."
 
-#: ../../modules/backends/backends.rst:190
-#: ../../modules/backends/backends.rst:255
+#: ../../modules/backends/backends.rst:210
+#: ../../modules/backends/backends.rst:275
 msgid "**Installation**"
 msgstr "**Instal·lació**"
 
-#: ../../modules/backends/backends.rst:208
+#: ../../modules/backends/backends.rst:216
+#: ../../modules/backends/backends.rst:281
+msgid "**Initialization**"
+msgstr "**Inicialització**"
+
+#: ../../modules/backends/backends.rst:226
+#: ../../modules/backends/backends.rst:289
+msgid "**Capabilities**"
+msgstr "**Capacitats**"
+
+#: ../../modules/backends/backends.rst:228
 msgid ""
 "Digital circuits through "
 ":class:`~qilisdk.functionals.digital_propagation.DigitalPropagation`."
@@ -379,17 +421,17 @@ msgstr ""
 "Circuits digitals mitjançant "
 ":class:`~qilisdk.functionals.digital_propagation.DigitalPropagation`."
 
-#: ../../modules/backends/backends.rst:209
+#: ../../modules/backends/backends.rst:229
 msgid ""
 "Analog dynamics for "
 ":class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`, powered "
 "by ``cudaq.evolve``."
 msgstr ""
 "Dinàmica analògica per a "
-":class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`, "
-"impulsada per ``cudaq.evolve``."
+":class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`, impulsada"
+" per ``cudaq.evolve``."
 
-#: ../../modules/backends/backends.rst:210
+#: ../../modules/backends/backends.rst:230
 msgid ""
 "Hybrid execution when paired with "
 ":class:`~qilisdk.functionals.variational_program.VariationalProgram`."
@@ -397,45 +439,52 @@ msgstr ""
 "Execució híbrida quan s'utilitza conjuntament amb "
 ":class:`~qilisdk.functionals.variational_program.VariationalProgram`."
 
-#: ../../modules/backends/backends.rst:212
+#: ../../modules/backends/backends.rst:232
 msgid "**Sampling methods**"
 msgstr "**Mètodes de mostreig**"
 
-#: ../../modules/backends/backends.rst:214
+#: ../../modules/backends/backends.rst:234
 msgid ""
 ":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.STATE_VECTOR`: "
 "Full state-vector simulation (switches to CPU if a GPU is unavailable)."
 msgstr ""
 ":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.STATE_VECTOR`: "
-"Simulació completa de vector d'estat (canvia a CPU si no hi ha GPU disponible)."
+"Simulació completa de vector d'estat (canvia a CPU si no hi ha GPU "
+"disponible)."
 
-#: ../../modules/backends/backends.rst:215
+#: ../../modules/backends/backends.rst:235
 msgid ""
 ":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.TENSOR_NETWORK`:"
 " Tensor-network contraction, suited for shallow yet wide circuits."
 msgstr ""
 ":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.TENSOR_NETWORK`:"
-" Contracció de xarxa tensorial, adequada per a circuits amples però poc profunds."
+" Contracció de xarxa tensorial, adequada per a circuits amples però poc "
+"profunds."
 
-#: ../../modules/backends/backends.rst:216
+#: ../../modules/backends/backends.rst:236
 msgid ""
 ":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.MATRIX_PRODUCT_STATE`:"
 " Matrix-product-state simulation for low-entanglement workloads."
 msgstr ""
 ":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.MATRIX_PRODUCT_STATE`:"
-" Simulació d'estat producte matricial per a càrregues de treball amb "
-"baix entrellaçament."
+" Simulació d'estat producte matricial per a càrregues de treball amb baix"
+" entrellaçament."
 
-#: ../../modules/backends/backends.rst:242
-#: ../../modules/backends/backends.rst:325
+#: ../../modules/backends/backends.rst:238
+#: ../../modules/backends/backends.rst:296
+msgid "**Example**"
+msgstr "**Exemple**"
+
+#: ../../modules/backends/backends.rst:262
+#: ../../modules/backends/backends.rst:345
 msgid "**Output**"
 msgstr "**Sortida**"
 
-#: ../../modules/backends/backends.rst:250
+#: ../../modules/backends/backends.rst:270
 msgid "Qutip Backend"
 msgstr "Backend Qutip"
 
-#: ../../modules/backends/backends.rst:252
+#: ../../modules/backends/backends.rst:272
 msgid ""
 "The **Qutip** backend uses the :mod:`qutip` library for simulation on "
 "CPU, supporting both digital and analog functionals. It is the most "
@@ -447,7 +496,7 @@ msgstr ""
 "l'opció més lleugera, ideal per al desenvolupament local o entorns sense "
 "GPU NVIDIA."
 
-#: ../../modules/backends/backends.rst:271
+#: ../../modules/backends/backends.rst:291
 msgid ""
 "**DigitalPropagation** of digital circuits via QuTiP's state-vector "
 "solvers."
@@ -455,7 +504,13 @@ msgstr ""
 "**DigitalPropagation** de circuits digitals mitjançant els solvers de "
 "vector d'estat de QuTiP."
 
-#: ../../modules/backends/backends.rst:273
+#: ../../modules/backends/backends.rst:292
+msgid "**AnalogEvolution** driven by :class:`~qilisdk.analog.schedule.Schedule`."
+msgstr ""
+"**AnalogEvolution** dirigida per "
+":class:`~qilisdk.analog.schedule.Schedule`."
+
+#: ../../modules/backends/backends.rst:293
 msgid ""
 "Compatible with "
 ":class:`~qilisdk.functionals.variational_program.VariationalProgram` for "
@@ -464,3 +519,21 @@ msgstr ""
 "Compatible amb "
 ":class:`~qilisdk.functionals.variational_program.VariationalProgram` per "
 "a bucles d'optimització totalment clàssics."
+
+#~ msgid ""
+#~ "**DigitalPropagation** of digital circuits "
+#~ "with efficient state-vector simulation."
+#~ msgstr ""
+#~ "**DigitalPropagation** de circuits digitals "
+#~ "amb simulació eficient de vector "
+#~ "d'estat."
+
+#~ msgid ""
+#~ "Compatible with "
+#~ ":class:`~qilisdk.functionals.variational_program.VariationalProgram`"
+#~ " for classical optimization loops."
+#~ msgstr ""
+#~ "Compatible amb "
+#~ ":class:`~qilisdk.functionals.variational_program.VariationalProgram`"
+#~ " per a bucles d'optimització clàssics."
+

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-17 14:50+0200\n"
+"POT-Creation-Date: 2026-04-29 11:34+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -88,7 +88,9 @@ msgstr "Variables"
 
 #: ../../modules/core/core.rst:36
 msgid "This module offers tools to define different types of variables:"
-msgstr "Este módulo ofrece herramientas para definir diferentes tipos de variables:"
+msgstr ""
+"Este módulo ofrece herramientas para definir diferentes tipos de "
+"variables:"
 
 #: ../../modules/core/core.rst:38
 msgid "**Binary Variables** (:class:`~qilisdk.core.variables.BinaryVariable`)"
@@ -152,7 +154,9 @@ msgstr "Codificación bit a bit (:class:`~qilisdk.core.variables.Bitwise`)"
 
 #: ../../modules/core/core.rst:53
 msgid "Domain wall encoding (:class:`~qilisdk.core.variables.DomainWall`)"
-msgstr "Codificación de pared de dominio (:class:`~qilisdk.core.variables.DomainWall`)"
+msgstr ""
+"Codificación de pared de dominio "
+"(:class:`~qilisdk.core.variables.DomainWall`)"
 
 #: ../../modules/core/core.rst:54
 msgid "One-hot encoding (:class:`~qilisdk.core.variables.OneHot`)"
@@ -214,7 +218,9 @@ msgstr ""
 
 #: ../../modules/core/core.rst:118
 msgid "Terms can be evaluated by providing values for the involved variables:"
-msgstr "Los términos pueden evaluarse proporcionando valores para las variables involucradas:"
+msgstr ""
+"Los términos pueden evaluarse proporcionando valores para las variables "
+"involucradas:"
 
 #: ../../modules/core/core.rst:135
 msgid ""
@@ -639,7 +645,9 @@ msgstr ""
 
 #: ../../modules/core/core.rst:457
 msgid "Embedded as penalties, these constraints give the penalized objective"
-msgstr "Incorporadas como penalizaciones, estas restricciones dan lugar al objetivo penalizado"
+msgstr ""
+"Incorporadas como penalizaciones, estas restricciones dan lugar al "
+"objetivo penalizado"
 
 #: ../../modules/core/core.rst:459
 #, python-brace-format
@@ -658,7 +666,9 @@ msgstr ""
 
 #: ../../modules/core/core.rst:467
 msgid "where :math:`\\lambda_0 > 0` is a penalty strength parameter."
-msgstr "donde :math:`\\lambda_0 > 0` es un parámetro de intensidad de penalización."
+msgstr ""
+"donde :math:`\\lambda_0 > 0` es un parámetro de intensidad de "
+"penalización."
 
 #: ../../modules/core/core.rst:469
 msgid "Ineqaulity constraints can be defined as:"
@@ -900,8 +910,8 @@ msgstr "**Escalares** (matrices ``(1, 1)``)"
 msgid "Examples of creating various quantum objects:"
 msgstr "Ejemplos de creación de diversos objetos cuánticos:"
 
-#: ../../modules/core/core.rst:641 ../../modules/core/core.rst:686
-#: ../../modules/core/core.rst:773 ../../modules/core/core.rst:823
+#: ../../modules/core/core.rst:641 ../../modules/core/core.rst:687
+#: ../../modules/core/core.rst:774 ../../modules/core/core.rst:824
 msgid "**Output**"
 msgstr "**Salida**"
 
@@ -953,15 +963,26 @@ msgstr ""
 ":func:`~qilisdk.core.qtensor.ghz` para generar estados GHZ con el número "
 "de cúbits especificado"
 
-#: ../../modules/core/core.rst:705
+#: ../../modules/core/core.rst:667
+#, fuzzy
+msgid ""
+":func:`~qilisdk.core.qtensor.uniform` for generating uniform "
+"superposition states of specified number of qubits"
+msgstr ""
+":func:`~qilisdk.core.qtensor.ghz` para generar estados GHZ con el número "
+"de cúbits especificado"
+
+#: ../../modules/core/core.rst:706
 msgid "Quantum Object Properties & Operations"
 msgstr "Propiedades y Operaciones de Objetos Cuánticos"
 
-#: ../../modules/core/core.rst:707
+#: ../../modules/core/core.rst:708
 msgid "All data are stored sparsely, but you can retrieve dense or sparse views:"
-msgstr "Todos los datos se almacenan de forma dispersa, pero puede obtener vistas densas o dispersas:"
+msgstr ""
+"Todos los datos se almacenan de forma dispersa, pero puede obtener vistas"
+" densas o dispersas:"
 
-#: ../../modules/core/core.rst:709
+#: ../../modules/core/core.rst:710
 msgid ""
 ":attr:`.data<qilisdk.core.qtensor.QTensor.data>`: get the underlying "
 "sparse matrix (SciPy CSR format)"
@@ -969,7 +990,7 @@ msgstr ""
 ":attr:`.data<qilisdk.core.qtensor.QTensor.data>`: obtiene la matriz "
 "dispersa subyacente (formato SciPy CSR)"
 
-#: ../../modules/core/core.rst:710
+#: ../../modules/core/core.rst:711
 msgid ""
 ":meth:`.dense()<qilisdk.core.qtensor.QTensor.dense>`: convert to a dense "
 "NumPy array (use with caution for large tensors)"
@@ -977,15 +998,15 @@ msgstr ""
 ":meth:`.dense()<qilisdk.core.qtensor.QTensor.dense>`: convierte a un "
 "array denso de NumPy (usar con precaución para tensores grandes)"
 
-#: ../../modules/core/core.rst:711
+#: ../../modules/core/core.rst:712
 msgid "or directly accessing elements by value with ``qtensor[i, j]``"
 msgstr "o accediendo directamente a los elementos por valor con ``qtensor[i, j]``"
 
-#: ../../modules/core/core.rst:713
+#: ../../modules/core/core.rst:714
 msgid "Common matrix operations are also available:"
 msgstr "También están disponibles operaciones matriciales comunes:"
 
-#: ../../modules/core/core.rst:715
+#: ../../modules/core/core.rst:716
 msgid ""
 ":meth:`.adjoint()<qilisdk.core.qtensor.QTensor.adjoint>`: conjugate "
 "transpose"
@@ -993,7 +1014,7 @@ msgstr ""
 ":meth:`.adjoint()<qilisdk.core.qtensor.QTensor.adjoint>`: traspuesta "
 "conjugada"
 
-#: ../../modules/core/core.rst:716
+#: ../../modules/core/core.rst:717
 msgid ""
 ":meth:`.conjugate()<qilisdk.core.qtensor.QTensor.conjugate>`: element-"
 "wise complex conjugate"
@@ -1001,7 +1022,7 @@ msgstr ""
 ":meth:`.conjugate()<qilisdk.core.qtensor.QTensor.conjugate>`: conjugado "
 "complejo elemento a elemento"
 
-#: ../../modules/core/core.rst:717
+#: ../../modules/core/core.rst:718
 msgid ""
 ":meth:`.transpose()<qilisdk.core.qtensor.QTensor.transpose>`: matrix "
 "transpose"
@@ -1009,19 +1030,21 @@ msgstr ""
 ":meth:`.transpose()<qilisdk.core.qtensor.QTensor.transpose>`: traspuesta "
 "de la matriz"
 
-#: ../../modules/core/core.rst:718
+#: ../../modules/core/core.rst:719
 msgid ":meth:`.exp()<qilisdk.core.qtensor.QTensor.exp>`: matrix exponential"
 msgstr ":meth:`.exp()<qilisdk.core.qtensor.QTensor.exp>`: exponencial de la matriz"
 
-#: ../../modules/core/core.rst:719
+#: ../../modules/core/core.rst:720
 msgid ":meth:`.log()<qilisdk.core.qtensor.QTensor.log>`: matrix logarithm"
 msgstr ":meth:`.log()<qilisdk.core.qtensor.QTensor.log>`: logaritmo de la matriz"
 
-#: ../../modules/core/core.rst:720
-msgid ":meth:`.sqrt()<qilisdk.core.qtensor.QTensor.sqrt>`: matrix square root"
-msgstr ":meth:`.sqrt()<qilisdk.core.qtensor.QTensor.sqrt>`: raíz cuadrada de la matriz"
-
 #: ../../modules/core/core.rst:721
+msgid ":meth:`.sqrt()<qilisdk.core.qtensor.QTensor.sqrt>`: matrix square root"
+msgstr ""
+":meth:`.sqrt()<qilisdk.core.qtensor.QTensor.sqrt>`: raíz cuadrada de la "
+"matriz"
+
+#: ../../modules/core/core.rst:722
 msgid ""
 ":meth:`.rank()<qilisdk.core.qtensor.QTensor.rank>`: compute the rank of "
 "the operator"
@@ -1029,11 +1052,13 @@ msgstr ""
 ":meth:`.rank()<qilisdk.core.qtensor.QTensor.rank>`: calcula el rango del "
 "operador"
 
-#: ../../modules/core/core.rst:722
-msgid ":meth:`.pow(exponent)<qilisdk.core.qtensor.QTensor.pow>`: matrix power"
-msgstr ":meth:`.pow(exponent)<qilisdk.core.qtensor.QTensor.pow>`: potencia de la matriz"
-
 #: ../../modules/core/core.rst:723
+msgid ":meth:`.pow(exponent)<qilisdk.core.qtensor.QTensor.pow>`: matrix power"
+msgstr ""
+":meth:`.pow(exponent)<qilisdk.core.qtensor.QTensor.pow>`: potencia de la "
+"matriz"
+
+#: ../../modules/core/core.rst:724
 msgid ""
 ":meth:`.norm(order=\"l2\")<qilisdk.core.qtensor.QTensor.norm>`: vector or"
 " matrix norm"
@@ -1041,7 +1066,7 @@ msgstr ""
 ":meth:`.norm(order=\"l2\")<qilisdk.core.qtensor.QTensor.norm>`: norma "
 "vectorial o matricial"
 
-#: ../../modules/core/core.rst:724
+#: ../../modules/core/core.rst:725
 msgid ""
 ":meth:`.normalized(order='l2')<qilisdk.core.qtensor.QTensor.normalized>`:"
 " normalize to unit norm"
@@ -1049,7 +1074,7 @@ msgstr ""
 ":meth:`.normalized(order='l2')<qilisdk.core.qtensor.QTensor.normalized>`:"
 " normalizar a norma unitaria"
 
-#: ../../modules/core/core.rst:725
+#: ../../modules/core/core.rst:726
 msgid ""
 ":meth:`.eig()<qilisdk.core.qtensor.QTensor.eig>`: get the eigenvalues and"
 " eigenvectors"
@@ -1057,7 +1082,7 @@ msgstr ""
 ":meth:`.eig()<qilisdk.core.qtensor.QTensor.eig>`: obtiene los valores "
 "propios y vectores propios"
 
-#: ../../modules/core/core.rst:726
+#: ../../modules/core/core.rst:727
 msgid ""
 ":meth:`.trace()<qilisdk.core.qtensor.QTensor.trace>`: compute the trace "
 "of an operator"
@@ -1065,7 +1090,7 @@ msgstr ""
 ":meth:`.trace()<qilisdk.core.qtensor.QTensor.trace>`: calcula la traza de"
 " un operador"
 
-#: ../../modules/core/core.rst:727
+#: ../../modules/core/core.rst:728
 msgid ""
 ":meth:`.dot(other)<qilisdk.core.qtensor.QTensor.dot>`: Frobenius inner "
 "product with another QTensor"
@@ -1073,11 +1098,11 @@ msgstr ""
 ":meth:`.dot(other)<qilisdk.core.qtensor.QTensor.dot>`: producto interno "
 "de Frobenius con otro QTensor"
 
-#: ../../modules/core/core.rst:729
+#: ../../modules/core/core.rst:730
 msgid "As well as some quantum-specific transformations:"
 msgstr "Así como algunas transformaciones específicas de la cuántica:"
 
-#: ../../modules/core/core.rst:731
+#: ../../modules/core/core.rst:732
 msgid ""
 ":meth:`.entropy_von_neumann()<qilisdk.core.qtensor.QTensor.entropy_von_neumann>`:"
 " compute the von Neumann entropy of a density matrix"
@@ -1085,7 +1110,7 @@ msgstr ""
 ":meth:`.entropy_von_neumann()<qilisdk.core.qtensor.QTensor.entropy_von_neumann>`:"
 " calcula la entropía de von Neumann de una matriz de densidad"
 
-#: ../../modules/core/core.rst:732
+#: ../../modules/core/core.rst:733
 msgid ""
 ":meth:`.entropy_renyi(alpha)<qilisdk.core.qtensor.QTensor.entropy_renyi>`:"
 " compute the Rényi entropy of a density matrix for a given order alpha"
@@ -1094,7 +1119,7 @@ msgstr ""
 " calcula la entropía de Rényi de una matriz de densidad para un orden "
 "alpha dado"
 
-#: ../../modules/core/core.rst:733
+#: ../../modules/core/core.rst:734
 msgid ""
 ":meth:`.commutator(other)<qilisdk.core.qtensor.QTensor.commutator>`: "
 "compute the commutator with another operator"
@@ -1102,7 +1127,7 @@ msgstr ""
 ":meth:`.commutator(other)<qilisdk.core.qtensor.QTensor.commutator>`: "
 "calcula el conmutador con otro operador"
 
-#: ../../modules/core/core.rst:734
+#: ../../modules/core/core.rst:735
 msgid ""
 ":meth:`.anticommutator(other)<qilisdk.core.qtensor.QTensor.anticommutator>`:"
 " compute the anticommutator with another operator"
@@ -1110,7 +1135,7 @@ msgstr ""
 ":meth:`.anticommutator(other)<qilisdk.core.qtensor.QTensor.anticommutator>`:"
 " calcula el anticonmutador con otro operador"
 
-#: ../../modules/core/core.rst:735
+#: ../../modules/core/core.rst:736
 msgid ""
 ":meth:`.fidelity(other)<qilisdk.core.qtensor.QTensor.fidelity>`: compute "
 "the fidelity between two quantum states"
@@ -1118,7 +1143,7 @@ msgstr ""
 ":meth:`.fidelity(other)<qilisdk.core.qtensor.QTensor.fidelity>`: calcula "
 "la fidelidad entre dos estados cuánticos"
 
-#: ../../modules/core/core.rst:736
+#: ../../modules/core/core.rst:737
 msgid ""
 ":meth:`.probabilities()<qilisdk.core.qtensor.QTensor.probabilities>`: "
 "compute the probability distribution of each state in the computational "
@@ -1128,7 +1153,7 @@ msgstr ""
 "calcula la distribución de probabilidad de cada estado en la base "
 "computacional"
 
-#: ../../modules/core/core.rst:737
+#: ../../modules/core/core.rst:738
 msgid ""
 ":meth:`.partial_trace(keep)<qilisdk.core.qtensor.QTensor.ptrace>`: "
 "partial trace"
@@ -1136,7 +1161,7 @@ msgstr ""
 ":meth:`.partial_trace(keep)<qilisdk.core.qtensor.QTensor.ptrace>`: traza "
 "parcial"
 
-#: ../../modules/core/core.rst:738
+#: ../../modules/core/core.rst:739
 msgid ""
 ":meth:`.reset_qubits(qubits)<qilisdk.core.qtensor.QTensor.reset_qubits>`:"
 " reset specified qubits to 0"
@@ -1144,31 +1169,31 @@ msgstr ""
 ":meth:`.reset_qubits(qubits)<qilisdk.core.qtensor.QTensor.reset_qubits>`:"
 " reinicia los cúbits especificados a 0"
 
-#: ../../modules/core/core.rst:739
+#: ../../modules/core/core.rst:740
 msgid ":meth:`.dagger()<qilisdk.core.qtensor.QTensor.dagger>`: alias for adjoint"
 msgstr ":meth:`.dagger()<qilisdk.core.qtensor.QTensor.dagger>`: alias de adjoint"
 
-#: ../../modules/core/core.rst:741
+#: ../../modules/core/core.rst:742
 msgid "Examples:"
 msgstr "Ejemplos:"
 
-#: ../../modules/core/core.rst:800
+#: ../../modules/core/core.rst:801
 msgid "Extra Utilities"
 msgstr "Utilidades Adicionales"
 
-#: ../../modules/core/core.rst:802
+#: ../../modules/core/core.rst:803
 msgid "**Tensor product** with :func:`~qilisdk.core.qtensor.tensor_prod`"
 msgstr "**Producto tensorial** con :func:`~qilisdk.core.qtensor.tensor_prod`"
 
-#: ../../modules/core/core.rst:803
+#: ../../modules/core/core.rst:804
 msgid "**Expectation value** with :func:`~qilisdk.core.qtensor.expect_val`"
 msgstr "**Valor esperado** con :func:`~qilisdk.core.qtensor.expect_val`"
 
-#: ../../modules/core/core.rst:835
+#: ../../modules/core/core.rst:836
 msgid "Visualization of Quantum States"
 msgstr "Visualización de Estados Cuánticos"
 
-#: ../../modules/core/core.rst:837
+#: ../../modules/core/core.rst:838
 msgid ""
 "You can also visualize single-qubit states on the Bloch sphere using "
 ":meth:`.draw()<qilisdk.core.qtensor.QTensor.draw>`:"
@@ -1176,7 +1201,7 @@ msgstr ""
 "También puede visualizar estados de un solo cúbit en la esfera de Bloch "
 "usando :meth:`.draw()<qilisdk.core.qtensor.QTensor.draw>`:"
 
-#: ../../modules/core/core.rst:846
+#: ../../modules/core/core.rst:847
 msgid ""
 "The appearance of this plot can be customized using a "
 ":class:`~qilisdk.utils.visualization.style.QTensorStyle` object, which "
