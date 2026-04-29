@@ -92,7 +92,31 @@ you can use the Pauli ``Z`` operators from the library:
 Schedule
 --------
 
-The :class:`~qilisdk.analog.schedule.Schedule` class maps time points to :class:`~qilisdk.analog.hamiltonian.Hamiltonian` coefficients. Coefficients can be numbers, parameters/terms, or callables of time, and you can define them at discrete points or over intervals that are sampled automatically.
+The simplest way to construct a common schedule is to use of the helper functions:
+
+- :func:`linear <qilisdk.analog.schedule.Schedule.linear>`: Linear interpolation between two Hamiltonians.
+- :func:`quadratic <qilisdk.analog.schedule.Schedule.quadratic>`: Quadratic interpolation between two Hamiltonians.
+- :func:`polynomial <qilisdk.analog.schedule.Schedule.polynomial>`: Polynomial interpolation of arbitrary degree between two Hamiltonians.
+- :func:`sinusoidal <qilisdk.analog.schedule.Schedule.sinusoidal>`: Sinusoidal interpolation between two Hamiltonians.
+- :func:`exponential <qilisdk.analog.schedule.Schedule.exponential>`: Exponential interpolation between two Hamiltonians.
+
+For example, to create a linear schedule that interpolates between a driver Hamiltonian and a problem Hamiltonian over a time of 10 units:
+
+.. code-block:: python
+
+    from qilisdk.analog import Schedule, X, Z
+
+    H1 = X(0) + X(1)
+    H2 = Z(0) * Z(1)
+
+    schedule = Schedule.linear(H1, H2, 10.0)
+    schedule.draw()
+
+For more complex schedules, you can use the :class:`~qilisdk.analog.schedule.Schedule` class directly, 
+which provides a flexible interface to fully define time-dependent Hamiltonian coefficients.
+The :class:`~qilisdk.analog.schedule.Schedule` class maps time points to :class:`~qilisdk.analog.hamiltonian.Hamiltonian` coefficients. 
+Coefficients can be numbers, parameters/terms, or callables of time, and you can define them at 
+discrete points or over intervals that are sampled automatically.
 
 Key arguments
 ^^^^^^^^^^^^^^^^^
@@ -104,7 +128,6 @@ Key arguments
     - or callable returning a coefficient. This callable can take a parameter ``t`` that will be replaced by time. Moreover, any other parameters passed to this callable need to have a default value or have their value specified in the ``**kwargs``.
 - **interpolation** (:class:`~qilisdk.core.interpolator.Interpolation`): ``LINEAR`` (default) or ``STEP`` behavior between provided points.
 - **total_time** (float | Parameter | Term | None): Optional max time that rescales all time points while preserving relative positions.
-
 
 .. note::
 
