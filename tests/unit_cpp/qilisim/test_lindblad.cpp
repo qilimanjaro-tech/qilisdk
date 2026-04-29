@@ -53,9 +53,9 @@ DenseMatrix pure_plus() {
     return r;
 }
 
-MatrixFreeHamiltonian make_matrix_free_H(const DenseMatrix& base_matrix) {
-    MatrixFreeOperator op("custom", {}, {0}, base_matrix);
-    return MatrixFreeHamiltonian(op);
+MatrixFreeHamiltonian make_matrix_free_H(std::complex<double> coeff, int qubit, const std::string& pauli) {
+    MatrixFreeOperator op(pauli, {}, {qubit}, DenseMatrix());
+    return MatrixFreeHamiltonian({{coeff, {op}}});
 }
 
 SparseMatrix amp_damp_jump() {
@@ -224,7 +224,7 @@ TEST_F(LindbladRhsSparseTest, MultipleJumpsAreAdditive) {
 
 class LindbladRhsMatrixFreeTest : public ::testing::Test {
    protected:
-    MatrixFreeHamiltonian H_mf = make_matrix_free_H(0.5 * pauli_z());
+    MatrixFreeHamiltonian H_mf = make_matrix_free_H(0.5, 0, "Z");
     SparseMatrix H_sparse = to_sparse(0.5 * pauli_z());
     SparseMatrix jump = amp_damp_jump();
 };
@@ -273,7 +273,7 @@ TEST_F(LindbladRhsMatrixFreeTest, WithJumpMatchesManual) {
 }
 
 TEST_F(LindbladRhsMatrixFreeTest, ZeroHamiltonianOnlyDissipator) {
-    MatrixFreeHamiltonian H_zero = make_matrix_free_H(DenseMatrix::Zero(2, 2));
+    MatrixFreeHamiltonian H_zero = make_matrix_free_H(0.0, 0, "Z");
     DenseMatrix rho = pure_plus();
     DenseMatrix drho(2, 2);
     lindblad_rhs(drho, rho, H_zero, {jump}, false);

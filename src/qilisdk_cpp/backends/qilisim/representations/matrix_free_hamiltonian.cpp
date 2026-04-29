@@ -19,45 +19,123 @@
 
 // GCOV_EXCL_BR_START
 
-void MatrixFreeHamiltonian::apply(DenseMatrix& output_state, MatrixFreeApplicationType application_type) const {
-    /*
-    Applies the matrix-free Hamiltonian to the given output state.
-    It iterates through each term in the Hamiltonian, applies the corresponding operators
-    to the output state, and accumulates the results. The final result is stored back in the output state.
-
-    Args:
-        output_state: The state to which the Hamiltonian will be applied. This state will be modified in-place to contain the result.
-        application_type: The type of application (Left, Right, or LeftAndRight) that determines how the operators are applied to the state.
-    */
-    m_new_state.resizeLike(output_state);
-    m_new_state.setZero();
-    m_temp_state.resizeLike(output_state);
-    for (const auto& [coefficient, ops] : operators) {
-        m_temp_state = output_state;
-        for (const auto& op : ops) {
-            op.apply(m_temp_state, application_type);
-        }
-        m_new_state.noalias() += coefficient * m_temp_state;
-    }
-    output_state.swap(m_new_state);
-}
-
 void MatrixFreeHamiltonian::apply(const DenseMatrix& input_state, MatrixFreeApplicationType application_type, DenseMatrix& output_state) const {
     /*
-    Applies the matrix-free Hamiltonian to the given input state and writes the result to a separate output state.
+    Applies the matrix-free Hamiltonian to the given input state and writes the
+    result to a separate output state.
 
     Args:
         input_state: The state to which the Hamiltonian will be applied.
         application_type: The type of application (Left, Right, or LeftAndRight).
         output_state: The state where the result will be stored.
     */
-    m_temp_state.resizeLike(output_state);
+    struct Term {
+        std::complex<double> base_phase;      // coefficient * (-i)^n_Y, precomputed
+        std::complex<double> base_phase_neg;  // -coefficient * (-i)^n_Y, precomputed
+        long flip_mask;                       // XOR of all X and Y qubit masks
+        long sign_mask;                       // OR of all Y and Z qubit masks (popcount parity = sign flip)
+    };
+
+    // Precompute things
+    std::vector<Term> terms;
+    terms.reserve(operators.size());
+    const int num_qubits = static_cast<int>(std::log2(input_state.rows()));
     for (const auto& [coefficient, ops] : operators) {
-        m_temp_state = input_state;
+        long flip_mask = 0;
+        long sign_mask = 0;
+        int n_y = 0;
         for (const auto& op : ops) {
-            op.apply(m_temp_state, application_type);
+            long mask = 1LL << (num_qubits - 1 - op.get_target_qubits()[0]);
+            if (op.get_name() == "X") {
+                flip_mask ^= mask;
+            } else if (op.get_name() == "Z") {
+                sign_mask |= mask;
+            } else if (op.get_name() == "Y") {
+                flip_mask ^= mask;
+                sign_mask |= mask;
+                ++n_y;
+            } else if (op.get_name() != "I") {
+                throw std::invalid_argument("Unsupported operator in Hamiltonian: " + op.get_name());
+            }
         }
-        output_state += m_temp_state * coefficient;
+        static const std::complex<double> neg_i_powers[4] = {{1, 0}, {0, -1}, {-1, 0}, {0, 1}};
+        std::complex<double> base_phase = coefficient * neg_i_powers[n_y & 3];
+        std::complex<double> base_phase_neg = -base_phase;
+        terms.push_back({base_phase, base_phase_neg, flip_mask, sign_mask});
+    }
+
+    // Make sure output_state has the right shape and is initialized to zero
+    output_state.resizeLike(input_state);
+    output_state.setZero();
+
+    // Cache some pointers
+    const std::complex<double>* in_ptr = input_state.data();
+    std::complex<double>* out_ptr = output_state.data();
+    const Term* t_begin = terms.data();
+    const Term* t_end = t_begin + terms.size();
+
+    // If it's a statevector
+    if (input_state.cols() == 1) {
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+        for (int i = 0; i < output_state.size(); ++i) {
+            std::complex<double> coeff = 0.0;
+            for (const Term* t = t_begin; t != t_end; ++t) {
+                long index = i ^ t->flip_mask;
+                bool neg = __builtin_popcountll((long long)i & t->sign_mask) & 1;
+                coeff += (neg ? t->base_phase_neg : t->base_phase) * in_ptr[index];
+            }
+            out_ptr[i] = coeff;
+        }
+    } else {
+        long N = output_state.rows();
+        if (application_type == MatrixFreeApplicationType::Left) {
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+            for (long i = 0; i < N; ++i) {
+                for (const Term* t = t_begin; t != t_end; ++t) {
+                    long index = i ^ t->flip_mask;
+                    bool neg = __builtin_popcountll((long long)i & t->sign_mask) & 1;
+                    output_state.row(i) += (neg ? t->base_phase_neg : t->base_phase) * input_state.row(index);
+                }
+            }
+        } else if (application_type == MatrixFreeApplicationType::Right) {
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+            for (long j = 0; j < N; ++j) {
+                for (const Term* t = t_begin; t != t_end; ++t) {
+                    long index = j ^ t->flip_mask;
+                    bool neg = __builtin_popcountll((long long)j & t->sign_mask) & 1;
+                    output_state.col(j) += std::conj(neg ? t->base_phase_neg : t->base_phase) * input_state.col(index);
+                }
+            }
+        } else if (application_type == MatrixFreeApplicationType::LeftAndRight) {
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+            for (long i = 0; i < N; ++i) {
+                for (const Term* t = t_begin; t != t_end; ++t) {
+                    long index = i ^ t->flip_mask;
+                    bool neg = __builtin_popcountll((long long)i & t->sign_mask) & 1;
+                    output_state.row(i) += (neg ? t->base_phase_neg : t->base_phase) * input_state.row(index);
+                }
+            }
+            DenseMatrix hr_temp = output_state;
+            output_state.setZero();
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+            for (long j = 0; j < N; ++j) {
+                for (const Term* t = t_begin; t != t_end; ++t) {
+                    long index = j ^ t->flip_mask;
+                    bool neg = __builtin_popcountll((long long)j & t->sign_mask) & 1;
+                    output_state.col(j) += std::conj(neg ? t->base_phase_neg : t->base_phase) * hr_temp.col(index);
+                }
+            }
+        }
     }
 }
 

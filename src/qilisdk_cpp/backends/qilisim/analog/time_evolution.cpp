@@ -135,12 +135,14 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
         }
 
         // Perform the iteration depending on the method
-        if (config.get_time_evolution_method() == "integrate") {
-            rho_t = iter_integrate(rho_t, dt, currentH, jump_operators, config.get_num_integrate_substeps(), is_unitary_on_statevector);
+        if (config.get_time_evolution_method() == "integrate_rk4") {
+            rho_t = iter_rk4_matrix(rho_t, dt, currentH, jump_operators, is_unitary_on_statevector);
         } else if (config.get_time_evolution_method() == "direct") {
             rho_t = iter_direct(rho_t, dt, currentH, jump_operators, is_unitary_on_statevector);
         } else if (config.get_time_evolution_method() == "arnoldi") {
             rho_t = iter_arnoldi(rho_t, dt, currentH, jump_operators, config.get_arnoldi_dim(), config.get_num_arnoldi_substeps(), is_unitary_on_statevector, config.get_atol());
+        } else {
+            throw std::invalid_argument("Invalid time evolution method: " + config.get_time_evolution_method());
         }
 
         // If we should store intermediates, do it here
@@ -245,32 +247,68 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
     // Init rho_0
     rho_t = rho_0;
 
-    // For each time step
-    for (size_t step_ind = 0; step_ind < step_list.size(); ++step_ind) {
-        // Get the current Hamiltonian
-        MatrixFreeHamiltonian currentH;
-        for (size_t h = 0; h < hamiltonians.size(); ++h) {
-            double c = parameters_list[h][step_ind];
-            currentH += hamiltonians[h] * c;
+    // If doing adaptive step size with rk45
+    if (config.get_time_evolution_method() == "integrate_rk45_matrix_free") {
+        // Initial step size
+        double dt = 1.0;
+        if (step_list.size() > 1) {
+            dt = step_list[1];
         }
 
-        // Determine the time step
-        double dt = step_list[step_ind];
-        if (step_ind > 0) {
-            dt = (step_list[step_ind] - step_list[step_ind - 1]);
-        }
+        // Loop until we reach the max time
+        double current_time = 0.0;
+        size_t iters = 0;
+        const size_t max_iters = 1000000;  // Just in case to prevent infinite loops
+        DenseMatrix k_saved;
+        while (current_time < step_list.back()) {
+            // Make sure the next step doesn't go beyond the final time point
+            dt = std::min(dt, step_list.back() - current_time);
 
-        // Perform the iteration depending on the method
-        iter_integrate(rho_t, dt, currentH, jump_operators, config.get_num_integrate_substeps(), is_unitary_on_statevector);
+            // dt is updated to the suggested next step; dt_taken is what was actually stepped0
+            double dt_taken = iter_rk45(rho_t, current_time, dt, step_list, hamiltonians, parameters_list, jump_operators, is_unitary_on_statevector, config.get_adaptive_tol(), k_saved);
 
-        // If we should store intermediates, do it here
-        if (config.get_store_intermediate_results()) {
-            if (use_monte_carlo || (!input_was_vector && rho_t.cols() == 1)) {
-                intermediate_rhos.push_back(trajectories_to_density_matrix(rho_t));
-            } else {
-                intermediate_rhos.push_back(rho_t);
+            // If we should store intermediates, do it here
+            if (config.get_store_intermediate_results() && dt_taken > 0) {
+                if (use_monte_carlo || (!input_was_vector && rho_t.cols() == 1)) {
+                    intermediate_rhos.push_back(trajectories_to_density_matrix(rho_t));
+                } else {
+                    intermediate_rhos.push_back(rho_t);
+                }
+            }
+
+            // Update the time and step index
+            current_time += dt_taken;
+            iters++;
+            if (iters >= max_iters) {
+                throw std::runtime_error("Maximum number of iterations reached in adaptive RK45 integration.");
+            }
+            if (dt < config.get_atol()) {
+                throw std::runtime_error("Minimum step size reached in adaptive RK45 integration.");
             }
         }
+
+        // If doing fixed step size with rk4
+    } else if (config.get_time_evolution_method() == "integrate_rk4_matrix_free") {
+        // For each time step
+        for (size_t step_ind = 0; step_ind < step_list.size(); ++step_ind) {
+            // Determine the time step and starting time
+            double t_start = (step_ind > 0) ? step_list[step_ind - 1] : 0.0;
+            double dt = step_list[step_ind] - t_start;
+
+            // Perform the iteration depending on the method
+            iter_rk4(rho_t, t_start, dt, step_list, hamiltonians, parameters_list, jump_operators, is_unitary_on_statevector);
+
+            // If we should store intermediates, do it here
+            if (config.get_store_intermediate_results()) {
+                if (use_monte_carlo || (!input_was_vector && rho_t.cols() == 1)) {
+                    intermediate_rhos.push_back(trajectories_to_density_matrix(rho_t));
+                } else {
+                    intermediate_rhos.push_back(rho_t);
+                }
+            }
+        }
+    } else {
+        throw std::invalid_argument("Invalid matrix-free time evolution method: " + config.get_time_evolution_method());
     }
 
     // If we have statevector/s but we should return a density matrix

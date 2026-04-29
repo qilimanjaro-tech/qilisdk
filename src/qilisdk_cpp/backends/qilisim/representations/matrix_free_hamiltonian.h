@@ -27,7 +27,6 @@ class MatrixFreeHamiltonian {
     MatrixFreeHamiltonian() {}
     MatrixFreeHamiltonian(const MatrixFreeOperator& op) { operators.push_back(std::make_pair(std::complex<double>(1.0, 0.0), std::vector<MatrixFreeOperator>{op})); }
     MatrixFreeHamiltonian(const std::vector<std::pair<std::complex<double>, std::vector<MatrixFreeOperator>>>& ops) : operators(ops) {}
-    void apply(DenseMatrix& output_state, MatrixFreeApplicationType application_type) const;
     void apply(const DenseMatrix& input_state, MatrixFreeApplicationType application_type, DenseMatrix& output_state) const;
     double expectation_value(const DenseMatrix& state) const;
     MatrixFreeHamiltonian& operator*=(const std::complex<double>& scalar);
