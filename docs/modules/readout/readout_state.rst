@@ -6,6 +6,12 @@ Instructs the backend to return the full quantum state vector (or density matrix
 .. code-block:: python
 
     from qilisdk.readout import Readout
+    from qilisdk.backends import QiliSim
+    from qilisdk.digital import Circuit
+    from qilisdk.functionals import DigitalPropagation
+
+    backend = QiliSim()
+    functional = DigitalPropagation(Circuit(2))
 
     spec = Readout().with_state_tomography()
     result = backend.execute(functional, readout=spec)

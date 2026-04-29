@@ -52,6 +52,8 @@ we can execute it on the QiliSim backend:
 
 .. code-block:: python
 
+    from qilisdk.readout import Readout
+
     # Execute on QiliSim backend and inspect results
     backend = QiliSim()
     results = backend.execute(

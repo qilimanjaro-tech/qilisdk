@@ -7,6 +7,12 @@ Instructs the backend to compute ``⟨ψ|O|ψ⟩`` for each observable in the li
 
     from qilisdk.analog import X, Y, Z
     from qilisdk.readout import Readout
+    from qilisdk.backends import QiliSim
+    from qilisdk.digital import Circuit
+    from qilisdk.functionals import DigitalPropagation
+
+    backend = QiliSim()
+    functional = DigitalPropagation(Circuit(2))
 
     spec = Readout().with_expectation(observables=[Z(0), X(0), Y(0)], nshots=0)
     result = backend.execute(functional, readout=spec)

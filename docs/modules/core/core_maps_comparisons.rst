@@ -66,7 +66,8 @@ Example:
 
 .. code-block:: python
 
-    from qilisdk.core.variables import LT
+    from qilisdk.core.variables import BinaryVariable, LT
+    x = BinaryVariable("x")
     LT(2 * x - 1, 1)
 
 **Output**:

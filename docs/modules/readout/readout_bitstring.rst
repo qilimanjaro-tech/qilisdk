@@ -7,6 +7,12 @@ collect the bitstring counts.
 .. code-block:: python
 
     from qilisdk.readout import Readout
+    from qilisdk.backends import QiliSim
+    from qilisdk.digital import Circuit
+    from qilisdk.functionals import DigitalPropagation
+
+    backend = QiliSim()
+    functional = DigitalPropagation(Circuit(2))
 
     spec = Readout().with_sampling(nshots=1000)
     result = backend.execute(functional, readout=spec)

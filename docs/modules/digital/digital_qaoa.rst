@@ -49,13 +49,14 @@ expectation value of the problem Hamiltonian, one can set up a :class:`~qilisdk.
     from qilisdk.optimizers.scipy_optimizer import SciPyOptimizer
     from qilisdk.cost_functions.observable_cost_function import ObservableCostFunction
     from qilisdk.readout import Readout
+    from qilisdk.backends import QiliSim
 
     vqa = VariationalProgram(functional=DigitalPropagation(ansatz),
                              optimizer=SciPyOptimizer(method="powell", tol=1e-7),
                              cost_function=ObservableCostFunction(problem_hamiltonian))
 
     print(f"Running QAOA with {len(ansatz.get_parameters())} parameters...")
-    backend = QutipBackend()
+    backend = QiliSim()
     result = backend.execute(vqa, readout=Readout().with_sampling(nshots=1000))
     print("VQA Result:", result)
 

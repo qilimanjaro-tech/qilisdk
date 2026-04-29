@@ -38,7 +38,9 @@ The :class:`~qilisdk.core.model.Objective` defines the function the model aims t
 .. code-block:: python
 
     from qilisdk.core.model import Model, ObjectiveSense
+    from qilisdk.core.variables import Variable, Domain, Bitwise
     model = Model("example_model")
+    x = Variable("x", domain=Domain.REAL, bounds=(1, 2), encoding=Bitwise, precision=1e-1)
     model.set_objective(2*x + 3, label="obj", sense=ObjectiveSense.MINIMIZE)
     print(model)
 
@@ -90,6 +92,8 @@ You can update the multiplier like so:
 Additional :class:`Constraints<qilisdk.core.model.Constraint>` can be added to restrict the solution space:
 
 .. code-block:: python
+
+    from qilisdk.core import LT
 
     model.add_constraint("test_constraint", LT(x, 1.5), lagrange_multiplier=10)
     print(model)

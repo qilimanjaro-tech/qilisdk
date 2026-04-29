@@ -38,13 +38,13 @@ object, and feeds it into the configured cost function to obtain the scalar that
 
 .. code-block:: python
 
-    from qilisdk.backends import CudaBackend
+    from qilisdk.backends import QiliSim
     from qilisdk.cost_functions import ModelCostFunction
     from qilisdk.functionals import VariationalProgram, DigitalPropagation
     from qilisdk.readout import Readout
     from qilisdk.optimizers import SciPyOptimizer
     from qilisdk.digital import Circuit, RX
-    from qilisdk.core import Parameter
+    from qilisdk.core import Parameter, BinaryVariable, Model
 
     param = Parameter("a", 0.3)
     ansatz = Circuit(1)

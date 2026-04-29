@@ -8,10 +8,11 @@ the backend stores a readout result for every time step.  The same readout metho
 
 .. code-block:: python
 
-    from qilisdk.analog import Schedule, Z
+    from qilisdk.analog import Schedule, Z, X
     from qilisdk.core import ket
     from qilisdk.functionals import AnalogEvolution
     from qilisdk.readout import Readout
+    from qilisdk.backends import QiliSim
 
     T = 5.0
     schedule = Schedule(
@@ -23,15 +24,16 @@ the backend stores a readout result for every time step.  The same readout metho
         dt=0.1,
     )
 
+    backend = QiliSim()
     functional = AnalogEvolution(schedule, initial_state=ket(0), store_intermediate_results=True)
     spec = Readout().with_expectation(observables=[Z(0)]).with_state_tomography()
     result = backend.execute(functional, readout=spec)
 
     # Per-step expectation values (intermediate steps + final step)
-    all_evs    = result.get_intermediate_expectation_values()  # list[list[float]]
-    all_states = result.get_intermediate_states()              # list[QTensor]
-    all_probs  = result.get_intermediate_probabilities()     # list[dict[str, float]]
-    all_samples = result.get_intermediate_samples()         # list[dict[str, int]]
+    all_evs     = result.get_intermediate_expectation_values()  # list[list[float]]
+    all_states  = result.get_intermediate_states()              # list[QTensor]
+    all_probs   = result.get_intermediate_probabilities()       # list[dict[str, float]]
+    all_samples = result.get_intermediate_samples()             # list[dict[str, int]]
 
 .. list-table::
    :header-rows: 1
