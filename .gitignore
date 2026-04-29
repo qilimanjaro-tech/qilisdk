@@ -20,6 +20,10 @@ scripts/*.log
 circuit_custom_font.png
 my_circuit.svg
 
+# Profiling stuff
+*.prof
+callgrind*
+
 # Virtual environments
 .venv
 

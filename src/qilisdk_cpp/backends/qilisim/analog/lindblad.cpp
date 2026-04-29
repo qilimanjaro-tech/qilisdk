@@ -105,16 +105,19 @@ void lindblad_rhs(DenseMatrix& drho, const DenseMatrix& rho, const MatrixFreeHam
         is_unitary_on_statevector (bool): Whether the evolution is unitary on a state vector.
     */
     if (is_unitary_on_statevector) {
-        drho = rho;
-        drho.setZero();
         H.apply(rho, MatrixFreeApplicationType::Left, drho);
-        drho *= -imag;
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+        for (int i = 0; i < drho.size(); ++i) {
+            drho(i) *= -imag;
+        }
     } else {
-        DenseMatrix Hrho = rho;
-        H.apply(Hrho, MatrixFreeApplicationType::Left);
-        drho = Hrho;
-        drho -= Hrho.adjoint();
-        drho *= -imag;
+        DenseMatrix Hrho(rho.rows(), rho.cols());
+        DenseMatrix rhoH(rho.rows(), rho.cols());
+        H.apply(rho, MatrixFreeApplicationType::Left, Hrho);
+        H.apply(rho, MatrixFreeApplicationType::Right, rhoH);
+        drho = -imag * (Hrho - rhoH);
         for (const auto& J : jumps) {
             SparseMatrix Jdag = J.adjoint();
             SparseMatrix JdagJ = Jdag * J;

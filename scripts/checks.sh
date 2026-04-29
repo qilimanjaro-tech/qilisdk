@@ -8,7 +8,7 @@
 # --------------------------------------------------------------------------
 
 # Stop if any command fails
-set -e
+set -euo pipefail
 
 # Keep a log file in same directory as this script
 LOG_FILE=$(dirname "$0")/checks.log
@@ -43,3 +43,5 @@ pytest tests/integration 2>&1 | tee -a $LOG_FILE
 # Check the docs
 echo "Running docs checks..." | tee -a $LOG_FILE
 bash scripts/docs.sh 2>&1 | tee -a $LOG_FILE
+
+echo "All checks passed successfully!" | tee -a $LOG_FILE
