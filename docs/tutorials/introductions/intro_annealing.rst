@@ -122,22 +122,14 @@ or more specifically the Pauli operator classes:
     final_hamiltonian = Z(0) + Z(1) + 0.5 * Z(0) * Z(1)
 
 We then need to construct our schedule to determine how the mixing will happen over time, which we 
-can do using the :doc:`Schedule </modules/analog/analog_schedule>` class:
+can do using the :doc:`Schedule </modules/analog/analog_schedule>` class. The class allows for complete
+flexibility in how you want to define your schedule, but it also provides some helper functions for common schedules:
 
 .. code-block:: python
 
     from qilisdk.analog import Schedule
-    from qilisdk.core import Interpolation
 
-    schedule = Schedule(
-        hamiltonians={"driver": initial_hamiltonian, "problem": final_hamiltonian},
-        coefficients={
-            "driver": {(0.0, 10.0): lambda t: 1 - t / 10.0},
-            "problem": {(0.0, 10.0): lambda t: t / 10.0},
-        },
-        dt=0.5,
-        interpolation=Interpolation.LINEAR,
-    )
+    schedule = Schedule.linear(initial_hamiltonian, final_hamiltonian, total_time=100, dt=0.1)
 
 We want to start in the ground state of the initial Hamiltonian, which is a uniform superposition of all possible states of the system:
 
@@ -145,7 +137,7 @@ We want to start in the ground state of the initial Hamiltonian, which is a unif
 
     from qilisdk.core import QTensor
 
-    initial_state = (QTensor.ket(0, 0) + QTensor.ket(0, 1) + QTensor.ket(1, 0) + QTensor.ket(1, 1)).normalized()
+    initial_state = QTensor.uniform(2)
 
 Finally, we can use :doc:`QiliSim </modules/backends/backends_qilisim>` to simulate the annealing process:
 

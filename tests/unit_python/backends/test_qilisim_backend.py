@@ -37,8 +37,7 @@ def test_qilisim_init():
     config = backend.get_config()
 
     assert backend.solver_params is not None
-    assert config["evolution_method"] == "integrate"
-    assert config["num_integrate_substeps"] == 2
+    assert config["evolution_method"] == "integrate_rk4_matrix_free"
     assert config["monte_carlo"] is False
     assert config["num_monte_carlo_trajectories"] == 100
     assert config["max_cache_size"] == 1000
@@ -87,6 +86,12 @@ def test_qilisim_config_builders_and_validation():
         ExecutionConfig(seed=-1)
     with pytest.raises(TypeError, match="does not accept positional arguments"):
         ExecutionConfig(1)
+
+
+def test_adaptive_creates_okay():
+    method = AnalogMethod.adaptive_integrator(tol=1e-2)
+    assert method.evolution_method == "integrate_rk45_matrix_free"
+    assert np.isclose(method.adaptive_tol, 1e-2)
 
 
 def test_qilisim_invalid_config_types():

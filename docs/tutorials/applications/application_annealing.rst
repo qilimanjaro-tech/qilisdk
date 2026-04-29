@@ -71,25 +71,18 @@ Then we use the model to form our problem Hamiltonian, and we can also define ou
     problem_hamiltonian = model.to_hamiltonian()
     mixer_hamiltonian = sum(-1.0 * X(i) for i in range(num_people))
 
-We also need to define the schedule - how the coefficients of the problem and mixing Hamiltonians change over time:
+We also need to define the schedule - how the coefficients of the problem and mixing Hamiltonians change over time. In this
+case we'll just use a simple linear mixing:
 
 .. code-block:: python
 
-    T = 100.0
-    schedule = Schedule(
-                    hamiltonians={"problem": problem_hamiltonian, "mixer": mixer_hamiltonian},
-                    coefficients={
-                        "mixer": {(0, T): lambda t: 1 - t / T},
-                        "problem": {(0, T): lambda t: t / T},
-                    },
-                    dt=0.1,
-                )
+    schedule = Schedule.linear(mixer_hamiltonian, problem_hamiltonian, total_time=100.0, dt=0.1)
 
 We will start in the ground state of our mixing Hamiltonian, which is the equal superposition state over all possible team assignments:
 
 .. code-block:: python
 
-    initial_state = QTensor.tensor_product([QTensor.ket(0) + QTensor.ket(1) for _ in range(num_people)]).normalized()  
+    initial_state = QTensor.uniform(num_people)
 
 Finally, we initialize our quantum simulator, execute the evolution, and read out the results:
 
@@ -117,7 +110,7 @@ This will print something like the following:
         )
 
         Expectation Value Results: (
-                expectation_values=[8.999696720325046],
+                expectation_values=[-8.999696720325046],
         )
 
     ]

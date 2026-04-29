@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import math
+
 import numpy as np
 import pytest
 
@@ -698,3 +700,67 @@ def test_schedule_set_parameter_bounds_propagates_to_interpolator():
     schedule.set_parameter_bounds({"p": (0.0, 5.0)})
 
     assert schedule.get_parameter_bounds()["p"] == (0.0, 5.0)
+
+
+def test_schedule_linear():
+    dt = 1
+    H1 = PauliX(0).to_hamiltonian()
+    H2 = PauliZ(0).to_hamiltonian()
+    sched = Schedule.linear(H1, H2, total_time=10, dt=dt)
+    assert sched.hamiltonians == {"driver": H1, "problem": H2}
+    assert _isclose(sched.coefficients["driver"][0], 1.0)
+    assert _isclose(sched.coefficients["driver"][10], 0.0)
+    assert _isclose(sched.coefficients["problem"][0], 0.0)
+    assert _isclose(sched.coefficients["problem"][10], 1.0)
+    assert _isclose(sched.coefficients["driver"][5], 0.5)
+    assert _isclose(sched.coefficients["problem"][5], 0.5)
+
+
+def test_schedule_quadratic():
+    dt = 1
+    H1 = PauliX(0).to_hamiltonian()
+    H2 = PauliZ(0).to_hamiltonian()
+    sched = Schedule.quadratic(H1, H2, total_time=10, dt=dt)
+    assert sched.hamiltonians == {"driver": H1, "problem": H2}
+    assert _isclose(sched.coefficients["driver"][0], 1.0)
+    assert _isclose(sched.coefficients["driver"][10], 0.0)
+    assert _isclose(sched.coefficients["problem"][0], 0.0)
+    assert _isclose(sched.coefficients["problem"][10], 1.0)
+    assert _isclose(sched.coefficients["driver"][5], 0.75)
+    assert _isclose(sched.coefficients["problem"][5], 0.25)
+
+
+def test_schedule_polynomial():
+    dt = 1
+    H1 = PauliX(0).to_hamiltonian()
+    H2 = PauliZ(0).to_hamiltonian()
+    sched = Schedule.polynomial(H1, H2, total_time=10, dt=dt, degree=3)
+    assert sched.hamiltonians == {"driver": H1, "problem": H2}
+    assert _isclose(sched.coefficients["driver"][0], 1.0)
+    assert _isclose(sched.coefficients["driver"][10], 0.0)
+    assert _isclose(sched.coefficients["problem"][0], 0.0)
+    assert _isclose(sched.coefficients["problem"][10], 1.0)
+    assert _isclose(sched.coefficients["driver"][5], 0.875)
+    assert _isclose(sched.coefficients["problem"][5], 0.125)
+
+
+def test_schedule_polynomial_with_negative_throws():
+    dt = 1
+    H1 = PauliX(0).to_hamiltonian()
+    H2 = PauliZ(0).to_hamiltonian()
+    with pytest.raises(ValueError, match=r"must be at least"):
+        Schedule.polynomial(H1, H2, total_time=10, dt=dt, degree=-1)
+
+
+def test_schedule_sinusoidal():
+    dt = 1
+    H1 = PauliX(0).to_hamiltonian()
+    H2 = PauliZ(0).to_hamiltonian()
+    sched = Schedule.sinusoidal(H1, H2, total_time=10, dt=dt)
+    assert sched.hamiltonians == {"driver": H1, "problem": H2}
+    assert _isclose(sched.coefficients["driver"][0], 1.0)
+    assert _isclose(sched.coefficients["driver"][10], 0.0)
+    assert _isclose(sched.coefficients["problem"][0], 0.0)
+    assert _isclose(sched.coefficients["problem"][10], 1.0)
+    assert _isclose(sched.coefficients["driver"][5], math.sqrt(1 / 2))
+    assert _isclose(sched.coefficients["problem"][5], 1 - math.sqrt(1 / 2))
