@@ -7,6 +7,7 @@ Digital
     digital_overview
     digital_gates
     digital_circuits
-    digital_custom_ansatz
+    digital_ansatz
+    digital_hardware
     digital_qaoa
     digital_trotter

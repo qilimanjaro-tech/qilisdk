@@ -1,14 +1,6 @@
 Overview
 =========
 
-.. toctree::
-   :maxdepth: 2
-   :hidden:
-
-   backends_qilisim
-   backends_cuda
-   backends_qutip
-
 The :mod:`~qilisdk.backends` module provides concrete execution engines for running :mod:`~qilisdk.functionals` (quantum processes).  
 Currently, three backends are supported:
 

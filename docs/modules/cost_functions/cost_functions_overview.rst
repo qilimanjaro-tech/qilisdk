@@ -6,7 +6,7 @@ optimizers can minimize. Each cost function inspects the :class:`~qilisdk.functi
 produced by a backend and evaluates a problem-specific metric such as an observable expectation value or the energy of
 an abstract optimization model.
 
-You will typically use cost functions to:
+Cost functions are used to:
 
 - score intermediate iterations inside a :class:`~qilisdk.functionals.variational_program.VariationalProgram`
 - post-process :class:`~qilisdk.functionals.functional_result.FunctionalResult` samples into meaningful costs
