@@ -47,7 +47,7 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 source_suffix = [".rst", ".pynb"]
 
 # Syntax highlighting
-pygments_style = "sphinx"
+pygments_style = "default"
 pygments_style_dark = "monokai"
 
 # Napoleon settings

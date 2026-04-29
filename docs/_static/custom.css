@@ -94,3 +94,14 @@ code, pre {
   border-radius: 0.35rem;
   padding: 0.05rem 0.3rem;
 }
+
+/* 
+Added because pygment broke in light mode at some point.
+Basically, there are two ways to set light vs dark mode, either via the browser or via the Sphinx theme toggle. 
+The latter adds a "dark" class to the html, whilst the former sets @media (prefers-color-scheme: dark).
+Pygments only uses the latter, so code follows the user's browser preference and not the theme toggle, which
+would lead to white code on white background when the user has dark mode enabled in their OS but light mode enabled in the theme.
+*/
+div.highlight {
+  background: #302e4c;
+}
