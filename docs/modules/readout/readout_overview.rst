@@ -1,5 +1,5 @@
-Readout
-=======
+Overview
+===========
 
 Readout is the mechanism that controls **what information is extracted from the quantum backend** after a
 functional is executed.  It is specified separately from the functional itself, so the same circuit or

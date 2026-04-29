@@ -1,5 +1,5 @@
-Expectation Values (with_expectation)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Expectation Values
+^^^^^^^^^^^^^^^^^^^^^^^
 
 Instructs the backend to compute ``⟨ψ|O|ψ⟩`` for each observable in the list.
 

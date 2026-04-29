@@ -1,5 +1,5 @@
-Bitstring Measurement (with_sampling)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Bitstring Measurement
+^^^^^^^^^^^^^^^^^^^^^^
 
 Instructs the backend to perform ``nshots`` projective measurements in the computational basis and
 collect the bitstring counts.
