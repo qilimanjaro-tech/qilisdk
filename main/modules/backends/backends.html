@@ -447,18 +447,6 @@ drivers to be present on the system.</p>
 efficient simulation of both digital and analog quantum functionals.
 It is designed for ease of use and does not require any special hardware or dependencies.
 There is no need to install QiliSim separately, as it is included with the core QILISDK installation.</p>
-<p><strong>Initialization</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.backends</span><span class="w"> </span><span class="kn">import</span> <span class="n">QiliSim</span>
-</span><span id="line-2">
-</span><span id="line-3"><span class="n">backend</span> <span class="o">=</span> <span class="n">QiliSim</span><span class="p">()</span>
-</span></code></pre></div>
-</div>
-<p><strong>Capabilities</strong></p>
-<ul class="simple">
-<li><p><strong>DigitalPropagation</strong> of digital circuits with efficient state-vector simulation.</p></li>
-<li><p><strong>AnalogEvolution</strong> driven by <a class="reference internal" href="../../code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule" title="qilisdk.analog.schedule.Schedule"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schedule</span></code></a>.</p></li>
-<li><p>Compatible with <a class="reference internal" href="../../code/api/qilisdk/functionals/variational_program/index.html#qilisdk.functionals.variational_program.VariationalProgram" title="qilisdk.functionals.variational_program.VariationalProgram"><code class="xref py py-class docutils literal notranslate"><span class="pre">VariationalProgram</span></code></a> for classical optimization loops.</p></li>
-</ul>
 <p><strong>Parameters</strong></p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">noise_model</span></code> (<a class="reference internal" href="../../code/api/qilisdk/noise/noise_model/index.html#qilisdk.noise.noise_model.NoiseModel" title="qilisdk.noise.noise_model.NoiseModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">NoiseModel</span></code></a>, optional): Noise model applied during simulation.</p></li>
@@ -466,7 +454,10 @@ There is no need to install QiliSim separately, as it is included with the core 
 <li><p><code class="docutils literal notranslate"><span class="pre">digital_simulation_method</span></code> (<a class="reference internal" href="../../code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.DigitalMethod" title="qilisdk.backends.backend_config.DigitalMethod"><code class="xref py py-class docutils literal notranslate"><span class="pre">DigitalMethod</span></code></a>, optional): Digital simulation options.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">execution_config</span></code> (<a class="reference internal" href="../../code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.ExecutionConfig" title="qilisdk.backends.backend_config.ExecutionConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExecutionConfig</span></code></a>, optional): Runtime execution options such as thread count and random seed.</p></li>
 </ul>
-<p><strong>Configuration example</strong></p>
+<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; sdk-260-make-qilisim-faster
+<strong>Usage Example</strong>
+=======
+<strong>Configuration example</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.backends</span><span class="w"> </span><span class="kn">import</span> <span class="n">QiliSim</span>
 </span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.backends.backend_config</span><span class="w"> </span><span class="kn">import</span> <span class="n">AnalogMethod</span><span class="p">,</span> <span class="n">DigitalMethod</span><span class="p">,</span> <span class="n">ExecutionConfig</span><span class="p">,</span> <span class="n">MonteCarloConfig</span>
 </span><span id="line-3">
@@ -480,7 +471,8 @@ There is no need to install QiliSim separately, as it is included with the core 
 </span><span id="line-11"><span class="p">)</span>
 </span></code></pre></div>
 </div>
-<p><strong>Example</strong></p>
+<p><strong>Example</strong>
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; main</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 </span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.digital</span><span class="w"> </span><span class="kn">import</span> <span class="n">Circuit</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="n">CNOT</span>
 </span><span id="line-3"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.backends</span><span class="w"> </span><span class="kn">import</span> <span class="n">QiliSim</span>
@@ -496,11 +488,38 @@ There is no need to install QiliSim separately, as it is included with the core 
 </span><span id="line-13"><span class="n">functional</span> <span class="o">=</span> <span class="n">DigitalPropagation</span><span class="p">(</span><span class="n">circuit</span><span class="p">)</span>
 </span><span id="line-14">
 </span><span id="line-15"><span class="c1"># Execute with the QiliSim backend</span>
-</span><span id="line-16"><span class="n">qilisim_backend</span> <span class="o">=</span> <span class="n">QiliSim</span><span class="p">()</span>
-</span><span id="line-17"><span class="n">result</span> <span class="o">=</span> <span class="n">qilisim_backend</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">functional</span><span class="p">,</span> <span class="n">Readout</span><span class="p">()</span><span class="o">.</span><span class="n">with_sampling</span><span class="p">(</span><span class="n">nshots</span><span class="o">=</span><span class="mi">500</span><span class="p">))</span>
+</span><span id="line-16"><span class="n">backend</span> <span class="o">=</span> <span class="n">QiliSim</span><span class="p">()</span>
+</span><span id="line-17"><span class="n">result</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">functional</span><span class="p">,</span> <span class="n">Readout</span><span class="p">()</span><span class="o">.</span><span class="n">with_sampling</span><span class="p">(</span><span class="n">nshots</span><span class="o">=</span><span class="mi">500</span><span class="p">))</span>
 </span><span id="line-18"><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">get_samples</span><span class="p">())</span>
 </span></code></pre></div>
 </div>
+<p><strong>Configuration</strong></p>
+<p>QiliSim has a variety of configuration options to customize the simulation methods and performance characteristics.
+These can be set at initialization via the <code class="docutils literal notranslate"><span class="pre">analog_simulation_method</span></code>, <code class="docutils literal notranslate"><span class="pre">digital_simulation_method</span></code>, and <code class="docutils literal notranslate"><span class="pre">execution_config</span></code> parameters:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.backends</span><span class="w"> </span><span class="kn">import</span> <span class="n">QiliSim</span><span class="p">,</span> <span class="n">AnalogMethod</span><span class="p">,</span> <span class="n">DigitalMethod</span><span class="p">,</span> <span class="n">ExecutionConfig</span><span class="p">,</span> <span class="n">MonteCarloConfig</span>
+</span><span id="line-2">
+</span><span id="line-3"><span class="n">backend</span> <span class="o">=</span> <span class="n">QiliSim</span><span class="p">(</span>
+</span><span id="line-4">    <span class="n">analog_simulation_method</span><span class="o">=</span><span class="n">AnalogMethod</span><span class="o">.</span><span class="n">integrator</span><span class="p">(),</span>
+</span><span id="line-5">    <span class="n">digital_simulation_method</span><span class="o">=</span><span class="n">DigitalMethod</span><span class="o">.</span><span class="n">statevector</span><span class="p">(),</span>
+</span><span id="line-6">    <span class="n">execution_config</span><span class="o">=</span><span class="n">ExecutionConfig</span><span class="p">(</span>
+</span><span id="line-7">        <span class="n">num_threads</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+</span><span id="line-8">        <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span>
+</span><span id="line-9">        <span class="n">monte_carlo</span><span class="o">=</span><span class="n">MonteCarloConfig</span><span class="p">(</span><span class="n">trajectories</span><span class="o">=</span><span class="mi">200</span><span class="p">)</span>
+</span><span id="line-10">    <span class="p">),</span>
+</span><span id="line-11"><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<p>Possible analog simulation methods:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="../../code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.AnalogMethod.integrator" title="qilisdk.backends.backend_config.AnalogMethod.integrator"><code class="xref py py-class docutils literal notranslate"><span class="pre">integrator</span></code></a>: General-purpose RK4 integrator.</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.AnalogMethod.adaptive_integrator" title="qilisdk.backends.backend_config.AnalogMethod.adaptive_integrator"><code class="xref py py-class docutils literal notranslate"><span class="pre">adaptive_integrator</span></code></a>: Adaptive RK45 integrator, faster for some systems.</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.AnalogMethod.direct" title="qilisdk.backends.backend_config.AnalogMethod.direct"><code class="xref py py-class docutils literal notranslate"><span class="pre">direct</span></code></a>: Matrix exponential method for small systems.</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.AnalogMethod.arnoldi" title="qilisdk.backends.backend_config.AnalogMethod.arnoldi"><code class="xref py py-class docutils literal notranslate"><span class="pre">arnoldi</span></code></a>: Krylov subspace method.</p></li>
+</ul>
+<p>Possible digital simulation methods:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="../../code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.DigitalMethod.statevector" title="qilisdk.backends.backend_config.DigitalMethod.statevector"><code class="xref py py-class docutils literal notranslate"><span class="pre">statevector</span></code></a>: Exact state-vector simulation with optional caching.</p></li>
+</ul>
 </section>
 <section id="cuda-backend">
 <h2>CUDA Backend<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#cuda-backend" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#cuda-backend'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>

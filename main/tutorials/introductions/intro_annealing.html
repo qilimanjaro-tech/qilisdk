@@ -413,25 +413,17 @@ or more specifically the Pauli operator classes:</p>
 </span></code></pre></div>
 </div>
 <p>We then need to construct our schedule to determine how the mixing will happen over time, which we
-can do using the <a class="reference internal" href="../../modules/analog/analog_schedule.html"><span class="doc">Schedule</span></a> class:</p>
+can do using the <a class="reference internal" href="../../modules/analog/analog_schedule.html"><span class="doc">Schedule</span></a> class. The class allows for complete
+flexibility in how you want to define your schedule, but it also provides some helper functions for common schedules:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.analog</span><span class="w"> </span><span class="kn">import</span> <span class="n">Schedule</span>
-</span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Interpolation</span>
-</span><span id="line-3">
-</span><span id="line-4"><span class="n">schedule</span> <span class="o">=</span> <span class="n">Schedule</span><span class="p">(</span>
-</span><span id="line-5">    <span class="n">hamiltonians</span><span class="o">=</span><span class="p">{</span><span class="s2">"driver"</span><span class="p">:</span> <span class="n">initial_hamiltonian</span><span class="p">,</span> <span class="s2">"problem"</span><span class="p">:</span> <span class="n">final_hamiltonian</span><span class="p">},</span>
-</span><span id="line-6">    <span class="n">coefficients</span><span class="o">=</span><span class="p">{</span>
-</span><span id="line-7">        <span class="s2">"driver"</span><span class="p">:</span> <span class="p">{(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">):</span> <span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">t</span> <span class="o">/</span> <span class="mf">10.0</span><span class="p">},</span>
-</span><span id="line-8">        <span class="s2">"problem"</span><span class="p">:</span> <span class="p">{(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">):</span> <span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">t</span> <span class="o">/</span> <span class="mf">10.0</span><span class="p">},</span>
-</span><span id="line-9">    <span class="p">},</span>
-</span><span id="line-10">    <span class="n">dt</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
-</span><span id="line-11">    <span class="n">interpolation</span><span class="o">=</span><span class="n">Interpolation</span><span class="o">.</span><span class="n">LINEAR</span><span class="p">,</span>
-</span><span id="line-12"><span class="p">)</span>
+</span><span id="line-2">
+</span><span id="line-3"><span class="n">schedule</span> <span class="o">=</span> <span class="n">Schedule</span><span class="o">.</span><span class="n">linear</span><span class="p">(</span><span class="n">initial_hamiltonian</span><span class="p">,</span> <span class="n">final_hamiltonian</span><span class="p">,</span> <span class="n">total_time</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
 </span></code></pre></div>
 </div>
 <p>We want to start in the ground state of the initial Hamiltonian, which is a uniform superposition of all possible states of the system:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">QTensor</span>
 </span><span id="line-2">
-</span><span id="line-3"><span class="n">initial_state</span> <span class="o">=</span> <span class="p">(</span><span class="n">QTensor</span><span class="o">.</span><span class="n">ket</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">QTensor</span><span class="o">.</span><span class="n">ket</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">QTensor</span><span class="o">.</span><span class="n">ket</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">QTensor</span><span class="o">.</span><span class="n">ket</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">normalized</span><span class="p">()</span>
+</span><span id="line-3"><span class="n">initial_state</span> <span class="o">=</span> <span class="n">QTensor</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
 </span></code></pre></div>
 </div>
 <p>Finally, we can use <a class="reference internal" href="../../modules/backends/backends_qilisim.html"><span class="doc">QiliSim</span></a> to simulate the annealing process:</p>

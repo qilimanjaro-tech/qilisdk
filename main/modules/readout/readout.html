@@ -387,8 +387,8 @@ collect the bitstring counts.</p>
 <ul class="simple">
 <li><p><strong>nshots</strong> (<code class="docutils literal notranslate"><span class="pre">int</span></code>): Number of measurement shots.  Must be a positive integer.</p></li>
 <li><p><strong>expand_samples</strong> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>): Whether to expand the samples, by default True. If this is True,
-partial measurements will be returned as “<a href="#id1"><span class="problematic" id="id2">0_</span></a>” where the “_” indicates an unmeasured qubit.
-If False, the unmeasured qubits will be dropped from the bitstring, so “<a href="#id3"><span class="problematic" id="id4">0_</span></a>” would be returned as “0”.</p></li>
+partial measurements will be returned as “0_” where the “_” indicates an unmeasured qubit.
+If False, the unmeasured qubits will be dropped from the bitstring, so “0_” would be returned as “0”.</p></li>
 </ul>
 <p><strong>When to Use It</strong></p>
 <p>Use sampling when you need the full bitstring distribution, for instance to evaluate a combinatorial

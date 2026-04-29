@@ -479,20 +479,13 @@ such that <span class="math notranslate nohighlight">\(A(t) = 1 - t/T\)</span> a
 </span><span id="line-6"><span class="n">mixer_hamiltonian</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span> <span class="o">*</span> <span class="n">X</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_people</span><span class="p">))</span>
 </span></code></pre></div>
 </div>
-<p>We also need to define the schedule - how the coefficients of the problem and mixing Hamiltonians change over time:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">T</span> <span class="o">=</span> <span class="mf">100.0</span>
-</span><span id="line-2"><span class="n">schedule</span> <span class="o">=</span> <span class="n">Schedule</span><span class="p">(</span>
-</span><span id="line-3">                <span class="n">hamiltonians</span><span class="o">=</span><span class="p">{</span><span class="s2">"problem"</span><span class="p">:</span> <span class="n">problem_hamiltonian</span><span class="p">,</span> <span class="s2">"mixer"</span><span class="p">:</span> <span class="n">mixer_hamiltonian</span><span class="p">},</span>
-</span><span id="line-4">                <span class="n">coefficients</span><span class="o">=</span><span class="p">{</span>
-</span><span id="line-5">                    <span class="s2">"mixer"</span><span class="p">:</span> <span class="p">{(</span><span class="mi">0</span><span class="p">,</span> <span class="n">T</span><span class="p">):</span> <span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">t</span> <span class="o">/</span> <span class="n">T</span><span class="p">},</span>
-</span><span id="line-6">                    <span class="s2">"problem"</span><span class="p">:</span> <span class="p">{(</span><span class="mi">0</span><span class="p">,</span> <span class="n">T</span><span class="p">):</span> <span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">t</span> <span class="o">/</span> <span class="n">T</span><span class="p">},</span>
-</span><span id="line-7">                <span class="p">},</span>
-</span><span id="line-8">                <span class="n">dt</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
-</span><span id="line-9">            <span class="p">)</span>
+<p>We also need to define the schedule - how the coefficients of the problem and mixing Hamiltonians change over time. In this
+case we’ll just use a simple linear mixing:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">schedule</span> <span class="o">=</span> <span class="n">Schedule</span><span class="o">.</span><span class="n">linear</span><span class="p">(</span><span class="n">mixer_hamiltonian</span><span class="p">,</span> <span class="n">problem_hamiltonian</span><span class="p">,</span> <span class="n">total_time</span><span class="o">=</span><span class="mf">100.0</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
 </span></code></pre></div>
 </div>
 <p>We will start in the ground state of our mixing Hamiltonian, which is the equal superposition state over all possible team assignments:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">initial_state</span> <span class="o">=</span> <span class="n">QTensor</span><span class="o">.</span><span class="n">tensor_product</span><span class="p">([</span><span class="n">QTensor</span><span class="o">.</span><span class="n">ket</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">QTensor</span><span class="o">.</span><span class="n">ket</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_people</span><span class="p">)])</span><span class="o">.</span><span class="n">normalized</span><span class="p">()</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">initial_state</span> <span class="o">=</span> <span class="n">QTensor</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">num_people</span><span class="p">)</span>
 </span></code></pre></div>
 </div>
 <p>Finally, we initialize our quantum simulator, execute the evolution, and read out the results:</p>
@@ -516,7 +509,7 @@ such that <span class="math notranslate nohighlight">\(A(t) = 1 - t/T\)</span> a
 </span><span id="line-6">    )
 </span><span id="line-7">
 </span><span id="line-8">    Expectation Value Results: (
-</span><span id="line-9">            expectation_values=[8.999696720325046],
+</span><span id="line-9">            expectation_values=[-8.999696720325046],
 </span><span id="line-10">    )
 </span><span id="line-11">
 </span><span id="line-12">]
