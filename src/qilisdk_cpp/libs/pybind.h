@@ -26,6 +26,8 @@ namespace py = pybind11;
 // Needed for _a literals
 using namespace py::literals;
 
+#pragma GCC visibility push(default)
+
 // External types
 extern py::object numpy_array;
 extern py::object numpy_array_type;
@@ -66,5 +68,7 @@ extern py::object ReadoutCompositeResults;
 void initialize_all_pybind_types();
 void initialize_external_pybind_types();
 void finalize_all_pybind_types();
+
+#pragma GCC visibility pop
 
 // GCOV_EXCL_BR_STOP

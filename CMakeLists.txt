@@ -21,7 +21,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
 include(CheckCXXCompilerFlag)
 check_cxx_compiler_flag("" COMPILER_EXISTS)
 if(NOT COMPILER_EXISTS OR CMAKE_CXX_COMPILER STREQUAL "")
-    message(FATAL_ERROR "[QiliSDK C++] No C++ compiler found. Please either install one (e.g. \"sudo apt install build-essential\" on Ubuntu) or recompile with -Ccmake.define.qilisdk=OFF to disable QiliSDK backend.")
+    message(FATAL_ERROR "[QiliSDK C++] No C++ compiler found. Please install one (e.g. \"sudo apt install build-essential\" on Ubuntu or \"xcode-select --install\" on macOS) and try again.")
 endif()
 
 # pybind should already be installed via the dependencies
