@@ -16,14 +16,14 @@ Welcome to **QiliSDK**, a unified Python framework for developing, simulating, a
       with some tutorials on how to install and start using QiliSDK!
 
    .. grid-item-card:: Modules
-      :link: modules/analog.html
+      :link: modules/core/core.html
       :text-align: center
       :img-top: _static/book.png
 
       This section contains in-depth information about each key module of QiliSDK.
 
    .. grid-item-card:: Tutorials
-      :link: tutorials/intro_circuits.html
+      :link: tutorials/introductions/intro_quantum.html
       :text-align: center
       :img-top: _static/book.png
 
