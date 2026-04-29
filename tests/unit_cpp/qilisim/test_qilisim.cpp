@@ -312,7 +312,7 @@ _rho_mf = QTensor(sp.csr_matrix(np.array([[1.+0j,0],[0,0]], dtype=complex)))
 _te_mf = AnalogEvolution(schedule=_sched_mf, initial_state=_rho_mf)
     )");
     py::dict p;
-    p["evolution_method"] = py::str("integrate_matrix_free");
+    p["evolution_method"] = py::str("integrate_rk4_matrix_free");
     EXPECT_NO_THROW(sim.execute_analog_evolution(py::globals()["_te_mf"], py::list(), py::none(), p));
 }
 
@@ -334,7 +334,7 @@ _te_mf_interm = AnalogEvolution(
 )
     )");
     py::dict p;
-    p["evolution_method"] = py::str("integrate_matrix_free");
+    p["evolution_method"] = py::str("integrate_rk4_matrix_free");
     EXPECT_NO_THROW(sim.execute_analog_evolution(py::globals()["_te_mf_interm"], py::list(), py::none(), p));
 }
 
