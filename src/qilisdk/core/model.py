@@ -745,23 +745,21 @@ class QUBO(Model):
     def __repr__(self) -> str:
         return self.label
 
-    def _check_valid_constraint(self, label: str, term: Term, operation: ComparisonOperation) -> int | None:
-        """Checks if a given constraint is valid. Assumes that the right hand side of the constraint is set to zero.
+    def _compute_lower_and_upper_limits(  # noqa: PLR6301
+        self,
+        term: Term,
+    ) -> tuple[RealNumber, RealNumber, RealNumber]:
+        """Computes the lower and upper bounds of a term.
 
         Args:
-            label (str): the label of the constraint.
-            term (Term): the left hand side of the constraint term.
-            operation (ComparisonOperation): the comparison operation between the left and right hand sides.
-
-        Raises:
-            ValueError: if the constraint is never feasible given the variable ranges.
+            term (Term): The term to compute the lower and upper limits for.
 
         Returns:
-            int | None: the upper bound of the continuous slack variable needed for this given constraint.
-                        None in case the constraint is always feasible.
+            tuple[RealNumber, RealNumber, RealNumber]: The Constant terms, lower limit, upper limit in this order.
+
+        Raises:
+            ValueError: if the operation the term uses is not addition or multiplication.
         """
-        ub = np.iinfo(np.int64).max if operation in {ComparisonOperation.GEQ, ComparisonOperation.GT} else 0
-        lb = np.iinfo(np.int64).min if operation in {ComparisonOperation.LEQ, ComparisonOperation.LT} else 0
 
         def to_real(num: Number) -> RealNumber:
             if isinstance(num, RealNumber):
@@ -791,6 +789,28 @@ class QUBO(Model):
                 term_lower_limit = coeff_value
         else:
             raise ValueError(f"Operation {term.operation.value} in constraint is not supported.")
+
+        return const, term_lower_limit, term_upper_limit
+
+    def _check_valid_constraint(self, label: str, term: Term, operation: ComparisonOperation) -> int | None:
+        """Checks if a given constraint is valid. Assumes that the right hand side of the constraint is set to zero.
+
+        Args:
+            label (str): the label of the constraint.
+            term (Term): the left hand side of the constraint term.
+            operation (ComparisonOperation): the comparison operation between the left and right hand sides.
+
+        Raises:
+            ValueError: if the constraint is never feasible given the variable ranges.
+
+        Returns:
+            int | None: the upper bound of the continuous slack variable needed for this given constraint.
+                        None in case the constraint is always feasible.
+        """
+        ub = np.iinfo(np.int64).max if operation in {ComparisonOperation.GEQ, ComparisonOperation.GT} else 0
+        lb = np.iinfo(np.int64).min if operation in {ComparisonOperation.LEQ, ComparisonOperation.LT} else 0
+
+        const, term_lower_limit, term_upper_limit = self._compute_lower_and_upper_limits(term)
 
         if operation == ComparisonOperation.GT and term_upper_limit + const <= 0:
             raise ValueError(f"Constraint {label} is unsatisfiable.")
