@@ -1,7 +1,7 @@
 CUDA Backend
 ------------
 
-The **CUDA** backend leverages NVIDIA GPUs via the :mod:`cuda-quantum` framework for both digital and analog simulations.
+The **CUDA** backend leverages NVIDIA GPUs via the ``cuda-quantum`` framework for both digital and analog simulations.
 When no compatible GPU is detected it automatically falls back to cpu-based targets, so you can prototype on
 commodity hardware before moving to accelerated machines.
 

@@ -172,7 +172,7 @@ Interoperability
         qubo_model = model.to_qubo()
 
 - **Export to Hamiltonian**  
-    Once in QUBO form, translate directly into an analog Ising :class:`~qilisdk.core.hamiltonian.Hamiltonian` for simulation or hardware:  
+    Once in QUBO form, translate directly into an analog Ising :class:`~qilisdk.analog.hamiltonian.Hamiltonian` for simulation or hardware:  
 
     .. code-block:: python
 

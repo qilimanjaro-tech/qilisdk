@@ -2,8 +2,8 @@ Intermediate Results
 --------------------
 
 When a functional is constructed with ``store_intermediate_results=True`` (currently supported by
-:class:`~qilisdk.functionals.AnalogEvolution` and :class:`~qilisdk.functionals.QuantumReservoir`), or via 
-mid-circuit measurements in a :class:`~qilisdk.circuit.Circuit`,
+:class:`~qilisdk.functionals.analog_evolution.AnalogEvolution` and :class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir`), or via 
+mid-circuit measurements in a :class:`~qilisdk.digital.circuit.Circuit`,
 the backend stores a readout result for every time step.  The same readout methods apply at each step.
 
 .. code-block:: python
@@ -56,5 +56,5 @@ the backend stores a readout result for every time step.  The same readout metho
      - ``.with_state_tomography()``
 
 All intermediate lists contain one entry per time step in chronological order, with the **final**
-step appended last.  ``result[i]`` returns the :class:`~qilisdk.readout.readout_results.ReadoutCompositeResults`
+step appended last.  ``result[i]`` returns the :class:`~qilisdk.readout.readout_result.ReadoutCompositeResults`
 for step ``i``.

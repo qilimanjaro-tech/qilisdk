@@ -17,9 +17,9 @@ Observables and shot counts are specified separately via readout objects passed 
 **Returns**
 
 - :class:`~qilisdk.functionals.functional_result.FunctionalResult`: Inspect
-  :attr:`expectation_values` for measured observables,
-  :attr:`state` for the closing state, and
-  :attr:`intermediate_states` and :attr:`intermediate_expectation_values` when ``store_intermediate_results`` is enabled.
+  :meth:`~qilisdk.functionals.functional_result.FunctionalResult.get_expectation_values` for measured observables,
+  :meth:`~qilisdk.functionals.functional_result.FunctionalResult.get_state` for the closing state, and
+  :meth:`~qilisdk.functionals.functional_result.FunctionalResult.get_intermediate_states` and :meth:`~qilisdk.functionals.functional_result.FunctionalResult.get_intermediate_expectation_values` when ``store_intermediate_results`` is enabled.
 
 **Usage Example**
 

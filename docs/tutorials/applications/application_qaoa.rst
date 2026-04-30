@@ -79,8 +79,8 @@ The Implementation
 ----------------------
 
 In QiliSDK, a variety of classes are available to help streamline the implementation. 
-Starting with the problem Hamiltonian, we can use the :class:`~qilisdk.core.QUBO` class to represent our QUBO problem,
-and then use the :class:`~qilisdk.core.QAOA` class to construct the QAOA circuit and perform the optimization.
+Starting with the problem Hamiltonian, we can use the :class:`~qilisdk.core.model.QUBO` class to represent our QUBO problem,
+and then use the :class:`~qilisdk.digital.ansatz.QAOA` class to construct the QAOA circuit and perform the optimization.
 
 To create our model:
 

@@ -66,7 +66,7 @@ Accessing Results
 --------------------
 
 :meth:`~qilisdk.backends.backend.Backend.execute` returns a
-:class:`~qilisdk.functionals.FunctionalResult`.  There are two ways to access the readout data.
+:class:`~qilisdk.functionals.functional_result.FunctionalResult`.  There are two ways to access the readout data.
 
 Convenient Shortcuts
 ^^^^^^^^^^^^^^^^^^^^^^

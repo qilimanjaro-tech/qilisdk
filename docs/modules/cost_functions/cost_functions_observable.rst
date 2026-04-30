@@ -55,6 +55,6 @@ numeric pipeline can be reused for both analog and digital results.
     print("Expectation value <Z> =", energy)
 
 For sampling workflows, the cost function iterates through the probability distribution exposed by
-:attr:`~qilisdk.functionals.functional_result.FunctionalResult.probabilities` and accumulates the expectation value in
+:meth:`~qilisdk.functionals.functional_result.FunctionalResult.get_probabilities` and accumulates the expectation value in
 the computational basis.
 

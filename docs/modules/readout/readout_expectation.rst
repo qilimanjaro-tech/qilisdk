@@ -23,8 +23,8 @@ Instructs the backend to compute ``⟨ψ|O|ψ⟩`` for each observable in the li
 **Parameters**
 
 - **observables** (``list[Hamiltonian | QTensor]``): The operators whose expectation values are
-  requested.  Each entry can be a :class:`~qilisdk.analog.Hamiltonian` expression (e.g. ``Z(0) + Z(1)``)
-  or a :class:`~qilisdk.core.QTensor` directly.
+  requested.  Each entry can be a :class:`~qilisdk.analog.hamiltonian.Hamiltonian` expression (e.g. ``Z(0) + Z(1)``)
+  or a :class:`~qilisdk.core.qtensor.QTensor` directly.
 - **nshots** (``int``, default ``0``): Number of shots for stochastic estimation.  ``0`` uses the
   exact state-vector inner product, meaning no sampling noise, only available on simulators.
 

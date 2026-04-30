@@ -145,7 +145,7 @@ must supply a ``device`` argument with the device code obtained from :meth:`~qil
 .. Warning::
 
     Physical QPUs currently do not support analog functionals built on :class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`; 
-    for now, analog hardware can run only pulse experiments from :mod:`~qilisdk.speqtrum.experiments`.
+    for now, analog hardware can run only pulse experiments from :mod:`~qilisdk.experiments`.
 
 
 Variational Programs

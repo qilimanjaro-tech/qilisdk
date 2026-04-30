@@ -21,9 +21,11 @@ be driven by input data sequences rather than optimization loops.
 **Returns**
 
 - :class:`~qilisdk.functionals.functional_result.FunctionalResult`: Access per-layer expectation values via
-  :attr:`expectation_values`, plus optional states via :attr:`state`.
+  :meth:`~qilisdk.functionals.functional_result.FunctionalResult.get_expectation_values`, plus optional 
+  states via :meth:`~qilisdk.functionals.functional_result.FunctionalResult.get_intermediate_states` if state tomography was requested in the readout spec.
 
-**Usage Example**
+Usage Example
+=================
 
 .. code-block:: python
 
@@ -65,13 +67,15 @@ be driven by input data sequences rather than optimization loops.
     print(results.get_expectation_values())
 
 
-**Encoding Input Data**
+Encoding Input Data
+======================
 
 You can inject classical data into a reservoir layer in multiple places. The only requirement is that the keys in
 ``input_per_layer`` match the labels of the :class:`~qilisdk.functionals.quantum_reservoirs.ReservoirInput` objects you
 place in the layer.
 
-**1. Encode with input and output circuits**
+1. Encode with input and output circuits
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: python
 
@@ -108,7 +112,8 @@ place in the layer.
         ],
     )
 
-**2. Encode directly in Hamiltonian parameters**
+2. Encode directly in Hamiltonian parameters
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: python
 
@@ -139,7 +144,8 @@ place in the layer.
         ],
     )
 
-**3. Encode in the schedule profile and duration**
+3. Encode in the schedule profile and duration
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: python
 

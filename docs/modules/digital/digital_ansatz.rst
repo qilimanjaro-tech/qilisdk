@@ -36,7 +36,7 @@ Once defined, the subclass behaves exactly like any other circuit: you can draw 
 
 For a prebuilt option, consider any of:
 
-   - :class:`~qilisdk.digital.ansatz.QAOA` for combinatorial optimization problems.
-   - :class:`~qilisdk.digital.ansatz.TrotterizedSchedule` for simulating analog dynamics with Trotterization.
-   - :class:`~qilisdk.digital.ansatz.HardwareEfficientAnsatz` for a simple layered structure that can be adapted to various hardware topologies.
+   - :doc:`digital_hardware` for a simple layered structure that can be adapted to various hardware topologies.
+   - :doc:`digital_trotter` for simulating analog dynamics with Trotterization.
+   - :doc:`digital_qaoa` for combinatorial optimization problems.
 

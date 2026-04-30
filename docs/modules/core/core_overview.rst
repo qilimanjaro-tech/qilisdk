@@ -7,11 +7,8 @@ the :mod:`~qilisdk.core.parameterizable.Parameterizable` mixin used throughout t
 
 Highlights:
 
-- :doc:`core_variables_terms` supplies binary, spin, continuous, and
-  parameter variables plus algebraic helpers (:class:`~qilisdk.core.variables.Term`,
-  comparison factories, encodings).
-- :doc:`core_model` builds constrained optimization programs and
-  offers tools to automatically convert the model to :class:`~qilisdk.core.model.QUBO` format if the constraints are linear.
-- :doc:`core_qtensor` manages sparse quantum objects, such as states and operators.
-- :doc:`core_parameters` standardizes how
-  objects expose symbolic parameters (shared by circuits, schedules, etc.).
+- :doc:`core_variables_parameters` supplies a variety of variables (for constructing optimization models), as well as parameters (for parameterizing circuits, schedules, and more).
+- :doc:`core_terms_maps_comparisons` provides ways of combining and manipulating variables and parameters.
+- :doc:`core_model` to build constrained optimization programs.
+- :doc:`core_qubo` to convert models to QUBO format.
+- :doc:`core_qtensor` to manage sparse quantum objects, such as states and operators.

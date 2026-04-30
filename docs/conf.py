@@ -55,6 +55,9 @@ napoleon_google_docstring = True
 napoleon_numpy_docstring = False
 napoleon_preprocess_types = True
 
+# Warn about broken links
+nitpicky = True
+
 # AutoAPI settings
 autoapi_type = "python"
 autoapi_dirs = ["../src/qilisdk"]

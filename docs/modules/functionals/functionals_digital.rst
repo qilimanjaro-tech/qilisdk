@@ -5,7 +5,7 @@ The :class:`~qilisdk.functionals.digital_propagation.DigitalPropagation` functio
 through the backend. Because it subclasses
 :class:`~qilisdk.functionals.functional.PrimitiveFunctional`, any symbolic parameters exposed by the underlying
 :class:`~qilisdk.digital.circuit.Circuit` can be queried or updated through helper methods such as
-:meth:`~qilisdk.functionals.digital_propagation.DigitalPropagation.get_parameter_names`.
+:meth:`~qilisdk.core.parameterizable.Parameterizable.get_parameter_names`.
 
 Measurement details such as the number of shots are specified separately via readout objects passed to
 :meth:`~qilisdk.backends.backend.Backend.execute`.
@@ -16,8 +16,9 @@ Measurement details such as the number of shots are specified separately via rea
 
 **Returns**
 
-- :class:`~qilisdk.functionals.functional_result.FunctionalResult`: Access shot counts via :attr:`samples`, or
-  probabilities through :attr:`probabilities`.
+- :class:`~qilisdk.functionals.functional_result.FunctionalResult`: Access shot counts 
+- via :meth:`~qilisdk.functionals.functional_result.FunctionalResult.get_samples` and
+- probabilities via :meth:`~qilisdk.functionals.functional_result.FunctionalResult.get_probabilities`.
 
 **Usage Example**
 

@@ -1,7 +1,7 @@
 Qutip Backend
 -------------
 
-The **Qutip** backend uses the :mod:`qutip` library for simulation on CPU, supporting both digital and analog functionals.
+The **Qutip** backend uses the ``qutip`` library for simulation on CPU, supporting both digital and analog functionals.
 It is the most lightweight option, ideal for local development or environments without NVIDIA GPUs.
 
 Installation

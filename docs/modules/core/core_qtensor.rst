@@ -64,7 +64,7 @@ There are also several constructors for common quantum objects:
  - :func:`~qilisdk.core.qtensor.identity` for identity operators of specified dimension
  - :func:`~qilisdk.core.qtensor.zero` for generating zero tensors of specified dimension
  - :func:`~qilisdk.core.qtensor.ghz` for generating GHZ states of specified number of qubits
- - :func:`~qilisdk.core.qtensor.uniform` for generating uniform superposition states of specified number of qubits
+ - :meth:`~qilisdk.core.qtensor.QTensor.uniform` for generating uniform superposition states of specified number of qubits
 
 .. code-block:: python
 
