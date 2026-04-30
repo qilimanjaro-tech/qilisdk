@@ -21,7 +21,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
 include(CheckCXXCompilerFlag)
 check_cxx_compiler_flag("" COMPILER_EXISTS)
 if(NOT COMPILER_EXISTS OR CMAKE_CXX_COMPILER STREQUAL "")
-    message(FATAL_ERROR "[QiliSDK C++] No C++ compiler found. Please either install one (e.g. \"sudo apt install build-essential\" on Ubuntu) or recompile with -Ccmake.define.qilisdk=OFF to disable QiliSDK backend.")
+    message(FATAL_ERROR "[QiliSDK C++] No C++ compiler found. Please install one (e.g. \"sudo apt install build-essential\" on Ubuntu or \"xcode-select --install\" on macOS) and try again.")
 endif()
 
 # pybind should already be installed via the dependencies
@@ -60,14 +60,21 @@ pybind11_add_module(qilisdk_libs SHARED)
 file(GLOB LIBS_SOURCES src/qilisdk_cpp/libs/*.cpp)
 target_sources(qilisdk_libs PRIVATE ${LIBS_SOURCES})
 
+# Origin is Linux specific, but we can set it to @loader_path on macOS which has the same effect
+if(APPLE)
+    set(RPATH_ORIGIN "@loader_path")
+else()
+    set(RPATH_ORIGIN "$ORIGIN")
+endif()
+
 # QTensor
 pybind11_add_module(qtensor_module SHARED src/qilisdk_cpp/core/qtensor_bindings.cpp)
 file(GLOB QTENSOR_SOURCES src/qilisdk_cpp/core/*.cpp)
 target_sources(qtensor_module PRIVATE ${QTENSOR_SOURCES})
 target_link_libraries(qtensor_module PRIVATE qilisdk_libs)
 set_target_properties(qtensor_module PROPERTIES
-    BUILD_RPATH "$ORIGIN"
-    INSTALL_RPATH "$ORIGIN"
+    BUILD_RPATH "${RPATH_ORIGIN}"
+    INSTALL_RPATH "${RPATH_ORIGIN}"
 )
 
 # QiliSim
@@ -78,8 +85,8 @@ list(APPEND QILISIM_SOURCES ${QILISIM_SUBDIR_SOURCES})
 target_sources(qilisim_module PRIVATE ${QILISIM_SOURCES})
 target_link_libraries(qilisim_module PRIVATE qilisdk_libs)
 set_target_properties(qilisim_module PROPERTIES
-    BUILD_RPATH "$ORIGIN"
-    INSTALL_RPATH "$ORIGIN"
+    BUILD_RPATH "${RPATH_ORIGIN}"
+    INSTALL_RPATH "${RPATH_ORIGIN}"
 )
 
 # List of all modules to build
