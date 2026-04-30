@@ -98,7 +98,7 @@ class AnalogMethod(BaseSimulatorConfig):
     """
 
     evolution_method: Literal[
-        "direct", "arnoldi", "integrate_rk4", "integrate_rk45_matrix_free", "integrate_rk4_matrix_free"
+        "direct", "arnoldi", "integrate_rk4", "integrate_rk45_matrix_free", "integrate_rk4_matrix_free", "approximate"
     ] = Field(
         default="integrate_rk4_matrix_free",
         description="Analog time-evolution method to use: 'direct', 'arnoldi', 'integrate_rk4', 'integrate_rk45_matrix_free', or 'integrate_rk4_matrix_free'.",
@@ -144,6 +144,17 @@ class AnalogMethod(BaseSimulatorConfig):
         """
         evolution_method = "integrate_rk4_matrix_free" if matrix_free else "integrate_rk4"
         return cls(evolution_method=evolution_method)
+
+    @classmethod
+    def approximate(cls) -> AnalogMethod:
+        """Build an ``approximate`` analog method configuration.
+
+        This evolves a variational ansatz rather than the full state.
+
+        Returns:
+            AnalogMethod: Configured approximate-method analog configuration.
+        """
+        return cls(evolution_method="approximate")
 
     @classmethod
     def adaptive_integrator(cls, *, tol: float = 1e-2) -> AnalogMethod:
