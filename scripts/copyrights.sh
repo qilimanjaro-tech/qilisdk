@@ -17,7 +17,7 @@ find ./src ./tests -type f \( -name "*.py" -o -name "*.cpp" -o -name "*.h" \) | 
     fi
 done
 
-if [ $FAILED -ne 0 ]; then
+if [[ $FAILED -ne 0 ]]; then
     echo "Copyright header check failed. Please add the appropriate header to the files listed above."
     exit 1
 fi
