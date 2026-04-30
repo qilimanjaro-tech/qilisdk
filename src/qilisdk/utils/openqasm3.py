@@ -365,7 +365,7 @@ class OpenQasmParser:
             if hasattr(expr, "lhs") and hasattr(expr, "rhs"):
                 lhs = self._evaluate_expression(expr.lhs)
                 rhs = self._evaluate_expression(expr.rhs)
-                return self._handle_expression_lhs_rhs(lhs, rhs, expr.op)
+                return self._handle_expression_lhs_rhs(lhs, rhs, expr.op)  # ty:ignore[invalid-argument-type]
             if hasattr(expr, "expression"):
                 expr_val = self._evaluate_expression(expr.expression)
                 if isinstance(expr_val, (bool, int, float, complex)):
@@ -618,7 +618,7 @@ class OpenQasmParser:
                     gates_to_prepend.append(X(qubits[i]))
                     gates_to_append.append(X(qubits[i]))
                 elif modifiers[i] == "inv":
-                    main_gate = Adjoint(main_gate)
+                    main_gate = Adjoint(main_gate)  # ty:ignore[invalid-argument-type]
                 elif modifiers[i] == "pow":
                     num_repeats += 1
                 else:
