@@ -64,9 +64,9 @@ DenseMatrix pauli_z() {
     return Z;
 }
 
-MatrixFreeHamiltonian make_matrix_free_H(const DenseMatrix& base_matrix) {
-    MatrixFreeOperator op("custom", {}, {0}, base_matrix);
-    return MatrixFreeHamiltonian(op);
+MatrixFreeHamiltonian make_matrix_free_H(std::complex<double> coeff, int qubit, const std::string& pauli) {
+    MatrixFreeOperator op(pauli, {}, {qubit}, DenseMatrix());
+    return MatrixFreeHamiltonian({{coeff, {op}}});
 }
 
 }  // namespace
@@ -631,23 +631,23 @@ class IterIntegrateSparseValidationTest : public ::testing::Test {
 
 TEST_F(IterIntegrateSparseValidationTest, NonSquareHamiltonianThrows) {
     SparseMatrix H_rect(2, 3);
-    EXPECT_ANY_THROW(iter_integrate(rho, dt, H_rect, {}, 1, false));
+    EXPECT_ANY_THROW(iter_rk4_matrix(rho, dt, H_rect, {}, false));
 }
 
 TEST_F(IterIntegrateSparseValidationTest, NonSquareDensityMatrixThrows) {
     DenseMatrix rho_rect(2, 3);
     rho_rect.setZero();
-    EXPECT_ANY_THROW(iter_integrate(rho_rect, dt, H, {}, 1, false));
+    EXPECT_ANY_THROW(iter_rk4_matrix(rho_rect, dt, H, {}, false));
 }
 
 TEST_F(IterIntegrateSparseValidationTest, MismatchedHamiltonianAndRhoDimensionsThrows) {
     DenseMatrix rho_4 = DenseMatrix::Identity(4, 4) * 0.25;
-    EXPECT_ANY_THROW(iter_integrate(rho_4, dt, H, {}, 1, false));
+    EXPECT_ANY_THROW(iter_rk4_matrix(rho_4, dt, H, {}, false));
 }
 
 TEST_F(IterIntegrateSparseValidationTest, MismatchedJumpOperatorDimensionThrows) {
     SparseMatrix bad_jump(4, 4);
-    EXPECT_ANY_THROW(iter_integrate(rho, dt, H, {bad_jump}, 1, false));
+    EXPECT_ANY_THROW(iter_rk4_matrix(rho, dt, H, {bad_jump}, false));
 }
 
 class IterIntegrateSparseUnitaryStatevectorTest : public ::testing::Test {
@@ -659,14 +659,14 @@ class IterIntegrateSparseUnitaryStatevectorTest : public ::testing::Test {
 TEST_F(IterIntegrateSparseUnitaryStatevectorTest, NormPreserved) {
     DenseMatrix psi(2, 1);
     psi << 1.0 / std::sqrt(2.0), 1.0 / std::sqrt(2.0);
-    DenseMatrix result = iter_integrate(psi, dt, H, {}, 1, true);
+    DenseMatrix result = iter_rk4_matrix(psi, dt, H, {}, true);
     EXPECT_NEAR(result.norm(), 1.0, kTol);
 }
 
 TEST_F(IterIntegrateSparseUnitaryStatevectorTest, EigenstateLeavesPopulationUnchanged) {
     DenseMatrix psi(2, 1);
     psi << 1, 0;
-    DenseMatrix result = iter_integrate(psi, dt, H, {}, 1, true);
+    DenseMatrix result = iter_rk4_matrix(psi, dt, H, {}, true);
     EXPECT_NEAR(std::abs(result(0, 0)), 1.0, kTol);
     EXPECT_NEAR(std::abs(result(1, 0)), 0.0, kTol);
 }
@@ -674,27 +674,16 @@ TEST_F(IterIntegrateSparseUnitaryStatevectorTest, EigenstateLeavesPopulationUnch
 TEST_F(IterIntegrateSparseUnitaryStatevectorTest, ZeroTimeStepReturnsInitialState) {
     DenseMatrix psi(2, 1);
     psi << 1.0 / std::sqrt(2.0), 1.0 / std::sqrt(2.0);
-    DenseMatrix result = iter_integrate(psi, 0.0, H, {}, 1, true);
+    DenseMatrix result = iter_rk4_matrix(psi, 0.0, H, {}, true);
     EXPECT_TRUE(result.isApprox(psi, kTol));
 }
 
 TEST_F(IterIntegrateSparseUnitaryStatevectorTest, MatchesIterDirectForShortTime) {
     DenseMatrix psi(2, 1);
     psi << 1.0 / std::sqrt(2.0), 1.0 / std::sqrt(2.0);
-    DenseMatrix result_rk4 = iter_integrate(psi, dt, H, {}, 10, true);
+    DenseMatrix result_rk4 = iter_rk4_matrix(psi, dt, H, {}, true);
     DenseMatrix result_direct = iter_direct(psi, dt, H, {}, true);
     EXPECT_TRUE(result_rk4.isApprox(result_direct, kTolLoose));
-}
-
-TEST_F(IterIntegrateSparseUnitaryStatevectorTest, MoreSubstepsImproveAccuracy) {
-    DenseMatrix psi(2, 1);
-    psi << 1.0 / std::sqrt(2.0), 1.0 / std::sqrt(2.0);
-    DenseMatrix ref = iter_direct(psi, dt, H, {}, true);
-    DenseMatrix result_1 = iter_integrate(psi, dt, H, {}, 1, true);
-    DenseMatrix result_10 = iter_integrate(psi, dt, H, {}, 10, true);
-    double err_1 = (result_1 - ref).norm();
-    double err_10 = (result_10 - ref).norm();
-    EXPECT_LT(err_10, err_1);
 }
 
 class IterIntegrateSparseUnitaryDensityMatrixTest : public ::testing::Test {
@@ -705,38 +694,38 @@ class IterIntegrateSparseUnitaryDensityMatrixTest : public ::testing::Test {
 
 TEST_F(IterIntegrateSparseUnitaryDensityMatrixTest, TracePreserved) {
     DenseMatrix rho = pure_plus();
-    DenseMatrix result = iter_integrate(rho, dt, H, {}, 1, false);
+    DenseMatrix result = iter_rk4_matrix(rho, dt, H, {}, false);
     EXPECT_NEAR(std::real(result.trace()), 1.0, kTol);
 }
 
 TEST_F(IterIntegrateSparseUnitaryDensityMatrixTest, HermiticityPreserved) {
     DenseMatrix rho = pure_plus();
-    DenseMatrix result = iter_integrate(rho, dt, H, {}, 1, false);
+    DenseMatrix result = iter_rk4_matrix(rho, dt, H, {}, false);
     EXPECT_TRUE((result - result.adjoint()).isZero(kTol));
 }
 
 TEST_F(IterIntegrateSparseUnitaryDensityMatrixTest, ZeroTimeStepReturnsInitialState) {
     DenseMatrix rho = pure_plus();
-    DenseMatrix result = iter_integrate(rho, 0.0, H, {}, 1, false);
+    DenseMatrix result = iter_rk4_matrix(rho, 0.0, H, {}, false);
     EXPECT_TRUE(result.isApprox(rho, kTol));
 }
 
 TEST_F(IterIntegrateSparseUnitaryDensityMatrixTest, MaximallyMixedStateInvariant) {
     DenseMatrix rho = maximally_mixed();
-    DenseMatrix result = iter_integrate(rho, dt, H, {}, 1, false);
+    DenseMatrix result = iter_rk4_matrix(rho, dt, H, {}, false);
     EXPECT_TRUE(result.isApprox(rho, kTol));
 }
 
 TEST_F(IterIntegrateSparseUnitaryDensityMatrixTest, MatchesIterDirectForShortTime) {
     DenseMatrix rho = pure_plus();
-    DenseMatrix result_rk4 = iter_integrate(rho, dt, H, {}, 10, false);
+    DenseMatrix result_rk4 = iter_rk4_matrix(rho, dt, H, {}, false);
     DenseMatrix result_direct = iter_direct(rho, dt, H, {}, false);
     EXPECT_TRUE(result_rk4.isApprox(result_direct, kTolLoose));
 }
 
 TEST_F(IterIntegrateSparseUnitaryDensityMatrixTest, PurityPreservedForPureState) {
     DenseMatrix rho = pure_plus();
-    DenseMatrix result = iter_integrate(rho, dt, H, {}, 10, false);
+    DenseMatrix result = iter_rk4_matrix(rho, dt, H, {}, false);
     double purity = std::real((result * result).trace());
     EXPECT_NEAR(purity, 1.0, kTolLoose);
 }
@@ -750,70 +739,80 @@ class IterIntegrateSparseLindbladTest : public ::testing::Test {
 
 TEST_F(IterIntegrateSparseLindbladTest, TracePreserved) {
     DenseMatrix rho = pure_plus();
-    DenseMatrix result = iter_integrate(rho, dt, H, {jump}, 1, false);
+    DenseMatrix result = iter_rk4_matrix(rho, dt, H, {jump}, false);
     EXPECT_NEAR(std::real(result.trace()), 1.0, kTol);
 }
 
 TEST_F(IterIntegrateSparseLindbladTest, HermiticityPreserved) {
     DenseMatrix rho = pure_plus();
-    DenseMatrix result = iter_integrate(rho, dt, H, {jump}, 1, false);
+    DenseMatrix result = iter_rk4_matrix(rho, dt, H, {jump}, false);
     EXPECT_TRUE((result - result.adjoint()).isZero(kTol));
 }
 
 TEST_F(IterIntegrateSparseLindbladTest, ZeroTimeStepReturnsInitialState) {
     DenseMatrix rho = pure_plus();
-    DenseMatrix result = iter_integrate(rho, 0.0, H, {jump}, 1, false);
+    DenseMatrix result = iter_rk4_matrix(rho, 0.0, H, {jump}, false);
     EXPECT_TRUE(result.isApprox(rho, kTol));
 }
 
 TEST_F(IterIntegrateSparseLindbladTest, GroundStateIsFixedPoint) {
     DenseMatrix rho = pure_zero();
-    DenseMatrix result = iter_integrate(rho, dt, H, {jump}, 1, false);
+    DenseMatrix result = iter_rk4_matrix(rho, dt, H, {jump}, false);
     EXPECT_TRUE(result.isApprox(rho, kTol));
 }
 
 TEST_F(IterIntegrateSparseLindbladTest, ExcitedStateDecaysTowardGroundState) {
     DenseMatrix rho = DenseMatrix::Zero(2, 2);
     rho(1, 1) = 1.0;
-    DenseMatrix result = iter_integrate(rho, dt, H, {jump}, 1, false);
+    DenseMatrix result = iter_rk4_matrix(rho, dt, H, {jump}, false);
     EXPECT_GT(std::real(result(0, 0)), std::real(rho(0, 0)));
     EXPECT_LT(std::real(result(1, 1)), std::real(rho(1, 1)));
 }
 
 TEST_F(IterIntegrateSparseLindbladTest, MatchesIterDirectForShortTime) {
     DenseMatrix rho = pure_plus();
-    DenseMatrix result_rk4 = iter_integrate(rho, dt, H, {jump}, 10, false);
+    DenseMatrix result_rk4 = iter_rk4_matrix(rho, dt, H, {jump}, false);
     DenseMatrix result_direct = iter_direct(rho, dt, H, {jump}, false);
     EXPECT_TRUE(result_rk4.isApprox(result_direct, kTolLoose));
 }
 
-TEST_F(IterIntegrateSparseLindbladTest, LongTimeConvergesToGroundState) {
-    DenseMatrix rho = pure_plus();
-    DenseMatrix result = iter_integrate(rho, 20.0, H, {jump}, 100, false);
-    EXPECT_NEAR(std::real(result(0, 0)), 1.0, kTolLoose);
-    EXPECT_NEAR(std::real(result(1, 1)), 0.0, kTolLoose);
-}
-
 class IterIntegrateMatrixFreeValidationTest : public ::testing::Test {
    protected:
-    MatrixFreeHamiltonian H_mf = make_matrix_free_H(0.5 * pauli_z());
+    MatrixFreeHamiltonian H_mf = make_matrix_free_H(0.5, 0, "Z");
 };
 
 TEST_F(IterIntegrateMatrixFreeValidationTest, NonSquareDensityMatrixThrows) {
     DenseMatrix rho_rect(2, 3);
     rho_rect.setZero();
-    EXPECT_ANY_THROW(iter_integrate(rho_rect, 0.1, H_mf, {}, 1, false));
+    EXPECT_ANY_THROW(iter_rk4(rho_rect, 0.0, 0.1, {}, {H_mf}, {{1.0}}, {}, false));
 }
 
 TEST_F(IterIntegrateMatrixFreeValidationTest, MismatchedJumpOperatorDimensionThrows) {
     DenseMatrix rho = pure_zero();
     SparseMatrix bad_jump(4, 4);
-    EXPECT_ANY_THROW(iter_integrate(rho, 0.1, H_mf, {bad_jump}, 1, false));
+    EXPECT_ANY_THROW(iter_rk4(rho, 0.0, 0.1, {}, {H_mf}, {{1.0}}, {bad_jump}, false));
+}
+
+TEST_F(IterIntegrateMatrixFreeValidationTest, NonSquareDensityMatrixThrowsRk45) {
+    DenseMatrix rho_rect(2, 3);
+    rho_rect.setZero();
+    double dt = 0.1;
+    DenseMatrix k_saved;
+    EXPECT_ANY_THROW(iter_rk45(rho_rect, 0.0, dt, {}, {H_mf}, {{1.0}}, {}, false, 0.1, k_saved));
+}
+
+TEST_F(IterIntegrateMatrixFreeValidationTest, MismatchedJumpOperatorDimensionThrowsRk45) {
+    DenseMatrix rho = pure_zero();
+    SparseMatrix bad_jump(4, 4);
+    double dt = 0.1;
+    DenseMatrix k_saved;
+    // double iter_rk45(DenseMatrix& rho_t, double t, double& dt, const std::vector<double>& step_list, const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<SparseMatrix>& jump_operators, bool is_unitary_on_statevector, double tol, DenseMatrix& k_saved) {
+    EXPECT_ANY_THROW(iter_rk45(rho, 0.0, dt, {}, {H_mf}, {{1.0}}, {bad_jump}, false, 0.1, k_saved));
 }
 
 class IterIntegrateMatrixFreeUnitaryStatevectorTest : public ::testing::Test {
    protected:
-    MatrixFreeHamiltonian H_mf = make_matrix_free_H(0.5 * pauli_z());
+    MatrixFreeHamiltonian H_mf = make_matrix_free_H(0.5, 0, "Z");
     SparseMatrix H_sparse = to_sparse(0.5 * pauli_z());
     double dt = 0.1;
 };
@@ -821,14 +820,14 @@ class IterIntegrateMatrixFreeUnitaryStatevectorTest : public ::testing::Test {
 TEST_F(IterIntegrateMatrixFreeUnitaryStatevectorTest, NormPreserved) {
     DenseMatrix psi(2, 1);
     psi << 1.0 / std::sqrt(2.0), 1.0 / std::sqrt(2.0);
-    iter_integrate(psi, dt, H_mf, {}, 1, true);
+    iter_rk4(psi, 0.0, dt, {}, {H_mf}, {{1.0}}, {}, true);
     EXPECT_NEAR(psi.norm(), 1.0, kTol);
 }
 
 TEST_F(IterIntegrateMatrixFreeUnitaryStatevectorTest, EigenstateLeavesPopulationUnchanged) {
     DenseMatrix psi(2, 1);
     psi << 1, 0;
-    iter_integrate(psi, dt, H_mf, {}, 1, true);
+    iter_rk4(psi, 0.0, dt, {}, {H_mf}, {{1.0}}, {}, true);
     EXPECT_NEAR(std::abs(psi(0, 0)), 1.0, kTol);
     EXPECT_NEAR(std::abs(psi(1, 0)), 0.0, kTol);
 }
@@ -837,7 +836,7 @@ TEST_F(IterIntegrateMatrixFreeUnitaryStatevectorTest, ZeroTimeStepReturnsInitial
     DenseMatrix psi(2, 1);
     psi << 1.0 / std::sqrt(2.0), 1.0 / std::sqrt(2.0);
     DenseMatrix psi_orig = psi;
-    iter_integrate(psi, 0.0, H_mf, {}, 1, true);
+    iter_rk4(psi, 0.0, 0.0, {}, {H_mf}, {{1.0}}, {}, true);
     EXPECT_TRUE(psi.isApprox(psi_orig, kTol));
 }
 
@@ -845,54 +844,54 @@ TEST_F(IterIntegrateMatrixFreeUnitaryStatevectorTest, MatchesSparseOverloadForSh
     DenseMatrix psi_mf(2, 1), psi_sp(2, 1);
     psi_mf << 1.0 / std::sqrt(2.0), 1.0 / std::sqrt(2.0);
     psi_sp = psi_mf;
-    iter_integrate(psi_mf, dt, H_mf, {}, 10, true);
-    DenseMatrix result_sp = iter_integrate(psi_sp, dt, H_sparse, {}, 10, true);
+    iter_rk4(psi_mf, 0.0, dt, {}, {H_mf}, {{1.0}}, {}, true);
+    DenseMatrix result_sp = iter_rk4_matrix(psi_sp, dt, H_sparse, {}, true);
     EXPECT_TRUE(psi_mf.isApprox(result_sp, kTolLoose));
 }
 
 class IterIntegrateMatrixFreeUnitaryDensityMatrixTest : public ::testing::Test {
    protected:
-    MatrixFreeHamiltonian H_mf = make_matrix_free_H(0.5 * pauli_z());
+    MatrixFreeHamiltonian H_mf = make_matrix_free_H(0.5, 0, "Z");
     SparseMatrix H_sparse = to_sparse(0.5 * pauli_z());
     double dt = 0.1;
 };
 
 TEST_F(IterIntegrateMatrixFreeUnitaryDensityMatrixTest, TracePreserved) {
     DenseMatrix rho = pure_plus();
-    iter_integrate(rho, dt, H_mf, {}, 1, false);
+    iter_rk4(rho, 0.0, dt, {}, {H_mf}, {{1.0}}, {}, false);
     EXPECT_NEAR(std::real(rho.trace()), 1.0, kTol);
 }
 
 TEST_F(IterIntegrateMatrixFreeUnitaryDensityMatrixTest, HermiticityPreserved) {
     DenseMatrix rho = pure_plus();
-    iter_integrate(rho, dt, H_mf, {}, 1, false);
+    iter_rk4(rho, 0.0, dt, {}, {H_mf}, {{1.0}}, {}, false);
     EXPECT_TRUE((rho - rho.adjoint()).isZero(kTol));
 }
 
 TEST_F(IterIntegrateMatrixFreeUnitaryDensityMatrixTest, ZeroTimeStepReturnsInitialState) {
     DenseMatrix rho = pure_plus();
     DenseMatrix rho_orig = rho;
-    iter_integrate(rho, 0.0, H_mf, {}, 1, false);
+    iter_rk4(rho, 0.0, 0.0, {}, {H_mf}, {{1.0}}, {}, false);
     EXPECT_TRUE(rho.isApprox(rho_orig, kTol));
 }
 
 TEST_F(IterIntegrateMatrixFreeUnitaryDensityMatrixTest, MaximallyMixedStateInvariant) {
     DenseMatrix rho = maximally_mixed();
-    iter_integrate(rho, dt, H_mf, {}, 1, false);
+    iter_rk4(rho, 0.0, dt, {}, {H_mf}, {{1.0}}, {}, false);
     EXPECT_TRUE(rho.isApprox(maximally_mixed(), kTol));
 }
 
 TEST_F(IterIntegrateMatrixFreeUnitaryDensityMatrixTest, MatchesSparseOverloadForShortTime) {
     DenseMatrix rho_mf = pure_plus();
     DenseMatrix rho_sp = pure_plus();
-    iter_integrate(rho_mf, dt, H_mf, {}, 10, false);
-    DenseMatrix result_sp = iter_integrate(rho_sp, dt, H_sparse, {}, 10, false);
+    iter_rk4(rho_mf, 0.0, dt, {}, {H_mf}, {{1.0}}, {}, false);
+    DenseMatrix result_sp = iter_rk4_matrix(rho_sp, dt, H_sparse, {}, false);
     EXPECT_TRUE(rho_mf.isApprox(result_sp, kTolLoose));
 }
 
 class IterIntegrateMatrixFreeLindbladTest : public ::testing::Test {
    protected:
-    MatrixFreeHamiltonian H_mf = make_matrix_free_H(0.5 * pauli_z());
+    MatrixFreeHamiltonian H_mf = make_matrix_free_H(0.5, 0, "Z");
     SparseMatrix H_sparse = to_sparse(0.5 * pauli_z());
     SparseMatrix jump = amp_damp_jump();
     double dt = 0.1;
@@ -900,27 +899,27 @@ class IterIntegrateMatrixFreeLindbladTest : public ::testing::Test {
 
 TEST_F(IterIntegrateMatrixFreeLindbladTest, TracePreserved) {
     DenseMatrix rho = pure_plus();
-    iter_integrate(rho, dt, H_mf, {jump}, 1, false);
+    iter_rk4(rho, 0.0, dt, {}, {H_mf}, {{1.0}}, {jump}, false);
     EXPECT_NEAR(std::real(rho.trace()), 1.0, kTol);
 }
 
 TEST_F(IterIntegrateMatrixFreeLindbladTest, HermiticityPreserved) {
     DenseMatrix rho = pure_plus();
-    iter_integrate(rho, dt, H_mf, {jump}, 1, false);
+    iter_rk4(rho, 0.0, dt, {}, {H_mf}, {{1.0}}, {jump}, false);
     EXPECT_TRUE((rho - rho.adjoint()).isZero(kTol));
 }
 
 TEST_F(IterIntegrateMatrixFreeLindbladTest, ZeroTimeStepReturnsInitialState) {
     DenseMatrix rho = pure_plus();
     DenseMatrix rho_orig = rho;
-    iter_integrate(rho, 0.0, H_mf, {jump}, 1, false);
+    iter_rk4(rho, 0.0, 0.0, {}, {H_mf}, {{1.0}}, {jump}, false);
     EXPECT_TRUE(rho.isApprox(rho_orig, kTol));
 }
 
 TEST_F(IterIntegrateMatrixFreeLindbladTest, GroundStateIsFixedPoint) {
     DenseMatrix rho = pure_zero();
     DenseMatrix rho_orig = rho;
-    iter_integrate(rho, dt, H_mf, {jump}, 1, false);
+    iter_rk4(rho, 0.0, dt, {}, {H_mf}, {{1.0}}, {jump}, false);
     EXPECT_TRUE(rho.isApprox(rho_orig, kTol));
 }
 
@@ -928,7 +927,7 @@ TEST_F(IterIntegrateMatrixFreeLindbladTest, ExcitedStateDecaysTowardGroundState)
     DenseMatrix rho = DenseMatrix::Zero(2, 2);
     rho(1, 1) = 1.0;
     double initial_excited = std::real(rho(1, 1));
-    iter_integrate(rho, dt, H_mf, {jump}, 1, false);
+    iter_rk4(rho, 0.0, dt, {}, {H_mf}, {{1.0}}, {jump}, false);
     EXPECT_GT(std::real(rho(0, 0)), 0.0);
     EXPECT_LT(std::real(rho(1, 1)), initial_excited);
 }
@@ -936,16 +935,9 @@ TEST_F(IterIntegrateMatrixFreeLindbladTest, ExcitedStateDecaysTowardGroundState)
 TEST_F(IterIntegrateMatrixFreeLindbladTest, MatchesSparseOverloadForShortTime) {
     DenseMatrix rho_mf = pure_plus();
     DenseMatrix rho_sp = pure_plus();
-    iter_integrate(rho_mf, dt, H_mf, {jump}, 10, false);
-    DenseMatrix result_sp = iter_integrate(rho_sp, dt, H_sparse, {jump}, 10, false);
+    iter_rk4(rho_mf, 0.0, dt, {}, {H_mf}, {{1.0}}, {jump}, false);
+    DenseMatrix result_sp = iter_rk4_matrix(rho_sp, dt, H_sparse, {jump}, false);
     EXPECT_TRUE(rho_mf.isApprox(result_sp, kTolLoose));
-}
-
-TEST_F(IterIntegrateMatrixFreeLindbladTest, LongTimeConvergesToGroundState) {
-    DenseMatrix rho = pure_plus();
-    iter_integrate(rho, 20.0, H_mf, {jump}, 100, false);
-    EXPECT_NEAR(std::real(rho(0, 0)), 1.0, kTolLoose);
-    EXPECT_NEAR(std::real(rho(1, 1)), 0.0, kTolLoose);
 }
 
 // GCOV_EXCL_BR_STOP
