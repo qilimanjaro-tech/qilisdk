@@ -9,6 +9,11 @@ known as :class:`Terms<qilisdk.core.variables.Term>`. For example:
 
 .. code-block:: python
 
+    from qilisdk.core.variables import BinaryVariable, Bitwise, Domain, SpinVariable, Variable
+    x = Variable("x", domain=Domain.REAL, bounds=(1, 2), encoding=Bitwise, precision=1e-1)
+    s = SpinVariable("s")
+    b = BinaryVariable("b")
+
     t1 = 2 * x + 3
     print("t1:", t1)
     t2 = 3 * x**2 + 2 * x + 4
