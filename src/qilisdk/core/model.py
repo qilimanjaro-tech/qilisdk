@@ -21,7 +21,6 @@ from typing import TYPE_CHECKING, Literal, Mapping, Type
 # import cupy as np
 import numpy as np
 from loguru import logger
-from matplotlib.pylab import LinAlgError
 
 from qilisdk.settings import get_settings
 from qilisdk.yaml import yaml

@@ -22,12 +22,16 @@ assignment is compared against the known optimum of the original model.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 import pytest
 
 from qilisdk.core import EQ, LEQ, BinaryVariable, Model, ObjectiveSense
-from qilisdk.core.model import QUBO
-from qilisdk.core.variables import BaseVariable
+
+if TYPE_CHECKING:
+    from qilisdk.core.model import QUBO
+    from qilisdk.core.variables import BaseVariable
 
 
 def _ground_state_assignment(qubo: QUBO) -> dict[BaseVariable, int]:
@@ -42,9 +46,7 @@ def _ground_state_assignment(qubo: QUBO) -> dict[BaseVariable, int]:
     _, eigvecs = np.linalg.eigh(matrix)
     gs_index = int(np.argmax(np.abs(eigvecs[:, 0]) ** 2))
     n = ham.nqubits
-    return {
-        v: (gs_index >> (n - 1 - i)) & 1 for i, v in enumerate(qubo.qubo_objective.variables())
-    }
+    return {v: (gs_index >> (n - 1 - i)) & 1 for i, v in enumerate(qubo.qubo_objective.variables())}
 
 
 def test_cubic_objective_ground_state_matches_minimum():
@@ -113,7 +115,8 @@ def test_shared_auxiliary_reduces_hamiltonian_qubit_count():
     # 4 original vars + 1 shared aux = 5 qubits.
     assert ham.nqubits == 5
     assignment = _ground_state_assignment(qubo)
-    assert assignment[x] == 1 and assignment[y] == 1
+    assert assignment[x] == 1
+    assert assignment[y] == 1
     # Either z or w (or both) maximises the sum.
     assert assignment[z] == 1 or assignment[w] == 1
 
