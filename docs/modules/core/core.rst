@@ -24,7 +24,9 @@ Highlights:
   parameter variables plus algebraic helpers (:class:`~qilisdk.core.variables.Term`,
   comparison factories, encodings).
 - :mod:`~qilisdk.core.model` builds constrained optimization programs and
-  offers tools to automatically convert the model to :class:`~qilisdk.core.model.QUBO` format if the constraints are linear.
+  offers tools to automatically convert the model to :class:`~qilisdk.core.model.QUBO` format,
+  including automatic degree reduction (*linearization*) of pseudo-Boolean constraints and
+  objectives of degree greater than two.
 - :mod:`~qilisdk.core.qtensor` manages sparse quantum objects and utilities
   such as :func:`~qilisdk.core.qtensor.tensor_prod` and :func:`~qilisdk.core.qtensor.expect_val`.
 - :mod:`~qilisdk.core.parameterizable.Parameterizable` standardizes how
@@ -580,6 +582,77 @@ Example: Unbalanced Penalization
 
 
 .. [1] Montañez-Barrera, Jhon Alejandro, et al. "Unbalanced penalization: A new approach to encode inequality constraints of combinatorial problems for quantum optimization algorithms." Quantum Science and Technology 9.2 (2024): 025022.
+
+Automatic Constraint Linearization
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A QUBO model is quadratic by definition, so any monomial of degree greater than two that appears
+either directly in the objective (e.g. ``x * y * z``) or indirectly after penalizing a nonlinear
+constraint (e.g. squaring ``x * y * z = 1``) has to be **reduced to quadratic form** before it
+can be mapped to an Ising Hamiltonian.
+
+:meth:`~qilisdk.core.model.Model.to_qubo` (and the underlying
+:meth:`~qilisdk.core.model.QUBO.from_model`) perform this reduction automatically by introducing
+fresh auxiliary binary variables and enforcing the substitution ``w = a * b`` via the
+**Rosenberg** penalty
+
+.. math::
+
+    P(a, b, w) = a \cdot b - 2 \, a \, w - 2 \, b \, w + 3 \, w,
+
+which is quadratic, non-negative for binary ``a``, ``b``, ``w``, and equal to zero if and only if
+``w = a \cdot b``. Each such substitution is added as a QUBO equality constraint
+(``P(a, b, w) == 0``) scaled by a Lagrange multiplier.
+
+- Auxiliary variables are named ``_linearization_aux(i)``.
+- A substitution (unordered pair ``{a, b}``) is cached, so the same sub-product that appears in
+  multiple monomials — for example ``x * y * z`` and ``x * y * w`` both sharing ``x * y`` —
+  reuses a single auxiliary and a single penalty.
+- Higher-degree monomials are reduced pairwise until every monomial has degree at most two, so
+  a degree-:math:`k` monomial introduces at most :math:`k - 2` auxiliaries.
+
+The two kwargs controlling the behaviour are:
+
+- ``linearize`` (default ``True``): enable or disable the reduction. When set to ``False``,
+  exporting a model whose objective or constraints contain terms of degree three or higher
+  raises a ``ValueError``, preserving the pre-existing strict QUBO behaviour.
+- ``linearization_lagrange_multiplier`` (default ``100``): the Lagrange multiplier applied to
+  every Rosenberg penalty constraint introduced during linearization. It should be large enough
+  to dominate any incentive the original objective may have to violate the auxiliary equalities.
+
+Example:
+
+.. code-block:: python
+
+    from qilisdk.core import BinaryVariable, EQ, Model, ObjectiveSense
+
+    x, y, z = BinaryVariable("x"), BinaryVariable("y"), BinaryVariable("z")
+
+    model = Model("cubic_objective")
+    model.set_objective(x * y * z, sense=ObjectiveSense.MAXIMIZE)
+
+    qubo = model.to_qubo(linearization_lagrange_multiplier=50)
+    print(qubo)
+
+**Output**::
+
+    Model name: QUBO_cubic_objective
+    objective (obj):
+         maximize :
+         _linearization_aux(0) * z
+
+    subject to the constraint/s:
+         linearization__linearization_aux(0): (x * y) + (-2.0) * (x * _linearization_aux(0)) + (-2.0) * (y * _linearization_aux(0)) + (3) * _linearization_aux(0) == 0
+
+    With Lagrange Multiplier/s:
+         linearization__linearization_aux(0) : 50
+
+Disabling linearization reproduces the previous hard error for non-quadratic constraints:
+
+.. code-block:: python
+
+    model.add_constraint("c", EQ(x * y * z, 0), lagrange_multiplier=10)
+    model.to_qubo(linearize=False)   # raises ValueError
 
 Interoperability
 ~~~~~~~~~~~~~~~~
