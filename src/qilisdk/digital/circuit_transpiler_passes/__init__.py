@@ -12,7 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from .add_phases_to_native_from_rz_and_cz_pass import (
+    AddPhasesToNativeFromRZAndCZPass,
+    PhaseCorrectionProvider,
+)
 from .cancel_identity_pairs_pass import CancelIdentityPairsPass
+from .canonical_basis_to_native_set_pass import CanonicalBasisToNativeSetPass, NativeSingleQubitGateBasis
 from .circuit_transpiler_pass import CircuitTranspilerPass
 from .custom_layout_pass import CustomLayoutPass
 from .decompose_multi_controlled_gates_pass import DecomposeMultiControlledGatesPass
@@ -23,12 +28,16 @@ from .sabre_swap_pass import SabreSwapPass
 from .transpilation_context import TranspilationContext
 
 __all__ = [
+    "AddPhasesToNativeFromRZAndCZPass",
     "CancelIdentityPairsPass",
+    "CanonicalBasisToNativeSetPass",
     "CircuitTranspilerPass",
     "CustomLayoutPass",
     "DecomposeMultiControlledGatesPass",
     "DecomposeToCanonicalBasisPass",
     "FuseSingleQubitGatesPass",
+    "NativeSingleQubitGateBasis",
+    "PhaseCorrectionProvider",
     "SabreLayoutPass",
     "SabreSwapPass",
     "SingleQubitGateBasis",

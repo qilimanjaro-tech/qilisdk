@@ -38,6 +38,7 @@ from .gates import (
     Y,
     Z,
 )
+from .native_gates import Rmw
 
 __all__ = [
     "CNOT",
@@ -60,6 +61,7 @@ __all__ = [
     "HardwareEfficientAnsatz",
     "I",
     "M",
+    "Rmw",
     "S",
     "T",
     "TrotterizedSchedule",
