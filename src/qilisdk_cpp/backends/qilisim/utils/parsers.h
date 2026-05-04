@@ -23,6 +23,7 @@
 // GCOV_EXCL_BR_START
 
 py::object construct_result_object(const DenseMatrix& state_dense, const py::object& readout, NoiseModelCpp& noise_model_cpp, int n_qubits, const QiliSimConfig& config, const std::vector<bool>& qubits_to_measure);
+py::object construct_result_object(const MatrixFreeHamiltonian& state_as_h, const py::object& readout, int n_qubits, const QiliSimConfig& config);
 std::vector<MatrixFreeHamiltonian> parse_hamiltonians_matrix_free(const py::object& Hs);
 std::vector<SparseMatrix> parse_hamiltonians(const py::object& Hs, double atol);
 NoiseModelCpp parse_noise_model(const py::object& noise_model, int nqubits, double atol);

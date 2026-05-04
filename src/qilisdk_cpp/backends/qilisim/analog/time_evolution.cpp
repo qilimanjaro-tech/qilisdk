@@ -317,4 +317,48 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
     }
 }
 
+#include <iostream>
+
+void time_evolution_approximate(MatrixFreeHamiltonian& rho_t_as_h, const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, QiliSimConfig& config) {
+    /*
+    Execute an approximate time evolution functional using a variational approach.
+
+    The state at each point is represented as a weighted sum of Pauli strings acting on the + state,
+    which is trunctated at each step to keep the number of terms manageable.
+    
+    Args:
+        rho_t_as_h (MatrixFreeHamiltonian&): Output parameter to hold the final state after evolution, represented as a MatrixFreeHamiltonian.
+        hamiltonians (std::vector<MatrixFreeHamiltonian>): The list of Hamiltonian terms.
+        parameters_list (std::vector<std::vector<double>>): The list of parameter values for each Hamiltonian term at each time step.
+        step_list (std::vector<double>): The list of time steps.
+        config (QiliSimConfig&): Configuration parameters for the time evolution.
+    */
+
+
+    std::cout << "Here" << std::endl;
+
+    rho_t_as_h = MatrixFreeHamiltonian(1.0);
+
+    for (size_t step_ind = 0; step_ind < step_list.size(); ++step_ind) {
+
+        std::cout << std::endl;
+        std::cout << "-----------------------------------------" << std::endl;
+        std::cout << "step " << step_ind << ", rho = " << rho_t_as_h << std::endl;
+
+        // Determine the time step and starting time
+        double t_start = (step_ind > 0) ? step_list[step_ind - 1] : 0.0;
+        double dt = step_list[step_ind] - t_start;
+
+        // Perform the iteration depending on the method
+        iter_rk4(rho_t_as_h, t_start, dt, step_list, hamiltonians, parameters_list);
+
+        // Truncate the resulting Hamiltonian to keep the number of terms manageable
+        rho_t_as_h.prune(1e-10, 1000);
+
+    }
+
+    std::cout << "final rho = " << rho_t_as_h << std::endl;
+
+}
+
 // GCOV_EXCL_BR_STOP

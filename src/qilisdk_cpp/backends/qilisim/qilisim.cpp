@@ -178,57 +178,77 @@ py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, co
         config.set_store_intermediate_results(true);
     }
 
-    // Common between methods
-    SparseMatrix rho_0 = parse_initial_state(initial_state, config.get_atol());
-    int nqubits = static_cast<int>(std::log2(rho_0.rows()));
-    NoiseModelCpp noise_model_cpp = parse_noise_model(noise_model, nqubits, config.get_atol());
-    std::vector<std::vector<double>> parameters_list = parse_coefficients(schedule, hamiltonians_keys, steps);
-    std::vector<double> step_list = parse_time_steps(steps);
+    // The super scalable method, we should never construct any matrix or state
+    if (config.get_time_evolution_method() == "approximate") {
 
-    // Depending on the method, call the internal implementation
-    std::vector<DenseMatrix> intermediate_rhos;
-    DenseMatrix rho_t;
-    std::vector<double> expectation_values;
-    if (config.get_time_evolution_method() == "integrate_rk4_matrix_free" || config.get_time_evolution_method() == "integrate_rk45_matrix_free") {
-        // Parse the Hamiltonians
         std::vector<MatrixFreeHamiltonian> hamiltonians = parse_hamiltonians_matrix_free(hamiltonians_values);
-        if (hamiltonians.size() != parameters_list.size()) {
-            throw py::value_error("Number of Hamiltonians does not match number of parameter lists");
-        }
+        MatrixFreeHamiltonian rho_t_as_h;
+        std::vector<std::vector<double>> parameters_list = parse_coefficients(schedule, hamiltonians_keys, steps);
+        std::vector<double> step_list = parse_time_steps(steps);
+        time_evolution_approximate(rho_t_as_h, hamiltonians, parameters_list, step_list, config);
 
-        // Call the implementation
-        time_evolution_matrix_free(rho_0, hamiltonians, parameters_list, step_list, noise_model_cpp, config, rho_t, intermediate_rhos);
+        int n_qubits = functional.attr("schedule").attr("nqubits").cast<int>();
+        py::object result = construct_result_object(rho_t_as_h, readout, n_qubits, config);
 
-    } else if (config.get_time_evolution_method() == "integrate_rk4" || config.get_time_evolution_method() == "arnoldi" || config.get_time_evolution_method() == "direct") {
-        // Parse the Hamiltonians
-        std::vector<SparseMatrix> hamiltonians = parse_hamiltonians(hamiltonians_values, config.get_atol());
-        if (hamiltonians.size() != parameters_list.size()) {
-            throw py::value_error("Number of Hamiltonians does not match number of parameter lists");
-        }
+        return FunctionalResult("readout_results"_a = result);
 
-        // Call the implementation
-        time_evolution(rho_0, hamiltonians, parameters_list, step_list, noise_model_cpp, config, rho_t, intermediate_rhos);
-
+    // In all of these methods the state is fully stored
     } else {
-        throw py::value_error("Unknown time evolution method: " + config.get_time_evolution_method());
-    }
 
-    // Construct the result object
-    int n_qubits = functional.attr("schedule").attr("nqubits").cast<int>();
-    std::vector<bool> qubits_to_measure(n_qubits, true);
-    py::object result = construct_result_object(rho_t, readout, noise_model_cpp, n_qubits, config, qubits_to_measure);
-    bool store_intermediate_results = functional.attr("store_intermediate_results").cast<bool>();
+        // Common between methods
+        SparseMatrix rho_0 = parse_initial_state(initial_state, config.get_atol());
+        int nqubits = static_cast<int>(std::log2(rho_0.rows()));
+        NoiseModelCpp noise_model_cpp = parse_noise_model(noise_model, nqubits, config.get_atol());
+        std::vector<std::vector<double>> parameters_list = parse_coefficients(schedule, hamiltonians_keys, steps);
+        std::vector<double> step_list = parse_time_steps(steps);
 
-    // If we have intermediates, process them too
-    if (store_intermediate_results) {
-        py::list inter_results;
-        for (size_t step = 0; step < intermediate_rhos.size(); ++step) {
-            auto& rho_intermediate = intermediate_rhos[step];
-            inter_results.append(construct_result_object(rho_intermediate, readout, noise_model_cpp, n_qubits, config, qubits_to_measure));
+        // Depending on the method, call the internal implementation
+        std::vector<DenseMatrix> intermediate_rhos;
+        DenseMatrix rho_t;
+        std::vector<double> expectation_values;
+        if (config.get_time_evolution_method() == "integrate_rk4_matrix_free" || config.get_time_evolution_method() == "integrate_rk45_matrix_free") {
+            // Parse the Hamiltonians
+            std::vector<MatrixFreeHamiltonian> hamiltonians = parse_hamiltonians_matrix_free(hamiltonians_values);
+            if (hamiltonians.size() != parameters_list.size()) {
+                throw py::value_error("Number of Hamiltonians does not match number of parameter lists");
+            }
+
+            // Call the implementation
+            time_evolution_matrix_free(rho_0, hamiltonians, parameters_list, step_list, noise_model_cpp, config, rho_t, intermediate_rhos);
+
+        } else if (config.get_time_evolution_method() == "integrate_rk4" || config.get_time_evolution_method() == "arnoldi" || config.get_time_evolution_method() == "direct") {
+            // Parse the Hamiltonians
+            std::vector<SparseMatrix> hamiltonians = parse_hamiltonians(hamiltonians_values, config.get_atol());
+            if (hamiltonians.size() != parameters_list.size()) {
+                throw py::value_error("Number of Hamiltonians does not match number of parameter lists");
+            }
+
+            // Call the implementation
+            time_evolution(rho_0, hamiltonians, parameters_list, step_list, noise_model_cpp, config, rho_t, intermediate_rhos);
+
+        } else {
+            throw py::value_error("Unknown time evolution method: " + config.get_time_evolution_method());
         }
-        return FunctionalResult("readout_results"_a = result, "intermediate_results"_a = inter_results);
+
+        // Construct the result object
+        int n_qubits = functional.attr("schedule").attr("nqubits").cast<int>();
+        std::vector<bool> qubits_to_measure(n_qubits, true);
+        py::object result = construct_result_object(rho_t, readout, noise_model_cpp, n_qubits, config, qubits_to_measure);
+        bool store_intermediate_results = functional.attr("store_intermediate_results").cast<bool>();
+
+        // If we have intermediates, process them too
+        if (store_intermediate_results) {
+            py::list inter_results;
+            for (size_t step = 0; step < intermediate_rhos.size(); ++step) {
+                auto& rho_intermediate = intermediate_rhos[step];
+                inter_results.append(construct_result_object(rho_intermediate, readout, noise_model_cpp, n_qubits, config, qubits_to_measure));
+            }
+            return FunctionalResult("readout_results"_a = result, "intermediate_results"_a = inter_results);
+        }
+        return FunctionalResult("readout_results"_a = result);
+
     }
-    return FunctionalResult("readout_results"_a = result);
+
 }
 
 // The public execute_sampling

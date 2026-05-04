@@ -23,6 +23,11 @@
 
 #pragma GCC visibility push(default)
 
+py::object construct_result_object(const MatrixFreeHamiltonian& state_as_h, const py::object& readout, int n_qubits, const QiliSimConfig& config) {
+    py::list results;
+    return ReadoutCompositeResults.attr("from_list")(results);
+}
+
 py::object construct_result_object(const DenseMatrix& state_dense, const py::object& readout, NoiseModelCpp& noise_model_cpp, int n_qubits, const QiliSimConfig& config, const std::vector<bool>& qubits_to_measure) {
     /*
     Construct a result object for a given state and readout.

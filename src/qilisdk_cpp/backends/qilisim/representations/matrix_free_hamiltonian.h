@@ -25,19 +25,26 @@ class MatrixFreeHamiltonian {
 
    public:
     MatrixFreeHamiltonian() {}
+    MatrixFreeHamiltonian(double val) { operators.push_back(std::make_pair(std::complex<double>(val, 0.0), std::vector<MatrixFreeOperator>{})); }
     MatrixFreeHamiltonian(const MatrixFreeOperator& op) { operators.push_back(std::make_pair(std::complex<double>(1.0, 0.0), std::vector<MatrixFreeOperator>{op})); }
     MatrixFreeHamiltonian(const std::vector<std::pair<std::complex<double>, std::vector<MatrixFreeOperator>>>& ops) : operators(ops) {}
     void apply(const DenseMatrix& input_state, MatrixFreeApplicationType application_type, DenseMatrix& output_state) const;
     double expectation_value(const DenseMatrix& state) const;
-    MatrixFreeHamiltonian& operator*=(const std::complex<double>& scalar);
     MatrixFreeHamiltonian operator*(const std::complex<double>& scalar) const;
     MatrixFreeHamiltonian operator*(const double& scalar) const;
+    friend MatrixFreeHamiltonian operator*(const std::complex<double>& scalar, const MatrixFreeHamiltonian& hamiltonian);
+    MatrixFreeHamiltonian operator*(const MatrixFreeHamiltonian& other) const;
+    MatrixFreeHamiltonian operator+(const MatrixFreeHamiltonian& other) const;
+    MatrixFreeHamiltonian operator-(const MatrixFreeHamiltonian& other) const;
+    MatrixFreeHamiltonian& operator*=(const std::complex<double>& scalar);
     MatrixFreeHamiltonian& operator+=(const MatrixFreeHamiltonian& other);
     bool operator==(const MatrixFreeHamiltonian& other) const;
     void add(const std::complex<double>& coeff, const MatrixFreeOperator& op);
     void add(const std::complex<double>& coeff, const std::vector<MatrixFreeOperator>& op);
     friend std::ostream& operator<<(std::ostream& os, const MatrixFreeHamiltonian& hamiltonian);
     std::vector<std::pair<std::complex<double>, std::vector<MatrixFreeOperator>>> get_operators() const { return operators; }
+    void prune(double threshold, int max_terms);
 };
+
 
 // GCOV_EXCL_BR_STOP

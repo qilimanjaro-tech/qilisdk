@@ -127,4 +127,22 @@ void lindblad_rhs(DenseMatrix& drho, const DenseMatrix& rho, const MatrixFreeHam
     }
 }
 
+#include <iostream>
+
+void lindblad_rhs(MatrixFreeHamiltonian& drho, const MatrixFreeHamiltonian& rho, const MatrixFreeHamiltonian& H) {
+    /*
+    Evaluate the right-hand side of the Lindblad master equation for the approximate method.
+
+    Args:
+        drho (MatrixFreeHamiltonian&): The output derivative of the density matrix.
+        rho (MatrixFreeHamiltonian): The current density matrix.
+        H (MatrixFreeHamiltonian): The Hamiltonian.
+    */
+    std::cout << "Applying H: " << H << std::endl;
+    std::cout << "to rho: " << rho << std::endl;
+    drho = H * rho;
+    drho *= -imag;
+    std::cout << "to give: " << drho << std::endl;
+}
+
 // GCOV_EXCL_BR_STOP
