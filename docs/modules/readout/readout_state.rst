@@ -1,7 +1,8 @@
 Full Quantum State
 ^^^^^^^^^^^^^^^^^^^^^^
 
-Instructs the backend to return the full quantum state vector (or density matrix) after execution.
+Using :meth:`with_state_tomography()<qilisdk.readout.readout_spec.Readout.with_state_tomography>` instructs 
+the backend to return the full quantum state vector (or density matrix) after execution.
 
 .. code-block:: python
 

@@ -80,18 +80,18 @@ The quickest way to access results:
    * - Property
      - Type
      - Requires
-   * - ``result.get_samples()``
+   * - :meth:`get_samples()<qilisdk.functionals.functional_result.FunctionalResult.get_samples>`
      - ``dict[str, int]``
-     - ``.with_sampling()``
-   * - ``result.get_probabilities()``
+     - :meth:`with_sampling()<qilisdk.readout.readout_spec.Readout.with_sampling>`
+   * - :meth:`get_probabilities()<qilisdk.functionals.functional_result.FunctionalResult.get_probabilities>`
      - ``dict[str, float]``
-     - ``.with_sampling()`` or ``.with_state_tomography()``
-   * - ``result.get_expectation_values()``
+     - :meth:`with_sampling()<qilisdk.readout.readout_spec.Readout.with_sampling>` or :meth:`with_state_tomography()<qilisdk.readout.readout_spec.Readout.with_state_tomography>`
+   * - :meth:`get_expectation_values()<qilisdk.functionals.functional_result.FunctionalResult.get_expectation_values>`
      - ``list[float]``
-     - ``.with_expectation()``
-   * - ``result.get_state()``
+     - :meth:`with_expectation()<qilisdk.readout.readout_spec.Readout.with_expectation>`
+   * - :meth:`get_state()<qilisdk.functionals.functional_result.FunctionalResult.get_state>`
      - ``QTensor``
-     - ``.with_state_tomography()``
+     - :meth:`with_state_tomography()<qilisdk.readout.readout_spec.Readout.with_state_tomography>`
 
 These raise ``ValueError`` at runtime if the corresponding readout was not requested.
 
@@ -124,13 +124,13 @@ These return the raw result objects and let the type checker verify access witho
      - Requires
    * - ``result.sampling``
      - ``SamplingReadoutResult | None``
-     - ``.with_sampling()``
+     - :meth:`with_sampling()<qilisdk.readout.readout_spec.Readout.with_sampling>`
    * - ``result.expectation``
      - ``ExpectationReadoutResult | None``
-     - ``.with_expectation()``
+     - :meth:`with_expectation()<qilisdk.readout.readout_spec.Readout.with_expectation>`
    * - ``result.state_tomography``
      - ``StateTomographyReadoutResult | None``
-     - ``.with_state_tomography()``
+     - :meth:`with_state_tomography()<qilisdk.readout.readout_spec.Readout.with_state_tomography>`
 
 Complete Example
 -------------------

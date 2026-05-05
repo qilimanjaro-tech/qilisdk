@@ -1,7 +1,8 @@
 Expectation Values
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-Instructs the backend to compute ``⟨ψ|O|ψ⟩`` for each observable in the list.
+Using :meth:`with_expectation()<qilisdk.readout.readout_spec.Readout.with_expectation>` instructs 
+the backend to compute ``⟨ψ|O|ψ⟩`` for each observable in the list.
 
 .. code-block:: python
 
