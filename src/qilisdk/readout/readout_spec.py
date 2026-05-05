@@ -89,6 +89,10 @@ class Readout(Generic[S, E, T]):
     def with_sampling(self, nshots: int = 1000, expand_samples: bool = True) -> Readout[SamplingReadoutResult, E, T]:
         """Add a sampling readout to the specification.
 
+        If expand_samples is True, partial samples will be displayed with underscores for better readability.
+        For example, "00_0" instead of "000" for a 4-qubit system where the third qubit's state is not measured.
+        Setting this to false can cause ambiguity, especially if you have a variety of mid-circuit measurements.
+
         Args:
             nshots (int): Number of measurement shots.  Must be >= 0.
             expand_samples (bool): Whether to display partial samples as "00_0" instead of "000" for better readability.

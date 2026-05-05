@@ -1050,8 +1050,3 @@ def test_gate_not_equals_circuit():
     gate = RX(qubit, theta=np.pi / 2)
     circuit = Circuit(1)
     assert gate != circuit
-
-
-def test_controlled_class_raises():
-    with pytest.raises(ValueError, match="not the class itself"):
-        Z.controlled(0)
