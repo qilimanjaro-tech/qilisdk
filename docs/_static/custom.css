@@ -94,3 +94,7 @@ code, pre {
   border-radius: 0.35rem;
   padding: 0.05rem 0.3rem;
 }
+
+.dark .highlight {
+  background-color: transparent;
+}

@@ -47,13 +47,16 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 source_suffix = [".rst", ".pynb"]
 
 # Syntax highlighting
-pygments_style = "sphinx"
+pygments_style = "default"
 pygments_style_dark = "monokai"
 
 # Napoleon settings
 napoleon_google_docstring = True
 napoleon_numpy_docstring = False
 napoleon_preprocess_types = True
+
+# Warn about broken links
+nitpicky = True
 
 # AutoAPI settings
 autoapi_type = "python"
