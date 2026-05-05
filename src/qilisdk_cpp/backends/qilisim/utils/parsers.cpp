@@ -25,6 +25,25 @@
 
 py::object construct_result_object(const MatrixFreeHamiltonian& state_as_h, const py::object& readout, int n_qubits, const QiliSimConfig& config) {
     py::list results;
+    for (py::handle ro_handle : readout) {
+        py::object ro = py::reinterpret_borrow<py::object>(ro_handle);
+        if (py::isinstance(ro, ExpectationReadout)) {
+            std::vector<std::complex<double>> expectations;
+            // parse the observables for which we need to compute the expectation values
+            std::vector<MatrixFreeHamiltonian> observables = parse_observables_matrix_free(n_qubits, ro.attr("observables"));
+            for (const auto& obs : observables) {
+                double exp_val = state_as_h.expectation_value(obs);
+                expectations.push_back(exp_val);
+            }
+            py::list expectations_py;
+            for (const auto& exp_val : expectations) {
+                expectations_py.append(py::cast(exp_val));
+            }
+            results.append(ExpectationReadoutResult.attr("from_expectations")("expectation_values"_a = expectations_py));
+        } else {
+            throw py::value_error("Unsupported Readout Method provided. Only ExpectationReadout is supported when using the approximate method.");
+        }
+    }
     return ReadoutCompositeResults.attr("from_list")(results);
 }
 
@@ -85,11 +104,12 @@ py::object construct_result_object(const DenseMatrix& state_dense, const py::obj
     return ReadoutCompositeResults.attr("from_list")(results);
 }
 
-std::vector<MatrixFreeHamiltonian> parse_hamiltonians_matrix_free(const py::object& Hs) {
+std::vector<MatrixFreeHamiltonian> parse_hamiltonians_matrix_free(int nqubits, const py::object& Hs) {
     /*
     Extract Hamiltonian terms in matrix-free form from a list of objects.
 
     Args:
+        nqubits (int): The total number of qubits.
         Hs (py::object): A list of Hamiltonian objects.
 
     Returns:
@@ -102,7 +122,7 @@ std::vector<MatrixFreeHamiltonian> parse_hamiltonians_matrix_free(const py::obje
     // For each Hamiltonian, we need to extract the terms, which are pairs of (coefficient, list of Pauli operators)
     std::vector<MatrixFreeHamiltonian> H_list;
     for (auto& hamiltonian : Hs) {
-        MatrixFreeHamiltonian H;
+        MatrixFreeHamiltonian H(nqubits);
         py::object elements = hamiltonian.attr("elements").attr("items")();
         for (auto& element : elements) {
             py::tuple term = element.cast<py::tuple>();
@@ -357,11 +377,12 @@ NoiseModelCpp parse_noise_model(const py::object& noise_model, int nqubits, doub
     return noise_model_cpp;
 }
 
-std::vector<MatrixFreeHamiltonian> parse_observables_matrix_free(const py::object& observables) {
+std::vector<MatrixFreeHamiltonian> parse_observables_matrix_free(int nqubits, const py::object& observables) {
     /*
     Extract observables from a list of objects.
 
     Args:
+        nqubits (int): The total number of qubits.
         observables (py::object): A list of observable objects, which can be Hamiltonians or PauliOperators.
 
     Returns:
@@ -374,12 +395,12 @@ std::vector<MatrixFreeHamiltonian> parse_observables_matrix_free(const py::objec
     std::vector<MatrixFreeHamiltonian> observable_matrices;
     for (auto obs : observables) {
         if (py::isinstance(obs, Hamiltonian)) {
-            std::vector<MatrixFreeHamiltonian> H = parse_hamiltonians_matrix_free(py::make_tuple(obs));
+            std::vector<MatrixFreeHamiltonian> H = parse_hamiltonians_matrix_free(nqubits, py::make_tuple(obs));
             observable_matrices.insert(observable_matrices.end(), H.begin(), H.end());
         } else if (py::isinstance(obs, PauliOperator)) {
             std::string name = obs.attr("name").cast<std::string>();
             int target = obs.attr("qubit").cast<int>();
-            observable_matrices.push_back(MatrixFreeHamiltonian(MatrixFreeOperator(name, target)));
+            observable_matrices.push_back(MatrixFreeHamiltonian(nqubits, MatrixFreeOperator(name, target)));
         } else if (py::isinstance(obs, QTensor)) {
             throw py::value_error("Matrix-free parsing of QTensor observables is not currently supported.");
         } else {

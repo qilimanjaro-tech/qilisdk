@@ -141,8 +141,8 @@ void lindblad_rhs(MatrixFreeHamiltonian& drho, const MatrixFreeHamiltonian& rho,
     std::cout << "Applying H: " << H << std::endl;
     std::cout << "to rho: " << rho << std::endl;
     drho = H * rho;
-    drho *= -imag;
     std::cout << "to give: " << drho << std::endl;
+    drho *= -imag;
 }
 
 // GCOV_EXCL_BR_STOP

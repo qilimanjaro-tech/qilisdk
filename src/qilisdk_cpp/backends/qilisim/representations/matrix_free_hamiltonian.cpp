@@ -40,22 +40,20 @@ void MatrixFreeHamiltonian::apply(const DenseMatrix& input_state, MatrixFreeAppl
     std::vector<Term> terms;
     terms.reserve(operators.size());
     const int num_qubits = static_cast<int>(std::log2(input_state.rows()));
-    for (const auto& [coefficient, ops] : operators) {
+    for (const auto& [pauli, coefficient] : operators) {
         long flip_mask = 0;
         long sign_mask = 0;
         int n_y = 0;
-        for (const auto& op : ops) {
-            long mask = 1LL << (num_qubits - 1 - op.get_target_qubits()[0]);
-            if (op.get_name() == "X") {
+        for (int i = 0; i < num_qubits; ++i) {
+            long mask = 1LL << (num_qubits - 1 - i);
+            if (pauli.x_mask[i] && !pauli.z_mask[i]) {  // X
                 flip_mask ^= mask;
-            } else if (op.get_name() == "Z") {
+            } else if (!pauli.x_mask[i] && pauli.z_mask[i]) {  // Z
                 sign_mask |= mask;
-            } else if (op.get_name() == "Y") {
+            } else if (pauli.x_mask[i] && pauli.z_mask[i]) {  // Y
                 flip_mask ^= mask;
                 sign_mask |= mask;
                 ++n_y;
-            } else if (op.get_name() != "I") {
-                throw std::invalid_argument("Unsupported operator in Hamiltonian: " + op.get_name());
             }
         }
         static const std::complex<double> neg_i_powers[4] = {{1, 0}, {0, -1}, {-1, 0}, {0, 1}};
@@ -150,30 +148,60 @@ double MatrixFreeHamiltonian::expectation_value(const DenseMatrix& state) const 
         std::invalid_argument: If any operator in the Hamiltonian acts on a qubit that is out of bounds for the given state.
     */
     int num_qubits_in_state = static_cast<int>(std::log2(state.rows()));
-    for (const auto& [coefficient, ops] : operators) {
-        for (const auto& op : ops) {
-            int max_qubit = -1;
-            for (int target : op.get_target_qubits()) {
-                max_qubit = std::max(max_qubit, target);
-            }
-            for (int control : op.get_control_qubits()) {
-                max_qubit = std::max(max_qubit, control);
-            }
-            if (max_qubit >= num_qubits_in_state) {
-                throw py::value_error("Operator in Hamiltonian acts on a qubit that is out of bounds for the given state.");
-            }
-        }
+    int num_qubits_in_hamiltonian = get_nqubits();
+    if (num_qubits_in_hamiltonian > num_qubits_in_state) {
+        throw std::invalid_argument("Hamiltonian acts on more qubits than the state has.");
     }
-    double exp_val = 0.0;
+
+    // Do <state|H|state> by applying H to state and then taking the dot product with state.
     m_temp_state.resizeLike(state);
-    for (const auto& [coefficient, ops] : operators) {
-        m_temp_state = state;
-        for (const auto& op : ops) {
-            op.apply(m_temp_state, MatrixFreeApplicationType::Left);
-        }
-        exp_val += std::real(coefficient * dot(state, m_temp_state));
-    }
+    m_new_state.resizeLike(state);
+    apply(state, MatrixFreeApplicationType::Left, m_temp_state);
+    double exp_val = std::real(dot(state, m_temp_state));
+
     return exp_val;
+
+}
+
+#include <iostream>
+
+double MatrixFreeHamiltonian::expectation_value(const MatrixFreeHamiltonian& other) const {
+    /*
+    Calculate the expectation value of this Hamiltonian with respect to another Hamiltonian.
+    The assumption is that the state is this*|+>.
+
+    Args:
+        other: The Hamiltonian with respect to which the expectation value will be calculated.
+
+    Returns:
+        The expectation value of this Hamiltonian with respect to the other Hamiltonian.
+    */
+
+    // need to calculate <+| H_this^dag H_other H_this |+>
+    int n_qubits = get_nqubits();
+
+    // first we calculate H_this^dag H_other H_this:
+    MatrixFreeHamiltonian temp = (*this).conjugate() * other * (*this);
+
+    std::cout << "State Hamiltonian: " << *this << std::endl;
+    std::cout << "Other Hamiltonian: " << other << std::endl;
+    std::cout << "Temp Hamiltonian: " << temp << std::endl;
+
+    // Since <+|P|+> is 1 if P is identity or X and 0 otherwise, we just need to sum the coefficients
+    std::complex<double> exp_val = 0.0;
+    for (const auto& [pauli, coefficient] : temp.operators) {
+        bool is_identity_or_x = true;
+        for (int i = 0; i < n_qubits; ++i) {
+            if (pauli.z_mask[i]) {
+                is_identity_or_x = false;
+                break;
+            }
+        }
+        if (is_identity_or_x) {
+            exp_val += coefficient;
+        }
+    }
+    return std::real(exp_val);
 }
 
 MatrixFreeHamiltonian& MatrixFreeHamiltonian::operator*=(const std::complex<double>& scalar) {
@@ -186,7 +214,7 @@ MatrixFreeHamiltonian& MatrixFreeHamiltonian::operator*=(const std::complex<doub
     Returns:
         A reference to the scaled Hamiltonian.
     */
-    for (auto& [coefficient, ops] : operators) {
+    for (auto& [pauli, coefficient] : operators) {
         coefficient *= scalar;
     }
     return *this;
@@ -217,7 +245,9 @@ MatrixFreeHamiltonian MatrixFreeHamiltonian::operator*(const double& scalar) con
     Returns:
         A new Hamiltonian that is the result of scaling this Hamiltonian by the given scalar.
     */
-    return (*this) * std::complex<double>(scalar, 0.0);
+    MatrixFreeHamiltonian result = *this;
+    result *= scalar;
+    return result;
 }
 
 MatrixFreeHamiltonian& MatrixFreeHamiltonian::operator+=(const MatrixFreeHamiltonian& other) {
@@ -230,25 +260,8 @@ MatrixFreeHamiltonian& MatrixFreeHamiltonian::operator+=(const MatrixFreeHamilto
     Returns:
         A reference to the resulting Hamiltonian after addition.
     */
-    std::unordered_map<std::string, int> op_map;
-    for (size_t i = 0; i < operators.size(); ++i) {
-        std::string id;
-        for (const auto& op : operators[i].second) {
-            id += op.get_id() + "|";
-        }
-        op_map[id] = int(i);
-    }
-    for (const auto& [coefficient, ops] : other.operators) {
-        std::string id;
-        for (const auto& op : ops) {
-            id += op.get_id() + "|";
-        }
-        if (op_map.find(id) != op_map.end()) {
-            operators[op_map[id]].first += coefficient;
-        } else {
-            operators.push_back({coefficient, ops});
-            op_map[id] = int(operators.size()) - 1;
-        }
+    for (const auto& [pauli, coefficient] : other.operators) {
+        operators[pauli] += coefficient;
     }
     return *this;
 }
@@ -266,17 +279,8 @@ std::ostream& operator<<(std::ostream& os, const MatrixFreeHamiltonian& hamilton
         A reference to the output stream after writing the Hamiltonian.
     */
     int count = 0;
-    for (const auto& [coefficient, ops] : hamiltonian.operators) {
-        os << coefficient << " * ";
-        if (ops.size() == 0) {
-            os << "I";
-        }
-        for (const auto& op : ops) {
-            os << op;
-            if (&op != &ops.back()) {
-                os << " ";
-            }
-        }
+    for (const auto& [pauli, coefficient] : hamiltonian.operators) {
+        os << coefficient << " * " << pauli;
         if (count < int(hamiltonian.operators.size()) - 1) {
             os << " + ";
         }
@@ -285,25 +289,39 @@ std::ostream& operator<<(std::ostream& os, const MatrixFreeHamiltonian& hamilton
     return os;
 }
 
-void MatrixFreeHamiltonian::add(const std::complex<double>& coeff, const MatrixFreeOperator& op) {
+void MatrixFreeHamiltonian::add(const std::complex<double>& coeff, const PauliString& op) {
     /*
     Add a term to the Hamiltonian with a given coefficient and operator.
 
     Args:
         coeff: The complex coefficient for the term being added.
-        op: The MatrixFreeOperator that defines the term being added to the Hamiltonian.
+        op: The PauliString that defines the term being added to the Hamiltonian.
     */
-    operators.push_back({coeff, std::vector<MatrixFreeOperator>{op}});
+    operators[op] += coeff;
 }
+
 void MatrixFreeHamiltonian::add(const std::complex<double>& coeff, const std::vector<MatrixFreeOperator>& ops) {
     /*
-    Add a term to the Hamiltonian with a given coefficient and a sequence of operators.
+    Add a term to the Hamiltonian with a given coefficient and a vector of operators.
 
     Args:
         coeff: The complex coefficient for the term being added.
-        ops: A vector of MatrixFreeOperators that define the term being added to the Hamiltonian. The operators will be applied in sequence.
+        ops: The vector of MatrixFreeOperator that defines the term being added to the Hamiltonian.
     */
-    operators.push_back({coeff, ops});
+    PauliString ps(get_nqubits());  // start with identity
+    for (const auto& op : ops) {
+        for (int target : op.get_target_qubits()) {
+            if (op.get_name() == "X") {
+                ps.x_mask[target] = !ps.x_mask[target];
+            } else if (op.get_name() == "Z") {
+                ps.z_mask[target] = !ps.z_mask[target];
+            } else if (op.get_name() == "Y") {
+                ps.x_mask[target] = !ps.x_mask[target];
+                ps.z_mask[target] = !ps.z_mask[target];
+            }
+        }
+    }
+    operators[ps] += coeff;
 }
 
 bool MatrixFreeHamiltonian::operator==(const MatrixFreeHamiltonian& other) const {
@@ -316,36 +334,7 @@ bool MatrixFreeHamiltonian::operator==(const MatrixFreeHamiltonian& other) const
     Returns:
         True if the Hamiltonians are equal, false otherwise.
     */
-    if (operators.size() != other.operators.size()) {
-        return false;
-    }
-    MatrixFreeHamiltonian sorted_this = *this;
-    MatrixFreeHamiltonian sorted_other = other;
-    auto sort_key = [](const std::pair<std::complex<double>, std::vector<MatrixFreeOperator>>& term) {
-        std::string key;
-        for (const auto& op : term.second) {
-            key += op.get_id() + "|";
-        }
-        return key;
-    };
-    std::sort(sorted_this.operators.begin(), sorted_this.operators.end(), [&](const auto& a, const auto& b) { return sort_key(a) < sort_key(b); });
-    std::sort(sorted_other.operators.begin(), sorted_other.operators.end(), [&](const auto& a, const auto& b) { return sort_key(a) < sort_key(b); });
-    for (size_t i = 0; i < sorted_this.operators.size(); ++i) {
-        if (sorted_this.operators[i].first != sorted_other.operators[i].first) {
-            return false;
-        }
-        const auto& ops1 = sorted_this.operators[i].second;
-        const auto& ops2 = sorted_other.operators[i].second;
-        if (ops1.size() != ops2.size()) {
-            return false;
-        }
-        for (size_t j = 0; j < ops1.size(); ++j) {
-            if (!(ops1[j] == ops2[j])) {
-                return false;
-            }
-        }
-    }
-    return true;
+    return operators == other.operators;
 }
 
 MatrixFreeHamiltonian operator*(const std::complex<double>& scalar, const MatrixFreeHamiltonian& hamiltonian) {
@@ -362,60 +351,73 @@ MatrixFreeHamiltonian operator*(const std::complex<double>& scalar, const Matrix
     return hamiltonian * scalar;
 }
 
+std::pair<PauliString, std::complex<double>> _multiply_pauli_strings(const PauliString& a, const PauliString& b) {
+    /*
+    Multiply two Pauli strings together, returning the resulting Pauli string and the phase factor.
+
+    Args:
+        a: The first Pauli string to be multiplied.
+        b: The second Pauli string to be multiplied.
+
+    Returns:
+        A pair consisting of the resulting Pauli string from the multiplication and the complex phase factor.
+    */
+
+    const size_t n = a.x_mask.size();
+    PauliString result(n);
+
+    // XOR gives the result masks directly (same as adding Paulis mod 2)
+    // X*X=I, Z*Z=I, X*Z or Z*X = Y (both bits set), etc.
+    int phase_exp = 0; // will be taken mod 4; maps to i^phase_exp
+    for (size_t q = 0; q < n; ++q) {
+        const int ax = a.x_mask[q], az = a.z_mask[q];
+        const int bx = b.x_mask[q], bz = b.z_mask[q];
+        result.x_mask[q] = ax ^ bx;
+        result.z_mask[q] = az ^ bz;
+        phase_exp += 2 * (ax & bz);
+        phase_exp -= 2 * (az & bx);
+    }
+
+    // Normalize to [0, 4)
+    phase_exp = ((phase_exp % 4) + 4) % 4;
+
+    // Map i^k to complex
+    static const std::complex<double> phase_table[4] = {
+        {1.0, 0.0},
+        {0.0, 1.0},
+        {-1.0, 0.0},
+        {0.0, -1.0}
+    };
+
+    return {result, phase_table[phase_exp]};
+}
 
 MatrixFreeHamiltonian MatrixFreeHamiltonian::operator*(const MatrixFreeHamiltonian& other) const {
     /*
-    Multiply this Hamiltonian by another Hamiltonian.
+    Multiply two Hamiltonians together.
 
     Args:
         other: The Hamiltonian to multiply with this one.
 
     Returns:
-        A new Hamiltonian that is the result of multiplying this Hamiltonian by the other Hamiltonian.
+        A new Hamiltonian that is the result of multiplying this Hamiltonian with the other Hamiltonian.
     */
     MatrixFreeHamiltonian result;
-    for (const auto& [coeff1, ops1] : operators) {
-        for (const auto& [coeff2, ops2] : other.operators) {
 
-            std::complex<double> coeff = coeff1 * coeff2;
-            std::vector<MatrixFreeOperator> combined_ops = ops1;
+    for (const auto& [ps_a, coeff_a] : operators) {
+        for (const auto& [ps_b, coeff_b] : other.operators) {
+            auto [ps_result, phase] = _multiply_pauli_strings(ps_a, ps_b);
+            std::complex<double> new_coeff = coeff_a * coeff_b * phase;
 
-            // check for duplicates, so Z(1) Z(1) should be removed, whilst Z(1) X(1) should become iY(1)
-            for (const auto& op2 : ops2) {
-                bool found_duplicate = false;
-                for (auto it = combined_ops.begin(); it != combined_ops.end(); ++it) {
-                    if (it->get_target_qubits() == op2.get_target_qubits()) {
-                        found_duplicate = true;
-                        std::string name1 = it->get_name();
-                        std::string name2 = op2.get_name();
-                        if ((name1 == "X" && name2 == "Z") || (name1 == "Z" && name2 == "X")) {
-                            coeff *= std::complex<double>(0, 1);  // i
-                            *it = MatrixFreeOperator("Y", it->get_control_qubits(), it->get_target_qubits(), it->get_base_matrix());
-                        } else if ((name1 == "Y" && name2 == "Z") || (name1 == "Z" && name2 == "Y")) {
-                            coeff *= std::complex<double>(0, 1);  // i
-                            *it = MatrixFreeOperator("X", it->get_control_qubits(), it->get_target_qubits(), it->get_base_matrix());
-                        } else if ((name1 == "X" && name2 == "Y") || (name1 == "Y" && name2 == "X")) {
-                            coeff *= std::complex<double>(0, 1);  // i
-                            *it = MatrixFreeOperator("Z", it->get_control_qubits(), it->get_target_qubits(), it->get_base_matrix());
-                        } else if ((name1 == "I") || (name2 == "I")) {
-                            *it = MatrixFreeOperator(name1 == "I" ? name2 : name1, it->get_control_qubits(), it->get_target_qubits(), it->get_base_matrix());
-                        } else if (name1 == name2) {
-                            combined_ops.erase(it);
-                        } else {
-                            throw std::logic_error("Unexpected case in Hamiltonian multiplication");
-                        }
-                        break;
-                    }
-                }
-                if (!found_duplicate) {
-                    combined_ops.push_back(op2);
-                }
+            auto it = result.operators.find(ps_result);
+            if (it != result.operators.end()) {
+                it->second += new_coeff;
+            } else {
+                result.operators[ps_result] = new_coeff;
             }
-
-            result.add(coeff, combined_ops);
-
         }
     }
+
     return result;
 }
 
@@ -460,19 +462,35 @@ void MatrixFreeHamiltonian::prune(double threshold, int max_terms) {
     Returns:
         A reference to the pruned Hamiltonian.
     */
-    std::vector<std::pair<std::complex<double>, std::vector<MatrixFreeOperator>>> pruned_operators;
-    for (const auto& [coefficient, ops] : operators) {
-        if (std::abs(coefficient) >= threshold) {
-            pruned_operators.push_back({coefficient, ops});
+    // Create a vector of terms and sort by absolute value of coefficients
+    std::vector<std::pair<PauliString, std::complex<double>>> term_vector(operators.begin(), operators.end());
+    std::sort(term_vector.begin(), term_vector.end(), [](const auto& a, const auto& b) {
+        return std::abs(a.second) > std::abs(b.second);
+    });
+    if (term_vector.size() > static_cast<size_t>(max_terms)) {
+        term_vector.resize(max_terms);
+    }
+    // Rebuild the operators map from the pruned vector
+    operators.clear();
+    for (const auto& [ps, coeff] : term_vector) {
+        if (std::abs(coeff) >= threshold) {
+            operators[ps] = coeff;
         }
     }
-    std::sort(pruned_operators.begin(), pruned_operators.end(), [](const auto& a, const auto& b) {
-        return std::abs(a.first) > std::abs(b.first);
-    });
-    if (pruned_operators.size() > static_cast<size_t>(max_terms)) {
-        pruned_operators.resize(max_terms);
+}
+
+MatrixFreeHamiltonian MatrixFreeHamiltonian::conjugate() const {
+    /*
+    Conjugate the Hamiltonian by taking the complex conjugate of all coefficients.
+
+    Returns:
+        A new Hamiltonian that is the complex conjugate of this Hamiltonian.
+    */
+    MatrixFreeHamiltonian result = *this;
+    for (auto& [ps, coeff] : result.operators) {
+        coeff = std::conj(coeff);
     }
-    operators = std::move(pruned_operators);
+    return result;
 }
 
 

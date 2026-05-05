@@ -337,7 +337,12 @@ void time_evolution_approximate(MatrixFreeHamiltonian& rho_t_as_h, const std::ve
 
     std::cout << "Here" << std::endl;
 
-    rho_t_as_h = MatrixFreeHamiltonian(1.0);
+    if (hamiltonians.size() <= 0) {
+        throw std::invalid_argument("At least one Hamiltonian must be provided");
+    }
+
+    int n_qubits = hamiltonians[0].get_nqubits();
+    rho_t_as_h = MatrixFreeHamiltonian(n_qubits, 1.0);
 
     for (size_t step_ind = 0; step_ind < step_list.size(); ++step_ind) {
 

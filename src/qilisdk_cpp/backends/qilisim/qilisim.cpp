@@ -171,6 +171,7 @@ py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, co
     py::list hamiltonians_keys = hamiltonians_full.attr("keys")();
     py::list hamiltonians_values = hamiltonians_full.attr("values")();
     py::object steps = functional.attr("schedule").attr("tlist");
+    int n_qubits = functional.attr("schedule").attr("nqubits").cast<int>();
 
     // Get parameters
     QiliSimConfig config = parse_solver_params(solver_params);
@@ -181,15 +182,12 @@ py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, co
     // The super scalable method, we should never construct any matrix or state
     if (config.get_time_evolution_method() == "approximate") {
 
-        std::vector<MatrixFreeHamiltonian> hamiltonians = parse_hamiltonians_matrix_free(hamiltonians_values);
-        MatrixFreeHamiltonian rho_t_as_h;
+        std::vector<MatrixFreeHamiltonian> hamiltonians = parse_hamiltonians_matrix_free(n_qubits, hamiltonians_values);
+        MatrixFreeHamiltonian rho_t_as_h(n_qubits);
         std::vector<std::vector<double>> parameters_list = parse_coefficients(schedule, hamiltonians_keys, steps);
         std::vector<double> step_list = parse_time_steps(steps);
         time_evolution_approximate(rho_t_as_h, hamiltonians, parameters_list, step_list, config);
-
-        int n_qubits = functional.attr("schedule").attr("nqubits").cast<int>();
         py::object result = construct_result_object(rho_t_as_h, readout, n_qubits, config);
-
         return FunctionalResult("readout_results"_a = result);
 
     // In all of these methods the state is fully stored
@@ -208,7 +206,7 @@ py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, co
         std::vector<double> expectation_values;
         if (config.get_time_evolution_method() == "integrate_rk4_matrix_free" || config.get_time_evolution_method() == "integrate_rk45_matrix_free") {
             // Parse the Hamiltonians
-            std::vector<MatrixFreeHamiltonian> hamiltonians = parse_hamiltonians_matrix_free(hamiltonians_values);
+            std::vector<MatrixFreeHamiltonian> hamiltonians = parse_hamiltonians_matrix_free(nqubits, hamiltonians_values);
             if (hamiltonians.size() != parameters_list.size()) {
                 throw py::value_error("Number of Hamiltonians does not match number of parameter lists");
             }
@@ -231,7 +229,6 @@ py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, co
         }
 
         // Construct the result object
-        int n_qubits = functional.attr("schedule").attr("nqubits").cast<int>();
         std::vector<bool> qubits_to_measure(n_qubits, true);
         py::object result = construct_result_object(rho_t, readout, noise_model_cpp, n_qubits, config, qubits_to_measure);
         bool store_intermediate_results = functional.attr("store_intermediate_results").cast<bool>();
@@ -361,7 +358,8 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
                 std::vector<DenseMatrix> intermediate_rhos;
                 if (config.get_time_evolution_method() == "integrate_rk4_matrix_free") {
                     // Parse the Hamiltonians
-                    std::vector<MatrixFreeHamiltonian> hamiltonians = parse_hamiltonians_matrix_free(hamiltonians_values);
+                    int n_qubits = functional.attr("schedule").attr("nqubits").cast<int>();
+                    std::vector<MatrixFreeHamiltonian> hamiltonians = parse_hamiltonians_matrix_free(n_qubits, hamiltonians_values);
                     if (hamiltonians.size() != parameters_list.size()) {
                         throw py::value_error("Number of Hamiltonians does not match number of parameter lists");
                     }
