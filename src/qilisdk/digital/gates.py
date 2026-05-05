@@ -451,13 +451,7 @@ class Modified(Gate, Generic[TBasicGate]):
 
 @yaml.register_class
 class Controlled(Modified[TBasicGate]):
-    def __init__(self, *control_qubits: int, basic_gate: Gate) -> None:
-
-        # Make sure it's an instance of the class and not the class itself
-        # i.e. Z(0).controlled(1) not Z.controlled(0, 1)
-        if not isinstance(basic_gate, Gate):
-            raise ValueError("basic_gate must be an instance of a Gate, not the class itself.")
-
+    def __init__(self, *control_qubits: int, basic_gate: TBasicGate | Controlled[TBasicGate]) -> None:
         # If doing Controlled of another Controlled, combine into one with all control qubits.
         if isinstance(basic_gate, Controlled) and isinstance(basic_gate.basic_gate, Gate):
             control_qubits += basic_gate.control_qubits
@@ -506,7 +500,7 @@ class Adjoint(Modified[TBasicGate]):
     Represents the adjoint (conjugate transpose) of a unitary gate.
     """
 
-    def __init__(self, basic_gate: Gate) -> None:
+    def __init__(self, basic_gate: TBasicGate) -> None:
         super().__init__(basic_gate=basic_gate)
 
     def _generate_matrix(self) -> np.ndarray:

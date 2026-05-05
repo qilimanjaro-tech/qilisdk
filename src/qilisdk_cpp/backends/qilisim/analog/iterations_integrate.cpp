@@ -17,7 +17,7 @@
 #include "lindblad.h"
 
 #if defined(_OPENMP)
-#pragma omp declare reduction(complex_double_reduction : std::complex <double> : omp_out += omp_in) initializer(omp_priv = std::complex <double>(0.0, 0.0))
+#pragma omp declare reduction(complex_double_reduction : std::complex<double> : omp_out += omp_in) initializer(omp_priv = std::complex<double>(0.0, 0.0))
 #endif
 
 // GCOV_EXCL_BR_START
@@ -340,15 +340,16 @@ double iter_rk45(DenseMatrix& rho_t, double t, double& dt, const std::vector<dou
     static constexpr double min_factor = 0.1;
     static constexpr double max_factor = 20.0;
 
+    // std::abs is not constexpr until C++23, so use a ternary for static_assert
     // Check that everything in the Butcher tableau is consistent
-    static_assert(std::abs(a2 - (b21)) < 1e-12, "Inconsistent Butcher tableau");
-    static_assert(std::abs(a3 - (b31 + b32)) < 1e-12, "Inconsistent Butcher tableau");
-    static_assert(std::abs(a4 - (b41 + b42 + b43)) < 1e-12, "Inconsistent Butcher tableau");
-    static_assert(std::abs(a5 - (b51 + b52 + b53 + b54)) < 1e-12, "Inconsistent Butcher tableau");
-    static_assert(std::abs(a6 - (b61 + b62 + b63 + b64 + b65)) < 1e-12, "Inconsistent Butcher tableau");
-    static_assert(std::abs(a7 - (b71 + b73 + b74 + b75 + b76)) < 1e-12, "Inconsistent Butcher tableau");
-    static_assert(std::abs(1.0 - (b71 + b73 + b74 + b75 + b76)) < 1e-12, "Inconsistent Butcher tableau");
-    static_assert(std::abs(1.0 - (c41 + c43 + c44 + c45 + c46 + c47)) < 1e-12, "Inconsistent Butcher tableau");
+    static_assert((a2 - (b21) < 0 ? -(a2 - (b21)) : (a2 - (b21))) < 1e-12, "Inconsistent Butcher tableau");
+    static_assert((a3 - (b31 + b32) < 0 ? -(a3 - (b31 + b32)) : (a3 - (b31 + b32))) < 1e-12, "Inconsistent Butcher tableau");
+    static_assert((a4 - (b41 + b42 + b43) < 0 ? -(a4 - (b41 + b42 + b43)) : (a4 - (b41 + b42 + b43))) < 1e-12, "Inconsistent Butcher tableau");
+    static_assert((a5 - (b51 + b52 + b53 + b54) < 0 ? -(a5 - (b51 + b52 + b53 + b54)) : (a5 - (b51 + b52 + b53 + b54))) < 1e-12, "Inconsistent Butcher tableau");
+    static_assert((a6 - (b61 + b62 + b63 + b64 + b65) < 0 ? -(a6 - (b61 + b62 + b63 + b64 + b65)) : (a6 - (b61 + b62 + b63 + b64 + b65))) < 1e-12, "Inconsistent Butcher tableau");
+    static_assert((a7 - (b71 + b73 + b74 + b75 + b76) < 0 ? -(a7 - (b71 + b73 + b74 + b75 + b76)) : (a7 - (b71 + b73 + b74 + b75 + b76))) < 1e-12, "Inconsistent Butcher tableau");
+    static_assert((1.0 - (b71 + b73 + b74 + b75 + b76) < 0 ? -(1.0 - (b71 + b73 + b74 + b75 + b76)) : (1.0 - (b71 + b73 + b74 + b75 + b76))) < 1e-12, "Inconsistent Butcher tableau");
+    static_assert((1.0 - (c41 + c43 + c44 + c45 + c46 + c47) < 0 ? -(1.0 - (c41 + c43 + c44 + c45 + c46 + c47)) : (1.0 - (c41 + c43 + c44 + c45 + c46 + c47))) < 1e-12, "Inconsistent Butcher tableau");
 
     // Sadly we need to do a lot of matrix allocations :(
     long rho_rows = rho_t.rows();

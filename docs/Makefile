@@ -52,3 +52,4 @@ html:
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
 %: Makefile
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)/en/main" $(SPHINXOPTS) $(O)
+	@sed -i 's/@media (prefers-color-scheme: dark)/.dark/g' "$(BUILDDIR)/html/_static/pygments.css"

@@ -44,4 +44,8 @@ pytest tests/integration 2>&1 | tee -a $LOG_FILE
 echo "Running docs checks..." | tee -a $LOG_FILE
 bash scripts/docs.sh 2>&1 | tee -a $LOG_FILE
 
+# Check copyrights
+echo "Running copyright header checks..." | tee -a $LOG_FILE
+bash scripts/copyrights.sh 2>&1 | tee -a $LOG_FILE
+
 echo "All checks passed successfully!" | tee -a $LOG_FILE
