@@ -764,3 +764,20 @@ def test_schedule_sinusoidal():
     assert _isclose(sched.coefficients["problem"][10], 1.0)
     assert _isclose(sched.coefficients["driver"][5], math.sqrt(1 / 2))
     assert _isclose(sched.coefficients["problem"][5], 1 - math.sqrt(1 / 2))
+
+
+def test_calculate_eigenvalues():
+    H1 = PauliX(0).to_hamiltonian()
+    H2 = PauliZ(0).to_hamiltonian()
+    sched = Schedule.linear(H1, H2, total_time=10, dt=1)
+    eigenvalues, eigenstates = sched.eig()
+    assert len(eigenvalues) == len(sched.tlist)
+    assert len(eigenstates) == len(sched.tlist)
+
+    # Check that the at the first step, the eigenvalues are the same as for H1
+    evals_h1 = H1.to_qtensor().eigenvalues
+    assert np.allclose(eigenvalues[0], evals_h1)
+
+    # Check that at the last step, the eigenvalues are the same as for H2
+    evals_h2 = H2.to_qtensor().eigenvalues
+    assert np.allclose(eigenvalues[-1], evals_h2)

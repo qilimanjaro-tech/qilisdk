@@ -209,31 +209,27 @@ class MatplotlibEigenvalueRenderer(MatplotlibScheduleRenderer):
         self.intermediate_states = intermediate_states
         self.show_overlaps = show_overlaps
 
-    def _calculate_eigenvalues(
-        self, hamiltonians: dict[str, Hamiltonian], times: list[float]
-    ) -> tuple[list[list[float]], list[list[QTensor]], list[float]]:
-        full_eigenvalues = []
-        full_eigenstates = []
+    def _calculate_expectation_values(self) -> list[float]:
         actual_expectation_values = []
-        for i, t in enumerate(times):
-            full_hamiltonian = sum(
-                self.schedule.coefficients[h][float(t)] * self.schedule.hamiltonians[h] for h in hamiltonians
-            )
-            if not isinstance(full_hamiltonian, Hamiltonian):
-                raise ValueError(f"Expected full_hamiltonian to be a Hamiltonian, got {type(full_hamiltonian)}")
-            as_qtensor = full_hamiltonian.to_qtensor()
-            vals, vecs = as_qtensor.eig()
-
-            full_eigenvalues.append([float(ev.real) for ev in vals[: self.levels]])
-            full_eigenstates.append(list(vecs[: self.levels]))
-
-            # Also plot the expectation value if we have intermediate states
-            if self.intermediate_states:
+        tlist = self.schedule.tlist
+        if self.intermediate_states:
+            if len(self.intermediate_states) < len(tlist):
+                raise ValueError(
+                    f"Length of intermediate_states must match length of schedule tlist. Got {len(self.intermediate_states) if self.intermediate_states else 0} states and {len(tlist)} time points."
+                )
+            for i in range(len(tlist)):
                 state = self.intermediate_states[i]
+                full_hamiltonian = sum(
+                    self.schedule.coefficients[h][float(self.schedule.tlist[i])] * self.schedule.hamiltonians[h]
+                    for h in self.schedule.hamiltonians
+                )
+                if not isinstance(full_hamiltonian, Hamiltonian):
+                    raise ValueError(f"Expected full_hamiltonian to be a Hamiltonian, got {type(full_hamiltonian)}")
+                as_qtensor = full_hamiltonian.to_qtensor()
                 exp_val = state.expectation_value(as_qtensor)
                 actual_expectation_values.append(float(exp_val.real))
 
-        return full_eigenvalues, full_eigenstates, actual_expectation_values
+        return actual_expectation_values
 
     @staticmethod
     def _calculate_overlaps(
@@ -292,14 +288,22 @@ class MatplotlibEigenvalueRenderer(MatplotlibScheduleRenderer):
         grad_colors = self.gradient_colors(theme.primary, theme.accent, n_hams)
 
         # Plot the eigenvalues of the full Hamiltonian as solid lines
-        full_eigenvalues, full_eigenstates, actual_expectation_values = self._calculate_eigenvalues(hamiltonians, times)
+        full_eigenvalues, full_eigenstates = self.schedule.eig(self.levels)
+        actual_expectation_values = self._calculate_expectation_values()
 
         min_eigenvalue = min(min(evs) for evs in full_eigenvalues)
         max_eigenvalue = max(max(evs) for evs in full_eigenvalues)
         eigen_range = max_eigenvalue - min_eigenvalue
 
         color = grad_colors[-1] if grad_colors else theme.accent
-        full_eigenvalues = list(zip(*full_eigenvalues))  # transpose to get eigenvalues over time
+
+        # We have the eigenvalues as a list of lists (one list per time step),
+        # but we want to plot each eigenvalue trajectory over time, so we need to transpose the list of lists
+        new_eigenvalues: list[list[float]] = []
+        for i in range(len(full_eigenvalues[0])):  # iterate over eigenvalues at each time step
+            new_eigenvalues.append([full_eigenvalues[j][i] for j in range(len(full_eigenvalues))])
+        full_eigenvalues = new_eigenvalues
+
         # only show the id for the first one
         for idx, evs in enumerate(full_eigenvalues):
             label = "Eigenvalues" if idx == 0 and self.intermediate_states else None

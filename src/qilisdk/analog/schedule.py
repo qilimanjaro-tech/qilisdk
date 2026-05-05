@@ -17,6 +17,7 @@ import math
 from copy import copy
 from typing import TYPE_CHECKING, Callable, Iterator, Mapping, overload
 
+from loguru import logger
 from numpy import linspace
 
 from qilisdk.analog.hamiltonian import Hamiltonian
@@ -551,7 +552,7 @@ class Schedule(Parameterizable):
             levels (int): The number of lowest eigenvalues to compute and plot for each Hamiltonian.
             style (ScheduleStyle, optional): Customization options for the plot appearance.
             filepath (str | None, optional): If provided, saves the plot to the specified file path.
-            intermediate_states (list[QTensor] | None, optional): If provided, these states will be used for additional visualization.
+            intermediate_states (list[QTensor] | None, optional): If provided, these states are plotted alongside the eigenvalues to show their evolution over time.
             show_overlaps (bool): Whether to annotate the plot with the overlaps between the intermediate states and the eigenstates.
 
         Raises:
@@ -561,18 +562,10 @@ class Schedule(Parameterizable):
         """
         from qilisdk.utils.visualization.schedule_renderers import MatplotlibEigenvalueRenderer  # noqa: PLC0415
 
-        # Don't allow big systems
-        _MAX_QUBITS_FOR_EIGENVALUE_PLOTTING = 7
-        if self.nqubits > _MAX_QUBITS_FOR_EIGENVALUE_PLOTTING:
-            raise ValueError(
-                f"Eigenvalue plotting is not supported for schedules with more than {_MAX_QUBITS_FOR_EIGENVALUE_PLOTTING} qubits due to computational complexity."
-            )
-
         # If we try to show overlaps but haven't given intermediate states, raise an error
-        if show_overlaps and intermediate_states is None:
-            raise ValueError(
-                "Overlaps can't be shown without intermediate states. Please provide intermediate_states or set show_overlaps to False."
-            )
+        if show_overlaps and not intermediate_states:
+            logger.warning("Overlaps can't be shown without intermediate states. Setting show_overlaps to False.")
+            show_overlaps = False
 
         renderer = MatplotlibEigenvalueRenderer(
             self, levels=levels, style=style, intermediate_states=intermediate_states, show_overlaps=show_overlaps
@@ -582,6 +575,40 @@ class Schedule(Parameterizable):
             renderer.save(filepath)
         else:
             renderer.show()
+
+    def eig(self, levels: int = 50) -> tuple[list[list[float]], list[list[QTensor]]]:
+        """
+        Calculate the lowest eigenvalues and corresponding eigenstates of the schedule's Hamiltonians at each time step.
+
+        Args:
+            levels (int): The number of lowest eigenvalues and corresponding eigenstates to compute for each Hamiltonian at each time step.
+
+        Returns:
+            tuple[list[list[float]], list[list[QTensor]]]: A tuple containing two lists, the first is a list
+            of lists of eigenvalues for each Hamiltonian at each time step, and the second is a
+            list of lists of corresponding eigenstates as QTensors.
+
+        Raises:
+            ValueError: If the Hamiltonian at any time step is not a valid Hamiltonian object that can be converted to a QTensor for eigenvalue computation.
+        """
+        _MAX_QUBITS_FOR_EIGENVALUE_PLOTTING = 7
+        if self.nqubits > _MAX_QUBITS_FOR_EIGENVALUE_PLOTTING:
+            logger.warning(
+                f"Calculating eigenvalues with more than {_MAX_QUBITS_FOR_EIGENVALUE_PLOTTING} qubits may be very slow and is not supported. This schedule has {self.nqubits} qubits."
+            )
+        full_eigenvalues: list[list[float]] = []
+        full_eigenstates: list[list[QTensor]] = []
+        for i, t in enumerate(self.tlist):
+            full_hamiltonian = sum(self.coefficients[h][float(t)] * self.hamiltonians[h] for h in self.hamiltonians)
+            if not isinstance(full_hamiltonian, Hamiltonian):
+                raise ValueError(f"Expected full_hamiltonian to be a Hamiltonian, got {type(full_hamiltonian)}")
+            as_qtensor = full_hamiltonian.to_qtensor()
+            vals, vecs = as_qtensor.eig()
+
+            full_eigenvalues.append([float(ev.real) for ev in vals[:levels]])
+            full_eigenstates.append(list(vecs[:levels]))
+
+        return full_eigenvalues, full_eigenstates
 
     def __repr__(self) -> str:
         lines = [

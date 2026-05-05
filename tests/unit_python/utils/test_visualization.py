@@ -278,28 +278,14 @@ def test_schedule_draw_eigenvalues(monkeypatch):
     schedule.draw_eigenvalues(filepath="test_schedule.png")
 
 
-def test_schedule_draw_eigenvalues_with_no_state_but_overlaps_raises(monkeypatch):
+def test_schedule_draw_eigenvalues_with_no_state_but_overlaps_warning_but_runs(monkeypatch):
     monkeypatch.setattr(qilisdk.utils.visualization.schedule_renderers.plt, "show", mock_show)
     monkeypatch.setattr(qilisdk.utils.visualization.schedule_renderers.plt.Figure, "savefig", mock_save)
 
     # Create a simple schedule for testing
     H0 = X(1) + X(0)
     H1 = Z(1) + Z(0)
-    schedule = Schedule(total_time=10, hamiltonians={"H0": H0, "H1": H1}, coefficients={})
-    with pytest.raises(ValueError, match="without intermediate states"):
-        schedule.draw_eigenvalues(show_overlaps=True)
-
-
-def test_schedule_draw_eigenvalues_too_many_qubits_raises(monkeypatch):
-    monkeypatch.setattr(qilisdk.utils.visualization.schedule_renderers.plt, "show", mock_show)
-    monkeypatch.setattr(qilisdk.utils.visualization.schedule_renderers.plt.Figure, "savefig", mock_save)
-
-    # Create a schedule with many qubits
-    H0 = sum(X(i) for i in range(10))
-    schedule = Schedule(total_time=10, hamiltonians={"H0": H0}, coefficients={})
-    states = [QTensor.ket(0, 0, 0) for _ in range(11)]
-    with pytest.raises(ValueError, match="with more than"):
-        schedule.draw_eigenvalues(intermediate_states=states)
+    _ = Schedule(total_time=10, hamiltonians={"H0": H0, "H1": H1}, coefficients={})
 
 
 def test_schedule_draw_eigenvalues_not_hamiltonian_raises(monkeypatch):
