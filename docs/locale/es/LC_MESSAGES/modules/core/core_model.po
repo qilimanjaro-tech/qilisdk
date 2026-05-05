@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-14 12:09+0200\n"
+"POT-Creation-Date: 2026-05-05 15:18+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -23,7 +23,100 @@ msgstr ""
 msgid "Models"
 msgstr "Modelos"
 
-#: ../../modules/core/core_model.rst:8
-msgid "Go to a specific subheading of a page."
-msgstr "Ir a un subtítulo específico de una página."
+#: ../../modules/core/core_model.rst:4
+msgid ""
+"This minimal example introduces a binary optimization model, converts it "
+"to a QUBO penalty form, and exports the corresponding Hamiltonian:"
+msgstr ""
+"Este ejemplo mínimo presenta un modelo de optimización binaria, lo "
+"convierte a la forma de penalización QUBO y exporta el Hamiltonian "
+"correspondiente:"
 
+#: ../../modules/core/core_model.rst:27
+msgid "Objectives and Constraints"
+msgstr "Objetivos y Restricciones"
+
+#: ../../modules/core/core_model.rst:29
+msgid "Each :class:`~qilisdk.core.model.Model` consists of:"
+msgstr "Cada :class:`~qilisdk.core.model.Model` consta de:"
+
+#: ../../modules/core/core_model.rst:31
+msgid "A single :class:`~qilisdk.core.model.Objective`"
+msgstr "Un único :class:`~qilisdk.core.model.Objective`"
+
+#: ../../modules/core/core_model.rst:32
+msgid "Zero or more :class:`~qilisdk.core.model.Constraint` instances"
+msgstr "Cero o más instancias de :class:`~qilisdk.core.model.Constraint`"
+
+#: ../../modules/core/core_model.rst:34
+msgid "**Objective**"
+msgstr "**Objetivo**"
+
+#: ../../modules/core/core_model.rst:36
+msgid ""
+"The :class:`~qilisdk.core.model.Objective` defines the function the model"
+" aims to minimize or maximize. Example:"
+msgstr ""
+"El :class:`~qilisdk.core.model.Objective` define la función que el modelo "
+"trata de minimizar o maximizar. Ejemplo:"
+
+#: ../../modules/core/core_model.rst:47 ../../modules/core/core_model.rst:73
+#: ../../modules/core/core_model.rst:101 ../../modules/core/core_model.rst:134
+#: ../../modules/core/core_model.rst:151
+msgid "**Output**:"
+msgstr "**Salida**:"
+
+#: ../../modules/core/core_model.rst:64
+msgid ""
+"Encoding constraints are automatically added for bounded continuous "
+"variables. Each constraint has an associated Lagrange multiplier, which "
+"determines the penalty for violating it."
+msgstr ""
+"Las restricciones de codificación se añaden automáticamente para variables "
+"continuas acotadas. Cada restricción tiene un multiplicador de Lagrange "
+"asociado que determina la penalización por violarla."
+
+#: ../../modules/core/core_model.rst:66
+msgid "You can update the multiplier like so:"
+msgstr "Puede actualizar el multiplicador de la siguiente manera:"
+
+#: ../../modules/core/core_model.rst:90
+msgid "**Constraints**"
+msgstr "**Restricciones**"
+
+#: ../../modules/core/core_model.rst:92
+msgid ""
+"Additional :class:`Constraints<qilisdk.core.model.Constraint>` can be "
+"added to restrict the solution space:"
+msgstr ""
+"Se pueden añadir :class:`Restricciones<qilisdk.core.model.Constraint>` "
+"adicionales para acotar el espacio de soluciones:"
+
+#: ../../modules/core/core_model.rst:124
+msgid "Evaluating a Model"
+msgstr "Evaluar un Modelo"
+
+#: ../../modules/core/core_model.rst:126
+msgid ""
+"To evaluate a :class:`~qilisdk.core.model.Model`, provide values for all "
+"involved variables:"
+msgstr ""
+"Para evaluar un :class:`~qilisdk.core.model.Model`, proporcione valores "
+"para todas las variables implicadas:"
+
+#: ../../modules/core/core_model.rst:140
+msgid ""
+"The evaluation returns a dictionary with values for the objective and "
+"constraints. A constraint returns `0.0` if satisfied, or its Lagrange "
+"multiplier if violated."
+msgstr ""
+"La evaluación devuelve un diccionario con valores para el objetivo y las "
+"restricciones. Una restricción devuelve `0.0` si se satisface, o su "
+"multiplicador de Lagrange si se viola."
+
+#: ../../modules/core/core_model.rst:143
+msgid "For example:"
+msgstr "Por ejemplo:"
+
+#~ msgid "Go to a specific subheading of a page."
+#~ msgstr "Ir a un subtítulo específico de una página."

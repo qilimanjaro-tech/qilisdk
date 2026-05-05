@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-14 12:09+0200\n"
+"POT-Creation-Date: 2026-05-05 15:18+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -20,10 +20,79 @@ msgstr ""
 "Generated-By: Babel 2.18.0\n"
 
 #: ../../modules/digital/digital_ansatz.rst:2
-msgid "Hardware Efficient Ansatz"
-msgstr "Ansatz Eficiente en Hardware"
+msgid "Ansatz"
+msgstr "Ansatz"
+
+#: ../../modules/digital/digital_ansatz.rst:4
+msgid ""
+"The :mod:`~qilisdk.digital.ansatz` submodule provides ready-to-use "
+"circuit templates (Ansätze) and a lightweight framework for writing your "
+"own. To author a custom template:"
+msgstr ""
+"El submódulo :mod:`~qilisdk.digital.ansatz` proporciona plantillas de "
+"circuitos listas para usar (Ansätze) y un marco ligero para escribir las "
+"propias. Para crear una plantilla personalizada:"
+
+#: ../../modules/digital/digital_ansatz.rst:6
+msgid ""
+"Subclass :class:`~qilisdk.digital.ansatz.Ansatz` (which already inherits "
+"from :class:`~qilisdk.digital.circuit.Circuit`)."
+msgstr ""
+"Crear una subclase de :class:`~qilisdk.digital.ansatz.Ansatz` (que ya "
+"hereda de :class:`~qilisdk.digital.circuit.Circuit`)."
+
+#: ../../modules/digital/digital_ansatz.rst:7
+msgid ""
+"Call ``super().__init__(nqubits=...)`` inside ``__init__`` to set the "
+"circuit width."
+msgstr ""
+"Llamar a ``super().__init__(nqubits=...)`` dentro de ``__init__`` para "
+"establecer el ancho del circuito."
 
 #: ../../modules/digital/digital_ansatz.rst:8
-msgid "Go to a specific subheading of a page."
-msgstr "Ir a un subtítulo específico de una página."
+msgid ""
+"Add gates in any order with ``self.add(gate)``, loops are fine, and you "
+"can keep references to any :class:`~qilisdk.core.variables.Parameter` "
+"objects you want to expose later."
+msgstr ""
+"Añadir puertas en cualquier orden con ``self.add(gate)``; los bucles están "
+"permitidos, y se pueden conservar referencias a cualquier objeto "
+":class:`~qilisdk.core.variables.Parameter` que se desee exponer más adelante."
 
+#: ../../modules/digital/digital_ansatz.rst:10
+msgid "**Example**"
+msgstr "**Ejemplo**"
+
+#: ../../modules/digital/digital_ansatz.rst:35
+msgid ""
+"Once defined, the subclass behaves exactly like any other circuit: you "
+"can draw it, bind parameters, or hand it off to backends."
+msgstr ""
+"Una vez definida, la subclase se comporta exactamente como cualquier otro "
+"circuito: se puede dibujar, vincular parámetros o pasarla a backends."
+
+#: ../../modules/digital/digital_ansatz.rst:37
+msgid "For a prebuilt option, consider any of:"
+msgstr "Para una opción prediseñada, considere cualquiera de las siguientes:"
+
+#: ../../modules/digital/digital_ansatz.rst:39
+msgid ""
+":doc:`digital_hardware` for a simple layered structure that can be "
+"adapted to various hardware topologies."
+msgstr ""
+":doc:`digital_hardware` para una estructura de capas simple que puede "
+"adaptarse a diversas topologías de hardware."
+
+#: ../../modules/digital/digital_ansatz.rst:40
+msgid ":doc:`digital_trotter` for simulating analog dynamics with Trotterization."
+msgstr ":doc:`digital_trotter` para simular dinámicas analógicas con Trotterización."
+
+#: ../../modules/digital/digital_ansatz.rst:41
+msgid ":doc:`digital_qaoa` for combinatorial optimization problems."
+msgstr ":doc:`digital_qaoa` para problemas de optimización combinatoria."
+
+#~ msgid "Hardware Efficient Ansatz"
+#~ msgstr "Ansatz Eficiente en Hardware"
+
+#~ msgid "Go to a specific subheading of a page."
+#~ msgstr "Ir a un subtítulo específico de una página."

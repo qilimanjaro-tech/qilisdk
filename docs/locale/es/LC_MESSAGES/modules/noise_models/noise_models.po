@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-14 12:09+0200\n"
+"POT-Creation-Date: 2026-05-05 15:18+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -23,684 +23,737 @@ msgstr ""
 msgid "Noise Models"
 msgstr "Modelos de Ruido"
 
-#: ../../modules/noise_models/noise_models.rst:11
-msgid ""
-"The :mod:`qilisdk.noise` module contains classes that represent different"
-" types of noise in quantum systems. These noise models can be integrated "
-"into quantum simulations to account for real-world imperfections and "
-"decoherence effects. A :class:`~qilisdk.noise.noise_model.NoiseModel` can"
-" contains various types of noise, each of which is then applied during "
-"simulation."
-msgstr ""
-"El módulo :mod:`qilisdk.noise` contiene clases que representan diferentes "
-"tipos de ruido en sistemas cuánticos. Estos modelos de ruido pueden "
-"integrarse en simulaciones cuánticas para tener en cuenta imperfecciones del "
-"mundo real y efectos de decoherencia. Un "
-":class:`~qilisdk.noise.noise_model.NoiseModel` puede contener varios tipos "
-"de ruido, cada uno de los cuales se aplica durante la simulación."
-
-#: ../../modules/noise_models/noise_models.rst:21
-msgid "Backend"
-msgstr "Backend"
-
-#: ../../modules/noise_models/noise_models.rst:21
-msgid "Noise Models Supported"
-msgstr "Modelos de Ruido Soportados"
-
-#: ../../modules/noise_models/noise_models.rst:23
-msgid ":class:`~qilisdk.backends.qilisim.QiliSim`"
-msgstr ":class:`~qilisdk.backends.qilisim.QiliSim`"
-
-#: ../../modules/noise_models/noise_models.rst:23
-#: ../../modules/noise_models/noise_models.rst:25
-#: ../../modules/noise_models/noise_models.rst:73
-#: ../../modules/noise_models/noise_models.rst:75
-#: ../../modules/noise_models/noise_models.rst:77
-#: ../../modules/noise_models/noise_models.rst:79
-#: ../../modules/noise_models/noise_models.rst:81
-#: ../../modules/noise_models/noise_models.rst:83
-#: ../../modules/noise_models/noise_models.rst:85
-#: ../../modules/noise_models/noise_models.rst:87
-#: ../../modules/noise_models/noise_models.rst:89
-#: ../../modules/noise_models/noise_models.rst:91
-#: ../../modules/noise_models/noise_models.rst:93
-msgid "✔"
-msgstr "✔"
-
-#: ../../modules/noise_models/noise_models.rst:25
-msgid ":class:`~qilisdk.backends.cuda_backend.CudaBackend`"
-msgstr ":class:`~qilisdk.backends.cuda_backend.CudaBackend`"
-
-#: ../../modules/noise_models/noise_models.rst:27
-msgid ":class:`~qilisdk.backends.qutip_backend.QutipBackend`"
-msgstr ":class:`~qilisdk.backends.qutip_backend.QutipBackend`"
-
-#: ../../modules/noise_models/noise_models.rst:27
-msgid "✕"
-msgstr "✕"
-
-#: ../../modules/noise_models/noise_models.rst:32
-msgid "Usage"
-msgstr "Uso"
-
-#: ../../modules/noise_models/noise_models.rst:34
-msgid ""
-"Noise passes are added to a "
-":class:`~qilisdk.noise.noise_model.NoiseModel`, which should then be "
-"included when creating a backend. For example, to create a simple circuit"
-" and then simulate it with a CUDA backend containing a bit-flip noise "
-"model:"
-msgstr ""
-"Los pases de ruido se añaden a un "
-":class:`~qilisdk.noise.noise_model.NoiseModel`, que luego debe incluirse al "
-"crear un backend. Por ejemplo, para crear un circuito sencillo y simularlo "
-"con un backend CUDA que contiene un modelo de ruido de inversión de bit:"
-
-#: ../../modules/noise_models/noise_models.rst:61
-msgid "Summary of Noise Types"
-msgstr "Resumen de Tipos de Ruido"
-
-#: ../../modules/noise_models/noise_models.rst:63
-msgid ""
-"Some of the noise passes available in QiliSDK can be used for both "
-"digital circuits and analog schedules, while others are specific to one "
-"or the other:"
-msgstr ""
-"Algunos de los pases de ruido disponibles en QiliSDK pueden usarse tanto "
-"para circuitos digitales como para esquemas analógicos, mientras que otros "
-"son específicos de uno u otro:"
-
-#: ../../modules/noise_models/noise_models.rst:71
-msgid "Noise Type"
-msgstr "Tipo de Ruido"
-
-#: ../../modules/noise_models/noise_models.rst:71
-msgid "Digital Circuits"
-msgstr "Circuitos Digitales"
-
-#: ../../modules/noise_models/noise_models.rst:71
-msgid "Analog Schedules"
-msgstr "Esquemas Analógicos"
-
-#: ../../modules/noise_models/noise_models.rst:73
-msgid ":class:`~qilisdk.noise.representations.KrausChannel`"
-msgstr ":class:`~qilisdk.noise.representations.KrausChannel`"
-
-#: ../../modules/noise_models/noise_models.rst:75
-msgid ":class:`~qilisdk.noise.representations.LindbladGenerator`"
-msgstr ":class:`~qilisdk.noise.representations.LindbladGenerator`"
-
-#: ../../modules/noise_models/noise_models.rst:77
-msgid ":class:`~qilisdk.noise.pauli_channel.PauliChannel`"
-msgstr ":class:`~qilisdk.noise.pauli_channel.PauliChannel`"
-
-#: ../../modules/noise_models/noise_models.rst:79
-msgid ":class:`~qilisdk.noise.bit_flip.BitFlip`"
-msgstr ":class:`~qilisdk.noise.bit_flip.BitFlip`"
-
-#: ../../modules/noise_models/noise_models.rst:81
-msgid ":class:`~qilisdk.noise.phase_flip.PhaseFlip`"
-msgstr ":class:`~qilisdk.noise.phase_flip.PhaseFlip`"
-
-#: ../../modules/noise_models/noise_models.rst:83
-msgid ":class:`~qilisdk.noise.depolarizing.Depolarizing`"
-msgstr ":class:`~qilisdk.noise.depolarizing.Depolarizing`"
-
-#: ../../modules/noise_models/noise_models.rst:85
-msgid ":class:`~qilisdk.noise.amplitude_damping.AmplitudeDamping`"
-msgstr ":class:`~qilisdk.noise.amplitude_damping.AmplitudeDamping`"
-
-#: ../../modules/noise_models/noise_models.rst:87
-msgid ":class:`~qilisdk.noise.dephasing.Dephasing`"
-msgstr ":class:`~qilisdk.noise.dephasing.Dephasing`"
-
-#: ../../modules/noise_models/noise_models.rst:89
-msgid ":class:`~qilisdk.noise.gaussian_perturbation.GaussianPerturbation`"
-msgstr ":class:`~qilisdk.noise.gaussian_perturbation.GaussianPerturbation`"
-
-#: ../../modules/noise_models/noise_models.rst:91
-msgid ":class:`~qilisdk.noise.offset_perturbation.OffsetPerturbation`"
-msgstr ":class:`~qilisdk.noise.offset_perturbation.OffsetPerturbation`"
-
-#: ../../modules/noise_models/noise_models.rst:93
-msgid ":class:`~qilisdk.noise.readout_assignment.ReadoutAssignment`"
-msgstr ":class:`~qilisdk.noise.readout_assignment.ReadoutAssignment`"
-
-#: ../../modules/noise_models/noise_models.rst:97
-msgid "Noise Config"
-msgstr "Configuración de Ruido"
-
-#: ../../modules/noise_models/noise_models.rst:99
-msgid ""
-"By default, when converting between different noise representations (e.g."
-" from Kraus operators to Lindblad generators), certain parameters are "
-"assumed, such as gate times. These defaults can be modified using the "
-":class:`~qilisdk.noise.noise_config.NoiseConfig` class:"
-msgstr ""
-"Por defecto, al convertir entre diferentes representaciones de ruido (por "
-"ejemplo, de operadores de Kraus a generadores de Lindblad), se asumen "
-"ciertos parámetros, como los tiempos de puerta. Estos valores por defecto "
-"pueden modificarse usando la clase "
-":class:`~qilisdk.noise.noise_config.NoiseConfig`:"
-
-#: ../../modules/noise_models/noise_models.rst:115
-msgid "Parameters and their defaults are as follows:"
-msgstr "Los parámetros y sus valores por defecto son los siguientes:"
-
-#: ../../modules/noise_models/noise_models.rst:122
-msgid "Parameter"
-msgstr "Parámetro"
-
-#: ../../modules/noise_models/noise_models.rst:122
-msgid "Default Value"
-msgstr "Valor por Defecto"
-
-#: ../../modules/noise_models/noise_models.rst:124
-msgid ":attr:`~qilisdk.noise.noise_config.NoiseConfig.gate_times`"
-msgstr ":attr:`~qilisdk.noise.noise_config.NoiseConfig.gate_times`"
-
-#: ../../modules/noise_models/noise_models.rst:124
-msgid "1.0 for all gates"
-msgstr "1.0 para todas las puertas"
-
-#: ../../modules/noise_models/noise_models.rst:128
-msgid "Noise Types"
-msgstr "Tipos de Ruido"
-
-#: ../../modules/noise_models/noise_models.rst:131
-msgid "KrausChannel"
-msgstr "KrausChannel"
-
-#: ../../modules/noise_models/noise_models.rst:133
-#, python-brace-format
-msgid ""
-":class:`~qilisdk.noise.representations.KrausChannel` is a base class for "
-"digital noise models that use Kraus operators to represent quantum noise "
-"channels. Kraus operators can be used to represent a generic quantum "
-"channel :math:`\\mathcal{E}` acting on a density matrix :math:`\\rho` as:"
-msgstr ""
-":class:`~qilisdk.noise.representations.KrausChannel` es una clase base para "
-"modelos de ruido digital que utilizan operadores de Kraus para representar "
-"canales de ruido cuántico. Los operadores de Kraus pueden usarse para "
-"representar un canal cuántico genérico :math:`\\mathcal{E}` que actúa sobre "
-"una matriz de densidad :math:`\\rho` como:"
-
-#: ../../modules/noise_models/noise_models.rst:136
-#, python-brace-format
-msgid "\\mathcal{E}(\\rho) = \\sum_i K_i \\rho K_i^\\dagger,"
-msgstr "\\mathcal{E}(\\rho) = \\sum_i K_i \\rho K_i^\\dagger,"
-
-#: ../../modules/noise_models/noise_models.rst:140
-msgid ""
-"where :math:`K_i` are the Kraus operators satisfying the completeness "
-"relation :math:`\\sum_i K_i^\\dagger K_i = I`. The class is initialized "
-"with a list of Kraus operators given as QTensors."
-msgstr ""
-"donde :math:`K_i` son los operadores de Kraus que satisfacen la relación de "
-"completitud :math:`\\sum_i K_i^\\dagger K_i = I`. La clase se inicializa "
-"con una lista de operadores de Kraus dados como QTensors."
-
-#: ../../modules/noise_models/noise_models.rst:154
-msgid "LindbladGenerator"
-msgstr "LindbladGenerator"
-
-#: ../../modules/noise_models/noise_models.rst:156
-msgid ""
-":class:`~qilisdk.noise.representations.LindbladGenerator` is a base class"
-" for analog noise models that use the Lindblad master equation to "
-"represent quantum noise processes. The Lindblad master equation describes"
-" the time evolution of a density matrix :math:`\\rho` under both unitary "
-"dynamics and dissipative processes:"
-msgstr ""
-":class:`~qilisdk.noise.representations.LindbladGenerator` es una clase base "
-"para modelos de ruido analógico que utilizan la ecuación maestra de Lindblad "
-"para representar procesos de ruido cuántico. La ecuación maestra de Lindblad "
-"describe la evolución temporal de una matriz de densidad :math:`\\rho` bajo "
-"dinámica unitaria y procesos disipativos:"
-
-#: ../../modules/noise_models/noise_models.rst:160
-#, python-brace-format
-msgid ""
-"\\frac{d\\rho}{dt} = -i[H, \\rho] + \\sum_i \\left( J_i \\rho "
-"J_i^\\dagger - \\frac{1}{2} \\{ J_i^\\dagger J_i, \\rho \\} \\right),"
-msgstr ""
-"\\frac{d\\rho}{dt} = -i[H, \\rho] + \\sum_i \\left( J_i \\rho "
-"J_i^\\dagger - \\frac{1}{2} \\{ J_i^\\dagger J_i, \\rho \\} \\right),"
-
-#: ../../modules/noise_models/noise_models.rst:164
-msgid ""
-"where :math:`H` is the system Hamiltonian, and :math:`J_i` are the jump "
-"operators representing different dissipation channels. The class is "
-"initialized with a list of jump operators given as QTensors and their "
-"corresponding rates (assumed to be 1 if not specified)."
-msgstr ""
-"donde :math:`H` es el Hamiltoniano del sistema y :math:`J_i` son los "
-"operadores de salto que representan diferentes canales de disipación. La "
-"clase se inicializa con una lista de operadores de salto dados como QTensors "
-"y sus tasas correspondientes (se asume 1 si no se especifica)."
-
-#: ../../modules/noise_models/noise_models.rst:177
-msgid "PauliChannel"
-msgstr "PauliChannel"
-
-#: ../../modules/noise_models/noise_models.rst:179
-msgid ""
-":class:`~qilisdk.noise.pauli_channel.PauliChannel` is a base class for "
-"noise models that use Pauli operators. A Pauli channel applies the Pauli "
-"operators (I, X, Y, Z) with certain probabilities. The channel can be "
-"represented as:"
-msgstr ""
-":class:`~qilisdk.noise.pauli_channel.PauliChannel` es una clase base para "
-"modelos de ruido que utilizan operadores de Pauli. Un canal de Pauli aplica "
-"los operadores de Pauli (I, X, Y, Z) con ciertas probabilidades. El canal "
-"puede representarse como:"
-
-#: ../../modules/noise_models/noise_models.rst:183
-#, python-brace-format
-msgid ""
-"\\mathcal{E}(\\rho) = p_I \\rho + p_X X \\rho X + p_Y Y \\rho Y + p_Z Z "
-"\\rho Z,"
-msgstr ""
-"\\mathcal{E}(\\rho) = p_I \\rho + p_X X \\rho X + p_Y Y \\rho Y + p_Z Z "
-"\\rho Z,"
-
-#: ../../modules/noise_models/noise_models.rst:187
-msgid ""
-"where :math:`p_I`, :math:`p_X`, :math:`p_Y`, and :math:`p_Z` are the "
-"probabilities for applying the respective Pauli operators, satisfying "
-":math:`p_I + p_X + p_Y + p_Z = 1`. This corresponds to Kraus operators:"
-msgstr ""
-"donde :math:`p_I`, :math:`p_X`, :math:`p_Y` y :math:`p_Z` son las "
-"probabilidades de aplicar los respectivos operadores de Pauli, satisfaciendo "
-":math:`p_I + p_X + p_Y + p_Z = 1`. Esto corresponde a operadores de Kraus:"
-
-#: ../../modules/noise_models/noise_models.rst:191
-#, python-brace-format
-msgid ""
-"K_0 = \\sqrt{p_I} I, \\quad K_1 = \\sqrt{p_X} X, \\quad K_2 = \\sqrt{p_Y}"
-" Y, \\quad K_3 = \\sqrt{p_Z} Z,"
-msgstr ""
-"K_0 = \\sqrt{p_I} I, \\quad K_1 = \\sqrt{p_X} X, \\quad K_2 = \\sqrt{p_Y}"
-" Y, \\quad K_3 = \\sqrt{p_Z} Z,"
-
-#: ../../modules/noise_models/noise_models.rst:195
-msgid "Or jump operators:"
-msgstr "O como operadores de salto:"
-
-#: ../../modules/noise_models/noise_models.rst:197
-#, python-brace-format
-msgid ""
-"J_1 = \\sqrt{\\gamma_X} X, \\quad J_2 = \\sqrt{\\gamma_Y} Y, \\quad J_3 ="
-" \\sqrt{\\gamma_Z} Z,"
-msgstr ""
-"J_1 = \\sqrt{\\gamma_X} X, \\quad J_2 = \\sqrt{\\gamma_Y} Y, \\quad J_3 ="
-" \\sqrt{\\gamma_Z} Z,"
-
-#: ../../modules/noise_models/noise_models.rst:201
-msgid "where :math:`\\gamma_i` are rates related to the probabilities."
-msgstr "donde :math:`\\gamma_i` son tasas relacionadas con las probabilidades."
-
-#: ../../modules/noise_models/noise_models.rst:209
-msgid "BitFlip"
-msgstr "BitFlip"
-
-#: ../../modules/noise_models/noise_models.rst:211
-msgid ""
-":class:`~qilisdk.noise.bit_flip.BitFlip` represents a bit-flip error "
-"model where each qubit has a certain probability of flipping its state "
-"from :math:`|0⟩` to :math:`|1⟩` or from :math:`|1⟩` to :math:`|0⟩`. This "
-"corresponds to the following channel:"
-msgstr ""
-":class:`~qilisdk.noise.bit_flip.BitFlip` representa un modelo de error de "
-"inversión de bit donde cada cúbit tiene una cierta probabilidad de cambiar "
-"su estado de :math:`|0⟩` a :math:`|1⟩` o de :math:`|1⟩` a :math:`|0⟩`. "
-"Esto corresponde al siguiente canal:"
-
-#: ../../modules/noise_models/noise_models.rst:215
-#, python-brace-format
-msgid "\\mathcal{E}(\\rho) = (1 - p) \\rho + p X \\rho X,"
-msgstr "\\mathcal{E}(\\rho) = (1 - p) \\rho + p X \\rho X,"
-
-#: ../../modules/noise_models/noise_models.rst:219
-msgid ""
-"where :math:`p` is the bit-flip probability. As such, it is a special "
-"case of :class:`~qilisdk.noise.pauli_channel.PauliChannel` with "
-":math:`p_X = p` and :math:`p_I = 1 - p`. This can therefore be written as"
-" Kraus operators:"
-msgstr ""
-"donde :math:`p` es la probabilidad de inversión de bit. Como tal, es un caso "
-"especial de :class:`~qilisdk.noise.pauli_channel.PauliChannel` con "
-":math:`p_X = p` y :math:`p_I = 1 - p`. Por tanto puede escribirse como "
-"operadores de Kraus:"
-
-#: ../../modules/noise_models/noise_models.rst:222
-#, python-brace-format
-msgid "K_0 = \\sqrt{1 - p} I, \\quad K_1 = \\sqrt{p} X,"
-msgstr "K_0 = \\sqrt{1 - p} I, \\quad K_1 = \\sqrt{p} X,"
-
-#: ../../modules/noise_models/noise_models.rst:226
-#: ../../modules/noise_models/noise_models.rst:257
-#: ../../modules/noise_models/noise_models.rst:357
-msgid "or similarly as a jump operator:"
-msgstr "o de manera similar como operador de salto:"
-
-#: ../../modules/noise_models/noise_models.rst:228
-#, python-brace-format
-msgid "J = \\sqrt{\\gamma} X,"
-msgstr "J = \\sqrt{\\gamma} X,"
-
-#: ../../modules/noise_models/noise_models.rst:232
-msgid "where now :math:`\\gamma` is the bit-flip rate."
-msgstr "donde ahora :math:`\\gamma` es la tasa de inversión de bit."
-
-#: ../../modules/noise_models/noise_models.rst:240
-msgid "PhaseFlip"
-msgstr "PhaseFlip"
-
-#: ../../modules/noise_models/noise_models.rst:242
-msgid ""
-":class:`~qilisdk.noise.phase_flip.PhaseFlip` represents a phase-flip "
-"error model where each qubit has a certain probability of flipping its "
-"phase, changing the sign of the :math:`|1⟩` state. This corresponds to "
-"the following channel:"
-msgstr ""
-":class:`~qilisdk.noise.phase_flip.PhaseFlip` representa un modelo de error "
-"de inversión de fase donde cada cúbit tiene una cierta probabilidad de "
-"cambiar su fase, alterando el signo del estado :math:`|1⟩`. Esto corresponde "
-"al siguiente canal:"
-
-#: ../../modules/noise_models/noise_models.rst:246
-#, python-brace-format
-msgid "\\mathcal{E}(\\rho) = (1 - p) \\rho + p Z \\rho Z,"
-msgstr "\\mathcal{E}(\\rho) = (1 - p) \\rho + p Z \\rho Z,"
-
-#: ../../modules/noise_models/noise_models.rst:250
-msgid ""
-"where :math:`p` is the phase-flip probability. As such, it is a special "
-"case of :class:`~qilisdk.noise.pauli_channel.PauliChannel` with "
-":math:`p_Z = p` and :math:`p_I = 1 - p`. This can therefore be written as"
-" Kraus operators:"
-msgstr ""
-"donde :math:`p` es la probabilidad de inversión de fase. Como tal, es un "
-"caso especial de :class:`~qilisdk.noise.pauli_channel.PauliChannel` con "
-":math:`p_Z = p` y :math:`p_I = 1 - p`. Por tanto puede escribirse como "
-"operadores de Kraus:"
-
-#: ../../modules/noise_models/noise_models.rst:253
-#: ../../modules/noise_models/noise_models.rst:353
-#, python-brace-format
-msgid "K_0 = \\sqrt{1 - p} I, \\quad K_1 = \\sqrt{p} Z,"
-msgstr "K_0 = \\sqrt{1 - p} I, \\quad K_1 = \\sqrt{p} Z,"
-
-#: ../../modules/noise_models/noise_models.rst:259
-#: ../../modules/noise_models/noise_models.rst:359
-#, python-brace-format
-msgid "J = \\sqrt{\\gamma} Z,"
-msgstr "J = \\sqrt{\\gamma} Z,"
-
-#: ../../modules/noise_models/noise_models.rst:263
-msgid "where now :math:`\\gamma` is the phase-flip rate."
-msgstr "donde ahora :math:`\\gamma` es la tasa de inversión de fase."
-
-#: ../../modules/noise_models/noise_models.rst:271
-msgid "Depolarizing"
-msgstr "Depolarizing"
-
-#: ../../modules/noise_models/noise_models.rst:273
-msgid ""
-":class:`~qilisdk.noise.depolarizing.Depolarizing` represents a "
-"depolarizing error model where each qubit has a certain probability of "
-"being replaced by the maximally mixed state. This corresponds to the "
-"following channel:"
-msgstr ""
-":class:`~qilisdk.noise.depolarizing.Depolarizing` representa un modelo de "
-"error despolarizante donde cada cúbit tiene una cierta probabilidad de ser "
-"reemplazado por el estado maximalmente mezclado. Esto corresponde al "
-"siguiente canal:"
-
-#: ../../modules/noise_models/noise_models.rst:277
-#, python-brace-format
-msgid ""
-"\\mathcal{E}(\\rho) = (1 - p) \\rho + \\frac{p}{3} (X \\rho X + Y \\rho Y"
-" + Z \\rho Z),"
-msgstr ""
-"\\mathcal{E}(\\rho) = (1 - p) \\rho + \\frac{p}{3} (X \\rho X + Y \\rho Y"
-" + Z \\rho Z),"
-
-#: ../../modules/noise_models/noise_models.rst:281
-msgid ""
-"where :math:`p` is the depolarizing probability. As such, it is a special"
-" case of :class:`~qilisdk.noise.pauli_channel.PauliChannel` with "
-":math:`p_X = p_Y = p_Z = p/3` and :math:`p_I = 1 - p`. This can therefore"
-" be written as Kraus operators:"
-msgstr ""
-"donde :math:`p` es la probabilidad despolarizante. Como tal, es un caso "
-"especial de :class:`~qilisdk.noise.pauli_channel.PauliChannel` con "
-":math:`p_X = p_Y = p_Z = p/3` y :math:`p_I = 1 - p`. Por tanto puede "
-"escribirse como operadores de Kraus:"
-
-#: ../../modules/noise_models/noise_models.rst:284
-msgid ""
-"K_0 = \\sqrt{1 - p} I, \\quad K_1 = \\sqrt{\\frac{p}{3}} X, \\quad K_2 = "
-"\\sqrt{\\frac{p}{3}} Y, \\quad K_3 = \\sqrt{\\frac{p}{3}} Z,"
-msgstr ""
-"K_0 = \\sqrt{1 - p} I, \\quad K_1 = \\sqrt{\\frac{p}{3}} X, \\quad K_2 = "
-"\\sqrt{\\frac{p}{3}} Y, \\quad K_3 = \\sqrt{\\frac{p}{3}} Z,"
-
-#: ../../modules/noise_models/noise_models.rst:288
-msgid "or similarly as jump operators:"
-msgstr "o de manera similar como operadores de salto:"
-
-#: ../../modules/noise_models/noise_models.rst:290
-msgid ""
-"J_1 = \\sqrt{\\frac{\\gamma}{3}} X, \\quad J_2 = "
-"\\sqrt{\\frac{\\gamma}{3}} Y, \\quad J_3 = \\sqrt{\\frac{\\gamma}{3}} Z,"
-msgstr ""
-"J_1 = \\sqrt{\\frac{\\gamma}{3}} X, \\quad J_2 = "
-"\\sqrt{\\frac{\\gamma}{3}} Y, \\quad J_3 = \\sqrt{\\frac{\\gamma}{3}} Z,"
-
-#: ../../modules/noise_models/noise_models.rst:294
-msgid "where :math:`\\gamma` is the depolarizing rate."
-msgstr "donde :math:`\\gamma` es la tasa despolarizante."
-
-#: ../../modules/noise_models/noise_models.rst:302
-msgid "AmplitudeDamping"
-msgstr "AmplitudeDamping"
-
-#: ../../modules/noise_models/noise_models.rst:304
-msgid ""
-":class:`~qilisdk.noise.amplitude_damping.AmplitudeDamping` represents an "
-"amplitude damping error model where each qubit has a certain probability "
-"of decaying from the excited state :math:`|1⟩` to the ground state "
-":math:`|0⟩`. This corresponds to the following channel:"
-msgstr ""
-":class:`~qilisdk.noise.amplitude_damping.AmplitudeDamping` representa un "
-"modelo de error de amortiguación de amplitud donde cada cúbit tiene una "
-"cierta probabilidad de decaer desde el estado excitado :math:`|1⟩` al "
-"estado fundamental :math:`|0⟩`. Esto corresponde al siguiente canal:"
-
-#: ../../modules/noise_models/noise_models.rst:308
-#, python-brace-format
-msgid "\\mathcal{E}(\\rho) = E_0 \\rho E_0^\\dagger + E_1 \\rho E_1^\\dagger."
-msgstr "\\mathcal{E}(\\rho) = E_0 \\rho E_0^\\dagger + E_1 \\rho E_1^\\dagger."
-
-#: ../../modules/noise_models/noise_models.rst:312
-msgid "Here the Kraus operators are defined as:"
-msgstr "Aquí los operadores de Kraus se definen como:"
-
-#: ../../modules/noise_models/noise_models.rst:314
-#, python-brace-format
-msgid ""
-"E_0 = \\begin{pmatrix} 1 & 0 \\\\ 0 & \\sqrt{1 - p} \\end{pmatrix}, "
-"\\quad E_1 = \\begin{pmatrix} 0 & \\sqrt{p} \\\\ 0 & 0 \\end{pmatrix},"
-msgstr ""
-"E_0 = \\begin{pmatrix} 1 & 0 \\\\ 0 & \\sqrt{1 - p} \\end{pmatrix}, "
-"\\quad E_1 = \\begin{pmatrix} 0 & \\sqrt{p} \\\\ 0 & 0 \\end{pmatrix},"
-
-#: ../../modules/noise_models/noise_models.rst:318
-msgid ""
-"where :math:`p` is the amplitude damping probability. The channel can "
-"also be represented using the jump operator:"
-msgstr ""
-"donde :math:`p` es la probabilidad de amortiguación de amplitud. El canal "
-"también puede representarse usando el operador de salto:"
-
-#: ../../modules/noise_models/noise_models.rst:320
-#, python-brace-format
-msgid "J = \\sqrt{\\gamma} \\sigma_-,"
-msgstr "J = \\sqrt{\\gamma} \\sigma_-,"
-
-#: ../../modules/noise_models/noise_models.rst:324
-msgid ""
-"where :math:`\\gamma` is the amplitude damping rate and :math:`\\sigma_-`"
-" is the lowering operator. The channel is defined by the :math:`T_1` time"
-" constant, with the relations:"
-msgstr ""
-"donde :math:`\\gamma` es la tasa de amortiguación de amplitud y "
-":math:`\\sigma_-` es el operador de descenso. El canal se define mediante "
-"la constante de tiempo :math:`T_1`, con las relaciones:"
-
-#: ../../modules/noise_models/noise_models.rst:327
-#, python-brace-format
-msgid ""
-"p = 1 - e^{-t / T_1},\n"
-"\\gamma = \\frac{1}{T_1},"
-msgstr ""
-"p = 1 - e^{-t / T_1},\n"
-"\\gamma = \\frac{1}{T_1},"
-
-#: ../../modules/noise_models/noise_models.rst:332
-msgid ""
-"where :math:`t` is the time duration over which the amplitude damping "
-"occurs."
-msgstr ""
-"donde :math:`t` es la duración temporal durante la cual ocurre la "
-"amortiguación de amplitud."
-
-#: ../../modules/noise_models/noise_models.rst:340
-msgid "Dephasing"
-msgstr "Dephasing"
-
-#: ../../modules/noise_models/noise_models.rst:342
-msgid ""
-":class:`~qilisdk.noise.dephasing.Dephasing` represents a dephasing error "
-"model where each qubit has a certain probability of losing coherence "
-"between its :math:`|0⟩` and :math:`|1⟩` states. This corresponds to the "
-"following channel:"
-msgstr ""
-":class:`~qilisdk.noise.dephasing.Dephasing` representa un modelo de error "
-"de desfase donde cada cúbit tiene una cierta probabilidad de perder "
-"coherencia entre sus estados :math:`|0⟩` y :math:`|1⟩`. Esto corresponde "
-"al siguiente canal:"
-
-#: ../../modules/noise_models/noise_models.rst:346
-#, python-brace-format
-msgid "\\mathcal{E}(\\rho) = (1 - p) \\rho + p Z \\rho Z"
-msgstr "\\mathcal{E}(\\rho) = (1 - p) \\rho + p Z \\rho Z"
-
-#: ../../modules/noise_models/noise_models.rst:350
-msgid ""
-"where :math:`p` is the dephasing probability. As such, it is a special "
-"case of :class:`~qilisdk.noise.pauli_channel.PauliChannel` with "
-":math:`p_Z = p` and :math:`p_I = 1 - p`. This can therefore be written as"
-" Kraus operators:"
-msgstr ""
-"donde :math:`p` es la probabilidad de desfase. Como tal, es un caso especial "
-"de :class:`~qilisdk.noise.pauli_channel.PauliChannel` con :math:`p_Z = p` "
-"y :math:`p_I = 1 - p`. Por tanto puede escribirse como operadores de Kraus:"
-
-#: ../../modules/noise_models/noise_models.rst:363
-msgid ""
-"where now :math:`\\gamma` is the dephasing rate. The channel is defined "
-"by the :math:`T_\\phi` time constant, with the relations:"
-msgstr ""
-"donde ahora :math:`\\gamma` es la tasa de desfase. El canal se define "
-"mediante la constante de tiempo :math:`T_\\phi`, con las relaciones:"
-
-#: ../../modules/noise_models/noise_models.rst:365
-#, python-brace-format
-msgid ""
-"p = \\frac{1}{2} \\left( 1 - e^{-t / T_\\phi} \\right),\n"
-"\\gamma = \\frac{1}{T_\\phi},"
-msgstr ""
-"p = \\frac{1}{2} \\left( 1 - e^{-t / T_\\phi} \\right),\n"
-"\\gamma = \\frac{1}{T_\\phi},"
-
-#: ../../modules/noise_models/noise_models.rst:370
-msgid "where :math:`t` is the time duration over which the dephasing occurs."
-msgstr "donde :math:`t` es la duración temporal durante la cual ocurre el desfase."
-
-#: ../../modules/noise_models/noise_models.rst:379
-msgid "GaussianPerturbation"
-msgstr "GaussianPerturbation"
-
-#: ../../modules/noise_models/noise_models.rst:381
-msgid ""
-":class:`~qilisdk.noise.gaussian_perturbation.GaussianPerturbation` "
-"represents a noise model that adds Gaussian-distributed perturbations to "
-"the parameters of gates or Hamiltonian terms in a quantum circuit or "
-"schedule. This simulates imperfections in control signals that can lead "
-"to deviations from the intended operations. The perturbations are drawn "
-"from a Gaussian distribution with a specified standard deviation:"
-msgstr ""
-":class:`~qilisdk.noise.gaussian_perturbation.GaussianPerturbation` "
-"representa un modelo de ruido que añade perturbaciones de distribución "
-"gaussiana a los parámetros de las puertas o términos del Hamiltoniano en un "
-"circuito cuántico o esquema. Esto simula imperfecciones en las señales de "
-"control que pueden producir desviaciones de las operaciones previstas. Las "
-"perturbaciones se extraen de una distribución gaussiana con una desviación "
-"estándar especificada:"
-
-#: ../../modules/noise_models/noise_models.rst:386
-#, python-brace-format
-msgid "\\delta \\theta \\sim \\mathcal{N}(\\mu, \\sigma^2),"
-msgstr "\\delta \\theta \\sim \\mathcal{N}(\\mu, \\sigma^2),"
-
-#: ../../modules/noise_models/noise_models.rst:390
-msgid ""
-"where :math:`\\sigma` is the standard deviation of the perturbations and "
-":math:`\\mu` is the mean (defaulting to 0)."
-msgstr ""
-"donde :math:`\\sigma` es la desviación estándar de las perturbaciones y "
-":math:`\\mu` es la media (por defecto 0)."
-
-#: ../../modules/noise_models/noise_models.rst:398
-msgid "OffsetPerturbation"
-msgstr "OffsetPerturbation"
-
-#: ../../modules/noise_models/noise_models.rst:399
-msgid ""
-":class:`~qilisdk.noise.offset_perturbation.OffsetPerturbation` represents"
-" a noise model that adds fixed offset perturbations to the parameters of "
-"gates or Hamiltonian terms in a quantum circuit or schedule. This "
-"simulates systematic errors in control signals that consistently shift "
-"the intended operations. The offsets are specified as fixed values for "
-"each parameter."
-msgstr ""
-":class:`~qilisdk.noise.offset_perturbation.OffsetPerturbation` representa "
-"un modelo de ruido que añade perturbaciones de desplazamiento fijo a los "
-"parámetros de las puertas o términos del Hamiltoniano en un circuito cuántico "
-"o esquema. Esto simula errores sistemáticos en las señales de control que "
-"desplazan de forma consistente las operaciones previstas. Los desplazamientos "
-"se especifican como valores fijos para cada parámetro."
-
-#: ../../modules/noise_models/noise_models.rst:410
-msgid "ReadoutAssignment"
-msgstr "ReadoutAssignment"
-
-#: ../../modules/noise_models/noise_models.rst:412
-#, python-brace-format
-msgid ""
-":class:`~qilisdk.noise.readout_assignment.ReadoutAssignment` represents a"
-" readout error model that simulates imperfections in the measurement "
-"process of qubits. It is defined by two probabilities: the probability of"
-" misreading a :math:`|0⟩` state as :math:`|1⟩` (:math:`p_{0 \\to 1}`) and"
-" the probability of misreading a :math:`|1⟩` state as :math:`|0⟩` "
-"(:math:`p_{1 \\to 0}`)."
-msgstr ""
-":class:`~qilisdk.noise.readout_assignment.ReadoutAssignment` representa un "
-"modelo de error de lectura que simula imperfecciones en el proceso de "
-"medición de los cúbits. Se define por dos probabilidades: la probabilidad de "
-"leer erróneamente un estado :math:`|0⟩` como :math:`|1⟩` "
-"(:math:`p_{0 \\to 1}`) y la probabilidad de leer erróneamente un estado "
-":math:`|1⟩` como :math:`|0⟩` (:math:`p_{1 \\to 0}`)."
+#~ msgid ""
+#~ "The :mod:`qilisdk.noise` module contains "
+#~ "classes that represent different types "
+#~ "of noise in quantum systems. These "
+#~ "noise models can be integrated into "
+#~ "quantum simulations to account for "
+#~ "real-world imperfections and decoherence "
+#~ "effects. A :class:`~qilisdk.noise.noise_model.NoiseModel`"
+#~ " can contains various types of noise,"
+#~ " each of which is then applied "
+#~ "during simulation."
+#~ msgstr ""
+#~ "El módulo :mod:`qilisdk.noise` contiene clases"
+#~ " que representan diferentes tipos de "
+#~ "ruido en sistemas cuánticos. Estos "
+#~ "modelos de ruido pueden integrarse en"
+#~ " simulaciones cuánticas para tener en "
+#~ "cuenta imperfecciones del mundo real y"
+#~ " efectos de decoherencia. Un "
+#~ ":class:`~qilisdk.noise.noise_model.NoiseModel` puede "
+#~ "contener varios tipos de ruido, cada "
+#~ "uno de los cuales se aplica "
+#~ "durante la simulación."
+
+#~ msgid "Backend"
+#~ msgstr "Backend"
+
+#~ msgid "Noise Models Supported"
+#~ msgstr "Modelos de Ruido Soportados"
+
+#~ msgid ":class:`~qilisdk.backends.qilisim.QiliSim`"
+#~ msgstr ":class:`~qilisdk.backends.qilisim.QiliSim`"
+
+#~ msgid "✔"
+#~ msgstr "✔"
+
+#~ msgid ":class:`~qilisdk.backends.cuda_backend.CudaBackend`"
+#~ msgstr ":class:`~qilisdk.backends.cuda_backend.CudaBackend`"
+
+#~ msgid ":class:`~qilisdk.backends.qutip_backend.QutipBackend`"
+#~ msgstr ":class:`~qilisdk.backends.qutip_backend.QutipBackend`"
+
+#~ msgid "✕"
+#~ msgstr "✕"
+
+#~ msgid "Usage"
+#~ msgstr "Uso"
+
+#~ msgid ""
+#~ "Noise passes are added to a "
+#~ ":class:`~qilisdk.noise.noise_model.NoiseModel`, which "
+#~ "should then be included when creating"
+#~ " a backend. For example, to create"
+#~ " a simple circuit and then simulate"
+#~ " it with a CUDA backend containing"
+#~ " a bit-flip noise model:"
+#~ msgstr ""
+#~ "Los pases de ruido se añaden a "
+#~ "un :class:`~qilisdk.noise.noise_model.NoiseModel`, que "
+#~ "luego debe incluirse al crear un "
+#~ "backend. Por ejemplo, para crear un "
+#~ "circuito sencillo y simularlo con un "
+#~ "backend CUDA que contiene un modelo "
+#~ "de ruido de inversión de bit:"
+
+#~ msgid "Summary of Noise Types"
+#~ msgstr "Resumen de Tipos de Ruido"
+
+#~ msgid ""
+#~ "Some of the noise passes available "
+#~ "in QiliSDK can be used for both"
+#~ " digital circuits and analog schedules, "
+#~ "while others are specific to one "
+#~ "or the other:"
+#~ msgstr ""
+#~ "Algunos de los pases de ruido "
+#~ "disponibles en QiliSDK pueden usarse "
+#~ "tanto para circuitos digitales como para"
+#~ " esquemas analógicos, mientras que otros"
+#~ " son específicos de uno u otro:"
+
+#~ msgid "Noise Type"
+#~ msgstr "Tipo de Ruido"
+
+#~ msgid "Digital Circuits"
+#~ msgstr "Circuitos Digitales"
+
+#~ msgid "Analog Schedules"
+#~ msgstr "Esquemas Analógicos"
+
+#~ msgid ":class:`~qilisdk.noise.representations.KrausChannel`"
+#~ msgstr ":class:`~qilisdk.noise.representations.KrausChannel`"
+
+#~ msgid ":class:`~qilisdk.noise.representations.LindbladGenerator`"
+#~ msgstr ":class:`~qilisdk.noise.representations.LindbladGenerator`"
+
+#~ msgid ":class:`~qilisdk.noise.pauli_channel.PauliChannel`"
+#~ msgstr ":class:`~qilisdk.noise.pauli_channel.PauliChannel`"
+
+#~ msgid ":class:`~qilisdk.noise.bit_flip.BitFlip`"
+#~ msgstr ":class:`~qilisdk.noise.bit_flip.BitFlip`"
+
+#~ msgid ":class:`~qilisdk.noise.phase_flip.PhaseFlip`"
+#~ msgstr ":class:`~qilisdk.noise.phase_flip.PhaseFlip`"
+
+#~ msgid ":class:`~qilisdk.noise.depolarizing.Depolarizing`"
+#~ msgstr ":class:`~qilisdk.noise.depolarizing.Depolarizing`"
+
+#~ msgid ":class:`~qilisdk.noise.amplitude_damping.AmplitudeDamping`"
+#~ msgstr ":class:`~qilisdk.noise.amplitude_damping.AmplitudeDamping`"
+
+#~ msgid ":class:`~qilisdk.noise.dephasing.Dephasing`"
+#~ msgstr ":class:`~qilisdk.noise.dephasing.Dephasing`"
+
+#~ msgid ":class:`~qilisdk.noise.gaussian_perturbation.GaussianPerturbation`"
+#~ msgstr ":class:`~qilisdk.noise.gaussian_perturbation.GaussianPerturbation`"
+
+#~ msgid ":class:`~qilisdk.noise.offset_perturbation.OffsetPerturbation`"
+#~ msgstr ":class:`~qilisdk.noise.offset_perturbation.OffsetPerturbation`"
+
+#~ msgid ":class:`~qilisdk.noise.readout_assignment.ReadoutAssignment`"
+#~ msgstr ":class:`~qilisdk.noise.readout_assignment.ReadoutAssignment`"
+
+#~ msgid "Noise Config"
+#~ msgstr "Configuración de Ruido"
+
+#~ msgid ""
+#~ "By default, when converting between "
+#~ "different noise representations (e.g. from "
+#~ "Kraus operators to Lindblad generators), "
+#~ "certain parameters are assumed, such as"
+#~ " gate times. These defaults can be"
+#~ " modified using the "
+#~ ":class:`~qilisdk.noise.noise_config.NoiseConfig` class:"
+#~ msgstr ""
+#~ "Por defecto, al convertir entre "
+#~ "diferentes representaciones de ruido (por "
+#~ "ejemplo, de operadores de Kraus a "
+#~ "generadores de Lindblad), se asumen "
+#~ "ciertos parámetros, como los tiempos de"
+#~ " puerta. Estos valores por defecto "
+#~ "pueden modificarse usando la clase "
+#~ ":class:`~qilisdk.noise.noise_config.NoiseConfig`:"
+
+#~ msgid "Parameters and their defaults are as follows:"
+#~ msgstr "Los parámetros y sus valores por defecto son los siguientes:"
+
+#~ msgid "Parameter"
+#~ msgstr "Parámetro"
+
+#~ msgid "Default Value"
+#~ msgstr "Valor por Defecto"
+
+#~ msgid ":attr:`~qilisdk.noise.noise_config.NoiseConfig.gate_times`"
+#~ msgstr ":attr:`~qilisdk.noise.noise_config.NoiseConfig.gate_times`"
+
+#~ msgid "1.0 for all gates"
+#~ msgstr "1.0 para todas las puertas"
+
+#~ msgid "Noise Types"
+#~ msgstr "Tipos de Ruido"
+
+#~ msgid "KrausChannel"
+#~ msgstr "KrausChannel"
+
+#~ msgid ""
+#~ ":class:`~qilisdk.noise.representations.KrausChannel` is a"
+#~ " base class for digital noise models"
+#~ " that use Kraus operators to "
+#~ "represent quantum noise channels. Kraus "
+#~ "operators can be used to represent "
+#~ "a generic quantum channel :math:`\\mathcal{E}`"
+#~ " acting on a density matrix "
+#~ ":math:`\\rho` as:"
+#~ msgstr ""
+#~ ":class:`~qilisdk.noise.representations.KrausChannel` es "
+#~ "una clase base para modelos de "
+#~ "ruido digital que utilizan operadores de"
+#~ " Kraus para representar canales de "
+#~ "ruido cuántico. Los operadores de Kraus"
+#~ " pueden usarse para representar un "
+#~ "canal cuántico genérico :math:`\\mathcal{E}` "
+#~ "que actúa sobre una matriz de "
+#~ "densidad :math:`\\rho` como:"
+
+#~ msgid "\\mathcal{E}(\\rho) = \\sum_i K_i \\rho K_i^\\dagger,"
+#~ msgstr "\\mathcal{E}(\\rho) = \\sum_i K_i \\rho K_i^\\dagger,"
+
+#~ msgid ""
+#~ "where :math:`K_i` are the Kraus "
+#~ "operators satisfying the completeness relation"
+#~ " :math:`\\sum_i K_i^\\dagger K_i = I`. "
+#~ "The class is initialized with a "
+#~ "list of Kraus operators given as "
+#~ "QTensors."
+#~ msgstr ""
+#~ "donde :math:`K_i` son los operadores de"
+#~ " Kraus que satisfacen la relación de"
+#~ " completitud :math:`\\sum_i K_i^\\dagger K_i "
+#~ "= I`. La clase se inicializa con"
+#~ " una lista de operadores de Kraus "
+#~ "dados como QTensors."
+
+#~ msgid "LindbladGenerator"
+#~ msgstr "LindbladGenerator"
+
+#~ msgid ""
+#~ ":class:`~qilisdk.noise.representations.LindbladGenerator` is "
+#~ "a base class for analog noise "
+#~ "models that use the Lindblad master "
+#~ "equation to represent quantum noise "
+#~ "processes. The Lindblad master equation "
+#~ "describes the time evolution of a "
+#~ "density matrix :math:`\\rho` under both "
+#~ "unitary dynamics and dissipative processes:"
+#~ msgstr ""
+#~ ":class:`~qilisdk.noise.representations.LindbladGenerator` es "
+#~ "una clase base para modelos de "
+#~ "ruido analógico que utilizan la ecuación"
+#~ " maestra de Lindblad para representar "
+#~ "procesos de ruido cuántico. La ecuación"
+#~ " maestra de Lindblad describe la "
+#~ "evolución temporal de una matriz de "
+#~ "densidad :math:`\\rho` bajo dinámica unitaria"
+#~ " y procesos disipativos:"
+
+#~ msgid ""
+#~ "\\frac{d\\rho}{dt} = -i[H, \\rho] + "
+#~ "\\sum_i \\left( J_i \\rho J_i^\\dagger -"
+#~ " \\frac{1}{2} \\{ J_i^\\dagger J_i, \\rho"
+#~ " \\} \\right),"
+#~ msgstr ""
+#~ "\\frac{d\\rho}{dt} = -i[H, \\rho] + "
+#~ "\\sum_i \\left( J_i \\rho J_i^\\dagger -"
+#~ " \\frac{1}{2} \\{ J_i^\\dagger J_i, \\rho"
+#~ " \\} \\right),"
+
+#~ msgid ""
+#~ "where :math:`H` is the system "
+#~ "Hamiltonian, and :math:`J_i` are the "
+#~ "jump operators representing different "
+#~ "dissipation channels. The class is "
+#~ "initialized with a list of jump "
+#~ "operators given as QTensors and their"
+#~ " corresponding rates (assumed to be 1"
+#~ " if not specified)."
+#~ msgstr ""
+#~ "donde :math:`H` es el Hamiltoniano del"
+#~ " sistema y :math:`J_i` son los "
+#~ "operadores de salto que representan "
+#~ "diferentes canales de disipación. La "
+#~ "clase se inicializa con una lista "
+#~ "de operadores de salto dados como "
+#~ "QTensors y sus tasas correspondientes "
+#~ "(se asume 1 si no se especifica)."
+
+#~ msgid "PauliChannel"
+#~ msgstr "PauliChannel"
+
+#~ msgid ""
+#~ ":class:`~qilisdk.noise.pauli_channel.PauliChannel` is a"
+#~ " base class for noise models that "
+#~ "use Pauli operators. A Pauli channel "
+#~ "applies the Pauli operators (I, X, "
+#~ "Y, Z) with certain probabilities. The"
+#~ " channel can be represented as:"
+#~ msgstr ""
+#~ ":class:`~qilisdk.noise.pauli_channel.PauliChannel` es una"
+#~ " clase base para modelos de ruido "
+#~ "que utilizan operadores de Pauli. Un "
+#~ "canal de Pauli aplica los operadores "
+#~ "de Pauli (I, X, Y, Z) con "
+#~ "ciertas probabilidades. El canal puede "
+#~ "representarse como:"
+
+#~ msgid ""
+#~ "\\mathcal{E}(\\rho) = p_I \\rho + p_X"
+#~ " X \\rho X + p_Y Y \\rho "
+#~ "Y + p_Z Z \\rho Z,"
+#~ msgstr ""
+#~ "\\mathcal{E}(\\rho) = p_I \\rho + p_X"
+#~ " X \\rho X + p_Y Y \\rho "
+#~ "Y + p_Z Z \\rho Z,"
+
+#~ msgid ""
+#~ "where :math:`p_I`, :math:`p_X`, :math:`p_Y`, "
+#~ "and :math:`p_Z` are the probabilities "
+#~ "for applying the respective Pauli "
+#~ "operators, satisfying :math:`p_I + p_X +"
+#~ " p_Y + p_Z = 1`. This "
+#~ "corresponds to Kraus operators:"
+#~ msgstr ""
+#~ "donde :math:`p_I`, :math:`p_X`, :math:`p_Y` y"
+#~ " :math:`p_Z` son las probabilidades de "
+#~ "aplicar los respectivos operadores de "
+#~ "Pauli, satisfaciendo :math:`p_I + p_X +"
+#~ " p_Y + p_Z = 1`. Esto "
+#~ "corresponde a operadores de Kraus:"
+
+#~ msgid ""
+#~ "K_0 = \\sqrt{p_I} I, \\quad K_1 ="
+#~ " \\sqrt{p_X} X, \\quad K_2 = "
+#~ "\\sqrt{p_Y} Y, \\quad K_3 = \\sqrt{p_Z}"
+#~ " Z,"
+#~ msgstr ""
+#~ "K_0 = \\sqrt{p_I} I, \\quad K_1 ="
+#~ " \\sqrt{p_X} X, \\quad K_2 = "
+#~ "\\sqrt{p_Y} Y, \\quad K_3 = \\sqrt{p_Z}"
+#~ " Z,"
+
+#~ msgid "Or jump operators:"
+#~ msgstr "O como operadores de salto:"
+
+#~ msgid ""
+#~ "J_1 = \\sqrt{\\gamma_X} X, \\quad J_2"
+#~ " = \\sqrt{\\gamma_Y} Y, \\quad J_3 ="
+#~ " \\sqrt{\\gamma_Z} Z,"
+#~ msgstr ""
+#~ "J_1 = \\sqrt{\\gamma_X} X, \\quad J_2"
+#~ " = \\sqrt{\\gamma_Y} Y, \\quad J_3 ="
+#~ " \\sqrt{\\gamma_Z} Z,"
+
+#~ msgid "where :math:`\\gamma_i` are rates related to the probabilities."
+#~ msgstr "donde :math:`\\gamma_i` son tasas relacionadas con las probabilidades."
+
+#~ msgid "BitFlip"
+#~ msgstr "BitFlip"
+
+#~ msgid ""
+#~ ":class:`~qilisdk.noise.bit_flip.BitFlip` represents a "
+#~ "bit-flip error model where each "
+#~ "qubit has a certain probability of "
+#~ "flipping its state from :math:`|0⟩` to"
+#~ " :math:`|1⟩` or from :math:`|1⟩` to "
+#~ ":math:`|0⟩`. This corresponds to the "
+#~ "following channel:"
+#~ msgstr ""
+#~ ":class:`~qilisdk.noise.bit_flip.BitFlip` representa un "
+#~ "modelo de error de inversión de "
+#~ "bit donde cada cúbit tiene una "
+#~ "cierta probabilidad de cambiar su estado"
+#~ " de :math:`|0⟩` a :math:`|1⟩` o de"
+#~ " :math:`|1⟩` a :math:`|0⟩`. Esto "
+#~ "corresponde al siguiente canal:"
+
+#~ msgid "\\mathcal{E}(\\rho) = (1 - p) \\rho + p X \\rho X,"
+#~ msgstr "\\mathcal{E}(\\rho) = (1 - p) \\rho + p X \\rho X,"
+
+#~ msgid ""
+#~ "where :math:`p` is the bit-flip "
+#~ "probability. As such, it is a "
+#~ "special case of "
+#~ ":class:`~qilisdk.noise.pauli_channel.PauliChannel` with "
+#~ ":math:`p_X = p` and :math:`p_I = 1"
+#~ " - p`. This can therefore be "
+#~ "written as Kraus operators:"
+#~ msgstr ""
+#~ "donde :math:`p` es la probabilidad de"
+#~ " inversión de bit. Como tal, es "
+#~ "un caso especial de "
+#~ ":class:`~qilisdk.noise.pauli_channel.PauliChannel` con "
+#~ ":math:`p_X = p` y :math:`p_I = 1"
+#~ " - p`. Por tanto puede escribirse "
+#~ "como operadores de Kraus:"
+
+#~ msgid "K_0 = \\sqrt{1 - p} I, \\quad K_1 = \\sqrt{p} X,"
+#~ msgstr "K_0 = \\sqrt{1 - p} I, \\quad K_1 = \\sqrt{p} X,"
+
+#~ msgid "or similarly as a jump operator:"
+#~ msgstr "o de manera similar como operador de salto:"
+
+#~ msgid "J = \\sqrt{\\gamma} X,"
+#~ msgstr "J = \\sqrt{\\gamma} X,"
+
+#~ msgid "where now :math:`\\gamma` is the bit-flip rate."
+#~ msgstr "donde ahora :math:`\\gamma` es la tasa de inversión de bit."
+
+#~ msgid "PhaseFlip"
+#~ msgstr "PhaseFlip"
+
+#~ msgid ""
+#~ ":class:`~qilisdk.noise.phase_flip.PhaseFlip` represents a"
+#~ " phase-flip error model where each"
+#~ " qubit has a certain probability of"
+#~ " flipping its phase, changing the "
+#~ "sign of the :math:`|1⟩` state. This "
+#~ "corresponds to the following channel:"
+#~ msgstr ""
+#~ ":class:`~qilisdk.noise.phase_flip.PhaseFlip` representa un"
+#~ " modelo de error de inversión de "
+#~ "fase donde cada cúbit tiene una "
+#~ "cierta probabilidad de cambiar su fase,"
+#~ " alterando el signo del estado "
+#~ ":math:`|1⟩`. Esto corresponde al siguiente "
+#~ "canal:"
+
+#~ msgid "\\mathcal{E}(\\rho) = (1 - p) \\rho + p Z \\rho Z,"
+#~ msgstr "\\mathcal{E}(\\rho) = (1 - p) \\rho + p Z \\rho Z,"
+
+#~ msgid ""
+#~ "where :math:`p` is the phase-flip "
+#~ "probability. As such, it is a "
+#~ "special case of "
+#~ ":class:`~qilisdk.noise.pauli_channel.PauliChannel` with "
+#~ ":math:`p_Z = p` and :math:`p_I = 1"
+#~ " - p`. This can therefore be "
+#~ "written as Kraus operators:"
+#~ msgstr ""
+#~ "donde :math:`p` es la probabilidad de"
+#~ " inversión de fase. Como tal, es "
+#~ "un caso especial de "
+#~ ":class:`~qilisdk.noise.pauli_channel.PauliChannel` con "
+#~ ":math:`p_Z = p` y :math:`p_I = 1"
+#~ " - p`. Por tanto puede escribirse "
+#~ "como operadores de Kraus:"
+
+#~ msgid "K_0 = \\sqrt{1 - p} I, \\quad K_1 = \\sqrt{p} Z,"
+#~ msgstr "K_0 = \\sqrt{1 - p} I, \\quad K_1 = \\sqrt{p} Z,"
+
+#~ msgid "J = \\sqrt{\\gamma} Z,"
+#~ msgstr "J = \\sqrt{\\gamma} Z,"
+
+#~ msgid "where now :math:`\\gamma` is the phase-flip rate."
+#~ msgstr "donde ahora :math:`\\gamma` es la tasa de inversión de fase."
+
+#~ msgid "Depolarizing"
+#~ msgstr "Depolarizing"
+
+#~ msgid ""
+#~ ":class:`~qilisdk.noise.depolarizing.Depolarizing` represents "
+#~ "a depolarizing error model where each"
+#~ " qubit has a certain probability of"
+#~ " being replaced by the maximally "
+#~ "mixed state. This corresponds to the "
+#~ "following channel:"
+#~ msgstr ""
+#~ ":class:`~qilisdk.noise.depolarizing.Depolarizing` representa "
+#~ "un modelo de error despolarizante donde"
+#~ " cada cúbit tiene una cierta "
+#~ "probabilidad de ser reemplazado por el"
+#~ " estado maximalmente mezclado. Esto "
+#~ "corresponde al siguiente canal:"
+
+#~ msgid ""
+#~ "\\mathcal{E}(\\rho) = (1 - p) \\rho "
+#~ "+ \\frac{p}{3} (X \\rho X + Y "
+#~ "\\rho Y + Z \\rho Z),"
+#~ msgstr ""
+#~ "\\mathcal{E}(\\rho) = (1 - p) \\rho "
+#~ "+ \\frac{p}{3} (X \\rho X + Y "
+#~ "\\rho Y + Z \\rho Z),"
+
+#~ msgid ""
+#~ "where :math:`p` is the depolarizing "
+#~ "probability. As such, it is a "
+#~ "special case of "
+#~ ":class:`~qilisdk.noise.pauli_channel.PauliChannel` with "
+#~ ":math:`p_X = p_Y = p_Z = p/3` "
+#~ "and :math:`p_I = 1 - p`. This "
+#~ "can therefore be written as Kraus "
+#~ "operators:"
+#~ msgstr ""
+#~ "donde :math:`p` es la probabilidad "
+#~ "despolarizante. Como tal, es un caso "
+#~ "especial de "
+#~ ":class:`~qilisdk.noise.pauli_channel.PauliChannel` con "
+#~ ":math:`p_X = p_Y = p_Z = p/3` "
+#~ "y :math:`p_I = 1 - p`. Por "
+#~ "tanto puede escribirse como operadores "
+#~ "de Kraus:"
+
+#~ msgid ""
+#~ "K_0 = \\sqrt{1 - p} I, \\quad "
+#~ "K_1 = \\sqrt{\\frac{p}{3}} X, \\quad K_2"
+#~ " = \\sqrt{\\frac{p}{3}} Y, \\quad K_3 "
+#~ "= \\sqrt{\\frac{p}{3}} Z,"
+#~ msgstr ""
+#~ "K_0 = \\sqrt{1 - p} I, \\quad "
+#~ "K_1 = \\sqrt{\\frac{p}{3}} X, \\quad K_2"
+#~ " = \\sqrt{\\frac{p}{3}} Y, \\quad K_3 "
+#~ "= \\sqrt{\\frac{p}{3}} Z,"
+
+#~ msgid "or similarly as jump operators:"
+#~ msgstr "o de manera similar como operadores de salto:"
+
+#~ msgid ""
+#~ "J_1 = \\sqrt{\\frac{\\gamma}{3}} X, \\quad "
+#~ "J_2 = \\sqrt{\\frac{\\gamma}{3}} Y, \\quad "
+#~ "J_3 = \\sqrt{\\frac{\\gamma}{3}} Z,"
+#~ msgstr ""
+#~ "J_1 = \\sqrt{\\frac{\\gamma}{3}} X, \\quad "
+#~ "J_2 = \\sqrt{\\frac{\\gamma}{3}} Y, \\quad "
+#~ "J_3 = \\sqrt{\\frac{\\gamma}{3}} Z,"
+
+#~ msgid "where :math:`\\gamma` is the depolarizing rate."
+#~ msgstr "donde :math:`\\gamma` es la tasa despolarizante."
+
+#~ msgid "AmplitudeDamping"
+#~ msgstr "AmplitudeDamping"
+
+#~ msgid ""
+#~ ":class:`~qilisdk.noise.amplitude_damping.AmplitudeDamping` "
+#~ "represents an amplitude damping error "
+#~ "model where each qubit has a "
+#~ "certain probability of decaying from the"
+#~ " excited state :math:`|1⟩` to the "
+#~ "ground state :math:`|0⟩`. This corresponds "
+#~ "to the following channel:"
+#~ msgstr ""
+#~ ":class:`~qilisdk.noise.amplitude_damping.AmplitudeDamping` "
+#~ "representa un modelo de error de "
+#~ "amortiguación de amplitud donde cada "
+#~ "cúbit tiene una cierta probabilidad de"
+#~ " decaer desde el estado excitado "
+#~ ":math:`|1⟩` al estado fundamental :math:`|0⟩`."
+#~ " Esto corresponde al siguiente canal:"
+
+#~ msgid "\\mathcal{E}(\\rho) = E_0 \\rho E_0^\\dagger + E_1 \\rho E_1^\\dagger."
+#~ msgstr "\\mathcal{E}(\\rho) = E_0 \\rho E_0^\\dagger + E_1 \\rho E_1^\\dagger."
+
+#~ msgid "Here the Kraus operators are defined as:"
+#~ msgstr "Aquí los operadores de Kraus se definen como:"
+
+#~ msgid ""
+#~ "E_0 = \\begin{pmatrix} 1 & 0 \\\\"
+#~ " 0 & \\sqrt{1 - p} \\end{pmatrix},"
+#~ " \\quad E_1 = \\begin{pmatrix} 0 &"
+#~ " \\sqrt{p} \\\\ 0 & 0 \\end{pmatrix},"
+#~ msgstr ""
+#~ "E_0 = \\begin{pmatrix} 1 & 0 \\\\"
+#~ " 0 & \\sqrt{1 - p} \\end{pmatrix},"
+#~ " \\quad E_1 = \\begin{pmatrix} 0 &"
+#~ " \\sqrt{p} \\\\ 0 & 0 \\end{pmatrix},"
+
+#~ msgid ""
+#~ "where :math:`p` is the amplitude damping"
+#~ " probability. The channel can also be"
+#~ " represented using the jump operator:"
+#~ msgstr ""
+#~ "donde :math:`p` es la probabilidad de"
+#~ " amortiguación de amplitud. El canal "
+#~ "también puede representarse usando el "
+#~ "operador de salto:"
+
+#~ msgid "J = \\sqrt{\\gamma} \\sigma_-,"
+#~ msgstr "J = \\sqrt{\\gamma} \\sigma_-,"
+
+#~ msgid ""
+#~ "where :math:`\\gamma` is the amplitude "
+#~ "damping rate and :math:`\\sigma_-` is "
+#~ "the lowering operator. The channel is"
+#~ " defined by the :math:`T_1` time "
+#~ "constant, with the relations:"
+#~ msgstr ""
+#~ "donde :math:`\\gamma` es la tasa de "
+#~ "amortiguación de amplitud y :math:`\\sigma_-`"
+#~ " es el operador de descenso. El "
+#~ "canal se define mediante la constante"
+#~ " de tiempo :math:`T_1`, con las "
+#~ "relaciones:"
+
+#~ msgid ""
+#~ "p = 1 - e^{-t / T_1},\n"
+#~ "\\gamma = \\frac{1}{T_1},"
+#~ msgstr ""
+#~ "p = 1 - e^{-t / T_1},\n"
+#~ "\\gamma = \\frac{1}{T_1},"
+
+#~ msgid ""
+#~ "where :math:`t` is the time duration "
+#~ "over which the amplitude damping occurs."
+#~ msgstr ""
+#~ "donde :math:`t` es la duración temporal"
+#~ " durante la cual ocurre la "
+#~ "amortiguación de amplitud."
+
+#~ msgid "Dephasing"
+#~ msgstr "Dephasing"
+
+#~ msgid ""
+#~ ":class:`~qilisdk.noise.dephasing.Dephasing` represents a"
+#~ " dephasing error model where each "
+#~ "qubit has a certain probability of "
+#~ "losing coherence between its :math:`|0⟩` "
+#~ "and :math:`|1⟩` states. This corresponds "
+#~ "to the following channel:"
+#~ msgstr ""
+#~ ":class:`~qilisdk.noise.dephasing.Dephasing` representa un"
+#~ " modelo de error de desfase donde "
+#~ "cada cúbit tiene una cierta probabilidad"
+#~ " de perder coherencia entre sus "
+#~ "estados :math:`|0⟩` y :math:`|1⟩`. Esto "
+#~ "corresponde al siguiente canal:"
+
+#~ msgid "\\mathcal{E}(\\rho) = (1 - p) \\rho + p Z \\rho Z"
+#~ msgstr "\\mathcal{E}(\\rho) = (1 - p) \\rho + p Z \\rho Z"
+
+#~ msgid ""
+#~ "where :math:`p` is the dephasing "
+#~ "probability. As such, it is a "
+#~ "special case of "
+#~ ":class:`~qilisdk.noise.pauli_channel.PauliChannel` with "
+#~ ":math:`p_Z = p` and :math:`p_I = 1"
+#~ " - p`. This can therefore be "
+#~ "written as Kraus operators:"
+#~ msgstr ""
+#~ "donde :math:`p` es la probabilidad de"
+#~ " desfase. Como tal, es un caso "
+#~ "especial de "
+#~ ":class:`~qilisdk.noise.pauli_channel.PauliChannel` con "
+#~ ":math:`p_Z = p` y :math:`p_I = 1"
+#~ " - p`. Por tanto puede escribirse "
+#~ "como operadores de Kraus:"
+
+#~ msgid ""
+#~ "where now :math:`\\gamma` is the "
+#~ "dephasing rate. The channel is defined"
+#~ " by the :math:`T_\\phi` time constant, "
+#~ "with the relations:"
+#~ msgstr ""
+#~ "donde ahora :math:`\\gamma` es la tasa"
+#~ " de desfase. El canal se define "
+#~ "mediante la constante de tiempo "
+#~ ":math:`T_\\phi`, con las relaciones:"
+
+#~ msgid ""
+#~ "p = \\frac{1}{2} \\left( 1 - e^{-t / T_\\phi} \\right),\n"
+#~ "\\gamma = \\frac{1}{T_\\phi},"
+#~ msgstr ""
+#~ "p = \\frac{1}{2} \\left( 1 - e^{-t / T_\\phi} \\right),\n"
+#~ "\\gamma = \\frac{1}{T_\\phi},"
+
+#~ msgid "where :math:`t` is the time duration over which the dephasing occurs."
+#~ msgstr ""
+#~ "donde :math:`t` es la duración temporal"
+#~ " durante la cual ocurre el desfase."
+
+#~ msgid "GaussianPerturbation"
+#~ msgstr "GaussianPerturbation"
+
+#~ msgid ""
+#~ ":class:`~qilisdk.noise.gaussian_perturbation.GaussianPerturbation` "
+#~ "represents a noise model that adds "
+#~ "Gaussian-distributed perturbations to the "
+#~ "parameters of gates or Hamiltonian terms"
+#~ " in a quantum circuit or schedule."
+#~ " This simulates imperfections in control"
+#~ " signals that can lead to deviations"
+#~ " from the intended operations. The "
+#~ "perturbations are drawn from a Gaussian"
+#~ " distribution with a specified standard "
+#~ "deviation:"
+#~ msgstr ""
+#~ ":class:`~qilisdk.noise.gaussian_perturbation.GaussianPerturbation` "
+#~ "representa un modelo de ruido que "
+#~ "añade perturbaciones de distribución gaussiana"
+#~ " a los parámetros de las puertas "
+#~ "o términos del Hamiltoniano en un "
+#~ "circuito cuántico o esquema. Esto simula"
+#~ " imperfecciones en las señales de "
+#~ "control que pueden producir desviaciones "
+#~ "de las operaciones previstas. Las "
+#~ "perturbaciones se extraen de una "
+#~ "distribución gaussiana con una desviación "
+#~ "estándar especificada:"
+
+#~ msgid "\\delta \\theta \\sim \\mathcal{N}(\\mu, \\sigma^2),"
+#~ msgstr "\\delta \\theta \\sim \\mathcal{N}(\\mu, \\sigma^2),"
+
+#~ msgid ""
+#~ "where :math:`\\sigma` is the standard "
+#~ "deviation of the perturbations and "
+#~ ":math:`\\mu` is the mean (defaulting to"
+#~ " 0)."
+#~ msgstr ""
+#~ "donde :math:`\\sigma` es la desviación "
+#~ "estándar de las perturbaciones y "
+#~ ":math:`\\mu` es la media (por defecto"
+#~ " 0)."
+
+#~ msgid "OffsetPerturbation"
+#~ msgstr "OffsetPerturbation"
+
+#~ msgid ""
+#~ ":class:`~qilisdk.noise.offset_perturbation.OffsetPerturbation` "
+#~ "represents a noise model that adds "
+#~ "fixed offset perturbations to the "
+#~ "parameters of gates or Hamiltonian terms"
+#~ " in a quantum circuit or schedule."
+#~ " This simulates systematic errors in "
+#~ "control signals that consistently shift "
+#~ "the intended operations. The offsets are"
+#~ " specified as fixed values for each"
+#~ " parameter."
+#~ msgstr ""
+#~ ":class:`~qilisdk.noise.offset_perturbation.OffsetPerturbation` "
+#~ "representa un modelo de ruido que "
+#~ "añade perturbaciones de desplazamiento fijo"
+#~ " a los parámetros de las puertas "
+#~ "o términos del Hamiltoniano en un "
+#~ "circuito cuántico o esquema. Esto simula"
+#~ " errores sistemáticos en las señales "
+#~ "de control que desplazan de forma "
+#~ "consistente las operaciones previstas. Los "
+#~ "desplazamientos se especifican como valores"
+#~ " fijos para cada parámetro."
+
+#~ msgid "ReadoutAssignment"
+#~ msgstr "ReadoutAssignment"
+
+#~ msgid ""
+#~ ":class:`~qilisdk.noise.readout_assignment.ReadoutAssignment` "
+#~ "represents a readout error model that"
+#~ " simulates imperfections in the measurement"
+#~ " process of qubits. It is defined "
+#~ "by two probabilities: the probability of"
+#~ " misreading a :math:`|0⟩` state as "
+#~ ":math:`|1⟩` (:math:`p_{0 \\to 1}`) and "
+#~ "the probability of misreading a "
+#~ ":math:`|1⟩` state as :math:`|0⟩` (:math:`p_{1"
+#~ " \\to 0}`)."
+#~ msgstr ""
+#~ ":class:`~qilisdk.noise.readout_assignment.ReadoutAssignment` "
+#~ "representa un modelo de error de "
+#~ "lectura que simula imperfecciones en el"
+#~ " proceso de medición de los cúbits."
+#~ " Se define por dos probabilidades: la"
+#~ " probabilidad de leer erróneamente un "
+#~ "estado :math:`|0⟩` como :math:`|1⟩` "
+#~ "(:math:`p_{0 \\to 1}`) y la probabilidad"
+#~ " de leer erróneamente un estado "
+#~ ":math:`|1⟩` como :math:`|0⟩` (:math:`p_{1 \\to"
+#~ " 0}`)."
+

@@ -1,0 +1,94 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025, Qilimanjaro Quantum Tech
+# This file is distributed under the same license as the QiliSDK package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: QiliSDK \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-05-05 15:18+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ca\n"
+"Language-Team: ca <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../modules/functionals/functionals_analog.rst:2
+msgid "Analog Evolution"
+msgstr ""
+
+#: ../../modules/functionals/functionals_analog.rst:4
+msgid ""
+"The :class:`~qilisdk.functionals.analog_evolution.AnalogEvolution` "
+"functional simulates analog evolution of a quantum system under one or "
+"more Hamiltonians, following a specified time-dependent schedule. Its "
+"parameter interface mirrors that of "
+":class:`~qilisdk.analog.schedule.Schedule`, making it straightforward to "
+"sweep control waveforms or pulse amplitudes from classical optimizers."
+msgstr ""
+
+#: ../../modules/functionals/functionals_analog.rst:8
+msgid ""
+"Observables and shot counts are specified separately via readout objects "
+"passed to :meth:`~qilisdk.backends.backend.Backend.execute`."
+msgstr ""
+
+#: ../../modules/functionals/functionals_analog.rst:11
+msgid "**Parameters**"
+msgstr ""
+
+#: ../../modules/functionals/functionals_analog.rst:13
+msgid ""
+"**schedule** (:class:`~qilisdk.analog.schedule.Schedule`): Defines total "
+"evolution time, time steps, Hamiltonians, and their time-dependent "
+"coefficients."
+msgstr ""
+
+#: ../../modules/functionals/functionals_analog.rst:14
+msgid ""
+"**initial_state** (:class:`~qilisdk.core.qtensor.QTensor`): Initial state"
+" of the system."
+msgstr ""
+
+#: ../../modules/functionals/functionals_analog.rst:15
+msgid ""
+"**store_intermediate_results** (bool, optional): If True, records the "
+"state at each time step. Default is False."
+msgstr ""
+
+#: ../../modules/functionals/functionals_analog.rst:17
+msgid "**Returns**"
+msgstr ""
+
+#: ../../modules/functionals/functionals_analog.rst:19
+msgid ""
+":class:`~qilisdk.functionals.functional_result.FunctionalResult`: Inspect"
+" "
+":meth:`~qilisdk.functionals.functional_result.FunctionalResult.get_expectation_values`"
+" for measured observables, "
+":meth:`~qilisdk.functionals.functional_result.FunctionalResult.get_state`"
+" for the closing state, and "
+":meth:`~qilisdk.functionals.functional_result.FunctionalResult.get_intermediate_states`"
+" and "
+":meth:`~qilisdk.functionals.functional_result.FunctionalResult.get_intermediate_expectation_values`"
+" when ``store_intermediate_results`` is enabled."
+msgstr ""
+
+#: ../../modules/functionals/functionals_analog.rst:24
+msgid "**Usage Example**"
+msgstr ""
+
+#: ../../modules/functionals/functionals_analog.rst:51
+msgid "we can execute it on the QiliSim backend:"
+msgstr ""
+
+#: ../../modules/functionals/functionals_analog.rst:65
+msgid "**Output**"
+msgstr ""
+

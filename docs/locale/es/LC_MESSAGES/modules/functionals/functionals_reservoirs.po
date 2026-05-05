@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-14 12:09+0200\n"
+"POT-Creation-Date: 2026-05-05 15:18+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -23,7 +23,128 @@ msgstr ""
 msgid "Quantum Reservoirs"
 msgstr "Reservorios Cuánticos"
 
-#: ../../modules/functionals/functionals_reservoirs.rst:8
-msgid "Go to a specific subheading of a page."
-msgstr "Ir a un subtítulo específico de una página."
+#: ../../modules/functionals/functionals_reservoirs.rst:4
+msgid ""
+"The :class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir` "
+"functional executes a reservoir pipeline over a sequence of inputs. Each "
+"layer applies an optional pre-processing circuit, an analog reservoir "
+"dynamics block (:class:`~qilisdk.analog.schedule.Schedule`), and an "
+"optional post-processing circuit, followed by measurements of one or more"
+" observables. The optional ``qubits_to_reset`` list can be used to reset "
+"selected qubits between layers."
+msgstr ""
+"El funcional :class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir` "
+"ejecuta un pipeline de reservoir sobre una secuencia de entradas. Cada "
+"capa aplica un circuito de preprocesamiento opcional, un bloque de "
+"dinámica de reservoir analog (:class:`~qilisdk.analog.schedule.Schedule`), "
+"y un circuito de postprocesamiento opcional, seguido de mediciones de uno "
+"o más observables. La lista opcional ``qubits_to_reset`` puede utilizarse "
+"para restablecer qubits seleccionados entre capas."
 
+#: ../../modules/functionals/functionals_reservoirs.rst:9
+msgid ""
+"The reservoir inputs are represented using "
+":class:`~qilisdk.functionals.quantum_reservoirs.ReservoirInput` "
+"parameters. These behave like standard "
+":class:`~qilisdk.core.variables.Parameter` objects but are marked as non-"
+"trainable so they can be driven by input data sequences rather than "
+"optimization loops."
+msgstr ""
+"Las entradas del reservoir se representan mediante parámetros "
+":class:`~qilisdk.functionals.quantum_reservoirs.ReservoirInput`. Estos se "
+"comportan como objetos :class:`~qilisdk.core.variables.Parameter` "
+"estándar, pero están marcados como no entrenables para que puedan ser "
+"dirigidos por secuencias de datos de entrada en lugar de bucles de "
+"optimización."
+
+#: ../../modules/functionals/functionals_reservoirs.rst:13
+msgid "**Parameters**"
+msgstr "**Parámetros**"
+
+#: ../../modules/functionals/functionals_reservoirs.rst:15
+msgid ""
+"**initial_state** (:class:`~qilisdk.core.qtensor.QTensor`): Initial state"
+" of the reservoir."
+msgstr ""
+"**initial_state** (:class:`~qilisdk.core.qtensor.QTensor`): Estado inicial "
+"del reservoir."
+
+#: ../../modules/functionals/functionals_reservoirs.rst:16
+msgid ""
+"**reservoir_layer** "
+"(:class:`~qilisdk.functionals.quantum_reservoirs.ReservoirLayer`): "
+"Defines pre/post-processing, reservoir dynamics, observables, and reset "
+"policy."
+msgstr ""
+"**reservoir_layer** "
+"(:class:`~qilisdk.functionals.quantum_reservoirs.ReservoirLayer`): "
+"Define el preprocesamiento/postprocesamiento, la dinámica del reservoir, "
+"los observables y la política de restablecimiento."
+
+#: ../../modules/functionals/functionals_reservoirs.rst:18
+msgid ""
+"**input_per_layer** (List[Dict[str, float]]): Input values to apply at "
+"each layer, keyed by input parameter names (typically the labels of "
+":class:`~qilisdk.functionals.quantum_reservoirs.ReservoirInput`)."
+msgstr ""
+"**input_per_layer** (List[Dict[str, float]]): Valores de entrada a "
+"aplicar en cada capa, indexados por nombres de parámetros de entrada "
+"(normalmente las etiquetas de "
+":class:`~qilisdk.functionals.quantum_reservoirs.ReservoirInput`)."
+
+#: ../../modules/functionals/functionals_reservoirs.rst:21
+msgid "**Returns**"
+msgstr "**Retorna**"
+
+#: ../../modules/functionals/functionals_reservoirs.rst:23
+msgid ""
+":class:`~qilisdk.functionals.functional_result.FunctionalResult`: Access "
+"per-layer expectation values via "
+":meth:`~qilisdk.functionals.functional_result.FunctionalResult.get_expectation_values`,"
+" plus optional states via "
+":meth:`~qilisdk.functionals.functional_result.FunctionalResult.get_intermediate_states`"
+" if state tomography was requested in the readout spec."
+msgstr ""
+":class:`~qilisdk.functionals.functional_result.FunctionalResult`: Accede "
+"a los valores esperados por capa mediante "
+":meth:`~qilisdk.functionals.functional_result.FunctionalResult.get_expectation_values`,"
+" más estados opcionales mediante "
+":meth:`~qilisdk.functionals.functional_result.FunctionalResult.get_intermediate_states`"
+" si se solicitó tomografía de estado en la especificación de lectura."
+
+#: ../../modules/functionals/functionals_reservoirs.rst:28
+msgid "Usage Example"
+msgstr "Ejemplo de Uso"
+
+#: ../../modules/functionals/functionals_reservoirs.rst:71
+msgid "Encoding Input Data"
+msgstr "Codificación de Datos de Entrada"
+
+#: ../../modules/functionals/functionals_reservoirs.rst:73
+msgid ""
+"You can inject classical data into a reservoir layer in multiple places. "
+"The only requirement is that the keys in ``input_per_layer`` match the "
+"labels of the "
+":class:`~qilisdk.functionals.quantum_reservoirs.ReservoirInput` objects "
+"you place in the layer."
+msgstr ""
+"Se pueden inyectar datos clásicos en una capa del reservoir en múltiples "
+"lugares. El único requisito es que las claves en ``input_per_layer`` "
+"coincidan con las etiquetas de los objetos "
+":class:`~qilisdk.functionals.quantum_reservoirs.ReservoirInput` que se "
+"colocan en la capa."
+
+#: ../../modules/functionals/functionals_reservoirs.rst:78
+msgid "1. Encode with input and output circuits"
+msgstr "1. Codificar con circuitos de entrada y salida"
+
+#: ../../modules/functionals/functionals_reservoirs.rst:116
+msgid "2. Encode directly in Hamiltonian parameters"
+msgstr "2. Codificar directamente en los parámetros del Hamiltoniano"
+
+#: ../../modules/functionals/functionals_reservoirs.rst:148
+msgid "3. Encode in the schedule profile and duration"
+msgstr "3. Codificar en el perfil y la duración del schedule"
+
+#~ msgid "Go to a specific subheading of a page."
+#~ msgstr "Ir a un subtítulo específico de una página."

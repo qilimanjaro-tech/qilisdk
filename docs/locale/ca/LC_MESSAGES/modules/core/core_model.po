@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-14 12:09+0200\n"
+"POT-Creation-Date: 2026-05-05 15:18+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -23,7 +23,100 @@ msgstr ""
 msgid "Models"
 msgstr "Models"
 
-#: ../../modules/core/core_model.rst:8
-msgid "Go to a specific subheading of a page."
-msgstr "Aneu a un subapartat específic d'una pàgina."
+#: ../../modules/core/core_model.rst:4
+msgid ""
+"This minimal example introduces a binary optimization model, converts it "
+"to a QUBO penalty form, and exports the corresponding Hamiltonian:"
+msgstr ""
+"Aquest exemple mínim presenta un model d'optimització binària, el "
+"converteix a una forma de penalització QUBO i exporta el Hamiltonian "
+"corresponent:"
 
+#: ../../modules/core/core_model.rst:27
+msgid "Objectives and Constraints"
+msgstr "Objectius i restriccions"
+
+#: ../../modules/core/core_model.rst:29
+msgid "Each :class:`~qilisdk.core.model.Model` consists of:"
+msgstr "Cada :class:`~qilisdk.core.model.Model` consta de:"
+
+#: ../../modules/core/core_model.rst:31
+msgid "A single :class:`~qilisdk.core.model.Objective`"
+msgstr "Un únic :class:`~qilisdk.core.model.Objective`"
+
+#: ../../modules/core/core_model.rst:32
+msgid "Zero or more :class:`~qilisdk.core.model.Constraint` instances"
+msgstr "Zero o més instàncies de :class:`~qilisdk.core.model.Constraint`"
+
+#: ../../modules/core/core_model.rst:34
+msgid "**Objective**"
+msgstr "**Objectiu**"
+
+#: ../../modules/core/core_model.rst:36
+msgid ""
+"The :class:`~qilisdk.core.model.Objective` defines the function the model"
+" aims to minimize or maximize. Example:"
+msgstr ""
+"El :class:`~qilisdk.core.model.Objective` defineix la funció que el "
+"model pretén minimitzar o maximitzar. Exemple:"
+
+#: ../../modules/core/core_model.rst:47 ../../modules/core/core_model.rst:73
+#: ../../modules/core/core_model.rst:101 ../../modules/core/core_model.rst:134
+#: ../../modules/core/core_model.rst:151
+msgid "**Output**:"
+msgstr "**Sortida**:"
+
+#: ../../modules/core/core_model.rst:64
+msgid ""
+"Encoding constraints are automatically added for bounded continuous "
+"variables. Each constraint has an associated Lagrange multiplier, which "
+"determines the penalty for violating it."
+msgstr ""
+"Les restriccions de codificació s'afegeixen automàticament per a les "
+"variables contínues acotades. Cada restricció té un multiplicador de "
+"Lagrange associat, que determina la penalització per violar-la."
+
+#: ../../modules/core/core_model.rst:66
+msgid "You can update the multiplier like so:"
+msgstr "Podeu actualitzar el multiplicador de la manera següent:"
+
+#: ../../modules/core/core_model.rst:90
+msgid "**Constraints**"
+msgstr "**Restriccions**"
+
+#: ../../modules/core/core_model.rst:92
+msgid ""
+"Additional :class:`Constraints<qilisdk.core.model.Constraint>` can be "
+"added to restrict the solution space:"
+msgstr ""
+"Es poden afegir :class:`Restriccions<qilisdk.core.model.Constraint>` "
+"addicionals per limitar l'espai de solucions:"
+
+#: ../../modules/core/core_model.rst:124
+msgid "Evaluating a Model"
+msgstr "Avaluar un model"
+
+#: ../../modules/core/core_model.rst:126
+msgid ""
+"To evaluate a :class:`~qilisdk.core.model.Model`, provide values for all "
+"involved variables:"
+msgstr ""
+"Per avaluar un :class:`~qilisdk.core.model.Model`, proporcioneu valors "
+"per a totes les variables implicades:"
+
+#: ../../modules/core/core_model.rst:140
+msgid ""
+"The evaluation returns a dictionary with values for the objective and "
+"constraints. A constraint returns `0.0` if satisfied, or its Lagrange "
+"multiplier if violated."
+msgstr ""
+"L'avaluació retorna un diccionari amb valors per a l'objectiu i les "
+"restriccions. Una restricció retorna `0.0` si es satisfà, o el seu "
+"multiplicador de Lagrange si es viola."
+
+#: ../../modules/core/core_model.rst:143
+msgid "For example:"
+msgstr "Per exemple:"
+
+#~ msgid "Go to a specific subheading of a page."
+#~ msgstr "Aneu a un subapartat específic d'una pàgina."

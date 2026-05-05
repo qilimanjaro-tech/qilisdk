@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-29 11:34+0200\n"
+"POT-Creation-Date: 2026-05-05 15:18+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -23,1191 +23,1235 @@ msgstr ""
 msgid "Core"
 msgstr "Core"
 
-#: ../../modules/core/core.rst:17
-msgid ""
-"The :mod:`qilisdk.core` layer underpins both the digital and analog "
-"stacks. It provides symbolic variables, optimization models, sparse "
-"quantum tensors, and the "
-":mod:`~qilisdk.core.parameterizable.Parameterizable` mixin used "
-"throughout the SDK."
-msgstr ""
-"La capa :mod:`qilisdk.core` sustenta tanto las pilas digital como "
-"analógica. Proporciona variables simbólicas, modelos de optimización, "
-"tensores cuánticos dispersos y el mixin "
-":mod:`~qilisdk.core.parameterizable.Parameterizable` utilizado en todo el"
-" SDK."
-
-#: ../../modules/core/core.rst:21
-msgid "Highlights:"
-msgstr "Aspectos destacados:"
-
-#: ../../modules/core/core.rst:23
-msgid ""
-":mod:`~qilisdk.core.variables` supplies binary, spin, continuous, and "
-"parameter variables plus algebraic helpers "
-"(:class:`~qilisdk.core.variables.Term`, comparison factories, encodings)."
-msgstr ""
-":mod:`~qilisdk.core.variables` proporciona variables binarias, de espín, "
-"continuas y de parámetro, junto con ayudantes algebraicos "
-"(:class:`~qilisdk.core.variables.Term`, fábricas de comparación, "
-"codificaciones)."
-
-#: ../../modules/core/core.rst:26
-msgid ""
-":mod:`~qilisdk.core.model` builds constrained optimization programs and "
-"offers tools to automatically convert the model to "
-":class:`~qilisdk.core.model.QUBO` format if the constraints are linear."
-msgstr ""
-":mod:`~qilisdk.core.model` construye programas de optimización con "
-"restricciones y ofrece herramientas para convertir automáticamente el "
-"modelo al formato :class:`~qilisdk.core.model.QUBO` si las restricciones "
-"son lineales."
-
-#: ../../modules/core/core.rst:28
-msgid ""
-":mod:`~qilisdk.core.qtensor` manages sparse quantum objects and utilities"
-" such as :func:`~qilisdk.core.qtensor.tensor_prod` and "
-":func:`~qilisdk.core.qtensor.expect_val`."
-msgstr ""
-":mod:`~qilisdk.core.qtensor` gestiona objetos cuánticos dispersos y "
-"utilidades como :func:`~qilisdk.core.qtensor.tensor_prod` y "
-":func:`~qilisdk.core.qtensor.expect_val`."
-
-#: ../../modules/core/core.rst:30
-msgid ""
-":mod:`~qilisdk.core.parameterizable.Parameterizable` standardizes how "
-"objects expose symbolic parameters (shared by circuits, schedules, etc.)."
-msgstr ""
-":mod:`~qilisdk.core.parameterizable.Parameterizable` estandariza la forma"
-" en que los objetos exponen parámetros simbólicos (compartidos por "
-"circuitos, esquemas, etc.)."
-
-#: ../../modules/core/core.rst:34
-msgid "Variables"
-msgstr "Variables"
-
-#: ../../modules/core/core.rst:36
-msgid "This module offers tools to define different types of variables:"
-msgstr ""
-"Este módulo ofrece herramientas para definir diferentes tipos de "
-"variables:"
-
-#: ../../modules/core/core.rst:38
-msgid "**Binary Variables** (:class:`~qilisdk.core.variables.BinaryVariable`)"
-msgstr "**Variables Binarias** (:class:`~qilisdk.core.variables.BinaryVariable`)"
-
-#: ../../modules/core/core.rst:39
-msgid "**Spin Variables** (:class:`~qilisdk.core.variables.SpinVariable`)"
-msgstr "**Variables de Espín** (:class:`~qilisdk.core.variables.SpinVariable`)"
-
-#: ../../modules/core/core.rst:40
-msgid ""
-"**Continuous Variables** (:class:`~qilisdk.core.variables.Variable`) with"
-" the following customizable parameters:"
-msgstr ""
-"**Variables Continuas** (:class:`~qilisdk.core.variables.Variable`) con "
-"los siguientes parámetros personalizables:"
-
-#: ../../modules/core/core.rst:42
-msgid ""
-"**Domain** (:class:`~qilisdk.core.variables.Domain`): Specifies the "
-"variable type:"
-msgstr ""
-"**Dominio** (:class:`~qilisdk.core.variables.Domain`): Especifica el tipo"
-" de variable:"
-
-#: ../../modules/core/core.rst:44
-msgid ":class:`~qilisdk.core.variables.Domain.REAL`"
-msgstr ":class:`~qilisdk.core.variables.Domain.REAL`"
-
-#: ../../modules/core/core.rst:45
-msgid ":class:`~qilisdk.core.variables.Domain.INTEGER`"
-msgstr ":class:`~qilisdk.core.variables.Domain.INTEGER`"
-
-#: ../../modules/core/core.rst:46
-msgid ":class:`~qilisdk.core.variables.Domain.POSITIVE_INTEGER`"
-msgstr ":class:`~qilisdk.core.variables.Domain.POSITIVE_INTEGER`"
-
-#: ../../modules/core/core.rst:47
-msgid ":class:`~qilisdk.core.variables.Domain.BINARY`"
-msgstr ":class:`~qilisdk.core.variables.Domain.BINARY`"
-
-#: ../../modules/core/core.rst:48
-msgid ":class:`~qilisdk.core.variables.Domain.SPIN`"
-msgstr ":class:`~qilisdk.core.variables.Domain.SPIN`"
-
-#: ../../modules/core/core.rst:49
-msgid "**Bounds**: Defines the allowed value range of the variable."
-msgstr "**Cotas**: Define el rango de valores permitidos de la variable."
-
-#: ../../modules/core/core.rst:50
-msgid ""
-"**Encoding** (:class:`~qilisdk.core.variables.Encoding`): Specifies how "
-"the variable is represented using binary encodings:"
-msgstr ""
-"**Codificación** (:class:`~qilisdk.core.variables.Encoding`): Especifica "
-"cómo se representa la variable mediante codificaciones binarias:"
-
-#: ../../modules/core/core.rst:52
-msgid "Bit-wise encoding (:class:`~qilisdk.core.variables.Bitwise`)"
-msgstr "Codificación bit a bit (:class:`~qilisdk.core.variables.Bitwise`)"
-
-#: ../../modules/core/core.rst:53
-msgid "Domain wall encoding (:class:`~qilisdk.core.variables.DomainWall`)"
-msgstr ""
-"Codificación de pared de dominio "
-"(:class:`~qilisdk.core.variables.DomainWall`)"
-
-#: ../../modules/core/core.rst:54
-msgid "One-hot encoding (:class:`~qilisdk.core.variables.OneHot`)"
-msgstr "Codificación one-hot (:class:`~qilisdk.core.variables.OneHot`)"
-
-#: ../../modules/core/core.rst:55
-msgid ""
-"**Precision**: Applicable to ``REAL`` domain; defines the resolution "
-"(e.g., floating-point precision)."
-msgstr ""
-"**Precisión**: Aplicable al dominio ``REAL``; define la resolución (p. "
-"ej., precisión de punto flotante)."
-
-#: ../../modules/core/core.rst:57
-msgid "An example of creating different types of variables:"
-msgstr "Un ejemplo de creación de diferentes tipos de variables:"
-
-#: ../../modules/core/core.rst:67
-msgid ""
-"Continuous variables support indexing, where each index refers to a "
-"component of the binary-encoded form of the variable. For example:"
-msgstr ""
-"Las variables continuas admiten indexación, donde cada índice hace "
-"referencia a un componente de la forma codificada en binario de la "
-"variable. Por ejemplo:"
-
-#: ../../modules/core/core.rst:73 ../../modules/core/core.rst:86
-#: ../../modules/core/core.rst:109 ../../modules/core/core.rst:127
-#: ../../modules/core/core.rst:261 ../../modules/core/core.rst:313
-#: ../../modules/core/core.rst:339 ../../modules/core/core.rst:365
-#: ../../modules/core/core.rst:398 ../../modules/core/core.rst:415
-msgid "**Output**:"
-msgstr "**Salida**:"
-
-#: ../../modules/core/core.rst:79
-msgid ""
-"To index the first binary variable from the binary representation of x "
-"you can write: ``x[0]``. Each binary variable configuration generates a "
-"float within the bounds, based on the defined precision. For instance:"
-msgstr ""
-"Para indexar la primera variable binaria de la representación binaria de "
-"x puede escribir: ``x[0]``. Cada configuración de variable binaria genera"
-" un número en coma flotante dentro de las cotas, basado en la precisión "
-"definida. Por ejemplo:"
-
-#: ../../modules/core/core.rst:93
-msgid "Terms"
-msgstr "Términos"
-
-#: ../../modules/core/core.rst:95
-msgid ""
-":class:`Variables<qilisdk.core.variables.Variable>` can be combined "
-"algebraically to form expressions known as "
-":class:`Terms<qilisdk.core.variables.Term>`. For example:"
-msgstr ""
-"Las :class:`Variables<qilisdk.core.variables.Variable>` pueden combinarse"
-" algebraicamente para formar expresiones conocidas como "
-":class:`Términos<qilisdk.core.variables.Term>`. Por ejemplo:"
-
-#: ../../modules/core/core.rst:118
-msgid "Terms can be evaluated by providing values for the involved variables:"
-msgstr ""
-"Los términos pueden evaluarse proporcionando valores para las variables "
-"involucradas:"
-
-#: ../../modules/core/core.rst:135
-msgid ""
-"To evaluate a term, all participating variables must be assigned valid "
-"values within their respective domains and bounds."
-msgstr ""
-"Para evaluar un término, todas las variables participantes deben tener "
-"asignados valores válidos dentro de sus respectivos dominios y cotas."
-
-#: ../../modules/core/core.rst:138
-msgid "Parameters and Parameterizable Objects"
-msgstr "Parámetros y Objetos Parametrizables"
-
-#: ../../modules/core/core.rst:140
-msgid ""
-"Many components in QiliSDK expose symbolic parameters that can be "
-"optimized or re-bound at runtime. The "
-":class:`~qilisdk.core.variables.Parameter` class represents a scalar "
-"symbol with optional bounds, and "
-":class:`~qilisdk.core.parameterizable.Parameterizable` provides a uniform"
-" API "
-"(:meth:`~qilisdk.core.parameterizable.Parameterizable.get_parameter_names`,"
-" "
-":meth:`~qilisdk.core.parameterizable.Parameterizable.set_parameter_values`…)"
-" implemented by circuits, schedules, models, and more."
-msgstr ""
-"Muchos componentes de QiliSDK exponen parámetros simbólicos que pueden "
-"optimizarse o reasignarse en tiempo de ejecución. La clase "
-":class:`~qilisdk.core.variables.Parameter` representa un símbolo escalar "
-"con cotas opcionales, y "
-":class:`~qilisdk.core.parameterizable.Parameterizable` proporciona una "
-"API uniforme "
-"(:meth:`~qilisdk.core.parameterizable.Parameterizable.get_parameter_names`,"
-" "
-":meth:`~qilisdk.core.parameterizable.Parameterizable.set_parameter_values`…)"
-" implementada por circuitos, esquemas, modelos y más."
-
-#: ../../modules/core/core.rst:156
-msgid ""
-"Parameters behave like symbolic variables in algebraic expressions, so "
-"you can combine them with other variables and evaluate terms without "
-"having to pass the parameter explicitly - its stored ``value`` is used "
-"automatically."
-msgstr ""
-"Los parámetros se comportan como variables simbólicas en expresiones "
-"algebraicas, por lo que puede combinarlos con otras variables y evaluar "
-"términos sin necesidad de pasar el parámetro explícitamente; su ``value``"
-" almacenado se usa automáticamente."
-
-#: ../../modules/core/core.rst:160
-msgid ""
-"Objects that inherit from "
-":class:`~qilisdk.core.parameterizable.Parameterizable` collect all the "
-":class:`~qilisdk.core.variables.Parameter` instances they encounter. For "
-"example:"
-msgstr ""
-"Los objetos que heredan de "
-":class:`~qilisdk.core.parameterizable.Parameterizable` recopilan todas "
-"las instancias de :class:`~qilisdk.core.variables.Parameter` que "
-"encuentran. Por ejemplo:"
-
-#: ../../modules/core/core.rst:174
-msgid ""
-"All parameter helper methods accept an optional ``where`` predicate to "
-"filter the exposed parameters. This is useful when you want to update "
-"only a subset, such as trainable parameters."
-msgstr ""
-"Todos los métodos auxiliares de parámetros aceptan un predicado ``where``"
-" opcional para filtrar los parámetros expuestos. Esto es útil cuando se "
-"desea actualizar únicamente un subconjunto, como los parámetros "
-"entrenables."
-
-#: ../../modules/core/core.rst:185
-msgid ""
-"Parameterizable objects expose parameter state through "
-":meth:`~qilisdk.core.parameterizable.Parameterizable.get_parameters`, "
-":meth:`~qilisdk.core.parameterizable.Parameterizable.get_parameter_names`,"
-" "
-":meth:`~qilisdk.core.parameterizable.Parameterizable.get_parameter_values`,"
-" and the corresponding ``set_*`` methods. Accessing ``.parameters`` "
-"directly is not part of the public API."
-msgstr ""
-"Los objetos parametrizables exponen el estado de los parámetros a través "
-"de :meth:`~qilisdk.core.parameterizable.Parameterizable.get_parameters`, "
-":meth:`~qilisdk.core.parameterizable.Parameterizable.get_parameter_names`,"
-" "
-":meth:`~qilisdk.core.parameterizable.Parameterizable.get_parameter_values`,"
-" y los métodos ``set_*`` correspondientes. Acceder a ``.parameters`` "
-"directamente no forma parte de la API pública."
-
-#: ../../modules/core/core.rst:194
-msgid "Mathematical Maps (sin, cos)"
-msgstr "Mapas Matemáticos (sin, cos)"
-
-#: ../../modules/core/core.rst:196
-msgid ""
-"Use :class:`~qilisdk.core.variables.MathematicalMap` helpers to apply "
-"common functions to a parameter or term while keeping expressions "
-"symbolic. :class:`~qilisdk.core.variables.Sin` and "
-":class:`~qilisdk.core.variables.Cos` wrap a "
-":class:`~qilisdk.core.variables.Parameter`, "
-":class:`~qilisdk.core.variables.Term`, or any other base variable and "
-"defer evaluation until values are provided."
-msgstr ""
-"Utilice los ayudantes :class:`~qilisdk.core.variables.MathematicalMap` "
-"para aplicar funciones comunes a un parámetro o término manteniendo las "
-"expresiones simbólicas. :class:`~qilisdk.core.variables.Sin` y "
-":class:`~qilisdk.core.variables.Cos` envuelven un "
-":class:`~qilisdk.core.variables.Parameter`, "
-":class:`~qilisdk.core.variables.Term`, o cualquier otra variable base y "
-"difieren la evaluación hasta que se proporcionen valores."
-
-#: ../../modules/core/core.rst:215
-msgid ""
-"These maps compose naturally with other terms, so you can include them in"
-" constraints or objectives and rely on the same evaluation and encoding "
-"rules as other symbolic expressions."
-msgstr ""
-"Estos mapas se componen de forma natural con otros términos, por lo que "
-"puede incluirlos en restricciones u objetivos y basarse en las mismas "
-"reglas de evaluación y codificación que otras expresiones simbólicas."
-
-#: ../../modules/core/core.rst:220
-msgid "Comparison Terms"
-msgstr "Términos de Comparación"
-
-#: ../../modules/core/core.rst:222
-msgid ""
-"Each :class:`~qilisdk.core.variables.ComparisonTerm` defines a constraint"
-" using mathematical comparisons. Use the following operators to construct"
-" them:"
-msgstr ""
-"Cada :class:`~qilisdk.core.variables.ComparisonTerm` define una "
-"restricción mediante comparaciones matemáticas. Utilice los siguientes "
-"operadores para construirlas:"
-
-#: ../../modules/core/core.rst:230
-msgid "Comparison Operation"
-msgstr "Operación de Comparación"
-
-#: ../../modules/core/core.rst:231
-msgid "QiliSDK Method"
-msgstr "Método de QiliSDK"
-
-#: ../../modules/core/core.rst:232
-msgid "Alias"
-msgstr "Alias"
-
-#: ../../modules/core/core.rst:233
-msgid "Equality"
-msgstr "Igualdad"
-
-#: ../../modules/core/core.rst:234
-msgid ":meth:`Equal(lhs, rhs)<qilisdk.core.variables.Equal>`"
-msgstr ":meth:`Equal(lhs, rhs)<qilisdk.core.variables.Equal>`"
-
-#: ../../modules/core/core.rst:235
-msgid ":meth:`EQ(lhs, rhs)<qilisdk.core.variables.EQ>`"
-msgstr ":meth:`EQ(lhs, rhs)<qilisdk.core.variables.EQ>`"
-
-#: ../../modules/core/core.rst:236
-msgid "Not Equal"
-msgstr "Distinto de"
-
-#: ../../modules/core/core.rst:237
-msgid ":meth:`NotEqual(lhs, rhs)<qilisdk.core.variables.NotEqual>`"
-msgstr ":meth:`NotEqual(lhs, rhs)<qilisdk.core.variables.NotEqual>`"
-
-#: ../../modules/core/core.rst:238
-msgid ":meth:`NEQ(lhs, rhs)<qilisdk.core.variables.NEQ>`"
-msgstr ":meth:`NEQ(lhs, rhs)<qilisdk.core.variables.NEQ>`"
-
-#: ../../modules/core/core.rst:239
-msgid "Less Than"
-msgstr "Menor que"
-
-#: ../../modules/core/core.rst:240
-msgid ":meth:`LessThan(lhs, rhs)<qilisdk.core.variables.LessThan>`"
-msgstr ":meth:`LessThan(lhs, rhs)<qilisdk.core.variables.LessThan>`"
-
-#: ../../modules/core/core.rst:241
-msgid ":meth:`LT(lhs, rhs)<qilisdk.core.variables.LT>`"
-msgstr ":meth:`LT(lhs, rhs)<qilisdk.core.variables.LT>`"
-
-#: ../../modules/core/core.rst:242
-msgid "Less Than or Equal"
-msgstr "Menor o igual que"
-
-#: ../../modules/core/core.rst:243
-msgid ":meth:`LessThanOrEqual(lhs, rhs)<qilisdk.core.variables.LessThanOrEqual>`"
-msgstr ":meth:`LessThanOrEqual(lhs, rhs)<qilisdk.core.variables.LessThanOrEqual>`"
-
-#: ../../modules/core/core.rst:244
-msgid ":meth:`LEQ(lhs, rhs)<qilisdk.core.variables.LEQ>`"
-msgstr ":meth:`LEQ(lhs, rhs)<qilisdk.core.variables.LEQ>`"
-
-#: ../../modules/core/core.rst:245
-msgid "Greater Than"
-msgstr "Mayor que"
-
-#: ../../modules/core/core.rst:246
-msgid ":meth:`GreaterThan(lhs, rhs)<qilisdk.core.variables.GreaterThan>`"
-msgstr ":meth:`GreaterThan(lhs, rhs)<qilisdk.core.variables.GreaterThan>`"
-
-#: ../../modules/core/core.rst:247
-msgid ":meth:`GT(lhs, rhs)<qilisdk.core.variables.GT>`"
-msgstr ":meth:`GT(lhs, rhs)<qilisdk.core.variables.GT>`"
-
-#: ../../modules/core/core.rst:248
-msgid "Greater Than or Equal"
-msgstr "Mayor o igual que"
-
-#: ../../modules/core/core.rst:249
-msgid ""
-":meth:`GreaterThanOrEqual(lhs, "
-"rhs)<qilisdk.core.variables.GreaterThanOrEqual>`"
-msgstr ""
-":meth:`GreaterThanOrEqual(lhs, "
-"rhs)<qilisdk.core.variables.GreaterThanOrEqual>`"
-
-#: ../../modules/core/core.rst:250
-msgid ":meth:`GEQ(lhs, rhs)<qilisdk.core.variables.GEQ>`"
-msgstr ":meth:`GEQ(lhs, rhs)<qilisdk.core.variables.GEQ>`"
-
-#: ../../modules/core/core.rst:252
-msgid ""
-"*Note*: `lhs` and `rhs` refer to the left-hand side and right-hand side "
-"expressions, respectively."
-msgstr ""
-"*Nota*: `lhs` y `rhs` hacen referencia a las expresiones del lado "
-"izquierdo y del lado derecho, respectivamente."
-
-#: ../../modules/core/core.rst:254
-msgid "Example:"
-msgstr "Ejemplo:"
-
-#: ../../modules/core/core.rst:267
-msgid ""
-"When a comparison term is created, constants are automatically moved to "
-"the right-hand side, and variable terms to the left-hand side."
-msgstr ""
-"Cuando se crea un término de comparación, las constantes se desplazan "
-"automáticamente al lado derecho y los términos de variable al lado "
-"izquierdo."
-
-#: ../../modules/core/core.rst:270
-msgid "Models"
-msgstr "Modelos"
-
-#: ../../modules/core/core.rst:272
-msgid ""
-"This minimal example introduces a binary optimization model, converts it "
-"to a QUBO penalty form, and exports the corresponding Hamiltonian:"
-msgstr ""
-"Este ejemplo mínimo presenta un modelo de optimización binaria, lo "
-"convierte a la forma de penalización QUBO y exporta el Hamiltoniano "
-"correspondiente:"
-
-#: ../../modules/core/core.rst:295
-msgid "Objectives and Constraints"
-msgstr "Objetivos y Restricciones"
-
-#: ../../modules/core/core.rst:297
-msgid "Each :class:`~qilisdk.core.model.Model` consists of:"
-msgstr "Cada :class:`~qilisdk.core.model.Model` consta de:"
-
-#: ../../modules/core/core.rst:299
-msgid "A single :class:`~qilisdk.core.model.Objective`"
-msgstr "Un único :class:`~qilisdk.core.model.Objective`"
-
-#: ../../modules/core/core.rst:300
-msgid "Zero or more :class:`~qilisdk.core.model.Constraint` instances"
-msgstr "Cero o más instancias de :class:`~qilisdk.core.model.Constraint`"
-
-#: ../../modules/core/core.rst:302 ../../modules/core/core.rst:523
-msgid "**Objective**"
-msgstr "**Objetivo**"
-
-#: ../../modules/core/core.rst:304
-msgid ""
-"The :class:`~qilisdk.core.model.Objective` defines the function the model"
-" aims to minimize or maximize. Example:"
-msgstr ""
-"El :class:`~qilisdk.core.model.Objective` define la función que el modelo"
-" pretende minimizar o maximizar. Ejemplo:"
-
-#: ../../modules/core/core.rst:330
-msgid ""
-"Encoding constraints are automatically added for bounded continuous "
-"variables. Each constraint has an associated Lagrange multiplier, which "
-"determines the penalty for violating it."
-msgstr ""
-"Las restricciones de codificación se añaden automáticamente para "
-"variables continuas acotadas. Cada restricción tiene un multiplicador de "
-"Lagrange asociado, que determina la penalización por incumplirla."
-
-#: ../../modules/core/core.rst:332
-msgid "You can update the multiplier like so:"
-msgstr "Puede actualizar el multiplicador de la siguiente manera:"
-
-#: ../../modules/core/core.rst:356
-msgid "**Constraints**"
-msgstr "**Restricciones**"
-
-#: ../../modules/core/core.rst:358
-msgid ""
-"Additional :class:`Constraints<qilisdk.core.model.Constraint>` can be "
-"added to restrict the solution space:"
-msgstr ""
-"Se pueden añadir :class:`Restricciones<qilisdk.core.model.Constraint>` "
-"adicionales para acotar el espacio de soluciones:"
-
-#: ../../modules/core/core.rst:388
-msgid "Evaluating a Model"
-msgstr "Evaluación de un Modelo"
-
-#: ../../modules/core/core.rst:390
-msgid ""
-"To evaluate a :class:`~qilisdk.core.model.Model`, provide values for all "
-"involved variables:"
-msgstr ""
-"Para evaluar un :class:`~qilisdk.core.model.Model`, proporcione valores "
-"para todas las variables involucradas:"
-
-#: ../../modules/core/core.rst:404
-msgid ""
-"The evaluation returns a dictionary with values for the objective and "
-"constraints. A constraint returns `0.0` if satisfied, or its Lagrange "
-"multiplier if violated."
-msgstr ""
-"La evaluación devuelve un diccionario con valores para el objetivo y las "
-"restricciones. Una restricción devuelve `0.0` si se satisface, o su "
-"multiplicador de Lagrange si se viola."
-
-#: ../../modules/core/core.rst:407
-msgid "For example:"
-msgstr "Por ejemplo:"
-
-#: ../../modules/core/core.rst:422
-msgid "QUBO Models"
-msgstr "Modelos QUBO"
-
-#: ../../modules/core/core.rst:424
-#, fuzzy
-msgid ""
-"The :class:`~qilisdk.core.model.QUBO` subclass specializes in **Quadratic"
-" Unconstrained Binary Optimization** models, where every decision "
-"variable is binary and the objective function is at most quadratic. "
-"Unlike general models, “hard” constraints are not maintained separately "
-"but are encoded directly into the objective as penalty terms. The "
-"strength of each penalty is controlled by its associated Lagrange "
-"multiplier."
-msgstr ""
-"La subclase :class:`~qilisdk.core.model.QUBO` se especializa en modelos "
-"de **Optimización Binaria Cuadrática Sin Restricciones**, donde cada "
-"variable de decisión es binaria y la función objetivo es como máximo "
-"cuadrática. A diferencia de los modelos generales, las restricciones "
-"\"duras\" no se mantienen por separado, sino que se codifican "
-"directamente en el objetivo como términos de penalización. La intensidad "
-"de cada penalización está controlada por su multiplicador de Lagrange "
-"asociado."
-
-#: ../../modules/core/core.rst:429
-msgid ""
-"The binary quadratic cost function that defines a QUBO problem is written"
-" as"
-msgstr ""
-"La función de coste cuadrática binaria que define un problema QUBO se "
-"escribe como"
-
-#: ../../modules/core/core.rst:432
-#, python-brace-format
-msgid "f(x) = \\frac{1}{2} \\sum_{i=1}^{n} \\sum_{j=1}^{n} q_{ij} x_i x_j,"
-msgstr "f(x) = \\frac{1}{2} \\sum_{i=1}^{n} \\sum_{j=1}^{n} q_{ij} x_i x_j,"
-
-#: ../../modules/core/core.rst:436
-#, python-brace-format
-msgid ""
-"with decision variables :math:`x_i \\in \\{0, 1\\}` and symmetric "
-"coefficients :math:`q_{ij} = q_{ji} \\in \\mathbb{R}`. Separating the "
-"diagonal terms highlights the effective linear weights:"
-msgstr ""
-"con variables de decisión :math:`x_i \\in \\{0, 1\\}` y coeficientes "
-"simétricos :math:`q_{ij} = q_{ji} \\in \\mathbb{R}`. Separar los términos"
-" diagonales pone de relieve los pesos lineales efectivos:"
-
-#: ../../modules/core/core.rst:440
-#, python-brace-format
-msgid ""
-"f(x) = \\sum_{i=1}^{n-1} \\sum_{j>i} q_{ij} x_i x_j + \\sum_{i=1}^{n} "
-"q_{ii} x_i."
-msgstr ""
-"f(x) = \\sum_{i=1}^{n-1} \\sum_{j>i} q_{ij} x_i x_j + \\sum_{i=1}^{n} "
-"q_{ii} x_i."
-
-#: ../../modules/core/core.rst:446
-msgid "Adding Constraints as Penalties"
-msgstr "Añadir Restricciones como Penalizaciones"
-
-#: ../../modules/core/core.rst:448
-msgid ""
-"Since QUBO is unconstrained, every constraint is converted into the "
-"objective via a **penalty term**. Linear equality constraints can be "
-"described as,"
-msgstr ""
-"Dado que QUBO no tiene restricciones, cada restricción se convierte en el"
-" objetivo mediante un **término de penalización**. Las restricciones de "
-"igualdad lineales pueden describirse como,"
-
-#: ../../modules/core/core.rst:451
-#, python-brace-format
-msgid "\\sum_{i=1}^{n} c_i x_i = C, \\quad c_i \\in \\mathbb{Z},"
-msgstr "\\sum_{i=1}^{n} c_i x_i = C, \\quad c_i \\in \\mathbb{Z},"
-
-#: ../../modules/core/core.rst:455
-msgid ""
-"where :math:`c_i` are integer coefficients and :math:`C` is an integer "
-"constant."
-msgstr ""
-"donde :math:`c_i` son coeficientes enteros y :math:`C` es una constante "
-"entera."
-
-#: ../../modules/core/core.rst:457
-msgid "Embedded as penalties, these constraints give the penalized objective"
-msgstr ""
-"Incorporadas como penalizaciones, estas restricciones dan lugar al "
-"objetivo penalizado"
-
-#: ../../modules/core/core.rst:459
-#, python-brace-format
-msgid ""
-"\\min_{x,\\,s} \\left(\n"
-"    \\sum_{i=1}^{n-1} \\sum_{j>i} c_{ij} x_i x_j\n"
-"    + \\sum_{i=1}^{n} h_i x_i\n"
-"    + \\lambda_0 \\left( \\sum_{i=1}^{n} q_i x_i - C \\right)^{2}\n"
-"\\right),"
-msgstr ""
-"\\min_{x,\\,s} \\left(\n"
-"    \\sum_{i=1}^{n-1} \\sum_{j>i} c_{ij} x_i x_j\n"
-"    + \\sum_{i=1}^{n} h_i x_i\n"
-"    + \\lambda_0 \\left( \\sum_{i=1}^{n} q_i x_i - C \\right)^{2}\n"
-"\\right),"
-
-#: ../../modules/core/core.rst:467
-msgid "where :math:`\\lambda_0 > 0` is a penalty strength parameter."
-msgstr ""
-"donde :math:`\\lambda_0 > 0` es un parámetro de intensidad de "
-"penalización."
-
-#: ../../modules/core/core.rst:469
-msgid "Ineqaulity constraints can be defined as:"
-msgstr "Las restricciones de desigualdad pueden definirse como:"
-
-#: ../../modules/core/core.rst:471
-#, python-brace-format
-msgid "\\sum_{i=1}^{n} \\ell_i x_i \\leq B, \\quad \\ell_i \\in \\mathbb{Z}."
-msgstr "\\sum_{i=1}^{n} \\ell_i x_i \\leq B, \\quad \\ell_i \\in \\mathbb{Z}."
-
-#: ../../modules/core/core.rst:475
-msgid "To translate these into penalties, two strategies are supported:"
-msgstr "Para convertirlas en penalizaciones, se admiten dos estrategias:"
-
-#: ../../modules/core/core.rst:477
-msgid "**Slack penalization** (default):"
-msgstr "**Penalización por holgura** (predeterminada):"
-
-#: ../../modules/core/core.rst:478
-msgid ""
-"Introduce additional binary slack variables to turn inequalities into "
-"equalities, then square the residual. Therefore, the penalty term "
-"becomes:"
-msgstr ""
-"Introducir variables de holgura binarias adicionales para convertir las "
-"desigualdades en igualdades y luego elevar al cuadrado el residual. Por "
-"tanto, el término de penalización se convierte en:"
-
-#: ../../modules/core/core.rst:481
-#, python-brace-format
-msgid ""
-"\\lambda_1 \\left( B - \\sum_{i=1}^{n} \\ell_i x_i - \\sum_{k=0}^{N-1} "
-"2^{k} s_k \\right)^{2}"
-msgstr ""
-"\\lambda_1 \\left( B - \\sum_{i=1}^{n} \\ell_i x_i - \\sum_{k=0}^{N-1} "
-"2^{k} s_k \\right)^{2}"
-
-#: ../../modules/core/core.rst:486
-#, python-brace-format
-msgid ""
-"where :math:`s_k` are slack binary variables introduced to encode the "
-"inequality constraint (with the number of bits :math:`N` chosen so that "
-"their binary expansion spans the admissible slack range) and "
-":math:`\\lambda_{1}` control the penalty strength."
-msgstr ""
-"donde :math:`s_k` son variables binarias de holgura introducidas para "
-"codificar la restricción de desigualdad (con el número de bits :math:`N` "
-"elegido de modo que su expansión binaria abarque el rango de holgura "
-"admisible) y :math:`\\lambda_{1}` controla la intensidad de la "
-"penalización."
-
-#: ../../modules/core/core.rst:490
-msgid "**Unbalanced penalization**:"
-msgstr "**Penalización no balanceada**:"
-
-#: ../../modules/core/core.rst:491
-#, python-brace-format
-msgid ""
-"Directly penalize violation without slack variables using two weights (a,"
-" b) to scale positive and negative deviations differently [1]_. we define"
-" :math:`h(x) = B - \\sum_{i=1}^{n} \\ell_i x_i` as the signed residual of"
-" the constraint, and the penalty term becomes:"
-msgstr ""
-"Penalizar directamente la violación sin variables de holgura utilizando "
-"dos pesos (a, b) para escalar de forma diferente las desviaciones "
-"positivas y negativas [1]_. Definimos :math:`h(x) = B - \\sum_{i=1}^{n} "
-"\\ell_i x_i` como el residual con signo de la restricción, y el término "
-"de penalización se convierte en:"
-
-#: ../../modules/core/core.rst:494
-msgid "- a h(x) + b h(x)^2,"
-msgstr "- a h(x) + b h(x)^2,"
-
-#: ../../modules/core/core.rst:498
-msgid ""
-"where :math:`a, b > 0` are parameters that control the penalty strength "
-"for violations above and below the bound, respectively."
-msgstr ""
-"donde :math:`a, b > 0` son parámetros que controlan la intensidad de la "
-"penalización para las violaciones por encima y por debajo de la cota, "
-"respectivamente."
-
-#: ../../modules/core/core.rst:507
-msgid "Why QUBO?"
-msgstr "¿Por qué QUBO?"
-
-#: ../../modules/core/core.rst:509
-msgid ""
-"**Unconstrained form**: Many quantum annealers and specialized solvers "
-"accept only unconstrained binary quadratic forms, making QUBO the lingua "
-"franca of quantum optimization."
-msgstr ""
-"**Forma sin restricciones**: Muchos recocedores cuánticos y "
-"solucionadores especializados solo aceptan formas cuadráticas binarias "
-"sin restricciones, lo que convierte a QUBO en la lengua franca de la "
-"optimización cuántica."
-
-#: ../../modules/core/core.rst:510
-msgid ""
-"**Penalty encoding**: Instead of throwing away constraint structure, you "
-"transform each constraint into a quadratic penalty, preserving problem "
-"fidelity."
-msgstr ""
-"**Codificación de penalización**: En lugar de descartar la estructura de "
-"restricciones, cada restricción se transforma en una penalización "
-"cuadrática, preservando la fidelidad del problema."
-
-#: ../../modules/core/core.rst:511
-msgid ""
-"**Direct mapping**: Once in QUBO form, you can directly translate the "
-"problem to Ising/Hamiltonian terms for hardware execution."
-msgstr ""
-"**Mapeo directo**: Una vez en forma QUBO, puede traducir directamente el "
-"problema a términos Ising/Hamiltoniano para su ejecución en hardware."
-
-#: ../../modules/core/core.rst:514
-msgid "Defining a QUBO"
-msgstr "Definición de un QUBO"
-
-#: ../../modules/core/core.rst:516
-msgid "**Model creation**"
-msgstr "**Creación del modelo**"
-
-#: ../../modules/core/core.rst:534
-msgid ""
-"If **transform_to_qubo=True**, your constraint **must be linear** (no "
-"quadratic terms), because it will be rewritten as (lhs-rhs)^2."
-msgstr ""
-"Si **transform_to_qubo=True**, la restricción **debe ser lineal** (sin "
-"términos cuadráticos), ya que se reescribirá como (lhs-rhs)^2."
-
-#: ../../modules/core/core.rst:535
-msgid ""
-"If **transform_to_qubo=False**, you assume the constraint is already a "
-"valid quadratic penalty, and it will be added verbatim."
-msgstr ""
-"Si **transform_to_qubo=False**, se asume que la restricción ya es una "
-"penalización cuadrática válida y se añadirá tal cual."
-
-#: ../../modules/core/core.rst:538
-msgid "Example: Slack Penalization"
-msgstr "Ejemplo: Penalización por Holgura"
-
-#: ../../modules/core/core.rst:554 ../../modules/core/core.rst:577
-msgid "**Output**::"
-msgstr "**Salida**::"
-
-#: ../../modules/core/core.rst:561
-msgid "Example: Unbalanced Penalization"
-msgstr "Ejemplo: Penalización No Balanceada"
-
-#: ../../modules/core/core.rst:582
-msgid ""
-"Montañez-Barrera, Jhon Alejandro, et al. \"Unbalanced penalization: A new"
-" approach to encode inequality constraints of combinatorial problems for "
-"quantum optimization algorithms.\" Quantum Science and Technology 9.2 "
-"(2024): 025022."
-msgstr ""
-"Montañez-Barrera, Jhon Alejandro, et al. \"Unbalanced penalization: A new"
-" approach to encode inequality constraints of combinatorial problems for "
-"quantum optimization algorithms.\" Quantum Science and Technology 9.2 "
-"(2024): 025022."
-
-#: ../../modules/core/core.rst:585
-msgid "Interoperability"
-msgstr "Interoperabilidad"
-
-#: ../../modules/core/core.rst:587
-msgid "**Convert any Model to QUBO**"
-msgstr "**Convertir cualquier Modelo a QUBO**"
-
-#: ../../modules/core/core.rst:588
-msgid ""
-"If you have a generic :class:`~qilisdk.core.model.Model` with only "
-"linear/quadratic terms, you can automatically produce a QUBO:"
-msgstr ""
-"Si tiene un :class:`~qilisdk.core.model.Model` genérico con únicamente "
-"términos lineales/cuadráticos, puede producir un QUBO automáticamente:"
-
-#: ../../modules/core/core.rst:594
-msgid "**Export to Hamiltonian**"
-msgstr "**Exportar a Hamiltoniano**"
-
-#: ../../modules/core/core.rst:595
-msgid ""
-"Once in QUBO form, translate directly into an analog Ising "
-":class:`~qilisdk.core.hamiltonian.Hamiltonian` for simulation or "
-"hardware:"
-msgstr ""
-"Una vez en forma QUBO, traduzca directamente a un "
-":class:`~qilisdk.core.hamiltonian.Hamiltonian` Ising analógico para "
-"simulación o hardware:"
-
-#: ../../modules/core/core.rst:602
-msgid "QTensor"
-msgstr "QTensor"
-
-#: ../../modules/core/core.rst:604
-msgid ""
-"The :mod:`~qilisdk.core.qtensor` module defines the "
-":class:`~qilisdk.core.qtensor.QTensor` class and related helpers for "
-"representing and manipulating quantum states and operators in sparse "
-"form."
-msgstr ""
-"El módulo :mod:`~qilisdk.core.qtensor` define la clase "
-":class:`~qilisdk.core.qtensor.QTensor` y ayudantes relacionados para "
-"representar y manipular estados cuánticos y operadores en forma dispersa."
-
-#: ../../modules/core/core.rst:608
-msgid ""
-"The :class:`~qilisdk.core.qtensor.QTensor` wraps a dense NumPy array or "
-"SciPy sparse matrix into a CSR-format sparse matrix, and can represent:"
-msgstr ""
-"El :class:`~qilisdk.core.qtensor.QTensor` envuelve un array denso de "
-"NumPy o una matriz dispersa de SciPy en una matriz dispersa en formato "
-"CSR, y puede representar:"
-
-#: ../../modules/core/core.rst:610
-msgid "**Kets** (column vectors of shape ``(2**N, 1)``)"
-msgstr "**Kets** (vectores columna de forma ``(2**N, 1)``)"
-
-#: ../../modules/core/core.rst:611
-msgid "**Bras** (row vectors of shape ``(1, 2**N)``)"
-msgstr "**Bras** (vectores fila de forma ``(1, 2**N)``)"
-
-#: ../../modules/core/core.rst:612
-msgid ""
-"**Operators / Density Matrices** (square matrices of shape ``(2**N, "
-"2**N)``)"
-msgstr ""
-"**Operadores / Matrices de Densidad** (matrices cuadradas de forma "
-"``(2**N, 2**N)``)"
-
-#: ../../modules/core/core.rst:613
-msgid "**Scalars** (``(1, 1)`` matrices)"
-msgstr "**Escalares** (matrices ``(1, 1)``)"
-
-#: ../../modules/core/core.rst:615
-msgid "Examples of creating various quantum objects:"
-msgstr "Ejemplos de creación de diversos objetos cuánticos:"
-
-#: ../../modules/core/core.rst:641 ../../modules/core/core.rst:687
-#: ../../modules/core/core.rst:774 ../../modules/core/core.rst:824
-msgid "**Output**"
-msgstr "**Salida**"
-
-#: ../../modules/core/core.rst:657
-msgid "Helper constructors"
-msgstr "Constructores auxiliares"
-
-#: ../../modules/core/core.rst:659
-msgid "There are also several constructors for common quantum objects:"
-msgstr "También existen varios constructores para objetos cuánticos comunes:"
-
-#: ../../modules/core/core.rst:661
-msgid ":func:`~qilisdk.core.qtensor.ket` for computational basis kets"
-msgstr ":func:`~qilisdk.core.qtensor.ket` para kets de la base computacional"
-
-#: ../../modules/core/core.rst:662
-msgid ":func:`~qilisdk.core.qtensor.bra` for computational basis bras"
-msgstr ":func:`~qilisdk.core.qtensor.bra` para bras de la base computacional"
-
-#: ../../modules/core/core.rst:663
-msgid ""
-":func:`~qilisdk.core.qtensor.basis_state` for N-dimensional basis states "
-"with a single 1 at the specified index"
-msgstr ""
-":func:`~qilisdk.core.qtensor.basis_state` para estados de base de "
-"dimensión N con un único 1 en el índice especificado"
-
-#: ../../modules/core/core.rst:664
-msgid ""
-":func:`~qilisdk.core.qtensor.identity` for identity operators of "
-"specified dimension"
-msgstr ""
-":func:`~qilisdk.core.qtensor.identity` para operadores identidad de "
-"dimensión especificada"
-
-#: ../../modules/core/core.rst:665
-msgid ""
-":func:`~qilisdk.core.qtensor.zero` for generating zero tensors of "
-"specified dimension"
-msgstr ""
-":func:`~qilisdk.core.qtensor.zero` para generar tensores cero de "
-"dimensión especificada"
-
-#: ../../modules/core/core.rst:666
-msgid ""
-":func:`~qilisdk.core.qtensor.ghz` for generating GHZ states of specified "
-"number of qubits"
-msgstr ""
-":func:`~qilisdk.core.qtensor.ghz` para generar estados GHZ con el número "
-"de cúbits especificado"
-
-#: ../../modules/core/core.rst:667
-#, fuzzy
-msgid ""
-":func:`~qilisdk.core.qtensor.uniform` for generating uniform "
-"superposition states of specified number of qubits"
-msgstr ""
-":func:`~qilisdk.core.qtensor.ghz` para generar estados GHZ con el número "
-"de cúbits especificado"
-
-#: ../../modules/core/core.rst:706
-msgid "Quantum Object Properties & Operations"
-msgstr "Propiedades y Operaciones de Objetos Cuánticos"
-
-#: ../../modules/core/core.rst:708
-msgid "All data are stored sparsely, but you can retrieve dense or sparse views:"
-msgstr ""
-"Todos los datos se almacenan de forma dispersa, pero puede obtener vistas"
-" densas o dispersas:"
-
-#: ../../modules/core/core.rst:710
-msgid ""
-":attr:`.data<qilisdk.core.qtensor.QTensor.data>`: get the underlying "
-"sparse matrix (SciPy CSR format)"
-msgstr ""
-":attr:`.data<qilisdk.core.qtensor.QTensor.data>`: obtiene la matriz "
-"dispersa subyacente (formato SciPy CSR)"
-
-#: ../../modules/core/core.rst:711
-msgid ""
-":meth:`.dense()<qilisdk.core.qtensor.QTensor.dense>`: convert to a dense "
-"NumPy array (use with caution for large tensors)"
-msgstr ""
-":meth:`.dense()<qilisdk.core.qtensor.QTensor.dense>`: convierte a un "
-"array denso de NumPy (usar con precaución para tensores grandes)"
-
-#: ../../modules/core/core.rst:712
-msgid "or directly accessing elements by value with ``qtensor[i, j]``"
-msgstr "o accediendo directamente a los elementos por valor con ``qtensor[i, j]``"
-
-#: ../../modules/core/core.rst:714
-msgid "Common matrix operations are also available:"
-msgstr "También están disponibles operaciones matriciales comunes:"
-
-#: ../../modules/core/core.rst:716
-msgid ""
-":meth:`.adjoint()<qilisdk.core.qtensor.QTensor.adjoint>`: conjugate "
-"transpose"
-msgstr ""
-":meth:`.adjoint()<qilisdk.core.qtensor.QTensor.adjoint>`: traspuesta "
-"conjugada"
-
-#: ../../modules/core/core.rst:717
-msgid ""
-":meth:`.conjugate()<qilisdk.core.qtensor.QTensor.conjugate>`: element-"
-"wise complex conjugate"
-msgstr ""
-":meth:`.conjugate()<qilisdk.core.qtensor.QTensor.conjugate>`: conjugado "
-"complejo elemento a elemento"
-
-#: ../../modules/core/core.rst:718
-msgid ""
-":meth:`.transpose()<qilisdk.core.qtensor.QTensor.transpose>`: matrix "
-"transpose"
-msgstr ""
-":meth:`.transpose()<qilisdk.core.qtensor.QTensor.transpose>`: traspuesta "
-"de la matriz"
-
-#: ../../modules/core/core.rst:719
-msgid ":meth:`.exp()<qilisdk.core.qtensor.QTensor.exp>`: matrix exponential"
-msgstr ":meth:`.exp()<qilisdk.core.qtensor.QTensor.exp>`: exponencial de la matriz"
-
-#: ../../modules/core/core.rst:720
-msgid ":meth:`.log()<qilisdk.core.qtensor.QTensor.log>`: matrix logarithm"
-msgstr ":meth:`.log()<qilisdk.core.qtensor.QTensor.log>`: logaritmo de la matriz"
-
-#: ../../modules/core/core.rst:721
-msgid ":meth:`.sqrt()<qilisdk.core.qtensor.QTensor.sqrt>`: matrix square root"
-msgstr ""
-":meth:`.sqrt()<qilisdk.core.qtensor.QTensor.sqrt>`: raíz cuadrada de la "
-"matriz"
-
-#: ../../modules/core/core.rst:722
-msgid ""
-":meth:`.rank()<qilisdk.core.qtensor.QTensor.rank>`: compute the rank of "
-"the operator"
-msgstr ""
-":meth:`.rank()<qilisdk.core.qtensor.QTensor.rank>`: calcula el rango del "
-"operador"
-
-#: ../../modules/core/core.rst:723
-msgid ":meth:`.pow(exponent)<qilisdk.core.qtensor.QTensor.pow>`: matrix power"
-msgstr ""
-":meth:`.pow(exponent)<qilisdk.core.qtensor.QTensor.pow>`: potencia de la "
-"matriz"
-
-#: ../../modules/core/core.rst:724
-msgid ""
-":meth:`.norm(order=\"l2\")<qilisdk.core.qtensor.QTensor.norm>`: vector or"
-" matrix norm"
-msgstr ""
-":meth:`.norm(order=\"l2\")<qilisdk.core.qtensor.QTensor.norm>`: norma "
-"vectorial o matricial"
-
-#: ../../modules/core/core.rst:725
-msgid ""
-":meth:`.normalized(order='l2')<qilisdk.core.qtensor.QTensor.normalized>`:"
-" normalize to unit norm"
-msgstr ""
-":meth:`.normalized(order='l2')<qilisdk.core.qtensor.QTensor.normalized>`:"
-" normalizar a norma unitaria"
-
-#: ../../modules/core/core.rst:726
-msgid ""
-":meth:`.eig()<qilisdk.core.qtensor.QTensor.eig>`: get the eigenvalues and"
-" eigenvectors"
-msgstr ""
-":meth:`.eig()<qilisdk.core.qtensor.QTensor.eig>`: obtiene los valores "
-"propios y vectores propios"
-
-#: ../../modules/core/core.rst:727
-msgid ""
-":meth:`.trace()<qilisdk.core.qtensor.QTensor.trace>`: compute the trace "
-"of an operator"
-msgstr ""
-":meth:`.trace()<qilisdk.core.qtensor.QTensor.trace>`: calcula la traza de"
-" un operador"
-
-#: ../../modules/core/core.rst:728
-msgid ""
-":meth:`.dot(other)<qilisdk.core.qtensor.QTensor.dot>`: Frobenius inner "
-"product with another QTensor"
-msgstr ""
-":meth:`.dot(other)<qilisdk.core.qtensor.QTensor.dot>`: producto interno "
-"de Frobenius con otro QTensor"
-
-#: ../../modules/core/core.rst:730
-msgid "As well as some quantum-specific transformations:"
-msgstr "Así como algunas transformaciones específicas de la cuántica:"
-
-#: ../../modules/core/core.rst:732
-msgid ""
-":meth:`.entropy_von_neumann()<qilisdk.core.qtensor.QTensor.entropy_von_neumann>`:"
-" compute the von Neumann entropy of a density matrix"
-msgstr ""
-":meth:`.entropy_von_neumann()<qilisdk.core.qtensor.QTensor.entropy_von_neumann>`:"
-" calcula la entropía de von Neumann de una matriz de densidad"
-
-#: ../../modules/core/core.rst:733
-msgid ""
-":meth:`.entropy_renyi(alpha)<qilisdk.core.qtensor.QTensor.entropy_renyi>`:"
-" compute the Rényi entropy of a density matrix for a given order alpha"
-msgstr ""
-":meth:`.entropy_renyi(alpha)<qilisdk.core.qtensor.QTensor.entropy_renyi>`:"
-" calcula la entropía de Rényi de una matriz de densidad para un orden "
-"alpha dado"
-
-#: ../../modules/core/core.rst:734
-msgid ""
-":meth:`.commutator(other)<qilisdk.core.qtensor.QTensor.commutator>`: "
-"compute the commutator with another operator"
-msgstr ""
-":meth:`.commutator(other)<qilisdk.core.qtensor.QTensor.commutator>`: "
-"calcula el conmutador con otro operador"
-
-#: ../../modules/core/core.rst:735
-msgid ""
-":meth:`.anticommutator(other)<qilisdk.core.qtensor.QTensor.anticommutator>`:"
-" compute the anticommutator with another operator"
-msgstr ""
-":meth:`.anticommutator(other)<qilisdk.core.qtensor.QTensor.anticommutator>`:"
-" calcula el anticonmutador con otro operador"
-
-#: ../../modules/core/core.rst:736
-msgid ""
-":meth:`.fidelity(other)<qilisdk.core.qtensor.QTensor.fidelity>`: compute "
-"the fidelity between two quantum states"
-msgstr ""
-":meth:`.fidelity(other)<qilisdk.core.qtensor.QTensor.fidelity>`: calcula "
-"la fidelidad entre dos estados cuánticos"
-
-#: ../../modules/core/core.rst:737
-msgid ""
-":meth:`.probabilities()<qilisdk.core.qtensor.QTensor.probabilities>`: "
-"compute the probability distribution of each state in the computational "
-"basis"
-msgstr ""
-":meth:`.probabilities()<qilisdk.core.qtensor.QTensor.probabilities>`: "
-"calcula la distribución de probabilidad de cada estado en la base "
-"computacional"
-
-#: ../../modules/core/core.rst:738
-msgid ""
-":meth:`.partial_trace(keep)<qilisdk.core.qtensor.QTensor.ptrace>`: "
-"partial trace"
-msgstr ""
-":meth:`.partial_trace(keep)<qilisdk.core.qtensor.QTensor.ptrace>`: traza "
-"parcial"
-
-#: ../../modules/core/core.rst:739
-msgid ""
-":meth:`.reset_qubits(qubits)<qilisdk.core.qtensor.QTensor.reset_qubits>`:"
-" reset specified qubits to 0"
-msgstr ""
-":meth:`.reset_qubits(qubits)<qilisdk.core.qtensor.QTensor.reset_qubits>`:"
-" reinicia los cúbits especificados a 0"
-
-#: ../../modules/core/core.rst:740
-msgid ":meth:`.dagger()<qilisdk.core.qtensor.QTensor.dagger>`: alias for adjoint"
-msgstr ":meth:`.dagger()<qilisdk.core.qtensor.QTensor.dagger>`: alias de adjoint"
-
-#: ../../modules/core/core.rst:742
-msgid "Examples:"
-msgstr "Ejemplos:"
-
-#: ../../modules/core/core.rst:801
-msgid "Extra Utilities"
-msgstr "Utilidades Adicionales"
-
-#: ../../modules/core/core.rst:803
-msgid "**Tensor product** with :func:`~qilisdk.core.qtensor.tensor_prod`"
-msgstr "**Producto tensorial** con :func:`~qilisdk.core.qtensor.tensor_prod`"
-
-#: ../../modules/core/core.rst:804
-msgid "**Expectation value** with :func:`~qilisdk.core.qtensor.expect_val`"
-msgstr "**Valor esperado** con :func:`~qilisdk.core.qtensor.expect_val`"
-
-#: ../../modules/core/core.rst:836
-msgid "Visualization of Quantum States"
-msgstr "Visualización de Estados Cuánticos"
-
-#: ../../modules/core/core.rst:838
-msgid ""
-"You can also visualize single-qubit states on the Bloch sphere using "
-":meth:`.draw()<qilisdk.core.qtensor.QTensor.draw>`:"
-msgstr ""
-"También puede visualizar estados de un solo cúbit en la esfera de Bloch "
-"usando :meth:`.draw()<qilisdk.core.qtensor.QTensor.draw>`:"
-
-#: ../../modules/core/core.rst:847
-msgid ""
-"The appearance of this plot can be customized using a "
-":class:`~qilisdk.utils.visualization.style.QTensorStyle` object, which "
-"allows you to set colors, point density, and other visual elements:"
-msgstr ""
-"La apariencia de esta gráfica puede personalizarse mediante un objeto "
-":class:`~qilisdk.utils.visualization.style.QTensorStyle`, que permite "
-"establecer colores, densidad de puntos y otros elementos visuales:"
+#~ msgid ""
+#~ "The :mod:`qilisdk.core` layer underpins both"
+#~ " the digital and analog stacks. It"
+#~ " provides symbolic variables, optimization "
+#~ "models, sparse quantum tensors, and the"
+#~ " :mod:`~qilisdk.core.parameterizable.Parameterizable` mixin"
+#~ " used throughout the SDK."
+#~ msgstr ""
+#~ "La capa :mod:`qilisdk.core` sustenta tanto "
+#~ "las pilas digital como analógica. "
+#~ "Proporciona variables simbólicas, modelos de"
+#~ " optimización, tensores cuánticos dispersos "
+#~ "y el mixin "
+#~ ":mod:`~qilisdk.core.parameterizable.Parameterizable` utilizado"
+#~ " en todo el SDK."
+
+#~ msgid "Highlights:"
+#~ msgstr "Aspectos destacados:"
+
+#~ msgid ""
+#~ ":mod:`~qilisdk.core.variables` supplies binary, "
+#~ "spin, continuous, and parameter variables "
+#~ "plus algebraic helpers "
+#~ "(:class:`~qilisdk.core.variables.Term`, comparison "
+#~ "factories, encodings)."
+#~ msgstr ""
+#~ ":mod:`~qilisdk.core.variables` proporciona variables "
+#~ "binarias, de espín, continuas y de "
+#~ "parámetro, junto con ayudantes algebraicos "
+#~ "(:class:`~qilisdk.core.variables.Term`, fábricas de "
+#~ "comparación, codificaciones)."
+
+#~ msgid ""
+#~ ":mod:`~qilisdk.core.model` builds constrained "
+#~ "optimization programs and offers tools "
+#~ "to automatically convert the model to"
+#~ " :class:`~qilisdk.core.model.QUBO` format if the"
+#~ " constraints are linear."
+#~ msgstr ""
+#~ ":mod:`~qilisdk.core.model` construye programas de"
+#~ " optimización con restricciones y ofrece"
+#~ " herramientas para convertir automáticamente "
+#~ "el modelo al formato "
+#~ ":class:`~qilisdk.core.model.QUBO` si las "
+#~ "restricciones son lineales."
+
+#~ msgid ""
+#~ ":mod:`~qilisdk.core.qtensor` manages sparse quantum"
+#~ " objects and utilities such as "
+#~ ":func:`~qilisdk.core.qtensor.tensor_prod` and "
+#~ ":func:`~qilisdk.core.qtensor.expect_val`."
+#~ msgstr ""
+#~ ":mod:`~qilisdk.core.qtensor` gestiona objetos "
+#~ "cuánticos dispersos y utilidades como "
+#~ ":func:`~qilisdk.core.qtensor.tensor_prod` y "
+#~ ":func:`~qilisdk.core.qtensor.expect_val`."
+
+#~ msgid ""
+#~ ":mod:`~qilisdk.core.parameterizable.Parameterizable` "
+#~ "standardizes how objects expose symbolic "
+#~ "parameters (shared by circuits, schedules, "
+#~ "etc.)."
+#~ msgstr ""
+#~ ":mod:`~qilisdk.core.parameterizable.Parameterizable` estandariza"
+#~ " la forma en que los objetos "
+#~ "exponen parámetros simbólicos (compartidos por"
+#~ " circuitos, esquemas, etc.)."
+
+#~ msgid "Variables"
+#~ msgstr "Variables"
+
+#~ msgid "This module offers tools to define different types of variables:"
+#~ msgstr ""
+#~ "Este módulo ofrece herramientas para "
+#~ "definir diferentes tipos de variables:"
+
+#~ msgid "**Binary Variables** (:class:`~qilisdk.core.variables.BinaryVariable`)"
+#~ msgstr ""
+#~ "**Variables Binarias** "
+#~ "(:class:`~qilisdk.core.variables.BinaryVariable`)"
+
+#~ msgid "**Spin Variables** (:class:`~qilisdk.core.variables.SpinVariable`)"
+#~ msgstr "**Variables de Espín** (:class:`~qilisdk.core.variables.SpinVariable`)"
+
+#~ msgid ""
+#~ "**Continuous Variables** "
+#~ "(:class:`~qilisdk.core.variables.Variable`) with the "
+#~ "following customizable parameters:"
+#~ msgstr ""
+#~ "**Variables Continuas** "
+#~ "(:class:`~qilisdk.core.variables.Variable`) con los "
+#~ "siguientes parámetros personalizables:"
+
+#~ msgid ""
+#~ "**Domain** (:class:`~qilisdk.core.variables.Domain`): "
+#~ "Specifies the variable type:"
+#~ msgstr ""
+#~ "**Dominio** (:class:`~qilisdk.core.variables.Domain`): "
+#~ "Especifica el tipo de variable:"
+
+#~ msgid ":class:`~qilisdk.core.variables.Domain.REAL`"
+#~ msgstr ":class:`~qilisdk.core.variables.Domain.REAL`"
+
+#~ msgid ":class:`~qilisdk.core.variables.Domain.INTEGER`"
+#~ msgstr ":class:`~qilisdk.core.variables.Domain.INTEGER`"
+
+#~ msgid ":class:`~qilisdk.core.variables.Domain.POSITIVE_INTEGER`"
+#~ msgstr ":class:`~qilisdk.core.variables.Domain.POSITIVE_INTEGER`"
+
+#~ msgid ":class:`~qilisdk.core.variables.Domain.BINARY`"
+#~ msgstr ":class:`~qilisdk.core.variables.Domain.BINARY`"
+
+#~ msgid ":class:`~qilisdk.core.variables.Domain.SPIN`"
+#~ msgstr ":class:`~qilisdk.core.variables.Domain.SPIN`"
+
+#~ msgid "**Bounds**: Defines the allowed value range of the variable."
+#~ msgstr "**Cotas**: Define el rango de valores permitidos de la variable."
+
+#~ msgid ""
+#~ "**Encoding** (:class:`~qilisdk.core.variables.Encoding`): "
+#~ "Specifies how the variable is "
+#~ "represented using binary encodings:"
+#~ msgstr ""
+#~ "**Codificación** (:class:`~qilisdk.core.variables.Encoding`):"
+#~ " Especifica cómo se representa la "
+#~ "variable mediante codificaciones binarias:"
+
+#~ msgid "Bit-wise encoding (:class:`~qilisdk.core.variables.Bitwise`)"
+#~ msgstr "Codificación bit a bit (:class:`~qilisdk.core.variables.Bitwise`)"
+
+#~ msgid "Domain wall encoding (:class:`~qilisdk.core.variables.DomainWall`)"
+#~ msgstr ""
+#~ "Codificación de pared de dominio "
+#~ "(:class:`~qilisdk.core.variables.DomainWall`)"
+
+#~ msgid "One-hot encoding (:class:`~qilisdk.core.variables.OneHot`)"
+#~ msgstr "Codificación one-hot (:class:`~qilisdk.core.variables.OneHot`)"
+
+#~ msgid ""
+#~ "**Precision**: Applicable to ``REAL`` domain;"
+#~ " defines the resolution (e.g., floating-"
+#~ "point precision)."
+#~ msgstr ""
+#~ "**Precisión**: Aplicable al dominio ``REAL``;"
+#~ " define la resolución (p. ej., "
+#~ "precisión de punto flotante)."
+
+#~ msgid "An example of creating different types of variables:"
+#~ msgstr "Un ejemplo de creación de diferentes tipos de variables:"
+
+#~ msgid ""
+#~ "Continuous variables support indexing, where"
+#~ " each index refers to a component "
+#~ "of the binary-encoded form of the"
+#~ " variable. For example:"
+#~ msgstr ""
+#~ "Las variables continuas admiten indexación,"
+#~ " donde cada índice hace referencia a"
+#~ " un componente de la forma codificada"
+#~ " en binario de la variable. Por "
+#~ "ejemplo:"
+
+#~ msgid "**Output**:"
+#~ msgstr "**Salida**:"
+
+#~ msgid ""
+#~ "To index the first binary variable "
+#~ "from the binary representation of x "
+#~ "you can write: ``x[0]``. Each binary "
+#~ "variable configuration generates a float "
+#~ "within the bounds, based on the "
+#~ "defined precision. For instance:"
+#~ msgstr ""
+#~ "Para indexar la primera variable binaria"
+#~ " de la representación binaria de x"
+#~ " puede escribir: ``x[0]``. Cada "
+#~ "configuración de variable binaria genera "
+#~ "un número en coma flotante dentro "
+#~ "de las cotas, basado en la "
+#~ "precisión definida. Por ejemplo:"
+
+#~ msgid "Terms"
+#~ msgstr "Términos"
+
+#~ msgid ""
+#~ ":class:`Variables<qilisdk.core.variables.Variable>` can be"
+#~ " combined algebraically to form expressions"
+#~ " known as :class:`Terms<qilisdk.core.variables.Term>`."
+#~ " For example:"
+#~ msgstr ""
+#~ "Las :class:`Variables<qilisdk.core.variables.Variable>` "
+#~ "pueden combinarse algebraicamente para formar"
+#~ " expresiones conocidas como "
+#~ ":class:`Términos<qilisdk.core.variables.Term>`. Por "
+#~ "ejemplo:"
+
+#~ msgid "Terms can be evaluated by providing values for the involved variables:"
+#~ msgstr ""
+#~ "Los términos pueden evaluarse proporcionando"
+#~ " valores para las variables involucradas:"
+
+#~ msgid ""
+#~ "To evaluate a term, all participating"
+#~ " variables must be assigned valid "
+#~ "values within their respective domains "
+#~ "and bounds."
+#~ msgstr ""
+#~ "Para evaluar un término, todas las "
+#~ "variables participantes deben tener asignados"
+#~ " valores válidos dentro de sus "
+#~ "respectivos dominios y cotas."
+
+#~ msgid "Parameters and Parameterizable Objects"
+#~ msgstr "Parámetros y Objetos Parametrizables"
+
+#~ msgid ""
+#~ "Many components in QiliSDK expose "
+#~ "symbolic parameters that can be "
+#~ "optimized or re-bound at runtime. "
+#~ "The :class:`~qilisdk.core.variables.Parameter` class "
+#~ "represents a scalar symbol with optional"
+#~ " bounds, and "
+#~ ":class:`~qilisdk.core.parameterizable.Parameterizable` provides"
+#~ " a uniform API "
+#~ "(:meth:`~qilisdk.core.parameterizable.Parameterizable.get_parameter_names`,"
+#~ " "
+#~ ":meth:`~qilisdk.core.parameterizable.Parameterizable.set_parameter_values`…)"
+#~ " implemented by circuits, schedules, "
+#~ "models, and more."
+#~ msgstr ""
+#~ "Muchos componentes de QiliSDK exponen "
+#~ "parámetros simbólicos que pueden optimizarse"
+#~ " o reasignarse en tiempo de "
+#~ "ejecución. La clase "
+#~ ":class:`~qilisdk.core.variables.Parameter` representa un"
+#~ " símbolo escalar con cotas opcionales, "
+#~ "y :class:`~qilisdk.core.parameterizable.Parameterizable` "
+#~ "proporciona una API uniforme "
+#~ "(:meth:`~qilisdk.core.parameterizable.Parameterizable.get_parameter_names`,"
+#~ " "
+#~ ":meth:`~qilisdk.core.parameterizable.Parameterizable.set_parameter_values`…)"
+#~ " implementada por circuitos, esquemas, "
+#~ "modelos y más."
+
+#~ msgid ""
+#~ "Parameters behave like symbolic variables "
+#~ "in algebraic expressions, so you can "
+#~ "combine them with other variables and"
+#~ " evaluate terms without having to "
+#~ "pass the parameter explicitly - its "
+#~ "stored ``value`` is used automatically."
+#~ msgstr ""
+#~ "Los parámetros se comportan como "
+#~ "variables simbólicas en expresiones "
+#~ "algebraicas, por lo que puede "
+#~ "combinarlos con otras variables y "
+#~ "evaluar términos sin necesidad de pasar"
+#~ " el parámetro explícitamente; su ``value``"
+#~ " almacenado se usa automáticamente."
+
+#~ msgid ""
+#~ "Objects that inherit from "
+#~ ":class:`~qilisdk.core.parameterizable.Parameterizable` collect"
+#~ " all the :class:`~qilisdk.core.variables.Parameter` "
+#~ "instances they encounter. For example:"
+#~ msgstr ""
+#~ "Los objetos que heredan de "
+#~ ":class:`~qilisdk.core.parameterizable.Parameterizable` recopilan"
+#~ " todas las instancias de "
+#~ ":class:`~qilisdk.core.variables.Parameter` que encuentran."
+#~ " Por ejemplo:"
+
+#~ msgid ""
+#~ "All parameter helper methods accept an"
+#~ " optional ``where`` predicate to filter "
+#~ "the exposed parameters. This is useful"
+#~ " when you want to update only a"
+#~ " subset, such as trainable parameters."
+#~ msgstr ""
+#~ "Todos los métodos auxiliares de "
+#~ "parámetros aceptan un predicado ``where`` "
+#~ "opcional para filtrar los parámetros "
+#~ "expuestos. Esto es útil cuando se "
+#~ "desea actualizar únicamente un subconjunto,"
+#~ " como los parámetros entrenables."
+
+#~ msgid ""
+#~ "Parameterizable objects expose parameter state"
+#~ " through "
+#~ ":meth:`~qilisdk.core.parameterizable.Parameterizable.get_parameters`,"
+#~ " "
+#~ ":meth:`~qilisdk.core.parameterizable.Parameterizable.get_parameter_names`,"
+#~ " "
+#~ ":meth:`~qilisdk.core.parameterizable.Parameterizable.get_parameter_values`,"
+#~ " and the corresponding ``set_*`` methods."
+#~ " Accessing ``.parameters`` directly is not"
+#~ " part of the public API."
+#~ msgstr ""
+#~ "Los objetos parametrizables exponen el "
+#~ "estado de los parámetros a través "
+#~ "de "
+#~ ":meth:`~qilisdk.core.parameterizable.Parameterizable.get_parameters`,"
+#~ " "
+#~ ":meth:`~qilisdk.core.parameterizable.Parameterizable.get_parameter_names`,"
+#~ " "
+#~ ":meth:`~qilisdk.core.parameterizable.Parameterizable.get_parameter_values`,"
+#~ " y los métodos ``set_*`` correspondientes."
+#~ " Acceder a ``.parameters`` directamente no"
+#~ " forma parte de la API pública."
+
+#~ msgid "Mathematical Maps (sin, cos)"
+#~ msgstr "Mapas Matemáticos (sin, cos)"
+
+#~ msgid ""
+#~ "Use :class:`~qilisdk.core.variables.MathematicalMap` "
+#~ "helpers to apply common functions to "
+#~ "a parameter or term while keeping "
+#~ "expressions symbolic. :class:`~qilisdk.core.variables.Sin`"
+#~ " and :class:`~qilisdk.core.variables.Cos` wrap a"
+#~ " :class:`~qilisdk.core.variables.Parameter`, "
+#~ ":class:`~qilisdk.core.variables.Term`, or any other"
+#~ " base variable and defer evaluation "
+#~ "until values are provided."
+#~ msgstr ""
+#~ "Utilice los ayudantes "
+#~ ":class:`~qilisdk.core.variables.MathematicalMap` para "
+#~ "aplicar funciones comunes a un parámetro"
+#~ " o término manteniendo las expresiones "
+#~ "simbólicas. :class:`~qilisdk.core.variables.Sin` y "
+#~ ":class:`~qilisdk.core.variables.Cos` envuelven un "
+#~ ":class:`~qilisdk.core.variables.Parameter`, "
+#~ ":class:`~qilisdk.core.variables.Term`, o cualquier "
+#~ "otra variable base y difieren la "
+#~ "evaluación hasta que se proporcionen "
+#~ "valores."
+
+#~ msgid ""
+#~ "These maps compose naturally with other"
+#~ " terms, so you can include them "
+#~ "in constraints or objectives and rely"
+#~ " on the same evaluation and encoding"
+#~ " rules as other symbolic expressions."
+#~ msgstr ""
+#~ "Estos mapas se componen de forma "
+#~ "natural con otros términos, por lo "
+#~ "que puede incluirlos en restricciones u"
+#~ " objetivos y basarse en las mismas"
+#~ " reglas de evaluación y codificación "
+#~ "que otras expresiones simbólicas."
+
+#~ msgid "Comparison Terms"
+#~ msgstr "Términos de Comparación"
+
+#~ msgid ""
+#~ "Each :class:`~qilisdk.core.variables.ComparisonTerm` "
+#~ "defines a constraint using mathematical "
+#~ "comparisons. Use the following operators "
+#~ "to construct them:"
+#~ msgstr ""
+#~ "Cada :class:`~qilisdk.core.variables.ComparisonTerm` "
+#~ "define una restricción mediante comparaciones"
+#~ " matemáticas. Utilice los siguientes "
+#~ "operadores para construirlas:"
+
+#~ msgid "Comparison Operation"
+#~ msgstr "Operación de Comparación"
+
+#~ msgid "QiliSDK Method"
+#~ msgstr "Método de QiliSDK"
+
+#~ msgid "Alias"
+#~ msgstr "Alias"
+
+#~ msgid "Equality"
+#~ msgstr "Igualdad"
+
+#~ msgid ":meth:`Equal(lhs, rhs)<qilisdk.core.variables.Equal>`"
+#~ msgstr ":meth:`Equal(lhs, rhs)<qilisdk.core.variables.Equal>`"
+
+#~ msgid ":meth:`EQ(lhs, rhs)<qilisdk.core.variables.EQ>`"
+#~ msgstr ":meth:`EQ(lhs, rhs)<qilisdk.core.variables.EQ>`"
+
+#~ msgid "Not Equal"
+#~ msgstr "Distinto de"
+
+#~ msgid ":meth:`NotEqual(lhs, rhs)<qilisdk.core.variables.NotEqual>`"
+#~ msgstr ":meth:`NotEqual(lhs, rhs)<qilisdk.core.variables.NotEqual>`"
+
+#~ msgid ":meth:`NEQ(lhs, rhs)<qilisdk.core.variables.NEQ>`"
+#~ msgstr ":meth:`NEQ(lhs, rhs)<qilisdk.core.variables.NEQ>`"
+
+#~ msgid "Less Than"
+#~ msgstr "Menor que"
+
+#~ msgid ":meth:`LessThan(lhs, rhs)<qilisdk.core.variables.LessThan>`"
+#~ msgstr ":meth:`LessThan(lhs, rhs)<qilisdk.core.variables.LessThan>`"
+
+#~ msgid ":meth:`LT(lhs, rhs)<qilisdk.core.variables.LT>`"
+#~ msgstr ":meth:`LT(lhs, rhs)<qilisdk.core.variables.LT>`"
+
+#~ msgid "Less Than or Equal"
+#~ msgstr "Menor o igual que"
+
+#~ msgid ""
+#~ ":meth:`LessThanOrEqual(lhs, "
+#~ "rhs)<qilisdk.core.variables.LessThanOrEqual>`"
+#~ msgstr ""
+#~ ":meth:`LessThanOrEqual(lhs, "
+#~ "rhs)<qilisdk.core.variables.LessThanOrEqual>`"
+
+#~ msgid ":meth:`LEQ(lhs, rhs)<qilisdk.core.variables.LEQ>`"
+#~ msgstr ":meth:`LEQ(lhs, rhs)<qilisdk.core.variables.LEQ>`"
+
+#~ msgid "Greater Than"
+#~ msgstr "Mayor que"
+
+#~ msgid ":meth:`GreaterThan(lhs, rhs)<qilisdk.core.variables.GreaterThan>`"
+#~ msgstr ":meth:`GreaterThan(lhs, rhs)<qilisdk.core.variables.GreaterThan>`"
+
+#~ msgid ":meth:`GT(lhs, rhs)<qilisdk.core.variables.GT>`"
+#~ msgstr ":meth:`GT(lhs, rhs)<qilisdk.core.variables.GT>`"
+
+#~ msgid "Greater Than or Equal"
+#~ msgstr "Mayor o igual que"
+
+#~ msgid ""
+#~ ":meth:`GreaterThanOrEqual(lhs, "
+#~ "rhs)<qilisdk.core.variables.GreaterThanOrEqual>`"
+#~ msgstr ""
+#~ ":meth:`GreaterThanOrEqual(lhs, "
+#~ "rhs)<qilisdk.core.variables.GreaterThanOrEqual>`"
+
+#~ msgid ":meth:`GEQ(lhs, rhs)<qilisdk.core.variables.GEQ>`"
+#~ msgstr ":meth:`GEQ(lhs, rhs)<qilisdk.core.variables.GEQ>`"
+
+#~ msgid ""
+#~ "*Note*: `lhs` and `rhs` refer to "
+#~ "the left-hand side and right-hand"
+#~ " side expressions, respectively."
+#~ msgstr ""
+#~ "*Nota*: `lhs` y `rhs` hacen referencia"
+#~ " a las expresiones del lado izquierdo"
+#~ " y del lado derecho, respectivamente."
+
+#~ msgid "Example:"
+#~ msgstr "Ejemplo:"
+
+#~ msgid ""
+#~ "When a comparison term is created, "
+#~ "constants are automatically moved to the"
+#~ " right-hand side, and variable terms"
+#~ " to the left-hand side."
+#~ msgstr ""
+#~ "Cuando se crea un término de "
+#~ "comparación, las constantes se desplazan "
+#~ "automáticamente al lado derecho y los"
+#~ " términos de variable al lado "
+#~ "izquierdo."
+
+#~ msgid "Models"
+#~ msgstr "Modelos"
+
+#~ msgid ""
+#~ "This minimal example introduces a binary"
+#~ " optimization model, converts it to a"
+#~ " QUBO penalty form, and exports the"
+#~ " corresponding Hamiltonian:"
+#~ msgstr ""
+#~ "Este ejemplo mínimo presenta un modelo"
+#~ " de optimización binaria, lo convierte "
+#~ "a la forma de penalización QUBO y"
+#~ " exporta el Hamiltoniano correspondiente:"
+
+#~ msgid "Objectives and Constraints"
+#~ msgstr "Objetivos y Restricciones"
+
+#~ msgid "Each :class:`~qilisdk.core.model.Model` consists of:"
+#~ msgstr "Cada :class:`~qilisdk.core.model.Model` consta de:"
+
+#~ msgid "A single :class:`~qilisdk.core.model.Objective`"
+#~ msgstr "Un único :class:`~qilisdk.core.model.Objective`"
+
+#~ msgid "Zero or more :class:`~qilisdk.core.model.Constraint` instances"
+#~ msgstr "Cero o más instancias de :class:`~qilisdk.core.model.Constraint`"
+
+#~ msgid "**Objective**"
+#~ msgstr "**Objetivo**"
+
+#~ msgid ""
+#~ "The :class:`~qilisdk.core.model.Objective` defines "
+#~ "the function the model aims to "
+#~ "minimize or maximize. Example:"
+#~ msgstr ""
+#~ "El :class:`~qilisdk.core.model.Objective` define la"
+#~ " función que el modelo pretende "
+#~ "minimizar o maximizar. Ejemplo:"
+
+#~ msgid ""
+#~ "Encoding constraints are automatically added"
+#~ " for bounded continuous variables. Each "
+#~ "constraint has an associated Lagrange "
+#~ "multiplier, which determines the penalty "
+#~ "for violating it."
+#~ msgstr ""
+#~ "Las restricciones de codificación se "
+#~ "añaden automáticamente para variables "
+#~ "continuas acotadas. Cada restricción tiene "
+#~ "un multiplicador de Lagrange asociado, "
+#~ "que determina la penalización por "
+#~ "incumplirla."
+
+#~ msgid "You can update the multiplier like so:"
+#~ msgstr "Puede actualizar el multiplicador de la siguiente manera:"
+
+#~ msgid "**Constraints**"
+#~ msgstr "**Restricciones**"
+
+#~ msgid ""
+#~ "Additional :class:`Constraints<qilisdk.core.model.Constraint>`"
+#~ " can be added to restrict the "
+#~ "solution space:"
+#~ msgstr ""
+#~ "Se pueden añadir "
+#~ ":class:`Restricciones<qilisdk.core.model.Constraint>` "
+#~ "adicionales para acotar el espacio de"
+#~ " soluciones:"
+
+#~ msgid "Evaluating a Model"
+#~ msgstr "Evaluación de un Modelo"
+
+#~ msgid ""
+#~ "To evaluate a :class:`~qilisdk.core.model.Model`,"
+#~ " provide values for all involved "
+#~ "variables:"
+#~ msgstr ""
+#~ "Para evaluar un :class:`~qilisdk.core.model.Model`,"
+#~ " proporcione valores para todas las "
+#~ "variables involucradas:"
+
+#~ msgid ""
+#~ "The evaluation returns a dictionary with"
+#~ " values for the objective and "
+#~ "constraints. A constraint returns `0.0` "
+#~ "if satisfied, or its Lagrange multiplier"
+#~ " if violated."
+#~ msgstr ""
+#~ "La evaluación devuelve un diccionario "
+#~ "con valores para el objetivo y las"
+#~ " restricciones. Una restricción devuelve "
+#~ "`0.0` si se satisface, o su "
+#~ "multiplicador de Lagrange si se viola."
+
+#~ msgid "For example:"
+#~ msgstr "Por ejemplo:"
+
+#~ msgid "QUBO Models"
+#~ msgstr "Modelos QUBO"
+
+#~ msgid ""
+#~ "The :class:`~qilisdk.core.model.QUBO` subclass "
+#~ "specializes in **Quadratic Unconstrained "
+#~ "Binary Optimization** models, where every "
+#~ "decision variable is binary and the "
+#~ "objective function is at most quadratic."
+#~ " Unlike general models, “hard” constraints"
+#~ " are not maintained separately but "
+#~ "are encoded directly into the objective"
+#~ " as penalty terms. The strength of"
+#~ " each penalty is controlled by its"
+#~ " associated Lagrange multiplier."
+#~ msgstr ""
+#~ "La subclase :class:`~qilisdk.core.model.QUBO` se "
+#~ "especializa en modelos de **Optimización "
+#~ "Binaria Cuadrática Sin Restricciones**, donde"
+#~ " cada variable de decisión es binaria"
+#~ " y la función objetivo es como "
+#~ "máximo cuadrática. A diferencia de los"
+#~ " modelos generales, las restricciones "
+#~ "\"duras\" no se mantienen por separado,"
+#~ " sino que se codifican directamente "
+#~ "en el objetivo como términos de "
+#~ "penalización. La intensidad de cada "
+#~ "penalización está controlada por su "
+#~ "multiplicador de Lagrange asociado."
+
+#~ msgid ""
+#~ "The binary quadratic cost function that"
+#~ " defines a QUBO problem is written"
+#~ " as"
+#~ msgstr ""
+#~ "La función de coste cuadrática binaria"
+#~ " que define un problema QUBO se "
+#~ "escribe como"
+
+#~ msgid "f(x) = \\frac{1}{2} \\sum_{i=1}^{n} \\sum_{j=1}^{n} q_{ij} x_i x_j,"
+#~ msgstr "f(x) = \\frac{1}{2} \\sum_{i=1}^{n} \\sum_{j=1}^{n} q_{ij} x_i x_j,"
+
+#~ msgid ""
+#~ "with decision variables :math:`x_i \\in "
+#~ "\\{0, 1\\}` and symmetric coefficients "
+#~ ":math:`q_{ij} = q_{ji} \\in \\mathbb{R}`. "
+#~ "Separating the diagonal terms highlights "
+#~ "the effective linear weights:"
+#~ msgstr ""
+#~ "con variables de decisión :math:`x_i "
+#~ "\\in \\{0, 1\\}` y coeficientes "
+#~ "simétricos :math:`q_{ij} = q_{ji} \\in "
+#~ "\\mathbb{R}`. Separar los términos diagonales"
+#~ " pone de relieve los pesos lineales"
+#~ " efectivos:"
+
+#~ msgid ""
+#~ "f(x) = \\sum_{i=1}^{n-1} \\sum_{j>i} q_{ij}"
+#~ " x_i x_j + \\sum_{i=1}^{n} q_{ii} "
+#~ "x_i."
+#~ msgstr ""
+#~ "f(x) = \\sum_{i=1}^{n-1} \\sum_{j>i} q_{ij}"
+#~ " x_i x_j + \\sum_{i=1}^{n} q_{ii} "
+#~ "x_i."
+
+#~ msgid "Adding Constraints as Penalties"
+#~ msgstr "Añadir Restricciones como Penalizaciones"
+
+#~ msgid ""
+#~ "Since QUBO is unconstrained, every "
+#~ "constraint is converted into the "
+#~ "objective via a **penalty term**. Linear"
+#~ " equality constraints can be described "
+#~ "as,"
+#~ msgstr ""
+#~ "Dado que QUBO no tiene restricciones,"
+#~ " cada restricción se convierte en el"
+#~ " objetivo mediante un **término de "
+#~ "penalización**. Las restricciones de igualdad"
+#~ " lineales pueden describirse como,"
+
+#~ msgid "\\sum_{i=1}^{n} c_i x_i = C, \\quad c_i \\in \\mathbb{Z},"
+#~ msgstr "\\sum_{i=1}^{n} c_i x_i = C, \\quad c_i \\in \\mathbb{Z},"
+
+#~ msgid ""
+#~ "where :math:`c_i` are integer coefficients "
+#~ "and :math:`C` is an integer constant."
+#~ msgstr ""
+#~ "donde :math:`c_i` son coeficientes enteros "
+#~ "y :math:`C` es una constante entera."
+
+#~ msgid "Embedded as penalties, these constraints give the penalized objective"
+#~ msgstr ""
+#~ "Incorporadas como penalizaciones, estas "
+#~ "restricciones dan lugar al objetivo "
+#~ "penalizado"
+
+#~ msgid ""
+#~ "\\min_{x,\\,s} \\left(\n"
+#~ "    \\sum_{i=1}^{n-1} \\sum_{j>i} c_{ij} x_i x_j\n"
+#~ "    + \\sum_{i=1}^{n} h_i x_i\n"
+#~ "    + \\lambda_0 \\left( \\sum_{i=1}^{n} q_i x_i - C \\right)^{2}\n"
+#~ "\\right),"
+#~ msgstr ""
+#~ "\\min_{x,\\,s} \\left(\n"
+#~ "    \\sum_{i=1}^{n-1} \\sum_{j>i} c_{ij} x_i x_j\n"
+#~ "    + \\sum_{i=1}^{n} h_i x_i\n"
+#~ "    + \\lambda_0 \\left( \\sum_{i=1}^{n} q_i x_i - C \\right)^{2}\n"
+#~ "\\right),"
+
+#~ msgid "where :math:`\\lambda_0 > 0` is a penalty strength parameter."
+#~ msgstr ""
+#~ "donde :math:`\\lambda_0 > 0` es un "
+#~ "parámetro de intensidad de penalización."
+
+#~ msgid "Ineqaulity constraints can be defined as:"
+#~ msgstr "Las restricciones de desigualdad pueden definirse como:"
+
+#~ msgid "\\sum_{i=1}^{n} \\ell_i x_i \\leq B, \\quad \\ell_i \\in \\mathbb{Z}."
+#~ msgstr "\\sum_{i=1}^{n} \\ell_i x_i \\leq B, \\quad \\ell_i \\in \\mathbb{Z}."
+
+#~ msgid "To translate these into penalties, two strategies are supported:"
+#~ msgstr "Para convertirlas en penalizaciones, se admiten dos estrategias:"
+
+#~ msgid "**Slack penalization** (default):"
+#~ msgstr "**Penalización por holgura** (predeterminada):"
+
+#~ msgid ""
+#~ "Introduce additional binary slack variables"
+#~ " to turn inequalities into equalities, "
+#~ "then square the residual. Therefore, the"
+#~ " penalty term becomes:"
+#~ msgstr ""
+#~ "Introducir variables de holgura binarias "
+#~ "adicionales para convertir las desigualdades"
+#~ " en igualdades y luego elevar al "
+#~ "cuadrado el residual. Por tanto, el "
+#~ "término de penalización se convierte en:"
+
+#~ msgid ""
+#~ "\\lambda_1 \\left( B - \\sum_{i=1}^{n} "
+#~ "\\ell_i x_i - \\sum_{k=0}^{N-1} 2^{k} "
+#~ "s_k \\right)^{2}"
+#~ msgstr ""
+#~ "\\lambda_1 \\left( B - \\sum_{i=1}^{n} "
+#~ "\\ell_i x_i - \\sum_{k=0}^{N-1} 2^{k} "
+#~ "s_k \\right)^{2}"
+
+#~ msgid ""
+#~ "where :math:`s_k` are slack binary "
+#~ "variables introduced to encode the "
+#~ "inequality constraint (with the number "
+#~ "of bits :math:`N` chosen so that "
+#~ "their binary expansion spans the "
+#~ "admissible slack range) and "
+#~ ":math:`\\lambda_{1}` control the penalty "
+#~ "strength."
+#~ msgstr ""
+#~ "donde :math:`s_k` son variables binarias "
+#~ "de holgura introducidas para codificar "
+#~ "la restricción de desigualdad (con el"
+#~ " número de bits :math:`N` elegido de"
+#~ " modo que su expansión binaria "
+#~ "abarque el rango de holgura admisible)"
+#~ " y :math:`\\lambda_{1}` controla la "
+#~ "intensidad de la penalización."
+
+#~ msgid "**Unbalanced penalization**:"
+#~ msgstr "**Penalización no balanceada**:"
+
+#~ msgid ""
+#~ "Directly penalize violation without slack "
+#~ "variables using two weights (a, b) "
+#~ "to scale positive and negative "
+#~ "deviations differently [1]_. we define "
+#~ ":math:`h(x) = B - \\sum_{i=1}^{n} "
+#~ "\\ell_i x_i` as the signed residual "
+#~ "of the constraint, and the penalty "
+#~ "term becomes:"
+#~ msgstr ""
+#~ "Penalizar directamente la violación sin "
+#~ "variables de holgura utilizando dos "
+#~ "pesos (a, b) para escalar de forma"
+#~ " diferente las desviaciones positivas y "
+#~ "negativas [1]_. Definimos :math:`h(x) = "
+#~ "B - \\sum_{i=1}^{n} \\ell_i x_i` como"
+#~ " el residual con signo de la "
+#~ "restricción, y el término de "
+#~ "penalización se convierte en:"
+
+#~ msgid "- a h(x) + b h(x)^2,"
+#~ msgstr "- a h(x) + b h(x)^2,"
+
+#~ msgid ""
+#~ "where :math:`a, b > 0` are "
+#~ "parameters that control the penalty "
+#~ "strength for violations above and below"
+#~ " the bound, respectively."
+#~ msgstr ""
+#~ "donde :math:`a, b > 0` son "
+#~ "parámetros que controlan la intensidad "
+#~ "de la penalización para las violaciones"
+#~ " por encima y por debajo de la"
+#~ " cota, respectivamente."
+
+#~ msgid "Why QUBO?"
+#~ msgstr "¿Por qué QUBO?"
+
+#~ msgid ""
+#~ "**Unconstrained form**: Many quantum annealers"
+#~ " and specialized solvers accept only "
+#~ "unconstrained binary quadratic forms, making"
+#~ " QUBO the lingua franca of quantum"
+#~ " optimization."
+#~ msgstr ""
+#~ "**Forma sin restricciones**: Muchos "
+#~ "recocedores cuánticos y solucionadores "
+#~ "especializados solo aceptan formas cuadráticas"
+#~ " binarias sin restricciones, lo que "
+#~ "convierte a QUBO en la lengua "
+#~ "franca de la optimización cuántica."
+
+#~ msgid ""
+#~ "**Penalty encoding**: Instead of throwing "
+#~ "away constraint structure, you transform "
+#~ "each constraint into a quadratic "
+#~ "penalty, preserving problem fidelity."
+#~ msgstr ""
+#~ "**Codificación de penalización**: En lugar "
+#~ "de descartar la estructura de "
+#~ "restricciones, cada restricción se transforma"
+#~ " en una penalización cuadrática, "
+#~ "preservando la fidelidad del problema."
+
+#~ msgid ""
+#~ "**Direct mapping**: Once in QUBO form,"
+#~ " you can directly translate the "
+#~ "problem to Ising/Hamiltonian terms for "
+#~ "hardware execution."
+#~ msgstr ""
+#~ "**Mapeo directo**: Una vez en forma "
+#~ "QUBO, puede traducir directamente el "
+#~ "problema a términos Ising/Hamiltoniano para"
+#~ " su ejecución en hardware."
+
+#~ msgid "Defining a QUBO"
+#~ msgstr "Definición de un QUBO"
+
+#~ msgid "**Model creation**"
+#~ msgstr "**Creación del modelo**"
+
+#~ msgid ""
+#~ "If **transform_to_qubo=True**, your constraint "
+#~ "**must be linear** (no quadratic terms),"
+#~ " because it will be rewritten as "
+#~ "(lhs-rhs)^2."
+#~ msgstr ""
+#~ "Si **transform_to_qubo=True**, la restricción "
+#~ "**debe ser lineal** (sin términos "
+#~ "cuadráticos), ya que se reescribirá como"
+#~ " (lhs-rhs)^2."
+
+#~ msgid ""
+#~ "If **transform_to_qubo=False**, you assume the"
+#~ " constraint is already a valid "
+#~ "quadratic penalty, and it will be "
+#~ "added verbatim."
+#~ msgstr ""
+#~ "Si **transform_to_qubo=False**, se asume que"
+#~ " la restricción ya es una "
+#~ "penalización cuadrática válida y se "
+#~ "añadirá tal cual."
+
+#~ msgid "Example: Slack Penalization"
+#~ msgstr "Ejemplo: Penalización por Holgura"
+
+#~ msgid "**Output**::"
+#~ msgstr "**Salida**::"
+
+#~ msgid "Example: Unbalanced Penalization"
+#~ msgstr "Ejemplo: Penalización No Balanceada"
+
+#~ msgid ""
+#~ "Montañez-Barrera, Jhon Alejandro, et al."
+#~ " \"Unbalanced penalization: A new approach"
+#~ " to encode inequality constraints of "
+#~ "combinatorial problems for quantum "
+#~ "optimization algorithms.\" Quantum Science and"
+#~ " Technology 9.2 (2024): 025022."
+#~ msgstr ""
+#~ "Montañez-Barrera, Jhon Alejandro, et al."
+#~ " \"Unbalanced penalization: A new approach"
+#~ " to encode inequality constraints of "
+#~ "combinatorial problems for quantum "
+#~ "optimization algorithms.\" Quantum Science and"
+#~ " Technology 9.2 (2024): 025022."
+
+#~ msgid "Interoperability"
+#~ msgstr "Interoperabilidad"
+
+#~ msgid "**Convert any Model to QUBO**"
+#~ msgstr "**Convertir cualquier Modelo a QUBO**"
+
+#~ msgid ""
+#~ "If you have a generic "
+#~ ":class:`~qilisdk.core.model.Model` with only "
+#~ "linear/quadratic terms, you can automatically"
+#~ " produce a QUBO:"
+#~ msgstr ""
+#~ "Si tiene un :class:`~qilisdk.core.model.Model` "
+#~ "genérico con únicamente términos "
+#~ "lineales/cuadráticos, puede producir un QUBO"
+#~ " automáticamente:"
+
+#~ msgid "**Export to Hamiltonian**"
+#~ msgstr "**Exportar a Hamiltoniano**"
+
+#~ msgid ""
+#~ "Once in QUBO form, translate directly"
+#~ " into an analog Ising "
+#~ ":class:`~qilisdk.core.hamiltonian.Hamiltonian` for "
+#~ "simulation or hardware:"
+#~ msgstr ""
+#~ "Una vez en forma QUBO, traduzca "
+#~ "directamente a un "
+#~ ":class:`~qilisdk.core.hamiltonian.Hamiltonian` Ising "
+#~ "analógico para simulación o hardware:"
+
+#~ msgid "QTensor"
+#~ msgstr "QTensor"
+
+#~ msgid ""
+#~ "The :mod:`~qilisdk.core.qtensor` module defines "
+#~ "the :class:`~qilisdk.core.qtensor.QTensor` class and"
+#~ " related helpers for representing and "
+#~ "manipulating quantum states and operators "
+#~ "in sparse form."
+#~ msgstr ""
+#~ "El módulo :mod:`~qilisdk.core.qtensor` define "
+#~ "la clase :class:`~qilisdk.core.qtensor.QTensor` y"
+#~ " ayudantes relacionados para representar y"
+#~ " manipular estados cuánticos y operadores"
+#~ " en forma dispersa."
+
+#~ msgid ""
+#~ "The :class:`~qilisdk.core.qtensor.QTensor` wraps a"
+#~ " dense NumPy array or SciPy sparse"
+#~ " matrix into a CSR-format sparse "
+#~ "matrix, and can represent:"
+#~ msgstr ""
+#~ "El :class:`~qilisdk.core.qtensor.QTensor` envuelve "
+#~ "un array denso de NumPy o una "
+#~ "matriz dispersa de SciPy en una "
+#~ "matriz dispersa en formato CSR, y "
+#~ "puede representar:"
+
+#~ msgid "**Kets** (column vectors of shape ``(2**N, 1)``)"
+#~ msgstr "**Kets** (vectores columna de forma ``(2**N, 1)``)"
+
+#~ msgid "**Bras** (row vectors of shape ``(1, 2**N)``)"
+#~ msgstr "**Bras** (vectores fila de forma ``(1, 2**N)``)"
+
+#~ msgid ""
+#~ "**Operators / Density Matrices** (square "
+#~ "matrices of shape ``(2**N, 2**N)``)"
+#~ msgstr ""
+#~ "**Operadores / Matrices de Densidad** "
+#~ "(matrices cuadradas de forma ``(2**N, "
+#~ "2**N)``)"
+
+#~ msgid "**Scalars** (``(1, 1)`` matrices)"
+#~ msgstr "**Escalares** (matrices ``(1, 1)``)"
+
+#~ msgid "Examples of creating various quantum objects:"
+#~ msgstr "Ejemplos de creación de diversos objetos cuánticos:"
+
+#~ msgid "**Output**"
+#~ msgstr "**Salida**"
+
+#~ msgid "Helper constructors"
+#~ msgstr "Constructores auxiliares"
+
+#~ msgid "There are also several constructors for common quantum objects:"
+#~ msgstr "También existen varios constructores para objetos cuánticos comunes:"
+
+#~ msgid ":func:`~qilisdk.core.qtensor.ket` for computational basis kets"
+#~ msgstr ":func:`~qilisdk.core.qtensor.ket` para kets de la base computacional"
+
+#~ msgid ":func:`~qilisdk.core.qtensor.bra` for computational basis bras"
+#~ msgstr ":func:`~qilisdk.core.qtensor.bra` para bras de la base computacional"
+
+#~ msgid ""
+#~ ":func:`~qilisdk.core.qtensor.basis_state` for "
+#~ "N-dimensional basis states with a single"
+#~ " 1 at the specified index"
+#~ msgstr ""
+#~ ":func:`~qilisdk.core.qtensor.basis_state` para estados "
+#~ "de base de dimensión N con un "
+#~ "único 1 en el índice especificado"
+
+#~ msgid ""
+#~ ":func:`~qilisdk.core.qtensor.identity` for identity "
+#~ "operators of specified dimension"
+#~ msgstr ""
+#~ ":func:`~qilisdk.core.qtensor.identity` para operadores "
+#~ "identidad de dimensión especificada"
+
+#~ msgid ""
+#~ ":func:`~qilisdk.core.qtensor.zero` for generating "
+#~ "zero tensors of specified dimension"
+#~ msgstr ""
+#~ ":func:`~qilisdk.core.qtensor.zero` para generar "
+#~ "tensores cero de dimensión especificada"
+
+#~ msgid ""
+#~ ":func:`~qilisdk.core.qtensor.ghz` for generating GHZ"
+#~ " states of specified number of qubits"
+#~ msgstr ""
+#~ ":func:`~qilisdk.core.qtensor.ghz` para generar "
+#~ "estados GHZ con el número de "
+#~ "cúbits especificado"
+
+#~ msgid ""
+#~ ":func:`~qilisdk.core.qtensor.uniform` for generating "
+#~ "uniform superposition states of specified "
+#~ "number of qubits"
+#~ msgstr ""
+#~ ":func:`~qilisdk.core.qtensor.ghz` para generar "
+#~ "estados GHZ con el número de "
+#~ "cúbits especificado"
+
+#~ msgid "Quantum Object Properties & Operations"
+#~ msgstr "Propiedades y Operaciones de Objetos Cuánticos"
+
+#~ msgid ""
+#~ "All data are stored sparsely, but "
+#~ "you can retrieve dense or sparse "
+#~ "views:"
+#~ msgstr ""
+#~ "Todos los datos se almacenan de "
+#~ "forma dispersa, pero puede obtener "
+#~ "vistas densas o dispersas:"
+
+#~ msgid ""
+#~ ":attr:`.data<qilisdk.core.qtensor.QTensor.data>`: get the"
+#~ " underlying sparse matrix (SciPy CSR "
+#~ "format)"
+#~ msgstr ""
+#~ ":attr:`.data<qilisdk.core.qtensor.QTensor.data>`: obtiene "
+#~ "la matriz dispersa subyacente (formato "
+#~ "SciPy CSR)"
+
+#~ msgid ""
+#~ ":meth:`.dense()<qilisdk.core.qtensor.QTensor.dense>`: convert"
+#~ " to a dense NumPy array (use "
+#~ "with caution for large tensors)"
+#~ msgstr ""
+#~ ":meth:`.dense()<qilisdk.core.qtensor.QTensor.dense>`: convierte"
+#~ " a un array denso de NumPy "
+#~ "(usar con precaución para tensores "
+#~ "grandes)"
+
+#~ msgid "or directly accessing elements by value with ``qtensor[i, j]``"
+#~ msgstr ""
+#~ "o accediendo directamente a los "
+#~ "elementos por valor con ``qtensor[i, "
+#~ "j]``"
+
+#~ msgid "Common matrix operations are also available:"
+#~ msgstr "También están disponibles operaciones matriciales comunes:"
+
+#~ msgid ""
+#~ ":meth:`.adjoint()<qilisdk.core.qtensor.QTensor.adjoint>`: "
+#~ "conjugate transpose"
+#~ msgstr ""
+#~ ":meth:`.adjoint()<qilisdk.core.qtensor.QTensor.adjoint>`: "
+#~ "traspuesta conjugada"
+
+#~ msgid ""
+#~ ":meth:`.conjugate()<qilisdk.core.qtensor.QTensor.conjugate>`: "
+#~ "element-wise complex conjugate"
+#~ msgstr ""
+#~ ":meth:`.conjugate()<qilisdk.core.qtensor.QTensor.conjugate>`: "
+#~ "conjugado complejo elemento a elemento"
+
+#~ msgid ""
+#~ ":meth:`.transpose()<qilisdk.core.qtensor.QTensor.transpose>`: "
+#~ "matrix transpose"
+#~ msgstr ""
+#~ ":meth:`.transpose()<qilisdk.core.qtensor.QTensor.transpose>`: "
+#~ "traspuesta de la matriz"
+
+#~ msgid ":meth:`.exp()<qilisdk.core.qtensor.QTensor.exp>`: matrix exponential"
+#~ msgstr ""
+#~ ":meth:`.exp()<qilisdk.core.qtensor.QTensor.exp>`: exponencial"
+#~ " de la matriz"
+
+#~ msgid ":meth:`.log()<qilisdk.core.qtensor.QTensor.log>`: matrix logarithm"
+#~ msgstr ""
+#~ ":meth:`.log()<qilisdk.core.qtensor.QTensor.log>`: logaritmo "
+#~ "de la matriz"
+
+#~ msgid ":meth:`.sqrt()<qilisdk.core.qtensor.QTensor.sqrt>`: matrix square root"
+#~ msgstr ""
+#~ ":meth:`.sqrt()<qilisdk.core.qtensor.QTensor.sqrt>`: raíz "
+#~ "cuadrada de la matriz"
+
+#~ msgid ""
+#~ ":meth:`.rank()<qilisdk.core.qtensor.QTensor.rank>`: compute "
+#~ "the rank of the operator"
+#~ msgstr ""
+#~ ":meth:`.rank()<qilisdk.core.qtensor.QTensor.rank>`: calcula "
+#~ "el rango del operador"
+
+#~ msgid ":meth:`.pow(exponent)<qilisdk.core.qtensor.QTensor.pow>`: matrix power"
+#~ msgstr ""
+#~ ":meth:`.pow(exponent)<qilisdk.core.qtensor.QTensor.pow>`: "
+#~ "potencia de la matriz"
+
+#~ msgid ""
+#~ ":meth:`.norm(order=\"l2\")<qilisdk.core.qtensor.QTensor.norm>`: "
+#~ "vector or matrix norm"
+#~ msgstr ""
+#~ ":meth:`.norm(order=\"l2\")<qilisdk.core.qtensor.QTensor.norm>`: "
+#~ "norma vectorial o matricial"
+
+#~ msgid ""
+#~ ":meth:`.normalized(order='l2')<qilisdk.core.qtensor.QTensor.normalized>`:"
+#~ " normalize to unit norm"
+#~ msgstr ""
+#~ ":meth:`.normalized(order='l2')<qilisdk.core.qtensor.QTensor.normalized>`:"
+#~ " normalizar a norma unitaria"
+
+#~ msgid ""
+#~ ":meth:`.eig()<qilisdk.core.qtensor.QTensor.eig>`: get the"
+#~ " eigenvalues and eigenvectors"
+#~ msgstr ""
+#~ ":meth:`.eig()<qilisdk.core.qtensor.QTensor.eig>`: obtiene "
+#~ "los valores propios y vectores propios"
+
+#~ msgid ""
+#~ ":meth:`.trace()<qilisdk.core.qtensor.QTensor.trace>`: compute"
+#~ " the trace of an operator"
+#~ msgstr ""
+#~ ":meth:`.trace()<qilisdk.core.qtensor.QTensor.trace>`: calcula"
+#~ " la traza de un operador"
+
+#~ msgid ""
+#~ ":meth:`.dot(other)<qilisdk.core.qtensor.QTensor.dot>`: Frobenius"
+#~ " inner product with another QTensor"
+#~ msgstr ""
+#~ ":meth:`.dot(other)<qilisdk.core.qtensor.QTensor.dot>`: producto"
+#~ " interno de Frobenius con otro "
+#~ "QTensor"
+
+#~ msgid "As well as some quantum-specific transformations:"
+#~ msgstr "Así como algunas transformaciones específicas de la cuántica:"
+
+#~ msgid ""
+#~ ":meth:`.entropy_von_neumann()<qilisdk.core.qtensor.QTensor.entropy_von_neumann>`:"
+#~ " compute the von Neumann entropy of"
+#~ " a density matrix"
+#~ msgstr ""
+#~ ":meth:`.entropy_von_neumann()<qilisdk.core.qtensor.QTensor.entropy_von_neumann>`:"
+#~ " calcula la entropía de von Neumann"
+#~ " de una matriz de densidad"
+
+#~ msgid ""
+#~ ":meth:`.entropy_renyi(alpha)<qilisdk.core.qtensor.QTensor.entropy_renyi>`:"
+#~ " compute the Rényi entropy of a "
+#~ "density matrix for a given order "
+#~ "alpha"
+#~ msgstr ""
+#~ ":meth:`.entropy_renyi(alpha)<qilisdk.core.qtensor.QTensor.entropy_renyi>`:"
+#~ " calcula la entropía de Rényi de "
+#~ "una matriz de densidad para un "
+#~ "orden alpha dado"
+
+#~ msgid ""
+#~ ":meth:`.commutator(other)<qilisdk.core.qtensor.QTensor.commutator>`:"
+#~ " compute the commutator with another "
+#~ "operator"
+#~ msgstr ""
+#~ ":meth:`.commutator(other)<qilisdk.core.qtensor.QTensor.commutator>`:"
+#~ " calcula el conmutador con otro "
+#~ "operador"
+
+#~ msgid ""
+#~ ":meth:`.anticommutator(other)<qilisdk.core.qtensor.QTensor.anticommutator>`:"
+#~ " compute the anticommutator with another"
+#~ " operator"
+#~ msgstr ""
+#~ ":meth:`.anticommutator(other)<qilisdk.core.qtensor.QTensor.anticommutator>`:"
+#~ " calcula el anticonmutador con otro "
+#~ "operador"
+
+#~ msgid ""
+#~ ":meth:`.fidelity(other)<qilisdk.core.qtensor.QTensor.fidelity>`: "
+#~ "compute the fidelity between two quantum"
+#~ " states"
+#~ msgstr ""
+#~ ":meth:`.fidelity(other)<qilisdk.core.qtensor.QTensor.fidelity>`: "
+#~ "calcula la fidelidad entre dos estados"
+#~ " cuánticos"
+
+#~ msgid ""
+#~ ":meth:`.probabilities()<qilisdk.core.qtensor.QTensor.probabilities>`:"
+#~ " compute the probability distribution of"
+#~ " each state in the computational "
+#~ "basis"
+#~ msgstr ""
+#~ ":meth:`.probabilities()<qilisdk.core.qtensor.QTensor.probabilities>`:"
+#~ " calcula la distribución de probabilidad"
+#~ " de cada estado en la base "
+#~ "computacional"
+
+#~ msgid ""
+#~ ":meth:`.partial_trace(keep)<qilisdk.core.qtensor.QTensor.ptrace>`: "
+#~ "partial trace"
+#~ msgstr ""
+#~ ":meth:`.partial_trace(keep)<qilisdk.core.qtensor.QTensor.ptrace>`: "
+#~ "traza parcial"
+
+#~ msgid ""
+#~ ":meth:`.reset_qubits(qubits)<qilisdk.core.qtensor.QTensor.reset_qubits>`:"
+#~ " reset specified qubits to 0"
+#~ msgstr ""
+#~ ":meth:`.reset_qubits(qubits)<qilisdk.core.qtensor.QTensor.reset_qubits>`:"
+#~ " reinicia los cúbits especificados a "
+#~ "0"
+
+#~ msgid ""
+#~ ":meth:`.dagger()<qilisdk.core.qtensor.QTensor.dagger>`: alias"
+#~ " for adjoint"
+#~ msgstr ""
+#~ ":meth:`.dagger()<qilisdk.core.qtensor.QTensor.dagger>`: alias"
+#~ " de adjoint"
+
+#~ msgid "Examples:"
+#~ msgstr "Ejemplos:"
+
+#~ msgid "Extra Utilities"
+#~ msgstr "Utilidades Adicionales"
+
+#~ msgid "**Tensor product** with :func:`~qilisdk.core.qtensor.tensor_prod`"
+#~ msgstr "**Producto tensorial** con :func:`~qilisdk.core.qtensor.tensor_prod`"
+
+#~ msgid "**Expectation value** with :func:`~qilisdk.core.qtensor.expect_val`"
+#~ msgstr "**Valor esperado** con :func:`~qilisdk.core.qtensor.expect_val`"
+
+#~ msgid "Visualization of Quantum States"
+#~ msgstr "Visualización de Estados Cuánticos"
+
+#~ msgid ""
+#~ "You can also visualize single-qubit "
+#~ "states on the Bloch sphere using "
+#~ ":meth:`.draw()<qilisdk.core.qtensor.QTensor.draw>`:"
+#~ msgstr ""
+#~ "También puede visualizar estados de un"
+#~ " solo cúbit en la esfera de "
+#~ "Bloch usando "
+#~ ":meth:`.draw()<qilisdk.core.qtensor.QTensor.draw>`:"
+
+#~ msgid ""
+#~ "The appearance of this plot can be"
+#~ " customized using a "
+#~ ":class:`~qilisdk.utils.visualization.style.QTensorStyle` object,"
+#~ " which allows you to set colors, "
+#~ "point density, and other visual "
+#~ "elements:"
+#~ msgstr ""
+#~ "La apariencia de esta gráfica puede "
+#~ "personalizarse mediante un objeto "
+#~ ":class:`~qilisdk.utils.visualization.style.QTensorStyle`, que"
+#~ " permite establecer colores, densidad de"
+#~ " puntos y otros elementos visuales:"
 

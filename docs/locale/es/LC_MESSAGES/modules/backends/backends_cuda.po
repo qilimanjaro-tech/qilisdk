@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-14 12:09+0200\n"
+"POT-Creation-Date: 2026-05-05 15:18+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -23,7 +23,94 @@ msgstr ""
 msgid "CUDA Backend"
 msgstr "Backend CUDA"
 
-#: ../../modules/backends/backends_cuda.rst:8
-msgid "Go to a specific subheading of a page."
-msgstr "Ir a un subtítulo específico de una página."
+#: ../../modules/backends/backends_cuda.rst:4
+msgid ""
+"The **CUDA** backend leverages NVIDIA GPUs via the ``cuda-quantum`` "
+"framework for both digital and analog simulations. When no compatible GPU"
+" is detected it automatically falls back to cpu-based targets, so you can"
+" prototype on commodity hardware before moving to accelerated machines."
+msgstr ""
+"El backend **CUDA** aprovecha las GPU de NVIDIA a través del framework "
+"``cuda-quantum`` para simulaciones tanto digitales como analógicas. Cuando "
+"no se detecta ninguna GPU compatible, recurre automáticamente a destinos "
+"basados en CPU, de modo que puede crear prototipos en hardware convencional "
+"antes de migrar a máquinas con aceleración."
 
+#: ../../modules/backends/backends_cuda.rst:9
+msgid "Installation"
+msgstr "Instalación"
+
+#: ../../modules/backends/backends_cuda.rst:16
+msgid "Initialization"
+msgstr "Inicialización"
+
+#: ../../modules/backends/backends_cuda.rst:27
+msgid "Capabilities"
+msgstr "Capacidades"
+
+#: ../../modules/backends/backends_cuda.rst:29
+msgid ""
+"Digital circuits through "
+":class:`~qilisdk.functionals.digital_propagation.DigitalPropagation`."
+msgstr ""
+"Circuitos digitales mediante "
+":class:`~qilisdk.functionals.digital_propagation.DigitalPropagation`."
+
+#: ../../modules/backends/backends_cuda.rst:30
+msgid ""
+"Analog dynamics for "
+":class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`, powered "
+"by ``cudaq.evolve``."
+msgstr ""
+"Dinámica analógica para "
+":class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`, impulsada "
+"por ``cudaq.evolve``."
+
+#: ../../modules/backends/backends_cuda.rst:31
+msgid ""
+"Hybrid execution when paired with "
+":class:`~qilisdk.functionals.variational_program.VariationalProgram`."
+msgstr ""
+"Ejecución híbrida cuando se combina con "
+":class:`~qilisdk.functionals.variational_program.VariationalProgram`."
+
+#: ../../modules/backends/backends_cuda.rst:34
+msgid "Sampling methods"
+msgstr "Métodos de muestreo"
+
+#: ../../modules/backends/backends_cuda.rst:36
+msgid ""
+":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.STATE_VECTOR`: "
+"Full state-vector simulation (switches to CPU if a GPU is unavailable)."
+msgstr ""
+":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.STATE_VECTOR`: "
+"Simulación completa de vector de estado (cambia a CPU si no hay GPU disponible)."
+
+#: ../../modules/backends/backends_cuda.rst:37
+msgid ""
+":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.TENSOR_NETWORK`:"
+" Tensor-network contraction, suited for shallow yet wide circuits."
+msgstr ""
+":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.TENSOR_NETWORK`:"
+" Contracción de redes tensoriales, adecuada para circuitos poco profundos "
+"pero anchos."
+
+#: ../../modules/backends/backends_cuda.rst:38
+msgid ""
+":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.MATRIX_PRODUCT_STATE`:"
+" Matrix-product-state simulation for low-entanglement workloads."
+msgstr ""
+":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.MATRIX_PRODUCT_STATE`:"
+" Simulación de estado producto de matrices para cargas de trabajo con bajo "
+"entrelazamiento."
+
+#: ../../modules/backends/backends_cuda.rst:41
+msgid "Example"
+msgstr "Ejemplo"
+
+#: ../../modules/backends/backends_cuda.rst:65
+msgid "**Output**"
+msgstr "**Salida**"
+
+#~ msgid "Go to a specific subheading of a page."
+#~ msgstr "Ir a un subtítulo específico de una página."

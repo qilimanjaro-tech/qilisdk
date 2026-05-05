@@ -1,0 +1,155 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025, Qilimanjaro Quantum Tech
+# This file is distributed under the same license as the QiliSDK package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: QiliSDK \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-05-05 15:45+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: es\n"
+"Language-Team: es <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../modules/noise/noise_overview.rst:2
+msgid "Overview"
+msgstr ""
+
+#: ../../modules/noise/noise_overview.rst:4
+msgid ""
+"The :mod:`qilisdk.noise` module contains classes that represent different"
+" types of noise in quantum systems. These noise models can be integrated "
+"into quantum simulations to account for real-world imperfections and "
+"decoherence effects. A :class:`~qilisdk.noise.noise_model.NoiseModel` can"
+" contains various types of noise, each of which is then applied during "
+"simulation."
+msgstr ""
+
+#: ../../modules/noise/noise_overview.rst:14
+msgid "Backend"
+msgstr ""
+
+#: ../../modules/noise/noise_overview.rst:14
+msgid "Noise Models Supported"
+msgstr ""
+
+#: ../../modules/noise/noise_overview.rst:16
+msgid ":class:`~qilisdk.backends.qilisim.QiliSim`"
+msgstr ""
+
+#: ../../modules/noise/noise_overview.rst:16
+#: ../../modules/noise/noise_overview.rst:18
+#: ../../modules/noise/noise_overview.rst:66
+#: ../../modules/noise/noise_overview.rst:68
+#: ../../modules/noise/noise_overview.rst:70
+#: ../../modules/noise/noise_overview.rst:72
+#: ../../modules/noise/noise_overview.rst:74
+#: ../../modules/noise/noise_overview.rst:76
+#: ../../modules/noise/noise_overview.rst:78
+#: ../../modules/noise/noise_overview.rst:80
+#: ../../modules/noise/noise_overview.rst:82
+#: ../../modules/noise/noise_overview.rst:84
+#: ../../modules/noise/noise_overview.rst:86
+msgid "✔"
+msgstr ""
+
+#: ../../modules/noise/noise_overview.rst:18
+msgid ":class:`~qilisdk.backends.cuda_backend.CudaBackend`"
+msgstr ""
+
+#: ../../modules/noise/noise_overview.rst:20
+msgid ":class:`~qilisdk.backends.qutip_backend.QutipBackend`"
+msgstr ""
+
+#: ../../modules/noise/noise_overview.rst:20
+msgid "✕"
+msgstr ""
+
+#: ../../modules/noise/noise_overview.rst:25
+msgid "Usage"
+msgstr ""
+
+#: ../../modules/noise/noise_overview.rst:27
+msgid ""
+"Noise passes are added to a "
+":class:`~qilisdk.noise.noise_model.NoiseModel`, which should then be "
+"included when creating a backend. For example, to create a simple circuit"
+" and then simulate it with a CUDA backend containing a bit-flip noise "
+"model:"
+msgstr ""
+
+#: ../../modules/noise/noise_overview.rst:54
+msgid "Summary of Noise Types"
+msgstr ""
+
+#: ../../modules/noise/noise_overview.rst:56
+msgid ""
+"Some of the noise passes available in QiliSDK can be used for both "
+"digital circuits and analog schedules, while others are specific to one "
+"or the other:"
+msgstr ""
+
+#: ../../modules/noise/noise_overview.rst:64
+msgid "Noise Type"
+msgstr ""
+
+#: ../../modules/noise/noise_overview.rst:64
+msgid "Digital Propogation"
+msgstr ""
+
+#: ../../modules/noise/noise_overview.rst:64
+msgid "Analog Evolution"
+msgstr ""
+
+#: ../../modules/noise/noise_overview.rst:66
+msgid ":class:`~qilisdk.noise.representations.KrausChannel`"
+msgstr ""
+
+#: ../../modules/noise/noise_overview.rst:68
+msgid ":class:`~qilisdk.noise.representations.LindbladGenerator`"
+msgstr ""
+
+#: ../../modules/noise/noise_overview.rst:70
+msgid ":class:`~qilisdk.noise.pauli_channel.PauliChannel`"
+msgstr ""
+
+#: ../../modules/noise/noise_overview.rst:72
+msgid ":class:`~qilisdk.noise.bit_flip.BitFlip`"
+msgstr ""
+
+#: ../../modules/noise/noise_overview.rst:74
+msgid ":class:`~qilisdk.noise.phase_flip.PhaseFlip`"
+msgstr ""
+
+#: ../../modules/noise/noise_overview.rst:76
+msgid ":class:`~qilisdk.noise.depolarizing.Depolarizing`"
+msgstr ""
+
+#: ../../modules/noise/noise_overview.rst:78
+msgid ":class:`~qilisdk.noise.amplitude_damping.AmplitudeDamping`"
+msgstr ""
+
+#: ../../modules/noise/noise_overview.rst:80
+msgid ":class:`~qilisdk.noise.dephasing.Dephasing`"
+msgstr ""
+
+#: ../../modules/noise/noise_overview.rst:82
+msgid ":class:`~qilisdk.noise.gaussian_perturbation.GaussianPerturbation`"
+msgstr ""
+
+#: ../../modules/noise/noise_overview.rst:84
+msgid ":class:`~qilisdk.noise.offset_perturbation.OffsetPerturbation`"
+msgstr ""
+
+#: ../../modules/noise/noise_overview.rst:86
+msgid ":class:`~qilisdk.noise.readout_assignment.ReadoutAssignment`"
+msgstr ""
+

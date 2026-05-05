@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-14 12:09+0200\n"
+"POT-Creation-Date: 2026-05-05 15:18+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -57,11 +57,11 @@ msgid ""
 "\"compatibility\" of the teams is maximized. The information about who "
 "likes who is as follows:"
 msgstr ""
-"Supongamos que tenemos cuatro personas y necesitamos formar dos equipos de "
-"dos personas cada uno. Tenemos información sobre lo bien que trabajan juntos "
-"cada par de personas, y queremos formar los equipos de modo que la "
-"\"compatibilidad\" total de los equipos sea máxima. La información sobre "
-"quién se lleva bien con quién es la siguiente:"
+"Supongamos que tenemos cuatro personas y necesitamos formar dos equipos "
+"de dos personas cada uno. Tenemos información sobre lo bien que trabajan "
+"juntos cada par de personas, y queremos formar los equipos de modo que la"
+" \"compatibilidad\" total de los equipos sea máxima. La información sobre"
+" quién se lleva bien con quién es la siguiente:"
 
 #: ../../shared/team_building.rst:7 ../../shared/team_building.rst:9
 msgid "Alice"
@@ -123,9 +123,9 @@ msgid ""
 "team 1. The compatibility of team 0 can then be expressed as:"
 msgstr ""
 "Matemáticamente, podemos representar nuestros dos equipos como variables "
-"binarias, donde :math:`x_i` es 0 si la persona :math:`i` está en el equipo "
-"0, y 1 si está en el equipo 1. La compatibilidad del equipo 0 puede "
-"expresarse entonces como:"
+"binarias, donde :math:`x_i` es 0 si la persona :math:`i` está en el "
+"equipo 0, y 1 si está en el equipo 1. La compatibilidad del equipo 0 "
+"puede expresarse entonces como:"
 
 #: ../../shared/team_building.rst:23
 #, python-brace-format
@@ -157,9 +157,9 @@ msgid ""
 "subject to the constraint that team 1 (and thus team 0) has exactly two "
 "people:"
 msgstr ""
-"Por lo tanto, queremos maximizar la compatibilidad total :math:`C = C_0 + "
-"C_1`, sujeto a la restricción de que el equipo 1 (y por tanto el equipo 0) "
-"tenga exactamente dos personas:"
+"Por lo tanto, queremos maximizar la compatibilidad total :math:`C = C_0 +"
+" C_1`, sujeto a la restricción de que el equipo 1 (y por tanto el equipo "
+"0) tenga exactamente dos personas:"
 
 #: ../../shared/team_building.rst:38
 msgid "\\max_{x_i \\in \\{0, 1\\}} C"
@@ -185,13 +185,13 @@ msgid ""
 msgstr ""
 "Un problema con esta formulación es que tiene una restricción, lo que la "
 "hace más difícil de resolver usando algoritmos de optimización cuántica. "
-"Para solucionar esto, podemos usar algunas técnicas para convertirla en un "
-"problema QUBO (Optimización Binaria Cuadrática Sin Restricciones). En este "
-"caso, dado que solo tenemos una restricción de igualdad, podemos añadir una "
-"versión al cuadrado de esta a la función objetivo como término de "
-"penalización, de modo que el término de penalización sea cero cuando se "
-"satisface la restricción y positivo en caso contrario. Para más detalles "
-"sobre este proceso, consulta la :doc:`referencia QUBO "
+"Para solucionar esto, podemos usar algunas técnicas para convertirla en "
+"un problema QUBO (Optimización Binaria Cuadrática Sin Restricciones). En "
+"este caso, dado que solo tenemos una restricción de igualdad, podemos "
+"añadir una versión al cuadrado de esta a la función objetivo como término"
+" de penalización, de modo que el término de penalización sea cero cuando "
+"se satisface la restricción y positivo en caso contrario. Para más "
+"detalles sobre este proceso, consulta la :doc:`referencia QUBO "
 "</modules/core/core_qubo>`. Ahora podemos asumir que el problema se ha "
 "reformulado en el siguiente problema de optimización sin restricciones:"
 
@@ -227,16 +227,17 @@ msgid ""
 "time-varying Hamiltonian."
 msgstr ""
 "Ahora que tenemos nuestro problema formulado como un QUBO, podemos usar "
-"QAOA para encontrar una solución aproximada. QAOA es un algoritmo híbrido "
-"cuántico-clásico que utiliza un circuito cuántico parametrizado para "
-"encontrar soluciones aproximadas a problemas de optimización combinatoria. "
-"Funciona alternando entre la aplicación de un Hamiltoniano del problema "
-"(que codifica el problema de optimización) y un Hamiltoniano de mezcla "
-"(que ayuda a explorar el espacio de soluciones), con los parámetros del "
-"circuito siendo optimizados mediante un algoritmo de optimización clásico. "
-"Piénsalo como hacer recocido cuántico, excepto que es una versión digital "
-"que alterna entre Hamiltonianos, en lugar de un algoritmo analógico que "
-"evoluciona un Hamiltoniano genérico variable en el tiempo."
+"QAOA para encontrar una solución aproximada. QAOA es un algoritmo híbrido"
+" cuántico-clásico que utiliza un circuito cuántico parametrizado para "
+"encontrar soluciones aproximadas a problemas de optimización "
+"combinatoria. Funciona alternando entre la aplicación de un Hamiltoniano "
+"del problema (que codifica el problema de optimización) y un Hamiltoniano"
+" de mezcla (que ayuda a explorar el espacio de soluciones), con los "
+"parámetros del circuito siendo optimizados mediante un algoritmo de "
+"optimización clásico. Piénsalo como hacer recocido cuántico, excepto que "
+"es una versión digital que alterna entre Hamiltonianos, en lugar de un "
+"algoritmo analógico que evoluciona un Hamiltoniano genérico variable en "
+"el tiempo."
 
 #: ../../tutorials/applications/application_qaoa.rst:29
 msgid ""
@@ -258,7 +259,8 @@ msgid ""
 " :math:`c_{ij}` are the coefficients from our QUBO formulation."
 msgstr ""
 "Donde :math:`Z(i)` es el operador de Pauli-Z que actúa sobre el cúbit "
-":math:`i`, y :math:`c_{ij}` son los coeficientes de nuestra formulación QUBO."
+":math:`i`, y :math:`c_{ij}` son los coeficientes de nuestra formulación "
+"QUBO."
 
 #: ../../tutorials/applications/application_qaoa.rst:38
 msgid ""
@@ -280,8 +282,8 @@ msgid ""
 "our circuit:"
 msgstr ""
 "Dado que estos son Hamiltonianos (en lugar de puertas unitarias), "
-"necesitamos transformarlos en unitarios, lo cual está determinado por los "
-"parámetros de nuestro circuito:"
+"necesitamos transformarlos en unitarios, lo cual está determinado por los"
+" parámetros de nuestro circuito:"
 
 #: ../../tutorials/applications/application_qaoa.rst:47
 msgid "U_{prob}(\\gamma) = e^{-i \\gamma H_{prob}}"
@@ -330,34 +332,35 @@ msgid ""
 "then use the results to adjust the parameters to give a better solution."
 msgstr ""
 "Los parámetros :math:`\\gamma` y :math:`\\beta` se optimizan entonces "
-"mediante un algoritmo de optimización clásico, con el objetivo de minimizar "
-"el valor esperado del Hamiltoniano del problema. Esto significa que "
-"ejecutamos el circuito cuántico, medimos la salida y luego usamos los "
-"resultados para ajustar los parámetros y obtener una mejor solución."
+"mediante un algoritmo de optimización clásico, con el objetivo de "
+"minimizar el valor esperado del Hamiltoniano del problema. Esto significa"
+" que ejecutamos el circuito cuántico, medimos la salida y luego usamos "
+"los resultados para ajustar los parámetros y obtener una mejor solución."
 
 #: ../../tutorials/applications/application_qaoa.rst:79
 msgid "The Implementation"
 msgstr "La Implementación"
 
 #: ../../tutorials/applications/application_qaoa.rst:81
+#, fuzzy
 msgid ""
 "In QiliSDK, a variety of classes are available to help streamline the "
 "implementation. Starting with the problem Hamiltonian, we can use the "
-":class:`~qilisdk.core.QUBO` class to represent our QUBO problem, and then"
-" use the :class:`~qilisdk.core.QAOA` class to construct the QAOA circuit "
-"and perform the optimization."
+":class:`~qilisdk.core.model.QUBO` class to represent our QUBO problem, "
+"and then use the :class:`~qilisdk.digital.ansatz.QAOA` class to construct"
+" the QAOA circuit and perform the optimization."
 msgstr ""
 "En QiliSDK, hay disponible una variedad de clases para agilizar la "
-"implementación. Empezando con el Hamiltoniano del problema, podemos usar la "
-"clase :class:`~qilisdk.core.QUBO` para representar nuestro problema QUBO, "
-"y luego usar la clase :class:`~qilisdk.core.QAOA` para construir el "
-"circuito QAOA y realizar la optimización."
+"implementación. Empezando con el Hamiltoniano del problema, podemos usar "
+"la clase :class:`~qilisdk.core.QUBO` para representar nuestro problema "
+"QUBO, y luego usar la clase :class:`~qilisdk.core.QAOA` para construir el"
+" circuito QAOA y realizar la optimización."
 
 #: ../../tutorials/applications/application_qaoa.rst:85
 msgid "To create our model:"
 msgstr "Para crear nuestro modelo:"
 
-#: ../../tutorials/applications/application_qaoa.rst:104
+#: ../../tutorials/applications/application_qaoa.rst:89
 msgid ""
 "Then we use the model to form our QAOA ansatz (the circuit we're going to"
 " optimize):"
@@ -365,7 +368,7 @@ msgstr ""
 "Luego usamos el modelo para formar nuestro ansatz QAOA (el circuito que "
 "vamos a optimizar):"
 
-#: ../../tutorials/applications/application_qaoa.rst:116
+#: ../../tutorials/applications/application_qaoa.rst:101
 msgid ""
 "Then we construct a variational problem (combining a classical optimizer "
 "and a quantum circuit) and simulate it:"
@@ -373,29 +376,30 @@ msgstr ""
 "A continuación, construimos un problema variacional (combinando un "
 "optimizador clásico y un circuito cuántico) y lo simulamos:"
 
-#: ../../tutorials/applications/application_qaoa.rst:136
+#: ../../tutorials/applications/application_qaoa.rst:120
 msgid "This gives something like the following result:"
 msgstr "Esto da algo parecido al siguiente resultado:"
 
-#: ../../tutorials/applications/application_qaoa.rst:159
+#: ../../tutorials/applications/application_qaoa.rst:143
 msgid ""
 "As you can see from these results, the most common samples are those "
 "which satisfy the constraint (i.e. have exactly two 1's), and among "
 "those, the most common ones are those which have a high objective value."
 msgstr ""
-"Como puedes ver en estos resultados, las muestras más comunes son aquellas "
-"que satisfacen la restricción (es decir, tienen exactamente dos 1's), y "
-"entre ellas, las más comunes son las que tienen un valor objetivo alto."
+"Como puedes ver en estos resultados, las muestras más comunes son "
+"aquellas que satisfacen la restricción (es decir, tienen exactamente dos "
+"1's), y entre ellas, las más comunes son las que tienen un valor objetivo"
+" alto."
 
-#: ../../tutorials/applications/application_qaoa.rst:163
+#: ../../tutorials/applications/application_qaoa.rst:147
 msgid "Further Reading"
 msgstr "Lectura Adicional"
 
-#: ../../tutorials/applications/application_qaoa.rst:165
+#: ../../tutorials/applications/application_qaoa.rst:149
 msgid "`QUBO`_"
 msgstr "`QUBO`_"
 
-#: ../../tutorials/applications/application_qaoa.rst:166
+#: ../../tutorials/applications/application_qaoa.rst:150
 msgid "`QAOA`_"
 msgstr "`QAOA`_"
 

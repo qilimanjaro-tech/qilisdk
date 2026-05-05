@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-14 12:09+0200\n"
+"POT-Creation-Date: 2026-05-05 15:45+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -23,7 +23,305 @@ msgstr ""
 msgid "QUBO"
 msgstr "QUBO"
 
-#: ../../modules/core/core_qubo.rst:8
-msgid "Go to a specific subheading of a page."
-msgstr "Aneu a un subapartat específic d'una pàgina."
+#: ../../modules/core/core_qubo.rst:4
+#, fuzzy
+msgid ""
+"The :class:`~qilisdk.core.model.QUBO` subclass specializes in **Quadratic"
+" Unconstrained Binary Optimization** models, where every decision "
+"variable is binary and the objective function is at most quadratic. "
+"Unlike general models, “hard” constraints are not maintained separately "
+"but are encoded directly into the objective as penalty terms. The "
+"strength of each penalty is controlled by its associated Lagrange "
+"multiplier."
+msgstr ""
+"La subclasse :class:`~qilisdk.core.model.QUBO` s'especialitza en models "
+"d'**Optimització Binària Quadràtica No Restringida** (Quadratic "
+"Unconstrained Binary Optimization), on cada variable de decisió és "
+"binària i la funció objectiu és com a màxim quadràtica. A diferència dels"
+" models generals, les restriccions «dures» no es mantenen per separat "
+"sinó que es codifiquen directament a l'objectiu com a termes de "
+"penalització. La força de cada penalització és controlada pel seu "
+"multiplicador de Lagrange associat."
+
+#: ../../modules/core/core_qubo.rst:9
+msgid ""
+"The binary quadratic cost function that defines a QUBO problem is written"
+" as"
+msgstr ""
+"La funció de cost quadràtica binària que defineix un problema QUBO "
+"s'escriu com"
+
+#: ../../modules/core/core_qubo.rst:12
+#, python-brace-format
+msgid "f(x) = \\frac{1}{2} \\sum_{i=1}^{n} \\sum_{j=1}^{n} q_{ij} x_i x_j,"
+msgstr "f(x) = \\frac{1}{2} \\sum_{i=1}^{n} \\sum_{j=1}^{n} q_{ij} x_i x_j,"
+
+#: ../../modules/core/core_qubo.rst:16
+#, python-brace-format
+msgid ""
+"with decision variables :math:`x_i \\in \\{0, 1\\}` and symmetric "
+"coefficients :math:`q_{ij} = q_{ji} \\in \\mathbb{R}`. Separating the "
+"diagonal terms highlights the effective linear weights:"
+msgstr ""
+"amb variables de decisió :math:`x_i \\in \\{0, 1\\}` i coeficients "
+"simètrics :math:`q_{ij} = q_{ji} \\in \\mathbb{R}`. Separar els termes "
+"diagonals posa de manifest els pesos lineals efectius:"
+
+#: ../../modules/core/core_qubo.rst:20
+#, python-brace-format
+msgid ""
+"f(x) = \\sum_{i=1}^{n-1} \\sum_{j>i} q_{ij} x_i x_j + \\sum_{i=1}^{n} "
+"q_{ii} x_i."
+msgstr ""
+"f(x) = \\sum_{i=1}^{n-1} \\sum_{j>i} q_{ij} x_i x_j + \\sum_{i=1}^{n} "
+"q_{ii} x_i."
+
+#: ../../modules/core/core_qubo.rst:26
+msgid "Adding Constraints as Penalties"
+msgstr "Afegir restriccions com a penalitzacions"
+
+#: ../../modules/core/core_qubo.rst:28
+msgid ""
+"Since QUBO is unconstrained, every constraint is converted into the "
+"objective via a **penalty term**. Linear equality constraints can be "
+"described as,"
+msgstr ""
+"Com que QUBO no té restriccions, cada restricció es converteix en "
+"l'objectiu mitjançant un **terme de penalització**. Les restriccions "
+"d'igualtat lineal es poden descriure com,"
+
+#: ../../modules/core/core_qubo.rst:31
+#, python-brace-format
+msgid "\\sum_{i=1}^{n} c_i x_i = C, \\quad c_i \\in \\mathbb{Z},"
+msgstr "\\sum_{i=1}^{n} c_i x_i = C, \\quad c_i \\in \\mathbb{Z},"
+
+#: ../../modules/core/core_qubo.rst:35
+msgid ""
+"where :math:`c_i` are integer coefficients and :math:`C` is an integer "
+"constant."
+msgstr "on :math:`c_i` són coeficients enters i :math:`C` és una constant entera."
+
+#: ../../modules/core/core_qubo.rst:37
+msgid "Embedded as penalties, these constraints give the penalized objective"
+msgstr ""
+"Incorporades com a penalitzacions, aquestes restriccions donen l'objectiu"
+" penalitzat"
+
+#: ../../modules/core/core_qubo.rst:39
+#, python-brace-format
+msgid ""
+"\\min_{x,\\,s} \\left(\n"
+"    \\sum_{i=1}^{n-1} \\sum_{j>i} c_{ij} x_i x_j\n"
+"    + \\sum_{i=1}^{n} h_i x_i\n"
+"    + \\lambda_0 \\left( \\sum_{i=1}^{n} q_i x_i - C \\right)^{2}\n"
+"\\right),"
+msgstr ""
+"\\min_{x,\\,s} \\left(\n"
+"    \\sum_{i=1}^{n-1} \\sum_{j>i} c_{ij} x_i x_j\n"
+"    + \\sum_{i=1}^{n} h_i x_i\n"
+"    + \\lambda_0 \\left( \\sum_{i=1}^{n} q_i x_i - C \\right)^{2}\n"
+"\\right),"
+
+#: ../../modules/core/core_qubo.rst:47
+msgid "where :math:`\\lambda_0 > 0` is a penalty strength parameter."
+msgstr "on :math:`\\lambda_0 > 0` és un paràmetre de força de la penalització."
+
+#: ../../modules/core/core_qubo.rst:49
+msgid "Ineqaulity constraints can be defined as:"
+msgstr "Les restriccions d'inequació es poden definir com:"
+
+#: ../../modules/core/core_qubo.rst:51
+#, python-brace-format
+msgid "\\sum_{i=1}^{n} \\ell_i x_i \\leq B, \\quad \\ell_i \\in \\mathbb{Z}."
+msgstr "\\sum_{i=1}^{n} \\ell_i x_i \\leq B, \\quad \\ell_i \\in \\mathbb{Z}."
+
+#: ../../modules/core/core_qubo.rst:55
+msgid "To translate these into penalties, two strategies are supported:"
+msgstr "Per convertir-les en penalitzacions, s'admeten dues estratègies:"
+
+#: ../../modules/core/core_qubo.rst:57
+msgid "**Slack penalization** (default):"
+msgstr "**Penalització per variable de relaxació** (per defecte):"
+
+#: ../../modules/core/core_qubo.rst:58
+msgid ""
+"Introduce additional binary slack variables to turn inequalities into "
+"equalities, then square the residual. Therefore, the penalty term "
+"becomes:"
+msgstr ""
+"S'introdueixen variables de relaxació binàries addicionals per convertir "
+"les inequacions en igualtats i, a continuació, s'eleva al quadrat el "
+"residu. Per tant, el terme de penalització passa a ser:"
+
+#: ../../modules/core/core_qubo.rst:61
+#, python-brace-format
+msgid ""
+"\\lambda_1 \\left( B - \\sum_{i=1}^{n} \\ell_i x_i - \\sum_{k=0}^{N-1} "
+"2^{k} s_k \\right)^{2}"
+msgstr ""
+"\\lambda_1 \\left( B - \\sum_{i=1}^{n} \\ell_i x_i - \\sum_{k=0}^{N-1} "
+"2^{k} s_k \\right)^{2}"
+
+#: ../../modules/core/core_qubo.rst:66
+#, python-brace-format
+msgid ""
+"where :math:`s_k` are slack binary variables introduced to encode the "
+"inequality constraint (with the number of bits :math:`N` chosen so that "
+"their binary expansion spans the admissible slack range) and "
+":math:`\\lambda_{1}` control the penalty strength."
+msgstr ""
+"on :math:`s_k` són variables binàries de relaxació introduïdes per "
+"codificar la restricció d'inequació (amb el nombre de bits :math:`N` "
+"escollit de manera que la seva expansió binària cobreixi el rang de "
+"relaxació admissible) i :math:`\\lambda_{1}` controla la força de la "
+"penalització."
+
+#: ../../modules/core/core_qubo.rst:70
+msgid "**Unbalanced penalization**:"
+msgstr "**Penalització no equilibrada**:"
+
+#: ../../modules/core/core_qubo.rst:71
+#, python-brace-format
+msgid ""
+"Directly penalize violation without slack variables using two weights (a,"
+" b) to scale positive and negative deviations differently [1]_. we define"
+" :math:`h(x) = B - \\sum_{i=1}^{n} \\ell_i x_i` as the signed residual of"
+" the constraint, and the penalty term becomes:"
+msgstr ""
+"Penalitza directament la violació sense variables de relaxació, fent "
+"servir dos pesos (a, b) per escalar de forma diferent les desviacions "
+"positives i negatives [1]_. Definim :math:`h(x) = B - \\sum_{i=1}^{n} "
+"\\ell_i x_i` com el residu signat de la restricció, i el terme de "
+"penalització passa a ser:"
+
+#: ../../modules/core/core_qubo.rst:74
+msgid "- a h(x) + b h(x)^2,"
+msgstr "- a h(x) + b h(x)^2,"
+
+#: ../../modules/core/core_qubo.rst:78
+msgid ""
+"where :math:`a, b > 0` are parameters that control the penalty strength "
+"for violations above and below the bound, respectively."
+msgstr ""
+"on :math:`a, b > 0` són paràmetres que controlen la força de la "
+"penalització per a violacions per sobre i per sota del límit, "
+"respectivament."
+
+#: ../../modules/core/core_qubo.rst:87
+msgid "Why QUBO?"
+msgstr "Per què QUBO?"
+
+#: ../../modules/core/core_qubo.rst:89
+msgid ""
+"**Unconstrained form**: Many quantum annealers and specialized solvers "
+"accept only unconstrained binary quadratic forms, making QUBO the lingua "
+"franca of quantum optimization."
+msgstr ""
+"**Forma no restringida**: molts annealers quàntics i solucionadors "
+"especialitzats accepten únicament formes quadràtiques binàries no "
+"restringides, cosa que fa del QUBO la lingua franca de l'optimització "
+"quàntica."
+
+#: ../../modules/core/core_qubo.rst:90
+msgid ""
+"**Penalty encoding**: Instead of throwing away constraint structure, you "
+"transform each constraint into a quadratic penalty, preserving problem "
+"fidelity."
+msgstr ""
+"**Codificació de penalitzacions**: en lloc de descartar l'estructura de "
+"les restriccions, cada restricció es transforma en una penalització "
+"quadràtica, preservant la fidelitat del problema."
+
+#: ../../modules/core/core_qubo.rst:91
+msgid ""
+"**Direct mapping**: Once in QUBO form, you can directly translate the "
+"problem to Ising/Hamiltonian terms for hardware execution."
+msgstr ""
+"**Mapatge directe**: un cop en forma QUBO, podeu traduir directament el "
+"problema a termes Ising/Hamiltonian per a l'execució en maquinari."
+
+#: ../../modules/core/core_qubo.rst:94
+msgid "Defining a QUBO"
+msgstr "Definir un QUBO"
+
+#: ../../modules/core/core_qubo.rst:96
+msgid "**Model creation**"
+msgstr "**Creació del model**"
+
+#: ../../modules/core/core_qubo.rst:103
+msgid "**Objective**"
+msgstr "**Objectiu**"
+
+#: ../../modules/core/core_qubo.rst:114
+msgid ""
+"If **transform_to_qubo=True**, your constraint **must be linear** (no "
+"quadratic terms), because it will be rewritten as (lhs-rhs)^2."
+msgstr ""
+"Si **transform_to_qubo=True**, la restricció **ha de ser lineal** (sense "
+"termes quadràtics), perquè es rescriurà com a (lhs-rhs)^2."
+
+#: ../../modules/core/core_qubo.rst:115
+msgid ""
+"If **transform_to_qubo=False**, you assume the constraint is already a "
+"valid quadratic penalty, and it will be added verbatim."
+msgstr ""
+"Si **transform_to_qubo=False**, s'assumeix que la restricció ja és una "
+"penalització quadràtica vàlida i s'afegirà tal qual."
+
+#: ../../modules/core/core_qubo.rst:118
+msgid "Example: Slack Penalization"
+msgstr "Exemple: penalització per variable de relaxació"
+
+#: ../../modules/core/core_qubo.rst:134 ../../modules/core/core_qubo.rst:157
+msgid "**Output**::"
+msgstr "**Sortida**::"
+
+#: ../../modules/core/core_qubo.rst:141
+msgid "Example: Unbalanced Penalization"
+msgstr "Exemple: penalització no equilibrada"
+
+#: ../../modules/core/core_qubo.rst:162
+msgid ""
+"Montañez-Barrera, Jhon Alejandro, et al. \"Unbalanced penalization: A new"
+" approach to encode inequality constraints of combinatorial problems for "
+"quantum optimization algorithms.\" Quantum Science and Technology 9.2 "
+"(2024): 025022."
+msgstr ""
+"Montañez-Barrera, Jhon Alejandro, et al. «Unbalanced penalization: A new "
+"approach to encode inequality constraints of combinatorial problems for "
+"quantum optimization algorithms.» Quantum Science and Technology 9.2 "
+"(2024): 025022."
+
+#: ../../modules/core/core_qubo.rst:165
+msgid "Interoperability"
+msgstr "Interoperabilitat"
+
+#: ../../modules/core/core_qubo.rst:167
+msgid "**Convert any Model to QUBO**"
+msgstr "**Convertir qualsevol model a QUBO**"
+
+#: ../../modules/core/core_qubo.rst:168
+msgid ""
+"If you have a generic :class:`~qilisdk.core.model.Model` with only "
+"linear/quadratic terms, you can automatically produce a QUBO:"
+msgstr ""
+"Si teniu un :class:`~qilisdk.core.model.Model` genèric amb només termes "
+"lineals/quadràtics, podeu produir automàticament un QUBO:"
+
+#: ../../modules/core/core_qubo.rst:174
+msgid "**Export to Hamiltonian**"
+msgstr "**Exportar a Hamiltonian**"
+
+#: ../../modules/core/core_qubo.rst:175
+msgid ""
+"Once in QUBO form, translate directly into an analog Ising "
+":class:`~qilisdk.analog.hamiltonian.Hamiltonian` for simulation or "
+"hardware:"
+msgstr ""
+"Un cop en forma QUBO, traduïu directament a un "
+":class:`~qilisdk.analog.hamiltonian.Hamiltonian` Ising analògic per a "
+"simulació o maquinari:"
+
+#~ msgid "Go to a specific subheading of a page."
+#~ msgstr "Aneu a un subapartat específic d'una pàgina."
 

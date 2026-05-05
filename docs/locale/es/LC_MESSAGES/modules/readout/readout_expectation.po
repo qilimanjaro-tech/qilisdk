@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-14 12:09+0200\n"
+"POT-Creation-Date: 2026-05-05 15:18+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -23,7 +23,58 @@ msgstr ""
 msgid "Expectation Values"
 msgstr "Valores Esperados"
 
-#: ../../modules/readout/readout_expectation.rst:8
-msgid "Go to a specific subheading of a page."
-msgstr "Ir a un subtítulo específico de una página."
+#: ../../modules/readout/readout_expectation.rst:4
+msgid ""
+"Using "
+":meth:`with_expectation()<qilisdk.readout.readout_spec.Readout.with_expectation>`"
+" instructs the backend to compute ``⟨ψ|O|ψ⟩`` for each observable in the "
+"list."
+msgstr ""
+"El uso de "
+":meth:`with_expectation()<qilisdk.readout.readout_spec.Readout.with_expectation>`"
+" instruye al backend a calcular ``⟨ψ|O|ψ⟩`` para cada observable en la "
+"lista."
 
+#: ../../modules/readout/readout_expectation.rst:24
+msgid "**Parameters**"
+msgstr "**Parámetros**"
+
+#: ../../modules/readout/readout_expectation.rst:26
+msgid ""
+"**observables** (``list[Hamiltonian | QTensor]``): The operators whose "
+"expectation values are requested.  Each entry can be a "
+":class:`~qilisdk.analog.hamiltonian.Hamiltonian` expression (e.g. ``Z(0) "
+"+ Z(1)``) or a :class:`~qilisdk.core.qtensor.QTensor` directly."
+msgstr ""
+"**observables** (``list[Hamiltonian | QTensor]``): Los operadores cuyos "
+"valores esperados se solicitan. Cada entrada puede ser una expresión "
+":class:`~qilisdk.analog.hamiltonian.Hamiltonian` (p. ej. ``Z(0) "
+"+ Z(1)``) o un :class:`~qilisdk.core.qtensor.QTensor` directamente."
+
+#: ../../modules/readout/readout_expectation.rst:29
+msgid ""
+"**nshots** (``int``, default ``0``): Number of shots for stochastic "
+"estimation.  ``0`` uses the exact state-vector inner product, meaning no "
+"sampling noise, only available on simulators."
+msgstr ""
+"**nshots** (``int``, por defecto ``0``): Número de disparos para la "
+"estimación estocástica. ``0`` utiliza el producto interno exacto del "
+"vector de estado, lo que significa que no hay ruido de muestreo; solo "
+"disponible en simuladores."
+
+#: ../../modules/readout/readout_expectation.rst:32
+msgid "**When to Use It**"
+msgstr "**Cuándo Usarlo**"
+
+#: ../../modules/readout/readout_expectation.rst:34
+msgid ""
+"Use expectation values when you need a scalar energy or observable "
+"readout, for example in variational algorithms (VQE, QAOA energy "
+"evaluation) or analog time-evolution studies."
+msgstr ""
+"Use los valores esperados cuando necesite un readout de energía escalar o "
+"de observable, por ejemplo en algoritmos variacionales (VQE, evaluación "
+"de energía en QAOA) o en estudios de evolución temporal analógica."
+
+#~ msgid "Go to a specific subheading of a page."
+#~ msgstr "Ir a un subtítulo específico de una página."

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-14 12:09+0200\n"
+"POT-Creation-Date: 2026-05-05 15:18+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -23,7 +23,57 @@ msgstr ""
 msgid "Full Quantum State"
 msgstr "Estado Cuántico Completo"
 
-#: ../../modules/readout/readout_state.rst:8
-msgid "Go to a specific subheading of a page."
-msgstr "Ir a un subtítulo específico de una página."
+#: ../../modules/readout/readout_state.rst:4
+msgid ""
+"Using "
+":meth:`with_state_tomography()<qilisdk.readout.readout_spec.Readout.with_state_tomography>`"
+" instructs the backend to return the full quantum state vector (or "
+"density matrix) after execution."
+msgstr ""
+"El uso de "
+":meth:`with_state_tomography()<qilisdk.readout.readout_spec.Readout.with_state_tomography>`"
+" instruye al backend a devolver el vector de estado cuántico completo (o "
+"la matriz de densidad) tras la ejecución."
 
+#: ../../modules/readout/readout_state.rst:23
+msgid "**Parameters**"
+msgstr "**Parámetros**"
+
+#: ../../modules/readout/readout_state.rst:25
+msgid ""
+"**method** (``Literal[\"exact\"]``, default ``\"exact\"``): Tomography "
+"method.  Currently only ``\"exact\"`` is supported, such that the backend"
+" returns the raw state vector."
+msgstr ""
+"**method** (``Literal[\"exact\"]``, por defecto ``\"exact\"``): Método de "
+"tomografía. Actualmente solo se admite ``\"exact\"``, de modo que el "
+"backend devuelve el vector de estado sin procesar."
+
+#: ../../modules/readout/readout_state.rst:28
+msgid "**When to Use It**"
+msgstr "**Cuándo Usarlo**"
+
+#: ../../modules/readout/readout_state.rst:30
+msgid ""
+"Use state tomography when you need the complete quantum state for post-"
+"processing: computing custom observables offline, visualising the state, "
+"checking fidelity, or seeding the next step of a multi-step algorithm."
+msgstr ""
+"Use la tomografía de estado cuando necesite el estado cuántico completo "
+"para el postprocesamiento: calcular observables personalizados fuera de "
+"línea, visualizar el estado, verificar la fidelity, o inicializar el "
+"siguiente paso de un algoritmo de múltiples pasos."
+
+#: ../../modules/readout/readout_state.rst:36
+msgid ""
+"State tomography is only available on simulators.  Physical QPUs "
+"(accessed via :class:`~qilisdk.speqtrum.speqtrum.SpeQtrum`) do not "
+"support this readout type."
+msgstr ""
+"La tomografía de estado solo está disponible en simuladores. Las QPUs "
+"físicas (a las que se accede mediante "
+":class:`~qilisdk.speqtrum.speqtrum.SpeQtrum`) no admiten este tipo de "
+"readout."
+
+#~ msgid "Go to a specific subheading of a page."
+#~ msgstr "Ir a un subtítulo específico de una página."

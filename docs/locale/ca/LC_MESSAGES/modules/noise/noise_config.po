@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-17 14:50+0200\n"
+"POT-Creation-Date: 2026-05-05 15:45+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -23,6 +23,34 @@ msgstr ""
 msgid "Noise Config"
 msgstr "Configuració del Soroll"
 
-#: ../../modules/noise/noise_config.rst:8
-msgid "Go to a specific subheading of a page."
-msgstr "Aneu a un subtítol específic d'una pàgina."
+#: ../../modules/noise/noise_config.rst:4
+msgid ""
+"By default, when converting between different noise representations (e.g."
+" from Kraus operators to Lindblad generators), certain parameters are "
+"assumed, such as gate times. These defaults can be modified using the "
+":class:`~qilisdk.noise.noise_config.NoiseConfig` class:"
+msgstr ""
+
+#: ../../modules/noise/noise_config.rst:20
+msgid "Parameters and their defaults are as follows:"
+msgstr ""
+
+#: ../../modules/noise/noise_config.rst:27
+msgid "Parameter"
+msgstr ""
+
+#: ../../modules/noise/noise_config.rst:27
+msgid "Default Value"
+msgstr ""
+
+#: ../../modules/noise/noise_config.rst:29
+msgid "gate_times"
+msgstr ""
+
+#: ../../modules/noise/noise_config.rst:29
+msgid "1.0 for all gates"
+msgstr ""
+
+#~ msgid "Go to a specific subheading of a page."
+#~ msgstr "Aneu a un subtítol específic d'una pàgina."
+

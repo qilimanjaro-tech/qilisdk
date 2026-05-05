@@ -1,0 +1,257 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025, Qilimanjaro Quantum Tech
+# This file is distributed under the same license as the QiliSDK package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: QiliSDK \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-05-05 15:18+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ca\n"
+"Language-Team: ca <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../modules/backends/backends_overview.rst:2
+msgid "Overview"
+msgstr "Visió general"
+
+#: ../../modules/backends/backends_overview.rst:4
+msgid ""
+"The :mod:`~qilisdk.backends` module provides concrete execution engines "
+"for running :mod:`~qilisdk.functionals` (quantum processes). Currently, "
+"three backends are supported:"
+msgstr ""
+"El mòdul :mod:`~qilisdk.backends` proporciona motors d'execució concrets "
+"per executar :mod:`~qilisdk.functionals` (processos quàntics). Actualment, "
+"s'admeten tres backends:"
+
+#: ../../modules/backends/backends_overview.rst:7
+msgid ""
+":doc:`QiliSim <backends_qilisim>`: A high-performance CPU simulator "
+"developed by Qilimanjaro, ideal for local development and testing."
+msgstr ""
+":doc:`QiliSim <backends_qilisim>`: Un simulador d'alt rendiment basat en "
+"CPU desenvolupat per Qilimanjaro, ideal per al desenvolupament i les proves "
+"locals."
+
+#: ../../modules/backends/backends_overview.rst:8
+msgid ""
+":doc:`CUDA <backends_cuda>`: A GPU-accelerated backend leveraging NVIDIA "
+"hardware for large-scale simulations."
+msgstr ""
+":doc:`CUDA <backends_cuda>`: Un backend accelerat per GPU que aprofita el "
+"maquinari NVIDIA per a simulacions a gran escala."
+
+#: ../../modules/backends/backends_overview.rst:9
+msgid ""
+":doc:`Qutip <backends_qutip>`: A CPU-based backend using the QuTiP "
+"library, suitable for lightweight simulations and environments without "
+"GPU access."
+msgstr ""
+":doc:`Qutip <backends_qutip>`: Un backend basat en CPU que utilitza la "
+"biblioteca QuTiP, adequat per a simulacions lleugeres i entorns sense "
+"accés a GPU."
+
+#: ../../modules/backends/backends_overview.rst:13
+msgid ""
+"Backends other than QiliSim are optional; to install one, include its "
+"extra when installing QILISDK:"
+msgstr ""
+"Els backends diferents de QiliSim són opcionals; per instal·lar-ne un, "
+"incloeu el seu extra en instal·lar QILISDK:"
+
+#: ../../modules/backends/backends_overview.rst:19
+msgid ""
+"For more information check the :doc:`../../getting_started/installation` "
+"page."
+msgstr ""
+"Per obtenir més informació, consulteu la pàgina "
+":doc:`../../getting_started/installation`."
+
+#: ../../modules/backends/backends_overview.rst:21
+msgid ""
+"Once installed, any primitive functional can be executed by passing it to"
+" the backend's :meth:`~qilisdk.backends.backend.Backend.execute` method "
+"along with readout specifications:"
+msgstr ""
+"Un cop instal·lat, qualsevol funcional primitiu es pot executar passant-lo "
+"al mètode :meth:`~qilisdk.backends.backend.Backend.execute` del backend "
+"juntament amb les especificacions de lectura:"
+
+#: ../../modules/backends/backends_overview.rst:36
+msgid "Architecture Overview"
+msgstr "Visió general de l'arquitectura"
+
+#: ../../modules/backends/backends_overview.rst:38
+msgid ""
+"All concrete backends subclass "
+":class:`~qilisdk.backends.backend.Backend`, which centralizes the "
+"execution workflow used across the SDK. The "
+":meth:`~qilisdk.backends.backend.Backend.execute` method dispatches a "
+"primitive functional (e.g. "
+":class:`~qilisdk.functionals.digital_propagation.DigitalPropagation` or "
+":class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`) to the "
+"appropriate simulation routine and returns a "
+":class:`~qilisdk.functionals.functional_result.FunctionalResult` (see the"
+" :doc:`Functionals </modules/functionals/functionals>` chapter). The "
+"execute method also accepts readout specifications that define how the "
+"quantum state is measured. The execute method is also used to optimize "
+"variational programs via repeated calls to the underlying parameterized "
+"primitive functional."
+msgstr ""
+"Tots els backends concrets subclassen "
+":class:`~qilisdk.backends.backend.Backend`, que centralitza el flux de "
+"treball d'execució utilitzat a tot el SDK. El mètode "
+":meth:`~qilisdk.backends.backend.Backend.execute` envia un funcional "
+"primitiu (p. ex. "
+":class:`~qilisdk.functionals.digital_propagation.DigitalPropagation` o "
+":class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`) a la "
+"rutina de simulació adequada i retorna un "
+":class:`~qilisdk.functionals.functional_result.FunctionalResult` (vegeu el "
+"capítol :doc:`Functionals </modules/functionals/functionals>`). El mètode "
+"execute també accepta especificacions de lectura que defineixen com es "
+"mesura l'estat quàntic. El mètode execute també s'utilitza per optimitzar "
+"programes variacionals mitjançant crides repetides al funcional primitiu "
+"parametritzat subjacent."
+
+#: ../../modules/backends/backends_overview.rst:45
+msgid ""
+"Backends register handlers for the functionals they support. If a "
+"functional is not implemented, "
+":meth:`~qilisdk.backends.backend.Backend.execute` raises "
+"``NotImplementedError`` to surface the mismatch early."
+msgstr ""
+"Els backends registren gestors per als funcionals que admeten. Si un "
+"funcional no està implementat, "
+":meth:`~qilisdk.backends.backend.Backend.execute` llança "
+"``NotImplementedError`` per detectar la incompatibilitat aviat."
+
+#: ../../modules/backends/backends_overview.rst:49
+msgid "Hardware & Dependencies"
+msgstr "Maquinari i dependències"
+
+#: ../../modules/backends/backends_overview.rst:51
+msgid ""
+"Installing a backend extra pulls in the library stack required for that "
+"simulator. GPU backends also expect compatible drivers to be present on "
+"the system."
+msgstr ""
+"La instal·lació d'un extra de backend incorpora la pila de biblioteques "
+"necessàries per a aquell simulador. Els backends de GPU també requereixen "
+"que hi hagi controladors compatibles al sistema."
+
+#: ../../modules/backends/backends_overview.rst:58
+#: ../../modules/backends/backends_overview.rst:84
+msgid "Backend"
+msgstr "Backend"
+
+#: ../../modules/backends/backends_overview.rst:59
+msgid "Extra"
+msgstr "Extra"
+
+#: ../../modules/backends/backends_overview.rst:60
+msgid "Key dependency"
+msgstr "Dependència clau"
+
+#: ../../modules/backends/backends_overview.rst:61
+msgid "Notes"
+msgstr "Notes"
+
+#: ../../modules/backends/backends_overview.rst:62
+#: ../../modules/backends/backends_overview.rst:89
+msgid ":class:`QiliSim <qilisdk.backends.qilisim.QiliSim>`"
+msgstr ":class:`QiliSim <qilisdk.backends.qilisim.QiliSim>`"
+
+#: ../../modules/backends/backends_overview.rst:63
+msgid "``qilisim``"
+msgstr "``qilisim``"
+
+#: ../../modules/backends/backends_overview.rst:64
+msgid "None"
+msgstr "Cap"
+
+#: ../../modules/backends/backends_overview.rst:65
+#: ../../modules/backends/backends_overview.rst:73
+msgid "CPU based; no special hardware needs."
+msgstr "Basat en CPU; no requereix maquinari especial."
+
+#: ../../modules/backends/backends_overview.rst:66
+#: ../../modules/backends/backends_overview.rst:94
+msgid ":class:`CudaBackend <qilisdk.backends.cuda_backend.CudaBackend>`"
+msgstr ":class:`CudaBackend <qilisdk.backends.cuda_backend.CudaBackend>`"
+
+#: ../../modules/backends/backends_overview.rst:67
+msgid "``cuda``"
+msgstr "``cuda``"
+
+#: ../../modules/backends/backends_overview.rst:68
+msgid "`cuda-quantum <https://github.com/NVIDIA/cuda-quantum>`_"
+msgstr "`cuda-quantum <https://github.com/NVIDIA/cuda-quantum>`_"
+
+#: ../../modules/backends/backends_overview.rst:69
+msgid "Requires NVIDIA hardware with recent drivers."
+msgstr "Requereix maquinari NVIDIA amb controladors recents."
+
+#: ../../modules/backends/backends_overview.rst:70
+#: ../../modules/backends/backends_overview.rst:99
+msgid ":class:`QutipBackend <qilisdk.backends.qutip_backend.QutipBackend>`"
+msgstr ":class:`QutipBackend <qilisdk.backends.qutip_backend.QutipBackend>`"
+
+#: ../../modules/backends/backends_overview.rst:71
+msgid "``qutip``"
+msgstr "``qutip``"
+
+#: ../../modules/backends/backends_overview.rst:72
+msgid "`QuTiP <https://qutip.org/>`_"
+msgstr "`QuTiP <https://qutip.org/>`_"
+
+#: ../../modules/backends/backends_overview.rst:76
+msgid "Functional Support"
+msgstr "Suport de funcionals"
+
+#: ../../modules/backends/backends_overview.rst:78
+msgid ""
+"The table below summarizes which primitive :mod:`~qilisdk.functionals` "
+"each backend can execute."
+msgstr ""
+"La taula següent resumeix quins :mod:`~qilisdk.functionals` primitius "
+"pot executar cada backend."
+
+#: ../../modules/backends/backends_overview.rst:85
+msgid "DigitalPropagation"
+msgstr "DigitalPropagation"
+
+#: ../../modules/backends/backends_overview.rst:86
+msgid "AnalogEvolution"
+msgstr "AnalogEvolution"
+
+#: ../../modules/backends/backends_overview.rst:87
+msgid "QuantumReservoir"
+msgstr "QuantumReservoir"
+
+#: ../../modules/backends/backends_overview.rst:88
+msgid "VariationalProgram"
+msgstr "VariationalProgram"
+
+#: ../../modules/backends/backends_overview.rst:90
+#: ../../modules/backends/backends_overview.rst:91
+#: ../../modules/backends/backends_overview.rst:92
+#: ../../modules/backends/backends_overview.rst:93
+#: ../../modules/backends/backends_overview.rst:95
+#: ../../modules/backends/backends_overview.rst:96
+#: ../../modules/backends/backends_overview.rst:97
+#: ../../modules/backends/backends_overview.rst:98
+#: ../../modules/backends/backends_overview.rst:100
+#: ../../modules/backends/backends_overview.rst:101
+#: ../../modules/backends/backends_overview.rst:102
+#: ../../modules/backends/backends_overview.rst:103
+msgid "|y|"
+msgstr "|y|"
