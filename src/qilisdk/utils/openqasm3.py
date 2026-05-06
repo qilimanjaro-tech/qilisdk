@@ -237,7 +237,11 @@ class OpenQasmParser:
     ) -> list | str | int | float | complex | bool | None:
 
         # With two int arguments
-        if len(args_evalled) >= 2 and isinstance(args_evalled[0], int) and isinstance(args_evalled[1], int):  # noqa: PLR2004
+        if (
+            len(args_evalled) >= 2  # noqa: PLR2004
+            and isinstance(args_evalled[0], int)
+            and isinstance(args_evalled[1], int)
+        ):
             match func_name:
                 case "rotl":
                     return ((args_evalled[0] << args_evalled[1]) | (args_evalled[0] >> (32 - args_evalled[1]))) % (
@@ -709,7 +713,11 @@ class OpenQasmParser:
                 raise ValueError(f"Unsupported variable type: {statement.type}")  # pragma: no cover
             if hasattr(statement.type, "size") and statement.type.size is not None:
                 var_size = self._evaluate_expression(statement.type.size)
-        self.var_list[var_name] = {"size": var_size, "value": var_value, "type": var_type}  # ty: ignore[invalid-assignment]
+        self.var_list[var_name] = {
+            "size": var_size,
+            "value": var_value,
+            "type": var_type,
+        }  # ty: ignore[invalid-assignment]
         self._cast_to_type(var_name)
 
     def _handle_statement_classical_assignment(self, statement: ClassicalAssignment) -> None:
@@ -922,7 +930,11 @@ class OpenQasmParser:
             raise ValueError(f"Unsupported for loop declaration: {statement.set_declaration}")  # pragma: no cover
 
         # Make the variable
-        self.var_list[loop_var_name] = {"size": loop_var_size, "value": 0, "type": loop_var_type}  # ty: ignore[invalid-assignment]
+        self.var_list[loop_var_name] = {
+            "size": loop_var_size,
+            "value": 0,
+            "type": loop_var_type,
+        }  # ty: ignore[invalid-assignment]
 
         # Loop through the values and process the body with the loop variable set to the current value
         res = None
@@ -1069,7 +1081,11 @@ class OpenQasmParser:
             # Otherwise, declare a parameter
             param_name = statement.identifier.name
             new_param = Parameter(param_name, 0.0)
-            self.var_list[param_name] = {"size": 1, "value": new_param, "type": "parameter"}  # ty: ignore[invalid-assignment]
+            self.var_list[param_name] = {
+                "size": 1,
+                "value": new_param,
+                "type": "parameter",
+            }  # ty: ignore[invalid-assignment]
 
         # Otherwise raise an error for now - we can add more statement types later
         elif not isinstance(statement, (Include, AliasStatement)):

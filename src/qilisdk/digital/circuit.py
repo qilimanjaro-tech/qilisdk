@@ -73,7 +73,7 @@ class Circuit(Parameterizable):
         self._nqubits: int = nqubits
         self._gates: list[Gate] = []
         self._init_state: np.ndarray = np.zeros(nqubits)
-        self._parameters_link: dict[str, tuple[str, Gate]] = {}
+        self._parameters_link: dict[str, list[tuple[str, Gate]]] = {}
 
     @property
     def nqubits(self) -> int:
@@ -121,7 +121,8 @@ class Circuit(Parameterizable):
         for label, param in parameters.items():
             if label not in self._parameters:
                 raise ValueError(f"Parameter {label} is not defined in this circuit.")
-            self._parameters_link[label][1].set_parameters({self._parameters_link[label][0]: param})
+            for link in self._parameters_link[label]:
+                link[1].set_parameters({link[0]: param})
 
     def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
         for label, bound in ranges.items():
@@ -129,7 +130,8 @@ class Circuit(Parameterizable):
                 raise ValueError(
                     f"The provided parameter label {label} is not defined in the list of parameters in this object."
                 )
-            self._parameters_link[label][1].set_parameter_bounds({self._parameters_link[label][0]: bound})
+            for link in self._parameters_link[label]:
+                link[1].set_parameter_bounds({link[0]: bound})
 
     def set_prefix(
         self,
@@ -168,7 +170,10 @@ class Circuit(Parameterizable):
                 else:
                     parameter_label = _parameter_name
                 self._add_parameter_from(label, gate, new_label=parameter_label)
-                self._parameters_link[parameter_label] = (label, gate)
+                if parameter_label not in self._parameters_link:
+                    self._parameters_link[parameter_label] = [(label, gate)]
+                else:
+                    self._parameters_link[parameter_label].append((label, gate))
 
     def _add(self, gate: Gate) -> None:
         """
