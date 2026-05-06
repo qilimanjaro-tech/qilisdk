@@ -28,7 +28,7 @@ msgid ""
 "QiliSDK and its optional extras are distributed via PyPI. Use pip to "
 "install the core package, plus any extra modules you need."
 msgstr ""
-"QiliSDK i els seus extras opcionals es distribueixen a través de PyPI."
+"QiliSDK i els seus extres opcionals es distribueixen a través de PyPI."
 " Useu pip per instal·lar el paquet principal, més qualsevol mòdul"
 " addicional que necessiteu."
 
@@ -38,7 +38,7 @@ msgstr "**Paquet base**"
 
 #: ../../getting_started/installation.rst:12
 msgid "**Optional extras**"
-msgstr "**Extras opcionals**"
+msgstr "**Extres opcionals**"
 
 #: ../../getting_started/installation.rst:14
 msgid ""
@@ -74,7 +74,7 @@ msgstr "**SpeQtrum** (enviament al núvol via :class:`~qilisdk.speqtrum`):"
 
 #: ../../getting_started/installation.rst:36
 msgid "You can combine extras:"
-msgstr "Podeu combinar extras:"
+msgstr "Podeu combinar extres:"
 
 #: ../../getting_started/installation.rst:44
 msgid "QiliSDK requires a python version 3.11 or higher."
@@ -158,7 +158,7 @@ msgid ""
 "If you want to install with extras, you can run the following, adjusting "
 "as needed:"
 msgstr ""
-"Si voleu instal·lar amb extras, podeu executar el següent, ajustant"
+"Si voleu instal·lar amb extres, podeu executar el següent, ajustant"
 " segons calgui:"
 
 #: ../../getting_started/installation.rst:107
