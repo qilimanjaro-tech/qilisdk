@@ -56,6 +56,7 @@ jobs:
             exit 1
           fi
           printf '<!doctype html><meta http-equiv="refresh" content="0; url=%s/">' "$latest_tag" > docs/_build/en/index.html
+          printf '<!doctype html><meta http-equiv="refresh" content="0; url=%s/">' "$latest_tag" > docs/_build/index.html
 
       - name: Deploy to GitHub Pages
         env:
