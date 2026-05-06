@@ -227,6 +227,95 @@ def test_reservoir_layer_parameter_sync_with_children():
     assert _isclose(pre.get_parameters()["u"], 0.8)
 
 
+def _ry_matrix(theta: float) -> np.ndarray:
+    cos_half = np.cos(theta / 2)
+    sin_half = np.sin(theta / 2)
+    return np.array([[cos_half, -sin_half], [sin_half, cos_half]])
+
+
+def test_reservoir_layer_set_parameters_invalidates_encoding_gate_matrix():
+    """Regression test: ``ReservoirLayer.set_parameters`` must route through each
+    child's own ``set_parameters`` so that gate matrix caches are invalidated.
+
+    Before the fix, the inherited ``Parameterizable.set_parameters`` called
+    ``Parameter.set_value`` directly, leaving each gate's ``cached_property``
+    matrix stale even though ``Parameter.value`` had been updated.
+    """
+    schedule, _ = _schedule_with_parameter(nqubits=2)
+    p_in = Parameter("p_in", 0.2, bounds=(0.0, np.pi))
+    p_out = Parameter("p_out", 0.2, bounds=(0.0, np.pi))
+
+    pre = Circuit(1)
+    pre.add(RY(0, theta=p_in))
+    post = Circuit(1)
+    post.add(RY(0, theta=p_out))
+
+    layer = ReservoirLayer(evolution_dynamics=schedule, input_encoding=pre, output_encoding=post)
+    pre_gate = pre.gates[0]
+    post_gate = post.gates[0]
+
+    np.testing.assert_allclose(pre_gate.matrix, _ry_matrix(0.2), atol=1e-12)
+    np.testing.assert_allclose(post_gate.matrix, _ry_matrix(0.2), atol=1e-12)
+
+    layer.set_parameters({"input_encoding_p_in": 0.9, "output_encoding_p_out": 1.1})
+
+    np.testing.assert_allclose(pre_gate.matrix, _ry_matrix(0.9), atol=1e-12)
+    np.testing.assert_allclose(post_gate.matrix, _ry_matrix(1.1), atol=1e-12)
+
+
+def test_reservoir_layer_set_parameter_values_invalidates_encoding_gate_matrix():
+    """Regression test for ``ReservoirLayer.set_parameter_values`` updating gate caches."""
+    schedule, _ = _schedule_with_parameter(nqubits=2)
+    p_out = Parameter("p_out", 0.2, bounds=(0.0, np.pi))
+
+    post = Circuit(1)
+    post.add(RY(0, theta=p_out))
+
+    layer = ReservoirLayer(evolution_dynamics=schedule, output_encoding=post)
+    post_gate = post.gates[0]
+    np.testing.assert_allclose(post_gate.matrix, _ry_matrix(0.2), atol=1e-12)
+
+    layer.set_parameter_values([0.5, 1.3], where=lambda param: param.is_trainable)
+
+    np.testing.assert_allclose(post_gate.matrix, _ry_matrix(1.3), atol=1e-12)
+
+
+def test_reservoir_layer_set_parameter_bounds_propagates_to_children():
+    """``ReservoirLayer.set_parameter_bounds`` must dispatch to each child so that
+    bounds-aware setters (e.g. on gates) run their own bookkeeping rather than
+    only mutating the underlying ``Parameter`` in place.
+    """
+    schedule, g = _schedule_with_parameter(nqubits=2)
+    p_in = Parameter("p_in", 0.2, bounds=(0.0, 1.0))
+    p_out = Parameter("p_out", 0.2, bounds=(0.0, 1.0))
+
+    pre = Circuit(1)
+    pre.add(RY(0, theta=p_in))
+    post = Circuit(1)
+    post.add(RY(0, theta=p_out))
+
+    layer = ReservoirLayer(evolution_dynamics=schedule, input_encoding=pre, output_encoding=post)
+    layer.set_parameter_bounds(
+        {
+            "input_encoding_p_in": (-2.0, 2.0),
+            "g": (-3.0, 3.0),
+            "output_encoding_p_out": (-4.0, 4.0),
+        }
+    )
+
+    _assert_bounds_dict_close(
+        layer.input_encoding.get_parameter_bounds(), {"input_encoding_p_in": (-2.0, 2.0)}
+    )
+    _assert_bounds_dict_close(schedule.get_parameter_bounds(), {"g": (-3.0, 3.0)})
+    _assert_bounds_dict_close(
+        layer.output_encoding.get_parameter_bounds(), {"output_encoding_p_out": (-4.0, 4.0)}
+    )
+
+    assert _isclose(p_in.bounds[0], -2.0) and _isclose(p_in.bounds[1], 2.0)
+    assert _isclose(g.bounds[0], -3.0) and _isclose(g.bounds[1], 3.0)
+    assert _isclose(p_out.bounds[0], -4.0) and _isclose(p_out.bounds[1], 4.0)
+
+
 def test_quantum_reservoir_parameter_sync_with_reservoir_layer_child():
     schedule, _ = _schedule_with_parameter(nqubits=2)
     u = ReservoirInput("u", 0.1)
