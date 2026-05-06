@@ -135,7 +135,7 @@ It may also throw an error about not being able to find `omp.h`, if so, try:
 ```bash
 sudo apt-get install libomp-dev
 ```
-For easy of use there are also a number of bash scripts in the "scripts" folder, for instance to generate coverage reports or to run all pre-commit checks.
+For ease of use there are also a number of bash scripts in the "scripts" folder, for instance to generate coverage reports or to run all pre-commit checks.
 
 ### Type Checking
 
