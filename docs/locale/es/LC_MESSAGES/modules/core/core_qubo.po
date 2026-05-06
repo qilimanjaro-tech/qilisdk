@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-05 15:45+0200\n"
+"POT-Creation-Date: 2026-05-06 15:01+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -299,26 +299,147 @@ msgstr ""
 "(2024): 025022."
 
 #: ../../modules/core/core_qubo.rst:165
+msgid "High-degree Term Linearization"
+msgstr "Linealización de Términos de Grado Alto"
+
+#: ../../modules/core/core_qubo.rst:167
+msgid ""
+"By definition, a QUBO objective is at most quadratic. However, both user-"
+"defined objectives and the squared residuals produced when penalizing "
+"constraints can introduce monomials of degree three or higher (for "
+"example, squaring a constraint with a quadratic left-hand side). To "
+"accept these inputs, :meth:`~qilisdk.core.model.Model.to_qubo` "
+"automatically *linearizes* any pseudo-Boolean monomial of degree greater "
+"than two by introducing auxiliary binary variables."
+msgstr ""
+"Por definición, un objetivo QUBO es como mucho cuadrático. Sin embargo, "
+"tanto los objetivos definidos por el usuario como los residuos al "
+"cuadrado generados al penalizar restricciones pueden introducir monomios "
+"de grado tres o superior (por ejemplo, al elevar al cuadrado una "
+"restricción con un lado izquierdo cuadrático). Para aceptar estas "
+"entradas, :meth:`~qilisdk.core.model.Model.to_qubo` *linealiza* "
+"automáticamente cualquier monomio pseudo-booleano de grado mayor que dos "
+"introduciendo variables binarias auxiliares."
+
+#: ../../modules/core/core_qubo.rst:173
+msgid ""
+"For each pair of binary factors :math:`a, b` that needs to be collapsed, "
+"a fresh auxiliary :math:`w` is created and the equality :math:`w = a "
+"\\cdot b` is enforced via the **Rosenberg** penalty"
+msgstr ""
+"Para cada par de factores binarios :math:`a, b` que se debe colapsar, se "
+"crea una nueva variable auxiliar :math:`w` y la igualdad :math:`w = a "
+"\\cdot b` se impone mediante la penalización de **Rosenberg**"
+
+#: ../../modules/core/core_qubo.rst:177
+msgid ""
+"P(a, b, w) = a \\cdot b - 2 \\cdot a \\cdot w - 2 \\cdot b \\cdot w + 3 "
+"\\cdot w,"
+msgstr ""
+"P(a, b, w) = a \\cdot b - 2 \\cdot a \\cdot w - 2 \\cdot b \\cdot w + 3 "
+"\\cdot w,"
+
+#: ../../modules/core/core_qubo.rst:181
+#, python-brace-format
+msgid ""
+"which is quadratic, non-negative for :math:`a, b, w \\in \\{0, 1\\}`, and"
+" zero if and only if :math:`w = a \\cdot b`. The original monomial then "
+"has its :math:`a \\cdot b` factor replaced by :math:`w`, lowering its "
+"degree by one. The reduction is iterated until every monomial is at most "
+"quadratic. Auxiliary variables are cached per unordered pair, so shared "
+"sub-products (e.g. :math:`x \\cdot y \\cdot z` and :math:`x \\cdot y "
+"\\cdot w` both reusing :math:`x \\cdot y`) introduce a single auxiliary "
+"and a single Rosenberg penalty."
+msgstr ""
+"que es cuadrática, no negativa para :math:`a, b, w \\in \\{0, 1\\}` y "
+"cero si y solo si :math:`w = a \\cdot b`. A continuación, en el monomio "
+"original el factor :math:`a \\cdot b` se sustituye por :math:`w`, "
+"reduciendo su grado en uno. La reducción se itera hasta que todo monomio "
+"es como mucho cuadrático. Las variables auxiliares se almacenan en caché "
+"por par no ordenado, de modo que los subproductos compartidos (por "
+"ejemplo, :math:`x \\cdot y \\cdot z` y :math:`x \\cdot y \\cdot w`, que "
+"reutilizan ambos :math:`x \\cdot y`) introducen una única variable "
+"auxiliar y una única penalización de Rosenberg."
+
+#: ../../modules/core/core_qubo.rst:188
+msgid ""
+"Two keyword arguments on :meth:`~qilisdk.core.model.Model.to_qubo` "
+"control this behavior:"
+msgstr ""
+"Dos argumentos por palabra clave de "
+":meth:`~qilisdk.core.model.Model.to_qubo` controlan este comportamiento:"
+
+#: ../../modules/core/core_qubo.rst:190
+msgid ""
+"``linearize`` (default ``True``): toggles the reduction. Set "
+"``linearize=False`` to keep the previous strict behavior where exporting "
+"a model with terms of degree three or higher raises a ``ValueError``."
+msgstr ""
+"``linearize`` (predeterminado ``True``): activa o desactiva la reducción."
+" Establezca ``linearize=False`` para mantener el comportamiento estricto "
+"anterior, en el que exportar un modelo con términos de grado tres o "
+"superior lanza un ``ValueError``."
+
+#: ../../modules/core/core_qubo.rst:193
+msgid ""
+"``linearization_lagrange_multiplier`` (default ``100``): the Lagrange "
+"multiplier applied to each Rosenberg penalty constraint. It must be large"
+" enough to dominate any incentive to violate the auxiliary equalities "
+":math:`w = a \\cdot b`."
+msgstr ""
+"``linearization_lagrange_multiplier`` (predeterminado ``100``): el "
+"multiplicador de Lagrange aplicado a cada restricción de penalización de "
+"Rosenberg. Debe ser lo bastante grande como para dominar cualquier "
+"incentivo a violar las igualdades auxiliares :math:`w = a \\cdot b`."
+
+#: ../../modules/core/core_qubo.rst:198
+msgid "Example: Cubic Objective and Constraint"
+msgstr "Ejemplo: Objetivo y Restricción Cúbicos"
+
+#: ../../modules/core/core_qubo.rst:213
+msgid ""
+"After ``to_qubo`` runs, the resulting :class:`~qilisdk.core.model.QUBO` "
+"contains a single auxiliary binary variable standing in for :math:`x "
+"\\cdot y` (shared between the objective and the constraint penalty) plus "
+"an equality constraint encoding the corresponding Rosenberg penalty. The "
+"cubic objective and the squared cubic constraint are both reduced to "
+"quadratic form so that :meth:`~qilisdk.core.model.QUBO.to_hamiltonian` "
+"can be invoked directly."
+msgstr ""
+"Tras ejecutar ``to_qubo``, el :class:`~qilisdk.core.model.QUBO` "
+"resultante contiene una única variable binaria auxiliar que sustituye a "
+":math:`x \\cdot y` (compartida entre el objetivo y la penalización de la "
+"restricción), junto con una restricción de igualdad que codifica la "
+"correspondiente penalización de Rosenberg. Tanto el objetivo cúbico como "
+"la restricción cúbica al cuadrado se reducen a forma cuadrática, de modo "
+"que :meth:`~qilisdk.core.model.QUBO.to_hamiltonian` se puede invocar "
+"directamente."
+
+#: ../../modules/core/core_qubo.rst:220
 msgid "Interoperability"
 msgstr "Interoperabilidad"
 
-#: ../../modules/core/core_qubo.rst:167
+#: ../../modules/core/core_qubo.rst:222
 msgid "**Convert any Model to QUBO**"
 msgstr "**Convertir cualquier Modelo a QUBO**"
 
-#: ../../modules/core/core_qubo.rst:168
+#: ../../modules/core/core_qubo.rst:223
 msgid ""
-"If you have a generic :class:`~qilisdk.core.model.Model` with only "
-"linear/quadratic terms, you can automatically produce a QUBO:"
+"Any generic :class:`~qilisdk.core.model.Model` can be converted into a "
+"QUBO. Higher-degree monomials are reduced to quadratic form via the "
+"Rosenberg-penalty linearization described above (set ``linearize=False`` "
+"to disable it):"
 msgstr ""
-"Si dispone de un :class:`~qilisdk.core.model.Model` genérico con términos"
-" únicamente lineales/cuadráticos, puede producir automáticamente un QUBO:"
+"Cualquier :class:`~qilisdk.core.model.Model` genérico se puede convertir "
+"en un QUBO. Los monomios de grado superior se reducen a forma cuadrática "
+"mediante la linealización con penalización de Rosenberg descrita arriba "
+"(establezca ``linearize=False`` para desactivarla):"
 
-#: ../../modules/core/core_qubo.rst:174
+#: ../../modules/core/core_qubo.rst:231
 msgid "**Export to Hamiltonian**"
 msgstr "**Exportar a Hamiltonian**"
 
-#: ../../modules/core/core_qubo.rst:175
+#: ../../modules/core/core_qubo.rst:232
 msgid ""
 "Once in QUBO form, translate directly into an analog Ising "
 ":class:`~qilisdk.analog.hamiltonian.Hamiltonian` for simulation or "
@@ -330,4 +451,15 @@ msgstr ""
 
 #~ msgid "Go to a specific subheading of a page."
 #~ msgstr "Ir a un subtítulo específico de una página."
+
+#~ msgid ""
+#~ "If you have a generic "
+#~ ":class:`~qilisdk.core.model.Model` with only "
+#~ "linear/quadratic terms, you can automatically"
+#~ " produce a QUBO:"
+#~ msgstr ""
+#~ "Si dispone de un "
+#~ ":class:`~qilisdk.core.model.Model` genérico con "
+#~ "términos únicamente lineales/cuadráticos, puede "
+#~ "producir automáticamente un QUBO:"
 
