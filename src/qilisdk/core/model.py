@@ -482,7 +482,7 @@ class Model:
         Args:
             lagrange_multiplier_dict (dict[str, float] | None, optional): A dictionary with lagrange multiplier values
                             to scale the model's constraints. Defaults to None.
-            penalization (Literal[&quot;unbalanced&quot;, &quot;slack&quot;], optional): the penalization used to handel
+            penalization (Literal[&quot;unbalanced&quot;, &quot;slack&quot;], optional): the penalization used to handle
                             inequality constraints. Defaults to "slack".
             parameters (list[float] | None, optional): the parameters used for the unbalanced penalization method.
                             Defaults to None.
@@ -987,7 +987,7 @@ class QUBO(Model):
 
         if self._linearizer is None and c.degree > 2:  # noqa: PLR2004
             raise ValueError(
-                f"QUBO constraints can not contain terms of order 2 or higher but received terms with degree {c.degree}."
+                f"QUBO constraints can not contain terms of order 2 or higher but received terms with degree {c.degree}. Set linearize=True to allow linearization."
             )
 
         self._check_variables(c, lagrange_multiplier=lagrange_multiplier)
@@ -1044,7 +1044,7 @@ class QUBO(Model):
 
         if self._linearizer is None and term.degree > 2:  # noqa: PLR2004
             raise ValueError(
-                f"QUBO objective can not contain terms of order higher than 2 but received terms with degree {term.degree}."
+                f"QUBO objective can not contain terms of order higher than 2 but received terms with degree {term.degree}. Set linearize=True to enable linearization."
             )
 
         term = term.to_binary()
