@@ -59,12 +59,12 @@ We should also start in the ground state of the mixing Hamiltonian, which in thi
 As a circuit, this looks like the following:
 
 .. image:: ../../_static/qaoa_circuit_light.svg
-   :align: left
+   :align: center
    :class: only-light
    :scale: 150%
 
 .. image:: ../../_static/qaoa_circuit_dark.svg
-   :align: left
+   :align: center
    :class: only-dark
    :scale: 150%
 

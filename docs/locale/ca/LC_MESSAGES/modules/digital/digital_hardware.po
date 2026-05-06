@@ -1,0 +1,106 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025, Qilimanjaro Quantum Tech
+# This file is distributed under the same license as the QiliSDK package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: QiliSDK \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-05-05 15:18+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ca\n"
+"Language-Team: ca <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../modules/digital/digital_hardware.rst:2
+msgid "HardwareEfficientAnsatz"
+msgstr "HardwareEfficientAnsatz"
+
+#: ../../modules/digital/digital_hardware.rst:4
+msgid ""
+":class:`~qilisdk.digital.ansatz.HardwareEfficientAnsatz` is a hardware-"
+"efficient ansatz tailored to quantum device topologies. Configuration "
+"options:"
+msgstr ""
+":class:`~qilisdk.digital.ansatz.HardwareEfficientAnsatz` és un ansatz "
+"eficient en hardware adaptat a les topologies dels dispositius quàntics. "
+"Opcions de configuració:"
+
+#: ../../modules/digital/digital_hardware.rst:7
+msgid "**layers**: Number of repeating layers of gates."
+msgstr "**layers**: Nombre de capes repetides de portes."
+
+#: ../../modules/digital/digital_hardware.rst:8
+msgid "**connectivity**:"
+msgstr "**connectivity**:"
+
+#: ../../modules/digital/digital_hardware.rst:10
+msgid "``circular``: Qubits form a ring."
+msgstr "``circular``: Els qubits formen un anell."
+
+#: ../../modules/digital/digital_hardware.rst:11
+msgid "``linear``: Qubits are connected linearly."
+msgstr "``linear``: Els qubits estan connectats linealment."
+
+#: ../../modules/digital/digital_hardware.rst:12
+msgid "``full``: All-to-all connectivity."
+msgstr "``full``: Connectivitat total entre tots els qubits."
+
+#: ../../modules/digital/digital_hardware.rst:13
+msgid "Or a list of tuples explicitly specifying the connectivity."
+msgstr "O una llista de tuples que especifiquen explícitament la connectivitat."
+
+#: ../../modules/digital/digital_hardware.rst:14
+msgid ""
+"**one_qubit_gate**: Choose the parameterized single-qubit gate (e.g., "
+":class:`~qilisdk.digital.gates.U1`, :class:`~qilisdk.digital.gates.U2`, "
+":class:`~qilisdk.digital.gates.U3`)."
+msgstr ""
+"**one_qubit_gate**: Trieu la porta parametritzada d'un sol qubit (p. ex., "
+":class:`~qilisdk.digital.gates.U1`, :class:`~qilisdk.digital.gates.U2`, "
+":class:`~qilisdk.digital.gates.U3`)."
+
+#: ../../modules/digital/digital_hardware.rst:15
+msgid ""
+"**two_qubit_gate**: Choose the two-qubit interaction type (e.g., "
+":class:`~qilisdk.digital.gates.CNOT`, "
+":class:`~qilisdk.digital.gates.CZ`)."
+msgstr ""
+"**two_qubit_gate**: Trieu el tipus d'interacció de dos qubits (p. ex., "
+":class:`~qilisdk.digital.gates.CNOT`, "
+":class:`~qilisdk.digital.gates.CZ`)."
+
+#: ../../modules/digital/digital_hardware.rst:16
+msgid "**structure**:"
+msgstr "**structure**:"
+
+#: ../../modules/digital/digital_hardware.rst:18
+msgid ""
+"``grouped``: Applies all single-qubit gates first, followed by all two-"
+"qubit gates."
+msgstr ""
+"``grouped``: Aplica primer totes les portes d'un sol qubit, seguides de "
+"totes les portes de dos qubits."
+
+#: ../../modules/digital/digital_hardware.rst:19
+msgid "``interposed``: Interleaves single and two-qubit gates."
+msgstr "``interposed``: Intercala les portes d'un sol qubit i de dos qubits."
+
+#: ../../modules/digital/digital_hardware.rst:22
+msgid "**Example**"
+msgstr "**Exemple**"
+
+#: ../../modules/digital/digital_hardware.rst:41
+msgid ""
+"This ansatz can then be used as a circuit. For example, we can execute "
+"this ansatz using QuTiP backend (need to be installed separately):"
+msgstr ""
+"Aquest ansatz es pot utilitzar com un circuit. Per exemple, podem executar "
+"aquest ansatz amb el backend QuTiP (cal instal·lar-lo per separat):"

@@ -1,0 +1,82 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025, Qilimanjaro Quantum Tech
+# This file is distributed under the same license as the QiliSDK package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: QiliSDK \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-14 12:09+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ca\n"
+"Language-Team: ca <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../index.rst:10 ../../index.rst:32
+msgid "Getting Started"
+msgstr "Primers passos"
+
+#: ../../index.rst:25 ../../index.rst:41
+msgid "Tutorials"
+msgstr "Tutorials"
+
+#: ../../index.rst:18 ../../index.rst:49
+msgid "Modules"
+msgstr "Mòduls"
+
+#: ../../index.rst:64
+msgid "API Reference"
+msgstr "Referència de l'API"
+
+#: ../../index.rst:2
+msgid "QiliSDK"
+msgstr "QiliSDK"
+
+#: ../../index.rst:6
+msgid ""
+"Welcome to **QiliSDK**, a unified Python framework for developing, "
+"simulating, and running both digital and analog quantum algorithms across"
+" a variety of backends (QPU, CPU, GPU) and Qilimanjaro's SpeQtrum. Its "
+"modular design makes it easy to prototype circuits, build Hamiltonians, "
+"design variational workflows, and deploy them on local or remote quantum "
+"simulators and hardware."
+msgstr ""
+"Benvingut a **QiliSDK**, un framework unificat de Python per desenvolupar,"
+" simular i executar algoritmes quàntics tant digitals com analògics en una"
+" varietat de backends (QPU, CPU, GPU) i el SpeQtrum de Qilimanjaro. El seu"
+" disseny modular facilita la creació de prototips de circuits, la"
+" construcció de Hamiltonians, el disseny de fluxos de treball variacionals"
+" i el seu desplegament en simuladors i maquinari quàntic locals o remots."
+
+#: ../../index.rst:15
+msgid ""
+"New to QiliSDK? Here you will find a description of its main concepts, "
+"together with some tutorials on how to install and start using QiliSDK!"
+msgstr ""
+"Nou a QiliSDK? Aquí trobareu una descripció dels seus conceptes principals,"
+" juntament amb alguns tutorials sobre com instal·lar i començar a usar"
+" QiliSDK!"
+
+#: ../../index.rst:23
+msgid ""
+"This section contains in-depth information about each key module of "
+"QiliSDK."
+msgstr ""
+"Aquesta secció conté informació detallada sobre cada mòdul clau de QiliSDK."
+
+#: ../../index.rst:30
+msgid ""
+"This section contains a series of tutorials that cover the basics of "
+"quantum computing and how to use QiliSDK to implement various quantum "
+"algorithms."
+msgstr ""
+"Aquesta secció conté una sèrie de tutorials que cobreixen els fonaments de"
+" la computació quàntica i com usar QiliSDK per implementar diversos"
+" algoritmes quàntics."

@@ -1,0 +1,213 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025, Qilimanjaro Quantum Tech
+# This file is distributed under the same license as the QiliSDK package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: QiliSDK \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-05-05 15:18+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: es\n"
+"Language-Team: es <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:2
+msgid "Terms, Maps and Comparisons"
+msgstr "Términos, Mapas y Comparaciones"
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:5
+msgid "Terms"
+msgstr "Términos"
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:7
+msgid ""
+":class:`Variables<qilisdk.core.variables.Variable>` can be combined "
+"algebraically to form expressions known as "
+":class:`Terms<qilisdk.core.variables.Term>`. For example:"
+msgstr ""
+"Las :class:`Variables<qilisdk.core.variables.Variable>` se pueden combinar "
+"algebraicamente para formar expresiones conocidas como "
+":class:`Términos<qilisdk.core.variables.Term>`. Por ejemplo:"
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:26
+#: ../../modules/core/core_terms_maps_comparisons.rst:44
+#: ../../modules/core/core_terms_maps_comparisons.rst:124
+msgid "**Output**:"
+msgstr "**Salida**:"
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:35
+msgid "Terms can be evaluated by providing values for the involved variables:"
+msgstr ""
+"Los términos se pueden evaluar proporcionando valores para las variables "
+"implicadas:"
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:52
+msgid ""
+"To evaluate a term, all participating variables must be assigned valid "
+"values within their respective domains and bounds."
+msgstr ""
+"Para evaluar un término, a todas las variables participantes se les deben "
+"asignar valores válidos dentro de sus dominios y límites respectivos."
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:56
+msgid "Mathematical Maps"
+msgstr "Mapas Matemáticos"
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:58
+msgid ""
+"Use :class:`~qilisdk.core.variables.MathematicalMap` helpers to apply "
+"common functions to a parameter or term while keeping expressions "
+"symbolic. :class:`~qilisdk.core.variables.Sin` and "
+":class:`~qilisdk.core.variables.Cos` wrap a "
+":class:`~qilisdk.core.variables.Parameter`, "
+":class:`~qilisdk.core.variables.Term`, or any other base variable and "
+"defer evaluation until values are provided."
+msgstr ""
+"Utilice los helpers :class:`~qilisdk.core.variables.MathematicalMap` para "
+"aplicar funciones comunes a un parámetro o término manteniendo las "
+"expresiones simbólicas. :class:`~qilisdk.core.variables.Sin` y "
+":class:`~qilisdk.core.variables.Cos` envuelven un "
+":class:`~qilisdk.core.variables.Parameter`, "
+":class:`~qilisdk.core.variables.Term`, o cualquier otra variable base y "
+"difieren la evaluación hasta que se proporcionan valores."
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:77
+msgid ""
+"These maps compose naturally with other terms, so you can include them in"
+" constraints or objectives and rely on the same evaluation and encoding "
+"rules as other symbolic expressions."
+msgstr ""
+"Estos mapas se componen de forma natural con otros términos, por lo que se "
+"pueden incluir en restricciones u objetivos y se rigen por las mismas "
+"reglas de evaluación y codificación que otras expresiones simbólicas."
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:82
+msgid "Comparison Terms"
+msgstr "Términos de Comparación"
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:84
+msgid ""
+"Each :class:`~qilisdk.core.variables.ComparisonTerm` defines a constraint"
+" using mathematical comparisons. Use the following operators to construct"
+" them:"
+msgstr ""
+"Cada :class:`~qilisdk.core.variables.ComparisonTerm` define una "
+"restricción mediante comparaciones matemáticas. Use los siguientes "
+"operadores para construirlos:"
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:92
+msgid "Comparison Operation"
+msgstr "Operación de Comparación"
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:93
+msgid "QiliSDK Method"
+msgstr "Método QiliSDK"
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:94
+msgid "Alias"
+msgstr "Alias"
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:95
+msgid "Equality"
+msgstr "Igualdad"
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:96
+msgid ":meth:`Equal(lhs, rhs)<qilisdk.core.variables.Equal>`"
+msgstr ":meth:`Equal(lhs, rhs)<qilisdk.core.variables.Equal>`"
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:97
+msgid ":meth:`EQ(lhs, rhs)<qilisdk.core.variables.EQ>`"
+msgstr ":meth:`EQ(lhs, rhs)<qilisdk.core.variables.EQ>`"
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:98
+msgid "Not Equal"
+msgstr "Distinto de"
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:99
+msgid ":meth:`NotEqual(lhs, rhs)<qilisdk.core.variables.NotEqual>`"
+msgstr ":meth:`NotEqual(lhs, rhs)<qilisdk.core.variables.NotEqual>`"
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:100
+msgid ":meth:`NEQ(lhs, rhs)<qilisdk.core.variables.NEQ>`"
+msgstr ":meth:`NEQ(lhs, rhs)<qilisdk.core.variables.NEQ>`"
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:101
+msgid "Less Than"
+msgstr "Menor que"
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:102
+msgid ":meth:`LessThan(lhs, rhs)<qilisdk.core.variables.LessThan>`"
+msgstr ":meth:`LessThan(lhs, rhs)<qilisdk.core.variables.LessThan>`"
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:103
+msgid ":meth:`LT(lhs, rhs)<qilisdk.core.variables.LT>`"
+msgstr ":meth:`LT(lhs, rhs)<qilisdk.core.variables.LT>`"
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:104
+msgid "Less Than or Equal"
+msgstr "Menor o igual que"
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:105
+msgid ":meth:`LessThanOrEqual(lhs, rhs)<qilisdk.core.variables.LessThanOrEqual>`"
+msgstr ":meth:`LessThanOrEqual(lhs, rhs)<qilisdk.core.variables.LessThanOrEqual>`"
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:106
+msgid ":meth:`LEQ(lhs, rhs)<qilisdk.core.variables.LEQ>`"
+msgstr ":meth:`LEQ(lhs, rhs)<qilisdk.core.variables.LEQ>`"
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:107
+msgid "Greater Than"
+msgstr "Mayor que"
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:108
+msgid ":meth:`GreaterThan(lhs, rhs)<qilisdk.core.variables.GreaterThan>`"
+msgstr ":meth:`GreaterThan(lhs, rhs)<qilisdk.core.variables.GreaterThan>`"
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:109
+msgid ":meth:`GT(lhs, rhs)<qilisdk.core.variables.GT>`"
+msgstr ":meth:`GT(lhs, rhs)<qilisdk.core.variables.GT>`"
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:110
+msgid "Greater Than or Equal"
+msgstr "Mayor o igual que"
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:111
+msgid ""
+":meth:`GreaterThanOrEqual(lhs, "
+"rhs)<qilisdk.core.variables.GreaterThanOrEqual>`"
+msgstr ""
+":meth:`GreaterThanOrEqual(lhs, "
+"rhs)<qilisdk.core.variables.GreaterThanOrEqual>`"
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:112
+msgid ":meth:`GEQ(lhs, rhs)<qilisdk.core.variables.GEQ>`"
+msgstr ":meth:`GEQ(lhs, rhs)<qilisdk.core.variables.GEQ>`"
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:114
+msgid ""
+"*Note*: `lhs` and `rhs` refer to the left-hand side and right-hand side "
+"expressions, respectively."
+msgstr ""
+"*Nota*: `lhs` y `rhs` hacen referencia a las expresiones del lado "
+"izquierdo y del lado derecho, respectivamente."
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:116
+msgid "Example:"
+msgstr "Ejemplo:"
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:130
+msgid ""
+"When a comparison term is created, constants are automatically moved to "
+"the right-hand side, and variable terms to the left-hand side."
+msgstr ""
+"Cuando se crea un término de comparación, las constantes se mueven "
+"automáticamente al lado derecho y los términos con variables al lado "
+"izquierdo."

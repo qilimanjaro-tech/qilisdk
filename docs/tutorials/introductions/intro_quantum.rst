@@ -156,12 +156,12 @@ which gives us a visual representation of the state of the qubit.
 For example, the state :math:`|0⟩` corresponds to the point at the top of the sphere:
 
 .. image:: ../../_static/bloch_light.svg
-   :align: left
+   :align: center
    :class: only-light
    :scale: 100%
 
 .. image:: ../../_static/bloch_dark.svg
-   :align: left
+   :align: center
    :class: only-dark
    :scale: 100%
 

@@ -1,0 +1,77 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025, Qilimanjaro Quantum Tech
+# This file is distributed under the same license as the QiliSDK package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: QiliSDK \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-05-05 15:18+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ca\n"
+"Language-Team: ca <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../modules/readout/readout_state.rst:2
+msgid "Full Quantum State"
+msgstr "Estat Quàntic Complet"
+
+#: ../../modules/readout/readout_state.rst:4
+msgid ""
+"Using "
+":meth:`with_state_tomography()<qilisdk.readout.readout_spec.Readout.with_state_tomography>`"
+" instructs the backend to return the full quantum state vector (or "
+"density matrix) after execution."
+msgstr ""
+"L'ús de "
+":meth:`with_state_tomography()<qilisdk.readout.readout_spec.Readout.with_state_tomography>`"
+" instrueix el backend a retornar el vector d'estat quàntic complet (o "
+"la matriu de densitat) després de l'execució."
+
+#: ../../modules/readout/readout_state.rst:23
+msgid "**Parameters**"
+msgstr "**Paràmetres**"
+
+#: ../../modules/readout/readout_state.rst:25
+msgid ""
+"**method** (``Literal[\"exact\"]``, default ``\"exact\"``): Tomography "
+"method.  Currently only ``\"exact\"`` is supported, such that the backend"
+" returns the raw state vector."
+msgstr ""
+"**method** (``Literal[\"exact\"]``, per defecte ``\"exact\"``): Mètode de "
+"tomografia. Actualment només s'admet ``\"exact\"``, de manera que el backend "
+"retorna el vector d'estat en brut."
+
+#: ../../modules/readout/readout_state.rst:28
+msgid "**When to Use It**"
+msgstr "**Quan Utilitzar-lo**"
+
+#: ../../modules/readout/readout_state.rst:30
+msgid ""
+"Use state tomography when you need the complete quantum state for post-"
+"processing: computing custom observables offline, visualising the state, "
+"checking fidelity, or seeding the next step of a multi-step algorithm."
+msgstr ""
+"Utilitzeu la tomografia d'estat quan necessiteu l'estat quàntic complet per al post-"
+"processament: calcular observables personalitzats fora de línia, visualitzar l'estat, "
+"comprovar la fidelitat, o inicialitzar el pas següent d'un algoritme de múltiples passos."
+
+#: ../../modules/readout/readout_state.rst:36
+msgid ""
+"State tomography is only available on simulators.  Physical QPUs "
+"(accessed via :class:`~qilisdk.speqtrum.speqtrum.SpeQtrum`) do not "
+"support this readout type."
+msgstr ""
+"La tomografia d'estat només està disponible en simuladors. Els QPUs físics "
+"(accessibles mitjançant :class:`~qilisdk.speqtrum.speqtrum.SpeQtrum`) no "
+"admeten aquest tipus de readout."
+
+#~ msgid "Go to a specific subheading of a page."
+#~ msgstr "Aneu a un subapartat específic d'una pàgina."
