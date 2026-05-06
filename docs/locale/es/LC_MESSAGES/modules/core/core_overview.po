@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../modules/core/core_overview.rst:2
 msgid "Overview"
-msgstr "Visión General"
+msgstr "Descripción General"
 
 #: ../../modules/core/core_overview.rst:4
 msgid ""

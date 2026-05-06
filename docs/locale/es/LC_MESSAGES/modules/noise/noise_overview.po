@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../modules/noise/noise_overview.rst:2
 msgid "Overview"
-msgstr "Visión General"
+msgstr "Descripción General"
 
 #: ../../modules/noise/noise_overview.rst:4
 msgid ""

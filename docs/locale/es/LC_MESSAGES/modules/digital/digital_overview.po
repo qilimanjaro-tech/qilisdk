@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../modules/digital/digital_overview.rst:2
 msgid "Overview"
-msgstr "Visión general"
+msgstr "Descripción General"
 
 #: ../../modules/digital/digital_overview.rst:4
 msgid ""

@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../modules/backends/backends_overview.rst:2
 msgid "Overview"
-msgstr "Descripción general"
+msgstr "Descripción General"
 
 #: ../../modules/backends/backends_overview.rst:4
 msgid ""
