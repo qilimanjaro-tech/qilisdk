@@ -50,12 +50,12 @@ jobs:
             echo "No tag found to redirect to" >&2
             exit 1
           fi
-          if [ ! -d "docs/_build/html/${latest_tag}" ]; then
+          if [ ! -d "docs/_build/en/${latest_tag}" ]; then
             echo "Built docs for tag ${latest_tag} not found" >&2
-            ls docs/_build/html
+            ls docs/_build/en
             exit 1
           fi
-          printf '<!doctype html><meta http-equiv="refresh" content="0; url=%s/">' "$latest_tag" > docs/_build/html/index.html
+          printf '<!doctype html><meta http-equiv="refresh" content="0; url=%s/">' "$latest_tag" > docs/_build/en/index.html
 
       - name: Deploy to GitHub Pages
         env:
@@ -63,4 +63,4 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          uv run ghp-import -n -f -p docs/_build/html
+          uv run ghp-import -n -f -p docs/_build/en

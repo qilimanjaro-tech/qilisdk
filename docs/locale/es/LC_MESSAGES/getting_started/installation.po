@@ -1,0 +1,190 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025, Qilimanjaro Quantum Tech
+# This file is distributed under the same license as the QiliSDK package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: QiliSDK \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-17 14:50+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: es\n"
+"Language-Team: es <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../getting_started/installation.rst:2
+msgid "Installation"
+msgstr "Instalación"
+
+#: ../../getting_started/installation.rst:4
+msgid ""
+"QiliSDK and its optional extras are distributed via PyPI. Use pip to "
+"install the core package, plus any extra modules you need."
+msgstr ""
+"QiliSDK y sus extras opcionales se distribuyen a través de PyPI. Use pip"
+" para instalar el paquete principal, más cualquier módulo adicional que"
+" necesite."
+
+#: ../../getting_started/installation.rst:6
+msgid "**Base package**"
+msgstr "**Paquete base**"
+
+#: ../../getting_started/installation.rst:12
+msgid "**Optional extras**"
+msgstr "**Extras opcionales**"
+
+#: ../../getting_started/installation.rst:14
+msgid ""
+"**CUDA acceleration** (NVIDIA GPU support with "
+":mod:`~qilisdk.backends.cuda_backend.CudaBackend`):"
+msgstr ""
+"**Aceleración CUDA** (soporte de GPU NVIDIA con "
+":mod:`~qilisdk.backends.cuda_backend.CudaBackend`):"
+
+#: ../../getting_started/installation.rst:21
+msgid ""
+"The CUDA backend requires a CUDA accelerated GPU to be available on your "
+"system and proper drivers to be installed. More information can be found "
+"on their official website: https://nvidia.github.io/cuda-"
+"quantum/latest/using/quick_start.html#install-cuda-q"
+msgstr ""
+"El backend CUDA requiere una GPU con aceleración CUDA disponible en su"
+" sistema y los controladores adecuados instalados. Puede encontrar más"
+" información en su sitio web oficial: https://nvidia.github.io/cuda-"
+"quantum/latest/using/quick_start.html#install-cuda-q"
+
+#: ../../getting_started/installation.rst:24
+msgid ""
+"**Qutip CPU backend** (CPU simulation with "
+":mod:`~qilisdk.backends.qutip_backend.QutipBackend`):"
+msgstr ""
+"**Backend CPU de Qutip** (simulación por CPU con "
+":mod:`~qilisdk.backends.qutip_backend.QutipBackend`):"
+
+#: ../../getting_started/installation.rst:30
+msgid "**SpeQtrum** (cloud submission via :class:`~qilisdk.speqtrum`):"
+msgstr "**SpeQtrum** (envío a la nube a través de :class:`~qilisdk.speqtrum`):"
+
+#: ../../getting_started/installation.rst:36
+msgid "You can combine extras:"
+msgstr "Puede combinar extras:"
+
+#: ../../getting_started/installation.rst:44
+msgid "QiliSDK requires a python version 3.11 or higher."
+msgstr "QiliSDK requiere una versión de Python 3.11 o superior."
+
+#: ../../getting_started/installation.rst:46
+msgid "Minimum OS requiremnets:"
+msgstr "Requisitos mínimos del sistema operativo:"
+
+#: ../../getting_started/installation.rst:47
+msgid "Linux: Ubuntu 22.04 or higher"
+msgstr "Linux: Ubuntu 22.04 o superior"
+
+#: ../../getting_started/installation.rst:48
+msgid "Windows: Windows 11 or higher"
+msgstr "Windows: Windows 11 o superior"
+
+#: ../../getting_started/installation.rst:49
+msgid "MacOS: MacOS 14 or higher"
+msgstr "MacOS: MacOS 14 o superior"
+
+#: ../../getting_started/installation.rst:52
+msgid "Compiling From Source"
+msgstr "Compilar desde el código fuente"
+
+#: ../../getting_started/installation.rst:54
+msgid ""
+"The above method will install the pre-built binaries of QiliSDK of the "
+"most recent release. If you want to get the newest features (those that "
+"we're still working on), you can compile the library from source, but be "
+"aware that this is not recommended for most users, and we make no "
+"promises that the latest code will be stable."
+msgstr ""
+"El método anterior instalará los binarios precompilados de QiliSDK de la"
+" versión más reciente. Si desea obtener las características más nuevas"
+" (aquellas en las que aún estamos trabajando), puede compilar la biblioteca"
+" desde el código fuente, pero tenga en cuenta que esto no se recomienda"
+" para la mayoría de los usuarios, y no garantizamos que el código más"
+" reciente sea estable."
+
+#: ../../getting_started/installation.rst:58
+msgid ""
+"Support for Windows is limited, so we recommend using WSL, which can be "
+"installed as per `this guide <https://learn.microsoft.com/en-"
+"us/windows/wsl/install>`__."
+msgstr ""
+"El soporte para Windows es limitado, por lo que recomendamos usar WSL,"
+" que se puede instalar según `esta guía <https://learn.microsoft.com/en-"
+"us/windows/wsl/install>`__."
+
+#: ../../getting_started/installation.rst:61
+msgid ""
+"First, make sure you have a Python, pip, git, and build-essentials "
+"installed. For Ubuntu/Debian, you can run:"
+msgstr ""
+"Primero, asegúrese de tener instalados Python, pip, git y build-essentials."
+" Para Ubuntu/Debian, puede ejecutar:"
+
+#: ../../getting_started/installation.rst:68
+msgid "or on MacOS with:"
+msgstr "o en MacOS con:"
+
+#: ../../getting_started/installation.rst:75
+msgid "Install uv globally with:"
+msgstr "Instale uv globalmente con:"
+
+#: ../../getting_started/installation.rst:81
+msgid "Then, clone (i.e. download) and enter the repository:"
+msgstr "Luego, clone (es decir, descargue) y acceda al repositorio:"
+
+#: ../../getting_started/installation.rst:88
+msgid "Create a new virtual environment using uv and activate it:"
+msgstr "Cree un nuevo entorno virtual usando uv y actívelo:"
+
+#: ../../getting_started/installation.rst:95
+msgid "To then install QiliSDK into this new environment, run:"
+msgstr "Para instalar QiliSDK en este nuevo entorno, ejecute:"
+
+#: ../../getting_started/installation.rst:101
+msgid ""
+"If you want to install with extras, you can run the following, adjusting "
+"as needed:"
+msgstr ""
+"Si desea instalar con extras, puede ejecutar lo siguiente, ajustando según"
+" sea necesario:"
+
+#: ../../getting_started/installation.rst:107
+msgid ""
+"You then have an environment with the latest version of QiliSDK "
+"installed. If you want to install other things to the environment you'll "
+"need to use pip with uv:"
+msgstr ""
+"Entonces tendrá un entorno con la última versión de QiliSDK instalada. Si"
+" desea instalar otras cosas en el entorno, necesitará usar pip con uv:"
+
+#: ../../getting_started/installation.rst:114
+msgid "And then to run a Python script within the environment, you can use:"
+msgstr "Y para ejecutar un script de Python dentro del entorno, puede usar:"
+
+#~ msgid ""
+#~ "Support for Windows is somewhat limited,"
+#~ " so we recommend using WSL, which "
+#~ "can be installed as per `this "
+#~ "guide <https://learn.microsoft.com/en-"
+#~ "us/windows/wsl/install>`__."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "First, make sure you have a "
+#~ "Python, pip, git, uv and build-"
+#~ "essentials installed. For Ubuntu/Debian, you"
+#~ " can run:"
+#~ msgstr ""

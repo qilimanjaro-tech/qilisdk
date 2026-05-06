@@ -1,0 +1,168 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025, Qilimanjaro Quantum Tech
+# This file is distributed under the same license as the QiliSDK package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: QiliSDK \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-05-05 15:18+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: es\n"
+"Language-Team: es <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../modules/functionals/functionals_variational.rst:2
+msgid "Variational Programs"
+msgstr "Programas Variacionales"
+
+#: ../../modules/functionals/functionals_variational.rst:4
+msgid ""
+"The :class:`~qilisdk.functionals.variational_program.VariationalProgram` "
+"functional gathers the pieces required for a variational quantum "
+"algorithm. It accepts a parameterized primitive functional, an optimizer,"
+" and a cost function. When you call "
+":meth:`~qilisdk.backends.backend.Backend.execute` it evaluates the "
+"functional repeatedly with updated parameters, feeds the resulting "
+":class:`~qilisdk.functionals.functional_result.FunctionalResult` into the"
+" supplied cost function, and finally returns a "
+":class:`~qilisdk.functionals.variational_program_result.VariationalProgramResult`."
+" Parameter constraints (inequalities/equalities on parameters) are "
+"attached at this level via the ``parameter_constraints`` argument; this "
+"is the place to enforce relations like ``theta >= phi`` or cross-"
+"parameter bounds across all QiliSDK functionals. Only parameters marked "
+"as trainable are optimized during this loop."
+msgstr ""
+"El funcional :class:`~qilisdk.functionals.variational_program.VariationalProgram` "
+"reúne los componentes necesarios para un algoritmo cuántico variacional. "
+"Acepta un functional primitivo parametrizado, un optimizador y una función "
+"de coste. Al llamar a "
+":meth:`~qilisdk.backends.backend.Backend.execute`, evalúa el functional "
+"repetidamente con parámetros actualizados, alimenta el "
+":class:`~qilisdk.functionals.functional_result.FunctionalResult` "
+"resultante en la función de coste suministrada y finalmente devuelve un "
+":class:`~qilisdk.functionals.variational_program_result.VariationalProgramResult`. "
+"Las restricciones de parámetros (desigualdades/igualdades sobre parámetros) "
+"se adjuntan en este nivel mediante el argumento ``parameter_constraints``; "
+"este es el lugar para imponer relaciones como ``theta >= phi`` o límites "
+"entre parámetros en todos los functionals de QiliSDK. Solo los parámetros "
+"marcados como entrenables se optimizan durante este bucle."
+
+#: ../../modules/functionals/functionals_variational.rst:14
+msgid "**Parameters**"
+msgstr "**Parámetros**"
+
+#: ../../modules/functionals/functionals_variational.rst:16
+msgid ""
+"**functional** "
+"(:class:`~qilisdk.functionals.functional.PrimitiveFunctional`): "
+"Parameterized primitive to optimize (for instance "
+":class:`DigitalPropagation "
+"<qilisdk.functionals.digital_propagation.DigitalPropagation>` or "
+":class:`AnalogEvolution "
+"<qilisdk.functionals.analog_evolution.AnalogEvolution>`)."
+msgstr ""
+"**functional** "
+"(:class:`~qilisdk.functionals.functional.PrimitiveFunctional`): "
+"Primitivo parametrizado a optimizar (por ejemplo, "
+":class:`DigitalPropagation "
+"<qilisdk.functionals.digital_propagation.DigitalPropagation>` o "
+":class:`AnalogEvolution "
+"<qilisdk.functionals.analog_evolution.AnalogEvolution>`)."
+
+#: ../../modules/functionals/functionals_variational.rst:19
+msgid ""
+"**optimizer** (:class:`~qilisdk.optimizers.optimizer.Optimizer`): "
+"Classical optimizer that proposes new parameter values and optionally "
+"stores intermediate iterates."
+msgstr ""
+"**optimizer** (:class:`~qilisdk.optimizers.optimizer.Optimizer`): "
+"Optimizador clásico que propone nuevos valores de parámetros y "
+"opcionalmente almacena los iterados intermedios."
+
+#: ../../modules/functionals/functionals_variational.rst:21
+msgid ""
+"**cost_function** "
+"(:class:`~qilisdk.cost_functions.cost_function.CostFunction`): Object "
+"that maps the functional results to a scalar cost; frequently constructed"
+" from a :class:`~qilisdk.core.model.Model`."
+msgstr ""
+"**cost_function** "
+"(:class:`~qilisdk.cost_functions.cost_function.CostFunction`): Objeto "
+"que transforma los resultados del functional en un coste escalar; "
+"frecuentemente construido a partir de un :class:`~qilisdk.core.model.Model`."
+
+#: ../../modules/functionals/functionals_variational.rst:23
+msgid ""
+"**store_intermediate_results** (bool, optional): When True, the optimizer"
+" keeps the intermediate steps, which are exposed through "
+":attr:`~qilisdk.functionals.variational_program_result.VariationalProgramResult.intermediate_results`."
+msgstr ""
+"**store_intermediate_results** (bool, opcional): Cuando es True, el "
+"optimizador conserva los pasos intermedios, que se exponen mediante "
+":attr:`~qilisdk.functionals.variational_program_result.VariationalProgramResult.intermediate_results`."
+
+#: ../../modules/functionals/functionals_variational.rst:25
+msgid ""
+"**parameter_constraints** "
+"(list[:class:`~qilisdk.core.variables.ComparisonTerm`], optional): "
+"Constraints on functional parameters (e.g., ``theta >= 0.5``) evaluated "
+"before each optimizer update. This is the supported entry point for "
+"enforcing parameter relations in QiliSDK."
+msgstr ""
+"**parameter_constraints** "
+"(list[:class:`~qilisdk.core.variables.ComparisonTerm`], opcional): "
+"Restricciones sobre los parámetros del functional (p. ej., "
+"``theta >= 0.5``) evaluadas antes de cada actualización del optimizador. "
+"Este es el punto de entrada admitido para imponer relaciones entre "
+"parámetros en QiliSDK."
+
+#: ../../modules/functionals/functionals_variational.rst:29
+msgid "**Returns**"
+msgstr "**Retorna**"
+
+#: ../../modules/functionals/functionals_variational.rst:31
+msgid ""
+":class:`~qilisdk.functionals.variational_program_result.VariationalProgramResult`:"
+" Retrieve :attr:`optimal_cost "
+"<qilisdk.functionals.variational_program_result.VariationalProgramResult.optimal_cost>`,"
+" :attr:`optimal_parameters "
+"<qilisdk.functionals.variational_program_result.VariationalProgramResult.optimal_parameters>`,"
+" and the final functional output packaged in "
+":attr:`optimal_execution_results "
+"<qilisdk.functionals.variational_program_result.VariationalProgramResult.optimal_execution_results>`."
+msgstr ""
+":class:`~qilisdk.functionals.variational_program_result.VariationalProgramResult`:"
+" Recupera :attr:`optimal_cost "
+"<qilisdk.functionals.variational_program_result.VariationalProgramResult.optimal_cost>`,"
+" :attr:`optimal_parameters "
+"<qilisdk.functionals.variational_program_result.VariationalProgramResult.optimal_parameters>`,"
+" y la salida final del functional empaquetada en "
+":attr:`optimal_execution_results "
+"<qilisdk.functionals.variational_program_result.VariationalProgramResult.optimal_execution_results>`."
+
+#: ../../modules/functionals/functionals_variational.rst:37
+msgid "**Usage Example (Using QiliSim Backend)**"
+msgstr "**Ejemplo de Uso (con el Backend QiliSim)**"
+
+#: ../../modules/functionals/functionals_variational.rst:84
+msgid "**Output**"
+msgstr "**Salida**"
+
+#: ../../modules/functionals/functionals_variational.rst:103
+msgid ""
+"**Usage Example 2 (Using QiliSim Backend)** This example optimizes a "
+"variational schedule under some parameter constraints."
+msgstr ""
+"**Ejemplo de Uso 2 (con el Backend QiliSim)** Este ejemplo optimiza un "
+"schedule variacional bajo ciertas restricciones de parámetros."
+
+#~ msgid "Go to a specific subheading of a page."
+#~ msgstr "Ir a un subtítulo específico de una página."

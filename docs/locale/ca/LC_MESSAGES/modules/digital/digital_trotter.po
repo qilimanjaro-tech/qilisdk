@@ -1,0 +1,67 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025, Qilimanjaro Quantum Tech
+# This file is distributed under the same license as the QiliSDK package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: QiliSDK \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-05-05 15:18+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ca\n"
+"Language-Team: ca <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../modules/digital/digital_trotter.rst:2
+msgid "TrotterizedSchedule"
+msgstr "TrotterizedSchedule"
+
+#: ../../modules/digital/digital_trotter.rst:4
+msgid ""
+":class:`~qilisdk.digital.ansatz.TrotterizedSchedule` builds a digital "
+"circuit that follows a time-ordered schedule of Hamiltonians. Each "
+"schedule slice is evolved using a fixed number of Trotter steps, and you "
+"may optionally prepend a state-initialization circuit or list of gates."
+msgstr ""
+":class:`~qilisdk.digital.ansatz.TrotterizedSchedule` construeix un circuit "
+"digital que segueix un programa ordenat en el temps de Hamiltonians. Cada "
+"segment del programa s'evoluciona amb un nombre fix de passos de Trotter, i "
+"opcionalment podeu anteposar un circuit d'inicialització d'estat o una llista "
+"de portes."
+
+#: ../../modules/digital/digital_trotter.rst:8
+msgid "Configuration options:"
+msgstr "Opcions de configuració:"
+
+#: ../../modules/digital/digital_trotter.rst:10
+msgid ""
+"**schedule**: A :class:`~qilisdk.analog.schedule.Schedule` of "
+"Hamiltonians to trotterize."
+msgstr ""
+"**schedule**: Un :class:`~qilisdk.analog.schedule.Schedule` de "
+"Hamiltonians per trotteritzar."
+
+#: ../../modules/digital/digital_trotter.rst:11
+msgid ""
+"**trotter_steps**: Number of Trotter steps per schedule slice. Defaults "
+"to 1."
+msgstr ""
+"**trotter_steps**: Nombre de passos de Trotter per segment del programa. "
+"Per defecte és 1."
+
+#: ../../modules/digital/digital_trotter.rst:13
+msgid "**Example**"
+msgstr "**Exemple**"
+
+#~ msgid "Trotterization"
+#~ msgstr "Trotterització"
+
+#~ msgid "Go to a specific subheading of a page."
+#~ msgstr "Aneu a un subapartat específic d'una pàgina."

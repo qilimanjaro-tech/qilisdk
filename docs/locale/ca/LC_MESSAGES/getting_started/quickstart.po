@@ -1,0 +1,139 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025, Qilimanjaro Quantum Tech
+# This file is distributed under the same license as the QiliSDK package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: QiliSDK \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-05-05 15:45+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ca\n"
+"Language-Team: ca <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../getting_started/quickstart.rst:3
+msgid "Quickstart"
+msgstr "Inici ràpid"
+
+#: ../../getting_started/quickstart.rst:5
+msgid ""
+"Below are minimal examples to get you running digital circuits and analog"
+" evolutions."
+msgstr ""
+"A continuació es mostren exemples mínims per posar en marxa circuits "
+"digitals i evolucions analògiques."
+
+#: ../../getting_started/quickstart.rst:8
+msgid "Digital Circuit Example"
+msgstr "Exemple de Circuit Digital"
+
+#: ../../getting_started/quickstart.rst:10
+msgid "Build a 2-qubit circuit, sample it, and inspect measurement counts:"
+msgstr ""
+"Construïu un circuit de 2 qubits, mostrejeu-lo i inspeccioneu els "
+"recomptes de mesura:"
+
+#: ../../getting_started/quickstart.rst:36
+msgid "Analog Evolution Example"
+msgstr "Exemple d'Evolució Analògica"
+
+#: ../../getting_started/quickstart.rst:38
+msgid ""
+"Define two Hamiltonians, build an interval-based interpolation schedule, "
+"and simulate:"
+msgstr ""
+"Definiu dos Hamiltonians, construïu una programació d'interpolació basada"
+" en intervals i simuleu:"
+
+#: ../../getting_started/quickstart.rst:84
+msgid "Next Steps"
+msgstr "Passos següents"
+
+#: ../../getting_started/quickstart.rst:86
+msgid ""
+"Once you've confirmed everything works, explore the tutorials section or "
+"check out each module for more details:"
+msgstr ""
+"Un cop hàgiu confirmat que tot funciona, exploreu la secció de tutorials "
+"o consulteu cada mòdul per obtenir més detalls:"
+
+#: ../../getting_started/quickstart.rst:88
+msgid ""
+"**Core primitives** (:doc:`/modules/core/core`) for state vectors, "
+"operators, and shared abstractions."
+msgstr ""
+"**Primitives del nucli** (:doc:`/modules/core/core`) per a vectors "
+"d'estat, operadors i abstraccions compartides."
+
+#: ../../getting_started/quickstart.rst:89
+msgid ""
+"**Digital workflows** (:doc:`/modules/digital/digital`) covering circuit "
+"construction, parameter sweeps, and QASM export."
+msgstr ""
+"**Fluxos de treball digitals** (:doc:`/modules/digital/digital`) que "
+"cobreixen la construcció de circuits, escombrats de paràmetres i "
+"exportació QASM."
+
+#: ../../getting_started/quickstart.rst:90
+msgid ""
+"**Analog workflows** (:doc:`/modules/analog/analog`) for Hamiltonian "
+"builders, schedules, and time-evolution utilities."
+msgstr ""
+"**Fluxos de treball analògics** (:doc:`/modules/analog/analog`) per a "
+"constructors d'Hamiltonians, programacions i utilitats d'evolució "
+"temporal."
+
+#: ../../getting_started/quickstart.rst:91
+msgid ""
+"**Functionals** (:doc:`/modules/functionals/functionals`) to see how "
+"experiments connect models with execution backends."
+msgstr ""
+"**Funcionals** (:doc:`/modules/functionals/functionals`) per veure com "
+"els experiments connecten models amb backends d'execució."
+
+#: ../../getting_started/quickstart.rst:92
+msgid ""
+"**Execution targets** (:doc:`/modules/backends/backends`) to compare "
+"Qutip (CPU) and CUDA (CPU/GPU) runtimes."
+msgstr ""
+"**Objectius d'execució** (:doc:`/modules/backends/backends`) per comparar"
+" els temps d'execució de Qutip (CPU) i CUDA (CPU/GPU)."
+
+#: ../../getting_started/quickstart.rst:93
+#, fuzzy
+msgid ""
+"**Noise** (:doc:`/modules/noise/noise`) to simulate hardware effects in "
+"both digital and analog contexts."
+msgstr ""
+"**Models de soroll** (:doc:`/modules/noise_models/noise_models`) per "
+"simular efectes de maquinari en contextos tant digitals com analògics."
+
+#: ../../getting_started/quickstart.rst:94
+msgid ""
+"**Cost functions** (:doc:`/modules/cost_functions/cost_functions`) for "
+"common optimization objectives and metrics."
+msgstr ""
+"**Funcions de cost** (:doc:`/modules/cost_functions/cost_functions`) per "
+"a objectius d'optimització i mètriques comunes."
+
+#: ../../getting_started/quickstart.rst:95
+msgid ""
+"**SpeQtrum cloud** (:doc:`/modules/speqtrum/speqtrum`) for account setup,"
+" calibration-aware jobs, and result retrieval."
+msgstr ""
+"**Núvol SpeQtrum** (:doc:`/modules/speqtrum/speqtrum`) per a la "
+"configuració de comptes, treballs amb calibració i recuperació de "
+"resultats."
+
+#: ../../getting_started/quickstart.rst:97
+msgid "Happy quantum coding!"
+msgstr "Feliç programació quàntica!"
+

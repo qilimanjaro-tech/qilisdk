@@ -27,6 +27,9 @@ callgrind*
 # Virtual environments
 .venv
 
+# Translation stuff
+*.mo
+
 # Hypothesis-generated files
 .hypothesis
 

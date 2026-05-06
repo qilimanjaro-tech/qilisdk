@@ -15,12 +15,12 @@ In quantum computing, we instead have *quantum gates* that operate on *qubits* t
 Most quantum circuits look something like the following:
 
 .. image:: ../../_static/general_circuit_light.svg
-   :align: left
+   :align: center
    :class: only-light
    :scale: 200%
 
 .. image:: ../../_static/general_circuit_dark.svg
-   :align: left
+   :align: center
    :class: only-dark
    :scale: 200%
 
@@ -187,7 +187,7 @@ entangles it with the second qubit, and then measures both qubits.
 
 If we want to simulate this circuit, we can use the :doc:`QiliSim </modules/backends/backends_qilisim>` backend.
 To tell the simulator that we want to simulate a circuit we use the
-the :doc:`DigitalPropagation </modules/functionals/functionals_sampling>` class 
+the :doc:`DigitalPropagation </modules/functionals/functionals_digital>` class 
 and then use the :doc:`Readout </modules/readout/readout>` class to specify how we want to read out our results:
 
 .. code-block:: python

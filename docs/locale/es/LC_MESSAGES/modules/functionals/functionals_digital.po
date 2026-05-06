@@ -1,0 +1,111 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025, Qilimanjaro Quantum Tech
+# This file is distributed under the same license as the QiliSDK package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: QiliSDK \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-05-05 15:18+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: es\n"
+"Language-Team: es <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../modules/functionals/functionals_digital.rst:2
+msgid "Digital Propagation"
+msgstr "Propagación Digital"
+
+#: ../../modules/functionals/functionals_digital.rst:4
+msgid ""
+"The :class:`~qilisdk.functionals.digital_propagation.DigitalPropagation` "
+"functional propagates a digital quantum circuit through the backend. "
+"Because it subclasses "
+":class:`~qilisdk.functionals.functional.PrimitiveFunctional`, any "
+"symbolic parameters exposed by the underlying "
+":class:`~qilisdk.digital.circuit.Circuit` can be queried or updated "
+"through helper methods such as "
+":meth:`~qilisdk.core.parameterizable.Parameterizable.get_parameter_names`."
+msgstr ""
+"El funcional :class:`~qilisdk.functionals.digital_propagation.DigitalPropagation` "
+"propaga un circuito cuántico digital a través del backend. Al ser una "
+"subclase de :class:`~qilisdk.functionals.functional.PrimitiveFunctional`, "
+"cualquier parámetro simbólico expuesto por el "
+":class:`~qilisdk.digital.circuit.Circuit` subyacente puede consultarse o "
+"actualizarse mediante métodos auxiliares como "
+":meth:`~qilisdk.core.parameterizable.Parameterizable.get_parameter_names`."
+
+#: ../../modules/functionals/functionals_digital.rst:10
+msgid ""
+"Measurement details such as the number of shots are specified separately "
+"via readout objects passed to "
+":meth:`~qilisdk.backends.backend.Backend.execute`."
+msgstr ""
+"Los detalles de medición, como el número de shots, se especifican por "
+"separado mediante objetos de lectura que se pasan a "
+":meth:`~qilisdk.backends.backend.Backend.execute`."
+
+#: ../../modules/functionals/functionals_digital.rst:13
+msgid "**Parameters**"
+msgstr "**Parámetros**"
+
+#: ../../modules/functionals/functionals_digital.rst:15
+msgid ""
+"**circuit** (:class:`~qilisdk.digital.circuit.Circuit`): Circuit to be "
+"propagated."
+msgstr ""
+"**circuit** (:class:`~qilisdk.digital.circuit.Circuit`): Circuito a "
+"propagar."
+
+#: ../../modules/functionals/functionals_digital.rst:17
+msgid "**Returns**"
+msgstr "**Retorna**"
+
+#: ../../modules/functionals/functionals_digital.rst:19
+msgid ""
+":class:`~qilisdk.functionals.functional_result.FunctionalResult`: Access "
+"shot counts"
+msgstr ""
+":class:`~qilisdk.functionals.functional_result.FunctionalResult`: Accede "
+"a los conteos de shots"
+
+#: ../../modules/functionals/functionals_digital.rst:20
+msgid ""
+"via "
+":meth:`~qilisdk.functionals.functional_result.FunctionalResult.get_samples`"
+" and"
+msgstr ""
+"mediante "
+":meth:`~qilisdk.functionals.functional_result.FunctionalResult.get_samples`"
+" y"
+
+#: ../../modules/functionals/functionals_digital.rst:21
+msgid ""
+"probabilities via "
+":meth:`~qilisdk.functionals.functional_result.FunctionalResult.get_probabilities`."
+msgstr ""
+"probabilidades mediante "
+":meth:`~qilisdk.functionals.functional_result.FunctionalResult.get_probabilities`."
+
+#: ../../modules/functionals/functionals_digital.rst:23
+msgid "**Usage Example**"
+msgstr "**Ejemplo de Uso**"
+
+#: ../../modules/functionals/functionals_digital.rst:41
+msgid ""
+"This functional can be executed on any backend that supports digital "
+"circuits. For example, we can execute it on the CUDA backend:"
+msgstr ""
+"Este functional puede ejecutarse en cualquier backend que soporte "
+"circuitos digitales. Por ejemplo, puede ejecutarse en el backend de CUDA:"
+
+#: ../../modules/functionals/functionals_digital.rst:54
+msgid "**Output**"
+msgstr "**Salida**"

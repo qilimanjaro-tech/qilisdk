@@ -1,0 +1,175 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025, Qilimanjaro Quantum Tech
+# This file is distributed under the same license as the QiliSDK package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: QiliSDK \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-05-05 15:18+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: es\n"
+"Language-Team: es <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../modules/functionals/functionals_overview.rst:2
+msgid "Overview"
+msgstr "Descripción General"
+
+#: ../../modules/functionals/functionals_overview.rst:4
+msgid ""
+"The :mod:`~qilisdk.functionals` module provides high-level quantum "
+"execution procedures by combining tools from the :mod:`~qilisdk.analog`, "
+":mod:`~qilisdk.digital`, and :mod:`~qilisdk.core` modules. Currently, it "
+"includes the following execution functionals:"
+msgstr ""
+"El módulo :mod:`~qilisdk.functionals` proporciona procedimientos de "
+"ejecución cuántica de alto nivel combinando herramientas de los módulos "
+":mod:`~qilisdk.analog`, :mod:`~qilisdk.digital` y :mod:`~qilisdk.core`. "
+"Actualmente incluye los siguientes functionals de ejecución:"
+
+#: ../../modules/functionals/functionals_overview.rst:7
+msgid ""
+":doc:`functionals_digital`: Propagates a digital quantum circuit through "
+"the backend."
+msgstr ""
+":doc:`functionals_digital`: Propaga un circuito cuántico digital a través "
+"del backend."
+
+#: ../../modules/functionals/functionals_overview.rst:8
+msgid ""
+":doc:`functionals_analog`: Simulates analog time evolution of one or more"
+" Hamiltonians according to a time-dependent schedule."
+msgstr ""
+":doc:`functionals_analog`: Simula la evolución temporal analog de uno o "
+"más Hamiltonianos según un schedule dependiente del tiempo."
+
+#: ../../modules/functionals/functionals_overview.rst:9
+msgid ""
+":doc:`functionals_reservoirs`: Runs a quantum reservoir pipeline (pre-"
+"processing, reservoir dynamics, post-processing) across multiple input "
+"layers."
+msgstr ""
+":doc:`functionals_reservoirs`: Ejecuta un pipeline de quantum reservoir "
+"(preprocesamiento, dinámica del reservoir, postprocesamiento) a través de "
+"múltiples capas de entrada."
+
+#: ../../modules/functionals/functionals_overview.rst:11
+msgid ""
+"Moreover, it provides more complex functionals that are used to execute "
+"more complex algorithms:"
+msgstr ""
+"Además, proporciona functionals más complejos que se utilizan para "
+"ejecutar algoritmos más complejos:"
+
+#: ../../modules/functionals/functionals_overview.rst:13
+msgid ""
+":doc:`functionals_variational`: Builds parameterized program to be "
+"optimized in a hybrid quantum-classical environment."
+msgstr ""
+":doc:`functionals_variational`: Construye un programa parametrizado para "
+"ser optimizado en un entorno híbrido cuántico-clásico."
+
+#: ../../modules/functionals/functionals_overview.rst:16
+msgid "Architecture Overview"
+msgstr "Descripción General de la Arquitectura"
+
+#: ../../modules/functionals/functionals_overview.rst:18
+msgid ""
+"Every functional conforms to the abstract "
+":class:`~qilisdk.functionals.functional.Functional` interface. Primitive "
+"functionals such as "
+":class:`~qilisdk.functionals.digital_propagation.DigitalPropagation` and "
+":class:`~qilisdk.functionals.analog_evolution.AnalogEvolution` also "
+"inherit from "
+":class:`~qilisdk.functionals.functional.PrimitiveFunctional`, which mixes"
+" in the :class:`~qilisdk.core.parameterizable.Parameterizable` contract. "
+"This lets backends query and update symbolic parameters consistently "
+"before execution."
+msgstr ""
+"Cada functional se ajusta a la interfaz abstracta "
+":class:`~qilisdk.functionals.functional.Functional`. Los functionals "
+"primitivos como "
+":class:`~qilisdk.functionals.digital_propagation.DigitalPropagation` y "
+":class:`~qilisdk.functionals.analog_evolution.AnalogEvolution` también "
+"heredan de "
+":class:`~qilisdk.functionals.functional.PrimitiveFunctional`, que "
+"incorpora el contrato :class:`~qilisdk.core.parameterizable.Parameterizable`. "
+"Esto permite que los backends consulten y actualicen parámetros simbólicos "
+"de forma coherente antes de la ejecución."
+
+#: ../../modules/functionals/functionals_overview.rst:25
+msgid ""
+"Readout is decoupled from functionals: measurement details (shots, "
+"observables, state tomography) are specified via :mod:`~qilisdk.readout` "
+"objects passed to the backend's "
+":meth:`~qilisdk.backends.backend.Backend.execute` method. All primitive "
+"functionals return a unified "
+":class:`~qilisdk.functionals.functional_result.FunctionalResult`."
+msgstr ""
+"La lectura está desacoplada de los functionals: los detalles de medición "
+"(shots, observables, tomografía de estado) se especifican mediante objetos "
+":mod:`~qilisdk.readout` que se pasan al método "
+":meth:`~qilisdk.backends.backend.Backend.execute` del backend. Todos los "
+"functionals primitivos devuelven un "
+":class:`~qilisdk.functionals.functional_result.FunctionalResult` unificado."
+
+#: ../../modules/functionals/functionals_overview.rst:30
+msgid "Result Objects"
+msgstr "Objetos de Resultado"
+
+#: ../../modules/functionals/functionals_overview.rst:32
+msgid ":class:`~qilisdk.functionals.functional_result.FunctionalResult`"
+msgstr ":class:`~qilisdk.functionals.functional_result.FunctionalResult`"
+
+#: ../../modules/functionals/functionals_overview.rst:33
+msgid ""
+"The unified result type for all primitive functionals. Access results "
+"through: ``samples`` for shot counts, ``probabilities`` for measurement "
+"probabilities, ``state`` for the terminal "
+":class:`~qilisdk.core.qtensor.QTensor` state (when using "
+":meth:`~qilisdk.readout.readout_spec.Readout.with_state_tomography`), and"
+" ``expectation_values`` for expectation values (when using "
+":meth:`~qilisdk.readout.readout_spec.Readout.with_expectation`). When "
+"``store_intermediate_results=True``, intermediate results are available "
+"via ``intermediate_states``, ``intermediate_samples``, "
+"``intermediate_probabilities``, and ``intermediate_expectation_values``."
+msgstr ""
+"El tipo de resultado unificado para todos los functionals primitivos. Se "
+"accede a los resultados mediante: ``samples`` para los conteos de shots, "
+"``probabilities`` para las probabilidades de medición, ``state`` para el "
+"estado terminal :class:`~qilisdk.core.qtensor.QTensor` (al usar "
+":meth:`~qilisdk.readout.readout_spec.Readout.with_state_tomography`), y "
+"``expectation_values`` para los valores esperados (al usar "
+":meth:`~qilisdk.readout.readout_spec.Readout.with_expectation`). Cuando "
+"``store_intermediate_results=True``, los resultados intermedios están "
+"disponibles mediante ``intermediate_states``, ``intermediate_samples``, "
+"``intermediate_probabilities`` e ``intermediate_expectation_values``."
+
+#: ../../modules/functionals/functionals_overview.rst:40
+msgid ":class:`~qilisdk.functionals.variational_program_result.VariationalProgramResult`"
+msgstr ":class:`~qilisdk.functionals.variational_program_result.VariationalProgramResult`"
+
+#: ../../modules/functionals/functionals_overview.rst:41
+msgid ""
+"bundles the optimizer trajectory (optimal cost, parameters, intermediate "
+"steps) together with the functional result obtained at convergence."
+msgstr ""
+"agrupa la trayectoria del optimizador (costo óptimo, parámetros, pasos "
+"intermedios) junto con el resultado funcional obtenido en la convergencia."
+
+#: ../../modules/functionals/functionals_overview.rst:44
+msgid ""
+"These objects make post-processing workflows ergonomic. For example, "
+"after a digital propagation you can surface the most likely bitstrings:"
+msgstr ""
+"Estos objetos hacen que los flujos de trabajo de postprocesamiento sean "
+"ergonómicos. Por ejemplo, tras una propagación digital se pueden extraer "
+"los bitstrings más probables:"
