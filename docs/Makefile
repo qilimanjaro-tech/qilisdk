@@ -20,9 +20,9 @@ multiversion:
 	rm -rf "$(BUILDDIR)/en"
 	sphinx-multiversion "$(SOURCEDIR)" "$(BUILDDIR)/en"
 	for lang in $(LANGUAGES); do \
-		@rm -rf "$(BUILDDIR)/$$lang"; \
-		@SPHINX_LOCALE_DIR="$(CURDIR)/locale" sphinx-multiversion "$(SOURCEDIR)" "$(BUILDDIR)/$$lang" -D language=$$lang; \
-		@sed -i 's/@media (prefers-color-scheme: dark)/.dark/g' "$(BUILDDIR)/$$lang/_static/pygments.css"; \
+		rm -rf "$(BUILDDIR)/$$lang"; \
+		SPHINX_LOCALE_DIR="$(CURDIR)/locale" sphinx-multiversion "$(SOURCEDIR)" "$(BUILDDIR)/$$lang" -D language=$$lang; \
+		sed -i 's/@media (prefers-color-scheme: dark)/.dark/g' "$(BUILDDIR)/$$lang/_static/pygments.css"; \
 	done
 
 # Run this to generate the files for translation
