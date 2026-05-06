@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../modules/functionals/functionals_analog.rst:2
 msgid "Analog Evolution"
-msgstr ""
+msgstr "Evolució Analògica"
 
 #: ../../modules/functionals/functionals_analog.rst:4
 msgid ""
@@ -32,16 +32,26 @@ msgid ""
 ":class:`~qilisdk.analog.schedule.Schedule`, making it straightforward to "
 "sweep control waveforms or pulse amplitudes from classical optimizers."
 msgstr ""
+"El funcional :class:`~qilisdk.functionals.analog_evolution.AnalogEvolution` "
+"simula l'evolució analògica d'un sistema quàntic sota un o més "
+"Hamiltonians, seguint un programa dependent del temps especificat. La "
+"seva interfície de paràmetres reflecteix la de "
+":class:`~qilisdk.analog.schedule.Schedule`, cosa que facilita el "
+"recorregut de formes d'ona de control o amplituds de pols des "
+"d'optimitzadors clàssics."
 
 #: ../../modules/functionals/functionals_analog.rst:8
 msgid ""
 "Observables and shot counts are specified separately via readout objects "
 "passed to :meth:`~qilisdk.backends.backend.Backend.execute`."
 msgstr ""
+"Els observables i els comptatges de mesures s'especifiquen per separat "
+"mitjançant objectes de lectura passats a "
+":meth:`~qilisdk.backends.backend.Backend.execute`."
 
 #: ../../modules/functionals/functionals_analog.rst:11
 msgid "**Parameters**"
-msgstr ""
+msgstr "**Paràmetres**"
 
 #: ../../modules/functionals/functionals_analog.rst:13
 msgid ""
@@ -49,22 +59,29 @@ msgid ""
 "evolution time, time steps, Hamiltonians, and their time-dependent "
 "coefficients."
 msgstr ""
+"**schedule** (:class:`~qilisdk.analog.schedule.Schedule`): Defineix el "
+"temps total d'evolució, els passos de temps, els Hamiltonians i els seus "
+"coeficients dependents del temps."
 
 #: ../../modules/functionals/functionals_analog.rst:14
 msgid ""
 "**initial_state** (:class:`~qilisdk.core.qtensor.QTensor`): Initial state"
 " of the system."
 msgstr ""
+"**initial_state** (:class:`~qilisdk.core.qtensor.QTensor`): Estat inicial"
+" del sistema."
 
 #: ../../modules/functionals/functionals_analog.rst:15
 msgid ""
 "**store_intermediate_results** (bool, optional): If True, records the "
 "state at each time step. Default is False."
 msgstr ""
+"**store_intermediate_results** (bool, opcional): Si és True, registra "
+"l'estat en cada pas de temps. El valor per defecte és False."
 
 #: ../../modules/functionals/functionals_analog.rst:17
 msgid "**Returns**"
-msgstr ""
+msgstr "**Retorna**"
 
 #: ../../modules/functionals/functionals_analog.rst:19
 msgid ""
@@ -79,16 +96,25 @@ msgid ""
 ":meth:`~qilisdk.functionals.functional_result.FunctionalResult.get_intermediate_expectation_values`"
 " when ``store_intermediate_results`` is enabled."
 msgstr ""
+":class:`~qilisdk.functionals.functional_result.FunctionalResult`: "
+"Consulteu "
+":meth:`~qilisdk.functionals.functional_result.FunctionalResult.get_expectation_values`"
+" per als observables mesurats, "
+":meth:`~qilisdk.functionals.functional_result.FunctionalResult.get_state`"
+" per a l'estat final, i "
+":meth:`~qilisdk.functionals.functional_result.FunctionalResult.get_intermediate_states`"
+" i "
+":meth:`~qilisdk.functionals.functional_result.FunctionalResult.get_intermediate_expectation_values`"
+" quan ``store_intermediate_results`` està activat."
 
 #: ../../modules/functionals/functionals_analog.rst:24
 msgid "**Usage Example**"
-msgstr ""
+msgstr "**Exemple d'Ús**"
 
 #: ../../modules/functionals/functionals_analog.rst:51
 msgid "we can execute it on the QiliSim backend:"
-msgstr ""
+msgstr "podem executar-lo al backend QiliSim:"
 
 #: ../../modules/functionals/functionals_analog.rst:65
 msgid "**Output**"
-msgstr ""
-
+msgstr "**Sortida**"

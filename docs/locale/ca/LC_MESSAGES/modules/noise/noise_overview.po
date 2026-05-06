@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../modules/noise/noise_overview.rst:2
 msgid "Overview"
-msgstr ""
+msgstr "Visió General"
 
 #: ../../modules/noise/noise_overview.rst:4
 msgid ""
@@ -32,18 +32,24 @@ msgid ""
 " contains various types of noise, each of which is then applied during "
 "simulation."
 msgstr ""
+"El mòdul :mod:`qilisdk.noise` conté classes que representen diferents "
+"tipus de soroll en sistemes quàntics. Aquests models de soroll es poden "
+"integrar en simulacions quàntiques per tenir en compte les imperfeccions "
+"del món real i els efectes de decoherència. Un "
+":class:`~qilisdk.noise.noise_model.NoiseModel` pot contenir diversos "
+"tipus de soroll, cadascun dels quals s'aplica durant la simulació."
 
 #: ../../modules/noise/noise_overview.rst:14
 msgid "Backend"
-msgstr ""
+msgstr "Backend"
 
 #: ../../modules/noise/noise_overview.rst:14
 msgid "Noise Models Supported"
-msgstr ""
+msgstr "Models de Soroll Compatibles"
 
 #: ../../modules/noise/noise_overview.rst:16
 msgid ":class:`~qilisdk.backends.qilisim.QiliSim`"
-msgstr ""
+msgstr ":class:`~qilisdk.backends.qilisim.QiliSim`"
 
 #: ../../modules/noise/noise_overview.rst:16
 #: ../../modules/noise/noise_overview.rst:18
@@ -59,23 +65,23 @@ msgstr ""
 #: ../../modules/noise/noise_overview.rst:84
 #: ../../modules/noise/noise_overview.rst:86
 msgid "✔"
-msgstr ""
+msgstr "✔"
 
 #: ../../modules/noise/noise_overview.rst:18
 msgid ":class:`~qilisdk.backends.cuda_backend.CudaBackend`"
-msgstr ""
+msgstr ":class:`~qilisdk.backends.cuda_backend.CudaBackend`"
 
 #: ../../modules/noise/noise_overview.rst:20
 msgid ":class:`~qilisdk.backends.qutip_backend.QutipBackend`"
-msgstr ""
+msgstr ":class:`~qilisdk.backends.qutip_backend.QutipBackend`"
 
 #: ../../modules/noise/noise_overview.rst:20
 msgid "✕"
-msgstr ""
+msgstr "✕"
 
 #: ../../modules/noise/noise_overview.rst:25
 msgid "Usage"
-msgstr ""
+msgstr "Ús"
 
 #: ../../modules/noise/noise_overview.rst:27
 msgid ""
@@ -85,10 +91,14 @@ msgid ""
 " and then simulate it with a CUDA backend containing a bit-flip noise "
 "model:"
 msgstr ""
+"Els passos de soroll s'afegeixen a un "
+":class:`~qilisdk.noise.noise_model.NoiseModel`, que s'ha d'incloure en "
+"crear un backend. Per exemple, per crear un circuit senzill i simular-lo "
+"amb un backend CUDA que contingui un model de soroll d'inversió de bit:"
 
 #: ../../modules/noise/noise_overview.rst:54
 msgid "Summary of Noise Types"
-msgstr ""
+msgstr "Resum dels Tipus de Soroll"
 
 #: ../../modules/noise/noise_overview.rst:56
 msgid ""
@@ -96,60 +106,62 @@ msgid ""
 "digital circuits and analog schedules, while others are specific to one "
 "or the other:"
 msgstr ""
+"Alguns dels passos de soroll disponibles a QiliSDK es poden utilitzar "
+"tant per a circuits digitals com per a programes analògics, mentre que "
+"d'altres són específics d'un o de l'altre:"
 
 #: ../../modules/noise/noise_overview.rst:64
 msgid "Noise Type"
-msgstr ""
+msgstr "Tipus de Soroll"
 
 #: ../../modules/noise/noise_overview.rst:64
 msgid "Digital Propogation"
-msgstr ""
+msgstr "Propagació Digital"
 
 #: ../../modules/noise/noise_overview.rst:64
 msgid "Analog Evolution"
-msgstr ""
+msgstr "Evolució Analògica"
 
 #: ../../modules/noise/noise_overview.rst:66
 msgid ":class:`~qilisdk.noise.representations.KrausChannel`"
-msgstr ""
+msgstr ":class:`~qilisdk.noise.representations.KrausChannel`"
 
 #: ../../modules/noise/noise_overview.rst:68
 msgid ":class:`~qilisdk.noise.representations.LindbladGenerator`"
-msgstr ""
+msgstr ":class:`~qilisdk.noise.representations.LindbladGenerator`"
 
 #: ../../modules/noise/noise_overview.rst:70
 msgid ":class:`~qilisdk.noise.pauli_channel.PauliChannel`"
-msgstr ""
+msgstr ":class:`~qilisdk.noise.pauli_channel.PauliChannel`"
 
 #: ../../modules/noise/noise_overview.rst:72
 msgid ":class:`~qilisdk.noise.bit_flip.BitFlip`"
-msgstr ""
+msgstr ":class:`~qilisdk.noise.bit_flip.BitFlip`"
 
 #: ../../modules/noise/noise_overview.rst:74
 msgid ":class:`~qilisdk.noise.phase_flip.PhaseFlip`"
-msgstr ""
+msgstr ":class:`~qilisdk.noise.phase_flip.PhaseFlip`"
 
 #: ../../modules/noise/noise_overview.rst:76
 msgid ":class:`~qilisdk.noise.depolarizing.Depolarizing`"
-msgstr ""
+msgstr ":class:`~qilisdk.noise.depolarizing.Depolarizing`"
 
 #: ../../modules/noise/noise_overview.rst:78
 msgid ":class:`~qilisdk.noise.amplitude_damping.AmplitudeDamping`"
-msgstr ""
+msgstr ":class:`~qilisdk.noise.amplitude_damping.AmplitudeDamping`"
 
 #: ../../modules/noise/noise_overview.rst:80
 msgid ":class:`~qilisdk.noise.dephasing.Dephasing`"
-msgstr ""
+msgstr ":class:`~qilisdk.noise.dephasing.Dephasing`"
 
 #: ../../modules/noise/noise_overview.rst:82
 msgid ":class:`~qilisdk.noise.gaussian_perturbation.GaussianPerturbation`"
-msgstr ""
+msgstr ":class:`~qilisdk.noise.gaussian_perturbation.GaussianPerturbation`"
 
 #: ../../modules/noise/noise_overview.rst:84
 msgid ":class:`~qilisdk.noise.offset_perturbation.OffsetPerturbation`"
-msgstr ""
+msgstr ":class:`~qilisdk.noise.offset_perturbation.OffsetPerturbation`"
 
 #: ../../modules/noise/noise_overview.rst:86
 msgid ":class:`~qilisdk.noise.readout_assignment.ReadoutAssignment`"
-msgstr ""
-
+msgstr ":class:`~qilisdk.noise.readout_assignment.ReadoutAssignment`"

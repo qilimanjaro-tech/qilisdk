@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../modules/noise/noise_overview.rst:2
 msgid "Overview"
-msgstr ""
+msgstr "Visión General"
 
 #: ../../modules/noise/noise_overview.rst:4
 msgid ""
@@ -32,18 +32,24 @@ msgid ""
 " contains various types of noise, each of which is then applied during "
 "simulation."
 msgstr ""
+"El módulo :mod:`qilisdk.noise` contiene clases que representan diferentes"
+" tipos de ruido en sistemas cuánticos. Estos modelos de ruido pueden "
+"integrarse en simulaciones cuánticas para tener en cuenta las "
+"imperfecciones del mundo real y los efectos de decoherencia. Un "
+":class:`~qilisdk.noise.noise_model.NoiseModel` puede contener varios "
+"tipos de ruido, cada uno de los cuales se aplica durante la simulación."
 
 #: ../../modules/noise/noise_overview.rst:14
 msgid "Backend"
-msgstr ""
+msgstr "Backend"
 
 #: ../../modules/noise/noise_overview.rst:14
 msgid "Noise Models Supported"
-msgstr ""
+msgstr "Modelos de Ruido Compatibles"
 
 #: ../../modules/noise/noise_overview.rst:16
 msgid ":class:`~qilisdk.backends.qilisim.QiliSim`"
-msgstr ""
+msgstr ":class:`~qilisdk.backends.qilisim.QiliSim`"
 
 #: ../../modules/noise/noise_overview.rst:16
 #: ../../modules/noise/noise_overview.rst:18
@@ -59,23 +65,23 @@ msgstr ""
 #: ../../modules/noise/noise_overview.rst:84
 #: ../../modules/noise/noise_overview.rst:86
 msgid "✔"
-msgstr ""
+msgstr "✔"
 
 #: ../../modules/noise/noise_overview.rst:18
 msgid ":class:`~qilisdk.backends.cuda_backend.CudaBackend`"
-msgstr ""
+msgstr ":class:`~qilisdk.backends.cuda_backend.CudaBackend`"
 
 #: ../../modules/noise/noise_overview.rst:20
 msgid ":class:`~qilisdk.backends.qutip_backend.QutipBackend`"
-msgstr ""
+msgstr ":class:`~qilisdk.backends.qutip_backend.QutipBackend`"
 
 #: ../../modules/noise/noise_overview.rst:20
 msgid "✕"
-msgstr ""
+msgstr "✕"
 
 #: ../../modules/noise/noise_overview.rst:25
 msgid "Usage"
-msgstr ""
+msgstr "Uso"
 
 #: ../../modules/noise/noise_overview.rst:27
 msgid ""
@@ -85,10 +91,15 @@ msgid ""
 " and then simulate it with a CUDA backend containing a bit-flip noise "
 "model:"
 msgstr ""
+"Los pases de ruido se añaden a un "
+":class:`~qilisdk.noise.noise_model.NoiseModel`, que luego debe incluirse "
+"al crear un backend. Por ejemplo, para crear un circuito simple y "
+"simularlo con un backend CUDA que contenga un modelo de ruido de "
+"inversión de bit:"
 
 #: ../../modules/noise/noise_overview.rst:54
 msgid "Summary of Noise Types"
-msgstr ""
+msgstr "Resumen de los Tipos de Ruido"
 
 #: ../../modules/noise/noise_overview.rst:56
 msgid ""
@@ -96,60 +107,62 @@ msgid ""
 "digital circuits and analog schedules, while others are specific to one "
 "or the other:"
 msgstr ""
+"Algunos de los pases de ruido disponibles en QiliSDK pueden utilizarse "
+"tanto para circuitos digitales como para programas analógicos, mientras "
+"que otros son específicos de uno u otro:"
 
 #: ../../modules/noise/noise_overview.rst:64
 msgid "Noise Type"
-msgstr ""
+msgstr "Tipo de Ruido"
 
 #: ../../modules/noise/noise_overview.rst:64
 msgid "Digital Propogation"
-msgstr ""
+msgstr "Propagación Digital"
 
 #: ../../modules/noise/noise_overview.rst:64
 msgid "Analog Evolution"
-msgstr ""
+msgstr "Evolución Analógica"
 
 #: ../../modules/noise/noise_overview.rst:66
 msgid ":class:`~qilisdk.noise.representations.KrausChannel`"
-msgstr ""
+msgstr ":class:`~qilisdk.noise.representations.KrausChannel`"
 
 #: ../../modules/noise/noise_overview.rst:68
 msgid ":class:`~qilisdk.noise.representations.LindbladGenerator`"
-msgstr ""
+msgstr ":class:`~qilisdk.noise.representations.LindbladGenerator`"
 
 #: ../../modules/noise/noise_overview.rst:70
 msgid ":class:`~qilisdk.noise.pauli_channel.PauliChannel`"
-msgstr ""
+msgstr ":class:`~qilisdk.noise.pauli_channel.PauliChannel`"
 
 #: ../../modules/noise/noise_overview.rst:72
 msgid ":class:`~qilisdk.noise.bit_flip.BitFlip`"
-msgstr ""
+msgstr ":class:`~qilisdk.noise.bit_flip.BitFlip`"
 
 #: ../../modules/noise/noise_overview.rst:74
 msgid ":class:`~qilisdk.noise.phase_flip.PhaseFlip`"
-msgstr ""
+msgstr ":class:`~qilisdk.noise.phase_flip.PhaseFlip`"
 
 #: ../../modules/noise/noise_overview.rst:76
 msgid ":class:`~qilisdk.noise.depolarizing.Depolarizing`"
-msgstr ""
+msgstr ":class:`~qilisdk.noise.depolarizing.Depolarizing`"
 
 #: ../../modules/noise/noise_overview.rst:78
 msgid ":class:`~qilisdk.noise.amplitude_damping.AmplitudeDamping`"
-msgstr ""
+msgstr ":class:`~qilisdk.noise.amplitude_damping.AmplitudeDamping`"
 
 #: ../../modules/noise/noise_overview.rst:80
 msgid ":class:`~qilisdk.noise.dephasing.Dephasing`"
-msgstr ""
+msgstr ":class:`~qilisdk.noise.dephasing.Dephasing`"
 
 #: ../../modules/noise/noise_overview.rst:82
 msgid ":class:`~qilisdk.noise.gaussian_perturbation.GaussianPerturbation`"
-msgstr ""
+msgstr ":class:`~qilisdk.noise.gaussian_perturbation.GaussianPerturbation`"
 
 #: ../../modules/noise/noise_overview.rst:84
 msgid ":class:`~qilisdk.noise.offset_perturbation.OffsetPerturbation`"
-msgstr ""
+msgstr ":class:`~qilisdk.noise.offset_perturbation.OffsetPerturbation`"
 
 #: ../../modules/noise/noise_overview.rst:86
 msgid ":class:`~qilisdk.noise.readout_assignment.ReadoutAssignment`"
-msgstr ""
-
+msgstr ":class:`~qilisdk.noise.readout_assignment.ReadoutAssignment`"

@@ -22,7 +22,7 @@ msgstr ""
 #: ../../modules/noise/noise.rst:2
 #, fuzzy
 msgid "Noise"
-msgstr "Tipus de Soroll"
+msgstr "Noise"
 
 #~ msgid "Noise Models"
 #~ msgstr "Models de Soroll"

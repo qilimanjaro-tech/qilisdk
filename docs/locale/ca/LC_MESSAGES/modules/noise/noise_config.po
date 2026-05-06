@@ -30,27 +30,31 @@ msgid ""
 "assumed, such as gate times. These defaults can be modified using the "
 ":class:`~qilisdk.noise.noise_config.NoiseConfig` class:"
 msgstr ""
+"Per defecte, en convertir entre diferents representacions de soroll "
+"(p. ex., d'operadors de Kraus a generadors de Lindblad), s'assumeixen "
+"certs paràmetres, com els temps de porta. Aquests valors predeterminats "
+"es poden modificar utilitzant la classe "
+":class:`~qilisdk.noise.noise_config.NoiseConfig`:"
 
 #: ../../modules/noise/noise_config.rst:20
 msgid "Parameters and their defaults are as follows:"
-msgstr ""
+msgstr "Els paràmetres i els seus valors predeterminats són els següents:"
 
 #: ../../modules/noise/noise_config.rst:27
 msgid "Parameter"
-msgstr ""
+msgstr "Paràmetre"
 
 #: ../../modules/noise/noise_config.rst:27
 msgid "Default Value"
-msgstr ""
+msgstr "Valor Predeterminat"
 
 #: ../../modules/noise/noise_config.rst:29
 msgid "gate_times"
-msgstr ""
+msgstr "gate_times"
 
 #: ../../modules/noise/noise_config.rst:29
 msgid "1.0 for all gates"
-msgstr ""
+msgstr "1.0 per a totes les portes"
 
 #~ msgid "Go to a specific subheading of a page."
 #~ msgstr "Aneu a un subtítol específic d'una pàgina."
-

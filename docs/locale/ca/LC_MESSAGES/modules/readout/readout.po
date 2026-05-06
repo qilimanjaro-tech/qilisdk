@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../modules/readout/readout.rst:2
 msgid "Readout"
-msgstr "Lectura"
+msgstr "Readout"
 
 #~ msgid ""
 #~ "Readout is the mechanism that controls"

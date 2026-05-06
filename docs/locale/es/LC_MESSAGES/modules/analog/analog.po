@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../modules/analog/analog.rst:2
 msgid "Analog"
-msgstr "Analógico"
+msgstr "Analog"
 
 #~ msgid ""
 #~ "The :mod:`qilisdk.analog` layer lets you "

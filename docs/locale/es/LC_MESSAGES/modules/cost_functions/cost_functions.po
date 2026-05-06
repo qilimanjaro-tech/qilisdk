@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../modules/cost_functions/cost_functions.rst:2
 msgid "Cost Functions"
-msgstr "Funciones de Coste"
+msgstr "Cost Functions"
 
 #~ msgid ""
 #~ "The :mod:`qilisdk.cost_functions` module turns "

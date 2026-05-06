@@ -30,27 +30,31 @@ msgid ""
 "assumed, such as gate times. These defaults can be modified using the "
 ":class:`~qilisdk.noise.noise_config.NoiseConfig` class:"
 msgstr ""
+"Por defecto, al convertir entre diferentes representaciones de ruido "
+"(p. ej., de operadores de Kraus a generadores de Lindblad), se asumen "
+"ciertos parámetros, como los tiempos de puerta. Estos valores "
+"predeterminados pueden modificarse utilizando la clase "
+":class:`~qilisdk.noise.noise_config.NoiseConfig`:"
 
 #: ../../modules/noise/noise_config.rst:20
 msgid "Parameters and their defaults are as follows:"
-msgstr ""
+msgstr "Los parámetros y sus valores predeterminados son los siguientes:"
 
 #: ../../modules/noise/noise_config.rst:27
 msgid "Parameter"
-msgstr ""
+msgstr "Parámetro"
 
 #: ../../modules/noise/noise_config.rst:27
 msgid "Default Value"
-msgstr ""
+msgstr "Valor Predeterminado"
 
 #: ../../modules/noise/noise_config.rst:29
 msgid "gate_times"
-msgstr ""
+msgstr "gate_times"
 
 #: ../../modules/noise/noise_config.rst:29
 msgid "1.0 for all gates"
-msgstr ""
+msgstr "1.0 para todas las puertas"
 
 #~ msgid "Go to a specific subheading of a page."
 #~ msgstr "Ir a un subtítulo específico de una página."
-
