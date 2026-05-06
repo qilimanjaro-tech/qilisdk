@@ -58,9 +58,9 @@ jobs:
           printf '<!doctype html><meta http-equiv="refresh" content="0; url=%s/">' "$latest_tag" > docs/_build/en/index.html
           printf '<!doctype html><meta http-equiv="refresh" content="0; url=%s/">' "en/$latest_tag" > docs/_build/index.html
           mkdir -p docs/_build/main
-          printf '<!doctype html><meta http-equiv="refresh" content="0; url=%s/">' "en/main" > docs/_build/main/index.html
+          printf '<!doctype html><meta http-equiv="refresh" content="0; url=%s/">' "../en/main" > docs/_build/main/index.html
           mkdir -p docs/_build/0.1.8
-          printf '<!doctype html><meta http-equiv="refresh" content="0; url=%s/">' "en/0.1.8" > docs/_build/0.1.8/index.html
+          printf '<!doctype html><meta http-equiv="refresh" content="0; url=%s/">' "../en/0.1.8" > docs/_build/0.1.8/index.html
 
       - name: Deploy to GitHub Pages
         env:
