@@ -22,8 +22,8 @@ multiversion:
 	for lang in $(LANGUAGES); do \
 		rm -rf "$(BUILDDIR)/$$lang"; \
 		SPHINX_LOCALE_DIR="$(CURDIR)/locale" sphinx-multiversion "$(SOURCEDIR)" "$(BUILDDIR)/$$lang" -D language=$$lang; \
-		sed -i 's/@media (prefers-color-scheme: dark)/.dark/g' "$(BUILDDIR)/$$lang/_static/pygments.css"; \
 	done
+	find "$(BUILDDIR)/" -name "pygments.css" -exec sed -i 's/@media (prefers-color-scheme: dark)/.dark/g' {} \;; \
 
 # Run this to generate the files for translation
 gettext:
@@ -39,18 +39,17 @@ gettext:
 translations:
 	rm -rf "$(BUILDDIR)/en/main"
 	$(SPHINXBUILD) -b html "$(SOURCEDIR)" "$(BUILDDIR)/en/main" $(SPHINXOPTS) $(O)
-	sed -i 's/@media (prefers-color-scheme: dark)/.dark/g' "$(BUILDDIR)/en/main/_static/pygments.css"
 	for lang in $(LANGUAGES); do \
 		rm -rf "$(BUILDDIR)/$$lang/main"; \
 		$(SPHINXBUILD) -b html "$(SOURCEDIR)" "$(BUILDDIR)/$$lang/main" $(SPHINXOPTS) -D language=$$lang $(O); \
-		sed -i 's/@media (prefers-color-scheme: dark)/.dark/g' "$(BUILDDIR)/$$lang/main/_static/pygments.css"; \
 	done;
+	find "$(BUILDDIR)/" -name "pygments.css" -exec sed -i 's/@media (prefers-color-scheme: dark)/.dark/g' {} \;; \
 
 # Just build the English version, clearing the cache first
 html:
 	rm -rf "$(BUILDDIR)/en/main"
 	$(SPHINXBUILD) -b html "$(SOURCEDIR)" "$(BUILDDIR)/en/main" $(SPHINXOPTS) $(O)
-	sed -i 's/@media (prefers-color-scheme: dark)/.dark/g' "$(BUILDDIR)/en/main/_static/pygments.css"
+	find "$(BUILDDIR)/" -name "pygments.css" -exec sed -i 's/@media (prefers-color-scheme: dark)/.dark/g' {} \;; \
 
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
