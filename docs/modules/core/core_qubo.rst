@@ -161,11 +161,68 @@ Example: Unbalanced Penalization
 
 .. [1] Montañez-Barrera, Jhon Alejandro, et al. "Unbalanced penalization: A new approach to encode inequality constraints of combinatorial problems for quantum optimization algorithms." Quantum Science and Technology 9.2 (2024): 025022.
 
+High-degree Term Linearization
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+By definition, a QUBO objective is at most quadratic. However, both user-defined objectives and the
+squared residuals produced when penalizing constraints can introduce monomials of degree three or
+higher (for example, squaring a constraint with a quadratic left-hand side). To accept these inputs,
+:meth:`~qilisdk.core.model.Model.to_qubo` automatically *linearizes* any pseudo-Boolean monomial of
+degree greater than two by introducing auxiliary binary variables.
+
+For each pair of binary factors :math:`a, b` that needs to be collapsed, a fresh auxiliary
+:math:`w` is created and the equality :math:`w = a \cdot b` is enforced via the **Rosenberg**
+penalty
+
+.. math::
+
+    P(a, b, w) = a \cdot b - 2 \cdot a \cdot w - 2 \cdot b \cdot w + 3 \cdot w,
+
+which is quadratic, non-negative for :math:`a, b, w \in \{0, 1\}`, and zero if and only if
+:math:`w = a \cdot b`. The original monomial then has its :math:`a \cdot b` factor replaced by
+:math:`w`, lowering its degree by one. The reduction is iterated until every monomial is at most
+quadratic. Auxiliary variables are cached per unordered pair, so shared sub-products
+(e.g. :math:`x \cdot y \cdot z` and :math:`x \cdot y \cdot w` both reusing :math:`x \cdot y`) introduce
+a single auxiliary and a single Rosenberg penalty.
+
+Two keyword arguments on :meth:`~qilisdk.core.model.Model.to_qubo` control this behavior:
+
+- ``linearize`` (default ``True``): toggles the reduction. Set ``linearize=False`` to keep the
+  previous strict behavior where exporting a model with terms of degree three or higher raises a
+  ``ValueError``.
+- ``linearization_lagrange_multiplier`` (default ``100``): the Lagrange multiplier applied to each
+  Rosenberg penalty constraint. It must be large enough to dominate any incentive to violate the
+  auxiliary equalities :math:`w = a \cdot b`.
+
+Example: Cubic Objective and Constraint
+'''''''''''''''''''''''''''''''''''''''
+
+.. code-block:: python
+
+    from qilisdk.core import BinaryVariable, EQ, Model, ObjectiveSense
+
+    x, y, z = BinaryVariable("x"), BinaryVariable("y"), BinaryVariable("z")
+
+    model = Model("cubic")
+    model.set_objective(x * y * z, sense=ObjectiveSense.MAXIMIZE)
+    model.add_constraint("forbid_triple", EQ(x * y * z, 0), lagrange_multiplier=10)
+
+    qubo = model.to_qubo(linearization_lagrange_multiplier=50)
+    ham = qubo.to_hamiltonian()
+
+After ``to_qubo`` runs, the resulting :class:`~qilisdk.core.model.QUBO` contains a single auxiliary
+binary variable standing in for :math:`x \cdot y` (shared between the objective and the constraint
+penalty) plus an equality constraint encoding the corresponding Rosenberg penalty. The cubic
+objective and the squared cubic constraint are both reduced to quadratic form so that
+:meth:`~qilisdk.core.model.QUBO.to_hamiltonian` can be invoked directly.
+
 Interoperability
 ~~~~~~~~~~~~~~~~
 
 - **Convert any Model to QUBO**
-    If you have a generic :class:`~qilisdk.core.model.Model` with only linear/quadratic terms, you can automatically produce a QUBO:  
+    Any generic :class:`~qilisdk.core.model.Model` can be converted into a QUBO. Higher-degree
+    monomials are reduced to quadratic form via the Rosenberg-penalty linearization described
+    above (set ``linearize=False`` to disable it):
 
     .. code-block:: python
 
