@@ -358,7 +358,14 @@ void time_evolution_approximate(MatrixFreeHamiltonian& rho_t_as_h, const std::ve
         iter_rk4(rho_t_as_h, t_start, dt, step_list, hamiltonians, parameters_list);
 
         // Truncate the resulting Hamiltonian to keep the number of terms manageable
+        std::cout << "Before pruning: " << rho_t_as_h << std::endl;
         rho_t_as_h.prune(1e-10, 1000);
+        std::cout << "After pruning: " << rho_t_as_h << std::endl;
+
+        // Normalize the state
+        std::cout << "Before normalization: " << rho_t_as_h << std::endl;
+        rho_t_as_h.normalize_acting_on_plus();
+        std::cout << "After normalization: " << rho_t_as_h << std::endl;
 
     }
 

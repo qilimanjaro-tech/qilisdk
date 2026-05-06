@@ -190,14 +190,14 @@ double MatrixFreeHamiltonian::expectation_value(const MatrixFreeHamiltonian& oth
     // Since <+|P|+> is 1 if P is identity or X and 0 otherwise, we just need to sum the coefficients
     std::complex<double> exp_val = 0.0;
     for (const auto& [pauli, coefficient] : temp.operators) {
-        bool is_identity_or_x = true;
+        bool all_z_zero = true;
         for (int i = 0; i < n_qubits; ++i) {
             if (pauli.z_mask[i]) {
-                is_identity_or_x = false;
+                all_z_zero = false;
                 break;
             }
         }
-        if (is_identity_or_x) {
+        if (all_z_zero) {
             exp_val += coefficient;
         }
     }
@@ -351,37 +351,85 @@ MatrixFreeHamiltonian operator*(const std::complex<double>& scalar, const Matrix
     return hamiltonian * scalar;
 }
 
+// TODO remove
+// std::pair<PauliString, std::complex<double>> _multiply_pauli_strings(const PauliString& a, const PauliString& b) {
+//     /*
+//     Multiply two Pauli strings together, returning the resulting Pauli string and the phase factor.
+
+//     Args:
+//         a: The first Pauli string to be multiplied.
+//         b: The second Pauli string to be multiplied.
+
+//     Returns:
+//         A pair consisting of the resulting Pauli string from the multiplication and the complex phase factor.
+//     */
+
+//     const size_t n = a.x_mask.size();
+//     PauliString result(n);
+
+//     // XOR gives the result masks directly (same as adding Paulis mod 2)
+//     // X*X=I, Z*Z=I, X*Z or Z*X = Y (both bits set), etc.
+//     int phase_exp = 0; // will be taken mod 4; maps to i^phase_exp
+//     for (size_t q = 0; q < n; ++q) {
+//         const int ax = a.x_mask[q], az = a.z_mask[q];
+//         const int bx = b.x_mask[q], bz = b.z_mask[q];
+//         result.x_mask[q] = ax ^ bx;
+//         result.z_mask[q] = az ^ bz;
+//         phase_exp += (ax & bz) - (az & bx); // TODO check
+//     }
+
+//     // Normalize to [0, 4)
+//     phase_exp = ((phase_exp % 4) + 4) % 4;
+
+//     // Map i^k to complex
+//     static const std::complex<double> phase_table[4] = {
+//         {1.0, 0.0},
+//         {0.0, 1.0},
+//         {-1.0, 0.0},
+//         {0.0, -1.0}
+//     };
+
+//     return {result, phase_table[phase_exp]};
+// }
+
 std::pair<PauliString, std::complex<double>> _multiply_pauli_strings(const PauliString& a, const PauliString& b) {
-    /*
-    Multiply two Pauli strings together, returning the resulting Pauli string and the phase factor.
-
-    Args:
-        a: The first Pauli string to be multiplied.
-        b: The second Pauli string to be multiplied.
-
-    Returns:
-        A pair consisting of the resulting Pauli string from the multiplication and the complex phase factor.
-    */
-
     const size_t n = a.x_mask.size();
     PauliString result(n);
 
-    // XOR gives the result masks directly (same as adding Paulis mod 2)
-    // X*X=I, Z*Z=I, X*Z or Z*X = Y (both bits set), etc.
-    int phase_exp = 0; // will be taken mod 4; maps to i^phase_exp
+    // Phase contribution lookup table indexed by [ax][az][bx][bz]
+    // Derived from: I=00, X=10, Z=01, Y=11
+    static const int phase_lut[2][2][2][2] = {
+        // ax=0
+        {
+            // az=0 (I)
+            {{ 0,  0},   // bx=0: I*I=+1(0), I*Z=+1(0)
+             { 0,  0}},  // bx=1: I*X=+1(0), I*Y=+1(0)
+            // az=1 (Z)
+            {{ 0,  0},   // bx=0: Z*I=+1(0), Z*Z=+1(0)
+             {-1,  1}}   // bx=1: Z*X=-i(-1), Z*Y=+i(+1)
+        },
+        // ax=1
+        {
+            // az=0 (X)
+            {{ 0,  1},   // bx=0: X*I=+1(0), X*Z=+i(+1)
+             { 0, -1}},  // bx=1: X*X=+1(0), X*Y=-i(-1)
+            // az=1 (Y)
+            {{ 0, -1},   // bx=0: Y*I=+1(0), Y*Z=-i(-1)
+             { 1,  0}}   // bx=1: Y*X=+i(+1), Y*Y=+1(0)
+        }
+    };
+
+    int phase_exp = 0;
     for (size_t q = 0; q < n; ++q) {
         const int ax = a.x_mask[q], az = a.z_mask[q];
         const int bx = b.x_mask[q], bz = b.z_mask[q];
         result.x_mask[q] = ax ^ bx;
         result.z_mask[q] = az ^ bz;
-        phase_exp += 2 * (ax & bz);
-        phase_exp -= 2 * (az & bx);
+        phase_exp += phase_lut[ax][az][bx][bz];
     }
 
-    // Normalize to [0, 4)
     phase_exp = ((phase_exp % 4) + 4) % 4;
 
-    // Map i^k to complex
     static const std::complex<double> phase_table[4] = {
         {1.0, 0.0},
         {0.0, 1.0},
@@ -491,6 +539,37 @@ MatrixFreeHamiltonian MatrixFreeHamiltonian::conjugate() const {
         coeff = std::conj(coeff);
     }
     return result;
+}
+
+void MatrixFreeHamiltonian::normalize_acting_on_plus() {
+    /*
+    Normalize the Hamiltonian such that when it acts on the |+> state, the resulting state has norm 1.
+    */
+
+    // Calculate H^dag H
+    MatrixFreeHamiltonian rho_t_as_h_squared = this->conjugate() * (*this);
+
+    // Only the identity and X strings contribute to the trace, so we can just sum those coefficients if the z_mask has any non-zero bits
+    double norm = 0.0;
+    for (const auto& [pauli_string, coeff] : rho_t_as_h_squared.operators) {
+        bool all_z_zero = true;
+        for (size_t i = 0; i < pauli_string.z_mask.size(); ++i) {
+            if (pauli_string.z_mask[i]) {
+                all_z_zero = false;
+                break;
+            }
+        }
+        if (all_z_zero) {
+            norm += coeff.real();
+        }
+    }
+
+    // Normalize all the coefficients by the square root of the norm
+    double scaling_factor = 1.0 / std::sqrt(norm);
+    for (auto& [pauli_string, coeff] : operators) {
+        coeff *= scaling_factor;
+    }
+
 }
 
 

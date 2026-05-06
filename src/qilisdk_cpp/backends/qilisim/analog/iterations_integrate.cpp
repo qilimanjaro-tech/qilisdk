@@ -523,6 +523,8 @@ double iter_rk45(DenseMatrix& rho_t, double t, double& dt, const std::vector<dou
     return dt_taken;
 }
 
+#include <iostream>
+
 void iter_rk4(MatrixFreeHamiltonian& rho_t_as_h, double t, double dt, const std::vector<double>& step_list, const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list) {
     /*
     4th-order Runge–Kutta integration of the Lindblad master equation using a variational methods, 
