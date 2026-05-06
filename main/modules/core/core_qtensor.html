@@ -24,11 +24,11 @@
 <title>QTensor | QiliSDK</title>
 <meta content="QTensor | QiliSDK" property="og:title"/>
 <meta content="QTensor | QiliSDK" name="twitter:title"/>
-<link href="../../_static/pygments.css?v=31f438d3" rel="stylesheet" type="text/css"/>
+<link href="../../_static/pygments.css?v=652ce3ed" rel="stylesheet" type="text/css"/>
 <link href="../../_static/theme.css?v=73505e79" rel="stylesheet" type="text/css"/>
 <link href="../../_static/graphviz.css?v=4ae1632d" rel="stylesheet" type="text/css"/>
 <link href="../../_static/sphinx-design.min.css?v=95c83b7e" rel="stylesheet" type="text/css"/>
-<link href="../../_static/custom.css?v=c047bc51" rel="stylesheet" type="text/css"/>
+<link href="../../_static/custom.css?v=0828450c" rel="stylesheet" type="text/css"/>
 <link href="../../_static/awesome-sphinx-design.css?v=c54898a4" rel="stylesheet" type="text/css"/>
 <link href="../../_static/q_trans.png" rel="icon"/>
 <link href="../../search.html" rel="search" title="Search"/>
@@ -44,7 +44,13 @@
 <a class="flex items-center mr-6" href="../../index.html">
 <img alt="Logo" class="mr-2 hidden dark:block" height="24" src="../../_static/q_trans.png" width="24"/>
 <img alt="Logo" class="mr-2 dark:hidden" height="24" src="../../_static/q_trans.png" width="24"/><span class="hidden font-bold sm:inline-block text-clip whitespace-nowrap">QiliSDK</span>
-</a></div><button @click="showSidebar = true" class="inline-flex items-center justify-center h-10 px-0 py-2 mr-2 text-base font-medium transition-colors rounded-md hover:text-accent-foreground hover:bg-transparent md:hidden" type="button">
+</a>
+<div class="language-switcher">
+<span class="lang-active">EN</span>
+<a class="lang-link" href="../../../../es/main/modules/core/core_qtensor.html">ES</a>
+<a class="lang-link" href="../../../../ca/main/modules/core/core_qtensor.html">CA</a>
+</div>
+</div><button @click="showSidebar = true" class="inline-flex items-center justify-center h-10 px-0 py-2 mr-2 text-base font-medium transition-colors rounded-md hover:text-accent-foreground hover:bg-transparent md:hidden" type="button">
 <svg aria-hidden="true" fill="currentColor" height="24" viewbox="0 96 960 960" width="24" xmlns="http://www.w3.org/2000/svg">
 <path d="M152.587 825.087q-19.152 0-32.326-13.174t-13.174-32.326q0-19.152 13.174-32.326t32.326-13.174h440q19.152 0 32.326 13.174t13.174 32.326q0 19.152-13.174 32.326t-32.326 13.174h-440Zm0-203.587q-19.152 0-32.326-13.174T107.087 576q0-19.152 13.174-32.326t32.326-13.174h320q19.152 0 32.326 13.174T518.087 576q0 19.152-13.174 32.326T472.587 621.5h-320Zm0-203.587q-19.152 0-32.326-13.174t-13.174-32.326q0-19.152 13.174-32.326t32.326-13.174h440q19.152 0 32.326 13.174t13.174 32.326q0 19.152-13.174 32.326t-32.326 13.174h-440ZM708.913 576l112.174 112.174q12.674 12.674 12.674 31.826t-12.674 31.826Q808.413 764.5 789.261 764.5t-31.826-12.674l-144-144Q600 594.391 600 576t13.435-31.826l144-144q12.674-12.674 31.826-12.674t31.826 12.674q12.674 12.674 12.674 31.826t-12.674 31.826L708.913 576Z"></path>
 </svg>
@@ -104,57 +110,63 @@
 <p class="caption" role="heading"><span class="caption-text">Modules</span></p>
 <ul class="current">
 <li class="toctree-l1 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="core.html">Core<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul class="current" x-show="expanded">
-<li class="toctree-l2"><a class="reference internal" href="core_variables.html">Variables</a></li>
-<li class="toctree-l2"><a class="reference internal" href="core_terms.html">Terms</a></li>
-<li class="toctree-l2"><a class="reference internal" href="core_parameters.html">Parameters</a></li>
-<li class="toctree-l2"><a class="reference internal" href="core_math_map.html">Mathematical Maps</a></li>
-<li class="toctree-l2"><a class="reference internal" href="core_comparison.html">Comparison Terms</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core_overview.html">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core_variables_parameters.html">Variables and Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core_terms_maps_comparisons.html">Terms, Maps and Comparisons</a></li>
 <li class="toctree-l2"><a class="reference internal" href="core_model.html">Models</a></li>
 <li class="toctree-l2"><a class="reference internal" href="core_qubo.html">QUBO</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">QTensor</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../digital/digital.html">Digital<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../digital/digital_overview.html">Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../digital/digital_gates.html">Gates</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../digital/digital_circuits.html">Circuits</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../digital/digital_vis.html">Visualization</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../digital/digital_ansatz.html">Hardware Efficient Ansatz</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../digital/digital_ansatz.html">Ansatz</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../digital/digital_hardware.html">HardwareEfficientAnsatz</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../digital/digital_qaoa.html">QAOA</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../digital/digital_trotter.html">Trotterization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../digital/digital_trotter.html">TrotterizedSchedule</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../analog/analog.html">Analog<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../analog/analog_overview.html">Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../analog/analog_hamiltonian.html">Hamiltonian</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../analog/analog_schedule.html">Schedule</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../functionals/functionals.html">Functionals<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
-<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_sampling.html">Digital Propogation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_time_evolution.html">Analog Evolution</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_reservoirs.html">Quantum Reservoirs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_overview.html">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_digital.html">Digital Propagation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_analog.html">Analog Evolution</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_variational.html">Variational Programs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_reservoirs.html">Quantum Reservoirs</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../readout/readout.html">Readout<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../readout/readout_overview.html">Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../readout/readout_bitstring.html">Bitstring Measurement</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../readout/readout_expectation.html">Expectation Values</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../readout/readout_state.html">Full Quantum State</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../readout/readout_intermediate.html">Intermediate Results</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../backends/backends.html">Backends<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../backends/backends_overview.html">Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../backends/backends_qilisim.html">QiliSim</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../backends/backends_cuda.html">CUDA Backend</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../backends/backends_qutip.html">QuTiP Backend</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../backends/backends_qutip.html">Qutip Backend</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../cost_functions/cost_functions.html">Cost Functions<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
-<li class="toctree-l2"><a class="reference internal" href="../cost_functions/cost_functions_observable.html">Observable Cost Function</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../cost_functions/cost_functions_model.html">Model Cost Function</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cost_functions/cost_functions_overview.html">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cost_functions/cost_functions_observable.html">ObservableCostFunction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cost_functions/cost_functions_model.html">ModelCostFunction</a></li>
 </ul>
 </li>
-<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../noise_models/noise_models.html">Noise Models<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
-<li class="toctree-l2"><a class="reference internal" href="../noise_models/noise_models_config.html">Noise Config</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../noise_models/noise_models_types.html">Noise Types</a></li>
+<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../noise/noise.html">Noise<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../noise/noise_overview.html">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../noise/noise_config.html">Noise Config</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../noise/noise_types.html">Noise Types</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../speqtrum/speqtrum.html">SpeQtrum</a></li>
@@ -326,7 +338,250 @@
 <div id="content" role="main">
 <section id="qtensor">
 <h1>QTensor<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qtensor"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h1>
-<meta content="0; url=core.html#qtensor" http-equiv="refresh"/><p>Go to a specific subheading of a page.</p>
+<p>The <a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#module-qilisdk.core.qtensor" title="qilisdk.core.qtensor"><code class="xref py py-mod docutils literal notranslate"><span class="pre">qtensor</span></code></a> module defines the <a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor" title="qilisdk.core.qtensor.QTensor"><code class="xref py py-class docutils literal notranslate"><span class="pre">QTensor</span></code></a>
+class and related helpers for representing and manipulating quantum states and
+operators in sparse form.</p>
+<p>The <a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor" title="qilisdk.core.qtensor.QTensor"><code class="xref py py-class docutils literal notranslate"><span class="pre">QTensor</span></code></a> wraps a dense NumPy array or SciPy sparse matrix into a CSR-format sparse matrix, and can represent:</p>
+<ul class="simple">
+<li><p><strong>Kets</strong> (column vectors of shape <code class="docutils literal notranslate"><span class="pre">(2**N,</span> <span class="pre">1)</span></code>)</p></li>
+<li><p><strong>Bras</strong> (row vectors of shape <code class="docutils literal notranslate"><span class="pre">(1,</span> <span class="pre">2**N)</span></code>)</p></li>
+<li><p><strong>Operators / Density Matrices</strong> (square matrices of shape <code class="docutils literal notranslate"><span class="pre">(2**N,</span> <span class="pre">2**N)</span></code>)</p></li>
+<li><p><strong>Scalars</strong> (<code class="docutils literal notranslate"><span class="pre">(1,</span> <span class="pre">1)</span></code> matrices)</p></li>
+</ul>
+<p>Examples of creating various quantum objects:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+</span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core.qtensor</span><span class="w"> </span><span class="kn">import</span> <span class="n">QTensor</span>
+</span><span id="line-3">
+</span><span id="line-4"><span class="c1"># 1‑qubit |0&gt; ket</span>
+</span><span id="line-5"><span class="n">psi_ket</span> <span class="o">=</span> <span class="n">QTensor</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">]]))</span>
+</span><span id="line-6"><span class="nb">print</span><span class="p">(</span><span class="s2">"Ket:"</span><span class="p">,</span> <span class="n">psi_ket</span><span class="o">.</span><span class="n">dense</span><span class="p">(),</span> <span class="s2">"is_ket?"</span><span class="p">,</span> <span class="n">psi_ket</span><span class="o">.</span><span class="n">is_ket</span><span class="p">())</span>
+</span><span id="line-7"><span class="nb">print</span><span class="p">(</span><span class="s2">"-"</span> <span class="o">*</span> <span class="mi">20</span><span class="p">)</span>
+</span><span id="line-8">
+</span><span id="line-9"><span class="c1"># 1‑qubit &lt;0| bra</span>
+</span><span id="line-10"><span class="n">psi_bra</span> <span class="o">=</span> <span class="n">QTensor</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]]))</span>
+</span><span id="line-11"><span class="nb">print</span><span class="p">(</span><span class="s2">"Bra:"</span><span class="p">,</span> <span class="n">psi_bra</span><span class="o">.</span><span class="n">dense</span><span class="p">(),</span> <span class="s2">"is_bra?"</span><span class="p">,</span> <span class="n">psi_bra</span><span class="o">.</span><span class="n">is_bra</span><span class="p">())</span>
+</span><span id="line-12"><span class="nb">print</span><span class="p">(</span><span class="s2">"-"</span> <span class="o">*</span> <span class="mi">20</span><span class="p">)</span>
+</span><span id="line-13">
+</span><span id="line-14"><span class="c1"># Density matrix |0&gt;&lt;0|</span>
+</span><span id="line-15"><span class="n">rho</span> <span class="o">=</span> <span class="n">QTensor</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]]))</span>
+</span><span id="line-16"><span class="nb">print</span><span class="p">(</span><span class="s2">"Density matrix:</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="n">rho</span><span class="o">.</span><span class="n">dense</span><span class="p">(),</span> <span class="s2">"is_density_matrix?"</span><span class="p">,</span> <span class="n">rho</span><span class="o">.</span><span class="n">is_density_matrix</span><span class="p">())</span>
+</span><span id="line-17"><span class="nb">print</span><span class="p">(</span><span class="s2">"-"</span> <span class="o">*</span> <span class="mi">20</span><span class="p">)</span>
+</span><span id="line-18">
+</span><span id="line-19"><span class="c1"># Scalar 0.5</span>
+</span><span id="line-20"><span class="n">scalar</span> <span class="o">=</span> <span class="n">QTensor</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">0.5</span><span class="p">]]))</span>
+</span><span id="line-21"><span class="nb">print</span><span class="p">(</span><span class="s2">"Scalar:"</span><span class="p">,</span> <span class="n">scalar</span><span class="o">.</span><span class="n">dense</span><span class="p">(),</span> <span class="s2">"is_scalar?"</span><span class="p">,</span> <span class="n">scalar</span><span class="o">.</span><span class="n">is_scalar</span><span class="p">())</span>
+</span></code></pre></div>
+</div>
+<p><strong>Output</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">Ket: [[1]
+</span><span id="line-2">[0]] is_ket? True
+</span><span id="line-3">--------------------
+</span><span id="line-4">Bra: [[1 0]] is_bra? True
+</span><span id="line-5">--------------------
+</span><span id="line-6">Density matrix:
+</span><span id="line-7">[[1 0]
+</span><span id="line-8">[0 0]] is_density_matrix? True
+</span><span id="line-9">--------------------
+</span><span id="line-10">Scalar: [[0.5]] is_scalar? True
+</span></code></pre></div>
+</div>
+<section id="helper-constructors">
+<h2>Helper constructors<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#helper-constructors" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#helper-constructors'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
+<p>There are also several constructors for common quantum objects:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.ket" title="qilisdk.core.qtensor.ket"><code class="xref py py-func docutils literal notranslate"><span class="pre">ket()</span></code></a> for computational basis kets</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.bra" title="qilisdk.core.qtensor.bra"><code class="xref py py-func docutils literal notranslate"><span class="pre">bra()</span></code></a> for computational basis bras</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.basis_state" title="qilisdk.core.qtensor.basis_state"><code class="xref py py-func docutils literal notranslate"><span class="pre">basis_state()</span></code></a> for N-dimensional basis states with a single 1 at the specified index</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.identity" title="qilisdk.core.qtensor.identity"><code class="xref py py-func docutils literal notranslate"><span class="pre">identity()</span></code></a> for identity operators of specified dimension</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.zero" title="qilisdk.core.qtensor.zero"><code class="xref py py-func docutils literal notranslate"><span class="pre">zero()</span></code></a> for generating zero tensors of specified dimension</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.ghz" title="qilisdk.core.qtensor.ghz"><code class="xref py py-func docutils literal notranslate"><span class="pre">ghz()</span></code></a> for generating GHZ states of specified number of qubits</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.uniform" title="qilisdk.core.qtensor.QTensor.uniform"><code class="xref py py-meth docutils literal notranslate"><span class="pre">uniform()</span></code></a> for generating uniform superposition states of specified number of qubits</p></li>
+</ul>
+</div></blockquote>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core.qtensor</span><span class="w"> </span><span class="kn">import</span> <span class="n">QTensor</span>
+</span><span id="line-2">
+</span><span id="line-3"><span class="c1"># Single‑qubit</span>
+</span><span id="line-4"><span class="nb">print</span><span class="p">(</span><span class="s2">"ket(0):</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="n">QTensor</span><span class="o">.</span><span class="n">ket</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">is_ket?"</span><span class="p">,</span> <span class="n">QTensor</span><span class="o">.</span><span class="n">ket</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">is_ket</span><span class="p">())</span>
+</span><span id="line-5"><span class="nb">print</span><span class="p">(</span><span class="s2">"bra(1):</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="n">QTensor</span><span class="o">.</span><span class="n">bra</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">is_bra?"</span><span class="p">,</span> <span class="n">QTensor</span><span class="o">.</span><span class="n">bra</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">is_bra</span><span class="p">())</span>
+</span><span id="line-6">
+</span><span id="line-7"><span class="c1"># Fock basis in N=4 Hilbert space</span>
+</span><span id="line-8"><span class="nb">print</span><span class="p">(</span><span class="s2">"basis_state(2,4):</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="n">QTensor</span><span class="o">.</span><span class="n">basis_state</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">shape:"</span><span class="p">,</span> <span class="n">QTensor</span><span class="o">.</span><span class="n">basis_state</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+</span><span id="line-9">
+</span><span id="line-10"><span class="c1"># GHZ state for 2 qubits</span>
+</span><span id="line-11"><span class="nb">print</span><span class="p">(</span><span class="s2">"GHZ state for 2 qubits:</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="n">QTensor</span><span class="o">.</span><span class="n">ghz</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+</span><span id="line-12">
+</span><span id="line-13"><span class="c1"># Identity and zero operators</span>
+</span><span id="line-14"><span class="nb">print</span><span class="p">(</span><span class="s2">"Identity (4x4):</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="n">QTensor</span><span class="o">.</span><span class="n">identity</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+</span><span id="line-15"><span class="nb">print</span><span class="p">(</span><span class="s2">"Zero (2x2):</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="n">QTensor</span><span class="o">.</span><span class="n">zero</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+</span></code></pre></div>
+</div>
+<p><strong>Output</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">ket(0):
+</span><span id="line-2">[[1.]
+</span><span id="line-3">[0.]]
+</span><span id="line-4">is_ket? True
+</span><span id="line-5">bra(1):
+</span><span id="line-6">[[0. 1.]]
+</span><span id="line-7">is_bra? True
+</span><span id="line-8">basis_state(2,4):
+</span><span id="line-9">[[0.]
+</span><span id="line-10">[0.]
+</span><span id="line-11">[1.]
+</span><span id="line-12">[0.]]
+</span><span id="line-13">shape: (4, 1)
+</span></code></pre></div>
+</div>
+</section>
+<section id="quantum-object-properties-operations">
+<h2>Quantum Object Properties &amp; Operations<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#quantum-object-properties-operations" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#quantum-object-properties-operations'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
+<p>All data are stored sparsely, but you can retrieve dense or sparse views:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.data" title="qilisdk.core.qtensor.QTensor.data"><code class="xref py py-attr docutils literal notranslate"><span class="pre">.data</span></code></a>: get the underlying sparse matrix (SciPy CSR format)</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.dense" title="qilisdk.core.qtensor.QTensor.dense"><code class="xref py py-meth docutils literal notranslate"><span class="pre">.dense()</span></code></a>: convert to a dense NumPy array (use with caution for large tensors)</p></li>
+<li><p>or directly accessing elements by value with <code class="docutils literal notranslate"><span class="pre">qtensor[i,</span> <span class="pre">j]</span></code></p></li>
+</ul>
+<p>Common matrix operations are also available:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.adjoint" title="qilisdk.core.qtensor.QTensor.adjoint"><code class="xref py py-meth docutils literal notranslate"><span class="pre">.adjoint()</span></code></a>: conjugate transpose</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.conjugate" title="qilisdk.core.qtensor.QTensor.conjugate"><code class="xref py py-meth docutils literal notranslate"><span class="pre">.conjugate()</span></code></a>: element-wise complex conjugate</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.transpose" title="qilisdk.core.qtensor.QTensor.transpose"><code class="xref py py-meth docutils literal notranslate"><span class="pre">.transpose()</span></code></a>: matrix transpose</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.exp" title="qilisdk.core.qtensor.QTensor.exp"><code class="xref py py-meth docutils literal notranslate"><span class="pre">.exp()</span></code></a>: matrix exponential</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.log" title="qilisdk.core.qtensor.QTensor.log"><code class="xref py py-meth docutils literal notranslate"><span class="pre">.log()</span></code></a>: matrix logarithm</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.sqrt" title="qilisdk.core.qtensor.QTensor.sqrt"><code class="xref py py-meth docutils literal notranslate"><span class="pre">.sqrt()</span></code></a>: matrix square root</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.rank" title="qilisdk.core.qtensor.QTensor.rank"><code class="xref py py-meth docutils literal notranslate"><span class="pre">.rank()</span></code></a>: compute the rank of the operator</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.pow" title="qilisdk.core.qtensor.QTensor.pow"><code class="xref py py-meth docutils literal notranslate"><span class="pre">.pow(exponent)</span></code></a>: matrix power</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.norm" title="qilisdk.core.qtensor.QTensor.norm"><code class="xref py py-meth docutils literal notranslate"><span class="pre">.norm(order="l2")</span></code></a>: vector or matrix norm</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.normalized" title="qilisdk.core.qtensor.QTensor.normalized"><code class="xref py py-meth docutils literal notranslate"><span class="pre">.normalized(order='l2')</span></code></a>: normalize to unit norm</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.eig" title="qilisdk.core.qtensor.QTensor.eig"><code class="xref py py-meth docutils literal notranslate"><span class="pre">.eig()</span></code></a>: get the eigenvalues and eigenvectors</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.trace" title="qilisdk.core.qtensor.QTensor.trace"><code class="xref py py-meth docutils literal notranslate"><span class="pre">.trace()</span></code></a>: compute the trace of an operator</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.dot" title="qilisdk.core.qtensor.QTensor.dot"><code class="xref py py-meth docutils literal notranslate"><span class="pre">.dot(other)</span></code></a>: Frobenius inner product with another QTensor</p></li>
+</ul>
+<p>As well as some quantum-specific transformations:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.entropy_von_neumann" title="qilisdk.core.qtensor.QTensor.entropy_von_neumann"><code class="xref py py-meth docutils literal notranslate"><span class="pre">.entropy_von_neumann()</span></code></a>: compute the von Neumann entropy of a density matrix</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.entropy_renyi" title="qilisdk.core.qtensor.QTensor.entropy_renyi"><code class="xref py py-meth docutils literal notranslate"><span class="pre">.entropy_renyi(alpha)</span></code></a>: compute the Rényi entropy of a density matrix for a given order alpha</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.commutator" title="qilisdk.core.qtensor.QTensor.commutator"><code class="xref py py-meth docutils literal notranslate"><span class="pre">.commutator(other)</span></code></a>: compute the commutator with another operator</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.anticommutator" title="qilisdk.core.qtensor.QTensor.anticommutator"><code class="xref py py-meth docutils literal notranslate"><span class="pre">.anticommutator(other)</span></code></a>: compute the anticommutator with another operator</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.fidelity" title="qilisdk.core.qtensor.QTensor.fidelity"><code class="xref py py-meth docutils literal notranslate"><span class="pre">.fidelity(other)</span></code></a>: compute the fidelity between two quantum states</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.probabilities" title="qilisdk.core.qtensor.QTensor.probabilities"><code class="xref py py-meth docutils literal notranslate"><span class="pre">.probabilities()</span></code></a>: compute the probability distribution of each state in the computational basis</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.ptrace" title="qilisdk.core.qtensor.QTensor.ptrace"><code class="xref py py-meth docutils literal notranslate"><span class="pre">.partial_trace(keep)</span></code></a>: partial trace</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.reset_qubits" title="qilisdk.core.qtensor.QTensor.reset_qubits"><code class="xref py py-meth docutils literal notranslate"><span class="pre">.reset_qubits(qubits)</span></code></a>: reset specified qubits to 0</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.dagger" title="qilisdk.core.qtensor.QTensor.dagger"><code class="xref py py-meth docutils literal notranslate"><span class="pre">.dagger()</span></code></a>: alias for adjoint</p></li>
+</ul>
+<p>Examples:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+</span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core.qtensor</span><span class="w"> </span><span class="kn">import</span> <span class="n">QTensor</span>
+</span><span id="line-3">
+</span><span id="line-4"><span class="c1"># Adjoint of a non-Hermitian operator</span>
+</span><span id="line-5"><span class="n">A</span> <span class="o">=</span> <span class="n">QTensor</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="o">+</span><span class="mi">1</span><span class="n">j</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">]]))</span>
+</span><span id="line-6"><span class="n">A_dag</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">adjoint</span><span class="p">()</span>
+</span><span id="line-7"><span class="nb">print</span><span class="p">(</span><span class="s2">"A:</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="n">A</span><span class="o">.</span><span class="n">dense</span><span class="p">())</span>
+</span><span id="line-8"><span class="nb">print</span><span class="p">(</span><span class="s2">"A†:</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="n">A_dag</span><span class="o">.</span><span class="n">dense</span><span class="p">())</span>
+</span><span id="line-9">
+</span><span id="line-10"><span class="c1"># Matrix exponential of Pauli-X</span>
+</span><span id="line-11"><span class="n">X</span> <span class="o">=</span> <span class="n">QTensor</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]]))</span>
+</span><span id="line-12"><span class="n">expX</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">exp</span><span class="p">()</span>
+</span><span id="line-13"><span class="nb">print</span><span class="p">(</span><span class="s2">"exp(X):</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">expX</span><span class="o">.</span><span class="n">dense</span><span class="p">(),</span> <span class="mi">3</span><span class="p">))</span>
+</span><span id="line-14">
+</span><span id="line-15"><span class="c1"># Norm of a ket and a density matrix</span>
+</span><span id="line-16"><span class="n">ket0</span> <span class="o">=</span> <span class="n">QTensor</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">]]))</span>
+</span><span id="line-17"><span class="n">dm</span> <span class="o">=</span> <span class="n">ket0</span><span class="o">.</span><span class="n">to_density_matrix</span><span class="p">()</span>
+</span><span id="line-18"><span class="nb">print</span><span class="p">(</span><span class="s2">"||ket0|| ="</span><span class="p">,</span> <span class="n">ket0</span><span class="o">.</span><span class="n">norm</span><span class="p">())</span>
+</span><span id="line-19"><span class="nb">print</span><span class="p">(</span><span class="s2">"trace norm(dm) ="</span><span class="p">,</span> <span class="n">dm</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="s1">'l2'</span><span class="p">))</span>
+</span><span id="line-20">
+</span><span id="line-21"><span class="c1"># Partial trace of a Bell state</span>
+</span><span id="line-22"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core.qtensor</span><span class="w"> </span><span class="kn">import</span> <span class="n">ket</span><span class="p">,</span> <span class="n">tensor_prod</span>
+</span><span id="line-23"><span class="n">bell</span> <span class="o">=</span> <span class="p">(</span><span class="n">tensor_prod</span><span class="p">([</span><span class="n">ket</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">ket</span><span class="p">(</span><span class="mi">0</span><span class="p">)])</span> <span class="o">+</span> <span class="n">tensor_prod</span><span class="p">([</span><span class="n">ket</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">ket</span><span class="p">(</span><span class="mi">1</span><span class="p">)]))</span><span class="o">.</span><span class="n">unit</span><span class="p">()</span>
+</span><span id="line-24"><span class="n">rho_bell</span> <span class="o">=</span> <span class="n">bell</span><span class="o">.</span><span class="n">to_density_matrix</span><span class="p">()</span>
+</span><span id="line-25"><span class="nb">print</span><span class="p">(</span><span class="s2">"rho_bell:</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="n">rho_bell</span><span class="p">)</span>
+</span><span id="line-26"><span class="n">rhoA</span> <span class="o">=</span> <span class="n">rho_bell</span><span class="o">.</span><span class="n">ptrace</span><span class="p">([</span><span class="mi">0</span><span class="p">])</span>
+</span><span id="line-27"><span class="nb">print</span><span class="p">(</span><span class="s2">"rho_A:</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="n">rhoA</span><span class="o">.</span><span class="n">dense</span><span class="p">())</span>
+</span></code></pre></div>
+</div>
+<p><strong>Output</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">A:
+</span><span id="line-2">[[1.+1.j 2.+0.j]
+</span><span id="line-3">[3.+0.j 4.+0.j]]
+</span><span id="line-4">A†:
+</span><span id="line-5">[[1.-1.j 3.+0.j]
+</span><span id="line-6">[2.+0.j 4.+0.j]]
+</span><span id="line-7">exp(X):
+</span><span id="line-8">[[1.543 1.175]
+</span><span id="line-9">[1.175 1.543]]
+</span><span id="line-10">||ket0|| = 1.0
+</span><span id="line-11">trace norm(dm) = 1.0
+</span><span id="line-12">rho_bell:
+</span><span id="line-13">QTensor(shape=4x4, nnz=4, format='csr')
+</span><span id="line-14">[[0.5 0.  0.  0.5]
+</span><span id="line-15">[0.  0.  0.  0. ]
+</span><span id="line-16">[0.  0.  0.  0. ]
+</span><span id="line-17">[0.5 0.  0.  0.5]]
+</span><span id="line-18">rho_A:
+</span><span id="line-19">[[0.5 0. ]
+</span><span id="line-20">[0.  0.5]]
+</span></code></pre></div>
+</div>
+</section>
+<section id="extra-utilities">
+<h2>Extra Utilities<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#extra-utilities" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#extra-utilities'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
+<ul class="simple">
+<li><p><strong>Tensor product</strong> with <a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.tensor_prod" title="qilisdk.core.qtensor.tensor_prod"><code class="xref py py-func docutils literal notranslate"><span class="pre">tensor_prod()</span></code></a></p></li>
+<li><p><strong>Expectation value</strong> with <a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.expect_val" title="qilisdk.core.qtensor.expect_val"><code class="xref py py-func docutils literal notranslate"><span class="pre">expect_val()</span></code></a></p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core.qtensor</span><span class="w"> </span><span class="kn">import</span> <span class="n">QTensor</span><span class="p">,</span> <span class="n">expect_val</span><span class="p">,</span> <span class="n">ket</span><span class="p">,</span> <span class="n">tensor_prod</span>
+</span><span id="line-2"><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+</span><span id="line-3">
+</span><span id="line-4"><span class="c1"># Two‑qubit Hadamard tensor</span>
+</span><span id="line-5"><span class="n">H</span> <span class="o">=</span> <span class="n">QTensor</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]])</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+</span><span id="line-6"><span class="n">H2</span> <span class="o">=</span> <span class="n">tensor_prod</span><span class="p">([</span><span class="n">H</span><span class="p">,</span> <span class="n">H</span><span class="p">])</span>
+</span><span id="line-7"><span class="nb">print</span><span class="p">(</span><span class="s2">"H ⊗ H:</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">H2</span><span class="o">.</span><span class="n">dense</span><span class="p">(),</span> <span class="mi">3</span><span class="p">))</span>
+</span><span id="line-8">
+</span><span id="line-9"><span class="c1"># Expectation of Z⊗Z on |00&gt;</span>
+</span><span id="line-10"><span class="n">Z</span> <span class="o">=</span> <span class="n">QTensor</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]]))</span>
+</span><span id="line-11"><span class="n">zz</span> <span class="o">=</span> <span class="n">tensor_prod</span><span class="p">([</span><span class="n">Z</span><span class="p">,</span> <span class="n">Z</span><span class="p">])</span>
+</span><span id="line-12"><span class="n">psi00</span> <span class="o">=</span> <span class="n">tensor_prod</span><span class="p">([</span><span class="n">ket</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">ket</span><span class="p">(</span><span class="mi">0</span><span class="p">)])</span>
+</span><span id="line-13"><span class="n">rho00</span> <span class="o">=</span> <span class="n">psi00</span><span class="o">.</span><span class="n">to_density_matrix</span><span class="p">()</span>
+</span><span id="line-14"><span class="n">ev</span> <span class="o">=</span> <span class="n">expect_val</span><span class="p">(</span><span class="n">zz</span><span class="p">,</span> <span class="n">rho00</span><span class="p">)</span>
+</span><span id="line-15"><span class="nb">print</span><span class="p">(</span><span class="s2">"⟨ZZ⟩ on |00&gt; ="</span><span class="p">,</span> <span class="n">ev</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<p><strong>Output</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">H ⊗ H:
+</span><span id="line-2">[[ 0.5  0.5  0.5  0.5]
+</span><span id="line-3">[ 0.5 -0.5  0.5 -0.5]
+</span><span id="line-4">[ 0.5  0.5 -0.5 -0.5]
+</span><span id="line-5">[ 0.5 -0.5 -0.5  0.5]]
+</span><span id="line-6">⟨ZZ⟩ on |00&gt; = 1.0
+</span></code></pre></div>
+</div>
+</section>
+<section id="visualization-of-quantum-states">
+<h2>Visualization of Quantum States<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#visualization-of-quantum-states" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#visualization-of-quantum-states'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
+<p>You can also visualize single-qubit states on the Bloch sphere using <a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.draw" title="qilisdk.core.qtensor.QTensor.draw"><code class="xref py py-meth docutils literal notranslate"><span class="pre">.draw()</span></code></a>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">QTensor</span>
+</span><span id="line-2">
+</span><span id="line-3"><span class="n">state</span> <span class="o">=</span> <span class="n">QTensor</span><span class="o">.</span><span class="n">ket</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</span><span id="line-4"><span class="n">state</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+</span></code></pre></div>
+</div>
+<p>The appearance of this plot can be customized using a <a class="reference internal" href="../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.QTensorStyle" title="qilisdk.utils.visualization.style.QTensorStyle"><code class="xref py py-class docutils literal notranslate"><span class="pre">QTensorStyle</span></code></a> object,
+which allows you to set colors, point density, and other visual elements:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">QTensor</span>
+</span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.utils.visualization</span><span class="w"> </span><span class="kn">import</span> <span class="n">QTensorStyle</span>
+</span><span id="line-3">
+</span><span id="line-4"><span class="n">state</span> <span class="o">=</span> <span class="n">QTensor</span><span class="o">.</span><span class="n">ket</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</span><span id="line-5"><span class="n">style</span> <span class="o">=</span> <span class="n">QTensorStyle</span><span class="p">(</span>
+</span><span id="line-6">            <span class="n">sphere_color</span><span class="o">=</span><span class="s2">"blue"</span><span class="p">,</span>
+</span><span id="line-7">            <span class="n">arrow_color</span><span class="o">=</span><span class="s2">"lightblue"</span><span class="p">,</span>
+</span><span id="line-8">            <span class="n">draw_center_circle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+</span><span id="line-9">            <span class="n">sphere_points</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+</span><span id="line-10">            <span class="n">draw_reference_points</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+</span><span id="line-11">        <span class="p">)</span>
+</span><span id="line-12"><span class="n">state</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="n">style</span><span class="o">=</span><span class="n">style</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+</section>
 </section>
 </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">
 <div class="mr-auto">
@@ -345,7 +600,16 @@
 </svg>
 </a>
 </div>
-</div></div>
+</div></div><aside class="hidden text-sm xl:block" id="right-sidebar">
+<div class="sticky top-16 -mt-10 max-h-[calc(100vh-5rem)] h-full overflow-y-auto pt-6 space-y-2"><p class="font-medium">On this page</p>
+<ul>
+<li><a :data-current="activeSection === '#helper-constructors'" class="reference internal" href="#helper-constructors">Helper constructors</a></li>
+<li><a :data-current="activeSection === '#quantum-object-properties-operations'" class="reference internal" href="#quantum-object-properties-operations">Quantum Object Properties &amp; Operations</a></li>
+<li><a :data-current="activeSection === '#extra-utilities'" class="reference internal" href="#extra-utilities">Extra Utilities</a></li>
+<li><a :data-current="activeSection === '#visualization-of-quantum-states'" class="reference internal" href="#visualization-of-quantum-states">Visualization of Quantum States</a></li>
+</ul>
+</div>
+</aside>
 </main>
 </div>
 </div><footer class="py-6 border-t border-border md:py-0">

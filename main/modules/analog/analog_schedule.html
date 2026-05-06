@@ -24,11 +24,11 @@
 <title>Schedule | QiliSDK</title>
 <meta content="Schedule | QiliSDK" property="og:title"/>
 <meta content="Schedule | QiliSDK" name="twitter:title"/>
-<link href="../../_static/pygments.css?v=31f438d3" rel="stylesheet" type="text/css"/>
+<link href="../../_static/pygments.css?v=652ce3ed" rel="stylesheet" type="text/css"/>
 <link href="../../_static/theme.css?v=73505e79" rel="stylesheet" type="text/css"/>
 <link href="../../_static/graphviz.css?v=4ae1632d" rel="stylesheet" type="text/css"/>
 <link href="../../_static/sphinx-design.min.css?v=95c83b7e" rel="stylesheet" type="text/css"/>
-<link href="../../_static/custom.css?v=c047bc51" rel="stylesheet" type="text/css"/>
+<link href="../../_static/custom.css?v=0828450c" rel="stylesheet" type="text/css"/>
 <link href="../../_static/awesome-sphinx-design.css?v=c54898a4" rel="stylesheet" type="text/css"/>
 <link href="../../_static/q_trans.png" rel="icon"/>
 <link href="../../search.html" rel="search" title="Search"/>
@@ -44,7 +44,13 @@
 <a class="flex items-center mr-6" href="../../index.html">
 <img alt="Logo" class="mr-2 hidden dark:block" height="24" src="../../_static/q_trans.png" width="24"/>
 <img alt="Logo" class="mr-2 dark:hidden" height="24" src="../../_static/q_trans.png" width="24"/><span class="hidden font-bold sm:inline-block text-clip whitespace-nowrap">QiliSDK</span>
-</a></div><button @click="showSidebar = true" class="inline-flex items-center justify-center h-10 px-0 py-2 mr-2 text-base font-medium transition-colors rounded-md hover:text-accent-foreground hover:bg-transparent md:hidden" type="button">
+</a>
+<div class="language-switcher">
+<span class="lang-active">EN</span>
+<a class="lang-link" href="../../../../es/main/modules/analog/analog_schedule.html">ES</a>
+<a class="lang-link" href="../../../../ca/main/modules/analog/analog_schedule.html">CA</a>
+</div>
+</div><button @click="showSidebar = true" class="inline-flex items-center justify-center h-10 px-0 py-2 mr-2 text-base font-medium transition-colors rounded-md hover:text-accent-foreground hover:bg-transparent md:hidden" type="button">
 <svg aria-hidden="true" fill="currentColor" height="24" viewbox="0 96 960 960" width="24" xmlns="http://www.w3.org/2000/svg">
 <path d="M152.587 825.087q-19.152 0-32.326-13.174t-13.174-32.326q0-19.152 13.174-32.326t32.326-13.174h440q19.152 0 32.326 13.174t13.174 32.326q0 19.152-13.174 32.326t-32.326 13.174h-440Zm0-203.587q-19.152 0-32.326-13.174T107.087 576q0-19.152 13.174-32.326t32.326-13.174h320q19.152 0 32.326 13.174T518.087 576q0 19.152-13.174 32.326T472.587 621.5h-320Zm0-203.587q-19.152 0-32.326-13.174t-13.174-32.326q0-19.152 13.174-32.326t32.326-13.174h440q19.152 0 32.326 13.174t13.174 32.326q0 19.152-13.174 32.326t-32.326 13.174h-440ZM708.913 576l112.174 112.174q12.674 12.674 12.674 31.826t-12.674 31.826Q808.413 764.5 789.261 764.5t-31.826-12.674l-144-144Q600 594.391 600 576t13.435-31.826l144-144q12.674-12.674 31.826-12.674t31.826 12.674q12.674 12.674 12.674 31.826t-12.674 31.826L708.913 576Z"></path>
 </svg>
@@ -104,57 +110,63 @@
 <p class="caption" role="heading"><span class="caption-text">Modules</span></p>
 <ul class="current">
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../core/core.html">Core<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
-<li class="toctree-l2"><a class="reference internal" href="../core/core_variables.html">Variables</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../core/core_terms.html">Terms</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../core/core_parameters.html">Parameters</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../core/core_math_map.html">Mathematical Maps</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../core/core_comparison.html">Comparison Terms</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core/core_overview.html">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core/core_variables_parameters.html">Variables and Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core/core_terms_maps_comparisons.html">Terms, Maps and Comparisons</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../core/core_model.html">Models</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../core/core_qubo.html">QUBO</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../core/core_qtensor.html">QTensor</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../digital/digital.html">Digital<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../digital/digital_overview.html">Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../digital/digital_gates.html">Gates</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../digital/digital_circuits.html">Circuits</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../digital/digital_vis.html">Visualization</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../digital/digital_ansatz.html">Hardware Efficient Ansatz</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../digital/digital_ansatz.html">Ansatz</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../digital/digital_hardware.html">HardwareEfficientAnsatz</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../digital/digital_qaoa.html">QAOA</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../digital/digital_trotter.html">Trotterization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../digital/digital_trotter.html">TrotterizedSchedule</a></li>
 </ul>
 </li>
 <li class="toctree-l1 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="analog.html">Analog<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul class="current" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="analog_overview.html">Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="analog_hamiltonian.html">Hamiltonian</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Schedule</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../functionals/functionals.html">Functionals<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
-<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_sampling.html">Digital Propogation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_time_evolution.html">Analog Evolution</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_reservoirs.html">Quantum Reservoirs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_overview.html">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_digital.html">Digital Propagation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_analog.html">Analog Evolution</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_variational.html">Variational Programs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_reservoirs.html">Quantum Reservoirs</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../readout/readout.html">Readout<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../readout/readout_overview.html">Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../readout/readout_bitstring.html">Bitstring Measurement</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../readout/readout_expectation.html">Expectation Values</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../readout/readout_state.html">Full Quantum State</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../readout/readout_intermediate.html">Intermediate Results</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../backends/backends.html">Backends<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../backends/backends_overview.html">Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../backends/backends_qilisim.html">QiliSim</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../backends/backends_cuda.html">CUDA Backend</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../backends/backends_qutip.html">QuTiP Backend</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../backends/backends_qutip.html">Qutip Backend</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../cost_functions/cost_functions.html">Cost Functions<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
-<li class="toctree-l2"><a class="reference internal" href="../cost_functions/cost_functions_observable.html">Observable Cost Function</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../cost_functions/cost_functions_model.html">Model Cost Function</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cost_functions/cost_functions_overview.html">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cost_functions/cost_functions_observable.html">ObservableCostFunction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cost_functions/cost_functions_model.html">ModelCostFunction</a></li>
 </ul>
 </li>
-<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../noise_models/noise_models.html">Noise Models<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
-<li class="toctree-l2"><a class="reference internal" href="../noise_models/noise_models_config.html">Noise Config</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../noise_models/noise_models_types.html">Noise Types</a></li>
+<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../noise/noise.html">Noise<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../noise/noise_overview.html">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../noise/noise_config.html">Noise Config</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../noise/noise_types.html">Noise Types</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../speqtrum/speqtrum.html">SpeQtrum</a></li>
@@ -326,7 +338,132 @@
 <div id="content" role="main">
 <section id="schedule">
 <h1>Schedule<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#schedule"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h1>
-<meta content="0; url=analog.html#schedule" http-equiv="refresh"/><p>Go to a specific subheading of a page.</p>
+<p>The simplest way to construct a common schedule is to use of the helper functions:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="../../code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule.linear" title="qilisdk.analog.schedule.Schedule.linear"><code class="xref py py-func docutils literal notranslate"><span class="pre">linear</span></code></a>: Linear interpolation between two Hamiltonians.</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule.quadratic" title="qilisdk.analog.schedule.Schedule.quadratic"><code class="xref py py-func docutils literal notranslate"><span class="pre">quadratic</span></code></a>: Quadratic interpolation between two Hamiltonians.</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule.polynomial" title="qilisdk.analog.schedule.Schedule.polynomial"><code class="xref py py-func docutils literal notranslate"><span class="pre">polynomial</span></code></a>: Polynomial interpolation of arbitrary degree between two Hamiltonians.</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule.sinusoidal" title="qilisdk.analog.schedule.Schedule.sinusoidal"><code class="xref py py-func docutils literal notranslate"><span class="pre">sinusoidal</span></code></a>: Sinusoidal interpolation between two Hamiltonians.</p></li>
+</ul>
+<p>For example, to create a linear schedule that interpolates between a driver Hamiltonian and a problem Hamiltonian over a time of 10 units:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.analog</span><span class="w"> </span><span class="kn">import</span> <span class="n">Schedule</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Z</span>
+</span><span id="line-2">
+</span><span id="line-3"><span class="n">H1</span> <span class="o">=</span> <span class="n">X</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">X</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+</span><span id="line-4"><span class="n">H2</span> <span class="o">=</span> <span class="n">Z</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">*</span> <span class="n">Z</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+</span><span id="line-5">
+</span><span id="line-6"><span class="n">schedule</span> <span class="o">=</span> <span class="n">Schedule</span><span class="o">.</span><span class="n">linear</span><span class="p">(</span><span class="n">H1</span><span class="p">,</span> <span class="n">H2</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">)</span>
+</span><span id="line-7"><span class="n">schedule</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+</span></code></pre></div>
+</div>
+<p>For more complex schedules, you can use the <a class="reference internal" href="../../code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule" title="qilisdk.analog.schedule.Schedule"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schedule</span></code></a> class directly,
+which provides a flexible interface to fully define time-dependent Hamiltonian coefficients.
+The <a class="reference internal" href="../../code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule" title="qilisdk.analog.schedule.Schedule"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schedule</span></code></a> class maps time points to <a class="reference internal" href="../../code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian" title="qilisdk.analog.hamiltonian.Hamiltonian"><code class="xref py py-class docutils literal notranslate"><span class="pre">Hamiltonian</span></code></a> coefficients.
+Coefficients can be numbers, parameters/terms, or callables of time, and you can define them at
+discrete points or over intervals that are sampled automatically.</p>
+<section id="key-arguments">
+<h2>Key arguments<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#key-arguments" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#key-arguments'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
+<ul class="simple">
+<li><p><strong>dt</strong> (float): resolution of time samples. Default is 0.1.</p></li>
+<li><p><strong>hamiltonians</strong> (dict[str, Hamiltonian]): Map of labels to <a class="reference internal" href="../../code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian" title="qilisdk.analog.hamiltonian.Hamiltonian"><code class="xref py py-class docutils literal notranslate"><span class="pre">Hamiltonian</span></code></a> instances.</p></li>
+<li><dl class="simple">
+<dt><strong>coefficients</strong> (dict[str, dict]): Mapping from Hamiltonian label to a time-definition dictionary. Each key is either a time point (float/parameter/term) or a 2-tuple defining an interval; each value can be:</dt><dd><ul>
+<li><p>the coefficient of the hamiltonian at that time</p></li>
+<li><p>or callable returning a coefficient. This callable can take a parameter <code class="docutils literal notranslate"><span class="pre">t</span></code> that will be replaced by time. Moreover, any other parameters passed to this callable need to have a default value or have their value specified in the <code class="docutils literal notranslate"><span class="pre">**kwargs</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p><strong>interpolation</strong> (<a class="reference internal" href="../../code/api/qilisdk/core/interpolator/index.html#qilisdk.core.interpolator.Interpolation" title="qilisdk.core.interpolator.Interpolation"><code class="xref py py-class docutils literal notranslate"><span class="pre">Interpolation</span></code></a>): <code class="docutils literal notranslate"><span class="pre">LINEAR</span></code> (default) or <code class="docutils literal notranslate"><span class="pre">STEP</span></code> behavior between provided points.</p></li>
+<li><p><strong>total_time</strong> (float | Parameter | Term | None): Optional max time that rescales all time points while preserving relative positions.</p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>When you place parameters on the time axis (e.g., as time points or interval endpoints), the schedule automatically
+constrains those parameters to stay between their neighboring time points so the ordering of the timeline remains valid.</p>
+</div>
+</section>
+<section id="example-1-callable-coefficients-with-interval-sampling">
+<h2>Example 1: Callable coefficients with interval sampling<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#example-1-callable-coefficients-with-interval-sampling" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#example-1-callable-coefficients-with-interval-sampling'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.analog</span><span class="w"> </span><span class="kn">import</span> <span class="n">Schedule</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Z</span>
+</span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.analog.schedule</span><span class="w"> </span><span class="kn">import</span> <span class="n">Interpolation</span>
+</span><span id="line-3">
+</span><span id="line-4"><span class="n">h_driver</span> <span class="o">=</span> <span class="n">X</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">X</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+</span><span id="line-5"><span class="n">h_problem</span> <span class="o">=</span> <span class="n">Z</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">*</span> <span class="n">Z</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+</span><span id="line-6">
+</span><span id="line-7"><span class="n">schedule</span> <span class="o">=</span> <span class="n">Schedule</span><span class="p">(</span>
+</span><span id="line-8">    <span class="n">hamiltonians</span><span class="o">=</span><span class="p">{</span><span class="s2">"driver"</span><span class="p">:</span> <span class="n">h_driver</span><span class="p">,</span> <span class="s2">"problem"</span><span class="p">:</span> <span class="n">h_problem</span><span class="p">},</span>
+</span><span id="line-9">    <span class="n">coefficients</span><span class="o">=</span><span class="p">{</span>
+</span><span id="line-10">        <span class="s2">"driver"</span><span class="p">:</span> <span class="p">{(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">):</span> <span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">t</span> <span class="o">/</span> <span class="mf">10.0</span><span class="p">},</span>
+</span><span id="line-11">        <span class="s2">"problem"</span><span class="p">:</span> <span class="p">{(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">):</span> <span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">t</span> <span class="o">/</span> <span class="mf">10.0</span><span class="p">},</span>
+</span><span id="line-12">    <span class="p">},</span>
+</span><span id="line-13">    <span class="n">dt</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+</span><span id="line-14">    <span class="n">interpolation</span><span class="o">=</span><span class="n">Interpolation</span><span class="o">.</span><span class="n">LINEAR</span><span class="p">,</span>
+</span><span id="line-15"><span class="p">)</span>
+</span><span id="line-16"><span class="n">schedule</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+</span></code></pre></div>
+</div>
+</section>
+<section id="example-2-step-interpolation-and-max-time-rescaling">
+<h2>Example 2: Step interpolation and max-time rescaling<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#example-2-step-interpolation-and-max-time-rescaling" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#example-2-step-interpolation-and-max-time-rescaling'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.analog</span><span class="w"> </span><span class="kn">import</span> <span class="n">Schedule</span><span class="p">,</span> <span class="n">Z</span>
+</span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.analog.schedule</span><span class="w"> </span><span class="kn">import</span> <span class="n">Interpolation</span>
+</span><span id="line-3"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.utils.visualization.style</span><span class="w"> </span><span class="kn">import</span> <span class="n">ScheduleStyle</span>
+</span><span id="line-4">
+</span><span id="line-5"><span class="n">h</span> <span class="o">=</span> <span class="n">Z</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</span><span id="line-6"><span class="n">schedule</span> <span class="o">=</span> <span class="n">Schedule</span><span class="p">(</span>
+</span><span id="line-7">    <span class="n">hamiltonians</span><span class="o">=</span><span class="p">{</span><span class="s2">"h"</span><span class="p">:</span> <span class="n">h</span><span class="p">},</span>
+</span><span id="line-8">    <span class="n">coefficients</span><span class="o">=</span><span class="p">{</span><span class="s2">"h"</span><span class="p">:</span> <span class="p">{</span><span class="mf">0.0</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">:</span> <span class="mf">0.2</span><span class="p">}},</span>
+</span><span id="line-9">    <span class="n">dt</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span>
+</span><span id="line-10">    <span class="n">interpolation</span><span class="o">=</span><span class="n">Interpolation</span><span class="o">.</span><span class="n">STEP</span><span class="p">,</span>
+</span><span id="line-11"><span class="p">)</span>
+</span><span id="line-12">
+</span><span id="line-13"><span class="c1"># Later, shorten the experiment to 3s without redefining points</span>
+</span><span id="line-14"><span class="n">schedule</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="n">ScheduleStyle</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">"Before Time Scaling"</span><span class="p">))</span>
+</span><span id="line-15"><span class="n">schedule</span><span class="o">.</span><span class="n">scale_max_time</span><span class="p">(</span><span class="mf">3.0</span><span class="p">)</span>
+</span><span id="line-16"><span class="n">schedule</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="n">ScheduleStyle</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">"After Time Scaling"</span><span class="p">))</span>
+</span><span id="line-17"><span class="nb">print</span><span class="p">(</span><span class="s2">"Time grid:"</span><span class="p">,</span> <span class="n">schedule</span><span class="o">.</span><span class="n">tlist</span><span class="p">)</span>
+</span><span id="line-18"><span class="nb">print</span><span class="p">(</span><span class="s2">"Coeff at t=1.5:"</span><span class="p">,</span> <span class="n">schedule</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s2">"h"</span><span class="p">][</span><span class="mf">1.5</span><span class="p">])</span>
+</span></code></pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The draw function samples 1/dt points from the schedule, therefore, for an increased resolution in the plot you can reduce dt.</p>
+</div>
+</section>
+<section id="parameterized-schedules">
+<h2>Parameterized Schedules<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#parameterized-schedules" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#parameterized-schedules'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
+<p><a class="reference internal" href="../../code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule" title="qilisdk.analog.schedule.Schedule"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schedule</span></code></a> coefficients can be symbolic, enabling classical optimization loops or
+experiments that scan over a family of time profiles. Coefficients can be
+instances of <a class="reference internal" href="../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Parameter" title="qilisdk.core.variables.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parameter</span></code></a> or algebraic
+expressions (<a class="reference internal" href="../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Term" title="qilisdk.core.variables.Term"><code class="xref py py-class docutils literal notranslate"><span class="pre">Term</span></code></a>) built from parameters.
+The schedule tracks every parameter it encounters so you can query or set them
+later.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.analog</span><span class="w"> </span><span class="kn">import</span> <span class="n">Schedule</span><span class="p">,</span> <span class="n">Z</span>
+</span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Parameter</span><span class="p">,</span> <span class="n">GreaterThanOrEqual</span>
+</span><span id="line-3">
+</span><span id="line-4"><span class="n">gamma</span> <span class="o">=</span> <span class="n">Parameter</span><span class="p">(</span><span class="s2">"gamma"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">))</span>
+</span><span id="line-5"><span class="n">T</span> <span class="o">=</span> <span class="n">Parameter</span><span class="p">(</span><span class="s2">"T"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="mf">10.0</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">20.0</span><span class="p">))</span>
+</span><span id="line-6">
+</span><span id="line-7"><span class="n">schedule</span> <span class="o">=</span> <span class="n">Schedule</span><span class="p">(</span>
+</span><span id="line-8">    <span class="n">hamiltonians</span><span class="o">=</span><span class="p">{</span><span class="s2">"problem"</span><span class="p">:</span> <span class="n">Z</span><span class="p">(</span><span class="mi">0</span><span class="p">)},</span>
+</span><span id="line-9">    <span class="n">coefficients</span><span class="o">=</span><span class="p">{</span><span class="s2">"problem"</span><span class="p">:</span> <span class="p">{(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">T</span><span class="p">):</span> <span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">gamma</span> <span class="o">*</span> <span class="n">t</span><span class="p">}},</span>
+</span><span id="line-10">    <span class="n">dt</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+</span><span id="line-11">    <span class="n">total_time</span><span class="o">=</span><span class="n">T</span><span class="p">,</span>
+</span><span id="line-12"><span class="p">)</span>
+</span><span id="line-13">
+</span><span id="line-14"><span class="n">schedule</span><span class="o">.</span><span class="n">get_parameters</span><span class="p">()</span>
+</span><span id="line-15">
+</span><span id="line-16"><span class="n">schedule</span><span class="o">.</span><span class="n">set_parameters</span><span class="p">({</span><span class="s2">"gamma"</span><span class="p">:</span> <span class="mf">0.7</span><span class="p">})</span>
+</span><span id="line-17"><span class="nb">print</span><span class="p">(</span><span class="n">schedule</span><span class="o">.</span><span class="n">get_parameter_names</span><span class="p">())</span>   <span class="c1"># ['gamma', 'T']</span>
+</span><span id="line-18"><span class="nb">print</span><span class="p">(</span><span class="n">schedule</span><span class="o">.</span><span class="n">get_constraints</span><span class="p">())</span>       <span class="c1"># [0 &lt;= T]</span>
+</span></code></pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>For schedules, Hamiltonians, and interpolators, use <code class="docutils literal notranslate"><span class="pre">get_parameters</span></code> and
+related accessor methods to inspect parameter state.</p>
+</div>
+</section>
 </section>
 </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">
 <div class="mr-auto">
@@ -345,7 +482,16 @@
 </svg>
 </a>
 </div>
-</div></div>
+</div></div><aside class="hidden text-sm xl:block" id="right-sidebar">
+<div class="sticky top-16 -mt-10 max-h-[calc(100vh-5rem)] h-full overflow-y-auto pt-6 space-y-2"><p class="font-medium">On this page</p>
+<ul>
+<li><a :data-current="activeSection === '#key-arguments'" class="reference internal" href="#key-arguments">Key arguments</a></li>
+<li><a :data-current="activeSection === '#example-1-callable-coefficients-with-interval-sampling'" class="reference internal" href="#example-1-callable-coefficients-with-interval-sampling">Example 1: Callable coefficients with interval sampling</a></li>
+<li><a :data-current="activeSection === '#example-2-step-interpolation-and-max-time-rescaling'" class="reference internal" href="#example-2-step-interpolation-and-max-time-rescaling">Example 2: Step interpolation and max-time rescaling</a></li>
+<li><a :data-current="activeSection === '#parameterized-schedules'" class="reference internal" href="#parameterized-schedules">Parameterized Schedules</a></li>
+</ul>
+</div>
+</aside>
 </main>
 </div>
 </div><footer class="py-6 border-t border-border md:py-0">

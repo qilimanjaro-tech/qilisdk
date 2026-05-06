@@ -21,20 +21,20 @@
 <meta content="#ffffff" media="(prefers-color-scheme: light)" name="theme-color"/>
 <meta content="#030711" media="(prefers-color-scheme: dark)" name="theme-color"/>
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
-<title>Noise Models | QiliSDK</title>
-<meta content="Noise Models | QiliSDK" property="og:title"/>
-<meta content="Noise Models | QiliSDK" name="twitter:title"/>
-<link href="../../_static/pygments.css?v=31f438d3" rel="stylesheet" type="text/css"/>
+<title>Noise Types | QiliSDK</title>
+<meta content="Noise Types | QiliSDK" property="og:title"/>
+<meta content="Noise Types | QiliSDK" name="twitter:title"/>
+<link href="../../_static/pygments.css?v=652ce3ed" rel="stylesheet" type="text/css"/>
 <link href="../../_static/theme.css?v=73505e79" rel="stylesheet" type="text/css"/>
 <link href="../../_static/graphviz.css?v=4ae1632d" rel="stylesheet" type="text/css"/>
 <link href="../../_static/sphinx-design.min.css?v=95c83b7e" rel="stylesheet" type="text/css"/>
-<link href="../../_static/custom.css?v=c047bc51" rel="stylesheet" type="text/css"/>
+<link href="../../_static/custom.css?v=0828450c" rel="stylesheet" type="text/css"/>
 <link href="../../_static/awesome-sphinx-design.css?v=c54898a4" rel="stylesheet" type="text/css"/>
 <link href="../../_static/q_trans.png" rel="icon"/>
 <link href="../../search.html" rel="search" title="Search"/>
 <link href="../../genindex.html" rel="index" title="Index"/>
-<link href="noise_models_config.html" rel="next" title="Noise Config"/>
-<link href="../cost_functions/cost_functions_model.html" rel="prev" title="Model Cost Function"/>
+<link href="../speqtrum/speqtrum.html" rel="next" title="SpeQtrum"/>
+<link href="noise_config.html" rel="prev" title="Noise Config"/>
 </head>
 <body :class="{ 'overflow-hidden': showSidebar }" class="min-h-screen font-sans antialiased bg-background text-foreground" x-data="{ showSidebar: false, showScrollTop: false }">
 <div @click.self="showSidebar = false" class="fixed inset-0 z-50 overflow-hidden bg-background/80 backdrop-blur-sm md:hidden" x-cloak="" x-show="showSidebar"></div><div class="relative flex flex-col min-h-screen" id="page"><a class="absolute top-0 left-0 z-[100] block bg-background p-4 text-xl transition -translate-x-full opacity-0 focus:translate-x-0 focus:opacity-100" href="#content">
@@ -44,7 +44,13 @@
 <a class="flex items-center mr-6" href="../../index.html">
 <img alt="Logo" class="mr-2 hidden dark:block" height="24" src="../../_static/q_trans.png" width="24"/>
 <img alt="Logo" class="mr-2 dark:hidden" height="24" src="../../_static/q_trans.png" width="24"/><span class="hidden font-bold sm:inline-block text-clip whitespace-nowrap">QiliSDK</span>
-</a></div><button @click="showSidebar = true" class="inline-flex items-center justify-center h-10 px-0 py-2 mr-2 text-base font-medium transition-colors rounded-md hover:text-accent-foreground hover:bg-transparent md:hidden" type="button">
+</a>
+<div class="language-switcher">
+<span class="lang-active">EN</span>
+<a class="lang-link" href="../../../../es/main/modules/noise/noise_types.html">ES</a>
+<a class="lang-link" href="../../../../ca/main/modules/noise/noise_types.html">CA</a>
+</div>
+</div><button @click="showSidebar = true" class="inline-flex items-center justify-center h-10 px-0 py-2 mr-2 text-base font-medium transition-colors rounded-md hover:text-accent-foreground hover:bg-transparent md:hidden" type="button">
 <svg aria-hidden="true" fill="currentColor" height="24" viewbox="0 96 960 960" width="24" xmlns="http://www.w3.org/2000/svg">
 <path d="M152.587 825.087q-19.152 0-32.326-13.174t-13.174-32.326q0-19.152 13.174-32.326t32.326-13.174h440q19.152 0 32.326 13.174t13.174 32.326q0 19.152-13.174 32.326t-32.326 13.174h-440Zm0-203.587q-19.152 0-32.326-13.174T107.087 576q0-19.152 13.174-32.326t32.326-13.174h320q19.152 0 32.326 13.174T518.087 576q0 19.152-13.174 32.326T472.587 621.5h-320Zm0-203.587q-19.152 0-32.326-13.174t-13.174-32.326q0-19.152 13.174-32.326t32.326-13.174h440q19.152 0 32.326 13.174t13.174 32.326q0 19.152-13.174 32.326t-32.326 13.174h-440ZM708.913 576l112.174 112.174q12.674 12.674 12.674 31.826t-12.674 31.826Q808.413 764.5 789.261 764.5t-31.826-12.674l-144-144Q600 594.391 600 576t13.435-31.826l144-144q12.674-12.674 31.826-12.674t31.826 12.674q12.674 12.674 12.674 31.826t-12.674 31.826L708.913 576Z"></path>
 </svg>
@@ -104,57 +110,63 @@
 <p class="caption" role="heading"><span class="caption-text">Modules</span></p>
 <ul class="current">
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../core/core.html">Core<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
-<li class="toctree-l2"><a class="reference internal" href="../core/core_variables.html">Variables</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../core/core_terms.html">Terms</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../core/core_parameters.html">Parameters</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../core/core_math_map.html">Mathematical Maps</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../core/core_comparison.html">Comparison Terms</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core/core_overview.html">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core/core_variables_parameters.html">Variables and Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core/core_terms_maps_comparisons.html">Terms, Maps and Comparisons</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../core/core_model.html">Models</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../core/core_qubo.html">QUBO</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../core/core_qtensor.html">QTensor</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../digital/digital.html">Digital<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../digital/digital_overview.html">Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../digital/digital_gates.html">Gates</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../digital/digital_circuits.html">Circuits</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../digital/digital_vis.html">Visualization</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../digital/digital_ansatz.html">Hardware Efficient Ansatz</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../digital/digital_ansatz.html">Ansatz</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../digital/digital_hardware.html">HardwareEfficientAnsatz</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../digital/digital_qaoa.html">QAOA</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../digital/digital_trotter.html">Trotterization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../digital/digital_trotter.html">TrotterizedSchedule</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../analog/analog.html">Analog<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../analog/analog_overview.html">Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../analog/analog_hamiltonian.html">Hamiltonian</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../analog/analog_schedule.html">Schedule</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../functionals/functionals.html">Functionals<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
-<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_sampling.html">Digital Propogation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_time_evolution.html">Analog Evolution</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_reservoirs.html">Quantum Reservoirs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_overview.html">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_digital.html">Digital Propagation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_analog.html">Analog Evolution</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_variational.html">Variational Programs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_reservoirs.html">Quantum Reservoirs</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../readout/readout.html">Readout<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../readout/readout_overview.html">Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../readout/readout_bitstring.html">Bitstring Measurement</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../readout/readout_expectation.html">Expectation Values</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../readout/readout_state.html">Full Quantum State</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../readout/readout_intermediate.html">Intermediate Results</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../backends/backends.html">Backends<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../backends/backends_overview.html">Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../backends/backends_qilisim.html">QiliSim</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../backends/backends_cuda.html">CUDA Backend</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../backends/backends_qutip.html">QuTiP Backend</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../backends/backends_qutip.html">Qutip Backend</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../cost_functions/cost_functions.html">Cost Functions<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
-<li class="toctree-l2"><a class="reference internal" href="../cost_functions/cost_functions_observable.html">Observable Cost Function</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../cost_functions/cost_functions_model.html">Model Cost Function</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cost_functions/cost_functions_overview.html">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cost_functions/cost_functions_observable.html">ObservableCostFunction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cost_functions/cost_functions_model.html">ModelCostFunction</a></li>
 </ul>
 </li>
-<li class="toctree-l1 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="current reference internal expandable" href="#">Noise Models<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
-<li class="toctree-l2"><a class="reference internal" href="noise_models_config.html">Noise Config</a></li>
-<li class="toctree-l2"><a class="reference internal" href="noise_models_types.html">Noise Types</a></li>
+<li class="toctree-l1 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="noise.html">Noise<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul class="current" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="noise_overview.html">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="noise_config.html">Noise Config</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Noise Types</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../speqtrum/speqtrum.html">SpeQtrum</a></li>
@@ -299,7 +311,7 @@
 </p>
 <ul>
 <li class="toctree-l1">
-<a class="reference internal" href="noise_models.html">main</a>
+<a class="reference internal" href="noise_types.html">main</a>
 </li>
 </ul>
 </nav>
@@ -320,154 +332,14 @@
 <path d="M240 856h120V616h240v240h120V496L480 316 240 496v360Zm-80 80V456l320-240 320 240v480H520V696h-80v240H160Zm320-350Z"></path>
 </svg>
 </a>
-<div class="mr-1">/</div><span aria-current="page" class="font-medium text-foreground overflow-hidden text-ellipsis whitespace-nowrap">Noise Models</span>
+<div class="mr-1">/</div><a class="hover:text-foreground overflow-hidden text-ellipsis whitespace-nowrap" href="noise.html">Noise</a>
+<div class="mr-1">/</div><span aria-current="page" class="font-medium text-foreground overflow-hidden text-ellipsis whitespace-nowrap">Noise Types</span>
 </nav>
 <div id="content" role="main">
-<section id="noise-models">
-<h1>Noise Models<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#noise-models"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h1>
-
-<p>The <a class="reference internal" href="../../code/api/qilisdk/noise/index.html#module-qilisdk.noise" title="qilisdk.noise"><code class="xref py py-mod docutils literal notranslate"><span class="pre">qilisdk.noise</span></code></a> module contains classes that represent different types of noise in quantum systems.
-These noise models can be integrated into quantum simulations to account for real-world imperfections and
-decoherence effects. A <a class="reference internal" href="../../code/api/qilisdk/noise/noise_model/index.html#qilisdk.noise.noise_model.NoiseModel" title="qilisdk.noise.noise_model.NoiseModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">NoiseModel</span></code></a> can contains various types of noise,
-each of which is then applied during simulation.</p>
-<table class="docutils align-left">
-<thead>
-<tr class="row-odd"><th class="head"><p>Backend</p></th>
-<th class="head"><p>Noise Models Supported</p></th>
-</tr>
-</thead>
-<tbody>
-<tr class="row-even"><td><p><a class="reference internal" href="../../code/api/qilisdk/backends/qilisim/index.html#qilisdk.backends.qilisim.QiliSim" title="qilisdk.backends.qilisim.QiliSim"><code class="xref py py-class docutils literal notranslate"><span class="pre">QiliSim</span></code></a></p></td>
-<td><p>✔</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../../code/api/qilisdk/backends/cuda_backend/index.html#qilisdk.backends.cuda_backend.CudaBackend" title="qilisdk.backends.cuda_backend.CudaBackend"><code class="xref py py-class docutils literal notranslate"><span class="pre">CudaBackend</span></code></a></p></td>
-<td><p>✔</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../../code/api/qilisdk/backends/qutip_backend/index.html#qilisdk.backends.qutip_backend.QutipBackend" title="qilisdk.backends.qutip_backend.QutipBackend"><code class="xref py py-class docutils literal notranslate"><span class="pre">QutipBackend</span></code></a></p></td>
-<td><p>✕</p></td>
-</tr>
-</tbody>
-</table>
-<section id="usage">
-<h2>Usage<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#usage" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#usage'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
-<p>Noise passes are added to a <a class="reference internal" href="../../code/api/qilisdk/noise/noise_model/index.html#qilisdk.noise.noise_model.NoiseModel" title="qilisdk.noise.noise_model.NoiseModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">NoiseModel</span></code></a>, which should then be included when creating a backend.
-For example, to create a simple circuit and then simulate it with a CUDA backend containing a bit-flip noise model:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.noise</span><span class="w"> </span><span class="kn">import</span> <span class="n">NoiseModel</span><span class="p">,</span> <span class="n">BitFlip</span>
-</span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.digital</span><span class="w"> </span><span class="kn">import</span> <span class="n">X</span><span class="p">,</span> <span class="n">Circuit</span>
-</span><span id="line-3"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.functionals</span><span class="w"> </span><span class="kn">import</span> <span class="n">DigitalPropagation</span>
-</span><span id="line-4"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.readout</span><span class="w"> </span><span class="kn">import</span> <span class="n">Readout</span>
-</span><span id="line-5"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.backends</span><span class="w"> </span><span class="kn">import</span> <span class="n">CudaBackend</span>
-</span><span id="line-6">
-</span><span id="line-7"><span class="c1"># Define the random circuit and functional</span>
-</span><span id="line-8"><span class="n">c</span> <span class="o">=</span> <span class="n">Circuit</span><span class="p">(</span><span class="n">nqubits</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-</span><span id="line-9"><span class="n">c</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">X</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
-</span><span id="line-10"><span class="n">c</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">X</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
-</span><span id="line-11"><span class="n">functional</span> <span class="o">=</span> <span class="n">DigitalPropagation</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
-</span><span id="line-12">
-</span><span id="line-13"><span class="c1"># Apply bit-flip noise with 50% probability to X gates on qubit 1</span>
-</span><span id="line-14"><span class="n">nm</span> <span class="o">=</span> <span class="n">NoiseModel</span><span class="p">()</span>
-</span><span id="line-15"><span class="n">nm</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">BitFlip</span><span class="p">(</span><span class="n">probability</span><span class="o">=</span><span class="mf">0.5</span><span class="p">),</span> <span class="n">gate</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">qubits</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-</span><span id="line-16">
-</span><span id="line-17"><span class="c1"># Execute with CUDA backend</span>
-</span><span id="line-18"><span class="n">backend_cuda</span> <span class="o">=</span> <span class="n">CudaBackend</span><span class="p">(</span><span class="n">noise_model</span><span class="o">=</span><span class="n">nm</span><span class="p">)</span>
-</span><span id="line-19"><span class="n">res</span> <span class="o">=</span> <span class="n">backend_cuda</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">functional</span><span class="p">,</span> <span class="n">readout</span><span class="o">=</span><span class="n">Readout</span><span class="p">()</span><span class="o">.</span><span class="n">with_sampling</span><span class="p">(</span><span class="n">nshots</span><span class="o">=</span><span class="mi">1000</span><span class="p">))</span>
-</span><span id="line-20"><span class="nb">print</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
-</span></code></pre></div>
-</div>
-</section>
-<section id="summary-of-noise-types">
-<h2>Summary of Noise Types<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#summary-of-noise-types" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#summary-of-noise-types'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
-<p>Some of the noise passes available in QiliSDK can be used for both digital circuits
-and analog schedules, while others are specific to one or the other:</p>
-<table class="docutils align-left">
-<thead>
-<tr class="row-odd"><th class="head"><p>Noise Type</p></th>
-<th class="head"><p>Digital Propogation</p></th>
-<th class="head"><p>Analog Evolution</p></th>
-</tr>
-</thead>
-<tbody>
-<tr class="row-even"><td><p><a class="reference internal" href="../../code/api/qilisdk/noise/representations/index.html#qilisdk.noise.representations.KrausChannel" title="qilisdk.noise.representations.KrausChannel"><code class="xref py py-class docutils literal notranslate"><span class="pre">KrausChannel</span></code></a></p></td>
-<td><p>✔</p></td>
-<td></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../../code/api/qilisdk/noise/representations/index.html#qilisdk.noise.representations.LindbladGenerator" title="qilisdk.noise.representations.LindbladGenerator"><code class="xref py py-class docutils literal notranslate"><span class="pre">LindbladGenerator</span></code></a></p></td>
-<td></td>
-<td><p>✔</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../../code/api/qilisdk/noise/pauli_channel/index.html#qilisdk.noise.pauli_channel.PauliChannel" title="qilisdk.noise.pauli_channel.PauliChannel"><code class="xref py py-class docutils literal notranslate"><span class="pre">PauliChannel</span></code></a></p></td>
-<td><p>✔</p></td>
-<td><p>✔</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../../code/api/qilisdk/noise/bit_flip/index.html#qilisdk.noise.bit_flip.BitFlip" title="qilisdk.noise.bit_flip.BitFlip"><code class="xref py py-class docutils literal notranslate"><span class="pre">BitFlip</span></code></a></p></td>
-<td><p>✔</p></td>
-<td><p>✔</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../../code/api/qilisdk/noise/phase_flip/index.html#qilisdk.noise.phase_flip.PhaseFlip" title="qilisdk.noise.phase_flip.PhaseFlip"><code class="xref py py-class docutils literal notranslate"><span class="pre">PhaseFlip</span></code></a></p></td>
-<td><p>✔</p></td>
-<td><p>✔</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../../code/api/qilisdk/noise/depolarizing/index.html#qilisdk.noise.depolarizing.Depolarizing" title="qilisdk.noise.depolarizing.Depolarizing"><code class="xref py py-class docutils literal notranslate"><span class="pre">Depolarizing</span></code></a></p></td>
-<td><p>✔</p></td>
-<td><p>✔</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../../code/api/qilisdk/noise/amplitude_damping/index.html#qilisdk.noise.amplitude_damping.AmplitudeDamping" title="qilisdk.noise.amplitude_damping.AmplitudeDamping"><code class="xref py py-class docutils literal notranslate"><span class="pre">AmplitudeDamping</span></code></a></p></td>
-<td><p>✔</p></td>
-<td><p>✔</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../../code/api/qilisdk/noise/dephasing/index.html#qilisdk.noise.dephasing.Dephasing" title="qilisdk.noise.dephasing.Dephasing"><code class="xref py py-class docutils literal notranslate"><span class="pre">Dephasing</span></code></a></p></td>
-<td><p>✔</p></td>
-<td><p>✔</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../../code/api/qilisdk/noise/gaussian_perturbation/index.html#qilisdk.noise.gaussian_perturbation.GaussianPerturbation" title="qilisdk.noise.gaussian_perturbation.GaussianPerturbation"><code class="xref py py-class docutils literal notranslate"><span class="pre">GaussianPerturbation</span></code></a></p></td>
-<td><p>✔</p></td>
-<td><p>✔</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../../code/api/qilisdk/noise/offset_perturbation/index.html#qilisdk.noise.offset_perturbation.OffsetPerturbation" title="qilisdk.noise.offset_perturbation.OffsetPerturbation"><code class="xref py py-class docutils literal notranslate"><span class="pre">OffsetPerturbation</span></code></a></p></td>
-<td><p>✔</p></td>
-<td><p>✔</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../../code/api/qilisdk/noise/readout_assignment/index.html#qilisdk.noise.readout_assignment.ReadoutAssignment" title="qilisdk.noise.readout_assignment.ReadoutAssignment"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReadoutAssignment</span></code></a></p></td>
-<td><p>✔</p></td>
-<td></td>
-</tr>
-</tbody>
-</table>
-</section>
-<section id="noise-config">
-<h2>Noise Config<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#noise-config" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#noise-config'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
-<p>By default, when converting between different noise representations (e.g. from Kraus operators to Lindblad generators),
-certain parameters are assumed, such as gate times.
-These defaults can be modified using the <a class="reference internal" href="../../code/api/qilisdk/noise/noise_config/index.html#qilisdk.noise.noise_config.NoiseConfig" title="qilisdk.noise.noise_config.NoiseConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">NoiseConfig</span></code></a> class:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.noise</span><span class="w"> </span><span class="kn">import</span> <span class="n">NoiseModel</span><span class="p">,</span> <span class="n">NoiseConfig</span>
-</span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.digital</span><span class="w"> </span><span class="kn">import</span> <span class="n">X</span>
-</span><span id="line-3">
-</span><span id="line-4"><span class="c1"># Create a noise configuration, setting the X gate time to 20 ns</span>
-</span><span id="line-5"><span class="n">conf</span> <span class="o">=</span> <span class="n">NoiseConfig</span><span class="p">()</span>
-</span><span id="line-6"><span class="n">conf</span><span class="o">.</span><span class="n">set_gate_time</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="mf">20e-9</span><span class="p">)</span>
-</span><span id="line-7">
-</span><span id="line-8"><span class="c1"># Define a simple noise model using this config</span>
-</span><span id="line-9"><span class="n">nm</span> <span class="o">=</span> <span class="n">NoiseModel</span><span class="p">(</span><span class="n">noise_config</span><span class="o">=</span><span class="n">conf</span><span class="p">)</span>
-</span></code></pre></div>
-</div>
-<p>Parameters and their defaults are as follows:</p>
-<table class="docutils align-left">
-<thead>
-<tr class="row-odd"><th class="head"><p>Parameter</p></th>
-<th class="head"><p>Default Value</p></th>
-</tr>
-</thead>
-<tbody>
-<tr class="row-even"><td><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">gate_times</span></code></p></td>
-<td><p>1.0 for all gates</p></td>
-</tr>
-</tbody>
-</table>
-</section>
 <section id="noise-types">
-<h2>Noise Types<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#noise-types" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#noise-types'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
+<h1>Noise Types<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#noise-types"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h1>
 <section id="krauschannel">
-<h3>KrausChannel<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#krauschannel" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#krauschannel'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h3>
+<h2>KrausChannel<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#krauschannel" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#krauschannel'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
 <p><a class="reference internal" href="../../code/api/qilisdk/noise/representations/index.html#qilisdk.noise.representations.KrausChannel" title="qilisdk.noise.representations.KrausChannel"><code class="xref py py-class docutils literal notranslate"><span class="pre">KrausChannel</span></code></a> is a base class for digital noise models that use Kraus operators
 to represent quantum noise channels. Kraus operators can be used to represent a generic quantum channel <span class="math notranslate nohighlight">\(\mathcal{E}\)</span> acting on a density matrix <span class="math notranslate nohighlight">\(\rho\)</span> as:</p>
 <div class="math notranslate nohighlight">
@@ -485,7 +357,7 @@ The class is initialized with a list of Kraus operators given as QTensors.</p>
 </div>
 </section>
 <section id="lindbladgenerator">
-<h3>LindbladGenerator<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#lindbladgenerator" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#lindbladgenerator'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h3>
+<h2>LindbladGenerator<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#lindbladgenerator" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#lindbladgenerator'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
 <p><a class="reference internal" href="../../code/api/qilisdk/noise/representations/index.html#qilisdk.noise.representations.LindbladGenerator" title="qilisdk.noise.representations.LindbladGenerator"><code class="xref py py-class docutils literal notranslate"><span class="pre">LindbladGenerator</span></code></a> is a base class for analog noise models that use the Lindblad master equation
 to represent quantum noise processes. The Lindblad master equation describes the time evolution of a density matrix <span class="math notranslate nohighlight">\(\rho\)</span> under
 both unitary dynamics and dissipative processes:</p>
@@ -503,7 +375,7 @@ The class is initialized with a list of jump operators given as QTensors and the
 </div>
 </section>
 <section id="paulichannel">
-<h3>PauliChannel<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#paulichannel" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#paulichannel'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h3>
+<h2>PauliChannel<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#paulichannel" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#paulichannel'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
 <p><a class="reference internal" href="../../code/api/qilisdk/noise/pauli_channel/index.html#qilisdk.noise.pauli_channel.PauliChannel" title="qilisdk.noise.pauli_channel.PauliChannel"><code class="xref py py-class docutils literal notranslate"><span class="pre">PauliChannel</span></code></a> is a base class for noise models that use Pauli operators.
 A Pauli channel applies the Pauli operators (I, X, Y, Z) with certain probabilities.
 The channel can be represented as:</p>
@@ -524,7 +396,7 @@ This corresponds to Kraus operators:</p>
 </div>
 </section>
 <section id="bitflip">
-<h3>BitFlip<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#bitflip" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#bitflip'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h3>
+<h2>BitFlip<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#bitflip" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#bitflip'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
 <p><a class="reference internal" href="../../code/api/qilisdk/noise/bit_flip/index.html#qilisdk.noise.bit_flip.BitFlip" title="qilisdk.noise.bit_flip.BitFlip"><code class="xref py py-class docutils literal notranslate"><span class="pre">BitFlip</span></code></a> represents a bit-flip error model where each qubit
 has a certain probability of flipping its state from <span class="math notranslate nohighlight">\(|0⟩\)</span> to <span class="math notranslate nohighlight">\(|1⟩\)</span> or from <span class="math notranslate nohighlight">\(|1⟩\)</span> to <span class="math notranslate nohighlight">\(|0⟩\)</span>.
 This corresponds to the following channel:</p>
@@ -544,7 +416,7 @@ with <span class="math notranslate nohighlight">\(p_X = p\)</span> and <span cla
 </div>
 </section>
 <section id="phaseflip">
-<h3>PhaseFlip<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#phaseflip" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#phaseflip'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h3>
+<h2>PhaseFlip<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#phaseflip" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#phaseflip'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
 <p><a class="reference internal" href="../../code/api/qilisdk/noise/phase_flip/index.html#qilisdk.noise.phase_flip.PhaseFlip" title="qilisdk.noise.phase_flip.PhaseFlip"><code class="xref py py-class docutils literal notranslate"><span class="pre">PhaseFlip</span></code></a> represents a phase-flip error model where each qubit
 has a certain probability of flipping its phase, changing the sign of the <span class="math notranslate nohighlight">\(|1⟩\)</span> state.
 This corresponds to the following channel:</p>
@@ -564,7 +436,7 @@ with <span class="math notranslate nohighlight">\(p_Z = p\)</span> and <span cla
 </div>
 </section>
 <section id="depolarizing">
-<h3>Depolarizing<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#depolarizing" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#depolarizing'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h3>
+<h2>Depolarizing<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#depolarizing" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#depolarizing'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
 <p><a class="reference internal" href="../../code/api/qilisdk/noise/depolarizing/index.html#qilisdk.noise.depolarizing.Depolarizing" title="qilisdk.noise.depolarizing.Depolarizing"><code class="xref py py-class docutils literal notranslate"><span class="pre">Depolarizing</span></code></a> represents a depolarizing error model
 where each qubit has a certain probability of being replaced by the maximally mixed state.
 This corresponds to the following channel:</p>
@@ -584,7 +456,7 @@ with <span class="math notranslate nohighlight">\(p_X = p_Y = p_Z = p/3\)</span>
 </div>
 </section>
 <section id="amplitudedamping">
-<h3>AmplitudeDamping<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#amplitudedamping" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#amplitudedamping'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h3>
+<h2>AmplitudeDamping<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#amplitudedamping" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#amplitudedamping'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
 <p><a class="reference internal" href="../../code/api/qilisdk/noise/amplitude_damping/index.html#qilisdk.noise.amplitude_damping.AmplitudeDamping" title="qilisdk.noise.amplitude_damping.AmplitudeDamping"><code class="xref py py-class docutils literal notranslate"><span class="pre">AmplitudeDamping</span></code></a> represents an amplitude damping error model
 where each qubit has a certain probability of decaying from the excited state <span class="math notranslate nohighlight">\(|1⟩\)</span> to the ground state <span class="math notranslate nohighlight">\(|0⟩\)</span>.
 This corresponds to the following channel:</p>
@@ -608,7 +480,7 @@ The channel is defined by the <span class="math notranslate nohighlight">\(T_1\)
 </div>
 </section>
 <section id="dephasing">
-<h3>Dephasing<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#dephasing" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#dephasing'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h3>
+<h2>Dephasing<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#dephasing" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#dephasing'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
 <p><a class="reference internal" href="../../code/api/qilisdk/noise/dephasing/index.html#qilisdk.noise.dephasing.Dephasing" title="qilisdk.noise.dephasing.Dephasing"><code class="xref py py-class docutils literal notranslate"><span class="pre">Dephasing</span></code></a> represents a dephasing error model where each qubit has a
 certain probability of losing coherence between its <span class="math notranslate nohighlight">\(|0⟩\)</span> and <span class="math notranslate nohighlight">\(|1⟩\)</span> states.
 This corresponds to the following channel:</p>
@@ -632,7 +504,7 @@ with <span class="math notranslate nohighlight">\(p_Z = p\)</span> and <span cla
 </div>
 </section>
 <section id="gaussianperturbation">
-<h3>GaussianPerturbation<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#gaussianperturbation" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#gaussianperturbation'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h3>
+<h2>GaussianPerturbation<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#gaussianperturbation" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#gaussianperturbation'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
 <p><a class="reference internal" href="../../code/api/qilisdk/noise/gaussian_perturbation/index.html#qilisdk.noise.gaussian_perturbation.GaussianPerturbation" title="qilisdk.noise.gaussian_perturbation.GaussianPerturbation"><code class="xref py py-class docutils literal notranslate"><span class="pre">GaussianPerturbation</span></code></a> represents a noise model that adds Gaussian-distributed perturbations
 to the parameters of gates or Hamiltonian terms in a quantum circuit or schedule. This simulates
 imperfections in control signals that can lead to deviations from the intended operations.
@@ -646,7 +518,7 @@ The perturbations are drawn from a Gaussian distribution with a specified standa
 </div>
 </section>
 <section id="offsetperturbation">
-<h3>OffsetPerturbation<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#offsetperturbation" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#offsetperturbation'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h3>
+<h2>OffsetPerturbation<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#offsetperturbation" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#offsetperturbation'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
 <p><a class="reference internal" href="../../code/api/qilisdk/noise/offset_perturbation/index.html#qilisdk.noise.offset_perturbation.OffsetPerturbation" title="qilisdk.noise.offset_perturbation.OffsetPerturbation"><code class="xref py py-class docutils literal notranslate"><span class="pre">OffsetPerturbation</span></code></a> represents a noise model that adds fixed offset perturbations
 to the parameters of gates or Hamiltonian terms in a quantum circuit or schedule. This simulates
 systematic errors in control signals that consistently shift the intended operations.
@@ -657,7 +529,7 @@ The offsets are specified as fixed values for each parameter.</p>
 </div>
 </section>
 <section id="readoutassignment">
-<h3>ReadoutAssignment<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#readoutassignment" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#readoutassignment'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h3>
+<h2>ReadoutAssignment<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#readoutassignment" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#readoutassignment'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
 <p><a class="reference internal" href="../../code/api/qilisdk/noise/readout_assignment/index.html#qilisdk.noise.readout_assignment.ReadoutAssignment" title="qilisdk.noise.readout_assignment.ReadoutAssignment"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReadoutAssignment</span></code></a> represents a readout error model that simulates
 imperfections in the measurement process of qubits. It is defined by two probabilities:
 the probability of misreading a <span class="math notranslate nohighlight">\(|0⟩\)</span> state as <span class="math notranslate nohighlight">\(|1⟩\)</span> (<span class="math notranslate nohighlight">\(p_{0 \to 1}\)</span>) and
@@ -668,19 +540,18 @@ the probability of misreading a <span class="math notranslate nohighlight">\(|1�
 </div>
 </section>
 </section>
-</section>
 </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">
 <div class="mr-auto">
-<a class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input hover:bg-accent hover:text-accent-foreground py-2 px-4" href="../cost_functions/cost_functions_model.html">
+<a class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input hover:bg-accent hover:text-accent-foreground py-2 px-4" href="noise_config.html">
 <svg class="mr-2 h-4 w-4" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
 <polyline points="15 18 9 12 15 6"></polyline>
 </svg>
-        Model Cost Function
+        Noise Config
       </a>
 </div>
 <div class="ml-auto">
-<a class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input hover:bg-accent hover:text-accent-foreground py-2 px-4" href="noise_models_config.html">
-        Noise Config
+<a class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input hover:bg-accent hover:text-accent-foreground py-2 px-4" href="../speqtrum/speqtrum.html">
+        SpeQtrum
         <svg class="ml-2 h-4 w-4" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
 <polyline points="9 18 15 12 9 6"></polyline>
 </svg>
@@ -689,10 +560,6 @@ the probability of misreading a <span class="math notranslate nohighlight">\(|1�
 </div></div><aside class="hidden text-sm xl:block" id="right-sidebar">
 <div class="sticky top-16 -mt-10 max-h-[calc(100vh-5rem)] h-full overflow-y-auto pt-6 space-y-2"><p class="font-medium">On this page</p>
 <ul>
-<li><a :data-current="activeSection === '#usage'" class="reference internal" href="#usage">Usage</a></li>
-<li><a :data-current="activeSection === '#summary-of-noise-types'" class="reference internal" href="#summary-of-noise-types">Summary of Noise Types</a></li>
-<li><a :data-current="activeSection === '#noise-config'" class="reference internal" href="#noise-config">Noise Config</a></li>
-<li><a :data-current="activeSection === '#noise-types'" class="reference internal" href="#noise-types">Noise Types</a><ul>
 <li><a :data-current="activeSection === '#krauschannel'" class="reference internal" href="#krauschannel">KrausChannel</a></li>
 <li><a :data-current="activeSection === '#lindbladgenerator'" class="reference internal" href="#lindbladgenerator">LindbladGenerator</a></li>
 <li><a :data-current="activeSection === '#paulichannel'" class="reference internal" href="#paulichannel">PauliChannel</a></li>
@@ -704,8 +571,6 @@ the probability of misreading a <span class="math notranslate nohighlight">\(|1�
 <li><a :data-current="activeSection === '#gaussianperturbation'" class="reference internal" href="#gaussianperturbation">GaussianPerturbation</a></li>
 <li><a :data-current="activeSection === '#offsetperturbation'" class="reference internal" href="#offsetperturbation">OffsetPerturbation</a></li>
 <li><a :data-current="activeSection === '#readoutassignment'" class="reference internal" href="#readoutassignment">ReadoutAssignment</a></li>
-</ul>
-</li>
 </ul>
 </div>
 </aside>

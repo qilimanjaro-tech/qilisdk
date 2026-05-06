@@ -21,20 +21,20 @@
 <meta content="#ffffff" media="(prefers-color-scheme: light)" name="theme-color"/>
 <meta content="#030711" media="(prefers-color-scheme: dark)" name="theme-color"/>
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
-<title>Noise Config | QiliSDK</title>
-<meta content="Noise Config | QiliSDK" property="og:title"/>
-<meta content="Noise Config | QiliSDK" name="twitter:title"/>
-<link href="../../_static/pygments.css?v=31f438d3" rel="stylesheet" type="text/css"/>
+<title>Terms, Maps and Comparisons | QiliSDK</title>
+<meta content="Terms, Maps and Comparisons | QiliSDK" property="og:title"/>
+<meta content="Terms, Maps and Comparisons | QiliSDK" name="twitter:title"/>
+<link href="../../_static/pygments.css?v=652ce3ed" rel="stylesheet" type="text/css"/>
 <link href="../../_static/theme.css?v=73505e79" rel="stylesheet" type="text/css"/>
 <link href="../../_static/graphviz.css?v=4ae1632d" rel="stylesheet" type="text/css"/>
 <link href="../../_static/sphinx-design.min.css?v=95c83b7e" rel="stylesheet" type="text/css"/>
-<link href="../../_static/custom.css?v=c047bc51" rel="stylesheet" type="text/css"/>
+<link href="../../_static/custom.css?v=0828450c" rel="stylesheet" type="text/css"/>
 <link href="../../_static/awesome-sphinx-design.css?v=c54898a4" rel="stylesheet" type="text/css"/>
 <link href="../../_static/q_trans.png" rel="icon"/>
 <link href="../../search.html" rel="search" title="Search"/>
 <link href="../../genindex.html" rel="index" title="Index"/>
-<link href="noise_models_types.html" rel="next" title="Noise Types"/>
-<link href="noise_models.html" rel="prev" title="Noise Models"/>
+<link href="core_model.html" rel="next" title="Models"/>
+<link href="core_variables_parameters.html" rel="prev" title="Variables and Parameters"/>
 </head>
 <body :class="{ 'overflow-hidden': showSidebar }" class="min-h-screen font-sans antialiased bg-background text-foreground" x-data="{ showSidebar: false, showScrollTop: false }">
 <div @click.self="showSidebar = false" class="fixed inset-0 z-50 overflow-hidden bg-background/80 backdrop-blur-sm md:hidden" x-cloak="" x-show="showSidebar"></div><div class="relative flex flex-col min-h-screen" id="page"><a class="absolute top-0 left-0 z-[100] block bg-background p-4 text-xl transition -translate-x-full opacity-0 focus:translate-x-0 focus:opacity-100" href="#content">
@@ -44,7 +44,13 @@
 <a class="flex items-center mr-6" href="../../index.html">
 <img alt="Logo" class="mr-2 hidden dark:block" height="24" src="../../_static/q_trans.png" width="24"/>
 <img alt="Logo" class="mr-2 dark:hidden" height="24" src="../../_static/q_trans.png" width="24"/><span class="hidden font-bold sm:inline-block text-clip whitespace-nowrap">QiliSDK</span>
-</a></div><button @click="showSidebar = true" class="inline-flex items-center justify-center h-10 px-0 py-2 mr-2 text-base font-medium transition-colors rounded-md hover:text-accent-foreground hover:bg-transparent md:hidden" type="button">
+</a>
+<div class="language-switcher">
+<span class="lang-active">EN</span>
+<a class="lang-link" href="../../../../es/main/modules/core/core_terms_maps_comparisons.html">ES</a>
+<a class="lang-link" href="../../../../ca/main/modules/core/core_terms_maps_comparisons.html">CA</a>
+</div>
+</div><button @click="showSidebar = true" class="inline-flex items-center justify-center h-10 px-0 py-2 mr-2 text-base font-medium transition-colors rounded-md hover:text-accent-foreground hover:bg-transparent md:hidden" type="button">
 <svg aria-hidden="true" fill="currentColor" height="24" viewbox="0 96 960 960" width="24" xmlns="http://www.w3.org/2000/svg">
 <path d="M152.587 825.087q-19.152 0-32.326-13.174t-13.174-32.326q0-19.152 13.174-32.326t32.326-13.174h440q19.152 0 32.326 13.174t13.174 32.326q0 19.152-13.174 32.326t-32.326 13.174h-440Zm0-203.587q-19.152 0-32.326-13.174T107.087 576q0-19.152 13.174-32.326t32.326-13.174h320q19.152 0 32.326 13.174T518.087 576q0 19.152-13.174 32.326T472.587 621.5h-320Zm0-203.587q-19.152 0-32.326-13.174t-13.174-32.326q0-19.152 13.174-32.326t32.326-13.174h440q19.152 0 32.326 13.174t13.174 32.326q0 19.152-13.174 32.326t-32.326 13.174h-440ZM708.913 576l112.174 112.174q12.674 12.674 12.674 31.826t-12.674 31.826Q808.413 764.5 789.261 764.5t-31.826-12.674l-144-144Q600 594.391 600 576t13.435-31.826l144-144q12.674-12.674 31.826-12.674t31.826 12.674q12.674 12.674 12.674 31.826t-12.674 31.826L708.913 576Z"></path>
 </svg>
@@ -103,58 +109,64 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Modules</span></p>
 <ul class="current">
-<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../core/core.html">Core<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
-<li class="toctree-l2"><a class="reference internal" href="../core/core_variables.html">Variables</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../core/core_terms.html">Terms</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../core/core_parameters.html">Parameters</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../core/core_math_map.html">Mathematical Maps</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../core/core_comparison.html">Comparison Terms</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../core/core_model.html">Models</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../core/core_qubo.html">QUBO</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../core/core_qtensor.html">QTensor</a></li>
+<li class="toctree-l1 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="core.html">Core<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul class="current" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="core_overview.html">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core_variables_parameters.html">Variables and Parameters</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Terms, Maps and Comparisons</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core_model.html">Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core_qubo.html">QUBO</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core_qtensor.html">QTensor</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../digital/digital.html">Digital<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../digital/digital_overview.html">Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../digital/digital_gates.html">Gates</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../digital/digital_circuits.html">Circuits</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../digital/digital_vis.html">Visualization</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../digital/digital_ansatz.html">Hardware Efficient Ansatz</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../digital/digital_ansatz.html">Ansatz</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../digital/digital_hardware.html">HardwareEfficientAnsatz</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../digital/digital_qaoa.html">QAOA</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../digital/digital_trotter.html">Trotterization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../digital/digital_trotter.html">TrotterizedSchedule</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../analog/analog.html">Analog<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../analog/analog_overview.html">Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../analog/analog_hamiltonian.html">Hamiltonian</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../analog/analog_schedule.html">Schedule</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../functionals/functionals.html">Functionals<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
-<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_sampling.html">Digital Propogation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_time_evolution.html">Analog Evolution</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_reservoirs.html">Quantum Reservoirs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_overview.html">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_digital.html">Digital Propagation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_analog.html">Analog Evolution</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_variational.html">Variational Programs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_reservoirs.html">Quantum Reservoirs</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../readout/readout.html">Readout<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../readout/readout_overview.html">Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../readout/readout_bitstring.html">Bitstring Measurement</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../readout/readout_expectation.html">Expectation Values</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../readout/readout_state.html">Full Quantum State</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../readout/readout_intermediate.html">Intermediate Results</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../backends/backends.html">Backends<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../backends/backends_overview.html">Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../backends/backends_qilisim.html">QiliSim</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../backends/backends_cuda.html">CUDA Backend</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../backends/backends_qutip.html">QuTiP Backend</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../backends/backends_qutip.html">Qutip Backend</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../cost_functions/cost_functions.html">Cost Functions<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
-<li class="toctree-l2"><a class="reference internal" href="../cost_functions/cost_functions_observable.html">Observable Cost Function</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../cost_functions/cost_functions_model.html">Model Cost Function</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cost_functions/cost_functions_overview.html">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cost_functions/cost_functions_observable.html">ObservableCostFunction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cost_functions/cost_functions_model.html">ModelCostFunction</a></li>
 </ul>
 </li>
-<li class="toctree-l1 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="noise_models.html">Noise Models<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul class="current" x-show="expanded">
-<li class="toctree-l2 current"><a class="current reference internal" href="#">Noise Config</a></li>
-<li class="toctree-l2"><a class="reference internal" href="noise_models_types.html">Noise Types</a></li>
+<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../noise/noise.html">Noise<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../noise/noise_overview.html">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../noise/noise_config.html">Noise Config</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../noise/noise_types.html">Noise Types</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../speqtrum/speqtrum.html">SpeQtrum</a></li>
@@ -299,7 +311,7 @@
 </p>
 <ul>
 <li class="toctree-l1">
-<a class="reference internal" href="noise_models_config.html">main</a>
+<a class="reference internal" href="core_terms_maps_comparisons.html">main</a>
 </li>
 </ul>
 </nav>
@@ -320,32 +332,160 @@
 <path d="M240 856h120V616h240v240h120V496L480 316 240 496v360Zm-80 80V456l320-240 320 240v480H520V696h-80v240H160Zm320-350Z"></path>
 </svg>
 </a>
-<div class="mr-1">/</div><a class="hover:text-foreground overflow-hidden text-ellipsis whitespace-nowrap" href="noise_models.html">Noise Models</a>
-<div class="mr-1">/</div><span aria-current="page" class="font-medium text-foreground overflow-hidden text-ellipsis whitespace-nowrap">Noise Config</span>
+<div class="mr-1">/</div><a class="hover:text-foreground overflow-hidden text-ellipsis whitespace-nowrap" href="core.html">Core</a>
+<div class="mr-1">/</div><span aria-current="page" class="font-medium text-foreground overflow-hidden text-ellipsis whitespace-nowrap">Terms, Maps and Comparisons</span>
 </nav>
 <div id="content" role="main">
-<section id="noise-config">
-<h1>Noise Config<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#noise-config"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h1>
-<meta content="0; url=noise_models.html#noise-config" http-equiv="refresh"/><p>Go to a specific subheading of a page.</p>
+<section id="terms-maps-and-comparisons">
+<h1>Terms, Maps and Comparisons<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#terms-maps-and-comparisons"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h1>
+<section id="terms">
+<h2>Terms<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#terms" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#terms'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
+<p><a class="reference internal" href="../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Variable" title="qilisdk.core.variables.Variable"><code class="xref py py-class docutils literal notranslate"><span class="pre">Variables</span></code></a> can be combined algebraically to form expressions
+known as <a class="reference internal" href="../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Term" title="qilisdk.core.variables.Term"><code class="xref py py-class docutils literal notranslate"><span class="pre">Terms</span></code></a>. For example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core.variables</span><span class="w"> </span><span class="kn">import</span> <span class="n">BinaryVariable</span><span class="p">,</span> <span class="n">Bitwise</span><span class="p">,</span> <span class="n">Domain</span><span class="p">,</span> <span class="n">SpinVariable</span><span class="p">,</span> <span class="n">Variable</span>
+</span><span id="line-2"><span class="n">x</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s2">"x"</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">Domain</span><span class="o">.</span><span class="n">REAL</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">encoding</span><span class="o">=</span><span class="n">Bitwise</span><span class="p">,</span> <span class="n">precision</span><span class="o">=</span><span class="mf">1e-1</span><span class="p">)</span>
+</span><span id="line-3"><span class="n">s</span> <span class="o">=</span> <span class="n">SpinVariable</span><span class="p">(</span><span class="s2">"s"</span><span class="p">)</span>
+</span><span id="line-4"><span class="n">b</span> <span class="o">=</span> <span class="n">BinaryVariable</span><span class="p">(</span><span class="s2">"b"</span><span class="p">)</span>
+</span><span id="line-5">
+</span><span id="line-6"><span class="n">t1</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">x</span> <span class="o">+</span> <span class="mi">3</span>
+</span><span id="line-7"><span class="nb">print</span><span class="p">(</span><span class="s2">"t1:"</span><span class="p">,</span> <span class="n">t1</span><span class="p">)</span>
+</span><span id="line-8"><span class="n">t2</span> <span class="o">=</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">x</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">x</span> <span class="o">+</span> <span class="mi">4</span>
+</span><span id="line-9"><span class="nb">print</span><span class="p">(</span><span class="s2">"t2:"</span><span class="p">,</span> <span class="n">t2</span><span class="p">)</span>
+</span><span id="line-10"><span class="n">t3</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">x</span> <span class="o">+</span> <span class="n">b</span> <span class="o">-</span> <span class="mi">1</span>
+</span><span id="line-11"><span class="nb">print</span><span class="p">(</span><span class="s2">"t3:"</span><span class="p">,</span> <span class="n">t3</span><span class="p">)</span>
+</span><span id="line-12"><span class="n">t4</span> <span class="o">=</span> <span class="n">t1</span> <span class="o">-</span> <span class="n">t2</span>
+</span><span id="line-13"><span class="nb">print</span><span class="p">(</span><span class="s2">"t4:"</span><span class="p">,</span> <span class="n">t4</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<p><strong>Output</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">t1</span><span class="p">:</span> <span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">x</span> <span class="o">+</span> <span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+</span><span id="line-2"><span class="n">t2</span><span class="p">:</span> <span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span><span class="o">^</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">x</span> <span class="o">+</span> <span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+</span><span id="line-3"><span class="n">t3</span><span class="p">:</span> <span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">x</span> <span class="o">+</span> <span class="n">b</span> <span class="o">+</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+</span><span id="line-4"><span class="n">t4</span><span class="p">:</span> <span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="o">-</span><span class="mf">3.0</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span><span class="o">^</span><span class="mi">2</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<p>Terms can be evaluated by providing values for the involved variables:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">t3</span><span class="o">.</span><span class="n">evaluate</span><span class="p">({</span>
+</span><span id="line-2">    <span class="n">x</span><span class="p">:</span> <span class="mf">1.5</span><span class="p">,</span>
+</span><span id="line-3">    <span class="n">b</span><span class="p">:</span> <span class="mi">0</span>
+</span><span id="line-4"><span class="p">})</span>
+</span></code></pre></div>
+</div>
+<p><strong>Output</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="mf">2.0</span>
+</span></code></pre></div>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>To evaluate a term, all participating variables must be assigned valid values within their respective domains and bounds.</p>
+</div>
+</section>
+<section id="mathematical-maps">
+<h2>Mathematical Maps<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#mathematical-maps" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#mathematical-maps'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
+<p>Use <a class="reference internal" href="../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.MathematicalMap" title="qilisdk.core.variables.MathematicalMap"><code class="xref py py-class docutils literal notranslate"><span class="pre">MathematicalMap</span></code></a> helpers to apply common
+functions to a parameter or term while keeping expressions symbolic.
+<a class="reference internal" href="../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Sin" title="qilisdk.core.variables.Sin"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sin</span></code></a> and <a class="reference internal" href="../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Cos" title="qilisdk.core.variables.Cos"><code class="xref py py-class docutils literal notranslate"><span class="pre">Cos</span></code></a>
+wrap a <a class="reference internal" href="../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Parameter" title="qilisdk.core.variables.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parameter</span></code></a>, <a class="reference internal" href="../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Term" title="qilisdk.core.variables.Term"><code class="xref py py-class docutils literal notranslate"><span class="pre">Term</span></code></a>,
+or any other base variable and defer evaluation until values are provided.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core.variables</span><span class="w"> </span><span class="kn">import</span> <span class="n">Parameter</span><span class="p">,</span> <span class="n">Sin</span><span class="p">,</span> <span class="n">Cos</span>
+</span><span id="line-2">
+</span><span id="line-3"><span class="n">theta</span> <span class="o">=</span> <span class="n">Parameter</span><span class="p">(</span><span class="s2">"theta"</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">)</span>
+</span><span id="line-4"><span class="n">expr</span> <span class="o">=</span> <span class="n">Sin</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span> <span class="o">+</span> <span class="n">Cos</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">theta</span><span class="p">)</span>
+</span><span id="line-5">
+</span><span id="line-6"><span class="nb">print</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span>                <span class="c1"># sin[theta] + cos[(2) * theta]</span>
+</span><span id="line-7"><span class="nb">print</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">evaluate</span><span class="p">({}))</span>   <span class="c1"># uses theta.value automatically</span>
+</span><span id="line-8">
+</span><span id="line-9"><span class="c1"># You can also supply a different value at evaluation time:</span>
+</span><span id="line-10"><span class="nb">print</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">evaluate</span><span class="p">({</span><span class="n">theta</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">}))</span>
+</span></code></pre></div>
+</div>
+<p>These maps compose naturally with other terms, so you can include them in
+constraints or objectives and rely on the same evaluation and encoding rules
+as other symbolic expressions.</p>
+</section>
+<section id="comparison-terms">
+<h2>Comparison Terms<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#comparison-terms" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#comparison-terms'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
+<p>Each <a class="reference internal" href="../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.ComparisonTerm" title="qilisdk.core.variables.ComparisonTerm"><code class="xref py py-class docutils literal notranslate"><span class="pre">ComparisonTerm</span></code></a> defines a constraint using mathematical comparisons.
+Use the following operators to construct them:</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 33.3%"/>
+<col style="width: 33.3%"/>
+<col style="width: 33.3%"/>
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Comparison Operation</p></th>
+<th class="head"><p>QiliSDK Method</p></th>
+<th class="head"><p>Alias</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Equality</p></td>
+<td><p><a class="reference internal" href="../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Equal" title="qilisdk.core.variables.Equal"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Equal(lhs,</span> <span class="pre">rhs)</span></code></a></p></td>
+<td><p><a class="reference internal" href="../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.EQ" title="qilisdk.core.variables.EQ"><code class="xref py py-meth docutils literal notranslate"><span class="pre">EQ(lhs,</span> <span class="pre">rhs)</span></code></a></p></td>
+</tr>
+<tr class="row-odd"><td><p>Not Equal</p></td>
+<td><p><a class="reference internal" href="../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.NotEqual" title="qilisdk.core.variables.NotEqual"><code class="xref py py-meth docutils literal notranslate"><span class="pre">NotEqual(lhs,</span> <span class="pre">rhs)</span></code></a></p></td>
+<td><p><a class="reference internal" href="../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.NEQ" title="qilisdk.core.variables.NEQ"><code class="xref py py-meth docutils literal notranslate"><span class="pre">NEQ(lhs,</span> <span class="pre">rhs)</span></code></a></p></td>
+</tr>
+<tr class="row-even"><td><p>Less Than</p></td>
+<td><p><a class="reference internal" href="../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.LessThan" title="qilisdk.core.variables.LessThan"><code class="xref py py-meth docutils literal notranslate"><span class="pre">LessThan(lhs,</span> <span class="pre">rhs)</span></code></a></p></td>
+<td><p><a class="reference internal" href="../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.LT" title="qilisdk.core.variables.LT"><code class="xref py py-meth docutils literal notranslate"><span class="pre">LT(lhs,</span> <span class="pre">rhs)</span></code></a></p></td>
+</tr>
+<tr class="row-odd"><td><p>Less Than or Equal</p></td>
+<td><p><a class="reference internal" href="../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.LessThanOrEqual" title="qilisdk.core.variables.LessThanOrEqual"><code class="xref py py-meth docutils literal notranslate"><span class="pre">LessThanOrEqual(lhs,</span> <span class="pre">rhs)</span></code></a></p></td>
+<td><p><a class="reference internal" href="../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.LEQ" title="qilisdk.core.variables.LEQ"><code class="xref py py-meth docutils literal notranslate"><span class="pre">LEQ(lhs,</span> <span class="pre">rhs)</span></code></a></p></td>
+</tr>
+<tr class="row-even"><td><p>Greater Than</p></td>
+<td><p><a class="reference internal" href="../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.GreaterThan" title="qilisdk.core.variables.GreaterThan"><code class="xref py py-meth docutils literal notranslate"><span class="pre">GreaterThan(lhs,</span> <span class="pre">rhs)</span></code></a></p></td>
+<td><p><a class="reference internal" href="../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.GT" title="qilisdk.core.variables.GT"><code class="xref py py-meth docutils literal notranslate"><span class="pre">GT(lhs,</span> <span class="pre">rhs)</span></code></a></p></td>
+</tr>
+<tr class="row-odd"><td><p>Greater Than or Equal</p></td>
+<td><p><a class="reference internal" href="../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.GreaterThanOrEqual" title="qilisdk.core.variables.GreaterThanOrEqual"><code class="xref py py-meth docutils literal notranslate"><span class="pre">GreaterThanOrEqual(lhs,</span> <span class="pre">rhs)</span></code></a></p></td>
+<td><p><a class="reference internal" href="../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.GEQ" title="qilisdk.core.variables.GEQ"><code class="xref py py-meth docutils literal notranslate"><span class="pre">GEQ(lhs,</span> <span class="pre">rhs)</span></code></a></p></td>
+</tr>
+</tbody>
+</table>
+<p><em>Note</em>: <cite>lhs</cite> and <cite>rhs</cite> refer to the left-hand side and right-hand side expressions, respectively.</p>
+<p>Example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core.variables</span><span class="w"> </span><span class="kn">import</span> <span class="n">BinaryVariable</span><span class="p">,</span> <span class="n">LT</span>
+</span><span id="line-2"><span class="n">x</span> <span class="o">=</span> <span class="n">BinaryVariable</span><span class="p">(</span><span class="s2">"x"</span><span class="p">)</span>
+</span><span id="line-3"><span class="n">LT</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">x</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<p><strong>Output</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">x</span> <span class="o">&lt;</span> <span class="p">(</span><span class="mf">2.0</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<p>When a comparison term is created, constants are automatically moved to the right-hand side, and variable terms to the left-hand side.</p>
+</section>
 </section>
 </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">
 <div class="mr-auto">
-<a class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input hover:bg-accent hover:text-accent-foreground py-2 px-4" href="noise_models.html">
+<a class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input hover:bg-accent hover:text-accent-foreground py-2 px-4" href="core_variables_parameters.html">
 <svg class="mr-2 h-4 w-4" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
 <polyline points="15 18 9 12 15 6"></polyline>
 </svg>
-        Noise Models
+        Variables and Parameters
       </a>
 </div>
 <div class="ml-auto">
-<a class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input hover:bg-accent hover:text-accent-foreground py-2 px-4" href="noise_models_types.html">
-        Noise Types
+<a class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input hover:bg-accent hover:text-accent-foreground py-2 px-4" href="core_model.html">
+        Models
         <svg class="ml-2 h-4 w-4" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
 <polyline points="9 18 15 12 9 6"></polyline>
 </svg>
 </a>
 </div>
-</div></div>
+</div></div><aside class="hidden text-sm xl:block" id="right-sidebar">
+<div class="sticky top-16 -mt-10 max-h-[calc(100vh-5rem)] h-full overflow-y-auto pt-6 space-y-2"><p class="font-medium">On this page</p>
+<ul>
+<li><a :data-current="activeSection === '#terms'" class="reference internal" href="#terms">Terms</a></li>
+<li><a :data-current="activeSection === '#mathematical-maps'" class="reference internal" href="#mathematical-maps">Mathematical Maps</a></li>
+<li><a :data-current="activeSection === '#comparison-terms'" class="reference internal" href="#comparison-terms">Comparison Terms</a></li>
+</ul>
+</div>
+</aside>
 </main>
 </div>
 </div><footer class="py-6 border-t border-border md:py-0">

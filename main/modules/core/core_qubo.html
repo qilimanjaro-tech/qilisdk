@@ -24,11 +24,11 @@
 <title>QUBO | QiliSDK</title>
 <meta content="QUBO | QiliSDK" property="og:title"/>
 <meta content="QUBO | QiliSDK" name="twitter:title"/>
-<link href="../../_static/pygments.css?v=31f438d3" rel="stylesheet" type="text/css"/>
+<link href="../../_static/pygments.css?v=652ce3ed" rel="stylesheet" type="text/css"/>
 <link href="../../_static/theme.css?v=73505e79" rel="stylesheet" type="text/css"/>
 <link href="../../_static/graphviz.css?v=4ae1632d" rel="stylesheet" type="text/css"/>
 <link href="../../_static/sphinx-design.min.css?v=95c83b7e" rel="stylesheet" type="text/css"/>
-<link href="../../_static/custom.css?v=c047bc51" rel="stylesheet" type="text/css"/>
+<link href="../../_static/custom.css?v=0828450c" rel="stylesheet" type="text/css"/>
 <link href="../../_static/awesome-sphinx-design.css?v=c54898a4" rel="stylesheet" type="text/css"/>
 <link href="../../_static/q_trans.png" rel="icon"/>
 <link href="../../search.html" rel="search" title="Search"/>
@@ -44,7 +44,13 @@
 <a class="flex items-center mr-6" href="../../index.html">
 <img alt="Logo" class="mr-2 hidden dark:block" height="24" src="../../_static/q_trans.png" width="24"/>
 <img alt="Logo" class="mr-2 dark:hidden" height="24" src="../../_static/q_trans.png" width="24"/><span class="hidden font-bold sm:inline-block text-clip whitespace-nowrap">QiliSDK</span>
-</a></div><button @click="showSidebar = true" class="inline-flex items-center justify-center h-10 px-0 py-2 mr-2 text-base font-medium transition-colors rounded-md hover:text-accent-foreground hover:bg-transparent md:hidden" type="button">
+</a>
+<div class="language-switcher">
+<span class="lang-active">EN</span>
+<a class="lang-link" href="../../../../es/main/modules/core/core_qubo.html">ES</a>
+<a class="lang-link" href="../../../../ca/main/modules/core/core_qubo.html">CA</a>
+</div>
+</div><button @click="showSidebar = true" class="inline-flex items-center justify-center h-10 px-0 py-2 mr-2 text-base font-medium transition-colors rounded-md hover:text-accent-foreground hover:bg-transparent md:hidden" type="button">
 <svg aria-hidden="true" fill="currentColor" height="24" viewbox="0 96 960 960" width="24" xmlns="http://www.w3.org/2000/svg">
 <path d="M152.587 825.087q-19.152 0-32.326-13.174t-13.174-32.326q0-19.152 13.174-32.326t32.326-13.174h440q19.152 0 32.326 13.174t13.174 32.326q0 19.152-13.174 32.326t-32.326 13.174h-440Zm0-203.587q-19.152 0-32.326-13.174T107.087 576q0-19.152 13.174-32.326t32.326-13.174h320q19.152 0 32.326 13.174T518.087 576q0 19.152-13.174 32.326T472.587 621.5h-320Zm0-203.587q-19.152 0-32.326-13.174t-13.174-32.326q0-19.152 13.174-32.326t32.326-13.174h440q19.152 0 32.326 13.174t13.174 32.326q0 19.152-13.174 32.326t-32.326 13.174h-440ZM708.913 576l112.174 112.174q12.674 12.674 12.674 31.826t-12.674 31.826Q808.413 764.5 789.261 764.5t-31.826-12.674l-144-144Q600 594.391 600 576t13.435-31.826l144-144q12.674-12.674 31.826-12.674t31.826 12.674q12.674 12.674 12.674 31.826t-12.674 31.826L708.913 576Z"></path>
 </svg>
@@ -104,57 +110,63 @@
 <p class="caption" role="heading"><span class="caption-text">Modules</span></p>
 <ul class="current">
 <li class="toctree-l1 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="core.html">Core<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul class="current" x-show="expanded">
-<li class="toctree-l2"><a class="reference internal" href="core_variables.html">Variables</a></li>
-<li class="toctree-l2"><a class="reference internal" href="core_terms.html">Terms</a></li>
-<li class="toctree-l2"><a class="reference internal" href="core_parameters.html">Parameters</a></li>
-<li class="toctree-l2"><a class="reference internal" href="core_math_map.html">Mathematical Maps</a></li>
-<li class="toctree-l2"><a class="reference internal" href="core_comparison.html">Comparison Terms</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core_overview.html">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core_variables_parameters.html">Variables and Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core_terms_maps_comparisons.html">Terms, Maps and Comparisons</a></li>
 <li class="toctree-l2"><a class="reference internal" href="core_model.html">Models</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">QUBO</a></li>
 <li class="toctree-l2"><a class="reference internal" href="core_qtensor.html">QTensor</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../digital/digital.html">Digital<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../digital/digital_overview.html">Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../digital/digital_gates.html">Gates</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../digital/digital_circuits.html">Circuits</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../digital/digital_vis.html">Visualization</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../digital/digital_ansatz.html">Hardware Efficient Ansatz</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../digital/digital_ansatz.html">Ansatz</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../digital/digital_hardware.html">HardwareEfficientAnsatz</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../digital/digital_qaoa.html">QAOA</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../digital/digital_trotter.html">Trotterization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../digital/digital_trotter.html">TrotterizedSchedule</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../analog/analog.html">Analog<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../analog/analog_overview.html">Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../analog/analog_hamiltonian.html">Hamiltonian</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../analog/analog_schedule.html">Schedule</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../functionals/functionals.html">Functionals<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
-<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_sampling.html">Digital Propogation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_time_evolution.html">Analog Evolution</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_reservoirs.html">Quantum Reservoirs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_overview.html">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_digital.html">Digital Propagation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_analog.html">Analog Evolution</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_variational.html">Variational Programs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_reservoirs.html">Quantum Reservoirs</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../readout/readout.html">Readout<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../readout/readout_overview.html">Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../readout/readout_bitstring.html">Bitstring Measurement</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../readout/readout_expectation.html">Expectation Values</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../readout/readout_state.html">Full Quantum State</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../readout/readout_intermediate.html">Intermediate Results</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../backends/backends.html">Backends<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../backends/backends_overview.html">Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../backends/backends_qilisim.html">QiliSim</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../backends/backends_cuda.html">CUDA Backend</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../backends/backends_qutip.html">QuTiP Backend</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../backends/backends_qutip.html">Qutip Backend</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../cost_functions/cost_functions.html">Cost Functions<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
-<li class="toctree-l2"><a class="reference internal" href="../cost_functions/cost_functions_observable.html">Observable Cost Function</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../cost_functions/cost_functions_model.html">Model Cost Function</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cost_functions/cost_functions_overview.html">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cost_functions/cost_functions_observable.html">ObservableCostFunction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cost_functions/cost_functions_model.html">ModelCostFunction</a></li>
 </ul>
 </li>
-<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../noise_models/noise_models.html">Noise Models<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
-<li class="toctree-l2"><a class="reference internal" href="../noise_models/noise_models_config.html">Noise Config</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../noise_models/noise_models_types.html">Noise Types</a></li>
+<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../noise/noise.html">Noise<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../noise/noise_overview.html">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../noise/noise_config.html">Noise Config</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../noise/noise_types.html">Noise Types</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../speqtrum/speqtrum.html">SpeQtrum</a></li>
@@ -326,7 +338,165 @@
 <div id="content" role="main">
 <section id="qubo">
 <h1>QUBO<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qubo"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h1>
-<meta content="0; url=core.html#qubo-models" http-equiv="refresh"/><p>Go to a specific subheading of a page.</p>
+<p>The <a class="reference internal" href="../../code/api/qilisdk/core/model/index.html#qilisdk.core.model.QUBO" title="qilisdk.core.model.QUBO"><code class="xref py py-class docutils literal notranslate"><span class="pre">QUBO</span></code></a> subclass specializes in <strong>Quadratic Unconstrained Binary Optimization</strong> models,
+where every decision variable is binary and the objective function is at most quadratic.
+Unlike general models, “hard” constraints are not maintained separately but are encoded directly into the objective as penalty terms.
+The strength of each penalty is controlled by its associated Lagrange multiplier.</p>
+<p>The binary quadratic cost function that defines a QUBO
+problem is written as</p>
+<div class="math notranslate nohighlight">
+\[f(x) = \frac{1}{2} \sum_{i=1}^{n} \sum_{j=1}^{n} q_{ij} x_i x_j,\]</div>
+<p>with decision variables <span class="math notranslate nohighlight">\(x_i \in \{0, 1\}\)</span> and symmetric coefficients <span class="math notranslate nohighlight">\(q_{ij} = q_{ji} \in \mathbb{R}\)</span>.
+Separating the diagonal terms highlights the effective linear
+weights:</p>
+<div class="math notranslate nohighlight">
+\[f(x) = \sum_{i=1}^{n-1} \sum_{j&gt;i} q_{ij} x_i x_j + \sum_{i=1}^{n} q_{ii} x_i.\]</div>
+<section id="adding-constraints-as-penalties">
+<h2>Adding Constraints as Penalties<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#adding-constraints-as-penalties" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#adding-constraints-as-penalties'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
+<p>Since QUBO is unconstrained, every constraint is converted into the objective via a <strong>penalty term</strong>.
+Linear equality constraints can be described as,</p>
+<div class="math notranslate nohighlight">
+\[\sum_{i=1}^{n} c_i x_i = C, \quad c_i \in \mathbb{Z},\]</div>
+<p>where <span class="math notranslate nohighlight">\(c_i\)</span> are integer coefficients and <span class="math notranslate nohighlight">\(C\)</span> is an integer constant.</p>
+<p>Embedded as penalties, these constraints give the penalized objective</p>
+<div class="math notranslate nohighlight">
+\[\min_{x,\,s} \left(
+    \sum_{i=1}^{n-1} \sum_{j&gt;i} c_{ij} x_i x_j
+    + \sum_{i=1}^{n} h_i x_i
+    + \lambda_0 \left( \sum_{i=1}^{n} q_i x_i - C \right)^{2}
+\right),\]</div>
+<p>where <span class="math notranslate nohighlight">\(\lambda_0 &gt; 0\)</span> is a penalty strength parameter.</p>
+<p>Ineqaulity constraints can be defined as:</p>
+<div class="math notranslate nohighlight">
+\[\sum_{i=1}^{n} \ell_i x_i \leq B, \quad \ell_i \in \mathbb{Z}.\]</div>
+<p>To translate these into penalties, two strategies are supported:</p>
+<ul>
+<li><dl>
+<dt><strong>Slack penalization</strong> (default):</dt><dd><p>Introduce additional binary slack variables to turn inequalities into equalities, then square the residual.
+Therefore, the penalty term becomes:</p>
+<div class="math notranslate nohighlight">
+\[\lambda_1 \left( B - \sum_{i=1}^{n} \ell_i x_i - \sum_{k=0}^{N-1} 2^{k} s_k \right)^{2}\]</div>
+<p>where <span class="math notranslate nohighlight">\(s_k\)</span> are slack binary variables introduced to encode the inequality constraint (with the
+number of bits <span class="math notranslate nohighlight">\(N\)</span> chosen so that their binary expansion spans the admissible slack range) and
+<span class="math notranslate nohighlight">\(\lambda_{1}\)</span> control the penalty strength.</p>
+</dd>
+</dl>
+</li>
+<li><dl>
+<dt><strong>Unbalanced penalization</strong>:</dt><dd><p>Directly penalize violation without slack variables using two weights (a, b) to scale positive and negative deviations differently <a class="footnote-reference brackets" href="#id2" id="id1" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a>.
+we define <span class="math notranslate nohighlight">\(h(x) = B - \sum_{i=1}^{n} \ell_i x_i\)</span> as the signed residual of the constraint, and the penalty term becomes:</p>
+<div class="math notranslate nohighlight">
+\[- a h(x) + b h(x)^2,\]</div>
+<p>where <span class="math notranslate nohighlight">\(a, b &gt; 0\)</span> are parameters that control the penalty strength for violations above and below the bound, respectively.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</section>
+<section id="why-qubo">
+<h2>Why QUBO?<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#why-qubo" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#why-qubo'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
+<ul class="simple">
+<li><p><strong>Unconstrained form</strong>: Many quantum annealers and specialized solvers accept only unconstrained binary quadratic forms, making QUBO the lingua franca of quantum optimization.</p></li>
+<li><p><strong>Penalty encoding</strong>: Instead of throwing away constraint structure, you transform each constraint into a quadratic penalty, preserving problem fidelity.</p></li>
+<li><p><strong>Direct mapping</strong>: Once in QUBO form, you can directly translate the problem to Ising/Hamiltonian terms for hardware execution.</p></li>
+</ul>
+</section>
+<section id="defining-a-qubo">
+<h2>Defining a QUBO<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#defining-a-qubo" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#defining-a-qubo'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
+<ol class="arabic simple">
+<li><p><strong>Model creation</strong></p></li>
+</ol>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">QUBO</span><span class="p">,</span> <span class="n">ObjectiveSense</span>
+</span><span id="line-2"><span class="n">model</span> <span class="o">=</span> <span class="n">QUBO</span><span class="p">(</span><span class="s2">"qubo_example"</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<ol class="arabic simple" start="2">
+<li><p><strong>Objective</strong></p></li>
+</ol>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="c1"># sum of weights x minus risk penalty</span>
+</span><span id="line-2"><span class="n">model</span><span class="o">.</span><span class="n">set_objective</span><span class="p">(</span><span class="mi">5</span> <span class="o">*</span> <span class="n">x1</span> <span class="o">+</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">x2</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">x1</span> <span class="o">*</span> <span class="n">x2</span><span class="p">,</span>
+</span><span id="line-3">                    <span class="n">label</span><span class="o">=</span><span class="s2">"return_minus_risk"</span><span class="p">,</span>
+</span><span id="line-4">                    <span class="n">sense</span><span class="o">=</span><span class="n">ObjectiveSense</span><span class="o">.</span><span class="n">MAXIMIZE</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<ul class="simple">
+<li><p>If <strong>transform_to_qubo=True</strong>, your constraint <strong>must be linear</strong> (no quadratic terms), because it will be rewritten as (lhs-rhs)^2.</p></li>
+<li><p>If <strong>transform_to_qubo=False</strong>, you assume the constraint is already a valid quadratic penalty, and it will be added verbatim.</p></li>
+</ul>
+</div>
+<section id="example-slack-penalization">
+<h3>Example: Slack Penalization<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#example-slack-penalization" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#example-slack-penalization'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">QUBO</span><span class="p">,</span> <span class="n">ObjectiveSense</span>
+</span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core.variables</span><span class="w"> </span><span class="kn">import</span> <span class="n">BinaryVariable</span><span class="p">,</span> <span class="n">LEQ</span>
+</span><span id="line-3">
+</span><span id="line-4"><span class="n">b</span><span class="p">,</span> <span class="n">b2</span> <span class="o">=</span> <span class="n">BinaryVariable</span><span class="p">(</span><span class="s2">"b"</span><span class="p">),</span> <span class="n">BinaryVariable</span><span class="p">(</span><span class="s2">"b2"</span><span class="p">)</span>
+</span><span id="line-5"><span class="n">model</span> <span class="o">=</span> <span class="n">QUBO</span><span class="p">(</span><span class="s2">"slack_example"</span><span class="p">)</span>
+</span><span id="line-6"><span class="n">model</span><span class="o">.</span><span class="n">set_objective</span><span class="p">(</span><span class="n">b2</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">b</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"obj"</span><span class="p">,</span> <span class="n">sense</span><span class="o">=</span><span class="n">ObjectiveSense</span><span class="o">.</span><span class="n">MINIMIZE</span><span class="p">)</span>
+</span><span id="line-7">
+</span><span id="line-8"><span class="c1"># Enforce b &lt;= 0.5 via slack, squared penalty in objective</span>
+</span><span id="line-9"><span class="n">model</span><span class="o">.</span><span class="n">add_constraint</span><span class="p">(</span><span class="s2">"c1"</span><span class="p">,</span> <span class="n">LEQ</span><span class="p">(</span><span class="n">b</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">b2</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">lagrange_multiplier</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">penalization</span><span class="o">=</span><span class="s2">"slack"</span><span class="p">,</span> <span class="n">transform_to_qubo</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="line-10">
+</span><span id="line-11"><span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">qubo_objective</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<p><strong>Output</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">obj</span><span class="p">:</span> <span class="p">(</span><span class="o">-</span><span class="mf">8.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">b</span> <span class="o">+</span> <span class="n">b2</span> <span class="o">+</span> <span class="p">(</span><span class="mf">11.0</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="mf">40.0</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">b2</span> <span class="o">*</span> <span class="n">b</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="mf">40.0</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">b2</span> <span class="o">*</span> <span class="n">c1_slack</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span> <span class="o">+</span> <span class="p">(</span><span class="mf">20.0</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">b</span> <span class="o">*</span> <span class="n">c1_slack</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span> <span class="o">+</span> <span class="p">(</span><span class="o">-</span><span class="mf">10.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">c1_slack</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<div class="line-block">
+<div class="line"><br/></div>
+</div>
+</section>
+<section id="example-unbalanced-penalization">
+<h3>Example: Unbalanced Penalization<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#example-unbalanced-penalization" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#example-unbalanced-penalization'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">QUBO</span><span class="p">,</span> <span class="n">ObjectiveSense</span>
+</span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core.variables</span><span class="w"> </span><span class="kn">import</span> <span class="n">BinaryVariable</span><span class="p">,</span> <span class="n">LEQ</span>
+</span><span id="line-3">
+</span><span id="line-4"><span class="n">b</span><span class="p">,</span> <span class="n">b2</span> <span class="o">=</span> <span class="n">BinaryVariable</span><span class="p">(</span><span class="s2">"b"</span><span class="p">),</span> <span class="n">BinaryVariable</span><span class="p">(</span><span class="s2">"b2"</span><span class="p">)</span>
+</span><span id="line-5"><span class="n">model</span> <span class="o">=</span> <span class="n">QUBO</span><span class="p">(</span><span class="s2">"unbalanced_penalization_example"</span><span class="p">)</span>
+</span><span id="line-6"><span class="n">model</span><span class="o">.</span><span class="n">set_objective</span><span class="p">(</span><span class="n">b2</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">b</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"obj"</span><span class="p">,</span> <span class="n">sense</span><span class="o">=</span><span class="n">ObjectiveSense</span><span class="o">.</span><span class="n">MINIMIZE</span><span class="p">)</span>
+</span><span id="line-7">
+</span><span id="line-8"><span class="c1"># Enforce b &lt;= 0.5 via slack, squared penalty in objective</span>
+</span><span id="line-9"><span class="n">model</span><span class="o">.</span><span class="n">add_constraint</span><span class="p">(</span><span class="s2">"c1"</span><span class="p">,</span> <span class="n">LEQ</span><span class="p">(</span><span class="n">b</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">b2</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">lagrange_multiplier</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">penalization</span><span class="o">=</span><span class="s2">"unbalanced"</span><span class="p">,</span> <span class="n">transform_to_qubo</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="line-10">
+</span><span id="line-11"><span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">qubo_objective</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<p><strong>Output</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">obj</span><span class="p">:</span> <span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">b</span> <span class="o">+</span> <span class="p">(</span><span class="mf">3.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">b2</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="mf">4.0</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">b2</span> <span class="o">*</span> <span class="n">b</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<aside class="footnote-list brackets">
+<aside class="footnote brackets" id="id2" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span><a href="#id1" role="doc-backlink">1</a><span class="fn-bracket">]</span></span>
+<p>Montañez-Barrera, Jhon Alejandro, et al. “Unbalanced penalization: A new approach to encode inequality constraints of combinatorial problems for quantum optimization algorithms.” Quantum Science and Technology 9.2 (2024): 025022.</p>
+</aside>
+</aside>
+</section>
+</section>
+<section id="interoperability">
+<h2>Interoperability<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#interoperability" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#interoperability'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
+<ul>
+<li><dl>
+<dt><strong>Convert any Model to QUBO</strong></dt><dd><p>If you have a generic <a class="reference internal" href="../../code/api/qilisdk/core/model/index.html#qilisdk.core.model.Model" title="qilisdk.core.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a> with only linear/quadratic terms, you can automatically produce a QUBO:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">qubo_model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">to_qubo</span><span class="p">()</span>
+</span></code></pre></div>
+</div>
+</dd>
+</dl>
+</li>
+<li><dl>
+<dt><strong>Export to Hamiltonian</strong></dt><dd><p>Once in QUBO form, translate directly into an analog Ising <a class="reference internal" href="../../code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian" title="qilisdk.analog.hamiltonian.Hamiltonian"><code class="xref py py-class docutils literal notranslate"><span class="pre">Hamiltonian</span></code></a> for simulation or hardware:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">h</span> <span class="o">=</span> <span class="n">qubo_model</span><span class="o">.</span><span class="n">to_hamiltonian</span><span class="p">()</span>
+</span></code></pre></div>
+</div>
+</dd>
+</dl>
+</li>
+</ul>
+</section>
 </section>
 </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">
 <div class="mr-auto">
@@ -345,7 +515,20 @@
 </svg>
 </a>
 </div>
-</div></div>
+</div></div><aside class="hidden text-sm xl:block" id="right-sidebar">
+<div class="sticky top-16 -mt-10 max-h-[calc(100vh-5rem)] h-full overflow-y-auto pt-6 space-y-2"><p class="font-medium">On this page</p>
+<ul>
+<li><a :data-current="activeSection === '#adding-constraints-as-penalties'" class="reference internal" href="#adding-constraints-as-penalties">Adding Constraints as Penalties</a></li>
+<li><a :data-current="activeSection === '#why-qubo'" class="reference internal" href="#why-qubo">Why QUBO?</a></li>
+<li><a :data-current="activeSection === '#defining-a-qubo'" class="reference internal" href="#defining-a-qubo">Defining a QUBO</a><ul>
+<li><a :data-current="activeSection === '#example-slack-penalization'" class="reference internal" href="#example-slack-penalization">Example: Slack Penalization</a></li>
+<li><a :data-current="activeSection === '#example-unbalanced-penalization'" class="reference internal" href="#example-unbalanced-penalization">Example: Unbalanced Penalization</a></li>
+</ul>
+</li>
+<li><a :data-current="activeSection === '#interoperability'" class="reference internal" href="#interoperability">Interoperability</a></li>
+</ul>
+</div>
+</aside>
 </main>
 </div>
 </div><footer class="py-6 border-t border-border md:py-0">
@@ -362,5 +545,7 @@
 <script defer="defer" src="../../_static/theme.js?v=582b20c5"></script>
 <script src="../../_static/design-tabs.js?v=f930bc37"></script>
 <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+<script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+<script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 </body>
 </html>

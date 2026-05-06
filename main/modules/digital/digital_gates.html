@@ -24,17 +24,17 @@
 <title>Gates | QiliSDK</title>
 <meta content="Gates | QiliSDK" property="og:title"/>
 <meta content="Gates | QiliSDK" name="twitter:title"/>
-<link href="../../_static/pygments.css?v=31f438d3" rel="stylesheet" type="text/css"/>
+<link href="../../_static/pygments.css?v=652ce3ed" rel="stylesheet" type="text/css"/>
 <link href="../../_static/theme.css?v=73505e79" rel="stylesheet" type="text/css"/>
 <link href="../../_static/graphviz.css?v=4ae1632d" rel="stylesheet" type="text/css"/>
 <link href="../../_static/sphinx-design.min.css?v=95c83b7e" rel="stylesheet" type="text/css"/>
-<link href="../../_static/custom.css?v=c047bc51" rel="stylesheet" type="text/css"/>
+<link href="../../_static/custom.css?v=0828450c" rel="stylesheet" type="text/css"/>
 <link href="../../_static/awesome-sphinx-design.css?v=c54898a4" rel="stylesheet" type="text/css"/>
 <link href="../../_static/q_trans.png" rel="icon"/>
 <link href="../../search.html" rel="search" title="Search"/>
 <link href="../../genindex.html" rel="index" title="Index"/>
 <link href="digital_circuits.html" rel="next" title="Circuits"/>
-<link href="digital.html" rel="prev" title="Digital"/>
+<link href="digital_overview.html" rel="prev" title="Overview"/>
 </head>
 <body :class="{ 'overflow-hidden': showSidebar }" class="min-h-screen font-sans antialiased bg-background text-foreground" x-data="{ showSidebar: false, showScrollTop: false }">
 <div @click.self="showSidebar = false" class="fixed inset-0 z-50 overflow-hidden bg-background/80 backdrop-blur-sm md:hidden" x-cloak="" x-show="showSidebar"></div><div class="relative flex flex-col min-h-screen" id="page"><a class="absolute top-0 left-0 z-[100] block bg-background p-4 text-xl transition -translate-x-full opacity-0 focus:translate-x-0 focus:opacity-100" href="#content">
@@ -44,7 +44,13 @@
 <a class="flex items-center mr-6" href="../../index.html">
 <img alt="Logo" class="mr-2 hidden dark:block" height="24" src="../../_static/q_trans.png" width="24"/>
 <img alt="Logo" class="mr-2 dark:hidden" height="24" src="../../_static/q_trans.png" width="24"/><span class="hidden font-bold sm:inline-block text-clip whitespace-nowrap">QiliSDK</span>
-</a></div><button @click="showSidebar = true" class="inline-flex items-center justify-center h-10 px-0 py-2 mr-2 text-base font-medium transition-colors rounded-md hover:text-accent-foreground hover:bg-transparent md:hidden" type="button">
+</a>
+<div class="language-switcher">
+<span class="lang-active">EN</span>
+<a class="lang-link" href="../../../../es/main/modules/digital/digital_gates.html">ES</a>
+<a class="lang-link" href="../../../../ca/main/modules/digital/digital_gates.html">CA</a>
+</div>
+</div><button @click="showSidebar = true" class="inline-flex items-center justify-center h-10 px-0 py-2 mr-2 text-base font-medium transition-colors rounded-md hover:text-accent-foreground hover:bg-transparent md:hidden" type="button">
 <svg aria-hidden="true" fill="currentColor" height="24" viewbox="0 96 960 960" width="24" xmlns="http://www.w3.org/2000/svg">
 <path d="M152.587 825.087q-19.152 0-32.326-13.174t-13.174-32.326q0-19.152 13.174-32.326t32.326-13.174h440q19.152 0 32.326 13.174t13.174 32.326q0 19.152-13.174 32.326t-32.326 13.174h-440Zm0-203.587q-19.152 0-32.326-13.174T107.087 576q0-19.152 13.174-32.326t32.326-13.174h320q19.152 0 32.326 13.174T518.087 576q0 19.152-13.174 32.326T472.587 621.5h-320Zm0-203.587q-19.152 0-32.326-13.174t-13.174-32.326q0-19.152 13.174-32.326t32.326-13.174h440q19.152 0 32.326 13.174t13.174 32.326q0 19.152-13.174 32.326t-32.326 13.174h-440ZM708.913 576l112.174 112.174q12.674 12.674 12.674 31.826t-12.674 31.826Q808.413 764.5 789.261 764.5t-31.826-12.674l-144-144Q600 594.391 600 576t13.435-31.826l144-144q12.674-12.674 31.826-12.674t31.826 12.674q12.674 12.674 12.674 31.826t-12.674 31.826L708.913 576Z"></path>
 </svg>
@@ -104,57 +110,63 @@
 <p class="caption" role="heading"><span class="caption-text">Modules</span></p>
 <ul class="current">
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../core/core.html">Core<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
-<li class="toctree-l2"><a class="reference internal" href="../core/core_variables.html">Variables</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../core/core_terms.html">Terms</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../core/core_parameters.html">Parameters</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../core/core_math_map.html">Mathematical Maps</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../core/core_comparison.html">Comparison Terms</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core/core_overview.html">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core/core_variables_parameters.html">Variables and Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core/core_terms_maps_comparisons.html">Terms, Maps and Comparisons</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../core/core_model.html">Models</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../core/core_qubo.html">QUBO</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../core/core_qtensor.html">QTensor</a></li>
 </ul>
 </li>
 <li class="toctree-l1 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="digital.html">Digital<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul class="current" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="digital_overview.html">Overview</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Gates</a></li>
 <li class="toctree-l2"><a class="reference internal" href="digital_circuits.html">Circuits</a></li>
-<li class="toctree-l2"><a class="reference internal" href="digital_vis.html">Visualization</a></li>
-<li class="toctree-l2"><a class="reference internal" href="digital_ansatz.html">Hardware Efficient Ansatz</a></li>
+<li class="toctree-l2"><a class="reference internal" href="digital_ansatz.html">Ansatz</a></li>
+<li class="toctree-l2"><a class="reference internal" href="digital_hardware.html">HardwareEfficientAnsatz</a></li>
 <li class="toctree-l2"><a class="reference internal" href="digital_qaoa.html">QAOA</a></li>
-<li class="toctree-l2"><a class="reference internal" href="digital_trotter.html">Trotterization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="digital_trotter.html">TrotterizedSchedule</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../analog/analog.html">Analog<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../analog/analog_overview.html">Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../analog/analog_hamiltonian.html">Hamiltonian</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../analog/analog_schedule.html">Schedule</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../functionals/functionals.html">Functionals<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
-<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_sampling.html">Digital Propogation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_time_evolution.html">Analog Evolution</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_reservoirs.html">Quantum Reservoirs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_overview.html">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_digital.html">Digital Propagation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_analog.html">Analog Evolution</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_variational.html">Variational Programs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_reservoirs.html">Quantum Reservoirs</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../readout/readout.html">Readout<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../readout/readout_overview.html">Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../readout/readout_bitstring.html">Bitstring Measurement</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../readout/readout_expectation.html">Expectation Values</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../readout/readout_state.html">Full Quantum State</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../readout/readout_intermediate.html">Intermediate Results</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../backends/backends.html">Backends<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../backends/backends_overview.html">Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../backends/backends_qilisim.html">QiliSim</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../backends/backends_cuda.html">CUDA Backend</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../backends/backends_qutip.html">QuTiP Backend</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../backends/backends_qutip.html">Qutip Backend</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../cost_functions/cost_functions.html">Cost Functions<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
-<li class="toctree-l2"><a class="reference internal" href="../cost_functions/cost_functions_observable.html">Observable Cost Function</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../cost_functions/cost_functions_model.html">Model Cost Function</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cost_functions/cost_functions_overview.html">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cost_functions/cost_functions_observable.html">ObservableCostFunction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cost_functions/cost_functions_model.html">ModelCostFunction</a></li>
 </ul>
 </li>
-<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../noise_models/noise_models.html">Noise Models<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
-<li class="toctree-l2"><a class="reference internal" href="../noise_models/noise_models_config.html">Noise Config</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../noise_models/noise_models_types.html">Noise Types</a></li>
+<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../noise/noise.html">Noise<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../noise/noise_overview.html">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../noise/noise_config.html">Noise Config</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../noise/noise_types.html">Noise Types</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../speqtrum/speqtrum.html">SpeQtrum</a></li>
@@ -326,15 +338,94 @@
 <div id="content" role="main">
 <section id="gates">
 <h1>Gates<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#gates"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h1>
-<meta content="0; url=digital.html#gates" http-equiv="refresh"/><p>Go to a specific subheading of a page.</p>
+<p>This submodule provides the necessary components to define and manipulate quantum gates for use in digital quantum circuits.</p>
+<section id="simple-gates">
+<h2>Simple Gates<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#simple-gates" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#simple-gates'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
+<p>Use these constructors to apply standard single- and two-qubit operations:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.X" title="qilisdk.digital.gates.X"><code class="xref py py-class docutils literal notranslate"><span class="pre">X(qubit:</span> <span class="pre">int)</span></code></a>
+Pauli X (bit-flip) on the specified qubit.</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.Y" title="qilisdk.digital.gates.Y"><code class="xref py py-class docutils literal notranslate"><span class="pre">Y(qubit:</span> <span class="pre">int)</span></code></a>
+Pauli Y (bit-and-phase-flip).</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.Z" title="qilisdk.digital.gates.Z"><code class="xref py py-class docutils literal notranslate"><span class="pre">Z(qubit:</span> <span class="pre">int)</span></code></a>
+Pauli Z (phase-flip).</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.H" title="qilisdk.digital.gates.H"><code class="xref py py-class docutils literal notranslate"><span class="pre">H(qubit:</span> <span class="pre">int)</span></code></a>
+Hadamard: creates superposition.</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.I" title="qilisdk.digital.gates.I"><code class="xref py py-class docutils literal notranslate"><span class="pre">I(qubit:</span> <span class="pre">int)</span></code></a>
+Identity gate: leaves the qubit unchanged.</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.S" title="qilisdk.digital.gates.S"><code class="xref py py-class docutils literal notranslate"><span class="pre">S(qubit:</span> <span class="pre">int)</span></code></a>
+Phase gate (π/2 rotation about Z).</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.T" title="qilisdk.digital.gates.T"><code class="xref py py-class docutils literal notranslate"><span class="pre">T(qubit:</span> <span class="pre">int)</span></code></a>
+T gate (π/4 rotation about Z).</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.RX" title="qilisdk.digital.gates.RX"><code class="xref py py-class docutils literal notranslate"><span class="pre">RX(qubit:</span> <span class="pre">int,</span> <span class="pre">theta:</span> <span class="pre">float</span> <span class="pre">|</span> <span class="pre">Parameter</span> <span class="pre">|</span> <span class="pre">Term)</span></code></a>
+Rotation by angle <cite>theta</cite> around X.</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.RY" title="qilisdk.digital.gates.RY"><code class="xref py py-class docutils literal notranslate"><span class="pre">RY(qubit:</span> <span class="pre">int,</span> <span class="pre">theta:</span> <span class="pre">float</span> <span class="pre">|</span> <span class="pre">Parameter</span> <span class="pre">|</span> <span class="pre">Term)</span></code></a>
+Rotation by angle <cite>theta</cite> around Y.</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.RZ" title="qilisdk.digital.gates.RZ"><code class="xref py py-class docutils literal notranslate"><span class="pre">RZ(qubit:</span> <span class="pre">int,</span> <span class="pre">phi:</span> <span class="pre">float</span> <span class="pre">|</span> <span class="pre">Parameter</span> <span class="pre">|</span> <span class="pre">Term)</span></code></a>
+Rotation by angle <cite>phi</cite> around Z.</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.U1" title="qilisdk.digital.gates.U1"><code class="xref py py-class docutils literal notranslate"><span class="pre">U1(qubit:</span> <span class="pre">int,</span> <span class="pre">*,</span> <span class="pre">phi:</span> <span class="pre">float</span> <span class="pre">|</span> <span class="pre">Parameter</span> <span class="pre">|</span> <span class="pre">Term)</span></code></a>
+Phase shift equivalent to RZ plus global phase.</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.U2" title="qilisdk.digital.gates.U2"><code class="xref py py-class docutils literal notranslate"><span class="pre">U2(qubit:</span> <span class="pre">int,</span> <span class="pre">*,</span> <span class="pre">phi:</span> <span class="pre">float</span> <span class="pre">|</span> <span class="pre">Parameter</span> <span class="pre">|</span> <span class="pre">Term,</span> <span class="pre">gamma:</span> <span class="pre">float</span> <span class="pre">|</span> <span class="pre">Parameter</span> <span class="pre">|</span> <span class="pre">Term)</span></code></a>
+π/2 Y-rotation sandwiched by Z-rotations.</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.U3" title="qilisdk.digital.gates.U3"><code class="xref py py-class docutils literal notranslate"><span class="pre">U3(qubit:</span> <span class="pre">int,</span> <span class="pre">*,</span> <span class="pre">theta:</span> <span class="pre">float</span> <span class="pre">|</span> <span class="pre">Parameter</span> <span class="pre">|</span> <span class="pre">Term,</span> <span class="pre">phi:</span> <span class="pre">float</span> <span class="pre">|</span> <span class="pre">Parameter</span> <span class="pre">|</span> <span class="pre">Term,</span> <span class="pre">gamma:</span> <span class="pre">float</span> <span class="pre">|</span> <span class="pre">Parameter</span> <span class="pre">|</span> <span class="pre">Term)</span></code></a>
+General single-qubit unitary: RZ-RY-RZ decomposition.</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.SWAP" title="qilisdk.digital.gates.SWAP"><code class="xref py py-class docutils literal notranslate"><span class="pre">SWAP(a:</span> <span class="pre">int,</span> <span class="pre">b:</span> <span class="pre">int)</span></code></a>
+Exchanges the states of qubits <code class="docutils literal notranslate"><span class="pre">a</span></code> and <code class="docutils literal notranslate"><span class="pre">b</span></code>.</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.CNOT" title="qilisdk.digital.gates.CNOT"><code class="xref py py-class docutils literal notranslate"><span class="pre">CNOT(control:</span> <span class="pre">int,</span> <span class="pre">target:</span> <span class="pre">int)</span></code></a>
+Controlled-X: flips target if control is 1.</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.CZ" title="qilisdk.digital.gates.CZ"><code class="xref py py-class docutils literal notranslate"><span class="pre">CZ(control:</span> <span class="pre">int,</span> <span class="pre">target:</span> <span class="pre">int)</span></code></a>
+Controlled-Z: applies Z on target if control is 1.</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.M" title="qilisdk.digital.gates.M"><code class="xref py py-class docutils literal notranslate"><span class="pre">M(*qubits:</span> <span class="pre">int)</span></code></a>
+Measures the listed qubits in the computational basis.</p></li>
+</ul>
+</section>
+<section id="controlled-gates">
+<h2>Controlled Gates<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#controlled-gates" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#controlled-gates'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
+<p>Any basic gate can be turned into a controlled gate using the <a class="reference internal" href="../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.Controlled" title="qilisdk.digital.gates.Controlled"><code class="xref py py-class docutils literal notranslate"><span class="pre">Controlled</span></code></a> class:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.digital.gates</span><span class="w"> </span><span class="kn">import</span> <span class="n">Controlled</span><span class="p">,</span> <span class="n">Y</span>
+</span><span id="line-2">
+</span><span id="line-3"><span class="n">controlled_y</span> <span class="o">=</span> <span class="n">Controlled</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">basic_gate</span><span class="o">=</span><span class="n">Y</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+</span><span id="line-4"><span class="n">multiple_controlled_y</span> <span class="o">=</span> <span class="n">Controlled</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">basic_gate</span><span class="o">=</span><span class="n">Y</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+</span></code></pre></div>
+</div>
+<p>Or alternatively, you can use the <a class="reference internal" href="../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.BasicGate.controlled" title="qilisdk.digital.gates.BasicGate.controlled"><code class="xref py py-meth docutils literal notranslate"><span class="pre">.controlled()</span></code></a> method on any gate instance:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.digital.gates</span><span class="w"> </span><span class="kn">import</span> <span class="n">Y</span>
+</span><span id="line-2">
+</span><span id="line-3"><span class="n">controlled_y</span> <span class="o">=</span> <span class="n">Y</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">controlled</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</span><span id="line-4"><span class="n">multiple_controlled_y</span> <span class="o">=</span> <span class="n">Y</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">controlled</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+</section>
+<section id="adjoint-gates">
+<h2>Adjoint Gates<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#adjoint-gates" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#adjoint-gates'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
+<p>You can create the Hermitian conjugate (dagger) of a gate either using the <a class="reference internal" href="../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.Adjoint" title="qilisdk.digital.gates.Adjoint"><code class="xref py py-class docutils literal notranslate"><span class="pre">Adjoint</span></code></a> class
+or using the <a class="reference internal" href="../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.BasicGate.adjoint" title="qilisdk.digital.gates.BasicGate.adjoint"><code class="xref py py-meth docutils literal notranslate"><span class="pre">.adjoint()</span></code></a> method on any gate instance:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.digital.gates</span><span class="w"> </span><span class="kn">import</span> <span class="n">Adjoint</span><span class="p">,</span> <span class="n">Y</span>
+</span><span id="line-2">
+</span><span id="line-3"><span class="n">adjoint_y</span> <span class="o">=</span> <span class="n">Adjoint</span><span class="p">(</span><span class="n">basic_gate</span><span class="o">=</span><span class="n">Y</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+</span><span id="line-4"><span class="n">adjoint_y</span> <span class="o">=</span> <span class="n">Y</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">adjoint</span><span class="p">()</span>
+</span></code></pre></div>
+</div>
+</section>
+<section id="exponential-gates">
+<h2>Exponential Gates<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#exponential-gates" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#exponential-gates'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
+<p>To apply a gate as an exponential operator, use either the <a class="reference internal" href="../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.Exponential" title="qilisdk.digital.gates.Exponential"><code class="xref py py-class docutils literal notranslate"><span class="pre">Exponential</span></code></a> class or
+the <a class="reference internal" href="../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.BasicGate.exponential" title="qilisdk.digital.gates.BasicGate.exponential"><code class="xref py py-meth docutils literal notranslate"><span class="pre">.exponential()</span></code></a> method on any gate instance:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.digital.gates</span><span class="w"> </span><span class="kn">import</span> <span class="n">Exponential</span><span class="p">,</span> <span class="n">Y</span>
+</span><span id="line-2">
+</span><span id="line-3"><span class="n">exp_y</span> <span class="o">=</span> <span class="n">Exponential</span><span class="p">(</span><span class="n">basic_gate</span><span class="o">=</span><span class="n">Y</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+</span><span id="line-4"><span class="n">exp_y</span> <span class="o">=</span> <span class="n">Y</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">exponential</span><span class="p">()</span>
+</span></code></pre></div>
+</div>
+</section>
 </section>
 </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">
 <div class="mr-auto">
-<a class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input hover:bg-accent hover:text-accent-foreground py-2 px-4" href="digital.html">
+<a class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input hover:bg-accent hover:text-accent-foreground py-2 px-4" href="digital_overview.html">
 <svg class="mr-2 h-4 w-4" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
 <polyline points="15 18 9 12 15 6"></polyline>
 </svg>
-        Digital
+        Overview
       </a>
 </div>
 <div class="ml-auto">
@@ -345,7 +436,16 @@
 </svg>
 </a>
 </div>
-</div></div>
+</div></div><aside class="hidden text-sm xl:block" id="right-sidebar">
+<div class="sticky top-16 -mt-10 max-h-[calc(100vh-5rem)] h-full overflow-y-auto pt-6 space-y-2"><p class="font-medium">On this page</p>
+<ul>
+<li><a :data-current="activeSection === '#simple-gates'" class="reference internal" href="#simple-gates">Simple Gates</a></li>
+<li><a :data-current="activeSection === '#controlled-gates'" class="reference internal" href="#controlled-gates">Controlled Gates</a></li>
+<li><a :data-current="activeSection === '#adjoint-gates'" class="reference internal" href="#adjoint-gates">Adjoint Gates</a></li>
+<li><a :data-current="activeSection === '#exponential-gates'" class="reference internal" href="#exponential-gates">Exponential Gates</a></li>
+</ul>
+</div>
+</aside>
 </main>
 </div>
 </div><footer class="py-6 border-t border-border md:py-0">
