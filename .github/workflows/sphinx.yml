@@ -57,6 +57,7 @@ jobs:
           fi
           printf '<!doctype html><meta http-equiv="refresh" content="0; url=%s/">' "$latest_tag" > docs/_build/en/index.html
           printf '<!doctype html><meta http-equiv="refresh" content="0; url=%s/">' "en/$latest_tag" > docs/_build/index.html
+          mkdir -p docs/_build/main
           printf '<!doctype html><meta http-equiv="refresh" content="0; url=%s/">' "en/main" > docs/_build/main/index.html
 
       - name: Deploy to GitHub Pages
