@@ -303,17 +303,16 @@ def test_reservoir_layer_set_parameter_bounds_propagates_to_children():
         }
     )
 
-    _assert_bounds_dict_close(
-        layer.input_encoding.get_parameter_bounds(), {"input_encoding_p_in": (-2.0, 2.0)}
-    )
+    _assert_bounds_dict_close(layer.input_encoding.get_parameter_bounds(), {"input_encoding_p_in": (-2.0, 2.0)})
     _assert_bounds_dict_close(schedule.get_parameter_bounds(), {"g": (-3.0, 3.0)})
-    _assert_bounds_dict_close(
-        layer.output_encoding.get_parameter_bounds(), {"output_encoding_p_out": (-4.0, 4.0)}
-    )
+    _assert_bounds_dict_close(layer.output_encoding.get_parameter_bounds(), {"output_encoding_p_out": (-4.0, 4.0)})
 
-    assert _isclose(p_in.bounds[0], -2.0) and _isclose(p_in.bounds[1], 2.0)
-    assert _isclose(g.bounds[0], -3.0) and _isclose(g.bounds[1], 3.0)
-    assert _isclose(p_out.bounds[0], -4.0) and _isclose(p_out.bounds[1], 4.0)
+    assert _isclose(p_in.bounds[0], -2.0)
+    assert _isclose(p_in.bounds[1], 2.0)
+    assert _isclose(g.bounds[0], -3.0)
+    assert _isclose(g.bounds[1], 3.0)
+    assert _isclose(p_out.bounds[0], -4.0)
+    assert _isclose(p_out.bounds[1], 4.0)
 
 
 def test_quantum_reservoir_parameter_sync_with_reservoir_layer_child():
