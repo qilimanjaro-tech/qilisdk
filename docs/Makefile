@@ -27,7 +27,7 @@ multiversion:
 
 # Run this to generate the files for translation
 gettext:
-	rm -rf "$(BUILDDIR)/gettext"
+	rm -rf "$(BUILDDIR)/"
 	$(SPHINXBUILD) -M gettext "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) -D exclude_patterns="code/**,shared/**" $(O)
 	LANGUAGE_FLAGS=""; \
 	for lang in $(LANGUAGES); do \
