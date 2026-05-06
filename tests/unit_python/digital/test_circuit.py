@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import math
 import random
 from unittest.mock import MagicMock
 
@@ -627,7 +628,7 @@ def test_circuit_set_parameter_values_clears_gate_matrix_cache():
 
 def test_shared_parameter_links_all_gates():
     """All gates sharing a Parameter must be registered in _parameters_link."""
-    shared = Parameter("shared", 3.14)
+    shared = Parameter("shared", math.pi)
     c = Circuit(nqubits=2)
     g0 = U1(0, phi=shared)
     g1 = U2(1, phi=shared, gamma=0.1)
@@ -644,7 +645,7 @@ def test_shared_parameter_links_all_gates():
 
 def test_circuit_set_parameters_updates_all_shared_gates():
     """set_parameters must update every gate sharing a Parameter object."""
-    shared = Parameter("shared", 3.14)
+    shared = Parameter("shared", math.pi)
     c = Circuit(nqubits=2)
     g0 = U1(0, phi=shared)
     g1 = U2(1, phi=shared, gamma=0.1)
@@ -684,7 +685,7 @@ def test_circuit_set_prefix_then_set_parameters_updates_all_shared_gates():
     Previously set_prefix renamed the link key but the value remained a single
     (label, gate) tuple, so the prefix path lost track of all but one gate.
     """
-    shared = Parameter("shared", 3.14)
+    shared = Parameter("shared", math.pi)
     c = Circuit(nqubits=2)
     g0 = U1(0, phi=shared)
     g1 = U2(1, phi=shared, gamma=0.1)
