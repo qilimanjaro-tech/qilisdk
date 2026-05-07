@@ -118,6 +118,11 @@ class AnalogMethod(BaseSimulatorConfig):
         gt=0,
         description="Tolerance for the adaptive integrator method when `evolution_method='integrate_rk45_matrix_free'`.",
     )
+    max_terms: int = Field(
+        default=1000,
+        gt=0,
+        description="Maximum number of terms in the variational ansatz for the approximate method when `evolution_method='approximate'`.",
+    )
 
     def get_config(self) -> SolverConfigDict:
         """Return a complete analog solver configuration for the C++ backend."""
@@ -126,6 +131,7 @@ class AnalogMethod(BaseSimulatorConfig):
             "arnoldi_dim": self.arnoldi_dim,
             "num_arnoldi_substeps": self.num_arnoldi_substeps,
             "adaptive_tol": self.adaptive_tol,
+            "max_terms": self.max_terms,
         }
 
         return d
@@ -146,7 +152,7 @@ class AnalogMethod(BaseSimulatorConfig):
         return cls(evolution_method=evolution_method)
 
     @classmethod
-    def approximate(cls) -> AnalogMethod:
+    def approximate(cls, *, max_terms: int = 1000) -> AnalogMethod:
         """Build an ``approximate`` analog method configuration.
 
         This evolves a variational ansatz rather than the full state.
@@ -154,7 +160,7 @@ class AnalogMethod(BaseSimulatorConfig):
         Returns:
             AnalogMethod: Configured approximate-method analog configuration.
         """
-        return cls(evolution_method="approximate")
+        return cls(evolution_method="approximate", max_terms=max_terms)
 
     @classmethod
     def adaptive_integrator(cls, *, tol: float = 1e-2) -> AnalogMethod:

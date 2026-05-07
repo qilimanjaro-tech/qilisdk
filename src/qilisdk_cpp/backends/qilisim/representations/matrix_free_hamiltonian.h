@@ -120,10 +120,11 @@ class MatrixFreeHamiltonian {
     void add(const std::complex<double>& coeff, const std::vector<MatrixFreeOperator>& ops);
     friend std::ostream& operator<<(std::ostream& os, const MatrixFreeHamiltonian& hamiltonian);
     std::unordered_map<PauliString, std::complex<double>, PauliString::HashFunction> get_operators() const { return operators; }
-    void prune(double threshold, int max_terms);
-    void normalize_acting_on_plus();
+    double prune(double threshold, int max_terms);
+    double normalize_acting_on_plus();
     int get_nqubits() const { return nqubits; }
     MatrixFreeHamiltonian conjugate() const;
+    size_t size() const { return operators.size(); }
 };
 
 

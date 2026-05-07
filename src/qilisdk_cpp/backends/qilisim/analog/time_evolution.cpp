@@ -334,9 +334,6 @@ void time_evolution_approximate(MatrixFreeHamiltonian& rho_t_as_h, const std::ve
         config (QiliSimConfig&): Configuration parameters for the time evolution.
     */
 
-
-    std::cout << "Here" << std::endl;
-
     if (hamiltonians.size() <= 0) {
         throw std::invalid_argument("At least one Hamiltonian must be provided");
     }
@@ -344,32 +341,27 @@ void time_evolution_approximate(MatrixFreeHamiltonian& rho_t_as_h, const std::ve
     int n_qubits = hamiltonians[0].get_nqubits();
     rho_t_as_h = MatrixFreeHamiltonian(n_qubits, 1.0);
 
+    double total_loss = 0.0;
     for (size_t step_ind = 0; step_ind < step_list.size(); ++step_ind) {
-
-        std::cout << std::endl;
-        std::cout << "-----------------------------------------" << std::endl;
-        std::cout << "step " << step_ind << ", rho = " << rho_t_as_h << std::endl;
 
         // Determine the time step and starting time
         double t_start = (step_ind > 0) ? step_list[step_ind - 1] : 0.0;
         double dt = step_list[step_ind] - t_start;
 
         // Perform the iteration depending on the method
-        iter_rk4(rho_t_as_h, t_start, dt, step_list, hamiltonians, parameters_list);
+        iter_rk4(rho_t_as_h, t_start, dt, step_list, hamiltonians, parameters_list, config.get_max_terms());
 
         // Truncate the resulting Hamiltonian to keep the number of terms manageable
-        std::cout << "Before pruning: " << rho_t_as_h << std::endl;
-        rho_t_as_h.prune(1e-10, 1000);
-        std::cout << "After pruning: " << rho_t_as_h << std::endl;
-
+        double loss = rho_t_as_h.prune(1e-10, config.get_max_terms());
+        
         // Normalize the state
-        std::cout << "Before normalization: " << rho_t_as_h << std::endl;
-        rho_t_as_h.normalize_acting_on_plus();
-        std::cout << "After normalization: " << rho_t_as_h << std::endl;
+        double factor = rho_t_as_h.normalize_acting_on_plus();
+        total_loss += loss * factor;
 
     }
 
-    std::cout << "final rho = " << rho_t_as_h << std::endl;
+    std::cout << "Total loss from pruning: " << total_loss << std::endl;
+    std::cout << "Average loss per step: " << total_loss / step_list.size() << std::endl;
 
 }
 

@@ -16,6 +16,9 @@
 #include <unordered_map>
 #include "../../../libs/pybind.h"
 #include "../utils/matrix_utils.h"
+#if defined(_OPENMP)
+#include <omp.h>
+#endif
 
 // GCOV_EXCL_BR_START
 
@@ -163,8 +166,6 @@ double MatrixFreeHamiltonian::expectation_value(const DenseMatrix& state) const 
 
 }
 
-#include <iostream>
-
 double MatrixFreeHamiltonian::expectation_value(const MatrixFreeHamiltonian& other) const {
     /*
     Calculate the expectation value of this Hamiltonian with respect to another Hamiltonian.
@@ -182,10 +183,6 @@ double MatrixFreeHamiltonian::expectation_value(const MatrixFreeHamiltonian& oth
 
     // first we calculate H_this^dag H_other H_this:
     MatrixFreeHamiltonian temp = (*this).conjugate() * other * (*this);
-
-    std::cout << "State Hamiltonian: " << *this << std::endl;
-    std::cout << "Other Hamiltonian: " << other << std::endl;
-    std::cout << "Temp Hamiltonian: " << temp << std::endl;
 
     // Since <+|P|+> is 1 if P is identity or X and 0 otherwise, we just need to sum the coefficients
     std::complex<double> exp_val = 0.0;
@@ -351,47 +348,6 @@ MatrixFreeHamiltonian operator*(const std::complex<double>& scalar, const Matrix
     return hamiltonian * scalar;
 }
 
-// TODO remove
-// std::pair<PauliString, std::complex<double>> _multiply_pauli_strings(const PauliString& a, const PauliString& b) {
-//     /*
-//     Multiply two Pauli strings together, returning the resulting Pauli string and the phase factor.
-
-//     Args:
-//         a: The first Pauli string to be multiplied.
-//         b: The second Pauli string to be multiplied.
-
-//     Returns:
-//         A pair consisting of the resulting Pauli string from the multiplication and the complex phase factor.
-//     */
-
-//     const size_t n = a.x_mask.size();
-//     PauliString result(n);
-
-//     // XOR gives the result masks directly (same as adding Paulis mod 2)
-//     // X*X=I, Z*Z=I, X*Z or Z*X = Y (both bits set), etc.
-//     int phase_exp = 0; // will be taken mod 4; maps to i^phase_exp
-//     for (size_t q = 0; q < n; ++q) {
-//         const int ax = a.x_mask[q], az = a.z_mask[q];
-//         const int bx = b.x_mask[q], bz = b.z_mask[q];
-//         result.x_mask[q] = ax ^ bx;
-//         result.z_mask[q] = az ^ bz;
-//         phase_exp += (ax & bz) - (az & bx); // TODO check
-//     }
-
-//     // Normalize to [0, 4)
-//     phase_exp = ((phase_exp % 4) + 4) % 4;
-
-//     // Map i^k to complex
-//     static const std::complex<double> phase_table[4] = {
-//         {1.0, 0.0},
-//         {0.0, 1.0},
-//         {-1.0, 0.0},
-//         {0.0, -1.0}
-//     };
-
-//     return {result, phase_table[phase_exp]};
-// }
-
 std::pair<PauliString, std::complex<double>> _multiply_pauli_strings(const PauliString& a, const PauliString& b) {
     const size_t n = a.x_mask.size();
     PauliString result(n);
@@ -440,6 +396,50 @@ std::pair<PauliString, std::complex<double>> _multiply_pauli_strings(const Pauli
     return {result, phase_table[phase_exp]};
 }
 
+// std::pair<PauliString, std::complex<double>> _multiply_pauli_strings(const PauliString& a, const PauliString& b) {
+//     const size_t n = a.x_mask.size();
+//     PauliString result(n);
+
+//     // Pack vector<bool> into uint64_t so XOR and phase use SIMD-friendly bitwise ops
+//     // instead of a per-qubit LUT loop. Assumes n <= 64 (same implicit limit as apply()).
+//     uint64_t ax = 0, az = 0, bx = 0, bz = 0;
+//     for (size_t q = 0; q < n; ++q) {
+//         ax |= (uint64_t)a.x_mask[q] << q;
+//         az |= (uint64_t)a.z_mask[q] << q;
+//         bx |= (uint64_t)b.x_mask[q] << q;
+//         bz |= (uint64_t)b.z_mask[q] << q;
+//     }
+
+//     const uint64_t rx = ax ^ bx;
+//     const uint64_t rz = az ^ bz;
+
+//     // Phase contributions derived from phase_lut (I=00, X=10, Z=01, Y=11):
+//     // +1 per qubit: Z*Y, X*Z, Y*X
+//     // -1 per qubit: Z*X, X*Y, Y*Z
+//     // High bits of ~ax/~az/~bx/~bz are harmless: they're always masked out by the
+//     // corresponding non-negated factor whose high bits are zero.
+//     const uint64_t plus_bits  = (~ax & az & bx & bz)   // Z*Y
+//                               | ( ax & ~az & ~bx & bz)  // X*Z
+//                               | ( ax &  az &  bx & ~bz); // Y*X
+//     const uint64_t minus_bits = (~ax &  az &  bx & ~bz) // Z*X
+//                               | ( ax & ~az &  bx &  bz)  // X*Y
+//                               | ( ax &  az & ~bx &  bz); // Y*Z
+
+//     int phase_exp = __builtin_popcountll(plus_bits) - __builtin_popcountll(minus_bits);
+//     phase_exp = ((phase_exp % 4) + 4) % 4;
+
+//     for (size_t q = 0; q < n; ++q) {
+//         result.x_mask[q] = (rx >> q) & 1;
+//         result.z_mask[q] = (rz >> q) & 1;
+//     }
+
+//     static const std::complex<double> phase_table[4] = {
+//         {1.0, 0.0}, {0.0, 1.0}, {-1.0, 0.0}, {0.0, -1.0}
+//     };
+
+//     return {result, phase_table[phase_exp]};
+// }
+
 MatrixFreeHamiltonian MatrixFreeHamiltonian::operator*(const MatrixFreeHamiltonian& other) const {
     /*
     Multiply two Hamiltonians together.
@@ -452,19 +452,38 @@ MatrixFreeHamiltonian MatrixFreeHamiltonian::operator*(const MatrixFreeHamiltoni
     */
     MatrixFreeHamiltonian result;
 
+#if defined(_OPENMP)
+    // Convert to vector for indexed parallel access
+    std::vector<std::pair<PauliString, std::complex<double>>> ops_vec(operators.begin(), operators.end());
+    const int nops = static_cast<int>(ops_vec.size());
+    const int nthreads = omp_get_max_threads();
+    std::vector<std::unordered_map<PauliString, std::complex<double>, PauliString::HashFunction>> local(nthreads);
+
+    #pragma omp parallel for schedule(static)
+    for (int i = 0; i < nops; ++i) {
+        const int tid = omp_get_thread_num();
+        const PauliString& ps_a = ops_vec[i].first;
+        const std::complex<double> coeff_a = ops_vec[i].second;
+        for (const auto& [ps_b, coeff_b] : other.operators) {
+            auto [ps_result, phase] = _multiply_pauli_strings(ps_a, ps_b);
+            local[tid][ps_result] += coeff_a * coeff_b * phase;
+        }
+    }
+
+    for (int t = 0; t < nthreads; ++t) {
+        for (auto& [ps, coeff] : local[t]) {
+            result.operators[ps] += coeff;
+        }
+    }
+#else
+    result.operators.reserve(operators.size() * other.operators.size());
     for (const auto& [ps_a, coeff_a] : operators) {
         for (const auto& [ps_b, coeff_b] : other.operators) {
             auto [ps_result, phase] = _multiply_pauli_strings(ps_a, ps_b);
-            std::complex<double> new_coeff = coeff_a * coeff_b * phase;
-
-            auto it = result.operators.find(ps_result);
-            if (it != result.operators.end()) {
-                it->second += new_coeff;
-            } else {
-                result.operators[ps_result] = new_coeff;
-            }
+            result.operators[ps_result] += coeff_a * coeff_b * phase;
         }
     }
+#endif
 
     return result;
 }
@@ -499,7 +518,7 @@ MatrixFreeHamiltonian MatrixFreeHamiltonian::operator-(const MatrixFreeHamiltoni
     return result;
 }
 
-void MatrixFreeHamiltonian::prune(double threshold, int max_terms) {
+double MatrixFreeHamiltonian::prune(double threshold, int max_terms) {
     /*
     Prune the Hamiltonian by removing terms with coefficients below a certain threshold and limiting the total number of terms.
 
@@ -508,14 +527,40 @@ void MatrixFreeHamiltonian::prune(double threshold, int max_terms) {
         max_terms: The maximum number of terms to keep in the Hamiltonian. If there are more terms than this after applying the threshold, only the terms with the largest coefficients (in absolute value) will be kept.
 
     Returns:
-        A reference to the pruned Hamiltonian.
+        The total loss incurred by pruning the Hamiltonian.
     */
+    // Canonicalize: X|+> = I|+> and Y|+> = -i*Z|+>, so collapse to IZ-only strings.
+    // This eliminates the 2^n redundancy and keeps at most 2^n distinct terms.
+    static const std::complex<double> neg_i(0.0, -1.0);
+    std::unordered_map<PauliString, std::complex<double>, PauliString::HashFunction> canonical;
+    canonical.reserve(operators.size());
+    for (const auto& [ps, coeff] : operators) {
+        int n = static_cast<int>(ps.x_mask.size());
+        PauliString cps(n);
+        std::complex<double> phase = coeff;
+        for (int i = 0; i < n; ++i) {
+            if (ps.x_mask[i] && ps.z_mask[i]) {  // Y → Z, absorb -i phase
+                cps.z_mask[i] = true;
+                phase *= neg_i;
+            } else if (!ps.x_mask[i]) {           // I or Z: unchanged
+                cps.z_mask[i] = ps.z_mask[i];
+            }
+            // X → I: x_mask stays false, coefficient unchanged
+        }
+        canonical[cps] += phase;
+    }
+    operators = std::move(canonical);
+
     // Create a vector of terms and sort by absolute value of coefficients
     std::vector<std::pair<PauliString, std::complex<double>>> term_vector(operators.begin(), operators.end());
     std::sort(term_vector.begin(), term_vector.end(), [](const auto& a, const auto& b) {
         return std::abs(a.second) > std::abs(b.second);
     });
+    double total_loss = 0.0;
     if (term_vector.size() > static_cast<size_t>(max_terms)) {
+        for (size_t i = max_terms; i < term_vector.size(); ++i) {
+            total_loss += std::abs(term_vector[i].second);
+        }
         term_vector.resize(max_terms);
     }
     // Rebuild the operators map from the pruned vector
@@ -525,6 +570,7 @@ void MatrixFreeHamiltonian::prune(double threshold, int max_terms) {
             operators[ps] = coeff;
         }
     }
+    return total_loss;
 }
 
 MatrixFreeHamiltonian MatrixFreeHamiltonian::conjugate() const {
@@ -541,7 +587,7 @@ MatrixFreeHamiltonian MatrixFreeHamiltonian::conjugate() const {
     return result;
 }
 
-void MatrixFreeHamiltonian::normalize_acting_on_plus() {
+double MatrixFreeHamiltonian::normalize_acting_on_plus() {
     /*
     Normalize the Hamiltonian such that when it acts on the |+> state, the resulting state has norm 1.
     */
@@ -569,6 +615,8 @@ void MatrixFreeHamiltonian::normalize_acting_on_plus() {
     for (auto& [pauli_string, coeff] : operators) {
         coeff *= scaling_factor;
     }
+
+    return scaling_factor;
 
 }
 

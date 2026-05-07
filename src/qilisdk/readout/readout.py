@@ -133,9 +133,6 @@ class ExpectationReadout(ReadoutMethod):
             raise ValueError("Invalid Observable: All observables need to be QTensors or a Hamiltonian.")
         self._nshots: int = nshots
         self._observables: list[Hamiltonian | QTensor] = observables
-        self._qtensor_observables: list[QTensor] = [
-            (o if isinstance(o, QTensor) else o.to_qtensor()) for o in self.observables
-        ]
         self._scaled_nqubits: int | None = None
 
     @property
@@ -151,13 +148,6 @@ class ExpectationReadout(ReadoutMethod):
         The observables whose expectation values are requested, in their original form as provided by the user.
         """
         return self._observables
-
-    @property
-    def qtensor_observables(self) -> list[QTensor]:
-        """
-        The observables converted to :class:`~qilisdk.core.QTensor` form, populated automatically; not intended to be set manually.
-        """
-        return self._qtensor_observables
 
     def expand_observables(self, nqubits: int) -> None:
         """Scale each observable to match a given number of qubits.

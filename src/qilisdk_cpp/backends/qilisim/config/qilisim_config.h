@@ -35,6 +35,7 @@ class QiliSimConfig {
     bool normalize_after_each_gate = false;
     double adaptive_tol = 1e-2;
     bool measurement_collapse = true;
+    int max_terms = 1000;
 
    public:
     // Getters
@@ -53,6 +54,7 @@ class QiliSimConfig {
     bool get_normalize_after_gate() const { return normalize_after_each_gate; }
     bool get_combine_single_qubit_gates() const { return combine_single_qubit_gates; }
     bool get_measurement_collapse() const { return measurement_collapse; }
+    int get_max_terms() const { return max_terms; }
 
     // Setters
     void set_monte_carlo(bool value) { monte_carlo = value; }
@@ -70,6 +72,7 @@ class QiliSimConfig {
     void set_normalize_after_gate(bool value) { normalize_after_each_gate = value; }
     void set_combine_single_qubit_gates(bool value) { combine_single_qubit_gates = value; }
     void set_measurement_collapse(bool value) { measurement_collapse = value; }
+    void set_max_terms(int value) { max_terms = value; }
 
     // Initialize with default values
     QiliSimConfig() = default;

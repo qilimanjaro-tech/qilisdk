@@ -523,9 +523,7 @@ double iter_rk45(DenseMatrix& rho_t, double t, double& dt, const std::vector<dou
     return dt_taken;
 }
 
-#include <iostream>
-
-void iter_rk4(MatrixFreeHamiltonian& rho_t_as_h, double t, double dt, const std::vector<double>& step_list, const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list) {
+void iter_rk4(MatrixFreeHamiltonian& rho_t_as_h, double t, double dt, const std::vector<double>& step_list, const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, int max_terms) {
     /*
     4th-order Runge–Kutta integration of the Lindblad master equation using a variational methods, 
     where the density matrix is represented as a weighted list of Pauli strings (i.e. a MatrixFreeHamiltonian).
@@ -537,6 +535,7 @@ void iter_rk4(MatrixFreeHamiltonian& rho_t_as_h, double t, double dt, const std:
         step_list (std::vector<double>): The list of time points corresponding to the parameters.
         hamiltonians (std::vector<MatrixFreeHamiltonian>): The list of Hamiltonians.
         parameters_list (std::vector<std::vector<double>>): The list of parameters for each Hamiltonian.
+        max_terms (int): The maximum number of terms to keep in the MatrixFreeHamiltonian after each operation, for pruning purposes.
     */
 
     // Cache some things
@@ -548,31 +547,40 @@ void iter_rk4(MatrixFreeHamiltonian& rho_t_as_h, double t, double dt, const std:
     MatrixFreeHamiltonian k;
     MatrixFreeHamiltonian rho_tmp;
     MatrixFreeHamiltonian rho_old;
+    MatrixFreeHamiltonian current_hamiltonian;
     double t_step = t;
 
     // Store the previous rho, we'll reuse it for the intermediate steps
     rho_old = rho_t_as_h;
 
     // First step: compute k1 at time t
-    lindblad_rhs(k, rho_t_as_h, construct_current_hamiltonian(t_step, step_list, hamiltonians, parameters_list));
+    current_hamiltonian = construct_current_hamiltonian(t_step, step_list, hamiltonians, parameters_list);
+    lindblad_rhs(k, rho_t_as_h, current_hamiltonian);
+    k.prune(1e-12, max_terms);
     rho_t_as_h += k * dt_over_6;
 
     // Second step: compute k2 at time t + dt/2
     rho_tmp = rho_old;
     rho_tmp += dt_over_2 * k;
-    lindblad_rhs(k, rho_tmp, construct_current_hamiltonian(t_step + 0.5 * dt, step_list, hamiltonians, parameters_list));
+    current_hamiltonian = construct_current_hamiltonian(t_step + 0.5 * dt, step_list, hamiltonians, parameters_list);
+    lindblad_rhs(k, rho_tmp, current_hamiltonian);
+    k.prune(1e-12, max_terms);
     rho_t_as_h += k * dt_over_3;
 
     // Third step: compute k3 at time t + dt/2
     rho_tmp = rho_old;
     rho_tmp += dt_over_2 * k;
-    lindblad_rhs(k, rho_tmp, construct_current_hamiltonian(t_step + 0.5 * dt, step_list, hamiltonians, parameters_list));
+    current_hamiltonian = construct_current_hamiltonian(t_step + 0.5 * dt, step_list, hamiltonians, parameters_list);
+    lindblad_rhs(k, rho_tmp, current_hamiltonian);
+    k.prune(1e-12, max_terms);
     rho_t_as_h += k * dt_over_3;
 
     // Fourth step: compute k4 at time t + dt
     rho_tmp = rho_old;
     rho_tmp += dt * k;
-    lindblad_rhs(k, rho_tmp, construct_current_hamiltonian(t_step + dt, step_list, hamiltonians, parameters_list));
+    current_hamiltonian = construct_current_hamiltonian(t_step + dt, step_list, hamiltonians, parameters_list);
+    lindblad_rhs(k, rho_tmp, current_hamiltonian);
+    k.prune(1e-12, max_terms);
     rho_t_as_h += k * dt_over_6;
 
 }

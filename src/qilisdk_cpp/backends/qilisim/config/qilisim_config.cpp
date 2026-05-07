@@ -47,6 +47,15 @@ void QiliSimConfig::validate() const {
     if (this->atol <= 0) {
         throw py::value_error("Absolute tolerance must be positive.");
     }
+    if (max_cache_size <= 0) {
+        throw py::value_error("Max cache size must be positive.");
+    }
+    if (adaptive_tol <= 0) {
+        throw py::value_error("Adaptive tolerance must be positive.");
+    }
+    if (max_terms <= 0) {
+        throw py::value_error("Max terms must be positive.");
+    }
 }
 
 // GCOV_EXCL_BR_STOP

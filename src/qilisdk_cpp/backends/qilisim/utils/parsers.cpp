@@ -765,6 +765,9 @@ QiliSimConfig parse_solver_params(const py::dict& solver_params) {
     if (solver_params.contains("measurement_collapse")) {
         config.set_measurement_collapse(solver_params["measurement_collapse"].cast<bool>());
     }
+    if (solver_params.contains("max_terms")) {
+        config.set_max_terms(solver_params["max_terms"].cast<int>());
+    }
     if (config.get_num_threads() <= 0) {
         config.set_num_threads(1);
     }
