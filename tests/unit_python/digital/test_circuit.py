@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import math
 import random
 from unittest.mock import MagicMock
 
@@ -615,3 +616,91 @@ def test_circuit_set_parameter_values_clears_gate_matrix_cache():
     c.set_parameter_values([np.pi / 2])
 
     assert not np.allclose(matrix_before, gate.matrix)
+
+
+# --- Shared Parameter Tests ---
+# Regression coverage for a bug where _parameters_link stored a single
+# (label, gate) tuple per parameter, so when the same Parameter object was
+# shared across multiple gates only the last-added gate received updates from
+# Circuit.set_parameters / set_parameter_bounds. Earlier gates kept stale
+# matrices because their _invalidate_matrix was never called.
+
+
+def test_shared_parameter_links_all_gates():
+    """All gates sharing a Parameter must be registered in _parameters_link."""
+    shared = Parameter("shared", math.pi)
+    c = Circuit(nqubits=2)
+    g0 = U1(0, phi=shared)
+    g1 = U2(1, phi=shared, gamma=0.1)
+    c.add(g0)
+    c.add(g1)
+
+    link = c._parameters_link["shared"]
+    assert isinstance(link, list)
+    linked_gates = [gate for _, gate in link]
+    assert g0 in linked_gates
+    assert g1 in linked_gates
+    assert all(label == "phi" for label, _ in link)
+
+
+def test_circuit_set_parameters_updates_all_shared_gates():
+    """set_parameters must update every gate sharing a Parameter object."""
+    shared = Parameter("shared", math.pi)
+    c = Circuit(nqubits=2)
+    g0 = U1(0, phi=shared)
+    g1 = U2(1, phi=shared, gamma=0.1)
+    c.add(g0)
+    c.add(g1)
+
+    # Prime the cached_property matrix on both gates.
+    _ = g0.matrix
+    _ = g1.matrix
+
+    c.set_parameters({"shared": 0.0})
+
+    # U1(phi=0) is the identity on its slot.
+    np.testing.assert_allclose(g0.matrix, np.eye(2))
+    # U2(phi=0, gamma=0.1) has [1, 0] = 1/sqrt(2) (independent of gamma).
+    assert np.isclose(g1.matrix[1, 0], 1 / np.sqrt(2))
+
+
+def test_circuit_set_parameter_bounds_updates_all_shared_gates():
+    """set_parameter_bounds must propagate to every gate sharing a Parameter."""
+    shared = Parameter("shared", 0.5, bounds=(0.0, 1.0))
+    c = Circuit(nqubits=2)
+    g0 = U1(0, phi=shared)
+    g1 = U2(1, phi=shared, gamma=0.1)
+    c.add(g0)
+    c.add(g1)
+
+    c.set_parameter_bounds({"shared": (0.1, 0.9)})
+
+    assert g0.get_parameter_bounds()["phi"] == (0.1, 0.9)
+    assert g1.get_parameter_bounds()["phi"] == (0.1, 0.9)
+
+
+def test_circuit_set_prefix_then_set_parameters_updates_all_shared_gates():
+    """After set_prefix the shared link must still drive every gate.
+
+    Previously set_prefix renamed the link key but the value remained a single
+    (label, gate) tuple, so the prefix path lost track of all but one gate.
+    """
+    shared = Parameter("shared", math.pi)
+    c = Circuit(nqubits=2)
+    g0 = U1(0, phi=shared)
+    g1 = U2(1, phi=shared, gamma=0.1)
+    c.add(g0)
+    c.add(g1)
+
+    c.set_prefix("prefix_")
+    assert "prefix_shared" in c._parameters_link
+    assert isinstance(c._parameters_link["prefix_shared"], list)
+    assert len(c._parameters_link["prefix_shared"]) == 2
+
+    _ = g0.matrix
+    _ = g1.matrix
+    c.set_parameters({"prefix_shared": 5.0})
+
+    expected = np.exp(1j * 5.0)
+    assert np.isclose(g0.matrix[1, 1], expected)
+    assert np.isclose(g1.matrix[1, 0], expected / np.sqrt(2))
