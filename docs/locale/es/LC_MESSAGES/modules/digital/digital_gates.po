@@ -1,0 +1,237 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025, Qilimanjaro Quantum Tech
+# This file is distributed under the same license as the QiliSDK package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: QiliSDK \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-05-05 15:18+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: es\n"
+"Language-Team: es <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../modules/digital/digital_gates.rst:2
+msgid "Gates"
+msgstr "Puertas"
+
+#: ../../modules/digital/digital_gates.rst:4
+msgid ""
+"This submodule provides the necessary components to define and manipulate"
+" quantum gates for use in digital quantum circuits."
+msgstr ""
+"Este submódulo proporciona los componentes necesarios para definir y "
+"manipular puertas cuánticas para su uso en circuitos cuánticos digitales."
+
+#: ../../modules/digital/digital_gates.rst:7
+msgid "Simple Gates"
+msgstr "Puertas simples"
+
+#: ../../modules/digital/digital_gates.rst:9
+msgid "Use these constructors to apply standard single- and two-qubit operations:"
+msgstr "Use estos constructores para aplicar operaciones estándar de uno y dos qubits:"
+
+#: ../../modules/digital/digital_gates.rst:11
+msgid ""
+":class:`X(qubit: int)<qilisdk.digital.gates.X>` Pauli X (bit-flip) on the"
+" specified qubit."
+msgstr ""
+":class:`X(qubit: int)<qilisdk.digital.gates.X>` Pauli X (inversión de bit) "
+"sobre el qubit especificado."
+
+#: ../../modules/digital/digital_gates.rst:13
+msgid ""
+":class:`Y(qubit: int)<qilisdk.digital.gates.Y>` Pauli Y (bit-and-phase-"
+"flip)."
+msgstr ""
+":class:`Y(qubit: int)<qilisdk.digital.gates.Y>` Pauli Y (inversión de bit "
+"y fase)."
+
+#: ../../modules/digital/digital_gates.rst:15
+msgid ":class:`Z(qubit: int)<qilisdk.digital.gates.Z>` Pauli Z (phase-flip)."
+msgstr ":class:`Z(qubit: int)<qilisdk.digital.gates.Z>` Pauli Z (inversión de fase)."
+
+#: ../../modules/digital/digital_gates.rst:17
+msgid ""
+":class:`H(qubit: int)<qilisdk.digital.gates.H>` Hadamard: creates "
+"superposition."
+msgstr ""
+":class:`H(qubit: int)<qilisdk.digital.gates.H>` Hadamard: crea "
+"superposición."
+
+#: ../../modules/digital/digital_gates.rst:19
+msgid ""
+":class:`I(qubit: int)<qilisdk.digital.gates.I>` Identity gate: leaves the"
+" qubit unchanged."
+msgstr ""
+":class:`I(qubit: int)<qilisdk.digital.gates.I>` Puerta identidad: deja el "
+"qubit sin cambios."
+
+#: ../../modules/digital/digital_gates.rst:21
+msgid ""
+":class:`S(qubit: int)<qilisdk.digital.gates.S>` Phase gate (π/2 rotation "
+"about Z)."
+msgstr ""
+":class:`S(qubit: int)<qilisdk.digital.gates.S>` Puerta de fase (rotación "
+"π/2 alrededor de Z)."
+
+#: ../../modules/digital/digital_gates.rst:23
+msgid ""
+":class:`T(qubit: int)<qilisdk.digital.gates.T>` T gate (π/4 rotation "
+"about Z)."
+msgstr ""
+":class:`T(qubit: int)<qilisdk.digital.gates.T>` Puerta T (rotación π/4 "
+"alrededor de Z)."
+
+#: ../../modules/digital/digital_gates.rst:25
+msgid ""
+":class:`RX(qubit: int, theta: float | Parameter | "
+"Term)<qilisdk.digital.gates.RX>` Rotation by angle `theta` around X."
+msgstr ""
+":class:`RX(qubit: int, theta: float | Parameter | "
+"Term)<qilisdk.digital.gates.RX>` Rotación por el ángulo `theta` alrededor de X."
+
+#: ../../modules/digital/digital_gates.rst:27
+msgid ""
+":class:`RY(qubit: int, theta: float | Parameter | "
+"Term)<qilisdk.digital.gates.RY>` Rotation by angle `theta` around Y."
+msgstr ""
+":class:`RY(qubit: int, theta: float | Parameter | "
+"Term)<qilisdk.digital.gates.RY>` Rotación por el ángulo `theta` alrededor de Y."
+
+#: ../../modules/digital/digital_gates.rst:29
+msgid ""
+":class:`RZ(qubit: int, phi: float | Parameter | "
+"Term)<qilisdk.digital.gates.RZ>` Rotation by angle `phi` around Z."
+msgstr ""
+":class:`RZ(qubit: int, phi: float | Parameter | "
+"Term)<qilisdk.digital.gates.RZ>` Rotación por el ángulo `phi` alrededor de Z."
+
+#: ../../modules/digital/digital_gates.rst:31
+msgid ""
+":class:`U1(qubit: int, *, phi: float | Parameter | "
+"Term)<qilisdk.digital.gates.U1>` Phase shift equivalent to RZ plus global"
+" phase."
+msgstr ""
+":class:`U1(qubit: int, *, phi: float | Parameter | "
+"Term)<qilisdk.digital.gates.U1>` Desplazamiento de fase equivalente a RZ "
+"más fase global."
+
+#: ../../modules/digital/digital_gates.rst:33
+msgid ""
+":class:`U2(qubit: int, *, phi: float | Parameter | Term, gamma: float | "
+"Parameter | Term)<qilisdk.digital.gates.U2>` π/2 Y-rotation sandwiched by"
+" Z-rotations."
+msgstr ""
+":class:`U2(qubit: int, *, phi: float | Parameter | Term, gamma: float | "
+"Parameter | Term)<qilisdk.digital.gates.U2>` Rotación Y de π/2 entre "
+"rotaciones Z."
+
+#: ../../modules/digital/digital_gates.rst:35
+msgid ""
+":class:`U3(qubit: int, *, theta: float | Parameter | Term, phi: float | "
+"Parameter | Term, gamma: float | Parameter | "
+"Term)<qilisdk.digital.gates.U3>` General single-qubit unitary: RZ-RY-RZ "
+"decomposition."
+msgstr ""
+":class:`U3(qubit: int, *, theta: float | Parameter | Term, phi: float | "
+"Parameter | Term, gamma: float | Parameter | "
+"Term)<qilisdk.digital.gates.U3>` Unitaria general de un qubit: "
+"descomposición RZ-RY-RZ."
+
+#: ../../modules/digital/digital_gates.rst:37
+msgid ""
+":class:`SWAP(a: int, b: int)<qilisdk.digital.gates.SWAP>` Exchanges the "
+"states of qubits ``a`` and ``b``."
+msgstr ""
+":class:`SWAP(a: int, b: int)<qilisdk.digital.gates.SWAP>` Intercambia los "
+"estados de los qubits ``a`` y ``b``."
+
+#: ../../modules/digital/digital_gates.rst:39
+msgid ""
+":class:`CNOT(control: int, target: int)<qilisdk.digital.gates.CNOT>` "
+"Controlled-X: flips target if control is 1."
+msgstr ""
+":class:`CNOT(control: int, target: int)<qilisdk.digital.gates.CNOT>` "
+"X controlada: invierte el objetivo si el control es 1."
+
+#: ../../modules/digital/digital_gates.rst:41
+msgid ""
+":class:`CZ(control: int, target: int)<qilisdk.digital.gates.CZ>` "
+"Controlled-Z: applies Z on target if control is 1."
+msgstr ""
+":class:`CZ(control: int, target: int)<qilisdk.digital.gates.CZ>` "
+"Z controlada: aplica Z sobre el objetivo si el control es 1."
+
+#: ../../modules/digital/digital_gates.rst:43
+msgid ""
+":class:`M(*qubits: int)<qilisdk.digital.gates.M>` Measures the listed "
+"qubits in the computational basis."
+msgstr ""
+":class:`M(*qubits: int)<qilisdk.digital.gates.M>` Mide los qubits "
+"listados en la base computacional."
+
+#: ../../modules/digital/digital_gates.rst:47
+msgid "Controlled Gates"
+msgstr "Puertas controladas"
+
+#: ../../modules/digital/digital_gates.rst:49
+msgid ""
+"Any basic gate can be turned into a controlled gate using the "
+":class:`~qilisdk.digital.gates.Controlled` class:"
+msgstr ""
+"Cualquier puerta básica puede convertirse en una puerta controlada usando "
+"la clase :class:`~qilisdk.digital.gates.Controlled`:"
+
+#: ../../modules/digital/digital_gates.rst:58
+msgid ""
+"Or alternatively, you can use the "
+":meth:`.controlled()<qilisdk.digital.gates.BasicGate.controlled>` method "
+"on any gate instance:"
+msgstr ""
+"O alternativamente, se puede usar el método "
+":meth:`.controlled()<qilisdk.digital.gates.BasicGate.controlled>` sobre "
+"cualquier instancia de puerta:"
+
+#: ../../modules/digital/digital_gates.rst:69
+msgid "Adjoint Gates"
+msgstr "Puertas adjuntas"
+
+#: ../../modules/digital/digital_gates.rst:71
+msgid ""
+"You can create the Hermitian conjugate (dagger) of a gate either using "
+"the :class:`~qilisdk.digital.gates.Adjoint` class or using the "
+":meth:`.adjoint()<qilisdk.digital.gates.BasicGate.adjoint>` method on any"
+" gate instance:"
+msgstr ""
+"Se puede crear el conjugado hermítico (dagger) de una puerta usando la "
+"clase :class:`~qilisdk.digital.gates.Adjoint` o usando el método "
+":meth:`.adjoint()<qilisdk.digital.gates.BasicGate.adjoint>` sobre "
+"cualquier instancia de puerta:"
+
+#: ../../modules/digital/digital_gates.rst:82
+msgid "Exponential Gates"
+msgstr "Puertas exponenciales"
+
+#: ../../modules/digital/digital_gates.rst:84
+msgid ""
+"To apply a gate as an exponential operator, use either the "
+":class:`~qilisdk.digital.gates.Exponential` class or the "
+":meth:`.exponential()<qilisdk.digital.gates.BasicGate.exponential>` "
+"method on any gate instance:"
+msgstr ""
+"Para aplicar una puerta como operador exponencial, use la clase "
+":class:`~qilisdk.digital.gates.Exponential` o el método "
+":meth:`.exponential()<qilisdk.digital.gates.BasicGate.exponential>` sobre "
+"cualquier instancia de puerta:"
+
+#~ msgid "Go to a specific subheading of a page."
+#~ msgstr "Ir a un subtítulo específico de una página."

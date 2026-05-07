@@ -1,0 +1,269 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025, Qilimanjaro Quantum Tech
+# This file is distributed under the same license as the QiliSDK package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: QiliSDK \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-05-05 15:18+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: es\n"
+"Language-Team: es <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../modules/speqtrum/speqtrum.rst:2
+msgid "SpeQtrum"
+msgstr "SpeQtrum"
+
+#: ../../modules/speqtrum/speqtrum.rst:4
+msgid ""
+"The :mod:`~qilisdk.speqtrum` package provides an optional, synchronous "
+"client for the Qilimanjaro SpeQtrum cloud. Through the "
+":class:`~qilisdk.speqtrum.speqtrum.SpeQtrum` class you can authenticate, "
+"inspect devices and jobs, and submit digital, analog, or pulse "
+"experiments for remote execution."
+msgstr ""
+"El paquete :mod:`~qilisdk.speqtrum` proporciona un cliente sincrónico "
+"opcional para la nube SpeQtrum de Qilimanjaro. A través de la clase "
+":class:`~qilisdk.speqtrum.speqtrum.SpeQtrum` se puede autenticar, "
+"inspeccionar dispositivos y trabajos, y enviar experimentos digitales, "
+"analógicos o de pulso para su ejecución remota."
+
+#: ../../modules/speqtrum/speqtrum.rst:9
+msgid "Installation"
+msgstr "Instalación"
+
+#: ../../modules/speqtrum/speqtrum.rst:11
+msgid ""
+"SpeQtrum support is shipped as an optional dependency group. Install it "
+"alongside QiliSDK with:"
+msgstr ""
+"El soporte de SpeQtrum se distribuye como un grupo de dependencias "
+"opcional. Instálelo junto con QiliSDK con:"
+
+#: ../../modules/speqtrum/speqtrum.rst:18
+msgid "Authentication"
+msgstr "Autenticación"
+
+#: ../../modules/speqtrum/speqtrum.rst:20
+msgid ""
+"The API uses short-lived OAuth tokens that are cached in the system "
+"keyring. Call :meth:`SpeQtrum.login "
+"<qilisdk.speqtrum.speqtrum.SpeQtrum.login>` once and the credentials will"
+" be reused for subsequent sessions."
+msgstr ""
+"La API utiliza tokens OAuth de corta duración que se almacenan en caché "
+"en el llavero del sistema. Llame a :meth:`SpeQtrum.login "
+"<qilisdk.speqtrum.speqtrum.SpeQtrum.login>` una vez y las credenciales se"
+" reutilizarán en sesiones posteriores."
+
+#: ../../modules/speqtrum/speqtrum.rst:42
+msgid "Client Construction"
+msgstr "Construcción del Cliente"
+
+#: ../../modules/speqtrum/speqtrum.rst:44
+msgid ""
+"Once credentials are stored, instantiate "
+":class:`~qilisdk.speqtrum.speqtrum.SpeQtrum` to start issuing requests. "
+"Construction fails with a ``RuntimeError`` if no cached credentials "
+"exist."
+msgstr ""
+"Una vez almacenadas las credenciales, instancie "
+":class:`~qilisdk.speqtrum.speqtrum.SpeQtrum` para comenzar a emitir "
+"solicitudes. La construcción falla con un ``RuntimeError`` si no existen "
+"credenciales en caché."
+
+#: ../../modules/speqtrum/speqtrum.rst:55
+msgid "Device Catalogue"
+msgstr "Catálogo de Dispositivos"
+
+#: ../../modules/speqtrum/speqtrum.rst:57
+msgid ""
+"Devices are represented by "
+":class:`~qilisdk.speqtrum.speqtrum_models.Device` models containing the "
+"device code, number of qubits, hardware type, and status. Use "
+":meth:`SpeQtrum.list_devices "
+"<qilisdk.speqtrum.speqtrum.SpeQtrum.list_devices>` to enumerate them. An "
+"optional ``where`` predicate allows client-side filtering."
+msgstr ""
+"Los dispositivos se representan mediante modelos "
+":class:`~qilisdk.speqtrum.speqtrum_models.Device` que contienen el código"
+" del dispositivo, el número de cúbits, el tipo de hardware y el estado. "
+"Use :meth:`SpeQtrum.list_devices "
+"<qilisdk.speqtrum.speqtrum.SpeQtrum.list_devices>` para enumerarlos. Un "
+"predicado ``where`` opcional permite el filtrado en el lado del cliente."
+
+#: ../../modules/speqtrum/speqtrum.rst:72
+msgid "Remote Jobs"
+msgstr "Trabajos Remotos"
+
+#: ../../modules/speqtrum/speqtrum.rst:74
+msgid ""
+":meth:`SpeQtrum.list_jobs <qilisdk.speqtrum.speqtrum.SpeQtrum.list_jobs>`"
+" returns lightweight :class:`JobInfo "
+"<qilisdk.speqtrum.speqtrum_models.JobInfo>` records. The ``where`` "
+"predicate works the same way as with devices."
+msgstr ""
+":meth:`SpeQtrum.list_jobs <qilisdk.speqtrum.speqtrum.SpeQtrum.list_jobs>`"
+" devuelve registros ligeros :class:`JobInfo "
+"<qilisdk.speqtrum.speqtrum_models.JobInfo>`. El predicado ``where`` "
+"funciona de la misma manera que con los dispositivos."
+
+#: ../../modules/speqtrum/speqtrum.rst:88
+msgid ""
+"To inspect complete job metadata (payload, result, logs, decoded errors) "
+"call :meth:`SpeQtrum.get_job "
+"<qilisdk.speqtrum.speqtrum.SpeQtrum.get_job>`. Binary fields are returned"
+" as decoded strings or structured "
+":class:`~qilisdk.speqtrum.speqtrum_models.ExecuteResult` objects."
+msgstr ""
+"Para inspeccionar los metadatos completos de un trabajo (carga útil, "
+"resultado, registros, errores decodificados) llame a "
+":meth:`SpeQtrum.get_job <qilisdk.speqtrum.speqtrum.SpeQtrum.get_job>`. "
+"Los campos binarios se devuelven como cadenas decodificadas u objetos "
+":class:`~qilisdk.speqtrum.speqtrum_models.ExecuteResult` estructurados."
+
+#: ../../modules/speqtrum/speqtrum.rst:92
+msgid ""
+"When you wait on a :class:`~qilisdk.speqtrum.speqtrum_models.JobHandle`, "
+"the returned object is a "
+":class:`~qilisdk.speqtrum.speqtrum_models.TypedJobDetail` that exposes a "
+"strongly typed "
+":meth:`~qilisdk.speqtrum.speqtrum_models.TypedJobDetail.get_results` "
+"helper."
+msgstr ""
+"Cuando se espera a un "
+":class:`~qilisdk.speqtrum.speqtrum_models.JobHandle`, el objeto devuelto "
+"es un :class:`~qilisdk.speqtrum.speqtrum_models.TypedJobDetail` que "
+"expone un auxiliar con tipado fuerte "
+":meth:`~qilisdk.speqtrum.speqtrum_models.TypedJobDetail.get_results`."
+
+#: ../../modules/speqtrum/speqtrum.rst:102
+msgid ""
+"You can still call :meth:`~qilisdk.speqtrum.speqtrum.SpeQtrum.get_job` "
+"with a bare integer identifier. In that case a regular :class:`JobDetail "
+"<qilisdk.speqtrum.speqtrum_models.JobDetail>` object is returned and you "
+"can inspect the individual ``*.result`` fields manually when needed."
+msgstr ""
+"Aún puede llamar a :meth:`~qilisdk.speqtrum.speqtrum.SpeQtrum.get_job` "
+"con un identificador entero simple. En ese caso se devuelve un objeto "
+"regular :class:`JobDetail <qilisdk.speqtrum.speqtrum_models.JobDetail>` y"
+" puede inspeccionar manualmente los campos ``*.result`` individuales "
+"cuando sea necesario."
+
+#: ../../modules/speqtrum/speqtrum.rst:107
+msgid "Waiting for Completion"
+msgstr "Espera de Finalización"
+
+#: ../../modules/speqtrum/speqtrum.rst:109
+msgid ""
+"Use :meth:`SpeQtrum.wait_for_job "
+"<qilisdk.speqtrum.speqtrum.SpeQtrum.wait_for_job>` to poll until a job "
+"reaches a terminal state (``completed``, ``error``, or ``cancelled``). "
+"Passing a :class:`JobHandle <qilisdk.speqtrum.speqtrum_models.JobHandle>`"
+" yields a :class:`TypedJobDetail "
+"<qilisdk.speqtrum.speqtrum_models.TypedJobDetail>` with typed result "
+"access, while raw integer identifiers continue to return a plain "
+":class:`JobDetail <qilisdk.speqtrum.speqtrum_models.JobDetail>`. The "
+"helper raises a :class:`TimeoutError` if the optional timeout elapses "
+"first."
+msgstr ""
+"Use :meth:`SpeQtrum.wait_for_job "
+"<qilisdk.speqtrum.speqtrum.SpeQtrum.wait_for_job>` para sondear hasta que"
+" un trabajo alcance un estado terminal (``completed``, ``error`` o "
+"``cancelled``). Pasar un :class:`JobHandle "
+"<qilisdk.speqtrum.speqtrum_models.JobHandle>` produce un "
+":class:`TypedJobDetail <qilisdk.speqtrum.speqtrum_models.TypedJobDetail>`"
+" con acceso tipado a los resultados, mientras que los identificadores "
+"enteros simples continúan devolviendo un :class:`JobDetail "
+"<qilisdk.speqtrum.speqtrum_models.JobDetail>` simple. El auxiliar lanza "
+"un :class:`TimeoutError` si el tiempo de espera opcional expira primero."
+
+#: ../../modules/speqtrum/speqtrum.rst:117
+msgid "Functional Submission"
+msgstr "Envío de Funcionales"
+
+#: ../../modules/speqtrum/speqtrum.rst:119
+msgid ""
+"SpeQtrum accepts the same primitive functionals used by local backends. "
+"The :meth:`SpeQtrum.submit <qilisdk.speqtrum.speqtrum.SpeQtrum.submit>` "
+"method inspects the functional type and serializes the correct payload. "
+"You must supply a ``device`` argument with the device code obtained from "
+":meth:`~qilisdk.speqtrum.speqtrum.SpeQtrum.list_devices`."
+msgstr ""
+"SpeQtrum acepta los mismos funcionales primitivos utilizados por los "
+"backends locales. El método :meth:`SpeQtrum.submit "
+"<qilisdk.speqtrum.speqtrum.SpeQtrum.submit>` inspecciona el tipo de "
+"funcional y serializa la carga útil correcta. Debe proporcionar un "
+"argumento ``device`` con el código de dispositivo obtenido de "
+":meth:`~qilisdk.speqtrum.speqtrum.SpeQtrum.list_devices`."
+
+#: ../../modules/speqtrum/speqtrum.rst:147
+#, fuzzy
+msgid ""
+"Physical QPUs currently do not support analog functionals built on "
+":class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`; for now, "
+"analog hardware can run only pulse experiments from "
+":mod:`~qilisdk.experiments`."
+msgstr ""
+"Las QPUs físicas actualmente no soportan funcionales analógicos basados "
+"en :class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`; por "
+"ahora, el hardware analógico solo puede ejecutar experimentos de pulso de"
+" :mod:`~qilisdk.speqtrum.experiments`."
+
+#: ../../modules/speqtrum/speqtrum.rst:152
+msgid "Variational Programs"
+msgstr "Programas Variacionales"
+
+#: ../../modules/speqtrum/speqtrum.rst:154
+msgid ""
+"Hybrid optimization is handled through the same "
+":class:`~qilisdk.functionals.variational_program.VariationalProgram` "
+"functional used with local backends. Serialize the fully-configured "
+"variational program (ansatz, optimizer, cost function) and submit it as "
+"any other functional."
+msgstr ""
+"La optimización híbrida se gestiona mediante el mismo funcional "
+":class:`~qilisdk.functionals.variational_program.VariationalProgram` "
+"utilizado con los backends locales. Serialice el programa variacional "
+"completamente configurado (ansatz, optimizador, función de coste) y "
+"envíelo como cualquier otro funcional."
+
+#: ../../modules/speqtrum/speqtrum.rst:194
+msgid "Pulse Experiments"
+msgstr "Experimentos de Pulso"
+
+#: ../../modules/speqtrum/speqtrum.rst:196
+msgid ""
+"The SpeQtrum client also supports calibration-style experiments defined "
+"in :mod:`qilisdk.experiments.experiment_functional`. These functional "
+"objects mirror the interfaces described in the "
+":doc:`/modules/functionals/functionals` chapter and return rich result "
+"types."
+msgstr ""
+"El cliente SpeQtrum también admite experimentos de estilo de calibración "
+"definidos en :mod:`qilisdk.experiments.experiment_functional`. Estos "
+"objetos funcionales reflejan las interfaces descritas en el capítulo "
+":doc:`/modules/functionals/functionals` y devuelven tipos de resultado "
+"enriquecidos."
+
+#: ../../modules/speqtrum/speqtrum.rst:223
+msgid ""
+"The resulting "
+":class:`~qilisdk.experiments.experiment_result.RabiExperimentResult` and "
+":class:`~qilisdk.experiments.experiment_result.T1ExperimentResult` "
+"objects can then be used directly."
+msgstr ""
+"Los objetos "
+":class:`~qilisdk.experiments.experiment_result.RabiExperimentResult` y "
+":class:`~qilisdk.experiments.experiment_result.T1ExperimentResult` "
+"resultantes pueden usarse directamente."
+

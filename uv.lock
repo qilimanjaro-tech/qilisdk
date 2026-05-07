@@ -3030,6 +3030,7 @@ docs = [
     { name = "sphinx-autoapi" },
     { name = "sphinx-automodapi" },
     { name = "sphinx-design" },
+    { name = "sphinx-intl" },
     { name = "sphinx-mdinclude" },
     { name = "sphinx-multiversion" },
     { name = "sphinxawesome-theme" },
@@ -3099,6 +3100,7 @@ docs = [
     { name = "sphinx-autoapi", specifier = ">=3.4.0" },
     { name = "sphinx-automodapi", specifier = ">=0.20.0" },
     { name = "sphinx-design", specifier = ">=0.7.0" },
+    { name = "sphinx-intl" },
     { name = "sphinx-mdinclude", specifier = ">=0.6.2" },
     { name = "sphinx-multiversion", git = "https://github.com/sphinx-contrib/multiversion?branch=main" },
     { name = "sphinxawesome-theme", specifier = ">=5.3.2" },
@@ -3590,6 +3592,20 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/13/7b/804f311da4663a4aecc6cf7abd83443f3d4ded970826d0c958edc77d4527/sphinx_design-0.7.0.tar.gz", hash = "sha256:d2a3f5b19c24b916adb52f97c5f00efab4009ca337812001109084a740ec9b7a", size = 2203582, upload-time = "2026-01-19T13:12:53.297Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/30/cf/45dd359f6ca0c3762ce0490f681da242f0530c49c81050c035c016bfdd3a/sphinx_design-0.7.0-py3-none-any.whl", hash = "sha256:f82bf179951d58f55dca78ab3706aeafa496b741a91b1911d371441127d64282", size = 2220350, upload-time = "2026-01-19T13:12:51.077Z" },
+]
+
+[[package]]
+name = "sphinx-intl"
+version = "2.3.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "babel" },
+    { name = "click" },
+    { name = "sphinx" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/7a/21/eb12016ecb0b52861762b0d227dff75622988f238776a5ee4c75bade507e/sphinx_intl-2.3.2.tar.gz", hash = "sha256:04b0d8ea04d111a7ba278b17b7b3fe9625c58b6f8ffb78bb8a1dd1288d88c1c7", size = 27921, upload-time = "2025-08-02T04:53:01.891Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f7/3b/156032fa29a87e9eba9182b8e893a7e88c1d98907a078a371d69be432e52/sphinx_intl-2.3.2-py3-none-any.whl", hash = "sha256:f0082f9383066bab8406129a2ed531d21c38706d08467bf5ca3714e8914bb2be", size = 12899, upload-time = "2025-08-02T04:53:00.353Z" },
 ]
 
 [[package]]

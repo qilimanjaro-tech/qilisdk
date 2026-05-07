@@ -1,0 +1,198 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025, Qilimanjaro Quantum Tech
+# This file is distributed under the same license as the QiliSDK package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: QiliSDK \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-05-05 15:18+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ca\n"
+"Language-Team: ca <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../modules/core/core_variables_parameters.rst:2
+msgid "Variables and Parameters"
+msgstr "Variables i paràmetres"
+
+#: ../../modules/core/core_variables_parameters.rst:5
+msgid "Variables"
+msgstr "Variables"
+
+#: ../../modules/core/core_variables_parameters.rst:7
+msgid "This module offers tools to define different types of variables:"
+msgstr "Aquest mòdul ofereix eines per definir diferents tipus de variables:"
+
+#: ../../modules/core/core_variables_parameters.rst:9
+msgid ":class:`Binary Variables <qilisdk.core.variables.BinaryVariable>`"
+msgstr ":class:`Variables binàries <qilisdk.core.variables.BinaryVariable>`"
+
+#: ../../modules/core/core_variables_parameters.rst:10
+msgid ":class:`Spin Variables <qilisdk.core.variables.SpinVariable>`"
+msgstr ":class:`Variables de spin <qilisdk.core.variables.SpinVariable>`"
+
+#: ../../modules/core/core_variables_parameters.rst:11
+msgid ""
+":class:`Continuous Variables <qilisdk.core.variables.Variable>` with the "
+"following customizable parameters:"
+msgstr ""
+":class:`Variables contínues <qilisdk.core.variables.Variable>` amb els "
+"paràmetres personalitzables següents:"
+
+#: ../../modules/core/core_variables_parameters.rst:13
+msgid ""
+"Domain: Specifies the variable type, one of "
+":class:`~qilisdk.core.variables.Domain.REAL`, "
+":class:`~qilisdk.core.variables.Domain.INTEGER`, "
+":class:`~qilisdk.core.variables.Domain.POSITIVE_INTEGER`, "
+":class:`~qilisdk.core.variables.Domain.BINARY`, or "
+":class:`~qilisdk.core.variables.Domain.SPIN`."
+msgstr ""
+"Domini: especifica el tipus de variable, un de: "
+":class:`~qilisdk.core.variables.Domain.REAL`, "
+":class:`~qilisdk.core.variables.Domain.INTEGER`, "
+":class:`~qilisdk.core.variables.Domain.POSITIVE_INTEGER`, "
+":class:`~qilisdk.core.variables.Domain.BINARY`, o "
+":class:`~qilisdk.core.variables.Domain.SPIN`."
+
+#: ../../modules/core/core_variables_parameters.rst:14
+msgid "Bounds: Defines the allowed value range of the variable."
+msgstr "Límits: defineix el rang de valors permesos de la variable."
+
+#: ../../modules/core/core_variables_parameters.rst:15
+msgid ""
+"Encoding: Specifies how the variable is represented using binary "
+"encodings, one of: :class:`~qilisdk.core.variables.Bitwise`, "
+":class:`~qilisdk.core.variables.DomainWall`, or "
+":class:`~qilisdk.core.variables.OneHot`."
+msgstr ""
+"Codificació: especifica com es representa la variable mitjançant "
+"codificacions binàries, una de: :class:`~qilisdk.core.variables.Bitwise`,"
+" :class:`~qilisdk.core.variables.DomainWall`, o "
+":class:`~qilisdk.core.variables.OneHot`."
+
+#: ../../modules/core/core_variables_parameters.rst:16
+msgid ""
+"Precision: Applicable to :class:`Domain.REAL "
+"<qilisdk.core.variables.Domain.REAL>` domain; defines the resolution "
+"(e.g., floating-point precision)."
+msgstr ""
+"Precisió: aplicable al domini :class:`Domain.REAL "
+"<qilisdk.core.variables.Domain.REAL>`; defineix la resolució "
+"(per exemple, la precisió en punt flotant)."
+
+#: ../../modules/core/core_variables_parameters.rst:18
+msgid "An example of creating different types of variables:"
+msgstr "Un exemple de creació de diferents tipus de variables:"
+
+#: ../../modules/core/core_variables_parameters.rst:28
+msgid ""
+"Continuous variables support indexing, where each index refers to a "
+"component of the binary-encoded form of the variable. For example:"
+msgstr ""
+"Les variables contínues admeten indexació, on cada índex fa referència a "
+"un component de la forma codificada en binari de la variable. Per exemple:"
+
+#: ../../modules/core/core_variables_parameters.rst:34
+#: ../../modules/core/core_variables_parameters.rst:47
+msgid "**Output**:"
+msgstr "**Sortida**:"
+
+#: ../../modules/core/core_variables_parameters.rst:40
+msgid ""
+"To index the first binary variable from the binary representation of x "
+"you can write: ``x[0]``. Each binary variable configuration generates a "
+"float within the bounds, based on the defined precision. For instance:"
+msgstr ""
+"Per indexar la primera variable binària de la representació binària de x "
+"podeu escriure: ``x[0]``. Cada configuració de variable binària genera un "
+"nombre de coma flotant dins dels límits, basat en la precisió definida. "
+"Per exemple:"
+
+#: ../../modules/core/core_variables_parameters.rst:54
+msgid "Parameters"
+msgstr "Paràmetres"
+
+#: ../../modules/core/core_variables_parameters.rst:56
+msgid ""
+"Many components in QiliSDK expose symbolic parameters that can be "
+"optimized or re-bound at runtime. The "
+":class:`~qilisdk.core.variables.Parameter` class represents a scalar "
+"symbol with optional bounds, and "
+":class:`~qilisdk.core.parameterizable.Parameterizable` provides a uniform"
+" API "
+"(:meth:`~qilisdk.core.parameterizable.Parameterizable.get_parameter_names`,"
+" "
+":meth:`~qilisdk.core.parameterizable.Parameterizable.set_parameter_values`…)"
+" implemented by circuits, schedules, models, and more."
+msgstr ""
+"Molts components de QiliSDK exposen paràmetres simbòlics que es poden "
+"optimitzar o reassignar en temps d'execució. La classe "
+":class:`~qilisdk.core.variables.Parameter` representa un símbol escalar "
+"amb límits opcionals, i "
+":class:`~qilisdk.core.parameterizable.Parameterizable` proporciona una "
+"API uniforme "
+"(:meth:`~qilisdk.core.parameterizable.Parameterizable.get_parameter_names`,"
+" "
+":meth:`~qilisdk.core.parameterizable.Parameterizable.set_parameter_values`…)"
+" implementada per circuits, planificacions, models i molt més."
+
+#: ../../modules/core/core_variables_parameters.rst:72
+msgid ""
+"Parameters behave like symbolic variables in algebraic expressions, so "
+"you can combine them with other variables and evaluate terms without "
+"having to pass the parameter explicitly - its stored ``value`` is used "
+"automatically."
+msgstr ""
+"Els paràmetres es comporten com a variables simbòliques en expressions "
+"algebraiques, de manera que podeu combinar-los amb altres variables i "
+"avaluar termes sense haver de passar el paràmetre explícitament: el seu "
+"``value`` emmagatzemat s'utilitza automàticament."
+
+#: ../../modules/core/core_variables_parameters.rst:76
+msgid ""
+"Objects that inherit from "
+":class:`~qilisdk.core.parameterizable.Parameterizable` collect all the "
+":class:`~qilisdk.core.variables.Parameter` instances they encounter. For "
+"example:"
+msgstr ""
+"Els objectes que hereten de "
+":class:`~qilisdk.core.parameterizable.Parameterizable` recullen totes les "
+"instàncies de :class:`~qilisdk.core.variables.Parameter` que troben. "
+"Per exemple:"
+
+#: ../../modules/core/core_variables_parameters.rst:90
+msgid ""
+"All parameter helper methods accept an optional ``where`` predicate to "
+"filter the exposed parameters. This is useful when you want to update "
+"only a subset, such as trainable parameters."
+msgstr ""
+"Tots els mètodes auxiliars de paràmetres accepten un predicat ``where`` "
+"opcional per filtrar els paràmetres exposats. Això és útil quan voleu "
+"actualitzar només un subconjunt, com ara els paràmetres entrenables."
+
+#: ../../modules/core/core_variables_parameters.rst:101
+msgid ""
+"Parameterizable objects expose parameter state through "
+":meth:`~qilisdk.core.parameterizable.Parameterizable.get_parameters`, "
+":meth:`~qilisdk.core.parameterizable.Parameterizable.get_parameter_names`,"
+" "
+":meth:`~qilisdk.core.parameterizable.Parameterizable.get_parameter_values`,"
+" and the corresponding ``set_*`` methods. Accessing ``.parameters`` "
+"directly is not part of the public API."
+msgstr ""
+"Els objectes Parameterizable exposen l'estat dels paràmetres mitjançant "
+":meth:`~qilisdk.core.parameterizable.Parameterizable.get_parameters`, "
+":meth:`~qilisdk.core.parameterizable.Parameterizable.get_parameter_names`,"
+" "
+":meth:`~qilisdk.core.parameterizable.Parameterizable.get_parameter_values`,"
+" i els mètodes ``set_*`` corresponents. Accedir a ``.parameters`` "
+"directament no forma part de l'API pública."

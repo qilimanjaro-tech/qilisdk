@@ -1,0 +1,365 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025, Qilimanjaro Quantum Tech
+# This file is distributed under the same license as the QiliSDK package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: QiliSDK \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-29 11:34+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ca\n"
+"Language-Team: ca <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../tutorials/introductions/intro_annealing.rst:2
+msgid "Quantum Annealing"
+msgstr "Recuita Quàntica"
+
+#: ../../tutorials/introductions/intro_annealing.rst:4
+msgid ""
+"In this tutorial, we will cover the basics of quantum annealing, and then"
+" show how to use QiliSDK to implement a simple quantum annealing "
+"algorithm."
+msgstr ""
+"En aquest tutorial, cobrirem els fonaments de la recuita quàntica i "
+"després mostrarem com fer servir QiliSDK per implementar un algorisme "
+"simple de recuita quàntica."
+
+#: ../../tutorials/introductions/intro_annealing.rst:8
+msgid "What is Quantum Annealing?"
+msgstr "Què és la Recuita Quàntica?"
+
+#: ../../tutorials/introductions/intro_annealing.rst:10
+msgid ""
+"Quantum annealing is a quantum optimization technique that is inspired by"
+" the process of annealing in metallurgy, where a material is heated and "
+"then slowly cooled to remove defects and improve its properties."
+msgstr ""
+"La recuita quàntica és una tècnica d'optimització quàntica inspirada en "
+"el procés de recuita en metal·lúrgia, on un material s'escalfa i després "
+"es refreda lentament per eliminar defectes i millorar les seves "
+"propietats."
+
+#: ../../tutorials/introductions/intro_annealing.rst:14
+msgid ""
+"In quantum annealing, we start with a simple quantum system that is easy "
+"to prepare and manipulate, and then we slowly evolve it into a more "
+"complex system that encodes the solution to some problem we want to "
+"solve."
+msgstr ""
+"En la recuita quàntica, comencem amb un sistema quàntic simple que és "
+"fàcil de preparar i manipular, i després l'evolucionem lentament cap a un"
+" sistema més complex que codifica la solució al problema que volem "
+"resoldre."
+
+#: ../../tutorials/introductions/intro_annealing.rst:18
+msgid ""
+"There is a theorem (the adiabatic theorem) that states that if we evolve "
+"our system slowly enough, we can guarantee that it will remain in its "
+"ground state (the lowest energy state) throughout the evolution. The "
+"speed that we need is determined by the energy gap between the ground "
+"state and the first excited state, since if we have only a small gap "
+"between the levels we have to move slowly to make sure we don't "
+"accidentally jump up to the excited state."
+msgstr ""
+"Hi ha un teorema (el teorema adiabàtic) que estableix que si evolucionem "
+"el nostre sistema prou lentament, podem garantir que romandrà en el seu "
+"estat fonamental (l'estat d'energia més baixa) al llarg de l'evolució. La"
+" velocitat que necessitem ve determinada per la bretxa d'energia entre "
+"l'estat fonamental i el primer estat excitat, ja que si tenim una bretxa "
+"petita entre els nivells hem de moure'ns lentament per assegurar-nos de "
+"no saltar accidentalment a l'estat excitat."
+
+#: ../../tutorials/introductions/intro_annealing.rst:24
+msgid "What is a Hamiltonian?"
+msgstr "Què és un Hamiltonià?"
+
+#: ../../tutorials/introductions/intro_annealing.rst:26
+msgid ""
+"When we talk about quantum annealing, we often talk about Hamiltonians. A"
+" Hamiltonian is a mathematical object that describes the energy of a "
+"quantum system."
+msgstr ""
+"Quan parlem de recuita quàntica, sovint parlem d'Hamiltonians. Un "
+"Hamiltonià és un objecte matemàtic que descriu l'energia d'un sistema "
+"quàntic."
+
+#: ../../tutorials/introductions/intro_annealing.rst:29
+msgid ""
+"In quantum annealing, we typically have two Hamiltonians: the initial "
+"Hamiltonian, which is easy to prepare and manipulate, and the final "
+"Hamiltonian, which encodes the solution to our problem. These are "
+"combined into a single time-dependent Hamiltonian that evolves from the "
+"initial to the final Hamiltonian over time:"
+msgstr ""
+"En la recuita quàntica, típicament tenim dos Hamiltonians: l'Hamiltonià "
+"inicial, que és fàcil de preparar i manipular, i l'Hamiltonià final, que "
+"codifica la solució al nostre problema. Aquests es combinen en un únic "
+"Hamiltonià depenent del temps que evoluciona de l'Hamiltonià inicial al "
+"final al llarg del temps:"
+
+#: ../../tutorials/introductions/intro_annealing.rst:33
+#, python-brace-format
+msgid "H(t) = c_i(t) H_{initial} + c_f(t) H_{final}"
+msgstr "H(t) = c_i(t) H_{initial} + c_f(t) H_{final}"
+
+#: ../../tutorials/introductions/intro_annealing.rst:37
+msgid ""
+"where :math:`c_i(t)` and :math:`c_f(t)` are time-dependent coefficients "
+"that control how the two Hamiltonians mix over time."
+msgstr ""
+"on :math:`c_i(t)` i :math:`c_f(t)` són coeficients dependents del temps "
+"que controlen com es barregen els dos Hamiltonians al llarg del temps."
+
+#: ../../tutorials/introductions/intro_annealing.rst:39
+msgid ""
+"These Hamiltonians are typically written in terms of the Pauli operators:"
+" I, X, Y, and Z, which are a set of matrices operating on qubits that "
+"form a basis for all possible quantum operations. So, for example, a "
+"simple two-qubit Hamiltonian might look like:"
+msgstr ""
+"Aquests Hamiltonians s'escriuen típicament en termes dels operadors de "
+"Pauli: I, X, Y i Z, que són un conjunt de matrius que operen sobre qubits"
+" i formen una base per a totes les operacions quàntiques possibles. Per "
+"exemple, un Hamiltonià simple de dos qubits podria tenir aquest aspecte:"
+
+#: ../../tutorials/introductions/intro_annealing.rst:43
+msgid "H = X \\otimes X - Z \\otimes I"
+msgstr "H = X \\otimes X - Z \\otimes I"
+
+#: ../../tutorials/introductions/intro_annealing.rst:47
+msgid ""
+"where the first term represents an interaction between the two qubits, "
+"and the second term represents a local field on the first qubit."
+msgstr ""
+"on el primer terme representa una interacció entre els dos qubits, i el "
+"segon terme representa un camp local en el primer qubit."
+
+#: ../../tutorials/introductions/intro_annealing.rst:49
+msgid ""
+"For simplicity, the tensor product symbol (⊗) is often omitted, and we "
+"can write the above Hamiltonian as:"
+msgstr ""
+"Per simplificar, el símbol del producte tensorial (⊗) s'omet sovint, i "
+"podem escriure l'Hamiltonià anterior com:"
+
+#: ../../tutorials/introductions/intro_annealing.rst:51
+msgid "H = X(0)X(1) - Z(0)"
+msgstr "H = X(0)X(1) - Z(0)"
+
+#: ../../tutorials/introductions/intro_annealing.rst:56
+msgid "What Do We Do Once We Have a Hamiltonian?"
+msgstr "Què Fem Un Cop Tenim un Hamiltonià?"
+
+#: ../../tutorials/introductions/intro_annealing.rst:58
+msgid ""
+"Once we have a Hamiltonian that combines our initial and final "
+"Hamiltonians, we can use it to evolve our quantum system over time. By "
+"starting our system in the ground state of the initial Hamiltonian and "
+"then slowly evolving it according to the time-dependent Hamiltonian, we "
+"can hopefully end up in the ground state of the final Hamiltonian, which "
+"encodes the solution to our problem."
+msgstr ""
+"Un cop tenim un Hamiltonià que combina els nostres Hamiltonians inicial i"
+" final, podem fer-lo servir per evolucionar el nostre sistema quàntic al "
+"llarg del temps. En iniciar el nostre sistema en l'estat fonamental de "
+"l'Hamiltonià inicial i evolucionant-lo lentament d'acord amb l'Hamiltonià"
+" depenent del temps, esperem acabar en l'estat fonamental de l'Hamiltonià"
+" final, que codifica la solució al nostre problema."
+
+#: ../../tutorials/introductions/intro_annealing.rst:64
+msgid ""
+"Say our ground state is :math:`|ψ_0⟩`, we can represent the state of our "
+"system at the next time :math:`dt` as:"
+msgstr ""
+"Si el nostre estat fonamental és :math:`|ψ_0⟩`, podem representar l'estat"
+" del nostre sistema en l'instant següent :math:`dt` com:"
+
+#: ../../tutorials/introductions/intro_annealing.rst:66
+#, python-brace-format
+msgid "|ψ(dt)⟩ = e^{-iH(dt)dt} |ψ_0⟩"
+msgstr "|ψ(dt)⟩ = e^{-iH(dt)dt} |ψ_0⟩"
+
+#: ../../tutorials/introductions/intro_annealing.rst:70
+msgid ""
+"This process is repeated until we reach the end of our annealing "
+"schedule. Assuming the :math:`dt` is small enough, the final state of our"
+" system at the end of the process should be close to the ground state of "
+"the final Hamiltonian, which encodes the solution to our problem."
+msgstr ""
+"Aquest procés es repeteix fins que arribem al final del nostre esquema de"
+" recuita. Assumint que :math:`dt` és prou petit, l'estat final del nostre"
+" sistema al final del procés hauria d'estar a prop de l'estat fonamental "
+"de l'Hamiltonià final, que codifica la solució al nostre problema."
+
+#: ../../tutorials/introductions/intro_annealing.rst:76
+msgid "How Do We Choose Our Hamiltonians?"
+msgstr "Com Triem els Nostres Hamiltonians?"
+
+#: ../../tutorials/introductions/intro_annealing.rst:78
+msgid ""
+"Determining what our initial and final Hamiltonians should be for a given"
+" optimization problem is a non-trivial task, and there are many different"
+" techniques for doing this. One common approach is to first represent our"
+" optimization problem as a quadratic unconstrained binary optimization "
+"(QUBO) problem, and then to convert this QUBO problem into our final "
+"Hamiltonian."
+msgstr ""
+"Determinar quins haurien de ser els nostres Hamiltonians inicial i final "
+"per a un problema d'optimització donat és una tasca no trivial, i hi ha "
+"moltes tècniques diferents per fer-ho. Un enfocament comú és representar "
+"primer el nostre problema d'optimització com un problema d'optimització "
+"binària quadràtica sense restriccions (QUBO), i després convertir aquest "
+"problema QUBO en el nostre Hamiltonià final."
+
+#: ../../tutorials/introductions/intro_annealing.rst:83
+msgid ""
+"A common starting Hamiltonian is the transverse field Hamiltonian, which "
+"is given by:"
+msgstr ""
+"Un Hamiltonià inicial comú és l'Hamiltonià de camp transversal, que ve "
+"donat per:"
+
+#: ../../tutorials/introductions/intro_annealing.rst:85
+#, python-brace-format
+msgid "H_{initial} = - \\sum_i X(i)"
+msgstr "H_{initial} = - \\sum_i X(i)"
+
+#: ../../tutorials/introductions/intro_annealing.rst:89
+msgid ""
+"This Hamiltonian has a simple ground state that is easy to prepare, which"
+" makes it a good choice for the initial Hamiltonian in quantum annealing."
+msgstr ""
+"Aquest Hamiltonià té un estat fonamental simple que és fàcil de preparar,"
+" la qual cosa el converteix en una bona elecció per a l'Hamiltonià "
+"inicial en la recuita quàntica."
+
+#: ../../tutorials/introductions/intro_annealing.rst:92
+msgid ""
+"There is also the choice of how you want to schedule the annealing "
+"process, which is determined by the functions :math:`c_i(t)` and "
+":math:`c_f(t)`. Choosing a good schedule can be important for the success"
+" of the annealing process, as it can help to ensure that we stay in the "
+"ground state throughout the evolution. The simplest choice is a linear "
+"schedule, the coefficients of which look as follows:"
+msgstr ""
+"També hi ha l'elecció de com es vol programar el procés de recuita, que "
+"ve determinat per les funcions :math:`c_i(t)` i :math:`c_f(t)`. Triar un "
+"bon esquema de programació pot ser important per a l'èxit del procés de "
+"recuita, ja que pot ajudar a garantir que romanguem en l'estat fonamental"
+" al llarg de l'evolució. L'elecció més simple és un esquema lineal, els "
+"coeficients del qual tenen el següent aspecte:"
+
+#: ../../tutorials/introductions/intro_annealing.rst:109
+msgid "How Can We Simulate Annealing With QiliSDK?"
+msgstr "Com Podem Simular la Recuita amb QiliSDK?"
+
+#: ../../shared/install_note.rst:1
+msgid ""
+"If you don't have QiliSDK installed and want to run the following "
+"examples yourself, you can follow the instructions in the "
+":doc:`installation guide </getting_started/installation>`."
+msgstr ""
+"Si no teniu QiliSDK instal·lat i voleu executar els exemples següents "
+"vosaltres mateixos, podeu seguir les instruccions de la :doc:`guia "
+"d'instal·lació </getting_started/installation>`."
+
+#: ../../tutorials/introductions/intro_annealing.rst:113
+msgid ""
+"In order to test out our quantum annealing algorithm, we can use the "
+"QiliSDK to simulate the annealing process on a classical computer. To do "
+"this, we first create our initial and final Hamiltonians using the "
+":doc:`Hamiltonian </modules/analog/analog_hamiltonian>` class, or more "
+"specifically the Pauli operator classes:"
+msgstr ""
+"Per provar el nostre algorisme de recuita quàntica, podem fer servir "
+"QiliSDK per simular el procés de recuita en un ordinador clàssic. Per "
+"fer-ho, primer creem els nostres Hamiltonians inicial i final fent servir"
+" la classe :doc:`Hamiltonian </modules/analog/analog_hamiltonian>`, o més"
+" específicament les classes d'operadors de Pauli:"
+
+#: ../../tutorials/introductions/intro_annealing.rst:124
+#, fuzzy
+msgid ""
+"We then need to construct our schedule to determine how the mixing will "
+"happen over time, which we can do using the :doc:`Schedule "
+"</modules/analog/analog_schedule>` class. The class allows for complete "
+"flexibility in how you want to define your schedule, but it also provides"
+" some helper functions for common schedules:"
+msgstr ""
+"Després hem de construir el nostre esquema de programació per determinar "
+"com es produirà la barreja al llarg del temps, cosa que podem fer fent "
+"servir la classe :doc:`Schedule </modules/analog/analog_schedule>`:"
+
+#: ../../tutorials/introductions/intro_annealing.rst:134
+msgid ""
+"We want to start in the ground state of the initial Hamiltonian, which is"
+" a uniform superposition of all possible states of the system:"
+msgstr ""
+"Volem començar en l'estat fonamental de l'Hamiltonià inicial, que és una "
+"superposició uniforme de tots els estats possibles del sistema:"
+
+#: ../../tutorials/introductions/intro_annealing.rst:142
+msgid ""
+"Finally, we can use :doc:`QiliSim </modules/backends/backends_qilisim>` "
+"to simulate the annealing process:"
+msgstr ""
+"Finalment, podem fer servir :doc:`QiliSim "
+"</modules/backends/backends_qilisim>` per simular el procés de recuita:"
+
+#: ../../tutorials/introductions/intro_annealing.rst:157
+msgid ""
+"This gives us the expectation values of the observables we specified at "
+"the end of the annealing process, which in this case are the terms in our"
+" final Hamiltonian:"
+msgstr ""
+"Això ens dóna els valors esperats dels observables que vam especificar al"
+" final del procés de recuita, que en aquest cas són els termes del nostre"
+" Hamiltonià final:"
+
+#: ../../tutorials/introductions/intro_annealing.rst:164
+msgid ""
+"These expectation values are close to the values we would expect for the "
+"ground state of our final Hamiltonian, since to minimize the energy of "
+"the final Hamiltonian we want to minimize the values of :math:`Z(0)` and "
+":math:`Z(1)`, while maximizing the value of :math:`Z(0)Z(1)`. If we "
+"increase the total time and decrease the time step, we can get these "
+"values even closer to 1.0 and -1.0, at the cost of increasing the runtime"
+" of our simulation."
+msgstr ""
+"Aquests valors esperats estan propers als que esperaríem per a l'estat "
+"fonamental del nostre Hamiltonià final, ja que per minimitzar l'energia "
+"de l'Hamiltonià final volem minimitzar els valors de :math:`Z(0)` i "
+":math:`Z(1)`, mentre maximitzem el valor de :math:`Z(0)Z(1)`. Si "
+"augmentem el temps total i reduïm el pas de temps, podem apropar encara "
+"més aquests valors a 1.0 i -1.0, a costa d'augmentar el temps d'execució "
+"de la nostra simulació."
+
+#: ../../tutorials/introductions/intro_annealing.rst:170
+msgid "Further Reading"
+msgstr "Lectures Addicionals"
+
+#: ../../tutorials/introductions/intro_annealing.rst:172
+msgid "`Adiabatic Theorem`_"
+msgstr "`Adiabatic Theorem`_"
+
+#: ../../tutorials/introductions/intro_annealing.rst:173
+msgid "`Pauli Operators`_"
+msgstr "`Pauli Operators`_"
+
+#: ../../tutorials/introductions/intro_annealing.rst:174
+msgid "`QUBO`_"
+msgstr "`QUBO`_"
+
+#: ../../tutorials/introductions/intro_annealing.rst:175
+msgid "`Hamiltonian`_"
+msgstr "`Hamiltonian`_"
+

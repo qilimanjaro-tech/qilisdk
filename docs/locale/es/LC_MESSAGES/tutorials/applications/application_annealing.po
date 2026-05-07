@@ -1,0 +1,406 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025, Qilimanjaro Quantum Tech
+# This file is distributed under the same license as the QiliSDK package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: QiliSDK \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-29 11:34+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: es\n"
+"Language-Team: es <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../tutorials/applications/application_annealing.rst:2
+msgid "Optimization with Quantum Annealing"
+msgstr "Optimización con Recocido Cuántico"
+
+#: ../../tutorials/applications/application_annealing.rst:4
+msgid ""
+"In this tutorial, we will explore how to use Quantum Annealing to solve a"
+" simple optimization problem using QiliSDK."
+msgstr ""
+"En este tutorial, exploraremos cómo usar el Recocido Cuántico para "
+"resolver un problema de optimización simple usando QiliSDK."
+
+#: ../../tutorials/applications/application_annealing.rst:7
+msgid ""
+"If you haven't already, it might be useful to check out these tutorials "
+"first: :doc:`Quantum Basics </tutorials/introductions/intro_quantum>`, "
+":doc:`Quantum Circuits </tutorials/introductions/intro_circuits>` and "
+":doc:`Quantum Annealing </tutorials/introductions/intro_annealing>`."
+msgstr ""
+"Si aún no lo has hecho, puede ser útil revisar primero estos tutoriales: "
+":doc:`Quantum Basics </tutorials/introductions/intro_quantum>`, "
+":doc:`Quantum Circuits </tutorials/introductions/intro_circuits>` y "
+":doc:`Quantum Annealing </tutorials/introductions/intro_annealing>`."
+
+#: ../../tutorials/applications/application_annealing.rst:13
+msgid "The Problem"
+msgstr "El Problema"
+
+#: ../../shared/team_building.rst:1
+msgid ""
+"Say we have four people and we need to form two teams of two people each."
+" We have some information about how well each pair of people work "
+"together, and we want to form the teams such that the total "
+"\"compatibility\" of the teams is maximized. The information about who "
+"likes who is as follows:"
+msgstr ""
+"Supongamos que tenemos cuatro personas y necesitamos formar dos equipos "
+"de dos personas cada uno. Tenemos información sobre lo bien que trabajan "
+"juntos cada par de personas, y queremos formar los equipos de modo que la"
+" \"compatibilidad\" total de los equipos sea máxima. La información sobre"
+" quién se lleva bien con quién es la siguiente:"
+
+#: ../../shared/team_building.rst:7 ../../shared/team_building.rst:9
+msgid "Alice"
+msgstr "Alice"
+
+#: ../../shared/team_building.rst:7 ../../shared/team_building.rst:11
+msgid "Bob"
+msgstr "Bob"
+
+#: ../../shared/team_building.rst:7 ../../shared/team_building.rst:13
+msgid "Carol"
+msgstr "Carol"
+
+#: ../../shared/team_building.rst:7 ../../shared/team_building.rst:15
+msgid "Dave"
+msgstr "Dave"
+
+#: ../../shared/team_building.rst:9 ../../shared/team_building.rst:11
+#: ../../shared/team_building.rst:13 ../../shared/team_building.rst:15
+msgid "N/A"
+msgstr "N/A"
+
+#: ../../shared/team_building.rst:9 ../../shared/team_building.rst:11
+msgid "1"
+msgstr "1"
+
+#: ../../shared/team_building.rst:9 ../../shared/team_building.rst:13
+msgid "3"
+msgstr "3"
+
+#: ../../shared/team_building.rst:9 ../../shared/team_building.rst:15
+msgid "4"
+msgstr "4"
+
+#: ../../shared/team_building.rst:11 ../../shared/team_building.rst:13
+msgid "5"
+msgstr "5"
+
+#: ../../shared/team_building.rst:11 ../../shared/team_building.rst:15
+msgid "2"
+msgstr "2"
+
+#: ../../shared/team_building.rst:13 ../../shared/team_building.rst:15
+msgid "6"
+msgstr "6"
+
+#: ../../shared/team_building.rst:18
+msgid ""
+"So this means that Alice would prefer to work with Dave, while Bob would "
+"prefer to work with Carol, and so on."
+msgstr ""
+"Esto significa que Alice preferiría trabajar con Dave, mientras que Bob "
+"preferiría trabajar con Carol, y así sucesivamente."
+
+#: ../../shared/team_building.rst:20
+msgid ""
+"Mathematically, we can represent our two teams as binary variables, where"
+" :math:`x_i` is 0 if person :math:`i` is in team 0, and 1 if they are in "
+"team 1. The compatibility of team 0 can then be expressed as:"
+msgstr ""
+"Matemáticamente, podemos representar nuestros dos equipos como variables "
+"binarias, donde :math:`x_i` es 0 si la persona :math:`i` está en el "
+"equipo 0, y 1 si está en el equipo 1. La compatibilidad del equipo 0 "
+"puede expresarse entonces como:"
+
+#: ../../shared/team_building.rst:23
+#, python-brace-format
+msgid "C_0 = \\sum_{i=0,j=0}^3 p_{ij} (1 - x_i) (1 - x_j)"
+msgstr "C_0 = \\sum_{i=0,j=0}^3 p_{ij} (1 - x_i) (1 - x_j)"
+
+#: ../../shared/team_building.rst:27
+#, python-brace-format
+msgid ""
+"Where :math:`p_{ij}` is the compatibility score between person :math:`i` "
+"and person :math:`j`. Note that here each term is only non-zero if both "
+":math:`x_i` and :math:`x_j` are 0, which means that both people are in "
+"team 0. Meanwhile the compatibility of team 1 can be expressed as:"
+msgstr ""
+"Donde :math:`p_{ij}` es la puntuación de compatibilidad entre la persona "
+":math:`i` y la persona :math:`j`. Nótese que aquí cada término solo es "
+"distinto de cero si tanto :math:`x_i` como :math:`x_j` son 0, lo que "
+"significa que ambas personas están en el equipo 0. Mientras tanto, la "
+"compatibilidad del equipo 1 puede expresarse como:"
+
+#: ../../shared/team_building.rst:31
+#, python-brace-format
+msgid "C_1 = \\sum_{i=0,j=0}^3 p_{ij} x_i x_j"
+msgstr "C_1 = \\sum_{i=0,j=0}^3 p_{ij} x_i x_j"
+
+#: ../../shared/team_building.rst:35
+msgid ""
+"Thus we want to maximize the total compatibility :math:`C = C_0 + C_1`, "
+"subject to the constraint that team 1 (and thus team 0) has exactly two "
+"people:"
+msgstr ""
+"Por lo tanto, queremos maximizar la compatibilidad total :math:`C = C_0 +"
+" C_1`, sujeto a la restricción de que el equipo 1 (y por tanto el equipo "
+"0) tenga exactamente dos personas:"
+
+#: ../../shared/team_building.rst:38
+msgid "\\max_{x_i \\in \\{0, 1\\}} C"
+msgstr "\\max_{x_i \\in \\{0, 1\\}} C"
+
+#: ../../shared/team_building.rst:42
+#, python-brace-format
+msgid "\\text{subject to} \\quad x_{Alice} + x_{Bob} + x_{Carol} + x_{Dave} = 2"
+msgstr "\\text{sujeto a} \\quad x_{Alice} + x_{Bob} + x_{Carol} + x_{Dave} = 2"
+
+#: ../../shared/team_building.rst:46
+msgid ""
+"One issue with this formulation is that it has a constraint, which makes "
+"it more difficult to solve using quantum optimization algorithms. To fix "
+"this, we can use some techniques to turn this into a QUBO (Quadratic "
+"Unconstrained Binary Optimization) problem. In this case, since we just "
+"have a single equality constraint, we can add a squared version of it to "
+"the objective function as a penalty term, such that the penalty term is "
+"zero when the constraint is satisfied, and positive otherwise. For more "
+"details on this process, check out the :doc:`QUBO reference "
+"</modules/core/core_qubo>`. Now we can assume that the problem has been "
+"reformulated into the following unconstrained optimization problem:"
+msgstr ""
+"Un problema con esta formulación es que tiene una restricción, lo que la "
+"hace más difícil de resolver usando algoritmos de optimización cuántica. "
+"Para solucionar esto, podemos usar algunas técnicas para convertirla en "
+"un problema QUBO (Optimización Binaria Cuadrática Sin Restricciones). En "
+"este caso, dado que solo tenemos una restricción de igualdad, podemos "
+"añadir una versión al cuadrado de esta a la función objetivo como término"
+" de penalización, de modo que el término de penalización sea cero cuando "
+"se satisface la restricción y positivo en caso contrario. Para más "
+"detalles sobre este proceso, consulta la :doc:`referencia QUBO "
+"</modules/core/core_qubo>`. Ahora podemos asumir que el problema se ha "
+"reformulado en el siguiente problema de optimización sin restricciones:"
+
+#: ../../shared/team_building.rst:53
+msgid "\\min_{x_i \\in \\{0, 1\\}} \\sum_{i=0,j=0}^4 c_{ij} x_i x_j"
+msgstr "\\min_{x_i \\in \\{0, 1\\}} \\sum_{i=0,j=0}^4 c_{ij} x_i x_j"
+
+#: ../../shared/team_building.rst:57
+#, python-brace-format
+msgid ""
+"Where :math:`c_{ij}` are coefficients that encode the objective function "
+"as well as the constraint."
+msgstr ""
+"Donde :math:`c_{ij}` son coeficientes que codifican la función objetivo "
+"así como la restricción."
+
+#: ../../tutorials/applications/application_annealing.rst:18
+msgid "The Solution"
+msgstr "La Solución"
+
+#: ../../tutorials/applications/application_annealing.rst:20
+msgid ""
+"Now that we have our problem formulated as a QUBO, we can use quantum "
+"annealing to find an approximate solution to it. Quantum annealing is a "
+"metaheuristic optimization algorithm that is inspired by the process of "
+"annealing in metallurgy, where a material is heated and then slowly "
+"cooled to remove defects and find a low-energy state. In quantum "
+"annealing, we start with a simple Hamiltonian whose ground state is easy "
+"to prepare and then slowly evolve it into a more complex Hamiltonian that"
+" encodes the optimization problem we want to solve. The hope is that if "
+"we do this slowly enough, the system will remain in its ground state "
+"throughout the evolution, and thus end up in the ground state of the "
+"final Hamiltonian, which corresponds to the optimal solution of our "
+"problem."
+msgstr ""
+"Ahora que tenemos nuestro problema formulado como un QUBO, podemos usar "
+"el recocido cuántico para encontrar una solución aproximada. El recocido "
+"cuántico es un algoritmo de optimización metaheurístico inspirado en el "
+"proceso de recocido en metalurgia, donde un material se calienta y luego "
+"se enfría lentamente para eliminar defectos y encontrar un estado de baja"
+" energía. En el recocido cuántico, comenzamos con un Hamiltoniano simple "
+"cuyo estado fundamental es fácil de preparar y luego lo evolucionamos "
+"lentamente hacia un Hamiltoniano más complejo que codifica el problema de"
+" optimización que queremos resolver. La esperanza es que si hacemos esto "
+"con suficiente lentitud, el sistema permanecerá en su estado fundamental "
+"durante toda la evolución y así terminará en el estado fundamental del "
+"Hamiltoniano final, que corresponde a la solución óptima de nuestro "
+"problema."
+
+#: ../../tutorials/applications/application_annealing.rst:29
+#, fuzzy
+msgid ""
+"Assuming we have reformulated our problem into a QUBO, we can construct "
+"the problem Hamiltonian for quantum annealing, which is in the form:"
+msgstr ""
+"Asumiendo que hemos reformulado nuestro problema en un QUBO, podemos "
+"construir el Hamiltoniano del problema para el recocido cuántico, que "
+"viene dado por:"
+
+#: ../../tutorials/applications/application_annealing.rst:32
+#, python-brace-format
+msgid "H_{prob} = \\sum_{i,j} c_{ij} Z(i) Z(j)"
+msgstr "H_{prob} = \\sum_{i,j} c_{ij} Z(i) Z(j)"
+
+#: ../../tutorials/applications/application_annealing.rst:36
+#, fuzzy, python-brace-format
+msgid ""
+"Where :math:`Z(i)` is the Pauli-Z operator acting on qubit :math:`i`, and"
+" :math:`c_{ij}` are the coefficients from our QUBO formulation. Note that"
+" these variables :math:`Z(i)` are related to the binary variables in our "
+"original problem by the transformation :math:`x_i = (1 - Z(i))/2`,"
+msgstr ""
+"Donde :math:`Z(i)` es el operador de Pauli-Z que actúa sobre el cúbit "
+":math:`i`, y :math:`c_{ij}` son los coeficientes de nuestra formulación "
+"QUBO."
+
+#: ../../tutorials/applications/application_annealing.rst:39
+msgid ""
+"Our mixing Hamiltonian is typically chosen to be the transverse field "
+"Hamiltonian, which is given by:"
+msgstr ""
+"Nuestro Hamiltoniano de mezcla se elige típicamente como el Hamiltoniano "
+"de campo transverso, que viene dado por:"
+
+#: ../../tutorials/applications/application_annealing.rst:41
+#, python-brace-format
+msgid "H_{mix} = - \\sum_i X(i)"
+msgstr "H_{mix} = - \\sum_i X(i)"
+
+#: ../../tutorials/applications/application_annealing.rst:45
+msgid "The overall time-dependent Hamiltonian that we evolve is then given by:"
+msgstr ""
+"El Hamiltoniano dependiente del tiempo que evolucionamos está dado "
+"entonces por:"
+
+#: ../../tutorials/applications/application_annealing.rst:47
+#, python-brace-format
+msgid "H(t) = A(t) H_{mix} + B(t) H_{prob}"
+msgstr "H(t) = A(t) H_{mix} + B(t) H_{prob}"
+
+#: ../../tutorials/applications/application_annealing.rst:51
+msgid ""
+"Where :math:`A(t)` and :math:`B(t)` are functions that determine how we "
+"interpolate between the mixing Hamiltonian and the problem Hamiltonian "
+"over time. For simplicity here will just assume that we do a linear "
+"interpolation, such that :math:`A(t) = 1 - t/T` and :math:`B(t) = t/T`, "
+"where :math:`T` is the total annealing time."
+msgstr ""
+"Donde :math:`A(t)` y :math:`B(t)` son funciones que determinan cómo "
+"interpolamos entre el Hamiltoniano de mezcla y el Hamiltoniano del "
+"problema a lo largo del tiempo. Por simplicidad, aquí asumiremos que "
+"realizamos una interpolación lineal, de modo que :math:`A(t) = 1 - t/T` y"
+" :math:`B(t) = t/T`, donde :math:`T` es el tiempo total de recocido."
+
+#: ../../tutorials/applications/application_annealing.rst:57
+msgid "The Implementation"
+msgstr "La Implementación"
+
+#: ../../tutorials/applications/application_annealing.rst:59
+msgid ""
+"To simulate the evolution of this time-dependent Hamiltonian, first we "
+"need to form our problem:"
+msgstr ""
+"Para simular la evolución de este Hamiltoniano dependiente del tiempo, "
+"primero necesitamos formular nuestro problema:"
+
+#: ../../tutorials/applications/application_annealing.rst:63
+msgid ""
+"Then we use the model to form our problem Hamiltonian, and we can also "
+"define our mixing Hamiltonian and the schedule for our evolution:"
+msgstr ""
+"Luego usamos el modelo para formar nuestro Hamiltoniano del problema, y "
+"también podemos definir nuestro Hamiltoniano de mezcla y el esquema de "
+"nuestra evolución:"
+
+#: ../../tutorials/applications/application_annealing.rst:74
+#, fuzzy
+msgid ""
+"We also need to define the schedule - how the coefficients of the problem"
+" and mixing Hamiltonians change over time. In this case we'll just use a "
+"simple linear mixing:"
+msgstr ""
+"También necesitamos definir el esquema: cómo cambian los coeficientes de "
+"los Hamiltonianos del problema y de mezcla a lo largo del tiempo:"
+
+#: ../../tutorials/applications/application_annealing.rst:81
+msgid ""
+"We will start in the ground state of our mixing Hamiltonian, which is the"
+" equal superposition state over all possible team assignments:"
+msgstr ""
+"Comenzaremos en el estado fundamental de nuestro Hamiltoniano de mezcla, "
+"que es el estado de superposición uniforme sobre todas las posibles "
+"asignaciones de equipos:"
+
+#: ../../tutorials/applications/application_annealing.rst:87
+msgid ""
+"Finally, we initialize our quantum simulator, execute the evolution, and "
+"read out the results:"
+msgstr ""
+"Finalmente, inicializamos nuestro simulador cuántico, ejecutamos la "
+"evolución y leemos los resultados:"
+
+#: ../../tutorials/applications/application_annealing.rst:101
+msgid "This will print something like the following:"
+msgstr "Esto imprimirá algo parecido a lo siguiente:"
+
+#: ../../tutorials/applications/application_annealing.rst:118
+msgid ""
+"As you can see from these results, the samples satisfy the constraint "
+"(i.e. have exactly two 1's). More specifically, the two samples \"0110\" "
+"and \"1001\" (corresponding to Alice/Dave on a team and Bob/Carol on the "
+"other team) are the optimal solutions to our problem, with 9 being the "
+"highest obtainable compatibility score."
+msgstr ""
+
+#: ../../tutorials/applications/application_annealing.rst:123
+msgid "Further Reading"
+msgstr "Lectura Adicional"
+
+#: ../../tutorials/applications/application_annealing.rst:125
+msgid "`QUBO`_"
+msgstr "`QUBO`_"
+
+#: ../../tutorials/applications/application_annealing.rst:126
+msgid "`Quantum Annealing`_"
+msgstr "`Quantum Annealing`_"
+
+#~ msgid ""
+#~ "As you can see from these results,"
+#~ " the most common samples are those"
+#~ " which satisfy the constraint (i.e. "
+#~ "have exactly two 1's), and among "
+#~ "those, the most common ones are "
+#~ "those which have a high objective "
+#~ "value. In this case there is some"
+#~ " leakage into other states like 0000"
+#~ " and 1111, but this is expected "
+#~ "since quantum annealing is a heuristic"
+#~ " algorithm and does not always find"
+#~ " the optimal solution."
+#~ msgstr ""
+#~ "Como puedes ver en estos resultados, "
+#~ "las muestras más comunes son aquellas"
+#~ " que satisfacen la restricción (es "
+#~ "decir, tienen exactamente dos 1's), y"
+#~ " entre ellas, las más comunes son "
+#~ "las que tienen un valor objetivo "
+#~ "alto. En este caso hay cierta "
+#~ "filtración hacia otros estados como 0000"
+#~ " y 1111, pero esto es esperado "
+#~ "ya que el recocido cuántico es un"
+#~ " algoritmo heurístico y no siempre "
+#~ "encuentra la solución óptima."
+

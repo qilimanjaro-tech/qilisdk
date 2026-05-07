@@ -1,0 +1,117 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025, Qilimanjaro Quantum Tech
+# This file is distributed under the same license as the QiliSDK package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: QiliSDK \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-05-05 15:18+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ca\n"
+"Language-Team: ca <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../modules/backends/backends_cuda.rst:2
+msgid "CUDA Backend"
+msgstr "Backend CUDA"
+
+#: ../../modules/backends/backends_cuda.rst:4
+msgid ""
+"The **CUDA** backend leverages NVIDIA GPUs via the ``cuda-quantum`` "
+"framework for both digital and analog simulations. When no compatible GPU"
+" is detected it automatically falls back to cpu-based targets, so you can"
+" prototype on commodity hardware before moving to accelerated machines."
+msgstr ""
+"El backend **CUDA** aprofita les GPU NVIDIA mitjançant el marc "
+"``cuda-quantum`` per a simulacions tant digitals com analògiques. Quan no "
+"es detecta cap GPU compatible, recorre automàticament a objectius basats en "
+"CPU, de manera que podeu fer prototips en maquinari convencional abans de "
+"passar a màquines accelerades."
+
+#: ../../modules/backends/backends_cuda.rst:9
+msgid "Installation"
+msgstr "Instal·lació"
+
+#: ../../modules/backends/backends_cuda.rst:16
+msgid "Initialization"
+msgstr "Inicialització"
+
+#: ../../modules/backends/backends_cuda.rst:27
+msgid "Capabilities"
+msgstr "Capacitats"
+
+#: ../../modules/backends/backends_cuda.rst:29
+msgid ""
+"Digital circuits through "
+":class:`~qilisdk.functionals.digital_propagation.DigitalPropagation`."
+msgstr ""
+"Circuits digitals mitjançant "
+":class:`~qilisdk.functionals.digital_propagation.DigitalPropagation`."
+
+#: ../../modules/backends/backends_cuda.rst:30
+msgid ""
+"Analog dynamics for "
+":class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`, powered "
+"by ``cudaq.evolve``."
+msgstr ""
+"Dinàmica analògica per a "
+":class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`, impulsada "
+"per ``cudaq.evolve``."
+
+#: ../../modules/backends/backends_cuda.rst:31
+msgid ""
+"Hybrid execution when paired with "
+":class:`~qilisdk.functionals.variational_program.VariationalProgram`."
+msgstr ""
+"Execució híbrida quan s'emparella amb "
+":class:`~qilisdk.functionals.variational_program.VariationalProgram`."
+
+#: ../../modules/backends/backends_cuda.rst:34
+msgid "Sampling methods"
+msgstr "Mètodes de mostreig"
+
+#: ../../modules/backends/backends_cuda.rst:36
+msgid ""
+":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.STATE_VECTOR`: "
+"Full state-vector simulation (switches to CPU if a GPU is unavailable)."
+msgstr ""
+":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.STATE_VECTOR`: "
+"Simulació completa de vector d'estat (canvia a CPU si no hi ha una GPU "
+"disponible)."
+
+#: ../../modules/backends/backends_cuda.rst:37
+msgid ""
+":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.TENSOR_NETWORK`:"
+" Tensor-network contraction, suited for shallow yet wide circuits."
+msgstr ""
+":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.TENSOR_NETWORK`:"
+" Contracció de xarxa tensorial, adequada per a circuits poc profunds però "
+"amples."
+
+#: ../../modules/backends/backends_cuda.rst:38
+msgid ""
+":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.MATRIX_PRODUCT_STATE`:"
+" Matrix-product-state simulation for low-entanglement workloads."
+msgstr ""
+":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.MATRIX_PRODUCT_STATE`:"
+" Simulació d'estat de producte matricial per a càrregues de treball amb "
+"baix entrelaçament."
+
+#: ../../modules/backends/backends_cuda.rst:41
+msgid "Example"
+msgstr "Exemple"
+
+#: ../../modules/backends/backends_cuda.rst:65
+msgid "**Output**"
+msgstr "**Sortida**"
+
+#~ msgid "Go to a specific subheading of a page."
+#~ msgstr "Aneu a un subapartat específic d'una pàgina."

@@ -1,0 +1,223 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025, Qilimanjaro Quantum Tech
+# This file is distributed under the same license as the QiliSDK package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: QiliSDK \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-14 12:09+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ca\n"
+"Language-Team: ca <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../tutorials/applications/application_shors.rst:2
+msgid "Factoring With Shor's Algorithm"
+msgstr "Factorització amb l'Algorisme de Shor"
+
+#: ../../tutorials/applications/application_shors.rst:4
+msgid ""
+"In this tutorial, we will learn about Shor's algorithm, which is a "
+"quantum algorithm for factoring large integers efficiently, providing an "
+"exponential speedup compared to classical algorithms."
+msgstr ""
+"En aquest tutorial, aprendrem sobre l'algorisme de Shor, que és un "
+"algorisme quàntic per factoritzar enters grans de manera eficient, "
+"proporcionant una acceleració exponencial en comparació amb els algorismes "
+"clàssics."
+
+#: ../../tutorials/applications/application_shors.rst:7
+msgid ""
+"If you haven't already, it might be useful to check out these tutorials "
+"first: :doc:`Quantum Basics </tutorials/introductions/intro_quantum>` and"
+" :doc:`Quantum Circuits </tutorials/introductions/intro_circuits>`."
+msgstr ""
+"Si encara no ho heu fet, pot ser útil consultar primer aquests tutorials: "
+":doc:`Quantum Basics </tutorials/introductions/intro_quantum>` i"
+" :doc:`Quantum Circuits </tutorials/introductions/intro_circuits>`."
+
+#: ../../tutorials/applications/application_shors.rst:12
+msgid "The Problem"
+msgstr "El Problema"
+
+#: ../../tutorials/applications/application_shors.rst:14
+msgid ""
+"The problem of integer factorization is to find the prime factors of a "
+"given composite number. For example, if we have the number 15, its prime "
+"factors are 3 and 5. This problem is of great importance in cryptography,"
+" as many encryption schemes rely on the difficulty of factoring large "
+"integers."
+msgstr ""
+"El problema de la factorització d'enters consisteix a trobar els factors "
+"primers d'un nombre compost donat. Per exemple, si tenim el nombre 15, els "
+"seus factors primers són 3 i 5. Aquest problema és de gran importància en "
+"criptografia, ja que molts esquemes de xifratge depenen de la dificultat de "
+"factoritzar enters grans."
+
+#: ../../tutorials/applications/application_shors.rst:18
+msgid ""
+"Classically, the best-known algorithms for factoring large integers run "
+"in sub-exponential time, which makes it infeasible to factor large "
+"numbers in a reasonable time frame."
+msgstr ""
+"Clàssicament, els algorismes més coneguts per factoritzar enters grans "
+"s'executen en temps sub-exponencial, la qual cosa fa inviable factoritzar "
+"nombres grans en un temps raonable."
+
+#: ../../tutorials/applications/application_shors.rst:22
+msgid "The Solution"
+msgstr "La Solució"
+
+#: ../../tutorials/applications/application_shors.rst:24
+msgid ""
+"Shor's algorithm, developed by Peter Shor in 1994, provides a polynomial-"
+"time solution to the integer factorization problem using quantum "
+"computing. The algorithm consists of two main parts: a classical part and"
+" a quantum part. The classical part involves reducing the factorization "
+"problem to a problem of finding the period of a certain function, while "
+"the quantum part uses quantum Fourier transform to find this period "
+"efficiently."
+msgstr ""
+"L'algorisme de Shor, desenvolupat per Peter Shor el 1994, proporciona una "
+"solució en temps polinomial al problema de factorització d'enters mitjançant "
+"la computació quàntica. L'algorisme consta de dues parts principals: una "
+"part clàssica i una part quàntica. La part clàssica implica reduir el "
+"problema de factorització a un problema de trobar el període d'una "
+"determinada funció, mentre que la part quàntica usa la transformada de "
+"Fourier quàntica per trobar aquest període de manera eficient."
+
+#: ../../tutorials/applications/application_shors.rst:30
+msgid ""
+"The algorithm can be summarized as follows, when trying to factor the "
+"number :math:`N`:"
+msgstr ""
+"L'algorisme es pot resumir de la manera següent, en intentar factoritzar "
+"el nombre :math:`N`:"
+
+#: ../../tutorials/applications/application_shors.rst:32
+msgid "Choose a random integer :math:`a` such that :math:`1 < a < N`"
+msgstr "Trieu un enter aleatori :math:`a` tal que :math:`1 < a < N`"
+
+#: ../../tutorials/applications/application_shors.rst:33
+msgid ""
+"Compute the greatest common divisor (GCD) of :math:`a` and :math:`N`. If "
+"the GCD is greater than 1, then we have found a non-trivial factor of "
+":math:`N`."
+msgstr ""
+"Calculeu el màxim comú divisor (MCD) de :math:`a` i :math:`N`. Si el MCD "
+"és major que 1, hem trobat un factor no trivial de :math:`N`."
+
+#: ../../tutorials/applications/application_shors.rst:34
+msgid ""
+"If the GCD is 1, then we proceed to find the period :math:`r` of the "
+"function :math:`f(x) = a^x \\mod N` using the quantum part of the "
+"algorithm."
+msgstr ""
+"Si el MCD és 1, procedim a trobar el període :math:`r` de la funció "
+":math:`f(x) = a^x \\mod N` usant la part quàntica de l'algorisme."
+
+#: ../../tutorials/applications/application_shors.rst:35
+#, python-brace-format
+msgid ""
+"If :math:`r` is even and the GCD of :math:`a^{r/2} - 1` and :math:`N` is "
+"greater than 1, then we have found a non-trivial factor of :math:`N`."
+msgstr ""
+"Si :math:`r` és parell i el MCD de :math:`a^{r/2} - 1` i :math:`N` és "
+"major que 1, hem trobat un factor no trivial de :math:`N`."
+
+#: ../../tutorials/applications/application_shors.rst:36
+msgid ""
+"Otherwise, we repeat the process with a different random integer "
+":math:`a`."
+msgstr ""
+"En cas contrari, repetim el procés amb un enter aleatori :math:`a` "
+"diferent."
+
+#: ../../tutorials/applications/application_shors.rst:39
+msgid "The Implementation"
+msgstr "La Implementació"
+
+#: ../../tutorials/applications/application_shors.rst:41
+msgid ""
+"As an example, let's consider the number 3. Whilst 15 is often used as an"
+" example for factoring, the quantum circuit for factoring it is harder to"
+" explain. Instead, we will factor 3 into 1 and 3 to demonstrate the "
+"algorithm."
+msgstr ""
+"Com a exemple, considerem el nombre 3. Encara que el 15 s'usa sovint com a "
+"exemple per a la factorització, el circuit quàntic per factoritzar-lo és "
+"més difícil d'explicar. En el seu lloc, factoritzarem 3 en 1 i 3 per "
+"demostrar l'algorisme."
+
+#: ../../tutorials/applications/application_shors.rst:45
+msgid "So, going through the steps:"
+msgstr "Llavors, seguint els passos:"
+
+#: ../../tutorials/applications/application_shors.rst:47
+msgid ""
+"We choose a random integer :math:`a` such that :math:`1 < a < 3`. The "
+"only choice is :math:`a = 2`."
+msgstr ""
+"Triem un enter aleatori :math:`a` tal que :math:`1 < a < 3`. L'única "
+"opció és :math:`a = 2`."
+
+#: ../../tutorials/applications/application_shors.rst:48
+msgid ""
+"We compute the GCD of :math:`2` and :math:`3`, which is 1, so we proceed "
+"to the next step."
+msgstr ""
+"Calculem el MCD de :math:`2` i :math:`3`, que és 1, de manera que "
+"procedim al pas següent."
+
+#: ../../tutorials/applications/application_shors.rst:49
+msgid ""
+"We need to find the period :math:`r` of the function :math:`f(x) = 2^x "
+"\\mod 3`. To do this, we use the following quantum circuit:"
+msgstr ""
+"Necessitem trobar el període :math:`r` de la funció :math:`f(x) = 2^x "
+"\\mod 3`. Per fer-ho, usem el circuit quàntic següent:"
+
+#: ../../tutorials/applications/application_shors.rst:86
+msgid ""
+"This will output a 50/50 mix of 0 and 2, which corresponds to the period "
+":math:`r = 2`."
+msgstr ""
+"Això donarà com a sortida una barreja 50/50 de 0 i 2, que correspon al "
+"període :math:`r = 2`."
+
+#: ../../tutorials/applications/application_shors.rst:88
+#, python-brace-format
+msgid ""
+"Since :math:`r` is even, we compute the GCD of :math:`a^{r/2} - 1 = 2^1 -"
+" 1 = 1` and :math:`3`, which is 1, so we do not find a non-trivial "
+"factor."
+msgstr ""
+"Com que :math:`r` és parell, calculem el MCD de :math:`a^{r/2} - 1 = 2^1 -"
+" 1 = 1` i :math:`3`, que és 1, de manera que no trobem un factor no trivial."
+
+#: ../../tutorials/applications/application_shors.rst:89
+msgid ""
+"We would then repeat the process with a different random integer "
+":math:`a`, but since there are no other choices, we conclude that the "
+"factors of 3 are 3 and 1."
+msgstr ""
+"Llavors repetiríem el procés amb un enter aleatori :math:`a` diferent, "
+"però com que no hi ha altres opcions, concloem que els factors de 3 són "
+"3 i 1."
+
+#: ../../tutorials/applications/application_shors.rst:92
+msgid "Further Reading"
+msgstr "Lectura Addicional"
+
+#: ../../tutorials/applications/application_shors.rst:94
+msgid "`Shor's Algorithm`_"
+msgstr "`Shor's Algorithm`_"
+

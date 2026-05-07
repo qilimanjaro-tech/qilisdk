@@ -1,0 +1,58 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025, Qilimanjaro Quantum Tech
+# This file is distributed under the same license as the QiliSDK package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: QiliSDK \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-05-05 15:18+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ca\n"
+"Language-Team: ca <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../modules/analog/analog_overview.rst:2
+msgid "Overview"
+msgstr "Visió general"
+
+#: ../../modules/analog/analog_overview.rst:4
+msgid ""
+"The :mod:`qilisdk.analog` module lets you build symbolic Hamiltonians and"
+" time-dependent schedules. The core types are:"
+msgstr ""
+"El mòdul :mod:`qilisdk.analog` us permet construir Hamiltonians simbòlics i "
+"esquemes dependents del temps. Els tipus principals són:"
+
+#: ../../modules/analog/analog_overview.rst:7
+msgid ""
+":doc:`analog_hamiltonian`: Tools to build arbitrary Hamiltonians using "
+"symbolic Pauli operators."
+msgstr ""
+":doc:`analog_hamiltonian`: Eines per construir Hamiltonians arbitraris "
+"fent servir operadors de Pauli simbòlics."
+
+#: ../../modules/analog/analog_overview.rst:8
+msgid ""
+":doc:`analog_schedule`: Flexible time-dependent evolution with "
+"callable/interval coefficients and step/linear interpolation."
+msgstr ""
+":doc:`analog_schedule`: Evolució flexible dependent del temps amb "
+"coeficients callables/per intervals i interpolació per passos/lineal."
+
+#: ../../modules/analog/analog_overview.rst:10
+msgid ""
+"These schedules can then be put into an "
+":doc:`../functionals/functionals_analog` functional and then submitted to"
+" a backend for simulation or execution."
+msgstr ""
+"Aquests esquemes es poden introduir en un funcional "
+":doc:`../functionals/functionals_analog` i enviar-los a un backend per a "
+"simulació o execució."
