@@ -161,7 +161,7 @@ void lindblad_rhs(ExponentialAnsatz& drho, const ExponentialAnsatz& rho, const M
     static const cdouble neg_i_powers[4] = {{1,0},{0,-1},{-1,0},{0,1}};
 
     const auto& ops = rho.get_terms().get_operators();
-    const int n_qubits = rho.get_terms().get_nqubits();
+    const int n_qubits = H.get_nqubits();
     const int p = static_cast<int>(ops.size());
     if (p == 0) return;
 
@@ -241,13 +241,12 @@ void lindblad_rhs(ExponentialAnsatz& drho, const ExponentialAnsatz& rho, const M
     DenseMatrix O_mat(N_s, p);   // O_mat(s,k) = P_k(x_s) ∈ {-1,+1}
     Eigen::VectorXcd El(N_s);   // El(s) = E_loc(x_s)
 
+    // One flip per sample: prevents parity-orbit trap on even n_qubits at a_k=0
     for (int s = 0; s < N_s; ++s) {
-        // Systematic sweep over all qubits; a random sweep can trap on even-parity states
-        for (int i = 0; i < n_qubits; ++i) {
-            long x_new  = x ^ (1LL << (n_qubits - 1 - i));
-            double lp_new = log_prob(x_new);
-            if (std::log(rand01(rng)) < lp_new - lp) { x = x_new; lp = lp_new; }
-        }
+        int    i      = rand_qubit(rng);
+        long x_new  = x ^ (1LL << (n_qubits - 1 - i));
+        double lp_new = log_prob(x_new);
+        if (std::log(rand01(rng)) < lp_new - lp) { x = x_new; lp = lp_new; }
 
         // Log-derivatives O_k(x) = P_k(x)
         for (int k = 0; k < p; ++k) {

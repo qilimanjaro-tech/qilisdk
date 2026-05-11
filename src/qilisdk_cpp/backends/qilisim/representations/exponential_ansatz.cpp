@@ -120,121 +120,171 @@ std::ostream& operator<<(std::ostream& os, const ExponentialAnsatz& ansatz) {
 double ExponentialAnsatz::expectation_value(const MatrixFreeHamiltonian& observable) const {
     /*
     Compute the expectation value of the given observable with respect to the state represented by this ansatz.
-
+ 
     Uses variational Monte Carlo: sample x ~ |Ψ(x)|² via Metropolis-Hastings and average the
     local observable E_O(x) = ∑_{x'} O_{x,x'} Ψ(x')/Ψ(x). The result is real for Hermitian O.
-
+ 
     Args:
         observable (const MatrixFreeHamiltonian&): The observable to compute the expectation value of.
-
+ 
     Returns:
         double: The estimated expectation value <Ψ|O|Ψ>.
     */
     using cdouble = std::complex<double>;
+    using OpsMap  = std::unordered_map<PauliString, cdouble, PauliString::HashFunction>;
+ 
+    if (num_qubits <= 0)
+        throw std::runtime_error("ExponentialAnsatz: num_qubits must be positive");
+ 
+    // (-i)^n for n = 0,1,2,3 — phase factor from Y = iXZ
     static const cdouble neg_i_powers[4] = {{1,0},{0,-1},{-1,0},{0,1}};
-
-    const auto& ops = terms.get_operators();
-    const int p = static_cast<int>(ops.size());
-    if (p == 0) return 0.0;
-
-    // Index the ansatz terms for stable iteration order
-    std::vector<std::pair<PauliString, cdouble>> terms_vec(ops.begin(), ops.end());
-
-    // Precompute bitmask for each Z-type Pauli string P_k
-    // P_k(x) = (-1)^{popcount(x & z_bits[k])}
-    std::vector<long> z_bits(p);
-    for (int k = 0; k < p; ++k) {
-        long bits = 0;
-        const auto& ps = terms_vec[k].first;
-        for (int i = 0; i < num_qubits; ++i) {
-            if (ps.z_mask[i]) bits |= (1LL << (num_qubits - 1 - i));
+ 
+    // Own copies — get_operators() returns by value so never take a const ref to it
+    const OpsMap ansatz_ops = terms.get_operators();
+    const OpsMap obs_ops    = observable.get_operators();
+ 
+    // Flatten ansatz into parallel arrays for fast inner-loop access
+    const int p = static_cast<int>(ansatz_ops.size());
+    std::vector<long>    z_bits(p);
+    std::vector<cdouble> a_k(p);
+    {
+        int k = 0;
+        for (const auto& [ps, coeff] : ansatz_ops) {
+            if (static_cast<int>(ps.z_mask.size()) != num_qubits)
+                throw std::runtime_error("Ansatz PauliString size mismatch with num_qubits");
+            a_k[k] = coeff;
+            long bits = 0;
+            for (int i = 0; i < num_qubits; ++i)
+                if (ps.z_mask[i]) bits |= (1LL << (num_qubits - 1 - i));
+            z_bits[k] = bits;
+            ++k;
         }
-        z_bits[k] = bits;
     }
-
-    // Precompute observable terms: flip_mask, sign_mask, base_phase, and which P_k
-    // change sign under the flip (needed for the wavefunction ratio Ψ(x')/Ψ(x))
-    struct OTerm {
+ 
+    // -----------------------------------------------------------------------
+    // Precompute observable terms
+    //
+    // For each Pauli term O_t = coeff * ∏ σ^{x/y/z}_i:
+    //   base_phase = coeff * (-i)^n_Y          (overall scalar phase)
+    //   flip_mask  = bits flipped by X and Y   (x' = x ^ flip_mask)
+    //   sign_mask  = bits giving a -1 from Z/Y (sign = (-1)^popcount(x & sign_mask))
+    //   flips_Pk   = for each ansatz term k, does flip_mask anticommute with P_k?
+    //                i.e. does x' = x ^ flip_mask change the sign of P_k?
+    // -----------------------------------------------------------------------
+    struct ObsTerm {
         cdouble           base_phase;
         long              flip_mask;
         long              sign_mask;
-        std::vector<bool> flips_Pk;
+        std::vector<bool> flips_Pk;   // size p
     };
-    const auto& o_ops = observable.get_operators();
-    std::vector<OTerm> o_terms;
-    o_terms.reserve(o_ops.size());
-    for (const auto& [ps, coeff] : o_ops) {
+ 
+    std::vector<ObsTerm> o_terms;
+    o_terms.reserve(obs_ops.size());
+    for (const auto& [ps, coeff] : obs_ops) {
+        if (static_cast<int>(ps.x_mask.size()) != num_qubits ||
+            static_cast<int>(ps.z_mask.size()) != num_qubits)
+            throw std::runtime_error("Observable PauliString size mismatch with num_qubits");
+ 
         long flip_mask = 0, sign_mask = 0;
-        int n_y = 0;
+        int  n_y = 0;
         for (int i = 0; i < num_qubits; ++i) {
-            long mask = 1LL << (num_qubits - 1 - i);
-            if ( ps.x_mask[i] && !ps.z_mask[i]) { flip_mask ^= mask; }
-            else if (!ps.x_mask[i] &&  ps.z_mask[i]) { sign_mask |= mask; }
-            else if ( ps.x_mask[i] &&  ps.z_mask[i]) { flip_mask ^= mask; sign_mask |= mask; ++n_y; }
+            long bit   = 1LL << (num_qubits - 1 - i);
+            bool has_x = ps.x_mask[i];
+            bool has_z = ps.z_mask[i];
+            if      ( has_x && !has_z) { flip_mask ^= bit; }
+            else if (!has_x &&  has_z) { sign_mask |= bit; }
+            else if ( has_x &&  has_z) { flip_mask ^= bit; sign_mask |= bit; ++n_y; }
         }
-        cdouble base_phase = coeff * neg_i_powers[n_y & 3];
         std::vector<bool> flips(p);
-        for (int k = 0; k < p; ++k) {
+        for (int k = 0; k < p; ++k)
             flips[k] = (__builtin_popcountll((long long)(flip_mask & z_bits[k])) & 1) != 0;
-        }
-        o_terms.push_back({base_phase, flip_mask, sign_mask, std::move(flips)});
+ 
+        o_terms.push_back({coeff * neg_i_powers[n_y & 3], flip_mask, sign_mask, std::move(flips)});
     }
-
-    // Metropolis-Hastings: sample x ~ |Ψ(x)|² = exp(2 Re ∑_k a_k P_k(x))
-    const int N_s      = 1000;
-    const int n_warmup = 200;
-
-    std::mt19937 rng(std::random_device{}());
-    std::uniform_int_distribution<int>     rand_qubit(0, num_qubits - 1);
-    std::uniform_real_distribution<double> rand01(0.0, 1.0);
-
-    // Only Re(a_k) contributes since P_k(x) ∈ ℝ
+ 
+    // -----------------------------------------------------------------------
+    // Helpers
+    // -----------------------------------------------------------------------
+ 
+    // log |Ψ(x)|² = 2 Re ∑_k a_k P_k(x),   P_k(x) = (-1)^popcount(x & z_bits[k])
     auto log_prob = [&](long x) -> double {
         double lp = 0.0;
         for (int k = 0; k < p; ++k) {
             bool neg = __builtin_popcountll((long long)(x & z_bits[k])) & 1;
-            lp += 2.0 * terms_vec[k].second.real() * (neg ? -1.0 : 1.0);
+            lp += 2.0 * a_k[k].real() * (neg ? -1.0 : 1.0);
         }
         return lp;
     };
-
-    long x = std::uniform_int_distribution<long>(0, (1LL << num_qubits) - 1)(rng);
+ 
+    // log(Ψ(x')/Ψ(x)) for x' = x ^ ot.flip_mask
+    // = ∑_k a_k [P_k(x') - P_k(x)]
+    // If flips_Pk[k]: P_k(x') = -P_k(x), so contribution = -2 a_k P_k(x)
+    auto compute_log_ratio = [&](long x, const ObsTerm& ot) -> cdouble {
+        cdouble lr = 0.0;
+        for (int k = 0; k < p; ++k) {
+            if (!ot.flips_Pk[k]) continue;
+            bool neg = __builtin_popcountll((long long)(x & z_bits[k])) & 1;
+            lr += a_k[k] * (neg ? cdouble(2.0, 0.0) : cdouble(-2.0, 0.0));
+        }
+        return lr;
+    };
+ 
+    // -----------------------------------------------------------------------
+    // Metropolis-Hastings
+    //
+    // Mixes single-qubit flips (90%) with two-qubit flips (10%) to ensure
+    // ergodicity across parity sectors and avoid the parity-orbit trap at a_k=0.
+    // Initial state built bit-by-bit to avoid shift overflow for large num_qubits.
+    // -----------------------------------------------------------------------
+    const int N_s      = 1000;
+    const int n_warmup = 500;
+ 
+    std::mt19937 rng(std::random_device{}());
+    std::uniform_int_distribution<int>     rand_qubit(0, num_qubits - 1);
+    std::uniform_int_distribution<int>     rand_bit(0, 1);
+    std::uniform_real_distribution<double> rand01(0.0, 1.0);
+ 
+    auto propose = [&](long x) -> long {
+        if (num_qubits > 1 && rand01(rng) < 0.1) {
+            int i = rand_qubit(rng), j;
+            do { j = rand_qubit(rng); } while (j == i);
+            return x ^ (1LL << (num_qubits - 1 - i))
+                     ^ (1LL << (num_qubits - 1 - j));
+        }
+        return x ^ (1LL << (num_qubits - 1 - rand_qubit(rng)));
+    };
+ 
+    // Build initial state bit-by-bit — safe for any num_qubits, no shift overflow
+    long x = 0;
+    for (int i = 0; i < num_qubits; ++i)
+        if (rand_bit(rng)) x |= (1LL << (num_qubits - 1 - i));
     double lp = log_prob(x);
-
+ 
     for (int s = 0; s < n_warmup * num_qubits; ++s) {
-        int    i      = rand_qubit(rng);
-        long   x_new  = x ^ (1LL << (num_qubits - 1 - i));
-        double lp_new = log_prob(x_new);
-        if (std::log(rand01(rng)) < lp_new - lp) { x = x_new; lp = lp_new; }
+        long   xn  = propose(x);
+        double lpn = log_prob(xn);
+        if (std::log(rand01(rng)) < lpn - lp) { x = xn; lp = lpn; }
     }
-
-    // Accumulate local observable E_O(x) = ∑_{x'} O_{x,x'} Ψ(x')/Ψ(x)
-    // log(Ψ(x')/Ψ(x)) = -2 ∑_{k: P_k changes} a_k P_k(x)
+ 
+    // -----------------------------------------------------------------------
+    // Accumulate local energy
+    // E_loc(x) = ∑_t base_phase_t * (-1)^popcount(x & sign_mask_t) * exp(log_ratio_t(x))
+    // -----------------------------------------------------------------------
     cdouble total = 0.0;
     for (int s = 0; s < N_s; ++s) {
-        for (int i = 0; i < num_qubits; ++i) {
-            long   x_new  = x ^ (1LL << (num_qubits - 1 - i));
-            double lp_new = log_prob(x_new);
-            if (std::log(rand01(rng)) < lp_new - lp) { x = x_new; lp = lp_new; }
-        }
-
+        long   xn  = propose(x);
+        double lpn = log_prob(xn);
+        if (std::log(rand01(rng)) < lpn - lp) { x = xn; lp = lpn; }
+ 
         cdouble e_local = 0.0;
         for (const auto& ot : o_terms) {
-            bool neg_sign = __builtin_popcountll((long long)(x & ot.sign_mask)) & 1;
-            cdouble o_elem = neg_sign ? -ot.base_phase : ot.base_phase;
-
-            cdouble log_ratio = 0.0;
-            for (int k = 0; k < p; ++k) {
-                if (ot.flips_Pk[k]) {
-                    bool neg = __builtin_popcountll((long long)(x & z_bits[k])) & 1;
-                    log_ratio -= 2.0 * terms_vec[k].second * cdouble(neg ? -1.0 : 1.0, 0.0);
-                }
-            }
-            e_local += o_elem * std::exp(log_ratio);
+            bool    neg   = __builtin_popcountll((long long)(x & ot.sign_mask)) & 1;
+            cdouble phase = neg ? -ot.base_phase : ot.base_phase;
+            e_local      += phase * std::exp(compute_log_ratio(x, ot));
         }
         total += e_local;
     }
-
+ 
     return std::real(total) / static_cast<double>(N_s);
 }
 
