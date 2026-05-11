@@ -52,7 +52,9 @@ class QiliSDKSettings(BaseSettings):
     prefixed with `QILISDK_`, or from a local `.env` file if present.
     """
 
-    model_config = SettingsConfigDict(env_prefix="qilisdk_", env_file=".env", env_file_encoding="utf-8")
+    model_config = SettingsConfigDict(
+        env_prefix="qilisdk_", env_file=".env", env_file_encoding="utf-8", dotenv_filtering="match_prefix"
+    )
 
     complex_precision: Precision = Field(default=Precision.COMPLEX_128, description="[env: QILISDK_COMPLEX_PRECISION]")
     logging_config_path: Path = Field(
