@@ -16,6 +16,7 @@
 #include <vector>
 #include "../../../libs/eigen.h"
 #include "../representations/matrix_free_hamiltonian.h"
+#include "../representations/exponential_ansatz.h"
 
 // GCOV_EXCL_BR_START
 
@@ -23,5 +24,6 @@ SparseMatrix create_superoperator(const SparseMatrix& currentH, const std::vecto
 void lindblad_rhs(DenseMatrix& drho, const DenseMatrix& rho, const SparseMatrix& H, const std::vector<SparseMatrix>& jumps, bool is_unitary_on_statevector);
 void lindblad_rhs(DenseMatrix& drho, const DenseMatrix& rho, const MatrixFreeHamiltonian& H, const std::vector<SparseMatrix>& jumps, bool is_unitary_on_statevector);
 void lindblad_rhs(MatrixFreeHamiltonian& drho, const MatrixFreeHamiltonian& rho, const MatrixFreeHamiltonian& H);
+void lindblad_rhs(ExponentialAnsatz& drho, const ExponentialAnsatz& rho, const MatrixFreeHamiltonian& H);
 
 // GCOV_EXCL_BR_STOP

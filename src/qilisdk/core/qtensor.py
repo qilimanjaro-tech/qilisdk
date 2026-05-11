@@ -26,6 +26,7 @@ from qilisdk.utils.visualization.style import QTensorStyle
 from qilisdk.yaml import yaml
 
 if TYPE_CHECKING:
+    from qilisdk.analog import Hamiltonian
     from qilisdk.core.types import Number
 
 Complex = int | float | complex
@@ -757,14 +758,14 @@ class QTensor:
         self._qtensor_cpp.compute_eigendecomposition()
         return [QTensor(vec) for vec in self._qtensor_cpp.get_eigenvectors_python()]
 
-    def expectation_value(self, other: QTensor, nshots: int = 0) -> complex:
+    def expectation_value(self, other: QTensor | Hamiltonian, nshots: int = 0) -> complex:
         """
         Compute the expectation value of another QTensor with respect to this QTensor.
 
         For state vectors, this corresponds to :math:`⟨\\psi|O|\\psi⟩`. For operators, it corresponds to :math:`\\text{tr}(\\rho O)`.
 
         Args:
-            other (QTensor): The other QTensor to compute the expectation value with.
+            other (QTensor | Hamiltonian): The other QTensor or Hamiltonian to compute the expectation value with.
             nshots (int, optional): The number of shots to use for a stochastic estimation of the expectation value. If 0 or negative, the exact expectation value is computed using the trace formula.
 
         Returns:
@@ -839,7 +840,7 @@ def bra(*state: int) -> QTensor:
     return QTensor.bra(*state)
 
 
-def expect_val(operator: QTensor, state: QTensor) -> complex:
+def expect_val(operator: QTensor | Hamiltonian, state: QTensor) -> complex:
     """
     Wrapper for backwards compatibility: see QTensor.expectation_value().
 

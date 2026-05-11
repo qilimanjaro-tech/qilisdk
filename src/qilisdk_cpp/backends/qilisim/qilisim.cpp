@@ -25,6 +25,7 @@
 #include "noise/noise_model.h"
 #include "qilisim.h"
 #include "representations/matrix_free_hamiltonian.h"
+#include "representations/exponential_ansatz.h"
 #include "utils/parsers.h"
 #include "utils/random.h"
 #include "utils/sample.h"
@@ -179,15 +180,26 @@ py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, co
         config.set_store_intermediate_results(true);
     }
 
-    // The super scalable method, we should never construct any matrix or state
-    if (config.get_time_evolution_method() == "approximate") {
+    // A scalable method, so we should never construct any matrix or state
+    if (config.get_time_evolution_method() == "variational_polynomial_adaptive") {
 
         std::vector<MatrixFreeHamiltonian> hamiltonians = parse_hamiltonians_matrix_free(n_qubits, hamiltonians_values);
         MatrixFreeHamiltonian rho_t_as_h(n_qubits);
         std::vector<std::vector<double>> parameters_list = parse_coefficients(schedule, hamiltonians_keys, steps);
         std::vector<double> step_list = parse_time_steps(steps);
-        time_evolution_approximate(rho_t_as_h, hamiltonians, parameters_list, step_list, config);
+        time_evolution_variational_polynomial_adaptive(rho_t_as_h, hamiltonians, parameters_list, step_list, config);
         py::object result = construct_result_object(rho_t_as_h, readout, n_qubits, config);
+        return FunctionalResult("readout_results"_a = result);
+
+    // A scalable method, so we should never construct any matrix or state
+    } else if (config.get_time_evolution_method() == "variational_exponential") {
+
+        std::vector<MatrixFreeHamiltonian> hamiltonians = parse_hamiltonians_matrix_free(n_qubits, hamiltonians_values);
+        ExponentialAnsatz rho_t(n_qubits, config.get_max_terms());
+        std::vector<std::vector<double>> parameters_list = parse_coefficients(schedule, hamiltonians_keys, steps);
+        std::vector<double> step_list = parse_time_steps(steps);
+        time_evolution_variational_exponential(rho_t, hamiltonians, parameters_list, step_list, config);
+        py::object result = construct_result_object(rho_t, readout, n_qubits, config);
         return FunctionalResult("readout_results"_a = result);
 
     // In all of these methods the state is fully stored

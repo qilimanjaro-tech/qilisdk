@@ -172,9 +172,9 @@ void iter_rk4(DenseMatrix& rho_t, double t, double dt, const std::vector<double>
     // Cache some things
     long rho_rows = long(rho_t.rows());
     long rho_cols = long(rho_t.cols());
-    double dt_over_2 = 0.5 * dt;
-    double dt_over_3 = dt / 3.0;
-    double dt_over_6 = dt / 6.0;
+    const double dt_over_2 = 0.5 * dt;
+    const double dt_over_3 = dt / 3.0;
+    const double dt_over_6 = dt / 6.0;
 
     // Standard RK4 loop
     DenseMatrix k(rho_rows, rho_cols);
@@ -539,9 +539,9 @@ void iter_rk4(MatrixFreeHamiltonian& rho_t_as_h, double t, double dt, const std:
     */
 
     // Cache some things
-    double dt_over_2 = 0.5 * dt;
-    double dt_over_3 = dt / 3.0;
-    double dt_over_6 = dt / 6.0;
+    const double dt_over_2 = 0.5 * dt;
+    const double dt_over_3 = dt / 3.0;
+    const double dt_over_6 = dt / 6.0;
 
     // Standard RK4 loop
     MatrixFreeHamiltonian k;
@@ -582,6 +582,65 @@ void iter_rk4(MatrixFreeHamiltonian& rho_t_as_h, double t, double dt, const std:
     lindblad_rhs(k, rho_tmp, current_hamiltonian);
     k.prune(1e-12, max_terms);
     rho_t_as_h += k * dt_over_6;
+
+}
+
+void iter_rk4(ExponentialAnsatz& rho_t, double t, double dt, const std::vector<double>& step_list, const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, int max_terms) {
+    /*
+    4th-order Runge–Kutta integration of the Lindblad master equation using a variational methods, 
+    where the density matrix is represented as an exponential of a weighted list of Pauli strings (i.e. an ExponentialAnsatz).
+
+    Args:
+        rho_t (ExponentialAnsatz&): The density matrix to be evolved, represented as an ExponentialAnsatz.
+        t (double): The current time.
+        dt (double): The total time step.
+        step_list (std::vector<double>): The list of time points corresponding to the parameters.
+        hamiltonians (std::vector<MatrixFreeHamiltonian>): The list of Hamiltonians.
+        parameters_list (std::vector<std::vector<double>>): The list of parameters for each Hamiltonian.
+        max_terms (int): The maximum number of terms to keep in the ExponentialAnsatz after each operation, for pruning purposes.
+    */
+
+    // Cache some things
+    int nqubits = hamiltonians[0].get_nqubits();
+    const double dt_over_2 = 0.5 * dt;
+    const double dt_over_3 = dt / 3.0;
+    const double dt_over_6 = dt / 6.0;
+
+    // Standard RK4 loop
+    ExponentialAnsatz k(nqubits, max_terms);
+    ExponentialAnsatz rho_tmp(nqubits, max_terms);
+    ExponentialAnsatz rho_old(nqubits, max_terms);
+    MatrixFreeHamiltonian current_hamiltonian;
+    double t_step = t;
+
+    // Store the previous rho, we'll reuse it for the intermediate steps
+    rho_old = rho_t;
+
+    // First step: compute k1 at time t
+    current_hamiltonian = construct_current_hamiltonian(t_step, step_list, hamiltonians, parameters_list);
+    lindblad_rhs(k, rho_t, current_hamiltonian);
+    rho_t += k * dt_over_6;
+
+    // Second step: compute k2 at time t + dt/2
+    rho_tmp = rho_old;
+    rho_tmp += k * dt_over_2;
+    current_hamiltonian = construct_current_hamiltonian(t_step + 0.5 * dt, step_list, hamiltonians, parameters_list);
+    lindblad_rhs(k, rho_tmp, current_hamiltonian);
+    rho_t += k * dt_over_3;
+
+    // Third step: compute k3 at time t + dt/2
+    rho_tmp = rho_old;
+    rho_tmp += k * dt_over_2;
+    current_hamiltonian = construct_current_hamiltonian(t_step + 0.5 * dt, step_list, hamiltonians, parameters_list);
+    lindblad_rhs(k, rho_tmp, current_hamiltonian);
+    rho_t += k * dt_over_3;
+
+    // Fourth step: compute k4 at time t + dt
+    rho_tmp = rho_old;
+    rho_tmp += k * dt;
+    current_hamiltonian = construct_current_hamiltonian(t_step + dt, step_list, hamiltonians, parameters_list);
+    lindblad_rhs(k, rho_tmp, current_hamiltonian);
+    rho_t += k * dt_over_6;
 
 }
 

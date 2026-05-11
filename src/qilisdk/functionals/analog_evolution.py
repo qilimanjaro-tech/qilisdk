@@ -60,7 +60,7 @@ class AnalogEvolution(PrimitiveFunctional):
             ValueError: if the number of qubits of the initial state doesn't match the number of qubits in the schedule.
         """
         super().__init__()
-        self.initial_state = initial_state
+        self._initial_state = initial_state
         self.schedule = schedule
         self.store_intermediate_results = store_intermediate_results
 
@@ -68,6 +68,21 @@ class AnalogEvolution(PrimitiveFunctional):
             raise ValueError(
                 f"The initial state provided acts on {initial_state.nqubits} qubits while the schedule acts on {schedule.nqubits} qubits"
             )
+
+    @property
+    def initial_state(self) -> QTensor:
+        """
+        The initial state of the simulation, if provided.
+
+        Returns:
+            QTensor: The initial state.
+
+        Raises:
+            ValueError: If no initial state was provided for this functional.
+        """
+        if self._initial_state is None:
+            raise ValueError("No initial state was provided for this functional.")
+        return self._initial_state
 
     def _iter_parameter_children(self) -> Iterator[Parameterizable]:
         """Yield the schedule as the sole parameterizable child.

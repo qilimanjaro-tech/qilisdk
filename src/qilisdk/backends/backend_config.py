@@ -98,7 +98,7 @@ class AnalogMethod(BaseSimulatorConfig):
     """
 
     evolution_method: Literal[
-        "direct", "arnoldi", "integrate_rk4", "integrate_rk45_matrix_free", "integrate_rk4_matrix_free", "approximate"
+        "direct", "arnoldi", "integrate_rk4", "integrate_rk45_matrix_free", "integrate_rk4_matrix_free", "variational_polynomial_adaptive", "variational_exponential"
     ] = Field(
         default="integrate_rk4_matrix_free",
         description="Analog time-evolution method to use: 'direct', 'arnoldi', 'integrate_rk4', 'integrate_rk45_matrix_free', or 'integrate_rk4_matrix_free'.",
@@ -152,15 +152,24 @@ class AnalogMethod(BaseSimulatorConfig):
         return cls(evolution_method=evolution_method)
 
     @classmethod
-    def approximate(cls, *, max_terms: int = 1000) -> AnalogMethod:
+    def variational(cls, *, ansatz="polynomial_adaptive", max_terms: int = 1000) -> AnalogMethod:
         """Build an ``approximate`` analog method configuration.
 
         This evolves a variational ansatz rather than the full state.
 
+        Args:
+            ansatz (str): Variational ansatz to use. Options are ``"polynomial_adaptive"`` or ``"exponential"``. Defaults to ``"polynomial_adaptive"``.
+            max_terms (int): Maximum number of terms in the variational ansatz. Defaults to ``1000``.
+
         Returns:
-            AnalogMethod: Configured approximate-method analog configuration.
+            AnalogMethod: Configured variational-method analog configuration.
         """
-        return cls(evolution_method="approximate", max_terms=max_terms)
+        if ansatz == "polynomial_adaptive":
+            return cls(evolution_method="variational_polynomial_adaptive", max_terms=max_terms)
+        elif ansatz == "exponential":
+            return cls(evolution_method="variational_exponential", max_terms=max_terms)
+        else:
+            raise ValueError(f"Unsupported ansatz type: {ansatz}. Supported options are 'polynomial_adaptive' and 'exponential'.")
 
     @classmethod
     def adaptive_integrator(cls, *, tol: float = 1e-2) -> AnalogMethod:

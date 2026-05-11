@@ -529,7 +529,7 @@ double MatrixFreeHamiltonian::prune(double threshold, int max_terms) {
     Returns:
         The total loss incurred by pruning the Hamiltonian.
     */
-    // Canonicalize: X|+> = I|+> and Y|+> = -i*Z|+>, so collapse to IZ-only strings.
+    // Canonicalize using X|+> = I|+> and Y|+> = -i*Z|+>, so collapse to Z-only strings.
     // This eliminates the 2^n redundancy and keeps at most 2^n distinct terms.
     static const std::complex<double> neg_i(0.0, -1.0);
     std::unordered_map<PauliString, std::complex<double>, PauliString::HashFunction> canonical;
@@ -539,13 +539,12 @@ double MatrixFreeHamiltonian::prune(double threshold, int max_terms) {
         PauliString cps(n);
         std::complex<double> phase = coeff;
         for (int i = 0; i < n; ++i) {
-            if (ps.x_mask[i] && ps.z_mask[i]) {  // Y → Z, absorb -i phase
+            if (ps.x_mask[i] && ps.z_mask[i]) {
                 cps.z_mask[i] = true;
                 phase *= neg_i;
-            } else if (!ps.x_mask[i]) {           // I or Z: unchanged
+            } else if (!ps.x_mask[i]) {
                 cps.z_mask[i] = ps.z_mask[i];
             }
-            // X → I: x_mask stays false, coefficient unchanged
         }
         canonical[cps] += phase;
     }
