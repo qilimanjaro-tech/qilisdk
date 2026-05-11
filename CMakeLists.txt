@@ -24,8 +24,17 @@ if(NOT COMPILER_EXISTS OR CMAKE_CXX_COMPILER STREQUAL "")
     message(FATAL_ERROR "[QiliSDK C++] No C++ compiler found. Please install one (e.g. \"sudo apt install build-essential\" on Ubuntu or \"xcode-select --install\" on macOS) and try again.")
 endif()
 
+# On Windows + MSVC, Python wheels are 64-bit. Force a helpful error if the
+# generator defaults to Win32 so users can pass -A x64 / CMAKE_GENERATOR_PLATFORM=x64.
+if(MSVC AND CMAKE_SIZEOF_VOID_P EQUAL 4)
+    message(FATAL_ERROR "[QiliSDK C++] Detected a 32-bit MSVC toolchain (Win32), but Python is expected to be 64-bit. Re-run with CMAKE_GENERATOR_PLATFORM=x64 (or pass -A x64).")
+endif()
+
 # pybind should already be installed via the dependencies
 set(pybind11_DIR "${CMAKE_CURRENT_LIST_DIR}/.venv/share/cmake/pybind11")
+# Use modern Python discovery path in pybind11 and avoid legacy FindPython* warnings.
+set(PYBIND11_FINDPYTHON ON)
+find_package(Python COMPONENTS Interpreter Development REQUIRED)
 find_package(pybind11 REQUIRED)
 
 # This is optional, but should be available as part of most compilers
@@ -56,7 +65,7 @@ message(STATUS "[QiliSDK C++] Using Eigen version: ${EIGEN3_VERSION}")
 message(STATUS "[QiliSDK C++] All dependencies found, preparing build files")
 
 # The common libs
-pybind11_add_module(qilisdk_libs SHARED)
+add_library(qilisdk_libs STATIC)
 file(GLOB LIBS_SOURCES src/qilisdk_cpp/libs/*.cpp)
 target_sources(qilisdk_libs PRIVATE ${LIBS_SOURCES})
 
@@ -103,8 +112,10 @@ foreach(module ${MODULES_TO_BUILD})
         target_compile_options(${module} PRIVATE -Wall -Wextra -Wpedantic)
     endif()
 
-    # Make everything visible, so that the test suite can access internal functions
-    target_compile_options(${module} PRIVATE -fvisibility=default)
+    # Make everything visible on compilers that support this flag
+    if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        target_compile_options(${module} PRIVATE -fvisibility=default)
+    endif()
 
     # Link libraries and include directories
     target_link_libraries(${module} PUBLIC Eigen3::Eigen)

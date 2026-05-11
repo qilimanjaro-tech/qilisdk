@@ -165,6 +165,11 @@ cmake.args = ["-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON"]
 cmake.build-type = "Release"
 editable.verbose = false
 
+[[tool.scikit-build.overrides]]
+if.platform-system = "^win32$"
+inherit.cmake.args = "append"
+cmake.args = ["-A", "x64"]
+
 [tool.scikit-build.wheel]
 packages = ["src/qilisdk"]
 
