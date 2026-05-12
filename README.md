@@ -7,6 +7,7 @@
 [![Docs](https://img.shields.io/badge/docs-0.1.7-pink.svg)](https://qilimanjaro-tech.github.io/qilisdk/0.1.7/index.html)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17819871.svg)](https://doi.org/10.5281/zenodo.17819871)
 fjdshfdjshfkj 
+another change
 
 **QiliSDK** is an open-source Python framework for designing and executing **analog, digital, and hybrid quantum algorithms**. Its modular structure unifies circuit-based and Hamiltonian-based workflows within a single API. It provides high-level abstractions for gates, circuits, Hamiltonians, and optimizers, while remaining fully backend-agnostic allowing a seamless switch between CPU, GPU, or QPU execution.
 
