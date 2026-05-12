@@ -22,7 +22,7 @@
 // GCOV_EXCL_BR_START
 
 #if defined(_OPENMP)
-#pragma omp declare reduction(complex_double_reduction : std::complex<double> : omp_out += omp_in) initializer(omp_priv = std::complex<double>(0.0, 0.0))
+////////#pragma omp declare reduction(complex_double_reduction : std::complex<double> : omp_out += omp_in) initializer(omp_priv = std::complex<double>(0.0, 0.0))
 #endif
 
 DenseMatrix _get_dense_eigenvectors(const std::vector<SparseMatrix>& evecs) {
@@ -1451,7 +1451,7 @@ std::complex<double> QTensorCpp::expectation_value(const QTensorCpp& other, int 
             // return (adjoint() * other * (*this)).trace();
             std::complex<double> expectation = 0.0;
 #if defined(_OPENMP)
-#pragma omp parallel for reduction(complex_double_reduction : expectation) schedule(static)
+//////#pragma omp parallel for reduction(complex_double_reduction : expectation) schedule(static)
 #endif
             for (int k = 0; k < other._data.outerSize(); ++k) {
                 for (typename SparseMatrix::InnerIterator it(other._data, k); it; ++it) {
@@ -1466,7 +1466,7 @@ std::complex<double> QTensorCpp::expectation_value(const QTensorCpp& other, int 
         } else if (is_bra()) {
             std::complex<double> expectation = 0.0;
 #if defined(_OPENMP)
-#pragma omp parallel for reduction(complex_double_reduction : expectation) schedule(static)
+//////#pragma omp parallel for reduction(complex_double_reduction : expectation) schedule(static)
 #endif
             for (int k = 0; k < other._data.outerSize(); ++k) {
                 for (typename SparseMatrix::InnerIterator it(other._data, k); it; ++it) {
@@ -1481,7 +1481,7 @@ std::complex<double> QTensorCpp::expectation_value(const QTensorCpp& other, int 
             // return (other * (*this)).trace();
             std::complex<double> expectation = 0.0;
 #if defined(_OPENMP)
-#pragma omp parallel for reduction(complex_double_reduction : expectation) schedule(static)
+////#pragma omp parallel for reduction(complex_double_reduction : expectation) schedule(static)
 #endif
             for (int k = 0; k < other._data.outerSize(); ++k) {
                 for (typename SparseMatrix::InnerIterator it(other._data, k); it; ++it) {

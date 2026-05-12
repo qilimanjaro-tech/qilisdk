@@ -56,7 +56,8 @@ message(STATUS "[QiliSDK C++] Using Eigen version: ${EIGEN3_VERSION}")
 message(STATUS "[QiliSDK C++] All dependencies found, preparing build files")
 
 # The common libs
-pybind11_add_module(qilisdk_libs SHARED)
+# pybind11_add_module(qilisdk_libs SHARED)
+pybind11_add_module(qilisdk_libs STATIC)
 file(GLOB LIBS_SOURCES src/qilisdk_cpp/libs/*.cpp)
 target_sources(qilisdk_libs PRIVATE ${LIBS_SOURCES})
 
