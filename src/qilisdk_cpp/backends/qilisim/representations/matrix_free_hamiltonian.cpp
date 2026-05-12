@@ -12,6 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifdef _MSC_VER
+#include <intrin.h>
+#define __builtin_popcountll __popcnt64
+#endif
+
 #include "matrix_free_hamiltonian.h"
 #include <unordered_map>
 #include "../../../libs/pybind.h"
