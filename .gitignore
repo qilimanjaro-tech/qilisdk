@@ -17,6 +17,7 @@ coverage*.info
 scripts/*.log
 *.pyd
 lib*.a
+qili*.lib
 
 # these are generated if you check the docs code
 circuit_custom_font.png
