@@ -536,9 +536,9 @@ class Schedule(Parameterizable):
 
     def draw_eigenvalues(
         self,
-        levels: int = 50,
         style: ScheduleStyle | None = None,
         filepath: str | None = None,
+        levels: int = 50,
         intermediate_states: list[QTensor] | None = None,
         show_overlaps: bool = False,
     ) -> None:

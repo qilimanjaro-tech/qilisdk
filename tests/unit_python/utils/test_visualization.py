@@ -278,14 +278,15 @@ def test_schedule_draw_eigenvalues(monkeypatch):
     schedule.draw_eigenvalues(filepath="test_schedule.png")
 
 
-def test_schedule_draw_eigenvalues_with_no_state_but_overlaps_warning_but_runs(monkeypatch):
+def test_schedule_draw_eigenvalues_with_no_state_but_overlaps_runs_with_warning(monkeypatch):
     monkeypatch.setattr(qilisdk.utils.visualization.schedule_renderers.plt, "show", mock_show)
     monkeypatch.setattr(qilisdk.utils.visualization.schedule_renderers.plt.Figure, "savefig", mock_save)
 
     # Create a simple schedule for testing
     H0 = X(1) + X(0)
     H1 = Z(1) + Z(0)
-    _ = Schedule(total_time=10, hamiltonians={"H0": H0, "H1": H1}, coefficients={})
+    schedule = Schedule(total_time=10, hamiltonians={"H0": H0, "H1": H1}, coefficients={})
+    schedule.draw_eigenvalues(show_overlaps=True)  # Should warn but not fail
 
 
 def test_schedule_draw_eigenvalues_not_hamiltonian_raises(monkeypatch):
@@ -321,3 +322,23 @@ def test_schedule_draw_eigenvalues_calculate_overlaps(monkeypatch):
         sig_figs=2,
     )
     assert overlaps == [(0.5, 100.0)]
+
+
+def test_calculate_expectation_values_too_few_states_raises():
+    H0 = X(1) + X(0)
+    schedule = Schedule(total_time=10, hamiltonians={"H0": H0}, coefficients={}, dt=1.0)
+    # tlist has 11 points (0..10), but only 5 states provided
+    states = [QTensor.ket(0, 0) for _ in range(5)]
+    renderer = MatplotlibEigenvalueRenderer(schedule=schedule, style=ScheduleStyle(), intermediate_states=states)
+    with pytest.raises(ValueError, match="Length of intermediate_states must match"):
+        renderer._calculate_expectation_values()
+
+
+def test_calculate_expectation_values_non_hamiltonian_raises():
+    fake_h = MagicMock()
+    fake_h.nqubits = 1
+    schedule = Schedule(total_time=10, hamiltonians={"H0": fake_h}, coefficients={}, dt=1.0)
+    states = [QTensor.ket(0) for _ in range(11)]
+    renderer = MatplotlibEigenvalueRenderer(schedule=schedule, style=ScheduleStyle(), intermediate_states=states)
+    with pytest.raises(ValueError, match="Expected full_hamiltonian to be a Hamiltonian"):
+        renderer._calculate_expectation_values()
