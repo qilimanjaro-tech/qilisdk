@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../modules/cost_functions/cost_functions_overview.rst:2
 msgid "Overview"
-msgstr "Descripción General"
+msgstr "Descripción general"
 
 #: ../../modules/cost_functions/cost_functions_overview.rst:4
 msgid ""
