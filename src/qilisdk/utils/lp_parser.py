@@ -550,7 +550,7 @@ def _mul_factors(term: Term) -> tuple[float, list[BaseVariable]]:
                 factors.append(elem)
             continue
         raise NotImplementedError(
-            "LP export does not support nested non-monomial terms; " f"encountered sub-term {elem!r} inside a product."
+            f"LP export does not support nested non-monomial terms; encountered sub-term {elem!r} inside a product."
         )
     return coef, factors
 

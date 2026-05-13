@@ -32,29 +32,25 @@ def _constraints_by_label(model) -> dict:
 
 
 def test_minimize_sense_with_default_label():
-    model = from_lp(
-        """
+    model = from_lp("""
         Minimize
          x
         Subject To
          x >= 0
         End
-        """
-    )
+        """)
     assert model.objective.sense is ObjectiveSense.MINIMIZE
     assert model.objective.label == "obj"
 
 
 def test_maximize_sense_and_explicit_label():
-    model = from_lp(
-        """
+    model = from_lp("""
         Maximize
          my_obj: x + y
         Subject To
          x + y <= 10
         End
-        """
-    )
+        """)
     assert model.objective.sense is ObjectiveSense.MAXIMIZE
     assert model.objective.label == "my_obj"
 
@@ -71,30 +67,26 @@ def test_minimize_keyword_is_caseless(keyword):
 
 def test_objective_collapses_constants_and_repeated_vars():
     """`x + 2 + x + 3` → `2*x + 5`."""
-    model = from_lp(
-        """
+    model = from_lp("""
         Minimize
          x + 2 + x + 3
         Subject To
          x >= 0
         End
-        """
-    )
+        """)
     sample = {_vars_by_label(model)["x"]: 4}
     assert model.objective.term.evaluate(sample) == pytest.approx(2 * 4 + 5)
 
 
 def test_objective_supports_quadratic_and_bilinear_terms():
-    model = from_lp(
-        """
+    model = from_lp("""
         Minimize
          2 x * x + 3 x * y
         Subject To
          x >= 0
          y >= 0
         End
-        """
-    )
+        """)
     vmap = _vars_by_label(model)
     sample = {vmap["x"]: 2, vmap["y"]: 5}
     assert model.objective.term.evaluate(sample) == pytest.approx(2 * 4 + 3 * 2 * 5)
@@ -102,28 +94,24 @@ def test_objective_supports_quadratic_and_bilinear_terms():
 
 def test_objective_handles_negated_parenthesised_group():
     """`- [x + 1]` should expand to `-x - 1` and fuse with sibling addends."""
-    model = from_lp(
-        """
+    model = from_lp("""
         Minimize
          5 - [x + 1]
         Subject To
          x >= 0
         End
-        """
-    )
+        """)
     assert model.objective.term.evaluate({_vars_by_label(model)["x"]: 7}) == pytest.approx(5 - 7 - 1)
 
 
 def test_objective_with_decimal_and_negative_coefficients():
-    model = from_lp(
-        """
+    model = from_lp("""
         Minimize
          1.5 x - 2.25 y + 0.5 z
         Subject To
          x + y + z = 1
         End
-        """
-    )
+        """)
     vmap = _vars_by_label(model)
     sample = {vmap["x"]: 4, vmap["y"]: 2, vmap["z"]: 6}
     assert model.objective.term.evaluate(sample) == pytest.approx(1.5 * 4 - 2.25 * 2 + 0.5 * 6)
@@ -134,8 +122,7 @@ def test_objective_with_decimal_and_negative_coefficients():
 
 def test_all_comparison_operators_round_trip():
     """Every sense operator the grammar accepts should map to the right ComparisonOperation."""
-    model = from_lp(
-        """
+    model = from_lp("""
         Minimize
          x
         Subject To
@@ -145,8 +132,7 @@ def test_all_comparison_operators_round_trip():
          c_gt: x >  4
          c_eq: x  = 5
         End
-        """
-    )
+        """)
     cmap = _constraints_by_label(model)
     assert cmap["c_le"].term.operation is ComparisonOperation.LEQ
     assert cmap["c_lt"].term.operation is ComparisonOperation.LT
@@ -156,8 +142,7 @@ def test_all_comparison_operators_round_trip():
 
 
 def test_unlabelled_constraints_get_auto_labels():
-    model = from_lp(
-        """
+    model = from_lp("""
         Minimize
          x + y + z
         Subject To
@@ -165,15 +150,13 @@ def test_unlabelled_constraints_get_auto_labels():
          y + z <= 20
          z     <= 30
         End
-        """
-    )
+        """)
     labels = [c.label for c in model.constraints]
     assert labels == ["c1", "c2", "c3"]
 
 
 def test_constraint_with_negative_rhs():
-    model = from_lp(
-        """
+    model = from_lp("""
         Minimize
          x
         Subject To
@@ -181,8 +164,7 @@ def test_constraint_with_negative_rhs():
         Bounds
          -10 <= x <= 10
         End
-        """
-    )
+        """)
     constraint = _constraints_by_label(model)["c"]
     var = _vars_by_label(model)["x"]
     # rhs is -5: x = -5 satisfies the boundary, x = -6 violates it.
@@ -192,24 +174,21 @@ def test_constraint_with_negative_rhs():
 
 def test_missing_comparison_raises():
     """Constraints with no sense operator are a grammar-level error in LP format."""
-    with pytest.raises(Exception):  # pyparsing raises a ParseException, not ValueError  # noqa: B017, PT011
-        from_lp(
-            """
+    with pytest.raises(Exception):  # pyparsing raises a ParseException, not ValueError  # noqa: PT011
+        from_lp("""
             Minimize
              x
             Subject To
              x + 1
             End
-            """
-        )
+            """)
 
 
 # --- Variables and bounds --------------------------------------------------------
 
 
 def test_real_variable_with_two_sided_bounds():
-    model = from_lp(
-        """
+    model = from_lp("""
         Minimize
          x
         Subject To
@@ -217,16 +196,14 @@ def test_real_variable_with_two_sided_bounds():
         Bounds
          -2.5 <= x <= 7.5
         End
-        """
-    )
+        """)
     var = _vars_by_label(model)["x"]
     assert var.domain is Domain.REAL
     assert var.bounds == (-2.5, 7.5)
 
 
 def test_free_variable_is_unbounded_real():
-    model = from_lp(
-        """
+    model = from_lp("""
         Minimize
          x
         Subject To
@@ -234,8 +211,7 @@ def test_free_variable_is_unbounded_real():
         Bounds
          x free
         End
-        """
-    )
+        """)
     var = _vars_by_label(model)["x"]
     assert var.domain is Domain.REAL
     assert var.lower_bound < -1e29
@@ -243,8 +219,7 @@ def test_free_variable_is_unbounded_real():
 
 
 def test_negative_infinity_lower_bound():
-    model = from_lp(
-        """
+    model = from_lp("""
         Minimize
          x
         Subject To
@@ -252,8 +227,7 @@ def test_negative_infinity_lower_bound():
         Bounds
          -infinity <= x <= 5
         End
-        """
-    )
+        """)
     var = _vars_by_label(model)["x"]
     assert var.lower_bound < -1e29
     assert var.upper_bound == pytest.approx(5.0)
@@ -261,8 +235,7 @@ def test_negative_infinity_lower_bound():
 
 def test_general_section_creates_integer_variable():
     """`General` after `Bounds` should preserve the bounds and switch domain to INTEGER."""
-    model = from_lp(
-        """
+    model = from_lp("""
         Minimize
          x
         Subject To
@@ -272,16 +245,14 @@ def test_general_section_creates_integer_variable():
         General
          x
         End
-        """
-    )
+        """)
     var = _vars_by_label(model)["x"]
     assert var.domain is Domain.INTEGER
     assert var.bounds == (0, 10)
 
 
 def test_general_without_bounds_uses_integer_domain_default():
-    model = from_lp(
-        """
+    model = from_lp("""
         Minimize
          x
         Subject To
@@ -289,8 +260,7 @@ def test_general_without_bounds_uses_integer_domain_default():
         General
          x
         End
-        """
-    )
+        """)
     var = _vars_by_label(model)["x"]
     assert var.domain is Domain.INTEGER
     # Lower bound defaults to 0 (LP convention); upper should sit at the int domain max.
@@ -299,8 +269,7 @@ def test_general_without_bounds_uses_integer_domain_default():
 
 
 def test_binary_section_creates_binary_variable():
-    model = from_lp(
-        """
+    model = from_lp("""
         Minimize
          b1 + b2
         Subject To
@@ -309,8 +278,7 @@ def test_binary_section_creates_binary_variable():
          b1
          b2
         End
-        """
-    )
+        """)
     vmap = _vars_by_label(model)
     assert isinstance(vmap["b1"], BinaryVariable)
     assert isinstance(vmap["b2"], BinaryVariable)
@@ -318,15 +286,13 @@ def test_binary_section_creates_binary_variable():
 
 def test_variable_only_in_expression_defaults_to_real_nonnegative():
     """Variables with no Bounds / General / Binary entry default to REAL [0, +inf)."""
-    model = from_lp(
-        """
+    model = from_lp("""
         Minimize
          only_here
         Subject To
          only_here + 1 = 1
         End
-        """
-    )
+        """)
     var = _vars_by_label(model)["only_here"]
     assert var.domain is Domain.REAL
     assert var.lower_bound == 0
@@ -337,8 +303,7 @@ def test_variable_only_in_expression_defaults_to_real_nonnegative():
 
 
 def test_backslash_comments_are_ignored():
-    model = from_lp(
-        """
+    model = from_lp("""
         \\ leading comment, ignored
         Minimize
          x \\ trailing comment
@@ -346,8 +311,7 @@ def test_backslash_comments_are_ignored():
         Subject To
          x >= 0
         End
-        """
-    )
+        """)
     assert "x" in _vars_by_label(model)
 
 
@@ -360,15 +324,13 @@ def test_subject_to_synonyms_are_accepted():
 
 def test_objective_with_trailing_constant_does_not_eat_subject_keyword():
     """Regression: `+ 10\nSubject To` previously parsed `+10*Subject` as a monomial."""
-    model = from_lp(
-        """
+    model = from_lp("""
         Maximize
          x + 10
         Subject To
          x <= 50
         End
-        """
-    )
+        """)
     assert model.objective.term.evaluate({_vars_by_label(model)["x"]: 0}) == pytest.approx(10)
 
 
@@ -439,9 +401,7 @@ def test_round_trip_linear_model_preserves_evaluations():
     vmap = _vars_by_label(reparsed)
     sample = {vmap["x"]: 1.5, vmap["y"]: -2.0}
     orig_sample = {v: sample[vmap[v.label]] for v in model.variables()}
-    assert reparsed.objective.term.evaluate(sample) == pytest.approx(
-        model.objective.term.evaluate(orig_sample)
-    )
+    assert reparsed.objective.term.evaluate(sample) == pytest.approx(model.objective.term.evaluate(orig_sample))
     cmap = _constraints_by_label(reparsed)
     assert cmap["c1"].term.evaluate(sample) == model.constraints[0].term.evaluate(orig_sample)
     assert cmap["c2"].term.evaluate(sample) == model.constraints[1].term.evaluate(orig_sample)
@@ -458,9 +418,7 @@ def test_round_trip_quadratic_objective():
     vmap = _vars_by_label(reparsed)
     sample = {vmap["x"]: 1.5, vmap["y"]: 2.0}
     orig_sample = {v: sample[vmap[v.label]] for v in model.variables()}
-    assert reparsed.objective.term.evaluate(sample) == pytest.approx(
-        model.objective.term.evaluate(orig_sample)
-    )
+    assert reparsed.objective.term.evaluate(sample) == pytest.approx(model.objective.term.evaluate(orig_sample))
 
 
 def test_round_trip_preserves_comparison_operators():
@@ -599,5 +557,3 @@ def test_to_lp_file_writes_and_reads_back(tmp_path):
     reparsed = from_lp_file(str(path))
     var = _vars_by_label(reparsed)["x"]
     assert reparsed.objective.term.evaluate({var: 2.5}) == pytest.approx(5.0)
-
-
