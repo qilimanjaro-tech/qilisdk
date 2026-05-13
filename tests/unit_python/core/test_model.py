@@ -19,7 +19,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from qilisdk.analog.hamiltonian import Z
-from qilisdk.core.model import QUBO, Constraint, Model, Objective, ObjectiveSense, SlackCounter
+from qilisdk.core.model import QUBO, Constraint, Model, Objective, ObjectiveSense, SlackCounter, _Linearizer
 from qilisdk.core.variables import (
     EQ,
     GT,
@@ -238,36 +238,6 @@ def test_model_to_ham():
 
 
 # ---------- QUBO ----------
-def test_qubo_parse_term_add_and_mul():
-    q = QUBO(label="q1")
-    v = BinaryVariable("b")
-    v2 = Variable("v2", Domain.BINARY)
-    # ADD term: 2*b + 3
-    t = Term(elements=[2, v, 1, v], operation=Operation.ADD)
-    const, terms = q._parse_term(t)
-    assert any(coeff == 2 and hash(var) == hash(v) for coeff, var in terms)
-    assert const == 3
-    # MUL term: b * 1
-    t2 = v * 1
-    const2, terms2 = q._parse_term(t2)
-    assert const2 == 1
-    assert any(hash(var) == hash(v) for _, var in terms2)
-
-    # MUL term: b + q1 * v + 2
-    t2 = v + v2 * 2 + 2
-    const2, terms2 = q._parse_term(t2)
-    assert const2 == 2
-
-    t3 = v + v * v * 2 + 2
-    const3, term3 = q._parse_term(t3)
-    assert const3 == 2
-    assert term3[0] == (3, v)
-
-    t3 = v2**2
-    with pytest.raises(ValueError):  # noqa: PT011
-        q._parse_term(t3)
-
-
 def test_qubo_print_and_str():
     q = QUBO(label="q1")
     v = BinaryVariable("b")
@@ -491,9 +461,10 @@ def test_add_constraint_error_degree_greater_than_two():
     ct = GT(x**3, 1)
 
     with pytest.raises(
-        ValueError, match=r"QUBO models can not contain terms of order 2 or higher but received terms with degree 3"
+        ValueError,
+        match=r"QUBO constraints can not contain terms of order 2 or higher but received terms with degree 3",
     ):
-        q.add_constraint("c", ct, penalization="slack")
+        q.add_constraint("c", ct, penalization="slack", linearize=False)
 
 
 def test_add_constraint_without_transform_to_qubo():
@@ -627,15 +598,6 @@ def test_model_evaluate():
     assert results["c"] == 20
 
 
-def test_add_constraint_with_terms():
-    q = QUBO(label="test")
-    x = Variable("x", Domain.POSITIVE_INTEGER, encoding=OneHot, bounds=(0, 2))
-    term = 2 * x + 1
-    term_of_terms = 2 * term + 1
-    term_of_terms._elements = {term: 2, 1: 2}
-    assert q._parse_term(term_of_terms) == (0, [(2, x), (2, 1)])
-
-
 def test_complex_constraint_raises():
     q = QUBO(label="test")
     x = Variable("x", Domain.POSITIVE_INTEGER, encoding=OneHot, bounds=(0, 2))
@@ -669,3 +631,136 @@ def test_parse_term_unsupported_element(monkeypatch):
     Term(elements=[x, 3], operation=Operation.SUB)
     with pytest.raises(ValueError, match=r"is not supported"):
         q.to_hamiltonian()
+
+
+# ---------- Linearization ----------
+
+
+def _qubo_minimum(qubo: QUBO) -> tuple[dict, float]:
+    """Brute-force: minimise the QUBO objective over all binary assignments."""
+    obj = qubo.qubo_objective.term
+    var_list = qubo.variables()
+    best_val = float("inf")
+    best_args: dict = {}
+    for mask in range(2 ** len(var_list)):
+        assignment = {v: (mask >> i) & 1 for i, v in enumerate(var_list)}
+        value = obj.evaluate(assignment)
+        if value < best_val:
+            best_val = value
+            best_args = assignment
+    return best_args, best_val
+
+
+def test_linearizer_reduce_cubic_monomial():
+    linearizer = _Linearizer()
+    x, y, z = BinaryVariable("x"), BinaryVariable("y"), BinaryVariable("z")
+    reduced = linearizer.reduce(x * y * z)
+    assert reduced.degree == 2
+    assert len(linearizer.substitutions) == 1
+
+
+def test_linearizer_quadratic_passthrough():
+    linearizer = _Linearizer()
+    x, y = BinaryVariable("x"), BinaryVariable("y")
+    reduced = linearizer.reduce(x * y + 2 * x + 3)
+    assert reduced.degree == 2
+    # No aux should be introduced when the input is already quadratic.
+    assert linearizer.substitutions == {}
+
+
+def test_linearizer_rejects_non_binary():
+    linearizer = _Linearizer()
+    x = Variable("x", Domain.POSITIVE_INTEGER, bounds=(0, 3))
+    y = Variable("y", Domain.POSITIVE_INTEGER, bounds=(0, 3))
+    z = Variable("z", Domain.POSITIVE_INTEGER, bounds=(0, 3))
+    # x*y*z involves non-binary Variable objects directly — should fail.
+    with pytest.raises(ValueError, match=r"binary-encoded"):
+        linearizer.reduce(x * y * z)
+
+
+def test_linearizer_reuses_auxiliary_across_monomials():
+    linearizer = _Linearizer()
+    x, y, z, w = BinaryVariable("x"), BinaryVariable("y"), BinaryVariable("z"), BinaryVariable("w")
+    linearizer.reduce(x * y * z + x * y * w)
+    # Both monomials share the x*y pair, so only one aux should be registered.
+    assert len(linearizer.substitutions) == 1
+    assert ("x", "y") in linearizer.substitutions
+
+
+def test_to_qubo_linearises_cubic_objective():
+    m = Model("cubic_obj")
+    x, y, z = BinaryVariable("x"), BinaryVariable("y"), BinaryVariable("z")
+    m.set_objective(-(x * y * z), sense=ObjectiveSense.MINIMIZE)  # forces xyz=1 at optimum
+    qubo = m.to_qubo(linearization_lagrange_multiplier=50)
+    aux_labels = [v.label for v in qubo.variables() if v.label.startswith("_linearization_aux")]
+    assert len(aux_labels) == 1
+    # Exactly one Rosenberg constraint.
+    rosenberg = [c for c in qubo.constraints if c.label.startswith("linearization_")]
+    assert len(rosenberg) == 1
+    # Brute force: the QUBO optimum should have xyz = 1 and aux = x*y.
+    best_args, _ = _qubo_minimum(qubo)
+    assert best_args[x] * best_args[y] * best_args[z] == 1
+
+
+def test_to_qubo_linearises_cubic_equality_constraint():
+    m = Model("cubic_eq")
+    x, y, z = BinaryVariable("x"), BinaryVariable("y"), BinaryVariable("z")
+    m.set_objective(-x - y - z)  # maximise population, unconstrained optimum is (1,1,1)
+    m.add_constraint("forbid_triple", EQ(x * y * z, 0), lagrange_multiplier=20)
+    qubo = m.to_qubo(linearization_lagrange_multiplier=50)
+    best_args, _ = _qubo_minimum(qubo)
+    # The constraint forbids (1,1,1); best feasible is two out of three = 1.
+    assert best_args[x] * best_args[y] * best_args[z] == 0
+    assert best_args[x] + best_args[y] + best_args[z] == 2
+
+
+def test_to_qubo_linearises_cubic_inequality_constraint():
+    m = Model("cubic_leq")
+    x, y, z = BinaryVariable("x"), BinaryVariable("y"), BinaryVariable("z")
+    m.set_objective(-x - y - z)
+    m.add_constraint("triple_cap", LEQ(x * y * z, 0), lagrange_multiplier=20)
+    qubo = m.to_qubo(linearization_lagrange_multiplier=50)
+    best_args, _ = _qubo_minimum(qubo)
+    assert best_args[x] * best_args[y] * best_args[z] == 0
+
+
+def test_to_qubo_auxiliary_reused_between_objective_and_constraint():
+    m = Model("shared_aux")
+    x, y, z, w = BinaryVariable("x"), BinaryVariable("y"), BinaryVariable("z"), BinaryVariable("w")
+    m.set_objective(x * y * z)
+    m.add_constraint("c", EQ(x * y * w, 0), lagrange_multiplier=10)
+    qubo = m.to_qubo()
+    aux_labels = [v.label for v in qubo.variables() if v.label.startswith("_linearization_aux")]
+    # The x*y pair is shared between the objective monomial and the EQ constraint penalty.
+    assert len(aux_labels) == 1
+
+
+def test_to_qubo_linearize_false_still_rejects_cubic_constraint():
+    m = Model("reject")
+    x, y, z = BinaryVariable("x"), BinaryVariable("y"), BinaryVariable("z")
+    m.set_objective(x + y + z)
+    m.add_constraint("c", EQ(x * y * z, 1), lagrange_multiplier=10)
+    with pytest.raises(ValueError, match=r"can not contain terms of order 2 or higher"):
+        m.to_qubo(linearize=False)
+
+
+def test_to_qubo_no_auxes_when_terms_are_quadratic():
+    m = Model("quadratic_only")
+    x, y, z = BinaryVariable("x"), BinaryVariable("y"), BinaryVariable("z")
+    m.set_objective(x * y + 2 * z)
+    m.add_constraint("c", LEQ(x + y + z, 2), lagrange_multiplier=5)
+    qubo = m.to_qubo()
+    aux_labels = [v.label for v in qubo.variables() if v.label.startswith("_linearization_aux")]
+    assert aux_labels == []
+
+
+def test_to_qubo_linearises_quartic_monomial():
+    m = Model("quartic")
+    a, b, c, d = (BinaryVariable(name) for name in ("a", "b", "c", "d"))
+    m.set_objective(-(a * b * c * d))  # minimise = maximise abcd
+    qubo = m.to_qubo(linearization_lagrange_multiplier=100)
+    # A degree-4 monomial needs two substitutions to collapse to quadratic.
+    aux_labels = [v.label for v in qubo.variables() if v.label.startswith("_linearization_aux")]
+    assert len(aux_labels) == 2
+    best_args, _ = _qubo_minimum(qubo)
+    assert best_args[a] * best_args[b] * best_args[c] * best_args[d] == 1
