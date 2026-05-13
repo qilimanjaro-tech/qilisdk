@@ -84,7 +84,6 @@ class MatrixFreeHamiltonian {
     mutable DenseMatrix m_new_state;
 
    public:
-    MatrixFreeHamiltonian() {}
     MatrixFreeHamiltonian(int nqubits) : nqubits(nqubits) {}
     MatrixFreeHamiltonian(int nqubits, double val) : nqubits(nqubits) { operators[PauliString(nqubits)] = std::complex<double>(val, 0.0); }
     MatrixFreeHamiltonian(int nqubits, const PauliString& op) : nqubits(nqubits) { operators[op] = 1.0; }

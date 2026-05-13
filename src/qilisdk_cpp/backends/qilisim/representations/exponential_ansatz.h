@@ -14,19 +14,34 @@
 #pragma once
 
 #include "matrix_free_hamiltonian.h"
+#include <vector>
 
 // GCOV_EXCL_BR_START
 
+struct SampleSet {
+    std::vector<long> configs;
+    DenseMatrix O_mat;  // (N_s x p) log-derivatives: O_k(x) = P_k(x) ∈ {-1,+1}
+};
+
 class ExponentialAnsatz {
    private:
-    MatrixFreeHamiltonian terms;
-    int num_qubits;
+    int shots = 100;
+    int shots_warmup = shots;
+    MatrixFreeHamiltonian terms = MatrixFreeHamiltonian(0);
+    int num_qubits = 0;
+
+    std::vector<long> build_z_bits() const;
 
    public:
     ExponentialAnsatz(int num_qubits, int max_terms);
     friend std::ostream& operator<<(std::ostream& os, const ExponentialAnsatz& ansatz);
+    void set_shots(int new_shots) { shots = new_shots; shots_warmup = new_shots; }
+    int get_shots() const { return shots; }
     MatrixFreeHamiltonian get_terms() const { return terms; }
     MatrixFreeHamiltonian& get_terms() { return terms; }
+    SampleSet draw_samples() const;
+    SampleSet draw_samples(int N_s, int n_warmup) const;
+    Eigen::VectorXcd local_energy(const SampleSet& samples, const MatrixFreeHamiltonian& H) const;
     double expectation_value(const MatrixFreeHamiltonian& observable) const;
     ExponentialAnsatz operator*(const double& scalar) const;
     ExponentialAnsatz& operator*=(const double& scalar);

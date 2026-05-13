@@ -450,7 +450,7 @@ MatrixFreeHamiltonian MatrixFreeHamiltonian::operator*(const MatrixFreeHamiltoni
     Returns:
         A new Hamiltonian that is the result of multiplying this Hamiltonian with the other Hamiltonian.
     */
-    MatrixFreeHamiltonian result;
+    MatrixFreeHamiltonian result(get_nqubits());
 
 #if defined(_OPENMP)
     // Convert to vector for indexed parallel access

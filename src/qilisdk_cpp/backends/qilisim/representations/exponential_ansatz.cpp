@@ -11,16 +11,15 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#pragma once
-
 #include "exponential_ansatz.h"
 #include <algorithm>
 #include <cmath>
 #include <random>
+#include <utility>
 
 // GCOV_EXCL_BR_START
 
-ExponentialAnsatz::ExponentialAnsatz(int num_qubits, int max_terms) {
+ExponentialAnsatz::ExponentialAnsatz(int num_qubits, int max_terms) : num_qubits(num_qubits), terms(num_qubits) {
     /*
     Construct an ExponentialAnsatz with the given number of qubits and maximum number of terms.
 
@@ -34,9 +33,6 @@ ExponentialAnsatz::ExponentialAnsatz(int num_qubits, int max_terms) {
     Returns:
         ExponentialAnsatz: The constructed ExponentialAnsatz object.
     */
-
-    // Set the number of qubits
-    this->num_qubits = num_qubits;
 
     // Keep adding terms until we reach the maximum number
     int terms_so_far = 0;
@@ -102,6 +98,132 @@ ExponentialAnsatz::ExponentialAnsatz(int num_qubits, int max_terms) {
 
 }
 
+std::vector<long> ExponentialAnsatz::build_z_bits() const {
+    const auto& ops = terms.get_operators();
+    const int p = static_cast<int>(ops.size());
+    std::vector<std::pair<PauliString, std::complex<double>>> terms_vec(ops.begin(), ops.end());
+    std::vector<long> z_bits(p);
+    for (int k = 0; k < p; ++k) {
+        long bits = 0;
+        const auto& ps = terms_vec[k].first;
+        for (int i = 0; i < num_qubits; ++i) {
+            if (ps.z_mask[i]) bits |= (1LL << (num_qubits - 1 - i));
+        }
+        z_bits[k] = bits;
+    }
+    return z_bits;
+}
+
+SampleSet ExponentialAnsatz::draw_samples() const {
+    return draw_samples(shots, shots_warmup);
+}
+
+SampleSet ExponentialAnsatz::draw_samples(int N_s, int n_warmup) const {
+    const auto& ops = terms.get_operators();
+    const int p = static_cast<int>(ops.size());
+    std::vector<std::pair<PauliString, std::complex<double>>> terms_vec(ops.begin(), ops.end());
+    std::vector<long> z_bits = build_z_bits();
+
+    auto log_prob = [&](long x) -> double {
+        double lp = 0.0;
+        for (int k = 0; k < p; ++k) {
+            bool neg = __builtin_popcountll((long long)(x & z_bits[k])) & 1;
+            lp += 2.0 * terms_vec[k].second.real() * (neg ? -1.0 : 1.0);
+        }
+        return lp;
+    };
+
+    std::mt19937 rng(std::random_device{}());
+    std::uniform_int_distribution<int> rand_qubit(0, num_qubits - 1);
+    std::uniform_real_distribution<double> rand01(0.0, 1.0);
+
+    long x = std::uniform_int_distribution<long>(0, (1LL << num_qubits) - 1)(rng);
+    double lp = log_prob(x);
+
+    for (int s = 0; s < n_warmup * num_qubits; ++s) {
+        int i = rand_qubit(rng);
+        long x_new = x ^ (1LL << (num_qubits - 1 - i));
+        double lp_new = log_prob(x_new);
+        if (std::log(rand01(rng)) < lp_new - lp) { x = x_new; lp = lp_new; }
+    }
+
+    SampleSet result;
+    result.configs.resize(N_s);
+    result.O_mat.resize(N_s, p);
+
+    for (int s = 0; s < N_s; ++s) {
+        int i = rand_qubit(rng);
+        long x_new = x ^ (1LL << (num_qubits - 1 - i));
+        double lp_new = log_prob(x_new);
+        if (std::log(rand01(rng)) < lp_new - lp) { x = x_new; lp = lp_new; }
+
+        result.configs[s] = x;
+        for (int k = 0; k < p; ++k) {
+            bool neg = __builtin_popcountll((long long)(x & z_bits[k])) & 1;
+            result.O_mat(s, k) = std::complex<double>(neg ? -1.0 : 1.0, 0.0);
+        }
+    }
+
+    return result;
+}
+
+Eigen::VectorXcd ExponentialAnsatz::local_energy(const SampleSet& samples, const MatrixFreeHamiltonian& H) const {
+    static const std::complex<double> neg_i_powers[4] = {{1,0},{0,-1},{-1,0},{0,1}};
+
+    const auto& ops = terms.get_operators();
+    const int p = static_cast<int>(ops.size());
+    std::vector<std::pair<PauliString, std::complex<double>>> terms_vec(ops.begin(), ops.end());
+    std::vector<long> z_bits = build_z_bits();
+    const int N_s = static_cast<int>(samples.configs.size());
+
+    struct HTerm {
+        std::complex<double> base_phase;
+        long flip_mask;
+        long sign_mask;
+        std::vector<bool> flips_Pk;
+    };
+    const auto& h_ops = H.get_operators();
+    std::vector<HTerm> h_terms;
+    h_terms.reserve(h_ops.size());
+    for (const auto& [ps, coeff] : h_ops) {
+        long flip_mask = 0, sign_mask = 0;
+        int n_y = 0;
+        for (int i = 0; i < num_qubits; ++i) {
+            long mask = 1LL << (num_qubits - 1 - i);
+            if ( ps.x_mask[i] && !ps.z_mask[i]) { flip_mask ^= mask; }
+            else if (!ps.x_mask[i] &&  ps.z_mask[i]) { sign_mask |= mask; }
+            else if ( ps.x_mask[i] &&  ps.z_mask[i]) { flip_mask ^= mask; sign_mask |= mask; ++n_y; }
+        }
+        std::complex<double> base_phase = coeff * neg_i_powers[n_y & 3];
+        std::vector<bool> flips(p);
+        for (int k = 0; k < p; ++k) {
+            flips[k] = (__builtin_popcountll((long long)(flip_mask & z_bits[k])) & 1) != 0;
+        }
+        h_terms.push_back({base_phase, flip_mask, sign_mask, std::move(flips)});
+    }
+
+    Eigen::VectorXcd El(N_s);
+    for (int s = 0; s < N_s; ++s) {
+        long x = samples.configs[s];
+        std::complex<double> el = 0.0;
+        for (const auto& ht : h_terms) {
+            bool neg_sign = __builtin_popcountll((long long)(x & ht.sign_mask)) & 1;
+            std::complex<double> h_elem = neg_sign ? -ht.base_phase : ht.base_phase;
+            std::complex<double> log_ratio = 0.0;
+            for (int k = 0; k < p; ++k) {
+                if (ht.flips_Pk[k]) {
+                    bool neg = __builtin_popcountll((long long)(x & z_bits[k])) & 1;
+                    log_ratio -= 2.0 * terms_vec[k].second * std::complex<double>(neg ? -1.0 : 1.0, 0.0);
+                }
+            }
+            el += h_elem * std::exp(log_ratio);
+        }
+        El(s) = el;
+    }
+
+    return El;
+}
+
 std::ostream& operator<<(std::ostream& os, const ExponentialAnsatz& ansatz) {
     /*
     Output the ExponentialAnsatz in a human-readable format.
@@ -120,172 +242,18 @@ std::ostream& operator<<(std::ostream& os, const ExponentialAnsatz& ansatz) {
 double ExponentialAnsatz::expectation_value(const MatrixFreeHamiltonian& observable) const {
     /*
     Compute the expectation value of the given observable with respect to the state represented by this ansatz.
- 
+
     Uses variational Monte Carlo: sample x ~ |Ψ(x)|² via Metropolis-Hastings and average the
     local observable E_O(x) = ∑_{x'} O_{x,x'} Ψ(x')/Ψ(x). The result is real for Hermitian O.
- 
+
     Args:
         observable (const MatrixFreeHamiltonian&): The observable to compute the expectation value of.
- 
+
     Returns:
         double: The estimated expectation value <Ψ|O|Ψ>.
     */
-    using cdouble = std::complex<double>;
-    using OpsMap  = std::unordered_map<PauliString, cdouble, PauliString::HashFunction>;
- 
-    if (num_qubits <= 0)
-        throw std::runtime_error("ExponentialAnsatz: num_qubits must be positive");
- 
-    // (-i)^n for n = 0,1,2,3 — phase factor from Y = iXZ
-    static const cdouble neg_i_powers[4] = {{1,0},{0,-1},{-1,0},{0,1}};
- 
-    // Own copies — get_operators() returns by value so never take a const ref to it
-    const OpsMap ansatz_ops = terms.get_operators();
-    const OpsMap obs_ops    = observable.get_operators();
- 
-    // Flatten ansatz into parallel arrays for fast inner-loop access
-    const int p = static_cast<int>(ansatz_ops.size());
-    std::vector<long>    z_bits(p);
-    std::vector<cdouble> a_k(p);
-    {
-        int k = 0;
-        for (const auto& [ps, coeff] : ansatz_ops) {
-            if (static_cast<int>(ps.z_mask.size()) != num_qubits)
-                throw std::runtime_error("Ansatz PauliString size mismatch with num_qubits");
-            a_k[k] = coeff;
-            long bits = 0;
-            for (int i = 0; i < num_qubits; ++i)
-                if (ps.z_mask[i]) bits |= (1LL << (num_qubits - 1 - i));
-            z_bits[k] = bits;
-            ++k;
-        }
-    }
- 
-    // -----------------------------------------------------------------------
-    // Precompute observable terms
-    //
-    // For each Pauli term O_t = coeff * ∏ σ^{x/y/z}_i:
-    //   base_phase = coeff * (-i)^n_Y          (overall scalar phase)
-    //   flip_mask  = bits flipped by X and Y   (x' = x ^ flip_mask)
-    //   sign_mask  = bits giving a -1 from Z/Y (sign = (-1)^popcount(x & sign_mask))
-    //   flips_Pk   = for each ansatz term k, does flip_mask anticommute with P_k?
-    //                i.e. does x' = x ^ flip_mask change the sign of P_k?
-    // -----------------------------------------------------------------------
-    struct ObsTerm {
-        cdouble           base_phase;
-        long              flip_mask;
-        long              sign_mask;
-        std::vector<bool> flips_Pk;   // size p
-    };
- 
-    std::vector<ObsTerm> o_terms;
-    o_terms.reserve(obs_ops.size());
-    for (const auto& [ps, coeff] : obs_ops) {
-        if (static_cast<int>(ps.x_mask.size()) != num_qubits ||
-            static_cast<int>(ps.z_mask.size()) != num_qubits)
-            throw std::runtime_error("Observable PauliString size mismatch with num_qubits");
- 
-        long flip_mask = 0, sign_mask = 0;
-        int  n_y = 0;
-        for (int i = 0; i < num_qubits; ++i) {
-            long bit   = 1LL << (num_qubits - 1 - i);
-            bool has_x = ps.x_mask[i];
-            bool has_z = ps.z_mask[i];
-            if      ( has_x && !has_z) { flip_mask ^= bit; }
-            else if (!has_x &&  has_z) { sign_mask |= bit; }
-            else if ( has_x &&  has_z) { flip_mask ^= bit; sign_mask |= bit; ++n_y; }
-        }
-        std::vector<bool> flips(p);
-        for (int k = 0; k < p; ++k)
-            flips[k] = (__builtin_popcountll((long long)(flip_mask & z_bits[k])) & 1) != 0;
- 
-        o_terms.push_back({coeff * neg_i_powers[n_y & 3], flip_mask, sign_mask, std::move(flips)});
-    }
- 
-    // -----------------------------------------------------------------------
-    // Helpers
-    // -----------------------------------------------------------------------
- 
-    // log |Ψ(x)|² = 2 Re ∑_k a_k P_k(x),   P_k(x) = (-1)^popcount(x & z_bits[k])
-    auto log_prob = [&](long x) -> double {
-        double lp = 0.0;
-        for (int k = 0; k < p; ++k) {
-            bool neg = __builtin_popcountll((long long)(x & z_bits[k])) & 1;
-            lp += 2.0 * a_k[k].real() * (neg ? -1.0 : 1.0);
-        }
-        return lp;
-    };
- 
-    // log(Ψ(x')/Ψ(x)) for x' = x ^ ot.flip_mask
-    // = ∑_k a_k [P_k(x') - P_k(x)]
-    // If flips_Pk[k]: P_k(x') = -P_k(x), so contribution = -2 a_k P_k(x)
-    auto compute_log_ratio = [&](long x, const ObsTerm& ot) -> cdouble {
-        cdouble lr = 0.0;
-        for (int k = 0; k < p; ++k) {
-            if (!ot.flips_Pk[k]) continue;
-            bool neg = __builtin_popcountll((long long)(x & z_bits[k])) & 1;
-            lr += a_k[k] * (neg ? cdouble(2.0, 0.0) : cdouble(-2.0, 0.0));
-        }
-        return lr;
-    };
- 
-    // -----------------------------------------------------------------------
-    // Metropolis-Hastings
-    //
-    // Mixes single-qubit flips (90%) with two-qubit flips (10%) to ensure
-    // ergodicity across parity sectors and avoid the parity-orbit trap at a_k=0.
-    // Initial state built bit-by-bit to avoid shift overflow for large num_qubits.
-    // -----------------------------------------------------------------------
-    const int N_s      = 1000;
-    const int n_warmup = 500;
- 
-    std::mt19937 rng(std::random_device{}());
-    std::uniform_int_distribution<int>     rand_qubit(0, num_qubits - 1);
-    std::uniform_int_distribution<int>     rand_bit(0, 1);
-    std::uniform_real_distribution<double> rand01(0.0, 1.0);
- 
-    auto propose = [&](long x) -> long {
-        if (num_qubits > 1 && rand01(rng) < 0.1) {
-            int i = rand_qubit(rng), j;
-            do { j = rand_qubit(rng); } while (j == i);
-            return x ^ (1LL << (num_qubits - 1 - i))
-                     ^ (1LL << (num_qubits - 1 - j));
-        }
-        return x ^ (1LL << (num_qubits - 1 - rand_qubit(rng)));
-    };
- 
-    // Build initial state bit-by-bit — safe for any num_qubits, no shift overflow
-    long x = 0;
-    for (int i = 0; i < num_qubits; ++i)
-        if (rand_bit(rng)) x |= (1LL << (num_qubits - 1 - i));
-    double lp = log_prob(x);
- 
-    for (int s = 0; s < n_warmup * num_qubits; ++s) {
-        long   xn  = propose(x);
-        double lpn = log_prob(xn);
-        if (std::log(rand01(rng)) < lpn - lp) { x = xn; lp = lpn; }
-    }
- 
-    // -----------------------------------------------------------------------
-    // Accumulate local energy
-    // E_loc(x) = ∑_t base_phase_t * (-1)^popcount(x & sign_mask_t) * exp(log_ratio_t(x))
-    // -----------------------------------------------------------------------
-    cdouble total = 0.0;
-    for (int s = 0; s < N_s; ++s) {
-        long   xn  = propose(x);
-        double lpn = log_prob(xn);
-        if (std::log(rand01(rng)) < lpn - lp) { x = xn; lp = lpn; }
- 
-        cdouble e_local = 0.0;
-        for (const auto& ot : o_terms) {
-            bool    neg   = __builtin_popcountll((long long)(x & ot.sign_mask)) & 1;
-            cdouble phase = neg ? -ot.base_phase : ot.base_phase;
-            e_local      += phase * std::exp(compute_log_ratio(x, ot));
-        }
-        total += e_local;
-    }
- 
-    return std::real(total) / static_cast<double>(N_s);
+    SampleSet samples = draw_samples(shots, shots_warmup);
+    return local_energy(samples, observable).mean().real();
 }
 
 ExponentialAnsatz& ExponentialAnsatz::operator*=(const double& scalar) {
@@ -346,31 +314,6 @@ ExponentialAnsatz& ExponentialAnsatz::operator+=(const ExponentialAnsatz& other)
     return *this;
 }
 
-DenseMatrix expand_matrix_to_nqubits(const DenseMatrix& mat, int num_qubits) {
-    /*
-    Expand a 2x2 matrix to act on a specific qubit in an n-qubit system.
-
-    Args:
-        mat (const DenseMatrix&): The 2x2 matrix to expand.
-        num_qubits (int): The total number of qubits in the system.
-
-    Returns:
-        DenseMatrix: The expanded matrix that acts on the specified qubit.
-    */
-    int dim = 1 << num_qubits;
-    DenseMatrix result = DenseMatrix::Identity(dim, dim);
-    for (int i = 0; i < dim; ++i) {
-        for (int j = 0; j < dim; ++j) {
-            if (((i ^ j) & ~(1 << (num_qubits - 1))) == 0) { // Only differ on the target qubit
-                int bit_i = (i >> (num_qubits - 1)) & 1;
-                int bit_j = (j >> (num_qubits - 1)) & 1;
-                result(i, j) = mat(bit_i, bit_j);
-            }
-        }
-    }
-    return result;
-}
-
 DenseMatrix ExponentialAnsatz::to_dense() const {
     /*
     Convert the ExponentialAnsatz to a dense matrix representation.
@@ -378,34 +321,32 @@ DenseMatrix ExponentialAnsatz::to_dense() const {
     Returns:
         DenseMatrix: The dense matrix representation of the state represented by this ansatz.
     */
-    // We have exp(sum_i c_i P_i) |+>, so form the inner total operator and then do the matrix exponential
     int dim = 1 << num_qubits;
     DenseMatrix total_op = DenseMatrix::Zero(dim, dim);
-    DenseMatrix pauli_x = DenseMatrix::Zero(2, 2);
-    pauli_x(0, 1) = 1.0;
-    pauli_x(1, 0) = 1.0;
-    DenseMatrix pauli_z = DenseMatrix::Zero(2, 2);
-    pauli_z(0, 0) = 1.0;
-    pauli_z(1, 1) = -1.0;
+    
+    // Build Pauli ops
+    DenseMatrix pauli_x(2, 2), pauli_y(2, 2), pauli_z(2, 2);
+    pauli_x << std::complex<double>(0), std::complex<double>(1), std::complex<double>(1), std::complex<double>(0);
+    pauli_y << std::complex<double>(0), std::complex<double>(0,-1), std::complex<double>(0,1), std::complex<double>(0);
+    pauli_z << std::complex<double>(1), std::complex<double>(0), std::complex<double>(0), std::complex<double>(-1);
+
     for (const auto& [ps, coeff] : terms.get_operators()) {
-        DenseMatrix op = DenseMatrix::Identity(dim, dim);
+        DenseMatrix op(1, 1);
+        op(0, 0) = 1.0;
         for (int i = 0; i < num_qubits; ++i) {
-            if (ps.x_mask[i] && !ps.z_mask[i]) {
-                op *= expand_matrix_to_nqubits(pauli_x, num_qubits);
-            } else if (!ps.x_mask[i] && ps.z_mask[i]) {
-                op *= expand_matrix_to_nqubits(pauli_z, num_qubits);
-            } else if (ps.x_mask[i] && ps.z_mask[i]) {
-                op *= expand_matrix_to_nqubits(pauli_x * pauli_z, num_qubits);
-            }
+            DenseMatrix single = DenseMatrix::Identity(2, 2);
+            if      (ps.x_mask[i] && !ps.z_mask[i]) single = pauli_x;
+            else if (!ps.x_mask[i] && ps.z_mask[i]) single = pauli_z;
+            else if (ps.x_mask[i] &&  ps.z_mask[i]) single = pauli_y;
+            op = Eigen::kroneckerProduct(op, single).eval();
         }
         total_op += coeff * op;
     }
 
-    Eigen::SelfAdjointEigenSolver<DenseMatrix> es(total_op);
-    DenseMatrix exp_total_op = es.eigenvectors() * (es.eigenvalues().array().exp().matrix().asDiagonal()) * es.eigenvectors().adjoint();
     DenseMatrix plus_state = DenseMatrix::Ones(dim, 1) / std::sqrt(static_cast<double>(dim));
-    return exp_total_op * plus_state;
-
+    DenseMatrix result = (total_op.exp() * plus_state).eval();
+    result /= result.norm();
+    return result;
 }
 
 // GCOV_EXCL_BR_STOP

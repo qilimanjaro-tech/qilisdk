@@ -295,7 +295,7 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
             double t_start = (step_ind > 0) ? step_list[step_ind - 1] : 0.0;
             double dt = step_list[step_ind] - t_start;
 
-            // Perform the iteration depending on the method
+            // Perform the iteration
             iter_rk4(rho_t, t_start, dt, step_list, hamiltonians, parameters_list, jump_operators, is_unitary_on_statevector);
 
             // If we should store intermediates, do it here
@@ -316,8 +316,6 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
         rho_t = trajectories_to_density_matrix(rho_t);
     }
 }
-
-#include <iostream>
 
 void time_evolution_variational_polynomial_adaptive(MatrixFreeHamiltonian& rho_t_as_h, const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, QiliSimConfig& config) {
     /*
@@ -356,7 +354,7 @@ void time_evolution_variational_polynomial_adaptive(MatrixFreeHamiltonian& rho_t
         double t_start = (step_ind > 0) ? step_list[step_ind - 1] : 0.0;
         double dt = step_list[step_ind] - t_start;
 
-        // Perform the iteration depending on the method
+        // Perform the iteration
         iter_rk4(rho_t_as_h, t_start, dt, step_list, hamiltonians, parameters_list, config.get_max_terms());
 
         // Truncate the resulting Hamiltonian to keep the number of terms manageable
@@ -368,10 +366,9 @@ void time_evolution_variational_polynomial_adaptive(MatrixFreeHamiltonian& rho_t
 
     }
 
-    std::cout << "Total removed by pruning: " << total_loss << std::endl;
-    std::cout << "Average removed per step: " << total_loss / step_list.size() << std::endl;
-
 }
+
+#include <iostream>
 
 void time_evolution_variational_exponential(ExponentialAnsatz& rho_t, const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, QiliSimConfig& config) {
     /*
@@ -400,12 +397,9 @@ void time_evolution_variational_exponential(ExponentialAnsatz& rho_t, const std:
 
     int n_qubits = hamiltonians[0].get_nqubits();
     rho_t = ExponentialAnsatz(n_qubits, config.get_max_terms());
-
-    std::cout << "Initial hamiltonian: " << hamiltonians[0] << std::endl;
-    std::cout << "Final hamiltonian: " << hamiltonians.back() << std::endl;
-
-    std::cout << "Initial rho_t: " << rho_t << std::endl;
-    std::cout << "Initial rho_t (dense): " << rho_t.to_dense() << std::endl;
+    rho_t.set_shots(config.get_num_monte_carlo_trajectories());
+    std::cout << "Initial trajectories: " << config.get_num_monte_carlo_trajectories() << std::endl;
+    std::cout << "Initial shots: " << rho_t.get_shots() << std::endl;
 
     double total_loss = 0.0;
     for (size_t step_ind = 0; step_ind < step_list.size(); ++step_ind) {
@@ -414,15 +408,12 @@ void time_evolution_variational_exponential(ExponentialAnsatz& rho_t, const std:
         double t_start = (step_ind > 0) ? step_list[step_ind - 1] : 0.0;
         double dt = step_list[step_ind] - t_start;
 
-        // Perform the iteration depending on the method
+        // Perform the iteration
         iter_rk4(rho_t, t_start, dt, step_list, hamiltonians, parameters_list, config.get_max_terms());
-
-        std::cout << "Step " << step_ind << " rho_t: " << rho_t << std::endl;
 
     }
 
-    std::cout << "Final rho_t: " << rho_t << std::endl;
-    std::cout << "Final rho_t (dense): " << rho_t.to_dense() << std::endl;
+    std::cout << "Shots: " << rho_t.get_shots() << std::endl;
 
 }
 

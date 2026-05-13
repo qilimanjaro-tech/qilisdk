@@ -123,7 +123,7 @@ MatrixFreeHamiltonian construct_current_hamiltonian(double t, const std::vector<
         ind++;
     }
     ind = std::min(ind, step_list.size() - 1);
-    MatrixFreeHamiltonian currentH;
+    MatrixFreeHamiltonian currentH(hamiltonians[0].get_nqubits());
     for (size_t h = 0; h < hamiltonians.size(); ++h) {
         if (ind == 0) {
             currentH += hamiltonians[h] * parameters_list[h][0];
@@ -544,10 +544,11 @@ void iter_rk4(MatrixFreeHamiltonian& rho_t_as_h, double t, double dt, const std:
     const double dt_over_6 = dt / 6.0;
 
     // Standard RK4 loop
-    MatrixFreeHamiltonian k;
-    MatrixFreeHamiltonian rho_tmp;
-    MatrixFreeHamiltonian rho_old;
-    MatrixFreeHamiltonian current_hamiltonian;
+    int nqubits = rho_t_as_h.get_nqubits();
+    MatrixFreeHamiltonian k(nqubits);
+    MatrixFreeHamiltonian rho_tmp(nqubits);
+    MatrixFreeHamiltonian rho_old(nqubits);
+    MatrixFreeHamiltonian current_hamiltonian(nqubits);
     double t_step = t;
 
     // Store the previous rho, we'll reuse it for the intermediate steps
@@ -610,7 +611,7 @@ void iter_rk4(ExponentialAnsatz& rho_t, double t, double dt, const std::vector<d
     ExponentialAnsatz k(nqubits, max_terms);
     ExponentialAnsatz rho_tmp(nqubits, max_terms);
     ExponentialAnsatz rho_old(nqubits, max_terms);
-    MatrixFreeHamiltonian current_hamiltonian;
+    MatrixFreeHamiltonian current_hamiltonian(nqubits);
     double t_step = t;
 
     // Store the previous rho, we'll reuse it for the intermediate steps
