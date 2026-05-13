@@ -64,6 +64,10 @@ msgid ":doc:`core_model` to build constrained optimization programs."
 msgstr ":doc:`core_model` para construir programas de optimización con restricciones."
 
 #: ../../modules/core/core_overview.rst:13
+msgid ":doc:`core_lp_parser` to load models from LP-format files."
+msgstr ":doc:`core_lp_parser` para cargar modelos desde archivos en formato LP."
+
+#: ../../modules/core/core_overview.rst:14
 msgid ":doc:`core_qubo` to convert models to QUBO format."
 msgstr ":doc:`core_qubo` para convertir modelos al formato QUBO."
 
