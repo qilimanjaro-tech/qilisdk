@@ -17,6 +17,7 @@ from typing import ClassVar
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.figure import Figure
+from scipy.optimize import curve_fit
 
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.yaml import yaml
@@ -225,6 +226,55 @@ class T1ExperimentResult(ExperimentResult):
     plot_title: ClassVar[str] = "T1"
     """Default title for T1 experiment plots."""
 
+    def plot(self, save_to: str | None = None) -> None:
+        """Plot the T1 decay curve, as well as an exponential fit to the data.
+
+        Args:
+            save_to (str | None): Optional path or directory to save the
+                generated plot. If a directory is provided, the filename is
+                automatically generated as ``{plot_title}_qubit{qubit}.png``.
+        """
+
+        x_data = self.dims[0].values[0].flatten()
+        y_data = self.s21_modulus.flatten()
+
+        _, ax = plt.subplots()
+        ax.set_title(f"{self.plot_title} - Qubit {self.qubit}")
+        ax.set_xlabel(self.dims[0].labels[0])
+        ax.set_ylabel(r"$|S_{21}|$")
+        ax.plot(x_data, y_data, ".", label="Data")
+
+        # Fit an exponential decay curve to the data
+        def t1_decay_model(t: np.ndarray, A: float, T1: float, B: float) -> np.ndarray:
+            """
+            Exponential decay model for T1 measurement.
+
+            Args:
+                t (np.ndarray): Time array (in microseconds).
+                A (float): Amplitude of the decay.
+                T1 (float): T1 relaxation time (in microseconds).
+                B (float): Baseline offset.
+
+            Returns:
+                np.ndarray: The modeled decay curve values at time t.
+            """
+            return A * np.exp(-t / T1) + B
+
+        initial_guess = [1, 10, -8]
+        # Perform the curve fit
+        popt, _ = curve_fit(t1_decay_model, x_data, y_data, p0=initial_guess)
+        A_fit, T1_fit, B_fit = popt
+        # Generate fitted curve data
+        t_fit = np.linspace(min(x_data), max(x_data), 100)
+        y_fit = t1_decay_model(t_fit, A_fit, T1_fit, B_fit)
+        ax.plot(t_fit, y_fit, label=f"Exponential Fit (T1={T1_fit:.2f} μs)")
+
+        ax.legend()
+        plt.tight_layout()
+        if save_to:
+            plt.savefig(save_to)
+        plt.show()
+
 
 @yaml.register_class
 class T2ExperimentResult(ExperimentResult):
@@ -240,3 +290,30 @@ class TwoTonesExperimentResult(ExperimentResult):
 
     plot_title: ClassVar[str] = "TwoTones"
     """Default title for TwoTones experiment plots."""
+
+    def plot(self, save_to: str | None = None) -> None:
+        """Plot the TwoTones experiment results as a 2D color mesh.
+
+        Args:
+            save_to (str | None): Optional path or directory to save the
+                generated plot. If a directory is provided, the filename is
+                automatically generated as ``{plot_title}_qubit{qubit}.png``.
+        """
+
+        x_data = self.dims[0].values[0]
+        y_data = self.dims[1].values[0]
+        z_data = self.s21_modulus
+
+        fig, ax = plt.subplots()
+        ax.set_title(f"{self.plot_title} - Qubit {self.qubit}")
+        ax.set_xlabel(self.dims[0].labels[0])
+        ax.set_ylabel(self.dims[1].labels[0])
+
+        # Create a 2D color mesh plot
+        mesh = ax.pcolormesh(x_data, y_data, z_data.T, cmap="viridis", shading="auto")
+        fig.colorbar(mesh, ax=ax)
+
+        plt.tight_layout()
+        if save_to:
+            plt.savefig(save_to)
+        plt.show()

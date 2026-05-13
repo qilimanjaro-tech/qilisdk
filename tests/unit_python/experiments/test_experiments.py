@@ -20,6 +20,7 @@ from qilisdk.experiments import (
     Dimension,
     ExperimentResult,
     RabiExperimentResult,
+    T1ExperimentResult,
 )
 
 
@@ -84,3 +85,34 @@ def test_experiment_plotting(monkeypatch):
     exp_result_3d = RabiExperimentResult(qubit=0, data=data3d, dims=dims3d)
     with pytest.raises(NotImplementedError, match="3D and higher"):
         exp_result_3d.plot(save_to="./")
+
+
+def test_t1_plotting(monkeypatch):
+    monkeypatch.setattr(plt, "show", lambda: None)  # Prevent actual plot display
+    monkeypatch.setattr(plt.Figure, "savefig", lambda self, *args, **kwargs: None)  # Prevent file saving
+
+    tau = np.array([1, 10, 100, 1000])
+    amplitudes = np.array([[0.1, 0.2, 0.3, 0.4], [0.15, 0.25, 0.35, 0.45]]).T
+    dims = [Dimension(labels=["Time"], values=[tau])]
+    t1_result = T1ExperimentResult(qubit=0, data=amplitudes, dims=dims)
+    t1_result.plot(save_to="./")
+
+
+def test_two_tones_plotting(monkeypatch):
+    monkeypatch.setattr(plt, "show", lambda: None)  # Prevent actual plot display
+    monkeypatch.setattr(plt.Figure, "savefig", lambda self, *args, **kwargs: None)  # Prevent file saving
+
+    z_bias_values = np.linspace(0.45, 0.60, 200)
+    drive_freqs = np.linspace(0.1, 4.2, 300)
+    Z, F = np.meshgrid(z_bias_values, drive_freqs)
+    f_qubit = 4.0 * np.abs(np.cos(np.pi * (Z - 0.5)))  # simple transmon model
+    linewidth = 0.05
+    generator = np.random.default_rng(seed=42)  # Use a generator for reproducibility
+    s21_amplitude = 1.5e-4 * np.exp(-(((F - f_qubit) / linewidth) ** 2)) + 1e-5 * generator.standard_normal(F.shape)
+    data = np.array([s21_amplitude, np.zeros_like(s21_amplitude)]).transpose(2, 1, 0)  # shape (300, 200, 2)
+    dims = [
+        Dimension(labels=["Z bias"], values=[z_bias_values]),
+        Dimension(labels=["Drive frequency"], values=[drive_freqs]),
+    ]
+    two_tones_result = RabiExperimentResult(qubit=0, data=data, dims=dims)
+    two_tones_result.plot(save_to="./")
