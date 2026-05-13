@@ -15,7 +15,7 @@
 import pytest
 
 from qilisdk.core.model import Model, ObjectiveSense
-from qilisdk.core.variables import EQ, GEQ, LEQ, BinaryVariable, ComparisonOperation, Domain, Variable
+from qilisdk.core.variables import EQ, GEQ, LEQ, BinaryVariable, ComparisonOperation, Domain, Operation, Term, Variable
 from qilisdk.utils.lp_parser import from_lp, from_lp_file, to_lp, to_lp_file
 
 
@@ -362,7 +362,7 @@ def test_to_lp_emits_sections_in_grammar_order():
     """LP grammar requires Min/Max → Subject To → Bounds → End in that order."""
     x = Variable("x", Domain.REAL, bounds=(0, 5))
     model = Model("m")
-    model.set_objective(x, label="obj")
+    model.set_objective(Term([x], Operation.ADD), label="obj")
     model.add_constraint("c", LEQ(x, 4))
     text = to_lp(model)
     assert text.index("Minimize") < text.index("Subject To") < text.index("Bounds") < text.index("End")
@@ -371,7 +371,7 @@ def test_to_lp_emits_sections_in_grammar_order():
 def test_to_lp_uses_maximize_keyword_for_maximize_sense():
     x = Variable("x", Domain.REAL, bounds=(0, 5))
     model = Model("m")
-    model.set_objective(x, sense=ObjectiveSense.MAXIMIZE)
+    model.set_objective(Term([x], Operation.ADD), sense=ObjectiveSense.MAXIMIZE)
     model.add_constraint("c", LEQ(x, 4))
     text = to_lp(model)
     assert "Maximize" in text
@@ -425,7 +425,7 @@ def test_round_trip_preserves_comparison_operators():
     # Labels must not start with `e`/`E` — the grammar reserves that for sci-notation numbers.
     x = Variable("x", Domain.REAL, bounds=(0, 10))
     model = Model("m")
-    model.set_objective(x)
+    model.set_objective(Term([x], Operation.ADD))
     model.add_constraint("c_le", LEQ(x, 1))
     model.add_constraint("c_ge", GEQ(x, 3))
     model.add_constraint("c_eq", EQ(x, 5))
@@ -441,7 +441,7 @@ def test_round_trip_normalises_constant_on_lhs():
     """`x + 3 <= 7` is stored as `lhs - rhs <op> 0`, so the rhs should serialize as `4`."""
     x = Variable("x", Domain.REAL, bounds=(0, 10))
     model = Model("m")
-    model.set_objective(x)
+    model.set_objective(Term([x], Operation.ADD))
     model.add_constraint("c", LEQ(x + 3, 7))
     text = to_lp(model)
     assert "x <= 4" in text
@@ -454,7 +454,7 @@ def test_default_lp_lower_bound_is_omitted():
     """A `[0, +inf)` REAL variable is the LP default — no Bounds entry should appear."""
     xp = Variable("xp", Domain.REAL, bounds=(0, None))
     model = Model("m")
-    model.set_objective(xp)
+    model.set_objective(Term([xp], Operation.ADD))
     model.add_constraint("c", LEQ(xp, 10))
     text = to_lp(model)
     # No Bounds section at all when every variable is at the LP default.
@@ -464,7 +464,7 @@ def test_default_lp_lower_bound_is_omitted():
 def test_free_variable_emits_free_keyword():
     x = Variable("x", Domain.REAL)
     model = Model("m")
-    model.set_objective(x)
+    model.set_objective(Term([x], Operation.ADD))
     model.add_constraint("c", EQ(x, 0))
     text = to_lp(model)
     assert "x free" in text
@@ -477,7 +477,7 @@ def test_free_variable_emits_free_keyword():
 def test_integer_variable_goes_into_general_section():
     z = Variable("z", Domain.INTEGER, bounds=(-3, 7))
     model = Model("m")
-    model.set_objective(z)
+    model.set_objective(Term([z], Operation.ADD))
     model.add_constraint("c", LEQ(z, 5))
     text = to_lp(model)
     assert "General" in text
@@ -504,7 +504,7 @@ def test_binary_variable_goes_into_binary_section():
 def test_one_sided_lower_bound_renders_compact_form():
     x = Variable("x", Domain.REAL, bounds=(2, None))
     model = Model("m")
-    model.set_objective(x)
+    model.set_objective(Term([x], Operation.ADD))
     model.add_constraint("c", LEQ(x, 10))
     assert "x >= 2" in to_lp(model)
 
@@ -512,7 +512,7 @@ def test_one_sided_lower_bound_renders_compact_form():
 def test_negative_lower_with_finite_upper_uses_neg_infinity():
     x = Variable("x", Domain.REAL, bounds=(None, 5))
     model = Model("m")
-    model.set_objective(x)
+    model.set_objective(Term([x], Operation.ADD))
     model.add_constraint("c", LEQ(x, 4))
     assert "-infinity <= x <= 5" in to_lp(model)
 

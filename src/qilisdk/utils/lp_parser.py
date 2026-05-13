@@ -576,7 +576,11 @@ def _format_monomial(coef: float, factors: list[BaseVariable], is_first: bool) -
         var_part = " * ".join(str(v) for v in factors)
         body = var_part if magnitude == 1 else f"{_format_number(magnitude)} {var_part}"
     if is_first:
-        return body if sign == "+" else f"-{body}" if not factors else f"- {body}"
+        if sign == "+":
+            return body
+        if not factors:
+            return f"-{body}"
+        return f"- {body}"
     return f"{sign} {body}"
 
 
