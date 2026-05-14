@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../modules/functionals/functionals_overview.rst:2
 msgid "Overview"
-msgstr "Descripción General"
+msgstr "Descripción general"
 
 #: ../../modules/functionals/functionals_overview.rst:4
 msgid ""
