@@ -26,6 +26,7 @@ from pathlib import Path
 from pyparsing import (
     CaselessKeyword,
     CaselessLiteral,
+    Combine,
     Forward,
     Group,
     Literal,
@@ -66,7 +67,7 @@ __all__ = ["from_lp", "from_lp_file", "to_lp", "to_lp_file"]
 
 # === Constants ====================================================================
 
-_INF = 1e30
+
 # A monomial token is a Group of [coef_float, var_name_str]; this length lets us
 # distinguish it from a parenthesized sub-expression at parse-walk time.
 _MONOMIAL_LEN = 2
@@ -99,7 +100,7 @@ def _finite_or_none(value: float) -> float | None:
     Returns:
         float | None: ``None`` if ``value`` is at or beyond ``± INF``, else ``value``.
     """
-    return None if abs(value) >= _INF else value
+    return None if abs(value) >= Domain.REAL.max() else value
 
 
 def _apply_arith(lhs: _Arith, op: str, rhs: _Arith) -> _Arith:
@@ -221,10 +222,13 @@ def _grammar() -> ParserElement:
     py_keyword = MatchFirst(map(CaselessKeyword, keywords))
     valid_name = ~py_keyword + name
 
-    colon = Suppress(one_of(": ::"))
+    colon = Suppress(":")
     plus_minus = one_of("+ -")
     inf = one_of("inf infinity", caseless=True)
-    number = Word(nums + ".")
+    # Scientific notation is permitted: the exponent must be adjacent (no whitespace),
+    # so `1e-3` parses as a number rather than `1 - 3`.
+    exponent = Combine(CaselessLiteral("e") + Optional(plus_minus) + Word(nums))
+    number = Combine(Word(nums + ".") + Optional(exponent))
     sense = one_of("< <= =< = > >= =>")
 
     # Section tags.
@@ -266,7 +270,7 @@ def _grammar() -> ParserElement:
     constraint = Group(labelled + var_expr + sense + rhs)
     constraints = ZeroOrMore(constraint).set_results_name("constraints")
 
-    signed_inf = (plus_minus + inf).set_parse_action(lambda toks: (1 if toks[0] == "+" else -1) * _INF)
+    signed_inf = (plus_minus + inf).set_parse_action(lambda toks: (1 if toks[0] == "+" else -1) * Domain.REAL.max())
     signed_number = (Optional(plus_minus, "+") + number).set_parse_action(lambda toks: float("".join(toks)))
     number_or_inf = signed_number | signed_inf
     lineq = number_or_inf + sense
@@ -277,7 +281,7 @@ def _grammar() -> ParserElement:
         + valid_name.copy().set_results_name("name")
         + Optional(rineq).set_results_name("rightbound")
     )
-    free_var = Group(valid_name.copy().set_results_name("name") + Literal("free"))
+    free_var = Group(valid_name.copy().set_results_name("name") + CaselessLiteral("free"))
     bound_stmt = free_var | bounded_var
 
     bounds = bounds_tag + Group(ZeroOrMore(bound_stmt)).set_results_name("bounds")
@@ -302,6 +306,8 @@ def _build_declared_variables(parsed: ParseResults, variable_dict: dict[str, Bas
         parsed (ParseResults): Output of :func:`_grammar` applied to LP content.
         variable_dict (dict[str, BaseVariable]): The dictionary to populate, keyed by
             variable label.
+    Raises:
+        ValueError: If the bounds of the expression are not valid.
     """
     # Bounds first so generals can pick them up. ``None`` means "unbounded in that
     # direction" — the Variable then falls back to its domain's natural extreme.
@@ -312,7 +318,12 @@ def _build_declared_variables(parsed: ParseResults, variable_dict: dict[str, Bas
             bounds_map[label] = (None, None)
         else:
             lo = float(entry.leftbound[0]) if entry.leftbound else 0.0
-            hi = float(entry.rightbound[1]) if entry.rightbound else _INF
+            hi = float(entry.rightbound[1]) if entry.rightbound else Domain.REAL.max()
+            if entry.rightbound and entry.rightbound[0] == "=":
+                if not entry.leftbound:
+                    lo = hi
+                else:
+                    raise ValueError(f"Invalid Bound: {' '.join([str(e) for e in entry])}")
             bounds_map[label] = (_finite_or_none(lo), _finite_or_none(hi))
 
     for binary_label in parsed.binaries:
@@ -349,7 +360,7 @@ def _resolve_var(name: str, variable_dict: dict[str, BaseVariable]) -> BaseVaria
         BaseVariable: The matching (or freshly created) variable.
     """
     if name not in variable_dict:
-        variable_dict[name] = Variable(label=name, domain=Domain.REAL, bounds=(0.0, _INF))
+        variable_dict[name] = Variable(label=name, domain=Domain.REAL, bounds=(0.0, Domain.REAL.max()))
     return variable_dict[name]
 
 
@@ -460,9 +471,9 @@ def _format_number(value: float) -> str:
     Returns:
         str: The LP-format text for ``value``.
     """
-    if value >= _INF:
+    if value >= Domain.REAL.max():
         return "+infinity"
-    if value <= -_INF:
+    if value <= -Domain.REAL.max():
         return "-infinity"
     if isinstance(value, float) and value.is_integer():
         return str(int(value))

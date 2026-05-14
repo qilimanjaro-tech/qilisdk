@@ -124,6 +124,22 @@ def test_objective_with_decimal_and_negative_coefficients():
     assert model.objective.term.evaluate(sample) == pytest.approx(1.5 * 4 - 2.25 * 2 + 0.5 * 6)
 
 
+def test_objective_with_scientific_notation_coefficients():
+    # Covers all three forms: `1.5e2` (mantissa + positive exponent), `1e-3`
+    # (signed exponent — must not be confused with subtraction), `2E5` (uppercase),
+    # and a leading sign on a sci-notation coefficient.
+    model = from_lp("""
+        Minimize
+         1.5e2 x + 1e-3 y - 2E5 z + .5e1 w
+        Subject To
+         x + y + z + w = 1
+        End
+        """)
+    vmap = _vars_by_label(model)
+    sample = {vmap["x"]: 1, vmap["y"]: 1, vmap["z"]: 1, vmap["w"]: 1}
+    assert model.objective.term.evaluate(sample) == pytest.approx(1.5e2 + 1e-3 - 2e5 + 0.5e1)
+
+
 # --- Constraints -----------------------------------------------------------------
 
 
@@ -179,6 +195,20 @@ def test_constraint_with_negative_rhs():
     assert not constraint.term.evaluate({var: -6})
 
 
+def test_constraint_rhs_accepts_scientific_notation():
+    model = from_lp("""
+        Minimize
+         x
+        Subject To
+         c: x >= 1.5e-3
+        End
+        """)
+    constraint = _constraints_by_label(model)["c"]
+    var = _vars_by_label(model)["x"]
+    assert constraint.term.evaluate({var: 1.5e-3})
+    assert not constraint.term.evaluate({var: 1e-3})
+
+
 def test_missing_comparison_raises():
     """Constraints with no sense operator are a grammar-level error in LP format."""
     with pytest.raises(Exception):  # pyparsing raises a ParseException, not ValueError  # noqa: PT011
@@ -207,6 +237,49 @@ def test_real_variable_with_two_sided_bounds():
     var = _vars_by_label(model)["x"]
     assert var.domain is Domain.REAL
     assert var.bounds == (-2.5, 7.5)
+
+
+def test_bounds_accept_scientific_notation():
+    model = from_lp("""
+        Minimize
+         x
+        Subject To
+         x >= 0
+        Bounds
+         -1e-2 <= x <= 1.5E3
+        End
+        """)
+    var = _vars_by_label(model)["x"]
+    assert var.bounds == (-1e-2, 1.5e3)
+
+
+def test_fixed_value_bound_collapses_to_equal_lo_hi():
+    # `x = 3` in the Bounds section pins the variable to a single value.
+    model = from_lp("""
+        Minimize
+         x
+        Subject To
+         x >= 0
+        Bounds
+         x = 3
+        End
+        """)
+    var = _vars_by_label(model)["x"]
+    assert var.bounds == (3.0, 3.0)
+
+
+def test_mixing_left_bound_with_equality_raises():
+    # `1 <= x = 3` is contradictory: left bound combined with a fixed-value rhs.
+    with pytest.raises(ValueError, match="Invalid Bound"):
+        from_lp("""
+            Minimize
+             x
+            Subject To
+             x >= 0
+            Bounds
+             1 <= x = 3
+            End
+            """)
 
 
 def test_free_variable_is_unbounded_real():
