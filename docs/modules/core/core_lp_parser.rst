@@ -1,5 +1,5 @@
-LP File Parser and Serializer
------------------------------
+Linear Programming File Parser and Serializer
+---------------------------------------------
 
 QiliSDK ships with a parser and a serializer for the CPLEX-flavor `LP format
 <https://www.ibm.com/docs/en/icos/22.1.1?topic=cplex-lp-file-format-algebraic-representation>`_.
@@ -47,7 +47,7 @@ Round-tripping a model back to LP text:
 
     from qilisdk.utils.lp_parser import to_lp, to_lp_file
 
-    print(to_lp(model))         # serialize to a string
+    print(to_lp(model))          # serialize to a string
     to_lp_file(model, "out.lp")  # or write directly to disk
 
 Supported features
@@ -89,7 +89,7 @@ Serialization conventions
 - Quadratic and bilinear monomials are expanded into explicit products
   (``x * x``, ``x * y``) since the LP grammar accepted by the parser has no
   ``^`` operator.
-- A unit coefficient is elided (``x`` rather than ``1 x``); a ``-1`` coefficient
+- A unit coefficient is omitted (``x`` rather than ``1 x``); a ``-1`` coefficient
   becomes a leading ``- x``.
 - Constraint right-hand sides are emitted as a single constant — any constant
   appearing on the left-hand side is folded into the rhs first.

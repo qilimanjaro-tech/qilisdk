@@ -272,13 +272,13 @@ def _grammar() -> ParserElement:
     lineq = number_or_inf + sense
     rineq = sense + number_or_inf
 
-    sensestmt = Group(
+    bounded_var = Group(
         Optional(lineq).set_results_name("leftbound")
         + valid_name.copy().set_results_name("name")
         + Optional(rineq).set_results_name("rightbound")
     )
     free_var = Group(valid_name.copy().set_results_name("name") + Literal("free"))
-    bound_stmt = free_var | sensestmt
+    bound_stmt = free_var | bounded_var
 
     bounds = bounds_tag + Group(ZeroOrMore(bound_stmt)).set_results_name("bounds")
     generals = gen_tag + Group(ZeroOrMore(valid_name)).set_results_name("generals")
@@ -408,7 +408,7 @@ def _extract_arith(expr: ParseResults | list, variable_dict: dict[str, BaseVaria
 
 
 def _extract_constraint(expr: ParseResults | list, variable_dict: dict[str, BaseVariable]) -> ComparisonTerm:
-    """Split a constraint's tokens at the sense operator and build the comparison.
+    """Split a constraint's tokens at the comparison operator and build the comparison.
 
     Args:
         expr (ParseResults | list): Flat token sequence containing exactly one comparison operator
@@ -428,58 +428,6 @@ def _extract_constraint(expr: ParseResults | list, variable_dict: dict[str, Base
             rhs = _extract_arith(items[i + 1 :], variable_dict)
             return _COMPARISON_FACTORY[e](lhs, rhs)
     raise ValueError("constraint is missing a comparison operator")
-
-
-# === Public API ===================================================================
-
-
-def from_lp(lp_str: str) -> Model:
-    """Parse an LP-format string and create a corresponding :class:`Model`.
-
-    Supports:
-        - Linear and quadratic objectives (Maximize / Minimize)
-        - Linear constraints with senses ``<``, ``<=``, ``=``, ``>=``, ``>``
-        - ``Bounds`` (two-sided ranges, ``free``, ``±infinity``)
-        - ``General`` (integer) and ``Binary`` declarations
-        - Backslash line comments
-
-    Args:
-        lp_str (str): The LP-format source.
-
-    Returns:
-        Model: The constructed optimization model.
-    """
-    parsed = _grammar().parse_string(lp_str, parse_all=True)
-    variable_dict: dict[str, BaseVariable] = {}
-    _build_declared_variables(parsed, variable_dict)
-
-    model = Model("")
-    obj_sense = (
-        ObjectiveSense.MAXIMIZE
-        if str(parsed.objSense).lower() in {"max", "maximum", "maximize"}
-        else ObjectiveSense.MINIMIZE
-    )
-    obj_label = _label_or("obj", parsed.objective[1])
-    obj = _extract_arith(parsed.objective[2:], variable_dict)
-    model.set_objective(_to_term(obj), label=obj_label, sense=obj_sense)
-
-    for idx, con in enumerate(parsed.constraints, start=1):
-        con_label = _label_or(f"c{idx}", con[0])
-        model.add_constraint(label=con_label, term=_extract_constraint(con[1:], variable_dict))
-
-    return model
-
-
-def from_lp_file(filename: str) -> Model:
-    """Read an LP-format file and create a corresponding :class:`Model`.
-
-    Args:
-        filename (str): Path to the LP file.
-
-    Returns:
-        Model: The constructed optimization model.
-    """
-    return from_lp(Path(filename).read_text(encoding="utf-8"))
 
 
 # === Serialization helpers ========================================================
@@ -644,6 +592,55 @@ def _bounds_line(var: Variable) -> str | None:
 
 
 # === Public API (serialization) ===================================================
+
+
+def from_lp(lp_str: str) -> Model:
+    """Parse an LP-format string and create a corresponding :class:`Model`.
+
+    Supports:
+        - Linear and quadratic objectives (Maximize / Minimize)
+        - Linear constraints with senses ``<``, ``<=``, ``=``, ``>=``, ``>``
+        - ``Bounds`` (two-sided ranges, ``free``, ``±infinity``)
+        - ``General`` (integer) and ``Binary`` declarations
+        - Backslash line comments
+
+    Args:
+        lp_str (str): The LP-format source.
+
+    Returns:
+        Model: The constructed optimization model.
+    """
+    parsed = _grammar().parse_string(lp_str, parse_all=True)
+    variable_dict: dict[str, BaseVariable] = {}
+    _build_declared_variables(parsed, variable_dict)
+
+    model = Model("")
+    obj_sense = (
+        ObjectiveSense.MAXIMIZE
+        if str(parsed.objSense).lower() in {"max", "maximum", "maximize"}
+        else ObjectiveSense.MINIMIZE
+    )
+    obj_label = _label_or("obj", parsed.objective[1])
+    obj = _extract_arith(parsed.objective[2:], variable_dict)
+    model.set_objective(_to_term(obj), label=obj_label, sense=obj_sense)
+
+    for idx, con in enumerate(parsed.constraints, start=1):
+        con_label = _label_or(f"c{idx}", con[0])
+        model.add_constraint(label=con_label, term=_extract_constraint(con[1:], variable_dict))
+
+    return model
+
+
+def from_lp_file(filename: str) -> Model:
+    """Read an LP-format file and create a corresponding :class:`Model`.
+
+    Args:
+        filename (str): Path to the LP file.
+
+    Returns:
+        Model: The constructed optimization model.
+    """
+    return from_lp(Path(filename).read_text(encoding="utf-8"))
 
 
 def to_lp(model: Model) -> str:

@@ -62,6 +62,13 @@ def test_minimize_keyword_is_caseless(keyword):
     assert model.objective.sense is ObjectiveSense.MINIMIZE
 
 
+@pytest.mark.parametrize("keyword", ["Maximize", "Maximum", "Max", "MAXIMIZE"])
+def test_maximize_keyword_is_caseless(keyword):
+    """`min`, `minimum`, `minimize` (any case) should all be treated as MINIMIZE."""
+    model = from_lp(f"{keyword}\n x\nSubject To\n x >= 0\nEnd\n")
+    assert model.objective.sense is ObjectiveSense.MAXIMIZE
+
+
 # --- Objective term shapes --------------------------------------------------------
 
 
