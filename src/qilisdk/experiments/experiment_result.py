@@ -226,7 +226,7 @@ class T1ExperimentResult(ExperimentResult):
     plot_title: ClassVar[str] = "T1"
     """Default title for T1 experiment plots."""
 
-    def plot(self, save_to: str | None = None) -> None:
+    def plot(self, save_to: str | None = None, initial_guess: list[float] | None = None) -> None:
         """Plot the T1 decay curve, as well as an exponential fit to the data.
 
         Args:
@@ -260,7 +260,9 @@ class T1ExperimentResult(ExperimentResult):
             """
             return a * np.exp(-t / t1) + b
 
-        initial_guess = [1, 10, -8]
+        if initial_guess is None:
+            initial_guess = [y_data.max() - y_data.min(), (x_data.max() - x_data.min()) / 3, y_data.min()]
+
         # Perform the curve fit
         popt, _ = curve_fit(t1_decay_model, x_data, y_data, p0=initial_guess)
         a_fit, t1_fit, b_fit = popt

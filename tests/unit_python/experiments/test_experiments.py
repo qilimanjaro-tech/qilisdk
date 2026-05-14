@@ -95,4 +95,4 @@ def test_t1_plotting(monkeypatch):
     amplitudes = np.array([[0.1, 0.2, 0.3, 0.4], [0.15, 0.25, 0.35, 0.45]]).T
     dims = [Dimension(labels=["Time"], values=[tau])]
     t1_result = T1ExperimentResult(qubit=0, data=amplitudes, dims=dims)
-    t1_result.plot(save_to="./")
+    t1_result.plot(save_to="./test.png")
