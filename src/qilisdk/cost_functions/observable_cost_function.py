@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliOperator
-from qilisdk.core.qtensor import QTensor, expect_val, ket, tensor_prod
+from qilisdk.core.qtensor import QTensor, expect_val, ket
 from qilisdk.cost_functions.cost_function import CostFunction
 from qilisdk.settings import get_settings
 
@@ -139,15 +139,16 @@ class ObservableCostFunction(CostFunction):
         """
         total_cost = complex(0.0)
         nqubits = self._observable.nqubits
-        probabilities = results.get_probabilities()
-        for sample, prob in probabilities.items():
-            state = tensor_prod([ket(int(i)) for i in sample])
+        samples = results.get_samples()
+        nshots = sum(samples.values())
+        for sample, prob in samples.items():
+            state = ket(*[int(bit) for bit in sample])
             if nqubits != state.nqubits:
                 raise ValueError(
                     f"The samples provided have {state.nqubits} qubits but the observable has {nqubits} qubits"
                 )
             evaluate_results = complex(np.real_if_close(expect_val(self._observable, state), tol=get_settings().atol))
-            total_cost += evaluate_results * prob
+            total_cost += evaluate_results * (prob / nshots)
 
         if abs(total_cost.imag) < get_settings().atol:
             return total_cost.real

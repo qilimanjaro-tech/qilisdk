@@ -165,6 +165,7 @@ class CudaSamplingMethod(str, Enum):
     STATE_VECTOR = "state_vector"
     TENSOR_NETWORK = "tensor_network"
     MATRIX_PRODUCT_STATE = "matrix_product_state"
+    CPU = "cpu"
 
 
 class CudaBackend(Backend):
@@ -187,9 +188,8 @@ class CudaBackend(Backend):
         Args:
             sampling_method (CudaSamplingMethod): The simulation method to
                 use for sampling circuits. Options include
-                ``STATE_VECTOR``, ``TENSOR_NETWORK``, or
-                ``MATRIX_PRODUCT_STATE``. Defaults to
-                ``CudaSamplingMethod.STATE_VECTOR``.
+                ``STATE_VECTOR``, ``TENSOR_NETWORK``, ``MATRIX_PRODUCT_STATE``, or
+                ``CPU``. Defaults to ``CudaSamplingMethod.STATE_VECTOR``.
             noise_model (NoiseModel | None): Optional noise model applied
                 during execution. Defaults to ``None``.
         """
@@ -475,8 +475,8 @@ class CudaBackend(Backend):
         For TENSOR_NETWORK and MATRIX_PRODUCT_STATE methods, it explicitly sets the target to use tensor network-based simulations.
         """
         logger.info("Applying sampling simulation method {}", self.sampling_method.value)
-        if self.sampling_method == CudaSamplingMethod.STATE_VECTOR:
-            if cudaq.num_available_gpus() == 0:
+        if self.sampling_method in {CudaSamplingMethod.STATE_VECTOR, CudaSamplingMethod.CPU}:
+            if cudaq.num_available_gpus() == 0 or self.sampling_method == CudaSamplingMethod.CPU:
                 cudaq.set_target("qpp-cpu")
                 logger.debug("No GPU detected, using cudaq's 'qpp-cpu' backend")
             else:
