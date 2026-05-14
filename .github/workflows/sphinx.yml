@@ -56,6 +56,11 @@ jobs:
             exit 1
           fi
           printf '<!doctype html><meta http-equiv="refresh" content="0; url=%s/">' "$latest_tag" > docs/_build/en/index.html
+          printf '<!doctype html><meta http-equiv="refresh" content="0; url=%s/">' "en/$latest_tag" > docs/_build/index.html
+          mkdir -p docs/_build/main
+          printf '<!doctype html><meta http-equiv="refresh" content="0; url=%s/">' "../en/main" > docs/_build/main/index.html
+          mkdir -p docs/_build/0.1.8
+          printf '<!doctype html><meta http-equiv="refresh" content="0; url=%s/">' "../en/0.1.8" > docs/_build/0.1.8/index.html
 
       - name: Deploy to GitHub Pages
         env:
@@ -63,4 +68,4 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          uv run ghp-import -n -f -p docs/_build/en
+          uv run ghp-import -n -f -p docs/_build/
