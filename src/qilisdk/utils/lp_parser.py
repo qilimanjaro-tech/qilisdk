@@ -299,18 +299,7 @@ def _grammar() -> ParserElement:
 # === Variables and expressions ====================================================
 
 
-def _build_declared_variables(parsed: ParseResults, variable_dict: dict[str, BaseVariable]) -> None:
-    """Populate ``variable_dict`` from the ``Bounds`` / ``Binary`` / ``General`` sections.
-
-    Args:
-        parsed (ParseResults): Output of :func:`_grammar` applied to LP content.
-        variable_dict (dict[str, BaseVariable]): The dictionary to populate, keyed by
-            variable label.
-    Raises:
-        ValueError: If the bounds of the expression are not valid.
-    """
-    # Bounds first so generals can pick them up. ``None`` means "unbounded in that
-    # direction" — the Variable then falls back to its domain's natural extreme.
+def _build_bounds_map(parsed: ParseResults) -> dict[str, tuple[float | None, float | None]]:
     bounds_map: dict[str, tuple[float | None, float | None]] = {}
     for entry in parsed.bounds:
         label = str(entry.name[0])
@@ -325,6 +314,22 @@ def _build_declared_variables(parsed: ParseResults, variable_dict: dict[str, Bas
                 else:
                     raise ValueError(f"Invalid Bound: {' '.join([str(e) for e in entry])}")
             bounds_map[label] = (_finite_or_none(lo), _finite_or_none(hi))
+    return bounds_map
+
+
+def _build_declared_variables(parsed: ParseResults, variable_dict: dict[str, BaseVariable]) -> None:
+    """Populate ``variable_dict`` from the ``Bounds`` / ``Binary`` / ``General`` sections.
+
+    Args:
+        parsed (ParseResults): Output of :func:`_grammar` applied to LP content.
+        variable_dict (dict[str, BaseVariable]): The dictionary to populate, keyed by
+            variable label.
+    Raises:
+        ValueError: If the bounds of the expression are not valid.
+    """
+    # Bounds first so generals can pick them up. ``None`` means "unbounded in that
+    # direction" — the Variable then falls back to its domain's natural extreme.
+    bounds_map: dict[str, tuple[float | None, float | None]] = _build_bounds_map(parsed)
 
     for binary_label in parsed.binaries:
         label = str(binary_label)
