@@ -282,4 +282,4 @@ markers = [
 package = "qilisdk"
 directory = "changes"
 filename = "CHANGELOG.md"
-issue_format = "[PR #{issue}](https://github.com/qilimanjaro-tech/qilisdk/pulls/{issue})"
+issue_format = "[PR #{issue}](https://github.com/qilimanjaro-tech/qilisdk/pull/{issue})"
