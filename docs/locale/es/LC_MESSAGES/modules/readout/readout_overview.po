@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../modules/readout/readout_overview.rst:2
 msgid "Overview"
-msgstr "Resumen"
+msgstr "Descripción general"
 
 #: ../../modules/readout/readout_overview.rst:4
 msgid ""
