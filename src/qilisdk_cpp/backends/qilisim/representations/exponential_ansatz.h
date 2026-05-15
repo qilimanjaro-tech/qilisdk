@@ -14,29 +14,35 @@
 #pragma once
 
 #include "matrix_free_hamiltonian.h"
+#include <boost/dynamic_bitset.hpp>
 #include <vector>
 
 // GCOV_EXCL_BR_START
 
 struct SampleSet {
-    std::vector<long> configs;
+    std::vector<boost::dynamic_bitset<>> configs;
     DenseMatrix O_mat;  // (N_s x p) log-derivatives: O_k(x) = P_k(x) ∈ {-1,+1}
 };
 
 class ExponentialAnsatz {
    private:
-    int shots = 100;
-    int shots_warmup = shots;
+    int shots;
+    int warmups;
+    int order;
     MatrixFreeHamiltonian terms = MatrixFreeHamiltonian(0);
-    int num_qubits = 0;
+    int num_qubits;
 
-    std::vector<long> build_z_bits() const;
+    std::vector<boost::dynamic_bitset<>> build_z_bits() const;
 
    public:
-    ExponentialAnsatz(int num_qubits, int max_terms);
+    ExponentialAnsatz(int num_qubits, int order, int shots, int warmups);
     friend std::ostream& operator<<(std::ostream& os, const ExponentialAnsatz& ansatz);
-    void set_shots(int new_shots) { shots = new_shots; shots_warmup = new_shots; }
+    void set_shots(int new_shots) { shots = new_shots; }
+    void set_warmups(int new_warmups) { warmups = new_warmups; }
+    void set_order(int new_order) { order = new_order; }
+    int get_order() const { return order; }
     int get_shots() const { return shots; }
+    int get_warmups() const { return warmups; }
     MatrixFreeHamiltonian get_terms() const { return terms; }
     MatrixFreeHamiltonian& get_terms() { return terms; }
     SampleSet draw_samples() const;

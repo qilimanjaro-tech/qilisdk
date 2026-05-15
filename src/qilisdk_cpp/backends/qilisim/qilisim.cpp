@@ -120,6 +120,8 @@ py::object QiliSimCpp::execute_digital_propagation(const py::object& functional,
     return FunctionalResult("readout_results"_a = result);
 }
 
+#include <iostream>
+
 // The public execute_time_evolution
 py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, const py::object& readout, const py::object& noise_model, const py::dict& solver_params) {
     /*
@@ -181,24 +183,44 @@ py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, co
     }
 
     // A scalable method, so we should never construct any matrix or state
-    if (config.get_time_evolution_method() == "variational_polynomial_adaptive") {
+    if (config.get_time_evolution_method() == "truncated_polynomial_expansion") {
 
+        // Ensure that the initial state is a plus state (a QTensorSymbolic)
+        if (!py::isinstance(initial_state, QTensorSymbolic) || initial_state.attr("name").cast<std::string>() != "uniform") {
+            throw py::value_error("Initial state must be a QTensorSymbolic instance for the truncated polynomial expansion method.");
+        }
+
+        // Parse things
         std::vector<MatrixFreeHamiltonian> hamiltonians = parse_hamiltonians_matrix_free(n_qubits, hamiltonians_values);
         MatrixFreeHamiltonian rho_t_as_h(n_qubits);
         std::vector<std::vector<double>> parameters_list = parse_coefficients(schedule, hamiltonians_keys, steps);
         std::vector<double> step_list = parse_time_steps(steps);
-        time_evolution_variational_polynomial_adaptive(rho_t_as_h, hamiltonians, parameters_list, step_list, config);
-        py::object result = construct_result_object(rho_t_as_h, readout, n_qubits, config);
+
+        // Run the evolution
+        time_evolution_truncated_polynomial_expansion(rho_t_as_h, hamiltonians, parameters_list, step_list, config);
+
+        // Construct the result object
+        py::object result = construct_result_object(rho_t_as_h, readout, n_qubits);
         return FunctionalResult("readout_results"_a = result);
 
     // A scalable method, so we should never construct any matrix or state
     } else if (config.get_time_evolution_method() == "variational_exponential") {
 
+        // Ensure that the initial state is a plus state (a QTensorSymbolic)
+        if (!py::isinstance(initial_state, QTensorSymbolic) || initial_state.attr("name").cast<std::string>() != "uniform") {
+            throw py::value_error("Initial state must be a QTensorSymbolic instance for the variational exponential method.");
+        }
+
+        // Parse things
         std::vector<MatrixFreeHamiltonian> hamiltonians = parse_hamiltonians_matrix_free(n_qubits, hamiltonians_values);
-        ExponentialAnsatz rho_t(n_qubits, config.get_max_terms());
+        ExponentialAnsatz rho_t(n_qubits, config.get_order(), config.get_shots(), config.get_warmups());
         std::vector<std::vector<double>> parameters_list = parse_coefficients(schedule, hamiltonians_keys, steps);
         std::vector<double> step_list = parse_time_steps(steps);
+
+        // Run the evolution
         time_evolution_variational_exponential(rho_t, hamiltonians, parameters_list, step_list, config);
+
+        // Construct the result object
         py::object result = construct_result_object(rho_t, readout, n_qubits, config);
         return FunctionalResult("readout_results"_a = result);
 

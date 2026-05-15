@@ -177,12 +177,8 @@ void lindblad_rhs(ExponentialAnsatz& drho, const ExponentialAnsatz& rho, const M
     DenseMatrix M = (O_conj.transpose() * samples.O_mat) / static_cast<double>(N_s)
                     - O_mean.conjugate() * O_mean.transpose();
 
-    // V_k = -(<O_k* E_loc> - <O_k*><E_loc>)  (imaginary-time / stochastic reconfiguration)
-    // The real-time Schrödinger form would prepend -i, but that makes adot purely imaginary
-    // for a real Hamiltonian and real initial parameters, leaving Re(a_k) frozen and the
-    // sampling distribution unchanged.  Imaginary-time evolution gives a real force, so
-    // Re(a_k) evolves and the distribution tracks the ground state.
-    Eigen::VectorXcd V = -(
+    // V_k = -i(<O_k* E_loc> - <O_k*><E_loc>)
+    Eigen::VectorXcd V = std::complex<double>(0.0, -1.0) * (
         (O_conj.transpose() * El) / static_cast<double>(N_s) - O_mean.conjugate() * El_mean
     );
 
@@ -190,10 +186,12 @@ void lindblad_rhs(ExponentialAnsatz& drho, const ExponentialAnsatz& rho, const M
     M += 1e-4 * DenseMatrix::Identity(p, p);
     Eigen::VectorXcd adot = M.lu().solve(V);
 
+    // Set the drho
     drho *= 0.0;
     for (int k = 0; k < p; ++k) {
         drho.get_terms().add(adot(k), terms_vec[k].first);
     }
+
 }
 
 // GCOV_EXCL_BR_STOP

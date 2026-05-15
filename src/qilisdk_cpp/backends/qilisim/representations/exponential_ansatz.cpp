@@ -17,9 +17,11 @@
 #include <random>
 #include <utility>
 
+#include <iostream>
+
 // GCOV_EXCL_BR_START
 
-ExponentialAnsatz::ExponentialAnsatz(int num_qubits, int max_terms) : num_qubits(num_qubits), terms(num_qubits) {
+ExponentialAnsatz::ExponentialAnsatz(int num_qubits, int order, int shots, int warmups) : num_qubits(num_qubits), order(order), shots(shots), warmups(warmups) {
     /*
     Construct an ExponentialAnsatz with the given number of qubits and maximum number of terms.
 
@@ -28,139 +30,176 @@ ExponentialAnsatz::ExponentialAnsatz(int num_qubits, int max_terms) : num_qubits
 
     Args:
         num_qubits (int): The number of qubits in the system.
-        max_terms (int): The maximum number of terms to keep in the ansatz.
+        order (int): The maximum order of terms to include in the ansatz.
+        shots (int): The number of shots to use for sampling.
+        warmups (int): The number of warmup steps to use for sampling.
 
     Returns:
         ExponentialAnsatz: The constructed ExponentialAnsatz object.
     */
 
-    // Keep adding terms until we reach the maximum number
-    int terms_so_far = 0;
-    
     // Add single body terms
-    for (int i = 0; i < num_qubits; ++i) {
-        if (terms_so_far >= max_terms) break;
-        PauliString ps(num_qubits, 'Z', i);
-        terms.add(0.0, ps);
-        terms_so_far++;
+    if (order >= 1) {
+        for (int i = 0; i < num_qubits; ++i) {
+            PauliString ps(num_qubits, 'Z', i);
+            terms.add(0.0, ps);
+        }
     }
 
     // Add two body terms
-    for (int i = 0; i < num_qubits; ++i) {
-        for (int j = i + 1; j < num_qubits; ++j) {
-            if (terms_so_far >= max_terms) break;
-            PauliString ps(num_qubits);
-            ps.z_mask[i] = true;
-            ps.z_mask[j] = true;
-            terms.add(0.0, ps);
-            terms_so_far++;
-        }
-        if (terms_so_far >= max_terms) break;
-    }
-
-    // Add three body terms
-    for (int i = 0; i < num_qubits; ++i) {
-        for (int j = i + 1; j < num_qubits; ++j) {
-            for (int k = j + 1; k < num_qubits; ++k) {
-                if (terms_so_far >= max_terms) break;
+    if (order >= 2) {
+        for (int i = 0; i < num_qubits; ++i) {
+            for (int j = i + 1; j < num_qubits; ++j) {
                 PauliString ps(num_qubits);
                 ps.z_mask[i] = true;
                 ps.z_mask[j] = true;
-                ps.z_mask[k] = true;
                 terms.add(0.0, ps);
-                terms_so_far++;
             }
-            if (terms_so_far >= max_terms) break;
         }
-        if (terms_so_far >= max_terms) break;
     }
 
-    // Add four body terms
-    for (int i = 0; i < num_qubits; ++i) {
-        for (int j = i + 1; j < num_qubits; ++j) {
-            for (int k = j + 1; k < num_qubits; ++k) {
-                for (int l = k + 1; l < num_qubits; ++l) {
-                    if (terms_so_far >= max_terms) break;
+    // Add three body terms
+    if (order >= 3) {
+        for (int i = 0; i < num_qubits; ++i) {
+            for (int j = i + 1; j < num_qubits; ++j) {
+                for (int k = j + 1; k < num_qubits; ++k) {
                     PauliString ps(num_qubits);
                     ps.z_mask[i] = true;
                     ps.z_mask[j] = true;
                     ps.z_mask[k] = true;
-                    ps.z_mask[l] = true;
                     terms.add(0.0, ps);
-                    terms_so_far++;
                 }
-                if (terms_so_far >= max_terms) break;
             }
-            if (terms_so_far >= max_terms) break;
         }
-        if (terms_so_far >= max_terms) break;
+    }
+
+    // Add four body terms
+    if (order >= 4) {
+        for (int i = 0; i < num_qubits; ++i) {
+            for (int j = i + 1; j < num_qubits; ++j) {
+                for (int k = j + 1; k < num_qubits; ++k) {
+                    for (int l = k + 1; l < num_qubits; ++l) {
+                        PauliString ps(num_qubits);
+                        ps.z_mask[i] = true;
+                        ps.z_mask[j] = true;
+                        ps.z_mask[k] = true;
+                        ps.z_mask[l] = true;
+                        terms.add(0.0, ps);
+                    }
+                }
+            }
+        }
     }
 
 }
 
-std::vector<long> ExponentialAnsatz::build_z_bits() const {
+std::vector<boost::dynamic_bitset<>> ExponentialAnsatz::build_z_bits() const {
     const auto& ops = terms.get_operators();
     const int p = static_cast<int>(ops.size());
     std::vector<std::pair<PauliString, std::complex<double>>> terms_vec(ops.begin(), ops.end());
-    std::vector<long> z_bits(p);
+    std::vector<boost::dynamic_bitset<>> z_bits(p, boost::dynamic_bitset<>(num_qubits, 0));
     for (int k = 0; k < p; ++k) {
-        long bits = 0;
         const auto& ps = terms_vec[k].first;
         for (int i = 0; i < num_qubits; ++i) {
-            if (ps.z_mask[i]) bits |= (1LL << (num_qubits - 1 - i));
+            if (ps.z_mask[i]) z_bits[k].set(num_qubits - 1 - i);
         }
-        z_bits[k] = bits;
     }
     return z_bits;
 }
 
 SampleSet ExponentialAnsatz::draw_samples() const {
-    return draw_samples(shots, shots_warmup);
+    /*
+    Draw samples from the probability distribution defined by the ansatz, using the default number of shots and warmup steps.
+
+    Returns:
+        SampleSet: A struct containing the drawn samples and their corresponding log-derivatives.
+    */
+    return draw_samples(shots, warmups);
 }
 
 SampleSet ExponentialAnsatz::draw_samples(int N_s, int n_warmup) const {
+    /*
+    Draw samples from the probability distribution defined by the ansatz.
+
+    Args:
+        N_s (int): The number of samples to draw.
+        n_warmup (int): The number of warmup steps to perform before drawing samples.
+
+    Returns:
+        SampleSet: A struct containing the drawn samples and their corresponding log-derivatives.
+    */
     const auto& ops = terms.get_operators();
     const int p = static_cast<int>(ops.size());
     std::vector<std::pair<PauliString, std::complex<double>>> terms_vec(ops.begin(), ops.end());
-    std::vector<long> z_bits = build_z_bits();
+    std::vector<boost::dynamic_bitset<>> z_bits = build_z_bits();
 
-    auto log_prob = [&](long x) -> double {
-        double lp = 0.0;
-        for (int k = 0; k < p; ++k) {
-            bool neg = __builtin_popcountll((long long)(x & z_bits[k])) & 1;
-            lp += 2.0 * terms_vec[k].second.real() * (neg ? -1.0 : 1.0);
-        }
-        return lp;
-    };
+    // For each qubit i, the indices of terms k whose z-support includes qubit i.
+    // When bit i is flipped, only these terms change parity (and thus sign in lp).
+    std::vector<std::vector<int>> qubit_to_terms(num_qubits);
+    for (int k = 0; k < p; ++k)
+        for (int i = 0; i < num_qubits; ++i)
+            if (z_bits[k].test(num_qubits - 1 - i))
+                qubit_to_terms[i].push_back(k);
 
     std::mt19937 rng(std::random_device{}());
     std::uniform_int_distribution<int> rand_qubit(0, num_qubits - 1);
     std::uniform_real_distribution<double> rand01(0.0, 1.0);
 
-    long x = std::uniform_int_distribution<long>(0, (1LL << num_qubits) - 1)(rng);
-    double lp = log_prob(x);
+    boost::dynamic_bitset<> x(num_qubits);
+    for (int i = 0; i < num_qubits; ++i)
+        if (rand01(rng) < 0.5) x.set(i);
+
+    // Per-term parity and weighted contribution: contrib[k] = 2*coeff_k * (-1)^parity_k.
+    // Tracking these allows O(affected terms) incremental updates on each bit flip.
+    std::vector<bool> parity(p);
+    std::vector<double> contrib(p);
+    double lp = 0.0;
+    for (int k = 0; k < p; ++k) {
+        bool neg = ((x & z_bits[k]).count()) & 1;
+        parity[k] = neg;
+        contrib[k] = 2.0 * terms_vec[k].second.real() * (neg ? -1.0 : 1.0);
+        lp += contrib[k];
+    }
+
+    // Flipping qubit i negates contrib[k] for each k in qubit_to_terms[i], giving delta = -2*sum(affected contrib).
+    auto compute_delta = [&](int qubit) -> double {
+        double delta = 0.0;
+        for (int k : qubit_to_terms[qubit]) delta -= 2.0 * contrib[k];
+        return delta;
+    };
+    auto accept_flip = [&](int qubit) {
+        x.flip(num_qubits - 1 - qubit);
+        for (int k : qubit_to_terms[qubit]) {
+            contrib[k] = -contrib[k];
+            parity[k] = !parity[k];
+        }
+    };
 
     for (int s = 0; s < n_warmup * num_qubits; ++s) {
         int i = rand_qubit(rng);
-        long x_new = x ^ (1LL << (num_qubits - 1 - i));
-        double lp_new = log_prob(x_new);
-        if (std::log(rand01(rng)) < lp_new - lp) { x = x_new; lp = lp_new; }
+        double lp_new = lp + compute_delta(i);
+        if (std::log(rand01(rng)) < lp_new - lp) {
+            accept_flip(i);
+            lp = lp_new;
+        }
     }
 
     SampleSet result;
-    result.configs.resize(N_s);
+    result.configs.resize(N_s, boost::dynamic_bitset<>(num_qubits, 0));
     result.O_mat.resize(N_s, p);
 
     for (int s = 0; s < N_s; ++s) {
-        int i = rand_qubit(rng);
-        long x_new = x ^ (1LL << (num_qubits - 1 - i));
-        double lp_new = log_prob(x_new);
-        if (std::log(rand01(rng)) < lp_new - lp) { x = x_new; lp = lp_new; }
-
+        for (int t = 0; t < num_qubits; ++t) {
+            int i = rand_qubit(rng);
+            double lp_new = lp + compute_delta(i);
+            if (std::log(rand01(rng)) < lp_new - lp) {
+                accept_flip(i);
+                lp = lp_new;
+            }
+        }
         result.configs[s] = x;
         for (int k = 0; k < p; ++k) {
-            bool neg = __builtin_popcountll((long long)(x & z_bits[k])) & 1;
-            result.O_mat(s, k) = std::complex<double>(neg ? -1.0 : 1.0, 0.0);
+            result.O_mat(s, k) = std::complex<double>(parity[k] ? -1.0 : 1.0, 0.0);
         }
     }
 
@@ -168,51 +207,60 @@ SampleSet ExponentialAnsatz::draw_samples(int N_s, int n_warmup) const {
 }
 
 Eigen::VectorXcd ExponentialAnsatz::local_energy(const SampleSet& samples, const MatrixFreeHamiltonian& H) const {
-    static const std::complex<double> neg_i_powers[4] = {{1,0},{0,-1},{-1,0},{0,1}};
+    /*
+    Compute the local energy E_loc(x) = ∑_{x'} H_{x,x'} Ψ(x')/Ψ(x) for each sample x.
+
+    Args:
+        samples (const SampleSet&): The samples to compute the local energy for.
+        H (const MatrixFreeHamiltonian&): The Hamiltonian to compute the local energy with respect to.
+
+    Returns:
+        Eigen::VectorXcd: A vector containing the local energy for each sample.
+    */
+    static const std::complex<double> i_powers[4] = {{1,0},{0,1},{-1,0},{0,-1}};
 
     const auto& ops = terms.get_operators();
     const int p = static_cast<int>(ops.size());
     std::vector<std::pair<PauliString, std::complex<double>>> terms_vec(ops.begin(), ops.end());
-    std::vector<long> z_bits = build_z_bits();
+    std::vector<boost::dynamic_bitset<>> z_bits = build_z_bits();
     const int N_s = static_cast<int>(samples.configs.size());
 
     struct HTerm {
         std::complex<double> base_phase;
-        long flip_mask;
-        long sign_mask;
+        boost::dynamic_bitset<> flip_mask;
+        boost::dynamic_bitset<> sign_mask;
         std::vector<bool> flips_Pk;
     };
     const auto& h_ops = H.get_operators();
     std::vector<HTerm> h_terms;
     h_terms.reserve(h_ops.size());
     for (const auto& [ps, coeff] : h_ops) {
-        long flip_mask = 0, sign_mask = 0;
+        boost::dynamic_bitset<> flip_mask(num_qubits, 0), sign_mask(num_qubits, 0);
         int n_y = 0;
         for (int i = 0; i < num_qubits; ++i) {
-            long mask = 1LL << (num_qubits - 1 - i);
-            if ( ps.x_mask[i] && !ps.z_mask[i]) { flip_mask ^= mask; }
-            else if (!ps.x_mask[i] &&  ps.z_mask[i]) { sign_mask |= mask; }
-            else if ( ps.x_mask[i] &&  ps.z_mask[i]) { flip_mask ^= mask; sign_mask |= mask; ++n_y; }
+            if ( ps.x_mask[i] && !ps.z_mask[i]) { flip_mask.flip(num_qubits - 1 - i); }
+            else if (!ps.x_mask[i] &&  ps.z_mask[i]) { sign_mask.set(num_qubits - 1 - i); }
+            else if ( ps.x_mask[i] &&  ps.z_mask[i]) { flip_mask.flip(num_qubits - 1 - i); sign_mask.set(num_qubits - 1 - i); ++n_y; }
         }
-        std::complex<double> base_phase = coeff * neg_i_powers[n_y & 3];
+        std::complex<double> base_phase = coeff * i_powers[n_y & 3];
         std::vector<bool> flips(p);
         for (int k = 0; k < p; ++k) {
-            flips[k] = (__builtin_popcountll((long long)(flip_mask & z_bits[k])) & 1) != 0;
+            flips[k] = ((flip_mask & z_bits[k]).count() & 1) != 0;
         }
-        h_terms.push_back({base_phase, flip_mask, sign_mask, std::move(flips)});
+        h_terms.push_back({base_phase, std::move(flip_mask), std::move(sign_mask), std::move(flips)});
     }
 
     Eigen::VectorXcd El(N_s);
     for (int s = 0; s < N_s; ++s) {
-        long x = samples.configs[s];
+        const boost::dynamic_bitset<>& x = samples.configs[s];
         std::complex<double> el = 0.0;
         for (const auto& ht : h_terms) {
-            bool neg_sign = __builtin_popcountll((long long)(x & ht.sign_mask)) & 1;
+            bool neg_sign = ((x & ht.sign_mask).count()) & 1;
             std::complex<double> h_elem = neg_sign ? -ht.base_phase : ht.base_phase;
             std::complex<double> log_ratio = 0.0;
             for (int k = 0; k < p; ++k) {
                 if (ht.flips_Pk[k]) {
-                    bool neg = __builtin_popcountll((long long)(x & z_bits[k])) & 1;
+                    bool neg = ((x & z_bits[k]).count()) & 1;
                     log_ratio -= 2.0 * terms_vec[k].second * std::complex<double>(neg ? -1.0 : 1.0, 0.0);
                 }
             }
@@ -252,7 +300,7 @@ double ExponentialAnsatz::expectation_value(const MatrixFreeHamiltonian& observa
     Returns:
         double: The estimated expectation value <Ψ|O|Ψ>.
     */
-    SampleSet samples = draw_samples(shots, shots_warmup);
+    SampleSet samples = draw_samples();
     return local_energy(samples, observable).mean().real();
 }
 

@@ -14,6 +14,7 @@
 #pragma once
 
 #include "matrix_free_operator.h"
+#include <boost/dynamic_bitset.hpp>
 
 // GCOV_EXCL_BR_START
 
@@ -23,8 +24,8 @@ class PauliString {
 public:
 
     // neither means i, x means x, z means z, both means y
-    std::vector<bool> x_mask;
-    std::vector<bool> z_mask;
+    boost::dynamic_bitset<> x_mask;
+    boost::dynamic_bitset<> z_mask;
 
     struct HashFunction {
         std::size_t operator()(const PauliString& ps) const {
@@ -38,15 +39,15 @@ public:
     };
 
     PauliString() {throw std::runtime_error("Default constructor for PauliString is not allowed. Please specify the number of qubits.");}
-    PauliString(int num_qubits) : x_mask(num_qubits, false), z_mask(num_qubits, false) {}
-    PauliString(int num_qubits, char pauli, int target_qubit) : x_mask(num_qubits, false), z_mask(num_qubits, false) {
+    PauliString(int num_qubits) : x_mask(num_qubits), z_mask(num_qubits) {}
+    PauliString(int num_qubits, char pauli, int target_qubit) : x_mask(num_qubits), z_mask(num_qubits) {
         if (pauli == 'X') {
-            x_mask[target_qubit] = true;
+            x_mask.set(target_qubit);
         } else if (pauli == 'Z') {
-            z_mask[target_qubit] = true;
+            z_mask.set(target_qubit);
         } else if (pauli == 'Y') {
-            x_mask[target_qubit] = true;
-            z_mask[target_qubit] = true;
+            x_mask.set(target_qubit);
+            z_mask.set(target_qubit);
         }
     }
 
@@ -91,12 +92,12 @@ class MatrixFreeHamiltonian {
         PauliString ps(nqubits);
         for (int target : op.get_target_qubits()) {
             if (op.get_name() == "X") {
-                ps.x_mask[target] = !ps.x_mask[target];
+                ps.x_mask.flip(target);
             } else if (op.get_name() == "Z") {
-                ps.z_mask[target] = !ps.z_mask[target];
+                ps.z_mask.flip(target);
             } else if (op.get_name() == "Y") {
-                ps.x_mask[target] = !ps.x_mask[target];
-                ps.z_mask[target] = !ps.z_mask[target];
+                ps.x_mask.flip(target);
+                ps.z_mask.flip(target);
             }
         }
         operators[ps] = 1.0;

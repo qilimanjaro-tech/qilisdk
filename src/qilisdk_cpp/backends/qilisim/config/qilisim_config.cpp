@@ -31,7 +31,7 @@ void QiliSimConfig::validate() const {
     if (num_arnoldi_substeps <= 0) {
         throw py::value_error("Number of Arnoldi substeps must be positive.");
     }
-    const std::string valid_evolution_methods = "'direct', 'arnoldi', 'variational_polynomial_adaptive', 'variational_exponential', 'integrate_rk4', 'integrate_rk45_matrix_free', or 'integrate_rk4_matrix_free'";
+    const std::string valid_evolution_methods = "'direct', 'arnoldi', 'truncated_polynomial_expansion', 'variational_exponential', 'integrate_rk4', 'integrate_rk45_matrix_free', or 'integrate_rk4_matrix_free'";
     if (valid_evolution_methods.find(time_evolution_method) == std::string::npos) {
         throw py::value_error("Time evolution method must be one of " + valid_evolution_methods);
     }
@@ -55,6 +55,15 @@ void QiliSimConfig::validate() const {
     }
     if (max_terms <= 0) {
         throw py::value_error("Max terms must be positive.");
+    }
+    if (order <= 0) {
+        throw py::value_error("Order must be positive.");
+    }
+    if (shots <= 0) {
+        throw py::value_error("Shots must be positive.");
+    }
+    if (warmups < 0) {
+        throw py::value_error("Warmups cannot be negative.");
     }
 }
 

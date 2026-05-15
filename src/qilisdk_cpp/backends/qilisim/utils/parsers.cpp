@@ -23,7 +23,7 @@
 
 #pragma GCC visibility push(default)
 
-py::object construct_result_object(const MatrixFreeHamiltonian& state_as_h, const py::object& readout, int n_qubits, const QiliSimConfig& config) {
+py::object construct_result_object(const MatrixFreeHamiltonian& state_as_h, const py::object& readout, int n_qubits) {
     py::list results;
     for (py::handle ro_handle : readout) {
         py::object ro = py::reinterpret_borrow<py::object>(ro_handle);
@@ -557,7 +557,12 @@ SparseMatrix parse_initial_state(const py::object& initial_state, double atol) {
     Returns:
         SparseMatrix: The initial state as a sparse matrix.
     */
-    py::object spm = initial_state.attr("data");
+    py::object spm;
+    if (py::isinstance(initial_state, QTensorSymbolic)) {
+        spm = initial_state.attr("as_qtensor")().attr("data");
+    } else if (py::isinstance(initial_state, QTensor)) {
+        spm = initial_state.attr("data");
+    }
     SparseMatrix rho = from_spmatrix(spm, atol);
     return rho;
 }
@@ -791,6 +796,15 @@ QiliSimConfig parse_solver_params(const py::dict& solver_params) {
     }
     if (solver_params.contains("max_terms")) {
         config.set_max_terms(solver_params["max_terms"].cast<int>());
+    }
+    if (solver_params.contains("order")) {
+        config.set_order(solver_params["order"].cast<int>());
+    }
+    if (solver_params.contains("shots")) {
+        config.set_shots(solver_params["shots"].cast<int>());
+    }
+    if (solver_params.contains("warmups")) {
+        config.set_warmups(solver_params["warmups"].cast<int>());
     }
     if (config.get_num_threads() <= 0) {
         config.set_num_threads(1);

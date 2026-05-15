@@ -16,7 +16,7 @@ from typing import Callable, ClassVar, Iterator
 from qilisdk.analog.schedule import Schedule
 from qilisdk.core import Parameter
 from qilisdk.core.parameterizable import Parameterizable
-from qilisdk.core.qtensor import QTensor
+from qilisdk.core.qtensor import QTensor, QTensorSymbolic
 from qilisdk.functionals.functional import PrimitiveFunctional
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.yaml import yaml
@@ -47,13 +47,13 @@ class AnalogEvolution(PrimitiveFunctional):
     def __init__(
         self,
         schedule: Schedule,
-        initial_state: QTensor | None,
+        initial_state: QTensor | QTensorSymbolic,
         store_intermediate_results: bool = False,
     ) -> None:
         """
         Args:
             schedule (Schedule): Annealing or control schedule describing the Hamiltonian evolution.
-            initial_state (QTensor | None): Quantum state used as the simulation starting point. If None, a default state will be used.
+            initial_state (QTensor | QTensorSymbolic): Quantum state used as the simulation starting point. If a symbolic state is provided, it will be resolved during execution.
             store_intermediate_results (bool, optional): Keep intermediate states if produced by the backend. Defaults to False.
 
         Raises:
@@ -64,7 +64,7 @@ class AnalogEvolution(PrimitiveFunctional):
         self.schedule = schedule
         self.store_intermediate_results = store_intermediate_results
 
-        if initial_state is not None and initial_state.nqubits != schedule.nqubits:
+        if isinstance(initial_state, QTensor) and initial_state.nqubits != schedule.nqubits:
             raise ValueError(
                 f"The initial state provided acts on {initial_state.nqubits} qubits while the schedule acts on {schedule.nqubits} qubits"
             )

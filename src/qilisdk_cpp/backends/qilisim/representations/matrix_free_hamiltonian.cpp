@@ -178,23 +178,13 @@ double MatrixFreeHamiltonian::expectation_value(const MatrixFreeHamiltonian& oth
         The expectation value of this Hamiltonian with respect to the other Hamiltonian.
     */
 
-    // need to calculate <+| H_this^dag H_other H_this |+>
-    int n_qubits = get_nqubits();
-
     // first we calculate H_this^dag H_other H_this:
     MatrixFreeHamiltonian temp = (*this).conjugate() * other * (*this);
 
     // Since <+|P|+> is 1 if P is identity or X and 0 otherwise, we just need to sum the coefficients
     std::complex<double> exp_val = 0.0;
     for (const auto& [pauli, coefficient] : temp.operators) {
-        bool all_z_zero = true;
-        for (int i = 0; i < n_qubits; ++i) {
-            if (pauli.z_mask[i]) {
-                all_z_zero = false;
-                break;
-            }
-        }
-        if (all_z_zero) {
+        if (pauli.z_mask.none()) {
             exp_val += coefficient;
         }
     }
@@ -309,12 +299,12 @@ void MatrixFreeHamiltonian::add(const std::complex<double>& coeff, const std::ve
     for (const auto& op : ops) {
         for (int target : op.get_target_qubits()) {
             if (op.get_name() == "X") {
-                ps.x_mask[target] = !ps.x_mask[target];
+                ps.x_mask.flip(target);
             } else if (op.get_name() == "Z") {
-                ps.z_mask[target] = !ps.z_mask[target];
+                ps.z_mask.flip(target);
             } else if (op.get_name() == "Y") {
-                ps.x_mask[target] = !ps.x_mask[target];
-                ps.z_mask[target] = !ps.z_mask[target];
+                ps.x_mask.flip(target);
+                ps.z_mask.flip(target);
             }
         }
     }
@@ -375,12 +365,13 @@ std::pair<PauliString, std::complex<double>> _multiply_pauli_strings(const Pauli
         }
     };
 
+    result.x_mask = a.x_mask ^ b.x_mask;
+    result.z_mask = a.z_mask ^ b.z_mask;
+
     int phase_exp = 0;
     for (size_t q = 0; q < n; ++q) {
         const int ax = a.x_mask[q], az = a.z_mask[q];
         const int bx = b.x_mask[q], bz = b.z_mask[q];
-        result.x_mask[q] = ax ^ bx;
-        result.z_mask[q] = az ^ bz;
         phase_exp += phase_lut[ax][az][bx][bz];
     }
 
@@ -597,14 +588,7 @@ double MatrixFreeHamiltonian::normalize_acting_on_plus() {
     // Only the identity and X strings contribute to the trace, so we can just sum those coefficients if the z_mask has any non-zero bits
     double norm = 0.0;
     for (const auto& [pauli_string, coeff] : rho_t_as_h_squared.operators) {
-        bool all_z_zero = true;
-        for (size_t i = 0; i < pauli_string.z_mask.size(); ++i) {
-            if (pauli_string.z_mask[i]) {
-                all_z_zero = false;
-                break;
-            }
-        }
-        if (all_z_zero) {
+        if (pauli_string.z_mask.none()) {
             norm += coeff.real();
         }
     }

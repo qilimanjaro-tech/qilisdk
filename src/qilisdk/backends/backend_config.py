@@ -89,8 +89,7 @@ class AnalogMethod(BaseSimulatorConfig):
 
     Args:
         evolution_method (str): Analog time-evolution method to use:
-            ``"direct"``, ``"arnoldi"``, ``"integrate_rk4"``, ``"integrate_rk45_matrix_free"``, or
-            ``"integrate_rk4_matrix_free"``. Defaults to ``"integrate_rk4_matrix_free"``.
+            ``"direct"``, ``"arnoldi"``, ``"integrate_rk4"``, ``"integrate_rk45_matrix_free"``, ``"integrate_rk4_matrix_free"``, ``"truncated_polynomial_expansion"``, or ``"variational_exponential"``. Defaults to ``"integrate_rk4_matrix_free"``.
         arnoldi_dim (int): Dimension of the Arnoldi Krylov subspace used
             when ``evolution_method="arnoldi"``. Defaults to ``10``.
         num_arnoldi_substeps (int): Number of integration substeps per
@@ -98,11 +97,14 @@ class AnalogMethod(BaseSimulatorConfig):
     """
 
     evolution_method: Literal[
-        "direct", "arnoldi", "integrate_rk4", "integrate_rk45_matrix_free", "integrate_rk4_matrix_free", "variational_polynomial_adaptive", "variational_exponential"
+        "direct", 
+        "arnoldi", 
+        "integrate_rk4", 
+        "integrate_rk45_matrix_free", "integrate_rk4_matrix_free", "truncated_polynomial_expansion", "variational_exponential"
     ] = Field(
         default="integrate_rk4_matrix_free",
-        description="Analog time-evolution method to use: 'direct', 'arnoldi', 'integrate_rk4', 'integrate_rk45_matrix_free', or 'integrate_rk4_matrix_free'.",
-    )
+        description="Analog time-evolution method to use: 'direct', 'arnoldi', 'integrate_rk4', 'integrate_rk45_matrix_free', 'integrate_rk4_matrix_free', 'truncated_polynomial_expansion', or 'variational_exponential'.",
+        )
     arnoldi_dim: int = Field(
         default=10,
         gt=0,
@@ -121,7 +123,17 @@ class AnalogMethod(BaseSimulatorConfig):
     max_terms: int = Field(
         default=1000,
         gt=0,
-        description="Maximum number of terms in the variational ansatz for the approximate method when `evolution_method='approximate'`.",
+        description="Maximum number of terms in the variational ansatz for the approximate method when `evolution_method='variational_exponential'`.",
+    )
+    shots: int = Field(
+        default=1000,
+        gt=0,
+        description="Number of shots to use when estimating expectation values for the variational optimization when `evolution_method='variational_exponential'`.",
+    )
+    warmups: int = Field(
+        default=10,
+        gt=0,
+        description="Number of warmup iterations to perform before collecting samples for the variational optimization when `evolution_method='variational_exponential'`.",
     )
 
     def get_config(self) -> SolverConfigDict:
@@ -132,6 +144,8 @@ class AnalogMethod(BaseSimulatorConfig):
             "num_arnoldi_substeps": self.num_arnoldi_substeps,
             "adaptive_tol": self.adaptive_tol,
             "max_terms": self.max_terms,
+            "shots": self.shots,
+            "warmups": self.warmups,
         }
 
         return d
@@ -152,24 +166,33 @@ class AnalogMethod(BaseSimulatorConfig):
         return cls(evolution_method=evolution_method)
 
     @classmethod
-    def variational(cls, *, ansatz="polynomial_adaptive", max_terms: int = 1000) -> AnalogMethod:
-        """Build an ``approximate`` analog method configuration.
-
-        This evolves a variational ansatz rather than the full state.
+    def variational_annealing(cls, *, order=2, shots=1000, warmups=10) -> AnalogMethod:
+        """
+        Anneal a variational ansatz rather than the full state.
 
         Args:
-            ansatz (str): Variational ansatz to use. Options are ``"polynomial_adaptive"`` or ``"exponential"``. Defaults to ``"polynomial_adaptive"``.
-            max_terms (int): Maximum number of terms in the variational ansatz. Defaults to ``1000``.
+            order (int): Order of the polynomial expansion used in the variational ansatz.
+            shots (int): Number of samples to use when estimating expectation values for the variational optimization.
+            warmups (int): Number of warmup iterations to perform before collecting samples for the variational optimization.
 
         Returns:
             AnalogMethod: Configured variational-method analog configuration.
         """
-        if ansatz == "polynomial_adaptive":
-            return cls(evolution_method="variational_polynomial_adaptive", max_terms=max_terms)
-        elif ansatz == "exponential":
-            return cls(evolution_method="variational_exponential", max_terms=max_terms)
-        else:
-            raise ValueError(f"Unsupported ansatz type: {ansatz}. Supported options are 'polynomial_adaptive' and 'exponential'.")
+        return cls(evolution_method="variational_exponential", order=order, shots=shots, warmups=warmups)
+
+    @classmethod
+    def truncated_integrator(cls, *, max_terms: int = 1000) -> AnalogMethod:
+        """Build a ``truncated_integrator`` analog method configuration.
+
+        This method uses a truncated Taylor series expansion of the time-evolution operator, which can be more efficient for short time steps or when high precision is not required. The `max_terms` parameter controls the number of terms in the expansion, allowing for a trade-off between accuracy and runtime.
+
+        Args:
+            max_terms (int): Maximum number of terms to include in the truncated expansion. Defaults to ``1000``.
+
+        Returns:
+            AnalogMethod: Configured truncated-integrator analog configuration.
+        """
+        return cls(evolution_method="truncated_polynomial_expansion", max_terms=max_terms)
 
     @classmethod
     def adaptive_integrator(cls, *, tol: float = 1e-2) -> AnalogMethod:

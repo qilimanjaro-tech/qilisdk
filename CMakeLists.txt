@@ -31,6 +31,21 @@ find_package(pybind11 REQUIRED)
 # This is optional, but should be available as part of most compilers
 find_package(OpenMP)
 
+# Fetch Boost if not found (only dynamic_bitset and its deps, all header-only)
+find_package(Boost QUIET)
+if (NOT Boost_FOUND)
+    message(STATUS "[QiliSDK C++] Boost not found, fetching...")
+    set(BOOST_INCLUDE_LIBRARIES dynamic_bitset)
+    set(BOOST_SKIP_INSTALL_RULES ON)
+    include(FetchContent)
+    FetchContent_Declare(
+        Boost
+        URL https://github.com/boostorg/boost/releases/download/boost-1.87.0/boost-1.87.0-cmake.tar.xz
+        DOWNLOAD_EXTRACT_TIMESTAMP ON
+    )
+    FetchContent_MakeAvailable(Boost)
+endif()
+
 # Fetch Eigen if not found (it's a header only library)
 find_package(Eigen3 5 QUIET)
 if (NOT Eigen3_FOUND)
@@ -109,6 +124,7 @@ foreach(module ${MODULES_TO_BUILD})
 
     # Link libraries and include directories
     target_link_libraries(${module} PUBLIC Eigen3::Eigen)
+    target_link_libraries(${module} PUBLIC Boost::headers)
     target_include_directories(${module} PRIVATE ${pybind11_INCLUDE_DIRS})
     if (OpenMP_CXX_FOUND)
         message(STATUS "[QiliSDK C++] Using OpenMP")
@@ -191,7 +207,7 @@ if (DEFINED tests AND tests STREQUAL "ON")
         target_compile_options(test_cpp PRIVATE --coverage -fno-elide-constructors -fno-default-inline)
         target_link_options(test_cpp PRIVATE --coverage)
     endif()
-    target_link_libraries(test_cpp PRIVATE gcov GTest::gtest Eigen3::Eigen)
+    target_link_libraries(test_cpp PRIVATE gcov GTest::gtest Eigen3::Eigen Boost::headers)
     target_link_directories(test_cpp PRIVATE ${Python3_LIBRARY_DIRS})
     target_link_libraries(test_cpp PRIVATE pybind11::embed)
     foreach(module ${MODULES_TO_BUILD})

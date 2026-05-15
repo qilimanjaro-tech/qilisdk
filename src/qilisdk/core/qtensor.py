@@ -32,7 +32,30 @@ if TYPE_CHECKING:
 Complex = int | float | complex
 NormTypes = Literal["auto", "frobenius", "trace", "l1", "l2", "inf", "nuclear"] | int
 QTensorType = Literal["ket", "bra", "operator"]
+QTensorSymbolicType = Literal["uniform", "zero"]
 
+# Enum containing presets like +, 0 etc.
+class QTensorSymbolic:
+
+    def __init__(self, name: QTensorSymbolicType, nqubits: int) -> None:
+        self.name = name
+        self.nqubits = nqubits
+
+    @classmethod
+    def zero(cls, nqubits: int) -> QTensorSymbolic:
+        return cls("zero", nqubits)
+
+    @classmethod
+    def uniform(cls, nqubits: int) -> QTensorSymbolic:
+        return cls("uniform", nqubits)
+
+    def as_qtensor(self) -> QTensor:
+        if self.name == "zero":
+            return QTensor.zero(self.nqubits, "ket")
+        elif self.name == "uniform":
+            return QTensor.uniform(self.nqubits)
+        else:
+            raise ValueError(f"Unknown symbolic QTensor: {self.name}")
 
 @yaml.register_class
 class QTensor:

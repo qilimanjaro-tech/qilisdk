@@ -598,7 +598,6 @@ void iter_rk4(ExponentialAnsatz& rho_t, double t, double dt, const std::vector<d
         step_list (std::vector<double>): The list of time points corresponding to the parameters.
         hamiltonians (std::vector<MatrixFreeHamiltonian>): The list of Hamiltonians.
         parameters_list (std::vector<std::vector<double>>): The list of parameters for each Hamiltonian.
-        max_terms (int): The maximum number of terms to keep in the ExponentialAnsatz after each operation, for pruning purposes.
     */
 
     // Cache some things
@@ -607,10 +606,15 @@ void iter_rk4(ExponentialAnsatz& rho_t, double t, double dt, const std::vector<d
     const double dt_over_3 = dt / 3.0;
     const double dt_over_6 = dt / 6.0;
 
+    // Get things from rho_t
+    int order = rho_t.get_order();
+    int shots = rho_t.get_shots();
+    int warmups = rho_t.get_warmups();
+
     // Standard RK4 loop
-    ExponentialAnsatz k(nqubits, max_terms);
-    ExponentialAnsatz rho_tmp(nqubits, max_terms);
-    ExponentialAnsatz rho_old(nqubits, max_terms);
+    ExponentialAnsatz k(nqubits, order, shots, warmups);
+    ExponentialAnsatz rho_tmp(nqubits, order, shots, warmups);
+    ExponentialAnsatz rho_old(nqubits, order, shots, warmups);
     MatrixFreeHamiltonian current_hamiltonian(nqubits);
     double t_step = t;
 

@@ -317,7 +317,7 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
     }
 }
 
-void time_evolution_variational_polynomial_adaptive(MatrixFreeHamiltonian& rho_t_as_h, const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, QiliSimConfig& config) {
+void time_evolution_truncated_polynomial_expansion(MatrixFreeHamiltonian& rho_t_as_h, const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, QiliSimConfig& config) {
     /*
     Execute an approximate time evolution functional using a variational approach.
 
@@ -396,10 +396,8 @@ void time_evolution_variational_exponential(ExponentialAnsatz& rho_t, const std:
     }
 
     int n_qubits = hamiltonians[0].get_nqubits();
-    rho_t = ExponentialAnsatz(n_qubits, config.get_max_terms());
+    rho_t = ExponentialAnsatz(n_qubits, config.get_order(), config.get_shots(), config.get_warmups());
     rho_t.set_shots(config.get_num_monte_carlo_trajectories());
-    std::cout << "Initial trajectories: " << config.get_num_monte_carlo_trajectories() << std::endl;
-    std::cout << "Initial shots: " << rho_t.get_shots() << std::endl;
 
     double total_loss = 0.0;
     for (size_t step_ind = 0; step_ind < step_list.size(); ++step_ind) {
@@ -412,8 +410,6 @@ void time_evolution_variational_exponential(ExponentialAnsatz& rho_t, const std:
         iter_rk4(rho_t, t_start, dt, step_list, hamiltonians, parameters_list, config.get_max_terms());
 
     }
-
-    std::cout << "Shots: " << rho_t.get_shots() << std::endl;
 
 }
 
