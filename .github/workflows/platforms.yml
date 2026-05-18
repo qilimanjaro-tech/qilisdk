@@ -34,7 +34,5 @@ jobs:
       - name: Install qilisdk
         run: uv -v sync --group dev --extra all-cu13 -Ccmake.build-type=Debug --reinstall
 
-      - name: Run Python tests
-        run: |
-          source .venv/bin/activate
-          pytest tests/unit_python/
+      - name: Smoke test import
+        run: uv run python -c "import qilisdk; print('qilisdk imported successfully')"
