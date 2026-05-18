@@ -641,22 +641,22 @@ name = "cuda-quantum-cu12"
 version = "0.14.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "astpretty", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13')" },
-    { name = "cudensitymat-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13')" },
-    { name = "cupy-cuda12x", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13')" },
-    { name = "custatevec-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13')" },
-    { name = "cutensornet-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13')" },
-    { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu12') or (sys_platform == 'darwin' and extra != 'extra-7-qilisdk-all-cu13') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "numpy", version = "2.4.3", source = { registry = "https://urob.github.io/numpy-mkl" }, marker = "(sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all-cu12') or (sys_platform != 'darwin' and extra != 'extra-7-qilisdk-all-cu13') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "nvidia-cublas-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13')" },
-    { name = "nvidia-cuda-nvrtc-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13')" },
-    { name = "nvidia-cuda-runtime-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13')" },
-    { name = "nvidia-curand-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13')" },
-    { name = "nvidia-cusolver-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13')" },
-    { name = "nvidia-cusparse-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13')" },
-    { name = "requests", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13')" },
-    { name = "scipy", version = "1.16.2", source = { registry = "https://urob.github.io/numpy-mkl" }, marker = "(sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all-cu12') or (sys_platform != 'darwin' and extra != 'extra-7-qilisdk-all-cu13') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu12') or (sys_platform == 'darwin' and extra != 'extra-7-qilisdk-all-cu13') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "astpretty", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
+    { name = "cudensitymat-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
+    { name = "cupy-cuda12x", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
+    { name = "custatevec-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
+    { name = "cutensornet-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
+    { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu12') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "numpy", version = "2.4.3", source = { registry = "https://urob.github.io/numpy-mkl" }, marker = "(sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all-cu12') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-cuda') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "nvidia-cublas-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
+    { name = "nvidia-cuda-nvrtc-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
+    { name = "nvidia-cuda-runtime-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
+    { name = "nvidia-curand-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
+    { name = "nvidia-cusolver-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
+    { name = "nvidia-cusparse-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
+    { name = "requests", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
+    { name = "scipy", version = "1.16.2", source = { registry = "https://urob.github.io/numpy-mkl" }, marker = "(sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all-cu12') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-cuda') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu12') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/73/22/249c2ba99b8c4e1c11df2be8bed80912e03f8be34a17c0cf162f80d9fc24/cuda_quantum_cu12-0.14.0.tar.gz", hash = "sha256:dddce110648e0450ff2df6709f7af021a67656de33218848e90814ae6c29025d", size = 6502, upload-time = "2026-03-16T20:51:31.022Z" }
 wheels = [
@@ -707,8 +707,8 @@ name = "cudensitymat-cu12"
 version = "0.4.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cutensor-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13')" },
-    { name = "cutensornet-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13')" },
+    { name = "cutensor-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
+    { name = "cutensornet-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/41/59/25a3c75bfb206de3a2406428c27164eb16f2b06d4651bbac72537e053d7a/cudensitymat_cu12-0.4.0-py3-none-manylinux2014_aarch64.whl", hash = "sha256:6a55c8e41f07280f8f34ae6d186289232128e0d42a6987634505b3f333acbdd4", size = 15847824, upload-time = "2026-01-26T19:48:54.755Z" },
@@ -733,9 +733,9 @@ name = "cupy-cuda12x"
 version = "13.6.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "fastrlock", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13')" },
-    { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu12') or (sys_platform == 'darwin' and extra != 'extra-7-qilisdk-all-cu13') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "numpy", version = "2.4.3", source = { registry = "https://urob.github.io/numpy-mkl" }, marker = "(sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all-cu12') or (sys_platform != 'darwin' and extra != 'extra-7-qilisdk-all-cu13') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "fastrlock", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
+    { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu12') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "numpy", version = "2.4.3", source = { registry = "https://urob.github.io/numpy-mkl" }, marker = "(sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all-cu12') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-cuda') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/54/64/71c6e08f76c06639e5112f69ee3bc1129be00054ad5f906d7fd3138af579/cupy_cuda12x-13.6.0-cp311-cp311-manylinux2014_aarch64.whl", hash = "sha256:c790d012fd4d86872b9c89af9f5f15d91c30b8e3a4aa4dd04c2610f45f06ac44", size = 128016458, upload-time = "2025-08-18T08:24:26.394Z" },
@@ -812,7 +812,7 @@ name = "cutensornet-cu12"
 version = "2.11.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cutensor-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13')" },
+    { name = "cutensor-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/7e/92/7fc84e05589f92dd2186fe2214e997212b4898c0151209f8eb932b591e35/cutensornet_cu12-2.11.0-py3-none-manylinux2014_aarch64.whl", hash = "sha256:99d0f3580006e9aec5d7f9b364df1d66bf9fefc21e9bdc77da71a1f2fa9c01af", size = 3029608, upload-time = "2026-01-26T19:50:27.283Z" },
@@ -1871,14 +1871,14 @@ dependencies = [
     { name = "mkl", marker = "sys_platform != 'darwin' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
 ]
 wheels = [
-    { url = "https://github.com/urob/numpy-mkl/releases/download/0.1.4/mkl_service-2.6.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:63970f7c713fe7541c2a44157402b1bbbfc10befdd33ca1d1001ff28e67b41d2" },
-    { url = "https://github.com/urob/numpy-mkl/releases/download/0.1.4/mkl_service-2.6.1-cp311-cp311-win_amd64.whl", hash = "sha256:65cbdf9fa18a2aa25c1e73168d7fb2f7f7f95e3d15f9d336454feecf96890130" },
-    { url = "https://github.com/urob/numpy-mkl/releases/download/0.1.4/mkl_service-2.6.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:f14a3ed26d45975725c364334a3ec7cb1dadf49acdfb8eb2fae81791a838c7aa" },
-    { url = "https://github.com/urob/numpy-mkl/releases/download/0.1.4/mkl_service-2.6.1-cp312-cp312-win_amd64.whl", hash = "sha256:1511fc2e164ea136f72cf1a852e0cd83c2471f5ccd140b10d2ca62a3cd5e332f" },
-    { url = "https://github.com/urob/numpy-mkl/releases/download/0.1.4/mkl_service-2.6.1-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:1ddcd311a559308a366ca30928159fbc041df6bb0a811e35e470c7ec08b7613b" },
-    { url = "https://github.com/urob/numpy-mkl/releases/download/0.1.4/mkl_service-2.6.1-cp313-cp313-win_amd64.whl", hash = "sha256:7caeaffec76689598bc147132a2d40702a60439dae3c18290982eea17ca56216" },
-    { url = "https://github.com/urob/numpy-mkl/releases/download/0.1.4/mkl_service-2.6.1-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:2a640c003ae519ea2b983bcb22138fd6cbc180d1286872142a6015cfd7cd3242" },
-    { url = "https://github.com/urob/numpy-mkl/releases/download/0.1.4/mkl_service-2.6.1-cp314-cp314-win_amd64.whl", hash = "sha256:e6ec18405f5a37cc9a3faca0dd561927890804600b0750aa99a8f7a17c470cc9" },
+    { url = "https://github.com/urob/numpy-mkl/releases/download/0.2.7/mkl_service-2.6.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:9b32157e195082e2dfa5b8d6fccc16ffe52e190e4871a013f5ecb32f0fc37906" },
+    { url = "https://github.com/urob/numpy-mkl/releases/download/0.2.7/mkl_service-2.6.1-cp311-cp311-win_amd64.whl", hash = "sha256:6ebc49c8428a3e7c85b0c5986ebe75b3a3728ae22e5db6e4e8bcc9b994dbc91e" },
+    { url = "https://github.com/urob/numpy-mkl/releases/download/0.2.7/mkl_service-2.6.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:8f084e3089ffd9d90e03b1135e441f8a5df345e7fd0e0a64dd8cc34f8cc72b69" },
+    { url = "https://github.com/urob/numpy-mkl/releases/download/0.2.7/mkl_service-2.6.1-cp312-cp312-win_amd64.whl", hash = "sha256:4793306a966a2744334115c18fb0bdad54baad20a1a17d343a156080349acb3f" },
+    { url = "https://github.com/urob/numpy-mkl/releases/download/0.2.7/mkl_service-2.6.1-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:a78f43713b9fe80234f0d66d6230b88e8461e23aad60167cba0438e16c5f4a00" },
+    { url = "https://github.com/urob/numpy-mkl/releases/download/0.2.7/mkl_service-2.6.1-cp313-cp313-win_amd64.whl", hash = "sha256:1a48107ec28f430335f3fb9e539a280bbd8340ca7982c7f339552f1dc2a498d0" },
+    { url = "https://github.com/urob/numpy-mkl/releases/download/0.2.7/mkl_service-2.6.1-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:535c19493723711e0e3ff184026038a7e38fc990b06d577c9b4a60771777519f" },
+    { url = "https://github.com/urob/numpy-mkl/releases/download/0.2.7/mkl_service-2.6.1-cp314-cp314-win_amd64.whl", hash = "sha256:5162352eda95a92b91c977a6f04d959f8acd98f3715d9d7ae80cba150cd2b061" },
 ]
 
 [[package]]
@@ -2087,14 +2087,14 @@ dependencies = [
     { name = "mkl-service", marker = "sys_platform != 'darwin' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
 ]
 wheels = [
-    { url = "https://github.com/urob/numpy-mkl/releases/download/0.1.10/numpy-2.4.3-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:3f25a8c2e4a2701ec8e4edbd151d8fe271182cfd5341ebb31de97cffe77029c2" },
-    { url = "https://github.com/urob/numpy-mkl/releases/download/0.1.10/numpy-2.4.3-cp311-cp311-win_amd64.whl", hash = "sha256:74c588d02ebf521b8f7d6470bc8fff293a290d7d8edaf01d7c5f4f9b8cbcd8e4" },
-    { url = "https://github.com/urob/numpy-mkl/releases/download/0.1.10/numpy-2.4.3-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:cdaecf76a0d08192f750bbe43ab8b17a2ca802def823d220b407568b3df8259d" },
-    { url = "https://github.com/urob/numpy-mkl/releases/download/0.1.10/numpy-2.4.3-cp312-cp312-win_amd64.whl", hash = "sha256:d13520b496249424d62c0ba922ebcfe6efc5436b363d5429662d2b8defd3a1c9" },
-    { url = "https://github.com/urob/numpy-mkl/releases/download/0.1.10/numpy-2.4.3-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:cc3d89fa70cd236e6c157da201a48efe8b6ad8754c6513c0415f55ed637243b1" },
-    { url = "https://github.com/urob/numpy-mkl/releases/download/0.1.10/numpy-2.4.3-cp313-cp313-win_amd64.whl", hash = "sha256:42af02641ff4a68ab98c792dc6b466482e4305f66cdf0f53b1ac7eeddc1f1a01" },
-    { url = "https://github.com/urob/numpy-mkl/releases/download/0.1.10/numpy-2.4.3-cp314-cp314-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:19a55177f1dddaaca8e3f1e71686b671c09f8bbf82149ca330c12142717da667" },
-    { url = "https://github.com/urob/numpy-mkl/releases/download/0.1.10/numpy-2.4.3-cp314-cp314-win_amd64.whl", hash = "sha256:b6b06378dbf9f92f1fe65072a88e4a3cffdc101f76e997899c6be174cad5c6ea" },
+    { url = "https://github.com/urob/numpy-mkl/releases/download/0.2.0/numpy-2.4.3-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:82604d74e0e4c9f34b30f5ab4644a1f40de02be165145b65cfa060c4735f8c40" },
+    { url = "https://github.com/urob/numpy-mkl/releases/download/0.2.0/numpy-2.4.3-cp311-cp311-win_amd64.whl", hash = "sha256:308430c01d6f4626e2ed66aa877936b8614246405b7a01caf92cb4ec9513097e" },
+    { url = "https://github.com/urob/numpy-mkl/releases/download/0.2.0/numpy-2.4.3-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:82ccd3aa6838b3eb3a6cc05b83558d086902c16a30111015777b3f52163ad07c" },
+    { url = "https://github.com/urob/numpy-mkl/releases/download/0.2.0/numpy-2.4.3-cp312-cp312-win_amd64.whl", hash = "sha256:5f4da9ecdc139e71c3731f73fd51a2e2861a5514728a3da693669a38a919b1a7" },
+    { url = "https://github.com/urob/numpy-mkl/releases/download/0.2.0/numpy-2.4.3-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:64c52e8703bd65cdb75da37ff1a4336a9c3ec9345ebaa613a369639af5bb5388" },
+    { url = "https://github.com/urob/numpy-mkl/releases/download/0.2.0/numpy-2.4.3-cp313-cp313-win_amd64.whl", hash = "sha256:71ce3a4931ab0a2d5cc74f60f5f0d3aa3543e0f36c2ee36ac44f3604b87997c1" },
+    { url = "https://github.com/urob/numpy-mkl/releases/download/0.2.0/numpy-2.4.3-cp314-cp314-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:272717399a6add6c944c7cbbab4ff98b0de54d847057f765bec0142924f071e6" },
+    { url = "https://github.com/urob/numpy-mkl/releases/download/0.2.0/numpy-2.4.3-cp314-cp314-win_amd64.whl", hash = "sha256:1987746a4d95c5fa29c3374838fc51f50081e0109ccad8f7f4ffd8dd68be6c0d" },
 ]
 
 [[package]]
@@ -2197,9 +2197,9 @@ name = "nvidia-cusolver-cu12"
 version = "11.7.5.82"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-cublas-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13')" },
-    { name = "nvidia-cusparse-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13')" },
-    { name = "nvidia-nvjitlink-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13')" },
+    { name = "nvidia-cublas-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
+    { name = "nvidia-cusparse-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
+    { name = "nvidia-nvjitlink-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/03/99/686ff9bf3a82a531c62b1a5c614476e8dfa24a9d89067aeedf3592ee4538/nvidia_cusolver_cu12-11.7.5.82-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:62efa83e4ace59a4c734d052bb72158e888aa7b770e1a5f601682f16fe5b4fd2", size = 337869834, upload-time = "2025-06-05T20:06:53.125Z" },
@@ -2225,7 +2225,7 @@ name = "nvidia-cusparse-cu12"
 version = "12.5.10.65"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-nvjitlink-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13')" },
+    { name = "nvidia-nvjitlink-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/5e/6f/8710fbd17cdd1d0fc3fea7d36d5b65ce1933611c31e1861da330206b253a/nvidia_cusparse_cu12-12.5.10.65-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:221c73e7482dd93eda44e65ce567c031c07e2f93f6fa0ecd3ba876a195023e83", size = 366359408, upload-time = "2025-06-05T20:07:42.501Z" },
@@ -2741,6 +2741,19 @@ wheels = [
 ]
 
 [[package]]
+name = "pyqir"
+version = "0.12.5"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/6e/10/3b041f225dac208451f568188fd06524360ffc66ff855a1a205af0a895a0/pyqir-0.12.5-cp39-abi3-macosx_10_12_x86_64.whl", hash = "sha256:9bc8232f028f40e026cb72c7f654cf63f4c464ff4695874b70a45e8c34969665", size = 2160708, upload-time = "2026-05-12T18:06:54.242Z" },
+    { url = "https://files.pythonhosted.org/packages/88/94/a120794a8048291203b28c96e1c212243c45d8d99e2dad9002d67c0559ce/pyqir-0.12.5-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:7f568054dbb42b7fd33e0d5b58e7ac60ad6af496e9e1376fcb4a45290e9f510d", size = 2102202, upload-time = "2026-05-12T18:06:56.336Z" },
+    { url = "https://files.pythonhosted.org/packages/5b/b7/da263a4c694b062d94b899a7248dec2238f965dc4ee58c69c6ba1263297e/pyqir-0.12.5-cp39-abi3-manylinux_2_34_x86_64.whl", hash = "sha256:4304984337a26cb01f8f0b0b0b436737e90379fbd0adfb48f142cfd942234384", size = 2640753, upload-time = "2026-05-12T18:06:57.988Z" },
+    { url = "https://files.pythonhosted.org/packages/31/9f/e78010a4158e65be86b0013bccd5b0709ae87d8af9da82685464fb8e784c/pyqir-0.12.5-cp39-abi3-manylinux_2_38_aarch64.whl", hash = "sha256:ced0baf85371393bae59c3c93a97d3de68217f43fde21b7be8c6ed31b1e00128", size = 2709456, upload-time = "2026-05-12T18:06:59.761Z" },
+    { url = "https://files.pythonhosted.org/packages/04/b2/970e1621e372dffbb540cbb06518d0af4a16e63c074db61d60fb3d464ae2/pyqir-0.12.5-cp39-abi3-win_amd64.whl", hash = "sha256:c70381e8e1e2db8e2a9d5aec484f51328b66f7ac9cc72989ba05a61d7689f950", size = 1967113, upload-time = "2026-05-12T18:07:01.197Z" },
+    { url = "https://files.pythonhosted.org/packages/a9/6e/575bbfe2382e15c2c1e1a3062ba5f1f0b61d73da05b2ff1b130dbda1214b/pyqir-0.12.5-cp39-abi3-win_arm64.whl", hash = "sha256:1be238924839fa5edbae20fb5a039f0caabe349e96c20029e7decf180a7aa1ae", size = 1868996, upload-time = "2026-05-12T18:07:02.58Z" },
+]
+
+[[package]]
 name = "pytest"
 version = "9.0.3"
 source = { registry = "https://pypi.org/simple" }
@@ -2966,6 +2979,7 @@ all = [
     { name = "keyring" },
     { name = "keyrings-alt" },
     { name = "openfermion" },
+    { name = "pyqir" },
     { name = "qutip" },
     { name = "qutip-qip" },
 ]
@@ -2975,6 +2989,7 @@ all-cu12 = [
     { name = "keyring" },
     { name = "keyrings-alt" },
     { name = "openfermion" },
+    { name = "pyqir" },
     { name = "qutip" },
     { name = "qutip-qip" },
 ]
@@ -2984,6 +2999,7 @@ all-cu13 = [
     { name = "keyring" },
     { name = "keyrings-alt" },
     { name = "openfermion" },
+    { name = "pyqir" },
     { name = "qutip" },
     { name = "qutip-qip" },
 ]
@@ -2998,6 +3014,9 @@ cuda13 = [
 ]
 openfermion = [
     { name = "openfermion" },
+]
+qir = [
+    { name = "pyqir" },
 ]
 qutip = [
     { name = "qutip" },
@@ -3056,6 +3075,7 @@ requires-dist = [
     { name = "py-cpuinfo", specifier = ">=9.0.0" },
     { name = "pydantic", specifier = ">=2.13.3" },
     { name = "pydantic-settings", specifier = ">=2.14.0" },
+    { name = "pyqir", marker = "extra == 'qir'", specifier = ">=0.10.0" },
     { name = "qilisdk", extras = ["cuda12"], marker = "extra == 'all'" },
     { name = "qilisdk", extras = ["cuda12"], marker = "extra == 'all-cu12'" },
     { name = "qilisdk", extras = ["cuda12"], marker = "extra == 'cuda'" },
@@ -3063,6 +3083,9 @@ requires-dist = [
     { name = "qilisdk", extras = ["openfermion"], marker = "extra == 'all'" },
     { name = "qilisdk", extras = ["openfermion"], marker = "extra == 'all-cu12'" },
     { name = "qilisdk", extras = ["openfermion"], marker = "extra == 'all-cu13'" },
+    { name = "qilisdk", extras = ["qir"], marker = "extra == 'all'" },
+    { name = "qilisdk", extras = ["qir"], marker = "extra == 'all-cu12'" },
+    { name = "qilisdk", extras = ["qir"], marker = "extra == 'all-cu13'" },
     { name = "qilisdk", extras = ["qutip"], marker = "extra == 'all'" },
     { name = "qilisdk", extras = ["qutip"], marker = "extra == 'all-cu12'" },
     { name = "qilisdk", extras = ["qutip"], marker = "extra == 'all-cu13'" },
@@ -3077,7 +3100,7 @@ requires-dist = [
     { name = "scipy", marker = "sys_platform == 'darwin'", specifier = ">=1.16.3" },
     { name = "setuptools", specifier = ">=82.0.1" },
 ]
-provides-extras = ["cuda", "cuda12", "cuda13", "speqtrum", "qutip", "openfermion", "all", "all-cu12", "all-cu13"]
+provides-extras = ["cuda", "cuda12", "cuda13", "speqtrum", "qutip", "openfermion", "qir", "all", "all-cu12", "all-cu13"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -3383,14 +3406,14 @@ dependencies = [
     { name = "numpy", version = "2.4.3", source = { registry = "https://urob.github.io/numpy-mkl" }, marker = "sys_platform != 'darwin' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
 ]
 wheels = [
-    { url = "https://github.com/urob/numpy-mkl/releases/download/0.1.0/scipy-1.16.2-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:9d445d12545413eca56786d514df38ab15145124c649c40efdd2bc4080eb6902" },
-    { url = "https://github.com/urob/numpy-mkl/releases/download/0.1.0/scipy-1.16.2-cp311-cp311-win_amd64.whl", hash = "sha256:1ba6dbe9c2cdab0e928e898fd02bff1326ca986d2984fb8408d92633db5a11d4" },
-    { url = "https://github.com/urob/numpy-mkl/releases/download/0.1.0/scipy-1.16.2-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:3fd322825f518c2ae9ced5543d8830467ef3751dc82541c5d665c82ca18032ea" },
-    { url = "https://github.com/urob/numpy-mkl/releases/download/0.1.0/scipy-1.16.2-cp312-cp312-win_amd64.whl", hash = "sha256:f0d86636cbb5e72b3894c2e8c756380425ac2a00c126a50743a5c75ac52b059f" },
-    { url = "https://github.com/urob/numpy-mkl/releases/download/0.1.0/scipy-1.16.2-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:a960066e5bee83856bfd3590bbf7b39a518fd7d90fa1b923dd1e20de3708ceac" },
-    { url = "https://github.com/urob/numpy-mkl/releases/download/0.1.0/scipy-1.16.2-cp313-cp313-win_amd64.whl", hash = "sha256:9267b1c77a78d3b67939d692524eb8d49a7427d553ff5e5398b4293424230923" },
-    { url = "https://github.com/urob/numpy-mkl/releases/download/0.1.1/scipy-1.16.2-cp314-cp314-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:7ed0aeda8ec9008d31c41b5c1305d2ad2476e3e83e40846fa04315232404e550" },
-    { url = "https://github.com/urob/numpy-mkl/releases/download/0.1.1/scipy-1.16.2-cp314-cp314-win_amd64.whl", hash = "sha256:c3b28995340c0a81015189f439114a4bd6aba7c6943d8c48143057689d4c909e" },
+    { url = "https://github.com/urob/numpy-mkl/releases/download/0.2.5/scipy-1.16.2-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:e9a29b6dcf57f7abdbcb17dccbe71e4fa79b71950b65bb36a346c1491ad765b7" },
+    { url = "https://github.com/urob/numpy-mkl/releases/download/0.2.5/scipy-1.16.2-cp311-cp311-win_amd64.whl", hash = "sha256:32e0bc250447fbb29eacfbfc48f757f27f35f0612013ab28e19202b0dccd13da" },
+    { url = "https://github.com/urob/numpy-mkl/releases/download/0.2.5/scipy-1.16.2-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:f4b3683ec2935705be9f835d11946fac1fa7a828f35e5feae340e4d78b178f46" },
+    { url = "https://github.com/urob/numpy-mkl/releases/download/0.2.5/scipy-1.16.2-cp312-cp312-win_amd64.whl", hash = "sha256:a9a2f8486a0d95df9852c91ff21b372d8af1de1c92cba804fff7dd3de01caf1f" },
+    { url = "https://github.com/urob/numpy-mkl/releases/download/0.2.5/scipy-1.16.2-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:fe2cd6911a9907278f96235749e7db6d6c3c5474b530005540ab37295869ffe5" },
+    { url = "https://github.com/urob/numpy-mkl/releases/download/0.2.5/scipy-1.16.2-cp313-cp313-win_amd64.whl", hash = "sha256:54e81e059db0c543b90b33a2c040c9eb317f4373813c3936594b23d0b7ebc373" },
+    { url = "https://github.com/urob/numpy-mkl/releases/download/0.2.5/scipy-1.16.2-cp314-cp314-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:7d46eb3c1dc51e8f55dc62fb8ce839805666655e8e19c79c94c39c3266201a46" },
+    { url = "https://github.com/urob/numpy-mkl/releases/download/0.2.5/scipy-1.16.2-cp314-cp314-win_amd64.whl", hash = "sha256:518253f99f0ee6352efd9887692bb9d737a0817eeca0d25be6516f194223d186" },
 ]
 
 [[package]]
