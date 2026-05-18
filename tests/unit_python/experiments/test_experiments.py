@@ -20,6 +20,7 @@ from qilisdk.experiments import (
     Dimension,
     ExperimentResult,
     RabiExperimentResult,
+    T1ExperimentResult,
 )
 
 
@@ -84,3 +85,14 @@ def test_experiment_plotting(monkeypatch):
     exp_result_3d = RabiExperimentResult(qubit=0, data=data3d, dims=dims3d)
     with pytest.raises(NotImplementedError, match="3D and higher"):
         exp_result_3d.plot(save_to="./")
+
+
+def test_t1_plotting(monkeypatch):
+    monkeypatch.setattr(plt, "show", lambda: None)  # Prevent actual plot display
+    monkeypatch.setattr(plt.Figure, "savefig", lambda self, *args, **kwargs: None)  # Prevent file saving
+
+    tau = np.array([1, 10, 100, 1000])
+    amplitudes = np.array([[0.1, 0.2, 0.3, 0.4], [0.15, 0.25, 0.35, 0.45]]).T
+    dims = [Dimension(labels=["Time"], values=[tau])]
+    t1_result = T1ExperimentResult(qubit=0, data=amplitudes, dims=dims)
+    t1_result.plot(save_to="./test.png")
