@@ -21,7 +21,7 @@ mkdir -p coverage
 
 # Rebuild the C++ ensuring we build the test suite
 echo "Rebuilding C++ with tests enabled..." | tee -a $LOG_FILE
-uv -v sync --group dev --extra all-cu13 -Ccmake.build-type=Debug -Ccmake.define.tests=ON -Ccmake.define.coverage=ON --reinstall 2>&1 | tee -a $LOG_FILE
+uv sync --group dev --extra all-cu13 -Ccmake.build-type=Debug -Ccmake.define.tests=ON -Ccmake.define.coverage=ON --reinstall 2>&1 | tee -a $LOG_FILE
 
 # Stop we if errored
 if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
