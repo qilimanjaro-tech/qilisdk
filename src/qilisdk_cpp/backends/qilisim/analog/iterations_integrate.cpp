@@ -588,7 +588,7 @@ void iter_rk4(MatrixFreeHamiltonian& rho_t_as_h, double t, double dt, const std:
 
 void iter_rk4(ExponentialAnsatz& rho_t, double t, double dt, const std::vector<double>& step_list, const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, int max_terms) {
     /*
-    4th-order Runge–Kutta integration of the Lindblad master equation using a variational methods, 
+    4th-order Runge–Kutta integration of the Lindblad master equation using a variational method, 
     where the density matrix is represented as an exponential of a weighted list of Pauli strings (i.e. an ExponentialAnsatz).
 
     Args:

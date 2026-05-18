@@ -509,17 +509,15 @@ MatrixFreeHamiltonian MatrixFreeHamiltonian::operator-(const MatrixFreeHamiltoni
     return result;
 }
 
-double MatrixFreeHamiltonian::prune(double threshold, int max_terms) {
+void MatrixFreeHamiltonian::prune(double threshold, int max_terms) {
     /*
     Prune the Hamiltonian by removing terms with coefficients below a certain threshold and limiting the total number of terms.
 
     Args:
-        threshold: The minimum absolute value of coefficients for terms to be kept in the Hamiltonian. Terms with coefficients below this value will be removed.
-        max_terms: The maximum number of terms to keep in the Hamiltonian. If there are more terms than this after applying the threshold, only the terms with the largest coefficients (in absolute value) will be kept.
-
-    Returns:
-        The total loss incurred by pruning the Hamiltonian.
+        threshold: The minimum absolute value of coefficients for terms to be kept in the Hamiltonian.
+        max_terms: The maximum number of terms to keep in the Hamiltonian.
     */
+
     // Canonicalize using X|+> = I|+> and Y|+> = -i*Z|+>, so collapse to Z-only strings.
     // This eliminates the 2^n redundancy and keeps at most 2^n distinct terms.
     static const std::complex<double> neg_i(0.0, -1.0);
@@ -546,13 +544,10 @@ double MatrixFreeHamiltonian::prune(double threshold, int max_terms) {
     std::sort(term_vector.begin(), term_vector.end(), [](const auto& a, const auto& b) {
         return std::abs(a.second) > std::abs(b.second);
     });
-    double total_loss = 0.0;
     if (term_vector.size() > static_cast<size_t>(max_terms)) {
-        for (size_t i = max_terms; i < term_vector.size(); ++i) {
-            total_loss += std::abs(term_vector[i].second);
-        }
         term_vector.resize(max_terms);
     }
+
     // Rebuild the operators map from the pruned vector
     operators.clear();
     for (const auto& [ps, coeff] : term_vector) {
@@ -560,7 +555,7 @@ double MatrixFreeHamiltonian::prune(double threshold, int max_terms) {
             operators[ps] = coeff;
         }
     }
-    return total_loss;
+
 }
 
 MatrixFreeHamiltonian MatrixFreeHamiltonian::conjugate() const {

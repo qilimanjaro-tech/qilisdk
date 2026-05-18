@@ -358,11 +358,10 @@ void time_evolution_truncated_polynomial_expansion(MatrixFreeHamiltonian& rho_t_
         iter_rk4(rho_t_as_h, t_start, dt, step_list, hamiltonians, parameters_list, config.get_max_terms());
 
         // Truncate the resulting Hamiltonian to keep the number of terms manageable
-        double loss = rho_t_as_h.prune(1e-10, config.get_max_terms());
+        rho_t_as_h.prune(1e-10, config.get_max_terms());
         
         // Normalize the state
         double factor = rho_t_as_h.normalize_acting_on_plus();
-        total_loss += loss * factor;
 
     }
 
