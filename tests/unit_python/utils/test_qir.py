@@ -73,7 +73,7 @@ def test_to_qir_module_name_appears_in_ir():
 
 
 @pytest.mark.parametrize(
-    "gate_cls,intrinsic",
+    ("gate_cls", "intrinsic"),
     [(X, "x"), (Y, "y"), (Z, "z"), (H, "h"), (S, "s"), (T, "t")],
 )
 def test_simple_single_qubit_gates_emit_expected_intrinsic(gate_cls, intrinsic):

@@ -648,9 +648,7 @@ class OpenQasmParser:
             elif var_type in {"float", "angle", "duration", "stretch"}:
                 self.var_list[var_name]["value"] = float(self.var_list[var_name]["value"])
             elif var_type == "complex":
-                self.var_list[var_name]["value"] = complex(
-                    self.var_list[var_name]["value"]
-                )  # ty: ignore[invalid-assignment]
+                self.var_list[var_name]["value"] = complex(self.var_list[var_name]["value"])  # ty: ignore[invalid-assignment]
             elif var_type == "bool":
                 self.var_list[var_name]["value"] = bool(self.var_list[var_name]["value"])
 
