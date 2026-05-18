@@ -71,10 +71,10 @@ class OpenQasmParser:
     Internal class for parsing OpenQASM 3.0.
 
     Use the external methods instead:
-     - `from qilisdk.utils.openqasm3 import to_qasm3_file`
-     - `from qilisdk.utils.openqasm3 import from_qasm3_file`
-     - `from qilisdk.utils.openqasm3 import to_qasm3`
-     - `from qilisdk.utils.openqasm3 import from_qasm3`
+     - `from qilisdk.utils.openqasm import to_qasm3_file`
+     - `from qilisdk.utils.openqasm import from_qasm3_file`
+     - `from qilisdk.utils.openqasm import to_qasm3`
+     - `from qilisdk.utils.openqasm import from_qasm3`
 
     Understanding the following table:
     - ✅: The feature is fully supported
@@ -648,7 +648,9 @@ class OpenQasmParser:
             elif var_type in {"float", "angle", "duration", "stretch"}:
                 self.var_list[var_name]["value"] = float(self.var_list[var_name]["value"])
             elif var_type == "complex":
-                self.var_list[var_name]["value"] = complex(self.var_list[var_name]["value"])  # ty: ignore[invalid-assignment]
+                self.var_list[var_name]["value"] = complex(
+                    self.var_list[var_name]["value"]
+                )  # ty: ignore[invalid-assignment]
             elif var_type == "bool":
                 self.var_list[var_name]["value"] = bool(self.var_list[var_name]["value"])
 

@@ -2960,7 +2960,6 @@ dependencies = [
     { name = "mkl-service", marker = "sys_platform != 'darwin' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
     { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'darwin' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
     { name = "numpy", version = "2.4.3", source = { registry = "https://urob.github.io/numpy-mkl" }, marker = "sys_platform != 'darwin' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "openqasm3", extra = ["parser"] },
     { name = "psutil" },
     { name = "py-cpuinfo" },
     { name = "pydantic" },
@@ -2979,6 +2978,7 @@ all = [
     { name = "keyring" },
     { name = "keyrings-alt" },
     { name = "openfermion" },
+    { name = "openqasm3", extra = ["parser"], marker = "extra == 'extra-7-qilisdk-all' or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
     { name = "pyqir" },
     { name = "qutip" },
     { name = "qutip-qip" },
@@ -2989,6 +2989,7 @@ all-cu12 = [
     { name = "keyring" },
     { name = "keyrings-alt" },
     { name = "openfermion" },
+    { name = "openqasm3", extra = ["parser"], marker = "extra == 'extra-7-qilisdk-all-cu12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra != 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra != 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (extra != 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra != 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
     { name = "pyqir" },
     { name = "qutip" },
     { name = "qutip-qip" },
@@ -2999,6 +3000,7 @@ all-cu13 = [
     { name = "keyring" },
     { name = "keyrings-alt" },
     { name = "openfermion" },
+    { name = "openqasm3", extra = ["parser"], marker = "extra == 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
     { name = "pyqir" },
     { name = "qutip" },
     { name = "qutip-qip" },
@@ -3014,6 +3016,9 @@ cuda13 = [
 ]
 openfermion = [
     { name = "openfermion" },
+]
+openqasm = [
+    { name = "openqasm3", extra = ["parser"] },
 ]
 qir = [
     { name = "pyqir" },
@@ -3070,7 +3075,7 @@ requires-dist = [
     { name = "numpy", marker = "sys_platform != 'darwin'", specifier = ">=2.4.1", index = "https://urob.github.io/numpy-mkl" },
     { name = "numpy", marker = "sys_platform == 'darwin'", specifier = ">=2.3,<2.4.1" },
     { name = "openfermion", marker = "extra == 'openfermion'", specifier = ">=1.7.1" },
-    { name = "openqasm3", extras = ["parser"], specifier = ">=1.0.1" },
+    { name = "openqasm3", extras = ["parser"], marker = "extra == 'openqasm'", specifier = ">=1.0.1" },
     { name = "psutil", specifier = ">=7.2.2" },
     { name = "py-cpuinfo", specifier = ">=9.0.0" },
     { name = "pydantic", specifier = ">=2.13.3" },
@@ -3083,6 +3088,9 @@ requires-dist = [
     { name = "qilisdk", extras = ["openfermion"], marker = "extra == 'all'" },
     { name = "qilisdk", extras = ["openfermion"], marker = "extra == 'all-cu12'" },
     { name = "qilisdk", extras = ["openfermion"], marker = "extra == 'all-cu13'" },
+    { name = "qilisdk", extras = ["openqasm"], marker = "extra == 'all'" },
+    { name = "qilisdk", extras = ["openqasm"], marker = "extra == 'all-cu12'" },
+    { name = "qilisdk", extras = ["openqasm"], marker = "extra == 'all-cu13'" },
     { name = "qilisdk", extras = ["qir"], marker = "extra == 'all'" },
     { name = "qilisdk", extras = ["qir"], marker = "extra == 'all-cu12'" },
     { name = "qilisdk", extras = ["qir"], marker = "extra == 'all-cu13'" },
@@ -3100,7 +3108,7 @@ requires-dist = [
     { name = "scipy", marker = "sys_platform == 'darwin'", specifier = ">=1.16.3" },
     { name = "setuptools", specifier = ">=82.0.1" },
 ]
-provides-extras = ["cuda", "cuda12", "cuda13", "speqtrum", "qutip", "openfermion", "qir", "all", "all-cu12", "all-cu13"]
+provides-extras = ["cuda", "cuda12", "cuda13", "speqtrum", "qutip", "openfermion", "qir", "openqasm", "all", "all-cu12", "all-cu13"]
 
 [package.metadata.requires-dev]
 dev = [

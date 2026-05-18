@@ -26,9 +26,9 @@ __all__ = []
 
 OPTIONAL_FEATURES: list[OptionalFeature] = [
     OptionalFeature(
-        name="pyqir",
+        name="openqasm",
         mode=RequirementMode.ALL,
-        dependency_groups=[DependencyGroup(dists=["pyqir"], extra="qir")],
+        dependency_groups=[DependencyGroup(dists=["openqasm3"], extra="openqasm")],
         symbols=[
             Symbol(path="qilisdk.utils.openqasm.openqasm2", name="to_qasm2"),
             Symbol(path="qilisdk.utils.openqasm.openqasm2", name="to_qasm2_file"),

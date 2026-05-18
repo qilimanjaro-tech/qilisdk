@@ -21,7 +21,7 @@ import pytest
 
 from qilisdk.core import Parameter
 from qilisdk.digital import CNOT, CZ, RX, RY, RZ, U1, U2, U3, Adjoint, Circuit, Controlled, H, M, S, T, X, Y, Z
-from qilisdk.utils.openqasm3 import from_qasm3, from_qasm3_file, to_qasm3, to_qasm3_file
+from qilisdk.utils.openqasm import from_qasm3, from_qasm3_file, to_qasm3, to_qasm3_file
 
 
 def test_quantum_reg():
