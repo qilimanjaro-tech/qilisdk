@@ -109,6 +109,7 @@ docs = [
     "sphinx-multiversion>=0.2.4",
     "sphinxawesome-theme>=5.3.2",
     "sphinx-intl",
+    "sphinx-tabs>=3.5.0",
 ]
 
 [tool.uv]
@@ -166,6 +167,11 @@ exclude = [
 cmake.args = ["-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON"]
 cmake.build-type = "Release"
 editable.verbose = false
+
+[[tool.scikit-build.overrides]]
+if.platform-system = "^win32$"
+inherit.cmake.args = "append"
+cmake.args = ["-A", "x64"]
 
 [tool.scikit-build.wheel]
 packages = ["src/qilisdk"]
