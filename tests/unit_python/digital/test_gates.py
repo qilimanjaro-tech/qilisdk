@@ -19,7 +19,7 @@ from numpy.testing import assert_allclose
 from scipy.linalg import expm
 
 from qilisdk.core.variables import Domain, Parameter, Term, Variable
-from qilisdk.digital import CNOT, CZ, RX, RY, RZ, SWAP, U1, U2, U3, Circuit, H, I, M, S, T, X, Y, Z
+from qilisdk.digital import CNOT, CZ, RX, RY, RZ, SWAP, U1, U2, U3, Circuit, H, I, M, Rmw, S, T, X, Y, Z
 from qilisdk.digital.exceptions import GateHasNoMatrixError, InvalidParameterNameError, ParametersNotEqualError
 from qilisdk.digital.gates import Adjoint, BasicGate, Controlled, Exponential, Gate, GateNotParameterizedError
 from qilisdk.settings import get_settings
@@ -448,6 +448,112 @@ def test_u3_gate_term():
 
 
 # ------------------------------------------------------------------------------
+# Rmw Gate Tests
+# ------------------------------------------------------------------------------
+@given(theta=strategies.floats(-1e3, 1e3), phase=strategies.floats(-1e3, 1e3))
+@example(theta=0.0, phase=0.0)
+@example(theta=np.pi / 2, phase=0.0)
+@example(theta=np.pi, phase=np.pi / 2)
+@example(theta=np.pi / 4, phase=-np.pi / 3)
+@example(theta=2 * np.pi, phase=np.e)
+def test_rmw_gate(theta, phase):
+    """
+    Parametrized test for the Rmw gate.
+
+    Rmw(theta, phase) = [[ cos(theta/2),            -i e^{-i*phase} sin(theta/2) ],
+                         [ -i e^{i*phase} sin(theta/2),  cos(theta/2)            ]]
+    """
+    qubit = 6
+    gate = Rmw(qubit, theta=theta, phase=phase)
+
+    # Basic checks
+    assert gate.name == "Rmw"
+    assert gate.nqubits == 1
+    assert gate.is_parameterized is True
+    assert gate.nparameters == 2
+    assert gate.get_parameter_names() == ["theta", "phase"]
+    assert gate.target_qubits == (qubit,)
+    assert gate.control_qubits == ()
+
+    # Check parameter values
+    assert np.isclose(gate.get_parameters()["theta"], theta)
+    assert np.isclose(gate.get_parameters()["phase"], phase)
+    assert np.isclose(gate.theta, theta)
+    assert np.isclose(gate.phase, phase)
+
+    # Reconstruct expected matrix
+    cos_half = np.cos(theta / 2)
+    sin_half = np.sin(theta / 2)
+    expected_matrix = np.array(
+        [
+            [cos_half, -1j * np.exp(-1j * phase) * sin_half],
+            [-1j * np.exp(1j * phase) * sin_half, cos_half],
+        ],
+        dtype=complex,
+    )
+    assert_matrix_equal(gate.matrix, expected_matrix)
+
+
+def test_rmw_gate_term():
+    """
+    Create an Rmw gate with Term objects as the angle parameters.
+    """
+    qubit = 6
+    theta = np.pi / 2
+    phase = np.pi / 3
+    constant_theta = 2.0
+    constant_phase = 3.0
+    theta_term = constant_theta * Parameter("test_theta", theta / constant_theta)
+    phase_term = constant_phase * Parameter("test_phase", phase / constant_phase)
+    gate = Rmw(qubit, theta=theta_term, phase=phase_term)
+
+    # Basic checks
+    assert gate.name == "Rmw"
+    assert gate.nqubits == 1
+    assert gate.is_parameterized is True
+    assert gate.nparameters == 2
+    assert gate.get_parameter_names() == ["test_theta", "test_phase"]
+    assert gate.target_qubits == (qubit,)
+    assert gate.control_qubits == ()
+
+    # Check parameter values
+    assert np.isclose(gate.get_parameters()["test_theta"], theta / constant_theta)
+    assert np.isclose(gate.get_parameters()["test_phase"], phase / constant_phase)
+    assert np.isclose(gate.theta, theta)
+    assert np.isclose(gate.phase, phase)
+
+    cos_half = np.cos(theta / 2)
+    sin_half = np.sin(theta / 2)
+    expected_matrix = np.array(
+        [
+            [cos_half, -1j * np.exp(-1j * phase) * sin_half],
+            [-1j * np.exp(1j * phase) * sin_half, cos_half],
+        ],
+        dtype=COMPLEX_DTYPE,
+    )
+    assert_matrix_equal(gate.matrix, expected_matrix)
+
+
+@pytest.mark.parametrize(
+    ("theta", "phase", "expected"),
+    [
+        # phase=0 reduces to RX(theta)
+        (np.pi / 2, 0.0, np.array([[np.cos(np.pi / 4), -1j * np.sin(np.pi / 4)],
+                                   [-1j * np.sin(np.pi / 4), np.cos(np.pi / 4)]], dtype=complex)),
+        # phase=pi/2 reduces to RY(theta)
+        (np.pi / 2, np.pi / 2, np.array([[np.cos(np.pi / 4), -np.sin(np.pi / 4)],
+                                         [np.sin(np.pi / 4), np.cos(np.pi / 4)]], dtype=complex)),
+        # theta=0 reduces to identity, regardless of phase
+        (0.0, 1.234, np.eye(2, dtype=complex)),
+    ],
+)
+def test_rmw_gate_known_reductions(theta, phase, expected):
+    """At phase=0 Rmw equals RX(theta); at phase=pi/2 it equals RY(theta); at theta=0 it equals I."""
+    gate = Rmw(0, theta=theta, phase=phase)
+    assert_matrix_equal(gate.matrix, expected)
+
+
+# ------------------------------------------------------------------------------
 # CNOT Gate Tests
 # ------------------------------------------------------------------------------
 @pytest.mark.parametrize(
@@ -600,6 +706,15 @@ def test_swap_gate(qubit_a, qubit_b):
             [4.44, 5.55, 6.66],  # valid list
             [7.77, 8.88],
         ),  # invalid list (2 instead of 3)
+        # Two-parameter gate (Rmw => theta, phase)
+        (
+            Rmw,
+            {"theta": 0.0, "phase": 0.0},
+            {"theta": 1.23, "phase": 2.34},  # valid dict
+            {"gamma": 3.45},  # invalid dict
+            [4.56, 5.67],  # valid list
+            [1.23],  # invalid list (only 1 param)
+        ),
     ],
 )
 def test_gate_parameter_methods(gate_class, ctor_kwargs, valid_dict, invalid_dict, valid_list, invalid_list):
@@ -1019,6 +1134,10 @@ def test_complex_transform():
     assert abs(u3.theta) < 1e-5
     assert abs(u3.phi) < 1e-5
     assert abs(u3.gamma) < 1e-5
+
+    rmw = Rmw(qubit, theta=term, phase=term)
+    assert abs(rmw.theta) < 1e-5
+    assert abs(rmw.phase) < 1e-5
 
 
 def test_repr_basic_gate():
