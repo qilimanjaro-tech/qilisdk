@@ -538,11 +538,20 @@ def test_rmw_gate_term():
     ("theta", "phase", "expected"),
     [
         # phase=0 reduces to RX(theta)
-        (np.pi / 2, 0.0, np.array([[np.cos(np.pi / 4), -1j * np.sin(np.pi / 4)],
-                                   [-1j * np.sin(np.pi / 4), np.cos(np.pi / 4)]], dtype=complex)),
+        (
+            np.pi / 2,
+            0.0,
+            np.array(
+                [[np.cos(np.pi / 4), -1j * np.sin(np.pi / 4)], [-1j * np.sin(np.pi / 4), np.cos(np.pi / 4)]],
+                dtype=complex,
+            ),
+        ),
         # phase=pi/2 reduces to RY(theta)
-        (np.pi / 2, np.pi / 2, np.array([[np.cos(np.pi / 4), -np.sin(np.pi / 4)],
-                                         [np.sin(np.pi / 4), np.cos(np.pi / 4)]], dtype=complex)),
+        (
+            np.pi / 2,
+            np.pi / 2,
+            np.array([[np.cos(np.pi / 4), -np.sin(np.pi / 4)], [np.sin(np.pi / 4), np.cos(np.pi / 4)]], dtype=complex),
+        ),
         # theta=0 reduces to identity, regardless of phase
         (0.0, 1.234, np.eye(2, dtype=complex)),
     ],
