@@ -38,6 +38,7 @@ extensions = [
     "sphinx.ext.viewcode",
     "autoapi.extension",
     "nbsphinx",
+    "sphinx_tabs.tabs",
     "sphinx_design",
     "sphinx_mdinclude",
     "sphinx_multiversion",
