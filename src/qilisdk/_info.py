@@ -69,10 +69,10 @@ def about() -> str:
     # System info
     cpu_info = cpuinfo.get_cpu_info()
     ram = round(2 ** ceil(log2(psutil.virtual_memory().total / (1024**3))))
-    try:
+    try:  # This can fail if there are driver issues
         gpus = GPUtil.getGPUs()
     except ValueError:
-        gpus = None
+        gpus = []
     nvidia_smi_output = None
     cuda_version = "Not Found"
     nvidia_driver_version = "Not Found"

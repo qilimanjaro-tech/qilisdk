@@ -51,20 +51,22 @@ def test_about_fake_gpu(monkeypatch):
     fake_gpu = MagicMock()
     fake_gpu.name = "Test GPU"
     fake_gpu.memoryTotal = 8 * 1024
-    fake_getGPUs = MagicMock(return_value=[fake_gpu])
-    monkeypatch.setattr("GPUtil.getGPUs", fake_getGPUs)
+    fake_get_gpus = MagicMock(return_value=[fake_gpu])
+    monkeypatch.setattr("GPUtil.getGPUs", fake_get_gpus)
 
     about_str = about()
     assert "GPU Info: Test GPU" in about_str
 
 
 def test_about_bad_gpu(monkeypatch):
+
     _monkeypatch_all(monkeypatch)
 
     fake_gpu = MagicMock()
     fake_gpu.name = "Test GPU"
     fake_gpu.memoryTotal = 8 * 1024
-    fake_get_gpus = MagicMock(side_effect=ValueError("GPU query failed"))
+    fake_get_gpus = MagicMock(return_value=[fake_gpu])
+    fake_get_gpus.side_effect = ValueError("GPU info retrieval failed")
     monkeypatch.setattr("GPUtil.getGPUs", fake_get_gpus)
 
     about_str = about()
