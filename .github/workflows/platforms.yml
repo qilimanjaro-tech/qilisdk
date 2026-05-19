@@ -32,7 +32,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install qilisdk
-        run: uv -v sync --group dev --extra all-cu13 -Ccmake.build-type=Debug --reinstall
+        run: uv -v sync
 
       - name: Smoke test import
         run: uv run python -c "import qilisdk; print('qilisdk imported successfully')"
