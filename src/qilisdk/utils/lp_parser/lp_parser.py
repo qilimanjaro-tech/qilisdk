@@ -20,6 +20,7 @@ constraints, variable bounds, and ``Binary`` / ``General`` (integer) declaration
 
 from __future__ import annotations
 
+import re
 from functools import cache
 from pathlib import Path
 
@@ -71,6 +72,10 @@ __all__ = ["from_lp", "from_lp_file", "to_lp", "to_lp_file"]
 # A monomial token is a Group of [coef_float, var_name_str]; this length lets us
 # distinguish it from a parenthesized sub-expression at parse-walk time.
 _MONOMIAL_LEN = 2
+
+# Comment header used to round-trip the Model label through the LP file.
+# Matches the CPLEX convention so the file stays portable to other LP readers.
+_NAME_COMMENT_RE = re.compile(r"^[ \t]*\\[ \t]*Model name:[ \t]*(.*?)[ \t]*$", re.MULTILINE)
 
 # An arithmetic expression value: a number or a symbolic variable / term.
 _Arith = int | float | BaseVariable | Term
@@ -630,7 +635,10 @@ def from_lp(lp_str: str) -> Model:
     variable_dict: dict[str, BaseVariable] = {}
     _build_declared_variables(parsed, variable_dict)
 
-    model = Model("")
+    # The grammar strips backslash comments, so recover the model label from the
+    # source text directly.
+    name_match = _NAME_COMMENT_RE.search(lp_str)
+    model = Model(name_match.group(1) if name_match else "")
     obj_sense = (
         ObjectiveSense.MAXIMIZE
         if str(parsed.objSense).lower() in {"max", "maximum", "maximize"}
@@ -685,7 +693,10 @@ def to_lp(model: Model) -> str:
     sense_keyword = "Maximize" if model.objective.sense is ObjectiveSense.MAXIMIZE else "Minimize"
     obj_label = model.objective.label
     obj_expr = _render_expression(model.objective.term)
-    lines: list[str] = [sense_keyword, f" {obj_label}: {obj_expr}", "Subject To"]
+    lines: list[str] = []
+    if model.label:
+        lines.append(f"\\Model name: {model.label}")
+    lines.extend([sense_keyword, f" {obj_label}: {obj_expr}", "Subject To"])
 
     for con in model.constraints:
         lhs = _render_expression(con.term.lhs)

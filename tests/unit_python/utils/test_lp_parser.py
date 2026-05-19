@@ -527,6 +527,28 @@ def test_round_trip_normalises_constant_on_lhs():
     assert "x <= 4" in text
 
 
+def test_round_trip_preserves_model_label():
+    x = Variable("x", Domain.REAL, bounds=(0, 10))
+    model = Model("my_problem")
+    model.set_objective(Term([x], Operation.ADD))
+    model.add_constraint("c", LEQ(x, 1))
+
+    text = to_lp(model)
+    assert text.startswith("\\Model name: my_problem\n")
+    assert from_lp(text).label == "my_problem"
+
+
+def test_empty_model_label_omits_name_comment():
+    x = Variable("x", Domain.REAL, bounds=(0, 10))
+    model = Model("")
+    model.set_objective(Term([x], Operation.ADD))
+    model.add_constraint("c", LEQ(x, 1))
+
+    text = to_lp(model)
+    assert "\\Model name:" not in text
+    assert not from_lp(text).label
+
+
 # --- Bounds, General, Binary sections ---------------------------------------------
 
 
