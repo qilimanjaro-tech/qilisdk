@@ -20,7 +20,6 @@ constraints, variable bounds, and ``Binary`` / ``General`` (integer) declaration
 
 from __future__ import annotations
 
-import re
 from functools import cache
 from pathlib import Path
 
@@ -74,8 +73,8 @@ __all__ = ["from_lp", "from_lp_file", "to_lp", "to_lp_file"]
 _MONOMIAL_LEN = 2
 
 # Comment header used to round-trip the Model label through the LP file.
-# Matches the CPLEX convention so the file stays portable to other LP readers.
-_NAME_COMMENT_RE = re.compile(r"^[ \t]*\\[ \t]*Model name:[ \t]*(.*?)[ \t]*$", re.MULTILINE)
+# Plain prefix match (no regex) — the label is whatever follows on the same line.
+_MODEL_NAME_PREFIX = "\\Model name:"
 
 # An arithmetic expression value: a number or a symbolic variable / term.
 _Arith = int | float | BaseVariable | Term
@@ -167,6 +166,27 @@ def _to_term(expr: _Arith) -> Term:
     if isinstance(expr, Term):
         return expr
     return Term([expr], operation=Operation.ADD)
+
+
+def _extract_model_label(lp_str: str) -> str:
+    """Recover the model label from the ``\\Model name:`` header comment.
+
+    The grammar strips backslash comments before parsing, so the label is read
+    directly from the source text. The first matching line wins; anything after
+    the prefix on that line is taken as the label (stripped of surrounding
+    whitespace).
+
+    Args:
+        lp_str (str): The LP-format source text.
+
+    Returns:
+        str: The model label, or the empty string if no header is present.
+    """
+    for line in lp_str.splitlines():
+        stripped = line.lstrip()
+        if stripped.startswith(_MODEL_NAME_PREFIX):
+            return stripped[len(_MODEL_NAME_PREFIX) :].strip()
+    return ""
 
 
 def _label_or(default: str, label_group: ParseResults) -> str:
@@ -635,10 +655,7 @@ def from_lp(lp_str: str) -> Model:
     variable_dict: dict[str, BaseVariable] = {}
     _build_declared_variables(parsed, variable_dict)
 
-    # The grammar strips backslash comments, so recover the model label from the
-    # source text directly.
-    name_match = _NAME_COMMENT_RE.search(lp_str)
-    model = Model(name_match.group(1) if name_match else "")
+    model = Model(_extract_model_label(lp_str))
     obj_sense = (
         ObjectiveSense.MAXIMIZE
         if str(parsed.objSense).lower() in {"max", "maximum", "maximize"}
