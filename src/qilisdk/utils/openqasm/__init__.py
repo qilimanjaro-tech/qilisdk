@@ -24,20 +24,23 @@ from qilisdk._optionals import (
 
 __all__ = []
 
+OPENQASM2_PATH = "qilisdk.utils.openqasm.openqasm2"
+OPENQASM3_PATH = "qilisdk.utils.openqasm.openqasm3"
+
 OPTIONAL_FEATURES: list[OptionalFeature] = [
     OptionalFeature(
         name="openqasm",
         mode=RequirementMode.ALL,
         dependency_groups=[DependencyGroup(dists=["openqasm3"], extra="openqasm")],
         symbols=[
-            Symbol(path="qilisdk.utils.openqasm.openqasm2", name="to_qasm2"),
-            Symbol(path="qilisdk.utils.openqasm.openqasm2", name="to_qasm2_file"),
-            Symbol(path="qilisdk.utils.openqasm.openqasm2", name="from_qasm2"),
-            Symbol(path="qilisdk.utils.openqasm.openqasm2", name="from_qasm2_file"),
-            Symbol(path="qilisdk.utils.openqasm.openqasm3", name="to_qasm3"),
-            Symbol(path="qilisdk.utils.openqasm.openqasm3", name="to_qasm3_file"),
-            Symbol(path="qilisdk.utils.openqasm.openqasm3", name="from_qasm3"),
-            Symbol(path="qilisdk.utils.openqasm.openqasm3", name="from_qasm3_file"),
+            Symbol(path=OPENQASM2_PATH, name="to_qasm2"),
+            Symbol(path=OPENQASM2_PATH, name="to_qasm2_file"),
+            Symbol(path=OPENQASM2_PATH, name="from_qasm2"),
+            Symbol(path=OPENQASM2_PATH, name="from_qasm2_file"),
+            Symbol(path=OPENQASM3_PATH, name="to_qasm3"),
+            Symbol(path=OPENQASM3_PATH, name="to_qasm3_file"),
+            Symbol(path=OPENQASM3_PATH, name="from_qasm3"),
+            Symbol(path=OPENQASM3_PATH, name="from_qasm3_file"),
         ],
     ),
 ]

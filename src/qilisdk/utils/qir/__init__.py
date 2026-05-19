@@ -24,16 +24,18 @@ from qilisdk._optionals import (
 
 __all__ = []
 
+QIR_PATH = "qilisdk.utils.qir.qir"
+
 OPTIONAL_FEATURES: list[OptionalFeature] = [
     OptionalFeature(
         name="pyqir",
         mode=RequirementMode.ALL,
         dependency_groups=[DependencyGroup(dists=["pyqir"], extra="qir")],
         symbols=[
-            Symbol(path="qilisdk.utils.qir.qir", name="from_qir"),
-            Symbol(path="qilisdk.utils.qir.qir", name="from_qir_file"),
-            Symbol(path="qilisdk.utils.qir.qir", name="to_qir"),
-            Symbol(path="qilisdk.utils.qir.qir", name="to_qir_file"),
+            Symbol(path=QIR_PATH, name="from_qir"),
+            Symbol(path=QIR_PATH, name="from_qir_file"),
+            Symbol(path=QIR_PATH, name="to_qir"),
+            Symbol(path=QIR_PATH, name="to_qir_file"),
         ],
     ),
 ]
