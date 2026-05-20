@@ -584,7 +584,7 @@ double MatrixFreeHamiltonian::normalize_acting_on_plus() {
     double norm = 0.0;
     for (const auto& [pauli_string, coeff] : rho_t_as_h_squared.operators) {
         if (pauli_string.z_mask.none()) {
-            norm += coeff.real();
+            norm += std::abs(coeff);
         }
     }
 

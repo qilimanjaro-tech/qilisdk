@@ -38,8 +38,8 @@ QTensorSymbolicType = Literal["uniform", "zero"]
 class QTensorSymbolic:
 
     def __init__(self, name: QTensorSymbolicType, nqubits: int) -> None:
-        self.name = name
-        self.nqubits = nqubits
+        self._name = name
+        self._nqubits = nqubits
 
     @classmethod
     def zero(cls, nqubits: int) -> QTensorSymbolic:
@@ -48,12 +48,20 @@ class QTensorSymbolic:
     @classmethod
     def uniform(cls, nqubits: int) -> QTensorSymbolic:
         return cls("uniform", nqubits)
+    
+    @property
+    def name(self) -> QTensorSymbolicType:
+        return self._name
+    
+    @property 
+    def nqubits(self) -> int:
+        return self._nqubits
 
     def as_qtensor(self) -> QTensor:
-        if self.name == "zero":
-            return QTensor.zero(self.nqubits, "ket")
-        elif self.name == "uniform":
-            return QTensor.uniform(self.nqubits)
+        if self._name == "zero":
+            return QTensor.zero(self._nqubits, "ket")
+        elif self._name == "uniform":
+            return QTensor.uniform(self._nqubits)
         else:
             raise ValueError(f"Unknown symbolic QTensor: {self.name}")
 

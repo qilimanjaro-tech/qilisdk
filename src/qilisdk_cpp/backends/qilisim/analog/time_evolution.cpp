@@ -18,6 +18,8 @@
 #include "../utils/random.h"
 #include "iterations.h"
 
+#include <iostream>
+
 // GCOV_EXCL_BR_START
 
 void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, NoiseModelCpp& noise_model_cpp, QiliSimConfig& config, DenseMatrix& rho_t, std::vector<DenseMatrix>& intermediate_rhos) {
@@ -354,20 +356,26 @@ void time_evolution_truncated_polynomial_expansion(MatrixFreeHamiltonian& rho_t_
         double t_start = (step_ind > 0) ? step_list[step_ind - 1] : 0.0;
         double dt = step_list[step_ind] - t_start;
 
+        std::cout << "Step " << step_ind << std::endl;
+
         // Perform the iteration
         iter_rk4(rho_t_as_h, t_start, dt, step_list, hamiltonians, parameters_list, config.get_max_terms());
 
+        std::cout << "After rk4: " << rho_t_as_h << std::endl;
+
         // Truncate the resulting Hamiltonian to keep the number of terms manageable
-        rho_t_as_h.prune(1e-10, config.get_max_terms());
+        rho_t_as_h.prune(1e-14, config.get_max_terms());
+
+        std::cout << "After pruning: " << rho_t_as_h << std::endl;
         
         // Normalize the state
         double factor = rho_t_as_h.normalize_acting_on_plus();
 
+        std::cout << "After normalization: " << rho_t_as_h << std::endl;
+
     }
 
 }
-
-#include <iostream>
 
 void time_evolution_variational_exponential(ExponentialAnsatz& rho_t, const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, QiliSimConfig& config) {
     /*
@@ -384,7 +392,7 @@ void time_evolution_variational_exponential(ExponentialAnsatz& rho_t, const std:
 
     // Set the number of threads
 #if defined(_OPENMP)
-    Eigen::setNbThreads(1);
+    Eigen::setNbThreads(config.get_num_threads());
     omp_set_num_threads(config.get_num_threads());
 #endif
 
@@ -394,20 +402,45 @@ void time_evolution_variational_exponential(ExponentialAnsatz& rho_t, const std:
         throw std::invalid_argument("At least one Hamiltonian must be provided");
     }
 
+    // Set up the ansatz
     int n_qubits = hamiltonians[0].get_nqubits();
     rho_t = ExponentialAnsatz(n_qubits, config.get_order(), config.get_shots(), config.get_warmups());
     rho_t.set_shots(config.get_num_monte_carlo_trajectories());
 
-    double total_loss = 0.0;
-    for (size_t step_ind = 0; step_ind < step_list.size(); ++step_ind) {
+    // Initial step size: match the first scheduled interval, or fall back to 1.0
+    double dt = 1.0;
+    if (step_list.size() > 1) {
+        dt = step_list[1];
+    }
 
-        // Determine the time step and starting time
-        double t_start = (step_ind > 0) ? step_list[step_ind - 1] : 0.0;
-        double dt = step_list[step_ind] - t_start;
+    // Adaptive RK45 loop
+    if (config.get_adaptive_tol() > 1e-8) {
+        double current_time = 0.0;
+        size_t iters = 0;
+        const size_t max_iters = 1000000;
+        while (current_time < step_list.back()) {
+            dt = std::min(dt, step_list.back() - current_time);
 
-        // Perform the iteration
-        iter_rk4(rho_t, t_start, dt, step_list, hamiltonians, parameters_list, config.get_max_terms());
+            double dt_taken = iter_rk45(rho_t, current_time, dt, step_list, hamiltonians, parameters_list, config.get_adaptive_tol());
 
+            current_time += dt_taken;
+            iters++;
+            if (iters >= max_iters) {
+                throw std::runtime_error("Maximum number of iterations reached in adaptive RK45 integration.");
+            }
+            if (dt < config.get_atol()) {
+                throw std::runtime_error("Minimum step size reached in adaptive RK45 integration.");
+            }
+        }
+        std::cout << "Adaptive RK45 completed in " << iters << " iterations." << std::endl;
+
+    // Fixed-step RK4 loop
+    } else {
+        for (size_t step_ind = 0; step_ind < step_list.size(); ++step_ind) {
+            double t_start = (step_ind > 0) ? step_list[step_ind - 1] : 0.0;
+            double dt = step_list[step_ind] - t_start;
+            iter_rk4(rho_t, t_start, dt, step_list, hamiltonians, parameters_list, config.get_max_terms());
+        }
     }
 
 }

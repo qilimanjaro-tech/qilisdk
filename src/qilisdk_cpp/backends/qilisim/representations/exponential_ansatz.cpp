@@ -184,10 +184,10 @@ SampleSet ExponentialAnsatz::draw_samples(int N_s, int n_warmup) const {
         }
     }
 
+    // Generate the samples
     SampleSet result;
     result.configs.resize(N_s, boost::dynamic_bitset<>(num_qubits, 0));
     result.O_mat.resize(N_s, p);
-
     for (int s = 0; s < N_s; ++s) {
         for (int t = 0; t < num_qubits; ++t) {
             int i = rand_qubit(rng);
@@ -217,14 +217,14 @@ Eigen::VectorXcd ExponentialAnsatz::local_energy(const SampleSet& samples, const
     Returns:
         Eigen::VectorXcd: A vector containing the local energy for each sample.
     */
-    static const std::complex<double> i_powers[4] = {{1,0},{0,1},{-1,0},{0,-1}};
-
     const auto& ops = terms.get_operators();
     const int p = static_cast<int>(ops.size());
     std::vector<std::pair<PauliString, std::complex<double>>> terms_vec(ops.begin(), ops.end());
     std::vector<boost::dynamic_bitset<>> z_bits = build_z_bits();
     const int N_s = static_cast<int>(samples.configs.size());
 
+    // Precompute the effect of each Hamiltonian term on the samples
+    static const std::complex<double> i_powers[4] = {{1,0},{0,1},{-1,0},{0,-1}};
     struct HTerm {
         std::complex<double> base_phase;
         boost::dynamic_bitset<> flip_mask;
@@ -250,7 +250,11 @@ Eigen::VectorXcd ExponentialAnsatz::local_energy(const SampleSet& samples, const
         h_terms.push_back({base_phase, std::move(flip_mask), std::move(sign_mask), std::move(flips)});
     }
 
+    // Compute the local energy for each sample using the precomputed Hamiltonian term effects
     Eigen::VectorXcd El(N_s);
+#if defined(_OPENMP)
+    #pragma omp parallel for
+#endif
     for (int s = 0; s < N_s; ++s) {
         const boost::dynamic_bitset<>& x = samples.configs[s];
         std::complex<double> el = 0.0;

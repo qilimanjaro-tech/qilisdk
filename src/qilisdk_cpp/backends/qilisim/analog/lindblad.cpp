@@ -183,7 +183,8 @@ void lindblad_rhs(ExponentialAnsatz& drho, const ExponentialAnsatz& rho, const M
     );
 
     // Regularise M to handle near-singular cases, then solve M ȧ = V
-    M += 1e-4 * DenseMatrix::Identity(p, p);
+    const double epsilon = 1e-4;
+    M += epsilon * DenseMatrix::Identity(p, p);
     Eigen::VectorXcd adot = M.lu().solve(V);
 
     // Set the drho

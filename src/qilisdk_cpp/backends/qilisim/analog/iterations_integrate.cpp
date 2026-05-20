@@ -557,7 +557,7 @@ void iter_rk4(MatrixFreeHamiltonian& rho_t_as_h, double t, double dt, const std:
     // First step: compute k1 at time t
     current_hamiltonian = construct_current_hamiltonian(t_step, step_list, hamiltonians, parameters_list);
     lindblad_rhs(k, rho_t_as_h, current_hamiltonian);
-    k.prune(1e-12, max_terms);
+    k.prune(1e-14, max_terms);
     rho_t_as_h += k * dt_over_6;
 
     // Second step: compute k2 at time t + dt/2
@@ -565,7 +565,7 @@ void iter_rk4(MatrixFreeHamiltonian& rho_t_as_h, double t, double dt, const std:
     rho_tmp += dt_over_2 * k;
     current_hamiltonian = construct_current_hamiltonian(t_step + 0.5 * dt, step_list, hamiltonians, parameters_list);
     lindblad_rhs(k, rho_tmp, current_hamiltonian);
-    k.prune(1e-12, max_terms);
+    k.prune(1e-14, max_terms);
     rho_t_as_h += k * dt_over_3;
 
     // Third step: compute k3 at time t + dt/2
@@ -573,7 +573,7 @@ void iter_rk4(MatrixFreeHamiltonian& rho_t_as_h, double t, double dt, const std:
     rho_tmp += dt_over_2 * k;
     current_hamiltonian = construct_current_hamiltonian(t_step + 0.5 * dt, step_list, hamiltonians, parameters_list);
     lindblad_rhs(k, rho_tmp, current_hamiltonian);
-    k.prune(1e-12, max_terms);
+    k.prune(1e-14, max_terms);
     rho_t_as_h += k * dt_over_3;
 
     // Fourth step: compute k4 at time t + dt
@@ -581,7 +581,7 @@ void iter_rk4(MatrixFreeHamiltonian& rho_t_as_h, double t, double dt, const std:
     rho_tmp += dt * k;
     current_hamiltonian = construct_current_hamiltonian(t_step + dt, step_list, hamiltonians, parameters_list);
     lindblad_rhs(k, rho_tmp, current_hamiltonian);
-    k.prune(1e-12, max_terms);
+    k.prune(1e-14, max_terms);
     rho_t_as_h += k * dt_over_6;
 
 }
@@ -647,6 +647,121 @@ void iter_rk4(ExponentialAnsatz& rho_t, double t, double dt, const std::vector<d
     lindblad_rhs(k, rho_tmp, current_hamiltonian);
     rho_t += k * dt_over_6;
 
+}
+
+double iter_rk45(ExponentialAnsatz& rho_t, double t, double& dt, const std::vector<double>& step_list, const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, double tol) {
+    /*
+    Adaptive 4th/5th-order Runge–Kutta (Dormand–Prince) integration of the variational equations for
+    the ExponentialAnsatz.  The error is estimated as the relative L2 norm of the coefficient difference
+    between the 4th- and 5th-order solutions; dt is scaled accordingly and the step is accepted only
+    when the error falls within the requested tolerance.
+
+    Args:
+        rho_t (ExponentialAnsatz&): Current state; updated in-place when the step is accepted.
+        t (double): Current time.
+        dt (double&): Proposed time step; overwritten with the suggested step for the next call.
+        step_list (std::vector<double>): Time grid used for Hamiltonian interpolation.
+        hamiltonians (std::vector<MatrixFreeHamiltonian>): Hamiltonian components.
+        parameters_list (std::vector<std::vector<double>>): Time-dependent coefficients per component.
+        tol (double): Target relative error tolerance.
+
+    Returns:
+        double: The time step actually taken (> 0 if accepted, 0 if rejected).
+    */
+
+    // https://en.wikipedia.org/wiki/Dormand%E2%80%93Prince_method
+
+    // Coefficients for adjusting the solution
+    static constexpr double b21 = 1.0 / 5.0;
+    static constexpr double b31 = 3.0 / 40.0, b32 = 9.0 / 40.0;
+    static constexpr double b41 = 44.0 / 45.0, b42 = -56.0 / 15.0, b43 = 32.0 / 9.0;
+    static constexpr double b51 = 19372.0 / 6561.0, b52 = -25360.0 / 2187.0, b53 = 64448.0 / 6561.0, b54 = -212.0 / 729.0;
+    static constexpr double b61 = 9017.0 / 3168.0, b62 = -355.0 / 33.0, b63 = 46732.0 / 5247.0, b64 = 49.0 / 176.0, b65 = -5103.0 / 18656.0;
+    static constexpr double b71 = 35.0 / 384.0, b73 = 500.0 / 1113.0, b74 = 125.0 / 192.0, b75 = -2187.0 / 6784.0, b76 = 11.0 / 84.0;
+
+    // Coefficients for adjusting the time step
+    static constexpr double a2 = 1.0 / 5.0, a3 = 3.0 / 10.0, a4 = 4.0 / 5.0, a5 = 8.0 / 9.0, a6 = 1.0, a7 = 1.0;
+
+    // Coefficients for forming the 4th order solution
+    static constexpr double c41 = 5179.0 / 57600.0, c43 = 7571.0 / 16695.0, c44 = 393.0 / 640.0, c45 = -92097.0 / 339200.0, c46 = 187.0 / 2100.0, c47 = 1.0 / 40.0;
+
+    // For dt scaling
+    static constexpr double min_factor = 0.1;
+    static constexpr double max_factor = 20.0;
+
+    // std::abs is not constexpr until C++23, so use a ternary for static_assert
+    // Check that everything in the Butcher tableau is consistent
+    static_assert((a2 - (b21) < 0 ? -(a2 - (b21)) : (a2 - (b21))) < 1e-12, "Inconsistent Butcher tableau");
+    static_assert((a3 - (b31 + b32) < 0 ? -(a3 - (b31 + b32)) : (a3 - (b31 + b32))) < 1e-12, "Inconsistent Butcher tableau");
+    static_assert((a4 - (b41 + b42 + b43) < 0 ? -(a4 - (b41 + b42 + b43)) : (a4 - (b41 + b42 + b43))) < 1e-12, "Inconsistent Butcher tableau");
+    static_assert((a5 - (b51 + b52 + b53 + b54) < 0 ? -(a5 - (b51 + b52 + b53 + b54)) : (a5 - (b51 + b52 + b53 + b54))) < 1e-12, "Inconsistent Butcher tableau");
+    static_assert((a6 - (b61 + b62 + b63 + b64 + b65) < 0 ? -(a6 - (b61 + b62 + b63 + b64 + b65)) : (a6 - (b61 + b62 + b63 + b64 + b65))) < 1e-12, "Inconsistent Butcher tableau");
+    static_assert((a7 - (b71 + b73 + b74 + b75 + b76) < 0 ? -(a7 - (b71 + b73 + b74 + b75 + b76)) : (a7 - (b71 + b73 + b74 + b75 + b76))) < 1e-12, "Inconsistent Butcher tableau");
+    static_assert((1.0 - (b71 + b73 + b74 + b75 + b76) < 0 ? -(1.0 - (b71 + b73 + b74 + b75 + b76)) : (1.0 - (b71 + b73 + b74 + b75 + b76))) < 1e-12, "Inconsistent Butcher tableau");
+    static_assert((1.0 - (c41 + c43 + c44 + c45 + c46 + c47) < 0 ? -(1.0 - (c41 + c43 + c44 + c45 + c46 + c47)) : (1.0 - (c41 + c43 + c44 + c45 + c46 + c47))) < 1e-12, "Inconsistent Butcher tableau");
+
+    const int nqubits = hamiltonians[0].get_nqubits();
+    const int order   = rho_t.get_order();
+    const int shots   = rho_t.get_shots();
+    const int warmups = rho_t.get_warmups();
+
+    ExponentialAnsatz k1(nqubits, order, shots, warmups);
+    ExponentialAnsatz k2(nqubits, order, shots, warmups);
+    ExponentialAnsatz k3(nqubits, order, shots, warmups);
+    ExponentialAnsatz k4(nqubits, order, shots, warmups);
+    ExponentialAnsatz k5(nqubits, order, shots, warmups);
+    ExponentialAnsatz k6(nqubits, order, shots, warmups);
+    ExponentialAnsatz k7(nqubits, order, shots, warmups);
+    ExponentialAnsatz rho_tmp(nqubits, order, shots, warmups);
+
+    lindblad_rhs(k1, rho_t, construct_current_hamiltonian(t, step_list, hamiltonians, parameters_list));
+
+    rho_tmp = rho_t + k1 * (dt * b21);
+    lindblad_rhs(k2, rho_tmp, construct_current_hamiltonian(t + a2 * dt, step_list, hamiltonians, parameters_list));
+
+    rho_tmp = rho_t + k1 * (dt * b31) + k2 * (dt * b32);
+    lindblad_rhs(k3, rho_tmp, construct_current_hamiltonian(t + a3 * dt, step_list, hamiltonians, parameters_list));
+
+    rho_tmp = rho_t + k1 * (dt * b41) + k2 * (dt * b42) + k3 * (dt * b43);
+    lindblad_rhs(k4, rho_tmp, construct_current_hamiltonian(t + a4 * dt, step_list, hamiltonians, parameters_list));
+
+    rho_tmp = rho_t + k1 * (dt * b51) + k2 * (dt * b52) + k3 * (dt * b53) + k4 * (dt * b54);
+    lindblad_rhs(k5, rho_tmp, construct_current_hamiltonian(t + a5 * dt, step_list, hamiltonians, parameters_list));
+
+    rho_tmp = rho_t + k1 * (dt * b61) + k2 * (dt * b62) + k3 * (dt * b63) + k4 * (dt * b64) + k5 * (dt * b65);
+    lindblad_rhs(k6, rho_tmp, construct_current_hamiltonian(t + a6 * dt, step_list, hamiltonians, parameters_list));
+
+    // 5th-order solution
+    ExponentialAnsatz rho_5 = rho_t + k1 * (dt * b71) + k3 * (dt * b73) + k4 * (dt * b74) + k5 * (dt * b75) + k6 * (dt * b76);
+
+    // k7 is evaluated at the 5th-order solution (needed only for the 4th-order error estimate)
+    lindblad_rhs(k7, rho_5, construct_current_hamiltonian(t + a7 * dt, step_list, hamiltonians, parameters_list));
+
+    // 4th-order solution
+    ExponentialAnsatz rho_4 = rho_t + k1 * (dt * c41) + k3 * (dt * c43) + k4 * (dt * c44) + k5 * (dt * c45) + k6 * (dt * c46) + k7 * (dt * c47);
+
+    // Error: relative L2 norm of coefficient difference, with absolute floor to stay well-defined near zero
+    ExponentialAnsatz diff = rho_4 + rho_5 * (-1.0);
+    const auto& diff_ops = diff.get_terms().get_operators();
+    const auto& rho5_ops = rho_5.get_terms().get_operators();
+    double diff_norm_sq = 0.0;
+    double rho5_norm_sq = 0.0;
+    for (const auto& [ps, coeff] : diff_ops) { diff_norm_sq += std::norm(coeff); }
+    for (const auto& [ps, coeff] : rho5_ops) { rho5_norm_sq += std::norm(coeff); }
+    double err_norm = std::sqrt(diff_norm_sq) / (std::sqrt(rho5_norm_sq) + 1e-8);
+    err_norm /= tol;
+
+    double dt_taken = 0.0;
+    if (err_norm <= 1.0) {
+        rho_t = rho_5;
+        dt_taken = dt;
+    }
+
+    double factor = 0.9 * std::pow(std::max(err_norm, 1e-8), -0.2);
+    factor = std::max(min_factor, std::min(max_factor, factor));
+    dt *= factor;
+
+    return dt_taken;
 }
 
 // GCOV_EXCL_BR_STOP
