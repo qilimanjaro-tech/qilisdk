@@ -13,6 +13,7 @@ inverse pair, :func:`~qilisdk.utils.lp_parser.to_lp` and
 Quick start
 ^^^^^^^^^^^
 
+.. SKIP
 .. code-block:: python
 
     from qilisdk.utils.lp_parser import from_lp_file

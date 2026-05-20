@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-08 12:00+0200\n"
+"POT-Creation-Date: 2026-05-20 15:11+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -20,37 +20,48 @@ msgstr ""
 "Generated-By: Babel 2.18.0\n"
 
 #: ../../modules/core/core_lp_parser.rst:2
-msgid "LP File Parser"
-msgstr "Analizador de archivos LP"
+msgid "Linear Programming File Parser and Serializer"
+msgstr "Analizador y Serializador de Archivos de Programación Lineal"
 
 #: ../../modules/core/core_lp_parser.rst:4
 msgid ""
-"QiliSDK ships with a parser for the CPLEX-flavor `LP format "
-"<https://www.ibm.com/docs/en/icos/22.1.1?topic=cplex-lp-file-format-"
-"algebraic-representation>`_, exposed as :func:`~qilisdk.utils.from_lp` "
-"(parse a string) and :func:`~qilisdk.utils.from_lp_file` (read and parse "
-"a file). Both produce a fully-formed :class:`~qilisdk.core.model.Model`."
+"QiliSDK ships with a parser and a serializer for the CPLEX-flavor `LP "
+"format <https://www.ibm.com/docs/en/icos/22.1.1?topic=cplex-lp-file-"
+"format-algebraic-representation>`_. The parser is exposed as "
+":func:`~qilisdk.utils.lp_parser.from_lp` (parse a string) and "
+":func:`~qilisdk.utils.lp_parser.from_lp_file` (read and parse a file); "
+"both produce a fully-formed :class:`~qilisdk.core.model.Model`. The "
+"inverse pair, :func:`~qilisdk.utils.lp_parser.to_lp` and "
+":func:`~qilisdk.utils.lp_parser.to_lp_file`, serializes a "
+":class:`~qilisdk.core.model.Model` back to LP-format text."
 msgstr ""
-"QiliSDK incluye un analizador para el `formato LP "
+"QiliSDK incluye un analizador y un serializador para el `formato LP "
 "<https://www.ibm.com/docs/en/icos/22.1.1?topic=cplex-lp-file-format-"
-"algebraic-representation>`_ en su variante CPLEX, expuesto como "
-":func:`~qilisdk.utils.from_lp` (analiza una cadena) y "
-":func:`~qilisdk.utils.from_lp_file` (lee y analiza un archivo). Ambos "
-"producen un :class:`~qilisdk.core.model.Model` completo."
+"algebraic-representation>`_ en su variante CPLEX. El analizador se expone"
+" como :func:`~qilisdk.utils.lp_parser.from_lp` (analiza una cadena) y "
+":func:`~qilisdk.utils.lp_parser.from_lp_file` (lee y analiza un archivo);"
+" ambos producen un :class:`~qilisdk.core.model.Model` completo. El par "
+"inverso, :func:`~qilisdk.utils.lp_parser.to_lp` y "
+":func:`~qilisdk.utils.lp_parser.to_lp_file`, serializa un "
+":class:`~qilisdk.core.model.Model` de vuelta a texto en formato LP."
 
-#: ../../modules/core/core_lp_parser.rst:10
+#: ../../modules/core/core_lp_parser.rst:14
 msgid "Quick start"
 msgstr "Inicio rápido"
 
-#: ../../modules/core/core_lp_parser.rst:19
+#: ../../modules/core/core_lp_parser.rst:24
 msgid "A small inline example:"
 msgstr "Un pequeño ejemplo en línea:"
 
-#: ../../modules/core/core_lp_parser.rst:40
+#: ../../modules/core/core_lp_parser.rst:45
+msgid "Round-tripping a model back to LP text:"
+msgstr "Serialización de un modelo de vuelta a texto LP:"
+
+#: ../../modules/core/core_lp_parser.rst:55
 msgid "Supported features"
 msgstr "Características soportadas"
 
-#: ../../modules/core/core_lp_parser.rst:42
+#: ../../modules/core/core_lp_parser.rst:57
 msgid ""
 "**Objective sense**: ``Maximize`` / ``Minimize`` (and the ``Max`` / "
 "``Min`` / ``Maximum`` / ``Minimum`` aliases, case-insensitive)."
@@ -59,7 +70,7 @@ msgstr ""
 "``Max`` / ``Min`` / ``Maximum`` / ``Minimum``, sin distinción entre "
 "mayúsculas y minúsculas)."
 
-#: ../../modules/core/core_lp_parser.rst:44
+#: ../../modules/core/core_lp_parser.rst:59
 msgid ""
 "**Section keywords**: ``Subject To`` (also ``subj to``, ``s.t.``, "
 "``st``), ``Bounds``, ``General``, ``Binary``, ``End``."
@@ -67,23 +78,22 @@ msgstr ""
 "**Palabras clave de sección**: ``Subject To`` (también ``subj to``, "
 "``s.t.``, ``st``), ``Bounds``, ``General``, ``Binary``, ``End``."
 
-#: ../../modules/core/core_lp_parser.rst:46
+#: ../../modules/core/core_lp_parser.rst:61
 msgid ""
-"**Objective expressions**: linear and quadratic terms, including "
-"bilinear monomials such as ``x1 * x2`` and parenthesised sub-expressions"
-" like ``- [x + 1]``. Repeated occurrences of the same variable are "
-"aggregated automatically (``x + x`` becomes ``2*x``)."
+"**Objective expressions**: linear and quadratic terms, including bilinear"
+" monomials such as ``x1 * x2`` and parenthesised sub-expressions like ``-"
+" [x + 1]``. Repeated occurrences of the same variable are aggregated "
+"automatically (``x + x`` becomes ``2*x``)."
 msgstr ""
-"**Expresiones del objetivo**: términos lineales y cuadráticos, "
-"incluyendo monomios bilineales como ``x1 * x2`` y subexpresiones entre "
-"corchetes como ``- [x + 1]``. Las apariciones repetidas de una misma "
-"variable se agregan automáticamente (``x + x`` se convierte en "
-"``2*x``)."
+"**Expresiones del objetivo**: términos lineales y cuadráticos, incluyendo"
+" monomios bilineales como ``x1 * x2`` y subexpresiones entre corchetes "
+"como ``- [x + 1]``. Las apariciones repetidas de una misma variable se "
+"agregan automáticamente (``x + x`` se convierte en ``2*x``)."
 
-#: ../../modules/core/core_lp_parser.rst:50
+#: ../../modules/core/core_lp_parser.rst:65
 msgid ""
-"**Constraint senses**: ``<``, ``<=``, ``=``, ``>=``, ``>`` — each maps "
-"to the corresponding :class:`~qilisdk.core.variables.ComparisonTerm`. "
+"**Constraint senses**: ``<``, ``<=``, ``=``, ``>=``, ``>`` — each maps to"
+" the corresponding :class:`~qilisdk.core.variables.ComparisonTerm`. "
 "Constraint labels are optional; missing labels are auto-generated as "
 "``c1``, ``c2``, …"
 msgstr ""
@@ -93,21 +103,21 @@ msgstr ""
 "cuando no se proporcionan, se generan automáticamente como ``c1``, "
 "``c2``, …"
 
-#: ../../modules/core/core_lp_parser.rst:53
+#: ../../modules/core/core_lp_parser.rst:68
 msgid ""
 "**Bounds**: two-sided ranges (``-2.5 <= x <= 7.5``), open sides via "
 "``+inf`` / ``-infinity``, and the ``free`` shorthand for unbounded "
 "variables."
 msgstr ""
-"**Cotas**: rangos de dos lados (``-2.5 <= x <= 7.5``), extremos "
-"abiertos mediante ``+inf`` / ``-infinity``, y el atajo ``free`` para "
-"variables sin restricciones."
+"**Cotas**: rangos de dos lados (``-2.5 <= x <= 7.5``), extremos abiertos "
+"mediante ``+inf`` / ``-infinity``, y el atajo ``free`` para variables sin"
+" restricciones."
 
-#: ../../modules/core/core_lp_parser.rst:55
+#: ../../modules/core/core_lp_parser.rst:70
 msgid "**Variable domains**:"
 msgstr "**Dominios de variables**:"
 
-#: ../../modules/core/core_lp_parser.rst:57
+#: ../../modules/core/core_lp_parser.rst:72
 msgid ""
 "Variables listed in ``Binary`` are "
 ":class:`~qilisdk.core.variables.BinaryVariable`."
@@ -115,7 +125,7 @@ msgstr ""
 "Las variables listadas en ``Binary`` son "
 ":class:`~qilisdk.core.variables.BinaryVariable`."
 
-#: ../../modules/core/core_lp_parser.rst:58
+#: ../../modules/core/core_lp_parser.rst:73
 msgid ""
 "Variables listed in ``General`` are integer "
 ":class:`~qilisdk.core.variables.Variable` with "
@@ -124,10 +134,10 @@ msgid ""
 msgstr ""
 "Las variables listadas en ``General`` son "
 ":class:`~qilisdk.core.variables.Variable` enteras con "
-":attr:`~qilisdk.core.variables.Domain.INTEGER`. Las cotas declaradas "
-"en la sección ``Bounds`` se conservan."
+":attr:`~qilisdk.core.variables.Domain.INTEGER`. Las cotas declaradas en "
+"la sección ``Bounds`` se conservan."
 
-#: ../../modules/core/core_lp_parser.rst:61
+#: ../../modules/core/core_lp_parser.rst:76
 msgid ""
 "Variables that appear only in the ``Bounds`` section are continuous "
 "(``Domain.REAL``) with the declared bounds."
@@ -135,71 +145,139 @@ msgstr ""
 "Las variables que solo aparecen en la sección ``Bounds`` son continuas "
 "(``Domain.REAL``) con las cotas declaradas."
 
-#: ../../modules/core/core_lp_parser.rst:63
+#: ../../modules/core/core_lp_parser.rst:78
 msgid ""
 "Variables that appear only inside expressions are auto-created as "
 "continuous with the LP-format default bounds ``[0, +inf)``."
 msgstr ""
 "Las variables que solo aparecen dentro de expresiones se crean "
-"automáticamente como continuas con las cotas por defecto del formato "
-"LP, ``[0, +inf)``."
+"automáticamente como continuas con las cotas por defecto del formato LP, "
+"``[0, +inf)``."
 
-#: ../../modules/core/core_lp_parser.rst:66
+#: ../../modules/core/core_lp_parser.rst:81
 msgid ""
-"**Comments**: backslash (``\\\\``) starts a line comment that runs to "
-"the end of the line."
+"**Comments**: backslash (``\\\\``) starts a line comment that runs to the"
+" end of the line."
 msgstr ""
 "**Comentarios**: la barra invertida (``\\\\``) inicia un comentario de "
 "línea que se extiende hasta el final de la misma."
 
-#: ../../modules/core/core_lp_parser.rst:70
+#: ../../modules/core/core_lp_parser.rst:85
+msgid "Serialization conventions"
+msgstr "Convenciones de serialización"
+
+#: ../../modules/core/core_lp_parser.rst:87
+msgid ""
+":func:`~qilisdk.utils.lp_parser.to_lp` produces grammar-compliant output "
+"that :func:`~qilisdk.utils.lp_parser.from_lp` can read back. Notable "
+"conventions:"
+msgstr ""
+":func:`~qilisdk.utils.lp_parser.to_lp` produce una salida conforme a la "
+"gramàtica que :func:`~qilisdk.utils.lp_parser.from_lp` puede volver a "
+"leer. Convenciones destacadas:"
+
+#: ../../modules/core/core_lp_parser.rst:90
+msgid ""
+"Quadratic and bilinear monomials are expanded into explicit products (``x"
+" * x``, ``x * y``) since the LP grammar accepted by the parser has no "
+"``^`` operator."
+msgstr ""
+"Los monomios cuadráticos y bilineales se expanden en productos explícitos "
+"(``x * x``, ``x * y``) ya que la gramática LP aceptada por el analizador "
+"no tiene el operador ``^``."
+
+#: ../../modules/core/core_lp_parser.rst:93
+msgid ""
+"A unit coefficient is omitted (``x`` rather than ``1 x``); a ``-1`` "
+"coefficient becomes a leading ``- x``."
+msgstr ""
+"Un coeficiente unitario se omite (``x`` en lugar de ``1 x``); un "
+"coeficiente ``-1`` se convierte en un ``- x`` inicial."
+
+#: ../../modules/core/core_lp_parser.rst:95
+msgid ""
+"Constraint right-hand sides are emitted as a single constant — any "
+"constant appearing on the left-hand side is folded into the rhs first."
+msgstr ""
+"Los lados derechos de las restricciones se emiten como una única constante"
+" — cualquier constante que aparezca en el lado izquierdo se pliega al rhs "
+"primero."
+
+#: ../../modules/core/core_lp_parser.rst:97
+msgid ""
+"Unbounded continuous variables are emitted as ``var free``; one-sided "
+"bounds use ``var >= lo`` or ``-infinity <= var <= up``. Variables "
+"matching the LP default of ``[0, +inf)`` are omitted from the ``Bounds`` "
+"section entirely."
+msgstr ""
+"Las variables continuas sin acotar se emiten como ``var free``; las cotas "
+"unilaterales usan ``var >= lo`` o ``-infinity <= var <= up``. Las "
+"variables que coinciden con el valor por defecto LP de ``[0, +inf)`` se "
+"omiten completamente de la sección ``Bounds``."
+
+#: ../../modules/core/core_lp_parser.rst:100
+msgid ""
+":class:`~qilisdk.core.variables.BinaryVariable` variables are listed in "
+"the ``Binary`` section; integer ones in ``General`` (with their bounds, "
+"if any)."
+msgstr ""
+"Las variables :class:`~qilisdk.core.variables.BinaryVariable` se listan "
+"en la sección ``Binary``; las enteras en ``General`` (con sus cotas, si "
+"las hay)."
+
+#: ../../modules/core/core_lp_parser.rst:104
 msgid "Worked example"
 msgstr "Ejemplo desarrollado"
 
-#: ../../modules/core/core_lp_parser.rst:96
-msgid ""
-"Parsing it returns a :class:`~qilisdk.core.model.Model` with:"
-msgstr ""
-"Su análisis devuelve un :class:`~qilisdk.core.model.Model` con:"
+#: ../../modules/core/core_lp_parser.rst:129
+msgid "Parsing it returns a :class:`~qilisdk.core.model.Model` with:"
+msgstr "Su análisis devuelve un :class:`~qilisdk.core.model.Model` con:"
 
-#: ../../modules/core/core_lp_parser.rst:98
+#: ../../modules/core/core_lp_parser.rst:131
 msgid ""
 "five real-valued variables (``x1``, ``x2``, ``x3``, ``x4`` plus auto-"
 "typed ones, plus integer ``y``),"
 msgstr ""
-"cinco variables de valor real (``x1``, ``x2``, ``x3``, ``x4`` además "
-"de las creadas automáticamente, junto con la entera ``y``),"
+"cinco variables de valor real (``x1``, ``x2``, ``x3``, ``x4`` además de "
+"las creadas automáticamente, junto con la entera ``y``),"
 
-#: ../../modules/core/core_lp_parser.rst:100
+#: ../../modules/core/core_lp_parser.rst:133
 msgid "two binary variables (``b1``, ``b2``),"
 msgstr "dos variables binarias (``b1``, ``b2``),"
 
-#: ../../modules/core/core_lp_parser.rst:101
-msgid ""
-"a maximization objective with linear, bilinear, and parenthesised "
-"terms,"
+#: ../../modules/core/core_lp_parser.rst:134
+msgid "a maximization objective with linear, bilinear, and parenthesised terms,"
 msgstr ""
-"un objetivo de maximización con términos lineales, bilineales y "
-"agrupados entre corchetes,"
+"un objetivo de maximización con términos lineales, bilineales y agrupados"
+" entre corchetes,"
 
-#: ../../modules/core/core_lp_parser.rst:102
-msgid ""
-"three labelled constraints covering the ``<=``, ``>=``, and ``=`` "
-"senses."
+#: ../../modules/core/core_lp_parser.rst:135
+msgid "three labelled constraints covering the ``<=``, ``>=``, and ``=`` senses."
 msgstr ""
-"tres restricciones etiquetadas que cubren los sentidos ``<=``, ``>=`` "
-"y ``=``."
+"tres restricciones etiquetadas que cubren los sentidos ``<=``, ``>=`` y "
+"``=``."
 
-#: ../../modules/core/core_lp_parser.rst:104
+#: ../../modules/core/core_lp_parser.rst:137
 msgid ""
 "The resulting model can be inspected, evaluated against a sample with "
-":meth:`Model.evaluate <qilisdk.core.model.Model.evaluate>`, or "
-"converted to a QUBO via :meth:`Model.to_qubo "
-"<qilisdk.core.model.Model.to_qubo>` like any other model built directly "
-"with the symbolic API."
+":meth:`Model.evaluate <qilisdk.core.model.Model.evaluate>`, or converted "
+"to a QUBO via :meth:`Model.to_qubo <qilisdk.core.model.Model.to_qubo>` "
+"like any other model built directly with the symbolic API. Passing the "
+"model to :func:`~qilisdk.utils.lp_parser.to_lp` yields an LP-format "
+"string that, when fed back through "
+":func:`~qilisdk.utils.lp_parser.from_lp`, reconstructs an equivalent "
+"model."
 msgstr ""
 "El modelo resultante puede inspeccionarse, evaluarse sobre una muestra "
 "con :meth:`Model.evaluate <qilisdk.core.model.Model.evaluate>`, o "
 "convertirse a QUBO mediante :meth:`Model.to_qubo "
-"<qilisdk.core.model.Model.to_qubo>` como cualquier otro modelo "
-"construido directamente con la API simbólica."
+"<qilisdk.core.model.Model.to_qubo>` como cualquier otro modelo construido"
+" directamente con la API simbólica. Pasar el modelo a "
+":func:`~qilisdk.utils.lp_parser.to_lp` produce una cadena en formato LP "
+"que, al ser procesada de nuevo por "
+":func:`~qilisdk.utils.lp_parser.from_lp`, reconstruye un modelo "
+"equivalente."
+
+#~ msgid "LP File Parser"
+#~ msgstr "Analizador de archivos LP"
+

@@ -36,4 +36,4 @@ jobs:
         run: uv sync --reinstall
 
       - name: Smoke test import
-        run: uv run python -c "import qilisdk; print('qilisdk imported successfully')"
+        run: uv run python -c "from qilisdk.backends import QiliSim; print('QiliSim imported successfully')"

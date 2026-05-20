@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-05 15:18+0200\n"
+"POT-Creation-Date: 2026-05-20 15:11+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -34,8 +34,8 @@ msgstr ""
 "La capa :mod:`qilisdk.core` sustenta tanto la pila digital como la "
 "analógica. Proporciona variables simbólicas, modelos de optimización, "
 "tensores cuánticos dispersos y el mixin "
-":mod:`~qilisdk.core.parameterizable.Parameterizable` utilizado en todo "
-"el SDK."
+":mod:`~qilisdk.core.parameterizable.Parameterizable` utilizado en todo el"
+" SDK."
 
 #: ../../modules/core/core_overview.rst:8
 msgid "Highlights:"
@@ -61,20 +61,26 @@ msgstr ""
 
 #: ../../modules/core/core_overview.rst:12
 msgid ":doc:`core_model` to build constrained optimization programs."
-msgstr ":doc:`core_model` para construir programas de optimización con restricciones."
+msgstr ""
+":doc:`core_model` para construir programas de optimización con "
+"restricciones."
 
 #: ../../modules/core/core_overview.rst:13
-msgid ":doc:`core_lp_parser` to load models from LP-format files."
+#, fuzzy
+msgid ""
+":doc:`core_lp_parser` to load models from and write models to LP-format "
+"files."
 msgstr ":doc:`core_lp_parser` para cargar modelos desde archivos en formato LP."
 
 #: ../../modules/core/core_overview.rst:14
 msgid ":doc:`core_qubo` to convert models to QUBO format."
 msgstr ":doc:`core_qubo` para convertir modelos al formato QUBO."
 
-#: ../../modules/core/core_overview.rst:14
+#: ../../modules/core/core_overview.rst:15
 msgid ""
 ":doc:`core_qtensor` to manage sparse quantum objects, such as states and "
 "operators."
 msgstr ""
 ":doc:`core_qtensor` para gestionar objetos cuánticos dispersos, como "
 "estados y operadores."
+

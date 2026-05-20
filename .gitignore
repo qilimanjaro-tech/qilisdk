@@ -23,6 +23,10 @@ qili*.lib
 circuit_custom_font.png
 my_circuit.svg
 test.png
+bell.bc
+bell.ll
+*.qasm
+*.lp
 
 # Profiling stuff
 *.prof

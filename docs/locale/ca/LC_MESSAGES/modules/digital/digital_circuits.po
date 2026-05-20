@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-05 15:18+0200\n"
+"POT-Creation-Date: 2026-05-20 15:11+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -62,8 +62,9 @@ msgid ""
 "You can also initialize a random circuit with a specified number of gates"
 " using the :meth:`~qilisdk.digital.circuit.Circuit.random` method:"
 msgstr ""
-"També podeu inicialitzar un circuit aleatori amb un nombre especificat de "
-"portes utilitzant el mètode :meth:`~qilisdk.digital.circuit.Circuit.random`:"
+"També podeu inicialitzar un circuit aleatori amb un nombre especificat de"
+" portes utilitzant el mètode "
+":meth:`~qilisdk.digital.circuit.Circuit.random`:"
 
 #: ../../modules/digital/digital_circuits.rst:69
 msgid "Parameterized Circuits"
@@ -74,8 +75,8 @@ msgid ""
 "Circuits can include parameterized gates. Adding them is similar to "
 "regular gates:"
 msgstr ""
-"Els circuits poden incloure portes parametritzades. Afegir-les és similar "
-"a les portes regulars:"
+"Els circuits poden incloure portes parametritzades. Afegir-les és similar"
+" a les portes regulars:"
 
 #: ../../modules/digital/digital_circuits.rst:81
 msgid "You can retrieve the current parameter using:"
@@ -88,7 +89,9 @@ msgstr "**Sortida:**"
 
 #: ../../modules/digital/digital_circuits.rst:95
 msgid "You can also retrieve a list containing only the current parameter values:"
-msgstr "També podeu recuperar una llista que contingui només els valors actuals dels paràmetres:"
+msgstr ""
+"També podeu recuperar una llista que contingui només els valors actuals "
+"dels paràmetres:"
 
 #: ../../modules/digital/digital_circuits.rst:109
 msgid "To update parameters by their keys:"
@@ -103,8 +106,8 @@ msgid ""
 "The order of parameters in the list passed to ``set_parameter_values`` "
 "must match the order in which the gates were added to the circuit."
 msgstr ""
-"L'ordre dels paràmetres a la llista passada a ``set_parameter_values`` "
-"ha de coincidir amb l'ordre en què les portes van ser afegides al circuit."
+"L'ordre dels paràmetres a la llista passada a ``set_parameter_values`` ha"
+" de coincidir amb l'ordre en què les portes van ser afegides al circuit."
 
 #: ../../modules/digital/digital_circuits.rst:126
 msgid "Visualization"
@@ -120,31 +123,33 @@ msgid ""
 "styling to the specific call without modifying global Matplotlib "
 "settings."
 msgstr ""
-"Utilitzeu :meth:`~qilisdk.digital.circuit.Circuit.draw` per renderitzar un "
-"circuit amb Matplotlib. Per defecte, el renderitzador aplica l'estil integrat "
-"de la biblioteca (inclosa la font predeterminada inclosa si està disponible). "
-"Podeu **ometre tots els valors predeterminats** passant un "
-":class:`~qilisdk.utils.visualization.style.CircuitStyle` personalitzat, que "
-"limita l'estil a la crida específica sense modificar la configuració global "
-"de Matplotlib."
+"Utilitzeu :meth:`~qilisdk.digital.circuit.Circuit.draw` per renderitzar "
+"un circuit amb Matplotlib. Per defecte, el renderitzador aplica l'estil "
+"integrat de la biblioteca (inclosa la font predeterminada inclosa si està"
+" disponible). Podeu **ometre tots els valors predeterminats** passant un "
+":class:`~qilisdk.utils.visualization.style.CircuitStyle` personalitzat, "
+"que limita l'estil a la crida específica sense modificar la configuració "
+"global de Matplotlib."
 
 #: ../../modules/digital/digital_circuits.rst:145
 msgid "**Output**"
 msgstr "**Sortida**"
 
-#: ../../modules/digital/digital_circuits.rst:148
+#: ../../modules/digital/digital_circuits.rst:147
 msgid "Example digital circuit rendered with Circuit.draw"
 msgstr "Exemple de circuit digital renderitzat amb Circuit.draw"
 
-#: ../../modules/digital/digital_circuits.rst:152
+#: ../../modules/digital/digital_circuits.rst:151
 msgid "Example circuit produced by ``circuit.draw()``."
 msgstr "Exemple de circuit produït per ``circuit.draw()``."
 
-#: ../../modules/digital/digital_circuits.rst:155
-msgid "Saving to a file"
-msgstr "Desar en un fitxer"
+#: ../../modules/digital/digital_circuits.rst:153
+msgid ""
+"The plot can also be saved to a file by providing a filepath to the draw "
+"method:"
+msgstr ""
 
-#: ../../modules/digital/digital_circuits.rst:163
+#: ../../modules/digital/digital_circuits.rst:161
 msgid ""
 "Custom styling with "
 ":class:`~qilisdk.utils.visualization.style.CircuitStyle`"
@@ -152,7 +157,7 @@ msgstr ""
 "Estil personalitzat amb "
 ":class:`~qilisdk.utils.visualization.style.CircuitStyle`"
 
-#: ../../modules/digital/digital_circuits.rst:165
+#: ../../modules/digital/digital_circuits.rst:163
 msgid ""
 "Create a style object to control theme, fonts, spacing, DPI, labels, and "
 "more. Passing this object to "
@@ -165,12 +170,12 @@ msgstr ""
 "Creeu un objecte d'estil per controlar el tema, les fonts, l'espaiat, el "
 "DPI, les etiquetes i molt més. Passar aquest objecte a "
 ":meth:`~qilisdk.digital.circuit.Circuit.draw` substitueix els valors "
-"predeterminats de la biblioteca per a aquesta crida. També podeu canviar si "
-"l'ordre del dibuix segueix l'ordre en què s'afegeixen o si compacta les capes "
-"tant com sigui possible canviant el paràmetre **layout** a *\"normal\"* "
-"(predeterminat) o *\"compact\"* respectivament."
+"predeterminats de la biblioteca per a aquesta crida. També podeu canviar "
+"si l'ordre del dibuix segueix l'ordre en què s'afegeixen o si compacta "
+"les capes tant com sigui possible canviant el paràmetre **layout** a "
+"*\"normal\"* (predeterminat) o *\"compact\"* respectivament."
 
-#: ../../modules/digital/digital_circuits.rst:209
+#: ../../modules/digital/digital_circuits.rst:207
 msgid ""
 "``CircuitStyle`` fields map directly to the renderer's layout and font "
 "configuration. In particular, you can switch fonts in two ways: (1) "
@@ -179,19 +184,19 @@ msgid ""
 "``fontfamily=[...]`` to use system-resolved fonts. Both approaches only "
 "affect the current draw call."
 msgstr ""
-"Els camps de ``CircuitStyle`` es mapegen directament a la configuració de "
-"disposició i fonts del renderitzador. En particular, podeu canviar les fonts "
-"de dues maneres: (1) proporcioneu un fitxer de font específic via "
-"``fontfname=\"/path/to/MyFont.ttf\"``; o (2) establiu ``fontfname=None`` i "
-"trieu una llista de famílies amb ``fontfamily=[...]`` per usar fonts "
+"Els camps de ``CircuitStyle`` es mapegen directament a la configuració de"
+" disposició i fonts del renderitzador. En particular, podeu canviar les "
+"fonts de dues maneres: (1) proporcioneu un fitxer de font específic via "
+"``fontfname=\"/path/to/MyFont.ttf\"``; o (2) establiu ``fontfname=None`` "
+"i trieu una llista de famílies amb ``fontfamily=[...]`` per usar fonts "
 "resoltes pel sistema. Ambdós enfocaments afecten únicament la crida de "
 "dibuix actual."
 
-#: ../../modules/digital/digital_circuits.rst:215
+#: ../../modules/digital/digital_circuits.rst:213
 msgid "Parameter Utilities"
 msgstr "Utilitats de paràmetres"
 
-#: ../../modules/digital/digital_circuits.rst:217
+#: ../../modules/digital/digital_circuits.rst:215
 msgid ""
 "Circuits collect the symbolic parameters contributed by each gate. Beyond"
 " the quick examples above, you can query names, current values, and "
@@ -201,15 +206,16 @@ msgstr ""
 "Més enllà dels exemples ràpids anteriors, podeu consultar noms, valors "
 "actuals i límits, o actualitzar-los de manera selectiva:"
 
-#: ../../modules/digital/digital_circuits.rst:242
+#: ../../modules/digital/digital_circuits.rst:240
 msgid ""
 "These helpers make it straightforward to plug the circuit into classical "
 "optimization loops while keeping parameter metadata synchronized."
 msgstr ""
 "Aquests assistents permeten integrar fàcilment el circuit en bucles "
-"d'optimització clàssics mantenint els metadades dels paràmetres sincronitzats."
+"d'optimització clàssics mantenint els metadades dels paràmetres "
+"sincronitzats."
 
-#: ../../modules/digital/digital_circuits.rst:247
+#: ../../modules/digital/digital_circuits.rst:245
 msgid ""
 "Parameterized gates and circuits expose parameter information through "
 "``get_parameter_names``, ``get_parameters``, ``get_parameter_values``, "
@@ -221,3 +227,7 @@ msgstr ""
 
 #~ msgid "Go to a specific subheading of a page."
 #~ msgstr "Aneu a un subapartat específic d'una pàgina."
+
+#~ msgid "Saving to a file"
+#~ msgstr "Desar en un fitxer"
+

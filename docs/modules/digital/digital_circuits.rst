@@ -144,15 +144,13 @@ confines styling to the specific call without modifying global Matplotlib settin
 
 **Output**
 
-
 .. figure:: /_static/circuit.png
     :alt: Example digital circuit rendered with Circuit.draw
     :align: center
 
     Example circuit produced by ``circuit.draw()``.
 
-Saving to a file
-^^^^^^^^^^^^^^^^
+The plot can also be saved to a file by providing a filepath to the draw method:
 
 .. code-block:: python
 
