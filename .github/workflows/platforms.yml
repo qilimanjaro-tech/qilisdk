@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   build-wheels:
@@ -32,7 +33,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install qilisdk
-        run: uv -v sync --group dev --extra all-cu13 -Ccmake.build-type=Debug --reinstall
+        run: uv sync --reinstall
 
       - name: Smoke test import
         run: uv run python -c "import qilisdk; print('qilisdk imported successfully')"
