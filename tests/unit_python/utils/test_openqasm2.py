@@ -22,8 +22,8 @@ import pytest
 from qilisdk.digital.circuit import Circuit
 from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import CNOT, CZ, RX, RY, RZ, U1, U2, U3, H, M, S, T, X, Y, Z
-from qilisdk.utils import openqasm2 as openqasm2_utils
-from qilisdk.utils.openqasm2 import from_qasm2, from_qasm2_file, to_qasm2, to_qasm2_file
+from qilisdk.utils.openqasm import from_qasm2, from_qasm2_file, to_qasm2, to_qasm2_file
+from qilisdk.utils.openqasm import openqasm2 as openqasm2_utils
 
 
 # --- Helper functions for tests ---

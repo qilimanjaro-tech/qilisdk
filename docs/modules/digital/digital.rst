@@ -11,3 +11,4 @@ Digital
     digital_hardware
     digital_qaoa
     digital_trotter
+    digital_qir

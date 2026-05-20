@@ -2715,6 +2715,19 @@ wheels = [
 ]
 
 [[package]]
+name = "pyqir"
+version = "0.12.5"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/6e/10/3b041f225dac208451f568188fd06524360ffc66ff855a1a205af0a895a0/pyqir-0.12.5-cp39-abi3-macosx_10_12_x86_64.whl", hash = "sha256:9bc8232f028f40e026cb72c7f654cf63f4c464ff4695874b70a45e8c34969665", size = 2160708, upload-time = "2026-05-12T18:06:54.242Z" },
+    { url = "https://files.pythonhosted.org/packages/88/94/a120794a8048291203b28c96e1c212243c45d8d99e2dad9002d67c0559ce/pyqir-0.12.5-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:7f568054dbb42b7fd33e0d5b58e7ac60ad6af496e9e1376fcb4a45290e9f510d", size = 2102202, upload-time = "2026-05-12T18:06:56.336Z" },
+    { url = "https://files.pythonhosted.org/packages/5b/b7/da263a4c694b062d94b899a7248dec2238f965dc4ee58c69c6ba1263297e/pyqir-0.12.5-cp39-abi3-manylinux_2_34_x86_64.whl", hash = "sha256:4304984337a26cb01f8f0b0b0b436737e90379fbd0adfb48f142cfd942234384", size = 2640753, upload-time = "2026-05-12T18:06:57.988Z" },
+    { url = "https://files.pythonhosted.org/packages/31/9f/e78010a4158e65be86b0013bccd5b0709ae87d8af9da82685464fb8e784c/pyqir-0.12.5-cp39-abi3-manylinux_2_38_aarch64.whl", hash = "sha256:ced0baf85371393bae59c3c93a97d3de68217f43fde21b7be8c6ed31b1e00128", size = 2709456, upload-time = "2026-05-12T18:06:59.761Z" },
+    { url = "https://files.pythonhosted.org/packages/04/b2/970e1621e372dffbb540cbb06518d0af4a16e63c074db61d60fb3d464ae2/pyqir-0.12.5-cp39-abi3-win_amd64.whl", hash = "sha256:c70381e8e1e2db8e2a9d5aec484f51328b66f7ac9cc72989ba05a61d7689f950", size = 1967113, upload-time = "2026-05-12T18:07:01.197Z" },
+    { url = "https://files.pythonhosted.org/packages/a9/6e/575bbfe2382e15c2c1e1a3062ba5f1f0b61d73da05b2ff1b130dbda1214b/pyqir-0.12.5-cp39-abi3-win_arm64.whl", hash = "sha256:1be238924839fa5edbae20fb5a039f0caabe349e96c20029e7decf180a7aa1ae", size = 1868996, upload-time = "2026-05-12T18:07:02.58Z" },
+]
+
+[[package]]
 name = "pytest"
 version = "9.0.3"
 source = { registry = "https://pypi.org/simple" }
@@ -2920,8 +2933,7 @@ dependencies = [
     { name = "matplotlib" },
     { name = "mkl-service", marker = "sys_platform != 'darwin' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
     { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'darwin' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "numpy", version = "2.4.4", source = { registry = "https://urob.github.io/numpy-mkl" }, marker = "sys_platform != 'darwin' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "openqasm3", extra = ["parser"] },
+    { name = "numpy", version = "2.4.3", source = { registry = "https://urob.github.io/numpy-mkl" }, marker = "sys_platform != 'darwin' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
     { name = "psutil" },
     { name = "py-cpuinfo" },
     { name = "pydantic" },
@@ -2942,6 +2954,8 @@ all = [
     { name = "keyring" },
     { name = "keyrings-alt" },
     { name = "openfermion" },
+    { name = "openqasm3", extra = ["parser"], marker = "extra == 'extra-7-qilisdk-all' or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "pyqir" },
     { name = "qutip" },
     { name = "qutip-qip" },
 ]
@@ -2951,6 +2965,8 @@ all-cu12 = [
     { name = "keyring" },
     { name = "keyrings-alt" },
     { name = "openfermion" },
+    { name = "openqasm3", extra = ["parser"], marker = "extra == 'extra-7-qilisdk-all-cu12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra != 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra != 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (extra != 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra != 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "pyqir" },
     { name = "qutip" },
     { name = "qutip-qip" },
 ]
@@ -2960,6 +2976,8 @@ all-cu13 = [
     { name = "keyring" },
     { name = "keyrings-alt" },
     { name = "openfermion" },
+    { name = "openqasm3", extra = ["parser"], marker = "extra == 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "pyqir" },
     { name = "qutip" },
     { name = "qutip-qip" },
 ]
@@ -2974,6 +2992,12 @@ cuda13 = [
 ]
 openfermion = [
     { name = "openfermion" },
+]
+openqasm = [
+    { name = "openqasm3", extra = ["parser"] },
+]
+qir = [
+    { name = "pyqir" },
 ]
 qutip = [
     { name = "qutip" },
@@ -3027,12 +3051,13 @@ requires-dist = [
     { name = "numpy", marker = "sys_platform != 'darwin'", specifier = ">=2.4.1", index = "https://urob.github.io/numpy-mkl" },
     { name = "numpy", marker = "sys_platform == 'darwin'", specifier = ">=2.3,<2.4.1" },
     { name = "openfermion", marker = "extra == 'openfermion'", specifier = ">=1.7.1" },
-    { name = "openqasm3", extras = ["parser"], specifier = ">=1.0.1" },
+    { name = "openqasm3", extras = ["parser"], marker = "extra == 'openqasm'", specifier = ">=1.0.1" },
     { name = "psutil", specifier = ">=7.2.2" },
     { name = "py-cpuinfo", specifier = ">=9.0.0" },
     { name = "pydantic", specifier = ">=2.13.3" },
     { name = "pydantic-settings", specifier = ">=2.14.0" },
     { name = "pyparsing", specifier = ">=3.3.2" },
+    { name = "pyqir", marker = "extra == 'qir'", specifier = ">=0.10.0" },
     { name = "qilisdk", extras = ["cuda12"], marker = "extra == 'all'" },
     { name = "qilisdk", extras = ["cuda12"], marker = "extra == 'all-cu12'" },
     { name = "qilisdk", extras = ["cuda12"], marker = "extra == 'cuda'" },
@@ -3040,6 +3065,12 @@ requires-dist = [
     { name = "qilisdk", extras = ["openfermion"], marker = "extra == 'all'" },
     { name = "qilisdk", extras = ["openfermion"], marker = "extra == 'all-cu12'" },
     { name = "qilisdk", extras = ["openfermion"], marker = "extra == 'all-cu13'" },
+    { name = "qilisdk", extras = ["openqasm"], marker = "extra == 'all'" },
+    { name = "qilisdk", extras = ["openqasm"], marker = "extra == 'all-cu12'" },
+    { name = "qilisdk", extras = ["openqasm"], marker = "extra == 'all-cu13'" },
+    { name = "qilisdk", extras = ["qir"], marker = "extra == 'all'" },
+    { name = "qilisdk", extras = ["qir"], marker = "extra == 'all-cu12'" },
+    { name = "qilisdk", extras = ["qir"], marker = "extra == 'all-cu13'" },
     { name = "qilisdk", extras = ["qutip"], marker = "extra == 'all'" },
     { name = "qilisdk", extras = ["qutip"], marker = "extra == 'all-cu12'" },
     { name = "qilisdk", extras = ["qutip"], marker = "extra == 'all-cu13'" },
@@ -3055,7 +3086,7 @@ requires-dist = [
     { name = "setuptools", specifier = ">=82.0.1" },
     { name = "sphinx-tabs", specifier = ">=3.5.0" },
 ]
-provides-extras = ["cuda", "cuda12", "cuda13", "speqtrum", "qutip", "openfermion", "all", "all-cu12", "all-cu13"]
+provides-extras = ["cuda", "cuda12", "cuda13", "speqtrum", "qutip", "openfermion", "qir", "openqasm", "all", "all-cu12", "all-cu13"]
 
 [package.metadata.requires-dev]
 dev = [
