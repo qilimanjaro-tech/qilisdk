@@ -509,6 +509,8 @@ MatrixFreeHamiltonian MatrixFreeHamiltonian::operator-(const MatrixFreeHamiltoni
     return result;
 }
 
+#include <iostream>
+
 void MatrixFreeHamiltonian::prune(double threshold, int max_terms) {
     /*
     Prune the Hamiltonian by removing terms with coefficients below a certain threshold and limiting the total number of terms.
@@ -546,6 +548,7 @@ void MatrixFreeHamiltonian::prune(double threshold, int max_terms) {
     });
     if (term_vector.size() > static_cast<size_t>(max_terms)) {
         term_vector.resize(max_terms);
+        std::cout << "Truncating from " << operators.size() << " to " << max_terms << " terms" << std::endl;
     }
 
     // Rebuild the operators map from the pruned vector

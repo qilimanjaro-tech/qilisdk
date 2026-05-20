@@ -361,17 +361,18 @@ void time_evolution_truncated_polynomial_expansion(MatrixFreeHamiltonian& rho_t_
         // Perform the iteration
         iter_rk4(rho_t_as_h, t_start, dt, step_list, hamiltonians, parameters_list, config.get_max_terms());
 
-        std::cout << "After rk4: " << rho_t_as_h << std::endl;
+        std::cout << "After rk4: " << rho_t_as_h.size() << " terms" << std::endl;
 
         // Truncate the resulting Hamiltonian to keep the number of terms manageable
         rho_t_as_h.prune(1e-14, config.get_max_terms());
 
-        std::cout << "After pruning: " << rho_t_as_h << std::endl;
+        std::cout << "After pruning: " << rho_t_as_h.size() << " terms" << std::endl;
         
         // Normalize the state
         double factor = rho_t_as_h.normalize_acting_on_plus();
 
-        std::cout << "After normalization: " << rho_t_as_h << std::endl;
+        std::cout << "After normalization: " << rho_t_as_h.size() << " terms" << std::endl;
+        std::cout << "Scaling factor: " << factor << std::endl;
 
     }
 
