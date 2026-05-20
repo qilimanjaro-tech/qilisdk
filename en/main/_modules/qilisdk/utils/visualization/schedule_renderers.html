@@ -27,11 +27,11 @@
   <meta property="og:title" content="qilisdk.utils.visualization.schedule_renderers | QiliSDK" />
   <meta name="twitter:title" content="qilisdk.utils.visualization.schedule_renderers | QiliSDK" />
   <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=652ce3ed" />
-  <link rel="stylesheet" type="text/css" href="../../../../_static/theme.css?v=73505e79" />
+  <link rel="stylesheet" type="text/css" href="../../../../_static/theme.css?v=979577e3" />
   <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
   <link rel="stylesheet" type="text/css" href="../../../../_static/sphinx-design.min.css?v=95c83b7e" />
-  <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css?v=0828450c" />
-  <link rel="stylesheet" type="text/css" href="../../../../_static/awesome-sphinx-design.css?v=c54898a4" />
+  <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css?v=7f555f8f" />
+  <link rel="stylesheet" type="text/css" href="../../../../_static/awesome-sphinx-design.css?v=b1d4564d" />
   <link rel="icon" href="../../../../_static/q_trans.png" />
   <link rel="search" title="Search" href="../../../../search.html" />
   <link rel="index" title="Index" href="../../../../genindex.html" />
@@ -164,6 +164,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../../modules/core/core_variables_parameters.html">Variables and Parameters</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../../modules/core/core_terms_maps_comparisons.html">Terms, Maps and Comparisons</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../../modules/core/core_model.html">Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../modules/core/core_lp_parser.html">Linear Programming File Parser and Serializer</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../../modules/core/core_qubo.html">QUBO</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../../modules/core/core_qtensor.html">QTensor</a></li>
 </ul>
@@ -176,6 +177,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../../modules/digital/digital_hardware.html">HardwareEfficientAnsatz</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../../modules/digital/digital_qaoa.html">QAOA</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../../modules/digital/digital_trotter.html">TrotterizedSchedule</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../modules/digital/digital_qir.html">QIR Import and Export</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../modules/analog/analog.html">Analog</a><ul>
@@ -323,9 +325,10 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../../../../code/api/qilisdk/utils/index.html">qilisdk.utils</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/utils/hashing/index.html">qilisdk.utils.hashing</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/utils/lp_parser/index.html">qilisdk.utils.lp_parser</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/utils/openfermion/index.html">qilisdk.utils.openfermion</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/utils/openqasm2/index.html">qilisdk.utils.openqasm2</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/utils/openqasm3/index.html">qilisdk.utils.openqasm3</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/utils/openqasm/index.html">qilisdk.utils.openqasm</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/utils/qir/index.html">qilisdk.utils.qir</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/utils/serialization/index.html">qilisdk.utils.serialization</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/utils/trotterization/index.html">qilisdk.utils.trotterization</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/utils/visualization/index.html">qilisdk.utils.visualization</a></li>
@@ -436,179 +439,400 @@
 </span><span id="line-20"><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 </span><span id="line-21"><span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.figure</span><span class="w"> </span><span class="kn">import</span> <span class="n">Figure</span>
 </span><span id="line-22">
-</span><span id="line-23"><span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
-</span><span id="line-24">    <span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.analog.schedule</span><span class="w"> </span><span class="kn">import</span> <span class="n">Schedule</span>
-</span><span id="line-25">    <span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Number</span>
-</span><span id="line-26">
-</span><span id="line-27"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.utils.visualization.style</span><span class="w"> </span><span class="kn">import</span> <span class="n">ScheduleStyle</span>
-</span><span id="line-28">
+</span><span id="line-23"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.analog.hamiltonian</span><span class="w"> </span><span class="kn">import</span> <span class="n">Hamiltonian</span>
+</span><span id="line-24">
+</span><span id="line-25"><span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+</span><span id="line-26">    <span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.analog.schedule</span><span class="w"> </span><span class="kn">import</span> <span class="n">Schedule</span>
+</span><span id="line-27">    <span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">QTensor</span>
+</span><span id="line-28">    <span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Number</span>
 </span><span id="line-29">
+</span><span id="line-30"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.utils.visualization.style</span><span class="w"> </span><span class="kn">import</span> <span class="n">ScheduleStyle</span>
+</span><span id="line-31">
+</span><span id="line-32">
 <div class="viewcode-block" id="MatplotlibScheduleRenderer">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer">[docs]</a>
-</span><span id="line-30"><span class="k">class</span><span class="w"> </span><span class="nc">MatplotlibScheduleRenderer</span><span class="p">:</span>
-</span><span id="line-31"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Render a Schedule using matplotlib, with theme support.&quot;&quot;&quot;</span>
-</span><span id="line-32">
-</span><span id="line-33">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
-</span><span id="line-34">        <span class="bp">self</span><span class="p">,</span>
-</span><span id="line-35">        <span class="n">schedule</span><span class="p">:</span> <span class="n">Schedule</span><span class="p">,</span>
-</span><span id="line-36">        <span class="n">ax</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="line-37">        <span class="o">*</span><span class="p">,</span>
-</span><span id="line-38">        <span class="n">style</span><span class="p">:</span> <span class="n">ScheduleStyle</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="line-39">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-33"><span class="k">class</span><span class="w"> </span><span class="nc">MatplotlibScheduleRenderer</span><span class="p">:</span>
+</span><span id="line-34"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Render a Schedule using matplotlib, with theme support.&quot;&quot;&quot;</span>
+</span><span id="line-35">
+</span><span id="line-36">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+</span><span id="line-37">        <span class="bp">self</span><span class="p">,</span>
+</span><span id="line-38">        <span class="n">schedule</span><span class="p">:</span> <span class="n">Schedule</span><span class="p">,</span>
+</span><span id="line-39">        <span class="n">ax</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-40">        <span class="o">*</span><span class="p">,</span>
+</span><span id="line-41">        <span class="n">style</span><span class="p">:</span> <span class="n">ScheduleStyle</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-42">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <div class="viewcode-block" id="MatplotlibScheduleRenderer.schedule">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer.schedule">[docs]</a>
-</span><span id="line-40">        <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span> <span class="o">=</span> <span class="n">schedule</span></div>
+</span><span id="line-43">        <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span> <span class="o">=</span> <span class="n">schedule</span></div>
 
 <div class="viewcode-block" id="MatplotlibScheduleRenderer.style">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer.style">[docs]</a>
-</span><span id="line-41">        <span class="bp">self</span><span class="o">.</span><span class="n">style</span> <span class="o">=</span> <span class="n">style</span> <span class="ow">or</span> <span class="n">ScheduleStyle</span><span class="p">()</span></div>
+</span><span id="line-44">        <span class="bp">self</span><span class="o">.</span><span class="n">style</span> <span class="o">=</span> <span class="n">style</span> <span class="ow">or</span> <span class="n">ScheduleStyle</span><span class="p">()</span></div>
 
 <div class="viewcode-block" id="MatplotlibScheduleRenderer.ax">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer.ax">[docs]</a>
-</span><span id="line-42">        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="o">=</span> <span class="n">ax</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_axes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">dpi</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="p">)</span></div>
+</span><span id="line-45">        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="o">=</span> <span class="n">ax</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_axes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">dpi</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="p">)</span></div>
 
-</span><span id="line-43">
+</span><span id="line-46">
+<div class="viewcode-block" id="MatplotlibScheduleRenderer.setup_axes">
+<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer.setup_axes">[docs]</a>
+</span><span id="line-47">    <span class="k">def</span><span class="w"> </span><span class="nf">setup_axes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-48">        <span class="n">style</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">style</span>
+</span><span id="line-49">        <span class="n">theme</span> <span class="o">=</span> <span class="n">style</span><span class="o">.</span><span class="n">theme</span>
+</span><span id="line-50">        <span class="n">title_color</span> <span class="o">=</span> <span class="n">theme</span><span class="o">.</span><span class="n">on_background</span>
+</span><span id="line-51">        <span class="n">label_color</span> <span class="o">=</span> <span class="n">theme</span><span class="o">.</span><span class="n">on_background</span>
+</span><span id="line-52">        <span class="n">legend_facecolor</span> <span class="o">=</span> <span class="n">theme</span><span class="o">.</span><span class="n">surface</span>
+</span><span id="line-53">        <span class="n">legend_edgecolor</span> <span class="o">=</span> <span class="n">theme</span><span class="o">.</span><span class="n">border</span>
+</span><span id="line-54">        <span class="n">tick_color</span> <span class="o">=</span> <span class="n">theme</span><span class="o">.</span><span class="n">on_background</span>
+</span><span id="line-55">
+</span><span id="line-56">        <span class="c1"># Set axes and figure background to theme</span>
+</span><span id="line-57">        <span class="n">facecolor</span> <span class="o">=</span> <span class="n">theme</span><span class="o">.</span><span class="n">background</span>
+</span><span id="line-58">        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">set_facecolor</span><span class="p">(</span><span class="n">facecolor</span><span class="p">)</span>
+</span><span id="line-59">        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="p">,</span> <span class="s2">&quot;figure&quot;</span><span class="p">):</span>
+</span><span id="line-60">            <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">set_facecolor</span><span class="p">(</span><span class="n">facecolor</span><span class="p">)</span>
+</span><span id="line-61">
+</span><span id="line-62">        <span class="k">if</span> <span class="n">style</span><span class="o">.</span><span class="n">grid</span><span class="p">:</span>
+</span><span id="line-63">            <span class="n">grid_style</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">style</span><span class="o">.</span><span class="n">grid_style</span><span class="p">)</span>
+</span><span id="line-64">            <span class="k">if</span> <span class="s2">&quot;color&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">grid_style</span><span class="p">:</span>
+</span><span id="line-65">                <span class="n">grid_style</span><span class="p">[</span><span class="s2">&quot;color&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">theme</span><span class="o">.</span><span class="n">surface_muted</span>
+</span><span id="line-66">            <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="o">**</span><span class="n">grid_style</span><span class="p">)</span>
+</span><span id="line-67">        <span class="n">leg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span>
+</span><span id="line-68">            <span class="n">loc</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">legend_loc</span><span class="p">,</span>
+</span><span id="line-69">            <span class="n">fontsize</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">legend_fontsize</span><span class="p">,</span>
+</span><span id="line-70">            <span class="n">frameon</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">legend_frame</span><span class="p">,</span>
+</span><span id="line-71">            <span class="n">facecolor</span><span class="o">=</span><span class="n">legend_facecolor</span><span class="p">,</span>
+</span><span id="line-72">            <span class="n">edgecolor</span><span class="o">=</span><span class="n">legend_edgecolor</span><span class="p">,</span>
+</span><span id="line-73">        <span class="p">)</span>
+</span><span id="line-74">        <span class="c1"># Set legend text color to match theme text color</span>
+</span><span id="line-75">        <span class="k">if</span> <span class="n">leg</span><span class="p">:</span>
+</span><span id="line-76">            <span class="k">for</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">leg</span><span class="o">.</span><span class="n">get_texts</span><span class="p">():</span>
+</span><span id="line-77">                <span class="n">text</span><span class="o">.</span><span class="n">set_color</span><span class="p">(</span><span class="n">title_color</span><span class="p">)</span>
+</span><span id="line-78">        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span>
+</span><span id="line-79">            <span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">title</span> <span class="ow">or</span> <span class="s2">&quot;Schedule Eigenvalues&quot;</span><span class="p">,</span>
+</span><span id="line-80">            <span class="n">fontsize</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">title_fontsize</span><span class="p">,</span>
+</span><span id="line-81">            <span class="n">color</span><span class="o">=</span><span class="n">title_color</span><span class="p">,</span>
+</span><span id="line-82">            <span class="n">fontweight</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">fontweight</span><span class="p">,</span>
+</span><span id="line-83">            <span class="n">family</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">fontfamily</span><span class="p">,</span>
+</span><span id="line-84">        <span class="p">)</span>
+</span><span id="line-85">        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span>
+</span><span id="line-86">            <span class="n">style</span><span class="o">.</span><span class="n">xlabel</span><span class="p">,</span>
+</span><span id="line-87">            <span class="n">fontsize</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">label_fontsize</span><span class="p">,</span>
+</span><span id="line-88">            <span class="n">color</span><span class="o">=</span><span class="n">label_color</span><span class="p">,</span>
+</span><span id="line-89">            <span class="n">fontweight</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">fontweight</span><span class="p">,</span>
+</span><span id="line-90">            <span class="n">family</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">fontfamily</span><span class="p">,</span>
+</span><span id="line-91">        <span class="p">)</span>
+</span><span id="line-92">        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span>
+</span><span id="line-93">            <span class="n">style</span><span class="o">.</span><span class="n">ylabel</span><span class="p">,</span>
+</span><span id="line-94">            <span class="n">fontsize</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">label_fontsize</span><span class="p">,</span>
+</span><span id="line-95">            <span class="n">color</span><span class="o">=</span><span class="n">label_color</span><span class="p">,</span>
+</span><span id="line-96">            <span class="n">fontweight</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">fontweight</span><span class="p">,</span>
+</span><span id="line-97">            <span class="n">family</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">fontfamily</span><span class="p">,</span>
+</span><span id="line-98">        <span class="p">)</span>
+</span><span id="line-99">        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">labelsize</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">xtick_fontsize</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="n">tick_color</span><span class="p">)</span>
+</span><span id="line-100">        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="n">labelsize</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">ytick_fontsize</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="n">tick_color</span><span class="p">)</span>
+</span><span id="line-101">        <span class="k">if</span> <span class="n">style</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">:</span>
+</span><span id="line-102">            <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span></div>
+
+</span><span id="line-103">
+</span><span id="line-104">    <span class="c1"># Generate gradient colors between primary and accent</span>
+</span><span id="line-105">    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="MatplotlibScheduleRenderer.hex_to_rgb">
+<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer.hex_to_rgb">[docs]</a>
+</span><span id="line-106">    <span class="k">def</span><span class="w"> </span><span class="nf">hex_to_rgb</span><span class="p">(</span><span class="n">hex_color</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+</span><span id="line-107">        <span class="n">hex_color</span> <span class="o">=</span> <span class="n">hex_color</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">&quot;#&quot;</span><span class="p">)</span>
+</span><span id="line-108">        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">hex_color</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">2</span><span class="p">],</span> <span class="mi">16</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span></div>
+
+</span><span id="line-109">
+</span><span id="line-110">    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="MatplotlibScheduleRenderer.rgb_to_hex">
+<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer.rgb_to_hex">[docs]</a>
+</span><span id="line-111">    <span class="k">def</span><span class="w"> </span><span class="nf">rgb_to_hex</span><span class="p">(</span><span class="n">rgb</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="line-112">        <span class="k">return</span> <span class="s2">&quot;#</span><span class="si">{:02x}{:02x}{:02x}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">*</span><span class="n">rgb</span><span class="p">)</span></div>
+
+</span><span id="line-113">
+<div class="viewcode-block" id="MatplotlibScheduleRenderer.gradient_colors">
+<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer.gradient_colors">[docs]</a>
+</span><span id="line-114">    <span class="k">def</span><span class="w"> </span><span class="nf">gradient_colors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start_hex</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">end_hex</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+</span><span id="line-115">        <span class="n">start_rgb</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">hex_to_rgb</span><span class="p">(</span><span class="n">start_hex</span><span class="p">)</span>
+</span><span id="line-116">        <span class="n">end_rgb</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">hex_to_rgb</span><span class="p">(</span><span class="n">end_hex</span><span class="p">)</span>
+</span><span id="line-117">        <span class="n">colors</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="line-118">        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+</span><span id="line-119">            <span class="n">ratio</span> <span class="o">=</span> <span class="n">i</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+</span><span id="line-120">            <span class="n">rgb</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">start_rgb</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">end_rgb</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">-</span> <span class="n">start_rgb</span><span class="p">[</span><span class="n">j</span><span class="p">])</span> <span class="o">*</span> <span class="n">ratio</span><span class="p">)</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+</span><span id="line-121">            <span class="n">colors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rgb_to_hex</span><span class="p">(</span><span class="n">rgb</span><span class="p">))</span>
+</span><span id="line-122">        <span class="k">return</span> <span class="n">colors</span></div>
+
+</span><span id="line-123">
 <div class="viewcode-block" id="MatplotlibScheduleRenderer.plot">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer.plot">[docs]</a>
-</span><span id="line-44">    <span class="k">def</span><span class="w"> </span><span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-45"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-46"><span class="sd">        Plot the schedule coefficients for each Hamiltonian over time.</span>
-</span><span id="line-47"><span class="sd">        Args:</span>
-</span><span id="line-48"><span class="sd">            ax (plt.Axes | None): The matplotlib axes to plot on. Default is None.</span>
-</span><span id="line-49"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-50">        <span class="n">style</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">style</span>
-</span><span id="line-51">        <span class="n">theme</span> <span class="o">=</span> <span class="n">style</span><span class="o">.</span><span class="n">theme</span>
-</span><span id="line-52">        <span class="n">facecolor</span> <span class="o">=</span> <span class="n">theme</span><span class="o">.</span><span class="n">background</span>
-</span><span id="line-53">        <span class="n">title_color</span> <span class="o">=</span> <span class="n">theme</span><span class="o">.</span><span class="n">on_background</span>
-</span><span id="line-54">        <span class="n">label_color</span> <span class="o">=</span> <span class="n">theme</span><span class="o">.</span><span class="n">on_background</span>
-</span><span id="line-55">        <span class="n">legend_facecolor</span> <span class="o">=</span> <span class="n">theme</span><span class="o">.</span><span class="n">surface</span>
-</span><span id="line-56">        <span class="n">legend_edgecolor</span> <span class="o">=</span> <span class="n">theme</span><span class="o">.</span><span class="n">border</span>
-</span><span id="line-57">        <span class="n">tick_color</span> <span class="o">=</span> <span class="n">theme</span><span class="o">.</span><span class="n">on_background</span>
-</span><span id="line-58">
-</span><span id="line-59">        <span class="c1"># Set axes and figure background to theme</span>
-</span><span id="line-60">        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">set_facecolor</span><span class="p">(</span><span class="n">facecolor</span><span class="p">)</span>
-</span><span id="line-61">        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="s2">&quot;figure&quot;</span><span class="p">):</span>
-</span><span id="line-62">            <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">set_facecolor</span><span class="p">(</span><span class="n">facecolor</span><span class="p">)</span>
-</span><span id="line-63">        <span class="n">plots</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Number</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
-</span><span id="line-64">        <span class="n">hamiltonians</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">hamiltonians</span>
-</span><span id="line-65">        <span class="n">times</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">tlist</span>
-</span><span id="line-66">        <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">hamiltonians</span><span class="p">:</span>
-</span><span id="line-67">            <span class="n">coef</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="n">h</span><span class="p">]</span>
-</span><span id="line-68">            <span class="n">plots</span><span class="p">[</span><span class="n">h</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">coef</span><span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">t</span><span class="p">)]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">times</span><span class="p">]</span>
-</span><span id="line-69">
-</span><span id="line-70">        <span class="c1"># Generate gradient colors between primary and accent</span>
-</span><span id="line-71">        <span class="k">def</span><span class="w"> </span><span class="nf">hex_to_rgb</span><span class="p">(</span><span class="n">hex_color</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
-</span><span id="line-72">            <span class="n">hex_color</span> <span class="o">=</span> <span class="n">hex_color</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">&quot;#&quot;</span><span class="p">)</span>
-</span><span id="line-73">            <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">hex_color</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">2</span><span class="p">],</span> <span class="mi">16</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
-</span><span id="line-74">
-</span><span id="line-75">        <span class="k">def</span><span class="w"> </span><span class="nf">rgb_to_hex</span><span class="p">(</span><span class="n">rgb</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="line-76">            <span class="k">return</span> <span class="s2">&quot;#</span><span class="si">{:02x}{:02x}{:02x}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">*</span><span class="n">rgb</span><span class="p">)</span>
-</span><span id="line-77">
-</span><span id="line-78">        <span class="k">def</span><span class="w"> </span><span class="nf">gradient_colors</span><span class="p">(</span><span class="n">start_hex</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">end_hex</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-</span><span id="line-79">            <span class="n">start_rgb</span> <span class="o">=</span> <span class="n">hex_to_rgb</span><span class="p">(</span><span class="n">start_hex</span><span class="p">)</span>
-</span><span id="line-80">            <span class="n">end_rgb</span> <span class="o">=</span> <span class="n">hex_to_rgb</span><span class="p">(</span><span class="n">end_hex</span><span class="p">)</span>
-</span><span id="line-81">            <span class="n">colors</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span id="line-82">            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
-</span><span id="line-83">                <span class="n">ratio</span> <span class="o">=</span> <span class="n">i</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-</span><span id="line-84">                <span class="n">rgb</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">start_rgb</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">end_rgb</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">-</span> <span class="n">start_rgb</span><span class="p">[</span><span class="n">j</span><span class="p">])</span> <span class="o">*</span> <span class="n">ratio</span><span class="p">)</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
-</span><span id="line-85">                <span class="n">colors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rgb_to_hex</span><span class="p">(</span><span class="n">rgb</span><span class="p">))</span>
-</span><span id="line-86">            <span class="k">return</span> <span class="n">colors</span>
-</span><span id="line-87">
-</span><span id="line-88">        <span class="n">n_hams</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">hamiltonians</span><span class="p">)</span>
-</span><span id="line-89">        <span class="n">grad_colors</span> <span class="o">=</span> <span class="n">gradient_colors</span><span class="p">(</span><span class="n">theme</span><span class="o">.</span><span class="n">primary</span><span class="p">,</span> <span class="n">theme</span><span class="o">.</span><span class="n">accent</span><span class="p">,</span> <span class="n">n_hams</span><span class="p">)</span>
-</span><span id="line-90">
-</span><span id="line-91">        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">h</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">hamiltonians</span><span class="p">):</span>
-</span><span id="line-92">            <span class="n">line_style</span> <span class="o">=</span> <span class="n">style</span><span class="o">.</span><span class="n">line_styles</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">style</span><span class="o">.</span><span class="n">default_line_style</span><span class="p">)</span>
-</span><span id="line-93">            <span class="n">marker</span> <span class="o">=</span> <span class="n">style</span><span class="o">.</span><span class="n">marker</span>
-</span><span id="line-94">            <span class="c1"># If no color specified, use gradient color</span>
-</span><span id="line-95">            <span class="k">if</span> <span class="s2">&quot;color&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">line_style</span><span class="p">:</span>
-</span><span id="line-96">                <span class="n">color</span> <span class="o">=</span> <span class="n">grad_colors</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
-</span><span id="line-97">                <span class="n">line_style</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">line_style</span><span class="p">,</span> <span class="s2">&quot;color&quot;</span><span class="p">:</span> <span class="n">color</span><span class="p">}</span>
-</span><span id="line-98">            <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
-</span><span id="line-99">                <span class="n">times</span><span class="p">,</span>
-</span><span id="line-100">                <span class="n">plots</span><span class="p">[</span><span class="n">h</span><span class="p">],</span>
-</span><span id="line-101">                <span class="n">label</span><span class="o">=</span><span class="n">h</span><span class="p">,</span>
-</span><span id="line-102">                <span class="n">marker</span><span class="o">=</span><span class="n">marker</span><span class="p">,</span>
-</span><span id="line-103">                <span class="n">markersize</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">marker_size</span><span class="p">,</span>
-</span><span id="line-104">                <span class="o">**</span><span class="n">line_style</span><span class="p">,</span>  <span class="c1"># ty:ignore[invalid-argument-type]</span>
-</span><span id="line-105">            <span class="p">)</span>
-</span><span id="line-106">        <span class="k">if</span> <span class="n">style</span><span class="o">.</span><span class="n">grid</span><span class="p">:</span>
-</span><span id="line-107">            <span class="n">grid_style</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">style</span><span class="o">.</span><span class="n">grid_style</span><span class="p">)</span>
-</span><span id="line-108">            <span class="k">if</span> <span class="s2">&quot;color&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">grid_style</span><span class="p">:</span>
-</span><span id="line-109">                <span class="n">grid_style</span><span class="p">[</span><span class="s2">&quot;color&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">theme</span><span class="o">.</span><span class="n">surface_muted</span>
-</span><span id="line-110">            <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="o">**</span><span class="n">grid_style</span><span class="p">)</span>
-</span><span id="line-111">        <span class="n">leg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span>
-</span><span id="line-112">            <span class="n">loc</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">legend_loc</span><span class="p">,</span>
-</span><span id="line-113">            <span class="n">fontsize</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">legend_fontsize</span><span class="p">,</span>
-</span><span id="line-114">            <span class="n">frameon</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">legend_frame</span><span class="p">,</span>
-</span><span id="line-115">            <span class="n">facecolor</span><span class="o">=</span><span class="n">legend_facecolor</span><span class="p">,</span>
-</span><span id="line-116">            <span class="n">edgecolor</span><span class="o">=</span><span class="n">legend_edgecolor</span><span class="p">,</span>
-</span><span id="line-117">        <span class="p">)</span>
-</span><span id="line-118">        <span class="c1"># Set legend text color to match theme text color</span>
-</span><span id="line-119">        <span class="k">if</span> <span class="n">leg</span><span class="p">:</span>
-</span><span id="line-120">            <span class="k">for</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">leg</span><span class="o">.</span><span class="n">get_texts</span><span class="p">():</span>
-</span><span id="line-121">                <span class="n">text</span><span class="o">.</span><span class="n">set_color</span><span class="p">(</span><span class="n">title_color</span><span class="p">)</span>
-</span><span id="line-122">        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span>
-</span><span id="line-123">            <span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">title</span> <span class="ow">or</span> <span class="s2">&quot;Schedule Plot&quot;</span><span class="p">,</span>
-</span><span id="line-124">            <span class="n">fontsize</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">title_fontsize</span><span class="p">,</span>
-</span><span id="line-125">            <span class="n">color</span><span class="o">=</span><span class="n">title_color</span><span class="p">,</span>
-</span><span id="line-126">            <span class="n">fontweight</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">fontweight</span><span class="p">,</span>
-</span><span id="line-127">            <span class="n">family</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">fontfamily</span><span class="p">,</span>
-</span><span id="line-128">        <span class="p">)</span>
-</span><span id="line-129">        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span>
-</span><span id="line-130">            <span class="n">style</span><span class="o">.</span><span class="n">xlabel</span><span class="p">,</span>
-</span><span id="line-131">            <span class="n">fontsize</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">label_fontsize</span><span class="p">,</span>
-</span><span id="line-132">            <span class="n">color</span><span class="o">=</span><span class="n">label_color</span><span class="p">,</span>
-</span><span id="line-133">            <span class="n">fontweight</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">fontweight</span><span class="p">,</span>
-</span><span id="line-134">            <span class="n">family</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">fontfamily</span><span class="p">,</span>
-</span><span id="line-135">        <span class="p">)</span>
-</span><span id="line-136">        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span>
-</span><span id="line-137">            <span class="n">style</span><span class="o">.</span><span class="n">ylabel</span><span class="p">,</span>
-</span><span id="line-138">            <span class="n">fontsize</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">label_fontsize</span><span class="p">,</span>
-</span><span id="line-139">            <span class="n">color</span><span class="o">=</span><span class="n">label_color</span><span class="p">,</span>
-</span><span id="line-140">            <span class="n">fontweight</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">fontweight</span><span class="p">,</span>
-</span><span id="line-141">            <span class="n">family</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">fontfamily</span><span class="p">,</span>
-</span><span id="line-142">        <span class="p">)</span>
-</span><span id="line-143">        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">labelsize</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">xtick_fontsize</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="n">tick_color</span><span class="p">)</span>
-</span><span id="line-144">        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="n">labelsize</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">ytick_fontsize</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="n">tick_color</span><span class="p">)</span>
-</span><span id="line-145">        <span class="k">if</span> <span class="n">style</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">:</span>
-</span><span id="line-146">            <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
-</span><span id="line-147">        <span class="n">plt</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span></div>
-
-</span><span id="line-148">
-<div class="viewcode-block" id="MatplotlibScheduleRenderer.save">
-<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer.save">[docs]</a>
-</span><span id="line-149">    <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># thin wrapper</span>
-</span><span id="line-150"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Save current figure to disk.</span>
-</span><span id="line-151">
-</span><span id="line-152"><span class="sd">        Args:</span>
-</span><span id="line-153"><span class="sd">            filename: Path to save the figure (e.g., &#39;circuit.png&#39;).</span>
-</span><span id="line-154"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-155">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">figure</span><span class="p">,</span> <span class="n">Figure</span><span class="p">):</span>
-</span><span id="line-156">            <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">&quot;tight&quot;</span><span class="p">)</span></div>
-
-</span><span id="line-157">
-<div class="viewcode-block" id="MatplotlibScheduleRenderer.show">
-<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer.show">[docs]</a>
-</span><span id="line-158">    <span class="k">def</span><span class="w"> </span><span class="nf">show</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># noqa: PLR6301</span>
-</span><span id="line-159"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Show the current figure.&quot;&quot;&quot;</span>
+</span><span id="line-124">    <span class="k">def</span><span class="w"> </span><span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-125"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-126"><span class="sd">        Plot the schedule coefficients for each Hamiltonian over time.</span>
+</span><span id="line-127"><span class="sd">        Args:</span>
+</span><span id="line-128"><span class="sd">            ax (plt.Axes | None): The matplotlib axes to plot on. Default is None.</span>
+</span><span id="line-129"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-130">        <span class="n">style</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">style</span>
+</span><span id="line-131">        <span class="n">theme</span> <span class="o">=</span> <span class="n">style</span><span class="o">.</span><span class="n">theme</span>
+</span><span id="line-132">
+</span><span id="line-133">        <span class="n">plots</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Number</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+</span><span id="line-134">        <span class="n">hamiltonians</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">hamiltonians</span>
+</span><span id="line-135">        <span class="n">times</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">tlist</span>
+</span><span id="line-136">        <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">hamiltonians</span><span class="p">:</span>
+</span><span id="line-137">            <span class="n">coef</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="n">h</span><span class="p">]</span>
+</span><span id="line-138">            <span class="n">plots</span><span class="p">[</span><span class="n">h</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">coef</span><span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">t</span><span class="p">)]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">times</span><span class="p">]</span>
+</span><span id="line-139">
+</span><span id="line-140">        <span class="n">n_hams</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">hamiltonians</span><span class="p">)</span>
+</span><span id="line-141">        <span class="n">grad_colors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gradient_colors</span><span class="p">(</span><span class="n">theme</span><span class="o">.</span><span class="n">primary</span><span class="p">,</span> <span class="n">theme</span><span class="o">.</span><span class="n">accent</span><span class="p">,</span> <span class="n">n_hams</span><span class="p">)</span>
+</span><span id="line-142">
+</span><span id="line-143">        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">h</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">hamiltonians</span><span class="p">):</span>
+</span><span id="line-144">            <span class="n">line_style</span> <span class="o">=</span> <span class="n">style</span><span class="o">.</span><span class="n">line_styles</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">style</span><span class="o">.</span><span class="n">default_line_style</span><span class="p">)</span>
+</span><span id="line-145">            <span class="n">marker</span> <span class="o">=</span> <span class="n">style</span><span class="o">.</span><span class="n">marker</span>
+</span><span id="line-146">            <span class="c1"># If no color specified, use gradient color</span>
+</span><span id="line-147">            <span class="k">if</span> <span class="s2">&quot;color&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">line_style</span><span class="p">:</span>
+</span><span id="line-148">                <span class="n">color</span> <span class="o">=</span> <span class="n">grad_colors</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+</span><span id="line-149">                <span class="n">line_style</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">line_style</span><span class="p">,</span> <span class="s2">&quot;color&quot;</span><span class="p">:</span> <span class="n">color</span><span class="p">}</span>
+</span><span id="line-150">            <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+</span><span id="line-151">                <span class="n">times</span><span class="p">,</span>
+</span><span id="line-152">                <span class="n">plots</span><span class="p">[</span><span class="n">h</span><span class="p">],</span>
+</span><span id="line-153">                <span class="n">label</span><span class="o">=</span><span class="n">h</span><span class="p">,</span>
+</span><span id="line-154">                <span class="n">marker</span><span class="o">=</span><span class="n">marker</span><span class="p">,</span>
+</span><span id="line-155">                <span class="n">markersize</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">marker_size</span><span class="p">,</span>
+</span><span id="line-156">                <span class="o">**</span><span class="n">line_style</span><span class="p">,</span>  <span class="c1"># ty:ignore[invalid-argument-type]</span>
+</span><span id="line-157">            <span class="p">)</span>
+</span><span id="line-158">
+</span><span id="line-159">        <span class="bp">self</span><span class="o">.</span><span class="n">setup_axes</span><span class="p">()</span>
 </span><span id="line-160">
-</span><span id="line-161">        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></div>
+</span><span id="line-161">        <span class="n">plt</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span></div>
 
 </span><span id="line-162">
-</span><span id="line-163">    <span class="nd">@staticmethod</span>
-</span><span id="line-164">    <span class="k">def</span><span class="w"> </span><span class="nf">_make_axes</span><span class="p">(</span><span class="n">dpi</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">style</span><span class="p">:</span> <span class="n">ScheduleStyle</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span><span class="p">:</span>
-</span><span id="line-165"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-166"><span class="sd">        Create a new figure and axes with the given DPI.</span>
-</span><span id="line-167">
-</span><span id="line-168"><span class="sd">        Args:</span>
-</span><span id="line-169"><span class="sd">            style: Optional style configuration (for DPI).</span>
-</span><span id="line-170">
-</span><span id="line-171"><span class="sd">        Returns:</span>
-</span><span id="line-172"><span class="sd">            A newly created Matplotlib Axes.</span>
-</span><span id="line-173"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-174">        <span class="n">_</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">figsize</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="n">dpi</span> <span class="ow">or</span> <span class="n">style</span><span class="o">.</span><span class="n">dpi</span><span class="p">,</span> <span class="n">facecolor</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">theme</span><span class="o">.</span><span class="n">background</span><span class="p">)</span>
-</span><span id="line-175">        <span class="k">return</span> <span class="n">ax</span></div>
+<div class="viewcode-block" id="MatplotlibScheduleRenderer.save">
+<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer.save">[docs]</a>
+</span><span id="line-163">    <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># thin wrapper</span>
+</span><span id="line-164"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Save current figure to disk.</span>
+</span><span id="line-165">
+</span><span id="line-166"><span class="sd">        Args:</span>
+</span><span id="line-167"><span class="sd">            filename: Path to save the figure (e.g., &#39;circuit.png&#39;).</span>
+</span><span id="line-168"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-169">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">figure</span><span class="p">,</span> <span class="n">Figure</span><span class="p">):</span>
+</span><span id="line-170">            <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">&quot;tight&quot;</span><span class="p">)</span></div>
+
+</span><span id="line-171">
+<div class="viewcode-block" id="MatplotlibScheduleRenderer.show">
+<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer.show">[docs]</a>
+</span><span id="line-172">    <span class="k">def</span><span class="w"> </span><span class="nf">show</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># noqa: PLR6301</span>
+</span><span id="line-173"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Show the current figure.&quot;&quot;&quot;</span>
+</span><span id="line-174">
+</span><span id="line-175">        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></div>
+
+</span><span id="line-176">
+</span><span id="line-177">    <span class="nd">@staticmethod</span>
+</span><span id="line-178">    <span class="k">def</span><span class="w"> </span><span class="nf">_make_axes</span><span class="p">(</span><span class="n">dpi</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">style</span><span class="p">:</span> <span class="n">ScheduleStyle</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span><span class="p">:</span>
+</span><span id="line-179"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-180"><span class="sd">        Create a new figure and axes with the given DPI.</span>
+</span><span id="line-181">
+</span><span id="line-182"><span class="sd">        Args:</span>
+</span><span id="line-183"><span class="sd">            style: Optional style configuration (for DPI).</span>
+</span><span id="line-184">
+</span><span id="line-185"><span class="sd">        Returns:</span>
+</span><span id="line-186"><span class="sd">            A newly created Matplotlib Axes.</span>
+</span><span id="line-187"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-188">        <span class="n">_</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">figsize</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="n">dpi</span> <span class="ow">or</span> <span class="n">style</span><span class="o">.</span><span class="n">dpi</span><span class="p">,</span> <span class="n">facecolor</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">theme</span><span class="o">.</span><span class="n">background</span><span class="p">)</span>
+</span><span id="line-189">        <span class="k">return</span> <span class="n">ax</span></div>
+
+</span><span id="line-190">
+</span><span id="line-191">
+<div class="viewcode-block" id="MatplotlibEigenvalueRenderer">
+<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibEigenvalueRenderer">[docs]</a>
+</span><span id="line-192"><span class="k">class</span><span class="w"> </span><span class="nc">MatplotlibEigenvalueRenderer</span><span class="p">(</span><span class="n">MatplotlibScheduleRenderer</span><span class="p">):</span>
+</span><span id="line-193"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Render the eigenvalues Schedule using matplotlib, with theme support.&quot;&quot;&quot;</span>
+</span><span id="line-194">
+</span><span id="line-195">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+</span><span id="line-196">        <span class="bp">self</span><span class="p">,</span>
+</span><span id="line-197">        <span class="n">schedule</span><span class="p">:</span> <span class="n">Schedule</span><span class="p">,</span>
+</span><span id="line-198">        <span class="n">ax</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-199">        <span class="o">*</span><span class="p">,</span>
+</span><span id="line-200">        <span class="n">style</span><span class="p">:</span> <span class="n">ScheduleStyle</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-201">        <span class="n">levels</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+</span><span id="line-202">        <span class="n">intermediate_states</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">QTensor</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-203">        <span class="n">show_overlaps</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+</span><span id="line-204">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="MatplotlibEigenvalueRenderer.schedule">
+<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibEigenvalueRenderer.schedule">[docs]</a>
+</span><span id="line-205">        <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="p">:</span> <span class="n">Schedule</span> <span class="o">=</span> <span class="n">schedule</span></div>
+
+<div class="viewcode-block" id="MatplotlibEigenvalueRenderer.style">
+<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibEigenvalueRenderer.style">[docs]</a>
+</span><span id="line-206">        <span class="bp">self</span><span class="o">.</span><span class="n">style</span> <span class="o">=</span> <span class="n">style</span> <span class="ow">or</span> <span class="n">ScheduleStyle</span><span class="p">(</span><span class="n">xlabel</span><span class="o">=</span><span class="s2">&quot;Time&quot;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;Eigenvalue&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MatplotlibEigenvalueRenderer.ax">
+<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibEigenvalueRenderer.ax">[docs]</a>
+</span><span id="line-207">        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="o">=</span> <span class="n">ax</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_axes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">dpi</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MatplotlibEigenvalueRenderer.levels">
+<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibEigenvalueRenderer.levels">[docs]</a>
+</span><span id="line-208">        <span class="bp">self</span><span class="o">.</span><span class="n">levels</span> <span class="o">=</span> <span class="n">levels</span></div>
+
+<div class="viewcode-block" id="MatplotlibEigenvalueRenderer.intermediate_states">
+<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibEigenvalueRenderer.intermediate_states">[docs]</a>
+</span><span id="line-209">        <span class="bp">self</span><span class="o">.</span><span class="n">intermediate_states</span> <span class="o">=</span> <span class="n">intermediate_states</span></div>
+
+<div class="viewcode-block" id="MatplotlibEigenvalueRenderer.show_overlaps">
+<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibEigenvalueRenderer.show_overlaps">[docs]</a>
+</span><span id="line-210">        <span class="bp">self</span><span class="o">.</span><span class="n">show_overlaps</span> <span class="o">=</span> <span class="n">show_overlaps</span></div>
+
+</span><span id="line-211">
+</span><span id="line-212">    <span class="k">def</span><span class="w"> </span><span class="nf">_calculate_expectation_values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+</span><span id="line-213">        <span class="n">actual_expectation_values</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="line-214">        <span class="n">tlist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">tlist</span>
+</span><span id="line-215">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">intermediate_states</span><span class="p">:</span>
+</span><span id="line-216">            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">intermediate_states</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">tlist</span><span class="p">):</span>
+</span><span id="line-217">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="line-218">                    <span class="sa">f</span><span class="s2">&quot;Length of intermediate_states must match length of schedule tlist. Got </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">intermediate_states</span><span class="p">)</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">intermediate_states</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="mi">0</span><span class="si">}</span><span class="s2"> states and </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">tlist</span><span class="p">)</span><span class="si">}</span><span class="s2"> time points.&quot;</span>
+</span><span id="line-219">                <span class="p">)</span>
+</span><span id="line-220">            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">tlist</span><span class="p">)):</span>
+</span><span id="line-221">                <span class="n">state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">intermediate_states</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+</span><span id="line-222">                <span class="n">full_hamiltonian</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
+</span><span id="line-223">                    <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="n">h</span><span class="p">][</span><span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">tlist</span><span class="p">[</span><span class="n">i</span><span class="p">])]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">hamiltonians</span><span class="p">[</span><span class="n">h</span><span class="p">]</span>
+</span><span id="line-224">                    <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">hamiltonians</span>
+</span><span id="line-225">                <span class="p">)</span>
+</span><span id="line-226">                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">full_hamiltonian</span><span class="p">,</span> <span class="n">Hamiltonian</span><span class="p">):</span>
+</span><span id="line-227">                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Expected full_hamiltonian to be a Hamiltonian, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">full_hamiltonian</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span id="line-228">                <span class="n">as_qtensor</span> <span class="o">=</span> <span class="n">full_hamiltonian</span><span class="o">.</span><span class="n">to_qtensor</span><span class="p">()</span>
+</span><span id="line-229">                <span class="n">exp_val</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">expectation_value</span><span class="p">(</span><span class="n">as_qtensor</span><span class="p">)</span>
+</span><span id="line-230">                <span class="n">actual_expectation_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">exp_val</span><span class="o">.</span><span class="n">real</span><span class="p">))</span>
+</span><span id="line-231">
+</span><span id="line-232">        <span class="k">return</span> <span class="n">actual_expectation_values</span>
+</span><span id="line-233">
+</span><span id="line-234">    <span class="nd">@staticmethod</span>
+</span><span id="line-235">    <span class="k">def</span><span class="w"> </span><span class="nf">_calculate_overlaps</span><span class="p">(</span>
+</span><span id="line-236">        <span class="n">state</span><span class="p">:</span> <span class="n">QTensor</span><span class="p">,</span>
+</span><span id="line-237">        <span class="n">eigenstates</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">QTensor</span><span class="p">],</span>
+</span><span id="line-238">        <span class="n">eigenvalues</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]],</span>
+</span><span id="line-239">        <span class="n">time_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+</span><span id="line-240">        <span class="n">eigen_range</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+</span><span id="line-241">        <span class="n">sig_figs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+</span><span id="line-242">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
+</span><span id="line-243">        <span class="n">overlaps</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="line-244">        <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">eig</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">eigenstates</span><span class="p">):</span>
+</span><span id="line-245">            <span class="n">overlap</span> <span class="o">=</span> <span class="mf">100.0</span> <span class="o">*</span> <span class="n">state</span><span class="o">.</span><span class="n">fidelity</span><span class="p">(</span><span class="n">eig</span><span class="p">)</span>
+</span><span id="line-246">            <span class="n">y_loc</span> <span class="o">=</span> <span class="n">eigenvalues</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="n">time_index</span><span class="p">]</span>
+</span><span id="line-247">            <span class="k">if</span> <span class="n">overlap</span> <span class="o">&gt;</span> <span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="n">sig_figs</span><span class="p">):</span>
+</span><span id="line-248">                <span class="n">overlaps</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">y_loc</span><span class="p">,</span> <span class="n">overlap</span><span class="p">))</span>
+</span><span id="line-249">
+</span><span id="line-250">        <span class="c1"># Group nearby overlaps together to avoid clutter</span>
+</span><span id="line-251">        <span class="n">grouped_overlaps</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="line-252">        <span class="k">for</span> <span class="n">overlap</span> <span class="ow">in</span> <span class="n">overlaps</span><span class="p">:</span>
+</span><span id="line-253">            <span class="n">found_group</span> <span class="o">=</span> <span class="kc">False</span>
+</span><span id="line-254">            <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">grouped_overlap</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">grouped_overlaps</span><span class="p">):</span>
+</span><span id="line-255">                <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">grouped_overlap</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">overlap</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">&lt;</span> <span class="mf">0.05</span> <span class="o">*</span> <span class="n">eigen_range</span><span class="p">:</span>
+</span><span id="line-256">                    <span class="c1"># If within 5% of the eigenvalue range, group them together by averaging the y location and summing the overlap percentage</span>
+</span><span id="line-257">                    <span class="n">new_y_loc</span> <span class="o">=</span> <span class="p">(</span><span class="n">grouped_overlap</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">overlap</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">/</span> <span class="mi">2</span>
+</span><span id="line-258">                    <span class="n">new_overlap</span> <span class="o">=</span> <span class="n">grouped_overlap</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">overlap</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+</span><span id="line-259">                    <span class="n">grouped_overlaps</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">new_y_loc</span><span class="p">,</span> <span class="n">new_overlap</span><span class="p">)</span>
+</span><span id="line-260">                    <span class="n">found_group</span> <span class="o">=</span> <span class="kc">True</span>
+</span><span id="line-261">                    <span class="k">break</span>
+</span><span id="line-262">            <span class="k">if</span> <span class="ow">not</span> <span class="n">found_group</span><span class="p">:</span>
+</span><span id="line-263">                <span class="n">grouped_overlaps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">overlap</span><span class="p">)</span>
+</span><span id="line-264">
+</span><span id="line-265">        <span class="k">return</span> <span class="n">grouped_overlaps</span>
+</span><span id="line-266">
+<div class="viewcode-block" id="MatplotlibEigenvalueRenderer.plot">
+<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibEigenvalueRenderer.plot">[docs]</a>
+</span><span id="line-267">    <span class="k">def</span><span class="w"> </span><span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">Axes</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-268"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-269"><span class="sd">        Plot the schedule coefficients for each Hamiltonian over time.</span>
+</span><span id="line-270">
+</span><span id="line-271"><span class="sd">        Args:</span>
+</span><span id="line-272"><span class="sd">            ax (plt.Axes | None): The matplotlib axes to plot on. Default is None.</span>
+</span><span id="line-273">
+</span><span id="line-274"><span class="sd">        Raises:</span>
+</span><span id="line-275"><span class="sd">            ValueError: If the full Hamiltonian cannot be constructed or is not a Hamiltonian instance.</span>
+</span><span id="line-276"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-277">        <span class="n">style</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">style</span>
+</span><span id="line-278">        <span class="n">theme</span> <span class="o">=</span> <span class="n">style</span><span class="o">.</span><span class="n">theme</span>
+</span><span id="line-279">
+</span><span id="line-280">        <span class="n">plots</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Number</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+</span><span id="line-281">        <span class="n">hamiltonians</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Hamiltonian</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">hamiltonians</span>
+</span><span id="line-282">        <span class="n">times</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">tlist</span>
+</span><span id="line-283">        <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">hamiltonians</span><span class="p">:</span>
+</span><span id="line-284">            <span class="n">coef</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="n">h</span><span class="p">]</span>
+</span><span id="line-285">            <span class="n">plots</span><span class="p">[</span><span class="n">h</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">coef</span><span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">t</span><span class="p">)]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">times</span><span class="p">]</span>
+</span><span id="line-286">
+</span><span id="line-287">        <span class="n">n_hams</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">hamiltonians</span><span class="p">)</span>
+</span><span id="line-288">        <span class="n">grad_colors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gradient_colors</span><span class="p">(</span><span class="n">theme</span><span class="o">.</span><span class="n">primary</span><span class="p">,</span> <span class="n">theme</span><span class="o">.</span><span class="n">accent</span><span class="p">,</span> <span class="n">n_hams</span><span class="p">)</span>
+</span><span id="line-289">
+</span><span id="line-290">        <span class="c1"># Plot the eigenvalues of the full Hamiltonian as solid lines</span>
+</span><span id="line-291">        <span class="n">full_eigenvalues</span><span class="p">,</span> <span class="n">full_eigenstates</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">eig</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">levels</span><span class="p">)</span>
+</span><span id="line-292">        <span class="n">actual_expectation_values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_expectation_values</span><span class="p">()</span>
+</span><span id="line-293">
+</span><span id="line-294">        <span class="n">min_eigenvalue</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">evs</span><span class="p">)</span> <span class="k">for</span> <span class="n">evs</span> <span class="ow">in</span> <span class="n">full_eigenvalues</span><span class="p">)</span>
+</span><span id="line-295">        <span class="n">max_eigenvalue</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">evs</span><span class="p">)</span> <span class="k">for</span> <span class="n">evs</span> <span class="ow">in</span> <span class="n">full_eigenvalues</span><span class="p">)</span>
+</span><span id="line-296">        <span class="n">eigen_range</span> <span class="o">=</span> <span class="n">max_eigenvalue</span> <span class="o">-</span> <span class="n">min_eigenvalue</span>
+</span><span id="line-297">
+</span><span id="line-298">        <span class="n">color</span> <span class="o">=</span> <span class="n">grad_colors</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">grad_colors</span> <span class="k">else</span> <span class="n">theme</span><span class="o">.</span><span class="n">accent</span>
+</span><span id="line-299">
+</span><span id="line-300">        <span class="c1"># We have the eigenvalues as a list of lists (one list per time step),</span>
+</span><span id="line-301">        <span class="c1"># but we want to plot each eigenvalue trajectory over time, so we need to transpose the list of lists</span>
+</span><span id="line-302">        <span class="n">new_eigenvalues</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="line-303">        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">full_eigenvalues</span><span class="p">[</span><span class="mi">0</span><span class="p">])):</span>  <span class="c1"># iterate over eigenvalues at each time step</span>
+</span><span id="line-304">            <span class="n">new_eigenvalues</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">full_eigenvalues</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">full_eigenvalues</span><span class="p">))])</span>
+</span><span id="line-305">        <span class="n">full_eigenvalues</span> <span class="o">=</span> <span class="n">new_eigenvalues</span>
+</span><span id="line-306">
+</span><span id="line-307">        <span class="c1"># only show the id for the first one</span>
+</span><span id="line-308">        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">evs</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">full_eigenvalues</span><span class="p">):</span>
+</span><span id="line-309">            <span class="n">label</span> <span class="o">=</span> <span class="s2">&quot;Eigenvalues&quot;</span> <span class="k">if</span> <span class="n">idx</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">intermediate_states</span> <span class="k">else</span> <span class="kc">None</span>
+</span><span id="line-310">            <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+</span><span id="line-311">                <span class="n">times</span><span class="p">,</span>
+</span><span id="line-312">                <span class="n">evs</span><span class="p">,</span>
+</span><span id="line-313">                <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span>
+</span><span id="line-314">                <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span>
+</span><span id="line-315">                <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">,</span>
+</span><span id="line-316">            <span class="p">)</span>
+</span><span id="line-317">
+</span><span id="line-318">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">intermediate_states</span> <span class="ow">and</span> <span class="n">actual_expectation_values</span><span class="p">:</span>
+</span><span id="line-319">            <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+</span><span id="line-320">                <span class="n">times</span><span class="p">,</span>
+</span><span id="line-321">                <span class="n">actual_expectation_values</span><span class="p">,</span>
+</span><span id="line-322">                <span class="n">label</span><span class="o">=</span><span class="s2">&quot;State Expectation Value&quot;</span><span class="p">,</span>
+</span><span id="line-323">                <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;-&quot;</span><span class="p">,</span>
+</span><span id="line-324">                <span class="n">color</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">,</span>
+</span><span id="line-325">                <span class="n">zorder</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+</span><span id="line-326">            <span class="p">)</span>
+</span><span id="line-327">
+</span><span id="line-328">            <span class="c1"># Every 10% of the way through, write the overlap with each of the eigenstates at that time</span>
+</span><span id="line-329">            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">show_overlaps</span><span class="p">:</span>
+</span><span id="line-330">                <span class="n">time_steps</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">times</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">times</span><span class="p">)</span> <span class="o">//</span> <span class="mi">9</span><span class="p">)))</span>
+</span><span id="line-331">                <span class="n">time_steps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">times</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+</span><span id="line-332">                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">time_steps</span><span class="p">:</span>
+</span><span id="line-333">                    <span class="n">t</span> <span class="o">=</span> <span class="n">times</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+</span><span id="line-334">                    <span class="n">eigenstates</span> <span class="o">=</span> <span class="n">full_eigenstates</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+</span><span id="line-335">                    <span class="n">state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">intermediate_states</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+</span><span id="line-336">
+</span><span id="line-337">                    <span class="n">_sig_figs</span> <span class="o">=</span> <span class="mi">3</span>
+</span><span id="line-338">                    <span class="n">grouped_overlaps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_overlaps</span><span class="p">(</span>
+</span><span id="line-339">                        <span class="n">state</span><span class="p">,</span> <span class="n">eigenstates</span><span class="p">[:</span> <span class="bp">self</span><span class="o">.</span><span class="n">levels</span><span class="p">],</span> <span class="n">full_eigenvalues</span><span class="p">[:</span> <span class="bp">self</span><span class="o">.</span><span class="n">levels</span><span class="p">],</span> <span class="n">i</span><span class="p">,</span> <span class="n">eigen_range</span><span class="p">,</span> <span class="n">_sig_figs</span>
+</span><span id="line-340">                    <span class="p">)</span>
+</span><span id="line-341">
+</span><span id="line-342">                    <span class="c1"># Plot each overlap with an arrow pointing to the eigenvalue, and annotate with the percentage</span>
+</span><span id="line-343">                    <span class="k">for</span> <span class="n">overlap</span> <span class="ow">in</span> <span class="n">grouped_overlaps</span><span class="p">:</span>
+</span><span id="line-344">                        <span class="n">overlap_text</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">overlap</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.</span><span class="si">{</span><span class="n">_sig_figs</span><span class="si">}</span><span class="s2">f</span><span class="si">}</span><span class="s2">%&quot;</span>
+</span><span id="line-345">                        <span class="n">y_loc</span> <span class="o">=</span> <span class="n">overlap</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</span><span id="line-346">                        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+</span><span id="line-347">                            <span class="n">overlap_text</span><span class="p">,</span>
+</span><span id="line-348">                            <span class="n">xy</span><span class="o">=</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">y_loc</span><span class="p">),</span>
+</span><span id="line-349">                            <span class="n">xytext</span><span class="o">=</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">y_loc</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">),</span>
+</span><span id="line-350">                            <span class="n">arrowprops</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;arrowstyle&quot;</span><span class="p">:</span> <span class="s2">&quot;-&gt;&quot;</span><span class="p">,</span> <span class="s2">&quot;color&quot;</span><span class="p">:</span> <span class="n">theme</span><span class="o">.</span><span class="n">on_background</span><span class="p">},</span>
+</span><span id="line-351">                            <span class="n">color</span><span class="o">=</span><span class="n">theme</span><span class="o">.</span><span class="n">on_background</span><span class="p">,</span>
+</span><span id="line-352">                            <span class="n">bbox</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;boxstyle&quot;</span><span class="p">:</span> <span class="s2">&quot;round,pad=0.2&quot;</span><span class="p">,</span> <span class="s2">&quot;fc&quot;</span><span class="p">:</span> <span class="n">theme</span><span class="o">.</span><span class="n">surface</span><span class="p">,</span> <span class="s2">&quot;ec&quot;</span><span class="p">:</span> <span class="s2">&quot;none&quot;</span><span class="p">,</span> <span class="s2">&quot;alpha&quot;</span><span class="p">:</span> <span class="mf">0.8</span><span class="p">},</span>
+</span><span id="line-353">                            <span class="n">fontsize</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">label_fontsize</span> <span class="o">*</span> <span class="mf">0.4</span><span class="p">,</span>
+</span><span id="line-354">                            <span class="n">ha</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">,</span>
+</span><span id="line-355">                            <span class="n">va</span><span class="o">=</span><span class="s2">&quot;bottom&quot;</span><span class="p">,</span>
+</span><span id="line-356">                            <span class="n">zorder</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span>
+</span><span id="line-357">                        <span class="p">)</span>
+</span><span id="line-358">
+</span><span id="line-359">        <span class="bp">self</span><span class="o">.</span><span class="n">setup_axes</span><span class="p">()</span>
+</span><span id="line-360">        <span class="n">plt</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span></div>
+</div>
 
 </span></code></pre></div>
     </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">
@@ -627,7 +851,7 @@
     <script src="../../../../_static/documentation_options.js?v=7f41d439"></script>
     <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script defer="defer" src="../../../../_static/theme.js?v=582b20c5"></script>
+    <script defer="defer" src="../../../../_static/theme.js?v=d6a9845b"></script>
     <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     

@@ -27,11 +27,11 @@
   <meta property="og:title" content="Índex | QiliSDK" />
   <meta name="twitter:title" content="Índex | QiliSDK" />
   <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=652ce3ed" />
-  <link rel="stylesheet" type="text/css" href="_static/theme.css?v=73505e79" />
+  <link rel="stylesheet" type="text/css" href="_static/theme.css?v=979577e3" />
   <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
   <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
-  <link rel="stylesheet" type="text/css" href="_static/custom.css?v=0828450c" />
-  <link rel="stylesheet" type="text/css" href="_static/awesome-sphinx-design.css?v=c54898a4" />
+  <link rel="stylesheet" type="text/css" href="_static/custom.css?v=7f555f8f" />
+  <link rel="stylesheet" type="text/css" href="_static/awesome-sphinx-design.css?v=b1d4564d" />
   <link rel="icon" href="_static/q_trans.png" />
   <link rel="search" title="Cerca" href="search.html" />
   <link rel="index" title="Índex" href="#" />
@@ -164,6 +164,7 @@
 <li class="toctree-l2"><a class="reference internal" href="modules/core/core_variables_parameters.html">Variables i paràmetres</a></li>
 <li class="toctree-l2"><a class="reference internal" href="modules/core/core_terms_maps_comparisons.html">Termes, mapes i comparacions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="modules/core/core_model.html">Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/core/core_lp_parser.html">Linear Programming File Parser and Serializer</a></li>
 <li class="toctree-l2"><a class="reference internal" href="modules/core/core_qubo.html">QUBO</a></li>
 <li class="toctree-l2"><a class="reference internal" href="modules/core/core_qtensor.html">QTensor</a></li>
 </ul>
@@ -176,6 +177,7 @@
 <li class="toctree-l2"><a class="reference internal" href="modules/digital/digital_hardware.html">HardwareEfficientAnsatz</a></li>
 <li class="toctree-l2"><a class="reference internal" href="modules/digital/digital_qaoa.html">QAOA</a></li>
 <li class="toctree-l2"><a class="reference internal" href="modules/digital/digital_trotter.html">TrotterizedSchedule</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/digital/digital_qir.html">QIR Import and Export</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="modules/analog/analog.html">Analog</a><ul>
@@ -323,9 +325,10 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="code/api/qilisdk/utils/index.html">qilisdk.utils</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/utils/hashing/index.html">qilisdk.utils.hashing</a></li>
+<li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/utils/lp_parser/index.html">qilisdk.utils.lp_parser</a></li>
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/utils/openfermion/index.html">qilisdk.utils.openfermion</a></li>
-<li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/utils/openqasm2/index.html">qilisdk.utils.openqasm2</a></li>
-<li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/utils/openqasm3/index.html">qilisdk.utils.openqasm3</a></li>
+<li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/utils/openqasm/index.html">qilisdk.utils.openqasm</a></li>
+<li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/utils/qir/index.html">qilisdk.utils.qir</a></li>
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/utils/serialization/index.html">qilisdk.utils.serialization</a></li>
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/utils/trotterization/index.html">qilisdk.utils.trotterization</a></li>
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/utils/visualization/index.html">qilisdk.utils.visualization</a></li>
@@ -482,6 +485,12 @@
         <li><a href="code/api/qilisdk/core/model/index.html#qilisdk.core.model.QUBO.add_constraint">(mètode QUBO)</a>
 </li>
       </ul></li>
+      <li><a href="code/api/qilisdk/experiments/experiment_result/index.html#qilisdk.experiments.experiment_result.ExperimentResult.add_fit">add_fit() (mètode ExperimentResult)</a>
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/experiments/experiment_result/index.html#qilisdk.experiments.experiment_result.T1ExperimentResult.add_fit">(mètode T1ExperimentResult)</a>
+</li>
+      </ul></li>
       <li><a href="code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule.add_hamiltonian">add_hamiltonian() (mètode Schedule)</a>
 </li>
       <li><a href="code/api/qilisdk/functionals/quantum_reservoirs/index.html#qilisdk.functionals.quantum_reservoirs.QuantumReservoir.add_inputs_per_layer">add_inputs_per_layer() (mètode QuantumReservoir)</a>
@@ -598,8 +607,12 @@
 </li>
       <li><a href="code/api/qilisdk/noise/protocols/index.html#qilisdk.noise.protocols.AttachmentScope">AttachmentScope (classe a qilisdk.noise.protocols)</a>
 </li>
-      <li><a href="code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer.ax">ax (atribut MatplotlibScheduleRenderer)</a>
+      <li><a href="code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibEigenvalueRenderer.ax">ax (atribut MatplotlibEigenvalueRenderer)</a>
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer.ax">(atribut MatplotlibScheduleRenderer)</a>
 </li>
+      </ul></li>
       <li><a href="code/api/qilisdk/utils/visualization/circuit_renderers/index.html#qilisdk.utils.visualization.circuit_renderers.MatplotlibCircuitRenderer.axes">axes (propietat MatplotlibCircuitRenderer)</a>
 
       <ul style="list-style-type:none">
@@ -852,7 +865,7 @@
 </li>
       <li><a href="code/api/qilisdk/backends/cuda_backend/index.html#qilisdk.backends.cuda_backend.CudaSamplingMethod">CudaSamplingMethod (classe a qilisdk.backends.cuda_backend)</a>
 </li>
-      <li><a href="code/api/qilisdk/utils/openqasm3/index.html#qilisdk.utils.openqasm3.OpenQasmParser.custom_gate_definitions">custom_gate_definitions (atribut OpenQasmParser)</a>
+      <li><a href="code/api/qilisdk/utils/openqasm/openqasm3/index.html#qilisdk.utils.openqasm.openqasm3.OpenQasmParser.custom_gate_definitions">custom_gate_definitions (atribut OpenQasmParser)</a>
 </li>
       <li><a href="code/api/qilisdk/digital/circuit_transpiler_passes/custom_layout_pass/index.html#qilisdk.digital.circuit_transpiler_passes.custom_layout_pass.CustomLayoutPass">CustomLayoutPass (classe a qilisdk.digital.circuit_transpiler_passes.custom_layout_pass)</a>
 </li>
@@ -937,10 +950,10 @@
       </ul></li>
       <li><a href="code/api/qilisdk/utils/serialization/index.html#qilisdk.utils.serialization.DeserializationError">DeserializationError</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="code/api/qilisdk/utils/serialization/index.html#qilisdk.utils.serialization.deserialize">deserialize() (al mòdul qilisdk.utils.serialization)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="code/api/qilisdk/utils/serialization/index.html#qilisdk.utils.serialization.deserialize_from">deserialize_from() (al mòdul qilisdk.utils.serialization)</a>
 </li>
       <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Device">Device (classe a qilisdk.speqtrum.speqtrum_models)</a>
@@ -993,6 +1006,8 @@
       </ul></li>
       <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.QTensorStyle.draw_center_circle">draw_center_circle (atribut QTensorStyle)</a>
 </li>
+      <li><a href="code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule.draw_eigenvalues">draw_eigenvalues() (mètode Schedule)</a>
+</li>
       <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.QTensorStyle.draw_reference_points">draw_reference_points (atribut QTensorStyle)</a>
 </li>
       <li><a href="code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.RabiExperiment.drive_duration_values">drive_duration_values (propietat RabiExperiment)</a>
@@ -1011,7 +1026,11 @@
       <li><a href="code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.E">E (al mòdul qilisdk.readout.readout_result)</a>
 </li>
       <li><a href="code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.eig">eig() (mètode QTensor)</a>
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule.eig">(mètode Schedule)</a>
 </li>
+      </ul></li>
       <li><a href="code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.eigenvalues">eigenvalues (propietat QTensor)</a>
 </li>
       <li><a href="code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.eigenvectors">eigenvectors (propietat QTensor)</a>
@@ -1211,23 +1230,31 @@
 </li>
       <li><a href="code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.ExpectationReadoutResult.from_expectations">from_expectations() (mètode de classe ExpectationReadoutResult)</a>
 </li>
+      <li><a href="code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.ReadoutCompositeResults.from_list">from_list() (mètode de classe ReadoutCompositeResults)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/lp_parser/lp_parser/index.html#qilisdk.utils.lp_parser.lp_parser.from_lp">from_lp() (al mòdul qilisdk.utils.lp_parser.lp_parser)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
-      <li><a href="code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.ReadoutCompositeResults.from_list">from_list() (mètode de classe ReadoutCompositeResults)</a>
+      <li><a href="code/api/qilisdk/utils/lp_parser/lp_parser/index.html#qilisdk.utils.lp_parser.lp_parser.from_lp_file">from_lp_file() (al mòdul qilisdk.utils.lp_parser.lp_parser)</a>
 </li>
       <li><a href="code/api/qilisdk/core/model/index.html#qilisdk.core.model.QUBO.from_model">from_model() (mètode de classe QUBO)</a>
 </li>
-      <li><a href="code/api/qilisdk/utils/openqasm2/index.html#qilisdk.utils.openqasm2.from_qasm2">from_qasm2() (al mòdul qilisdk.utils.openqasm2)</a>
+      <li><a href="code/api/qilisdk/utils/openqasm/openqasm2/index.html#qilisdk.utils.openqasm.openqasm2.from_qasm2">from_qasm2() (al mòdul qilisdk.utils.openqasm.openqasm2)</a>
 </li>
-      <li><a href="code/api/qilisdk/utils/openqasm2/index.html#qilisdk.utils.openqasm2.from_qasm2_file">from_qasm2_file() (al mòdul qilisdk.utils.openqasm2)</a>
+      <li><a href="code/api/qilisdk/utils/openqasm/openqasm2/index.html#qilisdk.utils.openqasm.openqasm2.from_qasm2_file">from_qasm2_file() (al mòdul qilisdk.utils.openqasm.openqasm2)</a>
 </li>
-      <li><a href="code/api/qilisdk/utils/openqasm3/index.html#qilisdk.utils.openqasm3.from_qasm3">from_qasm3() (al mòdul qilisdk.utils.openqasm3)</a>
+      <li><a href="code/api/qilisdk/utils/openqasm/openqasm3/index.html#qilisdk.utils.openqasm.openqasm3.from_qasm3">from_qasm3() (al mòdul qilisdk.utils.openqasm.openqasm3)</a>
 
       <ul style="list-style-type:none">
-        <li><a href="code/api/qilisdk/utils/openqasm3/index.html#qilisdk.utils.openqasm3.OpenQasmParser.from_qasm3">(mètode OpenQasmParser)</a>
+        <li><a href="code/api/qilisdk/utils/openqasm/openqasm3/index.html#qilisdk.utils.openqasm.openqasm3.OpenQasmParser.from_qasm3">(mètode OpenQasmParser)</a>
 </li>
       </ul></li>
-      <li><a href="code/api/qilisdk/utils/openqasm3/index.html#qilisdk.utils.openqasm3.from_qasm3_file">from_qasm3_file() (al mòdul qilisdk.utils.openqasm3)</a>
+      <li><a href="code/api/qilisdk/utils/openqasm/openqasm3/index.html#qilisdk.utils.openqasm.openqasm3.from_qasm3_file">from_qasm3_file() (al mòdul qilisdk.utils.openqasm.openqasm3)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/qir/qir/index.html#qilisdk.utils.qir.qir.from_qir">from_qir() (al mòdul qilisdk.utils.qir.qir)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/qir/qir/index.html#qilisdk.utils.qir.qir.from_qir_file">from_qir_file() (al mòdul qilisdk.utils.qir.qir)</a>
 </li>
       <li><a href="code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian.from_qtensor">from_qtensor() (mètode de classe Hamiltonian)</a>
 </li>
@@ -1286,7 +1313,7 @@
 </li>
       <li><a href="code/api/qilisdk/digital/circuit/index.html#qilisdk.digital.circuit.Circuit.gates">gates (propietat Circuit)</a>
 </li>
-      <li><a href="code/api/qilisdk/utils/openqasm3/index.html#qilisdk.utils.openqasm3.OpenQasmParser.gates_to_add">gates_to_add (atribut OpenQasmParser)</a>
+      <li><a href="code/api/qilisdk/utils/openqasm/openqasm3/index.html#qilisdk.utils.openqasm.openqasm3.OpenQasmParser.gates_to_add">gates_to_add (atribut OpenQasmParser)</a>
 </li>
       <li><a href="code/api/qilisdk/noise/noise_model/index.html#qilisdk.noise.noise_model.GateType">GateType (al mòdul qilisdk.noise.noise_model)</a>
 </li>
@@ -1346,8 +1373,6 @@
 </li>
       <li><a href="code/api/qilisdk/speqtrum/speqtrum/index.html#qilisdk.speqtrum.speqtrum.SpeQtrum.get_job">get_job() (mètode SpeQtrum)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.Gate.get_parameter_bounds">get_parameter_bounds() (mètode Gate)</a>
 
       <ul style="list-style-type:none">
@@ -1356,6 +1381,8 @@
         <li><a href="code/api/qilisdk/core/parameterizable/index.html#qilisdk.core.parameterizable.Parameterizable.get_parameter_bounds">(mètode Parameterizable)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.Gate.get_parameter_names">get_parameter_names() (mètode Gate)</a>
 
       <ul style="list-style-type:none">
@@ -1428,6 +1455,8 @@
 </li>
       <li><a href="code/api/qilisdk/noise/noise_model/index.html#qilisdk.noise.noise_model.NoiseModel.global_perturbations">global_perturbations (propietat NoiseModel)</a>
 </li>
+      <li><a href="code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer.gradient_colors">gradient_colors() (mètode MatplotlibScheduleRenderer)</a>
+</li>
       <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.GreaterThan">GreaterThan (al mòdul qilisdk.core.variables)</a>
 </li>
       <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.GreaterThanOrEqual">GreaterThanOrEqual (al mòdul qilisdk.core.variables)</a>
@@ -1478,6 +1507,8 @@
       <li><a href="code/api/qilisdk/noise/protocols/index.html#qilisdk.noise.protocols.HasAllowedScopes">HasAllowedScopes (classe a qilisdk.noise.protocols)</a>
 </li>
       <li><a href="code/api/qilisdk/utils/hashing/index.html#qilisdk.utils.hashing.hash">hash() (al mòdul qilisdk.utils.hashing)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer.hex_to_rgb">hex_to_rgb() (mètode estàtic MatplotlibScheduleRenderer)</a>
 </li>
   </ul></td>
   </tr>
@@ -1540,6 +1571,8 @@
         <li><a href="code/api/qilisdk/functionals/variational_program_result/index.html#qilisdk.functionals.variational_program_result.VariationalProgramResult.intermediate_results">(propietat VariationalProgramResult)</a>
 </li>
       </ul></li>
+      <li><a href="code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibEigenvalueRenderer.intermediate_states">intermediate_states (atribut MatplotlibEigenvalueRenderer)</a>
+</li>
       <li><a href="code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.InterpDict">InterpDict (al mòdul qilisdk.analog.schedule)</a>
 </li>
       <li><a href="code/api/qilisdk/core/interpolator/index.html#qilisdk.core.interpolator.Interpolation">Interpolation (classe a qilisdk.core.interpolator)</a>
@@ -1723,6 +1756,8 @@
 </li>
       <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.LessThanOrEqual">LessThanOrEqual (al mòdul qilisdk.core.variables)</a>
 </li>
+      <li><a href="code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibEigenvalueRenderer.levels">levels (atribut MatplotlibEigenvalueRenderer)</a>
+</li>
       <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.ComparisonTerm.lhs">lhs (propietat ComparisonTerm)</a>
 
       <ul style="list-style-type:none">
@@ -1801,6 +1836,8 @@
       <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.MathematicalMap">MathematicalMap (classe a qilisdk.core.variables)</a>
 </li>
       <li><a href="code/api/qilisdk/utils/visualization/circuit_renderers/index.html#qilisdk.utils.visualization.circuit_renderers.MatplotlibCircuitRenderer">MatplotlibCircuitRenderer (classe a qilisdk.utils.visualization.circuit_renderers)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibEigenvalueRenderer">MatplotlibEigenvalueRenderer (classe a qilisdk.utils.visualization.schedule_renderers)</a>
 </li>
       <li><a href="code/api/qilisdk/utils/visualization/qtensor_renderers/index.html#qilisdk.utils.visualization.qtensor_renderers.MatplotlibQTensorRenderer">MatplotlibQTensorRenderer (classe a qilisdk.utils.visualization.qtensor_renderers)</a>
 </li>
@@ -2060,13 +2097,23 @@
 </li>
         <li><a href="code/api/qilisdk/utils/hashing/index.html#module-qilisdk.utils.hashing">qilisdk.utils.hashing</a>
 </li>
+        <li><a href="code/api/qilisdk/utils/lp_parser/index.html#module-qilisdk.utils.lp_parser">qilisdk.utils.lp_parser</a>
+</li>
+        <li><a href="code/api/qilisdk/utils/lp_parser/lp_parser/index.html#module-qilisdk.utils.lp_parser.lp_parser">qilisdk.utils.lp_parser.lp_parser</a>
+</li>
         <li><a href="code/api/qilisdk/utils/openfermion/index.html#module-qilisdk.utils.openfermion">qilisdk.utils.openfermion</a>
 </li>
         <li><a href="code/api/qilisdk/utils/openfermion/openfermion/index.html#module-qilisdk.utils.openfermion.openfermion">qilisdk.utils.openfermion.openfermion</a>
 </li>
-        <li><a href="code/api/qilisdk/utils/openqasm2/index.html#module-qilisdk.utils.openqasm2">qilisdk.utils.openqasm2</a>
+        <li><a href="code/api/qilisdk/utils/openqasm/index.html#module-qilisdk.utils.openqasm">qilisdk.utils.openqasm</a>
 </li>
-        <li><a href="code/api/qilisdk/utils/openqasm3/index.html#module-qilisdk.utils.openqasm3">qilisdk.utils.openqasm3</a>
+        <li><a href="code/api/qilisdk/utils/openqasm/openqasm2/index.html#module-qilisdk.utils.openqasm.openqasm2">qilisdk.utils.openqasm.openqasm2</a>
+</li>
+        <li><a href="code/api/qilisdk/utils/openqasm/openqasm3/index.html#module-qilisdk.utils.openqasm.openqasm3">qilisdk.utils.openqasm.openqasm3</a>
+</li>
+        <li><a href="code/api/qilisdk/utils/qir/index.html#module-qilisdk.utils.qir">qilisdk.utils.qir</a>
+</li>
+        <li><a href="code/api/qilisdk/utils/qir/qir/index.html#module-qilisdk.utils.qir.qir">qilisdk.utils.qir.qir</a>
 </li>
         <li><a href="code/api/qilisdk/utils/serialization/index.html#module-qilisdk.utils.serialization">qilisdk.utils.serialization</a>
 </li>
@@ -2229,7 +2276,7 @@
       <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Device.nqubits">nqubits (atribut Device)</a>
 
       <ul style="list-style-type:none">
-        <li><a href="code/api/qilisdk/utils/openqasm3/index.html#qilisdk.utils.openqasm3.OpenQasmParser.nqubits">(atribut OpenQasmParser)</a>
+        <li><a href="code/api/qilisdk/utils/openqasm/openqasm3/index.html#qilisdk.utils.openqasm.openqasm3.OpenQasmParser.nqubits">(atribut OpenQasmParser)</a>
 </li>
         <li><a href="code/api/qilisdk/digital/circuit/index.html#qilisdk.digital.circuit.Circuit.nqubits">(propietat Circuit)</a>
 </li>
@@ -2327,9 +2374,9 @@
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
-      <li><a href="code/api/qilisdk/utils/openqasm2/index.html#qilisdk.utils.openqasm2.OPENQASM2_MAP">OPENQASM2_MAP (al mòdul qilisdk.utils.openqasm2)</a>
+      <li><a href="code/api/qilisdk/utils/openqasm/openqasm2/index.html#qilisdk.utils.openqasm.openqasm2.OPENQASM2_MAP">OPENQASM2_MAP (al mòdul qilisdk.utils.openqasm.openqasm2)</a>
 </li>
-      <li><a href="code/api/qilisdk/utils/openqasm3/index.html#qilisdk.utils.openqasm3.OpenQasmParser">OpenQasmParser (classe a qilisdk.utils.openqasm3)</a>
+      <li><a href="code/api/qilisdk/utils/openqasm/openqasm3/index.html#qilisdk.utils.openqasm.openqasm3.OpenQasmParser">OpenQasmParser (classe a qilisdk.utils.openqasm.openqasm3)</a>
 </li>
       <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Operation">Operation (classe a qilisdk.core.variables)</a>
 </li>
@@ -2482,6 +2529,8 @@
 
       <ul style="list-style-type:none">
         <li><a href="code/api/qilisdk/utils/visualization/circuit_renderers/index.html#qilisdk.utils.visualization.circuit_renderers.MatplotlibCircuitRenderer.plot">(mètode MatplotlibCircuitRenderer)</a>
+</li>
+        <li><a href="code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibEigenvalueRenderer.plot">(mètode MatplotlibEigenvalueRenderer)</a>
 </li>
         <li><a href="code/api/qilisdk/utils/visualization/qtensor_renderers/index.html#qilisdk.utils.visualization.qtensor_renderers.MatplotlibQTensorRenderer.plot">(mètode MatplotlibQTensorRenderer)</a>
 </li>
@@ -2962,8 +3011,6 @@
         <li><a href="code/api/qilisdk/noise/bit_flip/index.html#module-qilisdk.noise.bit_flip">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li>
     qilisdk.noise.dephasing
 
@@ -2985,6 +3032,8 @@
         <li><a href="code/api/qilisdk/noise/gaussian_perturbation/index.html#module-qilisdk.noise.gaussian_perturbation">module</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li>
     qilisdk.noise.noise
 
@@ -3175,6 +3224,20 @@
 </li>
       </ul></li>
       <li>
+    qilisdk.utils.lp_parser
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/utils/lp_parser/index.html#module-qilisdk.utils.lp_parser">module</a>
+</li>
+      </ul></li>
+      <li>
+    qilisdk.utils.lp_parser.lp_parser
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/utils/lp_parser/lp_parser/index.html#module-qilisdk.utils.lp_parser.lp_parser">module</a>
+</li>
+      </ul></li>
+      <li>
     qilisdk.utils.openfermion
 
       <ul style="list-style-type:none">
@@ -3189,17 +3252,38 @@
 </li>
       </ul></li>
       <li>
-    qilisdk.utils.openqasm2
+    qilisdk.utils.openqasm
 
       <ul style="list-style-type:none">
-        <li><a href="code/api/qilisdk/utils/openqasm2/index.html#module-qilisdk.utils.openqasm2">module</a>
+        <li><a href="code/api/qilisdk/utils/openqasm/index.html#module-qilisdk.utils.openqasm">module</a>
 </li>
       </ul></li>
       <li>
-    qilisdk.utils.openqasm3
+    qilisdk.utils.openqasm.openqasm2
 
       <ul style="list-style-type:none">
-        <li><a href="code/api/qilisdk/utils/openqasm3/index.html#module-qilisdk.utils.openqasm3">module</a>
+        <li><a href="code/api/qilisdk/utils/openqasm/openqasm2/index.html#module-qilisdk.utils.openqasm.openqasm2">module</a>
+</li>
+      </ul></li>
+      <li>
+    qilisdk.utils.openqasm.openqasm3
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/utils/openqasm/openqasm3/index.html#module-qilisdk.utils.openqasm.openqasm3">module</a>
+</li>
+      </ul></li>
+      <li>
+    qilisdk.utils.qir
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/utils/qir/index.html#module-qilisdk.utils.qir">module</a>
+</li>
+      </ul></li>
+      <li>
+    qilisdk.utils.qir.qir
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/utils/qir/qir/index.html#module-qilisdk.utils.qir.qir">module</a>
 </li>
       </ul></li>
       <li>
@@ -3391,7 +3475,7 @@
 </li>
       <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Token.refresh_token">refresh_token (atribut Token)</a>
 </li>
-      <li><a href="code/api/qilisdk/utils/openqasm3/index.html#qilisdk.utils.openqasm3.OpenQasmParser.reg_name_to_start_end">reg_name_to_start_end (atribut OpenQasmParser)</a>
+      <li><a href="code/api/qilisdk/utils/openqasm/openqasm3/index.html#qilisdk.utils.openqasm.openqasm3.OpenQasmParser.reg_name_to_start_end">reg_name_to_start_end (atribut OpenQasmParser)</a>
 </li>
       <li><a href="code/api/qilisdk/yaml/index.html#qilisdk.yaml.QiliYAML.register_class">register_class() (mètode QiliYAML)</a>
 </li>
@@ -3436,6 +3520,8 @@
       <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ResultExtractor">ResultExtractor (al mòdul qilisdk.speqtrum.speqtrum_models)</a>
 </li>
       <li><a href="code/api/qilisdk/backends/cuda_backend/index.html#qilisdk.backends.cuda_backend.reverse_bits">reverse_bits() (al mòdul qilisdk.backends.cuda_backend)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer.rgb_to_hex">rgb_to_hex() (mètode estàtic MatplotlibScheduleRenderer)</a>
 </li>
       <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.ComparisonTerm.rhs">rhs (propietat ComparisonTerm)</a>
 
@@ -3527,6 +3613,8 @@
       <li><a href="code/api/qilisdk/functionals/analog_evolution/index.html#qilisdk.functionals.analog_evolution.AnalogEvolution.schedule">schedule (atribut AnalogEvolution)</a>
 
       <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibEigenvalueRenderer.schedule">(atribut MatplotlibEigenvalueRenderer)</a>
+</li>
         <li><a href="code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer.schedule">(atribut MatplotlibScheduleRenderer)</a>
 </li>
       </ul></li>
@@ -3650,6 +3738,8 @@
       </ul></li>
       <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Parameter.set_value">set_value() (mètode Parameter)</a>
 </li>
+      <li><a href="code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer.setup_axes">setup_axes() (mètode MatplotlibScheduleRenderer)</a>
+</li>
       <li><a href="code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.shape">shape (propietat QTensor)</a>
 </li>
       <li><a href="code/api/qilisdk/utils/visualization/qtensor_renderers/index.html#qilisdk.utils.visualization.qtensor_renderers.MatplotlibQTensorRenderer.show">show() (mètode MatplotlibQTensorRenderer)</a>
@@ -3658,6 +3748,8 @@
         <li><a href="code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer.show">(mètode MatplotlibScheduleRenderer)</a>
 </li>
       </ul></li>
+      <li><a href="code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibEigenvalueRenderer.show_overlaps">show_overlaps (atribut MatplotlibEigenvalueRenderer)</a>
+</li>
       <li><a href="code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian.simplify">simplify() (mètode Hamiltonian)</a>
 </li>
       <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.DeviceType.SIMULATOR">SIMULATOR (atribut DeviceType)</a>
@@ -3749,6 +3841,8 @@
       <li><a href="code/api/qilisdk/utils/visualization/circuit_renderers/index.html#qilisdk.utils.visualization.circuit_renderers.MatplotlibCircuitRenderer.style">style (atribut MatplotlibCircuitRenderer)</a>
 
       <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibEigenvalueRenderer.style">(atribut MatplotlibEigenvalueRenderer)</a>
+</li>
         <li><a href="code/api/qilisdk/utils/visualization/qtensor_renderers/index.html#qilisdk.utils.visualization.qtensor_renderers.MatplotlibQTensorRenderer.style">(atribut MatplotlibQTensorRenderer)</a>
 </li>
         <li><a href="code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer.style">(atribut MatplotlibScheduleRenderer)</a>
@@ -3760,7 +3854,7 @@
 </li>
       <li><a href="code/api/qilisdk/speqtrum/speqtrum/index.html#qilisdk.speqtrum.speqtrum.SpeQtrum.submit">submit() (mètode SpeQtrum)</a>
 </li>
-      <li><a href="code/api/qilisdk/utils/openqasm3/index.html#qilisdk.utils.openqasm3.OpenQasmParser.subroutine_definitions">subroutine_definitions (atribut OpenQasmParser)</a>
+      <li><a href="code/api/qilisdk/utils/openqasm/openqasm3/index.html#qilisdk.utils.openqasm.openqasm3.OpenQasmParser.subroutine_definitions">subroutine_definitions (atribut OpenQasmParser)</a>
 </li>
       <li><a href="code/api/qilisdk/noise/protocols/index.html#qilisdk.noise.protocols.SupportsStaticKraus">SupportsStaticKraus (classe a qilisdk.noise.protocols)</a>
 </li>
@@ -3919,8 +4013,6 @@
         <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Variable.to_binary">(mètode Variable)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.to_density_matrix">to_density_matrix() (mètode QTensor)</a>
 </li>
       <li><a href="code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.PauliOperator.to_hamiltonian">to_hamiltonian() (mètode PauliOperator)</a>
@@ -3929,6 +4021,8 @@
         <li><a href="code/api/qilisdk/core/model/index.html#qilisdk.core.model.QUBO.to_hamiltonian">(mètode QUBO)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.ComparisonTerm.to_list">to_list() (mètode ComparisonTerm)</a>
 
       <ul style="list-style-type:none">
@@ -3937,23 +4031,31 @@
         <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Term.to_list">(mètode Term)</a>
 </li>
       </ul></li>
+      <li><a href="code/api/qilisdk/utils/lp_parser/lp_parser/index.html#qilisdk.utils.lp_parser.lp_parser.to_lp">to_lp() (al mòdul qilisdk.utils.lp_parser.lp_parser)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/lp_parser/lp_parser/index.html#qilisdk.utils.lp_parser.lp_parser.to_lp_file">to_lp_file() (al mòdul qilisdk.utils.lp_parser.lp_parser)</a>
+</li>
       <li><a href="code/api/qilisdk/digital/circuit/index.html#qilisdk.digital.circuit.Circuit.to_matrix">to_matrix() (mètode Circuit)</a>
 
       <ul style="list-style-type:none">
         <li><a href="code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian.to_matrix">(mètode Hamiltonian)</a>
 </li>
       </ul></li>
-      <li><a href="code/api/qilisdk/utils/openqasm2/index.html#qilisdk.utils.openqasm2.to_qasm2">to_qasm2() (al mòdul qilisdk.utils.openqasm2)</a>
+      <li><a href="code/api/qilisdk/utils/openqasm/openqasm2/index.html#qilisdk.utils.openqasm.openqasm2.to_qasm2">to_qasm2() (al mòdul qilisdk.utils.openqasm.openqasm2)</a>
 </li>
-      <li><a href="code/api/qilisdk/utils/openqasm2/index.html#qilisdk.utils.openqasm2.to_qasm2_file">to_qasm2_file() (al mòdul qilisdk.utils.openqasm2)</a>
+      <li><a href="code/api/qilisdk/utils/openqasm/openqasm2/index.html#qilisdk.utils.openqasm.openqasm2.to_qasm2_file">to_qasm2_file() (al mòdul qilisdk.utils.openqasm.openqasm2)</a>
 </li>
-      <li><a href="code/api/qilisdk/utils/openqasm3/index.html#qilisdk.utils.openqasm3.to_qasm3">to_qasm3() (al mòdul qilisdk.utils.openqasm3)</a>
+      <li><a href="code/api/qilisdk/utils/openqasm/openqasm3/index.html#qilisdk.utils.openqasm.openqasm3.to_qasm3">to_qasm3() (al mòdul qilisdk.utils.openqasm.openqasm3)</a>
 
       <ul style="list-style-type:none">
-        <li><a href="code/api/qilisdk/utils/openqasm3/index.html#qilisdk.utils.openqasm3.OpenQasmParser.to_qasm3">(mètode estàtic OpenQasmParser)</a>
+        <li><a href="code/api/qilisdk/utils/openqasm/openqasm3/index.html#qilisdk.utils.openqasm.openqasm3.OpenQasmParser.to_qasm3">(mètode estàtic OpenQasmParser)</a>
 </li>
       </ul></li>
-      <li><a href="code/api/qilisdk/utils/openqasm3/index.html#qilisdk.utils.openqasm3.to_qasm3_file">to_qasm3_file() (al mòdul qilisdk.utils.openqasm3)</a>
+      <li><a href="code/api/qilisdk/utils/openqasm/openqasm3/index.html#qilisdk.utils.openqasm.openqasm3.to_qasm3_file">to_qasm3_file() (al mòdul qilisdk.utils.openqasm.openqasm3)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/qir/qir/index.html#qilisdk.utils.qir.qir.to_qir">to_qir() (al mòdul qilisdk.utils.qir.qir)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/qir/qir/index.html#qilisdk.utils.qir.qir.to_qir_file">to_qir_file() (al mòdul qilisdk.utils.qir.qir)</a>
 </li>
       <li><a href="code/api/qilisdk/digital/circuit/index.html#qilisdk.digital.circuit.Circuit.to_qtensor">to_qtensor() (mètode Circuit)</a>
 
@@ -4123,7 +4225,7 @@
 </li>
       <li><a href="code/api/qilisdk/experiments/experiment_result/index.html#qilisdk.experiments.experiment_result.Dimension.values">values (atribut Dimension)</a>
 </li>
-      <li><a href="code/api/qilisdk/utils/openqasm3/index.html#qilisdk.utils.openqasm3.OpenQasmParser.var_list">var_list (atribut OpenQasmParser)</a>
+      <li><a href="code/api/qilisdk/utils/openqasm/openqasm3/index.html#qilisdk.utils.openqasm.openqasm3.OpenQasmParser.var_list">var_list (atribut OpenQasmParser)</a>
 </li>
       <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Variable">Variable (classe a qilisdk.core.variables)</a>
 </li>
@@ -4277,7 +4379,7 @@
     <script src="_static/documentation_options.js?v=62dba230"></script>
     <script src="_static/doctools.js?v=9bcbadda"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script defer="defer" src="_static/theme.js?v=582b20c5"></script>
+    <script defer="defer" src="_static/theme.js?v=d6a9845b"></script>
     <script src="_static/translations.js?v=5e30842e"></script>
     <script src="_static/design-tabs.js?v=f930bc37"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>

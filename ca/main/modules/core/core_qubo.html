@@ -25,16 +25,16 @@
 <meta content="QUBO | QiliSDK" property="og:title"/>
 <meta content="QUBO | QiliSDK" name="twitter:title"/>
 <link href="../../_static/pygments.css?v=652ce3ed" rel="stylesheet" type="text/css"/>
-<link href="../../_static/theme.css?v=73505e79" rel="stylesheet" type="text/css"/>
+<link href="../../_static/theme.css?v=979577e3" rel="stylesheet" type="text/css"/>
 <link href="../../_static/graphviz.css?v=4ae1632d" rel="stylesheet" type="text/css"/>
 <link href="../../_static/sphinx-design.min.css?v=95c83b7e" rel="stylesheet" type="text/css"/>
-<link href="../../_static/custom.css?v=0828450c" rel="stylesheet" type="text/css"/>
-<link href="../../_static/awesome-sphinx-design.css?v=c54898a4" rel="stylesheet" type="text/css"/>
+<link href="../../_static/custom.css?v=7f555f8f" rel="stylesheet" type="text/css"/>
+<link href="../../_static/awesome-sphinx-design.css?v=b1d4564d" rel="stylesheet" type="text/css"/>
 <link href="../../_static/q_trans.png" rel="icon"/>
 <link href="../../search.html" rel="search" title="Cerca"/>
 <link href="../../genindex.html" rel="index" title="Índex"/>
 <link href="core_qtensor.html" rel="next" title="QTensor"/>
-<link href="core_model.html" rel="prev" title="Models"/>
+<link href="core_lp_parser.html" rel="prev" title="Linear Programming File Parser and Serializer"/>
 </head>
 <body :class="{ 'overflow-hidden': showSidebar }" class="min-h-screen font-sans antialiased bg-background text-foreground" x-data="{ showSidebar: false, showScrollTop: false }">
 <div @click.self="showSidebar = false" class="fixed inset-0 z-50 overflow-hidden bg-background/80 backdrop-blur-sm md:hidden" x-cloak="" x-show="showSidebar"></div><div class="relative flex flex-col min-h-screen" id="page"><a class="absolute top-0 left-0 z-[100] block bg-background p-4 text-xl transition -translate-x-full opacity-0 focus:translate-x-0 focus:opacity-100" href="#content">
@@ -114,6 +114,7 @@
 <li class="toctree-l2"><a class="reference internal" href="core_variables_parameters.html">Variables i paràmetres</a></li>
 <li class="toctree-l2"><a class="reference internal" href="core_terms_maps_comparisons.html">Termes, mapes i comparacions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="core_model.html">Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core_lp_parser.html">Linear Programming File Parser and Serializer</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">QUBO</a></li>
 <li class="toctree-l2"><a class="reference internal" href="core_qtensor.html">QTensor</a></li>
 </ul>
@@ -126,6 +127,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../digital/digital_hardware.html">HardwareEfficientAnsatz</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../digital/digital_qaoa.html">QAOA</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../digital/digital_trotter.html">TrotterizedSchedule</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../digital/digital_qir.html">QIR Import and Export</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../analog/analog.html">Analog<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
@@ -273,9 +275,10 @@
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../code/api/qilisdk/utils/index.html">qilisdk.utils<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/utils/hashing/index.html">qilisdk.utils.hashing</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/utils/lp_parser/index.html">qilisdk.utils.lp_parser</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/utils/openfermion/index.html">qilisdk.utils.openfermion</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/utils/openqasm2/index.html">qilisdk.utils.openqasm2</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/utils/openqasm3/index.html">qilisdk.utils.openqasm3</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/utils/openqasm/index.html">qilisdk.utils.openqasm</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/utils/qir/index.html">qilisdk.utils.qir</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/utils/serialization/index.html">qilisdk.utils.serialization</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/utils/trotterization/index.html">qilisdk.utils.trotterization</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/utils/visualization/index.html">qilisdk.utils.visualization</a></li>
@@ -468,11 +471,40 @@ The strength of each penalty is controlled by its associated Lagrange multiplier
 </aside>
 </section>
 </section>
+<section id="high-degree-term-linearization">
+<h2>Linealització de termes de grau alt<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#high-degree-term-linearization" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#high-degree-term-linearization'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
+<p>Per definició, un objectiu QUBO és com a màxim quadràtic. Tanmateix, tant els objectius definits per l’usuari com els residus al quadrat produïts en penalitzar restriccions poden introduir monomis de grau tres o superior (per exemple, en elevar al quadrat una restricció amb un costat esquerre quadràtic). Per acceptar aquestes entrades, <a class="reference internal" href="../../code/api/qilisdk/core/model/index.html#qilisdk.core.model.Model.to_qubo" title="qilisdk.core.model.Model.to_qubo"><code class="xref py py-meth docutils literal notranslate"><span class="pre">to_qubo()</span></code></a> <em>linealitza</em> automàticament qualsevol monomi pseudo-booleà de grau més gran que dos introduint variables binàries auxiliars.</p>
+<p>Per a cada parell de factors binaris <span class="math notranslate nohighlight">\(a, b\)</span> que cal col·lapsar, es crea una nova variable auxiliar <span class="math notranslate nohighlight">\(w\)</span> i la igualtat <span class="math notranslate nohighlight">\(w = a \cdot b\)</span> s’imposa mitjançant la penalització de <strong>Rosenberg</strong></p>
+<div class="math notranslate nohighlight">
+\[P(a, b, w) = a \cdot b - 2 \cdot a \cdot w - 2 \cdot b \cdot w + 3 \cdot w,\]</div>
+<p>que és quadràtica, no negativa per a <span class="math notranslate nohighlight">\(a, b, w \in \{0, 1\}\)</span> i zero si i només si <span class="math notranslate nohighlight">\(w = a \cdot b\)</span>. A continuació, en el monomi original el factor <span class="math notranslate nohighlight">\(a \cdot b\)</span> se substitueix per <span class="math notranslate nohighlight">\(w\)</span>, reduint-ne el grau en un. La reducció s’itera fins que tot monomi és com a màxim quadràtic. Les variables auxiliars es memoritzen en memòria cau per parell no ordenat, de manera que els subproductes compartits (per exemple, <span class="math notranslate nohighlight">\(x \cdot y \cdot z\)</span> i <span class="math notranslate nohighlight">\(x \cdot y \cdot w\)</span>, que reutilitzen tots dos <span class="math notranslate nohighlight">\(x \cdot y\)</span>) introdueixen una única variable auxiliar i una única penalització de Rosenberg.</p>
+<p>Dos arguments per paraula clau de <a class="reference internal" href="../../code/api/qilisdk/core/model/index.html#qilisdk.core.model.Model.to_qubo" title="qilisdk.core.model.Model.to_qubo"><code class="xref py py-meth docutils literal notranslate"><span class="pre">to_qubo()</span></code></a> controlen aquest comportament:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">linearize</span></code> (per defecte <code class="docutils literal notranslate"><span class="pre">True</span></code>): activa o desactiva la reducció. Establiu <code class="docutils literal notranslate"><span class="pre">linearize=False</span></code> per mantenir el comportament estricte anterior, en què exportar un model amb termes de grau tres o superior llança un <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">linearization_lagrange_multiplier</span></code> (per defecte <code class="docutils literal notranslate"><span class="pre">100</span></code>): el multiplicador de Lagrange aplicat a cada restricció de penalització de Rosenberg. Ha de ser prou gran per dominar qualsevol incentiu a violar les igualtats auxiliars <span class="math notranslate nohighlight">\(w = a \cdot b\)</span>.</p></li>
+</ul>
+<section id="example-cubic-objective-and-constraint">
+<h3>Exemple: objectiu i restricció cúbics<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#example-cubic-objective-and-constraint" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#example-cubic-objective-and-constraint'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">BinaryVariable</span><span class="p">,</span> <span class="n">EQ</span><span class="p">,</span> <span class="n">Model</span><span class="p">,</span> <span class="n">ObjectiveSense</span>
+</span><span id="line-2">
+</span><span id="line-3"><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span> <span class="o">=</span> <span class="n">BinaryVariable</span><span class="p">(</span><span class="s2">"x"</span><span class="p">),</span> <span class="n">BinaryVariable</span><span class="p">(</span><span class="s2">"y"</span><span class="p">),</span> <span class="n">BinaryVariable</span><span class="p">(</span><span class="s2">"z"</span><span class="p">)</span>
+</span><span id="line-4">
+</span><span id="line-5"><span class="n">model</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">"cubic"</span><span class="p">)</span>
+</span><span id="line-6"><span class="n">model</span><span class="o">.</span><span class="n">set_objective</span><span class="p">(</span><span class="n">x</span> <span class="o">*</span> <span class="n">y</span> <span class="o">*</span> <span class="n">z</span><span class="p">,</span> <span class="n">sense</span><span class="o">=</span><span class="n">ObjectiveSense</span><span class="o">.</span><span class="n">MAXIMIZE</span><span class="p">)</span>
+</span><span id="line-7"><span class="n">model</span><span class="o">.</span><span class="n">add_constraint</span><span class="p">(</span><span class="s2">"forbid_triple"</span><span class="p">,</span> <span class="n">EQ</span><span class="p">(</span><span class="n">x</span> <span class="o">*</span> <span class="n">y</span> <span class="o">*</span> <span class="n">z</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">lagrange_multiplier</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+</span><span id="line-8">
+</span><span id="line-9"><span class="n">qubo</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">to_qubo</span><span class="p">(</span><span class="n">linearization_lagrange_multiplier</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+</span><span id="line-10"><span class="n">ham</span> <span class="o">=</span> <span class="n">qubo</span><span class="o">.</span><span class="n">to_hamiltonian</span><span class="p">()</span>
+</span></code></pre></div>
+</div>
+<p>Després d’executar <code class="docutils literal notranslate"><span class="pre">to_qubo</span></code>, el <a class="reference internal" href="../../code/api/qilisdk/core/model/index.html#qilisdk.core.model.QUBO" title="qilisdk.core.model.QUBO"><code class="xref py py-class docutils literal notranslate"><span class="pre">QUBO</span></code></a> resultant conté una única variable binària auxiliar que substitueix <span class="math notranslate nohighlight">\(x \cdot y\)</span> (compartida entre l’objectiu i la penalització de la restricció), juntament amb una restricció d’igualtat que codifica la corresponent penalització de Rosenberg. Tant l’objectiu cúbic com la restricció cúbica al quadrat es redueixen a forma quadràtica, de manera que <a class="reference internal" href="../../code/api/qilisdk/core/model/index.html#qilisdk.core.model.QUBO.to_hamiltonian" title="qilisdk.core.model.QUBO.to_hamiltonian"><code class="xref py py-meth docutils literal notranslate"><span class="pre">to_hamiltonian()</span></code></a> es pot invocar directament.</p>
+</section>
+</section>
 <section id="interoperability">
 <h2>Interoperabilitat<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#interoperability" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#interoperability'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
 <ul>
 <li><dl>
-<dt><strong>Convertir qualsevol model a QUBO</strong></dt><dd><p>Si teniu un <a class="reference internal" href="../../code/api/qilisdk/core/model/index.html#qilisdk.core.model.Model" title="qilisdk.core.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a> genèric amb només termes lineals/quadràtics, podeu produir automàticament un QUBO:</p>
+<dt><strong>Convertir qualsevol model a QUBO</strong></dt><dd><p>Qualsevol <a class="reference internal" href="../../code/api/qilisdk/core/model/index.html#qilisdk.core.model.Model" title="qilisdk.core.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a> genèric es pot convertir en un QUBO. Els monomis de grau superior es redueixen a forma quadràtica mitjançant la linealització amb penalització de Rosenberg descrita anteriorment (establiu <code class="docutils literal notranslate"><span class="pre">linearize=False</span></code> per desactivar-la):</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">qubo_model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">to_qubo</span><span class="p">()</span>
 </span></code></pre></div>
 </div>
@@ -492,11 +524,11 @@ The strength of each penalty is controlled by its associated Lagrange multiplier
 </section>
 </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">
 <div class="mr-auto">
-<a class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input hover:bg-accent hover:text-accent-foreground py-2 px-4" href="core_model.html">
+<a class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input hover:bg-accent hover:text-accent-foreground py-2 px-4" href="core_lp_parser.html">
 <svg class="mr-2 h-4 w-4" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
 <polyline points="15 18 9 12 15 6"></polyline>
 </svg>
-        Models
+        Linear Programming File Parser and Serializer
       </a>
 </div>
 <div class="ml-auto">
@@ -517,6 +549,10 @@ The strength of each penalty is controlled by its associated Lagrange multiplier
 <li><a :data-current="activeSection === '#example-unbalanced-penalization'" class="reference internal" href="#example-unbalanced-penalization">Exemple: penalització no equilibrada</a></li>
 </ul>
 </li>
+<li><a :data-current="activeSection === '#high-degree-term-linearization'" class="reference internal" href="#high-degree-term-linearization">Linealització de termes de grau alt</a><ul>
+<li><a :data-current="activeSection === '#example-cubic-objective-and-constraint'" class="reference internal" href="#example-cubic-objective-and-constraint">Exemple: objectiu i restricció cúbics</a></li>
+</ul>
+</li>
 <li><a :data-current="activeSection === '#interoperability'" class="reference internal" href="#interoperability">Interoperabilitat</a></li>
 </ul>
 </div>
@@ -534,7 +570,7 @@ The strength of each penalty is controlled by its associated Lagrange multiplier
 <script src="../../_static/documentation_options.js?v=62dba230"></script>
 <script src="../../_static/doctools.js?v=9bcbadda"></script>
 <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
-<script defer="defer" src="../../_static/theme.js?v=582b20c5"></script>
+<script defer="defer" src="../../_static/theme.js?v=d6a9845b"></script>
 <script src="../../_static/translations.js?v=5e30842e"></script>
 <script src="../../_static/design-tabs.js?v=f930bc37"></script>
 <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>

@@ -27,11 +27,11 @@
   <meta property="og:title" content="qilisdk.digital.circuit | QiliSDK" />
   <meta name="twitter:title" content="qilisdk.digital.circuit | QiliSDK" />
   <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=652ce3ed" />
-  <link rel="stylesheet" type="text/css" href="../../../_static/theme.css?v=73505e79" />
+  <link rel="stylesheet" type="text/css" href="../../../_static/theme.css?v=979577e3" />
   <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
   <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
-  <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=0828450c" />
-  <link rel="stylesheet" type="text/css" href="../../../_static/awesome-sphinx-design.css?v=c54898a4" />
+  <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=7f555f8f" />
+  <link rel="stylesheet" type="text/css" href="../../../_static/awesome-sphinx-design.css?v=b1d4564d" />
   <link rel="icon" href="../../../_static/q_trans.png" />
   <link rel="search" title="Search" href="../../../search.html" />
   <link rel="index" title="Index" href="../../../genindex.html" />
@@ -164,6 +164,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/core/core_variables_parameters.html">Variables and Parameters</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/core/core_terms_maps_comparisons.html">Terms, Maps and Comparisons</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/core/core_model.html">Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core/core_lp_parser.html">Linear Programming File Parser and Serializer</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/core/core_qubo.html">QUBO</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/core/core_qtensor.html">QTensor</a></li>
 </ul>
@@ -176,6 +177,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/digital/digital_hardware.html">HardwareEfficientAnsatz</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/digital/digital_qaoa.html">QAOA</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/digital/digital_trotter.html">TrotterizedSchedule</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/digital/digital_qir.html">QIR Import and Export</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/analog/analog.html">Analog</a><ul>
@@ -323,9 +325,10 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/utils/index.html">qilisdk.utils</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/hashing/index.html">qilisdk.utils.hashing</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/lp_parser/index.html">qilisdk.utils.lp_parser</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/openfermion/index.html">qilisdk.utils.openfermion</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/openqasm2/index.html">qilisdk.utils.openqasm2</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/openqasm3/index.html">qilisdk.utils.openqasm3</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/openqasm/index.html">qilisdk.utils.openqasm</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/qir/index.html">qilisdk.utils.qir</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/serialization/index.html">qilisdk.utils.serialization</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/trotterization/index.html">qilisdk.utils.trotterization</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/visualization/index.html">qilisdk.utils.visualization</a></li>
@@ -491,7 +494,7 @@
 </span><span id="line-73">        <span class="bp">self</span><span class="o">.</span><span class="n">_nqubits</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">nqubits</span>
 </span><span id="line-74">        <span class="bp">self</span><span class="o">.</span><span class="n">_gates</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Gate</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 </span><span id="line-75">        <span class="bp">self</span><span class="o">.</span><span class="n">_init_state</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">nqubits</span><span class="p">)</span>
-</span><span id="line-76">        <span class="bp">self</span><span class="o">.</span><span class="n">_parameters_link</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Gate</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+</span><span id="line-76">        <span class="bp">self</span><span class="o">.</span><span class="n">_parameters_link</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Gate</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{}</span>
 </span><span id="line-77">
 </span><span id="line-78">    <span class="nd">@property</span>
 <div class="viewcode-block" id="Circuit.nqubits">
@@ -550,327 +553,332 @@
 </span><span id="line-121">        <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">parameters</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
 </span><span id="line-122">            <span class="k">if</span> <span class="n">label</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameters</span><span class="p">:</span>
 </span><span id="line-123">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Parameter </span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2"> is not defined in this circuit.&quot;</span><span class="p">)</span>
-</span><span id="line-124">            <span class="bp">self</span><span class="o">.</span><span class="n">_parameters_link</span><span class="p">[</span><span class="n">label</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_parameters</span><span class="p">({</span><span class="bp">self</span><span class="o">.</span><span class="n">_parameters_link</span><span class="p">[</span><span class="n">label</span><span class="p">][</span><span class="mi">0</span><span class="p">]:</span> <span class="n">param</span><span class="p">})</span></div>
+</span><span id="line-124">            <span class="k">for</span> <span class="n">link</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameters_link</span><span class="p">[</span><span class="n">label</span><span class="p">]:</span>
+</span><span id="line-125">                <span class="n">link</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_parameters</span><span class="p">({</span><span class="n">link</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="n">param</span><span class="p">})</span></div>
 
-</span><span id="line-125">
+</span><span id="line-126">
 <div class="viewcode-block" id="Circuit.set_parameter_bounds">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/circuit/index.html#qilisdk.digital.circuit.Circuit.set_parameter_bounds">[docs]</a>
-</span><span id="line-126">    <span class="k">def</span><span class="w"> </span><span class="nf">set_parameter_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ranges</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-127">        <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">bound</span> <span class="ow">in</span> <span class="n">ranges</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-</span><span id="line-128">            <span class="k">if</span> <span class="n">label</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameters</span><span class="p">:</span>
-</span><span id="line-129">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-</span><span id="line-130">                    <span class="sa">f</span><span class="s2">&quot;The provided parameter label </span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2"> is not defined in the list of parameters in this object.&quot;</span>
-</span><span id="line-131">                <span class="p">)</span>
-</span><span id="line-132">            <span class="bp">self</span><span class="o">.</span><span class="n">_parameters_link</span><span class="p">[</span><span class="n">label</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_parameter_bounds</span><span class="p">({</span><span class="bp">self</span><span class="o">.</span><span class="n">_parameters_link</span><span class="p">[</span><span class="n">label</span><span class="p">][</span><span class="mi">0</span><span class="p">]:</span> <span class="n">bound</span><span class="p">})</span></div>
+</span><span id="line-127">    <span class="k">def</span><span class="w"> </span><span class="nf">set_parameter_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ranges</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-128">        <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">bound</span> <span class="ow">in</span> <span class="n">ranges</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+</span><span id="line-129">            <span class="k">if</span> <span class="n">label</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameters</span><span class="p">:</span>
+</span><span id="line-130">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="line-131">                    <span class="sa">f</span><span class="s2">&quot;The provided parameter label </span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2"> is not defined in the list of parameters in this object.&quot;</span>
+</span><span id="line-132">                <span class="p">)</span>
+</span><span id="line-133">            <span class="k">for</span> <span class="n">link</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameters_link</span><span class="p">[</span><span class="n">label</span><span class="p">]:</span>
+</span><span id="line-134">                <span class="n">link</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_parameter_bounds</span><span class="p">({</span><span class="n">link</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="n">bound</span><span class="p">})</span></div>
 
-</span><span id="line-133">
+</span><span id="line-135">
 <div class="viewcode-block" id="Circuit.set_prefix">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/circuit/index.html#qilisdk.digital.circuit.Circuit.set_prefix">[docs]</a>
-</span><span id="line-134">    <span class="k">def</span><span class="w"> </span><span class="nf">set_prefix</span><span class="p">(</span>
-</span><span id="line-135">        <span class="bp">self</span><span class="p">,</span>
-</span><span id="line-136">        <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-</span><span id="line-137">        <span class="n">where</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Parameter</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="line-138">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-139"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Set a prefix on parameter labels.</span>
-</span><span id="line-140">
-</span><span id="line-141"><span class="sd">        Args:</span>
-</span><span id="line-142"><span class="sd">            prefix (str): Prefix to prepend to selected parameter labels.</span>
-</span><span id="line-143"><span class="sd">            where (Callable[[Parameter], bool] | None): Optional predicate selecting local parameters.</span>
-</span><span id="line-144">
-</span><span id="line-145"><span class="sd">        Notes:</span>
-</span><span id="line-146"><span class="sd">            The ``where`` predicate is applied to local parameters only. Child parameterizable</span>
-</span><span id="line-147"><span class="sd">            objects always receive the same prefix operation recursively.</span>
-</span><span id="line-148"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-149">        <span class="n">old_keys</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_filtered_parameter_map</span><span class="p">(</span><span class="n">where</span><span class="o">=</span><span class="n">where</span><span class="p">))</span>
-</span><span id="line-150">        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">old_keys</span><span class="p">:</span>
-</span><span id="line-151">            <span class="k">if</span> <span class="ow">not</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">prefix</span><span class="p">):</span>
-</span><span id="line-152">                <span class="n">_name</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">removeprefix</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_prefix</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prefix</span> <span class="ow">and</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_prefix</span><span class="p">)</span> <span class="k">else</span> <span class="n">name</span>
-</span><span id="line-153">                <span class="bp">self</span><span class="o">.</span><span class="n">_parameters_link</span><span class="p">[</span><span class="n">prefix</span> <span class="o">+</span> <span class="n">_name</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameters_link</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
-</span><span id="line-154">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">set_prefix</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="n">where</span><span class="p">)</span></div>
+</span><span id="line-136">    <span class="k">def</span><span class="w"> </span><span class="nf">set_prefix</span><span class="p">(</span>
+</span><span id="line-137">        <span class="bp">self</span><span class="p">,</span>
+</span><span id="line-138">        <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+</span><span id="line-139">        <span class="n">where</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Parameter</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-140">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-141"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Set a prefix on parameter labels.</span>
+</span><span id="line-142">
+</span><span id="line-143"><span class="sd">        Args:</span>
+</span><span id="line-144"><span class="sd">            prefix (str): Prefix to prepend to selected parameter labels.</span>
+</span><span id="line-145"><span class="sd">            where (Callable[[Parameter], bool] | None): Optional predicate selecting local parameters.</span>
+</span><span id="line-146">
+</span><span id="line-147"><span class="sd">        Notes:</span>
+</span><span id="line-148"><span class="sd">            The ``where`` predicate is applied to local parameters only. Child parameterizable</span>
+</span><span id="line-149"><span class="sd">            objects always receive the same prefix operation recursively.</span>
+</span><span id="line-150"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-151">        <span class="n">old_keys</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_filtered_parameter_map</span><span class="p">(</span><span class="n">where</span><span class="o">=</span><span class="n">where</span><span class="p">))</span>
+</span><span id="line-152">        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">old_keys</span><span class="p">:</span>
+</span><span id="line-153">            <span class="k">if</span> <span class="ow">not</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">prefix</span><span class="p">):</span>
+</span><span id="line-154">                <span class="n">_name</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">removeprefix</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_prefix</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prefix</span> <span class="ow">and</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_prefix</span><span class="p">)</span> <span class="k">else</span> <span class="n">name</span>
+</span><span id="line-155">                <span class="bp">self</span><span class="o">.</span><span class="n">_parameters_link</span><span class="p">[</span><span class="n">prefix</span> <span class="o">+</span> <span class="n">_name</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameters_link</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+</span><span id="line-156">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">set_prefix</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="n">where</span><span class="p">)</span></div>
 
-</span><span id="line-155">
-</span><span id="line-156">    <span class="k">def</span><span class="w"> </span><span class="nf">_parse_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gate</span><span class="p">:</span> <span class="n">Gate</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-157"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse The parameters in the gate</span>
-</span><span id="line-158">
-</span><span id="line-159"><span class="sd">        Args:</span>
-</span><span id="line-160"><span class="sd">            gate (Gate): The gate to be parsed.</span>
-</span><span id="line-161"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-162">        <span class="k">if</span> <span class="n">gate</span><span class="o">.</span><span class="n">is_parameterized</span><span class="p">:</span>
-</span><span id="line-163">            <span class="n">param_base_label</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_prefix</span><span class="p">()</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">gate</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">(</span><span class="si">{</span><span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span><span class="w"> </span><span class="n">gate</span><span class="o">.</span><span class="n">qubits</span><span class="p">))</span><span class="si">}</span><span class="s2">)&quot;</span>
-</span><span id="line-164">            <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">gate</span><span class="o">.</span><span class="n">get_parameter_names</span><span class="p">():</span>
-</span><span id="line-165">                <span class="n">_parameter_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_query_parameter_original_name</span><span class="p">(</span><span class="n">gate</span><span class="p">,</span> <span class="n">label</span><span class="p">)</span>
-</span><span id="line-166">                <span class="k">if</span> <span class="n">label</span> <span class="o">==</span> <span class="n">_parameter_name</span> <span class="ow">and</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">gate</span><span class="o">.</span><span class="n">PARAMETER_NAMES</span><span class="p">:</span>
-</span><span id="line-167">                    <span class="n">parameter_label</span> <span class="o">=</span> <span class="n">param_base_label</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;_</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parameters</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
-</span><span id="line-168">                <span class="k">else</span><span class="p">:</span>
-</span><span id="line-169">                    <span class="n">parameter_label</span> <span class="o">=</span> <span class="n">_parameter_name</span>
-</span><span id="line-170">                <span class="bp">self</span><span class="o">.</span><span class="n">_add_parameter_from</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">gate</span><span class="p">,</span> <span class="n">new_label</span><span class="o">=</span><span class="n">parameter_label</span><span class="p">)</span>
-</span><span id="line-171">                <span class="bp">self</span><span class="o">.</span><span class="n">_parameters_link</span><span class="p">[</span><span class="n">parameter_label</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">gate</span><span class="p">)</span>
-</span><span id="line-172">
-</span><span id="line-173">    <span class="k">def</span><span class="w"> </span><span class="nf">_add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gate</span><span class="p">:</span> <span class="n">Gate</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-174"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-175"><span class="sd">        Add a quantum gate to the circuit.</span>
-</span><span id="line-176">
-</span><span id="line-177"><span class="sd">        Args:</span>
-</span><span id="line-178"><span class="sd">            gate (Gate): The quantum gate or a list of quantum gates to be added to the circuit.</span>
-</span><span id="line-179">
-</span><span id="line-180"><span class="sd">        Raises:</span>
-</span><span id="line-181"><span class="sd">            QubitOutOfRangeError: If any qubit index used by the gate is not within the circuit&#39;s qubit range.</span>
-</span><span id="line-182"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-183">        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">qubit</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span> <span class="k">for</span> <span class="n">qubit</span> <span class="ow">in</span> <span class="n">gate</span><span class="o">.</span><span class="n">qubits</span><span class="p">):</span>
-</span><span id="line-184">            <span class="k">raise</span> <span class="n">QubitOutOfRangeError</span>
-</span><span id="line-185">
-</span><span id="line-186">        <span class="bp">self</span><span class="o">.</span><span class="n">_parse_params</span><span class="p">(</span><span class="n">gate</span><span class="p">)</span>
-</span><span id="line-187">        <span class="bp">self</span><span class="o">.</span><span class="n">_gates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gate</span><span class="p">)</span>
-</span><span id="line-188">
+</span><span id="line-157">
+</span><span id="line-158">    <span class="k">def</span><span class="w"> </span><span class="nf">_parse_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gate</span><span class="p">:</span> <span class="n">Gate</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-159"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse The parameters in the gate</span>
+</span><span id="line-160">
+</span><span id="line-161"><span class="sd">        Args:</span>
+</span><span id="line-162"><span class="sd">            gate (Gate): The gate to be parsed.</span>
+</span><span id="line-163"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-164">        <span class="k">if</span> <span class="n">gate</span><span class="o">.</span><span class="n">is_parameterized</span><span class="p">:</span>
+</span><span id="line-165">            <span class="n">param_base_label</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_prefix</span><span class="p">()</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">gate</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">(</span><span class="si">{</span><span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span><span class="w"> </span><span class="n">gate</span><span class="o">.</span><span class="n">qubits</span><span class="p">))</span><span class="si">}</span><span class="s2">)&quot;</span>
+</span><span id="line-166">            <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">gate</span><span class="o">.</span><span class="n">get_parameter_names</span><span class="p">():</span>
+</span><span id="line-167">                <span class="n">_parameter_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_query_parameter_original_name</span><span class="p">(</span><span class="n">gate</span><span class="p">,</span> <span class="n">label</span><span class="p">)</span>
+</span><span id="line-168">                <span class="k">if</span> <span class="n">label</span> <span class="o">==</span> <span class="n">_parameter_name</span> <span class="ow">and</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">gate</span><span class="o">.</span><span class="n">PARAMETER_NAMES</span><span class="p">:</span>
+</span><span id="line-169">                    <span class="n">parameter_label</span> <span class="o">=</span> <span class="n">param_base_label</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;_</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parameters</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span id="line-170">                <span class="k">else</span><span class="p">:</span>
+</span><span id="line-171">                    <span class="n">parameter_label</span> <span class="o">=</span> <span class="n">_parameter_name</span>
+</span><span id="line-172">                <span class="bp">self</span><span class="o">.</span><span class="n">_add_parameter_from</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">gate</span><span class="p">,</span> <span class="n">new_label</span><span class="o">=</span><span class="n">parameter_label</span><span class="p">)</span>
+</span><span id="line-173">                <span class="k">if</span> <span class="n">parameter_label</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameters_link</span><span class="p">:</span>
+</span><span id="line-174">                    <span class="bp">self</span><span class="o">.</span><span class="n">_parameters_link</span><span class="p">[</span><span class="n">parameter_label</span><span class="p">]</span> <span class="o">=</span> <span class="p">[(</span><span class="n">label</span><span class="p">,</span> <span class="n">gate</span><span class="p">)]</span>
+</span><span id="line-175">                <span class="k">else</span><span class="p">:</span>
+</span><span id="line-176">                    <span class="bp">self</span><span class="o">.</span><span class="n">_parameters_link</span><span class="p">[</span><span class="n">parameter_label</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">label</span><span class="p">,</span> <span class="n">gate</span><span class="p">))</span>
+</span><span id="line-177">
+</span><span id="line-178">    <span class="k">def</span><span class="w"> </span><span class="nf">_add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gate</span><span class="p">:</span> <span class="n">Gate</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-179"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-180"><span class="sd">        Add a quantum gate to the circuit.</span>
+</span><span id="line-181">
+</span><span id="line-182"><span class="sd">        Args:</span>
+</span><span id="line-183"><span class="sd">            gate (Gate): The quantum gate or a list of quantum gates to be added to the circuit.</span>
+</span><span id="line-184">
+</span><span id="line-185"><span class="sd">        Raises:</span>
+</span><span id="line-186"><span class="sd">            QubitOutOfRangeError: If any qubit index used by the gate is not within the circuit&#39;s qubit range.</span>
+</span><span id="line-187"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-188">        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">qubit</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span> <span class="k">for</span> <span class="n">qubit</span> <span class="ow">in</span> <span class="n">gate</span><span class="o">.</span><span class="n">qubits</span><span class="p">):</span>
+</span><span id="line-189">            <span class="k">raise</span> <span class="n">QubitOutOfRangeError</span>
+</span><span id="line-190">
+</span><span id="line-191">        <span class="bp">self</span><span class="o">.</span><span class="n">_parse_params</span><span class="p">(</span><span class="n">gate</span><span class="p">)</span>
+</span><span id="line-192">        <span class="bp">self</span><span class="o">.</span><span class="n">_gates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gate</span><span class="p">)</span>
+</span><span id="line-193">
 <div class="viewcode-block" id="Circuit.add">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/circuit/index.html#qilisdk.digital.circuit.Circuit.add">[docs]</a>
-</span><span id="line-189">    <span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gates</span><span class="p">:</span> <span class="n">Gate</span> <span class="o">|</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Gate</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-190"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-191"><span class="sd">        Add a quantum gate to the circuit.</span>
-</span><span id="line-192">
-</span><span id="line-193"><span class="sd">        Args:</span>
-</span><span id="line-194"><span class="sd">            gates (Gate | list[Gate]): The quantum gate or a list of quantum gates to be added to the circuit.</span>
-</span><span id="line-195"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-196">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">gates</span><span class="p">,</span> <span class="n">Gate</span><span class="p">):</span>
-</span><span id="line-197">            <span class="bp">self</span><span class="o">.</span><span class="n">_add</span><span class="p">(</span><span class="n">gates</span><span class="p">)</span>
-</span><span id="line-198">            <span class="k">return</span>
-</span><span id="line-199">        <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">gates</span><span class="p">:</span>
-</span><span id="line-200">            <span class="bp">self</span><span class="o">.</span><span class="n">_add</span><span class="p">(</span><span class="n">g</span><span class="p">)</span></div>
+</span><span id="line-194">    <span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gates</span><span class="p">:</span> <span class="n">Gate</span> <span class="o">|</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Gate</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-195"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-196"><span class="sd">        Add a quantum gate to the circuit.</span>
+</span><span id="line-197">
+</span><span id="line-198"><span class="sd">        Args:</span>
+</span><span id="line-199"><span class="sd">            gates (Gate | list[Gate]): The quantum gate or a list of quantum gates to be added to the circuit.</span>
+</span><span id="line-200"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-201">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">gates</span><span class="p">,</span> <span class="n">Gate</span><span class="p">):</span>
+</span><span id="line-202">            <span class="bp">self</span><span class="o">.</span><span class="n">_add</span><span class="p">(</span><span class="n">gates</span><span class="p">)</span>
+</span><span id="line-203">            <span class="k">return</span>
+</span><span id="line-204">        <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">gates</span><span class="p">:</span>
+</span><span id="line-205">            <span class="bp">self</span><span class="o">.</span><span class="n">_add</span><span class="p">(</span><span class="n">g</span><span class="p">)</span></div>
 
-</span><span id="line-201">
-</span><span id="line-202">    <span class="k">def</span><span class="w"> </span><span class="nf">_insert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gate</span><span class="p">:</span> <span class="n">Gate</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-203"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Insert a quantum gate to the circuit at a given index.</span>
-</span><span id="line-204">
-</span><span id="line-205"><span class="sd">        Args:</span>
-</span><span id="line-206"><span class="sd">            gate (Gate): The gate to be inserted.</span>
-</span><span id="line-207"><span class="sd">            index (int, optional): The index at which the gate is inserted. Defaults to -1.</span>
-</span><span id="line-208">
-</span><span id="line-209"><span class="sd">        Raises:</span>
-</span><span id="line-210"><span class="sd">            QubitOutOfRangeError: If any qubit index used by the gate is not within the circuit&#39;s qubit range.</span>
-</span><span id="line-211"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-212">        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">qubit</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span> <span class="k">for</span> <span class="n">qubit</span> <span class="ow">in</span> <span class="n">gate</span><span class="o">.</span><span class="n">qubits</span><span class="p">):</span>
-</span><span id="line-213">            <span class="k">raise</span> <span class="n">QubitOutOfRangeError</span>
-</span><span id="line-214">
-</span><span id="line-215">        <span class="bp">self</span><span class="o">.</span><span class="n">_parse_params</span><span class="p">(</span><span class="n">gate</span><span class="p">)</span>
-</span><span id="line-216">        <span class="bp">self</span><span class="o">.</span><span class="n">_gates</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">gate</span><span class="p">)</span>
-</span><span id="line-217">
+</span><span id="line-206">
+</span><span id="line-207">    <span class="k">def</span><span class="w"> </span><span class="nf">_insert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gate</span><span class="p">:</span> <span class="n">Gate</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-208"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Insert a quantum gate to the circuit at a given index.</span>
+</span><span id="line-209">
+</span><span id="line-210"><span class="sd">        Args:</span>
+</span><span id="line-211"><span class="sd">            gate (Gate): The gate to be inserted.</span>
+</span><span id="line-212"><span class="sd">            index (int, optional): The index at which the gate is inserted. Defaults to -1.</span>
+</span><span id="line-213">
+</span><span id="line-214"><span class="sd">        Raises:</span>
+</span><span id="line-215"><span class="sd">            QubitOutOfRangeError: If any qubit index used by the gate is not within the circuit&#39;s qubit range.</span>
+</span><span id="line-216"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-217">        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">qubit</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span> <span class="k">for</span> <span class="n">qubit</span> <span class="ow">in</span> <span class="n">gate</span><span class="o">.</span><span class="n">qubits</span><span class="p">):</span>
+</span><span id="line-218">            <span class="k">raise</span> <span class="n">QubitOutOfRangeError</span>
+</span><span id="line-219">
+</span><span id="line-220">        <span class="bp">self</span><span class="o">.</span><span class="n">_parse_params</span><span class="p">(</span><span class="n">gate</span><span class="p">)</span>
+</span><span id="line-221">        <span class="bp">self</span><span class="o">.</span><span class="n">_gates</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">gate</span><span class="p">)</span>
+</span><span id="line-222">
 <div class="viewcode-block" id="Circuit.insert">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/circuit/index.html#qilisdk.digital.circuit.Circuit.insert">[docs]</a>
-</span><span id="line-218">    <span class="k">def</span><span class="w"> </span><span class="nf">insert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gates</span><span class="p">:</span> <span class="n">Gate</span> <span class="o">|</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Gate</span><span class="p">],</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-219"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Insert a quantum gate to the circuit at a given index.</span>
-</span><span id="line-220">
-</span><span id="line-221"><span class="sd">        Args:</span>
-</span><span id="line-222"><span class="sd">            gates (Gate | list[Gate]): The gate or list of gates to be inserted.</span>
-</span><span id="line-223"><span class="sd">            index (int, optional): The index at which the gate is inserted. Defaults to -1.</span>
-</span><span id="line-224"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-225">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">gates</span><span class="p">,</span> <span class="n">Gate</span><span class="p">):</span>
-</span><span id="line-226">            <span class="bp">self</span><span class="o">.</span><span class="n">_insert</span><span class="p">(</span><span class="n">gates</span><span class="p">,</span> <span class="n">index</span><span class="p">)</span>
-</span><span id="line-227">            <span class="k">return</span>
-</span><span id="line-228">        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">gate</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">gates</span><span class="p">):</span>
-</span><span id="line-229">            <span class="bp">self</span><span class="o">.</span><span class="n">_insert</span><span class="p">(</span><span class="n">gate</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="n">index</span><span class="p">)</span></div>
+</span><span id="line-223">    <span class="k">def</span><span class="w"> </span><span class="nf">insert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gates</span><span class="p">:</span> <span class="n">Gate</span> <span class="o">|</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Gate</span><span class="p">],</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-224"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Insert a quantum gate to the circuit at a given index.</span>
+</span><span id="line-225">
+</span><span id="line-226"><span class="sd">        Args:</span>
+</span><span id="line-227"><span class="sd">            gates (Gate | list[Gate]): The gate or list of gates to be inserted.</span>
+</span><span id="line-228"><span class="sd">            index (int, optional): The index at which the gate is inserted. Defaults to -1.</span>
+</span><span id="line-229"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-230">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">gates</span><span class="p">,</span> <span class="n">Gate</span><span class="p">):</span>
+</span><span id="line-231">            <span class="bp">self</span><span class="o">.</span><span class="n">_insert</span><span class="p">(</span><span class="n">gates</span><span class="p">,</span> <span class="n">index</span><span class="p">)</span>
+</span><span id="line-232">            <span class="k">return</span>
+</span><span id="line-233">        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">gate</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">gates</span><span class="p">):</span>
+</span><span id="line-234">            <span class="bp">self</span><span class="o">.</span><span class="n">_insert</span><span class="p">(</span><span class="n">gate</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="n">index</span><span class="p">)</span></div>
 
-</span><span id="line-230">
+</span><span id="line-235">
 <div class="viewcode-block" id="Circuit.append">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/circuit/index.html#qilisdk.digital.circuit.Circuit.append">[docs]</a>
-</span><span id="line-231">    <span class="k">def</span><span class="w"> </span><span class="nf">append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">circuit</span><span class="p">:</span> <span class="n">Circuit</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-232"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Append circuit elements at the end of the current circuit.</span>
-</span><span id="line-233">
-</span><span id="line-234"><span class="sd">        Args:</span>
-</span><span id="line-235"><span class="sd">            circuit (Circuit): The circuit to be appended.</span>
-</span><span id="line-236">
-</span><span id="line-237"><span class="sd">        Raises:</span>
-</span><span id="line-238"><span class="sd">            QubitOutOfRangeError: If the appended circuit acts on more qubits than the current circuit.</span>
-</span><span id="line-239"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-240">        <span class="k">if</span> <span class="n">circuit</span><span class="o">.</span><span class="n">nqubits</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span><span class="p">:</span>
-</span><span id="line-241">            <span class="k">raise</span> <span class="n">QubitOutOfRangeError</span><span class="p">(</span>
-</span><span id="line-242">                <span class="s2">&quot;the appended circuit contains different number of qubits than the current circuit.&quot;</span>
-</span><span id="line-243">            <span class="p">)</span>
-</span><span id="line-244">
-</span><span id="line-245">        <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">circuit</span><span class="o">.</span><span class="n">gates</span><span class="p">:</span>
-</span><span id="line-246">            <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">g</span><span class="p">)</span></div>
+</span><span id="line-236">    <span class="k">def</span><span class="w"> </span><span class="nf">append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">circuit</span><span class="p">:</span> <span class="n">Circuit</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-237"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Append circuit elements at the end of the current circuit.</span>
+</span><span id="line-238">
+</span><span id="line-239"><span class="sd">        Args:</span>
+</span><span id="line-240"><span class="sd">            circuit (Circuit): The circuit to be appended.</span>
+</span><span id="line-241">
+</span><span id="line-242"><span class="sd">        Raises:</span>
+</span><span id="line-243"><span class="sd">            QubitOutOfRangeError: If the appended circuit acts on more qubits than the current circuit.</span>
+</span><span id="line-244"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-245">        <span class="k">if</span> <span class="n">circuit</span><span class="o">.</span><span class="n">nqubits</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span><span class="p">:</span>
+</span><span id="line-246">            <span class="k">raise</span> <span class="n">QubitOutOfRangeError</span><span class="p">(</span>
+</span><span id="line-247">                <span class="s2">&quot;the appended circuit contains different number of qubits than the current circuit.&quot;</span>
+</span><span id="line-248">            <span class="p">)</span>
+</span><span id="line-249">
+</span><span id="line-250">        <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">circuit</span><span class="o">.</span><span class="n">gates</span><span class="p">:</span>
+</span><span id="line-251">            <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">g</span><span class="p">)</span></div>
 
-</span><span id="line-247">
+</span><span id="line-252">
 <div class="viewcode-block" id="Circuit.prepend">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/circuit/index.html#qilisdk.digital.circuit.Circuit.prepend">[docs]</a>
-</span><span id="line-248">    <span class="k">def</span><span class="w"> </span><span class="nf">prepend</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">circuit</span><span class="p">:</span> <span class="n">Circuit</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-249"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Prepend circuit elements to the beginning of the current circuit.</span>
-</span><span id="line-250">
-</span><span id="line-251"><span class="sd">        Args:</span>
-</span><span id="line-252"><span class="sd">            circuit (Circuit): The circuit to be prepended.</span>
-</span><span id="line-253">
-</span><span id="line-254"><span class="sd">        Raises:</span>
-</span><span id="line-255"><span class="sd">            QubitOutOfRangeError: If the circuit to be prepended acts on more qubits than the current circuit.</span>
-</span><span id="line-256"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-257">        <span class="k">if</span> <span class="n">circuit</span><span class="o">.</span><span class="n">nqubits</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span><span class="p">:</span>
-</span><span id="line-258">            <span class="k">raise</span> <span class="n">QubitOutOfRangeError</span><span class="p">(</span>
-</span><span id="line-259">                <span class="s2">&quot;the prepended circuit contains different number of qubits than the current circuit.&quot;</span>
-</span><span id="line-260">            <span class="p">)</span>
-</span><span id="line-261">
-</span><span id="line-262">        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">g</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">circuit</span><span class="o">.</span><span class="n">gates</span><span class="p">):</span>
-</span><span id="line-263">            <span class="bp">self</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span></div>
+</span><span id="line-253">    <span class="k">def</span><span class="w"> </span><span class="nf">prepend</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">circuit</span><span class="p">:</span> <span class="n">Circuit</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-254"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Prepend circuit elements to the beginning of the current circuit.</span>
+</span><span id="line-255">
+</span><span id="line-256"><span class="sd">        Args:</span>
+</span><span id="line-257"><span class="sd">            circuit (Circuit): The circuit to be prepended.</span>
+</span><span id="line-258">
+</span><span id="line-259"><span class="sd">        Raises:</span>
+</span><span id="line-260"><span class="sd">            QubitOutOfRangeError: If the circuit to be prepended acts on more qubits than the current circuit.</span>
+</span><span id="line-261"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-262">        <span class="k">if</span> <span class="n">circuit</span><span class="o">.</span><span class="n">nqubits</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span><span class="p">:</span>
+</span><span id="line-263">            <span class="k">raise</span> <span class="n">QubitOutOfRangeError</span><span class="p">(</span>
+</span><span id="line-264">                <span class="s2">&quot;the prepended circuit contains different number of qubits than the current circuit.&quot;</span>
+</span><span id="line-265">            <span class="p">)</span>
+</span><span id="line-266">
+</span><span id="line-267">        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">g</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">circuit</span><span class="o">.</span><span class="n">gates</span><span class="p">):</span>
+</span><span id="line-268">            <span class="bp">self</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span></div>
 
-</span><span id="line-264">
+</span><span id="line-269">
 <div class="viewcode-block" id="Circuit.to_matrix">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/circuit/index.html#qilisdk.digital.circuit.Circuit.to_matrix">[docs]</a>
-</span><span id="line-265">    <span class="k">def</span><span class="w"> </span><span class="nf">to_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-</span><span id="line-266"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the full unitary matrix representation of the circuit.</span>
-</span><span id="line-267">
-</span><span id="line-268"><span class="sd">        Raises:</span>
-</span><span id="line-269"><span class="sd">            GateHasNoMatrixError: if any gate does not define a matrix (e.g., measurement).</span>
-</span><span id="line-270"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-271">        <span class="n">dim</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span>
-</span><span id="line-272">        <span class="n">operator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">_complex_dtype</span><span class="p">())</span>
-</span><span id="line-273">        <span class="k">for</span> <span class="n">gate</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">gates</span><span class="p">:</span>
-</span><span id="line-274">            <span class="n">operator</span> <span class="o">=</span> <span class="n">_apply_gate_left</span><span class="p">(</span><span class="n">operator</span><span class="p">,</span> <span class="n">gate</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span><span class="p">)</span>
-</span><span id="line-275">        <span class="k">return</span> <span class="n">operator</span></div>
+</span><span id="line-270">    <span class="k">def</span><span class="w"> </span><span class="nf">to_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+</span><span id="line-271"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the full unitary matrix representation of the circuit.</span>
+</span><span id="line-272">
+</span><span id="line-273"><span class="sd">        Raises:</span>
+</span><span id="line-274"><span class="sd">            GateHasNoMatrixError: if any gate does not define a matrix (e.g., measurement).</span>
+</span><span id="line-275"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-276">        <span class="n">dim</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span>
+</span><span id="line-277">        <span class="n">operator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">_complex_dtype</span><span class="p">())</span>
+</span><span id="line-278">        <span class="k">for</span> <span class="n">gate</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">gates</span><span class="p">:</span>
+</span><span id="line-279">            <span class="n">operator</span> <span class="o">=</span> <span class="n">_apply_gate_left</span><span class="p">(</span><span class="n">operator</span><span class="p">,</span> <span class="n">gate</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span><span class="p">)</span>
+</span><span id="line-280">        <span class="k">return</span> <span class="n">operator</span></div>
 
-</span><span id="line-276">
+</span><span id="line-281">
 <div class="viewcode-block" id="Circuit.to_qtensor">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/circuit/index.html#qilisdk.digital.circuit.Circuit.to_qtensor">[docs]</a>
-</span><span id="line-277">    <span class="k">def</span><span class="w"> </span><span class="nf">to_qtensor</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QTensor</span><span class="p">:</span>
-</span><span id="line-278">        <span class="k">return</span> <span class="n">QTensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">to_matrix</span><span class="p">())</span></div>
+</span><span id="line-282">    <span class="k">def</span><span class="w"> </span><span class="nf">to_qtensor</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QTensor</span><span class="p">:</span>
+</span><span id="line-283">        <span class="k">return</span> <span class="n">QTensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">to_matrix</span><span class="p">())</span></div>
 
-</span><span id="line-279">
-</span><span id="line-280">    <span class="k">def</span><span class="w"> </span><span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Circuit</span> <span class="o">|</span> <span class="n">Gate</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Circuit</span> <span class="o">|</span> <span class="ne">NotImplementedError</span><span class="p">:</span>
-</span><span id="line-281">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="n">Circuit</span><span class="p">,</span> <span class="n">Gate</span><span class="p">)):</span>
-</span><span id="line-282">            <span class="k">return</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-</span><span id="line-283">                <span class="s2">&quot;Addition is only supported between Circuit objects or a Circuit and a Gate objects&quot;</span>
-</span><span id="line-284">            <span class="p">)</span>
-</span><span id="line-285">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Gate</span><span class="p">):</span>
-</span><span id="line-286">            <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
-</span><span id="line-287">        <span class="k">else</span><span class="p">:</span>
-</span><span id="line-288">            <span class="bp">self</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
-</span><span id="line-289">        <span class="k">return</span> <span class="bp">self</span>
-</span><span id="line-290">
-</span><span id="line-291">    <span class="fm">__iadd__</span> <span class="o">=</span> <span class="fm">__add__</span>
-</span><span id="line-292">
-</span><span id="line-293">    <span class="k">def</span><span class="w"> </span><span class="fm">__radd__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Circuit</span> <span class="o">|</span> <span class="n">Gate</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Circuit</span> <span class="o">|</span> <span class="ne">NotImplementedError</span><span class="p">:</span>
-</span><span id="line-294">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="n">Circuit</span><span class="p">,</span> <span class="n">Gate</span><span class="p">)):</span>
-</span><span id="line-295">            <span class="k">return</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-</span><span id="line-296">                <span class="s2">&quot;Addition is only supported between Circuit objects or a Circuit and a Gate objects&quot;</span>
-</span><span id="line-297">            <span class="p">)</span>
-</span><span id="line-298">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Gate</span><span class="p">):</span>
-</span><span id="line-299">            <span class="bp">self</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-</span><span id="line-300">        <span class="k">else</span><span class="p">:</span>
-</span><span id="line-301">            <span class="bp">self</span><span class="o">.</span><span class="n">prepend</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
-</span><span id="line-302">        <span class="k">return</span> <span class="bp">self</span>
-</span><span id="line-303">
-</span><span id="line-304">    <span class="k">def</span><span class="w"> </span><span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-</span><span id="line-305">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Circuit</span><span class="p">):</span>
-</span><span id="line-306">            <span class="k">return</span> <span class="bp">NotImplemented</span>
-</span><span id="line-307">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span> <span class="o">!=</span> <span class="n">other</span><span class="o">.</span><span class="n">nqubits</span><span class="p">:</span>
-</span><span id="line-308">            <span class="k">return</span> <span class="kc">False</span>
-</span><span id="line-309">        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gates</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">gates</span><span class="p">):</span>
-</span><span id="line-310">            <span class="k">return</span> <span class="kc">False</span>
-</span><span id="line-311">        <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="n">g1</span> <span class="o">==</span> <span class="n">g2</span> <span class="k">for</span> <span class="n">g1</span><span class="p">,</span> <span class="n">g2</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gates</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">gates</span><span class="p">))</span>
-</span><span id="line-312">
-</span><span id="line-313">    <span class="k">def</span><span class="w"> </span><span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-</span><span id="line-314">        <span class="k">return</span> <span class="n">qili_hash</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gates</span><span class="p">)))</span>
-</span><span id="line-315">
+</span><span id="line-284">
+</span><span id="line-285">    <span class="k">def</span><span class="w"> </span><span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Circuit</span> <span class="o">|</span> <span class="n">Gate</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Circuit</span> <span class="o">|</span> <span class="ne">NotImplementedError</span><span class="p">:</span>
+</span><span id="line-286">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="n">Circuit</span><span class="p">,</span> <span class="n">Gate</span><span class="p">)):</span>
+</span><span id="line-287">            <span class="k">return</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+</span><span id="line-288">                <span class="s2">&quot;Addition is only supported between Circuit objects or a Circuit and a Gate objects&quot;</span>
+</span><span id="line-289">            <span class="p">)</span>
+</span><span id="line-290">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Gate</span><span class="p">):</span>
+</span><span id="line-291">            <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+</span><span id="line-292">        <span class="k">else</span><span class="p">:</span>
+</span><span id="line-293">            <span class="bp">self</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+</span><span id="line-294">        <span class="k">return</span> <span class="bp">self</span>
+</span><span id="line-295">
+</span><span id="line-296">    <span class="fm">__iadd__</span> <span class="o">=</span> <span class="fm">__add__</span>
+</span><span id="line-297">
+</span><span id="line-298">    <span class="k">def</span><span class="w"> </span><span class="fm">__radd__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Circuit</span> <span class="o">|</span> <span class="n">Gate</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Circuit</span> <span class="o">|</span> <span class="ne">NotImplementedError</span><span class="p">:</span>
+</span><span id="line-299">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="n">Circuit</span><span class="p">,</span> <span class="n">Gate</span><span class="p">)):</span>
+</span><span id="line-300">            <span class="k">return</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+</span><span id="line-301">                <span class="s2">&quot;Addition is only supported between Circuit objects or a Circuit and a Gate objects&quot;</span>
+</span><span id="line-302">            <span class="p">)</span>
+</span><span id="line-303">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Gate</span><span class="p">):</span>
+</span><span id="line-304">            <span class="bp">self</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+</span><span id="line-305">        <span class="k">else</span><span class="p">:</span>
+</span><span id="line-306">            <span class="bp">self</span><span class="o">.</span><span class="n">prepend</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+</span><span id="line-307">        <span class="k">return</span> <span class="bp">self</span>
+</span><span id="line-308">
+</span><span id="line-309">    <span class="k">def</span><span class="w"> </span><span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+</span><span id="line-310">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Circuit</span><span class="p">):</span>
+</span><span id="line-311">            <span class="k">return</span> <span class="bp">NotImplemented</span>
+</span><span id="line-312">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span> <span class="o">!=</span> <span class="n">other</span><span class="o">.</span><span class="n">nqubits</span><span class="p">:</span>
+</span><span id="line-313">            <span class="k">return</span> <span class="kc">False</span>
+</span><span id="line-314">        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gates</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">gates</span><span class="p">):</span>
+</span><span id="line-315">            <span class="k">return</span> <span class="kc">False</span>
+</span><span id="line-316">        <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="n">g1</span> <span class="o">==</span> <span class="n">g2</span> <span class="k">for</span> <span class="n">g1</span><span class="p">,</span> <span class="n">g2</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gates</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">gates</span><span class="p">))</span>
+</span><span id="line-317">
+</span><span id="line-318">    <span class="k">def</span><span class="w"> </span><span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+</span><span id="line-319">        <span class="k">return</span> <span class="n">qili_hash</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gates</span><span class="p">)))</span>
+</span><span id="line-320">
 <div class="viewcode-block" id="Circuit.draw">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/circuit/index.html#qilisdk.digital.circuit.Circuit.draw">[docs]</a>
-</span><span id="line-316">    <span class="k">def</span><span class="w"> </span><span class="nf">draw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">style</span><span class="p">:</span> <span class="n">CircuitStyle</span> <span class="o">=</span> <span class="n">CircuitStyle</span><span class="p">(),</span> <span class="n">filepath</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-317"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-318"><span class="sd">        Render this circuit with Matplotlib and optionally save it to a file.</span>
-</span><span id="line-319">
-</span><span id="line-320"><span class="sd">        The circuit is rendered using the provided style configuration. If ``filepath`` is</span>
-</span><span id="line-321"><span class="sd">        given, the resulting figure is saved to disk (the output format is inferred</span>
-</span><span id="line-322"><span class="sd">        from the file extension, e.g. ``.png``, ``.pdf``, ``.svg``).</span>
-</span><span id="line-323">
-</span><span id="line-324"><span class="sd">        Args:</span>
-</span><span id="line-325"><span class="sd">            style (CircuitStyle): Visual style configuration applied to the plot.</span>
-</span><span id="line-326"><span class="sd">                If not provided, the default :class:`CircuitStyle` is used.</span>
-</span><span id="line-327"><span class="sd">            filepath (str | None): Destination file path for the rendered figure.</span>
-</span><span id="line-328"><span class="sd">                If ``None``, the figure is not saved.</span>
-</span><span id="line-329"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-330">        <span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.utils.visualization.circuit_renderers</span><span class="w"> </span><span class="kn">import</span> <span class="n">MatplotlibCircuitRenderer</span>  <span class="c1"># noqa: PLC0415</span>
-</span><span id="line-331">
-</span><span id="line-332">        <span class="n">renderer</span> <span class="o">=</span> <span class="n">MatplotlibCircuitRenderer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="n">style</span><span class="p">)</span>
-</span><span id="line-333">        <span class="n">renderer</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
-</span><span id="line-334">        <span class="k">if</span> <span class="n">filepath</span><span class="p">:</span>
-</span><span id="line-335">            <span class="n">renderer</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span></div>
-
+</span><span id="line-321">    <span class="k">def</span><span class="w"> </span><span class="nf">draw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">style</span><span class="p">:</span> <span class="n">CircuitStyle</span> <span class="o">=</span> <span class="n">CircuitStyle</span><span class="p">(),</span> <span class="n">filepath</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-322"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-323"><span class="sd">        Render this circuit with Matplotlib and optionally save it to a file.</span>
+</span><span id="line-324">
+</span><span id="line-325"><span class="sd">        The circuit is rendered using the provided style configuration. If ``filepath`` is</span>
+</span><span id="line-326"><span class="sd">        given, the resulting figure is saved to disk (the output format is inferred</span>
+</span><span id="line-327"><span class="sd">        from the file extension, e.g. ``.png``, ``.pdf``, ``.svg``).</span>
+</span><span id="line-328">
+</span><span id="line-329"><span class="sd">        Args:</span>
+</span><span id="line-330"><span class="sd">            style (CircuitStyle): Visual style configuration applied to the plot.</span>
+</span><span id="line-331"><span class="sd">                If not provided, the default :class:`CircuitStyle` is used.</span>
+</span><span id="line-332"><span class="sd">            filepath (str | None): Destination file path for the rendered figure.</span>
+</span><span id="line-333"><span class="sd">                If ``None``, the figure is not saved.</span>
+</span><span id="line-334"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-335">        <span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.utils.visualization.circuit_renderers</span><span class="w"> </span><span class="kn">import</span> <span class="n">MatplotlibCircuitRenderer</span>  <span class="c1"># noqa: PLC0415</span>
 </span><span id="line-336">
-</span><span id="line-337">    <span class="nd">@classmethod</span>
+</span><span id="line-337">        <span class="n">renderer</span> <span class="o">=</span> <span class="n">MatplotlibCircuitRenderer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="n">style</span><span class="p">)</span>
+</span><span id="line-338">        <span class="n">renderer</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
+</span><span id="line-339">        <span class="k">if</span> <span class="n">filepath</span><span class="p">:</span>
+</span><span id="line-340">            <span class="n">renderer</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span></div>
+
+</span><span id="line-341">
+</span><span id="line-342">    <span class="nd">@classmethod</span>
 <div class="viewcode-block" id="Circuit.random">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/circuit/index.html#qilisdk.digital.circuit.Circuit.random">[docs]</a>
-</span><span id="line-338">    <span class="k">def</span><span class="w"> </span><span class="nf">random</span><span class="p">(</span>
-</span><span id="line-339">        <span class="bp">cls</span><span class="p">,</span> <span class="n">nqubits</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">single_qubit_gates</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">BasicGate</span><span class="p">]],</span> <span class="n">two_qubit_gates</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">BasicGate</span><span class="p">]],</span> <span class="n">ngates</span><span class="p">:</span> <span class="nb">int</span>
-</span><span id="line-340">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
-</span><span id="line-341"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-342"><span class="sd">        Generate a random quantum circuit from a given set of gates.</span>
-</span><span id="line-343">
-</span><span id="line-344"><span class="sd">        Args:</span>
-</span><span id="line-345"><span class="sd">            nqubits (int): The number of qubits in the circuit.</span>
-</span><span id="line-346"><span class="sd">            single_qubit_gates (set[Gate]): A set of single-qubit gate classes to choose from.</span>
-</span><span id="line-347"><span class="sd">            two_qubit_gates (set[Gate]): A set of two-qubit gate classes to choose from.</span>
-</span><span id="line-348"><span class="sd">            ngates (int): The number of gates to include in the circuit.</span>
-</span><span id="line-349">
-</span><span id="line-350"><span class="sd">        Returns:</span>
-</span><span id="line-351"><span class="sd">            Circuit: A randomly generated quantum circuit.</span>
-</span><span id="line-352">
-</span><span id="line-353"><span class="sd">        Raises:</span>
-</span><span id="line-354"><span class="sd">            ValueError: If it is not possible to generate a full random circuit with the provided parameters</span>
-</span><span id="line-355">
-</span><span id="line-356"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-343">    <span class="k">def</span><span class="w"> </span><span class="nf">random</span><span class="p">(</span>
+</span><span id="line-344">        <span class="bp">cls</span><span class="p">,</span> <span class="n">nqubits</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">single_qubit_gates</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">BasicGate</span><span class="p">]],</span> <span class="n">two_qubit_gates</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">BasicGate</span><span class="p">]],</span> <span class="n">ngates</span><span class="p">:</span> <span class="nb">int</span>
+</span><span id="line-345">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
+</span><span id="line-346"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-347"><span class="sd">        Generate a random quantum circuit from a given set of gates.</span>
+</span><span id="line-348">
+</span><span id="line-349"><span class="sd">        Args:</span>
+</span><span id="line-350"><span class="sd">            nqubits (int): The number of qubits in the circuit.</span>
+</span><span id="line-351"><span class="sd">            single_qubit_gates (set[Gate]): A set of single-qubit gate classes to choose from.</span>
+</span><span id="line-352"><span class="sd">            two_qubit_gates (set[Gate]): A set of two-qubit gate classes to choose from.</span>
+</span><span id="line-353"><span class="sd">            ngates (int): The number of gates to include in the circuit.</span>
+</span><span id="line-354">
+</span><span id="line-355"><span class="sd">        Returns:</span>
+</span><span id="line-356"><span class="sd">            Circuit: A randomly generated quantum circuit.</span>
 </span><span id="line-357">
-</span><span id="line-358">        <span class="c1"># If we only have one gate and one qubit, throw an error</span>
-</span><span id="line-359">        <span class="k">if</span> <span class="n">nqubits</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">single_qubit_gates</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-</span><span id="line-360">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Cannot generate a full random circuit with only one qubit and one gate.&quot;</span><span class="p">)</span>
-</span><span id="line-361">
-</span><span id="line-362">        <span class="c1"># Make sure we have given gates</span>
-</span><span id="line-363">        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">single_qubit_gates</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">two_qubit_gates</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-</span><span id="line-364">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;At least one gate must be provided to generate a random circuit.&quot;</span><span class="p">)</span>
-</span><span id="line-365">
-</span><span id="line-366">        <span class="n">new_circuit</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">nqubits</span><span class="p">)</span>
-</span><span id="line-367">        <span class="n">gate_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">BasicGate</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">single_qubit_gates</span><span class="p">)</span>
-</span><span id="line-368">        <span class="k">if</span> <span class="n">nqubits</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-</span><span id="line-369">            <span class="n">gate_list</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">two_qubit_gates</span><span class="p">))</span>
-</span><span id="line-370">        <span class="n">prev_gate_type</span> <span class="o">=</span> <span class="kc">None</span>
-</span><span id="line-371">        <span class="n">prev_qubits</span> <span class="o">=</span> <span class="kc">None</span>
-</span><span id="line-372">        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ngates</span><span class="p">):</span>
-</span><span id="line-373">            <span class="n">gate_class</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">gate_list</span><span class="p">)</span>
-</span><span id="line-374">            <span class="n">gate_nqubits</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">gate_class</span> <span class="ow">in</span> <span class="n">single_qubit_gates</span> <span class="k">else</span> <span class="mi">2</span>
-</span><span id="line-375">            <span class="n">qubits</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">nqubits</span><span class="p">),</span> <span class="n">gate_nqubits</span><span class="p">))</span>
-</span><span id="line-376">
-</span><span id="line-377">            <span class="c1"># Avoid adding the same gate on the same qubits consecutively</span>
-</span><span id="line-378">            <span class="k">if</span> <span class="n">gate_class</span> <span class="o">==</span> <span class="n">prev_gate_type</span> <span class="ow">and</span> <span class="n">qubits</span> <span class="o">==</span> <span class="n">prev_qubits</span><span class="p">:</span>
-</span><span id="line-379">                <span class="c1"># If we only have one qubit, pick a different gate</span>
-</span><span id="line-380">                <span class="k">if</span> <span class="n">nqubits</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-</span><span id="line-381">                    <span class="n">possible_new_gates</span> <span class="o">=</span> <span class="p">[</span><span class="n">g</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">single_qubit_gates</span> <span class="k">if</span> <span class="n">g</span> <span class="o">!=</span> <span class="n">gate_class</span><span class="p">]</span>
-</span><span id="line-382">                    <span class="n">gate_class</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">possible_new_gates</span><span class="p">)</span>
-</span><span id="line-383">
-</span><span id="line-384">                <span class="c1"># If the gate list does not include all qubits, change the first to be a different qubit</span>
-</span><span id="line-385">                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">qubits</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">nqubits</span><span class="p">:</span>
-</span><span id="line-386">                    <span class="n">possible_new_qubits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">q</span> <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nqubits</span><span class="p">)</span> <span class="k">if</span> <span class="n">q</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">qubits</span><span class="p">]</span>
-</span><span id="line-387">                    <span class="n">new_qubit</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">possible_new_qubits</span><span class="p">)</span>
-</span><span id="line-388">                    <span class="n">qubits</span> <span class="o">=</span> <span class="p">(</span><span class="n">new_qubit</span><span class="p">,</span> <span class="o">*</span><span class="n">qubits</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
-</span><span id="line-389">
-</span><span id="line-390">                <span class="c1"># Otherwise, flip the order of the qubits</span>
-</span><span id="line-391">                <span class="k">else</span><span class="p">:</span>
-</span><span id="line-392">                    <span class="n">qubits</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">qubits</span><span class="p">))</span>
-</span><span id="line-393">
-</span><span id="line-394">            <span class="c1"># Update previous gate info</span>
-</span><span id="line-395">            <span class="n">prev_gate_type</span> <span class="o">=</span> <span class="n">gate_class</span>
-</span><span id="line-396">            <span class="n">prev_qubits</span> <span class="o">=</span> <span class="n">qubits</span>
-</span><span id="line-397">
-</span><span id="line-398">            <span class="c1"># Generate random parameters if needed</span>
-</span><span id="line-399">            <span class="n">params</span> <span class="o">=</span> <span class="p">{}</span>
-</span><span id="line-400">            <span class="k">if</span> <span class="n">gate_class</span><span class="o">.</span><span class="n">PARAMETER_NAMES</span><span class="p">:</span>
-</span><span id="line-401">                <span class="k">for</span> <span class="n">param_name</span> <span class="ow">in</span> <span class="n">gate_class</span><span class="o">.</span><span class="n">PARAMETER_NAMES</span><span class="p">:</span>
-</span><span id="line-402">                    <span class="n">val</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
-</span><span id="line-403">                    <span class="n">params</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">Parameter</span><span class="p">(</span>
-</span><span id="line-404">                        <span class="n">label</span><span class="o">=</span><span class="n">param_name</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">val</span><span class="p">),</span> <span class="n">value</span><span class="o">=</span><span class="n">val</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">Domain</span><span class="o">.</span><span class="n">REAL</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
-</span><span id="line-405">                    <span class="p">)</span>
-</span><span id="line-406">
-</span><span id="line-407">            <span class="c1"># Add the gate to the circuit</span>
-</span><span id="line-408">            <span class="n">new_circuit</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">gate_class</span><span class="p">(</span><span class="o">*</span><span class="n">qubits</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">))</span>  <span class="c1"># ty:ignore[invalid-argument-type]</span>
-</span><span id="line-409">
-</span><span id="line-410">        <span class="k">return</span> <span class="n">new_circuit</span></div>
-
+</span><span id="line-358"><span class="sd">        Raises:</span>
+</span><span id="line-359"><span class="sd">            ValueError: If it is not possible to generate a full random circuit with the provided parameters</span>
+</span><span id="line-360">
+</span><span id="line-361"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-362">
+</span><span id="line-363">        <span class="c1"># If we only have one gate and one qubit, throw an error</span>
+</span><span id="line-364">        <span class="k">if</span> <span class="n">nqubits</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">single_qubit_gates</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+</span><span id="line-365">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Cannot generate a full random circuit with only one qubit and one gate.&quot;</span><span class="p">)</span>
+</span><span id="line-366">
+</span><span id="line-367">        <span class="c1"># Make sure we have given gates</span>
+</span><span id="line-368">        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">single_qubit_gates</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">two_qubit_gates</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+</span><span id="line-369">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;At least one gate must be provided to generate a random circuit.&quot;</span><span class="p">)</span>
+</span><span id="line-370">
+</span><span id="line-371">        <span class="n">new_circuit</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">nqubits</span><span class="p">)</span>
+</span><span id="line-372">        <span class="n">gate_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">BasicGate</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">single_qubit_gates</span><span class="p">)</span>
+</span><span id="line-373">        <span class="k">if</span> <span class="n">nqubits</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+</span><span id="line-374">            <span class="n">gate_list</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">two_qubit_gates</span><span class="p">))</span>
+</span><span id="line-375">        <span class="n">prev_gate_type</span> <span class="o">=</span> <span class="kc">None</span>
+</span><span id="line-376">        <span class="n">prev_qubits</span> <span class="o">=</span> <span class="kc">None</span>
+</span><span id="line-377">        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ngates</span><span class="p">):</span>
+</span><span id="line-378">            <span class="n">gate_class</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">gate_list</span><span class="p">)</span>
+</span><span id="line-379">            <span class="n">gate_nqubits</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">gate_class</span> <span class="ow">in</span> <span class="n">single_qubit_gates</span> <span class="k">else</span> <span class="mi">2</span>
+</span><span id="line-380">            <span class="n">qubits</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">nqubits</span><span class="p">),</span> <span class="n">gate_nqubits</span><span class="p">))</span>
+</span><span id="line-381">
+</span><span id="line-382">            <span class="c1"># Avoid adding the same gate on the same qubits consecutively</span>
+</span><span id="line-383">            <span class="k">if</span> <span class="n">gate_class</span> <span class="o">==</span> <span class="n">prev_gate_type</span> <span class="ow">and</span> <span class="n">qubits</span> <span class="o">==</span> <span class="n">prev_qubits</span><span class="p">:</span>
+</span><span id="line-384">                <span class="c1"># If we only have one qubit, pick a different gate</span>
+</span><span id="line-385">                <span class="k">if</span> <span class="n">nqubits</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+</span><span id="line-386">                    <span class="n">possible_new_gates</span> <span class="o">=</span> <span class="p">[</span><span class="n">g</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">single_qubit_gates</span> <span class="k">if</span> <span class="n">g</span> <span class="o">!=</span> <span class="n">gate_class</span><span class="p">]</span>
+</span><span id="line-387">                    <span class="n">gate_class</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">possible_new_gates</span><span class="p">)</span>
+</span><span id="line-388">
+</span><span id="line-389">                <span class="c1"># If the gate list does not include all qubits, change the first to be a different qubit</span>
+</span><span id="line-390">                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">qubits</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">nqubits</span><span class="p">:</span>
+</span><span id="line-391">                    <span class="n">possible_new_qubits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">q</span> <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nqubits</span><span class="p">)</span> <span class="k">if</span> <span class="n">q</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">qubits</span><span class="p">]</span>
+</span><span id="line-392">                    <span class="n">new_qubit</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">possible_new_qubits</span><span class="p">)</span>
+</span><span id="line-393">                    <span class="n">qubits</span> <span class="o">=</span> <span class="p">(</span><span class="n">new_qubit</span><span class="p">,</span> <span class="o">*</span><span class="n">qubits</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+</span><span id="line-394">
+</span><span id="line-395">                <span class="c1"># Otherwise, flip the order of the qubits</span>
+</span><span id="line-396">                <span class="k">else</span><span class="p">:</span>
+</span><span id="line-397">                    <span class="n">qubits</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">qubits</span><span class="p">))</span>
+</span><span id="line-398">
+</span><span id="line-399">            <span class="c1"># Update previous gate info</span>
+</span><span id="line-400">            <span class="n">prev_gate_type</span> <span class="o">=</span> <span class="n">gate_class</span>
+</span><span id="line-401">            <span class="n">prev_qubits</span> <span class="o">=</span> <span class="n">qubits</span>
+</span><span id="line-402">
+</span><span id="line-403">            <span class="c1"># Generate random parameters if needed</span>
+</span><span id="line-404">            <span class="n">params</span> <span class="o">=</span> <span class="p">{}</span>
+</span><span id="line-405">            <span class="k">if</span> <span class="n">gate_class</span><span class="o">.</span><span class="n">PARAMETER_NAMES</span><span class="p">:</span>
+</span><span id="line-406">                <span class="k">for</span> <span class="n">param_name</span> <span class="ow">in</span> <span class="n">gate_class</span><span class="o">.</span><span class="n">PARAMETER_NAMES</span><span class="p">:</span>
+</span><span id="line-407">                    <span class="n">val</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+</span><span id="line-408">                    <span class="n">params</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">Parameter</span><span class="p">(</span>
+</span><span id="line-409">                        <span class="n">label</span><span class="o">=</span><span class="n">param_name</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">val</span><span class="p">),</span> <span class="n">value</span><span class="o">=</span><span class="n">val</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">Domain</span><span class="o">.</span><span class="n">REAL</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
+</span><span id="line-410">                    <span class="p">)</span>
 </span><span id="line-411">
-</span><span id="line-412">    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="line-413">        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Circuit(nqubits=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span><span class="si">}</span><span class="s2">, gates=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">gates</span><span class="si">}</span><span class="s2">)&quot;</span></div>
+</span><span id="line-412">            <span class="c1"># Add the gate to the circuit</span>
+</span><span id="line-413">            <span class="n">new_circuit</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">gate_class</span><span class="p">(</span><span class="o">*</span><span class="n">qubits</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">))</span>  <span class="c1"># ty:ignore[invalid-argument-type]</span>
+</span><span id="line-414">
+</span><span id="line-415">        <span class="k">return</span> <span class="n">new_circuit</span></div>
+
+</span><span id="line-416">
+</span><span id="line-417">    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="line-418">        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Circuit(nqubits=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span><span class="si">}</span><span class="s2">, gates=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">gates</span><span class="si">}</span><span class="s2">)&quot;</span></div>
 
 </span></code></pre></div>
     </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">
@@ -889,7 +897,7 @@
     <script src="../../../_static/documentation_options.js?v=7f41d439"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script defer="defer" src="../../../_static/theme.js?v=582b20c5"></script>
+    <script defer="defer" src="../../../_static/theme.js?v=d6a9845b"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     

@@ -25,16 +25,16 @@
 <meta content="qilisdk.utils.serialization | QiliSDK" property="og:title"/>
 <meta content="qilisdk.utils.serialization | QiliSDK" name="twitter:title"/>
 <link href="../../../../../_static/pygments.css?v=652ce3ed" rel="stylesheet" type="text/css"/>
-<link href="../../../../../_static/theme.css?v=73505e79" rel="stylesheet" type="text/css"/>
+<link href="../../../../../_static/theme.css?v=979577e3" rel="stylesheet" type="text/css"/>
 <link href="../../../../../_static/graphviz.css?v=4ae1632d" rel="stylesheet" type="text/css"/>
 <link href="../../../../../_static/sphinx-design.min.css?v=95c83b7e" rel="stylesheet" type="text/css"/>
-<link href="../../../../../_static/custom.css?v=0828450c" rel="stylesheet" type="text/css"/>
-<link href="../../../../../_static/awesome-sphinx-design.css?v=c54898a4" rel="stylesheet" type="text/css"/>
+<link href="../../../../../_static/custom.css?v=7f555f8f" rel="stylesheet" type="text/css"/>
+<link href="../../../../../_static/awesome-sphinx-design.css?v=b1d4564d" rel="stylesheet" type="text/css"/>
 <link href="../../../../../_static/q_trans.png" rel="icon"/>
 <link href="../../../../../search.html" rel="search" title="Cerca"/>
 <link href="../../../../../genindex.html" rel="index" title="Índex"/>
 <link href="../trotterization/index.html" rel="next" title="qilisdk.utils.trotterization"/>
-<link href="../openqasm3/index.html" rel="prev" title="qilisdk.utils.openqasm3"/>
+<link href="../qir/qir/index.html" rel="prev" title="qilisdk.utils.qir.qir"/>
 </head>
 <body :class="{ 'overflow-hidden': showSidebar }" class="min-h-screen font-sans antialiased bg-background text-foreground" x-data="{ showSidebar: false, showScrollTop: false }">
 <div @click.self="showSidebar = false" class="fixed inset-0 z-50 overflow-hidden bg-background/80 backdrop-blur-sm md:hidden" x-cloak="" x-show="showSidebar"></div><div class="relative flex flex-col min-h-screen" id="page"><a class="absolute top-0 left-0 z-[100] block bg-background p-4 text-xl transition -translate-x-full opacity-0 focus:translate-x-0 focus:opacity-100" href="#content">
@@ -114,6 +114,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../../../modules/core/core_variables_parameters.html">Variables i paràmetres</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../../../modules/core/core_terms_maps_comparisons.html">Termes, mapes i comparacions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../../../modules/core/core_model.html">Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../modules/core/core_lp_parser.html">Linear Programming File Parser and Serializer</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../../../modules/core/core_qubo.html">QUBO</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../../../modules/core/core_qtensor.html">QTensor</a></li>
 </ul>
@@ -126,6 +127,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../../../modules/digital/digital_hardware.html">HardwareEfficientAnsatz</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../../../modules/digital/digital_qaoa.html">QAOA</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../../../modules/digital/digital_trotter.html">TrotterizedSchedule</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../modules/digital/digital_qir.html">QIR Import and Export</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../../../../modules/analog/analog.html">Analog<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
@@ -273,9 +275,10 @@
 </li>
 <li class="toctree-l3 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../index.html">qilisdk.utils<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul class="current" x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="../hashing/index.html">qilisdk.utils.hashing</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lp_parser/index.html">qilisdk.utils.lp_parser</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../openfermion/index.html">qilisdk.utils.openfermion</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../openqasm2/index.html">qilisdk.utils.openqasm2</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../openqasm3/index.html">qilisdk.utils.openqasm3</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../openqasm/index.html">qilisdk.utils.openqasm</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../qir/index.html">qilisdk.utils.qir</a></li>
 <li class="toctree-l4 current"><a class="current reference internal" href="#">qilisdk.utils.serialization</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../trotterization/index.html">qilisdk.utils.trotterization</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../visualization/index.html">qilisdk.utils.visualization</a></li>
@@ -489,11 +492,11 @@
 </section>
 </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">
 <div class="mr-auto">
-<a class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input hover:bg-accent hover:text-accent-foreground py-2 px-4" href="../openqasm3/index.html">
+<a class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input hover:bg-accent hover:text-accent-foreground py-2 px-4" href="../qir/qir/index.html">
 <svg class="mr-2 h-4 w-4" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
 <polyline points="15 18 9 12 15 6"></polyline>
 </svg>
-        qilisdk.utils.openqasm3
+        qilisdk.utils.qir.qir
       </a>
 </div>
 <div class="ml-auto">
@@ -536,7 +539,7 @@
 <script src="../../../../../_static/documentation_options.js?v=62dba230"></script>
 <script src="../../../../../_static/doctools.js?v=9bcbadda"></script>
 <script src="../../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
-<script defer="defer" src="../../../../../_static/theme.js?v=582b20c5"></script>
+<script defer="defer" src="../../../../../_static/theme.js?v=d6a9845b"></script>
 <script src="../../../../../_static/translations.js?v=5e30842e"></script>
 <script src="../../../../../_static/design-tabs.js?v=f930bc37"></script>
 <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>

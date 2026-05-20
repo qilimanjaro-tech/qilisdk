@@ -116,3 +116,18 @@ code, pre {
 .dark .highlight {
   background-color: transparent;
 }
+
+.sphinx-tabs-tab, .sphinx-tabs-panel {
+  background-color: var(--inline-code-bg);
+  color: var(--inline-code-text);
+}
+
+.sphinx-tabs-tab[aria-selected="true"] {
+  background-color: var(--inline-code-bg);
+  color: var(--inline-code-text);
+  border: 1px solid #a0b3bf;
+}
+
+.sphinx-tabs {
+  margin-top: 1em;
+}
