@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-17 14:50+0200\n"
+"POT-Creation-Date: 2026-05-20 15:11+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -28,9 +28,9 @@ msgid ""
 "QiliSDK and its optional extras are distributed via PyPI. Use pip to "
 "install the core package, plus any extra modules you need."
 msgstr ""
-"QiliSDK y sus extras opcionales se distribuyen a través de PyPI. Use pip"
-" para instalar el paquete principal, más cualquier módulo adicional que"
-" necesite."
+"QiliSDK y sus extras opcionales se distribuyen a través de PyPI. Use pip "
+"para instalar el paquete principal, más cualquier módulo adicional que "
+"necesite."
 
 #: ../../getting_started/installation.rst:6
 msgid "**Base package**"
@@ -55,9 +55,9 @@ msgid ""
 "on their official website: https://nvidia.github.io/cuda-"
 "quantum/latest/using/quick_start.html#install-cuda-q"
 msgstr ""
-"El backend CUDA requiere una GPU con aceleración CUDA disponible en su"
-" sistema y los controladores adecuados instalados. Puede encontrar más"
-" información en su sitio web oficial: https://nvidia.github.io/cuda-"
+"El backend CUDA requiere una GPU con aceleración CUDA disponible en su "
+"sistema y los controladores adecuados instalados. Puede encontrar más "
+"información en su sitio web oficial: https://nvidia.github.io/cuda-"
 "quantum/latest/using/quick_start.html#install-cuda-q"
 
 #: ../../getting_started/installation.rst:24
@@ -108,60 +108,100 @@ msgid ""
 "aware that this is not recommended for most users, and we make no "
 "promises that the latest code will be stable."
 msgstr ""
-"El método anterior instalará los binarios precompilados de QiliSDK de la"
-" versión más reciente. Si desea obtener las características más nuevas"
-" (aquellas en las que aún estamos trabajando), puede compilar la biblioteca"
-" desde el código fuente, pero tenga en cuenta que esto no se recomienda"
-" para la mayoría de los usuarios, y no garantizamos que el código más"
-" reciente sea estable."
+"El método anterior instalará los binarios precompilados de QiliSDK de la "
+"versión más reciente. Si desea obtener las características más nuevas "
+"(aquellas en las que aún estamos trabajando), puede compilar la "
+"biblioteca desde el código fuente, pero tenga en cuenta que esto no se "
+"recomienda para la mayoría de los usuarios, y no garantizamos que el "
+"código más reciente sea estable."
 
 #: ../../getting_started/installation.rst:58
 msgid ""
 "Support for Windows is limited, so we recommend using WSL, which can be "
 "installed as per `this guide <https://learn.microsoft.com/en-"
-"us/windows/wsl/install>`__."
+"us/windows/wsl/install>`__. With this you should then following the Linux"
+" instructions below. If you must use pure Windows, the Windows "
+"instructions below should work, although they disable certain code "
+"features (notably some parallelized loops)."
 msgstr ""
-"El soporte para Windows es limitado, por lo que recomendamos usar WSL,"
-" que se puede instalar según `esta guía <https://learn.microsoft.com/en-"
-"us/windows/wsl/install>`__."
+"El soporte para Windows es limitado, por lo que recomendamos usar WSL, "
+"que se puede instalar según `esta guía <https://learn.microsoft.com/en-"
+"us/windows/wsl/install>`__. Con esto, debería seguir las instrucciones de"
+" Linux a continuación. Si debe usar Windows puro, las instrucciones de "
+"Windows a continuación deberían funcionar, aunque deshabilitan ciertas "
+"funciones del código (especialmente algunos bucles paralelizados)."
 
-#: ../../getting_started/installation.rst:61
+#: ../../getting_started/installation.rst:63
 msgid ""
-"First, make sure you have a Python, pip, git, and build-essentials "
-"installed. For Ubuntu/Debian, you can run:"
+"First, make sure you have Python, pip, git, cmake and a C++ compiler "
+"installed:"
 msgstr ""
-"Primero, asegúrese de tener instalados Python, pip, git y build-essentials."
-" Para Ubuntu/Debian, puede ejecutar:"
+"Primero, asegúrese de tener instalados Python, pip, git, cmake y un "
+"compilador de C++:"
 
-#: ../../getting_started/installation.rst:68
-msgid "or on MacOS with:"
-msgstr "o en MacOS con:"
+#: ../../getting_started/installation.rst:67
+#: ../../getting_started/installation.rst:93
+#: ../../getting_started/installation.rst:128
+msgid "Linux"
+msgstr "Linux"
 
-#: ../../getting_started/installation.rst:75
+#: ../../getting_started/installation.rst:74
+#: ../../getting_started/installation.rst:99
+#: ../../getting_started/installation.rst:134
+msgid "Mac OSX"
+msgstr "Mac OSX"
+
+#: ../../getting_started/installation.rst:81
+#: ../../getting_started/installation.rst:105
+#: ../../getting_started/installation.rst:140
+msgid "Windows"
+msgstr "Windows"
+
+#: ../../getting_started/installation.rst:83
+msgid "Install Python via the Microsoft Store."
+msgstr "Instale Python a través de la Microsoft Store."
+
+#: ../../getting_started/installation.rst:85
+msgid "Install Git via https://git-scm.com/install/windows."
+msgstr "Instale Git desde https://git-scm.com/install/windows."
+
+#: ../../getting_started/installation.rst:87
+msgid ""
+"Install C++ build tools by installing the \"C/C++ Extension Pack\" "
+"extension for VSCode."
+msgstr ""
+"Instale las herramientas de compilación de C++ instalando la extensión "
+"\"C/C++ Extension Pack\" para VSCode."
+
+#: ../../getting_started/installation.rst:89
 msgid "Install uv globally with:"
 msgstr "Instale uv globalmente con:"
 
-#: ../../getting_started/installation.rst:81
+#: ../../getting_started/installation.rst:111
 msgid "Then, clone (i.e. download) and enter the repository:"
 msgstr "Luego, clone (es decir, descargue) y acceda al repositorio:"
 
-#: ../../getting_started/installation.rst:88
-msgid "Create a new virtual environment using uv and activate it:"
-msgstr "Cree un nuevo entorno virtual usando uv y actívelo:"
+#: ../../getting_started/installation.rst:118
+msgid "Create a new virtual environment using uv:"
+msgstr "Cree un nuevo entorno virtual usando uv:"
 
-#: ../../getting_started/installation.rst:95
+#: ../../getting_started/installation.rst:124
+msgid "Then activate the environment:"
+msgstr "Luego active el entorno:"
+
+#: ../../getting_started/installation.rst:148
 msgid "To then install QiliSDK into this new environment, run:"
 msgstr "Para instalar QiliSDK en este nuevo entorno, ejecute:"
 
-#: ../../getting_started/installation.rst:101
+#: ../../getting_started/installation.rst:154
 msgid ""
 "If you want to install with extras, you can run the following, adjusting "
 "as needed:"
 msgstr ""
-"Si desea instalar con extras, puede ejecutar lo siguiente, ajustando según"
-" sea necesario:"
+"Si desea instalar con extras, puede ejecutar lo siguiente, ajustando "
+"según sea necesario:"
 
-#: ../../getting_started/installation.rst:107
+#: ../../getting_started/installation.rst:160
 msgid ""
 "You then have an environment with the latest version of QiliSDK "
 "installed. If you want to install other things to the environment you'll "
@@ -170,7 +210,7 @@ msgstr ""
 "Entonces tendrá un entorno con la última versión de QiliSDK instalada. Si"
 " desea instalar otras cosas en el entorno, necesitará usar pip con uv:"
 
-#: ../../getting_started/installation.rst:114
+#: ../../getting_started/installation.rst:167
 msgid "And then to run a Python script within the environment, you can use:"
 msgstr "Y para ejecutar un script de Python dentro del entorno, puede usar:"
 
@@ -188,3 +228,19 @@ msgstr "Y para ejecutar un script de Python dentro del entorno, puede usar:"
 #~ "essentials installed. For Ubuntu/Debian, you"
 #~ " can run:"
 #~ msgstr ""
+
+#~ msgid ""
+#~ "Support for Windows is limited, so "
+#~ "we recommend using WSL, which can "
+#~ "be installed as per `this guide "
+#~ "<https://learn.microsoft.com/en-us/windows/wsl/install>`__."
+#~ msgstr ""
+#~ "El soporte para Windows es limitado, "
+#~ "por lo que recomendamos usar WSL, "
+#~ "que se puede instalar según `esta "
+#~ "guía <https://learn.microsoft.com/en-"
+#~ "us/windows/wsl/install>`__."
+
+#~ msgid "or on MacOS with:"
+#~ msgstr "o en MacOS con:"
+

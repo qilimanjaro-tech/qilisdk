@@ -12,3 +12,4 @@ Digital
     digital_qaoa
     digital_trotter
     digital_qir
+    digital_qasm
