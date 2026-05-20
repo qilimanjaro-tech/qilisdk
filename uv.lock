@@ -2972,7 +2972,6 @@ dependencies = [
     { name = "scipy", version = "1.16.2", source = { registry = "https://urob.github.io/numpy-mkl" }, marker = "sys_platform != 'darwin' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
     { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'darwin' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
     { name = "setuptools" },
-    { name = "sphinx-tabs" },
 ]
 
 [package.optional-dependencies]
@@ -3061,6 +3060,7 @@ docs = [
     { name = "sphinx-intl" },
     { name = "sphinx-mdinclude" },
     { name = "sphinx-multiversion" },
+    { name = "sphinx-tabs" },
     { name = "sphinxawesome-theme" },
 ]
 
@@ -3111,7 +3111,6 @@ requires-dist = [
     { name = "scipy", marker = "sys_platform != 'darwin'", specifier = ">=1.15,<1.16.3", index = "https://urob.github.io/numpy-mkl" },
     { name = "scipy", marker = "sys_platform == 'darwin'", specifier = ">=1.16.3" },
     { name = "setuptools", specifier = ">=82.0.1" },
-    { name = "sphinx-tabs", specifier = ">=3.5.0" },
 ]
 provides-extras = ["cuda", "cuda12", "cuda13", "speqtrum", "qutip", "openfermion", "qir", "openqasm", "all", "all-cu12", "all-cu13"]
 
@@ -3139,6 +3138,7 @@ docs = [
     { name = "sphinx-intl" },
     { name = "sphinx-mdinclude", specifier = ">=0.6.2" },
     { name = "sphinx-multiversion", git = "https://github.com/sphinx-contrib/multiversion?branch=main" },
+    { name = "sphinx-tabs", specifier = ">=3.5.0" },
     { name = "sphinxawesome-theme", specifier = ">=5.3.2" },
 ]
 
