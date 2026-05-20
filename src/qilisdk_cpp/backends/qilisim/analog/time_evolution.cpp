@@ -319,65 +319,6 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
     }
 }
 
-void time_evolution_truncated_polynomial_expansion(MatrixFreeHamiltonian& rho_t_as_h, const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, QiliSimConfig& config) {
-    /*
-    Execute an approximate time evolution functional using a variational approach.
-
-    The state at each point is represented as a weighted sum of Pauli strings acting on the + state,
-    which is trunctated at each step to keep the number of terms manageable.
-    
-    Args:
-        rho_t_as_h (MatrixFreeHamiltonian&): Output parameter to hold the final state after evolution, represented as a MatrixFreeHamiltonian.
-        hamiltonians (std::vector<MatrixFreeHamiltonian>): The list of Hamiltonian terms.
-        parameters_list (std::vector<std::vector<double>>): The list of parameter values for each Hamiltonian term at each time step.
-        step_list (std::vector<double>): The list of time steps.
-        config (QiliSimConfig&): Configuration parameters for the time evolution.
-    */
-
-    // Set the number of threads
-#if defined(_OPENMP)
-    Eigen::setNbThreads(1);
-    omp_set_num_threads(config.get_num_threads());
-#endif
-
-    // Some checks
-    config.validate();
-    if (hamiltonians.size() <= 0) {
-        throw std::invalid_argument("At least one Hamiltonian must be provided");
-    }
-
-    int n_qubits = hamiltonians[0].get_nqubits();
-    rho_t_as_h = MatrixFreeHamiltonian(n_qubits, 1.0);
-
-    double total_loss = 0.0;
-    for (size_t step_ind = 0; step_ind < step_list.size(); ++step_ind) {
-
-        // Determine the time step and starting time
-        double t_start = (step_ind > 0) ? step_list[step_ind - 1] : 0.0;
-        double dt = step_list[step_ind] - t_start;
-
-        std::cout << "Step " << step_ind << std::endl;
-
-        // Perform the iteration
-        iter_rk4(rho_t_as_h, t_start, dt, step_list, hamiltonians, parameters_list, config.get_max_terms());
-
-        std::cout << "After rk4: " << rho_t_as_h.size() << " terms" << std::endl;
-
-        // Truncate the resulting Hamiltonian to keep the number of terms manageable
-        rho_t_as_h.prune(1e-14, config.get_max_terms());
-
-        std::cout << "After pruning: " << rho_t_as_h.size() << " terms" << std::endl;
-        
-        // Normalize the state
-        double factor = rho_t_as_h.normalize_acting_on_plus();
-
-        std::cout << "After normalization: " << rho_t_as_h.size() << " terms" << std::endl;
-        std::cout << "Scaling factor: " << factor << std::endl;
-
-    }
-
-}
-
 void time_evolution_variational_exponential(ExponentialAnsatz& rho_t, const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, QiliSimConfig& config) {
     /*
     Execute an approximate time evolution functional using a variational approach with an exponential ansatz.

@@ -14,13 +14,12 @@
 #pragma once
 
 #include "matrix_free_hamiltonian.h"
-#include <boost/dynamic_bitset.hpp>
 #include <vector>
 
 // GCOV_EXCL_BR_START
 
 struct SampleSet {
-    std::vector<boost::dynamic_bitset<>> configs;
+    std::vector<Bitset> configs;
     DenseMatrix O_mat;  // (N_s x p) log-derivatives: O_k(x) = P_k(x) ∈ {-1,+1}
 };
 
@@ -32,7 +31,7 @@ class ExponentialAnsatz {
     MatrixFreeHamiltonian terms = MatrixFreeHamiltonian(0);
     int num_qubits;
 
-    std::vector<boost::dynamic_bitset<>> build_z_bits() const;
+    std::vector<Bitset> build_z_bits() const;
 
    public:
     ExponentialAnsatz(int num_qubits, int order, int shots, int warmups);

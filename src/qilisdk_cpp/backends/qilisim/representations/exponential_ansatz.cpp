@@ -93,11 +93,11 @@ ExponentialAnsatz::ExponentialAnsatz(int num_qubits, int order, int shots, int w
 
 }
 
-std::vector<boost::dynamic_bitset<>> ExponentialAnsatz::build_z_bits() const {
+std::vector<Bitset> ExponentialAnsatz::build_z_bits() const {
     const auto& ops = terms.get_operators();
     const int p = static_cast<int>(ops.size());
     std::vector<std::pair<PauliString, std::complex<double>>> terms_vec(ops.begin(), ops.end());
-    std::vector<boost::dynamic_bitset<>> z_bits(p, boost::dynamic_bitset<>(num_qubits, 0));
+    std::vector<Bitset> z_bits(p, Bitset(num_qubits));
     for (int k = 0; k < p; ++k) {
         const auto& ps = terms_vec[k].first;
         for (int i = 0; i < num_qubits; ++i) {
@@ -131,7 +131,7 @@ SampleSet ExponentialAnsatz::draw_samples(int N_s, int n_warmup) const {
     const auto& ops = terms.get_operators();
     const int p = static_cast<int>(ops.size());
     std::vector<std::pair<PauliString, std::complex<double>>> terms_vec(ops.begin(), ops.end());
-    std::vector<boost::dynamic_bitset<>> z_bits = build_z_bits();
+    std::vector<Bitset> z_bits = build_z_bits();
 
     // For each qubit i, the indices of terms k whose z-support includes qubit i.
     // When bit i is flipped, only these terms change parity (and thus sign in lp).
@@ -145,7 +145,7 @@ SampleSet ExponentialAnsatz::draw_samples(int N_s, int n_warmup) const {
     std::uniform_int_distribution<int> rand_qubit(0, num_qubits - 1);
     std::uniform_real_distribution<double> rand01(0.0, 1.0);
 
-    boost::dynamic_bitset<> x(num_qubits);
+    Bitset x(num_qubits);
     for (int i = 0; i < num_qubits; ++i)
         if (rand01(rng) < 0.5) x.set(i);
 
@@ -186,7 +186,7 @@ SampleSet ExponentialAnsatz::draw_samples(int N_s, int n_warmup) const {
 
     // Generate the samples
     SampleSet result;
-    result.configs.resize(N_s, boost::dynamic_bitset<>(num_qubits, 0));
+    result.configs.resize(N_s, Bitset(num_qubits));
     result.O_mat.resize(N_s, p);
     for (int s = 0; s < N_s; ++s) {
         for (int t = 0; t < num_qubits; ++t) {
@@ -220,22 +220,22 @@ Eigen::VectorXcd ExponentialAnsatz::local_energy(const SampleSet& samples, const
     const auto& ops = terms.get_operators();
     const int p = static_cast<int>(ops.size());
     std::vector<std::pair<PauliString, std::complex<double>>> terms_vec(ops.begin(), ops.end());
-    std::vector<boost::dynamic_bitset<>> z_bits = build_z_bits();
+    std::vector<Bitset> z_bits = build_z_bits();
     const int N_s = static_cast<int>(samples.configs.size());
 
     // Precompute the effect of each Hamiltonian term on the samples
     static const std::complex<double> i_powers[4] = {{1,0},{0,1},{-1,0},{0,-1}};
     struct HTerm {
         std::complex<double> base_phase;
-        boost::dynamic_bitset<> flip_mask;
-        boost::dynamic_bitset<> sign_mask;
+        Bitset flip_mask;
+        Bitset sign_mask;
         std::vector<bool> flips_Pk;
     };
     const auto& h_ops = H.get_operators();
     std::vector<HTerm> h_terms;
     h_terms.reserve(h_ops.size());
     for (const auto& [ps, coeff] : h_ops) {
-        boost::dynamic_bitset<> flip_mask(num_qubits, 0), sign_mask(num_qubits, 0);
+        Bitset flip_mask(num_qubits), sign_mask(num_qubits);
         int n_y = 0;
         for (int i = 0; i < num_qubits; ++i) {
             if ( ps.x_mask[i] && !ps.z_mask[i]) { flip_mask.flip(num_qubits - 1 - i); }
@@ -256,7 +256,7 @@ Eigen::VectorXcd ExponentialAnsatz::local_energy(const SampleSet& samples, const
     #pragma omp parallel for
 #endif
     for (int s = 0; s < N_s; ++s) {
-        const boost::dynamic_bitset<>& x = samples.configs[s];
+        const Bitset& x = samples.configs[s];
         std::complex<double> el = 0.0;
         for (const auto& ht : h_terms) {
             bool neg_sign = ((x & ht.sign_mask).count()) & 1;

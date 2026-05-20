@@ -509,8 +509,6 @@ MatrixFreeHamiltonian MatrixFreeHamiltonian::operator-(const MatrixFreeHamiltoni
     return result;
 }
 
-#include <iostream>
-
 void MatrixFreeHamiltonian::prune(double threshold, int max_terms) {
     /*
     Prune the Hamiltonian by removing terms with coefficients below a certain threshold and limiting the total number of terms.
@@ -520,27 +518,6 @@ void MatrixFreeHamiltonian::prune(double threshold, int max_terms) {
         max_terms: The maximum number of terms to keep in the Hamiltonian.
     */
 
-    // Canonicalize using X|+> = I|+> and Y|+> = -i*Z|+>, so collapse to Z-only strings.
-    // This eliminates the 2^n redundancy and keeps at most 2^n distinct terms.
-    // static const std::complex<double> neg_i(0.0, -1.0);
-    // std::unordered_map<PauliString, std::complex<double>, PauliString::HashFunction> canonical;
-    // canonical.reserve(operators.size());
-    // for (const auto& [ps, coeff] : operators) {
-    //     int n = static_cast<int>(ps.x_mask.size());
-    //     PauliString cps(n);
-    //     std::complex<double> phase = coeff;
-    //     for (int i = 0; i < n; ++i) {
-    //         if (ps.x_mask[i] && ps.z_mask[i]) {
-    //             cps.z_mask[i] = true;
-    //             phase *= neg_i;
-    //         } else if (!ps.x_mask[i]) {
-    //             cps.z_mask[i] = ps.z_mask[i];
-    //         }
-    //     }
-    //     canonical[cps] += phase;
-    // }
-    // operators = std::move(canonical);
-
     // Create a vector of terms and sort by absolute value of coefficients
     std::vector<std::pair<PauliString, std::complex<double>>> term_vector(operators.begin(), operators.end());
     std::sort(term_vector.begin(), term_vector.end(), [](const auto& a, const auto& b) {
@@ -548,7 +525,6 @@ void MatrixFreeHamiltonian::prune(double threshold, int max_terms) {
     });
     if (term_vector.size() > static_cast<size_t>(max_terms)) {
         term_vector.resize(max_terms);
-        std::cout << "Truncating from " << operators.size() << " to " << max_terms << " terms" << std::endl;
     }
 
     // Rebuild the operators map from the pruned vector
@@ -574,32 +550,5 @@ MatrixFreeHamiltonian MatrixFreeHamiltonian::conjugate() const {
     }
     return result;
 }
-
-double MatrixFreeHamiltonian::normalize_acting_on_plus() {
-    /*
-    Normalize the Hamiltonian such that when it acts on the |+> state, the resulting state has norm 1.
-    */
-
-    // Calculate H^dag H
-    MatrixFreeHamiltonian rho_t_as_h_squared = this->conjugate() * (*this);
-
-    // Only the identity and X strings contribute to the trace, so we can just sum those coefficients if the z_mask has any non-zero bits
-    double norm = 0.0;
-    for (const auto& [pauli_string, coeff] : rho_t_as_h_squared.operators) {
-        if (pauli_string.z_mask.none()) {
-            norm += std::abs(coeff);
-        }
-    }
-
-    // Normalize all the coefficients by the square root of the norm
-    double scaling_factor = 1.0 / std::sqrt(norm);
-    for (auto& [pauli_string, coeff] : operators) {
-        coeff *= scaling_factor;
-    }
-
-    return scaling_factor;
-
-}
-
 
 // GCOV_EXCL_BR_STOP

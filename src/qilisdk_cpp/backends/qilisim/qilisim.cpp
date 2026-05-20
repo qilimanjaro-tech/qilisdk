@@ -183,28 +183,7 @@ py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, co
     }
 
     // A scalable method, so we should never construct any matrix or state
-    if (config.get_time_evolution_method() == "truncated_polynomial_expansion") {
-
-        // Ensure that the initial state is a plus state (a QTensorSymbolic)
-        if (!py::isinstance(initial_state, QTensorSymbolic) || initial_state.attr("name").cast<std::string>() != "uniform") {
-            throw py::value_error("Initial state must be a QTensorSymbolic instance for the truncated polynomial expansion method.");
-        }
-
-        // Parse things
-        std::vector<MatrixFreeHamiltonian> hamiltonians = parse_hamiltonians_matrix_free(n_qubits, hamiltonians_values);
-        MatrixFreeHamiltonian rho_t_as_h(n_qubits);
-        std::vector<std::vector<double>> parameters_list = parse_coefficients(schedule, hamiltonians_keys, steps);
-        std::vector<double> step_list = parse_time_steps(steps);
-
-        // Run the evolution
-        time_evolution_truncated_polynomial_expansion(rho_t_as_h, hamiltonians, parameters_list, step_list, config);
-
-        // Construct the result object
-        py::object result = construct_result_object(rho_t_as_h, readout, n_qubits);
-        return FunctionalResult("readout_results"_a = result);
-
-    // A scalable method, so we should never construct any matrix or state
-    } else if (config.get_time_evolution_method() == "variational_exponential") {
+    if (config.get_time_evolution_method() == "variational_exponential") {
 
         // Ensure that the initial state is a plus state (a QTensorSymbolic)
         if (!py::isinstance(initial_state, QTensorSymbolic) || initial_state.attr("name").cast<std::string>() != "uniform") {

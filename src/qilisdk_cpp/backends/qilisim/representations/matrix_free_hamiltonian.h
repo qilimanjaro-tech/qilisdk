@@ -15,8 +15,12 @@
 
 #include "matrix_free_operator.h"
 #include <boost/dynamic_bitset.hpp>
+#include <bitset>
 
 // GCOV_EXCL_BR_START
+
+typedef boost::dynamic_bitset<> Bitset;
+// typedef std::bitset<128> Bitset;
 
 // moving now to use a bitmask for x and z rather than storing operators and strings
 class PauliString {
@@ -24,8 +28,8 @@ class PauliString {
 public:
 
     // neither means i, x means x, z means z, both means y
-    boost::dynamic_bitset<> x_mask;
-    boost::dynamic_bitset<> z_mask;
+    Bitset x_mask;
+    Bitset z_mask;
 
     struct HashFunction {
         std::size_t operator()(const PauliString& ps) const {
@@ -121,7 +125,6 @@ class MatrixFreeHamiltonian {
     friend std::ostream& operator<<(std::ostream& os, const MatrixFreeHamiltonian& hamiltonian);
     std::unordered_map<PauliString, std::complex<double>, PauliString::HashFunction> get_operators() const { return operators; }
     void prune(double threshold, int max_terms);
-    double normalize_acting_on_plus();
     int get_nqubits() const { return nqubits; }
     MatrixFreeHamiltonian conjugate() const;
     size_t size() const { return operators.size(); }

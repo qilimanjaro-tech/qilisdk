@@ -182,20 +182,6 @@ class AnalogMethod(BaseSimulatorConfig):
         return cls(evolution_method="variational_exponential", order=order, shots=shots, warmups=warmups, adaptive_tol=adaptive_tol)
 
     @classmethod
-    def truncated_integrator(cls, *, max_terms: int = 1000) -> AnalogMethod:
-        """Build a ``truncated_integrator`` analog method configuration.
-
-        This method uses a truncated Taylor series expansion of the time-evolution operator, which can be more efficient for short time steps or when high precision is not required. The `max_terms` parameter controls the number of terms in the expansion, allowing for a trade-off between accuracy and runtime.
-
-        Args:
-            max_terms (int): Maximum number of terms to include in the truncated expansion. Defaults to ``1000``.
-
-        Returns:
-            AnalogMethod: Configured truncated-integrator analog configuration.
-        """
-        return cls(evolution_method="truncated_polynomial_expansion", max_terms=max_terms)
-
-    @classmethod
     def adaptive_integrator(cls, *, tol: float = 1e-2) -> AnalogMethod:
         """Build an ``adaptive_integrate`` analog method configuration.
 
