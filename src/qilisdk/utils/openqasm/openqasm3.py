@@ -71,10 +71,10 @@ class OpenQasmParser:
     Internal class for parsing OpenQASM 3.0.
 
     Use the external methods instead:
-     - `from qilisdk.utils.openqasm3 import to_qasm3_file`
-     - `from qilisdk.utils.openqasm3 import from_qasm3_file`
-     - `from qilisdk.utils.openqasm3 import to_qasm3`
-     - `from qilisdk.utils.openqasm3 import from_qasm3`
+     - `from qilisdk.utils.openqasm import to_qasm3_file`
+     - `from qilisdk.utils.openqasm import from_qasm3_file`
+     - `from qilisdk.utils.openqasm import to_qasm3`
+     - `from qilisdk.utils.openqasm import from_qasm3`
 
     Understanding the following table:
     - ✅: The feature is fully supported
