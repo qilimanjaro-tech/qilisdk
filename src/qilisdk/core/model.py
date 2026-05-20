@@ -357,12 +357,12 @@ class Model:
                 continue
             ub_encoding_name = f"{var}_upper_bound_constraint"
             lb_encoding_name = f"{var}_lower_bound_constraint"
-            if ub_encoding_name not in self._encoding_constraints and var.upper_bound < var.domain.max():
+            if ub_encoding_name not in self._encoding_constraints:
                 self._encoding_constraints[ub_encoding_name] = Constraint(
                     label=ub_encoding_name, term=LEQ(var, var.upper_bound)
                 )
                 self._lagrange_multipliers[ub_encoding_name] = lagrange_multiplier
-            if lb_encoding_name not in self._encoding_constraints and var.lower_bound > var.domain.min():
+            if lb_encoding_name not in self._encoding_constraints:
                 self._encoding_constraints[lb_encoding_name] = Constraint(
                     label=lb_encoding_name, term=GEQ(var, var.lower_bound)
                 )

@@ -153,39 +153,6 @@ def test_model_add_duplicate_constraint(simple_model):
         m.add_constraint("c", ct)
 
 
-def test_generate_encoding_constraints_skips_domain_default_bounds(simple_model):
-    # A REAL variable with no explicit bounds takes the domain extremes, so neither
-    # the lo > domain.min() nor the hi < domain.max() guard fires — no encoding
-    # constraint is emitted.
-    m = simple_model
-    var = Variable("x", Domain.REAL, bounds=(None, None))
-    m.set_objective(var)
-    m._generate_encoding_constraints()
-    assert m.encoding_constraints == []
-
-
-def test_generate_encoding_constraints_emits_for_tightened_bounds(simple_model):
-    # Tightening either side past the domain extreme triggers the corresponding
-    # encoding constraint: lower=0 emits `x >= 0`, upper=10 emits `x <= 10`.
-    m = simple_model
-    var = Variable("x", Domain.REAL, bounds=(0, 10))
-    m.set_objective(var)
-    m._generate_encoding_constraints()
-    labels = {c.label for c in m.encoding_constraints}
-    assert labels == {"x_lower_bound_constraint", "x_upper_bound_constraint"}
-
-
-def test_generate_encoding_constraints_partial_one_sided_bound(simple_model):
-    # Only the explicit side fires: lower=0 emits the lb encoding, upper=None
-    # falls back to the domain max so the ub guard stays silent.
-    m = simple_model
-    var = Variable("x", Domain.REAL, bounds=(0, None))
-    m.set_objective(var)
-    m._generate_encoding_constraints()
-    labels = [c.label for c in m.encoding_constraints]
-    assert labels == ["x_lower_bound_constraint"]
-
-
 def test_model_lagrange_multipliers(simple_model):
     m = simple_model
     var = Variable("x", Domain.BINARY)
