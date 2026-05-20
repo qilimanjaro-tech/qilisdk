@@ -522,24 +522,24 @@ void MatrixFreeHamiltonian::prune(double threshold, int max_terms) {
 
     // Canonicalize using X|+> = I|+> and Y|+> = -i*Z|+>, so collapse to Z-only strings.
     // This eliminates the 2^n redundancy and keeps at most 2^n distinct terms.
-    static const std::complex<double> neg_i(0.0, -1.0);
-    std::unordered_map<PauliString, std::complex<double>, PauliString::HashFunction> canonical;
-    canonical.reserve(operators.size());
-    for (const auto& [ps, coeff] : operators) {
-        int n = static_cast<int>(ps.x_mask.size());
-        PauliString cps(n);
-        std::complex<double> phase = coeff;
-        for (int i = 0; i < n; ++i) {
-            if (ps.x_mask[i] && ps.z_mask[i]) {
-                cps.z_mask[i] = true;
-                phase *= neg_i;
-            } else if (!ps.x_mask[i]) {
-                cps.z_mask[i] = ps.z_mask[i];
-            }
-        }
-        canonical[cps] += phase;
-    }
-    operators = std::move(canonical);
+    // static const std::complex<double> neg_i(0.0, -1.0);
+    // std::unordered_map<PauliString, std::complex<double>, PauliString::HashFunction> canonical;
+    // canonical.reserve(operators.size());
+    // for (const auto& [ps, coeff] : operators) {
+    //     int n = static_cast<int>(ps.x_mask.size());
+    //     PauliString cps(n);
+    //     std::complex<double> phase = coeff;
+    //     for (int i = 0; i < n; ++i) {
+    //         if (ps.x_mask[i] && ps.z_mask[i]) {
+    //             cps.z_mask[i] = true;
+    //             phase *= neg_i;
+    //         } else if (!ps.x_mask[i]) {
+    //             cps.z_mask[i] = ps.z_mask[i];
+    //         }
+    //     }
+    //     canonical[cps] += phase;
+    // }
+    // operators = std::move(canonical);
 
     // Create a vector of terms and sort by absolute value of coefficients
     std::vector<std::pair<PauliString, std::complex<double>>> term_vector(operators.begin(), operators.end());
