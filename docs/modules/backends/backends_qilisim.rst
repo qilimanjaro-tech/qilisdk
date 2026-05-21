@@ -215,7 +215,9 @@ noise channels:
 .. code-block:: python
 
     from qilisdk.backends import QiliSim
-    from qilisdk.noise import NoiseModel, Depolarizing
+    from qilisdk.noise import NoiseModel, Depolarizing 
 
-    noise = NoiseModel(global_noise=[Depolarizing(probability=1e-3)])
-    backend = QiliSim(noise_model=noise)
+    nm = NoiseModel()
+    nm.add(Depolarizing(probability=1e-3))
+
+    backend = QiliSim(noise_model=nm)

@@ -112,9 +112,12 @@ Example: a depolarising channel applied to every gate of a digital circuit:
 .. code-block:: python
 
     from qilisdk.backends import CudaBackend, CudaSamplingMethod
-    from qilisdk.noise import NoiseModel, Depolarizing
+    from qilisdk.noise import NoiseModel, Depolarizing 
+
+    nm = NoiseModel()
+    nm.add(Depolarizing(probability=1e-3))
 
     backend = CudaBackend(
         sampling_method=CudaSamplingMethod.STATE_VECTOR,
-        noise_model=NoiseModel(global_noise=[Depolarizing(probability=1e-3)]),
+        noise_model=nm,
     )
