@@ -75,11 +75,11 @@ Parameterized rotations                       --                                
 Measurement (``mz``)                          --                                             🟡            3
 Multi-qubit measurement grouping              --                                             🟡            4
 ``barrier`` / ``reset``                       --                                             ❌
-``ccx`` and other three-qubit intrinsics      --                                             ❌            5
 Adaptive Profile / classical control          --                                             ❌
 Branching on measurement results              --                                             ❌
 Output recording calls (``rt__*``)            --                                             ❌
 Dynamic qubit / result management             --                                             ❌
+--                                            ``ccx`` and other three-qubit intrinsics       ❌            5
 --                                            ``U1`` / ``U2`` / ``U3``                       ❌            5
 --                                            Arbitrary ``Controlled`` / ``Exponential``     ❌            5
 
