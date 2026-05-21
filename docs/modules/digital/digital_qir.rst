@@ -58,32 +58,32 @@ support status in QiliSDK:
 - 🟡: The feature is partially supported, see the note for explanation
 - ❌: The feature is not supported
 
-============================================  ============  =====
-QIR feature                                   QiliSDK       Notes
-============================================  ============  =====
-Base Profile module layout                    ✅
-Entry-point function                          ✅
-Static qubit allocation                       ✅
-Static result allocation                      ✅
-``required_num_qubits`` / ``_num_results``    ✅
-Textual LLVM IR (``.ll``)                     ✅
-LLVM bitcode (``.bc``)                        ✅
-Single-qubit QIS gates                        ✅            1
-Two-qubit QIS gates                           ✅            1
-Adjoint QIS gates (``s_adj`` / ``t_adj``)     ✅
-Parameterized rotations                       🟡            2
-Measurement (``mz``)                          🟡            3
-Multi-qubit measurement grouping              🟡            4
-``barrier`` / ``reset``                       ❌
-``ccx`` and other three-qubit intrinsics      ❌            5
-Adaptive Profile / classical control          ❌
-Branching on measurement results              ❌
-Output recording calls (``rt__*``)            ❌
-Dynamic qubit / result management             ❌
-``U1`` / ``U2`` / ``U3``                      ❌            5
-Arbitrary ``Controlled`` / ``Exponential``    ❌            5
+============================================  ============================================   ============  =====
+QIR feature                                   QiliSDK feature                                Supported     Notes
+============================================  ============================================   ============  =====
+Base Profile module layout                    --                                             ✅
+Entry-point function                          --                                             ✅
+Static qubit allocation                       --                                             ✅
+Static result allocation                      --                                             ✅
+``required_num_qubits`` / ``_num_results``    --                                             ✅
+Textual LLVM IR (``.ll``)                     --                                             ✅
+LLVM bitcode (``.bc``)                        --                                             ✅
+Single-qubit QIS gates                        --                                             ✅            1
+Two-qubit QIS gates                           --                                             ✅            1
+Adjoint QIS gates (``s_adj`` / ``t_adj``)     --                                             ✅
+Parameterized rotations                       --                                             🟡            2
+Measurement (``mz``)                          --                                             🟡            3
+Multi-qubit measurement grouping              --                                             🟡            4
+``barrier`` / ``reset``                       --                                             ❌
+``ccx`` and other three-qubit intrinsics      --                                             ❌            5
+Adaptive Profile / classical control          --                                             ❌
+Branching on measurement results              --                                             ❌
+Output recording calls (``rt__*``)            --                                             ❌
+Dynamic qubit / result management             --                                             ❌
+--                                            ``U1`` / ``U2`` / ``U3``                       ❌            5
+--                                            Arbitrary ``Controlled`` / ``Exponential``     ❌            5
 
-============================================  ============  =====
+============================================  ============================================   ============  =====
 
 1) See the "Supported gates" table below for the exact intrinsic mapping.
 

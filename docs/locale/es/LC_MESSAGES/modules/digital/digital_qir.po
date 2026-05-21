@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-20 15:11+0200\n"
+"POT-Creation-Date: 2026-05-21 10:34+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -56,8 +56,7 @@ msgstr ""
 
 #: ../../modules/digital/digital_qir.rst:11
 msgid ":func:`~qilisdk.utils.qir.to_qir` — serialize a Circuit to QIR textual IR."
-msgstr ""
-":func:`~qilisdk.utils.qir.to_qir` — serializa un Circuit a IR textual QIR."
+msgstr ":func:`~qilisdk.utils.qir.to_qir` — serializa un Circuit a IR textual QIR."
 
 #: ../../modules/digital/digital_qir.rst:12
 msgid ""
@@ -94,8 +93,8 @@ msgid ""
 "features to their support status in QiliSDK:"
 msgstr ""
 "QiliSDK apunta al Perfil Base QIR — un subconjunto plano y estáticamente "
-"asignado de QIR sin flujo de control clásico. La tabla siguiente mapea las"
-" características QIR con su estado de soporte en QiliSDK:"
+"asignado de QIR sin flujo de control clásico. La tabla siguiente mapea "
+"las características QIR con su estado de soporte en QiliSDK:"
 
 #: ../../modules/digital/digital_qir.rst:57
 msgid "✅: The feature is fully supported"
@@ -116,8 +115,12 @@ msgid "QIR feature"
 msgstr "Característica QIR"
 
 #: ../../modules/digital/digital_qir.rst:62
-msgid "QiliSDK"
-msgstr "QiliSDK"
+msgid "QiliSDK feature"
+msgstr "Característica QiliSDK"
+
+#: ../../modules/digital/digital_qir.rst:62
+msgid "Supported"
+msgstr "Soportado"
 
 #: ../../modules/digital/digital_qir.rst:62
 msgid "Notes"
@@ -126,6 +129,30 @@ msgstr "Notas"
 #: ../../modules/digital/digital_qir.rst:64
 msgid "Base Profile module layout"
 msgstr "Estructura del módulo del Perfil Base"
+
+#: ../../modules/digital/digital_qir.rst:64
+#: ../../modules/digital/digital_qir.rst:65
+#: ../../modules/digital/digital_qir.rst:66
+#: ../../modules/digital/digital_qir.rst:67
+#: ../../modules/digital/digital_qir.rst:68
+#: ../../modules/digital/digital_qir.rst:69
+#: ../../modules/digital/digital_qir.rst:70
+#: ../../modules/digital/digital_qir.rst:71
+#: ../../modules/digital/digital_qir.rst:72
+#: ../../modules/digital/digital_qir.rst:73
+#: ../../modules/digital/digital_qir.rst:74
+#: ../../modules/digital/digital_qir.rst:75
+#: ../../modules/digital/digital_qir.rst:76
+#: ../../modules/digital/digital_qir.rst:77
+#: ../../modules/digital/digital_qir.rst:78
+#: ../../modules/digital/digital_qir.rst:79
+#: ../../modules/digital/digital_qir.rst:80
+#: ../../modules/digital/digital_qir.rst:81
+#: ../../modules/digital/digital_qir.rst:82
+#: ../../modules/digital/digital_qir.rst:83
+#: ../../modules/digital/digital_qir.rst:84
+msgid "--"
+msgstr "--"
 
 #: ../../modules/digital/digital_qir.rst:64
 #: ../../modules/digital/digital_qir.rst:65
@@ -273,10 +300,10 @@ msgid ""
 ":class:`~qilisdk.core.Parameter` values to concrete numbers before "
 "calling :func:`~qilisdk.utils.qir.to_qir`."
 msgstr ""
-"Los ángulos de rotación se exportan como sus valores numéricos actualmente"
-" resueltos. El Perfil Base no admite parámetros simbólicos, por lo que "
-"vincule cualquier valor de :class:`~qilisdk.core.Parameter` a números "
-"concretos antes de llamar a :func:`~qilisdk.utils.qir.to_qir`."
+"Los ángulos de rotación se exportan como sus valores numéricos "
+"actualmente resueltos. El Perfil Base no admite parámetros simbólicos, "
+"por lo que vincule cualquier valor de :class:`~qilisdk.core.Parameter` a "
+"números concretos antes de llamar a :func:`~qilisdk.utils.qir.to_qir`."
 
 #: ../../modules/digital/digital_qir.rst:95
 msgid ""
@@ -454,8 +481,8 @@ msgid ""
 "matching the Base Profile contract."
 msgstr ""
 "Los módulos se emiten con una función de punto de entrada y registros de "
-"qubits y resultados asignados estáticamente (un registro de resultado por "
-"qubit), siguiendo el contrato del Perfil Base."
+"qubits y resultados asignados estáticamente (un registro de resultado por"
+" qubit), siguiendo el contrato del Perfil Base."
 
 #: ../../modules/digital/digital_qir.rst:145
 msgid ""
@@ -483,3 +510,7 @@ msgstr ""
 "actualmente resueltos; el Perfil Base no admite parámetros simbólicos, "
 "por lo que vincule cualquier valor de :class:`~qilisdk.core.Parameter` a "
 "números concretos antes de llamar a :func:`~qilisdk.utils.qir.to_qir`."
+
+#~ msgid "QiliSDK"
+#~ msgstr "QiliSDK"
+

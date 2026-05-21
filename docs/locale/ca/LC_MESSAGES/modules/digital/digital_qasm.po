@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-20 15:11+0200\n"
+"POT-Creation-Date: 2026-05-21 10:34+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -144,8 +144,8 @@ msgid "OpenQASM 3 feature"
 msgstr "Característica OpenQASM 3"
 
 #: ../../modules/digital/digital_qasm.rst:71
-msgid "QiliSDK"
-msgstr "QiliSDK"
+msgid "Supported"
+msgstr "Suportat"
 
 #: ../../modules/digital/digital_qasm.rst:71
 msgid "Notes"
@@ -457,11 +457,12 @@ msgid ""
 "or in any re-exported QASM string."
 msgstr ""
 "La lectura d'aquestes construccions és totalment suportada, però les "
-"expressions no s'emmagatzemen a l'objecte :class:`~qilisdk.digital.Circuit`"
-" i no s'escriuran en convertir a OpenQASM. Per exemple, declarar "
-"``int x = 5;`` fa que ``x`` sigui avaluada i usada durant l'anàlisi, però"
-" la declaració de variable no apareixerà a l'objecte de circuit resultant "
-"ni en cap cadena QASM reexportada."
+"expressions no s'emmagatzemen a l'objecte "
+":class:`~qilisdk.digital.Circuit` i no s'escriuran en convertir a "
+"OpenQASM. Per exemple, declarar ``int x = 5;`` fa que ``x`` sigui "
+"avaluada i usada durant l'anàlisi, però la declaració de variable no "
+"apareixerà a l'objecte de circuit resultant ni en cap cadena QASM "
+"reexportada."
 
 #: ../../modules/digital/digital_qasm.rst:132
 msgid ""
@@ -474,3 +475,7 @@ msgstr ""
 #: ../../modules/digital/digital_qasm.rst:135
 msgid "Mid-circuit measurements are not supported in QiliSDK."
 msgstr "Les mesures a mig circuit no estan suportades a QiliSDK."
+
+#~ msgid "QiliSDK"
+#~ msgstr "QiliSDK"
+
