@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-20 15:11+0200\n"
+"POT-Creation-Date: 2026-05-21 10:34+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -56,7 +56,8 @@ msgstr ""
 #: ../../modules/digital/digital_qir.rst:11
 msgid ":func:`~qilisdk.utils.qir.to_qir` — serialize a Circuit to QIR textual IR."
 msgstr ""
-":func:`~qilisdk.utils.qir.to_qir` — serialitza un Circuit a IR textual QIR."
+":func:`~qilisdk.utils.qir.to_qir` — serialitza un Circuit a IR textual "
+"QIR."
 
 #: ../../modules/digital/digital_qir.rst:12
 msgid ""
@@ -68,8 +69,7 @@ msgstr ""
 
 #: ../../modules/digital/digital_qir.rst:14
 msgid "The ``pyqir`` dependency is optional; install it with the ``qir`` extra:"
-msgstr ""
-"La dependència ``pyqir`` és opcional; instal·leu-la amb l'extra ``qir``:"
+msgstr "La dependència ``pyqir`` és opcional; instal·leu-la amb l'extra ``qir``:"
 
 #: ../../modules/digital/digital_qir.rst:21
 msgid "Quick start"
@@ -116,8 +116,12 @@ msgid "QIR feature"
 msgstr "Característica QIR"
 
 #: ../../modules/digital/digital_qir.rst:62
-msgid "QiliSDK"
-msgstr "QiliSDK"
+msgid "QiliSDK feature"
+msgstr "Característica QiliSDK"
+
+#: ../../modules/digital/digital_qir.rst:62
+msgid "Supported"
+msgstr "Suportat"
 
 #: ../../modules/digital/digital_qir.rst:62
 msgid "Notes"
@@ -126,6 +130,30 @@ msgstr "Notes"
 #: ../../modules/digital/digital_qir.rst:64
 msgid "Base Profile module layout"
 msgstr "Estructura del mòdul del Perfil Base"
+
+#: ../../modules/digital/digital_qir.rst:64
+#: ../../modules/digital/digital_qir.rst:65
+#: ../../modules/digital/digital_qir.rst:66
+#: ../../modules/digital/digital_qir.rst:67
+#: ../../modules/digital/digital_qir.rst:68
+#: ../../modules/digital/digital_qir.rst:69
+#: ../../modules/digital/digital_qir.rst:70
+#: ../../modules/digital/digital_qir.rst:71
+#: ../../modules/digital/digital_qir.rst:72
+#: ../../modules/digital/digital_qir.rst:73
+#: ../../modules/digital/digital_qir.rst:74
+#: ../../modules/digital/digital_qir.rst:75
+#: ../../modules/digital/digital_qir.rst:76
+#: ../../modules/digital/digital_qir.rst:77
+#: ../../modules/digital/digital_qir.rst:78
+#: ../../modules/digital/digital_qir.rst:79
+#: ../../modules/digital/digital_qir.rst:80
+#: ../../modules/digital/digital_qir.rst:81
+#: ../../modules/digital/digital_qir.rst:82
+#: ../../modules/digital/digital_qir.rst:83
+#: ../../modules/digital/digital_qir.rst:84
+msgid "--"
+msgstr "--"
 
 #: ../../modules/digital/digital_qir.rst:64
 #: ../../modules/digital/digital_qir.rst:65
@@ -467,10 +495,10 @@ msgid ""
 msgstr ""
 "El cicle d'anada i tornada preserva els tipus de portes, els índexs de "
 "qubits i els angles de rotació. Una instància de "
-":class:`~qilisdk.digital.gates.M` multi-qubit es serialitza com una "
-"crida ``mz`` per destí; en analitzar, torna com un "
-":class:`~qilisdk.digital.gates.M` per qubit mesurat (és a dir, el "
-"conjunt de qubits es conserva, però no l'agrupació)."
+":class:`~qilisdk.digital.gates.M` multi-qubit es serialitza com una crida"
+" ``mz`` per destí; en analitzar, torna com un "
+":class:`~qilisdk.digital.gates.M` per qubit mesurat (és a dir, el conjunt"
+" de qubits es conserva, però no l'agrupació)."
 
 #: ../../modules/digital/digital_qir.rst:150
 msgid ""
@@ -483,3 +511,7 @@ msgstr ""
 "actualment resolts; el Perfil Base no admet paràmetres simbòlics, per la "
 "qual cosa vinculeu qualsevol valor de :class:`~qilisdk.core.Parameter` a "
 "números concrets abans de cridar :func:`~qilisdk.utils.qir.to_qir`."
+
+#~ msgid "QiliSDK"
+#~ msgstr "QiliSDK"
+

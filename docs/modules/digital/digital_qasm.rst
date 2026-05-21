@@ -68,7 +68,7 @@ OpenQASM 3.0 supported features
 - ❌: The feature is not supported
 
 ============================  ============  =====
-OpenQASM 3 feature            QiliSDK       Notes
+OpenQASM 3 feature            Supported     Notes
 ============================  ============  =====
 comments                      ✅
 QASM version string           ✅
