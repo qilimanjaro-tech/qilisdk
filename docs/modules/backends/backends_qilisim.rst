@@ -73,7 +73,7 @@ QiliSim is configured at construction time through three orthogonal sections, al
 - :class:`~qilisdk.backends.backend_config.AnalogMethod` — chooses the analog time-evolution scheme
   and its hyperparameters.
 - :class:`~qilisdk.backends.backend_config.DigitalMethod` — chooses the digital simulation strategy
-  and its caching / normalization options.
+  and its hyperparameters.
 - :class:`~qilisdk.backends.backend_config.ExecutionConfig` — global execution controls (threads,
   random seed, Monte Carlo trajectories, measurement-collapse behaviour).
 
@@ -131,7 +131,7 @@ schedule is integrated:
      - Adaptive step size; ``tol`` bounds the fidelity error between the RK4 and RK5 estimates.
    * - :meth:`AnalogMethod.arnoldi(dim=10, num_substeps=1) <qilisdk.backends.backend_config.AnalogMethod.arnoldi>`
      - Krylov / Arnoldi
-     - Better scaling for large sparse Hamiltonians; tune ``dim`` for the Krylov subspace size.
+     - Can offer decent scaling for large sparse Hamiltonians; tune ``dim`` for the Krylov subspace size.
    * - :meth:`AnalogMethod.direct() <qilisdk.backends.backend_config.AnalogMethod.direct>`
      - Matrix exponential
      - Reference scheme for small systems; cost grows quickly with qubit count.
@@ -142,7 +142,7 @@ Example, using the adaptive integrator for a stiffer schedule:
 
     from qilisdk.backends import AnalogMethod, QiliSim
 
-    backend = QiliSim(analog_simulation_method=AnalogMethod.adaptive_integrator(tol=1e-4))
+    backend = QiliSim(analog_simulation_method=AnalogMethod.adaptive_integrator(tol=1e-2))
 
 Digital simulation methods
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -162,7 +162,7 @@ characteristics rather than choosing a different algorithm:
    * - ``max_cache_size``
      - Maximum number of precomputed gate matrices cached between executions.
    * - ``combine_single_qubit_gates``
-     - Merge adjacent single-qubit gates into a single operation before propagating.
+     - Merge adjacent single-qubit gates into a single operation before propagating. Disabled if gate-specific noise is used.
    * - ``normalize_after_each_gate``
      - Renormalize the statevector after each gate to mitigate numerical drift, at a runtime cost.
 

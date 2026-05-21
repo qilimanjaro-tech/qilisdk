@@ -63,7 +63,7 @@ Functional support
 Configuration
 =============
 
-The CUDA backend exposes a single configuration knob —
+The CUDA backend exposes a single configuration parameter —
 :class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod` — that selects the underlying CUDA-Q
 target used for **digital** circuits. Analog evolution always runs on the ``dynamics`` target and
 ignores this setting.
