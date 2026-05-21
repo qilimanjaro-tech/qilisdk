@@ -21,19 +21,19 @@
 <meta content="#ffffff" media="(prefers-color-scheme: light)" name="theme-color"/>
 <meta content="#030711" media="(prefers-color-scheme: dark)" name="theme-color"/>
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
-<title>QIR Import and Export | QiliSDK</title>
-<meta content="QIR Import and Export | QiliSDK" property="og:title"/>
-<meta content="QIR Import and Export | QiliSDK" name="twitter:title"/>
+<title>Importació i Exportació QIR | QiliSDK</title>
+<meta content="Importació i Exportació QIR | QiliSDK" property="og:title"/>
+<meta content="Importació i Exportació QIR | QiliSDK" name="twitter:title"/>
 <link href="../../_static/pygments.css?v=652ce3ed" rel="stylesheet" type="text/css"/>
-<link href="../../_static/theme.css?v=979577e3" rel="stylesheet" type="text/css"/>
+<link href="../../_static/theme.css?v=73505e79" rel="stylesheet" type="text/css"/>
 <link href="../../_static/graphviz.css?v=4ae1632d" rel="stylesheet" type="text/css"/>
 <link href="../../_static/sphinx-design.min.css?v=95c83b7e" rel="stylesheet" type="text/css"/>
 <link href="../../_static/custom.css?v=7f555f8f" rel="stylesheet" type="text/css"/>
-<link href="../../_static/awesome-sphinx-design.css?v=b1d4564d" rel="stylesheet" type="text/css"/>
+<link href="../../_static/awesome-sphinx-design.css?v=c54898a4" rel="stylesheet" type="text/css"/>
 <link href="../../_static/q_trans.png" rel="icon"/>
 <link href="../../search.html" rel="search" title="Cerca"/>
 <link href="../../genindex.html" rel="index" title="Índex"/>
-<link href="../analog/analog.html" rel="next" title="Analog"/>
+<link href="digital_qasm.html" rel="next" title="Importació i Exportació OpenQASM"/>
 <link href="digital_trotter.html" rel="prev" title="TrotterizedSchedule"/>
 </head>
 <body :class="{ 'overflow-hidden': showSidebar }" class="min-h-screen font-sans antialiased bg-background text-foreground" x-data="{ showSidebar: false, showScrollTop: false }">
@@ -114,7 +114,6 @@
 <li class="toctree-l2"><a class="reference internal" href="../core/core_variables_parameters.html">Variables i paràmetres</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../core/core_terms_maps_comparisons.html">Termes, mapes i comparacions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../core/core_model.html">Models</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../core/core_lp_parser.html">Linear Programming File Parser and Serializer</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../core/core_qubo.html">QUBO</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../core/core_qtensor.html">QTensor</a></li>
 </ul>
@@ -127,7 +126,8 @@
 <li class="toctree-l2"><a class="reference internal" href="digital_hardware.html">HardwareEfficientAnsatz</a></li>
 <li class="toctree-l2"><a class="reference internal" href="digital_qaoa.html">QAOA</a></li>
 <li class="toctree-l2"><a class="reference internal" href="digital_trotter.html">TrotterizedSchedule</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">QIR Import and Export</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Importació i Exportació QIR</a></li>
+<li class="toctree-l2"><a class="reference internal" href="digital_qasm.html">Importació i Exportació OpenQASM</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../analog/analog.html">Analog<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
@@ -275,7 +275,6 @@
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../code/api/qilisdk/utils/index.html">qilisdk.utils<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/utils/hashing/index.html">qilisdk.utils.hashing</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/utils/lp_parser/index.html">qilisdk.utils.lp_parser</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/utils/openfermion/index.html">qilisdk.utils.openfermion</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/utils/openqasm/index.html">qilisdk.utils.openqasm</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/utils/qir/index.html">qilisdk.utils.qir</a></li>
@@ -336,27 +335,24 @@
 </svg>
 </a>
 <div class="mr-1">/</div><a class="hover:text-foreground overflow-hidden text-ellipsis whitespace-nowrap" href="digital.html">Digital</a>
-<div class="mr-1">/</div><span aria-current="page" class="font-medium text-foreground overflow-hidden text-ellipsis whitespace-nowrap">QIR Import and Export</span>
+<div class="mr-1">/</div><span aria-current="page" class="font-medium text-foreground overflow-hidden text-ellipsis whitespace-nowrap">Importació i Exportació QIR</span>
 </nav>
 <div id="content" role="main">
 <section id="qir-import-and-export">
-<h1>QIR Import and Export<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qir-import-and-export"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h1>
-<p>QiliSDK can bridge <code class="xref py py-class docutils literal notranslate"><span class="pre">Circuit</span></code> and the
-<a class="reference external" href="https://github.com/qir-alliance/qir-spec/blob/main/specification/under_development/profiles/Base_Profile.md" rel="nofollow noopener">QIR Base Profile<svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a>
-via Microsoft’s <a class="reference external" href="https://pypi.org/project/pyqir/" rel="nofollow noopener">pyqir<svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a> library. Four
-entry-points live in <a class="reference internal" href="../../code/api/qilisdk/utils/qir/index.html#module-qilisdk.utils.qir" title="qilisdk.utils.qir"><code class="xref py py-mod docutils literal notranslate"><span class="pre">qilisdk.utils.qir</span></code></a>:</p>
+<h1>Importació i Exportació QIR<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qir-import-and-export"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h1>
+<p>QiliSDK pot connectar <code class="xref py py-class docutils literal notranslate"><span class="pre">Circuit</span></code> amb el <a class="reference external" href="https://github.com/qir-alliance/qir-spec/blob/main/specification/under_development/profiles/Base_Profile.md" rel="nofollow noopener">Perfil Base QIR<svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a> a través de la biblioteca <a class="reference external" href="https://pypi.org/project/pyqir/" rel="nofollow noopener">pyqir<svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a> de Microsoft. Quatre punts d’entrada es troben a <a class="reference internal" href="../../code/api/qilisdk/utils/qir/index.html#module-qilisdk.utils.qir" title="qilisdk.utils.qir"><code class="xref py py-mod docutils literal notranslate"><span class="pre">qilisdk.utils.qir</span></code></a>:</p>
 <ul class="simple">
-<li><p><code class="xref py py-func docutils literal notranslate"><span class="pre">from_qir()</span></code> — parse a QIR textual LLVM IR string into a Circuit.</p></li>
-<li><p><code class="xref py py-func docutils literal notranslate"><span class="pre">from_qir_file()</span></code> — read a <code class="docutils literal notranslate"><span class="pre">.ll</span></code> or <code class="docutils literal notranslate"><span class="pre">.bc</span></code> file (dispatched by extension).</p></li>
-<li><p><code class="xref py py-func docutils literal notranslate"><span class="pre">to_qir()</span></code> — serialize a Circuit to QIR textual IR.</p></li>
-<li><p><code class="xref py py-func docutils literal notranslate"><span class="pre">to_qir_file()</span></code> — write a <code class="docutils literal notranslate"><span class="pre">.ll</span></code> or <code class="docutils literal notranslate"><span class="pre">.bc</span></code> file (dispatched by extension).</p></li>
+<li><p><code class="xref py py-func docutils literal notranslate"><span class="pre">from_qir()</span></code> — analitza una cadena LLVM IR textual QIR en un Circuit.</p></li>
+<li><p><code class="xref py py-func docutils literal notranslate"><span class="pre">from_qir_file()</span></code> — llegeix un fitxer <code class="docutils literal notranslate"><span class="pre">.ll</span></code> o <code class="docutils literal notranslate"><span class="pre">.bc</span></code> (segons l’extensió).</p></li>
+<li><p><code class="xref py py-func docutils literal notranslate"><span class="pre">to_qir()</span></code> — serialitza un Circuit a IR textual QIR.</p></li>
+<li><p><code class="xref py py-func docutils literal notranslate"><span class="pre">to_qir_file()</span></code> — escriu un fitxer <code class="docutils literal notranslate"><span class="pre">.ll</span></code> o <code class="docutils literal notranslate"><span class="pre">.bc</span></code> (segons l’extensió).</p></li>
 </ul>
-<p>The <code class="docutils literal notranslate"><span class="pre">pyqir</span></code> dependency is optional; install it with the <code class="docutils literal notranslate"><span class="pre">qir</span></code> extra:</p>
+<p>La dependència <code class="docutils literal notranslate"><span class="pre">pyqir</span></code> és opcional; instal·leu-la amb l’extra <code class="docutils literal notranslate"><span class="pre">qir</span></code>:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">pip<span class="w"> </span>install<span class="w"> </span>qilisdk<span class="o">[</span>qir<span class="o">]</span>
 </span></code></pre></div>
 </div>
 <section id="quick-start">
-<h2>Quick start<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#quick-start" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#quick-start'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
+<h2>Inici ràpid<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#quick-start" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#quick-start'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.digital</span><span class="w"> </span><span class="kn">import</span> <span class="n">CNOT</span><span class="p">,</span> <span class="n">Circuit</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="n">M</span>
 </span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.utils.qir</span><span class="w"> </span><span class="kn">import</span> <span class="n">to_qir</span><span class="p">,</span> <span class="n">from_qir</span>
 </span><span id="line-3">
@@ -371,8 +367,7 @@ entry-points live in <a class="reference internal" href="../../code/api/qilisdk/
 </span><span id="line-12"><span class="n">reparsed</span> <span class="o">=</span> <span class="n">from_qir</span><span class="p">(</span><span class="n">qir_text</span><span class="p">)</span>
 </span></code></pre></div>
 </div>
-<p>Reading and writing files dispatches on the extension — <code class="docutils literal notranslate"><span class="pre">.ll</span></code> is treated as
-textual LLVM IR, <code class="docutils literal notranslate"><span class="pre">.bc</span></code> as LLVM bitcode:</p>
+<p>La lectura i escriptura de fitxers es despacha segons l’extensió — <code class="docutils literal notranslate"><span class="pre">.ll</span></code> es tracta com a IR LLVM textual, <code class="docutils literal notranslate"><span class="pre">.bc</span></code> com a bitcode LLVM:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.utils.qir</span><span class="w"> </span><span class="kn">import</span> <span class="n">to_qir_file</span><span class="p">,</span> <span class="n">from_qir_file</span>
 </span><span id="line-2">
 </span><span id="line-3"><span class="n">to_qir_file</span><span class="p">(</span><span class="n">circuit</span><span class="p">,</span> <span class="s2">"bell.ll"</span><span class="p">)</span>  <span class="c1"># textual</span>
@@ -383,139 +378,149 @@ textual LLVM IR, <code class="docutils literal notranslate"><span class="pre">.b
 </div>
 </section>
 <section id="supported-features">
-<h2>Supported features<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#supported-features" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#supported-features'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
-<p>QiliSDK targets the QIR Base Profile — a flat, statically-allocated subset of
-QIR with no classical control flow. The table below maps QIR features to their
-support status in QiliSDK:</p>
+<h2>Funcionalitats suportades<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#supported-features" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#supported-features'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
+<p>QiliSDK apunta al Perfil Base QIR — un subconjunt pla i estàticament assignat de QIR sense flux de control clàssic. La taula següent mapeja les característiques QIR amb el seu estat de suport a QiliSDK:</p>
 <ul class="simple">
-<li><p>✅: The feature is fully supported</p></li>
-<li><p>🟡: The feature is partially supported, see the note for explanation</p></li>
-<li><p>❌: The feature is not supported</p></li>
+<li><p>✅: La funcionalitat és totalment suportada</p></li>
+<li><p>🟡: La funcionalitat és parcialment suportada, vegeu la nota per a més explicació</p></li>
+<li><p>❌: La funcionalitat no està suportada</p></li>
 </ul>
 <table class="docutils align-default">
 <thead>
-<tr class="row-odd"><th class="head"><p>QIR feature</p></th>
-<th class="head"><p>QiliSDK</p></th>
+<tr class="row-odd"><th class="head"><p>Característica QIR</p></th>
+<th class="head"><p>Característica QiliSDK</p></th>
+<th class="head"><p>Suportat</p></th>
 <th class="head"><p>Notes</p></th>
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p>Base Profile module layout</p></td>
+<tr class="row-even"><td><p>Estructura del mòdul del Perfil Base</p></td>
+<td><p>–</p></td>
 <td><p>✅</p></td>
 <td></td>
 </tr>
-<tr class="row-odd"><td><p>Entry-point function</p></td>
+<tr class="row-odd"><td><p>Funció de punt d’entrada</p></td>
+<td><p>–</p></td>
 <td><p>✅</p></td>
 <td></td>
 </tr>
-<tr class="row-even"><td><p>Static qubit allocation</p></td>
+<tr class="row-even"><td><p>Assignació estàtica de qubits</p></td>
+<td><p>–</p></td>
 <td><p>✅</p></td>
 <td></td>
 </tr>
-<tr class="row-odd"><td><p>Static result allocation</p></td>
+<tr class="row-odd"><td><p>Assignació estàtica de resultats</p></td>
+<td><p>–</p></td>
 <td><p>✅</p></td>
 <td></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">required_num_qubits</span></code> / <code class="docutils literal notranslate"><span class="pre">_num_results</span></code></p></td>
+<td><p>–</p></td>
 <td><p>✅</p></td>
 <td></td>
 </tr>
-<tr class="row-odd"><td><p>Textual LLVM IR (<code class="docutils literal notranslate"><span class="pre">.ll</span></code>)</p></td>
+<tr class="row-odd"><td><p>IR LLVM textual (<code class="docutils literal notranslate"><span class="pre">.ll</span></code>)</p></td>
+<td><p>–</p></td>
 <td><p>✅</p></td>
 <td></td>
 </tr>
-<tr class="row-even"><td><p>LLVM bitcode (<code class="docutils literal notranslate"><span class="pre">.bc</span></code>)</p></td>
+<tr class="row-even"><td><p>Bitcode LLVM (<code class="docutils literal notranslate"><span class="pre">.bc</span></code>)</p></td>
+<td><p>–</p></td>
 <td><p>✅</p></td>
 <td></td>
 </tr>
-<tr class="row-odd"><td><p>Single-qubit QIS gates</p></td>
+<tr class="row-odd"><td><p>Portes QIS d’un sol qubit</p></td>
+<td><p>–</p></td>
 <td><p>✅</p></td>
 <td><p>1</p></td>
 </tr>
-<tr class="row-even"><td><p>Two-qubit QIS gates</p></td>
+<tr class="row-even"><td><p>Portes QIS de dos qubits</p></td>
+<td><p>–</p></td>
 <td><p>✅</p></td>
 <td><p>1</p></td>
 </tr>
-<tr class="row-odd"><td><p>Adjoint QIS gates (<code class="docutils literal notranslate"><span class="pre">s_adj</span></code> / <code class="docutils literal notranslate"><span class="pre">t_adj</span></code>)</p></td>
+<tr class="row-odd"><td><p>Portes QIS adjuntes (<code class="docutils literal notranslate"><span class="pre">s_adj</span></code> / <code class="docutils literal notranslate"><span class="pre">t_adj</span></code>)</p></td>
+<td><p>–</p></td>
 <td><p>✅</p></td>
 <td></td>
 </tr>
-<tr class="row-even"><td><p>Parameterized rotations</p></td>
+<tr class="row-even"><td><p>Rotacions parametritzades</p></td>
+<td><p>–</p></td>
 <td><p>🟡</p></td>
 <td><p>2</p></td>
 </tr>
-<tr class="row-odd"><td><p>Measurement (<code class="docutils literal notranslate"><span class="pre">mz</span></code>)</p></td>
+<tr class="row-odd"><td><p>Mesura (<code class="docutils literal notranslate"><span class="pre">mz</span></code>)</p></td>
+<td><p>–</p></td>
 <td><p>🟡</p></td>
 <td><p>3</p></td>
 </tr>
-<tr class="row-even"><td><p>Multi-qubit measurement grouping</p></td>
+<tr class="row-even"><td><p>Agrupació de mesures multi-qubit</p></td>
+<td><p>–</p></td>
 <td><p>🟡</p></td>
 <td><p>4</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">barrier</span></code> / <code class="docutils literal notranslate"><span class="pre">reset</span></code></p></td>
+<td><p>–</p></td>
 <td><p>❌</p></td>
 <td></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ccx</span></code> and other three-qubit intrinsics</p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ccx</span></code> i altres intrínsecs de tres qubits</p></td>
+<td><p>–</p></td>
 <td><p>❌</p></td>
 <td><p>5</p></td>
 </tr>
-<tr class="row-odd"><td><p>Adaptive Profile / classical control</p></td>
+<tr class="row-odd"><td><p>Perfil Adaptatiu / control clàssic</p></td>
+<td><p>–</p></td>
 <td><p>❌</p></td>
 <td></td>
 </tr>
-<tr class="row-even"><td><p>Branching on measurement results</p></td>
+<tr class="row-even"><td><p>Bifurcació en resultats de mesura</p></td>
+<td><p>–</p></td>
 <td><p>❌</p></td>
 <td></td>
 </tr>
-<tr class="row-odd"><td><p>Output recording calls (<code class="docutils literal notranslate"><span class="pre">rt__*</span></code>)</p></td>
+<tr class="row-odd"><td><p>Crides de gravació de sortida (<code class="docutils literal notranslate"><span class="pre">rt__*</span></code>)</p></td>
+<td><p>–</p></td>
 <td><p>❌</p></td>
 <td></td>
 </tr>
-<tr class="row-even"><td><p>Dynamic qubit / result management</p></td>
+<tr class="row-even"><td><p>Gestió dinàmica de qubits / resultats</p></td>
+<td><p>–</p></td>
 <td><p>❌</p></td>
 <td></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">U1</span></code> / <code class="docutils literal notranslate"><span class="pre">U2</span></code> / <code class="docutils literal notranslate"><span class="pre">U3</span></code></p></td>
+<tr class="row-odd"><td><p>–</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">U1</span></code> / <code class="docutils literal notranslate"><span class="pre">U2</span></code> / <code class="docutils literal notranslate"><span class="pre">U3</span></code></p></td>
 <td><p>❌</p></td>
 <td><p>5</p></td>
 </tr>
-<tr class="row-even"><td><p>Arbitrary <code class="docutils literal notranslate"><span class="pre">Controlled</span></code> / <code class="docutils literal notranslate"><span class="pre">Exponential</span></code></p></td>
+<tr class="row-even"><td><p>–</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">Controlled</span></code> / <code class="docutils literal notranslate"><span class="pre">Exponential</span></code> arbitrari</p></td>
 <td><p>❌</p></td>
 <td><p>5</p></td>
 </tr>
 </tbody>
 </table>
 <ol class="arabic simple">
-<li><p>See the «Supported gates» table below for the exact intrinsic mapping.</p></li>
-<li><p>Rotation angles are exported as their currently-resolved numeric values.
-Base Profile does not support symbolic parameters, so rebind any
-<code class="xref py py-class docutils literal notranslate"><span class="pre">Parameter</span></code> values to concrete numbers before calling
-<code class="xref py py-func docutils literal notranslate"><span class="pre">to_qir()</span></code>.</p></li>
-<li><p>Only <code class="docutils literal notranslate"><span class="pre">mz</span></code> is emitted; mid-circuit measurement followed by classical
-control is not supported (and is forbidden by the Base Profile).</p></li>
-<li><p>A multi-qubit <a class="reference internal" href="../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.M" title="qilisdk.digital.gates.M"><code class="xref py py-class docutils literal notranslate"><span class="pre">M</span></code></a> is serialized as one <code class="docutils literal notranslate"><span class="pre">mz</span></code>
-call per target qubit. On reparse it comes back as one
-<a class="reference internal" href="../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.M" title="qilisdk.digital.gates.M"><code class="xref py py-class docutils literal notranslate"><span class="pre">M</span></code></a> per measured qubit — the qubit set is
-preserved but the grouping is not.</p></li>
-<li><p>These must be decomposed into supported primitives before export, otherwise
-<code class="xref py py-func docutils literal notranslate"><span class="pre">to_qir()</span></code> raises <code class="xref py py-class docutils literal notranslate"><span class="pre">NotImplementedError</span></code>.</p></li>
+<li><p>Consulteu la taula «Portes suportades» a continuació per al mapeig exacte d’intrínsecs.</p></li>
+<li><p>Els angles de rotació s’exporten com els seus valors numèrics actualment resolts. El Perfil Base no admet paràmetres simbòlics, per la qual cosa vinculeu qualsevol valor de <code class="xref py py-class docutils literal notranslate"><span class="pre">Parameter</span></code> a números concrets abans de cridar <code class="xref py py-func docutils literal notranslate"><span class="pre">to_qir()</span></code>.</p></li>
+<li><p>Només s’emet <code class="docutils literal notranslate"><span class="pre">mz</span></code>; la mesura a mig circuit seguida de control clàssic no està suportada (i està prohibida pel Perfil Base).</p></li>
+<li><p>Un <a class="reference internal" href="../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.M" title="qilisdk.digital.gates.M"><code class="xref py py-class docutils literal notranslate"><span class="pre">M</span></code></a> multi-qubit es serialitza com una crida <code class="docutils literal notranslate"><span class="pre">mz</span></code> per qubit destí. En reanàlisi torna com un <a class="reference internal" href="../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.M" title="qilisdk.digital.gates.M"><code class="xref py py-class docutils literal notranslate"><span class="pre">M</span></code></a> per qubit mesurat — el conjunt de qubits es conserva, però no l’agrupació.</p></li>
+<li><p>Aquests han de descompondre’s en primitius suportats abans d’exportar; altrament, <code class="xref py py-func docutils literal notranslate"><span class="pre">to_qir()</span></code> llança <code class="xref py py-class docutils literal notranslate"><span class="pre">NotImplementedError</span></code>.</p></li>
 </ol>
 </section>
 <section id="supported-gates">
-<h2>Supported gates<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#supported-gates" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#supported-gates'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
-<p>The exporter maps the following gates onto the standard <code class="docutils literal notranslate"><span class="pre">__quantum__qis__*__body</span></code>
-intrinsics; everything else raises <code class="xref py py-class docutils literal notranslate"><span class="pre">NotImplementedError</span></code> to surface the
-need for decomposition.</p>
+<h2>Portes suportades<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#supported-gates" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#supported-gates'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
+<p>L’exportador mapeja les portes següents als intrínsecs estàndard <code class="docutils literal notranslate"><span class="pre">__quantum__qis__*__body</span></code>; tot la resta llança <code class="xref py py-class docutils literal notranslate"><span class="pre">NotImplementedError</span></code> per indicar la necessitat de descomposició.</p>
 <table class="docutils align-default">
 <thead>
-<tr class="row-odd"><th class="head"><p>QiliSDK gate</p></th>
-<th class="head"><p>QIR intrinsic</p></th>
+<tr class="row-odd"><th class="head"><p>Porta QiliSDK</p></th>
+<th class="head"><p>Intrínsec QIR</p></th>
 </tr>
 </thead>
 <tbody>
 <tr class="row-even"><td><p><a class="reference internal" href="../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.I" title="qilisdk.digital.gates.I"><code class="xref py py-class docutils literal notranslate"><span class="pre">I</span></code></a></p></td>
-<td><p><em>(no-op, emitted as nothing)</em></p></td>
+<td><p><em>(sense operació, no s’emet res)</em></p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.X" title="qilisdk.digital.gates.X"><code class="xref py py-class docutils literal notranslate"><span class="pre">X</span></code></a> /</p></td>
 <td></td>
@@ -557,31 +562,18 @@ need for decomposition.</p>
 <td><p><code class="docutils literal notranslate"><span class="pre">__quantum__qis__swap__body</span></code></p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.M" title="qilisdk.digital.gates.M"><code class="xref py py-class docutils literal notranslate"><span class="pre">M</span></code></a></p></td>
-<td><p>one <code class="docutils literal notranslate"><span class="pre">__quantum__qis__mz__body</span></code>
-call per target qubit</p></td>
+<td><p>una crida <code class="docutils literal notranslate"><span class="pre">__quantum__qis__mz__body</span></code> per qubit destí</p></td>
 </tr>
 </tbody>
 </table>
-<p>Gates outside this table (<code class="docutils literal notranslate"><span class="pre">U1</span></code> / <code class="docutils literal notranslate"><span class="pre">U2</span></code> / <code class="docutils literal notranslate"><span class="pre">U3</span></code>, three-qubit unitaries,
-arbitrary <a class="reference internal" href="../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.Controlled" title="qilisdk.digital.gates.Controlled"><code class="xref py py-class docutils literal notranslate"><span class="pre">Controlled</span></code></a> /
-<a class="reference internal" href="../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.Exponential" title="qilisdk.digital.gates.Exponential"><code class="xref py py-class docutils literal notranslate"><span class="pre">Exponential</span></code></a> wrappers) need to be decomposed
-into the supported set before export.</p>
+<p>Les portes fora d’aquesta taula (<code class="docutils literal notranslate"><span class="pre">U1</span></code> / <code class="docutils literal notranslate"><span class="pre">U2</span></code> / <code class="docutils literal notranslate"><span class="pre">U3</span></code>, unitàries de tres qubits, embolcalls arbitraris de <a class="reference internal" href="../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.Controlled" title="qilisdk.digital.gates.Controlled"><code class="xref py py-class docutils literal notranslate"><span class="pre">Controlled</span></code></a> / <a class="reference internal" href="../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.Exponential" title="qilisdk.digital.gates.Exponential"><code class="xref py py-class docutils literal notranslate"><span class="pre">Exponential</span></code></a>) han de descompondre’s en el conjunt suportat abans d’exportar.</p>
 </section>
 <section id="profile-and-round-trip-notes">
-<h2>Profile and round-trip notes<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#profile-and-round-trip-notes" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#profile-and-round-trip-notes'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
+<h2>Notes sobre el perfil i el cicle d’anada i tornada<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#profile-and-round-trip-notes" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#profile-and-round-trip-notes'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
 <ul class="simple">
-<li><p>Modules are emitted with one entry-point function and statically allocated
-qubit and result registers (one result register per qubit), matching the
-Base Profile contract.</p></li>
-<li><p>Round-tripping preserves gate types, qubit indices, and rotation angles. A
-multi-qubit <a class="reference internal" href="../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.M" title="qilisdk.digital.gates.M"><code class="xref py py-class docutils literal notranslate"><span class="pre">M</span></code></a> instance is serialized as one
-<code class="docutils literal notranslate"><span class="pre">mz</span></code> call per target; on parse it comes back as one
-<a class="reference internal" href="../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.M" title="qilisdk.digital.gates.M"><code class="xref py py-class docutils literal notranslate"><span class="pre">M</span></code></a> per measured qubit (i.e. the qubit set is
-preserved but the grouping is not).</p></li>
-<li><p>Parameterized rotations are exported with their currently-resolved numeric
-angles; Base Profile does not support symbolic parameters, so rebind any
-<code class="xref py py-class docutils literal notranslate"><span class="pre">Parameter</span></code> values to concrete numbers before calling
-<code class="xref py py-func docutils literal notranslate"><span class="pre">to_qir()</span></code>.</p></li>
+<li><p>Els mòduls s’emeten amb una funció de punt d’entrada i registres de qubits i resultats assignats estàticament (un registre de resultat per qubit), seguint el contracte del Perfil Base.</p></li>
+<li><p>El cicle d’anada i tornada preserva els tipus de portes, els índexs de qubits i els angles de rotació. Una instància de <a class="reference internal" href="../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.M" title="qilisdk.digital.gates.M"><code class="xref py py-class docutils literal notranslate"><span class="pre">M</span></code></a> multi-qubit es serialitza com una crida <code class="docutils literal notranslate"><span class="pre">mz</span></code> per destí; en analitzar, torna com un <a class="reference internal" href="../../code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.M" title="qilisdk.digital.gates.M"><code class="xref py py-class docutils literal notranslate"><span class="pre">M</span></code></a> per qubit mesurat (és a dir, el conjunt de qubits es conserva, però no l’agrupació).</p></li>
+<li><p>Les rotacions parametritzades s’exporten amb els seus angles numèrics actualment resolts; el Perfil Base no admet paràmetres simbòlics, per la qual cosa vinculeu qualsevol valor de <code class="xref py py-class docutils literal notranslate"><span class="pre">Parameter</span></code> a números concrets abans de cridar <code class="xref py py-func docutils literal notranslate"><span class="pre">to_qir()</span></code>.</p></li>
 </ul>
 </section>
 </section>
@@ -595,8 +587,8 @@ angles; Base Profile does not support symbolic parameters, so rebind any
       </a>
 </div>
 <div class="ml-auto">
-<a class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input hover:bg-accent hover:text-accent-foreground py-2 px-4" href="../analog/analog.html">
-        Analog
+<a class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input hover:bg-accent hover:text-accent-foreground py-2 px-4" href="digital_qasm.html">
+        Importació i Exportació OpenQASM
         <svg class="ml-2 h-4 w-4" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
 <polyline points="9 18 15 12 9 6"></polyline>
 </svg>
@@ -605,10 +597,10 @@ angles; Base Profile does not support symbolic parameters, so rebind any
 </div></div><aside class="hidden text-sm xl:block" id="right-sidebar">
 <div class="sticky top-16 -mt-10 max-h-[calc(100vh-5rem)] h-full overflow-y-auto pt-6 space-y-2"><p class="font-medium">On this page</p>
 <ul>
-<li><a :data-current="activeSection === '#quick-start'" class="reference internal" href="#quick-start">Quick start</a></li>
-<li><a :data-current="activeSection === '#supported-features'" class="reference internal" href="#supported-features">Supported features</a></li>
-<li><a :data-current="activeSection === '#supported-gates'" class="reference internal" href="#supported-gates">Supported gates</a></li>
-<li><a :data-current="activeSection === '#profile-and-round-trip-notes'" class="reference internal" href="#profile-and-round-trip-notes">Profile and round-trip notes</a></li>
+<li><a :data-current="activeSection === '#quick-start'" class="reference internal" href="#quick-start">Inici ràpid</a></li>
+<li><a :data-current="activeSection === '#supported-features'" class="reference internal" href="#supported-features">Funcionalitats suportades</a></li>
+<li><a :data-current="activeSection === '#supported-gates'" class="reference internal" href="#supported-gates">Portes suportades</a></li>
+<li><a :data-current="activeSection === '#profile-and-round-trip-notes'" class="reference internal" href="#profile-and-round-trip-notes">Notes sobre el perfil i el cicle d’anada i tornada</a></li>
 </ul>
 </div>
 </aside>
@@ -625,7 +617,7 @@ angles; Base Profile does not support symbolic parameters, so rebind any
 <script src="../../_static/documentation_options.js?v=62dba230"></script>
 <script src="../../_static/doctools.js?v=9bcbadda"></script>
 <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
-<script defer="defer" src="../../_static/theme.js?v=d6a9845b"></script>
+<script defer="defer" src="../../_static/theme.js?v=582b20c5"></script>
 <script src="../../_static/translations.js?v=5e30842e"></script>
 <script src="../../_static/design-tabs.js?v=f930bc37"></script>
 <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>

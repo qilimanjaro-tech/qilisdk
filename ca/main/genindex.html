@@ -27,11 +27,11 @@
   <meta property="og:title" content="Índex | QiliSDK" />
   <meta name="twitter:title" content="Índex | QiliSDK" />
   <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=652ce3ed" />
-  <link rel="stylesheet" type="text/css" href="_static/theme.css?v=979577e3" />
+  <link rel="stylesheet" type="text/css" href="_static/theme.css?v=73505e79" />
   <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
   <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
   <link rel="stylesheet" type="text/css" href="_static/custom.css?v=7f555f8f" />
-  <link rel="stylesheet" type="text/css" href="_static/awesome-sphinx-design.css?v=b1d4564d" />
+  <link rel="stylesheet" type="text/css" href="_static/awesome-sphinx-design.css?v=c54898a4" />
   <link rel="icon" href="_static/q_trans.png" />
   <link rel="search" title="Cerca" href="search.html" />
   <link rel="index" title="Índex" href="#" />
@@ -164,7 +164,6 @@
 <li class="toctree-l2"><a class="reference internal" href="modules/core/core_variables_parameters.html">Variables i paràmetres</a></li>
 <li class="toctree-l2"><a class="reference internal" href="modules/core/core_terms_maps_comparisons.html">Termes, mapes i comparacions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="modules/core/core_model.html">Models</a></li>
-<li class="toctree-l2"><a class="reference internal" href="modules/core/core_lp_parser.html">Linear Programming File Parser and Serializer</a></li>
 <li class="toctree-l2"><a class="reference internal" href="modules/core/core_qubo.html">QUBO</a></li>
 <li class="toctree-l2"><a class="reference internal" href="modules/core/core_qtensor.html">QTensor</a></li>
 </ul>
@@ -177,7 +176,8 @@
 <li class="toctree-l2"><a class="reference internal" href="modules/digital/digital_hardware.html">HardwareEfficientAnsatz</a></li>
 <li class="toctree-l2"><a class="reference internal" href="modules/digital/digital_qaoa.html">QAOA</a></li>
 <li class="toctree-l2"><a class="reference internal" href="modules/digital/digital_trotter.html">TrotterizedSchedule</a></li>
-<li class="toctree-l2"><a class="reference internal" href="modules/digital/digital_qir.html">QIR Import and Export</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/digital/digital_qir.html">Importació i Exportació QIR</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/digital/digital_qasm.html">Importació i Exportació OpenQASM</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="modules/analog/analog.html">Analog</a><ul>
@@ -325,7 +325,6 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="code/api/qilisdk/utils/index.html">qilisdk.utils</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/utils/hashing/index.html">qilisdk.utils.hashing</a></li>
-<li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/utils/lp_parser/index.html">qilisdk.utils.lp_parser</a></li>
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/utils/openfermion/index.html">qilisdk.utils.openfermion</a></li>
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/utils/openqasm/index.html">qilisdk.utils.openqasm</a></li>
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/utils/qir/index.html">qilisdk.utils.qir</a></li>
@@ -1232,12 +1231,8 @@
 </li>
       <li><a href="code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.ReadoutCompositeResults.from_list">from_list() (mètode de classe ReadoutCompositeResults)</a>
 </li>
-      <li><a href="code/api/qilisdk/utils/lp_parser/lp_parser/index.html#qilisdk.utils.lp_parser.lp_parser.from_lp">from_lp() (al mòdul qilisdk.utils.lp_parser.lp_parser)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
-      <li><a href="code/api/qilisdk/utils/lp_parser/lp_parser/index.html#qilisdk.utils.lp_parser.lp_parser.from_lp_file">from_lp_file() (al mòdul qilisdk.utils.lp_parser.lp_parser)</a>
-</li>
       <li><a href="code/api/qilisdk/core/model/index.html#qilisdk.core.model.QUBO.from_model">from_model() (mètode de classe QUBO)</a>
 </li>
       <li><a href="code/api/qilisdk/utils/openqasm/openqasm2/index.html#qilisdk.utils.openqasm.openqasm2.from_qasm2">from_qasm2() (al mòdul qilisdk.utils.openqasm.openqasm2)</a>
@@ -2096,10 +2091,6 @@
         <li><a href="code/api/qilisdk/utils/index.html#module-qilisdk.utils">qilisdk.utils</a>
 </li>
         <li><a href="code/api/qilisdk/utils/hashing/index.html#module-qilisdk.utils.hashing">qilisdk.utils.hashing</a>
-</li>
-        <li><a href="code/api/qilisdk/utils/lp_parser/index.html#module-qilisdk.utils.lp_parser">qilisdk.utils.lp_parser</a>
-</li>
-        <li><a href="code/api/qilisdk/utils/lp_parser/lp_parser/index.html#module-qilisdk.utils.lp_parser.lp_parser">qilisdk.utils.lp_parser.lp_parser</a>
 </li>
         <li><a href="code/api/qilisdk/utils/openfermion/index.html#module-qilisdk.utils.openfermion">qilisdk.utils.openfermion</a>
 </li>
@@ -3025,6 +3016,8 @@
         <li><a href="code/api/qilisdk/noise/depolarizing/index.html#module-qilisdk.noise.depolarizing">module</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li>
     qilisdk.noise.gaussian_perturbation
 
@@ -3032,8 +3025,6 @@
         <li><a href="code/api/qilisdk/noise/gaussian_perturbation/index.html#module-qilisdk.noise.gaussian_perturbation">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li>
     qilisdk.noise.noise
 
@@ -3221,20 +3212,6 @@
 
       <ul style="list-style-type:none">
         <li><a href="code/api/qilisdk/utils/hashing/index.html#module-qilisdk.utils.hashing">module</a>
-</li>
-      </ul></li>
-      <li>
-    qilisdk.utils.lp_parser
-
-      <ul style="list-style-type:none">
-        <li><a href="code/api/qilisdk/utils/lp_parser/index.html#module-qilisdk.utils.lp_parser">module</a>
-</li>
-      </ul></li>
-      <li>
-    qilisdk.utils.lp_parser.lp_parser
-
-      <ul style="list-style-type:none">
-        <li><a href="code/api/qilisdk/utils/lp_parser/lp_parser/index.html#module-qilisdk.utils.lp_parser.lp_parser">module</a>
 </li>
       </ul></li>
       <li>
@@ -4015,14 +3992,14 @@
       </ul></li>
       <li><a href="code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.to_density_matrix">to_density_matrix() (mètode QTensor)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.PauliOperator.to_hamiltonian">to_hamiltonian() (mètode PauliOperator)</a>
 
       <ul style="list-style-type:none">
         <li><a href="code/api/qilisdk/core/model/index.html#qilisdk.core.model.QUBO.to_hamiltonian">(mètode QUBO)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.ComparisonTerm.to_list">to_list() (mètode ComparisonTerm)</a>
 
       <ul style="list-style-type:none">
@@ -4031,10 +4008,6 @@
         <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Term.to_list">(mètode Term)</a>
 </li>
       </ul></li>
-      <li><a href="code/api/qilisdk/utils/lp_parser/lp_parser/index.html#qilisdk.utils.lp_parser.lp_parser.to_lp">to_lp() (al mòdul qilisdk.utils.lp_parser.lp_parser)</a>
-</li>
-      <li><a href="code/api/qilisdk/utils/lp_parser/lp_parser/index.html#qilisdk.utils.lp_parser.lp_parser.to_lp_file">to_lp_file() (al mòdul qilisdk.utils.lp_parser.lp_parser)</a>
-</li>
       <li><a href="code/api/qilisdk/digital/circuit/index.html#qilisdk.digital.circuit.Circuit.to_matrix">to_matrix() (mètode Circuit)</a>
 
       <ul style="list-style-type:none">
@@ -4379,7 +4352,7 @@
     <script src="_static/documentation_options.js?v=62dba230"></script>
     <script src="_static/doctools.js?v=9bcbadda"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script defer="defer" src="_static/theme.js?v=d6a9845b"></script>
+    <script defer="defer" src="_static/theme.js?v=582b20c5"></script>
     <script src="_static/translations.js?v=5e30842e"></script>
     <script src="_static/design-tabs.js?v=f930bc37"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>

@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 
-<html :class="{ 'dark' : darkMode === true }" data-content_root="../../" lang="ca" x-data="{ darkMode: $persist(window.matchMedia('(prefers-color-scheme: dark)').matches), activeSection: ''}">
+<html :class="{ 'dark' : darkMode === true }" data-content_root="../../" lang="es" x-data="{ darkMode: $persist(window.matchMedia('(prefers-color-scheme: dark)').matches), activeSection: ''}">
 <head>
 <script>
     (function () {
@@ -21,20 +21,20 @@
 <meta content="#ffffff" media="(prefers-color-scheme: light)" name="theme-color"/>
 <meta content="#030711" media="(prefers-color-scheme: dark)" name="theme-color"/>
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
-<title>Linear Programming File Parser and Serializer | QiliSDK</title>
-<meta content="Linear Programming File Parser and Serializer | QiliSDK" property="og:title"/>
-<meta content="Linear Programming File Parser and Serializer | QiliSDK" name="twitter:title"/>
+<title>Importación y Exportación OpenQASM | QiliSDK</title>
+<meta content="Importación y Exportación OpenQASM | QiliSDK" property="og:title"/>
+<meta content="Importación y Exportación OpenQASM | QiliSDK" name="twitter:title"/>
 <link href="../../_static/pygments.css?v=652ce3ed" rel="stylesheet" type="text/css"/>
-<link href="../../_static/theme.css?v=979577e3" rel="stylesheet" type="text/css"/>
+<link href="../../_static/theme.css?v=73505e79" rel="stylesheet" type="text/css"/>
 <link href="../../_static/graphviz.css?v=4ae1632d" rel="stylesheet" type="text/css"/>
 <link href="../../_static/sphinx-design.min.css?v=95c83b7e" rel="stylesheet" type="text/css"/>
 <link href="../../_static/custom.css?v=7f555f8f" rel="stylesheet" type="text/css"/>
-<link href="../../_static/awesome-sphinx-design.css?v=b1d4564d" rel="stylesheet" type="text/css"/>
+<link href="../../_static/awesome-sphinx-design.css?v=c54898a4" rel="stylesheet" type="text/css"/>
 <link href="../../_static/q_trans.png" rel="icon"/>
-<link href="../../search.html" rel="search" title="Cerca"/>
-<link href="../../genindex.html" rel="index" title="Índex"/>
-<link href="core_qubo.html" rel="next" title="QUBO"/>
-<link href="core_model.html" rel="prev" title="Models"/>
+<link href="../../search.html" rel="search" title="Búsqueda"/>
+<link href="../../genindex.html" rel="index" title="Índice"/>
+<link href="../analog/analog.html" rel="next" title="Analog"/>
+<link href="digital_qir.html" rel="prev" title="Importación y Exportación QIR"/>
 </head>
 <body :class="{ 'overflow-hidden': showSidebar }" class="min-h-screen font-sans antialiased bg-background text-foreground" x-data="{ showSidebar: false, showScrollTop: false }">
 <div @click.self="showSidebar = false" class="fixed inset-0 z-50 overflow-hidden bg-background/80 backdrop-blur-sm md:hidden" x-cloak="" x-show="showSidebar"></div><div class="relative flex flex-col min-h-screen" id="page"><a class="absolute top-0 left-0 z-[100] block bg-background p-4 text-xl transition -translate-x-full opacity-0 focus:translate-x-0 focus:opacity-100" href="#content">
@@ -46,9 +46,9 @@
 <img alt="Logo" class="mr-2 dark:hidden" height="24" src="../../_static/q_trans.png" width="24"/><span class="hidden font-bold sm:inline-block text-clip whitespace-nowrap">QiliSDK</span>
 </a>
 <div class="language-switcher">
-<a class="lang-link" href="../../../../en/main/modules/core/core_lp_parser.html">EN</a>
-<a class="lang-link" href="../../../../es/main/modules/core/core_lp_parser.html">ES</a>
-<span class="lang-active">CA</span>
+<a class="lang-link" href="../../../../en/main/modules/digital/digital_qasm.html">EN</a>
+<span class="lang-active">ES</span>
+<a class="lang-link" href="../../../../ca/main/modules/digital/digital_qasm.html">CA</a>
 </div>
 </div><button @click="showSidebar = true" class="inline-flex items-center justify-center h-10 px-0 py-2 mr-2 text-base font-medium transition-colors rounded-md hover:text-accent-foreground hover:bg-transparent md:hidden" type="button">
 <svg aria-hidden="true" fill="currentColor" height="24" viewbox="0 96 960 960" width="24" xmlns="http://www.w3.org/2000/svg">
@@ -85,95 +85,95 @@
 </a>
 <div class="relative overflow-hidden md:overflow-auto my-4 md:my-0">
 <div class="overflow-y-auto h-full w-full relative pr-6"><nav class="table w-full min-w-full my-6 lg:my-8">
-<p class="caption" role="heading"><span class="caption-text">Primers passos</span></p>
+<p class="caption" role="heading"><span class="caption-text">Primeros Pasos</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../getting_started/introduction.html">Introducció</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../getting_started/installation.html">Instal·lació</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../getting_started/quickstart.html">Inici ràpid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started/introduction.html">Introducción</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started/installation.html">Instalación</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started/quickstart.html">Inicio rápido</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<p class="caption" role="heading"><span class="caption-text">Tutoriales</span></p>
 <ul>
-<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../tutorials/introductions/index_intros.html">Introduccions<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
-<li class="toctree-l2"><a class="reference internal" href="../../tutorials/introductions/intro_quantum.html">Fonaments Quàntics</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../tutorials/introductions/intro_circuits.html">Circuits Quàntics</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../tutorials/introductions/intro_annealing.html">Recuita Quàntica</a></li>
+<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../tutorials/introductions/index_intros.html">Introducciones<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials/introductions/intro_quantum.html">Fundamentos Cuánticos</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials/introductions/intro_circuits.html">Circuitos Cuánticos</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials/introductions/intro_annealing.html">Recocido Cuántico</a></li>
 </ul>
 </li>
-<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../tutorials/applications/index_applications.html">Aplicacions<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
-<li class="toctree-l2"><a class="reference internal" href="../../tutorials/applications/application_grovers.html">Cerca Quàntica amb l’Algorisme de Grover</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../tutorials/applications/application_shors.html">Factorització amb l’Algorisme de Shor</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../tutorials/applications/application_annealing.html">Optimització amb Recuita Quàntica</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../tutorials/applications/application_qaoa.html">Optimització amb QAOA</a></li>
+<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../tutorials/applications/index_applications.html">Aplicaciones<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials/applications/application_grovers.html">Búsqueda Cuántica con el Algoritmo de Grover</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials/applications/application_shors.html">Factorización con el Algoritmo de Shor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials/applications/application_annealing.html">Optimización con Recocido Cuántico</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials/applications/application_qaoa.html">Optimización con QAOA</a></li>
 </ul>
 </li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">Mòduls</span></p>
+<p class="caption" role="heading"><span class="caption-text">Módulos</span></p>
 <ul class="current">
-<li class="toctree-l1 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="core.html">Core<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul class="current" x-show="expanded">
-<li class="toctree-l2"><a class="reference internal" href="core_overview.html">Visió general</a></li>
-<li class="toctree-l2"><a class="reference internal" href="core_variables_parameters.html">Variables i paràmetres</a></li>
-<li class="toctree-l2"><a class="reference internal" href="core_terms_maps_comparisons.html">Termes, mapes i comparacions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="core_model.html">Models</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">Linear Programming File Parser and Serializer</a></li>
-<li class="toctree-l2"><a class="reference internal" href="core_qubo.html">QUBO</a></li>
-<li class="toctree-l2"><a class="reference internal" href="core_qtensor.html">QTensor</a></li>
+<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../core/core.html">Core<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../core/core_overview.html">Descripción general</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core/core_variables_parameters.html">Variables y Parámetros</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core/core_terms_maps_comparisons.html">Términos, Mapas y Comparaciones</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core/core_model.html">Modelos</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core/core_qubo.html">QUBO</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core/core_qtensor.html">QTensor</a></li>
 </ul>
 </li>
-<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../digital/digital.html">Digital<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
-<li class="toctree-l2"><a class="reference internal" href="../digital/digital_overview.html">Visió general</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../digital/digital_gates.html">Portes</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../digital/digital_circuits.html">Circuits</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../digital/digital_ansatz.html">Ansatz</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../digital/digital_hardware.html">HardwareEfficientAnsatz</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../digital/digital_qaoa.html">QAOA</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../digital/digital_trotter.html">TrotterizedSchedule</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../digital/digital_qir.html">QIR Import and Export</a></li>
+<li class="toctree-l1 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="digital.html">Digital<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul class="current" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="digital_overview.html">Descripción general</a></li>
+<li class="toctree-l2"><a class="reference internal" href="digital_gates.html">Puertas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="digital_circuits.html">Circuitos</a></li>
+<li class="toctree-l2"><a class="reference internal" href="digital_ansatz.html">Ansatz</a></li>
+<li class="toctree-l2"><a class="reference internal" href="digital_hardware.html">HardwareEfficientAnsatz</a></li>
+<li class="toctree-l2"><a class="reference internal" href="digital_qaoa.html">QAOA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="digital_trotter.html">TrotterizedSchedule</a></li>
+<li class="toctree-l2"><a class="reference internal" href="digital_qir.html">Importación y Exportación QIR</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Importación y Exportación OpenQASM</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../analog/analog.html">Analog<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
-<li class="toctree-l2"><a class="reference internal" href="../analog/analog_overview.html">Visió general</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../analog/analog_hamiltonian.html">Hamiltonià</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../analog/analog_overview.html">Descripción general</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../analog/analog_hamiltonian.html">Hamiltoniano</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../analog/analog_schedule.html">Esquema</a></li>
 </ul>
 </li>
-<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../functionals/functionals.html">Funcionals<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
-<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_overview.html">Visió general</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_digital.html">Propagació Digital</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_analog.html">Evolució Analògica</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_variational.html">Programes Variacionals</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_reservoirs.html">Reservoris Quàntics</a></li>
+<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../functionals/functionals.html">Functionals<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_overview.html">Descripción general</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_digital.html">Propagación Digital</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_analog.html">Evolución Analog</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_variational.html">Programas Variacionales</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_reservoirs.html">Reservorios Cuánticos</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../readout/readout.html">Readout<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
-<li class="toctree-l2"><a class="reference internal" href="../readout/readout_overview.html">Visió General</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../readout/readout_bitstring.html">Mesura de Cadena de Bits</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../readout/readout_expectation.html">Valors Esperats</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../readout/readout_state.html">Estat Quàntic Complet</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../readout/readout_intermediate.html">Resultats Intermedis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../readout/readout_overview.html">Descripción general</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../readout/readout_bitstring.html">Medición de Cadena de Bits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../readout/readout_expectation.html">Valores Esperados</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../readout/readout_state.html">Estado Cuántico Completo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../readout/readout_intermediate.html">Resultados Intermedios</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../backends/backends.html">Backends<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
-<li class="toctree-l2"><a class="reference internal" href="../backends/backends_overview.html">Visió general</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../backends/backends_overview.html">Descripción general</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../backends/backends_qilisim.html">QiliSim</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../backends/backends_cuda.html">Backend CUDA</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../backends/backends_qutip.html">Backend QuTiP</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../cost_functions/cost_functions.html">Cost Functions<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
-<li class="toctree-l2"><a class="reference internal" href="../cost_functions/cost_functions_overview.html">Visió general</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../cost_functions/cost_functions_observable.html">ObservableCostFunction</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../cost_functions/cost_functions_model.html">ModelCostFunction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cost_functions/cost_functions_overview.html">Descripción general</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cost_functions/cost_functions_observable.html">Función de Coste de Observable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cost_functions/cost_functions_model.html">Función de Coste del Modelo</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../noise/noise.html">Noise<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
-<li class="toctree-l2"><a class="reference internal" href="../noise/noise_overview.html">Visió General</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../noise/noise_config.html">Configuració del Soroll</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../noise/noise_types.html">Tipus de Soroll</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../noise/noise_overview.html">Descripción general</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../noise/noise_config.html">Configuración de Ruido</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../noise/noise_types.html">Tipos de Ruido</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../speqtrum/speqtrum.html">SpeQtrum</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">Referència de l'API</span></p>
+<p class="caption" role="heading"><span class="caption-text">Referencia de la API</span></p>
 <ul>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../code/api/index.html">API Reference<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
 <li class="toctree-l2" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../code/api/qilisdk/index.html">qilisdk<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
@@ -275,7 +275,6 @@
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../code/api/qilisdk/utils/index.html">qilisdk.utils<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/utils/hashing/index.html">qilisdk.utils.hashing</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/utils/lp_parser/index.html">qilisdk.utils.lp_parser</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/utils/openfermion/index.html">qilisdk.utils.openfermion</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/utils/openqasm/index.html">qilisdk.utils.openqasm</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/utils/qir/index.html">qilisdk.utils.qir</a></li>
@@ -293,7 +292,7 @@
 </nav>
 <nav class="table w-full min-w-full my-6 lg:my-8 border-t pt-6">
 <p class="caption" role="heading">
-<span class="caption_text">Llançaments</span>
+<span class="caption_text">Versiones</span>
 </p>
 <ul>
 <li class="toctree-l1">
@@ -310,11 +309,11 @@
 </li>
 </ul>
 <p class="caption" role="heading">
-<span class="caption_text">Desenvolupament</span>
+<span class="caption_text">Desarrollo</span>
 </p>
 <ul>
 <li class="toctree-l1">
-<a class="reference internal" href="core_lp_parser.html">main</a>
+<a class="reference internal" href="digital_qasm.html">main</a>
 </li>
 </ul>
 </nav>
@@ -335,144 +334,300 @@
 <path d="M240 856h120V616h240v240h120V496L480 316 240 496v360Zm-80 80V456l320-240 320 240v480H520V696h-80v240H160Zm320-350Z"></path>
 </svg>
 </a>
-<div class="mr-1">/</div><a class="hover:text-foreground overflow-hidden text-ellipsis whitespace-nowrap" href="core.html">Core</a>
-<div class="mr-1">/</div><span aria-current="page" class="font-medium text-foreground overflow-hidden text-ellipsis whitespace-nowrap">Linear Programming File Parser and Serializer</span>
+<div class="mr-1">/</div><a class="hover:text-foreground overflow-hidden text-ellipsis whitespace-nowrap" href="digital.html">Digital</a>
+<div class="mr-1">/</div><span aria-current="page" class="font-medium text-foreground overflow-hidden text-ellipsis whitespace-nowrap">Importación y Exportación OpenQASM</span>
 </nav>
 <div id="content" role="main">
-<section id="linear-programming-file-parser-and-serializer">
-<h1>Linear Programming File Parser and Serializer<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#linear-programming-file-parser-and-serializer"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h1>
-<p>QiliSDK ships with a parser and a serializer for the CPLEX-flavor <a class="reference external" href="https://www.ibm.com/docs/en/icos/22.1.1?topic=cplex-lp-file-format-algebraic-representation" rel="nofollow noopener">LP format<svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a>.
-The parser is exposed as <code class="xref py py-func docutils literal notranslate"><span class="pre">from_lp()</span></code> (parse a
-string) and <code class="xref py py-func docutils literal notranslate"><span class="pre">from_lp_file()</span></code> (read and parse a
-file); both produce a fully-formed <a class="reference internal" href="../../code/api/qilisdk/core/model/index.html#qilisdk.core.model.Model" title="qilisdk.core.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a>. The
-inverse pair, <code class="xref py py-func docutils literal notranslate"><span class="pre">to_lp()</span></code> and
-<code class="xref py py-func docutils literal notranslate"><span class="pre">to_lp_file()</span></code>, serializes a
-<a class="reference internal" href="../../code/api/qilisdk/core/model/index.html#qilisdk.core.model.Model" title="qilisdk.core.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a> back to LP-format text.</p>
+<section id="openqasm-import-and-export">
+<h1>Importación y Exportación OpenQASM<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#openqasm-import-and-export"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h1>
+<p>QiliSDK puede conectar <code class="xref py py-class docutils literal notranslate"><span class="pre">Circuit</span></code> tanto con OpenQASM 2.0 como con OpenQASM 3.0 a través de los siguientes puntos de entrada en <a class="reference internal" href="../../code/api/qilisdk/utils/openqasm/index.html#module-qilisdk.utils.openqasm" title="qilisdk.utils.openqasm"><code class="xref py py-mod docutils literal notranslate"><span class="pre">qilisdk.utils.openqasm</span></code></a>:</p>
+<p><strong>OpenQASM 2.0</strong></p>
+<ul class="simple">
+<li><p><a class="reference internal" href="../../code/api/qilisdk/utils/openqasm/openqasm2/index.html#qilisdk.utils.openqasm.openqasm2.from_qasm2" title="qilisdk.utils.openqasm.openqasm2.from_qasm2"><code class="xref py py-func docutils literal notranslate"><span class="pre">from_qasm2()</span></code></a> — analiza una cadena OpenQASM 2.0 en un Circuit.</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/utils/openqasm/openqasm2/index.html#qilisdk.utils.openqasm.openqasm2.from_qasm2_file" title="qilisdk.utils.openqasm.openqasm2.from_qasm2_file"><code class="xref py py-func docutils literal notranslate"><span class="pre">from_qasm2_file()</span></code></a> — lee un archivo <code class="docutils literal notranslate"><span class="pre">.qasm</span></code>.</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/utils/openqasm/openqasm2/index.html#qilisdk.utils.openqasm.openqasm2.to_qasm2" title="qilisdk.utils.openqasm.openqasm2.to_qasm2"><code class="xref py py-func docutils literal notranslate"><span class="pre">to_qasm2()</span></code></a> — serializa un Circuit a una cadena OpenQASM 2.0.</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/utils/openqasm/openqasm2/index.html#qilisdk.utils.openqasm.openqasm2.to_qasm2_file" title="qilisdk.utils.openqasm.openqasm2.to_qasm2_file"><code class="xref py py-func docutils literal notranslate"><span class="pre">to_qasm2_file()</span></code></a> — escribe un archivo <code class="docutils literal notranslate"><span class="pre">.qasm</span></code>.</p></li>
+</ul>
+<p><strong>OpenQASM 3.0</strong></p>
+<ul class="simple">
+<li><p><a class="reference internal" href="../../code/api/qilisdk/utils/openqasm/openqasm3/index.html#qilisdk.utils.openqasm.openqasm3.from_qasm3" title="qilisdk.utils.openqasm.openqasm3.from_qasm3"><code class="xref py py-func docutils literal notranslate"><span class="pre">from_qasm3()</span></code></a> — analiza una cadena OpenQASM 3.0 en un Circuit.</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/utils/openqasm/openqasm3/index.html#qilisdk.utils.openqasm.openqasm3.from_qasm3_file" title="qilisdk.utils.openqasm.openqasm3.from_qasm3_file"><code class="xref py py-func docutils literal notranslate"><span class="pre">from_qasm3_file()</span></code></a> — lee un archivo <code class="docutils literal notranslate"><span class="pre">.qasm</span></code>.</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/utils/openqasm/openqasm3/index.html#qilisdk.utils.openqasm.openqasm3.to_qasm3" title="qilisdk.utils.openqasm.openqasm3.to_qasm3"><code class="xref py py-func docutils literal notranslate"><span class="pre">to_qasm3()</span></code></a> — serializa un Circuit a una cadena OpenQASM 3.0.</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/utils/openqasm/openqasm3/index.html#qilisdk.utils.openqasm.openqasm3.to_qasm3_file" title="qilisdk.utils.openqasm.openqasm3.to_qasm3_file"><code class="xref py py-func docutils literal notranslate"><span class="pre">to_qasm3_file()</span></code></a> — escribe un archivo <code class="docutils literal notranslate"><span class="pre">.qasm</span></code>.</p></li>
+</ul>
+<p>La dependencia <code class="docutils literal notranslate"><span class="pre">openqasm3</span></code> es opcional; instálela con el extra <code class="docutils literal notranslate"><span class="pre">openqasm</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">pip<span class="w"> </span>install<span class="w"> </span>qilisdk<span class="o">[</span>openqasm<span class="o">]</span>
+</span></code></pre></div>
+</div>
 <section id="quick-start">
-<h2>Inici ràpid<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#quick-start" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#quick-start'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.utils.lp_parser</span><span class="w"> </span><span class="kn">import</span> <span class="n">from_lp_file</span>
-</span><span id="line-2">
-</span><span id="line-3"><span class="n">model</span> <span class="o">=</span> <span class="n">from_lp_file</span><span class="p">(</span><span class="s2">"knapsack.lp"</span><span class="p">)</span>
-</span><span id="line-4"><span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+<h2>Inicio rápido<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#quick-start" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#quick-start'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.digital</span><span class="w"> </span><span class="kn">import</span> <span class="n">CNOT</span><span class="p">,</span> <span class="n">Circuit</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="n">M</span>
+</span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.utils.openqasm</span><span class="w"> </span><span class="kn">import</span> <span class="n">to_qasm2</span><span class="p">,</span> <span class="n">from_qasm2</span><span class="p">,</span> <span class="n">to_qasm3</span><span class="p">,</span> <span class="n">from_qasm3</span>
+</span><span id="line-3">
+</span><span id="line-4"><span class="n">circuit</span> <span class="o">=</span> <span class="n">Circuit</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+</span><span id="line-5"><span class="n">circuit</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">H</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+</span><span id="line-6"><span class="n">circuit</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">CNOT</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+</span><span id="line-7"><span class="n">circuit</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">M</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+</span><span id="line-8">
+</span><span id="line-9"><span class="c1"># OpenQASM 2.0</span>
+</span><span id="line-10"><span class="n">qasm2_text</span> <span class="o">=</span> <span class="n">to_qasm2</span><span class="p">(</span><span class="n">circuit</span><span class="p">)</span>
+</span><span id="line-11"><span class="nb">print</span><span class="p">(</span><span class="n">qasm2_text</span><span class="p">)</span>
+</span><span id="line-12"><span class="n">reparsed</span> <span class="o">=</span> <span class="n">from_qasm2</span><span class="p">(</span><span class="n">qasm2_text</span><span class="p">)</span>
+</span><span id="line-13">
+</span><span id="line-14"><span class="c1"># OpenQASM 3.0</span>
+</span><span id="line-15"><span class="n">qasm3_text</span> <span class="o">=</span> <span class="n">to_qasm3</span><span class="p">(</span><span class="n">circuit</span><span class="p">)</span>
+</span><span id="line-16"><span class="nb">print</span><span class="p">(</span><span class="n">qasm3_text</span><span class="p">)</span>
+</span><span id="line-17"><span class="n">reparsed</span> <span class="o">=</span> <span class="n">from_qasm3</span><span class="p">(</span><span class="n">qasm3_text</span><span class="p">)</span>
 </span></code></pre></div>
 </div>
-<p>Un petit exemple en línia:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.utils.lp_parser</span><span class="w"> </span><span class="kn">import</span> <span class="n">from_lp</span>
-</span><span id="line-2">
-</span><span id="line-3"><span class="n">lp</span> <span class="o">=</span> <span class="s2">"""</span>
-</span><span id="line-4"><span class="s2">Maximize</span>
-</span><span id="line-5"><span class="s2"> value: 4 x1 + 5 x2 + 3 x3</span>
-</span><span id="line-6"><span class="s2">Subject To</span>
-</span><span id="line-7"><span class="s2"> weight: 2 x1 + 3 x2 + x3 &lt;= 5</span>
-</span><span id="line-8"><span class="s2">Binary</span>
-</span><span id="line-9"><span class="s2"> x1</span>
-</span><span id="line-10"><span class="s2"> x2</span>
-</span><span id="line-11"><span class="s2"> x3</span>
-</span><span id="line-12"><span class="s2">End</span>
-</span><span id="line-13"><span class="s2">"""</span>
-</span><span id="line-14">
-</span><span id="line-15"><span class="n">model</span> <span class="o">=</span> <span class="n">from_lp</span><span class="p">(</span><span class="n">lp</span><span class="p">)</span>
-</span><span id="line-16"><span class="n">qubo</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">to_qubo</span><span class="p">()</span>
-</span></code></pre></div>
-</div>
-<p>Round-tripping a model back to LP text:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.utils.lp_parser</span><span class="w"> </span><span class="kn">import</span> <span class="n">to_lp</span><span class="p">,</span> <span class="n">to_lp_file</span>
-</span><span id="line-2">
-</span><span id="line-3"><span class="nb">print</span><span class="p">(</span><span class="n">to_lp</span><span class="p">(</span><span class="n">model</span><span class="p">))</span>          <span class="c1"># serialize to a string</span>
-</span><span id="line-4"><span class="n">to_lp_file</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">"out.lp"</span><span class="p">)</span>  <span class="c1"># or write directly to disk</span>
+<p>Lectura y escritura de archivos:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.utils.openqasm</span><span class="w"> </span><span class="kn">import</span> <span class="n">to_qasm2_file</span><span class="p">,</span> <span class="n">from_qasm2_file</span>
+</span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.utils.openqasm</span><span class="w"> </span><span class="kn">import</span> <span class="n">to_qasm3_file</span><span class="p">,</span> <span class="n">from_qasm3_file</span>
+</span><span id="line-3">
+</span><span id="line-4"><span class="n">to_qasm2_file</span><span class="p">(</span><span class="n">circuit</span><span class="p">,</span> <span class="s2">"bell.qasm"</span><span class="p">)</span>
+</span><span id="line-5"><span class="n">same_circuit</span> <span class="o">=</span> <span class="n">from_qasm2_file</span><span class="p">(</span><span class="s2">"bell.qasm"</span><span class="p">)</span>
+</span><span id="line-6">
+</span><span id="line-7"><span class="n">to_qasm3_file</span><span class="p">(</span><span class="n">circuit</span><span class="p">,</span> <span class="s2">"bell3.qasm"</span><span class="p">)</span>
+</span><span id="line-8"><span class="n">same_circuit</span> <span class="o">=</span> <span class="n">from_qasm3_file</span><span class="p">(</span><span class="s2">"bell3.qasm"</span><span class="p">)</span>
 </span></code></pre></div>
 </div>
 </section>
-<section id="supported-features">
-<h2>Funcionalitats suportades<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#supported-features" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#supported-features'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
+<section id="openqasm-3-0-supported-features">
+<h2>Características soportadas de OpenQASM 3.0<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#openqasm-3-0-supported-features" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#openqasm-3-0-supported-features'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
 <ul class="simple">
-<li><p><strong>Sentit de l’objectiu</strong>: <code class="docutils literal notranslate"><span class="pre">Maximize</span></code> / <code class="docutils literal notranslate"><span class="pre">Minimize</span></code> (i els àlies <code class="docutils literal notranslate"><span class="pre">Max</span></code> / <code class="docutils literal notranslate"><span class="pre">Min</span></code> / <code class="docutils literal notranslate"><span class="pre">Maximum</span></code> / <code class="docutils literal notranslate"><span class="pre">Minimum</span></code>, sense distinció entre majúscules i minúscules).</p></li>
-<li><p><strong>Paraules clau de secció</strong>: <code class="docutils literal notranslate"><span class="pre">Subject</span> <span class="pre">To</span></code> (també <code class="docutils literal notranslate"><span class="pre">subj</span> <span class="pre">to</span></code>, <code class="docutils literal notranslate"><span class="pre">s.t.</span></code>, <code class="docutils literal notranslate"><span class="pre">st</span></code>), <code class="docutils literal notranslate"><span class="pre">Bounds</span></code>, <code class="docutils literal notranslate"><span class="pre">General</span></code>, <code class="docutils literal notranslate"><span class="pre">Binary</span></code>, <code class="docutils literal notranslate"><span class="pre">End</span></code>.</p></li>
-<li><p><strong>Expressions de l’objectiu</strong>: termes lineals i quadràtics, incloent-hi monomis bilineals com <code class="docutils literal notranslate"><span class="pre">x1</span> <span class="pre">*</span> <span class="pre">x2</span></code> i subexpressions entre claudàtors com <code class="docutils literal notranslate"><span class="pre">-</span> <span class="pre">[x</span> <span class="pre">+</span> <span class="pre">1]</span></code>. Les ocurrències repetides de la mateixa variable s’agreguen automàticament (<code class="docutils literal notranslate"><span class="pre">x</span> <span class="pre">+</span> <span class="pre">x</span></code> esdevé <code class="docutils literal notranslate"><span class="pre">2*x</span></code>).</p></li>
-<li><p><strong>Sentits de restricció</strong>: <code class="docutils literal notranslate"><span class="pre">&lt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;=</span></code>, <code class="docutils literal notranslate"><span class="pre">=</span></code>, <code class="docutils literal notranslate"><span class="pre">&gt;=</span></code>, <code class="docutils literal notranslate"><span class="pre">&gt;</span></code> — cadascun es mapeja al <a class="reference internal" href="../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.ComparisonTerm" title="qilisdk.core.variables.ComparisonTerm"><code class="xref py py-class docutils literal notranslate"><span class="pre">ComparisonTerm</span></code></a> corresponent. Les etiquetes de les restriccions són opcionals; quan no se’n proporcionen, es generen automàticament com <code class="docutils literal notranslate"><span class="pre">c1</span></code>, <code class="docutils literal notranslate"><span class="pre">c2</span></code>, …</p></li>
-<li><p><strong>Cotes</strong>: rangs de dos costats (<code class="docutils literal notranslate"><span class="pre">-2.5</span> <span class="pre">&lt;=</span> <span class="pre">x</span> <span class="pre">&lt;=</span> <span class="pre">7.5</span></code>), extrems oberts mitjançant <code class="docutils literal notranslate"><span class="pre">+inf</span></code> / <code class="docutils literal notranslate"><span class="pre">-infinity</span></code> i la drecera <code class="docutils literal notranslate"><span class="pre">free</span></code> per a variables sense fitar.</p></li>
-<li><p><strong>Dominis de variables</strong>:</p>
-<ul>
-<li><p>Les variables llistades a <code class="docutils literal notranslate"><span class="pre">Binary</span></code> són <a class="reference internal" href="../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.BinaryVariable" title="qilisdk.core.variables.BinaryVariable"><code class="xref py py-class docutils literal notranslate"><span class="pre">BinaryVariable</span></code></a>.</p></li>
-<li><p>Les variables llistades a <code class="docutils literal notranslate"><span class="pre">General</span></code> són <a class="reference internal" href="../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Variable" title="qilisdk.core.variables.Variable"><code class="xref py py-class docutils literal notranslate"><span class="pre">Variable</span></code></a> enteres amb <a class="reference internal" href="../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Domain.INTEGER" title="qilisdk.core.variables.Domain.INTEGER"><code class="xref py py-attr docutils literal notranslate"><span class="pre">INTEGER</span></code></a>. Les cotes declarades a la secció <code class="docutils literal notranslate"><span class="pre">Bounds</span></code> es conserven.</p></li>
-<li><p>Les variables que només apareixen a la secció <code class="docutils literal notranslate"><span class="pre">Bounds</span></code> són contínues (<code class="docutils literal notranslate"><span class="pre">Domain.REAL</span></code>) amb les cotes declarades.</p></li>
-<li><p>Les variables que només apareixen dins d’expressions es creen automàticament com a contínues amb les cotes per defecte del format LP, <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">+inf)</span></code>.</p></li>
+<li><p>✅: La característica está totalmente soportada</p></li>
+<li><p>🟡: La característica está parcialmente soportada, vea la nota para más explicación</p></li>
+<li><p>❌: La característica no está soportada</p></li>
 </ul>
-</li>
-<li><p><strong>Comentaris</strong>: la barra invertida (<code class="docutils literal notranslate"><span class="pre">\\</span></code>) inicia un comentari de línia que s’estén fins al final de la mateixa.</p></li>
-</ul>
-</section>
-<section id="serialization-conventions">
-<h2>Serialization conventions<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#serialization-conventions" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#serialization-conventions'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
-<p><code class="xref py py-func docutils literal notranslate"><span class="pre">to_lp()</span></code> produces grammar-compliant output that
-<code class="xref py py-func docutils literal notranslate"><span class="pre">from_lp()</span></code> can read back. Notable conventions:</p>
-<ul class="simple">
-<li><p>Quadratic and bilinear monomials are expanded into explicit products
-(<code class="docutils literal notranslate"><span class="pre">x</span> <span class="pre">*</span> <span class="pre">x</span></code>, <code class="docutils literal notranslate"><span class="pre">x</span> <span class="pre">*</span> <span class="pre">y</span></code>) since the LP grammar accepted by the parser has no
-<code class="docutils literal notranslate"><span class="pre">^</span></code> operator.</p></li>
-<li><p>A unit coefficient is omitted (<code class="docutils literal notranslate"><span class="pre">x</span></code> rather than <code class="docutils literal notranslate"><span class="pre">1</span> <span class="pre">x</span></code>); a <code class="docutils literal notranslate"><span class="pre">-1</span></code> coefficient
-becomes a leading <code class="docutils literal notranslate"><span class="pre">-</span> <span class="pre">x</span></code>.</p></li>
-<li><p>Constraint right-hand sides are emitted as a single constant — any constant
-appearing on the left-hand side is folded into the rhs first.</p></li>
-<li><p>Unbounded continuous variables are emitted as <code class="docutils literal notranslate"><span class="pre">var</span> <span class="pre">free</span></code>; one-sided bounds
-use <code class="docutils literal notranslate"><span class="pre">var</span> <span class="pre">&gt;=</span> <span class="pre">lo</span></code> or <code class="docutils literal notranslate"><span class="pre">-infinity</span> <span class="pre">&lt;=</span> <span class="pre">var</span> <span class="pre">&lt;=</span> <span class="pre">up</span></code>. Variables matching the LP
-default of <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">+inf)</span></code> are omitted from the <code class="docutils literal notranslate"><span class="pre">Bounds</span></code> section entirely.</p></li>
-<li><p><a class="reference internal" href="../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.BinaryVariable" title="qilisdk.core.variables.BinaryVariable"><code class="xref py py-class docutils literal notranslate"><span class="pre">BinaryVariable</span></code></a> variables are listed in the
-<code class="docutils literal notranslate"><span class="pre">Binary</span></code> section; integer ones in <code class="docutils literal notranslate"><span class="pre">General</span></code> (with their bounds, if any).</p></li>
-</ul>
-</section>
-<section id="worked-example">
-<h2>Exemple desenvolupat<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#worked-example" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#worked-example'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">\\ Mixed-integer LP with one of every variable kind.
-</span><span id="line-2">Maximize
-</span><span id="line-3"> obj: 2 x1 + 1.5 x2 - 3 x3 + b1 * b2 - [x4 + 1] + 10
-</span><span id="line-4">Subject To
-</span><span id="line-5"> c_le: 2 x1 + x2 &lt;= 100
-</span><span id="line-6"> c_ge: x3 + x4   &gt;= -5
-</span><span id="line-7"> c_eq: x4 - 2 y  =  7
-</span><span id="line-8">Bounds
-</span><span id="line-9">    0 &lt;= x1 &lt;= 50
-</span><span id="line-10"> -2.5 &lt;= x2 &lt;= 7.5
-</span><span id="line-11">    x3 free
-</span><span id="line-12"> -infinity &lt;= x4 &lt;= 5
-</span><span id="line-13">    0 &lt;= y &lt;= 10
-</span><span id="line-14">General
-</span><span id="line-15"> x4
-</span><span id="line-16"> y
-</span><span id="line-17">Binary
-</span><span id="line-18"> b1
-</span><span id="line-19"> b2
-</span><span id="line-20">End
-</span></code></pre></div>
-</div>
-<p>L’anàlisi retorna un <a class="reference internal" href="../../code/api/qilisdk/core/model/index.html#qilisdk.core.model.Model" title="qilisdk.core.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a> amb:</p>
-<ul class="simple">
-<li><p>cinc variables de valor real (<code class="docutils literal notranslate"><span class="pre">x1</span></code>, <code class="docutils literal notranslate"><span class="pre">x2</span></code>, <code class="docutils literal notranslate"><span class="pre">x3</span></code>, <code class="docutils literal notranslate"><span class="pre">x4</span></code> a més de les creades automàticament, juntament amb l’entera <code class="docutils literal notranslate"><span class="pre">y</span></code>),</p></li>
-<li><p>dues variables binàries (<code class="docutils literal notranslate"><span class="pre">b1</span></code>, <code class="docutils literal notranslate"><span class="pre">b2</span></code>),</p></li>
-<li><p>un objectiu de maximització amb termes lineals, bilineals i agrupats entre claudàtors,</p></li>
-<li><p>tres restriccions etiquetades que cobreixen els sentits <code class="docutils literal notranslate"><span class="pre">&lt;=</span></code>, <code class="docutils literal notranslate"><span class="pre">&gt;=</span></code> i <code class="docutils literal notranslate"><span class="pre">=</span></code>.</p></li>
-</ul>
-<p>The resulting model can be inspected, evaluated against a sample with
-<a class="reference internal" href="../../code/api/qilisdk/core/model/index.html#qilisdk.core.model.Model.evaluate" title="qilisdk.core.model.Model.evaluate"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Model.evaluate</span></code></a>, or converted to a
-QUBO via <a class="reference internal" href="../../code/api/qilisdk/core/model/index.html#qilisdk.core.model.Model.to_qubo" title="qilisdk.core.model.Model.to_qubo"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Model.to_qubo</span></code></a> like any
-other model built directly with the symbolic API. Passing the model to
-<code class="xref py py-func docutils literal notranslate"><span class="pre">to_lp()</span></code> yields an LP-format string that, when
-fed back through <code class="xref py py-func docutils literal notranslate"><span class="pre">from_lp()</span></code>, reconstructs an
-equivalent model.</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Característica OpenQASM 3</p></th>
+<th class="head"><p>Soportado</p></th>
+<th class="head"><p>Notas</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>comentarios</p></td>
+<td><p>✅</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>Cadena de versión QASM</p></td>
+<td><p>✅</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>include</p></td>
+<td><p>✅</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>nombres unicode</p></td>
+<td><p>✅</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>qubit</p></td>
+<td><p>✅</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>bit</p></td>
+<td><p>🟡</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-even"><td><p>bool</p></td>
+<td><p>🟡</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-odd"><td><p>int</p></td>
+<td><p>🟡</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-even"><td><p>uint</p></td>
+<td><p>🟡</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-odd"><td><p>float</p></td>
+<td><p>🟡</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-even"><td><p>angle</p></td>
+<td><p>🟡</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-odd"><td><p>complex</p></td>
+<td><p>🟡</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-even"><td><p>const</p></td>
+<td><p>✅</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>pi/π/tau/τ/euler/ℇ</p></td>
+<td><p>✅</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>Alias: <code class="docutils literal notranslate"><span class="pre">let</span></code></p></td>
+<td><p>✅</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>concatenación de registros</p></td>
+<td><p>❌</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>conversión de tipo (<code class="docutils literal notranslate"><span class="pre">expr.Cast</span></code>)</p></td>
+<td><p>✅</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>duration</p></td>
+<td><p>🟡</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-even"><td><p>durationof</p></td>
+<td><p>❌</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>ns/μs/us/ms/s/dt</p></td>
+<td><p>✅</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>stretch (<code class="docutils literal notranslate"><span class="pre">expr.Stretch</span></code>)</p></td>
+<td><p>🟡</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-odd"><td><p>delay</p></td>
+<td><p>❌</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>barrier</p></td>
+<td><p>❌</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>box</p></td>
+<td><p>❌</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">U</span></code> integrada</p></td>
+<td><p>✅</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>definición de puerta</p></td>
+<td><p>🟡</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-even"><td><p>gphase</p></td>
+<td><p>❌</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ctrl</span> <span class="pre">@</span></code></p></td>
+<td><p>✅</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">negctrl</span> <span class="pre">@</span></code></p></td>
+<td><p>🟡</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">inv</span> <span class="pre">@</span></code></p></td>
+<td><p>✅</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">pow(k)</span> <span class="pre">@</span></code></p></td>
+<td><p>🟡</p></td>
+<td><p>1, 2</p></td>
+</tr>
+<tr class="row-odd"><td><p>reset</p></td>
+<td><p>❌</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>measure</p></td>
+<td><p>🟡</p></td>
+<td><p>3</p></td>
+</tr>
+<tr class="row-odd"><td><p>operaciones de bits</p></td>
+<td><p>🟡</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-even"><td><p>operaciones booleanas</p></td>
+<td><p>🟡</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-odd"><td><p>expresiones aritméticas</p></td>
+<td><p>🟡</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-even"><td><p>comparaciones</p></td>
+<td><p>🟡</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">if</span></code></p></td>
+<td><p>🟡</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">else</span></code></p></td>
+<td><p>🟡</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">else</span> <span class="pre">if</span></code></p></td>
+<td><p>🟡</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-even"><td><p>bucles for</p></td>
+<td><p>🟡</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-odd"><td><p>switch</p></td>
+<td><p>🟡</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-even"><td><p>bucles while</p></td>
+<td><p>🟡</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">continue</span></code></p></td>
+<td><p>🟡</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">break</span></code></p></td>
+<td><p>🟡</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-odd"><td><p>extern</p></td>
+<td><p>❌</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>subrutinas def</p></td>
+<td><p>🟡</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-odd"><td><p>return</p></td>
+<td><p>🟡</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-even"><td><p>input</p></td>
+<td><p>🟡</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-odd"><td><p>output</p></td>
+<td><p>❌</p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<ol class="arabic simple">
+<li><p>La lectura de estas construcciones está totalmente soportada, pero las expresiones no se almacenan en el objeto <code class="xref py py-class docutils literal notranslate"><span class="pre">Circuit</span></code> y no se escribirán al convertir a OpenQASM. Por ejemplo, declarar <code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">x</span> <span class="pre">=</span> <span class="pre">5;</span></code> hace que <code class="docutils literal notranslate"><span class="pre">x</span></code> sea evaluada y usada durante el análisis, pero la declaración de variable no aparecerá en el objeto de circuito resultante ni en ninguna cadena QASM reexportada.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pow(k)</span> <span class="pre">@</span></code> solo está soportado cuando <code class="docutils literal notranslate"><span class="pre">k</span></code> es un entero; se implementa mediante aplicación repetida de la puerta.</p></li>
+<li><p>Las mediciones a mitad de circuito no están soportadas en QiliSDK.</p></li>
+</ol>
 </section>
 </section>
 </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">
 <div class="mr-auto">
-<a class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input hover:bg-accent hover:text-accent-foreground py-2 px-4" href="core_model.html">
+<a class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input hover:bg-accent hover:text-accent-foreground py-2 px-4" href="digital_qir.html">
 <svg class="mr-2 h-4 w-4" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
 <polyline points="15 18 9 12 15 6"></polyline>
 </svg>
-        Models
+        Importación y Exportación QIR
       </a>
 </div>
 <div class="ml-auto">
-<a class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input hover:bg-accent hover:text-accent-foreground py-2 px-4" href="core_qubo.html">
-        QUBO
+<a class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input hover:bg-accent hover:text-accent-foreground py-2 px-4" href="../analog/analog.html">
+        Analog
         <svg class="ml-2 h-4 w-4" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
 <polyline points="9 18 15 12 9 6"></polyline>
 </svg>
@@ -481,10 +636,8 @@ equivalent model.</p>
 </div></div><aside class="hidden text-sm xl:block" id="right-sidebar">
 <div class="sticky top-16 -mt-10 max-h-[calc(100vh-5rem)] h-full overflow-y-auto pt-6 space-y-2"><p class="font-medium">On this page</p>
 <ul>
-<li><a :data-current="activeSection === '#quick-start'" class="reference internal" href="#quick-start">Inici ràpid</a></li>
-<li><a :data-current="activeSection === '#supported-features'" class="reference internal" href="#supported-features">Funcionalitats suportades</a></li>
-<li><a :data-current="activeSection === '#serialization-conventions'" class="reference internal" href="#serialization-conventions">Serialization conventions</a></li>
-<li><a :data-current="activeSection === '#worked-example'" class="reference internal" href="#worked-example">Exemple desenvolupat</a></li>
+<li><a :data-current="activeSection === '#quick-start'" class="reference internal" href="#quick-start">Inicio rápido</a></li>
+<li><a :data-current="activeSection === '#openqasm-3-0-supported-features'" class="reference internal" href="#openqasm-3-0-supported-features">Características soportadas de OpenQASM 3.0</a></li>
 </ul>
 </div>
 </aside>
@@ -498,11 +651,11 @@ equivalent model.</p>
 </div>
 </footer>
 </div>
-<script src="../../_static/documentation_options.js?v=62dba230"></script>
+<script src="../../_static/documentation_options.js?v=00904b1e"></script>
 <script src="../../_static/doctools.js?v=9bcbadda"></script>
 <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
-<script defer="defer" src="../../_static/theme.js?v=d6a9845b"></script>
-<script src="../../_static/translations.js?v=5e30842e"></script>
+<script defer="defer" src="../../_static/theme.js?v=582b20c5"></script>
+<script src="../../_static/translations.js?v=f85f4cfb"></script>
 <script src="../../_static/design-tabs.js?v=f930bc37"></script>
 <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
 </body>

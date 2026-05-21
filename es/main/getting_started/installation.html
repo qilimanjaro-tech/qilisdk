@@ -25,12 +25,12 @@
 <meta content="Instalación | QiliSDK" property="og:title"/>
 <meta content="Instalación | QiliSDK" name="twitter:title"/>
 <link href="../_static/pygments.css?v=652ce3ed" rel="stylesheet" type="text/css"/>
-<link href="../_static/theme.css?v=979577e3" rel="stylesheet" type="text/css"/>
+<link href="../_static/theme.css?v=73505e79" rel="stylesheet" type="text/css"/>
 <link href="../_static/graphviz.css?v=4ae1632d" rel="stylesheet" type="text/css"/>
 <link href="../_static/sphinx-design.min.css?v=95c83b7e" rel="stylesheet" type="text/css"/>
 <link href="../_static/tabs.css?v=a5c4661c" rel="stylesheet" type="text/css"/>
 <link href="../_static/custom.css?v=7f555f8f" rel="stylesheet" type="text/css"/>
-<link href="../_static/awesome-sphinx-design.css?v=b1d4564d" rel="stylesheet" type="text/css"/>
+<link href="../_static/awesome-sphinx-design.css?v=c54898a4" rel="stylesheet" type="text/css"/>
 <link href="../_static/q_trans.png" rel="icon"/>
 <link href="../search.html" rel="search" title="Búsqueda"/>
 <link href="../genindex.html" rel="index" title="Índice"/>
@@ -115,7 +115,6 @@
 <li class="toctree-l2"><a class="reference internal" href="../modules/core/core_variables_parameters.html">Variables y Parámetros</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../modules/core/core_terms_maps_comparisons.html">Términos, Mapas y Comparaciones</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../modules/core/core_model.html">Modelos</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../modules/core/core_lp_parser.html">Linear Programming File Parser and Serializer</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../modules/core/core_qubo.html">QUBO</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../modules/core/core_qtensor.html">QTensor</a></li>
 </ul>
@@ -128,7 +127,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../modules/digital/digital_hardware.html">HardwareEfficientAnsatz</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../modules/digital/digital_qaoa.html">QAOA</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../modules/digital/digital_trotter.html">TrotterizedSchedule</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../modules/digital/digital_qir.html">QIR Import and Export</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/digital/digital_qir.html">Importación y Exportación QIR</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/digital/digital_qasm.html">Importación y Exportación OpenQASM</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../modules/analog/analog.html">Analog<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
@@ -276,7 +276,6 @@
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/utils/index.html">qilisdk.utils<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/utils/hashing/index.html">qilisdk.utils.hashing</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/utils/lp_parser/index.html">qilisdk.utils.lp_parser</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/utils/openfermion/index.html">qilisdk.utils.openfermion</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/utils/openqasm/index.html">qilisdk.utils.openqasm</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/utils/qir/index.html">qilisdk.utils.qir</a></li>
@@ -389,11 +388,8 @@
 <section id="compiling-from-source">
 <h2>Compilar desde el código fuente<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#compiling-from-source" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#compiling-from-source'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
 <p>El método anterior instalará los binarios precompilados de QiliSDK de la versión más reciente. Si desea obtener las características más nuevas (aquellas en las que aún estamos trabajando), puede compilar la biblioteca desde el código fuente, pero tenga en cuenta que esto no se recomienda para la mayoría de los usuarios, y no garantizamos que el código más reciente sea estable.</p>
-<p>Support for Windows is limited, so we recommend using WSL, which can be installed as per
-<a class="reference external" href="https://learn.microsoft.com/en-us/windows/wsl/install" rel="nofollow noopener">this guide<svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a>.
-With this you should then following the Linux instructions below.
-If you must use pure Windows, the Windows instructions below should work, although they disable certain code features (notably some parallelized loops).</p>
-<p>First, make sure you have Python, pip, git, cmake and a C++ compiler installed:</p>
+<p>El soporte para Windows es limitado, por lo que recomendamos usar WSL, que se puede instalar según <a class="reference external" href="https://learn.microsoft.com/en-us/windows/wsl/install" rel="nofollow noopener">esta guía<svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a>. Con esto, debería seguir las instrucciones de Linux a continuación. Si debe usar Windows puro, las instrucciones de Windows a continuación deberían funcionar, aunque deshabilitan ciertas funciones del código (especialmente algunos bucles paralelizados).</p>
+<p>Primero, asegúrese de tener instalados Python, pip, git, cmake y un compilador de C++:</p>
 <div class="sphinx-tabs docutils container">
 <div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-0-TGludXg=" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-0-TGludXg=" name="TGludXg=" role="tab" tabindex="0">Linux</button><button aria-controls="panel-0-TWFjIE9TWA==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-TWFjIE9TWA==" name="TWFjIE9TWA==" role="tab" tabindex="-1">Mac OSX</button><button aria-controls="panel-0-V2luZG93cw==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-V2luZG93cw==" name="V2luZG93cw==" role="tab" tabindex="-1">Windows</button></div><div aria-labelledby="tab-0-TGludXg=" class="sphinx-tabs-panel group-tab" id="panel-0-TGludXg=" name="TGludXg=" role="tabpanel" tabindex="0"><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">sudo<span class="w"> </span>apt<span class="w"> </span>update
 </span><span id="line-2">sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>python3<span class="w"> </span>python3-pip<span class="w"> </span>git<span class="w"> </span>build-essential
@@ -404,9 +400,9 @@ If you must use pure Windows, the Windows instructions below should work, althou
 </span></code></pre></div>
 </div>
 </div><div aria-labelledby="tab-0-V2luZG93cw==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-0-V2luZG93cw==" name="V2luZG93cw==" role="tabpanel" tabindex="0"><ul class="simple">
-<li><p>Install Python via the Microsoft Store.</p></li>
-<li><p>Install Git via <a class="reference external" href="https://git-scm.com/install/windows" rel="nofollow noopener">https://git-scm.com/install/windows<svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a>.</p></li>
-<li><p>Install C++ build tools by installing the «C/C++ Extension Pack» extension for VSCode.</p></li>
+<li><p>Instale Python a través de la Microsoft Store.</p></li>
+<li><p>Instale Git desde <a class="reference external" href="https://git-scm.com/install/windows" rel="nofollow noopener">https://git-scm.com/install/windows<svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a>.</p></li>
+<li><p>Instale las herramientas de compilación de C++ instalando la extensión «C/C++ Extension Pack» para VSCode.</p></li>
 </ul>
 </div></div>
 <p>Instale uv globalmente con:</p>
@@ -426,11 +422,11 @@ If you must use pure Windows, the Windows instructions below should work, althou
 </span><span id="line-2"><span class="nb">cd</span><span class="w"> </span>qilisdk
 </span></code></pre></div>
 </div>
-<p>Create a new virtual environment using uv:</p>
+<p>Cree un nuevo entorno virtual usando uv:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">uv<span class="w"> </span>venv
 </span></code></pre></div>
 </div>
-<p>Then activate the environment:</p>
+<p>Luego active el entorno:</p>
 <div class="sphinx-tabs docutils container">
 <div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-2-TGludXg=" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-2-TGludXg=" name="TGludXg=" role="tab" tabindex="0">Linux</button><button aria-controls="panel-2-TWFjIE9TWA==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-2-TWFjIE9TWA==" name="TWFjIE9TWA==" role="tab" tabindex="-1">Mac OSX</button><button aria-controls="panel-2-V2luZG93cw==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-2-V2luZG93cw==" name="V2luZG93cw==" role="tab" tabindex="-1">Windows</button></div><div aria-labelledby="tab-2-TGludXg=" class="sphinx-tabs-panel group-tab" id="panel-2-TGludXg=" name="TGludXg=" role="tabpanel" tabindex="0"><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="nb">source</span><span class="w"> </span>.venv/bin/activate
 </span></code></pre></div>
@@ -500,7 +496,7 @@ If you must use pure Windows, the Windows instructions below should work, althou
 <script src="../_static/documentation_options.js?v=00904b1e"></script>
 <script src="../_static/doctools.js?v=9bcbadda"></script>
 <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
-<script defer="defer" src="../_static/theme.js?v=d6a9845b"></script>
+<script defer="defer" src="../_static/theme.js?v=582b20c5"></script>
 <script src="../_static/translations.js?v=f85f4cfb"></script>
 <script src="../_static/design-tabs.js?v=f930bc37"></script>
 <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>

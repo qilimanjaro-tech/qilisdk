@@ -27,11 +27,11 @@
   <meta property="og:title" content="qilisdk.core.model | QiliSDK" />
   <meta name="twitter:title" content="qilisdk.core.model | QiliSDK" />
   <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=652ce3ed" />
-  <link rel="stylesheet" type="text/css" href="../../../_static/theme.css?v=979577e3" />
+  <link rel="stylesheet" type="text/css" href="../../../_static/theme.css?v=73505e79" />
   <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
   <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
   <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=7f555f8f" />
-  <link rel="stylesheet" type="text/css" href="../../../_static/awesome-sphinx-design.css?v=b1d4564d" />
+  <link rel="stylesheet" type="text/css" href="../../../_static/awesome-sphinx-design.css?v=c54898a4" />
   <link rel="icon" href="../../../_static/q_trans.png" />
   <link rel="search" title="Cerca" href="../../../search.html" />
   <link rel="index" title="Índex" href="../../../genindex.html" />
@@ -164,7 +164,6 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/core/core_variables_parameters.html">Variables i paràmetres</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/core/core_terms_maps_comparisons.html">Termes, mapes i comparacions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/core/core_model.html">Models</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../modules/core/core_lp_parser.html">Linear Programming File Parser and Serializer</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/core/core_qubo.html">QUBO</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/core/core_qtensor.html">QTensor</a></li>
 </ul>
@@ -177,7 +176,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/digital/digital_hardware.html">HardwareEfficientAnsatz</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/digital/digital_qaoa.html">QAOA</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/digital/digital_trotter.html">TrotterizedSchedule</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../modules/digital/digital_qir.html">QIR Import and Export</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/digital/digital_qir.html">Importació i Exportació QIR</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/digital/digital_qasm.html">Importació i Exportació OpenQASM</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/analog/analog.html">Analog</a><ul>
@@ -325,7 +325,6 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/utils/index.html">qilisdk.utils</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/hashing/index.html">qilisdk.utils.hashing</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/lp_parser/index.html">qilisdk.utils.lp_parser</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/openfermion/index.html">qilisdk.utils.openfermion</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/openqasm/index.html">qilisdk.utils.openqasm</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/qir/index.html">qilisdk.utils.qir</a></li>
@@ -853,12 +852,12 @@
 </span><span id="line-357">                <span class="k">continue</span>
 </span><span id="line-358">            <span class="n">ub_encoding_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">var</span><span class="si">}</span><span class="s2">_upper_bound_constraint&quot;</span>
 </span><span id="line-359">            <span class="n">lb_encoding_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">var</span><span class="si">}</span><span class="s2">_lower_bound_constraint&quot;</span>
-</span><span id="line-360">            <span class="k">if</span> <span class="n">ub_encoding_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encoding_constraints</span> <span class="ow">and</span> <span class="n">var</span><span class="o">.</span><span class="n">upper_bound</span> <span class="o">&lt;</span> <span class="n">var</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">max</span><span class="p">():</span>
+</span><span id="line-360">            <span class="k">if</span> <span class="n">ub_encoding_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encoding_constraints</span><span class="p">:</span>
 </span><span id="line-361">                <span class="bp">self</span><span class="o">.</span><span class="n">_encoding_constraints</span><span class="p">[</span><span class="n">ub_encoding_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span>
 </span><span id="line-362">                    <span class="n">label</span><span class="o">=</span><span class="n">ub_encoding_name</span><span class="p">,</span> <span class="n">term</span><span class="o">=</span><span class="n">LEQ</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">var</span><span class="o">.</span><span class="n">upper_bound</span><span class="p">)</span>
 </span><span id="line-363">                <span class="p">)</span>
 </span><span id="line-364">                <span class="bp">self</span><span class="o">.</span><span class="n">_lagrange_multipliers</span><span class="p">[</span><span class="n">ub_encoding_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">lagrange_multiplier</span>
-</span><span id="line-365">            <span class="k">if</span> <span class="n">lb_encoding_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encoding_constraints</span> <span class="ow">and</span> <span class="n">var</span><span class="o">.</span><span class="n">lower_bound</span> <span class="o">&gt;</span> <span class="n">var</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">min</span><span class="p">():</span>
+</span><span id="line-365">            <span class="k">if</span> <span class="n">lb_encoding_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encoding_constraints</span><span class="p">:</span>
 </span><span id="line-366">                <span class="bp">self</span><span class="o">.</span><span class="n">_encoding_constraints</span><span class="p">[</span><span class="n">lb_encoding_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">(</span>
 </span><span id="line-367">                    <span class="n">label</span><span class="o">=</span><span class="n">lb_encoding_name</span><span class="p">,</span> <span class="n">term</span><span class="o">=</span><span class="n">GEQ</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">var</span><span class="o">.</span><span class="n">lower_bound</span><span class="p">)</span>
 </span><span id="line-368">                <span class="p">)</span>
@@ -1853,7 +1852,7 @@
     <script src="../../../_static/documentation_options.js?v=62dba230"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script defer="defer" src="../../../_static/theme.js?v=d6a9845b"></script>
+    <script defer="defer" src="../../../_static/theme.js?v=582b20c5"></script>
     <script src="../../../_static/translations.js?v=5e30842e"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>

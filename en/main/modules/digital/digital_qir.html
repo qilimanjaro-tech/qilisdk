@@ -25,15 +25,15 @@
 <meta content="QIR Import and Export | QiliSDK" property="og:title"/>
 <meta content="QIR Import and Export | QiliSDK" name="twitter:title"/>
 <link href="../../_static/pygments.css?v=652ce3ed" rel="stylesheet" type="text/css"/>
-<link href="../../_static/theme.css?v=979577e3" rel="stylesheet" type="text/css"/>
+<link href="../../_static/theme.css?v=73505e79" rel="stylesheet" type="text/css"/>
 <link href="../../_static/graphviz.css?v=4ae1632d" rel="stylesheet" type="text/css"/>
 <link href="../../_static/sphinx-design.min.css?v=95c83b7e" rel="stylesheet" type="text/css"/>
 <link href="../../_static/custom.css?v=7f555f8f" rel="stylesheet" type="text/css"/>
-<link href="../../_static/awesome-sphinx-design.css?v=b1d4564d" rel="stylesheet" type="text/css"/>
+<link href="../../_static/awesome-sphinx-design.css?v=c54898a4" rel="stylesheet" type="text/css"/>
 <link href="../../_static/q_trans.png" rel="icon"/>
 <link href="../../search.html" rel="search" title="Search"/>
 <link href="../../genindex.html" rel="index" title="Index"/>
-<link href="../analog/analog.html" rel="next" title="Analog"/>
+<link href="digital_qasm.html" rel="next" title="OpenQASM Import and Export"/>
 <link href="digital_trotter.html" rel="prev" title="TrotterizedSchedule"/>
 </head>
 <body :class="{ 'overflow-hidden': showSidebar }" class="min-h-screen font-sans antialiased bg-background text-foreground" x-data="{ showSidebar: false, showScrollTop: false }">
@@ -114,7 +114,6 @@
 <li class="toctree-l2"><a class="reference internal" href="../core/core_variables_parameters.html">Variables and Parameters</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../core/core_terms_maps_comparisons.html">Terms, Maps and Comparisons</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../core/core_model.html">Models</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../core/core_lp_parser.html">Linear Programming File Parser and Serializer</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../core/core_qubo.html">QUBO</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../core/core_qtensor.html">QTensor</a></li>
 </ul>
@@ -128,6 +127,7 @@
 <li class="toctree-l2"><a class="reference internal" href="digital_qaoa.html">QAOA</a></li>
 <li class="toctree-l2"><a class="reference internal" href="digital_trotter.html">TrotterizedSchedule</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">QIR Import and Export</a></li>
+<li class="toctree-l2"><a class="reference internal" href="digital_qasm.html">OpenQASM Import and Export</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../analog/analog.html">Analog<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
@@ -275,7 +275,6 @@
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../code/api/qilisdk/utils/index.html">qilisdk.utils<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/utils/hashing/index.html">qilisdk.utils.hashing</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/utils/lp_parser/index.html">qilisdk.utils.lp_parser</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/utils/openfermion/index.html">qilisdk.utils.openfermion</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/utils/openqasm/index.html">qilisdk.utils.openqasm</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/utils/qir/index.html">qilisdk.utils.qir</a></li>
@@ -395,92 +394,114 @@ support status in QiliSDK:</p>
 <table class="docutils align-default">
 <thead>
 <tr class="row-odd"><th class="head"><p>QIR feature</p></th>
-<th class="head"><p>QiliSDK</p></th>
+<th class="head"><p>QiliSDK feature</p></th>
+<th class="head"><p>Supported</p></th>
 <th class="head"><p>Notes</p></th>
 </tr>
 </thead>
 <tbody>
 <tr class="row-even"><td><p>Base Profile module layout</p></td>
+<td><p>–</p></td>
 <td><p>✅</p></td>
 <td></td>
 </tr>
 <tr class="row-odd"><td><p>Entry-point function</p></td>
+<td><p>–</p></td>
 <td><p>✅</p></td>
 <td></td>
 </tr>
 <tr class="row-even"><td><p>Static qubit allocation</p></td>
+<td><p>–</p></td>
 <td><p>✅</p></td>
 <td></td>
 </tr>
 <tr class="row-odd"><td><p>Static result allocation</p></td>
+<td><p>–</p></td>
 <td><p>✅</p></td>
 <td></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">required_num_qubits</span></code> / <code class="docutils literal notranslate"><span class="pre">_num_results</span></code></p></td>
+<td><p>–</p></td>
 <td><p>✅</p></td>
 <td></td>
 </tr>
 <tr class="row-odd"><td><p>Textual LLVM IR (<code class="docutils literal notranslate"><span class="pre">.ll</span></code>)</p></td>
+<td><p>–</p></td>
 <td><p>✅</p></td>
 <td></td>
 </tr>
 <tr class="row-even"><td><p>LLVM bitcode (<code class="docutils literal notranslate"><span class="pre">.bc</span></code>)</p></td>
+<td><p>–</p></td>
 <td><p>✅</p></td>
 <td></td>
 </tr>
 <tr class="row-odd"><td><p>Single-qubit QIS gates</p></td>
+<td><p>–</p></td>
 <td><p>✅</p></td>
 <td><p>1</p></td>
 </tr>
 <tr class="row-even"><td><p>Two-qubit QIS gates</p></td>
+<td><p>–</p></td>
 <td><p>✅</p></td>
 <td><p>1</p></td>
 </tr>
 <tr class="row-odd"><td><p>Adjoint QIS gates (<code class="docutils literal notranslate"><span class="pre">s_adj</span></code> / <code class="docutils literal notranslate"><span class="pre">t_adj</span></code>)</p></td>
+<td><p>–</p></td>
 <td><p>✅</p></td>
 <td></td>
 </tr>
 <tr class="row-even"><td><p>Parameterized rotations</p></td>
+<td><p>–</p></td>
 <td><p>🟡</p></td>
 <td><p>2</p></td>
 </tr>
 <tr class="row-odd"><td><p>Measurement (<code class="docutils literal notranslate"><span class="pre">mz</span></code>)</p></td>
+<td><p>–</p></td>
 <td><p>🟡</p></td>
 <td><p>3</p></td>
 </tr>
 <tr class="row-even"><td><p>Multi-qubit measurement grouping</p></td>
+<td><p>–</p></td>
 <td><p>🟡</p></td>
 <td><p>4</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">barrier</span></code> / <code class="docutils literal notranslate"><span class="pre">reset</span></code></p></td>
+<td><p>–</p></td>
 <td><p>❌</p></td>
 <td></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ccx</span></code> and other three-qubit intrinsics</p></td>
+<td><p>–</p></td>
 <td><p>❌</p></td>
 <td><p>5</p></td>
 </tr>
 <tr class="row-odd"><td><p>Adaptive Profile / classical control</p></td>
+<td><p>–</p></td>
 <td><p>❌</p></td>
 <td></td>
 </tr>
 <tr class="row-even"><td><p>Branching on measurement results</p></td>
+<td><p>–</p></td>
 <td><p>❌</p></td>
 <td></td>
 </tr>
 <tr class="row-odd"><td><p>Output recording calls (<code class="docutils literal notranslate"><span class="pre">rt__*</span></code>)</p></td>
+<td><p>–</p></td>
 <td><p>❌</p></td>
 <td></td>
 </tr>
 <tr class="row-even"><td><p>Dynamic qubit / result management</p></td>
+<td><p>–</p></td>
 <td><p>❌</p></td>
 <td></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">U1</span></code> / <code class="docutils literal notranslate"><span class="pre">U2</span></code> / <code class="docutils literal notranslate"><span class="pre">U3</span></code></p></td>
+<tr class="row-odd"><td><p>–</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">U1</span></code> / <code class="docutils literal notranslate"><span class="pre">U2</span></code> / <code class="docutils literal notranslate"><span class="pre">U3</span></code></p></td>
 <td><p>❌</p></td>
 <td><p>5</p></td>
 </tr>
-<tr class="row-even"><td><p>Arbitrary <code class="docutils literal notranslate"><span class="pre">Controlled</span></code> / <code class="docutils literal notranslate"><span class="pre">Exponential</span></code></p></td>
+<tr class="row-even"><td><p>–</p></td>
+<td><p>Arbitrary <code class="docutils literal notranslate"><span class="pre">Controlled</span></code> / <code class="docutils literal notranslate"><span class="pre">Exponential</span></code></p></td>
 <td><p>❌</p></td>
 <td><p>5</p></td>
 </tr>
@@ -595,8 +616,8 @@ angles; Base Profile does not support symbolic parameters, so rebind any
       </a>
 </div>
 <div class="ml-auto">
-<a class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input hover:bg-accent hover:text-accent-foreground py-2 px-4" href="../analog/analog.html">
-        Analog
+<a class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input hover:bg-accent hover:text-accent-foreground py-2 px-4" href="digital_qasm.html">
+        OpenQASM Import and Export
         <svg class="ml-2 h-4 w-4" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
 <polyline points="9 18 15 12 9 6"></polyline>
 </svg>
@@ -625,7 +646,7 @@ angles; Base Profile does not support symbolic parameters, so rebind any
 <script src="../../_static/documentation_options.js?v=7f41d439"></script>
 <script src="../../_static/doctools.js?v=9bcbadda"></script>
 <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
-<script defer="defer" src="../../_static/theme.js?v=d6a9845b"></script>
+<script defer="defer" src="../../_static/theme.js?v=582b20c5"></script>
 <script src="../../_static/design-tabs.js?v=f930bc37"></script>
 <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
 </body>
