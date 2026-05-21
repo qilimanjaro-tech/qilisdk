@@ -20,26 +20,26 @@
 
 struct SampleSet {
     std::vector<Bitset> configs;
-    DenseMatrix O_mat;  // (N_s x p) log-derivatives: O_k(x) = P_k(x) ∈ {-1,+1}
+    Eigen::MatrixXd O_mat;  // (N_s x p) log-derivatives: O_k(x) = P_k(x) ∈ {-1,+1}, always real
 };
 
 class ExponentialAnsatz {
    private:
     int shots;
     int warmups;
-    int order;
+    float order;
     MatrixFreeHamiltonian terms = MatrixFreeHamiltonian(0);
     int num_qubits;
 
     std::vector<Bitset> build_z_bits() const;
 
    public:
-    ExponentialAnsatz(int num_qubits, int order, int shots, int warmups);
+    ExponentialAnsatz(int num_qubits, float order, int shots, int warmups);
     friend std::ostream& operator<<(std::ostream& os, const ExponentialAnsatz& ansatz);
     void set_shots(int new_shots) { shots = new_shots; }
     void set_warmups(int new_warmups) { warmups = new_warmups; }
-    void set_order(int new_order) { order = new_order; }
-    int get_order() const { return order; }
+    void set_order(float new_order) { order = new_order; }
+    float get_order() const { return order; }
     int get_shots() const { return shots; }
     int get_warmups() const { return warmups; }
     MatrixFreeHamiltonian get_terms() const { return terms; }
@@ -48,10 +48,12 @@ class ExponentialAnsatz {
     SampleSet draw_samples(int N_s, int n_warmup) const;
     Eigen::VectorXcd local_energy(const SampleSet& samples, const MatrixFreeHamiltonian& H) const;
     double expectation_value(const MatrixFreeHamiltonian& observable) const;
+    void prune_terms_not_in_hamiltonian(const MatrixFreeHamiltonian& H);
     ExponentialAnsatz operator*(const double& scalar) const;
     ExponentialAnsatz& operator*=(const double& scalar);
     ExponentialAnsatz operator+(const ExponentialAnsatz& other) const;
     ExponentialAnsatz& operator+=(const ExponentialAnsatz& other);
+    ExponentialAnsatz zeroed() const;
     DenseMatrix to_dense() const;
 };
 

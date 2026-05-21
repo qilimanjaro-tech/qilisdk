@@ -546,20 +546,22 @@ std::vector<double> parse_time_steps(const py::object& steps) {
     return step_list;
 }
 
-SparseMatrix parse_initial_state(const py::object& initial_state, double atol) {
+SparseMatrix parse_initial_state(const py::object& initial_state, double atol, int nqubits) {
     /*
     Extract the initial state from a QTensor object.
 
     Args:
-        initial_state (py::object): The initial state as a QTensor.
+        initial_state (py::object): The initial state as a QTensor or InitialState object.
         atol (double): Absolute tolerance for numerical operations.
+        nqubits (int): The total number of qubits.
 
     Returns:
         SparseMatrix: The initial state as a sparse matrix.
     */
     py::object spm;
-    if (py::isinstance(initial_state, QTensorSymbolic)) {
-        spm = initial_state.attr("as_qtensor")().attr("data");
+    if (py::isinstance(initial_state, InitialState)) {
+        spm = initial_state.attr("as_qtensor")(nqubits).attr("data");
+
     } else if (py::isinstance(initial_state, QTensor)) {
         spm = initial_state.attr("data");
     }
@@ -798,7 +800,7 @@ QiliSimConfig parse_solver_params(const py::dict& solver_params) {
         config.set_max_terms(solver_params["max_terms"].cast<int>());
     }
     if (solver_params.contains("order")) {
-        config.set_order(solver_params["order"].cast<int>());
+        config.set_order(solver_params["order"].cast<float>());
     }
     if (solver_params.contains("shots")) {
         config.set_shots(solver_params["shots"].cast<int>());

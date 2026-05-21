@@ -347,7 +347,11 @@ void time_evolution_variational_exponential(ExponentialAnsatz& rho_t, const std:
     // Set up the ansatz
     int n_qubits = hamiltonians[0].get_nqubits();
     rho_t = ExponentialAnsatz(n_qubits, config.get_order(), config.get_shots(), config.get_warmups());
+    if (std::abs(rho_t.get_order() - 1.5) < 1e-10) {
+        rho_t.prune_terms_not_in_hamiltonian(hamiltonians[hamiltonians.size() - 1]);
+    }
     rho_t.set_shots(config.get_num_monte_carlo_trajectories());
+    std::cout << "State has " << rho_t.get_terms().size() << " terms in the ansatz" << std::endl;
 
     // Initial step size: match the first scheduled interval, or fall back to 1.0
     double dt = 1.0;
@@ -355,34 +359,11 @@ void time_evolution_variational_exponential(ExponentialAnsatz& rho_t, const std:
         dt = step_list[1];
     }
 
-    // Adaptive RK45 loop
-    if (config.get_adaptive_tol() > 1e-8) {
-        double current_time = 0.0;
-        size_t iters = 0;
-        const size_t max_iters = 1000000;
-        while (current_time < step_list.back()) {
-            dt = std::min(dt, step_list.back() - current_time);
-
-            double dt_taken = iter_rk45(rho_t, current_time, dt, step_list, hamiltonians, parameters_list, config.get_adaptive_tol());
-
-            current_time += dt_taken;
-            iters++;
-            if (iters >= max_iters) {
-                throw std::runtime_error("Maximum number of iterations reached in adaptive RK45 integration.");
-            }
-            if (dt < config.get_atol()) {
-                throw std::runtime_error("Minimum step size reached in adaptive RK45 integration.");
-            }
-        }
-        std::cout << "Adaptive RK45 completed in " << iters << " iterations." << std::endl;
-
     // Fixed-step RK4 loop
-    } else {
-        for (size_t step_ind = 0; step_ind < step_list.size(); ++step_ind) {
-            double t_start = (step_ind > 0) ? step_list[step_ind - 1] : 0.0;
-            double dt = step_list[step_ind] - t_start;
-            iter_rk4(rho_t, t_start, dt, step_list, hamiltonians, parameters_list, config.get_max_terms());
-        }
+    for (size_t step_ind = 0; step_ind < step_list.size(); ++step_ind) {
+        double t_start = (step_ind > 0) ? step_list[step_ind - 1] : 0.0;
+        double dt = step_list[step_ind] - t_start;
+        iter_rk4(rho_t, t_start, dt, step_list, hamiltonians, parameters_list, config.get_max_terms());
     }
 
 }

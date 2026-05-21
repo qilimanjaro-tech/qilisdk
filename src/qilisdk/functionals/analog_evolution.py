@@ -16,7 +16,7 @@ from typing import Callable, ClassVar, Iterator
 from qilisdk.analog.schedule import Schedule
 from qilisdk.core import Parameter
 from qilisdk.core.parameterizable import Parameterizable
-from qilisdk.core.qtensor import QTensor, QTensorSymbolic
+from qilisdk.core.qtensor import InitialState, QTensor
 from qilisdk.functionals.functional import PrimitiveFunctional
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.yaml import yaml
@@ -47,13 +47,13 @@ class AnalogEvolution(PrimitiveFunctional):
     def __init__(
         self,
         schedule: Schedule,
-        initial_state: QTensor | QTensorSymbolic,
+        initial_state: QTensor | InitialState,
         store_intermediate_results: bool = False,
     ) -> None:
         """
         Args:
             schedule (Schedule): Annealing or control schedule describing the Hamiltonian evolution.
-            initial_state (QTensor | QTensorSymbolic): Quantum state used as the simulation starting point. If a symbolic state is provided, it will be resolved during execution.
+            initial_state (QTensor | InitialState): Quantum state used as the simulation starting point. If a symbolic state is provided, it will be resolved during execution.
             store_intermediate_results (bool, optional): Keep intermediate states if produced by the backend. Defaults to False.
 
         Raises:
@@ -70,12 +70,12 @@ class AnalogEvolution(PrimitiveFunctional):
             )
 
     @property
-    def initial_state(self) -> QTensor:
+    def initial_state(self) -> QTensor | InitialState:
         """
         The initial state of the simulation, if provided.
 
         Returns:
-            QTensor: The initial state.
+            QTensor | InitialState: The initial state.
 
         Raises:
             ValueError: If no initial state was provided for this functional.

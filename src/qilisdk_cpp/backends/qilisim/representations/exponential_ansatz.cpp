@@ -21,7 +21,7 @@
 
 // GCOV_EXCL_BR_START
 
-ExponentialAnsatz::ExponentialAnsatz(int num_qubits, int order, int shots, int warmups) : num_qubits(num_qubits), order(order), shots(shots), warmups(warmups) {
+ExponentialAnsatz::ExponentialAnsatz(int num_qubits, float order, int shots, int warmups) : num_qubits(num_qubits), order(order), shots(shots), warmups(warmups) {
     /*
     Construct an ExponentialAnsatz with the given number of qubits and maximum number of terms.
 
@@ -30,7 +30,7 @@ ExponentialAnsatz::ExponentialAnsatz(int num_qubits, int order, int shots, int w
 
     Args:
         num_qubits (int): The number of qubits in the system.
-        order (int): The maximum order of terms to include in the ansatz.
+        order (float): The maximum order of terms to include in the ansatz.
         shots (int): The number of shots to use for sampling.
         warmups (int): The number of warmup steps to use for sampling.
 
@@ -47,7 +47,7 @@ ExponentialAnsatz::ExponentialAnsatz(int num_qubits, int order, int shots, int w
     }
 
     // Add two body terms
-    if (order >= 2) {
+    if (order >= 1.5) {
         for (int i = 0; i < num_qubits; ++i) {
             for (int j = i + 1; j < num_qubits; ++j) {
                 PauliString ps(num_qubits);
@@ -93,11 +93,42 @@ ExponentialAnsatz::ExponentialAnsatz(int num_qubits, int order, int shots, int w
 
 }
 
+ExponentialAnsatz ExponentialAnsatz::zeroed() const {
+    ExponentialAnsatz result(num_qubits, 0, shots, warmups);
+    for (const auto& [ps, coeff] : terms.get_operators()) {
+        result.terms.add(0.0, ps);
+    }
+    return result;
+}
+
+void ExponentialAnsatz::prune_terms_not_in_hamiltonian(const MatrixFreeHamiltonian& H) {
+    /*
+    Remove any terms from the ansatz that do not appear in the given Hamiltonian.
+
+    Args:
+        H (const MatrixFreeHamiltonian&): The Hamiltonian to use for pruning terms.
+
+    Returns:
+        void
+    */
+    std::cout << "Pruning ansatz terms that are not: " << H << std::endl;
+    const auto& h_ops = H.get_operators();
+    std::unordered_map<PauliString, std::complex<double>, PauliString::HashFunction> new_ops;
+    for (const auto& [ps, coeff] : terms.get_operators()) {
+        std::cout << "Checking if term " << ps << " is in the Hamiltonian..." << std::endl;
+        if (h_ops.find(ps) != h_ops.end() || ps.size() == 1) {
+            new_ops[ps] = coeff;
+            std::cout << "Keeping term " << ps << " with coefficient " << coeff << std::endl;
+        }
+    }
+    terms = MatrixFreeHamiltonian(num_qubits, new_ops);
+}
+
 std::vector<Bitset> ExponentialAnsatz::build_z_bits() const {
     const auto& ops = terms.get_operators();
     const int p = static_cast<int>(ops.size());
     std::vector<std::pair<PauliString, std::complex<double>>> terms_vec(ops.begin(), ops.end());
-    std::vector<Bitset> z_bits(p, Bitset(num_qubits));
+    std::vector<Bitset> z_bits(p, Bitset());
     for (int k = 0; k < p; ++k) {
         const auto& ps = terms_vec[k].first;
         for (int i = 0; i < num_qubits; ++i) {
@@ -136,18 +167,26 @@ SampleSet ExponentialAnsatz::draw_samples(int N_s, int n_warmup) const {
     // For each qubit i, the indices of terms k whose z-support includes qubit i.
     // When bit i is flipped, only these terms change parity (and thus sign in lp).
     std::vector<std::vector<int>> qubit_to_terms(num_qubits);
-    for (int k = 0; k < p; ++k)
-        for (int i = 0; i < num_qubits; ++i)
-            if (z_bits[k].test(num_qubits - 1 - i))
+    for (int k = 0; k < p; ++k) {
+        for (int i = 0; i < num_qubits; ++i) {
+            if (z_bits[k].test(num_qubits - 1 - i)) {
                 qubit_to_terms[i].push_back(k);
+            }
+        }
+    }
 
+    // Set up the random generator
     std::mt19937 rng(std::random_device{}());
     std::uniform_int_distribution<int> rand_qubit(0, num_qubits - 1);
     std::uniform_real_distribution<double> rand01(0.0, 1.0);
 
-    Bitset x(num_qubits);
-    for (int i = 0; i < num_qubits; ++i)
-        if (rand01(rng) < 0.5) x.set(i);
+    // Start with a random bitstring
+    Bitset x;
+    for (int i = 0; i < num_qubits; ++i) {
+        if (rand01(rng) < 0.5) {
+            x.set(i);
+        }
+    }
 
     // Per-term parity and weighted contribution: contrib[k] = 2*coeff_k * (-1)^parity_k.
     // Tracking these allows O(affected terms) incremental updates on each bit flip.
@@ -164,7 +203,9 @@ SampleSet ExponentialAnsatz::draw_samples(int N_s, int n_warmup) const {
     // Flipping qubit i negates contrib[k] for each k in qubit_to_terms[i], giving delta = -2*sum(affected contrib).
     auto compute_delta = [&](int qubit) -> double {
         double delta = 0.0;
-        for (int k : qubit_to_terms[qubit]) delta -= 2.0 * contrib[k];
+        for (int k : qubit_to_terms[qubit]) {
+            delta -= 2.0 * contrib[k];
+        }
         return delta;
     };
     auto accept_flip = [&](int qubit) {
@@ -175,6 +216,7 @@ SampleSet ExponentialAnsatz::draw_samples(int N_s, int n_warmup) const {
         }
     };
 
+    // Do some warmup passes before we start taking samples
     for (int s = 0; s < n_warmup * num_qubits; ++s) {
         int i = rand_qubit(rng);
         double lp_new = lp + compute_delta(i);
@@ -186,7 +228,7 @@ SampleSet ExponentialAnsatz::draw_samples(int N_s, int n_warmup) const {
 
     // Generate the samples
     SampleSet result;
-    result.configs.resize(N_s, Bitset(num_qubits));
+    result.configs.resize(N_s, Bitset());
     result.O_mat.resize(N_s, p);
     for (int s = 0; s < N_s; ++s) {
         for (int t = 0; t < num_qubits; ++t) {
@@ -199,7 +241,7 @@ SampleSet ExponentialAnsatz::draw_samples(int N_s, int n_warmup) const {
         }
         result.configs[s] = x;
         for (int k = 0; k < p; ++k) {
-            result.O_mat(s, k) = std::complex<double>(parity[k] ? -1.0 : 1.0, 0.0);
+            result.O_mat(s, k) = parity[k] ? -1.0 : 1.0;
         }
     }
 
@@ -235,7 +277,7 @@ Eigen::VectorXcd ExponentialAnsatz::local_energy(const SampleSet& samples, const
     std::vector<HTerm> h_terms;
     h_terms.reserve(h_ops.size());
     for (const auto& [ps, coeff] : h_ops) {
-        Bitset flip_mask(num_qubits), sign_mask(num_qubits);
+        Bitset flip_mask, sign_mask;
         int n_y = 0;
         for (int i = 0; i < num_qubits; ++i) {
             if ( ps.x_mask[i] && !ps.z_mask[i]) { flip_mask.flip(num_qubits - 1 - i); }
@@ -287,7 +329,9 @@ std::ostream& operator<<(std::ostream& os, const ExponentialAnsatz& ansatz) {
     Returns:
         std::ostream&: The output stream after writing the ansatz.
     */
+    os << "exp(";
     os << ansatz.get_terms();
+    os << ") |+>";
     return os;
 }
 

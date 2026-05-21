@@ -97,7 +97,7 @@ py::object QiliSimCpp::execute_digital_propagation(const py::object& functional,
         initial_state_cpp.coeffRef(0, 0) = 1.0;
         initial_state_cpp.makeCompressed();
     } else {
-        initial_state_cpp = parse_initial_state(initial_state, config.get_atol());
+        initial_state_cpp = parse_initial_state(initial_state, config.get_atol(), n_qubits);
     }
     if (config.get_sampling_method() == "statevector_matrix_free") {
         sampling_matrix_free(gates, n_qubits, initial_state_cpp, noise_model_cpp, state_dense, intermediate_results, config, readout);
@@ -185,9 +185,9 @@ py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, co
     // A scalable method, so we should never construct any matrix or state
     if (config.get_time_evolution_method() == "variational_exponential") {
 
-        // Ensure that the initial state is a plus state (a QTensorSymbolic)
-        if (!py::isinstance(initial_state, QTensorSymbolic) || initial_state.attr("name").cast<std::string>() != "uniform") {
-            throw py::value_error("Initial state must be a QTensorSymbolic instance for the variational exponential method.");
+        // Ensure that the initial state is a plus state (a InitialState)
+        if (!py::isinstance(initial_state, InitialState) || initial_state.attr("name").cast<std::string>() != "UNIFORM") {
+            throw py::value_error("Initial state must be a InitialState.UNIFORM instance for the variational annealing method.");
         }
 
         // Parse things
@@ -195,6 +195,20 @@ py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, co
         ExponentialAnsatz rho_t(n_qubits, config.get_order(), config.get_shots(), config.get_warmups());
         std::vector<std::vector<double>> parameters_list = parse_coefficients(schedule, hamiltonians_keys, steps);
         std::vector<double> step_list = parse_time_steps(steps);
+
+        // Make sure the first Hamiltonian only has X terms
+        for (const auto& [ps, coeff] : hamiltonians[0].get_operators()) {
+            if ((ps.x_mask.count() + ps.z_mask.count()) != ps.x_mask.count()) {
+                throw py::value_error("The first Hamiltonian in the schedule must only contain X terms for the variational annealing method.");
+            }
+        }
+
+        // Make sure the last Hamiltonian only has Z terms
+        for (const auto& [ps, coeff] : hamiltonians.back().get_operators()) {
+            if ((ps.x_mask.count() + ps.z_mask.count()) != ps.z_mask.count()) {
+                throw py::value_error("The last Hamiltonian in the schedule must only contain Z terms for the variational annealing method.");
+            }
+        }
 
         // Run the evolution
         time_evolution_variational_exponential(rho_t, hamiltonians, parameters_list, step_list, config);
@@ -207,7 +221,7 @@ py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, co
     } else {
 
         // Common between methods
-        SparseMatrix rho_0 = parse_initial_state(initial_state, config.get_atol());
+        SparseMatrix rho_0 = parse_initial_state(initial_state, config.get_atol(), n_qubits);
         int nqubits = static_cast<int>(std::log2(rho_0.rows()));
         NoiseModelCpp noise_model_cpp = parse_noise_model(noise_model, nqubits, config.get_atol());
         std::vector<std::vector<double>> parameters_list = parse_coefficients(schedule, hamiltonians_keys, steps);
@@ -305,7 +319,7 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
     NoiseModelCpp noise_model_cpp = parse_noise_model(noise_model, n_qubits, config.get_atol());
 
     py::object initial_state = functional.attr("initial_state");
-    SparseMatrix rho_0 = parse_initial_state(initial_state, config.get_atol());
+    SparseMatrix rho_0 = parse_initial_state(initial_state, config.get_atol(), n_qubits);
     // Ensure state is always a density matrix (matching Python's to_density_matrix())
     DenseMatrix state;
     if (rho_0.cols() == 1) {

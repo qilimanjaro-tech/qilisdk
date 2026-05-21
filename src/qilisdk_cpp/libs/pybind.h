@@ -46,7 +46,7 @@ extern py::object AnalogEvolution;
 extern py::object QuantumReservoir;
 extern py::object FunctionalResult;
 extern py::object QTensor;
-extern py::object QTensorSymbolic;
+extern py::object InitialState;
 extern py::object Hamiltonian;
 extern py::object PauliOperator;
 extern py::object NoiseModel;

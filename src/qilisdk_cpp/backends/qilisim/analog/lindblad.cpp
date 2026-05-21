@@ -140,6 +140,9 @@ void lindblad_rhs(MatrixFreeHamiltonian& drho, const MatrixFreeHamiltonian& rho,
     drho *= -imag;
 }
 
+#include <iostream>
+#include <chrono>
+
 void lindblad_rhs(ExponentialAnsatz& drho, const ExponentialAnsatz& rho, const MatrixFreeHamiltonian& H) {
     /*
     Evaluate the right-hand side of the variational equations for the ExponentialAnsatz.
@@ -156,36 +159,38 @@ void lindblad_rhs(ExponentialAnsatz& drho, const ExponentialAnsatz& rho, const M
         rho (ExponentialAnsatz): Current ansatz with parameters a_k.
         H (MatrixFreeHamiltonian): The Hamiltonian.
     */
-    using cdouble = std::complex<double>;
-
     const auto& ops = rho.get_terms().get_operators();
     const int p = static_cast<int>(ops.size());
     if (p == 0) return;
 
-    std::vector<std::pair<PauliString, cdouble>> terms_vec(ops.begin(), ops.end());
+    std::vector<std::pair<PauliString, std::complex<double>>> terms_vec(ops.begin(), ops.end());
 
+    // Get the samples from the ansatz
     SampleSet samples = rho.draw_samples();
     int N_s = static_cast<int>(samples.configs.size());
     Eigen::VectorXcd El = rho.local_energy(samples, H);
 
-    // --- Monte Carlo estimators ---
-    Eigen::VectorXcd O_mean = samples.O_mat.colwise().mean();
-    cdouble El_mean = El.mean();
+    // Monte Carlo estimators — O_mat is real (±1), so use real arithmetic throughout
+    Eigen::VectorXd O_mean_real = samples.O_mat.colwise().mean();
+    std::complex<double> El_mean = El.mean();
 
-    // M_{kk'} = <O_k* O_k'> - <O_k*><O_k'>
-    DenseMatrix O_conj = samples.O_mat.conjugate();
-    DenseMatrix M = (O_conj.transpose() * samples.O_mat) / static_cast<double>(N_s)
-                    - O_mean.conjugate() * O_mean.transpose();
+    // M_{kk'} = <O_k* O_k'> - <O_k*><O_k'>  (real since O is real)
+    Eigen::MatrixXd O_T = samples.O_mat.transpose();
+    Eigen::MatrixXd M_real = (O_T * samples.O_mat) / static_cast<double>(N_s)
+                             - O_mean_real * O_mean_real.transpose();
 
     // V_k = -i(<O_k* E_loc> - <O_k*><E_loc>)
     Eigen::VectorXcd V = std::complex<double>(0.0, -1.0) * (
-        (O_conj.transpose() * El) / static_cast<double>(N_s) - O_mean.conjugate() * El_mean
+        (O_T.cast<std::complex<double>>() * El) / static_cast<double>(N_s) - O_mean_real.cast<std::complex<double>>() * El_mean
     );
 
-    // Regularise M to handle near-singular cases, then solve M ȧ = V
+    // Regularise M and solve via Cholesky
     const double epsilon = 1e-4;
-    M += epsilon * DenseMatrix::Identity(p, p);
-    Eigen::VectorXcd adot = M.lu().solve(V);
+    M_real += epsilon * Eigen::MatrixXd::Identity(p, p);
+    Eigen::LLT<Eigen::MatrixXd> llt(M_real);
+    Eigen::VectorXcd adot(p);
+    adot.real() = llt.solve(V.real());
+    adot.imag() = llt.solve(V.imag());
 
     // Set the drho
     drho *= 0.0;

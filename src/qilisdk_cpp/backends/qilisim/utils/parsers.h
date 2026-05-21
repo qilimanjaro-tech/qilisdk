@@ -33,7 +33,7 @@ std::vector<SparseMatrix> parse_observables(const py::object& observables, long 
 std::vector<MatrixFreeHamiltonian> parse_observables_matrix_free(int nqubits, const py::object& observables);
 std::vector<std::vector<double>> parse_coefficients(const py::object& schedule, const py::list& hamiltonians_keys, const py::object& steps);
 std::vector<double> parse_time_steps(const py::object& steps);
-SparseMatrix parse_initial_state(const py::object& initial_state, double atol);
+SparseMatrix parse_initial_state(const py::object& initial_state, double atol, int nqubits);
 std::vector<Gate> parse_gates(const py::object& circuit, double atol, const py::object& noise_model);
 std::vector<bool> parse_measurements(const py::object& circuit);
 QiliSimConfig parse_solver_params(const py::dict& solver_params);

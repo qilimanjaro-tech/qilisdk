@@ -14,6 +14,7 @@
 from __future__ import annotations
 
 from copy import copy
+from enum import Enum
 from typing import TYPE_CHECKING, Literal
 
 import numpy as np
@@ -32,38 +33,36 @@ if TYPE_CHECKING:
 Complex = int | float | complex
 NormTypes = Literal["auto", "frobenius", "trace", "l1", "l2", "inf", "nuclear"] | int
 QTensorType = Literal["ket", "bra", "operator"]
-QTensorSymbolicType = Literal["uniform", "zero"]
 
-# Enum containing presets like +, 0 etc.
-class QTensorSymbolic:
 
-    def __init__(self, name: QTensorSymbolicType, nqubits: int) -> None:
-        self._name = name
-        self._nqubits = nqubits
+# Enum containing state presets like +, 0 etc.
+class InitialState(Enum):
+    """
+    Enumeration of symbolic initial states that can be used to specify the initial state of an evolution without needing to construct the corresponding QTensor manually.
+    """
 
-    @classmethod
-    def zero(cls, nqubits: int) -> QTensorSymbolic:
-        return cls("zero", nqubits)
+    UNIFORM = "uniform"
+    ZERO = "zero"
 
-    @classmethod
-    def uniform(cls, nqubits: int) -> QTensorSymbolic:
-        return cls("uniform", nqubits)
-    
-    @property
-    def name(self) -> QTensorSymbolicType:
-        return self._name
-    
-    @property 
-    def nqubits(self) -> int:
-        return self._nqubits
+    def as_qtensor(self, nqubits: int) -> QTensor:
+        """
+        Convert the symbolic initial state to a QTensor.
 
-    def as_qtensor(self) -> QTensor:
-        if self._name == "zero":
-            return QTensor.zero(self._nqubits, "ket")
-        elif self._name == "uniform":
-            return QTensor.uniform(self._nqubits)
-        else:
-            raise ValueError(f"Unknown symbolic QTensor: {self.name}")
+        Args:
+            nqubits (int): The number of qubits in the system, which determines the size of the resulting QTensor.
+
+        Returns:
+            QTensor: A QTensor representing the specified initial state for the given number of qubits.
+
+        Raises:
+            ValueError: If the symbolic initial state is not recognized.
+        """
+        if self == InitialState.ZERO:
+            return QTensor.zero(nqubits, "ket")
+        if self == InitialState.UNIFORM:
+            return QTensor.uniform(nqubits)
+        raise ValueError(f"Unknown symbolic QTensor: {self.name}")
+
 
 @yaml.register_class
 class QTensor:

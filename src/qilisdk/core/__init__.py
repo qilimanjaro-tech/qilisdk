@@ -15,8 +15,9 @@
 from .interpolator import Interpolation, Interpolator
 from .model import Constraint, Model, Objective, ObjectiveSense
 from .qtensor import (
-    QTensor, 
-    basis_state, 
+    InitialState,
+    QTensor,
+    basis_state,
     bra,
     expect_val,
     ghz,
@@ -25,7 +26,6 @@ from .qtensor import (
     reset_qubits,
     tensor_prod,
     zero,
-    QTensorSymbolic
 )
 from .variables import (
     EQ,
@@ -55,13 +55,13 @@ __all__ = [
     "LEQ",
     "LT",
     "NEQ",
-    "QTensorSymbolic",
     "BinaryVariable",
     "Constraint",
     "Domain",
     "Equal",
     "GreaterThan",
     "GreaterThanOrEqual",
+    "InitialState",
     "Interpolation",
     "Interpolator",
     "LessThan",

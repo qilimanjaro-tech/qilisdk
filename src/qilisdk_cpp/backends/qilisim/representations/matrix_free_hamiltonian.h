@@ -14,13 +14,11 @@
 #pragma once
 
 #include "matrix_free_operator.h"
-#include <boost/dynamic_bitset.hpp>
 #include <bitset>
 
 // GCOV_EXCL_BR_START
 
-typedef boost::dynamic_bitset<> Bitset;
-// typedef std::bitset<128> Bitset;
+typedef std::bitset<256> Bitset;
 
 // moving now to use a bitmask for x and z rather than storing operators and strings
 class PauliString {
@@ -30,11 +28,12 @@ public:
     // neither means i, x means x, z means z, both means y
     Bitset x_mask;
     Bitset z_mask;
+    int nqubits;
 
     struct HashFunction {
         std::size_t operator()(const PauliString& ps) const {
             std::size_t hash = 0;
-            for (size_t i = 0; i < ps.x_mask.size(); ++i) {
+            for (size_t i = 0; i < ps.nqubits; ++i) {
                 hash ^= std::hash<bool>()(ps.x_mask[i]) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
                 hash ^= std::hash<bool>()(ps.z_mask[i]) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
             }
@@ -43,8 +42,8 @@ public:
     };
 
     PauliString() {throw std::runtime_error("Default constructor for PauliString is not allowed. Please specify the number of qubits.");}
-    PauliString(int num_qubits) : x_mask(num_qubits), z_mask(num_qubits) {}
-    PauliString(int num_qubits, char pauli, int target_qubit) : x_mask(num_qubits), z_mask(num_qubits) {
+    PauliString(int num_qubits) : x_mask(), z_mask(), nqubits(num_qubits) {}
+    PauliString(int num_qubits, char pauli, int target_qubit) : x_mask(), z_mask(), nqubits(num_qubits) {
         if (pauli == 'X') {
             x_mask.set(target_qubit);
         } else if (pauli == 'Z') {
@@ -53,6 +52,10 @@ public:
             x_mask.set(target_qubit);
             z_mask.set(target_qubit);
         }
+    }
+
+    size_t size() const {
+        return (x_mask | z_mask).count();
     }
 
     bool operator==(const PauliString& other) const {
