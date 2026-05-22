@@ -84,6 +84,9 @@ ignores this setting.
    * - :class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.MATRIX_PRODUCT_STATE`
      - ``tensornet-mps``. Good for low-entanglement, long circuits.
      -
+   * - :class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.CPU`
+     - ``cpu``. Force running on CPU. Mostly useful for benchmarking.
+     -
 
 Set the method at construction time:
 
