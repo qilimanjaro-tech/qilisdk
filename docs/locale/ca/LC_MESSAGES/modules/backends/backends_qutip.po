@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-05 15:18+0200\n"
+"POT-Creation-Date: 2026-05-21 16:31+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -25,56 +25,193 @@ msgstr "Backend QuTiP"
 
 #: ../../modules/backends/backends_qutip.rst:4
 msgid ""
-"The **Qutip** backend uses the ``qutip`` library for simulation on CPU, "
-"supporting both digital and analog functionals. It is the most "
-"lightweight option, ideal for local development or environments without "
-"NVIDIA GPUs."
+"The **Qutip** backend uses the `QuTiP <https://qutip.org/>`_ library for "
+"CPU-only simulation. It is the most lightweight optional backend — no "
+"GPU, no compiled extension — and is well suited to local development, CI "
+"pipelines and educational notebooks."
 msgstr ""
-"El backend **Qutip** utilitza la biblioteca ``qutip`` per a la simulació "
-"en CPU, admetent funcionals tant digitals com analògics. És l'opció més "
-"lleugera, ideal per al desenvolupament local o entorns sense GPU NVIDIA."
+"El backend **Qutip** utilitza la biblioteca `QuTiP <https://qutip.org/>`_"
+" per a simulació només a CPU. És el backend opcional més lleuger — sense "
+"GPU ni extensió compilada — i és adequat per al desenvolupament local, "
+"pipelines de CI i notebooks educatius."
 
-#: ../../modules/backends/backends_qutip.rst:8
+#: ../../modules/backends/backends_qutip.rst:9
 msgid "Installation"
 msgstr "Instal·lació"
 
-#: ../../modules/backends/backends_qutip.rst:15
-msgid "Initialization"
-msgstr "Inicialització"
+#: ../../modules/backends/backends_qutip.rst:16
+msgid "Quick start"
+msgstr "Inici ràpid"
 
-#: ../../modules/backends/backends_qutip.rst:24
-msgid "Capabilities"
-msgstr "Capacitats"
+#: ../../modules/backends/backends_qutip.rst:55
+msgid "Functional support"
+msgstr "Suport de funcionals"
 
-#: ../../modules/backends/backends_qutip.rst:26
+#: ../../modules/backends/backends_qutip.rst:61
+msgid "Functional"
+msgstr "Funcional"
+
+#: ../../modules/backends/backends_qutip.rst:62
+msgid "Support"
+msgstr "Suport"
+
+#: ../../modules/backends/backends_qutip.rst:63
+msgid "Notes"
+msgstr "Notes"
+
+#: ../../modules/backends/backends_qutip.rst:64
+msgid ":class:`~qilisdk.functionals.digital_propagation.DigitalPropagation`"
+msgstr ":class:`~qilisdk.functionals.digital_propagation.DigitalPropagation`"
+
+#: ../../modules/backends/backends_qutip.rst:65
+#: ../../modules/backends/backends_qutip.rst:68
+#: ../../modules/backends/backends_qutip.rst:74
+msgid "|y|"
+msgstr "|y|"
+
+#: ../../modules/backends/backends_qutip.rst:66
 msgid ""
-"**DigitalPropagation** of digital circuits via QuTiP's state-vector "
-"solvers."
+"Statevector simulation via ``qutip_qip``'s :class:`CircuitSimulator`. "
+"Mid-circuit measurements raise ``ValueError``; all measurements must be "
+"at the end of the circuit."
 msgstr ""
-"**DigitalPropagation** de circuits digitals mitjançant els solucionadors "
-"de vector d'estat de QuTiP."
+"Simulació basada en vector d'estat mitjançant :class:`CircuitSimulator` "
+"de ``qutip_qip``. Les mesures a mig circuit llancen ``ValueError``; totes"
+" les mesures han d'estar al final del circuit."
 
-#: ../../modules/backends/backends_qutip.rst:27
-msgid "**AnalogEvolution** driven by :class:`~qilisdk.analog.schedule.Schedule`."
-msgstr "**AnalogEvolution** impulsada per :class:`~qilisdk.analog.schedule.Schedule`."
+#: ../../modules/backends/backends_qutip.rst:67
+msgid ":class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`"
+msgstr ":class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`"
 
-#: ../../modules/backends/backends_qutip.rst:28
+#: ../../modules/backends/backends_qutip.rst:69
 msgid ""
-"Compatible with "
-":class:`~qilisdk.functionals.variational_program.VariationalProgram` for "
-"fully classical optimization loops."
+"Master-equation integration via QuTiP's :func:`qutip.mesolve`. ``nsteps``"
+" (default ``10_000``) caps the internal ODE substeps."
 msgstr ""
-"Compatible amb "
-":class:`~qilisdk.functionals.variational_program.VariationalProgram` per "
-"a bucles d'optimització totalment clàssics."
+"Integració de l'equació mestra mitjançant :func:`qutip.mesolve` de QuTiP."
+" ``nsteps`` (per defecte ``10_000``) limita els subpassos interns de "
+"l'integrador ODE."
 
-#: ../../modules/backends/backends_qutip.rst:32
-msgid "Example"
-msgstr "Exemple"
+#: ../../modules/backends/backends_qutip.rst:70
+msgid ":class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir`"
+msgstr ":class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir`"
 
-#: ../../modules/backends/backends_qutip.rst:81
-msgid "**Output**"
-msgstr "**Sortida**"
+#: ../../modules/backends/backends_qutip.rst:71
+msgid "|p|"
+msgstr "|p|"
+
+#: ../../modules/backends/backends_qutip.rst:72
+#, fuzzy
+msgid ""
+"The QutipBackend does not natively implement "
+":meth:`Backend._execute_quantum_reservoir "
+"<qilisdk.backends.backend.Backend._execute_quantum_reservoir>`. Circuit "
+"steps in the reservoir layer fall back to dense ``QTensor`` unitary "
+"multiplication on CPU; ``Schedule`` steps still use QuTiP's "
+":func:`mesolve`."
+msgstr ""
+"QutipBackend no implementa :meth:`Backend._execute_quantum_reservoir "
+"<qilisdk.backends.backend.Backend._execute_quantum_reservoir>`. Els "
+"passos ``Circuit`` de la capa del reservori recauen en una multiplicació "
+"unitària ``QTensor`` densa a CPU; els passos ``Schedule`` segueixen "
+"utilitzant :func:`mesolve` de QuTiP."
+
+#: ../../modules/backends/backends_qutip.rst:73
+msgid ":class:`~qilisdk.functionals.variational_program.VariationalProgram`"
+msgstr ":class:`~qilisdk.functionals.variational_program.VariationalProgram`"
+
+#: ../../modules/backends/backends_qutip.rst:75
+msgid "Reuses the digital/analog handlers above for each optimization step."
+msgstr ""
+"Reutilitza els manejadors digital/analògic anteriors a cada pas "
+"d'optimització."
+
+#: ../../modules/backends/backends_qutip.rst:82
+msgid "Configuration"
+msgstr "Configuració"
+
+#: ../../modules/backends/backends_qutip.rst:84
+msgid "QutipBackend has a single constructor option:"
+msgstr "QutipBackend té una única opció de constructor:"
+
+#: ../../modules/backends/backends_qutip.rst:90
+msgid "Option"
+msgstr "Opció"
+
+#: ../../modules/backends/backends_qutip.rst:91
+msgid "Meaning"
+msgstr "Significat"
+
+#: ../../modules/backends/backends_qutip.rst:92
+msgid "``nsteps``"
+msgstr "``nsteps``"
+
+#: ../../modules/backends/backends_qutip.rst:93
+msgid ""
+"Upper bound on the number of internal ODE substeps used by "
+":func:`qutip.mesolve` per schedule interval. Increase it if a long or "
+"stiff schedule causes the QuTiP solver to fail with a \"max steps "
+"exceeded\" warning. Defaults to ``10_000``."
+msgstr ""
+"Límit superior del nombre de subpassos interns de l'integrador ODE "
+"utilitzats per :func:`qutip.mesolve` per interval del schedule. "
+"Augmenteu-lo si un schedule llarg o rígid fa que el solver de QuTiP falli"
+" amb un avís \"max steps exceeded\". Per defecte ``10_000``."
+
+#: ../../modules/backends/backends_qutip.rst:105
+msgid ""
+"QutipBackend does **not** accept a :class:`~qilisdk.noise.NoiseModel`. "
+"For noisy digital or analog simulations use "
+":class:`~qilisdk.backends.qilisim.QiliSim` or "
+":class:`~qilisdk.backends.cuda_backend.CudaBackend` instead."
+msgstr ""
+"QutipBackend **no** accepta cap :class:`~qilisdk.noise.NoiseModel`. Per a"
+" simulacions digitals o analògiques amb soroll utilitzeu en el seu lloc "
+":class:`~qilisdk.backends.qilisim.QiliSim` o "
+":class:`~qilisdk.backends.cuda_backend.CudaBackend`."
 
 #~ msgid "Go to a specific subheading of a page."
 #~ msgstr "Aneu a un subapartat específic d'una pàgina."
+
+#~ msgid ""
+#~ "The **Qutip** backend uses the ``qutip``"
+#~ " library for simulation on CPU, "
+#~ "supporting both digital and analog "
+#~ "functionals. It is the most lightweight"
+#~ " option, ideal for local development "
+#~ "or environments without NVIDIA GPUs."
+#~ msgstr ""
+#~ "El backend **Qutip** utilitza la "
+#~ "biblioteca ``qutip`` per a la simulació"
+#~ " en CPU, admetent funcionals tant "
+#~ "digitals com analògics. És l'opció més"
+#~ " lleugera, ideal per al desenvolupament "
+#~ "local o entorns sense GPU NVIDIA."
+
+#~ msgid "Initialization"
+#~ msgstr "Inicialització"
+
+#~ msgid "Capabilities"
+#~ msgstr "Capacitats"
+
+#~ msgid ""
+#~ "**DigitalPropagation** of digital circuits via"
+#~ " QuTiP's state-vector solvers."
+#~ msgstr ""
+#~ "**DigitalPropagation** de circuits digitals "
+#~ "mitjançant els solucionadors de vector "
+#~ "d'estat de QuTiP."
+
+#~ msgid ""
+#~ "**AnalogEvolution** driven by "
+#~ ":class:`~qilisdk.analog.schedule.Schedule`."
+#~ msgstr ""
+#~ "**AnalogEvolution** impulsada per "
+#~ ":class:`~qilisdk.analog.schedule.Schedule`."
+
+#~ msgid "Example"
+#~ msgstr "Exemple"
+
+#~ msgid "**Output**"
+#~ msgstr "**Sortida**"
+
