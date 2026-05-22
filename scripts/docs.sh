@@ -16,11 +16,14 @@ ORIG_DIR=$(pwd)
 
 # Change to the root directory of the project
 cd "$(dirname "$(dirname "$(realpath "$0")")")"
+cd .tmp
+mkdir -p .docs_test
+cd .docs_test
 
 TMPFILE=$(mktemp /tmp/docs_test_XXXXXX.py)
 trap "rm -f $TMPFILE" EXIT
 
-for file in $( { find docs/ -name "*.rst"; find . -maxdepth 2 -name "*.md" -not -path './.venv/*' -not -path './node_modules/*'; } | sort ); do
+for file in $( { find ../../docs/ -name "*.rst"; find . -maxdepth 2 -name "*.md" -not -path './.venv/*' -not -path './node_modules/*'; } | sort ); do
 
     # Use Python to extract and concatenate all Python code blocks, then run them.
     # RST: code-block:: python, skip with '.. SKIP' on the preceding line.
@@ -147,6 +150,9 @@ done
 echo ""
 echo "Note: skip a code block by adding '.. SKIP' immediately before a '.. code-block:: python' directive (RST), or '<!-- SKIP -->' immediately before a '\`\`\`python' fence (MD)."
 echo "Results: $PASS passed, $FAIL failed, $SKIP skipped"
+
+cd ../..
+rm -rf .tmp/.docs_test
 
 # Return to the original directory
 cd "$ORIG_DIR"

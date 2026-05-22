@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-05 15:18+0200\n"
+"POT-Creation-Date: 2026-05-21 16:31+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -20,93 +20,499 @@ msgstr ""
 "Generated-By: Babel 2.18.0\n"
 
 #: ../../modules/backends/backends_qilisim.rst:2
-msgid "QiliSim"
+#, fuzzy
+msgid "QiliSim Backend"
 msgstr "QiliSim"
 
 #: ../../modules/backends/backends_qilisim.rst:4
+#, fuzzy
 msgid ""
-"The **QiliSim** backend is a CPU-based simulator developed by Qilimanjaro"
-" and written in C++, providing efficient simulation of both digital and "
-"analog quantum functionals. It is designed for ease of use and does not "
-"require any special hardware or dependencies. There is no need to install"
-" QiliSim separately, as it is included with the core QILISDK "
-"installation."
+"The **QiliSim** backend is the default CPU simulator developed by "
+"Qilimanjaro and written in C++. It implements every primitive functional "
+"natively, supports a noise model on all execution paths, and is included "
+"with the core ``qilisdk`` installation — no extra dependency or hardware "
+"is required."
 msgstr ""
-"El backend **QiliSim** és un simulador basat en CPU desenvolupat per "
-"Qilimanjaro i escrit en C++, que proporciona una simulació eficient de "
-"funcionals quàntics tant digitals com analògics. Està dissenyat per ser "
-"fàcil d'utilitzar i no requereix cap maquinari ni dependències especials. "
-"No cal instal·lar QiliSim per separat, ja que s'inclou amb la instal·lació "
-"bàsica de QILISDK."
+"El backend **QiliSim** és el simulador de CPU per defecte desenvolupat "
+"per Qilimanjaro i escrit en C++ (exposat mitjançant ``pybind11``). "
+"Implementa tots els funcionals primitius de manera nativa, suporta un "
+"model de soroll en totes les rutes d'execució i s'inclou amb la "
+"instal·lació principal de ``qilisdk`` — no requereix cap dependència ni "
+"maquinari addicional."
 
-#: ../../modules/backends/backends_qilisim.rst:10
-msgid "Example"
-msgstr "Exemple"
+#: ../../modules/backends/backends_qilisim.rst:9
+msgid "Installation"
+msgstr "Instal·lació"
 
-#: ../../modules/backends/backends_qilisim.rst:34
-msgid "Configuration"
-msgstr "Configuració"
-
-#: ../../modules/backends/backends_qilisim.rst:36
+#: ../../modules/backends/backends_qilisim.rst:11
 msgid ""
-"QiliSim has a variety of configuration options to customize the "
-"simulation methods and performance characteristics. These can be set at "
-"initialization via the ``analog_simulation_method``, "
-"``digital_simulation_method``, and ``execution_config`` parameters:"
+"QiliSim is bundled with the core ``qilisdk`` installation, so no extra "
+"package is required:"
 msgstr ""
-"QiliSim té diverses opcions de configuració per personalitzar els mètodes "
-"de simulació i les característiques de rendiment. Aquestes es poden "
-"establir en la inicialització mitjançant els paràmetres "
-"``analog_simulation_method``, ``digital_simulation_method`` i "
-"``execution_config``:"
 
+#: ../../modules/backends/backends_qilisim.rst:15
+msgid "Quick start"
+msgstr "Inici ràpid"
+
+#: ../../modules/backends/backends_qilisim.rst:39
+msgid "Functional support"
+msgstr "Suport de funcionals"
+
+#: ../../modules/backends/backends_qilisim.rst:41
+msgid ""
+"QiliSim natively supports all primitive functionals through dedicated C++"
+" routines:"
+msgstr ""
+"QiliSim suporta de manera nativa tots els funcionals primitius mitjançant"
+" rutines dedicades en C++:"
+
+#: ../../modules/backends/backends_qilisim.rst:47
+msgid "Functional"
+msgstr "Funcional"
+
+#: ../../modules/backends/backends_qilisim.rst:48
+msgid "Support"
+msgstr "Suport"
+
+#: ../../modules/backends/backends_qilisim.rst:49
+msgid "Notes"
+msgstr "Notes"
+
+#: ../../modules/backends/backends_qilisim.rst:50
+msgid ":class:`~qilisdk.functionals.digital_propagation.DigitalPropagation`"
+msgstr ":class:`~qilisdk.functionals.digital_propagation.DigitalPropagation`"
+
+#: ../../modules/backends/backends_qilisim.rst:51
 #: ../../modules/backends/backends_qilisim.rst:54
-msgid "Possible analog simulation methods:"
-msgstr "Mètodes de simulació analògica possibles:"
+#: ../../modules/backends/backends_qilisim.rst:57
+#: ../../modules/backends/backends_qilisim.rst:60
+msgid "|y|"
+msgstr "|y|"
+
+#: ../../modules/backends/backends_qilisim.rst:52
+msgid ""
+"Statevector-based simulation, configurable via "
+":class:`~qilisdk.backends.backend_config.DigitalMethod`."
+msgstr ""
+"Simulació basada en vector d'estat, configurable mitjançant "
+":class:`~qilisdk.backends.backend_config.DigitalMethod`."
+
+#: ../../modules/backends/backends_qilisim.rst:53
+msgid ":class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`"
+msgstr ":class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`"
+
+#: ../../modules/backends/backends_qilisim.rst:55
+msgid ""
+"Multiple integration schemes, configurable via "
+":class:`~qilisdk.backends.backend_config.AnalogMethod`."
+msgstr ""
+"Múltiples esquemes d'integració, configurables mitjançant "
+":class:`~qilisdk.backends.backend_config.AnalogMethod`."
 
 #: ../../modules/backends/backends_qilisim.rst:56
-msgid ""
-":class:`~qilisdk.backends.backend_config.AnalogMethod.integrator`: "
-"General-purpose RK4 integrator."
-msgstr ""
-":class:`~qilisdk.backends.backend_config.AnalogMethod.integrator`: "
-"Integrador RK4 de propòsit general."
-
-#: ../../modules/backends/backends_qilisim.rst:57
-msgid ""
-":class:`~qilisdk.backends.backend_config.AnalogMethod.adaptive_integrator`:"
-" Adaptive RK45 integrator, faster for some systems."
-msgstr ""
-":class:`~qilisdk.backends.backend_config.AnalogMethod.adaptive_integrator`:"
-" Integrador RK45 adaptatiu, més ràpid per a alguns sistemes."
+msgid ":class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir`"
+msgstr ":class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir`"
 
 #: ../../modules/backends/backends_qilisim.rst:58
 msgid ""
-":class:`~qilisdk.backends.backend_config.AnalogMethod.direct`: Matrix "
-"exponential method for small systems."
+"Native C++ implementation; supports both Circuit and Schedule reservoir "
+"steps."
 msgstr ""
-":class:`~qilisdk.backends.backend_config.AnalogMethod.direct`: Mètode "
-"d'exponencial de matriu per a sistemes petits."
+"Implementació nativa en C++; suporta tant passos Circuit com Schedule del"
+" reservori."
 
 #: ../../modules/backends/backends_qilisim.rst:59
-msgid ""
-":class:`~qilisdk.backends.backend_config.AnalogMethod.arnoldi`: Krylov "
-"subspace method."
-msgstr ""
-":class:`~qilisdk.backends.backend_config.AnalogMethod.arnoldi`: Mètode "
-"del subespai de Krylov."
+msgid ":class:`~qilisdk.functionals.variational_program.VariationalProgram`"
+msgstr ":class:`~qilisdk.functionals.variational_program.VariationalProgram`"
 
 #: ../../modules/backends/backends_qilisim.rst:61
-msgid "Possible digital simulation methods:"
-msgstr "Mètodes de simulació digital possibles:"
-
-#: ../../modules/backends/backends_qilisim.rst:63
-msgid ""
-":class:`~qilisdk.backends.backend_config.DigitalMethod.statevector`: "
-"Exact state-vector simulation with optional caching."
+msgid "Reuses the primitive functional handlers above for each optimization step."
 msgstr ""
-":class:`~qilisdk.backends.backend_config.DigitalMethod.statevector`: "
-"Simulació exacta de vector d'estat amb memòria cau opcional."
+"Reutilitza els manejadors de funcionals primitius anteriors a cada pas "
+"d'optimització."
+
+#: ../../modules/backends/backends_qilisim.rst:68
+msgid "Configuration"
+msgstr "Configuració"
+
+#: ../../modules/backends/backends_qilisim.rst:70
+msgid ""
+"QiliSim is configured at construction time through three orthogonal "
+"sections, all defined in :mod:`qilisdk.backends.backend_config`:"
+msgstr ""
+"QiliSim es configura en el moment de la construcció mitjançant tres "
+"seccions ortogonals, totes definides a "
+":mod:`qilisdk.backends.backend_config`:"
+
+#: ../../modules/backends/backends_qilisim.rst:73
+msgid ""
+":class:`~qilisdk.backends.backend_config.AnalogMethod` — chooses the "
+"analog time-evolution scheme and its hyperparameters."
+msgstr ""
+":class:`~qilisdk.backends.backend_config.AnalogMethod` — escull l'esquema"
+" d'evolució temporal analògica i els seus hiperparàmetres."
+
+#: ../../modules/backends/backends_qilisim.rst:75
+msgid ""
+":class:`~qilisdk.backends.backend_config.DigitalMethod` — chooses the "
+"digital simulation strategy and its caching / normalization options."
+msgstr ""
+":class:`~qilisdk.backends.backend_config.DigitalMethod` — escull "
+"l'estratègia de simulació digital i les seves opcions de memòria cau / "
+"normalització."
+
+#: ../../modules/backends/backends_qilisim.rst:77
+msgid ""
+":class:`~qilisdk.backends.backend_config.ExecutionConfig` — global "
+"execution controls (threads, random seed, Monte Carlo trajectories, "
+"measurement-collapse behaviour)."
+msgstr ""
+":class:`~qilisdk.backends.backend_config.ExecutionConfig` — controls "
+"globals d'execució (fils, llavor aleatòria, trajectòries de Monte Carlo, "
+"comportament del col·lapse de mesura)."
+
+#: ../../modules/backends/backends_qilisim.rst:105
+msgid "If any argument is omitted, QiliSim falls back to:"
+msgstr "Si s'omet qualsevol argument, QiliSim recau en:"
+
+#: ../../modules/backends/backends_qilisim.rst:107
+msgid ""
+":meth:`AnalogMethod.integrator() "
+"<qilisdk.backends.backend_config.AnalogMethod.integrator>` (matrix-free "
+"RK4),"
+msgstr ""
+":meth:`AnalogMethod.integrator() "
+"<qilisdk.backends.backend_config.AnalogMethod.integrator>` (RK4 sense "
+"matriu),"
+
+#: ../../modules/backends/backends_qilisim.rst:109
+msgid ""
+":meth:`DigitalMethod.statevector() "
+"<qilisdk.backends.backend_config.DigitalMethod.statevector>`,"
+msgstr ""
+":meth:`DigitalMethod.statevector() "
+"<qilisdk.backends.backend_config.DigitalMethod.statevector>`,"
+
+#: ../../modules/backends/backends_qilisim.rst:110
+msgid ""
+"a default :class:`~qilisdk.backends.backend_config.ExecutionConfig` (all "
+"cores, random seed, Monte Carlo disabled)."
+msgstr ""
+"un :class:`~qilisdk.backends.backend_config.ExecutionConfig` per defecte "
+"(tots els nuclis, llavor aleatòria, Monte Carlo desactivat)."
+
+#: ../../modules/backends/backends_qilisim.rst:114
+msgid "Analog simulation methods"
+msgstr "Mètodes de simulació analògica"
+
+#: ../../modules/backends/backends_qilisim.rst:116
+msgid ""
+"Use the classmethods of "
+":class:`~qilisdk.backends.backend_config.AnalogMethod` to choose how the "
+"schedule is integrated:"
+msgstr ""
+"Utilitzeu els mètodes de classe de "
+":class:`~qilisdk.backends.backend_config.AnalogMethod` per triar com "
+"s'integra el schedule:"
+
+#: ../../modules/backends/backends_qilisim.rst:123
+msgid "Constructor"
+msgstr "Constructor"
+
+#: ../../modules/backends/backends_qilisim.rst:124
+msgid "Underlying scheme"
+msgstr "Esquema subjacent"
+
+#: ../../modules/backends/backends_qilisim.rst:125
+msgid "When to use it"
+msgstr "Quan utilitzar-lo"
+
+#: ../../modules/backends/backends_qilisim.rst:126
+msgid ""
+":meth:`AnalogMethod.integrator(matrix_free=True) "
+"<qilisdk.backends.backend_config.AnalogMethod.integrator>`"
+msgstr ""
+":meth:`AnalogMethod.integrator(matrix_free=True) "
+"<qilisdk.backends.backend_config.AnalogMethod.integrator>`"
+
+#: ../../modules/backends/backends_qilisim.rst:127
+msgid "RK4"
+msgstr "RK4"
+
+#: ../../modules/backends/backends_qilisim.rst:128
+msgid ""
+"Default. Fixed-step Runge-Kutta 4; matrix-free is faster for sparse "
+"Hamiltonians."
+msgstr ""
+"Per defecte. Runge-Kutta 4 amb pas fix; sense matriu és més ràpid per a "
+"Hamiltonians dispersos."
+
+#: ../../modules/backends/backends_qilisim.rst:129
+msgid ""
+":meth:`AnalogMethod.adaptive_integrator(tol=1e-2) "
+"<qilisdk.backends.backend_config.AnalogMethod.adaptive_integrator>`"
+msgstr ""
+":meth:`AnalogMethod.adaptive_integrator(tol=1e-2) "
+"<qilisdk.backends.backend_config.AnalogMethod.adaptive_integrator>`"
+
+#: ../../modules/backends/backends_qilisim.rst:130
+msgid "Dormand-Prince RK4/5"
+msgstr "Dormand-Prince RK4/5"
+
+#: ../../modules/backends/backends_qilisim.rst:131
+msgid ""
+"Adaptive step size; ``tol`` bounds the fidelity error between the RK4 and"
+" RK5 estimates."
+msgstr ""
+"Mida de pas adaptativa; ``tol`` limita l'error de fidelitat entre les "
+"estimacions RK4 i RK5."
+
+#: ../../modules/backends/backends_qilisim.rst:132
+msgid ""
+":meth:`AnalogMethod.arnoldi(dim=10, num_substeps=1) "
+"<qilisdk.backends.backend_config.AnalogMethod.arnoldi>`"
+msgstr ""
+":meth:`AnalogMethod.arnoldi(dim=10, num_substeps=1) "
+"<qilisdk.backends.backend_config.AnalogMethod.arnoldi>`"
+
+#: ../../modules/backends/backends_qilisim.rst:133
+msgid "Krylov / Arnoldi"
+msgstr "Krylov / Arnoldi"
+
+#: ../../modules/backends/backends_qilisim.rst:134
+msgid ""
+"Better scaling for large sparse Hamiltonians; tune ``dim`` for the Krylov"
+" subspace size."
+msgstr ""
+"Millor escalabilitat per a Hamiltonians dispersos grans; ajusteu ``dim`` "
+"per a la mida del subespai de Krylov."
+
+#: ../../modules/backends/backends_qilisim.rst:135
+msgid ""
+":meth:`AnalogMethod.direct() "
+"<qilisdk.backends.backend_config.AnalogMethod.direct>`"
+msgstr ""
+":meth:`AnalogMethod.direct() "
+"<qilisdk.backends.backend_config.AnalogMethod.direct>`"
+
+#: ../../modules/backends/backends_qilisim.rst:136
+msgid "Matrix exponential"
+msgstr "Exponencial de matriu"
+
+#: ../../modules/backends/backends_qilisim.rst:137
+msgid "Reference scheme for small systems; cost grows quickly with qubit count."
+msgstr ""
+"Esquema de referència per a sistemes petits; el cost creix ràpidament amb"
+" el nombre de qubits."
+
+#: ../../modules/backends/backends_qilisim.rst:139
+msgid "Example, using the adaptive integrator for a stiffer schedule:"
+msgstr "Exemple, utilitzant l'integrador adaptatiu per a un schedule més rígid:"
+
+#: ../../modules/backends/backends_qilisim.rst:148
+msgid "Digital simulation methods"
+msgstr "Mètodes de simulació digital"
+
+#: ../../modules/backends/backends_qilisim.rst:150
+msgid ""
+"Digital execution is currently always state-vector based; the "
+":class:`~qilisdk.backends.backend_config.DigitalMethod` configuration "
+"tunes its performance characteristics rather than choosing a different "
+"algorithm:"
+msgstr ""
+"L'execució digital es basa actualment sempre en vector d'estat; la "
+"configuració :class:`~qilisdk.backends.backend_config.DigitalMethod` "
+"ajusta les seves característiques de rendiment en lloc de triar un "
+"algoritme diferent:"
+
+#: ../../modules/backends/backends_qilisim.rst:158
+msgid "Option"
+msgstr "Opció"
+
+#: ../../modules/backends/backends_qilisim.rst:159
+msgid "Meaning"
+msgstr "Significat"
+
+#: ../../modules/backends/backends_qilisim.rst:160
+msgid "``matrix_free``"
+msgstr "``matrix_free``"
+
+#: ../../modules/backends/backends_qilisim.rst:161
+msgid ""
+"Apply gates directly to the statevector instead of building dense "
+"matrices. Default ``True``."
+msgstr ""
+"Aplica les portes directament al vector d'estat en lloc de construir "
+"matrius denses. Per defecte ``True``."
+
+#: ../../modules/backends/backends_qilisim.rst:162
+msgid "``max_cache_size``"
+msgstr "``max_cache_size``"
+
+#: ../../modules/backends/backends_qilisim.rst:163
+msgid "Maximum number of precomputed gate matrices cached between executions."
+msgstr ""
+"Nombre màxim de matrius de porta precomputades emmagatzemades en memòria "
+"cau entre execucions."
+
+#: ../../modules/backends/backends_qilisim.rst:164
+msgid "``combine_single_qubit_gates``"
+msgstr "``combine_single_qubit_gates``"
+
+#: ../../modules/backends/backends_qilisim.rst:165
+msgid ""
+"Merge adjacent single-qubit gates into a single operation before "
+"propagating."
+msgstr ""
+"Fusiona portes d'un sol qubit adjacents en una única operació abans de "
+"propagar."
+
+#: ../../modules/backends/backends_qilisim.rst:166
+msgid "``normalize_after_each_gate``"
+msgstr "``normalize_after_each_gate``"
+
+#: ../../modules/backends/backends_qilisim.rst:167
+msgid ""
+"Renormalize the statevector after each gate to mitigate numerical drift, "
+"at a runtime cost."
+msgstr ""
+"Renormalitza el vector d'estat després de cada porta per mitigar la "
+"deriva numèrica, amb un cost de temps d'execució."
+
+#: ../../modules/backends/backends_qilisim.rst:181
+msgid "Execution and Monte Carlo"
+msgstr "Execució i Monte Carlo"
+
+#: ../../modules/backends/backends_qilisim.rst:183
+msgid ""
+":class:`~qilisdk.backends.backend_config.ExecutionConfig` controls "
+"threading, randomness, and optional Monte Carlo trajectory sampling for "
+"open-system simulations."
+msgstr ""
+":class:`~qilisdk.backends.backend_config.ExecutionConfig` controla els "
+"fils, l'aleatorietat i el mostreig opcional de trajectòries de Monte "
+"Carlo per a simulacions de sistemes oberts."
+
+#: ../../modules/backends/backends_qilisim.rst:186
+msgid "``num_threads=0`` (default) lets the simulator use every physical core."
+msgstr ""
+"``num_threads=0`` (per defecte) permet al simulador utilitzar tots els "
+"nuclis físics."
+
+#: ../../modules/backends/backends_qilisim.rst:187
+msgid ""
+"``seed=None`` (default) draws a fresh random seed at construction time; "
+"pass an integer for reproducibility."
+msgstr ""
+"``seed=None`` (per defecte) genera una nova llavor aleatòria en el moment"
+" de la construcció; passeu un enter per a reproducibilitat."
+
+#: ../../modules/backends/backends_qilisim.rst:189
+msgid ""
+"``monte_carlo=MonteCarloConfig(trajectories=N)`` enables stochastic "
+"trajectory sampling for noise models that admit a Monte Carlo unraveling;"
+" leave it ``None`` for deterministic master-equation evolution."
+msgstr ""
+"``monte_carlo=MonteCarloConfig(trajectories=N)`` activa el mostreig "
+"estocàstic de trajectòries per a models de soroll que admeten un "
+"unraveling de Monte Carlo; deixeu-ho a ``None`` per a una evolució "
+"determinista de l'equació mestra."
+
+#: ../../modules/backends/backends_qilisim.rst:192
+msgid ""
+"``measurement_collapse`` controls whether measurements collapse the "
+"statevector in place (relevant for mid-circuit measurement and reservoir "
+"computing); defaults to ``False``."
+msgstr ""
+"``measurement_collapse`` controla si les mesures col·lapsen el vector "
+"d'estat in situ (rellevant per a mesures a mig circuit i computació de "
+"reservoris); per defecte ``False``."
+
+#: ../../modules/backends/backends_qilisim.rst:209
+#, fuzzy
+msgid "Noise model support"
+msgstr "Suport de funcionals"
+
+#: ../../modules/backends/backends_qilisim.rst:211
+msgid ""
+"Any :class:`~qilisdk.noise.NoiseModel` accepted by the SDK can be passed "
+"directly to the constructor; QiliSim applies it inside the C++ solver, so"
+" digital, analog, and reservoir runs all see the same noise channels:"
+msgstr ""
+"Qualsevol :class:`~qilisdk.noise.NoiseModel` acceptat pel SDK es pot "
+"passar directament al constructor; QiliSim l'aplica dins del solver de "
+"C++, de manera que les execucions digitals, analògiques i de reservori "
+"veuen totes els mateixos canals de soroll:"
 
 #~ msgid "Go to a specific subheading of a page."
 #~ msgstr "Aneu a un subapartat específic d'una pàgina."
+
+#~ msgid ""
+#~ "The **QiliSim** backend is a CPU-"
+#~ "based simulator developed by Qilimanjaro "
+#~ "and written in C++, providing efficient"
+#~ " simulation of both digital and "
+#~ "analog quantum functionals. It is "
+#~ "designed for ease of use and does"
+#~ " not require any special hardware or"
+#~ " dependencies. There is no need to"
+#~ " install QiliSim separately, as it is"
+#~ " included with the core QILISDK "
+#~ "installation."
+#~ msgstr ""
+#~ "El backend **QiliSim** és un simulador"
+#~ " basat en CPU desenvolupat per "
+#~ "Qilimanjaro i escrit en C++, que "
+#~ "proporciona una simulació eficient de "
+#~ "funcionals quàntics tant digitals com "
+#~ "analògics. Està dissenyat per ser fàcil"
+#~ " d'utilitzar i no requereix cap "
+#~ "maquinari ni dependències especials. No "
+#~ "cal instal·lar QiliSim per separat, ja"
+#~ " que s'inclou amb la instal·lació "
+#~ "bàsica de QILISDK."
+
+#~ msgid "Example"
+#~ msgstr "Exemple"
+
+#~ msgid ""
+#~ "QiliSim has a variety of configuration"
+#~ " options to customize the simulation "
+#~ "methods and performance characteristics. These"
+#~ " can be set at initialization via "
+#~ "the ``analog_simulation_method``, "
+#~ "``digital_simulation_method``, and ``execution_config``"
+#~ " parameters:"
+#~ msgstr ""
+#~ "QiliSim té diverses opcions de "
+#~ "configuració per personalitzar els mètodes "
+#~ "de simulació i les característiques de"
+#~ " rendiment. Aquestes es poden establir "
+#~ "en la inicialització mitjançant els "
+#~ "paràmetres ``analog_simulation_method``, "
+#~ "``digital_simulation_method`` i ``execution_config``:"
+
+#~ msgid ""
+#~ ":class:`~qilisdk.backends.backend_config.AnalogMethod.adaptive_integrator`:"
+#~ " Adaptive RK45 integrator, faster for "
+#~ "some systems."
+#~ msgstr ""
+#~ ":class:`~qilisdk.backends.backend_config.AnalogMethod.adaptive_integrator`:"
+#~ " Integrador RK45 adaptatiu, més ràpid "
+#~ "per a alguns sistemes."
+
+#~ msgid ""
+#~ "A :class:`~qilisdk.noise.NoiseModel` may be "
+#~ "attached to a QiliSim instance and "
+#~ "is honoured by every functional handler"
+#~ " (digital, analog, and reservoir)."
+#~ msgstr ""
+#~ "Es pot associar un "
+#~ ":class:`~qilisdk.noise.NoiseModel` a una instància"
+#~ " de QiliSim i serà respectat per "
+#~ "tots els manejadors de funcionals "
+#~ "(digital, analògic i reservori)."
+
+#~ msgid "Using a noise model"
+#~ msgstr "Ús d'un model de soroll"
+

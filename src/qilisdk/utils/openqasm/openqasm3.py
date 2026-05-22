@@ -71,10 +71,10 @@ class OpenQasmParser:
     Internal class for parsing OpenQASM 3.0.
 
     Use the external methods instead:
-     - `from qilisdk.utils.openqasm3 import to_qasm3_file`
-     - `from qilisdk.utils.openqasm3 import from_qasm3_file`
-     - `from qilisdk.utils.openqasm3 import to_qasm3`
-     - `from qilisdk.utils.openqasm3 import from_qasm3`
+     - `from qilisdk.utils.openqasm import to_qasm3_file`
+     - `from qilisdk.utils.openqasm import from_qasm3_file`
+     - `from qilisdk.utils.openqasm import to_qasm3`
+     - `from qilisdk.utils.openqasm import from_qasm3`
 
     Understanding the following table:
     - ✅: The feature is fully supported
@@ -598,15 +598,17 @@ class OpenQasmParser:
         qubits_without_controls = qubits[num_controls_total:]
 
         # The gate itself
-        if gate_name == "cx":
-            gates_to_return.append(CNOT(*qubits_without_controls))
+        if gate_name == "cx" or (gate_name == "x" and "ctrl" in modifiers):
+            gates_to_return.append(CNOT(*qubits))
+            modifiers = [modifier for modifier in modifiers if modifier != "ctrl"]
         elif gate_name == "cz":
-            gates_to_return.append(CZ(*qubits_without_controls))
+            gates_to_return.append(CZ(*qubits))
+            modifiers = [modifier for modifier in modifiers if modifier != "ctrl"]
         else:
             for qubit in qubits_without_controls:
                 gates_to_return.append(self._str_to_gate(gate_name, qubit, arguments))
 
-        # Add controls if we have them
+        # Apply modifiers if we have them
         main_gates = copy(gates_to_return)
         gates_to_return = []
         for j in range(len(main_gates)):
@@ -983,8 +985,7 @@ class OpenQasmParser:
     def _handle_statement_quantum_measurement(self, statement: QuantumMeasurementStatement) -> None:
         qubit_statement = statement.measure.qubit
         qubits_to_measure = self._evaluate_register(qubit_statement)
-        for qubit in qubits_to_measure:
-            self.gates_to_add.append(M(qubit))
+        self.gates_to_add.append(M(*qubits_to_measure))
         if hasattr(statement, "target") and statement.target is not None:
             raise ValueError("Measurement statements with targets are not currently supported")
 
@@ -1170,12 +1171,17 @@ class OpenQasmParser:
             qasm3 += f"qubit[{circuit.nqubits}] q;\n"
         for gate in circuit.gates:
             qasm_gate_name = gate.name.lower()
+            if gate.name == "CNOT":
+                qasm_gate_name = "x"
             qasm_parameter_str = ""
             if gate.is_parameterized:
                 qasm_parameter_str = "(" + ", ".join([str(param) for param in gate.get_parameter_values()]) + ")"
             qasm_control_str = "".join(["ctrl @ " for _ in gate.control_qubits])
             qasm_qubits_str = ", ".join([f"q[{qb}]" for qb in gate.qubits])
-            qasm_gate_string = f"{qasm_control_str} {qasm_gate_name}{qasm_parameter_str} {qasm_qubits_str}"
+            if gate.name == "M":
+                qasm_gate_name = "measure"
+                qasm_qubits_str = "q[" + ",".join([str(qb) for qb in gate.qubits]) + "]"
+            qasm_gate_string = f"{qasm_control_str}{qasm_gate_name}{qasm_parameter_str} {qasm_qubits_str}"
             qasm_gate_string = qasm_gate_string.strip()
             qasm3 += f"{qasm_gate_string};\n"
         return qasm3.strip()
