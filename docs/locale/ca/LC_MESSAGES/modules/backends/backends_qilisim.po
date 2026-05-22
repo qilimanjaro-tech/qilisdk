@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-21 16:31+0200\n"
+"POT-Creation-Date: 2026-05-22 15:29+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -47,7 +47,7 @@ msgstr "Instal·lació"
 #: ../../modules/backends/backends_qilisim.rst:11
 msgid ""
 "QiliSim is bundled with the core ``qilisdk`` installation, so no extra "
-"package is required:"
+"package is required."
 msgstr ""
 
 #: ../../modules/backends/backends_qilisim.rst:15
@@ -153,9 +153,10 @@ msgstr ""
 " d'evolució temporal analògica i els seus hiperparàmetres."
 
 #: ../../modules/backends/backends_qilisim.rst:75
+#, fuzzy
 msgid ""
 ":class:`~qilisdk.backends.backend_config.DigitalMethod` — chooses the "
-"digital simulation strategy and its caching / normalization options."
+"digital simulation strategy and its hyperparameters."
 msgstr ""
 ":class:`~qilisdk.backends.backend_config.DigitalMethod` — escull "
 "l'estratègia de simulació digital i les seves opcions de memòria cau / "
@@ -280,9 +281,10 @@ msgid "Krylov / Arnoldi"
 msgstr "Krylov / Arnoldi"
 
 #: ../../modules/backends/backends_qilisim.rst:134
+#, fuzzy
 msgid ""
-"Better scaling for large sparse Hamiltonians; tune ``dim`` for the Krylov"
-" subspace size."
+"Can offer decent scaling for large sparse Hamiltonians; tune ``dim`` for "
+"the Krylov subspace size."
 msgstr ""
 "Millor escalabilitat per a Hamiltonians dispersos grans; ajusteu ``dim`` "
 "per a la mida del subespai de Krylov."
@@ -360,9 +362,10 @@ msgid "``combine_single_qubit_gates``"
 msgstr "``combine_single_qubit_gates``"
 
 #: ../../modules/backends/backends_qilisim.rst:165
+#, fuzzy
 msgid ""
 "Merge adjacent single-qubit gates into a single operation before "
-"propagating."
+"propagating. Disabled if gate-specific noise is used."
 msgstr ""
 "Fusiona portes d'un sol qubit adjacents en una única operació abans de "
 "propagar."
@@ -515,4 +518,10 @@ msgstr ""
 
 #~ msgid "Using a noise model"
 #~ msgstr "Ús d'un model de soroll"
+
+#~ msgid ""
+#~ "QiliSim is bundled with the core "
+#~ "``qilisdk`` installation, so no extra "
+#~ "package is required:"
+#~ msgstr ""
 

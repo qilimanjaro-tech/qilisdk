@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-21 16:31+0200\n"
+"POT-Creation-Date: 2026-05-22 15:29+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -103,7 +103,6 @@ msgid "|p|"
 msgstr "|p|"
 
 #: ../../modules/backends/backends_cuda.rst:54
-#, fuzzy
 msgid ""
 "The CudaBackend does not natively implement "
 ":meth:`Backend._execute_quantum_reservoir "
@@ -135,13 +134,13 @@ msgstr "Configuración"
 
 #: ../../modules/backends/backends_cuda.rst:66
 msgid ""
-"The CUDA backend exposes a single configuration knob — "
+"The CUDA backend exposes a single configuration parameter — "
 ":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod` — that selects"
 " the underlying CUDA-Q target used for **digital** circuits. Analog "
 "evolution always runs on the ``dynamics`` target and ignores this "
 "setting."
 msgstr ""
-"El backend CUDA expone una única perilla de configuración — "
+"El backend CUDA expone un único parámetro de configuración — "
 ":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod` — que "
 "selecciona el target subyacente de CUDA-Q utilizado para los circuitos "
 "**digitales**. La evolución analógica siempre se ejecuta sobre el target "
@@ -189,15 +188,23 @@ msgstr ""
 "``tensornet-mps``. Adecuado para circuitos largos con bajo "
 "entrelazamiento."
 
+#: ../../modules/backends/backends_cuda.rst:87
+msgid ":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.CPU`"
+msgstr ":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.CPU`"
+
 #: ../../modules/backends/backends_cuda.rst:88
+msgid "``cpu``. Force running on CPU. Mostly useful for benchmarking."
+msgstr "``cpu``. Fuerza la ejecución en CPU. Útil principalmente para benchmarking."
+
+#: ../../modules/backends/backends_cuda.rst:91
 msgid "Set the method at construction time:"
 msgstr "Defina el método en el momento de la construcción:"
 
-#: ../../modules/backends/backends_cuda.rst:97
+#: ../../modules/backends/backends_cuda.rst:100
 msgid "Noise model support"
 msgstr "Soporte de modelos de ruido"
 
-#: ../../modules/backends/backends_cuda.rst:99
+#: ../../modules/backends/backends_cuda.rst:102
 msgid ""
 "A :class:`~qilisdk.noise.NoiseModel` can be passed to "
 "``CudaBackend(noise_model=…)``:"
@@ -205,7 +212,7 @@ msgstr ""
 "Puede pasarse un :class:`~qilisdk.noise.NoiseModel` a "
 "``CudaBackend(noise_model=…)``:"
 
-#: ../../modules/backends/backends_cuda.rst:101
+#: ../../modules/backends/backends_cuda.rst:104
 msgid ""
 "For :class:`~qilisdk.functionals.digital_propagation.DigitalPropagation`,"
 " qilisdk noise channels are translated into a ``cudaq.NoiseModel`` (Kraus"
@@ -220,7 +227,7 @@ msgstr ""
 "perturbaciones de parámetros aplicadas al circuito). Con ruido activado, "
 "solo se admite una única :class:`~qilisdk.readout.SamplingReadout`."
 
-#: ../../modules/backends/backends_cuda.rst:105
+#: ../../modules/backends/backends_cuda.rst:108
 msgid ""
 "For :class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`, "
 "Lindblad-compatible noise channels become CUDA-Q jump operators and "
@@ -231,7 +238,7 @@ msgstr ""
 "salto de CUDA-Q y en deltas del Hamiltoniano que se pasan a "
 "``cudaq.evolve``."
 
-#: ../../modules/backends/backends_cuda.rst:107
+#: ../../modules/backends/backends_cuda.rst:110
 msgid ""
 "For :class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir`, "
 "the fallback implementation drops the noise model (a warning is logged)."
@@ -240,7 +247,7 @@ msgstr ""
 "la implementación de fallback descarta el modelo de ruido (se emite un "
 "aviso en el log)."
 
-#: ../../modules/backends/backends_cuda.rst:110
+#: ../../modules/backends/backends_cuda.rst:113
 msgid ""
 "Example: a depolarising channel applied to every gate of a digital "
 "circuit:"
