@@ -179,8 +179,8 @@ void lindblad_rhs(ExponentialAnsatz& drho, const ExponentialAnsatz& rho, const M
     Eigen::MatrixXd M_real = (O_T * samples.O_mat) / static_cast<double>(N_s)
                              - O_mean_real * O_mean_real.transpose();
 
-    // V_k = -i(<O_k* E_loc> - <O_k*><E_loc>)
-    Eigen::VectorXcd V = std::complex<double>(0.0, -1.0) * (
+    // V_k = -(<O_k* E_loc> - <O_k*><E_loc>)  (imaginary-time force)
+    Eigen::VectorXcd V = -(
         (O_T.cast<std::complex<double>>() * El) / static_cast<double>(N_s) - O_mean_real.cast<std::complex<double>>() * El_mean
     );
 
