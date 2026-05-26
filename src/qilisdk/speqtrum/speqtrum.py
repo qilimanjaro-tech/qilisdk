@@ -457,14 +457,14 @@ class SpeQtrum:
 
         # Send login request to QaaS
         logger.debug("Attempting login for user '{}'", username)
+        assertion = {
+            "username": username,
+            "api_key": apikey,
+            "audience": settings.speqtrum_audience,
+            "iat": int(datetime.now(timezone.utc).timestamp()),
+        }
+        encoded_assertion = urlsafe_b64encode(json.dumps(assertion, indent=2).encode("utf-8")).decode("utf-8")
         try:
-            assertion = {
-                "username": username,
-                "api_key": apikey,
-                "audience": settings.speqtrum_audience,
-                "iat": int(datetime.now(timezone.utc).timestamp()),
-            }
-            encoded_assertion = urlsafe_b64encode(json.dumps(assertion, indent=2).encode("utf-8")).decode("utf-8")
             with httpx.Client(
                 base_url=settings.speqtrum_api_url,
                 headers=cls._get_headers(),
