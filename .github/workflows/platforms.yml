@@ -33,7 +33,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install qilisdk
-        run: uv sync --no-build --frozen --group --reinstall
+        run: uv sync --frozen --group --reinstall
 
       - name: Smoke test import
         run: uv run --no-build --frozen --no-sync --group python -c "from qilisdk.backends import QiliSim; print('QiliSim imported successfully')"

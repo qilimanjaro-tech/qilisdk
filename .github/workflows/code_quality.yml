@@ -43,7 +43,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install the project
-        run: uv sync --no-build --frozen --group dev --extra all-cu13
+        run: uv sync --frozen --group dev --extra all-cu13
         
       - name: Ruff
         run: uv run --no-build --frozen --no-sync ruff check --output-format=github .

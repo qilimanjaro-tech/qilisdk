@@ -31,7 +31,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y pandoc
 
       - name: Install the requirements
-        run: uv sync --no-build --frozen --group --group docs 
+        run: uv sync --frozen --group --group docs 
 
       - name: Install ghp-import
         run: uv pip install --no-build ghp-import==2.1.0
