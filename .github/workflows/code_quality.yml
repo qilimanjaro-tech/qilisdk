@@ -49,10 +49,10 @@ jobs:
         run: uv run --no-build --frozen --no-sync ruff check --output-format=github .
 
       - name: Format
-        run: uv run --no-build --frozen --no-sync  ruff format --diff --output-format=github .
+        run: uv run --no-build --frozen --no-sync ruff format --diff --output-format=github .
 
       - name: Mypy
-        run: uv run --no-build --frozen --no-sync  ty check --output-format=github
+        run: uv run --no-build --frozen --no-sync ty check --output-format=github
 
       - name: Cpp Linter
         uses: cpp-linter/cpp-linter-action@v2
