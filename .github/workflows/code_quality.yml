@@ -43,16 +43,19 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install the project
-        run: uv sync --frozen --group dev --extra all-cu13
-        
+        run: |
+          uv sync --frozen --group dev --extra all-cu13
+          echo "VIRTUAL_ENV=$PWD/.venv" >> "$GITHUB_ENV"
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+
       - name: Ruff
-        run: uv run --no-build --frozen --no-sync ruff check --output-format=github .
+        run: ruff check --output-format=github .
 
       - name: Format
-        run: uv run --no-build --frozen --no-sync ruff format --diff --output-format=github .
+        run: ruff format --diff --output-format=github .
 
       - name: Mypy
-        run: uv run --no-build --frozen --no-sync ty check --output-format=github
+        run: ty check --output-format=github
 
       - name: Cpp Linter
         uses: cpp-linter/cpp-linter-action@v2

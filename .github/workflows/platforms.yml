@@ -33,7 +33,17 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install qilisdk
-        run: uv sync --frozen --group --reinstall
+        shell: bash
+        run: |
+          uv sync --frozen --reinstall
+          if [ -d .venv/bin ]; then
+            VENV_BIN="$PWD/.venv/bin"
+          else
+            VENV_BIN="$PWD/.venv/Scripts"
+          fi
+          echo "VIRTUAL_ENV=$PWD/.venv" >> "$GITHUB_ENV"
+          echo "$VENV_BIN" >> "$GITHUB_PATH"
 
       - name: Smoke test import
-        run: uv run --no-build --frozen --no-sync --group python -c "from qilisdk.backends import QiliSim; print('QiliSim imported successfully')"
+        shell: bash
+        run: python -c "from qilisdk.backends import QiliSim; print('QiliSim imported successfully')"
