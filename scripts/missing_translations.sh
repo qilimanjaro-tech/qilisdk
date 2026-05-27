@@ -17,13 +17,13 @@ MISSING=0
 FUZZY=0
 
 for file in $(find ./docs/ -name "*.po"); do
-    # match non-empty msgid followed immediately by empty msgstr (not a multiline continuation)
-    if grep -Pzo 'msgid ".+"\nmsgstr ""\n(?!")' "$file" > /dev/null 2>&1; then
+    # match msgid blocks (single or multiline) followed by an empty msgstr
+    if grep -Pzo 'msgid ".*"\n(?:".*"\n)*msgstr ""\n(?!")' "$file" > /dev/null 2>&1; then
         echo "Missing translations in $file"
         MISSING=$((MISSING + 1))
     fi
-    # match fuzzy translations (lines starting with #, followed by a line containing "fuzzy")
-    if grep -Pzo '#.*\nfuzzy' "$file" > /dev/null 2>&1; then
+    # match fuzzy translations, excluding the file header (which always has msgid "")
+    if grep -Pzo '#, fuzzy\nmsgid ".+"' "$file" > /dev/null 2>&1; then
         echo "Fuzzy translations in $file"
         FUZZY=$((FUZZY + 1))
     fi

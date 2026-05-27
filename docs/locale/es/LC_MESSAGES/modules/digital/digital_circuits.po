@@ -148,6 +148,8 @@ msgid ""
 "The plot can also be saved to a file by providing a filepath to the draw "
 "method:"
 msgstr ""
+"El gráfico también se puede guardar en un archivo proporcionando una ruta "
+"de archivo al método draw:"
 
 #: ../../modules/digital/digital_circuits.rst:161
 msgid ""
