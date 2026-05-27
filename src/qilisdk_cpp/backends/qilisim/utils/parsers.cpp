@@ -800,7 +800,7 @@ QiliSimConfig parse_solver_params(const py::dict& solver_params) {
         config.set_max_terms(solver_params["max_terms"].cast<int>());
     }
     if (solver_params.contains("order")) {
-        config.set_order(solver_params["order"].cast<float>());
+        config.set_order(solver_params["order"].cast<int>());
     }
     if (solver_params.contains("shots")) {
         config.set_shots(solver_params["shots"].cast<int>());

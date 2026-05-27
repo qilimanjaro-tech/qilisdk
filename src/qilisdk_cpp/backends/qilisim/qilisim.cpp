@@ -120,8 +120,6 @@ py::object QiliSimCpp::execute_digital_propagation(const py::object& functional,
     return FunctionalResult("readout_results"_a = result);
 }
 
-#include <iostream>
-
 // The public execute_time_evolution
 py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, const py::object& readout, const py::object& noise_model, const py::dict& solver_params) {
     /*

@@ -134,11 +134,11 @@ class AnalogMethod(BaseSimulatorConfig):
         description="Number of shots to use when estimating expectation values for the variational optimization when `evolution_method='variational_exponential'`.",
     )
     warmups: int = Field(
-        default=10,
+        default=100,
         ge=0,
         description="Number of warmup iterations to perform before collecting samples for the variational optimization when `evolution_method='variational_exponential'`.",
     )
-    order: float = Field(
+    order: int = Field(
         default=2,
         gt=0,
         description="Order of the polynomial expansion used in the variational ansatz when `evolution_method='variational_exponential'`.",
@@ -175,12 +175,12 @@ class AnalogMethod(BaseSimulatorConfig):
         return cls(evolution_method=evolution_method)
 
     @classmethod
-    def variational_annealing(cls, *, order: float = 2, shots: int = 1000, warmups: int = 10) -> AnalogMethod:
+    def variational_annealing(cls, *, order: int = 2, shots: int = 1000, warmups: int = 100) -> AnalogMethod:
         """
         Anneal a variational ansatz rather than the full state.
 
         Args:
-            order (float): Order of the polynomial expansion used in the variational ansatz.
+            order (int): Order of the polynomial expansion used in the variational ansatz.
             shots (int): Number of samples to use when estimating expectation values for the variational optimization.
             warmups (int): Number of warmup iterations to perform before collecting samples for the variational optimization.
 

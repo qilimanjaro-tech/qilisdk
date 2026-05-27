@@ -20,26 +20,26 @@
 
 struct SampleSet {
     std::vector<Bitset> configs;
-    Eigen::MatrixXd O_mat;  // (N_s x p) log-derivatives: O_k(x) = P_k(x) ∈ {-1,+1}, always real
+    Eigen::Matrix<int8_t, Eigen::Dynamic, Eigen::Dynamic> O_mat;  // (N_s x p) log-derivatives: O_k(x) = P_k(x) ∈ {-1,+1}, stored as int8 for cache efficiency
 };
 
 class ExponentialAnsatz {
    private:
     int shots;
     int warmups;
-    float order;
+    int order;
     MatrixFreeHamiltonian terms = MatrixFreeHamiltonian(0);
     int num_qubits;
 
     std::vector<Bitset> build_z_bits() const;
 
    public:
-    ExponentialAnsatz(int num_qubits, float order, int shots, int warmups);
+    ExponentialAnsatz(int num_qubits, int order, int shots, int warmups);
     friend std::ostream& operator<<(std::ostream& os, const ExponentialAnsatz& ansatz);
     void set_shots(int new_shots) { shots = new_shots; }
     void set_warmups(int new_warmups) { warmups = new_warmups; }
-    void set_order(float new_order) { order = new_order; }
-    float get_order() const { return order; }
+    void set_order(int new_order) { order = new_order; }
+    int get_order() const { return order; }
     int get_shots() const { return shots; }
     int get_warmups() const { return warmups; }
     MatrixFreeHamiltonian get_terms() const { return terms; }

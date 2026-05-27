@@ -16,12 +16,13 @@
 #include <cmath>
 #include <random>
 #include <utility>
-
-#include <iostream>
+#if defined(_OPENMP)
+#include <omp.h>
+#endif
 
 // GCOV_EXCL_BR_START
 
-ExponentialAnsatz::ExponentialAnsatz(int num_qubits, float order, int shots, int warmups) : num_qubits(num_qubits), order(order), shots(shots), warmups(warmups) {
+ExponentialAnsatz::ExponentialAnsatz(int num_qubits, int order, int shots, int warmups) : num_qubits(num_qubits), order(order), shots(shots), warmups(warmups) {
     /*
     Construct an ExponentialAnsatz with the given number of qubits and maximum number of terms.
 
@@ -30,7 +31,7 @@ ExponentialAnsatz::ExponentialAnsatz(int num_qubits, float order, int shots, int
 
     Args:
         num_qubits (int): The number of qubits in the system.
-        order (float): The maximum order of terms to include in the ansatz.
+        order (int): The maximum order of terms to include in the ansatz.
         shots (int): The number of shots to use for sampling.
         warmups (int): The number of warmup steps to use for sampling.
 
@@ -47,7 +48,7 @@ ExponentialAnsatz::ExponentialAnsatz(int num_qubits, float order, int shots, int
     }
 
     // Add two body terms
-    if (order >= 1.5) {
+    if (order >= 2) {
         for (int i = 0; i < num_qubits; ++i) {
             for (int j = i + 1; j < num_qubits; ++j) {
                 PauliString ps(num_qubits);
@@ -101,29 +102,6 @@ ExponentialAnsatz ExponentialAnsatz::zeroed() const {
     return result;
 }
 
-void ExponentialAnsatz::prune_terms_not_in_hamiltonian(const MatrixFreeHamiltonian& H) {
-    /*
-    Remove any terms from the ansatz that do not appear in the given Hamiltonian.
-
-    Args:
-        H (const MatrixFreeHamiltonian&): The Hamiltonian to use for pruning terms.
-
-    Returns:
-        void
-    */
-    std::cout << "Pruning ansatz terms that are not: " << H << std::endl;
-    const auto& h_ops = H.get_operators();
-    std::unordered_map<PauliString, std::complex<double>, PauliString::HashFunction> new_ops;
-    for (const auto& [ps, coeff] : terms.get_operators()) {
-        std::cout << "Checking if term " << ps << " is in the Hamiltonian..." << std::endl;
-        if (h_ops.find(ps) != h_ops.end() || ps.size() == 1) {
-            new_ops[ps] = coeff;
-            std::cout << "Keeping term " << ps << " with coefficient " << coeff << std::endl;
-        }
-    }
-    terms = MatrixFreeHamiltonian(num_qubits, new_ops);
-}
-
 std::vector<Bitset> ExponentialAnsatz::build_z_bits() const {
     const auto& ops = terms.get_operators();
     const int p = static_cast<int>(ops.size());
@@ -152,9 +130,14 @@ SampleSet ExponentialAnsatz::draw_samples(int N_s, int n_warmup) const {
     /*
     Draw samples from the probability distribution defined by the ansatz.
 
+    One Markov chain per thread runs independently. Each chain warms up for n_warmup
+    sweeps from a random start, then draws its share of the N_s samples with n_warmup
+    sweeps of thinning between consecutive samples. This keeps chains well-mixed while
+    eliminating autocorrelation across the chains.
+
     Args:
         N_s (int): The number of samples to draw.
-        n_warmup (int): The number of warmup steps to perform before drawing samples.
+        n_warmup (int): Warmup sweeps at chain start, and thinning sweeps between samples.
 
     Returns:
         SampleSet: A struct containing the drawn samples and their corresponding log-derivatives.
@@ -175,73 +158,96 @@ SampleSet ExponentialAnsatz::draw_samples(int N_s, int n_warmup) const {
         }
     }
 
-    // Set up the random generator
-    std::mt19937 rng(std::random_device{}());
-    std::uniform_int_distribution<int> rand_qubit(0, num_qubits - 1);
-    std::uniform_real_distribution<double> rand01(0.0, 1.0);
+    // One RNG per thread to avoid data races under OpenMP.
+#if defined(_OPENMP)
+    const int nthreads = omp_get_max_threads();
+#else
+    const int nthreads = 1;
+#endif
+    std::random_device rd;
+    std::vector<std::mt19937> rngs(nthreads);
+    for (auto& r : rngs) r.seed(rd());
 
-    // Start with a random bitstring
-    Bitset x;
-    for (int i = 0; i < num_qubits; ++i) {
-        if (rand01(rng) < 0.5) {
-            x.set(i);
-        }
-    }
-
-    // Per-term parity and weighted contribution: contrib[k] = 2*coeff_k * (-1)^parity_k.
-    // Tracking these allows O(affected terms) incremental updates on each bit flip.
-    std::vector<bool> parity(p);
-    std::vector<double> contrib(p);
-    double lp = 0.0;
-    for (int k = 0; k < p; ++k) {
-        bool neg = ((x & z_bits[k]).count()) & 1;
-        parity[k] = neg;
-        contrib[k] = 2.0 * terms_vec[k].second.real() * (neg ? -1.0 : 1.0);
-        lp += contrib[k];
-    }
-
-    // Flipping qubit i negates contrib[k] for each k in qubit_to_terms[i], giving delta = -2*sum(affected contrib).
-    auto compute_delta = [&](int qubit) -> double {
-        double delta = 0.0;
-        for (int k : qubit_to_terms[qubit]) {
-            delta -= 2.0 * contrib[k];
-        }
-        return delta;
-    };
-    auto accept_flip = [&](int qubit) {
-        x.flip(num_qubits - 1 - qubit);
-        for (int k : qubit_to_terms[qubit]) {
-            contrib[k] = -contrib[k];
-            parity[k] = !parity[k];
-        }
-    };
-
-    // Do some warmup passes before we start taking samples
-    for (int s = 0; s < n_warmup * num_qubits; ++s) {
-        int i = rand_qubit(rng);
-        double lp_new = lp + compute_delta(i);
-        if (std::log(rand01(rng)) < lp_new - lp) {
-            accept_flip(i);
-            lp = lp_new;
-        }
-    }
-
-    // Generate the samples
     SampleSet result;
     result.configs.resize(N_s, Bitset());
     result.O_mat.resize(N_s, p);
-    for (int s = 0; s < N_s; ++s) {
-        for (int t = 0; t < num_qubits; ++t) {
-            int i = rand_qubit(rng);
-            double lp_new = lp + compute_delta(i);
-            if (std::log(rand01(rng)) < lp_new - lp) {
-                accept_flip(i);
-                lp = lp_new;
-            }
+
+    // Each thread runs one long chain for its share of the samples.
+#if defined(_OPENMP)
+    #pragma omp parallel
+#endif
+    {
+#if defined(_OPENMP)
+        const int tid = omp_get_thread_num();
+        const int actual_nthreads = omp_get_num_threads();
+#else
+        const int tid = 0;
+        const int actual_nthreads = 1;
+#endif
+        const int s_start = (tid * N_s) / actual_nthreads;
+        const int s_end = ((tid + 1) * N_s) / actual_nthreads;
+
+        std::mt19937& rng = rngs[tid];
+        std::uniform_int_distribution<int> rand_qubit(0, num_qubits - 1);
+        std::uniform_real_distribution<double> rand01(0.0, 1.0);
+
+        // Start from a random bitstring.
+        Bitset x;
+        for (int i = 0; i < num_qubits; ++i) {
+            if (rand01(rng) < 0.5) x.set(i);
         }
-        result.configs[s] = x;
+
+        // Per-term parity and weighted contribution: contrib[k] = 2*coeff_k * (-1)^parity_k
+        std::vector<bool> parity(p);
+        std::vector<double> contrib(p);
+        double lp = 0.0;
         for (int k = 0; k < p; ++k) {
-            result.O_mat(s, k) = parity[k] ? -1.0 : 1.0;
+            bool neg = ((x & z_bits[k]).count()) & 1;
+            parity[k] = neg;
+            contrib[k] = 2.0 * terms_vec[k].second.real() * (neg ? -1.0 : 1.0);
+            lp += contrib[k];
+        }
+
+        // Calculate the change in log-probability if we flip a given qubit
+        auto compute_delta = [&](int qubit) -> double {
+            double delta = 0.0;
+            for (int k : qubit_to_terms[qubit]) delta -= 2.0 * contrib[k];
+            return delta;
+        };
+        
+        // Accept a proposed flip of a given qubit, updating the state, parity, contrib
+        auto accept_flip = [&](int qubit) {
+            x.flip(num_qubits - 1 - qubit);
+            for (int k : qubit_to_terms[qubit]) {
+                contrib[k] = -contrib[k];
+                parity[k] = !parity[k];
+            }
+        };
+
+        // Advance the chain by the given number of full sweeps.
+        auto mh_sweep = [&](int nsweeps) {
+            for (int t = 0; t < nsweeps * num_qubits; ++t) {
+                int i = rand_qubit(rng);
+                double lp_new = lp + compute_delta(i);
+                if (std::log(rand01(rng)) < lp_new - lp) {
+                    accept_flip(i);
+                    lp = lp_new;
+                }
+            }
+        };
+
+        // Initial warmup to mix the chain away from its random start
+        mh_sweep(n_warmup);
+
+        // Draw the samples, with thinning in between to reduce autocorrelation
+        for (int s = s_start; s < s_end; ++s) {
+            if (s > s_start) {
+                mh_sweep(1);
+            }
+            result.configs[s] = x;
+            for (int k = 0; k < p; ++k) {
+                result.O_mat(s, k) = parity[k] ? int8_t(-1) : int8_t(1);
+            }
         }
     }
 
@@ -259,6 +265,8 @@ Eigen::VectorXcd ExponentialAnsatz::local_energy(const SampleSet& samples, const
     Returns:
         Eigen::VectorXcd: A vector containing the local energy for each sample.
     */
+    
+    // Get the operators and coefficients from the ansatz
     const auto& ops = terms.get_operators();
     const int p = static_cast<int>(ops.size());
     std::vector<std::pair<PauliString, std::complex<double>>> terms_vec(ops.begin(), ops.end());

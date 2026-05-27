@@ -18,8 +18,6 @@
 #include "../utils/random.h"
 #include "iterations.h"
 
-#include <iostream>
-
 // GCOV_EXCL_BR_START
 
 void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, NoiseModelCpp& noise_model_cpp, QiliSimConfig& config, DenseMatrix& rho_t, std::vector<DenseMatrix>& intermediate_rhos) {
@@ -347,11 +345,7 @@ void time_evolution_variational_exponential(ExponentialAnsatz& rho_t, const std:
     // Set up the ansatz
     int n_qubits = hamiltonians[0].get_nqubits();
     rho_t = ExponentialAnsatz(n_qubits, config.get_order(), config.get_shots(), config.get_warmups());
-    if (std::abs(rho_t.get_order() - 1.5) < 1e-10) {
-        rho_t.prune_terms_not_in_hamiltonian(hamiltonians[hamiltonians.size() - 1]);
-    }
     rho_t.set_shots(config.get_num_monte_carlo_trajectories());
-    std::cout << "State has " << rho_t.get_terms().size() << " terms in the ansatz" << std::endl;
 
     // Initial step size: match the first scheduled interval, or fall back to 1.0
     double dt = 1.0;
