@@ -1,14 +1,20 @@
-name: Platform Tests
+name: Smoke Build
 
 on:
   push:
     branches:
       - main
+  pull_request:
+    types:
+      - "opened"
+      - "reopened"
+      - "synchronize"
+      - "ready_for_review"
   workflow_dispatch:
 
 jobs:
-  build-wheels:
-    name: Build wheels (${{ matrix.os }})
+  smoke-build:
+    name: Smoke Build for Python ${{ matrix.python-version }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
