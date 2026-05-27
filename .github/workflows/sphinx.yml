@@ -31,14 +31,14 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y pandoc
 
       - name: Install the requirements
-        run: uv sync --group docs 
+        run: uv sync --no-build --frozen --group --group docs 
 
       - name: Install ghp-import
-        run: uv pip install ghp-import
+        run: uv pip install --no-build ghp-import==2.1.0
       
       - name: Build multiversion HTML
         working-directory: docs
-        run: uv run make multiversion
+        run: uv run --no-build --frozen --no-sync --group make multiversion
 
       - name: Redirect root to latest release tag
         run: |
@@ -68,4 +68,4 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          uv run ghp-import -n -f -p docs/_build/
+          uv run --no-build --frozen --no-sync --group ghp-import -n -f -p docs/_build/
