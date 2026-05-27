@@ -1,3 +1,603 @@
+# qilisdk 0.2.0 (2026-05-26)
+
+## Features
+
+- Added quantum reservoir computing support through the new`QuantumReservoir`, `ReservoirLayer`, and `ReservoirInput` APIs. Backends can now execute reservoir workflows with per-layer inputs, optional pre/post encoding stages, and optional intermediate/final state output.
+
+  Example:
+
+  ```python
+  from qilisdk.analog import Schedule, Z
+  from qilisdk.backends import QiliSim
+  from qilisdk.core import ket
+  from qilisdk.digital import Circuit, RX
+  from qilisdk.functionals import QuantumReservoir, ReservoirInput, ReservoirLayer
+  from qilisdk.readout import Readout
+
+  theta = ReservoirInput("res_in", 0.0)
+  pre = Circuit(1)
+  pre.add(RX(0, theta=theta))
+
+  layer = ReservoirLayer(
+      evolution_dynamics=Schedule(
+          hamiltonians={"h": Z(0)},
+          coefficients={"h": {(0.0, 1.0): 1.0}},
+          dt=0.1,
+      ),
+      input_encoding=pre,
+  )
+
+  reservoir = QuantumReservoir(
+      initial_state=ket(0),
+      reservoir_layer=layer,
+      input_per_layer=[{"res_in": 0.1}, {"res_in": 0.4}],
+  )
+
+  result = QiliSim().execute(reservoir, Readout().with_expectation([Z(0)]))
+  print(result.get_expectation_values())
+  ```
+  ([PR #143](https://github.com/qilimanjaro-tech/qilisdk/pull/143))
+- Noise models are now supported in QiliSim. Usage is the same as with CudaBackend:
+  ```python
+  from qilisdk.digital import Circuit, X
+  from qilisdk.noise import NoiseModel, BitFlip
+  from qilisdk.functionals import DigitalPropagation
+  from qilisdk.backends import QiliSim
+  from qilisdk.readout import Readout
+
+  circuit = Circuit(nqubits=1)
+  circuit.add(X(0))
+
+  noise_model = NoiseModel()
+  noise_model.add(BitFlip(probability=0.5))
+
+  backend = QiliSim(noise_model=noise_model)
+  result = backend.execute(DigitalPropagation(circuit), Readout().with_sampling(100))
+  ```
+  ([PR #146](https://github.com/qilimanjaro-tech/qilisdk/pull/146))
+- CUDA 13 is now officially supported alongside CUDA 12, and the optional dependency system has been refactored to support these mutually exclusive CUDA variants in a clean and explicit way. The internal optional-import mechanism now supports "ANY-of" dependency groups, allowing the `cuda` feature to be satisfied by either the CUDA 12 or CUDA 13 distribution. If neither is installed, CUDA symbols (e.g., `CudaBackend`) resolve to informative stubs that raise an `OptionalDependencyError` with clear installation instructions indicating the valid extras.
+
+  Two new mutually exclusive extras are introduced:
+
+  * `cuda12` → installs the CUDA 12 backend stack
+  * `cuda13` → installs the CUDA 13 backend stack
+
+  For convenience, aggregated extras are also provided:
+
+  * `all-cu12` → installs all optional features plus CUDA 12
+  * `all-cu13` → installs all optional features plus CUDA 13
+
+  For backwards compatibility, the legacy `cuda` and `all` specifiers are temporarily preserved and default to CUDA 12:
+
+  * `cuda` → aliases to `cuda12`
+  * `all` → equivalent to `all-cu12`
+
+  This ensures existing environments and CI pipelines continue to work unchanged while users transition to explicit CUDA version selection. Conflicts between incompatible extras (e.g., `cuda12` vs `cuda13`, `all-cu12` vs `all-cu13`) are enforced via `uv` configuration to prevent invalid combinations.
+
+  User installation examples:
+
+  * Core only (no CUDA):
+    `pip install qilisdk`
+
+  * CUDA 12 (explicit):
+    `pip install "qilisdk[cuda12]"`
+    or
+    `uv sync --extra cuda12`
+
+  * CUDA 13 (explicit):
+    `pip install "qilisdk[cuda13]"`
+    or
+    `uv sync --extra cuda13`
+
+  * Full stack with CUDA 12:
+    `pip install "qilisdk[all-cu12]"`
+    or
+    `uv sync --extra all-cu12`
+
+  * Full stack with CUDA 13:
+    `pip install "qilisdk[all-cu13]"`
+    or
+    `uv sync --extra all-cu13`
+
+  * Backwards-compatible installs (defaulting to CUDA 12):
+    `pip install "qilisdk[cuda]"`
+    `pip install "qilisdk[all]"`
+
+  Developer installation examples:
+
+  * Development + CUDA 12:
+    `uv sync --group dev --extra cuda12`
+    or
+    `pip install -e ".[dev,cuda12]"`
+
+  * Development + CUDA 13:
+    `uv sync --group dev --extra cuda13`
+    or
+    `pip install -e ".[dev,cuda13]"`
+
+  * Development without CUDA (CPU-only CI):
+    `uv sync --group dev`
+
+  ([PR #154](https://github.com/qilimanjaro-tech/qilisdk/pull/154))
+- Added a composable digital circuit transpilation framework centered around `CircuitTranspiler` and concrete implemetations of `CircuitTranspilerPass`. The new transpiler is intentionally thin: it executes an ordered list of non-mutating passes, resets shared state for every `transpile()` call, and returns a `CircuitTranspilerResult` that exposes the transpiled circuit through `circuit`, the per-pass outputs through `intermediate_results`, the final user-facing logical-to-physical mapping through `layout`, and any pass-level diagnostics through `metrics`.
+
+  The default transpiler has two modes. Without topology information, `CircuitTranspiler.default()` builds a local-rewrite pipeline made of `DecomposeMultiControlledGatesPass`, `CancelIdentityPairsPass`, `DecomposeToCanonicalBasisPass`, and `FuseSingleQubitGatesPass`. This path is meant for basis normalization and cheap circuit cleanup without introducing device-specific constraints. When a topology is provided, the default pipeline becomes hardware-aware: it performs the same decomposition and simplification steps first, then applies layout and routing (`SabreLayoutPass` plus `SabreSwapPass` when no mapping is given, or `CustomLayoutPass` when a user mapping is supplied), and finally runs canonical decomposition and single-qubit fusion again so any routing artefacts are pushed back into the requested gate basis.
+
+  `DecomposeMultiControlledGatesPass` handles the structural lowering of multi-controlled single-qubit operations before any basis work is attempted. Gates such as `X(2).controlled(0, 1)` are recursively rewritten into equivalent sequences containing only single-control operations, square roots of the target gate, their adjoints, and auxiliary controlled Pauli-X operations. Single-control gates are left unchanged, while controlled versions of multi-qubit payloads are rejected explicitly, which keeps later passes focused on 1Q/2Q synthesis only.
+
+  `CancelIdentityPairsPass` performs fixed-point cancellation of gates whose product is the identity up to global phase, even when those gates are separated by operations on disjoint qubits. It removes explicit `I` gates immediately, recognizes self-inverse primitives such as `H`, `X`, `Y`, `Z`, `CNOT`, `CZ`, and `SWAP`, cancels parametric inverses such as `RX(theta)` with `RX(-theta)` and `U3(theta, phi, gamma)` with `U3(-theta, -gamma, -phi)`, understands `Adjoint(...)` wrappers and controlled inverse pairs, and falls back to matrix-based matching for custom gates that expose a unitary. Measurements and gates without a matrix act as barriers on the qubits they touch, so the pass stays conservative around non-unitary or opaque operations.
+
+  `DecomposeToCanonicalBasisPass` is responsible for basis normalization. It maps supported one-qubit gates into either a `U3` basis or an `RX`/`RY`/`RZ` basis, depending on `single_qubit_basis`, and rewrites two-qubit structure into either `CNOT`-based or `CZ`-based entangling skeletons, depending on `two_qubit_basis`. In practice this means `H`, `X`, `Y`, `Z`, `U1`, `U2`, arbitrary one-qubit `BasicGate` instances, `CNOT`, `CZ`, `SWAP`, single-control controlled one-qubit gates, `Adjoint(...)`, and one-qubit `Exponential(...)` gates can all be rewritten into a circuit containing only the chosen 1Q basis, the chosen 2Q entangler, and measurements. Multi-controlled gates are deliberately out of scope here and are expected to be lowered by `DecomposeMultiControlledGatesPass` first.
+
+  `FuseSingleQubitGatesPass` then compresses maximal adjacent runs of one-qubit unitary gates on each wire into a basis-respecting sequence. In `SingleQubitGateBasis.U3` mode, each fused run is emitted as a single `U3`. In `SingleQubitGateBasis.RxRyRz` mode, the pass emits compact axis-aligned rotations when the fused unitary is recognizable as pure `RX`, `RY`, or `RZ`, and otherwise falls back to a canonical `RZ-RY-RZ` realization. Multi-qubit gates, measurements, and any unsupported or non-unitary operations flush pending fusion on the affected qubits, so gate order and circuit semantics are preserved.
+
+  The topology-aware passes cover both automatic placement and user-directed placement. `SabreLayoutPass` is a layout-only pass that chooses a logical-to-physical mapping with a SABRE-style heuristic using a front layer, a bounded look-ahead set, randomized trials, and a light decay penalty to avoid thrashing. It retargets the entire circuit to physical qubits, can enlarge the returned circuit to the device size, and records the selected initial layout in the shared context. `SabreSwapPass` starts from either an explicit `initial_layout`, the layout already present in the context, or a default identity-style placement, and then inserts SWAPs so every emitted two-qubit gate acts on an edge of the topology while preserving the original gate order. It stores the routed final layout in `result.layout` and exposes `swap_count` through `result.metrics`. `CustomLayoutPass` is the deterministic alternative for users who already know where logical qubits should live: it validates that the mapping covers every logical qubit exactly once, is injective, and only references physical qubits in the topology; it then retargets the circuit to the requested physical qubits and, when necessary, inserts shortest-path SWAPs and immediately undoes them so later operations remain pinned to the user-requested mapping.
+
+  Changing the target basis is now a one-line configuration change on the default transpiler. The example below requests an `RX`/`RY`/`RZ` one-qubit basis and `CZ` as the only two-qubit entangler, so the final circuit contains only those basis gates plus measurements:
+
+  ```python
+  from qilisdk.digital import CNOT, H, Circuit
+  from qilisdk.digital.circuit_transpiler import CircuitTranspiler
+  from qilisdk.digital.circuit_transpiler_passes import SingleQubitGateBasis, TwoQubitGateBasis
+
+  circuit = Circuit(2)
+  circuit.add(H(0))
+  circuit.add(CNOT(0, 1))
+
+  transpiler = CircuitTranspiler.default(
+      single_qubit_basis=SingleQubitGateBasis.RxRyRz,
+      two_qubit_basis=TwoQubitGateBasis.CZ,
+  )
+  result = transpiler.transpile(circuit)
+
+  assert all(gate.name in {"RX", "RY", "RZ", "CZ"} for gate in result.circuit.gates)
+  ```
+
+  Supplying a topology activates layout and routing automatically. The topology can be provided either as a `rustworkx.PyGraph` or as a simple edge list, and the transpiler will return both the routed circuit and routing diagnostics:
+
+  ```python
+  from qilisdk.digital import CZ, Circuit
+  from qilisdk.digital.circuit_transpiler import CircuitTranspiler
+
+  circuit = Circuit(3)
+  circuit.add(CZ(0, 2))
+
+  transpiler = CircuitTranspiler.default(topology=[(0, 1), (1, 2)])
+  result = transpiler.transpile(circuit)
+
+  print(result.layout)              # final logical -> physical mapping after routing
+  print(result.metrics["swap_count"])
+  ```
+
+  If you want to pin logical qubits to specific physical locations, pass `qubit_mapping` together with the topology. In this mode the transpiler uses `CustomLayoutPass`, keeps the reported final layout equal to the user mapping, and routes non-adjacent two-qubit interactions with temporary SWAPs under the hood:
+
+  ```python
+  from qilisdk.digital import CZ, RX, Circuit
+  from qilisdk.digital.circuit_transpiler import CircuitTranspiler
+
+  circuit = Circuit(2)
+  circuit.add(RX(0, theta=0.5))
+  circuit.add(CZ(0, 1))
+
+  transpiler = CircuitTranspiler.default(
+      topology=[(0, 1), (1, 2)],
+      qubit_mapping={0: 2, 1: 0},
+  )
+  result = transpiler.transpile(circuit)
+
+  assert result.layout == {0: 2, 1: 0}
+  assert result.circuit.nqubits == 3
+  ```
+
+  The pipeline is also fully customizable, which makes it easy to build a transpiler that only performs the stages you want and then inspect the circuit produced after each stage. In the example below, the transpiler lowers multi-controlled gates, removes trivial inverse pairs, canonicalizes everything to a `CZ` + `U3` basis, and finally fuses one-qubit runs; the returned `intermediate_results` preserve the per-pass circuit snapshots in execution order:
+
+  ```python
+  from qilisdk.digital import Controlled, X, Circuit
+  from qilisdk.digital.circuit_transpiler import CircuitTranspiler
+  from qilisdk.digital.circuit_transpiler_passes import (
+      CancelIdentityPairsPass,
+      DecomposeMultiControlledGatesPass,
+      DecomposeToCanonicalBasisPass,
+      FuseSingleQubitGatesPass,
+      SingleQubitGateBasis,
+      TwoQubitGateBasis,
+  )
+
+  circuit = Circuit(3)
+  circuit.add(Controlled(0, 1, basic_gate=X(2)))
+
+  transpiler = CircuitTranspiler(
+      pipeline=[
+          DecomposeMultiControlledGatesPass(),
+          CancelIdentityPairsPass(),
+          DecomposeToCanonicalBasisPass(
+              single_qubit_basis=SingleQubitGateBasis.U3,
+              two_qubit_basis=TwoQubitGateBasis.CZ,
+          ),
+          FuseSingleQubitGatesPass(single_qubit_basis=SingleQubitGateBasis.U3),
+      ]
+  )
+  result = transpiler.transpile(circuit)
+
+  print([step.name for step in result.intermediate_results])
+  print(result.circuit)
+  ```
+  ([PR #164](https://github.com/qilimanjaro-tech/qilisdk/pull/164))
+- Refactored the QiliSim backend configuration API around typed Pydantic models and aligned docs/tests with the new usage.
+
+  Main changes:
+
+  * Introduced structured QiliSim configuration models:
+    * `AnalogMethod` (with `integrator`, `arnoldi`, and `direct` builders)
+    * `DigitalMethod` (with `state_vector` builder)
+    * `ExecutionConfig` (threading and RNG seed controls)
+    * `MonteCarloConfig` (trajectory control for Monte Carlo mode)
+  * Updated `QiliSim` initialization to accept:
+    * `analog_simulation_method`
+    * `digital_simulation_method`
+    * `execution_config`
+    instead of many flat constructor parameters.
+  * Added `QiliSim.get_config()` and kept `solver_params` as a backward-compatible alias.
+  * Fixed solver configuration wiring so execution paths use the refactored internal config dictionary.
+  * Expanded docstrings for new and affected methods/classes, including:
+    * per-field `Field(description=...)` metadata for Pydantic model fields
+    * top-level model parameter documentation for better IDE hover help
+    * classmethod argument documentation aligned with field descriptions.
+  * Updated backend documentation (`docs/fundamentals/backends.rst`) to describe the new configuration objects and provide an updated configuration example.
+  * Updated and expanded QiliSim unit/integration tests to validate:
+    * new configuration builders and validation behavior
+    * new backend construction patterns using `ExecutionConfig`/`AnalogMethod`/`DigitalMethod`/`MonteCarloConfig`
+    * compatibility of shared backend integration suites with the new API.
+
+  ([PR #165](https://github.com/qilimanjaro-tech/qilisdk/pull/165))
+- Matrix-free methods have been added to QiliSim. This is now the default simulation method for circuit sampling, so without changing your workflow you should notice performance and memory improvements. ([PR #167](https://github.com/qilimanjaro-tech/qilisdk/pull/167))
+- QTensor has been moved to C++, giving increased performance.
+
+  The interface remains almost exactly the same, the only change being that now `QTensor * QTensor` does element-wise multiplication, for matrix multiplication please change to using `QTensor @ QTensor`. ([PR #168](https://github.com/qilimanjaro-tech/qilisdk/pull/168))
+- Added an about() method to QiliSDK, as in Qililab, to output useful information about the installation to aid in debugging. ([PR #170](https://github.com/qilimanjaro-tech/qilisdk/pull/170))
+- Almost all QiliSDK objects can now be printed (i.e. print(thing)) to show details about the object. ([PR #171](https://github.com/qilimanjaro-tech/qilisdk/pull/171))
+- Restructured the functionals and results system with a decoupled, type-safe readout architecture.
+
+  **Breaking Changes**
+
+  - **`Sampling` renamed to `DigitalPropagation`**: The functional now takes only a `circuit` argument. Shot count is specified via readout.
+  - **`TimeEvolution` renamed to `AnalogEvolution`**: The functional now takes `schedule`, `initial_state`, and `store_intermediate_results`. Observables and shot count are specified via readout.
+  - **`SamplingResult` and `TimeEvolutionResult` removed**: All primitive functionals now return a unified `FunctionalResult`.
+  - **`backend.execute()` now requires a `readout` parameter**: A `Readout` specification is passed at execution time instead of being bundled into the functional.
+
+  **New Readout System**
+
+  A new `qilisdk.readout` module provides the `Readout` builder and three readout types.
+  Build a specification by chaining `with_*` methods and pass it to `backend.execute()`:
+
+  ```python
+  from qilisdk.analog import Z
+  from qilisdk.readout import Readout
+  from qilisdk.backends import QiliSim
+  from qilisdk.functionals import DigitalPropagation
+  from qilisdk.digital import Circuit
+
+  backend = QiliSim()
+  functional = DigitalPropagation(Circuit(2))
+
+  result = backend.execute(functional, readout=Readout().with_sampling(nshots=1000))
+  result = backend.execute(functional, readout=Readout().with_expectation(observables=[Z(0)]))
+  result = backend.execute(functional, readout=Readout().with_state_tomography())
+
+  # Multiple readout types can be combined in a single execution
+  result = backend.execute(
+      functional,
+      readout=Readout().with_sampling(nshots=500).with_expectation(observables=[Z(0)]),
+  )
+  ```
+
+  The three readout types are:
+
+  - `Readout().with_sampling(nshots)`: sample in the computational basis and collect bitstring counts.
+  - `Readout().with_expectation(observables, nshots=0)`: compute `⟨ψ|O|ψ⟩` for each observable (`nshots=0` uses the exact state-vector inner product).
+  - `Readout().with_state_tomography()`: return the full quantum state vector.
+
+  **Type-Safe Results**
+
+  `Readout` carries generic type parameters `S`, `E`, `T` that track which readout slots are populated.
+  `backend.execute()` propagates these to the returned `FunctionalResult`, so the type checker knows
+  which result fields are present without runtime guards:
+
+  ```python
+  from qilisdk.analog import Z
+  from qilisdk.readout import Readout
+
+  # result.sampling is SamplingReadoutResult — type checker knows this, no Optional guard needed
+  result = backend.execute(functional, readout=Readout().with_sampling(nshots=1000))
+  top2 = result.sampling.get_probabilities(n=2)
+
+  # result.expectation is ExpectationReadoutResult — type checker knows this
+  result = backend.execute(functional, readout=Readout().with_expectation(observables=[Z(0)]))
+  evs = result.expectation.expectation_values
+  ```
+
+  **Migration Guide**
+
+  **Before (digital circuit sampling):**
+
+  <!-- SKIP -->
+  ```python
+  from qilisdk.functionals import Sampling
+
+  sampling = Sampling(circuit=circuit, nshots=500)
+  result = backend.execute(sampling)
+  print(result.samples)
+  ```
+
+  **After:**
+
+  <!-- SKIP -->
+  ```python
+  from qilisdk.functionals import DigitalPropagation
+  from qilisdk.readout import Readout
+
+  functional = DigitalPropagation(circuit)
+  result = backend.execute(functional, readout=Readout().with_sampling(nshots=500))
+  print(result.get_samples())
+  ```
+
+  **Before (analog time evolution):**
+
+  <!-- SKIP -->
+  ```python
+  from qilisdk.functionals import TimeEvolution
+
+  te = TimeEvolution(schedule=schedule, initial_state=psi0, observables=[Z(0)], nshots=100)
+  result = backend.execute(te)
+  print(result.expected_values)
+  ```
+
+  **After:**
+
+  <!-- SKIP -->
+  ```python
+  from qilisdk.analog import Z
+  from qilisdk.functionals import AnalogEvolution
+  from qilisdk.readout import Readout
+
+  evolution = AnalogEvolution(schedule=schedule, initial_state=psi0)
+  result = backend.execute(evolution, readout=Readout().with_expectation(observables=[Z(0)]).with_state_tomography())
+  print(result.expectation_values)
+  ```
+
+  **Before (variational program):**
+
+  <!-- SKIP -->
+  ```python
+  vp = VariationalProgram(functional=Sampling(ansatz), optimizer=opt, cost_function=cost_fn)
+  result = backend.execute(vp)
+  ```
+
+  **After:**
+
+  <!-- SKIP -->
+  ```python
+  from qilisdk.readout import Readout
+
+  vp = VariationalProgram(functional=DigitalPropagation(ansatz), optimizer=opt, cost_function=cost_fn)
+  result = backend.execute(vp, readout=Readout().with_sampling(nshots=1000))
+  ```
+
+  **Result Properties**
+
+  The unified `FunctionalResult` provides convenience shortcuts:
+
+  - `get_samples`: shot counts (`with_sampling`)
+  - `get_probabilities`: measurement probabilities (`with_sampling` or `with_state_tomography`)
+  - `get_state`: full quantum state (`with_state_tomography`)
+  - `get_expectation_values`: list of expectation values (`with_expectation`)
+  - `intermediate_samples`, `intermediate_probabilities`, `intermediate_states`, `intermediate_expectation_values`: per-step lists when `store_intermediate_results=True`
+
+  Typed forwarding properties (`result.sampling`, `result.expectation`, `result.state_tomography`) return the raw result objects and are preferred for production code.
+
+  **Other Changes**
+
+  - Added a `Readout` documentation page covering the builder pattern, all three readout types, result access, intermediate results, and a complete end-to-end example.
+  - Added QiliSim C++ backend support for `DigitalPropagation`, `AnalogEvolution`, and `QuantumReservoir`.
+  - Added CUDA and QuTiP backend support for the new readout system.
+  - Updated SpeQtrum cloud submission (`SpeQtrum.submit`) to accept `Readout`.
+  - Updated all documentation to reflect the new structure.
+
+  ([PR #175](https://github.com/qilimanjaro-tech/qilisdk/pull/175))
+- `Gate.matrix` is now a cached property instead of a stored instance attribute. This considerably reduces serialization size by excluding the matrix from YAML output. ([PR #177](https://github.com/qilimanjaro-tech/qilisdk/pull/177))
+- Added a method to plot a single-qubit QTensor state on the Bloch sphere:
+  ```
+  from qilisdk.core import QTensor
+  state = QTensor.ket(0)
+  state.draw()
+  ```
+  ([PR #179](https://github.com/qilimanjaro-tech/qilisdk/pull/179))
+- QiliSim now supports mid-circuit measurements. Additionally, partial samples are now returned as "11_0", where a "_" indicates that the qubit wasn't measured. Usage:
+
+  ```python
+  from qilisdk.digital import Circuit, X, M
+  from qilisdk.backends import QiliSim
+  from qilisdk.readout import Readout
+  from qilisdk.functionals import DigitalPropagation
+
+  c = Circuit(2)
+  c.add(X(0))
+  c.add(M(0))
+  c.add(X(0))
+  c.add(M(0))
+  c.add(M(1))
+
+  results = QiliSim().execute(DigitalPropagation(c), Readout().with_sampling(1000))
+  print(results)
+  ```
+  ([PR #185](https://github.com/qilimanjaro-tech/qilisdk/pull/185))
+- Added a new QTensor constructor to allow users to easily construct a uniform superposition state of a certain number of qubits:
+
+  ```python
+  from qilisdk.core import QTensor
+  state = QTensor.uniform(2)
+  ```
+  ([PR #186](https://github.com/qilimanjaro-tech/qilisdk/pull/186))
+- QiliSim's default analog simulator - integrator - has been optimized and now offers around 4x performance for the same number of steps.
+
+  A new analog simulation method has also been added: adaptive_integrator, capable of speeding up when the problem is easy and slowing down when precision is needed. It does this using a Dormand-Prince-style RK45 method. For some cases this can offer a speedup, but the main advantage is that the user doesn't have to choose their dt carefully. Usage is as follows:
+
+  ```python
+  from qilisdk.backends import QiliSim, AnalogMethod
+  backend = QiliSim(analog_simulation_method=AnalogMethod.adaptive_integrator(tol=0.01),)
+  ```
+  ([PR #188](https://github.com/qilimanjaro-tech/qilisdk/pull/188))
+- Several init methods to simplify the construction of basic Schedules have been added:
+
+  ```python
+  from qilisdk.analog import Schedule, X, Z
+
+  H1 = X(0)
+  H2 = Z(0)
+  T = 10
+  dt = 0.1
+
+  schedule = Schedule.linear(H1, H2, T, dt)
+  schedule = Schedule.quadratic(H1, H2, T, dt)
+  schedule = Schedule.polynomial(H1, H2, T, dt, 5)
+  schedule = Schedule.sinusoidal(H1, H2, T, dt)
+  ```
+  ([PR #190](https://github.com/qilimanjaro-tech/qilisdk/pull/190))
+- You can now generate a plot of the eigenspectrum of a Schedule for small (i.e. less than 7 qubits) systems.
+  This can also be combined with simulation data to visualize how the state evolves.
+  Usage is as follows:
+
+  ```python
+  from qilisdk.backends import QiliSim, AnalogMethod
+  from qilisdk.readout import Readout
+  from qilisdk.functionals import AnalogEvolution
+  from qilisdk.analog import Schedule, X, Z
+  from qilisdk.core import QTensor, Interpolation
+
+  nqubits = 5
+  T = 10.0
+  dt = 0.1
+  Hx = -sum(X(i) for i in range(nqubits))
+  Hz = sum(Z(i)*Z((i+1) % nqubits) for i in range(nqubits))
+  schedule = Schedule(
+      hamiltonians={"driver": Hx, "problem": Hz},
+      coefficients={
+          "driver": {(0.0, T): lambda t: 1 - t / T},
+          "problem": {(0.0, T): lambda t: t / T},
+      },
+      dt=dt,
+      interpolation=Interpolation.LINEAR,
+  )
+
+  backend = QiliSim(analog_simulation_method=AnalogMethod.integrator())
+  evolution = AnalogEvolution(schedule=schedule, initial_state=QTensor.uniform(nqubits), store_intermediate_results=True)
+  res = backend.execute(evolution, Readout().with_state_tomography())
+
+  schedule.draw_eigenvalues(levels=200, intermediate_states=res.get_intermediate_states(), show_overlaps=True)
+  ```
+
+  which generates the following, where the percentages are the overlap with the evolved state versus each of the eigenstates:
+
+  <img width="768" height="480" alt="fig" src="https://github.com/user-attachments/assets/6150d982-4734-4937-ab2c-90792daf191b" /> ([PR #191](https://github.com/qilimanjaro-tech/qilisdk/pull/191))
+- `Model.to_qubo()` now automatically *linearizes* pseudo-Boolean objectives and constraints of degree greater than two. High-degree monomials are reduced pairwise to quadratic form by introducing fresh auxiliary binary variables `w = a * b` enforced via the Rosenberg penalty
+
+  ```
+  P(a, b, w) = a * b - 2 * a * w - 2 * b * w + 3 * w
+  ```
+
+  which is quadratic, non-negative, and zero iff `w = a * b`. Shared sub-products (e.g. `x*y*z` and `x*y*w` both reusing `x*y`) share a single auxiliary and a single penalty.
+
+  Two new kwargs control the behavior:
+
+  - `linearize` (default `True`): toggles the reduction. Set `linearize=False` to keep the previous strict behavior where exporting a model with terms of degree 3+ raises `ValueError`.
+  - `linearization_lagrange_multiplier` (default `100`): the Lagrange multiplier applied to each Rosenberg penalty constraint.
+
+  Usage:
+
+  ```python
+  from qilisdk.core import BinaryVariable, EQ, Model, ObjectiveSense
+
+  x, y, z = BinaryVariable("x"), BinaryVariable("y"), BinaryVariable("z")
+
+  model = Model("cubic")
+  model.set_objective(x * y * z, sense=ObjectiveSense.MAXIMIZE)
+  model.add_constraint("forbid_triple", EQ(x * y * z, 0), lagrange_multiplier=10)
+
+  qubo = model.to_qubo(linearization_lagrange_multiplier=50)
+  ham = qubo.to_hamiltonian()
+  ```
+
+  ([PR #195](https://github.com/qilimanjaro-tech/qilisdk/pull/195))
+- Added QIR (Quantum Intermediate Representation) Base-Profile import and export, bridging `qilisdk.digital.Circuit` and Microsoft's [pyqir](https://pypi.org/project/pyqir/) library. The new entry points live in `qilisdk.utils.qir`:
+
+  * `to_qir(circuit, *, name="circuit")` — serialize a `Circuit` to QIR textual LLVM IR.
+  * `to_qir_file(circuit, filename, *, name=None)` — write a `.ll` (textual) or `.bc` (bitcode) file; dispatched on extension.
+  * `from_qir(qir_text)` — parse QIR textual LLVM IR back into a `Circuit`.
+  * `from_qir_file(filename)` — read a `.ll` or `.bc` file.
+
+  `pyqir` is an optional dependency; install with `pip install qilisdk[qir]`.
+
+  Example:
+
+  ```python
+  from qilisdk.digital import CNOT, Circuit, H, M
+  from qilisdk.utils.qir import from_qir, to_qir
+
+  circuit = Circuit(2)
+  circuit.add(H(0))
+  circuit.add(CNOT(0, 1))
+  circuit.add(M(0, 1))
+
+  qir_text = to_qir(circuit, name="bell")
+  reparsed = from_qir(qir_text)
+  ```
+
+  Supported gates map to the standard `__quantum__qis__*__body` intrinsics: `X`, `Y`, `Z`, `H`, `S`, `T`, `Adjoint(S)`, `Adjoint(T)`, `RX`, `RY`, `RZ`, `CNOT`, `CZ`, `SWAP`, and `M`. Identity is emitted as a no-op. Gates outside this set (`U1` / `U2` / `U3`, three-qubit unitaries, arbitrary `Controlled` / `Exponential` wrappers) must be decomposed before export. Rotation angles are exported as their currently-resolved numeric values — rebind any `Parameter` values to concrete numbers before calling `to_qir`.
+
+  OpenQASM 2 and 3 support has been moved to an optional dependency group and now lives under the `qilisdk.utils.openqasm` package. Install with `pip install qilisdk[openqasm]`; the public entry points (`to_qasm2`, `from_qasm2`, `to_qasm2_file`, `from_qasm2_file`, `to_qasm3`, `from_qasm3`, `to_qasm3_file`, `from_qasm3_file`) are unchanged but now imported from `qilisdk.utils.openqasm` rather than `qilisdk.utils.openqasm2` / `qilisdk.utils.openqasm3`:
+
+  <!-- SKIP -->
+  ```python
+  # Before
+  from qilisdk.utils.openqasm2 import to_qasm2, from_qasm2
+  from qilisdk.utils.openqasm3 import to_qasm3, from_qasm3
+
+  # After
+  from qilisdk.utils.openqasm import to_qasm2, from_qasm2, to_qasm3, from_qasm3
+  ```
+
+  ([PR #209](https://github.com/qilimanjaro-tech/qilisdk/pull/209))
+
+## Bugfixes
+
+- Fixed a bug in the cuda backend with time evolution that was erasing information from the hamiltonian. ([PR #152](https://github.com/qilimanjaro-tech/qilisdk/pull/152))
+- Fixed issues with empty elements in cuda hamiltonian that caused issues during simulation. ([PR #155](https://github.com/qilimanjaro-tech/qilisdk/pull/155))
+- Fixed multiple backend issues in analog time evolution: CUDA now supports `QTensor` observables (via Hamiltonian conversion), CUDA Lindblad jump-operator dimension handling was corrected for global/per-qubit noise, and QiliSim now correctly applies Lindblad rates (`jump_operators_with_rates`) and expands global single-qubit jump operators per qubit so dephasing strength affects results as expected. ([PR #157](https://github.com/qilimanjaro-tech/qilisdk/pull/157))
+- Fixed YAML serialization for `@yaml.register_class` objects so transient hash cache fields (`_hash_cache` and `_hash_chache`) are always dumped as `null` (`None`) without mutating the in-memory object state. ([PR #158](https://github.com/qilimanjaro-tech/qilisdk/pull/158))
+- Reworked custom hashing to a deterministic `hashlib.blake2b`-based `qilisdk.utils.hashing.hash(...)` interface (no Python builtin hash dependency in the hashing pipeline), migrated Variable/Term/ComparisonTerm/QTensor/Hamiltonian/Pauli hashing to it, and added consistency tests for hashing behavior (stability, equality-consistency, and order-insensitive structures). ([PR #159](https://github.com/qilimanjaro-tech/qilisdk/pull/159))
+- Fixed OpenQASM 2.0 import parsing by replacing parameter parsing with AST-based expression evaluation (supporting `pi`, arithmetic, and standard functions like `sin`/`cos`/`sqrt`), handling inline `//` comments, and adding stricter gate-parameter parsing with clear errors for invalid/deeply nested expressions; expanded unit tests to cover these cases and full supported gate round-trips. ([PR #162](https://github.com/qilimanjaro-tech/qilisdk/pull/162))
+- Fix numpy version constraints for macOS to avoid MKL resolution issue ([PR #163](https://github.com/qilimanjaro-tech/qilisdk/pull/163))
+- Fixed a bug when building the docs. Versions of sphinx >= 9 cause issues with the newest (0.2.4) version of sphinx-multiversion, so now we limit the version of sphinx to be less than 9. ([PR #182](https://github.com/qilimanjaro-tech/qilisdk/pull/182))
+- Build issues have been fixed for Mac, the "compile from source" guide in the docs now works as expected. ([PR #193](https://github.com/qilimanjaro-tech/qilisdk/pull/193))
+- Fixed `ReservoirLayer.set_parameters` and `ReservoirLayer.set_parameter_bounds` so they dispatch through each sub-component (input encoding, evolution dynamics, output encoding) instead of relying on the inherited `Parameterizable` implementation. The previous behavior updated `Parameter` values directly and bypassed the encoding gates' setters, leaving their cached matrices stale after a parameter update on the layer. Added tests covering both the matrix-cache invalidation on encoding gates and the propagation of bounds to each child component. ([PR #197](https://github.com/qilimanjaro-tech/qilisdk/pull/197))
+- Fixed `Circuit.set_parameters`, `Circuit.set_parameter_bounds`, and `Circuit.set_prefix` so they correctly handle a single `Parameter` shared across multiple gates. Previously `Circuit._parameters_link` stored a single `(label, gate)` tuple per parameter, so only the last-added gate received the update; earlier gates kept their cached matrices stale after the underlying `Parameter` was mutated. The link is now a list of every `(label, gate)` pair sharing a parameter, and all of them are updated. Added regression tests covering shared parameters across `set_parameters`, `set_parameter_bounds`, and the `set_prefix` + `set_parameters` flow. ([PR #199](https://github.com/qilimanjaro-tech/qilisdk/pull/199))
+- Fixed `.env` file loading in `QiliSDKSettings` so that only variables prefixed with `QILISDK_` are read, preventing unrelated environment variables in the user's `.env` from causing validation errors. ([PR #201](https://github.com/qilimanjaro-tech/qilisdk/pull/201))
+- Fixed build issues when trying to compile QiliSDK from source on Windows using VSCode. ([PR #202](https://github.com/qilimanjaro-tech/qilisdk/pull/202))
+
+## Improved Documentation
+
+- Fixed a bug in the documentation whereby titles could be hidden by a highlight after searching. ([PR #160](https://github.com/qilimanjaro-tech/qilisdk/pull/160))
+- Added a "Tutorials" section to the documentation, covering some quantum basics as well as a number of useful examples.
+  The rest of the documentation has also been proof-read and adjusted. ([PR #183](https://github.com/qilimanjaro-tech/qilisdk/pull/183))
+- The docs have been further refactored, splitting the larger pages into smaller ones. ([PR #194](https://github.com/qilimanjaro-tech/qilisdk/pull/194))
+- Updated the QIR feature table and added missing Spanish and Catalan translations for the QIR and OpenQASM documentation. ([PR #214](https://github.com/qilimanjaro-tech/qilisdk/pull/214))
+- Expanded the Backends documentation: full QiliSim page with simulation-method descriptions, per-backend functional-support tables (with partial-support markers for QuantumReservoir on CUDA and Qutip), a sampling-methods table for the CUDA backend, noise-model notes, and unified section structure across the QiliSim, CUDA, and Qutip pages. ([PR #216](https://github.com/qilimanjaro-tech/qilisdk/pull/216))
+
+## Misc
+
+- [PR #153](https://github.com/qilimanjaro-tech/qilisdk/pull/153), [PR #161](https://github.com/qilimanjaro-tech/qilisdk/pull/161), [PR #169](https://github.com/qilimanjaro-tech/qilisdk/pull/169), [PR #172](https://github.com/qilimanjaro-tech/qilisdk/pull/172), [PR #174](https://github.com/qilimanjaro-tech/qilisdk/pull/174), [PR #176](https://github.com/qilimanjaro-tech/qilisdk/pull/176), [PR #192](https://github.com/qilimanjaro-tech/qilisdk/pull/192), [PR #196](https://github.com/qilimanjaro-tech/qilisdk/pull/196), [PR #206](https://github.com/qilimanjaro-tech/qilisdk/pull/206), [PR #208](https://github.com/qilimanjaro-tech/qilisdk/pull/208), [PR #210](https://github.com/qilimanjaro-tech/qilisdk/pull/210), [PR #212](https://github.com/qilimanjaro-tech/qilisdk/pull/212)
+
+
 # qilisdk 0.1.8 (2026-02-03)
 
 ## Features
