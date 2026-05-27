@@ -1,4 +1,4 @@
-name: Smoke Build
+name: Platform Builds
 
 on:
   push:
@@ -13,7 +13,7 @@ on:
 
 jobs:
   smoke-build:
-    name: Smoke Build for Python ${{ matrix.python-version }} on ${{ matrix.os }}
+    name: Build & Smoke for Python ${{ matrix.python-version }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -51,4 +51,6 @@ jobs:
 
       - name: Smoke test import
         shell: bash
-        run: python -c "from qilisdk.backends import QiliSim; print('QiliSim imported successfully')"
+        run: |
+          python -c "import qilisdk; print('QiliSDK imported successfully')"
+          python -c "from qilisdk.backends import QiliSim; print('QiliSim imported successfully')"
