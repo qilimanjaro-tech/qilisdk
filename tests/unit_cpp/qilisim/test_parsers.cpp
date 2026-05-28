@@ -1583,4 +1583,76 @@ TEST(ConstructResults, BadReadoutTypeThrows) {
     EXPECT_THROW({ auto results = construct_result_object(state, readout, noise_model_cpp, n_qubits, config, qubits_to_measure); }, py::value_error);
 }
 
+TEST(ConstructResultsExponentialAnsatz, WithExpectationReadout_Succeeds) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.readout import ExpectationReadout
+from qilisdk.analog.hamiltonian import Z
+_ea_ro_exp = [ExpectationReadout(observables=[Z(0)])]
+    )");
+    ExponentialAnsatz state(1, 1, 50, 0);
+    py::list readout = py::globals()["_ea_ro_exp"].cast<py::list>();
+    EXPECT_NO_THROW({ auto result = construct_result_object(state, readout, 1); });
+}
+
+TEST(ConstructResultsExponentialAnsatz, WithSamplingReadout_Succeeds) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.readout import SamplingReadout
+_ea_ro_samp = [SamplingReadout(nshots=10)]
+    )");
+    ExponentialAnsatz state(1, 1, 50, 0);
+    py::list readout = py::globals()["_ea_ro_samp"].cast<py::list>();
+    EXPECT_NO_THROW({ auto result = construct_result_object(state, readout, 1); });
+}
+
+TEST(ConstructResultsExponentialAnsatz, WithUnsupportedReadout_Throws) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.readout import StateTomographyReadout
+_ea_ro_bad = [StateTomographyReadout()]
+    )");
+    ExponentialAnsatz state(1, 1, 50, 0);
+    py::list readout = py::globals()["_ea_ro_bad"].cast<py::list>();
+    EXPECT_THROW({ auto result = construct_result_object(state, readout, 1); }, py::value_error);
+}
+
+TEST(ParseInitialState, WithQTensorObject_Succeeds) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.core.qtensor import QTensor
+import scipy.sparse as sp, numpy as np
+_parse_is_qtensor = QTensor(sp.csr_matrix(np.array([[1.+0j], [0.]], dtype=complex)))
+    )");
+    py::object qs = py::globals()["_parse_is_qtensor"];
+    SparseMatrix result;
+    EXPECT_NO_THROW(result = parse_initial_state(qs, 1e-12, 1));
+    EXPECT_EQ(result.rows(), 2);
+    EXPECT_EQ(result.cols(), 1);
+}
+
+TEST(ParseInitialState, WithInitialStateEnum_Succeeds) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.core.qtensor import InitialState
+_parse_is_uniform = InitialState.UNIFORM
+    )");
+    py::object is_obj = py::globals()["_parse_is_uniform"];
+    SparseMatrix result;
+    EXPECT_NO_THROW(result = parse_initial_state(is_obj, 1e-12, 1));
+}
+
+TEST(ParseSolverParams, OrderShotsWarmupsAreApplied) {
+    py::gil_scoped_acquire gil;
+    py::dict params;
+    params["order"] = py::int_(3);
+    params["shots"] = py::int_(200);
+    params["warmups"] = py::int_(50);
+    QiliSimConfig config;
+    EXPECT_NO_THROW(config = parse_solver_params(params));
+    EXPECT_EQ(config.get_order(), 3);
+    EXPECT_EQ(config.get_shots(), 200);
+    EXPECT_EQ(config.get_warmups(), 50);
+}
+
 // GCOV_EXCL_BR_STOP

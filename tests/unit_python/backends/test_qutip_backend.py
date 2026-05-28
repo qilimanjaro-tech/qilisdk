@@ -358,6 +358,18 @@ def test_time_evolution(monkeypatch, initial_state, ob):
     assert isinstance(result.get_state(), QTensor)
 
 
+def test_time_evolution_initial_state_enum(monkeypatch):
+    monkeypatch.setattr("qilisdk.backends.qutip_backend.mesolve", lambda *args, **kwargs: TimeEvolutionMockResults())
+    backend = QutipBackend()
+    hamiltonian = Hamiltonian({(PauliZ(0),): 1.0})
+    schedule = Schedule(hamiltonians={"h": hamiltonian}, dt=0.1)
+    from qilisdk.core.qtensor import InitialState
+
+    func = AnalogEvolution(schedule=schedule, initial_state=InitialState.ZERO)
+    result = backend.execute(func, Readout().with_state_tomography())
+    assert isinstance(result, FunctionalResult)
+
+
 def test_time_evolution_bad_initial(monkeypatch):
     monkeypatch.setattr("qilisdk.backends.qutip_backend.mesolve", lambda *args, **kwargs: TimeEvolutionMockResults())
     backend = QutipBackend()

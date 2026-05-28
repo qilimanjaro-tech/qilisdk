@@ -1041,3 +1041,32 @@ def test_qtensor_negative_norm():
         qobj.norm(order=-1)
     with pytest.raises(ValueError, match="Norm order must be a positive"):
         qobj.norm(order=0)
+
+
+# --- InitialState Tests ---
+
+
+from qilisdk.core.qtensor import InitialState
+
+
+def test_initial_state_zero_as_qtensor():
+    result = InitialState.ZERO.as_qtensor(2)
+    assert isinstance(result, QTensor)
+    assert result.shape == (4, 1)
+
+
+def test_initial_state_uniform_as_qtensor():
+    result = InitialState.UNIFORM.as_qtensor(2)
+    assert isinstance(result, QTensor)
+    assert result.shape == (4, 1)
+
+
+def test_initial_state_unknown_raises():
+    class FakeState:
+        name = "FAKE"
+
+        def __eq__(self, other):
+            return False
+
+    with pytest.raises(ValueError, match="Unknown symbolic QTensor"):
+        InitialState.as_qtensor(FakeState(), 2)

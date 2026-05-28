@@ -49,6 +49,36 @@ TEST(QilisimConfig, BadValidateThrows) {
     config = default_config;
     config.set_atol(0);
     EXPECT_ANY_THROW(config.validate());
+
+    config = default_config;
+    config.set_max_cache_size(0);
+    EXPECT_ANY_THROW(config.validate());
+
+    config = default_config;
+    config.set_adaptive_tol(-1.0);
+    EXPECT_ANY_THROW(config.validate());
+
+    config = default_config;
+    config.set_order(0);
+    EXPECT_ANY_THROW(config.validate());
+
+    config = default_config;
+    config.set_shots(0);
+    EXPECT_ANY_THROW(config.validate());
+
+    config = default_config;
+    config.set_warmups(-1);
+    EXPECT_ANY_THROW(config.validate());
+}
+
+TEST(QilisimConfig, VariationalFieldGettersSetters) {
+    QiliSimConfig config;
+    config.set_order(3);
+    config.set_shots(200);
+    config.set_warmups(50);
+    EXPECT_EQ(config.get_order(), 3);
+    EXPECT_EQ(config.get_shots(), 200);
+    EXPECT_EQ(config.get_warmups(), 50);
 }
 
 // GCOV_EXCL_BR_STOP

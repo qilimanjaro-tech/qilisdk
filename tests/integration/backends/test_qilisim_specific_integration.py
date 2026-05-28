@@ -271,4 +271,105 @@ def test_mid_circuit_measurement_collapse():
     samples = result.get_samples()
     assert "00" in samples
     assert "10" in samples
+
+
+# --- Variational annealing (variational_exponential method) ---
+
+
+def _make_annealing_schedule():
+    """Simple 1-qubit X→Z annealing schedule."""
+    return Schedule(
+        dt=1,
+        hamiltonians={"h_x": pauli_x(0), "h_z": pauli_z(0)},
+        coefficients={
+            "h_x": {(0, 4): lambda t: 1 - t / 4},
+            "h_z": {(0, 4): lambda t: t / 4},
+        },
+    )
+
+
+@pytest.mark.parametrize(
+    "readout",
+    [
+        Readout().with_expectation(observables=[pauli_z(0)]),
+        Readout().with_sampling(nshots=50),
+    ],
+)
+def test_variational_annealing_runs(readout):
+    from qilisdk.core.qtensor import InitialState
+
+    backend = QiliSim(
+        analog_simulation_method=AnalogMethod.variational_annealing(order=1, shots=100, warmups=5),
+        execution_config=ExecutionConfig(seed=42, num_threads=1),
+    )
+    result = backend.execute(
+        AnalogEvolution(schedule=_make_annealing_schedule(), initial_state=InitialState.UNIFORM),
+        readout=readout,
+    )
+    assert isinstance(result, FunctionalResult)
+
+
+def test_variational_annealing_expectation_value_bounded():
+    """After full X→Z annealing the ground state of Z is near |0⟩, so <Z> > 0."""
+    from qilisdk.core.qtensor import InitialState
+
+    backend = QiliSim(
+        analog_simulation_method=AnalogMethod.variational_annealing(order=1, shots=200, warmups=10),
+        execution_config=ExecutionConfig(seed=42, num_threads=1),
+    )
+    result = backend.execute(
+        AnalogEvolution(schedule=_make_annealing_schedule(), initial_state=InitialState.UNIFORM),
+        readout=Readout().with_expectation(observables=[pauli_z(0)]),
+    )
+    assert isinstance(result, FunctionalResult)
+    ev = result.get_expectation_values()[0]
+    assert -1.0 <= ev <= 1.0
+
+
+def test_variational_annealing_wrong_initial_state_raises():
+    backend = QiliSim(
+        analog_simulation_method=AnalogMethod.variational_annealing(order=1, shots=50, warmups=0),
+        execution_config=ExecutionConfig(seed=42, num_threads=1),
+    )
+    with pytest.raises(Exception):
+        backend.execute(
+            AnalogEvolution(schedule=_make_annealing_schedule(), initial_state=ket(0)),
+            readout=Readout().with_expectation(observables=[pauli_z(0)]),
+        )
+
+
+def test_variational_annealing_non_x_first_hamiltonian_raises():
+    from qilisdk.core.qtensor import InitialState
+
+    bad_schedule = Schedule(
+        dt=1,
+        hamiltonians={"h_z1": pauli_z(0), "h_z2": pauli_z(0)},
+        coefficients={"h_z1": {(0, 4): lambda t: 1 - t / 4}, "h_z2": {(0, 4): lambda t: t / 4}},
+    )
+    backend = QiliSim(
+        analog_simulation_method=AnalogMethod.variational_annealing(order=1, shots=50, warmups=0),
+        execution_config=ExecutionConfig(seed=42, num_threads=1),
+    )
+    with pytest.raises(Exception):
+        backend.execute(
+            AnalogEvolution(schedule=bad_schedule, initial_state=InitialState.UNIFORM),
+            readout=Readout().with_expectation(observables=[pauli_z(0)]),
+        )
+
+
+def test_variational_annealing_config_validation_raises():
+    """Negative warmups should raise a validation error."""
+    from qilisdk.core.qtensor import InitialState
+
+    backend = QiliSim(
+        analog_simulation_method=AnalogMethod.variational_annealing(order=1, shots=50, warmups=0),
+        execution_config=ExecutionConfig(seed=42, num_threads=1),
+    )
+    # Override internal solver config to trigger validation failure
+    backend._solver_config["warmups"] = -1
+    with pytest.raises(Exception):
+        backend.execute(
+            AnalogEvolution(schedule=_make_annealing_schedule(), initial_state=InitialState.UNIFORM),
+            readout=Readout().with_expectation(observables=[pauli_z(0)]),
+        )
     assert samples["00"] + samples["10"] == 50

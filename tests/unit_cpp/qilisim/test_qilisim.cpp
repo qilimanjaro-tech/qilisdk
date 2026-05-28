@@ -552,4 +552,125 @@ _reservoir = QuantumReservoir(
     EXPECT_TRUE(py::hasattr(result, "intermediate_results"));
 }
 
+TEST_F(ExecuteTimeEvolutionTest, VariationalExponential_NonUniformInitialState_Throws) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.functionals.analog_evolution import AnalogEvolution
+from qilisdk.analog.schedule import Schedule
+from qilisdk.analog.hamiltonian import X, Z
+from qilisdk.core.qtensor import QTensor, ket
+import scipy.sparse as sp, numpy as np
+
+_sched_var_bad = Schedule(
+    hamiltonians={"h_x": X(0), "h_z": Z(0)},
+    coefficients={"h_x": {(0, 2): lambda t: 1 - t/2}, "h_z": {(0, 2): lambda t: t/2}},
+    dt=1,
+)
+_rho_var_bad = QTensor(sp.csr_matrix(np.array([[1.+0j], [0.]], dtype=complex)))
+_te_var_bad = AnalogEvolution(schedule=_sched_var_bad, initial_state=_rho_var_bad)
+    )");
+    py::dict p;
+    p["evolution_method"] = py::str("variational_exponential");
+    p["order"] = py::int_(1);
+    p["shots"] = py::int_(50);
+    p["warmups"] = py::int_(0);
+    EXPECT_THROW(sim.execute_analog_evolution(py::globals()["_te_var_bad"], py::list(), py::none(), p), py::value_error);
+}
+
+TEST_F(ExecuteTimeEvolutionTest, VariationalExponential_FirstHamiltonianNotXOnly_Throws) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.functionals.analog_evolution import AnalogEvolution
+from qilisdk.analog.schedule import Schedule
+from qilisdk.analog.hamiltonian import Z
+from qilisdk.core.qtensor import InitialState
+
+_sched_var_nox = Schedule(
+    hamiltonians={"h_z1": Z(0), "h_z2": Z(0)},
+    coefficients={"h_z1": {(0, 2): lambda t: 1 - t/2}, "h_z2": {(0, 2): lambda t: t/2}},
+    dt=1,
+)
+_te_var_nox = AnalogEvolution(schedule=_sched_var_nox, initial_state=InitialState.UNIFORM)
+    )");
+    py::dict p;
+    p["evolution_method"] = py::str("variational_exponential");
+    p["order"] = py::int_(1);
+    p["shots"] = py::int_(50);
+    p["warmups"] = py::int_(0);
+    EXPECT_THROW(sim.execute_analog_evolution(py::globals()["_te_var_nox"], py::list(), py::none(), p), py::value_error);
+}
+
+TEST_F(ExecuteTimeEvolutionTest, VariationalExponential_LastHamiltonianNotZOnly_Throws) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.functionals.analog_evolution import AnalogEvolution
+from qilisdk.analog.schedule import Schedule
+from qilisdk.analog.hamiltonian import X
+from qilisdk.core.qtensor import InitialState
+
+_sched_var_noz = Schedule(
+    hamiltonians={"h_x1": X(0), "h_x2": X(0)},
+    coefficients={"h_x1": {(0, 2): lambda t: 1 - t/2}, "h_x2": {(0, 2): lambda t: t/2}},
+    dt=1,
+)
+_te_var_noz = AnalogEvolution(schedule=_sched_var_noz, initial_state=InitialState.UNIFORM)
+    )");
+    py::dict p;
+    p["evolution_method"] = py::str("variational_exponential");
+    p["order"] = py::int_(1);
+    p["shots"] = py::int_(50);
+    p["warmups"] = py::int_(0);
+    EXPECT_THROW(sim.execute_analog_evolution(py::globals()["_te_var_noz"], py::list(), py::none(), p), py::value_error);
+}
+
+TEST_F(ExecuteTimeEvolutionTest, VariationalExponential_ValidXToZSchedule_Succeeds) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.functionals.analog_evolution import AnalogEvolution
+from qilisdk.analog.schedule import Schedule
+from qilisdk.analog.hamiltonian import X, Z
+from qilisdk.readout import ExpectationReadout
+from qilisdk.core.qtensor import InitialState
+
+_sched_var_ok = Schedule(
+    hamiltonians={"h_x": X(0), "h_z": Z(0)},
+    coefficients={"h_x": {(0, 2): lambda t: 1 - t/2}, "h_z": {(0, 2): lambda t: t/2}},
+    dt=1,
+)
+_te_var_ok = AnalogEvolution(schedule=_sched_var_ok, initial_state=InitialState.UNIFORM)
+_readout_var = [ExpectationReadout(observables=[Z(0)])]
+    )");
+    py::dict p;
+    p["evolution_method"] = py::str("variational_exponential");
+    p["order"] = py::int_(1);
+    p["shots"] = py::int_(50);
+    p["warmups"] = py::int_(0);
+    EXPECT_NO_THROW(sim.execute_analog_evolution(py::globals()["_te_var_ok"], py::globals()["_readout_var"], py::none(), p));
+}
+
+TEST_F(ExecuteTimeEvolutionTest, VariationalExponential_SamplingReadout_Succeeds) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.functionals.analog_evolution import AnalogEvolution
+from qilisdk.analog.schedule import Schedule
+from qilisdk.analog.hamiltonian import X, Z
+from qilisdk.readout import SamplingReadout
+from qilisdk.core.qtensor import InitialState
+
+_sched_var_samp = Schedule(
+    hamiltonians={"h_x": X(0), "h_z": Z(0)},
+    coefficients={"h_x": {(0, 2): lambda t: 1 - t/2}, "h_z": {(0, 2): lambda t: t/2}},
+    dt=1,
+)
+_te_var_samp = AnalogEvolution(schedule=_sched_var_samp, initial_state=InitialState.UNIFORM)
+_readout_var_samp = [SamplingReadout(nshots=20)]
+    )");
+    py::dict p;
+    p["evolution_method"] = py::str("variational_exponential");
+    p["order"] = py::int_(1);
+    p["shots"] = py::int_(50);
+    p["warmups"] = py::int_(0);
+    EXPECT_NO_THROW(sim.execute_analog_evolution(py::globals()["_te_var_samp"], py::globals()["_readout_var_samp"], py::none(), p));
+}
+
 // GCOV_EXCL_BR_STOP

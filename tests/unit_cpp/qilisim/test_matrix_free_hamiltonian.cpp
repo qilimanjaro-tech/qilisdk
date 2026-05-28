@@ -560,4 +560,163 @@ TEST(MatrixFreeHamiltonian, UnsupportedPauliThrowsError) {
     EXPECT_ANY_THROW(h.add({1.0, 0.0}, MatrixFreeOperator("Q", 0)));
 }
 
+// --- PauliString construction and stream ---
+
+TEST(PauliString, YConstructorSetsBothMasks) {
+    PauliString ps(1, 'Y', 0);
+    EXPECT_TRUE(ps.x_mask[0]);
+    EXPECT_TRUE(ps.z_mask[0]);
+}
+
+TEST(PauliString, VectorConstructorSetsCorrectMasks) {
+    std::vector<MatrixFreeOperator> ops = {MatrixFreeOperator("X", 0), MatrixFreeOperator("Z", 1)};
+    PauliString ps(2, ops);
+    EXPECT_TRUE(ps.x_mask[0]);
+    EXPECT_FALSE(ps.z_mask[0]);
+    EXPECT_FALSE(ps.x_mask[1]);
+    EXPECT_TRUE(ps.z_mask[1]);
+}
+
+TEST(PauliString, StreamOutputContainsY) {
+    PauliString ps(1, 'Y', 0);
+    std::ostringstream oss;
+    oss << ps;
+    EXPECT_NE(oss.str().find("Y(0)"), std::string::npos);
+}
+
+TEST(PauliString, StreamOutputIdentityPrintsI) {
+    PauliString ps(2);  // all zeros = identity
+    std::ostringstream oss;
+    oss << ps;
+    EXPECT_EQ(oss.str(), "I");
+}
+
+// --- MatrixFreeHamiltonian missing methods ---
+
+TEST(MatrixFreeHamiltonian, AddWithPauliString) {
+    MatrixFreeHamiltonian h(1);
+    PauliString ps(1, 'Z', 0);
+    h.add(std::complex<double>(2.0, 0.0), ps);
+    MatrixFreeHamiltonian ref(1);
+    ref.add({2.0, 0.0}, MatrixFreeOperator("Z", 0));
+    EXPECT_TRUE(h == ref);
+}
+
+TEST(MatrixFreeHamiltonian, SizeReturnsTermCount) {
+    MatrixFreeHamiltonian h(1);
+    EXPECT_EQ(h.size(), 0u);
+    h.add({1.0, 0.0}, MatrixFreeOperator("Z", 0));
+    EXPECT_EQ(h.size(), 1u);
+    h.add({1.0, 0.0}, MatrixFreeOperator("X", 0));
+    EXPECT_EQ(h.size(), 2u);
+}
+
+TEST(MatrixFreeHamiltonian, Addition) {
+    MatrixFreeHamiltonian h1(1), h2(1);
+    h1.add({1.0, 0.0}, MatrixFreeOperator("Z", 0));
+    h2.add({2.0, 0.0}, MatrixFreeOperator("X", 0));
+    MatrixFreeHamiltonian sum = h1 + h2;
+    EXPECT_EQ(sum.size(), 2u);
+    MatrixFreeHamiltonian ref(1);
+    ref.add({1.0, 0.0}, MatrixFreeOperator("Z", 0));
+    ref.add({2.0, 0.0}, MatrixFreeOperator("X", 0));
+    EXPECT_TRUE(sum == ref);
+}
+
+TEST(MatrixFreeHamiltonian, Subtraction) {
+    MatrixFreeHamiltonian h1(1), h2(1);
+    h1.add({3.0, 0.0}, MatrixFreeOperator("Z", 0));
+    h2.add({1.0, 0.0}, MatrixFreeOperator("Z", 0));
+    MatrixFreeHamiltonian diff = h1 - h2;
+    MatrixFreeHamiltonian ref(1);
+    ref.add({2.0, 0.0}, MatrixFreeOperator("Z", 0));
+    EXPECT_TRUE(diff == ref);
+}
+
+TEST(MatrixFreeHamiltonian, HamiltonianMultiplicationXX_GivesIdentity) {
+    // X * X = I (with coefficient 1)
+    MatrixFreeHamiltonian H_X(1);
+    H_X.add({1.0, 0.0}, MatrixFreeOperator("X", 0));
+    MatrixFreeHamiltonian result = H_X * H_X;
+    MatrixFreeHamiltonian expected(1);
+    PauliString iden(1);  // identity: all masks zero
+    expected.add({1.0, 0.0}, iden);
+    EXPECT_TRUE(result == expected);
+}
+
+TEST(MatrixFreeHamiltonian, HamiltonianMultiplicationXZ_GivesMinusIY) {
+    // X * Z = -iY
+    MatrixFreeHamiltonian H_X(1), H_Z(1);
+    H_X.add({1.0, 0.0}, MatrixFreeOperator("X", 0));
+    H_Z.add({1.0, 0.0}, MatrixFreeOperator("Z", 0));
+    MatrixFreeHamiltonian result = H_X * H_Z;
+    // X*Z = -iY: coefficient = -i, PauliString = Y(0)
+    MatrixFreeHamiltonian expected(1);
+    expected.add({0.0, -1.0}, MatrixFreeOperator("Y", 0));
+    EXPECT_TRUE(result == expected);
+}
+
+TEST(MatrixFreeHamiltonian, LeftScalarMultiplication) {
+    MatrixFreeHamiltonian H(1);
+    H.add({2.0, 0.0}, MatrixFreeOperator("Z", 0));
+    std::complex<double> scalar{3.0, 0.0};
+    MatrixFreeHamiltonian result = scalar * H;
+    MatrixFreeHamiltonian expected(1);
+    expected.add({6.0, 0.0}, MatrixFreeOperator("Z", 0));
+    EXPECT_TRUE(result == expected);
+}
+
+TEST(MatrixFreeHamiltonian, PruneByThresholdRemovesSmallTerms) {
+    MatrixFreeHamiltonian H(1);
+    H.add({1.0, 0.0}, MatrixFreeOperator("Z", 0));
+    H.add({0.001, 0.0}, MatrixFreeOperator("X", 0));
+    H.prune(0.1, 10);
+    EXPECT_EQ(H.size(), 1u);
+}
+
+TEST(MatrixFreeHamiltonian, PruneByMaxTermsKeepsLargest) {
+    MatrixFreeHamiltonian H(1);
+    H.add({1.0, 0.0}, MatrixFreeOperator("Z", 0));
+    H.add({0.5, 0.0}, MatrixFreeOperator("X", 0));
+    H.prune(0.0, 1);
+    EXPECT_EQ(H.size(), 1u);
+}
+
+TEST(MatrixFreeHamiltonian, ConjugateNegatesImaginaryPart) {
+    MatrixFreeHamiltonian H(1);
+    H.add({1.0, 2.0}, MatrixFreeOperator("Z", 0));
+    MatrixFreeHamiltonian conj = H.conjugate();
+    for (const auto& [ps, coeff] : conj.get_operators()) {
+        EXPECT_NEAR(coeff.real(), 1.0, 1e-12);
+        EXPECT_NEAR(coeff.imag(), -2.0, 1e-12);
+    }
+}
+
+TEST(MatrixFreeHamiltonian, ExpectationValueXOnPlusState) {
+    // state = I|+> = |+>; <+|X|+> = 1
+    MatrixFreeHamiltonian state(1);
+    state.add({1.0, 0.0}, MatrixFreeOperator("I", 0));
+    MatrixFreeHamiltonian H_X(1);
+    H_X.add({1.0, 0.0}, MatrixFreeOperator("X", 0));
+    EXPECT_NEAR(state.expectation_value(H_X), 1.0, 1e-10);
+}
+
+TEST(MatrixFreeHamiltonian, ExpectationValueZOnPlusState) {
+    // state = I|+> = |+>; <+|Z|+> = 0
+    MatrixFreeHamiltonian state(1);
+    state.add({1.0, 0.0}, MatrixFreeOperator("I", 0));
+    MatrixFreeHamiltonian H_Z(1);
+    H_Z.add({1.0, 0.0}, MatrixFreeOperator("Z", 0));
+    EXPECT_NEAR(state.expectation_value(H_Z), 0.0, 1e-10);
+}
+
+TEST(MatrixFreeHamiltonian, ExpectationValueIdentityOnPlusState) {
+    // <+|I|+> = 1
+    MatrixFreeHamiltonian state(1);
+    state.add({1.0, 0.0}, MatrixFreeOperator("I", 0));
+    MatrixFreeHamiltonian H_I(1);
+    H_I.add({1.0, 0.0}, MatrixFreeOperator("I", 0));
+    EXPECT_NEAR(state.expectation_value(H_I), 1.0, 1e-10);
+}
+
 // GCOV_EXCL_BR_STOP

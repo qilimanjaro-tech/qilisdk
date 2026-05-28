@@ -834,6 +834,30 @@ def test_qtensor_observable_to_hamiltonian_wrong_nqubits_raises():
         backend._qtensor_observable_to_hamiltonian(obs, nqubits=1)
 
 
+def test_time_dependent_hamiltonian_cuda_initial_state_enum(monkeypatch):
+    from qilisdk.core.qtensor import InitialState
+
+    dummy_return = MagicMock()
+    dummy_return.final_state = MagicMock(return_value=np.array([1 / np.sqrt(2), 1 / np.sqrt(2)]))
+    dummy_evolve = MagicMock(return_value=dummy_return)
+    monkeypatch.setattr("qilisdk.backends.cuda_backend.evolve", dummy_evolve)
+    monkeypatch.setattr("qilisdk.backends.cuda_backend.cudaq.set_target", lambda target: None)
+    monkeypatch.setattr("qilisdk.backends.cuda_backend.State.from_data", MagicMock(return_value=None))
+
+    schedule = Schedule(
+        dt=1,
+        hamiltonians={"h": pauli_z(0)},
+        coefficients={"h": {(0, 10): lambda t: 1 - t / 10}},
+    )
+    backend = CudaBackend()
+    res = backend.execute(
+        AnalogEvolution(schedule=schedule, initial_state=InitialState.UNIFORM),
+        Readout().with_state_tomography(),
+    )
+    assert isinstance(res, FunctionalResult)
+    assert dummy_evolve.called
+
+
 def test_qtensor_initial_state_bra_converted_to_ket():
     # A bra should be converted to a ket (adjoint)
     bra = ket(0).adjoint()
