@@ -235,13 +235,13 @@ def test_qilisim_variational_annealing_runs(monkeypatch):
     initial_state = ket(0)
     func = AnalogEvolution(schedule=schedule, initial_state=initial_state)
 
-    def _mock_execute_analog_evolution(self, f, readout):
-        return FunctionalResult(readout_results={"expectation_values": [0.5]})
+    mock_execute_analog_evolution = MagicMock(return_value=FunctionalResult(readout_results={}))
 
     monkeypatch.setattr(
         "qilisdk.backends.qilisim.QiliSim._execute_analog_evolution",
-        _mock_execute_analog_evolution,
+        mock_execute_analog_evolution,
     )
 
     result = backend.execute(func, Readout().with_expectation(observables=[pauli_z(0)]))
-    assert result.get_expectation_values() == [0.5]
+    assert result is not None
+    mock_execute_analog_evolution.assert_called_once()

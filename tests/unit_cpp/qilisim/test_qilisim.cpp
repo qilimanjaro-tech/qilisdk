@@ -204,7 +204,7 @@ _c_intermediate.add(M(0))
 _c_intermediate.add(H(0))
 _c_intermediate.add(M(0))
 _samp_intermediate = DigitalPropagation(circuit=_c_intermediate)
-_solver_params = {"collapse_measurements": True}
+_solver_params = {"measurement_collapse": True}
 _readout_intermediate = [SamplingReadout(nshots=1000)]
     )");
     py::object result;
@@ -233,7 +233,7 @@ _c_intermediate.add(M(0))
 _c_intermediate.add(H(0))
 _c_intermediate.add(M(0))
 _samp_intermediate = DigitalPropagation(circuit=_c_intermediate)
-_solver_params = {"collapse_measurements": True}
+_solver_params = {"measurement_collapse": True}
 _readout_intermediate = [SamplingReadout(nshots=1000)]
     )");
     py::object result;
@@ -417,7 +417,7 @@ class _TEMatchingParam(AnalogEvolution):
     def __init__(self):
         object.__init__(self)
         self.schedule = _FakeScheduleWithParam()
-        self.initial_state = _rho_nm_match
+        self._initial_state = _rho_nm_match
         self.store_intermediate_results = False
 
 _te_nm_match = _TEMatchingParam()
@@ -456,7 +456,7 @@ class _TE_MM_MF(AnalogEvolution):
     def __init__(self):
         object.__init__(self)
         self.schedule = _FakeSched_MM_MF()
-        self.initial_state = _rho_mm_mf
+        self._initial_state = _rho_mm_mf
         self.store_intermediate_results = False
 
 _te_mm_mf = _TE_MM_MF()
@@ -492,7 +492,7 @@ class _TE_MM_Std(AnalogEvolution):
     def __init__(self):
         object.__init__(self)
         self.schedule = _FakeSched_MM_Std()
-        self.initial_state = _rho_mm_std
+        self._initial_state = _rho_mm_std
         self.store_intermediate_results = False
 
 _te_mm_std = _TE_MM_Std()

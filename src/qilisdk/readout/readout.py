@@ -143,6 +143,17 @@ class ExpectationReadout(ReadoutMethod):
         return self._nshots
 
     @property
+    def qtensor_observables(self) -> list[QTensor]:
+        """Observables as :class:`~qilisdk.core.QTensor` instances.
+
+        Returns the expanded versions if :meth:`expand_observables` has been called;
+        otherwise converts each observable using its natural qubit count.
+        """
+        if hasattr(self, "_qtensor_observables"):
+            return self._qtensor_observables
+        return [o if isinstance(o, QTensor) else o.to_qtensor() for o in self._observables]
+
+    @property
     def observables(self) -> list[Hamiltonian | QTensor]:
         """
         The observables whose expectation values are requested, in their original form as provided by the user.

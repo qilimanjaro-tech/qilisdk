@@ -561,9 +561,11 @@ SparseMatrix parse_initial_state(const py::object& initial_state, double atol, i
     py::object spm;
     if (py::isinstance(initial_state, InitialState)) {
         spm = initial_state.attr("as_qtensor")(nqubits).attr("data");
-
-    } else if (py::isinstance(initial_state, QTensor)) {
+    } else if (py::isinstance(initial_state, QTensor) || py::hasattr(initial_state, "data")) {
         spm = initial_state.attr("data");
+    } else {
+        std::string type_name = py::type::of(initial_state).attr("__name__").cast<std::string>();
+        throw py::value_error("Initial state type not recognized: " + type_name);
     }
     SparseMatrix rho = from_spmatrix(spm, atol);
     return rho;

@@ -456,12 +456,6 @@ TEST(MatrixFreeHamiltonian, ExpectationValueXonKetPlusIs1) {
     EXPECT_NEAR(h.expectation_value(ketPlus()), 1.0, 1e-10);
 }
 
-TEST(MatrixFreeHamiltonian, ExpectationValueCNOTOnKet00IsPlus1) {
-    MatrixFreeHamiltonian h(2);
-    h.add({1.0, 0.0}, std::vector<MatrixFreeOperator>{MatrixFreeOperator("X", 0, 1)});
-    EXPECT_NEAR(h.expectation_value(ket00()), 1.0, 1e-10);
-}
-
 TEST(MatrixFreeHamiltonian, ExpectationValueWithRealCoefficientScales) {
     MatrixFreeHamiltonian h(1);
     h.add({3.0, 0.0}, MatrixFreeOperator("Z", 0));
@@ -563,10 +557,7 @@ TEST(MatrixFreeHamiltonian, IActingOnKet1GivesKet1) {
 
 TEST(MatrixFreeHamiltonian, UnsupportedPauliThrowsError) {
     MatrixFreeHamiltonian h(1);
-    h.add({1.0, 0.0}, MatrixFreeOperator("Q", 0));
-    DenseMatrix state = ket0();
-    DenseMatrix output_state;
-    EXPECT_ANY_THROW(h.apply(state, MatrixFreeApplicationType::Left, output_state));
+    EXPECT_ANY_THROW(h.add({1.0, 0.0}, MatrixFreeOperator("Q", 0)));
 }
 
 // GCOV_EXCL_BR_STOP

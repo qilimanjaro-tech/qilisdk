@@ -379,7 +379,7 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
                 std::vector<DenseMatrix> intermediate_rhos;
                 if (config.get_time_evolution_method() == "integrate_rk4_matrix_free") {
                     // Parse the Hamiltonians
-                    int n_qubits = functional.attr("schedule").attr("nqubits").cast<int>();
+                    int n_qubits = functional.attr("nqubits").cast<int>();
                     std::vector<MatrixFreeHamiltonian> hamiltonians = parse_hamiltonians_matrix_free(n_qubits, hamiltonians_values);
                     if (hamiltonians.size() != parameters_list.size()) {
                         throw py::value_error("Number of Hamiltonians does not match number of parameter lists");

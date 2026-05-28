@@ -61,7 +61,7 @@ class PauliString {
                 } else if (op.get_name() == "Y") {
                     x_mask.set(target);
                     z_mask.set(target);
-                } else {
+                } else if (op.get_name() != "I") {
                     throw std::invalid_argument("Unsupported operator name: " + op.get_name());
                 }
             }
