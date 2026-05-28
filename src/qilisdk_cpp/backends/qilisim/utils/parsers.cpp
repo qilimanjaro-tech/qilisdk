@@ -44,7 +44,14 @@ py::object construct_result_object(const ExponentialAnsatz& state, const py::obj
             SampleSet samples = state.draw_samples();
             int n_shots = ro.attr("nshots").cast<int>();
             bool expand_samples = ro.attr("expand_samples").cast<bool>();
-            std::map<std::string, int> counts = process_samples(samples, n_qubits, n_shots, expand_samples);
+            std::map<std::string, int> counts;
+            for (const auto& config : samples.configs) {
+                std::string bitstring = "";
+                for (size_t i = 0; i < n_qubits; ++i) {
+                    bitstring = (config[i] ? "1" : "0") + bitstring;
+                }
+                counts[bitstring]++;
+            }
             py::dict samples_py;
             for (const auto& pair : counts) {
                 samples_py[py::cast(pair.first)] = py::cast(pair.second);
