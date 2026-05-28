@@ -53,9 +53,6 @@ void QiliSimConfig::validate() const {
     if (adaptive_tol <= 0) {
         throw py::value_error("Adaptive tolerance must be positive.");
     }
-    if (max_terms <= 0) {
-        throw py::value_error("Max terms must be positive.");
-    }
     if (order <= 0) {
         throw py::value_error("Order must be positive.");
     }

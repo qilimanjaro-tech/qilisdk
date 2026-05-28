@@ -24,8 +24,8 @@
 #include "digital/sampling.h"
 #include "noise/noise_model.h"
 #include "qilisim.h"
-#include "representations/matrix_free_hamiltonian.h"
 #include "representations/exponential_ansatz.h"
+#include "representations/matrix_free_hamiltonian.h"
 #include "utils/parsers.h"
 #include "utils/random.h"
 #include "utils/sample.h"
@@ -182,7 +182,6 @@ py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, co
 
     // A scalable method, so we should never construct any matrix or state
     if (config.get_time_evolution_method() == "variational_exponential") {
-
         // Ensure that the initial state is a plus state (a InitialState)
         if (!py::isinstance(initial_state, InitialState) || initial_state.attr("name").cast<std::string>() != "UNIFORM") {
             throw py::value_error("Initial state must be a InitialState.UNIFORM instance for the variational annealing method.");
@@ -212,12 +211,11 @@ py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, co
         time_evolution_variational_exponential(rho_t, hamiltonians, parameters_list, step_list, config);
 
         // Construct the result object
-        py::object result = construct_result_object(rho_t, readout, n_qubits, config);
+        py::object result = construct_result_object(rho_t, readout, n_qubits);
         return FunctionalResult("readout_results"_a = result);
 
-    // In all of these methods the state is fully stored
+        // In all of these methods the state is fully stored
     } else {
-
         // Common between methods
         SparseMatrix rho_0 = parse_initial_state(initial_state, config.get_atol(), n_qubits);
         int nqubits = static_cast<int>(std::log2(rho_0.rows()));
@@ -268,9 +266,7 @@ py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, co
             return FunctionalResult("readout_results"_a = result, "intermediate_results"_a = inter_results);
         }
         return FunctionalResult("readout_results"_a = result);
-
     }
-
 }
 
 // The public execute_sampling

@@ -22,7 +22,7 @@
 
 // GCOV_EXCL_BR_START
 
-ExponentialAnsatz::ExponentialAnsatz(int num_qubits, int order, int shots, int warmups) : num_qubits(num_qubits), order(order), shots(shots), warmups(warmups) {
+ExponentialAnsatz::ExponentialAnsatz(int num_qubits, int order, int shots, int warmups) {
     /*
     Construct an ExponentialAnsatz with the given number of qubits and maximum number of terms.
 
@@ -38,6 +38,12 @@ ExponentialAnsatz::ExponentialAnsatz(int num_qubits, int order, int shots, int w
     Returns:
         ExponentialAnsatz: The constructed ExponentialAnsatz object.
     */
+
+    // Set the internals
+    this->num_qubits = num_qubits;
+    this->order = order;
+    this->shots = shots;
+    this->warmups = warmups;
 
     // Add single body terms
     if (order >= 1) {
@@ -91,7 +97,6 @@ ExponentialAnsatz::ExponentialAnsatz(int num_qubits, int order, int shots, int w
             }
         }
     }
-
 }
 
 ExponentialAnsatz ExponentialAnsatz::zeroed() const {
@@ -110,7 +115,8 @@ std::vector<Bitset> ExponentialAnsatz::build_z_bits() const {
     for (int k = 0; k < p; ++k) {
         const auto& ps = terms_vec[k].first;
         for (int i = 0; i < num_qubits; ++i) {
-            if (ps.z_mask[i]) z_bits[k].set(num_qubits - 1 - i);
+            if (ps.z_mask[i])
+                z_bits[k].set(num_qubits - 1 - i);
         }
     }
     return z_bits;
@@ -166,7 +172,8 @@ SampleSet ExponentialAnsatz::draw_samples(int N_s, int n_warmup) const {
 #endif
     std::random_device rd;
     std::vector<std::mt19937> rngs(nthreads);
-    for (auto& r : rngs) r.seed(rd());
+    for (auto& r : rngs)
+        r.seed(rd());
 
     SampleSet result;
     result.configs.resize(N_s, Bitset());
@@ -174,7 +181,7 @@ SampleSet ExponentialAnsatz::draw_samples(int N_s, int n_warmup) const {
 
     // Each thread runs one long chain for its share of the samples.
 #if defined(_OPENMP)
-    #pragma omp parallel
+#pragma omp parallel
 #endif
     {
 #if defined(_OPENMP)
@@ -194,7 +201,8 @@ SampleSet ExponentialAnsatz::draw_samples(int N_s, int n_warmup) const {
         // Start from a random bitstring.
         Bitset x;
         for (int i = 0; i < num_qubits; ++i) {
-            if (rand01(rng) < 0.5) x.set(i);
+            if (rand01(rng) < 0.5)
+                x.set(i);
         }
 
         // Per-term parity and weighted contribution: contrib[k] = 2*coeff_k * (-1)^parity_k
@@ -211,10 +219,11 @@ SampleSet ExponentialAnsatz::draw_samples(int N_s, int n_warmup) const {
         // Calculate the change in log-probability if we flip a given qubit
         auto compute_delta = [&](int qubit) -> double {
             double delta = 0.0;
-            for (int k : qubit_to_terms[qubit]) delta -= 2.0 * contrib[k];
+            for (int k : qubit_to_terms[qubit])
+                delta -= 2.0 * contrib[k];
             return delta;
         };
-        
+
         // Accept a proposed flip of a given qubit, updating the state, parity, contrib
         auto accept_flip = [&](int qubit) {
             x.flip(num_qubits - 1 - qubit);
@@ -265,7 +274,7 @@ Eigen::VectorXcd ExponentialAnsatz::local_energy(const SampleSet& samples, const
     Returns:
         Eigen::VectorXcd: A vector containing the local energy for each sample.
     */
-    
+
     // Get the operators and coefficients from the ansatz
     const auto& ops = terms.get_operators();
     const int p = static_cast<int>(ops.size());
@@ -274,7 +283,7 @@ Eigen::VectorXcd ExponentialAnsatz::local_energy(const SampleSet& samples, const
     const int N_s = static_cast<int>(samples.configs.size());
 
     // Precompute the effect of each Hamiltonian term on the samples
-    static const std::complex<double> i_powers[4] = {{1,0},{0,1},{-1,0},{0,-1}};
+    static const std::complex<double> i_powers[4] = {{1, 0}, {0, 1}, {-1, 0}, {0, -1}};
     struct HTerm {
         std::complex<double> base_phase;
         Bitset flip_mask;
@@ -288,9 +297,15 @@ Eigen::VectorXcd ExponentialAnsatz::local_energy(const SampleSet& samples, const
         Bitset flip_mask, sign_mask;
         int n_y = 0;
         for (int i = 0; i < num_qubits; ++i) {
-            if ( ps.x_mask[i] && !ps.z_mask[i]) { flip_mask.flip(num_qubits - 1 - i); }
-            else if (!ps.x_mask[i] &&  ps.z_mask[i]) { sign_mask.set(num_qubits - 1 - i); }
-            else if ( ps.x_mask[i] &&  ps.z_mask[i]) { flip_mask.flip(num_qubits - 1 - i); sign_mask.set(num_qubits - 1 - i); ++n_y; }
+            if (ps.x_mask[i] && !ps.z_mask[i]) {
+                flip_mask.flip(num_qubits - 1 - i);
+            } else if (!ps.x_mask[i] && ps.z_mask[i]) {
+                sign_mask.set(num_qubits - 1 - i);
+            } else if (ps.x_mask[i] && ps.z_mask[i]) {
+                flip_mask.flip(num_qubits - 1 - i);
+                sign_mask.set(num_qubits - 1 - i);
+                ++n_y;
+            }
         }
         std::complex<double> base_phase = coeff * i_powers[n_y & 3];
         std::vector<bool> flips(p);
@@ -303,7 +318,7 @@ Eigen::VectorXcd ExponentialAnsatz::local_energy(const SampleSet& samples, const
     // Compute the local energy for each sample using the precomputed Hamiltonian term effects
     Eigen::VectorXcd El(N_s);
 #if defined(_OPENMP)
-    #pragma omp parallel for
+#pragma omp parallel for
 #endif
     for (int s = 0; s < N_s; ++s) {
         const Bitset& x = samples.configs[s];
@@ -427,11 +442,11 @@ DenseMatrix ExponentialAnsatz::to_dense() const {
     */
     int dim = 1 << num_qubits;
     DenseMatrix total_op = DenseMatrix::Zero(dim, dim);
-    
+
     // Build Pauli ops
     DenseMatrix pauli_x(2, 2), pauli_y(2, 2), pauli_z(2, 2);
     pauli_x << std::complex<double>(0), std::complex<double>(1), std::complex<double>(1), std::complex<double>(0);
-    pauli_y << std::complex<double>(0), std::complex<double>(0,-1), std::complex<double>(0,1), std::complex<double>(0);
+    pauli_y << std::complex<double>(0), std::complex<double>(0, -1), std::complex<double>(0, 1), std::complex<double>(0);
     pauli_z << std::complex<double>(1), std::complex<double>(0), std::complex<double>(0), std::complex<double>(-1);
 
     for (const auto& [ps, coeff] : terms.get_operators()) {
@@ -439,9 +454,12 @@ DenseMatrix ExponentialAnsatz::to_dense() const {
         op(0, 0) = 1.0;
         for (int i = 0; i < num_qubits; ++i) {
             DenseMatrix single = DenseMatrix::Identity(2, 2);
-            if      (ps.x_mask[i] && !ps.z_mask[i]) single = pauli_x;
-            else if (!ps.x_mask[i] && ps.z_mask[i]) single = pauli_z;
-            else if (ps.x_mask[i] &&  ps.z_mask[i]) single = pauli_y;
+            if (ps.x_mask[i] && !ps.z_mask[i])
+                single = pauli_x;
+            else if (!ps.x_mask[i] && ps.z_mask[i])
+                single = pauli_z;
+            else if (ps.x_mask[i] && ps.z_mask[i])
+                single = pauli_y;
             op = Eigen::kroneckerProduct(op, single).eval();
         }
         total_op += coeff * op;

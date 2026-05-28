@@ -123,11 +123,6 @@ class AnalogMethod(BaseSimulatorConfig):
         gt=0,
         description="Tolerance for the adaptive integrator method when `evolution_method='integrate_rk45_matrix_free'`.",
     )
-    max_terms: int = Field(
-        default=1000,
-        gt=0,
-        description="Maximum number of terms in the variational ansatz for the approximate method when `evolution_method='variational_exponential'`.",
-    )
     shots: int = Field(
         default=1000,
         gt=0,
@@ -151,7 +146,6 @@ class AnalogMethod(BaseSimulatorConfig):
             "arnoldi_dim": self.arnoldi_dim,
             "num_arnoldi_substeps": self.num_arnoldi_substeps,
             "adaptive_tol": self.adaptive_tol,
-            "max_terms": self.max_terms,
             "shots": self.shots,
             "warmups": self.warmups,
             "order": self.order,

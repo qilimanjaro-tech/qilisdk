@@ -13,8 +13,8 @@
 // limitations under the License.
 #pragma once
 
-#include "matrix_free_operator.h"
 #include <bitset>
+#include "matrix_free_operator.h"
 
 // GCOV_EXCL_BR_START
 
@@ -22,9 +22,7 @@ typedef std::bitset<256> Bitset;
 
 // moving now to use a bitmask for x and z rather than storing operators and strings
 class PauliString {
-
-public:
-
+   public:
     // neither means i, x means x, z means z, both means y
     Bitset x_mask;
     Bitset z_mask;
@@ -33,7 +31,7 @@ public:
     struct HashFunction {
         std::size_t operator()(const PauliString& ps) const {
             std::size_t hash = 0;
-            for (size_t i = 0; i < ps.nqubits; ++i) {
+            for (size_t i = 0; i < size_t(ps.nqubits); ++i) {
                 hash ^= std::hash<bool>()(ps.x_mask[i]) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
                 hash ^= std::hash<bool>()(ps.z_mask[i]) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
             }
@@ -41,7 +39,7 @@ public:
         }
     };
 
-    PauliString() {throw std::runtime_error("Default constructor for PauliString is not allowed. Please specify the number of qubits.");}
+    PauliString() { throw std::runtime_error("Default constructor for PauliString is not allowed. Please specify the number of qubits."); }
     PauliString(int num_qubits) : x_mask(), z_mask(), nqubits(num_qubits) {}
     PauliString(int num_qubits, char pauli, int target_qubit) : x_mask(), z_mask(), nqubits(num_qubits) {
         if (pauli == 'X') {
@@ -53,14 +51,26 @@ public:
             z_mask.set(target_qubit);
         }
     }
-
-    size_t size() const {
-        return (x_mask | z_mask).count();
+    PauliString(int num_qubits, const std::vector<MatrixFreeOperator>& ops) : x_mask(), z_mask(), nqubits(num_qubits) {
+        for (const auto& op : ops) {
+            for (int target : op.get_target_qubits()) {
+                if (op.get_name() == "X") {
+                    x_mask.set(target);
+                } else if (op.get_name() == "Z") {
+                    z_mask.set(target);
+                } else if (op.get_name() == "Y") {
+                    x_mask.set(target);
+                    z_mask.set(target);
+                } else {
+                    throw std::invalid_argument("Unsupported operator name: " + op.get_name());
+                }
+            }
+        }
     }
 
-    bool operator==(const PauliString& other) const {
-        return x_mask == other.x_mask && z_mask == other.z_mask;
-    }
+    size_t size() const { return (x_mask | z_mask).count(); }
+
+    bool operator==(const PauliString& other) const { return x_mask == other.x_mask && z_mask == other.z_mask; }
 
     friend std::ostream& operator<<(std::ostream& os, const PauliString& ps) {
         bool printed_something = false;
@@ -81,7 +91,6 @@ public:
         }
         return os;
     }
-                
 };
 
 class MatrixFreeHamiltonian {
@@ -94,23 +103,10 @@ class MatrixFreeHamiltonian {
    public:
     MatrixFreeHamiltonian(int nqubits) : nqubits(nqubits) {}
     MatrixFreeHamiltonian(int nqubits, double val) : nqubits(nqubits) { operators[PauliString(nqubits)] = std::complex<double>(val, 0.0); }
-    MatrixFreeHamiltonian(int nqubits, const PauliString& op) : nqubits(nqubits) { operators[op] = 1.0; }
-    MatrixFreeHamiltonian(int nqubits, const MatrixFreeOperator& op) : nqubits(nqubits) {
-        PauliString ps(nqubits);
-        for (int target : op.get_target_qubits()) {
-            if (op.get_name() == "X") {
-                ps.x_mask.flip(target);
-            } else if (op.get_name() == "Z") {
-                ps.z_mask.flip(target);
-            } else if (op.get_name() == "Y") {
-                ps.x_mask.flip(target);
-                ps.z_mask.flip(target);
-            }
-        }
-        operators[ps] = 1.0;
-    }
-    MatrixFreeHamiltonian(int nqubits, const PauliString& op, const std::complex<double>& coeff) : nqubits(nqubits) { operators[op] = coeff; }
+    MatrixFreeHamiltonian(int nqubits, const MatrixFreeOperator& op, std::complex<double> coeff = 1.0);
+    MatrixFreeHamiltonian(int nqubits, const PauliString& op, std::complex<double> coeff = 1.0) : nqubits(nqubits) { operators[op] = coeff; }
     MatrixFreeHamiltonian(int nqubits, const std::unordered_map<PauliString, std::complex<double>, PauliString::HashFunction>& ops) : nqubits(nqubits), operators(ops) {}
+
     void apply(const DenseMatrix& input_state, MatrixFreeApplicationType application_type, DenseMatrix& output_state) const;
     double expectation_value(const DenseMatrix& state) const;
     double expectation_value(const MatrixFreeHamiltonian& other) const;
@@ -125,6 +121,7 @@ class MatrixFreeHamiltonian {
     bool operator==(const MatrixFreeHamiltonian& other) const;
     void add(const std::complex<double>& coeff, const PauliString& op);
     void add(const std::complex<double>& coeff, const std::vector<MatrixFreeOperator>& ops);
+    void add(const std::complex<double>& coeff, const MatrixFreeOperator& op);
     friend std::ostream& operator<<(std::ostream& os, const MatrixFreeHamiltonian& hamiltonian);
     std::unordered_map<PauliString, std::complex<double>, PauliString::HashFunction> get_operators() const { return operators; }
     void prune(double threshold, int max_terms);
@@ -132,6 +129,5 @@ class MatrixFreeHamiltonian {
     MatrixFreeHamiltonian conjugate() const;
     size_t size() const { return operators.size(); }
 };
-
 
 // GCOV_EXCL_BR_STOP

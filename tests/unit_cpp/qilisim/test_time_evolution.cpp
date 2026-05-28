@@ -67,7 +67,7 @@ SparseMatrix amp_damp_jump() {
 
 MatrixFreeHamiltonian make_matrix_free_H(std::complex<double> coeff, int target_qubit, std::string name) {
     MatrixFreeOperator op(name, {}, {target_qubit}, DenseMatrix());
-    return MatrixFreeHamiltonian({{coeff, {op}}});
+    return MatrixFreeHamiltonian(1, op, coeff);
 }
 
 struct TimeEvolutionOutputs {

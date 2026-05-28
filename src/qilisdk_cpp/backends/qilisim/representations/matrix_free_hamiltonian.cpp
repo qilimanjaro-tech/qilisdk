@@ -22,6 +22,11 @@
 
 // GCOV_EXCL_BR_START
 
+MatrixFreeHamiltonian::MatrixFreeHamiltonian(int nqubits, const MatrixFreeOperator& op, std::complex<double> coeff) : nqubits(nqubits) {
+    PauliString ps(nqubits, {op});
+    operators[ps] = coeff;
+}
+
 void MatrixFreeHamiltonian::apply(const DenseMatrix& input_state, MatrixFreeApplicationType application_type, DenseMatrix& output_state) const {
     /*
     Applies the matrix-free Hamiltonian to the given input state and writes the
@@ -163,7 +168,6 @@ double MatrixFreeHamiltonian::expectation_value(const DenseMatrix& state) const 
     double exp_val = std::real(dot(state, m_temp_state));
 
     return exp_val;
-
 }
 
 double MatrixFreeHamiltonian::expectation_value(const MatrixFreeHamiltonian& other) const {
@@ -295,20 +299,12 @@ void MatrixFreeHamiltonian::add(const std::complex<double>& coeff, const std::ve
         coeff: The complex coefficient for the term being added.
         ops: The vector of MatrixFreeOperator that defines the term being added to the Hamiltonian.
     */
-    PauliString ps(get_nqubits());  // start with identity
-    for (const auto& op : ops) {
-        for (int target : op.get_target_qubits()) {
-            if (op.get_name() == "X") {
-                ps.x_mask.flip(target);
-            } else if (op.get_name() == "Z") {
-                ps.z_mask.flip(target);
-            } else if (op.get_name() == "Y") {
-                ps.x_mask.flip(target);
-                ps.z_mask.flip(target);
-            }
-        }
-    }
+    PauliString ps(get_nqubits(), ops);  // start with identity
     operators[ps] += coeff;
+}
+
+void MatrixFreeHamiltonian::add(const std::complex<double>& coeff, const MatrixFreeOperator& op) {
+    add(coeff, std::vector<MatrixFreeOperator>{op});
 }
 
 bool MatrixFreeHamiltonian::operator==(const MatrixFreeHamiltonian& other) const {
@@ -344,26 +340,24 @@ std::pair<PauliString, std::complex<double>> _multiply_pauli_strings(const Pauli
 
     // Phase contribution lookup table indexed by [ax][az][bx][bz]
     // Derived from: I=00, X=10, Z=01, Y=11
-    static const int phase_lut[2][2][2][2] = {
-        // ax=0
-        {
-            // az=0 (I)
-            {{ 0,  0},   // bx=0: I*I=+1(0), I*Z=+1(0)
-             { 0,  0}},  // bx=1: I*X=+1(0), I*Y=+1(0)
-            // az=1 (Z)
-            {{ 0,  0},   // bx=0: Z*I=+1(0), Z*Z=+1(0)
-             {-1,  1}}   // bx=1: Z*X=-i(-1), Z*Y=+i(+1)
-        },
-        // ax=1
-        {
-            // az=0 (X)
-            {{ 0,  1},   // bx=0: X*I=+1(0), X*Z=+i(+1)
-             { 0, -1}},  // bx=1: X*X=+1(0), X*Y=-i(-1)
-            // az=1 (Y)
-            {{ 0, -1},   // bx=0: Y*I=+1(0), Y*Z=-i(-1)
-             { 1,  0}}   // bx=1: Y*X=+i(+1), Y*Y=+1(0)
-        }
-    };
+    static const int phase_lut[2][2][2][2] = {// ax=0
+                                              {
+                                                  // az=0 (I)
+                                                  {{0, 0},   // bx=0: I*I=+1(0), I*Z=+1(0)
+                                                   {0, 0}},  // bx=1: I*X=+1(0), I*Y=+1(0)
+                                                             // az=1 (Z)
+                                                  {{0, 0},   // bx=0: Z*I=+1(0), Z*Z=+1(0)
+                                                   {-1, 1}}  // bx=1: Z*X=-i(-1), Z*Y=+i(+1)
+                                              },
+                                              // ax=1
+                                              {
+                                                  // az=0 (X)
+                                                  {{0, 1},    // bx=0: X*I=+1(0), X*Z=+i(+1)
+                                                   {0, -1}},  // bx=1: X*X=+1(0), X*Y=-i(-1)
+                                                              // az=1 (Y)
+                                                  {{0, -1},   // bx=0: Y*I=+1(0), Y*Z=-i(-1)
+                                                   {1, 0}}    // bx=1: Y*X=+i(+1), Y*Y=+1(0)
+                                              }};
 
     result.x_mask = a.x_mask ^ b.x_mask;
     result.z_mask = a.z_mask ^ b.z_mask;
@@ -377,59 +371,10 @@ std::pair<PauliString, std::complex<double>> _multiply_pauli_strings(const Pauli
 
     phase_exp = ((phase_exp % 4) + 4) % 4;
 
-    static const std::complex<double> phase_table[4] = {
-        {1.0, 0.0},
-        {0.0, 1.0},
-        {-1.0, 0.0},
-        {0.0, -1.0}
-    };
+    static const std::complex<double> phase_table[4] = {{1.0, 0.0}, {0.0, 1.0}, {-1.0, 0.0}, {0.0, -1.0}};
 
     return {result, phase_table[phase_exp]};
 }
-
-// std::pair<PauliString, std::complex<double>> _multiply_pauli_strings(const PauliString& a, const PauliString& b) {
-//     const size_t n = a.x_mask.size();
-//     PauliString result(n);
-
-//     // Pack vector<bool> into uint64_t so XOR and phase use SIMD-friendly bitwise ops
-//     // instead of a per-qubit LUT loop. Assumes n <= 64 (same implicit limit as apply()).
-//     uint64_t ax = 0, az = 0, bx = 0, bz = 0;
-//     for (size_t q = 0; q < n; ++q) {
-//         ax |= (uint64_t)a.x_mask[q] << q;
-//         az |= (uint64_t)a.z_mask[q] << q;
-//         bx |= (uint64_t)b.x_mask[q] << q;
-//         bz |= (uint64_t)b.z_mask[q] << q;
-//     }
-
-//     const uint64_t rx = ax ^ bx;
-//     const uint64_t rz = az ^ bz;
-
-//     // Phase contributions derived from phase_lut (I=00, X=10, Z=01, Y=11):
-//     // +1 per qubit: Z*Y, X*Z, Y*X
-//     // -1 per qubit: Z*X, X*Y, Y*Z
-//     // High bits of ~ax/~az/~bx/~bz are harmless: they're always masked out by the
-//     // corresponding non-negated factor whose high bits are zero.
-//     const uint64_t plus_bits  = (~ax & az & bx & bz)   // Z*Y
-//                               | ( ax & ~az & ~bx & bz)  // X*Z
-//                               | ( ax &  az &  bx & ~bz); // Y*X
-//     const uint64_t minus_bits = (~ax &  az &  bx & ~bz) // Z*X
-//                               | ( ax & ~az &  bx &  bz)  // X*Y
-//                               | ( ax &  az & ~bx &  bz); // Y*Z
-
-//     int phase_exp = __builtin_popcountll(plus_bits) - __builtin_popcountll(minus_bits);
-//     phase_exp = ((phase_exp % 4) + 4) % 4;
-
-//     for (size_t q = 0; q < n; ++q) {
-//         result.x_mask[q] = (rx >> q) & 1;
-//         result.z_mask[q] = (rz >> q) & 1;
-//     }
-
-//     static const std::complex<double> phase_table[4] = {
-//         {1.0, 0.0}, {0.0, 1.0}, {-1.0, 0.0}, {0.0, -1.0}
-//     };
-
-//     return {result, phase_table[phase_exp]};
-// }
 
 MatrixFreeHamiltonian MatrixFreeHamiltonian::operator*(const MatrixFreeHamiltonian& other) const {
     /*
@@ -450,7 +395,7 @@ MatrixFreeHamiltonian MatrixFreeHamiltonian::operator*(const MatrixFreeHamiltoni
     const int nthreads = omp_get_max_threads();
     std::vector<std::unordered_map<PauliString, std::complex<double>, PauliString::HashFunction>> local(nthreads);
 
-    #pragma omp parallel for schedule(static)
+#pragma omp parallel for schedule(static)
     for (int i = 0; i < nops; ++i) {
         const int tid = omp_get_thread_num();
         const PauliString& ps_a = ops_vec[i].first;
@@ -520,9 +465,7 @@ void MatrixFreeHamiltonian::prune(double threshold, int max_terms) {
 
     // Create a vector of terms and sort by absolute value of coefficients
     std::vector<std::pair<PauliString, std::complex<double>>> term_vector(operators.begin(), operators.end());
-    std::sort(term_vector.begin(), term_vector.end(), [](const auto& a, const auto& b) {
-        return std::abs(a.second) > std::abs(b.second);
-    });
+    std::sort(term_vector.begin(), term_vector.end(), [](const auto& a, const auto& b) { return std::abs(a.second) > std::abs(b.second); });
     if (term_vector.size() > static_cast<size_t>(max_terms)) {
         term_vector.resize(max_terms);
     }
@@ -534,7 +477,6 @@ void MatrixFreeHamiltonian::prune(double threshold, int max_terms) {
             operators[ps] = coeff;
         }
     }
-
 }
 
 MatrixFreeHamiltonian MatrixFreeHamiltonian::conjugate() const {

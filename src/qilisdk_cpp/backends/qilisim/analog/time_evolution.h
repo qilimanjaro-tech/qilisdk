@@ -18,8 +18,8 @@
 #include "../../../libs/eigen.h"
 #include "../config/qilisim_config.h"
 #include "../noise/noise_model.h"
-#include "../representations/matrix_free_hamiltonian.h"
 #include "../representations/exponential_ansatz.h"
+#include "../representations/matrix_free_hamiltonian.h"
 
 // GCOV_EXCL_BR_START
 

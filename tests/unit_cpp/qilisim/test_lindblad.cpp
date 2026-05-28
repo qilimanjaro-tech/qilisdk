@@ -55,7 +55,7 @@ DenseMatrix pure_plus() {
 
 MatrixFreeHamiltonian make_matrix_free_H(std::complex<double> coeff, int qubit, const std::string& pauli) {
     MatrixFreeOperator op(pauli, {}, {qubit}, DenseMatrix());
-    return MatrixFreeHamiltonian({{coeff, {op}}});
+    return MatrixFreeHamiltonian(1, op, coeff);
 }
 
 SparseMatrix amp_damp_jump() {

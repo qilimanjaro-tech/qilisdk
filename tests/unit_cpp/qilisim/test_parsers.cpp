@@ -22,7 +22,7 @@ namespace py = pybind11;
 
 TEST(ParseHamiltonians, MatrixFreeEmptyThrows) {
     py::list empty;
-    EXPECT_ANY_THROW(parse_hamiltonians_matrix_free(empty));
+    EXPECT_ANY_THROW(parse_hamiltonians_matrix_free(1, empty));
 }
 
 TEST(ParseHamiltonians, MatrixFreeSingleTerm) {
@@ -37,8 +37,8 @@ TEST(ParseHamiltonians, MatrixFreeSingleTerm) {
     py::list Hs;
     Hs.append(fake_H);
 
-    std::vector<MatrixFreeHamiltonian> result = parse_hamiltonians_matrix_free(Hs);
-    std::vector<MatrixFreeHamiltonian> expected = {MatrixFreeHamiltonian(MatrixFreeOperator("X", 0))};
+    std::vector<MatrixFreeHamiltonian> result = parse_hamiltonians_matrix_free(1, Hs);
+    std::vector<MatrixFreeHamiltonian> expected = {MatrixFreeHamiltonian(1, MatrixFreeOperator("X", 0))};
     EXPECT_EQ(result.size(), 1);
     EXPECT_EQ(result[0], expected[0]);
 }
@@ -804,7 +804,7 @@ TEST(ParseObservablesMatrixFree, HamiltonianObservable) {
     )");
 
     py::object fake_obs = py::globals()["fake_obs_hamiltonian"];
-    auto result = parse_observables_matrix_free(fake_obs);
+    auto result = parse_observables_matrix_free(1, fake_obs);
 
     ASSERT_EQ(result.size(), 1u);
 }
@@ -817,10 +817,10 @@ TEST(ParseObservablesMatrixFree, PauliOperatorObservable) {
     )");
 
     py::object fake_obs = py::globals()["fake_obs_pauli"];
-    auto result = parse_observables_matrix_free(fake_obs);
+    auto result = parse_observables_matrix_free(1, fake_obs);
 
     ASSERT_EQ(result.size(), 1u);
-    EXPECT_EQ(result[0], MatrixFreeHamiltonian(MatrixFreeOperator("Z", 1)));
+    EXPECT_EQ(result[0], MatrixFreeHamiltonian(1, MatrixFreeOperator("Z", 1)));
 }
 
 TEST(ParseObservablesMatrixFree, MultipleMixedObservables) {
@@ -831,7 +831,7 @@ TEST(ParseObservablesMatrixFree, MultipleMixedObservables) {
     )");
 
     py::object fake_obs = py::globals()["fake_obs_mixed"];
-    auto result = parse_observables_matrix_free(fake_obs);
+    auto result = parse_observables_matrix_free(2, fake_obs);
 
     EXPECT_EQ(result.size(), 2u);
 }
@@ -845,7 +845,7 @@ TEST(ParseObservablesMatrixFree, QTensorObservableThrows) {
     )");
 
     py::object fake_obs = py::globals()["fake_obs_qtensor"];
-    EXPECT_THROW(parse_observables_matrix_free(fake_obs), py::value_error);
+    EXPECT_THROW(parse_observables_matrix_free(1, fake_obs), py::value_error);
 }
 
 TEST(ParseObservablesMatrixFree, UnrecognizedTypeThrows) {
@@ -857,7 +857,7 @@ TEST(ParseObservablesMatrixFree, UnrecognizedTypeThrows) {
     )");
 
     py::object fake_obs = py::globals()["fake_obs_unknown"];
-    EXPECT_THROW(parse_observables_matrix_free(fake_obs), py::value_error);
+    EXPECT_THROW(parse_observables_matrix_free(1, fake_obs), py::value_error);
 }
 
 TEST(ParseObservablesMatrixFree, EmptyObservablesReturnsEmpty) {
@@ -867,7 +867,7 @@ TEST(ParseObservablesMatrixFree, EmptyObservablesReturnsEmpty) {
     )");
 
     py::object fake_obs = py::globals()["fake_obs_empty"];
-    auto result = parse_observables_matrix_free(fake_obs);
+    auto result = parse_observables_matrix_free(1, fake_obs);
     EXPECT_TRUE(result.empty());
 }
 
@@ -1076,7 +1076,7 @@ TEST(ParseInitialState, BasicDensityMatrix) {
     )");
 
     py::object fake_state = py::globals()["fake_initial_state_basic"];
-    auto result = parse_initial_state(fake_state, 1e-10);
+    auto result = parse_initial_state(fake_state, 1e-10, 1);
 
     EXPECT_EQ(result.rows(), 2);
     EXPECT_EQ(result.cols(), 2);
@@ -1095,7 +1095,7 @@ TEST(ParseInitialState, FourByFourState) {
     )");
 
     py::object fake_state = py::globals()["fake_initial_state_4x4"];
-    auto result = parse_initial_state(fake_state, 1e-10);
+    auto result = parse_initial_state(fake_state, 1e-10, 2);
 
     EXPECT_EQ(result.rows(), 4);
     EXPECT_EQ(result.cols(), 4);

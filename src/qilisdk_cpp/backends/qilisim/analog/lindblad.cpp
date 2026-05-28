@@ -156,7 +156,7 @@ void lindblad_rhs(ExponentialAnsatz& drho, const ExponentialAnsatz& rho, const M
         rho (ExponentialAnsatz): Current ansatz with parameters a_k.
         H (MatrixFreeHamiltonian): The Hamiltonian.
     */
-    
+
     // Convert the operators to a vector for indexed access
     const auto& ops = rho.get_terms().get_operators();
     const int p = static_cast<int>(ops.size());
@@ -169,20 +169,17 @@ void lindblad_rhs(ExponentialAnsatz& drho, const ExponentialAnsatz& rho, const M
 
     // Cast int8 ±1 storage to doubles so that we can use BLAS routines
     Eigen::MatrixXd O_mat_d = samples.O_mat.cast<double>();
-    
+
     // Compute the means
     Eigen::VectorXd O_mean_real = O_mat_d.colwise().mean();
     std::complex<double> El_mean = El.mean();
 
     // M_{kk'} = <O_k* O_k'> - <O_k*><O_k'>
     Eigen::MatrixXd O_T = O_mat_d.transpose();
-    Eigen::MatrixXd M_real = (O_T * O_mat_d) / static_cast<double>(N_s)
-                             - O_mean_real * O_mean_real.transpose();
+    Eigen::MatrixXd M_real = (O_T * O_mat_d) / static_cast<double>(N_s) - O_mean_real * O_mean_real.transpose();
 
     // V_k = -(<O_k* E_loc> - <O_k*><E_loc>)
-    Eigen::VectorXcd V = -(
-        (O_T.cast<std::complex<double>>() * El) / static_cast<double>(N_s) - O_mean_real.cast<std::complex<double>>() * El_mean
-    );
+    Eigen::VectorXcd V = -((O_T.cast<std::complex<double>>() * El) / static_cast<double>(N_s) - O_mean_real.cast<std::complex<double>>() * El_mean);
 
     // Regularise M and solve via Cholesky
     // const double epsilon = 1e-4;
@@ -198,7 +195,6 @@ void lindblad_rhs(ExponentialAnsatz& drho, const ExponentialAnsatz& rho, const M
     for (int k = 0; k < p; ++k) {
         drho.get_terms().add(adot(k), terms_vec[k].first);
     }
-
 }
 
 // GCOV_EXCL_BR_STOP

@@ -13,8 +13,8 @@
 // limitations under the License.
 #pragma once
 
-#include "matrix_free_hamiltonian.h"
 #include <vector>
+#include "matrix_free_hamiltonian.h"
 
 // GCOV_EXCL_BR_START
 

@@ -15,8 +15,8 @@
 
 #include <vector>
 #include "../../../libs/eigen.h"
-#include "../representations/matrix_free_hamiltonian.h"
 #include "../representations/exponential_ansatz.h"
+#include "../representations/matrix_free_hamiltonian.h"
 
 // GCOV_EXCL_BR_START
 

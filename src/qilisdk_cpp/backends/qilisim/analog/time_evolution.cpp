@@ -347,19 +347,12 @@ void time_evolution_variational_exponential(ExponentialAnsatz& rho_t, const std:
     rho_t = ExponentialAnsatz(n_qubits, config.get_order(), config.get_shots(), config.get_warmups());
     rho_t.set_shots(config.get_num_monte_carlo_trajectories());
 
-    // Initial step size: match the first scheduled interval, or fall back to 1.0
-    double dt = 1.0;
-    if (step_list.size() > 1) {
-        dt = step_list[1];
-    }
-
     // Fixed-step RK4 loop
     for (size_t step_ind = 0; step_ind < step_list.size(); ++step_ind) {
         double t_start = (step_ind > 0) ? step_list[step_ind - 1] : 0.0;
         double dt = step_list[step_ind] - t_start;
-        iter_rk4(rho_t, t_start, dt, step_list, hamiltonians, parameters_list, config.get_max_terms());
+        iter_rk4(rho_t, t_start, dt, step_list, hamiltonians, parameters_list);
     }
-
 }
 
 // GCOV_EXCL_BR_STOP

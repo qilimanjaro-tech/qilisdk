@@ -47,7 +47,7 @@ py::object construct_result_object(const MatrixFreeHamiltonian& state_as_h, cons
     return ReadoutCompositeResults.attr("from_list")(results);
 }
 
-py::object construct_result_object(const ExponentialAnsatz& state, const py::object& readout, int n_qubits, const QiliSimConfig& config) {
+py::object construct_result_object(const ExponentialAnsatz& state, const py::object& readout, int n_qubits) {
     py::list results;
     for (py::handle ro_handle : readout) {
         py::object ro = py::reinterpret_borrow<py::object>(ro_handle);
@@ -795,9 +795,6 @@ QiliSimConfig parse_solver_params(const py::dict& solver_params) {
     }
     if (solver_params.contains("measurement_collapse")) {
         config.set_measurement_collapse(solver_params["measurement_collapse"].cast<bool>());
-    }
-    if (solver_params.contains("max_terms")) {
-        config.set_max_terms(solver_params["max_terms"].cast<int>());
     }
     if (solver_params.contains("order")) {
         config.set_order(solver_params["order"].cast<int>());
