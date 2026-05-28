@@ -65,4 +65,21 @@ gcovr \
     --cobertura-add-tracefile coverage/coverage_combined.xml
 echo "Combined HTML report generated at coverage/index.html" | tee -a $LOG_FILE
 
+# Determine the base branch (default: origin/main)
+BASE_BRANCH=${BASE_BRANCH:-origin/main}
 
+# Report diff coverage (changed lines only) to terminal
+echo "Generating diff coverage report (changed lines only vs $BASE_BRANCH)..." | tee -a $LOG_FILE
+diff-cover coverage/coverage_combined.xml \
+  --compare-branch="$BASE_BRANCH" \
+  --diff-range-notation="..." \
+  2>&1 | tee -a $LOG_FILE
+
+# Also generate an HTML version
+diff-cover coverage/coverage_combined.xml \
+  --compare-branch="$BASE_BRANCH" \
+  --diff-range-notation="..." \
+  --html-report coverage/diff_coverage.html \
+  2>&1 | tee -a $LOG_FILE
+
+echo "Diff HTML report generated at coverage/diff_coverage.html" | tee -a $LOG_FILE

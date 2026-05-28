@@ -23,30 +23,6 @@
 
 #pragma GCC visibility push(default)
 
-py::object construct_result_object(const MatrixFreeHamiltonian& state_as_h, const py::object& readout, int n_qubits) {
-    py::list results;
-    for (py::handle ro_handle : readout) {
-        py::object ro = py::reinterpret_borrow<py::object>(ro_handle);
-        if (py::isinstance(ro, ExpectationReadout)) {
-            std::vector<std::complex<double>> expectations;
-            // parse the observables for which we need to compute the expectation values
-            std::vector<MatrixFreeHamiltonian> observables = parse_observables_matrix_free(n_qubits, ro.attr("observables"));
-            for (const auto& obs : observables) {
-                double exp_val = state_as_h.expectation_value(obs);
-                expectations.push_back(exp_val);
-            }
-            py::list expectations_py;
-            for (const auto& exp_val : expectations) {
-                expectations_py.append(py::cast(exp_val));
-            }
-            results.append(ExpectationReadoutResult.attr("from_expectations")("expectation_values"_a = expectations_py));
-        } else {
-            throw py::value_error("Unsupported Readout Method provided. Only ExpectationReadout is supported when using the approximate method.");
-        }
-    }
-    return ReadoutCompositeResults.attr("from_list")(results);
-}
-
 py::object construct_result_object(const ExponentialAnsatz& state, const py::object& readout, int n_qubits) {
     py::list results;
     for (py::handle ro_handle : readout) {
@@ -64,8 +40,22 @@ py::object construct_result_object(const ExponentialAnsatz& state, const py::obj
                 expectations_py.append(py::cast(exp_val));
             }
             results.append(ExpectationReadoutResult.attr("from_expectations")("expectation_values"_a = expectations_py));
+        } else if (py::isinstance(ro, SamplingReadout)) {
+            SampleSet samples = state.draw_samples();
+            int n_shots = ro.attr("nshots").cast<int>();
+            bool expand_samples = ro.attr("expand_samples").cast<bool>();
+            std::map<std::string, int> counts = process_samples(samples, n_qubits, n_shots, expand_samples);
+            py::dict samples_py;
+            for (const auto& pair : counts) {
+                samples_py[py::cast(pair.first)] = py::cast(pair.second);
+            }
+            py::list qubits_to_measure_list;
+            for (size_t i = 0; i < n_qubits; ++i) {
+                qubits_to_measure_list.append(i);
+            }
+            results.append(SamplingReadoutResult.attr("from_samples")("samples"_a = samples_py, "qubits_to_measure"_a = qubits_to_measure_list, "nqubits"_a = n_qubits, "expand_samples"_a = expand_samples));
         } else {
-            throw py::value_error("Unsupported Readout Method provided. Only ExpectationReadout is supported when using the approximate method.");
+            throw py::value_error("Unsupported Readout Method provided. Only ExpectationReadout or SamplingReadout are supported when using the variational annealing method.");
         }
     }
     return ReadoutCompositeResults.attr("from_list")(results);

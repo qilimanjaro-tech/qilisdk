@@ -127,19 +127,6 @@ void lindblad_rhs(DenseMatrix& drho, const DenseMatrix& rho, const MatrixFreeHam
     }
 }
 
-void lindblad_rhs(MatrixFreeHamiltonian& drho, const MatrixFreeHamiltonian& rho, const MatrixFreeHamiltonian& H) {
-    /*
-    Evaluate the right-hand side of the Lindblad master equation for the approximate method.
-
-    Args:
-        drho (MatrixFreeHamiltonian&): The output derivative of the density matrix.
-        rho (MatrixFreeHamiltonian): The current density matrix.
-        H (MatrixFreeHamiltonian): The Hamiltonian.
-    */
-    drho = H * rho;
-    drho *= -imag;
-}
-
 void lindblad_rhs(ExponentialAnsatz& drho, const ExponentialAnsatz& rho, const MatrixFreeHamiltonian& H) {
     /*
     Evaluate the right-hand side of the variational equations for the ExponentialAnsatz.

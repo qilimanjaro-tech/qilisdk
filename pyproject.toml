@@ -108,6 +108,7 @@ dev = [
     "pytest-cov>=7.1.0",
     "gcovr>=8.6",
     "ty>=0.0.33",
+    "diff-cover>=10.2.1",
 ]
 docs = [
     "astroid<3.2",

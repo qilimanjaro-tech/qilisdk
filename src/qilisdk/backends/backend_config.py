@@ -89,7 +89,7 @@ class AnalogMethod(BaseSimulatorConfig):
 
     Args:
         evolution_method (str): Analog time-evolution method to use:
-            ``"direct"``, ``"arnoldi"``, ``"integrate_rk4"``, ``"integrate_rk45_matrix_free"``, ``"integrate_rk4_matrix_free"``, ``"truncated_polynomial_expansion"``, or ``"variational_exponential"``. Defaults to ``"integrate_rk4_matrix_free"``.
+            ``"direct"``, ``"arnoldi"``, ``"integrate_rk4"``, ``"integrate_rk45_matrix_free"``, ``"integrate_rk4_matrix_free"``, or ``"variational_exponential"``. Defaults to ``"integrate_rk4_matrix_free"``.
         arnoldi_dim (int): Dimension of the Arnoldi Krylov subspace used
             when ``evolution_method="arnoldi"``. Defaults to ``10``.
         num_arnoldi_substeps (int): Number of integration substeps per
@@ -102,11 +102,10 @@ class AnalogMethod(BaseSimulatorConfig):
         "integrate_rk4",
         "integrate_rk45_matrix_free",
         "integrate_rk4_matrix_free",
-        "truncated_polynomial_expansion",
         "variational_exponential",
     ] = Field(
         default="integrate_rk4_matrix_free",
-        description="Analog time-evolution method to use: 'direct', 'arnoldi', 'integrate_rk4', 'integrate_rk45_matrix_free', 'integrate_rk4_matrix_free', 'truncated_polynomial_expansion', or 'variational_exponential'.",
+        description="Analog time-evolution method to use: 'direct', 'arnoldi', 'integrate_rk4', 'integrate_rk45_matrix_free', 'integrate_rk4_matrix_free', or 'variational_exponential'.",
     )
     arnoldi_dim: int = Field(
         default=10,
@@ -172,6 +171,8 @@ class AnalogMethod(BaseSimulatorConfig):
     def variational_annealing(cls, *, order: int = 2, shots: int = 1000, warmups: int = 100) -> AnalogMethod:
         """
         Anneal a variational ansatz rather than the full state.
+
+        Based on this paper: https://arxiv.org/pdf/2403.05147
 
         Args:
             order (int): Order of the polynomial expansion used in the variational ansatz.

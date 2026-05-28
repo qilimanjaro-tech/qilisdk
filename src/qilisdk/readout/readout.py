@@ -143,6 +143,13 @@ class ExpectationReadout(ReadoutMethod):
         return self._nshots
 
     @property
+    def observables(self) -> list[Hamiltonian | QTensor]:
+        """
+        The observables whose expectation values are requested, in their original form as provided by the user.
+        """
+        return self._observables
+
+    @property
     def qtensor_observables(self) -> list[QTensor]:
         """Observables as :class:`~qilisdk.core.QTensor` instances.
 
@@ -152,13 +159,6 @@ class ExpectationReadout(ReadoutMethod):
         if hasattr(self, "_qtensor_observables"):
             return self._qtensor_observables
         return [o if isinstance(o, QTensor) else o.to_qtensor() for o in self._observables]
-
-    @property
-    def observables(self) -> list[Hamiltonian | QTensor]:
-        """
-        The observables whose expectation values are requested, in their original form as provided by the user.
-        """
-        return self._observables
 
     def expand_observables(self, nqubits: int) -> None:
         """Scale each observable to match a given number of qubits.
