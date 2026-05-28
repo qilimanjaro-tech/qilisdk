@@ -125,7 +125,10 @@ schedule is integrated:
      - When to use it
    * - :meth:`AnalogMethod.integrator(matrix_free=True) <qilisdk.backends.backend_config.AnalogMethod.integrator>`
      - RK4
-     - Default. Fixed-step Runge-Kutta 4; matrix-free is faster for sparse Hamiltonians.
+     - Default. Fixed-step Runge-Kutta 4. matrix-free is faster for sparse Hamiltonians.
+   * - :meth:`AnalogMethod.variational_annealing() <qilisdk.backends.backend_config.AnalogMethod.variational_annealing>`
+     - Variational annealing
+     - Only availalbe for X to Z annealing schedules. Can be used to simulate large (i.e. 60+ qubits) systems at the cost of accuracy. Set `order=1` for a quicker but less accurate simulation. Increasing warmups can also improve accuracy at the cost of time.
    * - :meth:`AnalogMethod.adaptive_integrator(tol=1e-2) <qilisdk.backends.backend_config.AnalogMethod.adaptive_integrator>`
      - Dormand-Prince RK4/5
      - Adaptive step size; ``tol`` bounds the fidelity error between the RK4 and RK5 estimates.
@@ -136,7 +139,7 @@ schedule is integrated:
      - Matrix exponential
      - Reference scheme for small systems; cost grows quickly with qubit count.
 
-Example, using the adaptive integrator for a stiffer schedule:
+Example, using the adaptive integrator:
 
 .. code-block:: python
 
