@@ -16,8 +16,10 @@
 #include "iterations.h"
 #include "lindblad.h"
 
+#ifndef _WIN32
 #if defined(_OPENMP)
 #pragma omp declare reduction(complex_double_reduction : std::complex<double> : omp_out += omp_in) initializer(omp_priv = std::complex<double>(0.0, 0.0))
+#endif
 #endif
 
 // GCOV_EXCL_BR_START
@@ -263,16 +265,20 @@ void iter_rk4(DenseMatrix& rho_t, double t, double dt, const std::vector<double>
     // Normalize the state
     std::complex<double> norm = 0;
     if (is_unitary_on_statevector) {
+#ifndef _WIN32
 #if defined(_OPENMP)
 #pragma omp parallel for reduction(complex_double_reduction : norm) schedule(static)
+#endif
 #endif
         for (int i = 0; i < rho_t.rows(); ++i) {
             norm += std::norm(rho_t(i, 0));
         }
         norm = std::sqrt(norm);
     } else {
+#ifndef _WIN32
 #if defined(_OPENMP)
 #pragma omp parallel for reduction(complex_double_reduction : norm) schedule(static)
+#endif
 #endif
         for (int i = 0; i < dim; ++i) {
             norm += rho_t(i, i);
@@ -446,8 +452,10 @@ double iter_rk45(DenseMatrix& rho_t, double t, double& dt, const std::vector<dou
 
     // Comparing statevectors we use their fidelity, since it's phase invariant
     if (is_unitary_on_statevector) {
+#ifndef _WIN32
 #if defined(_OPENMP)
 #pragma omp parallel for reduction(complex_double_reduction : overlap, rho_4_norm, rho_5_norm) schedule(static)
+#endif
 #endif
         for (long i = 0; i < rho_rows; ++i) {
             for (long j = 0; j < rho_cols; ++j) {
@@ -465,8 +473,10 @@ double iter_rk45(DenseMatrix& rho_t, double t, double& dt, const std::vector<dou
         err_norm = std::sqrt(std::abs(1.0 - std::pow(std::abs(overlap), 2)));
     } else {
 // For density matrices use the relative Frobenius distance: ||rho4-rho5||_F / ||rho5||_F
+#ifndef _WIN32
 #if defined(_OPENMP)
 #pragma omp parallel for reduction(+ : rho_5_frob_sq) reduction(complex_double_reduction : overlap, rho_4_norm, rho_5_norm) schedule(static)
+#endif
 #endif
         for (long i = 0; i < rho_rows; ++i) {
             for (long j = 0; j < rho_cols; ++j) {

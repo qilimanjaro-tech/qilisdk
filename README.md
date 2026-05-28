@@ -4,10 +4,10 @@
 [![PyPI Version](https://img.shields.io/pypi/v/qilisdk.svg)](https://pypi.org/project/qilisdk/)
 [![Code Coverage](https://codecov.io/gh/qilimanjaro-tech/qilisdk/graph/badge.svg?token=iUMp8nKCqJ)](https://codecov.io/gh/qilimanjaro-tech/qilisdk)
 [![License](https://img.shields.io/pypi/l/qilisdk.svg)](#license)
-[![Docs](https://img.shields.io/badge/docs-0.1.7-pink.svg)](https://qilimanjaro-tech.github.io/qilisdk/en/main/index.html)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17819871.svg)](https://doi.org/10.5281/zenodo.17819871)
+[![Docs](https://img.shields.io/badge/docs-latest-pink.svg)](https://qilimanjaro-tech.github.io/qilisdk/)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17819870.svg)](https://doi.org/10.5281/zenodo.17819870)
 
-**QiliSDK** is an open-source Python framework for designing and executing **analog, digital, and hybrid quantum algorithms**. Its modular structure unifies circuit-based and Hamiltonian-based workflows within a single API. It provides high-level abstractions for gates, circuits, Hamiltonians, and optimizers, while remaining fully backend-agnostic allowing a seamless switch between CPU, GPU, or QPU execution.
+**QiliSDK** is an open-source Python framework for designing and executing **analog, digital, and hybrid quantum algorithms**. Its modular structure unifies circuit-based and Hamiltonian-based workflows within a single API. It provides high-level abstractions for gates, circuits, Hamiltonians, and more, while remaining fully backend-agnostic allowing a seamless switch between CPU, GPU, or QPU execution. Fast CPU simulation can be done locally using **QiliSim**, our quantum simulator written in C++.
 
 ## Installation
 
@@ -42,20 +42,11 @@ To create a linear interpolation between an initial and final Hamiltonian:
 
 ```python
 from qilisdk.analog import Schedule, X, Z
-from qilisdk.core import Interpolation
 
 initial_hamiltonian = - X(0) - X(1)
 final_hamiltonian = Z(0) + Z(1) + 0.5 * Z(0) * Z(1)
 
-schedule = Schedule(
-    hamiltonians={"driver": initial_hamiltonian, "problem": final_hamiltonian},
-    coefficients={
-        "driver": {(0.0, 10.0): lambda t: 1 - t / 10.0},
-        "problem": {(0.0, 10.0): lambda t: t / 10.0},
-    },
-    dt=0.5,
-    interpolation=Interpolation.LINEAR,
-)
+schedule = Schedule.linear(initial_hamiltonian, final_hamiltonian, total_time=10.0, dt=0.5)
 ```
 
 ## Development Guide
@@ -135,6 +126,7 @@ It may also throw an error about not being able to find `omp.h`, if so, try:
 ```bash
 sudo apt-get install libomp-dev
 ```
+For ease of use there are also a number of bash scripts in the "scripts" folder, for instance to generate coverage reports or to run all pre-commit checks.
 
 ### Type Checking
 

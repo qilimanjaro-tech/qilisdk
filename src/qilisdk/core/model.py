@@ -15,6 +15,7 @@ from __future__ import annotations
 
 # import numpy as np
 import copy
+import itertools
 from typing import TYPE_CHECKING, Literal, Mapping, Type
 
 # import cupy as np
@@ -26,9 +27,11 @@ from qilisdk.yaml import yaml
 
 from .types import QiliEnum
 from .variables import (
+    EQ,
     GEQ,
     LEQ,
     BaseVariable,
+    BinaryVariable,
     Bitwise,
     ComparisonOperation,
     ComparisonTerm,
@@ -466,25 +469,212 @@ class Model:
         lagrange_multiplier_dict: dict[str, float] | None = None,
         penalization: Literal["unbalanced", "slack"] = "slack",
         parameters: list[float] | None = None,
+        linearize: bool = True,
+        linearization_lagrange_multiplier: float = 100,
     ) -> QUBO:
         """Export the model to a qubo model.
-        Args:
-            lagrange_multiplier_dict (dict[str, float] | None, optional): A dictionary with lagrange multiplier values to scale the model's constraints. Defaults to None.
-            penalization (Literal[&quot;unbalanced&quot;, &quot;slack&quot;], optional): the penalization used to handel inequality constraints. Defaults to "slack".
-            parameters (list[float] | None, optional): the parameters used for the unbalanced penalization method. Defaults to None.
 
-        Note:
-            this exportation only works if the model doesn't violate the QUBO format.
-            Automatic constraint and objective linearization will be added in the future.
+        When ``linearize`` is ``True``, any pseudo-Boolean monomial of degree greater than two, coming either from the
+        objective or from the squared/slack penalty of a constraint, is automatically rewritten to quadratic form by
+        introducing auxiliary binary variables and corresponding Rosenberg penalty constraints.
+        See :meth:`QUBO.from_model` for details on the reduction scheme.
+
+        Args:
+            lagrange_multiplier_dict (dict[str, float] | None, optional): A dictionary with lagrange multiplier values
+                            to scale the model's constraints. Defaults to None.
+            penalization (Literal[&quot;unbalanced&quot;, &quot;slack&quot;], optional): the penalization used to handle
+                            inequality constraints. Defaults to "slack".
+            parameters (list[float] | None, optional): the parameters used for the unbalanced penalization method.
+                            Defaults to None.
+            linearize (bool, optional): Automatically reduce high-degree pseudo-Boolean monomials to quadratic form by
+                            introducing auxiliary binary variables. When ``False``, exporting a model whose objective or
+                            constraints contain terms of degree three or higher raises a ``ValueError``.
+                            Defaults to ``True``.
+            linearization_lagrange_multiplier (float, optional): The Lagrange multiplier applied to each Rosenberg
+                            penalty constraint added during linearization. Defaults to 100.
+
         Returns:
-            QUBO: A QUBO model that is generate from the model object.
+            QUBO: A QUBO model that is generated from the model object.
         """
         if lagrange_multiplier_dict is None:
             lagrange_multiplier_dict = {}
         for lm in self.lagrange_multipliers:
             if lm not in lagrange_multiplier_dict:
                 lagrange_multiplier_dict[lm] = self.lagrange_multipliers[lm]
-        return QUBO.from_model(self, lagrange_multiplier_dict, penalization, parameters)
+        return QUBO.from_model(
+            self,
+            lagrange_multiplier_dict,
+            penalization,
+            parameters,
+            linearize=linearize,
+            linearization_lagrange_multiplier=linearization_lagrange_multiplier,
+        )
+
+
+class _Linearizer:
+    """Degree-reduction helper that rewrites binary polynomials as quadratic expressions.
+
+    Given a pseudo-Boolean term (i.e. a polynomial in ``BinaryVariable``'s obtained via
+    :meth:`~qilisdk.core.variables.Term.to_binary`), :meth:`reduce` iteratively replaces each monomial of degree greater
+    than two with an auxiliary binary variable that represents the product of two of its factors. Let's say the pair
+    ``a`` and ``b`` are two binary variables contributing in a non-linear term, we can add an auxiliary binary
+    variable ``w`` to substitute the pair, and the correctness of the substitution is enforced by the **Rosenberg** penalty:
+
+    .. math::
+
+        P(a, b, w) = a \\cdot b - 2 \\cdot a \\cdot w - 2 \\cdot b \\cdot w + 3 \\cdot w,
+
+    which is quadratic, non-negative for ``a``, ``b``, ``w`` binary, and equal to zero if and only
+    if ``w = a * b``.
+
+    Auxiliary variables are cached per (unordered) pair of factors so that the same product shared across several
+    monomials — for example ``x*y*z`` and ``x*y*w`` both reusing ``x*y`` — introduces a single auxiliary and a single
+    Rosenberg penalty. Variables participating in a monomial are sorted deterministically by label so generated
+    auxiliary names are reproducible across runs.
+
+    Example:
+        .. code-block:: python
+
+            from qilisdk.core.model import _Linearizer
+            from qilisdk.core.variables import BinaryVariable
+
+            x, y, z = BinaryVariable("x"), BinaryVariable("y"), BinaryVariable("z")
+            linearizer = _Linearizer()
+            reduced = linearizer.reduce(x * y * z)
+            # reduced has degree 2, auxiliary variables are registered on the linearizer
+            penalties = linearizer.rosenberg_constraints()
+    """
+
+    _AUX_PREFIX = "_linearization_aux"
+
+    def __init__(self) -> None:
+        self._substitutions: dict[tuple[str, str], tuple[BaseVariable, BaseVariable, BinaryVariable]] = {}
+        self._counter = 0
+
+    @property
+    def substitutions(self) -> dict[tuple[str, str], tuple[BaseVariable, BaseVariable, BinaryVariable]]:
+        """Mapping from the ordered labels of a substituted pair ``(a_label, b_label)`` to the
+        triple ``(a, b, aux)`` where ``aux`` is the binary variable that stands in for ``a * b``.
+
+        Returns:
+            dict: a dictionary of the currently registered pair-to-auxiliary substitutions.
+        """
+        return self._substitutions
+
+    def reduce(self, term: Term) -> Term:
+        """Rewrite ``term`` so that every monomial has degree at most two.
+
+        The input is expected to be in binary-encoded form (i.e. the output of
+        :meth:`~qilisdk.core.variables.Term.to_binary`). Terms that are already quadratic are returned unchanged
+        (up to a structural copy).
+
+        Args:
+            term (Term): the polynomial expression to reduce.
+
+        Returns:
+            Term: an expression whose monomials all have degree at most two, with new auxiliary
+            binary variables standing in for higher-degree sub-products.
+        """
+        if not isinstance(term, Term):
+            return term
+
+        if term.operation == Operation.MUL:
+            return self._reduce_monomial(term)
+
+        if term.operation == Operation.ADD:
+            new_elements: list[BaseVariable | Term | Number] = []
+            for element in term:
+                coeff = term[element]
+                if isinstance(element, Term) and element.operation == Operation.MUL:
+                    new_elements.append(coeff * self._reduce_monomial(element))
+                elif isinstance(element, Term):
+                    new_elements.append(coeff * self.reduce(element))
+                elif isinstance(element, BaseVariable) and element == Term.CONST:
+                    new_elements.append(coeff)
+                else:
+                    new_elements.append(coeff * element)
+            return Term(new_elements, Operation.ADD)
+
+        return term
+
+    def rosenberg_constraints(self) -> list[tuple[str, ComparisonTerm]]:
+        """Materialize the Rosenberg penalty constraints that pin each auxiliary to its product.
+
+        One equality constraint ``P(a, b, w) = 0`` is returned per registered pair. Each penalty is
+        already quadratic in binary variables and can be added to a QUBO model verbatim, i.e. with
+        ``transform_to_qubo=False``.
+
+        Returns:
+            list[tuple[str, ComparisonTerm]]: pairs of ``(label, penalty_constraint)``.
+        """
+        out: list[tuple[str, ComparisonTerm]] = []
+        for _, (a, b, w) in self._substitutions.items():
+            penalty = a * b - 2 * a * w - 2 * b * w + 3 * w
+            out.append((f"linearization_{w.label}", EQ(penalty, 0)))
+        return out
+
+    def _get_or_create_aux(self, a: BaseVariable, b: BaseVariable) -> BinaryVariable:
+        a_sorted, b_sorted = sorted([a, b], key=lambda v: v.label)
+        key = (a_sorted.label, b_sorted.label)
+        if key not in self._substitutions:
+            aux = BinaryVariable(f"{self._AUX_PREFIX}({self._counter})")
+            self._counter += 1
+            self._substitutions[key] = (a_sorted, b_sorted, aux)
+        return self._substitutions[key][2]
+
+    def _reduce_monomial(self, monomial: Term) -> Term:
+        if monomial.operation != Operation.MUL or monomial.degree <= 2:  # noqa: PLR2004
+            return monomial
+
+        coeff: Number = 1
+        variables: list[BaseVariable] = []
+        for elem in monomial:
+            if isinstance(elem, BaseVariable) and elem == Term.CONST:
+                coeff *= monomial[elem]
+            elif isinstance(elem, BinaryVariable):
+                variables.append(elem)
+            elif isinstance(elem, BaseVariable):
+                raise ValueError(
+                    f"_Linearizer only operates on binary-encoded terms but received variable {elem}"
+                    f" of domain {elem.domain}. Call `to_binary()` before linearizing."
+                )
+            else:
+                raise ValueError(f"_Linearizer does not support nested sub-term {elem} inside a term.")
+
+        variables.sort(key=lambda v: v.label)
+
+        while len(variables) > 2:  # noqa: PLR2004
+            a, b = self._pick_pair(variables)
+            variables.remove(a)
+            variables.remove(b)
+            variables.insert(0, self._get_or_create_aux(a, b))
+
+        result: Number | BaseVariable | Term = coeff
+        for v in variables:
+            result *= v
+        if not isinstance(result, Term):
+            result = Term([result], Operation.MUL)
+        return result
+
+    def _pick_pair(self, variables: list[BaseVariable]) -> tuple[BaseVariable, BaseVariable]:
+        """Select which pair of factors to collapse into an auxiliary next.
+
+        Preference order:
+
+        1. A pair that is already registered with an auxiliary, so the existing aux is reused and
+           no new Rosenberg penalty is introduced. This maximizes aux sharing across monomials
+           (e.g. ``x*y*z`` and ``x*y*w`` both end up using the same ``w_{xy}``).
+        2. Otherwise, the lexicographically smallest pair, which keeps aux generation
+           deterministic and independent of the monomial ordering in the source term.
+
+        Returns:
+            tuple[BaseVariable, BaseVariable]: the pair of factors to replace with an auxiliary.
+        """
+        for a, b in itertools.combinations(variables, 2):
+            a_sorted, b_sorted = sorted([a, b], key=lambda v: v.label)
+            if (a_sorted.label, b_sorted.label) in self._substitutions:
+                return a, b
+        return variables[0], variables[1]
 
 
 @yaml.register_class
@@ -511,6 +701,24 @@ class QUBO(Model):
         super().__init__(label)
         self.continuous_vars: dict[str, Variable] = {}
         self.__qubo_objective: Objective | None = None
+        self._linearizer: _Linearizer | None = None
+
+    def _reduce(self, term: Term) -> Term:
+        """Reduce the degree of ``term`` if a :class:`_Linearizer` is attached.
+
+        The reduction introduces auxiliary binary variables that stand in for products of existing factors. Those
+        auxiliaries are registered on the linearizer, and the corresponding Rosenberg penalty constraints are
+        added in :meth:`from_model` once all objective and constraint terms have been processed.
+
+        Args:
+            term (Term): the term to potentially reduce.
+
+        Returns:
+            Term: the (possibly degree-reduced) term.
+        """
+        if self._linearizer is None:
+            return term
+        return self._linearizer.reduce(term)
 
     @property
     def qubo_objective(self) -> Objective | None:
@@ -536,38 +744,52 @@ class QUBO(Model):
     def __repr__(self) -> str:
         return self.label
 
-    def _parse_term(self, term: Term) -> tuple[Number, list[tuple[Number, BaseVariable]]]:
-        """parses a Term object into a list of variables and coefficients.
+    def _compute_lower_and_upper_limits(  # noqa: PLR6301
+        self,
+        term: Term,
+    ) -> tuple[RealNumber, RealNumber, RealNumber]:
+        """Computes the lower and upper bounds of a term.
 
         Args:
-            term (Term): The term to be parsed.
-
-        Raises:
-            ValueError: if the degree of the term is higher than 1.
+            term (Term): The term to compute the lower and upper limits for.
 
         Returns:
-            tuple[Number, list[tuple[Number, BaseVariable]]]:
-                The first return value is the constant value in the term.
-                The second return value is a list of variables and their respective coefficients.
+            tuple[RealNumber, RealNumber, RealNumber]: The Constant terms, lower limit, upper limit in this order.
+
+        Raises:
+            ValueError: if the operation the term uses is not addition or multiplication.
         """
-        const = term.get_constant()
-        terms: list[tuple[Number, BaseVariable]] = []
 
-        if term.degree > 1:
-            raise ValueError(f'QUBO constraints only allow linear terms but received "{term}" of degree {term.degree}')
+        def to_real(num: Number) -> RealNumber:
+            if isinstance(num, RealNumber):
+                return num
+            if isinstance(num, complex) and abs(num.imag) < get_settings().atol:
+                return num.real
+            raise ValueError("Complex values encountered in the constraint.")
 
+        const: RealNumber = 0
+        term_upper_limit: RealNumber = 0
+        term_lower_limit: RealNumber = 0
         if term.operation is Operation.ADD:
             for element in term:
-                if isinstance(element, Term):  # I don't think this will ever be true for a QUBO model.
-                    _, aux_terms = self._parse_term(element)
-                    terms.extend(aux_terms)
-                elif element != Term.CONST:
-                    terms.append((term[element], element))
-        if term.operation is Operation.MUL:
-            for element in term:
-                if not isinstance(element, Term) and element != Term.CONST:
-                    terms.append((1, element))
-        return const, terms
+                if isinstance(element, BaseVariable) and element == Term.CONST:
+                    const = to_real(term[element])
+                else:
+                    coeff_value = to_real(term[element])
+                    if coeff_value > 0:
+                        term_upper_limit += coeff_value
+                    elif coeff_value < 0:
+                        term_lower_limit += coeff_value
+        elif term.operation is Operation.MUL:
+            coeff_value = to_real(term.get_constant())
+            if coeff_value > 0:
+                term_upper_limit = coeff_value
+            elif coeff_value < 0:
+                term_lower_limit = coeff_value
+        else:
+            raise ValueError(f"Operation {term.operation.value} in constraint is not supported.")
+
+        return const, term_lower_limit, term_upper_limit
 
     def _check_valid_constraint(self, label: str, term: Term, operation: ComparisonOperation) -> int | None:
         """Checks if a given constraint is valid. Assumes that the right hand side of the constraint is set to zero.
@@ -586,18 +808,8 @@ class QUBO(Model):
         """
         ub = np.iinfo(np.int64).max if operation in {ComparisonOperation.GEQ, ComparisonOperation.GT} else 0
         lb = np.iinfo(np.int64).min if operation in {ComparisonOperation.LEQ, ComparisonOperation.LT} else 0
-        _const, terms = self._parse_term(term)
 
-        def to_real(num: Number) -> RealNumber:
-            if isinstance(num, RealNumber):
-                return num
-            if isinstance(num, complex) and abs(num.imag) < get_settings().atol:
-                return num.real
-            raise ValueError("Complex values encountered in the constraint.")
-
-        const = to_real(_const)
-        term_upper_limit: RealNumber = sum(to_real(coeff) for coeff, _ in terms if to_real(coeff) > 0)
-        term_lower_limit: RealNumber = sum(to_real(coeff) for coeff, _ in terms if to_real(coeff) < 0)
+        const, term_lower_limit, term_upper_limit = self._compute_lower_and_upper_limits(term)
 
         if operation == ComparisonOperation.GT and term_upper_limit + const <= 0:
             raise ValueError(f"Constraint {label} is unsatisfiable.")
@@ -724,6 +936,7 @@ class QUBO(Model):
         penalization: Literal["unbalanced", "slack"] = "slack",
         parameters: list[float] | None = None,
         transform_to_qubo: bool = True,
+        linearize: bool = True,
     ) -> None:
         """Adds a constraint to the QUBO model.
 
@@ -738,6 +951,7 @@ class QUBO(Model):
                             Defaults to None.
             transform_to_qubo (bool, optional): Automatically transform a given constraint to QUBO format.
                                                 Defaults to True.
+            linearize (bool, optional): linearize the constraints if they are above degree 2.
 
         Raises:
             ValueError: if constraint label already exists in the model.
@@ -747,6 +961,7 @@ class QUBO(Model):
             ValueError: if the constraint term contains variables that are not from Positive Integers or Binary domains.
             ValueError: if the constraint term contains variable that do not have 0 as their lower bound.
         """
+
         if label in self._constraints:
             raise ValueError((f'Constraint "{label}" already exists:\n \t\t{self._constraints[label]}'))
 
@@ -767,18 +982,28 @@ class QUBO(Model):
         else:
             c = copy.copy(term)
 
-        if c.degree > 2:  # noqa: PLR2004
+        if linearize and self._linearizer is None:
+            self._linearizer = _Linearizer()
+
+        if self._linearizer is None and c.degree > 2:  # noqa: PLR2004
             raise ValueError(
-                f"QUBO models can not contain terms of order 2 or higher but received terms with degree {c.degree}."
+                f"QUBO constraints can not contain terms of order 2 or higher but received terms with degree {c.degree}. Set linearize=True to allow linearization."
             )
 
         self._check_variables(c, lagrange_multiplier=lagrange_multiplier)
 
         if transform_to_qubo:
             c = c.to_binary()
+            if self._linearizer:
+                c = ComparisonTerm(
+                    lhs=self._linearizer.reduce(c.lhs),
+                    rhs=self._linearizer.reduce(c.rhs),
+                    operation=c.operation,
+                )
             transformed_c = self._transform_constraint(label, c, penalization=penalization, parameters=parameters)
             if transformed_c is None:
                 return
+            transformed_c = self._reduce(transformed_c)
             if lower_penalization == "unbalanced" and lagrange_multiplier != 1:
                 self.lagrange_multipliers[label] = 1
                 logger.warning(
@@ -799,17 +1024,31 @@ class QUBO(Model):
     def set_objective(self, term: Term, label: str = "obj", sense: ObjectiveSense = ObjectiveSense.MINIMIZE) -> None:
         """Set the QUBO objective.
 
+        If a :class:`_Linearizer` has been attached to this QUBO instance (via :meth:`from_model`
+        with ``linearize=True``), the binary-encoded objective is additionally rewritten so that
+        every monomial has degree at most two. Auxiliary variables introduced by the rewrite are
+        registered on the linearizer.
+
         Args:
             term (Term): The objective's term.
             label (str, optional): the objective's label. Defaults to "obj".
             sense (ObjectiveSense, optional): The optimization sense of the model's objective.
                                                 Defaults to ObjectiveSense.MINIMIZE.
 
+        Raises:
+            ValueError: if the degree of the provided term is larger than 2.
+
         """
 
         self._check_variables(term)
 
+        if self._linearizer is None and term.degree > 2:  # noqa: PLR2004
+            raise ValueError(
+                f"QUBO objective can not contain terms of order higher than 2 but received terms with degree {term.degree}. Set linearize=True to enable linearization."
+            )
+
         term = term.to_binary()
+        term = self._reduce(term)
         self._objective = Objective(label=label, term=term, sense=sense)
 
     def _check_variables(self, term: Term | ComparisonTerm, lagrange_multiplier: RealNumber = 100) -> None:
@@ -905,8 +1144,23 @@ class QUBO(Model):
         lagrange_multiplier_dict: dict[str, float] | None = None,
         penalization: Literal["unbalanced", "slack"] = "slack",
         parameters: list[float] | None = None,
+        linearize: bool = True,
+        linearization_lagrange_multiplier: float = 100,
     ) -> QUBO:
         """A class method that constructs a QUBO model from a regular model if possible.
+
+        When ``linearize`` is ``True`` (default), any pseudo-Boolean monomial of degree greater
+        than two that appears in the objective or in a transformed constraint penalty is rewritten
+        using auxiliary binary variables via the **Rosenberg** penalty
+
+        .. math::
+
+            P(a, b, w) = a \\cdot b - 2 \\cdot a \\cdot w - 2 \\cdot b \\cdot w + 3 \\cdot w,
+
+        so ``w`` is forced to equal the product ``a * b`` at the optimum. One such penalty is
+        added as an equality QUBO constraint for every unique pair substitution. Setting
+        ``linearize=False`` restores the previous behaviour, where a ``ValueError`` is raised if
+        the model contains terms of degree three or higher.
 
         Args:
             model (Model): the model to be used to construct the QUBO model.
@@ -916,10 +1170,19 @@ class QUBO(Model):
                             handel inequality constraints. Defaults to "slack".
             parameters (list[float] | None, optional): the parameters used for the unbalanced penalization method.
                             Defaults to None.
+            linearize (bool, optional): Automatically reduce high-degree pseudo-Boolean monomials to
+                            quadratic form by introducing auxiliary binary variables. Defaults to ``True``.
+            linearization_lagrange_multiplier (float, optional): The Lagrange multiplier applied to
+                            each Rosenberg penalty constraint added as part of the linearization.
+                            Must be large enough to dominate any incentive to violate the
+                            auxiliary equalities ``w = a * b``. Defaults to 100.
         Returns:
-            QUBO: _description_
+            QUBO: a QUBO model equivalent to the input model, with any high-degree terms rewritten
+            via auxiliary binary variables when ``linearize`` is enabled.
         """
         instance = QUBO(label="QUBO_" + model.label)
+        if linearize:
+            instance._linearizer = _Linearizer()
         instance.set_objective(term=model.objective.term, label=model.objective.label, sense=model.objective.sense)
         for constraint in model.constraints:
             if lagrange_multiplier_dict is not None and constraint.label in lagrange_multiplier_dict:
@@ -934,7 +1197,17 @@ class QUBO(Model):
                 lagrange_multiplier=lagrange_multiplier,
                 penalization=penalization,
                 parameters=parameters,
+                linearize=linearize,
             )
+        if instance._linearizer is not None:
+            for pen_label, pen_term in instance._linearizer.rosenberg_constraints():
+                instance.add_constraint(
+                    label=pen_label,
+                    term=pen_term,
+                    lagrange_multiplier=linearization_lagrange_multiplier,
+                    transform_to_qubo=False,
+                    linearize=linearize,
+                )
         return instance
 
     def to_hamiltonian(self) -> Hamiltonian:
@@ -991,7 +1264,15 @@ class QUBO(Model):
         lagrange_multiplier_dict: dict[str, float] | None = None,
         penalization: Literal["unbalanced", "slack"] = "slack",
         parameters: list[float] | None = None,
+        linearize: bool = True,
+        linearization_lagrange_multiplier: float = 100,
     ) -> QUBO:
+        """Return a copy of this QUBO model.
+
+        QUBO models are already in quadratic form, so the linearization arguments are accepted for
+        signature compatibility with :meth:`Model.to_qubo` but have no effect. A warning is
+        emitted noting that no conversion was performed.
+        """
         logger.warning(
             f"Running `to_qubo()` on the model {self.label} that is already in QUBO format.",
         )
@@ -1001,12 +1282,21 @@ class QUBO(Model):
         out = QUBO(label=self.label)
         obj = copy.copy(self.objective)
         out.set_objective(term=obj.term, label=obj.label, sense=obj.sense)
-        for c in self.constraints:
-            # THIS DOESN'T COPY ANY PARAMETERS ATTACHED TO A CONSTRAINT
-            out.add_constraint(
-                label=c.label,
-                term=copy.copy(c.term),
-                lagrange_multiplier=self.lagrange_multipliers[c.label],
-                transform_to_qubo=False,
+
+        for label, constraint in self._constraints.items():
+            out._constraints[copy.copy(label)] = Constraint(
+                label=copy.copy(constraint.label), term=copy.copy(constraint.term)
             )
+
+        out._lagrange_multipliers = copy.copy(self._lagrange_multipliers)
+
+        out.continuous_vars = copy.copy(self.continuous_vars)
+        out.__qubo_objective = copy.copy(self.__qubo_objective)
+        out._linearizer = copy.copy(self._linearizer)
+
+        for label, constraint in self._encoding_constraints.items():
+            out._encoding_constraints[copy.copy(label)] = Constraint(
+                label=copy.copy(constraint.label), term=copy.copy(constraint.term)
+            )
+
         return out

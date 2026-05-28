@@ -1,0 +1,79 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025, Qilimanjaro Quantum Tech
+# This file is distributed under the same license as the QiliSDK package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: QiliSDK \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-05-20 15:11+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: es\n"
+"Language-Team: es <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../modules/core/core_overview.rst:2
+msgid "Overview"
+msgstr "Descripción general"
+
+#: ../../modules/core/core_overview.rst:4
+msgid ""
+"The :mod:`qilisdk.core` layer underpins both the digital and analog "
+"stacks. It provides symbolic variables, optimization models, sparse "
+"quantum tensors, and the "
+":mod:`~qilisdk.core.parameterizable.Parameterizable` mixin used "
+"throughout the SDK."
+msgstr ""
+"La capa :mod:`qilisdk.core` sustenta tanto la pila digital como la "
+"analógica. Proporciona variables simbólicas, modelos de optimización, "
+"tensores cuánticos dispersos y el mixin "
+":mod:`~qilisdk.core.parameterizable.Parameterizable` utilizado en todo el"
+" SDK."
+
+#: ../../modules/core/core_overview.rst:8
+msgid "Highlights:"
+msgstr "Aspectos destacados:"
+
+#: ../../modules/core/core_overview.rst:10
+msgid ""
+":doc:`core_variables_parameters` supplies a variety of variables (for "
+"constructing optimization models), as well as parameters (for "
+"parameterizing circuits, schedules, and more)."
+msgstr ""
+":doc:`core_variables_parameters` proporciona una variedad de variables "
+"(para construir modelos de optimización), así como parámetros (para "
+"parametrizar circuitos, planificaciones y más)."
+
+#: ../../modules/core/core_overview.rst:11
+msgid ""
+":doc:`core_terms_maps_comparisons` provides ways of combining and "
+"manipulating variables and parameters."
+msgstr ""
+":doc:`core_terms_maps_comparisons` ofrece formas de combinar y manipular "
+"variables y parámetros."
+
+#: ../../modules/core/core_overview.rst:12
+msgid ":doc:`core_model` to build constrained optimization programs."
+msgstr ""
+":doc:`core_model` para construir programas de optimización con "
+"restricciones."
+
+#: ../../modules/core/core_overview.rst:13
+msgid ":doc:`core_qubo` to convert models to QUBO format."
+msgstr ":doc:`core_qubo` para convertir modelos al formato QUBO."
+
+#: ../../modules/core/core_overview.rst:15
+msgid ""
+":doc:`core_qtensor` to manage sparse quantum objects, such as states and "
+"operators."
+msgstr ""
+":doc:`core_qtensor` para gestionar objetos cuánticos dispersos, como "
+"estados y operadores."
+

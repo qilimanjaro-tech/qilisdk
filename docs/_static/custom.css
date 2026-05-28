@@ -46,6 +46,24 @@ code, pre {
   --inline-code-text: 349.14deg 63.74% 64.3; /* 40 93% 85%; */
 }
 
+.mr-4 {
+  width: 100%;
+}
+
+.language-switcher {
+  margin-left: auto;
+  margin-right: 0.5em;
+}
+
+.lang-link, .lang-active {
+  margin-left: 0.5em;
+}
+
+.lang-active {
+  font-weight: bold;
+  text-decoration: underline;
+}
+
 #content h1, #content h2, #content h3, #content h4, #content h5, #content h6 {
     background: linear-gradient(
       90deg,
@@ -93,4 +111,23 @@ code, pre {
   border: 1px solid hsl(var(--inline-code-border));
   border-radius: 0.35rem;
   padding: 0.05rem 0.3rem;
+}
+
+.dark .highlight {
+  background-color: transparent;
+}
+
+.sphinx-tabs-tab, .sphinx-tabs-panel {
+  background-color: var(--inline-code-bg);
+  color: var(--inline-code-text);
+}
+
+.sphinx-tabs-tab[aria-selected="true"] {
+  background-color: var(--inline-code-bg);
+  color: var(--inline-code-text);
+  border: 1px solid #a0b3bf;
+}
+
+.sphinx-tabs {
+  margin-top: 1em;
 }

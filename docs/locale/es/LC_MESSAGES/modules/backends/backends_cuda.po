@@ -1,0 +1,334 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025, Qilimanjaro Quantum Tech
+# This file is distributed under the same license as the QiliSDK package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: QiliSDK \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-05-21 16:31+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: es\n"
+"Language-Team: es <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../modules/backends/backends_cuda.rst:2
+msgid "CUDA Backend"
+msgstr "Backend CUDA"
+
+#: ../../modules/backends/backends_cuda.rst:4
+msgid ""
+"The **CUDA** backend leverages NVIDIA GPUs via the `cuda-quantum "
+"<https://github.com/NVIDIA/cuda-quantum>`_ framework. When no compatible "
+"GPU is detected it transparently falls back to a CPU target, so the same "
+"code prototyped on a laptop will also run on an accelerated machine."
+msgstr ""
+"El backend **CUDA** aprovecha las GPU de NVIDIA a través del framework "
+"`cuda-quantum <https://github.com/NVIDIA/cuda-quantum>`_. Cuando no se "
+"detecta ninguna GPU compatible recae de forma transparente en un destino "
+"de CPU, de modo que el mismo código creado en un portátil también "
+"funcionará en una máquina con aceleración."
+
+#: ../../modules/backends/backends_cuda.rst:10
+msgid "Installation"
+msgstr "Instalación"
+
+#: ../../modules/backends/backends_cuda.rst:17
+msgid "Quick start"
+msgstr "Inicio rápido"
+
+#: ../../modules/backends/backends_cuda.rst:37
+msgid "Functional support"
+msgstr "Soporte de funcionales"
+
+#: ../../modules/backends/backends_cuda.rst:43
+msgid "Functional"
+msgstr "Funcional"
+
+#: ../../modules/backends/backends_cuda.rst:44
+msgid "Support"
+msgstr "Soporte"
+
+#: ../../modules/backends/backends_cuda.rst:45
+msgid "Notes"
+msgstr "Notas"
+
+#: ../../modules/backends/backends_cuda.rst:46
+msgid ":class:`~qilisdk.functionals.digital_propagation.DigitalPropagation`"
+msgstr ":class:`~qilisdk.functionals.digital_propagation.DigitalPropagation`"
+
+#: ../../modules/backends/backends_cuda.rst:47
+#: ../../modules/backends/backends_cuda.rst:50
+#: ../../modules/backends/backends_cuda.rst:56
+#: ../../modules/backends/backends_cuda.rst:80
+msgid "|y|"
+msgstr "|y|"
+
+#: ../../modules/backends/backends_cuda.rst:48
+msgid ""
+"Native CUDA-Q kernel. Sampling method selected via "
+":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod`. Intermediate "
+"measurements raise ``NotImplementedError``."
+msgstr ""
+"Kernel CUDA-Q nativo. El método de muestreo se selecciona mediante "
+":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod`. Las "
+"mediciones intermedias lanzan ``NotImplementedError``."
+
+#: ../../modules/backends/backends_cuda.rst:49
+msgid ":class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`"
+msgstr ":class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`"
+
+#: ../../modules/backends/backends_cuda.rst:51
+msgid ""
+"Driven by ``cudaq.evolve`` on the ``dynamics`` target (always GPU-"
+"accelerated when available, independent of the digital sampling method)."
+msgstr ""
+"Impulsada por ``cudaq.evolve`` sobre el target ``dynamics`` (siempre "
+"acelerada por GPU cuando está disponible, con independencia del método de"
+" muestreo digital)."
+
+#: ../../modules/backends/backends_cuda.rst:52
+msgid ":class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir`"
+msgstr ":class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir`"
+
+#: ../../modules/backends/backends_cuda.rst:53
+msgid "|p|"
+msgstr "|p|"
+
+#: ../../modules/backends/backends_cuda.rst:54
+#, fuzzy
+msgid ""
+"The CudaBackend does not natively implement "
+":meth:`Backend._execute_quantum_reservoir "
+"<qilisdk.backends.backend.Backend._execute_quantum_reservoir>`. Circuit "
+"steps inside the reservoir layer fall back to dense ``QTensor`` unitary "
+"multiplication on CPU; ``Schedule`` steps still use CUDA-Q's ``evolve``. "
+"Any attached noise model is ignored."
+msgstr ""
+"CudaBackend no implementa :meth:`Backend._execute_quantum_reservoir "
+"<qilisdk.backends.backend.Backend._execute_quantum_reservoir>`. Los pasos"
+" ``Circuit`` dentro de la capa del reservorio recaen en una "
+"multiplicación unitaria ``QTensor`` densa en CPU; los pasos ``Schedule`` "
+"siguen utilizando ``evolve`` de CUDA-Q. Cualquier modelo de ruido adjunto"
+" se ignora."
+
+#: ../../modules/backends/backends_cuda.rst:55
+msgid ":class:`~qilisdk.functionals.variational_program.VariationalProgram`"
+msgstr ":class:`~qilisdk.functionals.variational_program.VariationalProgram`"
+
+#: ../../modules/backends/backends_cuda.rst:57
+msgid "Reuses the digital/analog handlers above for each optimization step."
+msgstr ""
+"Reutiliza los manejadores digital/analógico anteriores en cada paso de "
+"optimización."
+
+#: ../../modules/backends/backends_cuda.rst:64
+msgid "Configuration"
+msgstr "Configuración"
+
+#: ../../modules/backends/backends_cuda.rst:66
+msgid ""
+"The CUDA backend exposes a single configuration knob — "
+":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod` — that selects"
+" the underlying CUDA-Q target used for **digital** circuits. Analog "
+"evolution always runs on the ``dynamics`` target and ignores this "
+"setting."
+msgstr ""
+"El backend CUDA expone una única perilla de configuración — "
+":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod` — que "
+"selecciona el target subyacente de CUDA-Q utilizado para los circuitos "
+"**digitales**. La evolución analógica siempre se ejecuta sobre el target "
+"``dynamics`` e ignora esta opción."
+
+#: ../../modules/backends/backends_cuda.rst:75
+msgid "Method"
+msgstr "Método"
+
+#: ../../modules/backends/backends_cuda.rst:76
+msgid "CUDA-Q target (and fallback)"
+msgstr "Target de CUDA-Q (y fallback)"
+
+#: ../../modules/backends/backends_cuda.rst:77
+msgid "Default"
+msgstr "Por defecto"
+
+#: ../../modules/backends/backends_cuda.rst:78
+msgid ":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.STATE_VECTOR`"
+msgstr ":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.STATE_VECTOR`"
+
+#: ../../modules/backends/backends_cuda.rst:79
+msgid ""
+"``nvidia`` (GPU) when a GPU is available, otherwise ``qpp-cpu``. "
+"Precision matches :class:`~qilisdk.settings.Precision`."
+msgstr ""
+"``nvidia`` (GPU) cuando hay una GPU disponible; en caso contrario ``qpp-"
+"cpu``. La precisión coincide con :class:`~qilisdk.settings.Precision`."
+
+#: ../../modules/backends/backends_cuda.rst:81
+msgid ":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.TENSOR_NETWORK`"
+msgstr ":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.TENSOR_NETWORK`"
+
+#: ../../modules/backends/backends_cuda.rst:82
+msgid "``tensornet``. Good for shallow, wide circuits."
+msgstr "``tensornet``. Adecuado para circuitos poco profundos pero anchos."
+
+#: ../../modules/backends/backends_cuda.rst:84
+msgid ":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.MATRIX_PRODUCT_STATE`"
+msgstr ":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.MATRIX_PRODUCT_STATE`"
+
+#: ../../modules/backends/backends_cuda.rst:85
+msgid "``tensornet-mps``. Good for low-entanglement, long circuits."
+msgstr ""
+"``tensornet-mps``. Adecuado para circuitos largos con bajo "
+"entrelazamiento."
+
+#: ../../modules/backends/backends_cuda.rst:88
+msgid "Set the method at construction time:"
+msgstr "Defina el método en el momento de la construcción:"
+
+#: ../../modules/backends/backends_cuda.rst:97
+msgid "Noise model support"
+msgstr "Soporte de modelos de ruido"
+
+#: ../../modules/backends/backends_cuda.rst:99
+msgid ""
+"A :class:`~qilisdk.noise.NoiseModel` can be passed to "
+"``CudaBackend(noise_model=…)``:"
+msgstr ""
+"Puede pasarse un :class:`~qilisdk.noise.NoiseModel` a "
+"``CudaBackend(noise_model=…)``:"
+
+#: ../../modules/backends/backends_cuda.rst:101
+msgid ""
+"For :class:`~qilisdk.functionals.digital_propagation.DigitalPropagation`,"
+" qilisdk noise channels are translated into a ``cudaq.NoiseModel`` (Kraus"
+" channels for static / time-derived noise, parameter perturbations "
+"applied to the circuit). With noise enabled, only a single "
+":class:`~qilisdk.readout.SamplingReadout` is supported."
+msgstr ""
+"Para "
+":class:`~qilisdk.functionals.digital_propagation.DigitalPropagation`, los"
+" canales de ruido de qilisdk se traducen a un ``cudaq.NoiseModel`` "
+"(canales de Kraus para ruido estático o derivado del tiempo, "
+"perturbaciones de parámetros aplicadas al circuito). Con ruido activado, "
+"solo se admite una única :class:`~qilisdk.readout.SamplingReadout`."
+
+#: ../../modules/backends/backends_cuda.rst:105
+msgid ""
+"For :class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`, "
+"Lindblad-compatible noise channels become CUDA-Q jump operators and "
+"Hamiltonian deltas fed to ``cudaq.evolve``."
+msgstr ""
+"Para :class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`, los "
+"canales de ruido compatibles con Lindblad se convierten en operadores de "
+"salto de CUDA-Q y en deltas del Hamiltoniano que se pasan a "
+"``cudaq.evolve``."
+
+#: ../../modules/backends/backends_cuda.rst:107
+msgid ""
+"For :class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir`, "
+"the fallback implementation drops the noise model (a warning is logged)."
+msgstr ""
+"Para :class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir`, "
+"la implementación de fallback descarta el modelo de ruido (se emite un "
+"aviso en el log)."
+
+#: ../../modules/backends/backends_cuda.rst:110
+msgid ""
+"Example: a depolarising channel applied to every gate of a digital "
+"circuit:"
+msgstr ""
+"Ejemplo: un canal despolarizador aplicado a cada puerta de un circuito "
+"digital:"
+
+#~ msgid "Go to a specific subheading of a page."
+#~ msgstr "Ir a un subtítulo específico de una página."
+
+#~ msgid "Capabilities"
+#~ msgstr "Capacidades"
+
+#~ msgid "Example"
+#~ msgstr "Ejemplo"
+
+#~ msgid "**Output**"
+#~ msgstr "**Salida**"
+
+#~ msgid "Sampling methods"
+#~ msgstr "Métodos de muestreo"
+
+#~ msgid "How each sampling method covers the functionals"
+#~ msgstr "Cómo cada método de muestreo cubre los funcionales"
+
+#~ msgid ""
+#~ "The table below shows which functionals"
+#~ " are affected by ``sampling_method``. Rows"
+#~ " marked |n| are unaffected — the "
+#~ "method is simply ignored for those "
+#~ "execution paths."
+#~ msgstr ""
+#~ "La tabla siguiente muestra qué "
+#~ "funcionales se ven afectados por "
+#~ "``sampling_method``. Las filas marcadas con"
+#~ " |n| no se ven afectadas — el"
+#~ " método simplemente se ignora en esas"
+#~ " rutas de ejecución."
+
+#~ msgid "Sampling method"
+#~ msgstr "Método de muestreo"
+
+#~ msgid "DigitalPropagation"
+#~ msgstr "DigitalPropagation"
+
+#~ msgid "AnalogEvolution"
+#~ msgstr "AnalogEvolution"
+
+#~ msgid "QuantumReservoir"
+#~ msgstr "QuantumReservoir"
+
+#~ msgid "VariationalProgram"
+#~ msgstr "VariationalProgram"
+
+#~ msgid "``STATE_VECTOR``"
+#~ msgstr "``STATE_VECTOR``"
+
+#~ msgid "|n| ``dynamics``"
+#~ msgstr "|n| ``dynamics``"
+
+#~ msgid "|p| Circuit steps via QTensor; Schedule steps via ``dynamics``"
+#~ msgstr "|p| Pasos Circuit vía QTensor; pasos Schedule vía ``dynamics``"
+
+#~ msgid "|y| (delegates to digital/analog)"
+#~ msgstr "|y| (delega en digital/analógico)"
+
+#~ msgid "``TENSOR_NETWORK``"
+#~ msgstr "``TENSOR_NETWORK``"
+
+#~ msgid "``MATRIX_PRODUCT_STATE``"
+#~ msgstr "``MATRIX_PRODUCT_STATE``"
+
+#~ msgid ""
+#~ "In short: ``sampling_method`` only changes "
+#~ "how a **digital** circuit is simulated."
+#~ " Analog evolution always uses "
+#~ "``cudaq.evolve`` on the ``dynamics`` target;"
+#~ " for reservoirs, only the analog "
+#~ "sub-step benefits from CUDA-Q (the "
+#~ "digital sub-circuits run on CPU "
+#~ "through ``QTensor``)."
+#~ msgstr ""
+#~ "En resumen: ``sampling_method`` solo cambia"
+#~ " cómo se simula un circuito "
+#~ "**digital**. La evolución analógica siempre"
+#~ " usa ``cudaq.evolve`` sobre el target "
+#~ "``dynamics``; en los reservorios, solo "
+#~ "el subpaso analógico se beneficia de "
+#~ "CUDA-Q (los subcircuitos digitales se "
+#~ "ejecutan en CPU mediante ``QTensor``)."
+

@@ -1,0 +1,56 @@
+name: Platform Builds
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types:
+      - "opened"
+      - "reopened"
+      - "synchronize"
+      - "ready_for_review"
+
+jobs:
+  smoke-build:
+    name: Build & Smoke for Python ${{ matrix.python-version }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, windows-latest]
+        python-version:
+          - "3.11"
+          - "3.12"
+          - "3.13"
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: |
+            **/pyproject.toml
+            **/uv.lock
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install qilisdk
+        shell: bash
+        run: |
+          uv sync --frozen --reinstall
+          if [ -d .venv/bin ]; then
+            VENV_BIN="$PWD/.venv/bin"
+          else
+            VENV_BIN="$PWD/.venv/Scripts"
+          fi
+          echo "VIRTUAL_ENV=$PWD/.venv" >> "$GITHUB_ENV"
+          echo "$VENV_BIN" >> "$GITHUB_PATH"
+
+      - name: Smoke test import
+        shell: bash
+        run: |
+          python -c "import qilisdk; print('QiliSDK imported successfully')"
+          python -c "from qilisdk.backends import QiliSim; print('QiliSim imported successfully')"

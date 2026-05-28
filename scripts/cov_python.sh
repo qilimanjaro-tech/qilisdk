@@ -21,7 +21,7 @@ mkdir -p coverage
 
 # Rebuild the C++, no need to build tests
 echo "Rebuilding C++ without tests..." | tee -a $LOG_FILE
-uv -v sync --group dev --extra all-cu13 --reinstall 2>&1 | tee -a $LOG_FILE
+uv sync --group dev --extra all-cu13 --reinstall 2>&1 | tee -a $LOG_FILE
 
 # Stop we if errored
 if [[ ${PIPESTATUS[0]} -ne 0 ]]; then

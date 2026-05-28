@@ -21,7 +21,8 @@
 const std::complex<double> imag(0.0, 1.0);
 const std::complex<double> imag_conj(0.0, -1.0);
 const double inv_sqrt_2 = 1.0 / std::sqrt(2.0);
-const std::complex<double> t_phase = std::exp(std::complex<double>(0.0, M_PI / 4.0));
+constexpr double pi = 3.14159265358979323846;
+const std::complex<double> t_phase = std::exp(std::complex<double>(0.0, pi / 4.0));
 const std::complex<double> t_phase_conj = std::conj(t_phase);
 
 void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationType application_type) const {

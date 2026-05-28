@@ -1,0 +1,123 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025, Qilimanjaro Quantum Tech
+# This file is distributed under the same license as the QiliSDK package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: QiliSDK \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-05-05 15:18+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: es\n"
+"Language-Team: es <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../modules/readout/readout_bitstring.rst:2
+msgid "Bitstring Measurement"
+msgstr "Medición de Cadena de Bits"
+
+#: ../../modules/readout/readout_bitstring.rst:4
+msgid ""
+"Using "
+":meth:`with_sampling()<qilisdk.readout.readout_spec.Readout.with_sampling>`"
+" instructs the backend to perform ``nshots`` projective measurements in "
+"the computational basis and collect the bitstring counts."
+msgstr ""
+"El uso de "
+":meth:`with_sampling()<qilisdk.readout.readout_spec.Readout.with_sampling>`"
+" instruye al backend a realizar ``nshots`` mediciones proyectivas en "
+"la base computacional y recopilar los recuentos de cadenas de bits."
+
+#: ../../modules/readout/readout_bitstring.rst:28
+msgid "**Parameters**"
+msgstr "**Parámetros**"
+
+#: ../../modules/readout/readout_bitstring.rst:30
+msgid ""
+"**nshots** (``int``): Number of measurement shots.  Must be a positive "
+"integer."
+msgstr ""
+"**nshots** (``int``): Número de disparos de medición. Debe ser un entero "
+"positivo."
+
+#: ../../modules/readout/readout_bitstring.rst:31
+msgid ""
+"**expand_samples** (``bool``): Whether to expand the samples, by default "
+"True. If this is True, partial measurements will be returned as \"0\\_\" "
+"where the \"_\" indicates an unmeasured qubit. If False, the unmeasured "
+"qubits will be dropped from the bitstring, so \"0\\_\" would be returned "
+"as \"0\"."
+msgstr ""
+"**expand_samples** (``bool``): Si se deben expandir las muestras, por defecto "
+"True. Si es True, las mediciones parciales se devolverán como \"0\\_\" "
+"donde el \"_\" indica un qubit no medido. Si es False, los qubits no medidos "
+"se eliminarán de la cadena de bits, por lo que \"0\\_\" se devolvería "
+"como \"0\"."
+
+#: ../../modules/readout/readout_bitstring.rst:35
+msgid "**When to Use It**"
+msgstr "**Cuándo Usarlo**"
+
+#: ../../modules/readout/readout_bitstring.rst:37
+msgid ""
+"Use sampling when you need the full bitstring distribution, for instance "
+"to evaluate a combinatorial cost function, run QAOA post-processing, or "
+"compute error rates."
+msgstr ""
+"Use el muestreo cuando necesite la distribución completa de cadenas de bits, "
+"por ejemplo para evaluar una función de coste combinatoria, ejecutar el "
+"postprocesamiento de QAOA, o calcular tasas de error."
+
+#: ../../modules/readout/readout_bitstring.rst:40
+msgid "**Expanded Samples**"
+msgstr "**Muestras Expandidas**"
+
+#: ../../modules/readout/readout_bitstring.rst:42
+msgid ""
+"When ``expand_samples`` is set to True, the bitstrings in the results "
+"will include underscores (\"_\") to indicate unmeasured qubits. This can "
+"be helpful for readability, especially when only a subset of qubits are "
+"measured. For example, if you have a 4-qubit system and only measure the "
+"first, second, and fourth qubits, a sample would be returned as "
+"\"00\\_0\" instead of \"000\", where the underscore indicates that the "
+"third qubit's state is not measured."
+msgstr ""
+"Cuando ``expand_samples`` se establece en True, las cadenas de bits en los "
+"resultados incluirán guiones bajos (\"_\") para indicar qubits no medidos. "
+"Esto puede ser útil para la legibilidad, especialmente cuando solo se mide "
+"un subconjunto de qubits. Por ejemplo, si tiene un sistema de 4 qubits y "
+"solo mide el primero, segundo y cuarto qubit, una muestra se devolvería como "
+"\"00\\_0\" en lugar de \"000\", donde el guion bajo indica que el estado del "
+"tercer qubit no ha sido medido."
+
+#: ../../modules/readout/readout_bitstring.rst:77
+msgid "**Output**:"
+msgstr "**Salida**:"
+
+#: ../../modules/readout/readout_bitstring.rst:86
+msgid ""
+"Notice how the first result includes the underscore to make it clear "
+"which qubits were ignored, whilst the second result is more compact but "
+"ambiguous unless you know the measurement configuration. This would be "
+"especially important if there were mid-circuit measurements, since you "
+"might measure just qubit 1 early on and then just qubit 2 later, so the "
+"position of the underscore would indicate which qubits were measured at "
+"each step."
+msgstr ""
+"Observe cómo el primer resultado incluye el guion bajo para dejar claro "
+"qué qubits fueron ignorados, mientras que el segundo resultado es más "
+"compacto pero ambiguo a menos que se conozca la configuración de medición. "
+"Esto sería especialmente importante si hubiera mediciones a mitad del "
+"circuito, ya que se podría medir solo el qubit 1 al principio y luego solo "
+"el qubit 2 más tarde, por lo que la posición del guion bajo indicaría qué "
+"qubits fueron medidos en cada paso."
+
+#~ msgid "Go to a specific subheading of a page."
+#~ msgstr "Ir a un subtítulo específico de una página."

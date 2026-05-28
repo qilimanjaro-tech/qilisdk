@@ -96,12 +96,12 @@ as it can help to ensure that we stay in the ground state throughout the evoluti
 The simplest choice is a linear schedule, the coefficients of which look as follows:
 
 .. image:: ../../_static/schedule_light.svg
-   :align: left
+   :align: center
    :class: only-light
    :scale: 70%
 
 .. image:: ../../_static/schedule_dark.svg
-   :align: left
+   :align: center
    :class: only-dark
    :scale: 70%
 

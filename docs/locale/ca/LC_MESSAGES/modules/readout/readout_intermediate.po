@@ -1,0 +1,114 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025, Qilimanjaro Quantum Tech
+# This file is distributed under the same license as the QiliSDK package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: QiliSDK \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-05-05 15:18+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ca\n"
+"Language-Team: ca <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../modules/readout/readout_intermediate.rst:2
+msgid "Intermediate Results"
+msgstr "Resultats Intermedis"
+
+#: ../../modules/readout/readout_intermediate.rst:4
+msgid ""
+"When a functional is constructed with ``store_intermediate_results=True``"
+" (currently supported by "
+":class:`~qilisdk.functionals.analog_evolution.AnalogEvolution` and "
+":class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir`), or "
+"via mid-circuit measurements in a "
+":class:`~qilisdk.digital.circuit.Circuit`, the backend stores a readout "
+"result for every time step.  The same readout methods apply at each step."
+msgstr ""
+"Quan un funcional es construeix amb ``store_intermediate_results=True``"
+" (actualment compatible amb "
+":class:`~qilisdk.functionals.analog_evolution.AnalogEvolution` i "
+":class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir`), o "
+"mitjançant mesures a mig circuit en un "
+":class:`~qilisdk.digital.circuit.Circuit`, el backend emmagatzema un resultat de readout "
+"per a cada pas de temps. Els mateixos mètodes de readout s'apliquen a cada pas."
+
+#: ../../modules/readout/readout_intermediate.rst:42
+msgid "Property"
+msgstr "Propietat"
+
+#: ../../modules/readout/readout_intermediate.rst:43
+msgid "Type"
+msgstr "Tipus"
+
+#: ../../modules/readout/readout_intermediate.rst:44
+msgid "Requires"
+msgstr "Requereix"
+
+#: ../../modules/readout/readout_intermediate.rst:45
+msgid "``result.get_intermediate_samples()``"
+msgstr "``result.get_intermediate_samples()``"
+
+#: ../../modules/readout/readout_intermediate.rst:46
+msgid "``list[dict[str, int]]``"
+msgstr "``list[dict[str, int]]``"
+
+#: ../../modules/readout/readout_intermediate.rst:47
+msgid "``.with_sampling()``"
+msgstr "``.with_sampling()``"
+
+#: ../../modules/readout/readout_intermediate.rst:48
+msgid "``result.get_intermediate_probabilities()``"
+msgstr "``result.get_intermediate_probabilities()``"
+
+#: ../../modules/readout/readout_intermediate.rst:49
+msgid "``list[dict[str, float]]``"
+msgstr "``list[dict[str, float]]``"
+
+#: ../../modules/readout/readout_intermediate.rst:50
+msgid "``.with_sampling()`` or ``.with_state_tomography()``"
+msgstr "``.with_sampling()`` o ``.with_state_tomography()``"
+
+#: ../../modules/readout/readout_intermediate.rst:51
+msgid "``result.get_intermediate_expectation_values()``"
+msgstr "``result.get_intermediate_expectation_values()``"
+
+#: ../../modules/readout/readout_intermediate.rst:52
+msgid "``list[list[float]]``"
+msgstr "``list[list[float]]``"
+
+#: ../../modules/readout/readout_intermediate.rst:53
+msgid "``.with_expectation()``"
+msgstr "``.with_expectation()``"
+
+#: ../../modules/readout/readout_intermediate.rst:54
+msgid "``result.get_intermediate_states()``"
+msgstr "``result.get_intermediate_states()``"
+
+#: ../../modules/readout/readout_intermediate.rst:55
+msgid "``list[QTensor]``"
+msgstr "``list[QTensor]``"
+
+#: ../../modules/readout/readout_intermediate.rst:56
+msgid "``.with_state_tomography()``"
+msgstr "``.with_state_tomography()``"
+
+#: ../../modules/readout/readout_intermediate.rst:58
+msgid ""
+"All intermediate lists contain one entry per time step in chronological "
+"order, with the **final** step appended last.  ``result[i]`` returns the "
+":class:`~qilisdk.readout.readout_result.ReadoutCompositeResults` for step"
+" ``i``."
+msgstr ""
+"Totes les llistes intermèdies contenen una entrada per pas de temps en ordre cronològic, "
+"amb el pas **final** afegit al final. ``result[i]`` retorna el "
+":class:`~qilisdk.readout.readout_result.ReadoutCompositeResults` per al pas "
+"``i``."

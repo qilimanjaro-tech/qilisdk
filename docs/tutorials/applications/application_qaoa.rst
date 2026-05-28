@@ -59,12 +59,12 @@ We should also start in the ground state of the mixing Hamiltonian, which in thi
 As a circuit, this looks like the following:
 
 .. image:: ../../_static/qaoa_circuit_light.svg
-   :align: left
+   :align: center
    :class: only-light
    :scale: 150%
 
 .. image:: ../../_static/qaoa_circuit_dark.svg
-   :align: left
+   :align: center
    :class: only-dark
    :scale: 150%
 
@@ -79,8 +79,8 @@ The Implementation
 ----------------------
 
 In QiliSDK, a variety of classes are available to help streamline the implementation. 
-Starting with the problem Hamiltonian, we can use the :class:`~qilisdk.core.QUBO` class to represent our QUBO problem,
-and then use the :class:`~qilisdk.core.QAOA` class to construct the QAOA circuit and perform the optimization.
+Starting with the problem Hamiltonian, we can use the :class:`~qilisdk.core.model.QUBO` class to represent our QUBO problem,
+and then use the :class:`~qilisdk.digital.ansatz.QAOA` class to construct the QAOA circuit and perform the optimization.
 
 To create our model:
 

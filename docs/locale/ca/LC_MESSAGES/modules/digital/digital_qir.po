@@ -1,0 +1,517 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025, Qilimanjaro Quantum Tech
+# This file is distributed under the same license as the QiliSDK package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: QiliSDK \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-05-21 10:34+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ca\n"
+"Language-Team: ca <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../modules/digital/digital_qir.rst:2
+msgid "QIR Import and Export"
+msgstr "Importació i Exportació QIR"
+
+#: ../../modules/digital/digital_qir.rst:4
+msgid ""
+"QiliSDK can bridge :class:`~qilisdk.digital.Circuit` and the `QIR Base "
+"Profile <https://github.com/qir-alliance/qir-"
+"spec/blob/main/specification/under_development/profiles/Base_Profile.md>`_"
+" via Microsoft's `pyqir <https://pypi.org/project/pyqir/>`_ library. Four"
+" entry-points live in :mod:`qilisdk.utils.qir`:"
+msgstr ""
+"QiliSDK pot connectar :class:`~qilisdk.digital.Circuit` amb el `Perfil "
+"Base QIR <https://github.com/qir-alliance/qir-"
+"spec/blob/main/specification/under_development/profiles/Base_Profile.md>`_"
+" a través de la biblioteca `pyqir <https://pypi.org/project/pyqir/>`_ de "
+"Microsoft. Quatre punts d'entrada es troben a :mod:`qilisdk.utils.qir`:"
+
+#: ../../modules/digital/digital_qir.rst:9
+msgid ""
+":func:`~qilisdk.utils.qir.from_qir` — parse a QIR textual LLVM IR string "
+"into a Circuit."
+msgstr ""
+":func:`~qilisdk.utils.qir.from_qir` — analitza una cadena LLVM IR textual"
+" QIR en un Circuit."
+
+#: ../../modules/digital/digital_qir.rst:10
+msgid ""
+":func:`~qilisdk.utils.qir.from_qir_file` — read a ``.ll`` or ``.bc`` file"
+" (dispatched by extension)."
+msgstr ""
+":func:`~qilisdk.utils.qir.from_qir_file` — llegeix un fitxer ``.ll`` o "
+"``.bc`` (segons l'extensió)."
+
+#: ../../modules/digital/digital_qir.rst:11
+msgid ":func:`~qilisdk.utils.qir.to_qir` — serialize a Circuit to QIR textual IR."
+msgstr ""
+":func:`~qilisdk.utils.qir.to_qir` — serialitza un Circuit a IR textual "
+"QIR."
+
+#: ../../modules/digital/digital_qir.rst:12
+msgid ""
+":func:`~qilisdk.utils.qir.to_qir_file` — write a ``.ll`` or ``.bc`` file "
+"(dispatched by extension)."
+msgstr ""
+":func:`~qilisdk.utils.qir.to_qir_file` — escriu un fitxer ``.ll`` o "
+"``.bc`` (segons l'extensió)."
+
+#: ../../modules/digital/digital_qir.rst:14
+msgid "The ``pyqir`` dependency is optional; install it with the ``qir`` extra:"
+msgstr "La dependència ``pyqir`` és opcional; instal·leu-la amb l'extra ``qir``:"
+
+#: ../../modules/digital/digital_qir.rst:21
+msgid "Quick start"
+msgstr "Inici ràpid"
+
+#: ../../modules/digital/digital_qir.rst:38
+msgid ""
+"Reading and writing files dispatches on the extension — ``.ll`` is "
+"treated as textual LLVM IR, ``.bc`` as LLVM bitcode:"
+msgstr ""
+"La lectura i escriptura de fitxers es despacha segons l'extensió — "
+"``.ll`` es tracta com a IR LLVM textual, ``.bc`` com a bitcode LLVM:"
+
+#: ../../modules/digital/digital_qir.rst:51
+msgid "Supported features"
+msgstr "Funcionalitats suportades"
+
+#: ../../modules/digital/digital_qir.rst:53
+msgid ""
+"QiliSDK targets the QIR Base Profile — a flat, statically-allocated "
+"subset of QIR with no classical control flow. The table below maps QIR "
+"features to their support status in QiliSDK:"
+msgstr ""
+"QiliSDK apunta al Perfil Base QIR — un subconjunt pla i estàticament "
+"assignat de QIR sense flux de control clàssic. La taula següent mapeja "
+"les característiques QIR amb el seu estat de suport a QiliSDK:"
+
+#: ../../modules/digital/digital_qir.rst:57
+msgid "✅: The feature is fully supported"
+msgstr "✅: La funcionalitat és totalment suportada"
+
+#: ../../modules/digital/digital_qir.rst:58
+msgid "🟡: The feature is partially supported, see the note for explanation"
+msgstr ""
+"🟡: La funcionalitat és parcialment suportada, vegeu la nota per a més "
+"explicació"
+
+#: ../../modules/digital/digital_qir.rst:59
+msgid "❌: The feature is not supported"
+msgstr "❌: La funcionalitat no està suportada"
+
+#: ../../modules/digital/digital_qir.rst:62
+msgid "QIR feature"
+msgstr "Característica QIR"
+
+#: ../../modules/digital/digital_qir.rst:62
+msgid "QiliSDK feature"
+msgstr "Característica QiliSDK"
+
+#: ../../modules/digital/digital_qir.rst:62
+msgid "Supported"
+msgstr "Suportat"
+
+#: ../../modules/digital/digital_qir.rst:62
+msgid "Notes"
+msgstr "Notes"
+
+#: ../../modules/digital/digital_qir.rst:64
+msgid "Base Profile module layout"
+msgstr "Estructura del mòdul del Perfil Base"
+
+#: ../../modules/digital/digital_qir.rst:64
+#: ../../modules/digital/digital_qir.rst:65
+#: ../../modules/digital/digital_qir.rst:66
+#: ../../modules/digital/digital_qir.rst:67
+#: ../../modules/digital/digital_qir.rst:68
+#: ../../modules/digital/digital_qir.rst:69
+#: ../../modules/digital/digital_qir.rst:70
+#: ../../modules/digital/digital_qir.rst:71
+#: ../../modules/digital/digital_qir.rst:72
+#: ../../modules/digital/digital_qir.rst:73
+#: ../../modules/digital/digital_qir.rst:74
+#: ../../modules/digital/digital_qir.rst:75
+#: ../../modules/digital/digital_qir.rst:76
+#: ../../modules/digital/digital_qir.rst:77
+#: ../../modules/digital/digital_qir.rst:78
+#: ../../modules/digital/digital_qir.rst:79
+#: ../../modules/digital/digital_qir.rst:80
+#: ../../modules/digital/digital_qir.rst:81
+#: ../../modules/digital/digital_qir.rst:82
+#: ../../modules/digital/digital_qir.rst:83
+#: ../../modules/digital/digital_qir.rst:84
+msgid "--"
+msgstr "--"
+
+#: ../../modules/digital/digital_qir.rst:64
+#: ../../modules/digital/digital_qir.rst:65
+#: ../../modules/digital/digital_qir.rst:66
+#: ../../modules/digital/digital_qir.rst:67
+#: ../../modules/digital/digital_qir.rst:68
+#: ../../modules/digital/digital_qir.rst:69
+#: ../../modules/digital/digital_qir.rst:70
+#: ../../modules/digital/digital_qir.rst:71
+#: ../../modules/digital/digital_qir.rst:72
+#: ../../modules/digital/digital_qir.rst:73
+msgid "✅"
+msgstr "✅"
+
+#: ../../modules/digital/digital_qir.rst:65
+msgid "Entry-point function"
+msgstr "Funció de punt d'entrada"
+
+#: ../../modules/digital/digital_qir.rst:66
+msgid "Static qubit allocation"
+msgstr "Assignació estàtica de qubits"
+
+#: ../../modules/digital/digital_qir.rst:67
+msgid "Static result allocation"
+msgstr "Assignació estàtica de resultats"
+
+#: ../../modules/digital/digital_qir.rst:68
+msgid "``required_num_qubits`` / ``_num_results``"
+msgstr "``required_num_qubits`` / ``_num_results``"
+
+#: ../../modules/digital/digital_qir.rst:69
+msgid "Textual LLVM IR (``.ll``)"
+msgstr "IR LLVM textual (``.ll``)"
+
+#: ../../modules/digital/digital_qir.rst:70
+msgid "LLVM bitcode (``.bc``)"
+msgstr "Bitcode LLVM (``.bc``)"
+
+#: ../../modules/digital/digital_qir.rst:71
+msgid "Single-qubit QIS gates"
+msgstr "Portes QIS d'un sol qubit"
+
+#: ../../modules/digital/digital_qir.rst:71
+#: ../../modules/digital/digital_qir.rst:72
+msgid "1"
+msgstr "1"
+
+#: ../../modules/digital/digital_qir.rst:72
+msgid "Two-qubit QIS gates"
+msgstr "Portes QIS de dos qubits"
+
+#: ../../modules/digital/digital_qir.rst:73
+msgid "Adjoint QIS gates (``s_adj`` / ``t_adj``)"
+msgstr "Portes QIS adjuntes (``s_adj`` / ``t_adj``)"
+
+#: ../../modules/digital/digital_qir.rst:74
+msgid "Parameterized rotations"
+msgstr "Rotacions parametritzades"
+
+#: ../../modules/digital/digital_qir.rst:74
+#: ../../modules/digital/digital_qir.rst:75
+#: ../../modules/digital/digital_qir.rst:76
+msgid "🟡"
+msgstr "🟡"
+
+#: ../../modules/digital/digital_qir.rst:74
+msgid "2"
+msgstr "2"
+
+#: ../../modules/digital/digital_qir.rst:75
+msgid "Measurement (``mz``)"
+msgstr "Mesura (``mz``)"
+
+#: ../../modules/digital/digital_qir.rst:75
+msgid "3"
+msgstr "3"
+
+#: ../../modules/digital/digital_qir.rst:76
+msgid "Multi-qubit measurement grouping"
+msgstr "Agrupació de mesures multi-qubit"
+
+#: ../../modules/digital/digital_qir.rst:76
+msgid "4"
+msgstr "4"
+
+#: ../../modules/digital/digital_qir.rst:77
+msgid "``barrier`` / ``reset``"
+msgstr "``barrier`` / ``reset``"
+
+#: ../../modules/digital/digital_qir.rst:77
+#: ../../modules/digital/digital_qir.rst:78
+#: ../../modules/digital/digital_qir.rst:79
+#: ../../modules/digital/digital_qir.rst:80
+#: ../../modules/digital/digital_qir.rst:81
+#: ../../modules/digital/digital_qir.rst:82
+#: ../../modules/digital/digital_qir.rst:83
+#: ../../modules/digital/digital_qir.rst:84
+msgid "❌"
+msgstr "❌"
+
+#: ../../modules/digital/digital_qir.rst:78
+msgid "``ccx`` and other three-qubit intrinsics"
+msgstr "``ccx`` i altres intrínsecs de tres qubits"
+
+#: ../../modules/digital/digital_qir.rst:78
+#: ../../modules/digital/digital_qir.rst:83
+#: ../../modules/digital/digital_qir.rst:84
+msgid "5"
+msgstr "5"
+
+#: ../../modules/digital/digital_qir.rst:79
+msgid "Adaptive Profile / classical control"
+msgstr "Perfil Adaptatiu / control clàssic"
+
+#: ../../modules/digital/digital_qir.rst:80
+msgid "Branching on measurement results"
+msgstr "Bifurcació en resultats de mesura"
+
+#: ../../modules/digital/digital_qir.rst:81
+msgid "Output recording calls (``rt__*``)"
+msgstr "Crides de gravació de sortida (``rt__*``)"
+
+#: ../../modules/digital/digital_qir.rst:82
+msgid "Dynamic qubit / result management"
+msgstr "Gestió dinàmica de qubits / resultats"
+
+#: ../../modules/digital/digital_qir.rst:83
+msgid "``U1`` / ``U2`` / ``U3``"
+msgstr "``U1`` / ``U2`` / ``U3``"
+
+#: ../../modules/digital/digital_qir.rst:84
+msgid "Arbitrary ``Controlled`` / ``Exponential``"
+msgstr "``Controlled`` / ``Exponential`` arbitrari"
+
+#: ../../modules/digital/digital_qir.rst:88
+msgid "See the \"Supported gates\" table below for the exact intrinsic mapping."
+msgstr ""
+"Consulteu la taula \"Portes suportades\" a continuació per al mapeig "
+"exacte d'intrínsecs."
+
+#: ../../modules/digital/digital_qir.rst:90
+msgid ""
+"Rotation angles are exported as their currently-resolved numeric values. "
+"Base Profile does not support symbolic parameters, so rebind any "
+":class:`~qilisdk.core.Parameter` values to concrete numbers before "
+"calling :func:`~qilisdk.utils.qir.to_qir`."
+msgstr ""
+"Els angles de rotació s'exporten com els seus valors numèrics actualment "
+"resolts. El Perfil Base no admet paràmetres simbòlics, per la qual cosa "
+"vinculeu qualsevol valor de :class:`~qilisdk.core.Parameter` a números "
+"concrets abans de cridar :func:`~qilisdk.utils.qir.to_qir`."
+
+#: ../../modules/digital/digital_qir.rst:95
+msgid ""
+"Only ``mz`` is emitted; mid-circuit measurement followed by classical "
+"control is not supported (and is forbidden by the Base Profile)."
+msgstr ""
+"Només s'emet ``mz``; la mesura a mig circuit seguida de control clàssic "
+"no està suportada (i està prohibida pel Perfil Base)."
+
+#: ../../modules/digital/digital_qir.rst:98
+msgid ""
+"A multi-qubit :class:`~qilisdk.digital.gates.M` is serialized as one "
+"``mz`` call per target qubit. On reparse it comes back as one "
+":class:`~qilisdk.digital.gates.M` per measured qubit — the qubit set is "
+"preserved but the grouping is not."
+msgstr ""
+"Un :class:`~qilisdk.digital.gates.M` multi-qubit es serialitza com una "
+"crida ``mz`` per qubit destí. En reanàlisi torna com un "
+":class:`~qilisdk.digital.gates.M` per qubit mesurat — el conjunt de "
+"qubits es conserva, però no l'agrupació."
+
+#: ../../modules/digital/digital_qir.rst:103
+msgid ""
+"These must be decomposed into supported primitives before export, "
+"otherwise :func:`~qilisdk.utils.qir.to_qir` raises "
+":class:`NotImplementedError`."
+msgstr ""
+"Aquests han de descompondre's en primitius suportats abans d'exportar; "
+"altrament, :func:`~qilisdk.utils.qir.to_qir` llança "
+":class:`NotImplementedError`."
+
+#: ../../modules/digital/digital_qir.rst:107
+msgid "Supported gates"
+msgstr "Portes suportades"
+
+#: ../../modules/digital/digital_qir.rst:109
+msgid ""
+"The exporter maps the following gates onto the standard "
+"``__quantum__qis__*__body`` intrinsics; everything else raises "
+":class:`NotImplementedError` to surface the need for decomposition."
+msgstr ""
+"L'exportador mapeja les portes següents als intrínsecs estàndard "
+"``__quantum__qis__*__body``; tot la resta llança "
+":class:`NotImplementedError` per indicar la necessitat de descomposició."
+
+#: ../../modules/digital/digital_qir.rst:114
+msgid "QiliSDK gate"
+msgstr "Porta QiliSDK"
+
+#: ../../modules/digital/digital_qir.rst:114
+msgid "QIR intrinsic"
+msgstr "Intrínsec QIR"
+
+#: ../../modules/digital/digital_qir.rst:116
+msgid ":class:`~qilisdk.digital.gates.I`"
+msgstr ":class:`~qilisdk.digital.gates.I`"
+
+#: ../../modules/digital/digital_qir.rst:116
+msgid "*(no-op, emitted as nothing)*"
+msgstr "*(sense operació, no s'emet res)*"
+
+#: ../../modules/digital/digital_qir.rst:117
+msgid ":class:`~qilisdk.digital.gates.X` /"
+msgstr ":class:`~qilisdk.digital.gates.X` /"
+
+#: ../../modules/digital/digital_qir.rst:118
+msgid ":class:`~qilisdk.digital.gates.Y` /"
+msgstr ":class:`~qilisdk.digital.gates.Y` /"
+
+#: ../../modules/digital/digital_qir.rst:119
+msgid ":class:`~qilisdk.digital.gates.Z`"
+msgstr ":class:`~qilisdk.digital.gates.Z`"
+
+#: ../../modules/digital/digital_qir.rst:119
+msgid "``__quantum__qis__x/y/z__body``"
+msgstr "``__quantum__qis__x/y/z__body``"
+
+#: ../../modules/digital/digital_qir.rst:120
+msgid ":class:`~qilisdk.digital.gates.H`"
+msgstr ":class:`~qilisdk.digital.gates.H`"
+
+#: ../../modules/digital/digital_qir.rst:120
+msgid "``__quantum__qis__h__body``"
+msgstr "``__quantum__qis__h__body``"
+
+#: ../../modules/digital/digital_qir.rst:121
+msgid ":class:`~qilisdk.digital.gates.S` /"
+msgstr ":class:`~qilisdk.digital.gates.S` /"
+
+#: ../../modules/digital/digital_qir.rst:122
+msgid ":class:`~qilisdk.digital.gates.T`"
+msgstr ":class:`~qilisdk.digital.gates.T`"
+
+#: ../../modules/digital/digital_qir.rst:122
+msgid "``__quantum__qis__s/t__body``"
+msgstr "``__quantum__qis__s/t__body``"
+
+#: ../../modules/digital/digital_qir.rst:123
+msgid "``Adjoint(S)`` / ``Adjoint(T)``"
+msgstr "``Adjoint(S)`` / ``Adjoint(T)``"
+
+#: ../../modules/digital/digital_qir.rst:123
+msgid "``__quantum__qis__s/t__adj``"
+msgstr "``__quantum__qis__s/t__adj``"
+
+#: ../../modules/digital/digital_qir.rst:124
+msgid ":class:`~qilisdk.digital.gates.RX` /"
+msgstr ":class:`~qilisdk.digital.gates.RX` /"
+
+#: ../../modules/digital/digital_qir.rst:125
+msgid ":class:`~qilisdk.digital.gates.RY` /"
+msgstr ":class:`~qilisdk.digital.gates.RY` /"
+
+#: ../../modules/digital/digital_qir.rst:126
+msgid ":class:`~qilisdk.digital.gates.RZ`"
+msgstr ":class:`~qilisdk.digital.gates.RZ`"
+
+#: ../../modules/digital/digital_qir.rst:126
+msgid "``__quantum__qis__rx/ry/rz__body``"
+msgstr "``__quantum__qis__rx/ry/rz__body``"
+
+#: ../../modules/digital/digital_qir.rst:127
+msgid ":class:`~qilisdk.digital.gates.CNOT`"
+msgstr ":class:`~qilisdk.digital.gates.CNOT`"
+
+#: ../../modules/digital/digital_qir.rst:127
+msgid "``__quantum__qis__cnot__body``"
+msgstr "``__quantum__qis__cnot__body``"
+
+#: ../../modules/digital/digital_qir.rst:128
+msgid ":class:`~qilisdk.digital.gates.CZ`"
+msgstr ":class:`~qilisdk.digital.gates.CZ`"
+
+#: ../../modules/digital/digital_qir.rst:128
+msgid "``__quantum__qis__cz__body``"
+msgstr "``__quantum__qis__cz__body``"
+
+#: ../../modules/digital/digital_qir.rst:129
+msgid ":class:`~qilisdk.digital.gates.SWAP`"
+msgstr ":class:`~qilisdk.digital.gates.SWAP`"
+
+#: ../../modules/digital/digital_qir.rst:129
+msgid "``__quantum__qis__swap__body``"
+msgstr "``__quantum__qis__swap__body``"
+
+#: ../../modules/digital/digital_qir.rst:130
+msgid ":class:`~qilisdk.digital.gates.M`"
+msgstr ":class:`~qilisdk.digital.gates.M`"
+
+#: ../../modules/digital/digital_qir.rst:130
+msgid "one ``__quantum__qis__mz__body`` call per target qubit"
+msgstr "una crida ``__quantum__qis__mz__body`` per qubit destí"
+
+#: ../../modules/digital/digital_qir.rst:134
+msgid ""
+"Gates outside this table (``U1`` / ``U2`` / ``U3``, three-qubit "
+"unitaries, arbitrary :class:`~qilisdk.digital.gates.Controlled` / "
+":class:`~qilisdk.digital.gates.Exponential` wrappers) need to be "
+"decomposed into the supported set before export."
+msgstr ""
+"Les portes fora d'aquesta taula (``U1`` / ``U2`` / ``U3``, unitàries de "
+"tres qubits, embolcalls arbitraris de "
+":class:`~qilisdk.digital.gates.Controlled` / "
+":class:`~qilisdk.digital.gates.Exponential`) han de descompondre's en el "
+"conjunt suportat abans d'exportar."
+
+#: ../../modules/digital/digital_qir.rst:140
+msgid "Profile and round-trip notes"
+msgstr "Notes sobre el perfil i el cicle d'anada i tornada"
+
+#: ../../modules/digital/digital_qir.rst:142
+msgid ""
+"Modules are emitted with one entry-point function and statically "
+"allocated qubit and result registers (one result register per qubit), "
+"matching the Base Profile contract."
+msgstr ""
+"Els mòduls s'emeten amb una funció de punt d'entrada i registres de "
+"qubits i resultats assignats estàticament (un registre de resultat per "
+"qubit), seguint el contracte del Perfil Base."
+
+#: ../../modules/digital/digital_qir.rst:145
+msgid ""
+"Round-tripping preserves gate types, qubit indices, and rotation angles. "
+"A multi-qubit :class:`~qilisdk.digital.gates.M` instance is serialized as"
+" one ``mz`` call per target; on parse it comes back as one "
+":class:`~qilisdk.digital.gates.M` per measured qubit (i.e. the qubit set "
+"is preserved but the grouping is not)."
+msgstr ""
+"El cicle d'anada i tornada preserva els tipus de portes, els índexs de "
+"qubits i els angles de rotació. Una instància de "
+":class:`~qilisdk.digital.gates.M` multi-qubit es serialitza com una crida"
+" ``mz`` per destí; en analitzar, torna com un "
+":class:`~qilisdk.digital.gates.M` per qubit mesurat (és a dir, el conjunt"
+" de qubits es conserva, però no l'agrupació)."
+
+#: ../../modules/digital/digital_qir.rst:150
+msgid ""
+"Parameterized rotations are exported with their currently-resolved "
+"numeric angles; Base Profile does not support symbolic parameters, so "
+"rebind any :class:`~qilisdk.core.Parameter` values to concrete numbers "
+"before calling :func:`~qilisdk.utils.qir.to_qir`."
+msgstr ""
+"Les rotacions parametritzades s'exporten amb els seus angles numèrics "
+"actualment resolts; el Perfil Base no admet paràmetres simbòlics, per la "
+"qual cosa vinculeu qualsevol valor de :class:`~qilisdk.core.Parameter` a "
+"números concrets abans de cridar :func:`~qilisdk.utils.qir.to_qir`."
+
+#~ msgid "QiliSDK"
+#~ msgstr "QiliSDK"
+

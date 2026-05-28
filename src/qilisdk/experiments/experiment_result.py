@@ -17,6 +17,7 @@ from typing import ClassVar
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.figure import Figure
+from scipy.optimize import curve_fit
 
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.yaml import yaml
@@ -93,7 +94,12 @@ class ExperimentResult(FunctionalResult):
         """
         return 20 * np.log10(self.s21_modulus)
 
-    def plot(self, save_to: str | None = None) -> None:
+    def add_fit(self, initial_guess: list[float] | None = None) -> None:
+        """Fit a user-provided function to the experimental data.
+        This should be implemented by subclasses to provide specific fitting functionality relevant to the experiment type.
+        """
+
+    def plot(self, save_to: str | None = None, initial_guess: list[float] | None = None) -> None:
         """Plot the S21 parameter from experiment results.
 
         Automatically detects whether the dataset is 1D or 2D and creates
@@ -142,6 +148,8 @@ class ExperimentResult(FunctionalResult):
 
                 # Force scientific notation
                 ax2.ticklabel_format(axis="x", style="sci", scilimits=(-3, 3))
+
+            self.add_fit(initial_guess=initial_guess)
 
             if save_to:
                 save_figure(fig, save_to)
@@ -195,6 +203,8 @@ class ExperimentResult(FunctionalResult):
                 # Force scientific notation
                 ax3.ticklabel_format(axis="y", style="sci", scilimits=(-3, 3))
 
+            self.add_fit(initial_guess=initial_guess)
+
             if save_to:
                 save_figure(fig, save_to)
 
@@ -224,6 +234,34 @@ class T1ExperimentResult(ExperimentResult):
 
     plot_title: ClassVar[str] = "T1"
     """Default title for T1 experiment plots."""
+
+    def add_fit(self, initial_guess: list[float] | None = None) -> None:
+        """Fit an exponential decay curve to the T1 experiment data."""
+
+        def _t1_decay_model(t: np.ndarray, a: float, t1: float, b: float) -> np.ndarray:
+            """Exponential decay model for T1 measurement.
+
+            Args:
+                t (np.ndarray): Time array (in microseconds).
+                a (float): Amplitude of the decay.
+                t1 (float): T1 relaxation time (in microseconds).
+                b (float): Baseline offset.
+
+            Returns:
+                np.ndarray: The modeled decay curve values at time t.
+            """
+            return a * np.exp(-t / t1) + b
+
+        x_data = self.dims[0].values[0].flatten()
+        y_data = self.s21_modulus.flatten()
+        if initial_guess is None:
+            initial_guess = [y_data.max() - y_data.min(), (x_data.max() - x_data.min()) / 3, y_data.min()]
+        popt, _ = curve_fit(_t1_decay_model, x_data, y_data, p0=initial_guess)
+        a_fit, t1_fit, b_fit = popt
+        t_fit = np.linspace(min(x_data), max(x_data), 100)
+        y_fit = _t1_decay_model(t_fit, a_fit, t1_fit, b_fit)
+        plt.plot(t_fit, y_fit, label=f"Exponential Fit (T1={t1_fit:.2f} μs)")
+        plt.legend()
 
 
 @yaml.register_class

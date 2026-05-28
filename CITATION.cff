@@ -1,0 +1,42 @@
+cff-version: "1.2.0"
+message: "If you use QiliSDK, please cite it using the metadata from this file."
+type: software
+
+title: "QiliSDK"
+
+authors:
+  - family-names: "Vasileiadis"
+    given-names: "Vyron"
+    affiliation: "Qilimanjaro Quantum Tech"
+    orcid: "https://orcid.org/0009-0009-6241-6806"
+  - family-names: "Azzam"
+    given-names: "Amir"
+    affiliation: "Qilimanjaro Quantum Tech"
+    orcid: "https://orcid.org/0009-0006-1061-6257"
+  - family-names: "Mortimer"
+    given-names: "Luke"
+    affiliation: "Qilimanjaro Quantum Tech"
+    orcid: "https://orcid.org/0000-0002-5644-8985"
+  - family-names: "Padilla Sirera"
+    given-names: "Natàlia"
+    affiliation: "Qilimanjaro Quantum Tech"
+    orcid: "https://orcid.org/0000-0002-7872-2279"
+  - family-names: "Arcos"
+    given-names: "David"
+    affiliation: "Qilimanjaro Quantum Tech"
+
+identifiers:
+  - type: doi
+    value: "10.5281/zenodo.17819870"
+    description: "DOI for all QiliSDK versions archived on Zenodo."
+
+repository-code: "https://github.com/qilimanjaro-tech/qilisdk"
+url: "https://zenodo.org/records/18468117"
+license: "Apache-2.0"
+
+keywords:
+  - "quantum computing"
+  - "quantum software"
+  - "quantum simulation"
+  - "software development kit"
+  - "superconducting qubits"

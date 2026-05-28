@@ -1,0 +1,63 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025, Qilimanjaro Quantum Tech
+# This file is distributed under the same license as the QiliSDK package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: QiliSDK \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-05-20 15:11+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: es\n"
+"Language-Team: es <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../modules/digital/digital_overview.rst:2
+msgid "Overview"
+msgstr "Descripción general"
+
+#: ../../modules/digital/digital_overview.rst:4
+msgid ""
+"The :mod:`~qilisdk.digital` module facilitates the construction of "
+"digital quantum systems. It is composed of the following primary "
+"components:"
+msgstr ""
+"El módulo :mod:`~qilisdk.digital` facilita la construcción de sistemas "
+"cuánticos digitales. Está compuesto por los siguientes componentes "
+"principales:"
+
+#: ../../modules/digital/digital_overview.rst:7
+msgid ""
+":doc:`digital_gates`: A collection of quantum gates and tools for gate "
+"construction."
+msgstr ""
+":doc:`digital_gates`: Una colección de puertas cuánticas y herramientas "
+"para la construcción de puertas."
+
+#: ../../modules/digital/digital_overview.rst:8
+msgid ""
+":doc:`digital_circuits`: A class to create and manage digital quantum "
+"circuits."
+msgstr ""
+":doc:`digital_circuits`: Una clase para crear y gestionar circuitos "
+"cuánticos digitales."
+
+#: ../../modules/digital/digital_overview.rst:9
+msgid ":doc:`digital_ansatz`: Predefined circuits that can serve as Ansätze."
+msgstr ""
+":doc:`digital_ansatz`: Circuitos predefinidos que pueden servir como "
+"Ansätze."
+
+#: ../../modules/digital/digital_overview.rst:10
+msgid ""
+":doc:`digital_qir`: Import and export circuits to / from the QIR Base "
+"Profile."
+msgstr ""
+

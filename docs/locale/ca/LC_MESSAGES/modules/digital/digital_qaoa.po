@@ -1,0 +1,140 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025, Qilimanjaro Quantum Tech
+# This file is distributed under the same license as the QiliSDK package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: QiliSDK \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-05-05 15:18+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ca\n"
+"Language-Team: ca <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../modules/digital/digital_qaoa.rst:2
+msgid "QAOA"
+msgstr "QAOA"
+
+#: ../../modules/digital/digital_qaoa.rst:4
+msgid ""
+":class:`~qilisdk.digital.ansatz.QAOA` is an ansatz applying the "
+"alternating time evolution of a problem Hamiltonian and a mixer "
+"Hamiltonian [1]_. By initializing the circuit as the ground state of the "
+"mixer Hamiltonian (often simply the uniform superposition) and then "
+"applying the alternating evolution scaled by parameters :math:`\\gamma_i`"
+" and :math:`\\alpha_i`, the idea is that at a certain set of parameters "
+"the ansatz should approximate the evolution from the ground state of the "
+"mixer Hamiltonian to the ground state of the problem Hamiltonian, as per "
+"the quantum adiabatic theorem. By treating this parameterized circuit as "
+"an ansatz for a variational quantum algorithm, we can optimize to try to "
+"minimize the expectation value of the problem Hamiltonian and thus solve "
+"the encoded optimization problem."
+msgstr ""
+":class:`~qilisdk.digital.ansatz.QAOA` és un ansatz que aplica l'evolució "
+"temporal alternada d'un Hamiltonià de problema i un Hamiltonià mesclador "
+"[1]_. Inicialitzant el circuit com l'estat fonamental del Hamiltonià "
+"mesclador (sovint simplement la superposició uniforme) i aplicant "
+"l'evolució alternada escalada pels paràmetres :math:`\\gamma_i` i "
+":math:`\\alpha_i`, la idea és que amb un cert conjunt de paràmetres "
+"l'ansatz hauria d'aproximar l'evolució de l'estat fonamental del Hamiltonià "
+"mesclador a l'estat fonamental del Hamiltonià de problema, d'acord amb el "
+"teorema adiabàtic quàntic. Tractant aquest circuit parametritzat com un "
+"ansatz per a un algorisme quàntic variacional, podem optimitzar per "
+"intentar minimitzar el valor esperat del Hamiltonià de problema i així "
+"resoldre el problema d'optimització codificat."
+
+#: ../../modules/digital/digital_qaoa.rst:12
+msgid ""
+"Farhi, Edward, Jeffrey Goldstone, and Sam Gutmann. \"A quantum "
+"approximate optimization algorithm.\" arXiv preprint `arXiv:1411.4028 "
+"<https://arxiv.org/abs/1411.4028>`_ (2014)."
+msgstr ""
+"Farhi, Edward, Jeffrey Goldstone, i Sam Gutmann. \"A quantum "
+"approximate optimization algorithm.\" arXiv preprint `arXiv:1411.4028 "
+"<https://arxiv.org/abs/1411.4028>`_ (2014)."
+
+#: ../../modules/digital/digital_qaoa.rst:14
+msgid "Configuration options:"
+msgstr "Opcions de configuració:"
+
+#: ../../modules/digital/digital_qaoa.rst:16
+msgid ""
+"**problem_hamiltonian**: The problem Hamiltonian encoding the cost "
+"function."
+msgstr ""
+"**problem_hamiltonian**: El Hamiltonià de problema que codifica la funció "
+"de cost."
+
+#: ../../modules/digital/digital_qaoa.rst:17
+msgid ""
+"**layers**: Number of repeating layers of gates. Each layer applies two "
+"evolutions: one for the problem Hamiltonian and one for the mixer "
+"Hamiltonian."
+msgstr ""
+"**layers**: Nombre de capes repetides de portes. Cada capa aplica dues "
+"evolucions: una per al Hamiltonià de problema i una per al Hamiltonià "
+"mesclador."
+
+#: ../../modules/digital/digital_qaoa.rst:18
+msgid "**mixer_hamiltonian**: The mixer Hamiltonian. Defaults to X mixer."
+msgstr "**mixer_hamiltonian**: El Hamiltonià mesclador. Per defecte és el mesclador X."
+
+#: ../../modules/digital/digital_qaoa.rst:19
+msgid ""
+"**trotter_steps**: Number of Trotter steps to use for Hamiltonian "
+"approximation. Only used if the Hamiltonians contains non-commuting "
+"terms."
+msgstr ""
+"**trotter_steps**: Nombre de passos de Trotter per usar en l'aproximació "
+"del Hamiltonià. Només s'utilitza si els Hamiltonians contenen termes que "
+"no commuten."
+
+#: ../../modules/digital/digital_qaoa.rst:20
+msgid ""
+"**problem_params**: Initial parameter values for the problem Hamiltonian "
+"evolution angles. Defaults to 0.0 for all layers."
+msgstr ""
+"**problem_params**: Valors inicials dels paràmetres per als angles "
+"d'evolució del Hamiltonià de problema. Per defecte és 0.0 per a totes "
+"les capes."
+
+#: ../../modules/digital/digital_qaoa.rst:21
+msgid ""
+"**mixer_params**: Initial parameter values for the mixer Hamiltonian "
+"evolution angles. Defaults to 0.0 for all layers."
+msgstr ""
+"**mixer_params**: Valors inicials dels paràmetres per als angles "
+"d'evolució del Hamiltonià mesclador. Per defecte és 0.0 per a totes "
+"les capes."
+
+#: ../../modules/digital/digital_qaoa.rst:23
+msgid "**Example**"
+msgstr "**Exemple**"
+
+#: ../../modules/digital/digital_qaoa.rst:41
+msgid ""
+"As with the :class:`~qilisdk.digital.ansatz.HardwareEfficientAnsatz`, "
+"this ansatz can then be used as per any QiliSDK circuit. Or, to instead "
+"perform variational optimization over the parameters to minimize the "
+"expectation value of the problem Hamiltonian, one can set up a "
+":class:`~qilisdk.functionals.variational_program.VariationalProgram` (see"
+" :doc:`Functionals </modules/functionals/functionals>` for more details):"
+msgstr ""
+"Com amb el :class:`~qilisdk.digital.ansatz.HardwareEfficientAnsatz`, "
+"aquest ansatz es pot utilitzar com qualsevol circuit de QiliSDK. O bé, per "
+"realitzar en canvi una optimització variacional sobre els paràmetres per "
+"minimitzar el valor esperat del Hamiltonià de problema, es pot configurar "
+"un :class:`~qilisdk.functionals.variational_program.VariationalProgram` "
+"(vegeu :doc:`Functionals </modules/functionals/functionals>` per a més "
+"detalls):"
+
+#~ msgid "Go to a specific subheading of a page."
+#~ msgstr "Aneu a un subapartat específic d'una pàgina."

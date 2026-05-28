@@ -1,0 +1,98 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025, Qilimanjaro Quantum Tech
+# This file is distributed under the same license as the QiliSDK package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: QiliSDK \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-05-05 15:18+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ca\n"
+"Language-Team: ca <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../modules/digital/digital_ansatz.rst:2
+msgid "Ansatz"
+msgstr "Ansatz"
+
+#: ../../modules/digital/digital_ansatz.rst:4
+msgid ""
+"The :mod:`~qilisdk.digital.ansatz` submodule provides ready-to-use "
+"circuit templates (Ansätze) and a lightweight framework for writing your "
+"own. To author a custom template:"
+msgstr ""
+"El submòdul :mod:`~qilisdk.digital.ansatz` proporciona plantilles de "
+"circuit llestes per usar (Ansätze) i un marc lleuger per escriure les "
+"vostres pròpies. Per crear una plantilla personalitzada:"
+
+#: ../../modules/digital/digital_ansatz.rst:6
+msgid ""
+"Subclass :class:`~qilisdk.digital.ansatz.Ansatz` (which already inherits "
+"from :class:`~qilisdk.digital.circuit.Circuit`)."
+msgstr ""
+"Creeu una subclasse de :class:`~qilisdk.digital.ansatz.Ansatz` (que ja "
+"hereta de :class:`~qilisdk.digital.circuit.Circuit`)."
+
+#: ../../modules/digital/digital_ansatz.rst:7
+msgid ""
+"Call ``super().__init__(nqubits=...)`` inside ``__init__`` to set the "
+"circuit width."
+msgstr ""
+"Crideu ``super().__init__(nqubits=...)`` dins de ``__init__`` per establir "
+"l'amplada del circuit."
+
+#: ../../modules/digital/digital_ansatz.rst:8
+msgid ""
+"Add gates in any order with ``self.add(gate)``, loops are fine, and you "
+"can keep references to any :class:`~qilisdk.core.variables.Parameter` "
+"objects you want to expose later."
+msgstr ""
+"Afegiu portes en qualsevol ordre amb ``self.add(gate)``, els bucles estan "
+"permesos, i podeu mantenir referències a qualsevol objecte "
+":class:`~qilisdk.core.variables.Parameter` que vulgueu exposar més endavant."
+
+#: ../../modules/digital/digital_ansatz.rst:10
+msgid "**Example**"
+msgstr "**Exemple**"
+
+#: ../../modules/digital/digital_ansatz.rst:35
+msgid ""
+"Once defined, the subclass behaves exactly like any other circuit: you "
+"can draw it, bind parameters, or hand it off to backends."
+msgstr ""
+"Un cop definida, la subclasse es comporta exactament com qualsevol altre "
+"circuit: podeu dibuixar-la, vincular paràmetres o passar-la als backends."
+
+#: ../../modules/digital/digital_ansatz.rst:37
+msgid "For a prebuilt option, consider any of:"
+msgstr "Per a una opció preconstruïda, considereu qualsevol de les següents:"
+
+#: ../../modules/digital/digital_ansatz.rst:39
+msgid ""
+":doc:`digital_hardware` for a simple layered structure that can be "
+"adapted to various hardware topologies."
+msgstr ""
+":doc:`digital_hardware` per a una estructura de capes senzilla que es pot "
+"adaptar a diverses topologies de hardware."
+
+#: ../../modules/digital/digital_ansatz.rst:40
+msgid ":doc:`digital_trotter` for simulating analog dynamics with Trotterization."
+msgstr ":doc:`digital_trotter` per simular dinàmiques analògiques amb Trotterització."
+
+#: ../../modules/digital/digital_ansatz.rst:41
+msgid ":doc:`digital_qaoa` for combinatorial optimization problems."
+msgstr ":doc:`digital_qaoa` per a problemes d'optimització combinatòria."
+
+#~ msgid "Hardware Efficient Ansatz"
+#~ msgstr "Ansatz Eficient en Hardware"
+
+#~ msgid "Go to a specific subheading of a page."
+#~ msgstr "Aneu a un subapartat específic d'una pàgina."

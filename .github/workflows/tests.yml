@@ -34,7 +34,7 @@ jobs:
           fetch-depth: 1
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@v8.1.0
         with:
           enable-cache: true
           cache-dependency-glob: |
@@ -43,23 +43,21 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install qilisdk
-        run: uv -v sync --group dev --extra all-cu13 -Ccmake.define.tests=ON -Ccmake.build-type=Debug -Ccmake.define.coverage=ON --reinstall
+        run: |
+          uv -v sync --group dev --extra all-cu13 -Ccmake.define.tests=ON -Ccmake.build-type=Debug -Ccmake.define.coverage=ON --reinstall
+          echo "VIRTUAL_ENV=$PWD/.venv" >> "$GITHUB_ENV"
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
 
       - name: Run Python tests
-        run: |
-          source .venv/bin/activate
-          pytest --cov=qilisdk --cov-report=xml --cov-report=term-missing --junitxml=junit.xml -o junit_family=legacy tests/unit_python/
+        run: pytest --cov=qilisdk --cov-report=xml --cov-report=term-missing --junitxml=junit.xml -o junit_family=legacy tests/unit_python/
 
       - name: Run C++ tests
         run: |
-          source .venv/bin/activate
           GCOV_PREFIX=$(pwd)/tests/unit_cpp/coverage GCOV_PREFIX_STRIP=5 ./tests/unit_cpp/test_cpp
           gcovr --exclude '.*googletest.*' --exclude '/usr/.*' --gcov-ignore-errors=all --exclude-unreachable-branches --exclude-throw-branches --xml coverage_cpp.xml
 
       - name: Combine coverage reports
-        run: |
-          source .venv/bin/activate
-          gcovr --gcov-ignore-errors=all --xml combined_coverage.xml --cobertura-add-tracefile coverage.xml --cobertura-add-tracefile coverage_cpp.xml
+        run: gcovr --gcov-ignore-errors=all --xml combined_coverage.xml --cobertura-add-tracefile coverage.xml --cobertura-add-tracefile coverage_cpp.xml
 
       - name: Output the coverage directory for debugging
         run: ls -R tests/unit_cpp/coverage/

@@ -226,6 +226,26 @@ class ReservoirLayer(Parameterizable):
         if self._output_encoding:
             yield self._output_encoding
 
+    def set_parameters(self, parameters: dict[str, RealNumber]) -> None:
+        if self._input_encoding:
+            param_labels = self._input_encoding.get_parameter_names()
+            self._input_encoding.set_parameters({p: v for p, v in parameters.items() if p in param_labels})
+        param_labels = self._evolution_dynamics.get_parameter_names()
+        self._evolution_dynamics.set_parameters({p: v for p, v in parameters.items() if p in param_labels})
+        if self._output_encoding:
+            param_labels = self._output_encoding.get_parameter_names()
+            self._output_encoding.set_parameters({p: v for p, v in parameters.items() if p in param_labels})
+
+    def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
+        if self._input_encoding:
+            param_labels = self._input_encoding.get_parameter_names()
+            self._input_encoding.set_parameter_bounds({p: v for p, v in ranges.items() if p in param_labels})
+        param_labels = self._evolution_dynamics.get_parameter_names()
+        self._evolution_dynamics.set_parameter_bounds({p: v for p, v in ranges.items() if p in param_labels})
+        if self._output_encoding:
+            param_labels = self._output_encoding.get_parameter_names()
+            self._output_encoding.set_parameter_bounds({p: v for p, v in ranges.items() if p in param_labels})
+
     def __len__(self) -> int:
         """
         Get the total number of steps in the reservoir pass (maximum of 3)

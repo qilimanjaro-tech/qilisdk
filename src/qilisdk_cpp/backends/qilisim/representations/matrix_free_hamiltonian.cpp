@@ -14,6 +14,9 @@
 
 #include "matrix_free_hamiltonian.h"
 #include <unordered_map>
+#if defined(_MSC_VER)
+#include <intrin.h>
+#endif
 #include "../../../libs/pybind.h"
 #include "../utils/matrix_utils.h"
 #if defined(_OPENMP)
@@ -21,6 +24,16 @@
 #endif
 
 // GCOV_EXCL_BR_START
+
+namespace {
+int popcount_u64(unsigned long long value) {
+#if defined(_MSC_VER)
+    return static_cast<int>(__popcnt64(value));
+#else
+    return __builtin_popcountll(value);
+#endif
+}
+}  // namespace
 
 MatrixFreeHamiltonian::MatrixFreeHamiltonian(int nqubits, const MatrixFreeOperator& op, std::complex<double> coeff) : nqubits(nqubits) {
     PauliString ps(nqubits, {op});
@@ -89,7 +102,7 @@ void MatrixFreeHamiltonian::apply(const DenseMatrix& input_state, MatrixFreeAppl
             std::complex<double> coeff = 0.0;
             for (const Term* t = t_begin; t != t_end; ++t) {
                 long index = i ^ t->flip_mask;
-                bool neg = __builtin_popcountll((long long)i & t->sign_mask) & 1;
+                bool neg = popcount_u64(static_cast<unsigned long long>(i) & static_cast<unsigned long long>(t->sign_mask)) & 1;
                 coeff += (neg ? t->base_phase_neg : t->base_phase) * in_ptr[index];
             }
             out_ptr[i] = coeff;
@@ -103,7 +116,7 @@ void MatrixFreeHamiltonian::apply(const DenseMatrix& input_state, MatrixFreeAppl
             for (long i = 0; i < N; ++i) {
                 for (const Term* t = t_begin; t != t_end; ++t) {
                     long index = i ^ t->flip_mask;
-                    bool neg = __builtin_popcountll((long long)i & t->sign_mask) & 1;
+                    bool neg = popcount_u64(static_cast<unsigned long long>(i) & static_cast<unsigned long long>(t->sign_mask)) & 1;
                     output_state.row(i) += (neg ? t->base_phase_neg : t->base_phase) * input_state.row(index);
                 }
             }
@@ -114,7 +127,7 @@ void MatrixFreeHamiltonian::apply(const DenseMatrix& input_state, MatrixFreeAppl
             for (long j = 0; j < N; ++j) {
                 for (const Term* t = t_begin; t != t_end; ++t) {
                     long index = j ^ t->flip_mask;
-                    bool neg = __builtin_popcountll((long long)j & t->sign_mask) & 1;
+                    bool neg = popcount_u64(static_cast<unsigned long long>(j) & static_cast<unsigned long long>(t->sign_mask)) & 1;
                     output_state.col(j) += std::conj(neg ? t->base_phase_neg : t->base_phase) * input_state.col(index);
                 }
             }
@@ -125,7 +138,7 @@ void MatrixFreeHamiltonian::apply(const DenseMatrix& input_state, MatrixFreeAppl
             for (long i = 0; i < N; ++i) {
                 for (const Term* t = t_begin; t != t_end; ++t) {
                     long index = i ^ t->flip_mask;
-                    bool neg = __builtin_popcountll((long long)i & t->sign_mask) & 1;
+                    bool neg = popcount_u64(static_cast<unsigned long long>(i) & static_cast<unsigned long long>(t->sign_mask)) & 1;
                     output_state.row(i) += (neg ? t->base_phase_neg : t->base_phase) * input_state.row(index);
                 }
             }
@@ -137,7 +150,7 @@ void MatrixFreeHamiltonian::apply(const DenseMatrix& input_state, MatrixFreeAppl
             for (long j = 0; j < N; ++j) {
                 for (const Term* t = t_begin; t != t_end; ++t) {
                     long index = j ^ t->flip_mask;
-                    bool neg = __builtin_popcountll((long long)j & t->sign_mask) & 1;
+                    bool neg = popcount_u64(static_cast<unsigned long long>(j) & static_cast<unsigned long long>(t->sign_mask)) & 1;
                     output_state.col(j) += std::conj(neg ? t->base_phase_neg : t->base_phase) * hr_temp.col(index);
                 }
             }
