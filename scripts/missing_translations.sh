@@ -38,6 +38,6 @@ cd ..
 
 # Return non-zero exit code if any missing or fuzzy translations were found
 if [[ $MISSING -gt 0 ]] || [[ $FUZZY -gt 0 ]]; then
-    echo "Error: Missing or fuzzy translations found. Please update the .po files."
+    echo "Error: Missing or fuzzy translations found. Please update the .po files." >&2
     exit 1
 fi
