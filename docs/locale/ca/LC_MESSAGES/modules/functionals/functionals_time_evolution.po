@@ -20,9 +20,8 @@ msgstr ""
 "Generated-By: Babel 2.18.0\n"
 
 #: ../../modules/functionals/functionals_time_evolution.rst:2
-#, fuzzy
 msgid "Analog Evolution"
-msgstr "Evolució Temporal"
+msgstr "Evolució Analògica"
 
 #: ../../modules/functionals/functionals_time_evolution.rst:8
 msgid "Go to a specific subheading of a page."

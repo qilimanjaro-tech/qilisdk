@@ -22,8 +22,8 @@ for file in $(find ./ -name "*.po"); do
         echo "Missing translations in $file"
         MISSING=$((MISSING + 1))
     fi
-    # match fuzzy translations (lines starting with #, followed by a line containing "fuzzy")
-    if grep -Pzo '#.*\nfuzzy' "$file" > /dev/null 2>&1; then
+    # match fuzzy translations, skipping the header block (which has empty msgid "")
+    if awk '/^#, fuzzy/{fuzzy=1;next} fuzzy&&/^msgid ".+"/{found=1;exit} fuzzy&&/^msgid/{fuzzy=0} END{exit !found}' "$file"; then
         echo "Fuzzy translations in $file"
         FUZZY=$((FUZZY + 1))
     fi

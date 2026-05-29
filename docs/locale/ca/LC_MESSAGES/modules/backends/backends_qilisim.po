@@ -20,12 +20,10 @@ msgstr ""
 "Generated-By: Babel 2.18.0\n"
 
 #: ../../modules/backends/backends_qilisim.rst:2
-#, fuzzy
 msgid "QiliSim Backend"
-msgstr "QiliSim"
+msgstr "Backend QiliSim"
 
 #: ../../modules/backends/backends_qilisim.rst:4
-#, fuzzy
 msgid ""
 "The **QiliSim** backend is the default CPU simulator developed by "
 "Qilimanjaro and written in C++. It implements every primitive functional "
@@ -34,11 +32,10 @@ msgid ""
 "is required."
 msgstr ""
 "El backend **QiliSim** és el simulador de CPU per defecte desenvolupat "
-"per Qilimanjaro i escrit en C++ (exposat mitjançant ``pybind11``). "
-"Implementa tots els funcionals primitius de manera nativa, suporta un "
-"model de soroll en totes les rutes d'execució i s'inclou amb la "
-"instal·lació principal de ``qilisdk`` — no requereix cap dependència ni "
-"maquinari addicional."
+"per Qilimanjaro i escrit en C++. Implementa tots els funcionals primitius "
+"de manera nativa, suporta un model de soroll en totes les rutes d'execució "
+"i s'inclou amb la instal·lació principal de ``qilisdk`` — no requereix cap "
+"dependència ni maquinari addicional."
 
 #: ../../modules/backends/backends_qilisim.rst:9
 msgid "Installation"
@@ -155,14 +152,12 @@ msgstr ""
 " d'evolució temporal analògica i els seus hiperparàmetres."
 
 #: ../../modules/backends/backends_qilisim.rst:75
-#, fuzzy
 msgid ""
 ":class:`~qilisdk.backends.backend_config.DigitalMethod` — chooses the "
 "digital simulation strategy and its hyperparameters."
 msgstr ""
 ":class:`~qilisdk.backends.backend_config.DigitalMethod` — escull "
-"l'estratègia de simulació digital i les seves opcions de memòria cau / "
-"normalització."
+"l'estratègia de simulació digital i els seus hiperparàmetres."
 
 #: ../../modules/backends/backends_qilisim.rst:77
 msgid ""
@@ -243,22 +238,20 @@ msgid "RK4"
 msgstr "RK4"
 
 #: ../../modules/backends/backends_qilisim.rst:128
-#, fuzzy
 msgid ""
 "Default. Fixed-step Runge-Kutta 4. matrix-free is faster for sparse "
 "Hamiltonians."
 msgstr ""
-"Per defecte. Runge-Kutta 4 amb pas fix; sense matriu és més ràpid per a "
+"Per defecte. Runge-Kutta 4 amb pas fix. Sense matriu és més ràpid per a "
 "Hamiltonians dispersos."
 
 #: ../../modules/backends/backends_qilisim.rst:129
-#, fuzzy
 msgid ""
 ":meth:`AnalogMethod.variational_annealing() "
 "<qilisdk.backends.backend_config.AnalogMethod.variational_annealing>`"
 msgstr ""
-":meth:`AnalogMethod.direct() "
-"<qilisdk.backends.backend_config.AnalogMethod.direct>`"
+":meth:`AnalogMethod.variational_annealing() "
+"<qilisdk.backends.backend_config.AnalogMethod.variational_annealing>`"
 
 #: ../../modules/backends/backends_qilisim.rst:130
 msgid "Variational annealing"
@@ -309,13 +302,12 @@ msgid "Krylov / Arnoldi"
 msgstr "Krylov / Arnoldi"
 
 #: ../../modules/backends/backends_qilisim.rst:137
-#, fuzzy
 msgid ""
 "Can offer decent scaling for large sparse Hamiltonians; tune ``dim`` for "
 "the Krylov subspace size."
 msgstr ""
-"Millor escalabilitat per a Hamiltonians dispersos grans; ajusteu ``dim`` "
-"per a la mida del subespai de Krylov."
+"Pot oferir una escalabilitat decent per a Hamiltonians dispersos grans; "
+"ajusteu ``dim`` per a la mida del subespai de Krylov."
 
 #: ../../modules/backends/backends_qilisim.rst:138
 msgid ""
@@ -336,9 +328,8 @@ msgstr ""
 " el nombre de qubits."
 
 #: ../../modules/backends/backends_qilisim.rst:142
-#, fuzzy
 msgid "Example, using the adaptive integrator:"
-msgstr "Exemple, utilitzant l'integrador adaptatiu per a un schedule més rígid:"
+msgstr "Exemple, utilitzant l'integrador adaptatiu:"
 
 #: ../../modules/backends/backends_qilisim.rst:151
 msgid "Digital simulation methods"
@@ -391,13 +382,12 @@ msgid "``combine_single_qubit_gates``"
 msgstr "``combine_single_qubit_gates``"
 
 #: ../../modules/backends/backends_qilisim.rst:168
-#, fuzzy
 msgid ""
 "Merge adjacent single-qubit gates into a single operation before "
 "propagating. Disabled if gate-specific noise is used."
 msgstr ""
 "Fusiona portes d'un sol qubit adjacents en una única operació abans de "
-"propagar."
+"propagar. Desactivat si s'utilitza soroll específic de porta."
 
 #: ../../modules/backends/backends_qilisim.rst:169
 msgid "``normalize_after_each_gate``"
@@ -461,9 +451,8 @@ msgstr ""
 "reservoris); per defecte ``False``."
 
 #: ../../modules/backends/backends_qilisim.rst:212
-#, fuzzy
 msgid "Noise model support"
-msgstr "Suport de funcionals"
+msgstr "Suport de models de soroll"
 
 #: ../../modules/backends/backends_qilisim.rst:214
 msgid ""
