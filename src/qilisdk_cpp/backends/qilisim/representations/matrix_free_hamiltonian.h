@@ -17,13 +17,13 @@
 #include "matrix_free_operator.h"
 
 #ifdef _WIN32
-  #ifdef qilisim_module_EXPORTS
-    #define QILISIM_EXPORT __declspec(dllexport)
-  #else
-    #define QILISIM_EXPORT __declspec(dllimport)
-  #endif
+#ifdef qilisim_module_EXPORTS
+#define QILISIM_EXPORT __declspec(dllexport)
 #else
-  #define QILISIM_EXPORT
+#define QILISIM_EXPORT __declspec(dllimport)
+#endif
+#else
+#define QILISIM_EXPORT
 #endif
 
 // GCOV_EXCL_BR_START

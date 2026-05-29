@@ -186,7 +186,7 @@ class Interpolator(Parameterizable):
         Returns:
             list[PARAMETERIZED_NUMBER]: Sorted time indices based on their evaluated value.
         """
-        return sorted((self._time_dict.keys()), key=self._get_value)  # ty:ignore[invalid-return-type]
+        return sorted((self._time_dict.keys()), key=self._get_value)
 
     @property
     def _time_scale(self) -> float:
