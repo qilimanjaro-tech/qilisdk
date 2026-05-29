@@ -16,6 +16,16 @@
 #include <bitset>
 #include "matrix_free_operator.h"
 
+#ifdef _WIN32
+  #ifdef qilisim_module_EXPORTS
+    #define QILISIM_EXPORT __declspec(dllexport)
+  #else
+    #define QILISIM_EXPORT __declspec(dllimport)
+  #endif
+#else
+  #define QILISIM_EXPORT
+#endif
+
 // GCOV_EXCL_BR_START
 
 typedef std::bitset<256> Bitset;
@@ -107,7 +117,7 @@ class MatrixFreeHamiltonian {
     MatrixFreeHamiltonian(int nqubits, const PauliString& op, std::complex<double> coeff = 1.0) : nqubits(nqubits) { operators[op] = coeff; }
     MatrixFreeHamiltonian(int nqubits, const std::unordered_map<PauliString, std::complex<double>, PauliString::HashFunction>& ops) : nqubits(nqubits), operators(ops) {}
 
-    void apply(const DenseMatrix& input_state, MatrixFreeApplicationType application_type, DenseMatrix& output_state) const;
+    QILISIM_EXPORT void apply(const DenseMatrix& input_state, MatrixFreeApplicationType application_type, DenseMatrix& output_state) const;
     double expectation_value(const DenseMatrix& state) const;
     double expectation_value(const MatrixFreeHamiltonian& other) const;
     MatrixFreeHamiltonian operator*(const std::complex<double>& scalar) const;
