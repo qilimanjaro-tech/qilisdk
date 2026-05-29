@@ -211,7 +211,7 @@ def test_state_vector_with_gpu(mock_sample, mock_make_kernel, mock_set_target, m
     backend = CudaBackend(sampling_method=CudaSamplingMethod.STATE_VECTOR)
     circuit = Circuit(nqubits=1)
     result = backend.execute(DigitalPropagation(circuit), Readout().with_sampling(nshots=10))
-    float_precision = "fp32" if get_settings().complex_precision == Precision.COMPLEX_64 else "fp64"
+    float_precision = "fp64" if get_settings().complex_precision == Precision.COMPLEX_64 else "fp32"
     mock_set_target.assert_called_with("nvidia", option=float_precision)
     assert isinstance(result, FunctionalResult)
     assert result.get_samples() == {"0": 1000}
@@ -862,7 +862,7 @@ def test_apply_digital_simulation_method_state_vector_with_gpu(monkeypatch):
     monkeypatch.setattr("cudaq.set_target", mock_set_target)
     monkeypatch.setattr("cudaq.num_available_gpus", mock_num_gpus)
     backend._apply_digital_simulation_method()
-    float_precision = "fp32" if get_settings().complex_precision == Precision.COMPLEX_64 else "fp64"
+    float_precision = "fp64" if get_settings().complex_precision == Precision.COMPLEX_64 else "fp32"
     mock_set_target.assert_called_once_with("nvidia", option=float_precision)
 
 
@@ -889,7 +889,7 @@ def test_apply_digital_simulation_method_state_vector_mgpu_multiple_gpus(monkeyp
     monkeypatch.setattr("cudaq.set_target", mock_set_target)
     monkeypatch.setattr("cudaq.num_available_gpus", mock_num_gpus)
     backend._apply_digital_simulation_method()
-    float_precision = "fp32" if get_settings().complex_precision == Precision.COMPLEX_64 else "fp64"
+    float_precision = "fp64" if get_settings().complex_precision == Precision.COMPLEX_64 else "fp32"
     mock_set_target.assert_called_once_with("nvidia", option="mgpu," + float_precision)
 
 
@@ -900,7 +900,7 @@ def test_apply_digital_simulation_method_state_vector_mgpu_single_gpu(monkeypatc
     monkeypatch.setattr("cudaq.set_target", mock_set_target)
     monkeypatch.setattr("cudaq.num_available_gpus", mock_num_gpus)
     backend._apply_digital_simulation_method()
-    float_precision = "fp32" if get_settings().complex_precision == Precision.COMPLEX_64 else "fp64"
+    float_precision = "fp64" if get_settings().complex_precision == Precision.COMPLEX_64 else "fp32"
     mock_set_target.assert_called_once_with("nvidia", option=float_precision)
 
 

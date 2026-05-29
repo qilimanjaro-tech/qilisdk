@@ -482,7 +482,7 @@ class CudaBackend(Backend):
         """
         logger.info("Applying sampling simulation method {}", self.sampling_method.value)
         if self.sampling_method in {CudaSamplingMethod.STATE_VECTOR, CudaSamplingMethod.STATE_VECTOR_MGPU}:
-            float_precision = "fp32" if get_settings().complex_precision == Precision.COMPLEX_64 else "fp64"
+            float_precision = "fp64" if get_settings().complex_precision == Precision.COMPLEX_64 else "fp32"
             num_gpus = cudaq.num_available_gpus()
             if num_gpus == 0:
                 cudaq.set_target("qpp-cpu")
