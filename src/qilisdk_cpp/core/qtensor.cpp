@@ -1457,8 +1457,10 @@ std::complex<double> QTensorCpp::expectation_value(const MatrixFreeHamiltonian& 
         DenseMatrix psi_dense = _data;
         DenseMatrix H_psi_dense;
         other.apply(psi_dense, MatrixFreeApplicationType::Left, H_psi_dense);
+#ifndef _WIN32
 #if defined(_OPENMP)
 #pragma omp parallel for reduction(complex_double_reduction : expectation) schedule(static)
+#endif
 #endif
         for (int i = 0; i < H_psi_dense.rows(); ++i) {
             expectation += std::conj(psi_dense(i, 0)) * H_psi_dense(i, 0);
@@ -1468,8 +1470,10 @@ std::complex<double> QTensorCpp::expectation_value(const MatrixFreeHamiltonian& 
         DenseMatrix psi_dense = _data.adjoint();
         DenseMatrix H_psi_dense;
         other.apply(psi_dense, MatrixFreeApplicationType::Right, H_psi_dense);
+#ifndef _WIN32
 #if defined(_OPENMP)
 #pragma omp parallel for reduction(complex_double_reduction : expectation) schedule(static)
+#endif
 #endif
         for (int i = 0; i < H_psi_dense.cols(); ++i) {
             expectation += H_psi_dense(0, i) * std::conj(psi_dense(0, i));
@@ -1479,8 +1483,10 @@ std::complex<double> QTensorCpp::expectation_value(const MatrixFreeHamiltonian& 
         DenseMatrix rho_dense = _data;
         DenseMatrix H_rho_dense;
         other.apply(rho_dense, MatrixFreeApplicationType::Left, H_rho_dense);
+#ifndef _WIN32
 #if defined(_OPENMP)
 #pragma omp parallel for reduction(complex_double_reduction : expectation) schedule(static)
+#endif
 #endif
         for (int i = 0; i < H_rho_dense.rows(); ++i) {
             expectation += std::real(H_rho_dense(i, i));
