@@ -20,7 +20,7 @@ import pytest
 from qilisdk.analog.hamiltonian import Hamiltonian
 from qilisdk.backends.cuda_backend import cudaq_to_standard, reverse_bits
 from qilisdk.core import Parameter
-from qilisdk.core.qtensor import QTensor, ket
+from qilisdk.core.qtensor import InitialState, QTensor, ket
 from qilisdk.functionals.analog_evolution import AnalogEvolution
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirLayer
@@ -835,7 +835,6 @@ def test_qtensor_observable_to_hamiltonian_wrong_nqubits_raises():
 
 
 def test_time_dependent_hamiltonian_cuda_initial_state_enum(monkeypatch):
-    from qilisdk.core.qtensor import InitialState
 
     dummy_return = MagicMock()
     dummy_return.final_state = MagicMock(return_value=np.array([1 / np.sqrt(2), 1 / np.sqrt(2)]))

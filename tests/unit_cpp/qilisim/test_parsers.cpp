@@ -1642,6 +1642,15 @@ _parse_is_uniform = InitialState.UNIFORM
     EXPECT_NO_THROW(result = parse_initial_state(is_obj, 1e-12, 1));
 }
 
+TEST(ParseInitialState, UnknownType_ThrowsValueError) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+_unknown_initial_state = 42
+    )");
+    py::object obj = py::globals()["_unknown_initial_state"];
+    EXPECT_THROW(parse_initial_state(obj, 1e-12, 1), py::value_error);
+}
+
 TEST(ParseSolverParams, OrderShotsWarmupsAreApplied) {
     py::gil_scoped_acquire gil;
     py::dict params;

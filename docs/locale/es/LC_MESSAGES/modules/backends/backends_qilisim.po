@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-21 16:31+0200\n"
+"POT-Creation-Date: 2026-05-29 12:18+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -47,8 +47,10 @@ msgstr "Instalación"
 #: ../../modules/backends/backends_qilisim.rst:11
 msgid ""
 "QiliSim is bundled with the core ``qilisdk`` installation, so no extra "
-"package is required:"
+"package is required."
 msgstr ""
+"QiliSim se incluye con la instalación principal de ``qilisdk``, por lo que "
+"no se requiere ningún paquete adicional."
 
 #: ../../modules/backends/backends_qilisim.rst:15
 msgid "Quick start"
@@ -153,9 +155,10 @@ msgstr ""
 " de evolución temporal analógica y sus hiperparámetros."
 
 #: ../../modules/backends/backends_qilisim.rst:75
+#, fuzzy
 msgid ""
 ":class:`~qilisdk.backends.backend_config.DigitalMethod` — chooses the "
-"digital simulation strategy and its caching / normalization options."
+"digital simulation strategy and its hyperparameters."
 msgstr ""
 ":class:`~qilisdk.backends.backend_config.DigitalMethod` — elige la "
 "estrategia de simulación digital y sus opciones de caché / normalización."
@@ -239,14 +242,41 @@ msgid "RK4"
 msgstr "RK4"
 
 #: ../../modules/backends/backends_qilisim.rst:128
+#, fuzzy
 msgid ""
-"Default. Fixed-step Runge-Kutta 4; matrix-free is faster for sparse "
+"Default. Fixed-step Runge-Kutta 4. matrix-free is faster for sparse "
 "Hamiltonians."
 msgstr ""
 "Por defecto. Runge-Kutta 4 con paso fijo; sin matriz es más rápido para "
 "Hamiltonianos dispersos."
 
 #: ../../modules/backends/backends_qilisim.rst:129
+#, fuzzy
+msgid ""
+":meth:`AnalogMethod.variational_annealing() "
+"<qilisdk.backends.backend_config.AnalogMethod.variational_annealing>`"
+msgstr ""
+":meth:`AnalogMethod.direct() "
+"<qilisdk.backends.backend_config.AnalogMethod.direct>`"
+
+#: ../../modules/backends/backends_qilisim.rst:130
+msgid "Variational annealing"
+msgstr "Recocido variacional"
+
+#: ../../modules/backends/backends_qilisim.rst:131
+msgid ""
+"Only availalbe for X to Z annealing schedules. Can be used to simulate "
+"large (i.e. 60+ qubits) systems at the cost of accuracy. Set `order=1` "
+"for a quicker but less accurate simulation. Increasing warmups can also "
+"improve accuracy at the cost of time."
+msgstr ""
+"Solo disponible para schedules de recocido de X a Z. Puede usarse para "
+"simular sistemas grandes (es decir, 60+ qubits) a costa de la precisión. "
+"Establezca `order=1` para una simulación más rápida pero menos precisa. "
+"Aumentar los calentamientos también puede mejorar la precisión a costa del "
+"tiempo."
+
+#: ../../modules/backends/backends_qilisim.rst:132
 msgid ""
 ":meth:`AnalogMethod.adaptive_integrator(tol=1e-2) "
 "<qilisdk.backends.backend_config.AnalogMethod.adaptive_integrator>`"
@@ -254,11 +284,11 @@ msgstr ""
 ":meth:`AnalogMethod.adaptive_integrator(tol=1e-2) "
 "<qilisdk.backends.backend_config.AnalogMethod.adaptive_integrator>`"
 
-#: ../../modules/backends/backends_qilisim.rst:130
+#: ../../modules/backends/backends_qilisim.rst:133
 msgid "Dormand-Prince RK4/5"
 msgstr "Dormand-Prince RK4/5"
 
-#: ../../modules/backends/backends_qilisim.rst:131
+#: ../../modules/backends/backends_qilisim.rst:134
 msgid ""
 "Adaptive step size; ``tol`` bounds the fidelity error between the RK4 and"
 " RK5 estimates."
@@ -266,7 +296,7 @@ msgstr ""
 "Tamaño de paso adaptativo; ``tol`` acota el error de fidelidad entre las "
 "estimaciones RK4 y RK5."
 
-#: ../../modules/backends/backends_qilisim.rst:132
+#: ../../modules/backends/backends_qilisim.rst:135
 msgid ""
 ":meth:`AnalogMethod.arnoldi(dim=10, num_substeps=1) "
 "<qilisdk.backends.backend_config.AnalogMethod.arnoldi>`"
@@ -274,19 +304,20 @@ msgstr ""
 ":meth:`AnalogMethod.arnoldi(dim=10, num_substeps=1) "
 "<qilisdk.backends.backend_config.AnalogMethod.arnoldi>`"
 
-#: ../../modules/backends/backends_qilisim.rst:133
+#: ../../modules/backends/backends_qilisim.rst:136
 msgid "Krylov / Arnoldi"
 msgstr "Krylov / Arnoldi"
 
-#: ../../modules/backends/backends_qilisim.rst:134
+#: ../../modules/backends/backends_qilisim.rst:137
+#, fuzzy
 msgid ""
-"Better scaling for large sparse Hamiltonians; tune ``dim`` for the Krylov"
-" subspace size."
+"Can offer decent scaling for large sparse Hamiltonians; tune ``dim`` for "
+"the Krylov subspace size."
 msgstr ""
 "Mejor escalabilidad para Hamiltonianos dispersos grandes; ajuste ``dim`` "
 "para el tamaño del subespacio de Krylov."
 
-#: ../../modules/backends/backends_qilisim.rst:135
+#: ../../modules/backends/backends_qilisim.rst:138
 msgid ""
 ":meth:`AnalogMethod.direct() "
 "<qilisdk.backends.backend_config.AnalogMethod.direct>`"
@@ -294,25 +325,26 @@ msgstr ""
 ":meth:`AnalogMethod.direct() "
 "<qilisdk.backends.backend_config.AnalogMethod.direct>`"
 
-#: ../../modules/backends/backends_qilisim.rst:136
+#: ../../modules/backends/backends_qilisim.rst:139
 msgid "Matrix exponential"
 msgstr "Exponencial de matriz"
 
-#: ../../modules/backends/backends_qilisim.rst:137
+#: ../../modules/backends/backends_qilisim.rst:140
 msgid "Reference scheme for small systems; cost grows quickly with qubit count."
 msgstr ""
 "Esquema de referencia para sistemas pequeños; el coste crece rápidamente "
 "con el número de qubits."
 
-#: ../../modules/backends/backends_qilisim.rst:139
-msgid "Example, using the adaptive integrator for a stiffer schedule:"
+#: ../../modules/backends/backends_qilisim.rst:142
+#, fuzzy
+msgid "Example, using the adaptive integrator:"
 msgstr "Ejemplo, utilizando el integrador adaptativo para un schedule más rígido:"
 
-#: ../../modules/backends/backends_qilisim.rst:148
+#: ../../modules/backends/backends_qilisim.rst:151
 msgid "Digital simulation methods"
 msgstr "Métodos de simulación digital"
 
-#: ../../modules/backends/backends_qilisim.rst:150
+#: ../../modules/backends/backends_qilisim.rst:153
 msgid ""
 "Digital execution is currently always state-vector based; the "
 ":class:`~qilisdk.backends.backend_config.DigitalMethod` configuration "
@@ -324,19 +356,19 @@ msgstr ""
 "ajusta sus características de rendimiento en lugar de elegir un algoritmo"
 " distinto:"
 
-#: ../../modules/backends/backends_qilisim.rst:158
+#: ../../modules/backends/backends_qilisim.rst:161
 msgid "Option"
 msgstr "Opción"
 
-#: ../../modules/backends/backends_qilisim.rst:159
+#: ../../modules/backends/backends_qilisim.rst:162
 msgid "Meaning"
 msgstr "Significado"
 
-#: ../../modules/backends/backends_qilisim.rst:160
+#: ../../modules/backends/backends_qilisim.rst:163
 msgid "``matrix_free``"
 msgstr "``matrix_free``"
 
-#: ../../modules/backends/backends_qilisim.rst:161
+#: ../../modules/backends/backends_qilisim.rst:164
 msgid ""
 "Apply gates directly to the statevector instead of building dense "
 "matrices. Default ``True``."
@@ -344,33 +376,34 @@ msgstr ""
 "Aplica las puertas directamente al vector de estado en lugar de construir"
 " matrices densas. Por defecto ``True``."
 
-#: ../../modules/backends/backends_qilisim.rst:162
+#: ../../modules/backends/backends_qilisim.rst:165
 msgid "``max_cache_size``"
 msgstr "``max_cache_size``"
 
-#: ../../modules/backends/backends_qilisim.rst:163
+#: ../../modules/backends/backends_qilisim.rst:166
 msgid "Maximum number of precomputed gate matrices cached between executions."
 msgstr ""
 "Número máximo de matrices de puerta precomputadas almacenadas en caché "
 "entre ejecuciones."
 
-#: ../../modules/backends/backends_qilisim.rst:164
+#: ../../modules/backends/backends_qilisim.rst:167
 msgid "``combine_single_qubit_gates``"
 msgstr "``combine_single_qubit_gates``"
 
-#: ../../modules/backends/backends_qilisim.rst:165
+#: ../../modules/backends/backends_qilisim.rst:168
+#, fuzzy
 msgid ""
 "Merge adjacent single-qubit gates into a single operation before "
-"propagating."
+"propagating. Disabled if gate-specific noise is used."
 msgstr ""
 "Fusiona puertas de un solo qubit adyacentes en una única operación antes "
 "de propagar."
 
-#: ../../modules/backends/backends_qilisim.rst:166
+#: ../../modules/backends/backends_qilisim.rst:169
 msgid "``normalize_after_each_gate``"
 msgstr "``normalize_after_each_gate``"
 
-#: ../../modules/backends/backends_qilisim.rst:167
+#: ../../modules/backends/backends_qilisim.rst:170
 msgid ""
 "Renormalize the statevector after each gate to mitigate numerical drift, "
 "at a runtime cost."
@@ -378,11 +411,11 @@ msgstr ""
 "Renormaliza el vector de estado tras cada puerta para mitigar la deriva "
 "numérica, con un coste de tiempo de ejecución."
 
-#: ../../modules/backends/backends_qilisim.rst:181
+#: ../../modules/backends/backends_qilisim.rst:184
 msgid "Execution and Monte Carlo"
 msgstr "Ejecución y Monte Carlo"
 
-#: ../../modules/backends/backends_qilisim.rst:183
+#: ../../modules/backends/backends_qilisim.rst:186
 msgid ""
 ":class:`~qilisdk.backends.backend_config.ExecutionConfig` controls "
 "threading, randomness, and optional Monte Carlo trajectory sampling for "
@@ -392,13 +425,13 @@ msgstr ""
 "hilos, la aleatoriedad y el muestreo opcional de trayectorias Monte Carlo"
 " para simulaciones de sistemas abiertos."
 
-#: ../../modules/backends/backends_qilisim.rst:186
+#: ../../modules/backends/backends_qilisim.rst:189
 msgid "``num_threads=0`` (default) lets the simulator use every physical core."
 msgstr ""
 "``num_threads=0`` (por defecto) permite al simulador utilizar todos los "
 "núcleos físicos."
 
-#: ../../modules/backends/backends_qilisim.rst:187
+#: ../../modules/backends/backends_qilisim.rst:190
 msgid ""
 "``seed=None`` (default) draws a fresh random seed at construction time; "
 "pass an integer for reproducibility."
@@ -406,7 +439,7 @@ msgstr ""
 "``seed=None`` (por defecto) genera una semilla aleatoria nueva en el "
 "momento de la construcción; pase un entero para reproducibilidad."
 
-#: ../../modules/backends/backends_qilisim.rst:189
+#: ../../modules/backends/backends_qilisim.rst:192
 msgid ""
 "``monte_carlo=MonteCarloConfig(trajectories=N)`` enables stochastic "
 "trajectory sampling for noise models that admit a Monte Carlo unraveling;"
@@ -417,7 +450,7 @@ msgstr ""
 "unraveling de Monte Carlo; déjelo en ``None`` para una evolución "
 "determinista de la ecuación maestra."
 
-#: ../../modules/backends/backends_qilisim.rst:192
+#: ../../modules/backends/backends_qilisim.rst:195
 msgid ""
 "``measurement_collapse`` controls whether measurements collapse the "
 "statevector in place (relevant for mid-circuit measurement and reservoir "
@@ -427,12 +460,12 @@ msgstr ""
 " estado in situ (relevante para mediciones en mitad del circuito y "
 "computación de reservorios); por defecto ``False``."
 
-#: ../../modules/backends/backends_qilisim.rst:209
+#: ../../modules/backends/backends_qilisim.rst:212
 #, fuzzy
 msgid "Noise model support"
 msgstr "Soporte de funcionales"
 
-#: ../../modules/backends/backends_qilisim.rst:211
+#: ../../modules/backends/backends_qilisim.rst:214
 msgid ""
 "Any :class:`~qilisdk.noise.NoiseModel` accepted by the SDK can be passed "
 "directly to the constructor; QiliSim applies it inside the C++ solver, so"
@@ -514,4 +547,10 @@ msgstr ""
 
 #~ msgid "Using a noise model"
 #~ msgstr "Uso de un modelo de ruido"
+
+#~ msgid ""
+#~ "QiliSim is bundled with the core "
+#~ "``qilisdk`` installation, so no extra "
+#~ "package is required:"
+#~ msgstr ""
 

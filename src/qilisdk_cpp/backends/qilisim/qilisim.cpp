@@ -248,7 +248,7 @@ py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, co
             time_evolution(rho_0, hamiltonians, parameters_list, step_list, noise_model_cpp, config, rho_t, intermediate_rhos);
 
         } else {
-            throw py::value_error("Unknown time evolution method: " + config.get_time_evolution_method());
+            throw py::value_error("Unknown time evolution method: " + config.get_time_evolution_method());  // GCOV_EXCL_LINE
         }
 
         // Construct the result object

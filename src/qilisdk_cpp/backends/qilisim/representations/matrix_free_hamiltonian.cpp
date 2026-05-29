@@ -365,11 +365,11 @@ std::pair<PauliString, std::complex<double>> _multiply_pauli_strings(const Pauli
                                               // ax=1
                                               {
                                                   // az=0 (X)
-                                                  {{0, -1},   // bx=0: X*I=+1(0), X*Z=-i(-1)
-                                                   {0, 1}},   // bx=1: X*X=+1(0), X*Y=+i(+1)
-                                                              // az=1 (Y)
-                                                  {{0, 1},    // bx=0: Y*I=+1(0), Y*Z=+i(+1)
-                                                   {-1, 0}}   // bx=1: Y*X=-i(-1), Y*Y=+1(0)
+                                                  {{0, -1},  // bx=0: X*I=+1(0), X*Z=-i(-1)
+                                                   {0, 1}},  // bx=1: X*X=+1(0), X*Y=+i(+1)
+                                                             // az=1 (Y)
+                                                  {{0, 1},   // bx=0: Y*I=+1(0), Y*Z=+i(+1)
+                                                   {-1, 0}}  // bx=1: Y*X=-i(-1), Y*Y=+1(0)
                                               }};
 
     result.x_mask = a.x_mask ^ b.x_mask;

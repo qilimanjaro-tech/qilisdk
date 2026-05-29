@@ -22,7 +22,7 @@ from qilisdk.analog.hamiltonian import Hamiltonian, PauliZ
 from qilisdk.analog.schedule import Schedule
 from qilisdk.backends.qutip_backend import QutipBackend
 from qilisdk.core import ket
-from qilisdk.core.qtensor import QTensor, tensor_prod
+from qilisdk.core.qtensor import InitialState, QTensor, tensor_prod
 from qilisdk.functionals.analog_evolution import AnalogEvolution
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirLayer
@@ -363,7 +363,6 @@ def test_time_evolution_initial_state_enum(monkeypatch):
     backend = QutipBackend()
     hamiltonian = Hamiltonian({(PauliZ(0),): 1.0})
     schedule = Schedule(hamiltonians={"h": hamiltonian}, dt=0.1)
-    from qilisdk.core.qtensor import InitialState
 
     func = AnalogEvolution(schedule=schedule, initial_state=InitialState.ZERO)
     result = backend.execute(func, Readout().with_state_tomography())

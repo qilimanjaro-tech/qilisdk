@@ -19,7 +19,7 @@
 #include "../../../src/qilisdk_cpp/backends/qilisim/representations/exponential_ansatz.h"
 
 namespace {
-constexpr double kTolMC = 0.2;   // Monte Carlo tolerance (stochastic)
+constexpr double kTolMC = 0.2;       // Monte Carlo tolerance (stochastic)
 constexpr double kTolExact = 1e-10;  // Exact tolerance for deterministic results
 }  // namespace
 
@@ -219,6 +219,39 @@ TEST(ExponentialAnsatz, ToDenseZeroCoeffIsUniformSuperposition) {
 }
 
 // --- expectation_value() ---
+
+TEST(ExponentialAnsatz, LocalEnergyWithYHamiltonian_IsNonZero) {
+    ExponentialAnsatz ea(1, 1, 100, 0);
+    SampleSet samples = ea.draw_samples();
+    MatrixFreeHamiltonian H_Y(1);
+    H_Y.add(std::complex<double>(1.0, 0.0), MatrixFreeOperator("Y", 0));
+    Eigen::VectorXcd el = ea.local_energy(samples, H_Y);
+    double total_abs = 0.0;
+    for (int i = 0; i < el.size(); ++i)
+        total_abs += std::abs(el(i));
+    EXPECT_GT(total_abs, 0.0);
+}
+
+TEST(ExponentialAnsatz, ToDenseWithXTerm_IsNormalized) {
+    ExponentialAnsatz ea(1, 1, 100, 0);
+    PauliString ps_x(1);
+    ps_x.x_mask.set(0);
+    ea.get_terms().add(std::complex<double>(0.1, 0.0), ps_x);
+    DenseMatrix d = ea.to_dense();
+    EXPECT_EQ(d.rows(), 2);
+    EXPECT_NEAR(d.norm(), 1.0, 1e-10);
+}
+
+TEST(ExponentialAnsatz, ToDenseWithYTerm_IsNormalized) {
+    ExponentialAnsatz ea(1, 1, 100, 0);
+    PauliString ps_y(1);
+    ps_y.x_mask.set(0);
+    ps_y.z_mask.set(0);
+    ea.get_terms().add(std::complex<double>(0.1, 0.0), ps_y);
+    DenseMatrix d = ea.to_dense();
+    EXPECT_EQ(d.rows(), 2);
+    EXPECT_NEAR(d.norm(), 1.0, 1e-10);
+}
 
 TEST(ExponentialAnsatz, ExpectationValueZIsZeroForPlusState) {
     // |+> state has <Z> = 0

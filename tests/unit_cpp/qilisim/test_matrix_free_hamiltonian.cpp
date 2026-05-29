@@ -562,6 +562,16 @@ TEST(MatrixFreeHamiltonian, UnsupportedPauliThrowsError) {
 
 // --- PauliString construction and stream ---
 
+TEST(PauliString, DefaultConstructorThrows) {
+    EXPECT_THROW({ PauliString ps; }, std::runtime_error);
+}
+
+TEST(PauliString, XConstructorSetsXMaskOnly) {
+    PauliString ps(1, 'X', 0);
+    EXPECT_TRUE(ps.x_mask[0]);
+    EXPECT_FALSE(ps.z_mask[0]);
+}
+
 TEST(PauliString, YConstructorSetsBothMasks) {
     PauliString ps(1, 'Y', 0);
     EXPECT_TRUE(ps.x_mask[0]);

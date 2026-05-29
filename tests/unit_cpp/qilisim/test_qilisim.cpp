@@ -673,4 +673,94 @@ _readout_var_samp = [SamplingReadout(nshots=20)]
     EXPECT_NO_THROW(sim.execute_analog_evolution(py::globals()["_te_var_samp"], py::globals()["_readout_var_samp"], py::none(), p));
 }
 
+TEST_F(ExecuteTimeEvolutionTest, IntegrateRK4Method_NoNoise_Succeeds) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.functionals.analog_evolution import AnalogEvolution
+from qilisdk.analog.schedule import Schedule
+from qilisdk.analog.hamiltonian import Z
+from qilisdk.core.qtensor import QTensor
+import scipy.sparse as sp, numpy as np
+
+_sched_rk4 = Schedule(hamiltonians={"h0": Z(0)}, dt=0.1, total_time=0.3)
+_rho_rk4 = QTensor(sp.csr_matrix(np.array([[1.+0j,0],[0,0]], dtype=complex)))
+_te_rk4 = AnalogEvolution(schedule=_sched_rk4, initial_state=_rho_rk4)
+    )");
+    py::dict p;
+    p["evolution_method"] = py::str("integrate_rk4");
+    EXPECT_NO_THROW(sim.execute_analog_evolution(py::globals()["_te_rk4"], py::list(), py::none(), p));
+}
+
+TEST_F(ExecuteTimeEvolutionTest, HamiltonianCountMismatch_IntegrateRK4_ThrowsValueError) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.functionals.analog_evolution import AnalogEvolution
+from qilisdk.analog.hamiltonian import Z
+from qilisdk.core.qtensor import QTensor
+import scipy.sparse as sp, numpy as np
+
+_rho_mm_rk4 = QTensor(sp.csr_matrix(np.array([[1.+0j,0],[0,0]], dtype=complex)))
+
+class _WeirdHams_RK4:
+    def keys(self): return ["h0"]
+    def values(self): return [Z(0), Z(0)]
+
+class _FakeSched_MM_RK4:
+    nqubits = 1
+    tlist = [0.1, 0.2, 0.3]
+    coefficients = {"h0": {0.1: 1.0, 0.2: 1.0, 0.3: 1.0}}
+    hamiltonians = _WeirdHams_RK4()
+    def get_parameters(self): return {}
+    def set_parameters(self, _): pass
+
+class _TE_MM_RK4(AnalogEvolution):
+    def __init__(self):
+        object.__init__(self)
+        self.schedule = _FakeSched_MM_RK4()
+        self._initial_state = _rho_mm_rk4
+        self.store_intermediate_results = False
+
+_te_mm_rk4 = _TE_MM_RK4()
+    )");
+    py::dict p;
+    p["evolution_method"] = py::str("integrate_rk4");
+    EXPECT_THROW(sim.execute_analog_evolution(py::globals()["_te_mm_rk4"], py::list(), py::none(), p), py::value_error);
+}
+
+TEST_F(ExecuteTimeEvolutionTest, UnknownEvolutionMethod_ThrowsValueError) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.functionals.analog_evolution import AnalogEvolution
+from qilisdk.analog.hamiltonian import Z
+from qilisdk.core.qtensor import QTensor
+import scipy.sparse as sp, numpy as np
+
+_rho_unknown = QTensor(sp.csr_matrix(np.array([[1.+0j,0],[0,0]], dtype=complex)))
+
+class _Hams_Unknown:
+    def keys(self): return ["h0"]
+    def values(self): return [Z(0)]
+
+class _FakeSched_Unknown:
+    nqubits = 1
+    tlist = [0.1, 0.2, 0.3]
+    coefficients = {"h0": {0.1: 1.0, 0.2: 1.0, 0.3: 1.0}}
+    hamiltonians = _Hams_Unknown()
+    def get_parameters(self): return {}
+    def set_parameters(self, _): pass
+
+class _TE_Unknown(AnalogEvolution):
+    def __init__(self):
+        object.__init__(self)
+        self.schedule = _FakeSched_Unknown()
+        self._initial_state = _rho_unknown
+        self.store_intermediate_results = False
+
+_te_unknown = _TE_Unknown()
+    )");
+    py::dict p;
+    p["evolution_method"] = py::str("not_a_real_method");
+    EXPECT_THROW(sim.execute_analog_evolution(py::globals()["_te_unknown"], py::list(), py::none(), p), py::value_error);
+}
+
 // GCOV_EXCL_BR_STOP

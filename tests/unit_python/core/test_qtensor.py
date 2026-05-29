@@ -20,6 +20,7 @@ from scipy.sparse import coo_matrix, csc_array, issparse
 from scipy.sparse.linalg import norm as scipy_norm
 
 from qilisdk.core.qtensor import (
+    InitialState,
     QTensor,
     basis_state,
     bra,
@@ -1046,9 +1047,6 @@ def test_qtensor_negative_norm():
 # --- InitialState Tests ---
 
 
-from qilisdk.core.qtensor import InitialState
-
-
 def test_initial_state_zero_as_qtensor():
     result = InitialState.ZERO.as_qtensor(2)
     assert isinstance(result, QTensor)
@@ -1067,6 +1065,9 @@ def test_initial_state_unknown_raises():
 
         def __eq__(self, other):
             return False
+
+        def __hash__(self):
+            return hash(self.name)
 
     with pytest.raises(ValueError, match="Unknown symbolic QTensor"):
         InitialState.as_qtensor(FakeState(), 2)
