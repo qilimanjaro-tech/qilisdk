@@ -148,6 +148,8 @@ msgid ""
 "The plot can also be saved to a file by providing a filepath to the draw "
 "method:"
 msgstr ""
+"El gràfic també es pot desar en un fitxer proporcionant un camí de fitxer "
+"al mètode draw:"
 
 #: ../../modules/digital/digital_circuits.rst:161
 msgid ""

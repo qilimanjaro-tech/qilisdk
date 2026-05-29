@@ -78,11 +78,17 @@ ignores this setting.
    * - :class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.STATE_VECTOR`
      - ``nvidia`` (GPU) when a GPU is available, otherwise ``qpp-cpu``. Precision matches :class:`~qilisdk.settings.Precision`.
      - |y|
+   * - :class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.STATE_VECTOR_MGPU`
+     - ``nvidia-mgpu`` (multiple GPUs) when multiple GPUs are available, otherwise falls back to ``nvidia``.
+     - 
    * - :class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.TENSOR_NETWORK`
      - ``tensornet``. Good for shallow, wide circuits.
      -
    * - :class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.MATRIX_PRODUCT_STATE`
      - ``tensornet-mps``. Good for low-entanglement, long circuits.
+     -
+   * - :class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.CPU`
+     - ``cpu``. Force running on CPU. Mostly useful for benchmarking.
      -
 
 Set the method at construction time:

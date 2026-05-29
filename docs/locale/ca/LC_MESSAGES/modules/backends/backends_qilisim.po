@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-21 16:31+0200\n"
+"POT-Creation-Date: 2026-05-22 15:29+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -20,12 +20,10 @@ msgstr ""
 "Generated-By: Babel 2.18.0\n"
 
 #: ../../modules/backends/backends_qilisim.rst:2
-#, fuzzy
 msgid "QiliSim Backend"
-msgstr "QiliSim"
+msgstr "Backend QiliSim"
 
 #: ../../modules/backends/backends_qilisim.rst:4
-#, fuzzy
 msgid ""
 "The **QiliSim** backend is the default CPU simulator developed by "
 "Qilimanjaro and written in C++. It implements every primitive functional "
@@ -34,11 +32,10 @@ msgid ""
 "is required."
 msgstr ""
 "El backend **QiliSim** és el simulador de CPU per defecte desenvolupat "
-"per Qilimanjaro i escrit en C++ (exposat mitjançant ``pybind11``). "
-"Implementa tots els funcionals primitius de manera nativa, suporta un "
-"model de soroll en totes les rutes d'execució i s'inclou amb la "
-"instal·lació principal de ``qilisdk`` — no requereix cap dependència ni "
-"maquinari addicional."
+"per Qilimanjaro i escrit en C++. Implementa tots els funcionals primitius "
+"de manera nativa, suporta un model de soroll en totes les rutes d'execució "
+"i s'inclou amb la instal·lació principal de ``qilisdk`` — no requereix cap "
+"dependència ni maquinari addicional."
 
 #: ../../modules/backends/backends_qilisim.rst:9
 msgid "Installation"
@@ -47,8 +44,10 @@ msgstr "Instal·lació"
 #: ../../modules/backends/backends_qilisim.rst:11
 msgid ""
 "QiliSim is bundled with the core ``qilisdk`` installation, so no extra "
-"package is required:"
+"package is required."
 msgstr ""
+"QiliSim s'inclou amb la instal·lació principal de ``qilisdk``, per la "
+"qual cosa no cal cap paquet addicional."
 
 #: ../../modules/backends/backends_qilisim.rst:15
 msgid "Quick start"
@@ -155,11 +154,10 @@ msgstr ""
 #: ../../modules/backends/backends_qilisim.rst:75
 msgid ""
 ":class:`~qilisdk.backends.backend_config.DigitalMethod` — chooses the "
-"digital simulation strategy and its caching / normalization options."
+"digital simulation strategy and its hyperparameters."
 msgstr ""
 ":class:`~qilisdk.backends.backend_config.DigitalMethod` — escull "
-"l'estratègia de simulació digital i les seves opcions de memòria cau / "
-"normalització."
+"l'estratègia de simulació digital i els seus hiperparàmetres."
 
 #: ../../modules/backends/backends_qilisim.rst:77
 msgid ""
@@ -281,11 +279,11 @@ msgstr "Krylov / Arnoldi"
 
 #: ../../modules/backends/backends_qilisim.rst:134
 msgid ""
-"Better scaling for large sparse Hamiltonians; tune ``dim`` for the Krylov"
-" subspace size."
+"Can offer decent scaling for large sparse Hamiltonians; tune ``dim`` for "
+"the Krylov subspace size."
 msgstr ""
-"Millor escalabilitat per a Hamiltonians dispersos grans; ajusteu ``dim`` "
-"per a la mida del subespai de Krylov."
+"Pot oferir un escalat decent per a Hamiltonians dispersos grans; ajusteu "
+"``dim`` per a la mida del subespai de Krylov."
 
 #: ../../modules/backends/backends_qilisim.rst:135
 msgid ""
@@ -362,10 +360,10 @@ msgstr "``combine_single_qubit_gates``"
 #: ../../modules/backends/backends_qilisim.rst:165
 msgid ""
 "Merge adjacent single-qubit gates into a single operation before "
-"propagating."
+"propagating. Disabled if gate-specific noise is used."
 msgstr ""
 "Fusiona portes d'un sol qubit adjacents en una única operació abans de "
-"propagar."
+"propagar. Desactivat si s'utilitza soroll específic de porta."
 
 #: ../../modules/backends/backends_qilisim.rst:166
 msgid "``normalize_after_each_gate``"
@@ -429,9 +427,8 @@ msgstr ""
 "reservoris); per defecte ``False``."
 
 #: ../../modules/backends/backends_qilisim.rst:209
-#, fuzzy
 msgid "Noise model support"
-msgstr "Suport de funcionals"
+msgstr "Suport del model de soroll"
 
 #: ../../modules/backends/backends_qilisim.rst:211
 msgid ""
@@ -515,4 +512,10 @@ msgstr ""
 
 #~ msgid "Using a noise model"
 #~ msgstr "Ús d'un model de soroll"
+
+#~ msgid ""
+#~ "QiliSim is bundled with the core "
+#~ "``qilisdk`` installation, so no extra "
+#~ "package is required:"
+#~ msgstr ""
 
