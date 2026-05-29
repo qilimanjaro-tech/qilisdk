@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-29 12:18+0200\n"
+"POT-Creation-Date: 2026-05-22 15:29+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -46,8 +46,8 @@ msgid ""
 "QiliSim is bundled with the core ``qilisdk`` installation, so no extra "
 "package is required."
 msgstr ""
-"QiliSim s'inclou amb la instal·lació principal de ``qilisdk``, de manera "
-"que no cal cap paquet addicional."
+"QiliSim s'inclou amb la instal·lació principal de ``qilisdk``, per la "
+"qual cosa no cal cap paquet addicional."
 
 #: ../../modules/backends/backends_qilisim.rst:15
 msgid "Quick start"
@@ -306,8 +306,8 @@ msgid ""
 "Can offer decent scaling for large sparse Hamiltonians; tune ``dim`` for "
 "the Krylov subspace size."
 msgstr ""
-"Pot oferir una escalabilitat decent per a Hamiltonians dispersos grans; "
-"ajusteu ``dim`` per a la mida del subespai de Krylov."
+"Pot oferir un escalat decent per a Hamiltonians dispersos grans; ajusteu "
+"``dim`` per a la mida del subespai de Krylov."
 
 #: ../../modules/backends/backends_qilisim.rst:138
 msgid ""
@@ -450,9 +450,9 @@ msgstr ""
 "d'estat in situ (rellevant per a mesures a mig circuit i computació de "
 "reservoris); per defecte ``False``."
 
-#: ../../modules/backends/backends_qilisim.rst:212
+#: ../../modules/backends/backends_qilisim.rst:209
 msgid "Noise model support"
-msgstr "Suport de models de soroll"
+msgstr "Suport del model de soroll"
 
 #: ../../modules/backends/backends_qilisim.rst:214
 msgid ""

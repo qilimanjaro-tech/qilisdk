@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-29 12:18+0200\n"
+"POT-Creation-Date: 2026-05-22 15:29+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -46,8 +46,8 @@ msgid ""
 "QiliSim is bundled with the core ``qilisdk`` installation, so no extra "
 "package is required."
 msgstr ""
-"QiliSim se incluye con la instalación principal de ``qilisdk``, por lo que "
-"no se requiere ningún paquete adicional."
+"QiliSim se incluye con la instalación principal de ``qilisdk``, por lo "
+"que no se necesita ningún paquete adicional."
 
 #: ../../modules/backends/backends_qilisim.rst:15
 msgid "Quick start"
@@ -307,8 +307,8 @@ msgid ""
 "Can offer decent scaling for large sparse Hamiltonians; tune ``dim`` for "
 "the Krylov subspace size."
 msgstr ""
-"Puede ofrecer una escalabilidad aceptable para Hamiltonianos dispersos "
-"grandes; ajuste ``dim`` para el tamaño del subespacio de Krylov."
+"Puede ofrecer un escalado decente para Hamiltonianos dispersos grandes; "
+"ajuste ``dim`` para el tamaño del subespacio de Krylov."
 
 #: ../../modules/backends/backends_qilisim.rst:138
 msgid ""
@@ -451,9 +451,9 @@ msgstr ""
 " estado in situ (relevante para mediciones en mitad del circuito y "
 "computación de reservorios); por defecto ``False``."
 
-#: ../../modules/backends/backends_qilisim.rst:212
+#: ../../modules/backends/backends_qilisim.rst:209
 msgid "Noise model support"
-msgstr "Soporte de modelos de ruido"
+msgstr "Soporte del modelo de ruido"
 
 #: ../../modules/backends/backends_qilisim.rst:214
 msgid ""

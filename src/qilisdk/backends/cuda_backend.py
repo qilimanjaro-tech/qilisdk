@@ -163,8 +163,10 @@ class CudaSamplingMethod(str, Enum):
     """Enumeration of available simulation methods for the CUDA backend."""
 
     STATE_VECTOR = "state_vector"
+    STATE_VECTOR_MGPU = "state_vector_mgpu"
     TENSOR_NETWORK = "tensor_network"
     MATRIX_PRODUCT_STATE = "matrix_product_state"
+    CPU = "cpu"
 
 
 class CudaBackend(Backend):
@@ -187,9 +189,8 @@ class CudaBackend(Backend):
         Args:
             sampling_method (CudaSamplingMethod): The simulation method to
                 use for sampling circuits. Options include
-                ``STATE_VECTOR``, ``TENSOR_NETWORK``, or
-                ``MATRIX_PRODUCT_STATE``. Defaults to
-                ``CudaSamplingMethod.STATE_VECTOR``.
+                ``STATE_VECTOR``, ``STATE_VECTOR_MGPU``, ``TENSOR_NETWORK``, ``MATRIX_PRODUCT_STATE``, or
+                ``CPU``. Defaults to ``CudaSamplingMethod.STATE_VECTOR``.
             noise_model (NoiseModel | None): Optional noise model applied
                 during execution. Defaults to ``None``.
         """
@@ -478,23 +479,43 @@ class CudaBackend(Backend):
         Configure the cudaq simulation target based on the selected simulation method.
 
         For the STATE_VECTOR method, it checks for GPU availability and selects an appropriate target.
+        For the STATE_VECTOR_MGPU method, it checks for multiple GPU availability and selects an appropriate target.
         For TENSOR_NETWORK and MATRIX_PRODUCT_STATE methods, it explicitly sets the target to use tensor network-based simulations.
+        For the CPU method, it sets the target to use CPU-based simulation.
+
+        Raises:
+            ValueError: If an unsupported sampling method is configured.
         """
         logger.info("Applying sampling simulation method {}", self.sampling_method.value)
-        if self.sampling_method == CudaSamplingMethod.STATE_VECTOR:
-            if cudaq.num_available_gpus() == 0:
+        if self.sampling_method in {CudaSamplingMethod.STATE_VECTOR, CudaSamplingMethod.STATE_VECTOR_MGPU}:
+            float_precision = "fp64" if get_settings().complex_precision == Precision.COMPLEX_64 else "fp32"
+            num_gpus = cudaq.num_available_gpus()
+            if num_gpus == 0:
                 cudaq.set_target("qpp-cpu")
                 logger.debug("No GPU detected, using cudaq's 'qpp-cpu' backend")
+            elif self.sampling_method == CudaSamplingMethod.STATE_VECTOR_MGPU:
+                if num_gpus < 2:  # noqa: PLR2004 # come on, two isn't a magic numbr
+                    cudaq.set_target("nvidia", option=float_precision)
+                    logger.warning(
+                        "Multiple GPU simulation method selected but only single GPU detected. Falling back to single GPU."
+                    )
+                else:
+                    cudaq.set_target("nvidia", option="mgpu," + float_precision)
+                    logger.debug("Multiple GPUs detected, using cudaq's 'nvidia-mgpu' backend")
             else:
-                float_precision = "fp32" if get_settings().complex_precision == Precision.COMPLEX_64 else "fp64"
                 cudaq.set_target("nvidia", option=float_precision)
                 logger.debug("GPU detected, using cudaq's 'nvidia' backend")
+        elif self.sampling_method == CudaSamplingMethod.CPU:
+            cudaq.set_target("qpp-cpu")
+            logger.debug("Using cudaq's 'qpp-cpu' backend")
         elif self.sampling_method == CudaSamplingMethod.TENSOR_NETWORK:
             cudaq.set_target("tensornet")
             logger.debug("Using cudaq's 'tensornet' backend")
-        else:
+        elif self.sampling_method == CudaSamplingMethod.MATRIX_PRODUCT_STATE:
             cudaq.set_target("tensornet-mps")
             logger.debug("Using cudaq's 'tensornet-mps' backend")
+        else:
+            raise ValueError(f"Unsupported sampling method: {self.sampling_method.value}")
 
     @staticmethod
     def _handle_readout_errors(cudaq_result: dict[str, int], noise_model: NoiseModel, nqubits: int) -> dict[str, int]:
