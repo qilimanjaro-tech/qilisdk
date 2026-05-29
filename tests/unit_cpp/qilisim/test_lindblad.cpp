@@ -308,13 +308,13 @@ TEST_F(LindbladRhsExponentialAnsatzTest, DrhoHasSameTermStructure) {
 TEST_F(LindbladRhsExponentialAnsatzTest, DrhoChangesFromZeroUnderHamiltonian) {
     ExponentialAnsatz rho(1, 1, 100, 0);
     ExponentialAnsatz drho = rho.zeroed();
-    lindblad_rhs(drho, rho, H_X);
+    lindblad_rhs(drho, rho, H_Z);
     // Some coefficients should be nonzero after computing the variational gradient
     double total_abs = 0.0;
     for (const auto& [ps, coeff] : drho.get_terms().get_operators()) {
         total_abs += std::abs(coeff);
     }
-    EXPECT_GT(total_abs, 0.0);
+    EXPECT_GT(total_abs, 0.0) << "Expected drho to change from zero under Hamiltonian evolution, but all coefficients were zero.";
 }
 
 TEST_F(LindbladRhsExponentialAnsatzTest, DrhoIsZeroForZHamiltonianOnPlusState) {

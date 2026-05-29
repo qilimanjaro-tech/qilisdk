@@ -42,7 +42,7 @@ class ExponentialAnsatz {
     int get_order() const { return order; }
     int get_shots() const { return shots; }
     int get_warmups() const { return warmups; }
-    MatrixFreeHamiltonian get_terms() const { return terms; }
+    const MatrixFreeHamiltonian& get_terms() const { return terms; }
     MatrixFreeHamiltonian& get_terms() { return terms; }
     SampleSet draw_samples() const;
     SampleSet draw_samples(int N_s, int n_warmup) const;

@@ -641,7 +641,7 @@ TEST(MatrixFreeHamiltonian, HamiltonianMultiplicationXX_GivesIdentity) {
     MatrixFreeHamiltonian expected(1);
     PauliString iden(1);  // identity: all masks zero
     expected.add({1.0, 0.0}, iden);
-    EXPECT_TRUE(result == expected);
+    EXPECT_TRUE(result == expected) << "Expected " << expected << " but got " << result;
 }
 
 TEST(MatrixFreeHamiltonian, HamiltonianMultiplicationXZ_GivesMinusIY) {
@@ -653,7 +653,7 @@ TEST(MatrixFreeHamiltonian, HamiltonianMultiplicationXZ_GivesMinusIY) {
     // X*Z = -iY: coefficient = -i, PauliString = Y(0)
     MatrixFreeHamiltonian expected(1);
     expected.add({0.0, -1.0}, MatrixFreeOperator("Y", 0));
-    EXPECT_TRUE(result == expected);
+    EXPECT_TRUE(result == expected) << "Expected " << expected << " but got " << result;
 }
 
 TEST(MatrixFreeHamiltonian, LeftScalarMultiplication) {
