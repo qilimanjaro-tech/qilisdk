@@ -1,6 +1,6 @@
 [project]
 name = "qilisdk"
-version = "0.1.9"
+version = "0.2.1"
 description = "QiliSDK is a Python framework for writing digital and analog quantum algorithms and executing them across multiple quantum backends. Its modular design streamlines the development process and enables easy integration with a variety of quantum platforms."
 readme = "README.md"
 authors = [{name = "Qilimanjaro Quantum Tech", email = "info@qilimanjaro.tech"}]
@@ -8,9 +8,11 @@ requires-python = ">=3.11"
 keywords = ["qilimanjaro", "quantum computing", "digital quantum computing", "analog quantum computing"]
 urls = { "Homepage" = "https://github.com/qilimanjaro-tech/qilisdk", "Documentation" = "https://qilimanjaro-tech.github.io/qilisdk/", "Source" = "https://github.com/qilimanjaro-tech/qilisdk", "Issues" = "https://github.com/qilimanjaro-tech/qilisdk/issues", "Changelog" = "https://github.com/qilimanjaro-tech/qilisdk/blob/main/CHANGELOG.md" }
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Environment :: Console",
     "Operating System :: POSIX :: Linux",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: MacOS",
     "License :: OSI Approved :: Apache Software License",
     "Topic :: Scientific/Engineering",
     "Topic :: Scientific/Engineering :: Physics",
@@ -36,7 +38,7 @@ dependencies = [
     "py-cpuinfo>=9.0.0",
     "setuptools>=82.0.1",
     "gputil>=1.4.0",
-    "mkl-service>=2.6.1; sys_platform != 'darwin'",
+    "mkl-service>=2.6.1; sys_platform != 'darwin' and platform_machine != 'aarch64'",
     "rustworkx>=0.17.1",
     "psutil>=7.2.2",
 ]
@@ -46,10 +48,10 @@ cuda = [
     "qilisdk[cuda12]"
 ]
 cuda12 = [
-    "cuda-quantum-cu12==0.14.0",
+    "cuda-quantum-cu12==0.14.2",
 ]
 cuda13 = [
-    "cuda-quantum-cu13==0.14.0"
+    "cuda-quantum-cu13==0.14.2"
 ]
 speqtrum = [
     "httpx==0.28.1",
@@ -116,8 +118,8 @@ docs = [
     "sphinx-automodapi>=0.20.0",
     "sphinx-design>=0.7.0",
     "sphinx-mdinclude>=0.6.2",
-    "sphinx-multiversion>=0.2.4",
-    "sphinxawesome-theme>=5.3.2",
+    "sphinx-multiversion==0.2.4",
+    "sphinxawesome-theme==5.3.2",
     "sphinx-intl",
     "sphinx-tabs>=3.5.0",
 ]
@@ -146,9 +148,9 @@ conflicts = [
 
 [tool.uv.sources]
 sphinx-multiversion = { git = "https://github.com/sphinx-contrib/multiversion", branch = "main"}
-numpy = [{ index = "numpy-mkl", marker = "sys_platform != 'darwin'" }]
-scipy = [{ index = "numpy-mkl", marker = "sys_platform != 'darwin'" }]
-mkl-service = [{ index = "numpy-mkl", marker = "sys_platform != 'darwin'" }]
+numpy = [{ index = "numpy-mkl", marker = "sys_platform != 'darwin' and platform_machine != 'aarch64'" }]
+scipy = [{ index = "numpy-mkl", marker = "sys_platform != 'darwin' and platform_machine != 'aarch64'" }]
+mkl-service = [{ index = "numpy-mkl", marker = "sys_platform != 'darwin' and platform_machine != 'aarch64'" }]
 
 [[tool.uv.index]]
 name = "numpy-mkl"

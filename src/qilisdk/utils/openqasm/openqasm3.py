@@ -618,9 +618,9 @@ class OpenQasmParser:
             num_repeats = 1
             for i in range(len(modifiers) - 1, -1, -1):
                 if modifiers[i] == "ctrl":
-                    main_gate = Controlled(qubits[i], basic_gate=main_gate)
+                    main_gate = Controlled(qubits[i], basic_gate=main_gate)  # ty:ignore[invalid-argument-type]
                 elif modifiers[i] == "negctrl":
-                    main_gate = Controlled(qubits[i], basic_gate=main_gate)
+                    main_gate = Controlled(qubits[i], basic_gate=main_gate)  # ty:ignore[invalid-argument-type]
                     gates_to_prepend.append(X(qubits[i]))
                     gates_to_append.append(X(qubits[i]))
                 elif modifiers[i] == "inv":
@@ -832,7 +832,7 @@ class OpenQasmParser:
 
         # Otherwise process normally
         else:
-            self.gates_to_add.extend(self._to_qilisdk_gate(gate_name, qubits, arguments, modifiers))
+            self.gates_to_add.extend(self._to_qilisdk_gate(gate_name, qubits, arguments, modifiers))  # ty:ignore[invalid-argument-type]
 
     def _handle_statement_branching_statement(
         self, statement: BranchingStatement, extra_modifiers: list[str] = [], extra_qubits: list[int] = []
