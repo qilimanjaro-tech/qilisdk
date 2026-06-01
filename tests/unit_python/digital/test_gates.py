@@ -1079,7 +1079,5 @@ def test_controlled_controlled():
     cc_gate = base_gate.controlled(control1).controlled(control2)
     expected_name = "CCRX"
     assert cc_gate.name == expected_name
-    # The matrix should be the same as applying two controls to the base gate.
-    controlled_once = base_gate.controlled(control1)
-    controlled_twice = controlled_once.controlled(control2)
+    controlled_twice = base_gate.controlled(control1, control2)
     assert_matrix_equal(cc_gate.matrix, controlled_twice.matrix)
