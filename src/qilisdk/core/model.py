@@ -774,10 +774,13 @@ class QUBO(Model):
                 return num.real
             raise ValueError("Complex values encountered in the constraint.")
 
-        const: RealNumber = to_real(term.get_constant())
+        # Distribute first: ``Mul`` no longer auto-distributes, so an un-expanded term such as
+        # ``-1 * (1 - (x + y))`` would otherwise report an additive constant of 0 instead of -1.
+        expanded = term.expand()
+        const: RealNumber = to_real(expanded.get_constant())
         term_upper_limit: RealNumber = 0
         term_lower_limit: RealNumber = 0
-        for _monomial, coeff in term.expand().as_coefficients_dict().items():
+        for _monomial, coeff in expanded.as_coefficients_dict().items():
             coeff_value = to_real(coeff)
             if coeff_value > 0:
                 term_upper_limit += coeff_value

@@ -19,7 +19,7 @@ import math
 import pytest
 
 from qilisdk.core.exceptions import NonPolynomialError
-from qilisdk.core.expression import Add, Constant, Cos, Exp, Expression, Log, Mul, Pow, Sin
+from qilisdk.core.expression import Constant, Cos, Exp, Expression, Log, Pow, Sin
 from qilisdk.core.variables import BinaryVariable, Domain, Parameter, Variable
 from qilisdk.utils.serialization import deserialize, serialize
 
