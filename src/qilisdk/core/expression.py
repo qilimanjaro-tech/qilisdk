@@ -287,6 +287,14 @@ class Expression(ABC):
     def __eq__(self, other: object) -> bool:
         return isinstance(other, Expression) and hash(self) == hash(other)
 
+    def __contains__(self, item: object) -> bool:
+        """Whether ``item`` is one of the named leaves (variables/parameters) of the expression.
+
+        Returns:
+            bool: ``True`` if ``item`` appears as a free symbol in the expression.
+        """
+        return isinstance(item, Expression) and item in self.free_symbols()
+
     def __getstate__(self) -> dict:
         state = self.__dict__.copy()
         state.pop("_hash_cache", None)

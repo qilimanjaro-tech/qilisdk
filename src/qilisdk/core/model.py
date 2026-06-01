@@ -550,6 +550,7 @@ class _Linearizer:
 
     def __init__(self) -> None:
         self._substitutions: dict[tuple[str, str], tuple[BaseVariable, BaseVariable, BinaryVariable]] = {}
+        self._preferred_pairs: set[tuple[str, str]] = set()
         self._counter = 0
 
     @property
@@ -580,10 +581,29 @@ class _Linearizer:
             return term
 
         term = term.expand()
+        monomials = list(term.as_coefficients_dict().items())
+        self._collect_preferred_pairs([monomial for monomial, _ in monomials])
         new_elements: list[Expression] = [Constant(term.get_constant())]
-        for monomial, coeff in term.as_coefficients_dict().items():
+        for monomial, coeff in monomials:
             new_elements.append(Constant(coeff) * self._reduce_monomial(monomial))
         return Add.build(tuple(new_elements))
+
+    def _collect_preferred_pairs(self, monomials: list[Expression]) -> None:
+        """Mark variable pairs shared by two or more high-degree monomials as preferred.
+
+        Because the canonical ordering of monomials in an :class:`~qilisdk.core.expression.Add` is
+        deterministic but not insertion-based, this pre-pass ensures a shared pair (e.g. ``x*y`` in
+        both ``x*y*z`` and ``x*y*w``) collapses to a single auxiliary regardless of which monomial is
+        reduced first.
+        """
+        counts: dict[tuple[str, str], int] = {}
+        for monomial in monomials:
+            labels = sorted({base.label for base, _ in monomial.monomial_factors() if isinstance(base, BinaryVariable)})
+            if len(labels) <= 2:  # noqa: PLR2004
+                continue
+            for pair in itertools.combinations(labels, 2):
+                counts[pair] = counts.get(pair, 0) + 1
+        self._preferred_pairs.update(pair for pair, count in counts.items() if count >= 2)  # noqa: PLR2004
 
     def rosenberg_constraints(self) -> list[tuple[str, ComparisonTerm]]:
         """Materialize the Rosenberg penalty constraints that pin each auxiliary to its product.
@@ -656,6 +676,10 @@ class _Linearizer:
         for a, b in itertools.combinations(variables, 2):
             a_sorted, b_sorted = sorted([a, b], key=lambda v: v.label)
             if (a_sorted.label, b_sorted.label) in self._substitutions:
+                return a, b
+        for a, b in itertools.combinations(variables, 2):
+            a_sorted, b_sorted = sorted([a, b], key=lambda v: v.label)
+            if (a_sorted.label, b_sorted.label) in self._preferred_pairs:
                 return a, b
         return variables[0], variables[1]
 

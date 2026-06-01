@@ -322,7 +322,7 @@ def test_schedule_term_and_basevariable_errors():
     sch = {"H1": {0: term}}
     with pytest.raises(
         ValueError,
-        match=r"Tlist can only contain parameters and no variables, but the term dummy \* \(2\) contains objects other than parameters.",
+        match=r"Tlist can only contain parameters and no variables, but the term 2 \* dummy contains objects other than parameters.",
     ):
         Schedule(total_time=10, dt=1, hamiltonians={"H1": H1}, coefficients=sch)
 
@@ -334,7 +334,7 @@ def test_add_schedule_step_term_basevariable_errors():
     sched = Schedule(dt=1, hamiltonians={"H1": H1})
     with pytest.raises(
         ValueError,
-        match=r"Tlist can only contain parameters and no variables, but the term dummy \* \(2\) contains objects other than parameters.",
+        match=r"Tlist can only contain parameters and no variables, but the term 2 \* dummy contains objects other than parameters.",
     ):
         sched.update_hamiltonian("H1", new_coefficients={0: term})
     with pytest.raises(
@@ -351,7 +351,7 @@ def test_update_hamiltonian_coefficient_term_basevariable_errors():
     sched = Schedule(total_time=10, dt=1, hamiltonians={"H1": H1})
     with pytest.raises(
         ValueError,
-        match=r"Tlist can only contain parameters and no variables, but the term dummy \* \(2\) contains objects other than parameters.",
+        match=r"Tlist can only contain parameters and no variables, but the term 2 \* dummy contains objects other than parameters.",
     ):
         sched.update_hamiltonian("H1", new_coefficients={1: term})
     with pytest.raises(ValueError):  # noqa: PT011

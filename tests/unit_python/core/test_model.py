@@ -30,10 +30,10 @@ from qilisdk.core.variables import (
     Bitwise,
     ComparisonOperation,
     ComparisonTerm,
+    Constant,
     Domain,
     OneHot,
-    Operation,
-    Term,
+    Sin,
     Variable,
 )
 
@@ -64,7 +64,7 @@ def test_constraint_init_and_repr():
     assert cons.degree == max(ct.lhs.degree, ct.rhs.degree)
     # errors
     with pytest.raises(ValueError):  # noqa: PT011
-        Constraint(label="bad", term=Term([0], Operation.ADD))
+        Constraint(label="bad", term=Constant(0))
 
 
 def test_constraint_variables():
@@ -97,7 +97,7 @@ def test_constraint_copy():
 # ---------- Objective ----------
 def test_objective_init_and_copy_and_errors():
     var = Variable("b", Domain.BINARY)
-    t = Term(elements=[var], operation=Operation.ADD)
+    t = var
     obj = Objective(label="o1", term=t, sense=ObjectiveSense.MAXIMIZE)
     obj2 = Objective(label="o2", term=var, sense=ObjectiveSense.MAXIMIZE)
     assert obj.label == "o1"
@@ -117,7 +117,7 @@ def test_objective_init_and_copy_and_errors():
     assert obj3.sense == obj.sense
     # errors
     with pytest.raises(ValueError):  # noqa: PT011
-        Objective(label="bad", term=123, sense=ObjectiveSense.MINIMIZE)
+        Objective(label="bad", term="not-an-expression", sense=ObjectiveSense.MINIMIZE)
     with pytest.raises(ValueError):  # noqa: PT011
         Objective(label="bad", term=t, sense="wrong")
 
@@ -168,7 +168,7 @@ def test_model_lagrange_multipliers(simple_model):
 def test_model_set_objective_and_repr(simple_model):
     m = simple_model
     var = Variable("y", Domain.BINARY)
-    t = Term(elements=[var], operation=Operation.ADD)
+    t = var
     m.set_objective(term=t, label="obj1", sense=ObjectiveSense.MINIMIZE)
     assert m.objective.label == "obj1"
     assert m.objective.term == t
@@ -304,12 +304,12 @@ def test_qubo_set_objective_errors():
     q = QUBO(label="q5")
     # non-binary domain
     y = Variable("y", Domain.REAL, bounds=(0, 1))
-    t = Term(elements=[y], operation=Operation.ADD)
+    t = y
     with pytest.raises(ValueError):  # noqa: PT011
         q.set_objective(term=t)
     # valid binary
     b = BinaryVariable("b3")
-    t2 = Term(elements=[b], operation=Operation.ADD)
+    t2 = b
     q.set_objective(term=t2, label="o2", sense=ObjectiveSense.MAXIMIZE)
     assert q.objective.label == "o2"
     assert q.qubo_objective.sense.value == ObjectiveSense.MINIMIZE.value  # always stored as minimize
@@ -339,14 +339,14 @@ def test_qubo_transform_unbalanced_penalization():
     q.add_constraint("c", ct, penalization="unbalanced", parameters=(2, 1))
 
     h = ct.lhs - ct.rhs
-    assert q._constraints["c"].lhs - q._constraints["c"].rhs == (-2 * h + h**2).to_binary()
+    assert (q._constraints["c"].lhs - q._constraints["c"].rhs).expand() == (-2 * h + h**2).to_binary().expand()
 
     ct = LT(x, 5)
 
     q.add_constraint("c2", ct, penalization="unbalanced", parameters=(2, 1))
 
     h = ct.rhs - ct.lhs
-    assert q._constraints["c2"].lhs - q._constraints["c2"].rhs == (-2 * h + h**2).to_binary()
+    assert (q._constraints["c2"].lhs - q._constraints["c2"].rhs).expand() == (-2 * h + h**2).to_binary().expand()
 
 
 def test_qubo_transform_slack_penalization():
@@ -624,11 +624,10 @@ def test_qubo_from_model():
 def test_parse_term_unsupported_element(monkeypatch):
     x = Variable("x", Domain.POSITIVE_INTEGER, encoding=OneHot, bounds=(0, 2))
     bad_objective = MagicMock()
-    bad_objective.term = Term(elements=[x, 3], operation=Operation.SUB)
+    bad_objective.term = Sin(x)
     bad_objective.variables = MagicMock(return_value=[x])
     monkeypatch.setattr(QUBO, "qubo_objective", bad_objective)
     q = QUBO(label="test")
-    Term(elements=[x, 3], operation=Operation.SUB)
     with pytest.raises(ValueError, match=r"is not supported"):
         q.to_hamiltonian()
 

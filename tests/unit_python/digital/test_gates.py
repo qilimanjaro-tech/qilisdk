@@ -18,7 +18,7 @@ from hypothesis import example, given, strategies
 from numpy.testing import assert_allclose
 from scipy.linalg import expm
 
-from qilisdk.core.variables import Domain, Parameter, Term, Variable
+from qilisdk.core.variables import Domain, Parameter, Expression, Variable
 from qilisdk.digital import CNOT, CZ, RX, RY, RZ, SWAP, U1, U2, U3, Circuit, H, I, M, S, T, X, Y, Z
 from qilisdk.digital.exceptions import GateHasNoMatrixError, InvalidParameterNameError, ParametersNotEqualError
 from qilisdk.digital.gates import Adjoint, BasicGate, Controlled, Exponential, Gate, GateNotParameterizedError
@@ -139,7 +139,7 @@ def test_rx_gate(angle: float):
 
 def test_rx_gate_term():
     """
-    Create an RX gate with a Term object as the angle parameter.
+    Create an RX gate with a Expression object as the angle parameter.
     """
     qubit = 2
     angle = np.pi
@@ -181,7 +181,7 @@ def test_ry_gate(angle: float):
 
 def test_ry_gate_term():
     """
-    Create an RY gate with a Term object as the angle parameter.
+    Create an RY gate with a Expression object as the angle parameter.
     """
     qubit = 3
     angle = np.pi
@@ -220,7 +220,7 @@ def test_rz_gate(angle: float):
 
 def test_rz_gate_term():
     """
-    Create an RZ gate with a Term object as the angle parameter.
+    Create an RZ gate with a Expression object as the angle parameter.
     """
     qubit = 3
     angle = np.pi
@@ -260,7 +260,7 @@ def test_u1_gate(angle: float):
 
 def test_u1_gate_term():
     """
-    Create a U1 gate with a Term object as the angle parameter.
+    Create a U1 gate with a Expression object as the angle parameter.
     """
     qubit = 5
     angle = np.pi
@@ -327,7 +327,7 @@ def test_u2_gate(phi, gamma):
 
 def test_u2_gate_term():
     """
-    Create a U2 gate with Term objects as the angle parameters.
+    Create a U2 gate with Expression objects as the angle parameters.
     """
     qubit = 7
     phi = np.pi / 2
@@ -408,7 +408,7 @@ def test_u3_gate(theta, phi, gamma):
 
 def test_u3_gate_term():
     """
-    Create a U3 gate with Term objects as the angle parameters.
+    Create a U3 gate with Expression objects as the angle parameters.
     """
     qubit = 8
     theta = np.pi / 2
@@ -872,7 +872,7 @@ class CustomGate(BasicGate):
     def __init__(
         self,
         target_qubits: tuple[int, ...],
-        parameter_transforms: dict[str, Term] | None = None,
+        parameter_transforms: dict[str, Expression] | None = None,
         parameters: dict[str, Parameter] | None = None,
     ):
         super().__init__(target_qubits=target_qubits, parameter_transforms=parameter_transforms, parameters=parameters)

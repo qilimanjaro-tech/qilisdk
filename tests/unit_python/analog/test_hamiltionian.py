@@ -659,22 +659,22 @@ def test_hamiltonian_term_arithmetic():
 
     H = X(0) + Y(1)
 
-    with pytest.raises(ValueError, match="Term provided contains generic variables"):
+    with pytest.raises(ValueError, match="Expression provided contains generic variables"):
         _ = H + term
 
-    with pytest.raises(ValueError, match="Term provided contains generic variables"):
+    with pytest.raises(ValueError, match="Expression provided contains generic variables"):
         _ = term + H
 
-    with pytest.raises(ValueError, match="Term provided contains generic variables"):
+    with pytest.raises(ValueError, match="Expression provided contains generic variables"):
         _ = H - term
 
-    with pytest.raises(ValueError, match="Term provided contains generic variables"):
+    with pytest.raises(ValueError, match="Expression provided contains generic variables"):
         _ = term - H
 
-    with pytest.raises(ValueError, match="Term provided contains generic variables"):
+    with pytest.raises(ValueError, match="Expression provided contains generic variables"):
         _ = H * term
 
-    with pytest.raises(ValueError, match="Term provided contains generic variables"):
+    with pytest.raises(ValueError, match="Expression provided contains generic variables"):
         _ = term * H
 
 
