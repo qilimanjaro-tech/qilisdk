@@ -47,6 +47,14 @@ if TYPE_CHECKING:
     from qilisdk.analog.hamiltonian import Hamiltonian
 
 
+def _assert_real(number: Number) -> float:
+    if isinstance(number, complex):
+        if abs(number.imag) < get_settings().atol:
+            return number.real
+        raise ValueError("Complex Number encountered when expecting only real values to be present.")
+    return number
+
+
 class SlackCounter:
     """A singleton class to generate a slack counter id that increments continuously within the user's active session."""
 
@@ -510,35 +518,12 @@ class Model:
             linearization_lagrange_multiplier=linearization_lagrange_multiplier,
         )
 
-    def to_hamiltonian(self,
-            lagrange_multiplier_dict: dict[str, float] | None = None,
-            penalization: Literal["unbalanced", "slack"] = "slack",
-            parameters: list[float] | None = None,
-            linearize: bool = True,
-            linearization_lagrange_multiplier: float = 100,
-        ) -> Hamiltonian:
-        """
-        Convert the model to a Hamiltonian by first turning it to a QUBO model.
-
-        See `to_qubo` for usage.
-
-        Returns:
-            Hamiltonian: the Hamiltonian corresponding to the model.
-        """
-        return self.to_qubo(
-            lagrange_multiplier_dict=lagrange_multiplier_dict,
-            penalization=penalization,
-            parameters=parameters,
-            linearize=linearize,
-            linearization_lagrange_multiplier=linearization_lagrange_multiplier,
-        ).to_hamiltonian()
-
     @classmethod
     def knapsack(
         cls,
         values: list[Number],
         weights: list[Number],
-        max_weight: Number,
+        max_weight: float,
         label: str = "Knapsack",
     ) -> Model:
         """Factory method to generate a knapsack model.
@@ -546,11 +531,15 @@ class Model:
         Args:
             values (list[Number]): the value of each item.
             weights (list[Number]): the weight of each item.
-            max_weight (Number): the maximum weight that can be put in the knapsack.
+            max_weight (float): the maximum weight that can be put in the knapsack.
             label (str, optional): the model label. Defaults to "Knapsack".
 
         Returns:
             Model: a model of the knapsack problem with the given parameters.
+
+        Raises:
+            ValueError: if the number of values and weights are different.
+            ValueError: if the number of items is zero.
         """
         num_items = len(values)
         if len(weights) != num_items:
@@ -558,6 +547,8 @@ class Model:
         bin_vars = [BinaryVariable(f"b{i}") for i in range(num_items)]
         model = cls(label)
         objective = sum(values[i] * bin_vars[i] for i in range(num_items))
+        if isinstance(objective, Number):
+            raise ValueError("the number of items must be greater than zero.")
         model.set_objective(objective)
         constraint = LEQ(sum(weights[i] * bin_vars[i] for i in range(num_items)), max_weight)
         model.add_constraint("maximum weight", constraint)
@@ -567,7 +558,7 @@ class Model:
     def random_ising(
         cls,
         num_variables: int,
-        coefficient_range: tuple[Number, Number] = (-1, 1),
+        coefficient_range: tuple[float, float] = (-1, 1),
         label: str = "Random Ising",
         seed: int = 1,
     ) -> Model:
@@ -575,7 +566,7 @@ class Model:
 
         Args:
             num_variables (int): the number of variables in the Ising model.
-            coefficient_range (tuple[Number, Number], optional): the range from which the coefficients of the Ising model are drawn uniformly at random. Defaults to (-1, 1).
+            coefficient_range (tuple[float, float], optional): the range from which the coefficients of the Ising model are drawn uniformly at random. Defaults to (-1, 1).
             label (str, optional): the model label. Defaults to "Random Ising".
             seed (int, optional): the seed for the random number generator. Defaults to 1.
 
@@ -586,10 +577,16 @@ class Model:
         variables = [BinaryVariable(f"x{i}") for i in range(num_variables)]
         generator = np.random.default_rng(seed)
         for i in range(num_variables):
-            model.set_objective(model.objective.term + generator.uniform(*coefficient_range) * variables[i])
+            model.set_objective(
+                model.objective.term
+                + generator.uniform(low=coefficient_range[0], high=coefficient_range[1]) * variables[i]
+            )
             for j in range(i + 1, num_variables):
                 model.set_objective(
-                    model.objective.term + generator.uniform(*coefficient_range) * variables[i] * variables[j]
+                    model.objective.term
+                    + generator.uniform(low=coefficient_range[0], high=coefficient_range[1])
+                    * variables[i]
+                    * variables[j]
                 )
         return model
 
@@ -623,18 +620,21 @@ class Model:
     def max_cut(
         cls,
         edges: list[tuple[int, int]],
-        weights: list[Number] | None = None,
+        weights: list[float] | None = None,
         label: str = "Max-Cut",
     ) -> Model:
         """Factory method to generate a max-cut model.
 
         Args:
             edges (list[tuple[int, int]]): the edges of the graph as ``(u, v)`` pairs.
-            weights (list[Number] | None, optional): a weight for each edge. Defaults to 1 for all edges.
+            weights (list[float] | None, optional): a weight for each edge. Defaults to 1 for all edges.
             label (str, optional): the model label. Defaults to "Max-Cut".
 
         Returns:
             Model: a model of the max-cut problem for the given graph.
+
+        Raises:
+            ValueError: if weights are provided and their number is different from the number of edges.
         """
         if weights is not None and len(weights) != len(edges):
             raise ValueError("the number of weights must be equal to the number of edges.")
@@ -642,9 +642,10 @@ class Model:
         x = {n: BinaryVariable(f"x{n}") for n in nodes}
         model = cls(label)
         objective = sum(
-            (1 if weights is None else weights[i]) * (x[u] + x[v] - 2 * x[u] * x[v])
-            for i, (u, v) in enumerate(edges)
+            (1 if weights is None else weights[i]) * (x[u] + x[v] - 2 * x[u] * x[v]) for i, (u, v) in enumerate(edges)
         )
+        if isinstance(objective, Number):
+            raise ValueError("the graph must have at least one edge.")
         model.set_objective(objective, sense=ObjectiveSense.MAXIMIZE)
         return model
 
@@ -712,6 +713,8 @@ class Model:
             for k, (i, j) in enumerate(edges)
             for t in range(n)
         )
+        if isinstance(objective, Number):
+            raise ValueError("the graph must have at least one edge.")
         model.set_objective(objective)
         for i in range(n):
             model.add_constraint(f"city_{i}", EQ(sum(x[i][t] for t in range(n)), 1))
@@ -752,9 +755,7 @@ class Model:
                         vals.append(val)
                 domains.append(vals)
             else:
-                raise ValueError(
-                    f"Brute-force enumeration is not supported for variable {v} of domain {v.domain}."
-                )
+                raise ValueError(f"Brute-force enumeration is not supported for variable {v} of domain {v.domain}.")
 
         total_combinations = 1
         for d in domains:
@@ -769,7 +770,7 @@ class Model:
         for values in itertools.product(*domains):
             sample = dict(zip(variables, values))
             results = self.evaluate(sample)
-            objective_value = results[self.objective.label]
+            objective_value = _assert_real(results[self.objective.label])
             if objective_value < best_objective_value:
                 best_objective_value = objective_value
                 best_sample = sample
