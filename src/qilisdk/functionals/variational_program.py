@@ -68,7 +68,7 @@ class VariationalProgram(Functional):
         parameter_constraints = parameter_constraints or []
         functional_params = self._functional.get_parameters()
         for p in parameter_constraints:
-            if not p.lhs.is_parameterized_term() or not p.rhs.is_parameterized_term():
+            if not p.lhs.is_parameterized() or not p.rhs.is_parameterized():
                 raise ValueError("Only parameters are allowed to be constrained.")
             variables = p.variables()
             for v in variables:

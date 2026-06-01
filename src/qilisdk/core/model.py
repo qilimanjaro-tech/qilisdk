@@ -25,7 +25,8 @@ from loguru import logger
 from qilisdk.settings import get_settings
 from qilisdk.yaml import yaml
 
-from .types import QiliEnum
+from .expression import Add, Constant, Expression, Mul, Pow
+from .types import Number, QiliEnum, RealNumber
 from .variables import (
     EQ,
     GEQ,
@@ -36,10 +37,6 @@ from .variables import (
     ComparisonOperation,
     ComparisonTerm,
     Domain,
-    Number,
-    Operation,
-    RealNumber,
-    Term,
     Variable,
 )
 
@@ -135,18 +132,18 @@ class Constraint:
         return self._term.variables()
 
     @property
-    def lhs(self) -> Term:
+    def lhs(self) -> Expression:
         """
         Returns:
-            Term: The left hand side of the constraint term.
+            Expression: The left hand side of the constraint term.
         """
         return self.term.lhs
 
     @property
-    def rhs(self) -> Term:
+    def rhs(self) -> Expression:
         """
         Returns:
-            Term: The right hand side of the constraint term.
+            Expression: The right hand side of the constraint term.
         """
         return self.term.rhs
 
@@ -183,23 +180,25 @@ class Objective:
             obj = Objective("profit", 3 * x, sense=ObjectiveSense.MAXIMIZE)
     """
 
-    def __init__(self, label: str, term: BaseVariable | Term, sense: ObjectiveSense = ObjectiveSense.MINIMIZE) -> None:
+    def __init__(
+        self, label: str, term: BaseVariable | Expression, sense: ObjectiveSense = ObjectiveSense.MINIMIZE
+    ) -> None:
         """
         Build a new objective function.
 
         Args:
             label (str): Objective label.
-            term (BaseVariable | Term): Expression to minimize or maximize.
+            term (BaseVariable | Expression): Expression to minimize or maximize.
             sense (ObjectiveSense, optional): Optimization sense. Defaults to ``ObjectiveSense.MINIMIZE``.
 
         Raises:
-            ValueError: if the term provided is not a Term Object.
+            ValueError: if the term provided is not a Expression Object.
             ValueError: if the optimization sense provided is not one that is defined by the ObjectiveSense Enum.
         """
-        if isinstance(term, Variable):
-            term = Term(elements=[term], operation=Operation.ADD)
-        if not isinstance(term, Term):
-            raise ValueError(f"the parameter term is expecting a {Term} but received {term.__class__}")
+        if isinstance(term, (int, float, complex)):
+            term = Constant(term)
+        if not isinstance(term, Expression):
+            raise ValueError(f"the parameter term is expecting an {Expression} but received {term.__class__}")
         if not isinstance(sense, ObjectiveSense):
             raise ValueError(f"the objective sense is expecting a {ObjectiveSense} but received {sense.__class__}")
         self._term = term
@@ -215,10 +214,10 @@ class Objective:
         return self._label
 
     @property
-    def term(self) -> Term:
+    def term(self) -> Expression:
         """
         Returns:
-            Term: the objective term.
+            Expression: the objective term.
         """
         return self._term
 
@@ -280,7 +279,7 @@ class Model:
         self._constraints: dict[str, Constraint] = {}
         self._encoding_constraints: dict[str, Constraint] = {}
         self._lagrange_multipliers: dict[str, float] = {}
-        self._objective = Objective("objective", Term([0], Operation.ADD))
+        self._objective = Objective("objective", Constant(0))
         self._label = label
 
     @property
@@ -426,11 +425,13 @@ class Model:
         self._lagrange_multipliers[label] = lagrange_multiplier
         self._generate_encoding_constraints(lagrange_multiplier=lagrange_multiplier)
 
-    def set_objective(self, term: Term, label: str = "obj", sense: ObjectiveSense = ObjectiveSense.MINIMIZE) -> None:
+    def set_objective(
+        self, term: Expression, label: str = "obj", sense: ObjectiveSense = ObjectiveSense.MINIMIZE
+    ) -> None:
         """Sets the model's objective.
 
         Args:
-            term (Term): the objective term.
+            term (Expression): the objective term.
             label (str, optional): the objective's label. Defaults to "obj".
             sense (ObjectiveSense, optional): The optimization sense of the model's objective.
                                                 Defaults to ObjectiveSense.MINIMIZE.
@@ -515,7 +516,7 @@ class _Linearizer:
     """Degree-reduction helper that rewrites binary polynomials as quadratic expressions.
 
     Given a pseudo-Boolean term (i.e. a polynomial in ``BinaryVariable``'s obtained via
-    :meth:`~qilisdk.core.variables.Term.to_binary`), :meth:`reduce` iteratively replaces each monomial of degree greater
+    :meth:`~qilisdk.core.variables.Expression.to_binary`), :meth:`reduce` iteratively replaces each monomial of degree greater
     than two with an auxiliary binary variable that represents the product of two of its factors. Let's say the pair
     ``a`` and ``b`` are two binary variables contributing in a non-linear term, we can add an auxiliary binary
     variable ``w`` to substitute the pair, and the correctness of the substitution is enforced by the **Rosenberg** penalty:
@@ -561,41 +562,28 @@ class _Linearizer:
         """
         return self._substitutions
 
-    def reduce(self, term: Term) -> Term:
+    def reduce(self, term: Expression) -> Expression:
         """Rewrite ``term`` so that every monomial has degree at most two.
 
         The input is expected to be in binary-encoded form (i.e. the output of
-        :meth:`~qilisdk.core.variables.Term.to_binary`). Terms that are already quadratic are returned unchanged
+        :meth:`~qilisdk.core.variables.Expression.to_binary`). Terms that are already quadratic are returned unchanged
         (up to a structural copy).
 
         Args:
-            term (Term): the polynomial expression to reduce.
+            term (Expression): the polynomial expression to reduce.
 
         Returns:
-            Term: an expression whose monomials all have degree at most two, with new auxiliary
+            Expression: an expression whose monomials all have degree at most two, with new auxiliary
             binary variables standing in for higher-degree sub-products.
         """
-        if not isinstance(term, Term):
+        if not isinstance(term, Expression):
             return term
 
-        if term.operation == Operation.MUL:
-            return self._reduce_monomial(term)
-
-        if term.operation == Operation.ADD:
-            new_elements: list[BaseVariable | Term | Number] = []
-            for element in term:
-                coeff = term[element]
-                if isinstance(element, Term) and element.operation == Operation.MUL:
-                    new_elements.append(coeff * self._reduce_monomial(element))
-                elif isinstance(element, Term):
-                    new_elements.append(coeff * self.reduce(element))
-                elif isinstance(element, BaseVariable) and element == Term.CONST:
-                    new_elements.append(coeff)
-                else:
-                    new_elements.append(coeff * element)
-            return Term(new_elements, Operation.ADD)
-
-        return term
+        term = term.expand()
+        new_elements: list[Expression] = [Constant(term.get_constant())]
+        for monomial, coeff in term.as_coefficients_dict().items():
+            new_elements.append(Constant(coeff) * self._reduce_monomial(monomial))
+        return Add.build(tuple(new_elements))
 
     def rosenberg_constraints(self) -> list[tuple[str, ComparisonTerm]]:
         """Materialize the Rosenberg penalty constraints that pin each auxiliary to its product.
@@ -622,24 +610,21 @@ class _Linearizer:
             self._substitutions[key] = (a_sorted, b_sorted, aux)
         return self._substitutions[key][2]
 
-    def _reduce_monomial(self, monomial: Term) -> Term:
-        if monomial.operation != Operation.MUL or monomial.degree <= 2:  # noqa: PLR2004
-            return monomial
-
-        coeff: Number = 1
+    def _reduce_monomial(self, monomial: Expression) -> Expression:
         variables: list[BaseVariable] = []
-        for elem in monomial:
-            if isinstance(elem, BaseVariable) and elem == Term.CONST:
-                coeff *= monomial[elem]
-            elif isinstance(elem, BinaryVariable):
-                variables.append(elem)
-            elif isinstance(elem, BaseVariable):
+        for base, power in monomial.monomial_factors():
+            if isinstance(base, BinaryVariable):
+                variables.extend([base] * power)
+            elif isinstance(base, BaseVariable):
                 raise ValueError(
-                    f"_Linearizer only operates on binary-encoded terms but received variable {elem}"
-                    f" of domain {elem.domain}. Call `to_binary()` before linearizing."
+                    f"_Linearizer only operates on binary-encoded terms but received variable {base}"
+                    f" of domain {base.domain}. Call `to_binary()` before linearizing."
                 )
             else:
-                raise ValueError(f"_Linearizer does not support nested sub-term {elem} inside a term.")
+                raise ValueError(f"_Linearizer does not support nested sub-term {base} inside a term.")
+
+        if len(variables) <= 2:  # noqa: PLR2004
+            return monomial
 
         variables.sort(key=lambda v: v.label)
 
@@ -649,11 +634,9 @@ class _Linearizer:
             variables.remove(b)
             variables.insert(0, self._get_or_create_aux(a, b))
 
-        result: Number | BaseVariable | Term = coeff
+        result: Expression = Constant(1)
         for v in variables:
             result *= v
-        if not isinstance(result, Term):
-            result = Term([result], Operation.MUL)
         return result
 
     def _pick_pair(self, variables: list[BaseVariable]) -> tuple[BaseVariable, BaseVariable]:
@@ -703,7 +686,7 @@ class QUBO(Model):
         self.__qubo_objective: Objective | None = None
         self._linearizer: _Linearizer | None = None
 
-    def _reduce(self, term: Term) -> Term:
+    def _reduce(self, term: Expression) -> Expression:
         """Reduce the degree of ``term`` if a :class:`_Linearizer` is attached.
 
         The reduction introduces auxiliary binary variables that stand in for products of existing factors. Those
@@ -711,10 +694,10 @@ class QUBO(Model):
         added in :meth:`from_model` once all objective and constraint terms have been processed.
 
         Args:
-            term (Term): the term to potentially reduce.
+            term (Expression): the term to potentially reduce.
 
         Returns:
-            Term: the (possibly degree-reduced) term.
+            Expression: the (possibly degree-reduced) term.
         """
         if self._linearizer is None:
             return term
@@ -746,12 +729,12 @@ class QUBO(Model):
 
     def _compute_lower_and_upper_limits(  # noqa: PLR6301
         self,
-        term: Term,
+        term: Expression,
     ) -> tuple[RealNumber, RealNumber, RealNumber]:
         """Computes the lower and upper bounds of a term.
 
         Args:
-            term (Term): The term to compute the lower and upper limits for.
+            term (Expression): The term to compute the lower and upper limits for.
 
         Returns:
             tuple[RealNumber, RealNumber, RealNumber]: The Constant terms, lower limit, upper limit in this order.
@@ -767,36 +750,24 @@ class QUBO(Model):
                 return num.real
             raise ValueError("Complex values encountered in the constraint.")
 
-        const: RealNumber = 0
+        const: RealNumber = to_real(term.get_constant())
         term_upper_limit: RealNumber = 0
         term_lower_limit: RealNumber = 0
-        if term.operation is Operation.ADD:
-            for element in term:
-                if isinstance(element, BaseVariable) and element == Term.CONST:
-                    const = to_real(term[element])
-                else:
-                    coeff_value = to_real(term[element])
-                    if coeff_value > 0:
-                        term_upper_limit += coeff_value
-                    elif coeff_value < 0:
-                        term_lower_limit += coeff_value
-        elif term.operation is Operation.MUL:
-            coeff_value = to_real(term.get_constant())
+        for _monomial, coeff in term.expand().as_coefficients_dict().items():
+            coeff_value = to_real(coeff)
             if coeff_value > 0:
-                term_upper_limit = coeff_value
+                term_upper_limit += coeff_value
             elif coeff_value < 0:
-                term_lower_limit = coeff_value
-        else:
-            raise ValueError(f"Operation {term.operation.value} in constraint is not supported.")
+                term_lower_limit += coeff_value
 
         return const, term_lower_limit, term_upper_limit
 
-    def _check_valid_constraint(self, label: str, term: Term, operation: ComparisonOperation) -> int | None:
+    def _check_valid_constraint(self, label: str, term: Expression, operation: ComparisonOperation) -> int | None:
         """Checks if a given constraint is valid. Assumes that the right hand side of the constraint is set to zero.
 
         Args:
             label (str): the label of the constraint.
-            term (Term): the left hand side of the constraint term.
+            term (Expression): the left hand side of the constraint term.
             operation (ComparisonOperation): the comparison operation between the left and right hand sides.
 
         Raises:
@@ -838,7 +809,7 @@ class QUBO(Model):
         term: ComparisonTerm,
         penalization: Literal["unbalanced", "slack"] = "slack",
         parameters: list[float] | None = None,
-    ) -> Term | None:
+    ) -> Expression | None:
         """Transforms a constraint into QUBO format.
 
         Args:
@@ -854,7 +825,7 @@ class QUBO(Model):
             ValueError: if unbalanced penalization method is used and not enough parameters are provided.
 
         Returns:
-            Term | None: A transformed term that is in QUBO format.
+            Expression | None: A transformed term that is in QUBO format.
                         None if the constraint is always feasible.
         """
 
@@ -1021,7 +992,9 @@ class QUBO(Model):
             self.lagrange_multipliers[label] = lagrange_multiplier
             self._constraints[label] = Constraint(label, term=c)
 
-    def set_objective(self, term: Term, label: str = "obj", sense: ObjectiveSense = ObjectiveSense.MINIMIZE) -> None:
+    def set_objective(
+        self, term: Expression, label: str = "obj", sense: ObjectiveSense = ObjectiveSense.MINIMIZE
+    ) -> None:
         """Set the QUBO objective.
 
         If a :class:`_Linearizer` has been attached to this QUBO instance (via :meth:`from_model`
@@ -1030,7 +1003,7 @@ class QUBO(Model):
         registered on the linearizer.
 
         Args:
-            term (Term): The objective's term.
+            term (Expression): The objective's term.
             label (str, optional): the objective's label. Defaults to "obj".
             sense (ObjectiveSense, optional): The optimization sense of the model's objective.
                                                 Defaults to ObjectiveSense.MINIMIZE.
@@ -1051,12 +1024,12 @@ class QUBO(Model):
         term = self._reduce(term)
         self._objective = Objective(label=label, term=term, sense=sense)
 
-    def _check_variables(self, term: Term | ComparisonTerm, lagrange_multiplier: RealNumber = 100) -> None:
+    def _check_variables(self, term: Expression | ComparisonTerm, lagrange_multiplier: RealNumber = 100) -> None:
         """checks if the variables in the provided term are valid to be used in a QUBO model. Moreover, we add all the
         encoding constraint for supported continuous variables.
 
         Args:
-            term (Term): the term to be checked.
+            term (Expression): the term to be checked.
 
         Raises:
             ValueError: if the constraint term contains variables that are not from Positive Integers or Binary domains.
@@ -1081,12 +1054,12 @@ class QUBO(Model):
                     )
 
     def _build_qubo_objective(
-        self, term: Term, label: str | None = None, sense: ObjectiveSense = ObjectiveSense.MINIMIZE
+        self, term: Expression, label: str | None = None, sense: ObjectiveSense = ObjectiveSense.MINIMIZE
     ) -> None:
         """updates the internal qubo objective term.
 
         Args:
-            term (Term): A term to be added to the qubo objective.
+            term (Expression): A term to be added to the qubo objective.
             label (str | None, optional): the label of the objective (if None then the current label is maintained).
                                             Defaults to None.
             sense (ObjectiveSense, optional): The optimization sense of the model's objective.
@@ -1231,31 +1204,31 @@ class QUBO(Model):
         for i, v in enumerate(obj.variables()):
             spins[v] = (1 - Z(i)) / 2
 
-        def _parse_term(term: Term) -> Hamiltonian:
-            ham = Hamiltonian()
-            terms = term.to_list()
-            operation = term.operation
-            default = 0.0 if operation is Operation.ADD else 1.0
-            aux_term: Number | Hamiltonian = copy.copy(default)
-            for t in terms:
-                aux: Number | Hamiltonian = copy.copy(default)
-                if isinstance(t, Term):
-                    aux = _parse_term(t)
-                elif isinstance(t, Number):
-                    aux = t
-                elif isinstance(t, BaseVariable):
-                    aux = spins[t]
+        def _parse_term(expr: Expression) -> Number | Hamiltonian:
+            if isinstance(expr, Constant):
+                return expr.value
+            if isinstance(expr, BaseVariable):
+                return spins[expr]
+            if isinstance(expr, Add):
+                add_acc: Number | Hamiltonian = 0.0
+                for term in expr.args:
+                    add_acc += _parse_term(term)
+                return add_acc
+            if isinstance(expr, Mul):
+                mul_acc: Number | Hamiltonian = 1.0
+                for factor in expr.args:
+                    mul_acc *= _parse_term(factor)
+                return mul_acc
+            if isinstance(expr, Pow):
+                base = _parse_term(expr.base)
+                pow_acc: Number | Hamiltonian = 1.0
+                for _ in range(int(expr.exp.value)):  # ty:ignore[unresolved-attribute]
+                    pow_acc *= base
+                return pow_acc
+            raise ValueError(f"expression {expr} is not supported when building a Hamiltonian")
 
-                if operation is Operation.ADD:
-                    aux_term += aux
-                elif operation is Operation.MUL:
-                    aux_term *= aux
-                else:  # I don't think this can be reached.
-                    raise ValueError(f"operation {operation} is not supported")
-            ham += aux_term
-            return ham
-
-        ham = _parse_term(obj.term)
+        result = _parse_term(obj.term.expand())
+        ham = result if isinstance(result, Hamiltonian) else Hamiltonian() + result
 
         return ham
 

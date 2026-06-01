@@ -23,7 +23,7 @@ from numpy import linspace
 from qilisdk.analog.hamiltonian import Hamiltonian
 from qilisdk.core.interpolator import PARAMETERIZED_NUMBER, Interpolation, Interpolator, TimeDict
 from qilisdk.core.parameterizable import Parameterizable
-from qilisdk.core.variables import BaseVariable, Cos, Domain, Parameter, Term
+from qilisdk.core.variables import BaseVariable, Cos, Domain, Expression, Parameter
 from qilisdk.settings import get_settings
 from qilisdk.utils.visualization import ScheduleStyle
 from qilisdk.yaml import yaml
@@ -85,7 +85,7 @@ class Schedule(Parameterizable):
             hamiltonians (dict[str, Hamiltonian] | None): Mapping of labels to Hamiltonian objects. If omitted, an empty schedule is created.
             coefficients (InterpDict | CoeffDict | None): Per-Hamiltonian time definitions. Keys are time points or intervals; values are coefficients or callables. If an :class:`Interpolator` is supplied, it is used directly.
             dt (float): Time resolution used for sampling callable/interval definitions and plotting. Must be positive.
-            total_time (float | Parameter | Term | None): Optional maximum time that rescales all defined time points proportionally.
+            total_time (float | Parameter | Expression | None): Optional maximum time that rescales all defined time points proportionally.
             interpolation (Interpolation): How to interpolate between provided time points (``LINEAR`` or ``STEP``).
 
         Raises:
@@ -315,7 +315,7 @@ class Schedule(Parameterizable):
                     raise ValueError("Can't evaluate Parameter because time is not provided.")
                 value.set_value(t)
             return float(value.evaluate())
-        if isinstance(value, Term):
+        if isinstance(value, Expression):
             ctx: Mapping[BaseVariable, list[int] | int | float] = {self._current_time: t} if t is not None else {}
             aux = value.evaluate(ctx)
 
@@ -325,8 +325,8 @@ class Schedule(Parameterizable):
     def _extract_parameters(self, element: PARAMETERIZED_NUMBER) -> None:
         if isinstance(element, Parameter):
             self._add_parameter(element.label, element)
-        elif isinstance(element, Term):
-            if not element.is_parameterized_term():
+        elif isinstance(element, Expression):
+            if not element.is_parameterized():
                 raise ValueError(
                     f"Tlist can only contain parameters and no variables, but the term {element} contains objects other than parameters."
                 )

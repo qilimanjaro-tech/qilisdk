@@ -191,7 +191,7 @@ class Parameterizable(ABC):
         Raises:
             ValueError: If Generic Variables are present in the constraint.
         """
-        if not (constraint.lhs.is_parameterized_term() and constraint.rhs.is_parameterized_term()):
+        if not (constraint.lhs.is_parameterized() and constraint.rhs.is_parameterized()):
             raise ValueError(
                 "The constraint should only contain parameters and having generic variables is not allowed."
             )
