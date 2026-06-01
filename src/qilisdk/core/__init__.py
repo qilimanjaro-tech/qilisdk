@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from .expression import Add, Constant, Cos, Exp, Expression, Function, Log, Mul, Pow, Sin, Sqrt, Tan
-from .interpolator import Interpolation, Interpolator
+from .interpolator import Interpolation, Interpolator, ParameterizedNumber
 from .model import Constraint, Model, Objective, ObjectiveSense
 from .qtensor import QTensor, basis_state, bra, expect_val, ghz, identity, ket, reset_qubits, tensor_prod, zero
 from .variables import (
@@ -70,6 +70,7 @@ __all__ = [
     "Objective",
     "ObjectiveSense",
     "Parameter",
+    "ParameterizedNumber",
     "Pow",
     "QTensor",
     "Sin",

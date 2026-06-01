@@ -37,6 +37,8 @@ from .exceptions import (
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from qilisdk.core.interpolator import ParameterizedNumber
+
 TBasicGate = TypeVar("TBasicGate", bound="BasicGate")
 
 
@@ -803,7 +805,7 @@ class T(BasicGate):
 
 def _process_param(
     name: str,
-    value: float | Parameter | Expression,
+    value: ParameterizedNumber,
     params_to_init: dict[str, Parameter],
     terms_to_init: dict[str, Expression],
 ) -> None:
@@ -811,17 +813,20 @@ def _process_param(
     Process a parameter value and update the params_to_init and terms_to_init dictionaries.
     Args:
         name (str): The name of the parameter.
-        value (float | Parameter | Expression): The value of the parameter.
+        value (ParameterizedNumber): The value of the parameter — a float or an Expression whose
+            free leaves are all Parameters (the parameter-only invariant of ParameterizedNumber).
         params_to_init (dict[str, Parameter]): The dictionary to initialize parameters.
         terms_to_init (dict[str, Expression]): The dictionary to initialize terms.
     Raises:
-        ValueError: If a Expression is provided that contains Variables instead of Parameters.
+        ValueError: If an Expression is provided that references decision Variables instead of
+            Parameters. This is the runtime check for the parameter-only invariant that
+            ParameterizedNumber documents but the type system cannot enforce.
     """
     if isinstance(value, Parameter):
         params_to_init[name] = value
     elif isinstance(value, Expression):
         if not value.is_parameterized() and len(value.variables()) > 0:
-            raise ValueError(f"RX gate Expression '{name}' must contain a Parameter and not Variables.")
+            raise ValueError(f"Gate Expression '{name}' must contain only Parameters, not Variables.")
         for param in value.variables():
             if isinstance(param, Parameter):
                 params_to_init[param.label] = param
@@ -848,13 +853,13 @@ class RX(BasicGate):
 
     PARAMETER_NAMES: ClassVar[list[str]] = ["theta"]
 
-    def __init__(self, qubit: int, *, theta: float | Parameter | Expression) -> None:
+    def __init__(self, qubit: int, *, theta: ParameterizedNumber) -> None:
         """
         Initialize an RX gate.
 
         Args:
             qubit (int): The target qubit index for the rotation.
-            theta (float | Parameter | Expression): The rotation angle (polar) in radians.
+            theta (ParameterizedNumber): The rotation angle (polar) in radians.
 
         """
 
@@ -910,13 +915,13 @@ class RY(BasicGate):
 
     PARAMETER_NAMES: ClassVar[list[str]] = ["theta"]
 
-    def __init__(self, qubit: int, *, theta: float | Parameter | Expression) -> None:
+    def __init__(self, qubit: int, *, theta: ParameterizedNumber) -> None:
         """
         Initialize an RY gate.
 
         Args:
             qubit (int): The target qubit index for the rotation.
-            theta (float | Parameter | Expression): The rotation angle (polar) in radians.
+            theta (ParameterizedNumber): The rotation angle (polar) in radians.
 
         """
 
@@ -980,13 +985,13 @@ class RZ(BasicGate):
 
     PARAMETER_NAMES: ClassVar[list[str]] = ["phi"]
 
-    def __init__(self, qubit: int, *, phi: float | Parameter | Expression) -> None:
+    def __init__(self, qubit: int, *, phi: ParameterizedNumber) -> None:
         """
         Initialize an RZ gate.
 
         Args:
             qubit (int): The target qubit index for the rotation.
-            phi (float | Parameter | Expression): The rotation angle (azimuthal) in radians.
+            phi (ParameterizedNumber): The rotation angle (azimuthal) in radians.
 
         """
 
@@ -1045,13 +1050,13 @@ class U1(BasicGate):
 
     PARAMETER_NAMES: ClassVar[list[str]] = ["phi"]
 
-    def __init__(self, qubit: int, *, phi: float | Parameter | Expression) -> None:
+    def __init__(self, qubit: int, *, phi: ParameterizedNumber) -> None:
         """
         Initialize a U1 gate.
 
         Args:
             qubit (int): The target qubit index for the U1 gate.
-            phi (float | Parameter | Expression): The phase to add, or equivalently the rotation angle (azimuthal) in radians.
+            phi (ParameterizedNumber): The phase to add, or equivalently the rotation angle (azimuthal) in radians.
         """
         # Initialize parameter terms dictionary
         params_to_init: dict[str, Parameter] = {}
@@ -1112,15 +1117,15 @@ class U2(BasicGate):
     PARAMETER_NAMES: ClassVar[list[str]] = ["phi", "gamma"]
 
     def __init__(
-        self, qubit: int, *, phi: float | Parameter | Expression, gamma: float | Parameter | Expression
+        self, qubit: int, *, phi: ParameterizedNumber, gamma: ParameterizedNumber
     ) -> None:
         """
         Initialize a U2 gate.
 
         Args:
             qubit (int): The target qubit index for the U2 gate.
-            phi (float | Parameter | Expression): The first phase parameter, or equivalently the first rotation angle (azimuthal) in radians.
-            gamma (float | Parameter | Expression): The second phase parameter, or equivalently the second rotation angle (azimuthal) in radians.
+            phi (ParameterizedNumber): The first phase parameter, or equivalently the first rotation angle (azimuthal) in radians.
+            gamma (ParameterizedNumber): The second phase parameter, or equivalently the second rotation angle (azimuthal) in radians.
 
         """
         # Initialize parameter terms dictionary
@@ -1203,18 +1208,18 @@ class U3(BasicGate):
         self,
         qubit: int,
         *,
-        theta: float | Parameter | Expression,
-        phi: float | Parameter | Expression,
-        gamma: float | Parameter | Expression,
+        theta: ParameterizedNumber,
+        phi: ParameterizedNumber,
+        gamma: ParameterizedNumber,
     ) -> None:
         """
         Initialize a U3 gate.
 
         Args:
             qubit (int): The target qubit index for the U3 gate.
-            theta (float | Parameter | Expression): The rotation angle (polar), in between both phase rotations (azimuthal).
-            phi (float | Parameter | Expression): The first phase parameter, or equivalently the first rotation angle (azimuthal) in radians.
-            gamma (float | Parameter | Expression): The second phase parameter, or equivalently the second rotation angle (azimuthal) in radians.
+            theta (ParameterizedNumber): The rotation angle (polar), in between both phase rotations (azimuthal).
+            phi (ParameterizedNumber): The first phase parameter, or equivalently the first rotation angle (azimuthal) in radians.
+            gamma (ParameterizedNumber): The second phase parameter, or equivalently the second rotation angle (azimuthal) in radians.
 
         """
 

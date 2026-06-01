@@ -990,7 +990,7 @@ def test_param_gate_given_variable():
     qubit = 0
     var = Variable("theta", Domain.REAL, (0.0, 1.0))
     term = var * 2.0 + 1
-    with pytest.raises(ValueError, match="must contain a Parameter"):
+    with pytest.raises(ValueError, match="must contain only Parameters"):
         RX(qubit, theta=term)
 
 
