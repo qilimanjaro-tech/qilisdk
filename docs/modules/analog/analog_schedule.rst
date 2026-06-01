@@ -23,7 +23,7 @@ For example, to create a linear schedule that interpolates between a driver Hami
 For more complex schedules, you can use the :class:`~qilisdk.analog.schedule.Schedule` class directly, 
 which provides a flexible interface to fully define time-dependent Hamiltonian coefficients.
 The :class:`~qilisdk.analog.schedule.Schedule` class maps time points to :class:`~qilisdk.analog.hamiltonian.Hamiltonian` coefficients. 
-Coefficients can be numbers, parameters/terms, or callables of time, and you can define them at 
+Coefficients can be numbers, parameters/expressions, or callables of time, and you can define them at
 discrete points or over intervals that are sampled automatically.
 
 Key arguments
@@ -31,11 +31,11 @@ Key arguments
 
 - **dt** (float): resolution of time samples. Default is 0.1.
 - **hamiltonians** (dict[str, Hamiltonian]): Map of labels to :class:`~qilisdk.analog.hamiltonian.Hamiltonian` instances.
-- **coefficients** (dict[str, dict]): Mapping from Hamiltonian label to a time-definition dictionary. Each key is either a time point (float/parameter/term) or a 2-tuple defining an interval; each value can be:
+- **coefficients** (dict[str, dict]): Mapping from Hamiltonian label to a time-definition dictionary. Each key is either a time point (float/parameter/expression) or a 2-tuple defining an interval; each value can be:
     - the coefficient of the hamiltonian at that time
     - or callable returning a coefficient. This callable can take a parameter ``t`` that will be replaced by time. Moreover, any other parameters passed to this callable need to have a default value or have their value specified in the ``**kwargs``.
 - **interpolation** (:class:`~qilisdk.core.interpolator.Interpolation`): ``LINEAR`` (default) or ``STEP`` behavior between provided points.
-- **total_time** (float | Parameter | Term | None): Optional max time that rescales all time points while preserving relative positions.
+- **total_time** (float | Parameter | Expression | None): Optional max time that rescales all time points while preserving relative positions.
 
 .. note::
 
@@ -99,7 +99,7 @@ Parameterized Schedules
 :class:`~qilisdk.analog.schedule.Schedule` coefficients can be symbolic, enabling classical optimization loops or
 experiments that scan over a family of time profiles. Coefficients can be
 instances of :class:`~qilisdk.core.variables.Parameter` or algebraic
-expressions (:class:`~qilisdk.core.variables.Term`) built from parameters.
+expressions (:class:`~qilisdk.core.variables.Expression`) built from parameters.
 The schedule tracks every parameter it encounters so you can query or set them
 later.
 

@@ -21,9 +21,9 @@ from loguru import logger
 from numpy import linspace
 
 from qilisdk.analog.hamiltonian import Hamiltonian
-from qilisdk.core.interpolator import PARAMETERIZED_NUMBER, Interpolation, Interpolator, TimeDict
+from qilisdk.core.interpolator import Interpolation, Interpolator, ParameterizedNumber, TimeDict
 from qilisdk.core.parameterizable import Parameterizable
-from qilisdk.core.variables import BaseVariable, Cos, Domain, Parameter, Term
+from qilisdk.core.variables import BaseVariable, Cos, Domain, Expression, Parameter
 from qilisdk.settings import get_settings
 from qilisdk.utils.visualization import ScheduleStyle
 from qilisdk.yaml import yaml
@@ -76,7 +76,7 @@ class Schedule(Parameterizable):
         hamiltonians: dict[str, Hamiltonian] | None = None,
         coefficients: InterpDict | CoeffDict | None = None,
         dt: float = _DEFAULT_DT,
-        total_time: PARAMETERIZED_NUMBER | None = None,
+        total_time: ParameterizedNumber | None = None,
         interpolation: Interpolation = Interpolation.LINEAR,
     ) -> None:
         """Create a Schedule that assigns time-dependent coefficients to Hamiltonians.
@@ -85,7 +85,7 @@ class Schedule(Parameterizable):
             hamiltonians (dict[str, Hamiltonian] | None): Mapping of labels to Hamiltonian objects. If omitted, an empty schedule is created.
             coefficients (InterpDict | CoeffDict | None): Per-Hamiltonian time definitions. Keys are time points or intervals; values are coefficients or callables. If an :class:`Interpolator` is supplied, it is used directly.
             dt (float): Time resolution used for sampling callable/interval definitions and plotting. Must be positive.
-            total_time (float | Parameter | Term | None): Optional maximum time that rescales all defined time points proportionally.
+            total_time (float | Parameter | Expression | None): Optional maximum time that rescales all defined time points proportionally.
             interpolation (Interpolation): How to interpolate between provided time points (``LINEAR`` or ``STEP``).
 
         Raises:
@@ -99,7 +99,7 @@ class Schedule(Parameterizable):
         self._interpolation = None
         self._current_time: Parameter = Parameter(_TIME_PARAMETER_NAME, 0, Domain.REAL)
         self.iter_time_step = 0
-        self._max_time: PARAMETERIZED_NUMBER | None = None
+        self._max_time: ParameterizedNumber | None = None
         if dt <= 0:
             raise ValueError("dt must be greater than zero.")
         self._dt = dt
@@ -242,7 +242,7 @@ class Schedule(Parameterizable):
         return self._hamiltonians
 
     @property
-    def coefficients_dict(self) -> dict[str, dict[PARAMETERIZED_NUMBER, PARAMETERIZED_NUMBER]]:
+    def coefficients_dict(self) -> dict[str, dict[ParameterizedNumber, ParameterizedNumber]]:
         return {ham: self._coefficients[ham].coefficients_dict for ham in self._hamiltonians}
 
     @property
@@ -304,7 +304,7 @@ class Schedule(Parameterizable):
         yield from self._hamiltonians.values()
         yield from self._coefficients.values()
 
-    def _get_value(self, value: PARAMETERIZED_NUMBER | complex, t: float | None = None) -> float:
+    def _get_value(self, value: ParameterizedNumber | complex, t: float | None = None) -> float:
         if isinstance(value, (int, float)):
             return value
         if isinstance(value, complex):
@@ -315,18 +315,18 @@ class Schedule(Parameterizable):
                     raise ValueError("Can't evaluate Parameter because time is not provided.")
                 value.set_value(t)
             return float(value.evaluate())
-        if isinstance(value, Term):
+        if isinstance(value, Expression):
             ctx: Mapping[BaseVariable, list[int] | int | float] = {self._current_time: t} if t is not None else {}
             aux = value.evaluate(ctx)
 
             return aux.real if isinstance(aux, complex) else float(aux)
         raise ValueError(f"Invalid value of type {type(value)} is being evaluated.")
 
-    def _extract_parameters(self, element: PARAMETERIZED_NUMBER) -> None:
+    def _extract_parameters(self, element: ParameterizedNumber) -> None:
         if isinstance(element, Parameter):
             self._add_parameter(element.label, element)
-        elif isinstance(element, Term):
-            if not element.is_parameterized_term():
+        elif isinstance(element, Expression):
+            if not element.is_parameterized():
                 raise ValueError(
                     f"Tlist can only contain parameters and no variables, but the term {element} contains objects other than parameters."
                 )
@@ -334,7 +334,7 @@ class Schedule(Parameterizable):
                 if isinstance(p, Parameter):
                     self._add_parameter(p.label, p)
 
-    def scale_max_time(self, max_time: PARAMETERIZED_NUMBER) -> None:  # FIX!
+    def scale_max_time(self, max_time: ParameterizedNumber) -> None:  # FIX!
         """
         Rescale the schedule to a new maximum time while keeping relative points fixed.
 

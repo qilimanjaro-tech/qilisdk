@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .interpolator import Interpolation, Interpolator
+from .expression import Add, Constant, Cos, Exp, Expression, Function, Log, Mul, Pow, Sin, Sqrt, Tan
+from .interpolator import Interpolation, Interpolator, ParameterizedNumber
 from .model import Constraint, Model, Objective, ObjectiveSense
 from .qtensor import QTensor, basis_state, bra, expect_val, ghz, identity, ket, reset_qubits, tensor_prod, zero
 from .variables import (
@@ -22,7 +23,9 @@ from .variables import (
     LEQ,
     LT,
     NEQ,
+    BaseVariable,
     BinaryVariable,
+    ComparisonTerm,
     Domain,
     Equal,
     GreaterThan,
@@ -32,7 +35,6 @@ from .variables import (
     NotEqual,
     Parameter,
     SpinVariable,
-    Term,
     Variable,
 )
 
@@ -43,24 +45,38 @@ __all__ = [
     "LEQ",
     "LT",
     "NEQ",
+    "Add",
+    "BaseVariable",
     "BinaryVariable",
+    "ComparisonTerm",
+    "Constant",
     "Constraint",
+    "Cos",
     "Domain",
     "Equal",
+    "Exp",
+    "Expression",
+    "Function",
     "GreaterThan",
     "GreaterThanOrEqual",
     "Interpolation",
     "Interpolator",
     "LessThan",
     "LessThanOrEqual",
+    "Log",
     "Model",
+    "Mul",
     "NotEqual",
     "Objective",
     "ObjectiveSense",
     "Parameter",
+    "ParameterizedNumber",
+    "Pow",
     "QTensor",
+    "Sin",
     "SpinVariable",
-    "Term",
+    "Sqrt",
+    "Tan",
     "Variable",
     "basis_state",
     "bra",

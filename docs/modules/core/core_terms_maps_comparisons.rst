@@ -1,11 +1,15 @@
-Terms, Maps and Comparisons
----------------------------------
+Expressions, Functions and Comparisons
+--------------------------------------
 
-Terms
-==========
+Expressions
+===========
 
-:class:`Variables<qilisdk.core.variables.Variable>` can be combined algebraically to form expressions 
-known as :class:`Terms<qilisdk.core.variables.Term>`. For example:
+:class:`Variables<qilisdk.core.variables.Variable>` can be combined algebraically with the usual
+Python operators (``+``, ``-``, ``*``, ``/``, ``**``) to build a symbolic
+:class:`~qilisdk.core.variables.Expression`. Every leaf (a variable, parameter or numeric constant)
+and every operator node (:class:`~qilisdk.core.variables.Add`, :class:`~qilisdk.core.variables.Mul`,
+:class:`~qilisdk.core.variables.Pow`) is itself an ``Expression``, so expressions compose freely.
+For example:
 
 .. code-block:: python
 
@@ -14,29 +18,47 @@ known as :class:`Terms<qilisdk.core.variables.Term>`. For example:
     s = SpinVariable("s")
     b = BinaryVariable("b")
 
-    t1 = 2 * x + 3
-    print("t1:", t1)
-    t2 = 3 * x**2 + 2 * x + 4
-    print("t2:", t2)
-    t3 = 2 * x + b - 1
-    print("t3:", t3)
-    t4 = t1 - t2
-    print("t4:", t4)
+    e1 = 2 * x + 3
+    print("e1:", e1)
+    e2 = 3 * x**2 + 2 * x + 4
+    print("e2:", e2)
+    e3 = 2 * x + b - 1
+    print("e3:", e3)
+    e4 = e1 - e2
+    print("e4:", e4)
 
 **Output**:
 
 ::
 
-    t1: (2) * x + (3)
-    t2: (3) * (x^2) + (2) * x + (4)
-    t3: (2) * x + b + (-1)
-    t4: (-1.0) + (-3.0) * (x^2)
+    e1: 3 + 2 * x
+    e2: 4 + 2 * x + 3 * x**2
+    e3: -1 + b + 2 * x
+    e4: 3 + -1 * (4 + 2 * x + 3 * x**2) + 2 * x
 
-Terms can be evaluated by providing values for the involved variables:
+Construction *canonicalizes* the expression (flattening nested sums/products, combining like terms
+and powers, folding constants, ordering operands deterministically), which is why the numeric
+constant is printed first and ``x + y`` equals ``y + x``. Canonicalization is intentionally cheap:
+products are **not** distributed over sums, so ``e4`` keeps the factored ``-1 * (4 + 2 * x + 3 * x**2)``
+sub-expression. Use :meth:`~qilisdk.core.variables.Expression.expand` to distribute, and
+:meth:`~qilisdk.core.variables.Expression.simplify` to request a simpler (but semantically equal) form:
 
 .. code-block:: python
 
-    t3.evaluate({
+    print(e4.expand())          # distribute the product over the sum
+
+**Output**:
+
+::
+
+    -1 + -3 * x**2
+
+Expressions can be evaluated by providing values for the involved variables via
+:meth:`~qilisdk.core.variables.Expression.evaluate`:
+
+.. code-block:: python
+
+    e3.evaluate({
         x: 1.5,
         b: 0
     })
@@ -49,17 +71,50 @@ Terms can be evaluated by providing values for the involved variables:
 
 .. warning::
 
-    To evaluate a term, all participating variables must be assigned valid values within their respective domains and bounds.
+    To evaluate an expression, all participating variables must be assigned valid values within their respective domains and bounds.
+
+Inspecting and differentiating expressions
+===========================================
+
+An :class:`~qilisdk.core.variables.Expression` exposes a small introspection API. You can list the
+named leaves it depends on, isolate just the free :class:`~qilisdk.core.variables.Parameter` leaves,
+read its polynomial :attr:`~qilisdk.core.variables.Expression.degree`, and take a symbolic
+derivative with :meth:`~qilisdk.core.variables.Expression.diff`:
+
+.. code-block:: python
+
+    from qilisdk.core.variables import Parameter, Variable, Domain
+
+    a = Parameter("a", value=2.0)
+    y = Variable("y", domain=Domain.REAL, bounds=(0, 5))
+
+    expr = a * y**2 + 3 * y
+
+    print(expr.variables())          # named leaves, sorted by label
+    print(expr.free_parameters())    # only the Parameter leaves
+    print(expr.degree)               # highest polynomial degree (a and y both count)
+    print(expr.diff(y))              # symbolic d/dy
+
+**Output**:
+
+::
+
+    [a, y]
+    {a}
+    3
+    3 + 2 * a * y
 
 
-Mathematical Maps
-===============================
+Mathematical Functions
+======================
 
-Use :class:`~qilisdk.core.variables.MathematicalMap` helpers to apply common
-functions to a parameter or term while keeping expressions symbolic.
-:class:`~qilisdk.core.variables.Sin` and :class:`~qilisdk.core.variables.Cos`
-wrap a :class:`~qilisdk.core.variables.Parameter`, :class:`~qilisdk.core.variables.Term`,
-or any other base variable and defer evaluation until values are provided.
+Non-polynomial operations are represented by :class:`~qilisdk.core.variables.Function`, the abstract
+base for the unary maths functions. Its concrete subclasses
+:class:`~qilisdk.core.variables.Sin`, :class:`~qilisdk.core.variables.Cos`,
+:class:`~qilisdk.core.variables.Exp`, :class:`~qilisdk.core.variables.Log`,
+:class:`~qilisdk.core.variables.Tan` and :class:`~qilisdk.core.variables.Sqrt` each wrap a single
+:class:`~qilisdk.core.variables.Expression` operand (a :class:`~qilisdk.core.variables.Parameter`,
+any other variable, or a compound expression) and defer numeric evaluation until values are provided.
 
 .. code-block:: python
 
@@ -68,15 +123,46 @@ or any other base variable and defer evaluation until values are provided.
     theta = Parameter("theta", 0.5)
     expr = Sin(theta) + Cos(2 * theta)
 
-    print(expr)                # sin[theta] + cos[(2) * theta]
+    print(expr)                # cos(2 * theta) + sin(theta)
     print(expr.evaluate({}))   # uses theta.value automatically
 
     # You can also supply a different value at evaluation time:
     print(expr.evaluate({theta: 1.0}))
 
-These maps compose naturally with other terms, so you can include them in
-constraints or objectives and rely on the same evaluation and encoding rules
-as other symbolic expressions.
+**Output**:
+
+::
+
+    cos(2 * theta) + sin(theta)
+    1.0197278444723428
+    0.4253241482607541
+
+Because every function is a regular ``Expression`` node, it participates in the same algebra: it can
+be added to or multiplied with other expressions, differentiated symbolically (the chain rule is
+applied automatically), and evaluated. Wrapping a numeric constant folds eagerly to a
+:class:`~qilisdk.core.variables.Constant`:
+
+.. code-block:: python
+
+    from qilisdk.core.variables import Cos, Sin, Exp, Parameter
+
+    theta = Parameter("theta", 0.5)
+
+    print(Sin(theta).diff(theta))   # d/dtheta sin(theta) == cos(theta)
+    print(Exp(theta).diff(theta))   # d/dtheta exp(theta) == exp(theta)
+    print(Cos(0))                   # folds to a numeric constant
+
+**Output**:
+
+::
+
+    cos(theta)
+    exp(theta)
+    1.0
+
+These functions compose naturally with the rest of the expression tree, so you can include them in
+constraints, objectives, or schedule coefficients and rely on the same evaluation and encoding rules
+as any other symbolic expression.
 
 Comparison Terms
 =======================
@@ -119,13 +205,13 @@ Example:
 
     from qilisdk.core.variables import BinaryVariable, LT
     x = BinaryVariable("x")
-    LT(2 * x - 1, 1)
+    print(LT(2 * x - 1, 1))
 
 **Output**:
 
 ::
 
-    (2) * x < (2.0)
+    2 * x < 2
 
 When a comparison term is created, constants are automatically moved to the right-hand side, and variable terms to the left-hand side.
 
