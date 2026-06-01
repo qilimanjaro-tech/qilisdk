@@ -32,6 +32,7 @@ from qilisdk.core.variables import (
     MAX_INT,
     MIN_INT,
     NEQ,
+    Abs,
     BaseVariable,
     BinaryVariable,
     Bitwise,
@@ -41,18 +42,24 @@ from qilisdk.core.variables import (
     Domain,
     DomainWall,
     Equal,
+    Exp,
     GreaterThan,
     GreaterThanOrEqual,
+    Inv,
     LessThan,
     LessThanOrEqual,
+    Log,
     MathematicalMap,
     NotEqual,
     Number,
     OneHot,
     Operation,
     Parameter,
+    Pow,
     Sin,
     SpinVariable,
+    Sqrt,
+    Tan,
     Term,
     Variable,
     _assert_real,
@@ -1203,6 +1210,145 @@ def test_cos_map():
     assert cos_map.evaluate({b: 1}) == np.cos(3)
 
     assert isinstance(copy(cos_map), Cos)
+
+
+def test_sqrt_map():
+    b = BinaryVariable("b")
+    p = Parameter("p", 1)
+    term = 2 * b + p
+
+    sqrt_map = Sqrt(b)
+    assert str(sqrt_map) == "sqrt[b]"
+    assert sqrt_map.evaluate({b: 0}) == np.sqrt(0)
+
+    sqrt_map = Sqrt(p)
+    assert str(sqrt_map) == "sqrt[p]"
+    assert sqrt_map.evaluate({}) == np.sqrt(1)
+
+    sqrt_map = Sqrt(term)
+    assert str(sqrt_map) == f"sqrt[({term})]"
+    assert sqrt_map.evaluate({b: 1}) == np.sqrt(3)
+
+    assert isinstance(copy(sqrt_map), Sqrt)
+
+
+def test_log_map():
+    b = BinaryVariable("b")
+    p = Parameter("p", 1)
+    term = 2 * b + p
+
+    log_map = Log(b)
+    assert str(log_map) == "log[b]"
+    assert log_map.evaluate({b: 1}) == np.log(1)
+
+    log_map = Log(p)
+    assert str(log_map) == "log[p]"
+    assert log_map.evaluate({}) == np.log(1)
+
+    log_map = Log(term)
+    assert str(log_map) == f"log[({term})]"
+    assert log_map.evaluate({b: 1}) == np.log(3)
+
+    assert isinstance(copy(log_map), Log)
+
+
+def test_inv_map():
+    b = BinaryVariable("b")
+    p = Parameter("p", 1)
+    term = 2 * b + p
+
+    inv_map = Inv(b)
+    assert str(inv_map) == "inv[b]"
+    assert inv_map.evaluate({b: 1}) == 1
+
+    inv_map = Inv(p)
+    assert str(inv_map) == "inv[p]"
+    assert inv_map.evaluate({}) == 1
+
+    inv_map = Inv(term)
+    assert str(inv_map) == f"inv[({term})]"
+    assert inv_map.evaluate({b: 1}) == 1 / 3
+
+    assert isinstance(copy(inv_map), Inv)
+
+    with pytest.raises(ValueError, match=r"Division by zero is not allowed"):
+        Inv(b).evaluate({b: 0})
+
+
+def test_exp_map():
+    b = BinaryVariable("b")
+    p = Parameter("p", 1)
+    term = 2 * b + p
+
+    exp_map = Exp(b)
+    assert str(exp_map) == "exp[b]"
+    assert exp_map.evaluate({b: 1}) == np.exp(1)
+
+    exp_map = Exp(p)
+    assert str(exp_map) == "exp[p]"
+    assert exp_map.evaluate({}) == np.exp(1)
+
+    exp_map = Exp(term)
+    assert str(exp_map) == f"exp[({term})]"
+    assert exp_map.evaluate({b: 1}) == np.exp(3)
+
+    assert isinstance(copy(exp_map), Exp)
+
+
+def test_pow_map():
+    p = Parameter("p", 2)
+    term = 2 * p
+
+    pow_map = Pow(p, 3)
+    assert str(pow_map) == "pow[p, 3]"
+    assert pow_map.evaluate({}) == 8
+
+    pow_map = Pow(term, 3)
+    assert str(pow_map) == f"pow[{term}, 3]"
+    assert pow_map.evaluate({}) == 64
+
+    assert isinstance(copy(pow_map), Pow)
+
+    with pytest.raises(ValueError, match=r"Division by zero is not allowed"):
+        Pow(p, -1).evaluate({p: 0})
+
+
+def test_abs_map():
+    p = Parameter("p", -1)
+    term = 2 * p
+
+    abs_map = Abs(p)
+    assert str(abs_map) == "abs[p]"
+    assert abs_map.evaluate({}) == 1
+
+    abs_map = Abs(term)
+    assert str(abs_map) == f"abs[{term}]"
+    assert abs_map.evaluate({}) == 2
+
+    assert isinstance(copy(abs_map), Abs)
+
+
+def test_tan_map():
+    b = BinaryVariable("b")
+    p = Parameter("p", 1)
+    term = 2 * b + p
+
+    tan_map = Tan(b)
+    assert str(tan_map) == "tan[b]"
+    assert tan_map.evaluate({b: 0}) == np.tan(0)
+
+    tan_map = Tan(p)
+    assert str(tan_map) == "tan[p]"
+    assert tan_map.evaluate({}) == np.tan(1)
+
+    tan_map = Tan(term)
+    assert str(tan_map) == f"tan[({term})]"
+    assert tan_map.evaluate({b: 1}) == np.tan(3)
+
+    assert isinstance(copy(tan_map), Tan)
+
+    with pytest.raises(ValueError, match=r"Tangent is not defined for values where cosine is zero."):
+        Tan(p).evaluate({p: np.pi / 2})
 
 
 @pytest.mark.parametrize("domain", list(Domain))

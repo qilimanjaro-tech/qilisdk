@@ -57,8 +57,7 @@ Mathematical Maps
 
 Use :class:`~qilisdk.core.variables.MathematicalMap` helpers to apply common
 functions to a parameter or term while keeping expressions symbolic.
-:class:`~qilisdk.core.variables.Sin` and :class:`~qilisdk.core.variables.Cos`
-wrap a :class:`~qilisdk.core.variables.Parameter`, :class:`~qilisdk.core.variables.Term`,
+Each wraps a :class:`~qilisdk.core.variables.Parameter`, :class:`~qilisdk.core.variables.Term`,
 or any other base variable and defer evaluation until values are provided.
 
 .. code-block:: python
@@ -68,8 +67,8 @@ or any other base variable and defer evaluation until values are provided.
     theta = Parameter("theta", 0.5)
     expr = Sin(theta) + Cos(2 * theta)
 
-    print(expr)                # sin[theta] + cos[(2) * theta]
-    print(expr.evaluate({}))   # uses theta.value automatically
+    print(expr) # prints: "sin[theta] + cos[(2) * theta]""
+    print(expr.evaluate({})) # prints: "0.5" (using default parameter values)
 
     # You can also supply a different value at evaluation time:
     print(expr.evaluate({theta: 1.0}))
@@ -77,6 +76,18 @@ or any other base variable and defer evaluation until values are provided.
 These maps compose naturally with other terms, so you can include them in
 constraints or objectives and rely on the same evaluation and encoding rules
 as other symbolic expressions.
+
+The list of possible mathematical maps includes:
+
+- :class:`~qilisdk.core.variables.Abs` for absolute value
+- :class:`~qilisdk.core.variables.Exp` for exponential
+- :class:`~qilisdk.core.variables.Log` for logarithm
+- :class:`~qilisdk.core.variables.Pow` for power functions
+- :class:`~qilisdk.core.variables.Sqrt` for square root
+- :class:`~qilisdk.core.variables.Inv` for inverse
+- :class:`~qilisdk.core.variables.Sin` for sine
+- :class:`~qilisdk.core.variables.Cos` for cosine
+- :class:`~qilisdk.core.variables.Tan` for tangent
 
 Comparison Terms
 =======================
