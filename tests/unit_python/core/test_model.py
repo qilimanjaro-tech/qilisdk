@@ -360,6 +360,58 @@ def test_model_graph_coloring_constraint_labels():
     assert "conflict_0_1_1" in labels
 
 
+def test_model_travelling_salesman_basic():
+    edges = [(0, 1), (0, 2), (1, 2)]
+    distances = [1.0, 2.0, 3.0]
+    m = Model.travelling_salesman(edges, distances)
+    assert m.label == "Travelling Salesman"
+    assert len(m.variables()) == 9  # 3 cities * 3 positions
+    assert len(m.constraints) == 6  # 3 city + 3 position constraints
+
+
+def test_model_travelling_salesman_custom_label():
+    edges = [(0, 1)]
+    distances = [1.0]
+    m = Model.travelling_salesman(edges, distances, label="TSP")
+    assert m.label == "TSP"
+
+
+def test_model_travelling_salesman_mismatched_lengths():
+    with pytest.raises(ValueError, match=r"edges and distances must have the same length"):
+        Model.travelling_salesman([(0, 1), (1, 2)], [1.0])
+
+
+def test_model_travelling_salesman_constraint_labels():
+    edges = [(0, 1), (0, 2), (1, 2)]
+    distances = [1.0, 2.0, 3.0]
+    m = Model.travelling_salesman(edges, distances)
+    labels = {c.label for c in m.constraints}
+    assert "city_0" in labels
+    assert "city_1" in labels
+    assert "city_2" in labels
+    assert "position_0" in labels
+    assert "position_1" in labels
+    assert "position_2" in labels
+
+
+def test_model_travelling_salesman_evaluate_valid_tour():
+    edges = [(0, 1), (0, 2), (1, 2)]
+    distances = [1.0, 2.0, 3.0]
+    m = Model.travelling_salesman(edges, distances)
+    # Tour: city 0 → city 1 → city 2 → city 0 (cost = 1 + 3 + 2 = 6)
+    vars_by_label = {v.label: v for v in m.variables()}
+    sample = dict.fromkeys(m.variables(), 0)
+    sample[vars_by_label["x0_0"]] = 1
+    sample[vars_by_label["x1_1"]] = 1
+    sample[vars_by_label["x2_2"]] = 1
+    results = m.evaluate(sample)
+    for i in range(3):
+        assert results[f"city_{i}"] == 0
+    for t in range(3):
+        assert results[f"position_{t}"] == 0
+    assert results[m.objective.label] == 6
+
+
 # ---------- Model.brute_force ----------
 
 

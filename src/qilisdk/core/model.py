@@ -678,6 +678,47 @@ class Model:
                 model.add_constraint(f"conflict_{u}_{v}_{k}", LEQ(x[u, k] + x[v, k], 1))
         return model
 
+    @classmethod
+    def travelling_salesman(
+        cls,
+        edges: list[tuple[int, int]],
+        distances: list[float],
+        label: str = "Travelling Salesman",
+    ) -> Model:
+        """Factory method to generate a travelling salesman model.
+
+        Binary variables ``x[i][t]`` encode whether city ``i`` is visited at position ``t``.
+        Two sets of constraints enforce a valid tour: each city is visited exactly once, and
+        each position in the tour is occupied by exactly one city.
+
+        Args:
+            edges (list[tuple[int, int]]): list of undirected edges as ``(city_i, city_j)`` pairs.
+            distances (list[float]): travel cost for each edge, parallel to ``edges``.
+            label (str, optional): the model label. Defaults to "Travelling Salesman".
+
+        Returns:
+            Model: a model of the travelling salesman problem for the given graph.
+
+        Raises:
+            ValueError: if ``edges`` and ``distances`` have different lengths.
+        """
+        if len(edges) != len(distances):
+            raise ValueError("edges and distances must have the same length.")
+        n = max(node for edge in edges for node in edge) + 1
+        x = [[BinaryVariable(f"x{i}_{t}") for t in range(n)] for i in range(n)]
+        model = cls(label)
+        objective = sum(
+            distances[k] * (x[i][t] * x[j][(t + 1) % n] + x[j][t] * x[i][(t + 1) % n])
+            for k, (i, j) in enumerate(edges)
+            for t in range(n)
+        )
+        model.set_objective(objective)
+        for i in range(n):
+            model.add_constraint(f"city_{i}", EQ(sum(x[i][t] for t in range(n)), 1))
+        for t in range(n):
+            model.add_constraint(f"position_{t}", EQ(sum(x[i][t] for i in range(n)), 1))
+        return model
+
     def brute_force(self) -> tuple[dict[str, Number], dict[BaseVariable, RealNumber]]:
         """Solve the model by brute-force enumeration of all variable assignments.
 
