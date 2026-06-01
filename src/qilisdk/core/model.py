@@ -525,6 +525,7 @@ class Model:
         weights: list[Number],
         max_weight: float,
         label: str = "Knapsack",
+        lagrange_multiplier: float = 100,
     ) -> Model:
         """Factory method to generate a knapsack model.
 
@@ -533,6 +534,7 @@ class Model:
             weights (list[Number]): the weight of each item.
             max_weight (float): the maximum weight that can be put in the knapsack.
             label (str, optional): the model label. Defaults to "Knapsack".
+            lagrange_multiplier (float, optional): the lagrange multiplier value to be used for the constraint in the model.
 
         Returns:
             Model: a model of the knapsack problem with the given parameters.
@@ -549,9 +551,9 @@ class Model:
         objective = sum(values[i] * bin_vars[i] for i in range(num_items))
         if isinstance(objective, Number):
             raise ValueError("the number of items must be greater than zero.")
-        model.set_objective(objective)
+        model.set_objective(objective, sense=ObjectiveSense.MAXIMIZE)
         constraint = LEQ(sum(weights[i] * bin_vars[i] for i in range(num_items)), max_weight)
-        model.add_constraint("maximum weight", constraint)
+        model.add_constraint("maximum weight", constraint, lagrange_multiplier=lagrange_multiplier)
         return model
 
     @classmethod
@@ -655,6 +657,7 @@ class Model:
         edges: list[tuple[int, int]],
         num_colors: int,
         label: str = "Graph Coloring",
+        lagrange_multiplier: float = 100,
     ) -> Model:
         """Factory method to generate a graph coloring model.
 
@@ -665,6 +668,7 @@ class Model:
             edges (list[tuple[int, int]]): the edges of the graph as ``(u, v)`` pairs.
             num_colors (int): the number of colors available.
             label (str, optional): the model label. Defaults to "Graph Coloring".
+            lagrange_multiplier (float, optional): the lagrange multiplier value to be used for the constraints in the model.
 
         Returns:
             Model: a model of the graph coloring problem for the given graph.
@@ -673,10 +677,10 @@ class Model:
         x = {(n, k): BinaryVariable(f"x{n}_{k}") for n in nodes for k in range(num_colors)}
         model = cls(label)
         for n in nodes:
-            model.add_constraint(f"one_color_{n}", EQ(sum(x[n, k] for k in range(num_colors)), 1))
+            model.add_constraint(f"one_color_{n}", EQ(sum(x[n, k] for k in range(num_colors)), 1), lagrange_multiplier=lagrange_multiplier)
         for u, v in edges:
             for k in range(num_colors):
-                model.add_constraint(f"conflict_{u}_{v}_{k}", LEQ(x[u, k] + x[v, k], 1))
+                model.add_constraint(f"conflict_{u}_{v}_{k}", LEQ(x[u, k] + x[v, k], 1), lagrange_multiplier=lagrange_multiplier)
         return model
 
     @classmethod
@@ -685,6 +689,7 @@ class Model:
         edges: list[tuple[int, int]],
         distances: list[float],
         label: str = "Travelling Salesman",
+        lagrange_multiplier: float = 100,
     ) -> Model:
         """Factory method to generate a travelling salesman model.
 
@@ -696,6 +701,7 @@ class Model:
             edges (list[tuple[int, int]]): list of undirected edges as ``(city_i, city_j)`` pairs.
             distances (list[float]): travel cost for each edge, parallel to ``edges``.
             label (str, optional): the model label. Defaults to "Travelling Salesman".
+            lagrange_multiplier (float, optional): the lagrange multiplier value to be used for the constraints in the model.
 
         Returns:
             Model: a model of the travelling salesman problem for the given graph.
@@ -717,9 +723,9 @@ class Model:
             raise ValueError("the graph must have at least one edge.")
         model.set_objective(objective)
         for i in range(n):
-            model.add_constraint(f"city_{i}", EQ(sum(x[i][t] for t in range(n)), 1))
+            model.add_constraint(f"city_{i}", EQ(sum(x[i][t] for t in range(n)), 1), lagrange_multiplier=lagrange_multiplier)
         for t in range(n):
-            model.add_constraint(f"position_{t}", EQ(sum(x[i][t] for i in range(n)), 1))
+            model.add_constraint(f"position_{t}", EQ(sum(x[i][t] for i in range(n)), 1), lagrange_multiplier=lagrange_multiplier)
         return model
 
     def brute_force(self) -> tuple[dict[str, Number], dict[BaseVariable, RealNumber]]:
@@ -771,8 +777,9 @@ class Model:
             sample = dict(zip(variables, values))
             results = self.evaluate(sample)
             objective_value = _assert_real(results[self.objective.label])
-            if objective_value < best_objective_value:
-                best_objective_value = objective_value
+            penalty = sum(_assert_real(results[c.label]) for c in self.constraints)
+            if objective_value + penalty < best_objective_value:
+                best_objective_value = objective_value + penalty
                 best_sample = sample
         return self.evaluate(best_sample), best_sample
 

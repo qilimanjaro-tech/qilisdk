@@ -247,7 +247,7 @@ def test_model_knapsack_basic():
     assert len(m.variables()) == 3
     assert len(m.constraints) == 1
     assert m.constraints[0].label == "maximum weight"
-    assert m.objective.sense == ObjectiveSense.MINIMIZE  # set_objective default is MINIMIZE
+    assert m.objective.sense == ObjectiveSense.MAXIMIZE
 
 
 def test_model_knapsack_custom_label():
@@ -261,15 +261,14 @@ def test_model_knapsack_mismatched_lengths():
 
 
 def test_model_knapsack_brute_force_solution():
-    # items: value=5, weight=3 and value=4, weight=2; max_weight=3
-    # optimal: take only item 0 (value 5) or only item 1 (value 4) but not both (weight 5 > 3)
-    # objective is to minimize -sum(values * vars) so the QUBO finds the set that maximises value
-    # knapsack uses MINIMIZE on the positive sum, so brute_force should pick the feasible assignment
+    # items: value=5 weight=3, value=4 weight=2; max_weight=3
+    # optimal: b0=1 only (value=5, weight=3); taking both violates constraint (weight=5>3)
     m = Model.knapsack(values=[5, 4], weights=[3, 2], max_weight=3)
     _, sample = m.brute_force()
-    # constraint must be satisfied: 3*b0 + 2*b1 <= 3
     b0, b1 = list(sample.keys())
     assert 3 * sample[b0] + 2 * sample[b1] <= 3
+    assert sample[b0] == 1
+    assert sample[b1] == 0
 
 
 def test_model_random_ising_structure():
@@ -434,6 +433,19 @@ def test_brute_force_maximize():
     assert sample[y] == 1
     # evaluate() negates MAXIMIZE objectives, so the returned value is -(x + 2y) = -3.
     assert results[m.objective.label] == -3
+
+
+def test_brute_force_respects_constraints():
+    # Without constraint handling, brute_force would greedily pick all items (value=18, weight=14)
+    # which violates max_weight=5. The correct answer is b0=1,b1=1 (value=7, weight=5).
+    m = Model.knapsack(values=[3, 4, 5, 6], weights=[2, 3, 4, 5], max_weight=5)
+    _, sample = m.brute_force()
+    b0, b1, b2, b3 = list(sample.keys())
+    assert 2 * sample[b0] + 3 * sample[b1] + 4 * sample[b2] + 5 * sample[b3] <= 5
+    assert sample[b0] == 1
+    assert sample[b1] == 1
+    assert sample[b2] == 0
+    assert sample[b3] == 0
 
 
 def test_brute_force_returns_evaluate_dict():

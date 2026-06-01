@@ -125,10 +125,10 @@ Constructors
 Rather than building a model from scratch, you can also construct it for certain predefined problems:
 
  - :func:`Model.random_ising()<qilisdk.core.model.Model.random_ising>` - Constructs a random Ising model with specified parameters.
- - :func:`Model.knapsack(values, weights, max_weight, label)<qilisdk.core.model.Model.knapsack>` - Constructs a knapsack problem with given weights, values, and capacity.
+ - :func:`Model.knapsack(values, weights, max_weight, label, lagrange_multiplier)<qilisdk.core.model.Model.knapsack>` - Constructs a knapsack problem with given weights, values, and capacity.
  - :func:`Model.max_cut(edges, weights, label)<qilisdk.core.model.Model.max_cut>` - Constructs a max cut problem for a given graph.
- - :func:`Model.graph_coloring(graph, num_colors, label)<qilisdk.core.model.Model.graph_coloring>` - Constructs a graph coloring problem for a given graph and number of colors.
- - :func:`Model.travelling_salesman(edges, distances, label)<qilisdk.core.model.Model.travelling_salesman>` - Constructs a travelling salesman problem for a given distance matrix.
+ - :func:`Model.graph_coloring(graph, num_colors, label, lagrange_multiplier)<qilisdk.core.model.Model.graph_coloring>` - Constructs a graph coloring problem for a given graph and number of colors.
+ - :func:`Model.travelling_salesman(edges, distances, label, lagrange_multiplier)<qilisdk.core.model.Model.travelling_salesman>` - Constructs a travelling salesman problem for a given distance matrix.
  - :func:`Model.factoring(n, label)<qilisdk.core.model.Model.factoring>` - Constructs a factoring problem for a given integer.
 
 For instance, to create a knapsack problem:
