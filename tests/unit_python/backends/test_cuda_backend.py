@@ -922,7 +922,9 @@ def test_apply_digital_simulation_method_unsupported_method():
 
 
 @pytest.mark.parametrize("method", [CudaSamplingMethod.MATRIX_PRODUCT_STATE, CudaSamplingMethod.TENSOR_NETWORK])
-def test_expectation_for_methods_raises(method):
+def test_expectation_for_methods_raises(monkeypatch, method):
+    monkeypatch.setattr("cudaq.make_kernel", dummy_make_kernel)
+    monkeypatch.setattr("cudaq.set_target", lambda target: None)
     c = Circuit(nqubits=1)
     f = DigitalPropagation(circuit=c)
     r = Readout().with_expectation(observables=[pauli_z(0)])
@@ -932,7 +934,9 @@ def test_expectation_for_methods_raises(method):
 
 
 @pytest.mark.parametrize("method", [CudaSamplingMethod.MATRIX_PRODUCT_STATE, CudaSamplingMethod.TENSOR_NETWORK])
-def test_tomography_for_methods_raises(method):
+def test_tomography_for_methods_raises(monkeypatch, method):
+    monkeypatch.setattr("cudaq.make_kernel", dummy_make_kernel)
+    monkeypatch.setattr("cudaq.set_target", lambda target: None)
     c = Circuit(nqubits=1)
     f = DigitalPropagation(circuit=c)
     r = Readout().with_state_tomography()
