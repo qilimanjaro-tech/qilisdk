@@ -510,6 +510,233 @@ class Model:
             linearization_lagrange_multiplier=linearization_lagrange_multiplier,
         )
 
+    def to_hamiltonian(self,
+            lagrange_multiplier_dict: dict[str, float] | None = None,
+            penalization: Literal["unbalanced", "slack"] = "slack",
+            parameters: list[float] | None = None,
+            linearize: bool = True,
+            linearization_lagrange_multiplier: float = 100,
+        ) -> Hamiltonian:
+        """
+        Convert the model to a Hamiltonian by first turning it to a QUBO model.
+
+        See `to_qubo` for usage.
+
+        Returns:
+            Hamiltonian: the Hamiltonian corresponding to the model.
+        """
+        return self.to_qubo(
+            lagrange_multiplier_dict=lagrange_multiplier_dict,
+            penalization=penalization,
+            parameters=parameters,
+            linearize=linearize,
+            linearization_lagrange_multiplier=linearization_lagrange_multiplier,
+        ).to_hamiltonian()
+
+    @classmethod
+    def knapsack(
+        cls,
+        values: list[Number],
+        weights: list[Number],
+        max_weight: Number,
+        label: str = "Knapsack",
+    ) -> Model:
+        """Factory method to generate a knapsack model.
+
+        Args:
+            values (list[Number]): the value of each item.
+            weights (list[Number]): the weight of each item.
+            max_weight (Number): the maximum weight that can be put in the knapsack.
+            label (str, optional): the model label. Defaults to "Knapsack".
+
+        Returns:
+            Model: a model of the knapsack problem with the given parameters.
+        """
+        num_items = len(values)
+        if len(weights) != num_items:
+            raise ValueError("the number of weights must be equal to the number of values.")
+        bin_vars = [BinaryVariable(f"b{i}") for i in range(num_items)]
+        model = cls(label)
+        objective = sum(values[i] * bin_vars[i] for i in range(num_items))
+        model.set_objective(objective)
+        constraint = LEQ(sum(weights[i] * bin_vars[i] for i in range(num_items)), max_weight)
+        model.add_constraint("maximum weight", constraint)
+        return model
+
+    @classmethod
+    def random_ising(
+        cls,
+        num_variables: int,
+        coefficient_range: tuple[Number, Number] = (-1, 1),
+        label: str = "Random Ising",
+        seed: int = 1,
+    ) -> Model:
+        """Factory method to generate a random Ising model.
+
+        Args:
+            num_variables (int): the number of variables in the Ising model.
+            coefficient_range (tuple[Number, Number], optional): the range from which the coefficients of the Ising model are drawn uniformly at random. Defaults to (-1, 1).
+            label (str, optional): the model label. Defaults to "Random Ising".
+            seed (int, optional): the seed for the random number generator. Defaults to 1.
+
+        Returns:
+            Model: a model of a random Ising problem with the given parameters.
+        """
+        model = cls(label)
+        variables = [BinaryVariable(f"x{i}") for i in range(num_variables)]
+        generator = np.random.default_rng(seed)
+        for i in range(num_variables):
+            model.set_objective(model.objective.term + generator.uniform(*coefficient_range) * variables[i])
+            for j in range(i + 1, num_variables):
+                model.set_objective(
+                    model.objective.term + generator.uniform(*coefficient_range) * variables[i] * variables[j]
+                )
+        return model
+
+    @classmethod
+    def factoring(
+        cls,
+        number: int,
+        label: str = "Factoring",
+    ) -> Model:
+        """Factory method to generate a factoring model.
+
+        Args:
+            number (int): the number to factor.
+            label (str, optional): the model label. Defaults to "Factoring".
+
+        Returns:
+            Model: a model of the factoring problem for the given number.
+        """
+        model = cls(label)
+        num_bits = (number // 2).bit_length()
+        x = [BinaryVariable(f"x{i}") for i in range(num_bits)]
+        y = [BinaryVariable(f"y{i}") for i in range(num_bits)]
+        product = Term([0], Operation.ADD)
+        for i in range(num_bits):
+            for j in range(num_bits):
+                product += (2 ** (i + j)) * x[i] * y[j]
+        model.set_objective((product - number) ** 2)
+        return model
+
+    @classmethod
+    def max_cut(
+        cls,
+        edges: list[tuple[int, int]],
+        weights: list[Number] | None = None,
+        label: str = "Max-Cut",
+    ) -> Model:
+        """Factory method to generate a max-cut model.
+
+        Args:
+            edges (list[tuple[int, int]]): the edges of the graph as ``(u, v)`` pairs.
+            weights (list[Number] | None, optional): a weight for each edge. Defaults to 1 for all edges.
+            label (str, optional): the model label. Defaults to "Max-Cut".
+
+        Returns:
+            Model: a model of the max-cut problem for the given graph.
+        """
+        if weights is not None and len(weights) != len(edges):
+            raise ValueError("the number of weights must be equal to the number of edges.")
+        nodes = sorted({n for u, v in edges for n in (u, v)})
+        x = {n: BinaryVariable(f"x{n}") for n in nodes}
+        model = cls(label)
+        objective = sum(
+            (1 if weights is None else weights[i]) * (x[u] + x[v] - 2 * x[u] * x[v])
+            for i, (u, v) in enumerate(edges)
+        )
+        model.set_objective(objective, sense=ObjectiveSense.MAXIMIZE)
+        return model
+
+    @classmethod
+    def graph_coloring(
+        cls,
+        edges: list[tuple[int, int]],
+        num_colors: int,
+        label: str = "Graph Coloring",
+    ) -> Model:
+        """Factory method to generate a graph coloring model.
+
+        Each vertex is assigned exactly one color and no two adjacent vertices may share a color.
+        This is a feasibility problem: the solver finds a valid ``num_colors``-coloring if one exists.
+
+        Args:
+            edges (list[tuple[int, int]]): the edges of the graph as ``(u, v)`` pairs.
+            num_colors (int): the number of colors available.
+            label (str, optional): the model label. Defaults to "Graph Coloring".
+
+        Returns:
+            Model: a model of the graph coloring problem for the given graph.
+        """
+        nodes = sorted({n for u, v in edges for n in (u, v)})
+        x = {(n, k): BinaryVariable(f"x{n}_{k}") for n in nodes for k in range(num_colors)}
+        model = cls(label)
+        for n in nodes:
+            model.add_constraint(f"one_color_{n}", EQ(sum(x[n, k] for k in range(num_colors)), 1))
+        for u, v in edges:
+            for k in range(num_colors):
+                model.add_constraint(f"conflict_{u}_{v}_{k}", LEQ(x[u, k] + x[v, k], 1))
+        return model
+
+    def brute_force(self) -> tuple[dict[str, Number], dict[BaseVariable, RealNumber]]:
+        """Solve the model by brute-force enumeration of all variable assignments.
+
+        Binary variables are assigned values from {0, 1}. Any other ``Variable`` is decomposed
+        via its encoding: all bit patterns are enumerated and decoded to their representable
+        values, so the search covers every value the encoding can express regardless of domain.
+
+        Returns:
+            dict[str, Number]: a dictionary mapping the label of the objective and each constraint to their evaluated value at the optimal solution.
+            dict[BaseVariable, RealNumber]: a dictionary mapping each variable to its value in the optimal solution.
+
+        Raises:
+            ValueError: if the model contains a variable that has no encoding (i.e. is not a
+                BinaryVariable or a bounded Variable).
+        """
+        variables = self.variables()
+
+        domains: list[list[RealNumber]] = []
+        for v in variables:
+            if isinstance(v, BinaryVariable):
+                domains.append([0, 1])
+            elif isinstance(v, Variable):
+                n_bits = v.num_binary_equivalent()
+                seen: set[RealNumber] = set()
+                vals: list[RealNumber] = []
+                for bits_int in range(2**n_bits):
+                    bits = [(bits_int >> b) & 1 for b in range(n_bits)]
+                    val = v.evaluate(bits)
+                    if val not in seen:
+                        seen.add(val)
+                        vals.append(val)
+                domains.append(vals)
+            else:
+                raise ValueError(
+                    f"Brute-force enumeration is not supported for variable {v} of domain {v.domain}."
+                )
+
+        total_combinations = 1
+        for d in domains:
+            total_combinations *= len(d)
+        if total_combinations > 1024:  # noqa: PLR2004
+            logger.warning(
+                f"Model has {total_combinations} combinations, brute-force enumeration may take a long time."
+            )
+
+        best_sample: dict[BaseVariable, RealNumber] = {}
+        best_objective_value = float("inf") if self.objective.sense == ObjectiveSense.MINIMIZE else float("-inf")
+        for values in itertools.product(*domains):
+            sample = dict(zip(variables, values))
+            results = self.evaluate(sample)
+            objective_value = results[self.objective.label]
+            if (
+                (self.objective.sense == ObjectiveSense.MINIMIZE and objective_value < best_objective_value)
+                or (self.objective.sense == ObjectiveSense.MAXIMIZE and objective_value > best_objective_value)
+            ):
+                best_objective_value = objective_value
+                best_sample = sample
+        return self.evaluate(best_sample), best_sample
+
 
 class _Linearizer:
     """Degree-reduction helper that rewrites binary polynomials as quadratic expressions.
