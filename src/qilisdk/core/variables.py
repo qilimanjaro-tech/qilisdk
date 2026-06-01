@@ -29,6 +29,8 @@ from qilisdk.yaml import yaml
 
 from .types import Number, QiliEnum, RealNumber
 
+_DIVISION_MESSAGE = "Division by zero is not allowed"
+
 GenericVar = TypeVar("GenericVar", bound="Variable")
 CONST_KEY = "_const_"
 MAX_INT = np.iinfo(np.int64).max
@@ -885,7 +887,7 @@ class BaseVariable(ABC):
             raise NotImplementedError("Only division by real numbers is currently supported")
 
         if abs(other) < self.TOL:
-            raise ValueError("Division by zero is not allowed")
+            raise ValueError(_DIVISION_MESSAGE)
 
         if isinstance(other, np.generic):
             other = cast("RealNumber", other.item())
@@ -1751,7 +1753,7 @@ class Term:
             raise NotImplementedError("Only division by numbers is currently supported")
 
         if abs(other) < self.TOL:
-            raise ValueError("Division by zero is not allowed")
+            raise ValueError(_DIVISION_MESSAGE)
 
         other = 1 / other
         return self * other
@@ -2107,7 +2109,7 @@ class Pow(MathematicalMap):
 
     def _apply_mathematical_map(self, value: Number) -> Number:
         if self._exponent < 0 and abs(value) < get_settings().atol:
-            raise ValueError("Division by zero is not allowed")
+            raise ValueError(_DIVISION_MESSAGE)
         result = value**self._exponent
         return result
 
@@ -2139,7 +2141,7 @@ class Inv(MathematicalMap):
 
     def _apply_mathematical_map(self, value: Number) -> Number:  # noqa: PLR6301
         if abs(value) < get_settings().atol:
-            raise ValueError("Division by zero is not allowed")
+            raise ValueError(_DIVISION_MESSAGE)
         return float(1 / _assert_real(value))
 
     def __copy__(self) -> Inv:
