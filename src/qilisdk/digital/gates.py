@@ -559,6 +559,15 @@ class Adjoint(Modified[TBasicGate]):
         """
         return Controlled(*control_qubits, basic_gate=self)
 
+    def adjoint(self) -> TBasicGate:
+        """
+        Returns the original basic gate before the adjoint was applied.
+
+        Returns:
+            TBasicGate: The original basic gate that this adjoint gate is derived from.
+        """
+        return self.basic_gate
+
 
 @yaml.register_class
 class Exponential(Modified[TBasicGate]):
