@@ -33,6 +33,7 @@ from qilisdk.core.variables import (
     Domain,
     OneHot,
     Operation,
+    SpinVariable,
     Term,
     Variable,
 )
@@ -235,6 +236,180 @@ def test_model_to_ham():
     assert m.to_qubo().to_hamiltonian() == (
         (1 - Z(0)) / 2 + 2 * (1 - Z(1)) / 2 + 3 * (1 - Z(2)) / 2 + 10 * ((1 - Z(0)) / 2) * ((1 - Z(0)) / 2)
     )
+
+
+# ---------- Model constructors ----------
+
+
+def test_model_knapsack_basic():
+    m = Model.knapsack(values=[3, 2, 5], weights=[2, 1, 3], max_weight=4)
+    assert m.label == "Knapsack"
+    assert len(m.variables()) == 3
+    assert len(m.constraints) == 1
+    assert m.constraints[0].label == "maximum weight"
+    assert m.objective.sense == ObjectiveSense.MINIMIZE  # set_objective default is MINIMIZE
+
+
+def test_model_knapsack_custom_label():
+    m = Model.knapsack(values=[1, 2], weights=[1, 1], max_weight=1, label="MyKnapsack")
+    assert m.label == "MyKnapsack"
+
+
+def test_model_knapsack_mismatched_lengths():
+    with pytest.raises(ValueError, match=r"number of weights must be equal"):
+        Model.knapsack(values=[1, 2, 3], weights=[1, 2], max_weight=5)
+
+
+def test_model_knapsack_brute_force_solution():
+    # items: value=5, weight=3 and value=4, weight=2; max_weight=3
+    # optimal: take only item 0 (value 5) or only item 1 (value 4) but not both (weight 5 > 3)
+    # objective is to minimize -sum(values * vars) so the QUBO finds the set that maximises value
+    # knapsack uses MINIMIZE on the positive sum, so brute_force should pick the feasible assignment
+    m = Model.knapsack(values=[5, 4], weights=[3, 2], max_weight=3)
+    _, sample = m.brute_force()
+    # constraint must be satisfied: 3*b0 + 2*b1 <= 3
+    b0, b1 = list(sample.keys())
+    assert 3 * sample[b0] + 2 * sample[b1] <= 3
+
+
+def test_model_random_ising_structure():
+    m = Model.random_ising(num_variables=3)
+    assert m.label == "Random Ising"
+    assert len(m.variables()) == 3
+    assert len(m.constraints) == 0
+
+
+def test_model_random_ising_custom_label_and_seed():
+    m1 = Model.random_ising(num_variables=4, seed=42, label="RandIsing")
+    m2 = Model.random_ising(num_variables=4, seed=42)
+    assert m1.label == "RandIsing"
+    # Same seed produces identical objective terms
+    assert hash(m1.objective.term) == hash(m2.objective.term)
+
+
+def test_model_random_ising_different_seeds_differ():
+    m1 = Model.random_ising(num_variables=4, seed=1)
+    m2 = Model.random_ising(num_variables=4, seed=2)
+    assert hash(m1.objective.term) != hash(m2.objective.term)
+
+
+def test_model_factoring_basic():
+    m = Model.factoring(6)
+    assert m.label == "Factoring"
+    assert len(m.constraints) == 0
+    # brute-force should find factors: 6 = 2*3 → x0=0,x1=1 and y0=1,y1=0 (or permutations)
+    results, _ = m.brute_force()
+    obj_val = next(iter(results.values()))
+    assert obj_val == 0
+
+
+def test_model_factoring_custom_label():
+    m = Model.factoring(4, label="Factor4")
+    assert m.label == "Factor4"
+
+
+def test_model_max_cut_basic():
+    # Triangle graph: 3 nodes, 3 edges
+    m = Model.max_cut(edges=[(0, 1), (1, 2), (0, 2)])
+    assert m.label == "Max-Cut"
+    assert m.objective.sense == ObjectiveSense.MAXIMIZE
+    assert len(m.variables()) == 3
+    assert len(m.constraints) == 0
+
+
+def test_model_max_cut_custom_label_and_weights():
+    m = Model.max_cut(edges=[(0, 1), (1, 2)], weights=[2.0, 3.0], label="WMax-Cut")
+    assert m.label == "WMax-Cut"
+    assert len(m.variables()) == 3
+
+
+def test_model_max_cut_mismatched_weights():
+    with pytest.raises(ValueError, match=r"number of weights must be equal"):
+        Model.max_cut(edges=[(0, 1), (1, 2)], weights=[1.0])
+
+
+def test_model_max_cut_brute_force_solution():
+    # Path graph 0-1-2: max cut = 2 (put nodes 0,2 on one side, node 1 on the other).
+    # evaluate() negates MAXIMIZE objectives, so brute_force returns the negated value (-2).
+    m = Model.max_cut(edges=[(0, 1), (1, 2)])
+    results, _ = m.brute_force()
+    obj_val = results[m.objective.label]
+    assert obj_val == -2
+
+
+def test_model_graph_coloring_basic():
+    # Triangle graph needs 3 colors
+    m = Model.graph_coloring(edges=[(0, 1), (1, 2), (0, 2)], num_colors=3)
+    assert m.label == "Graph Coloring"
+    # one_color constraint per node (3) + conflict constraint per (edge, color) (3*3=9) = 12
+    assert len(m.constraints) == 12
+    assert len(m.variables()) == 9  # 3 nodes * 3 colors
+
+
+def test_model_graph_coloring_custom_label():
+    m = Model.graph_coloring(edges=[(0, 1)], num_colors=2, label="MyColoring")
+    assert m.label == "MyColoring"
+
+
+def test_model_graph_coloring_constraint_labels():
+    m = Model.graph_coloring(edges=[(0, 1)], num_colors=2)
+    labels = {c.label for c in m.constraints}
+    assert "one_color_0" in labels
+    assert "one_color_1" in labels
+    assert "conflict_0_1_0" in labels
+    assert "conflict_0_1_1" in labels
+
+
+# ---------- Model.brute_force ----------
+
+
+def test_brute_force_minimize():
+    m = Model("bf_min")
+    x, y = BinaryVariable("x"), BinaryVariable("y")
+    m.set_objective(x + 2 * y, sense=ObjectiveSense.MINIMIZE)
+    results, sample = m.brute_force()
+    assert sample[x] == 0
+    assert sample[y] == 0
+    assert results[m.objective.label] == 0
+
+
+def test_brute_force_maximize():
+    m = Model("bf_max")
+    x, y = BinaryVariable("x"), BinaryVariable("y")
+    m.set_objective(x + 2 * y, sense=ObjectiveSense.MAXIMIZE)
+    results, sample = m.brute_force()
+    assert sample[x] == 1
+    assert sample[y] == 1
+    # evaluate() negates MAXIMIZE objectives, so the returned value is -(x + 2y) = -3.
+    assert results[m.objective.label] == -3
+
+
+def test_brute_force_returns_evaluate_dict():
+    m = Model("bf_eval")
+    x = BinaryVariable("x")
+    m.set_objective(x + 0, sense=ObjectiveSense.MINIMIZE)
+    m.add_constraint("must_be_zero", EQ(x, 0))
+    results, _ = m.brute_force()
+    # results should contain both the objective label and the constraint label
+    assert m.objective.label in results
+    assert "must_be_zero" in results
+
+
+def test_brute_force_with_bounded_variable():
+    m = Model("bf_bounded")
+    v = Variable("v", Domain.POSITIVE_INTEGER, bounds=(0, 3))
+    m.set_objective(v + 0, sense=ObjectiveSense.MINIMIZE)
+    _, sample = m.brute_force()
+    assert sample[v] == 0
+
+
+def test_brute_force_raises_for_unsupported_variable():
+    # SpinVariable is not BinaryVariable or Variable, so brute_force raises ValueError.
+    m = Model("bf_spin")
+    s = SpinVariable("s")
+    m.set_objective(s + 0)
+    with pytest.raises(ValueError):  # noqa: PT011
+        m.brute_force()
 
 
 # ---------- QUBO ----------

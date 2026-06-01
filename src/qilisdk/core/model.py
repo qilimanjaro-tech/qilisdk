@@ -724,15 +724,12 @@ class Model:
             )
 
         best_sample: dict[BaseVariable, RealNumber] = {}
-        best_objective_value = float("inf") if self.objective.sense == ObjectiveSense.MINIMIZE else float("-inf")
+        best_objective_value = float("inf")
         for values in itertools.product(*domains):
             sample = dict(zip(variables, values))
             results = self.evaluate(sample)
             objective_value = results[self.objective.label]
-            if (
-                (self.objective.sense == ObjectiveSense.MINIMIZE and objective_value < best_objective_value)
-                or (self.objective.sense == ObjectiveSense.MAXIMIZE and objective_value > best_objective_value)
-            ):
+            if objective_value < best_objective_value:
                 best_objective_value = objective_value
                 best_sample = sample
         return self.evaluate(best_sample), best_sample
