@@ -124,7 +124,7 @@ Constructors
 
 Rather than building a model from scratch, you can also construct it for certain predefined problems:
 
- - :func:`Model.random_ising()<qilisdk.core.model.Model.random_ising>` - Constructs a random Ising model with specified parameters.
+ - :func:`Model.random_ising(num_variables, coefficient_range, label, seed)<qilisdk.core.model.Model.random_ising>` - Constructs a random Ising model with specified parameters.
  - :func:`Model.knapsack(values, weights, max_weight, label, lagrange_multiplier)<qilisdk.core.model.Model.knapsack>` - Constructs a knapsack problem with given weights, values, and capacity.
  - :func:`Model.max_cut(edges, weights, label)<qilisdk.core.model.Model.max_cut>` - Constructs a max cut problem for a given graph.
  - :func:`Model.graph_coloring(graph, num_colors, label, lagrange_multiplier)<qilisdk.core.model.Model.graph_coloring>` - Constructs a graph coloring problem for a given graph and number of colors.
