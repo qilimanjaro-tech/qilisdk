@@ -1051,6 +1051,7 @@ def test_gate_not_equals_circuit():
     circuit = Circuit(1)
     assert gate != circuit
 
+
 def test_adjoint_controlled():
     qubit = 0
     control = 1
@@ -1061,12 +1062,14 @@ def test_adjoint_controlled():
     assert controlled_adj.name == "CRX†"
     assert_matrix_equal(adj_controlled.matrix, controlled_adj.matrix)
 
+
 def test_adjoint_adjoint():
     qubit = 0
     base_gate = RX(qubit, theta=np.pi / 2)
     adj_adj_gate = base_gate.adjoint().adjoint()
     assert adj_adj_gate.name == base_gate.name
     assert_matrix_equal(adj_adj_gate.matrix, base_gate.matrix)
+
 
 def test_controlled_controlled():
     qubit = 0
