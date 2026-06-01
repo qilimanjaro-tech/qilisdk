@@ -1050,3 +1050,26 @@ def test_gate_not_equals_circuit():
     gate = RX(qubit, theta=np.pi / 2)
     circuit = Circuit(1)
     assert gate != circuit
+
+def test_adjoint_controlled():
+    qubit = 0
+    control = 1
+    base_gate = RX(qubit, theta=np.pi / 2)
+    adj_controlled = base_gate.controlled(control).adjoint()
+    controlled_adj = base_gate.adjoint().controlled(control)
+    assert adj_controlled.name == "CRX†"
+    assert controlled_adj.name == "CRX†"
+    assert_matrix_equal(adj_controlled.matrix, controlled_adj.matrix)
+
+def test_controlled_controlled():
+    qubit = 0
+    control1 = 1
+    control2 = 2
+    base_gate = RX(qubit, theta=np.pi / 2)
+    cc_gate = base_gate.controlled(control1).controlled(control2)
+    expected_name = "CCRX"
+    assert cc_gate.name == expected_name
+    # The matrix should be the same as applying two controls to the base gate.
+    controlled_once = base_gate.controlled(control1)
+    controlled_twice = controlled_once.controlled(control2)
+    assert_matrix_equal(cc_gate.matrix, controlled_twice.matrix)

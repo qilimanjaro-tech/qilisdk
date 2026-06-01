@@ -493,6 +493,33 @@ class Controlled(Modified[TBasicGate]):
     def name(self) -> str:
         return "C" * len(self.control_qubits) + self.basic_gate.name
 
+    def adjoint(self) -> Controlled[TBasicGate]:
+        """
+        Returns the adjoint (conjugate transpose) of this controlled gate.
+
+        This method constructs and returns a new controlled gate where the underlying basic gate is replaced by its adjoint.
+        The control qubits remain the same, and the resulting gate's matrix is the conjugate transpose of the current gate's matrix.
+
+        Returns:
+            Controlled: A new Controlled gate instance representing the adjoint of this controlled gate.
+        """
+        return Controlled(*self.control_qubits, basic_gate=self.basic_gate.adjoint())
+
+    def controlled(self, *additional_control_qubits: int) -> Controlled[TBasicGate]:
+        """
+        Creates a new controlled gate with additional control qubits.
+
+        This method returns a new instance of a Controlled gate where the provided additional qubits serve as extra control qubits,
+        and the current controlled gate is used as the target. The resulting gate operates on all control qubits (existing and additional) and the target qubits.
+
+        Args:
+            *additional_control_qubits (int): One or more integer indices specifying the additional control qubits.
+
+        Returns:
+            Controlled: A new Controlled gate instance that wraps this controlled gate with the specified additional control qubits.
+        """
+        return Controlled(*additional_control_qubits, basic_gate=self)
+
 
 @yaml.register_class
 class Adjoint(Modified[TBasicGate]):
@@ -518,6 +545,19 @@ class Adjoint(Modified[TBasicGate]):
             str: The name of the adjoint gate.
         """
         return self.basic_gate.name + "†"
+
+    def controlled(self, *control_qubits: int) -> Controlled[TBasicGate]:
+        """
+        Creates a controlled version of this adjoint gate.
+
+        This method returns a new instance of a Controlled gate where the provided qubits serve as the
+        control qubits and the current adjoint gate is used as the target. The resulting gate operates
+        on both the control and target qubits.
+
+        Args:
+            *control_qubits (int): One or more integer indices specifying the control qubits.
+        """
+        return Controlled(*control_qubits, basic_gate=self)
 
 
 @yaml.register_class
