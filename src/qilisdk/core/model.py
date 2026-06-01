@@ -677,10 +677,16 @@ class Model:
         x = {(n, k): BinaryVariable(f"x{n}_{k}") for n in nodes for k in range(num_colors)}
         model = cls(label)
         for n in nodes:
-            model.add_constraint(f"one_color_{n}", EQ(sum(x[n, k] for k in range(num_colors)), 1), lagrange_multiplier=lagrange_multiplier)
+            model.add_constraint(
+                f"one_color_{n}",
+                EQ(sum(x[n, k] for k in range(num_colors)), 1),
+                lagrange_multiplier=lagrange_multiplier,
+            )
         for u, v in edges:
             for k in range(num_colors):
-                model.add_constraint(f"conflict_{u}_{v}_{k}", LEQ(x[u, k] + x[v, k], 1), lagrange_multiplier=lagrange_multiplier)
+                model.add_constraint(
+                    f"conflict_{u}_{v}_{k}", LEQ(x[u, k] + x[v, k], 1), lagrange_multiplier=lagrange_multiplier
+                )
         return model
 
     @classmethod
@@ -723,9 +729,13 @@ class Model:
             raise ValueError("the graph must have at least one edge.")
         model.set_objective(objective)
         for i in range(n):
-            model.add_constraint(f"city_{i}", EQ(sum(x[i][t] for t in range(n)), 1), lagrange_multiplier=lagrange_multiplier)
+            model.add_constraint(
+                f"city_{i}", EQ(sum(x[i][t] for t in range(n)), 1), lagrange_multiplier=lagrange_multiplier
+            )
         for t in range(n):
-            model.add_constraint(f"position_{t}", EQ(sum(x[i][t] for i in range(n)), 1), lagrange_multiplier=lagrange_multiplier)
+            model.add_constraint(
+                f"position_{t}", EQ(sum(x[i][t] for i in range(n)), 1), lagrange_multiplier=lagrange_multiplier
+            )
         return model
 
     def brute_force(self) -> tuple[dict[str, Number], dict[BaseVariable, RealNumber]]:
