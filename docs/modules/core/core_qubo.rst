@@ -133,7 +133,7 @@ Example: Slack Penalization
 
 **Output**::
 
-    obj: (-8.0) * b + b2 + (11.0) + (40.0) * (b2 * b) + (40.0) * (b2 * c1_slack(0)) + (20.0) * (b * c1_slack(0)) + (-10.0) * c1_slack(0)
+    obj: 11 + b2 + 2 * b + 10 * (-1 * b + -1 * c1_slack(0) + 2 * b * c1_slack(0) + 4 * b * b2 + 4 * b2 * c1_slack(0))
 
 |
 
@@ -156,13 +156,13 @@ Example: Unbalanced Penalization
 
 **Output**::
 
-    obj: (2) * b + (3.0) * b2 + (1) + (4.0) * (b2 * b)
+    obj: 1 + 2 * b + 3 * b2 + 4 * b * b2
 
 
 .. [1] Montañez-Barrera, Jhon Alejandro, et al. "Unbalanced penalization: A new approach to encode inequality constraints of combinatorial problems for quantum optimization algorithms." Quantum Science and Technology 9.2 (2024): 025022.
 
-High-degree Term Linearization
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+High-degree Monomial Linearization
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 By definition, a QUBO objective is at most quadratic. However, both user-defined objectives and the
 squared residuals produced when penalizing constraints can introduce monomials of degree three or
