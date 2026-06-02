@@ -375,9 +375,9 @@ class BasicGate(Gate):
 
 @yaml.register_class
 class Modified(Gate, Generic[TBasicGate]):
-    def __init__(self, basic_gate: TBasicGate) -> None:
+    def __init__(self, basic_gate: TBasicGate | Modified) -> None:
         super().__init__()
-        self._basic_gate: TBasicGate = basic_gate
+        self._basic_gate: TBasicGate | Modified = basic_gate
         self._link_parameters(self._basic_gate)
 
     @property
@@ -448,10 +448,16 @@ class Modified(Gate, Generic[TBasicGate]):
     def is_modified_from(self, gate_type: type[TBasicGate]) -> bool:
         return isinstance(self.basic_gate, gate_type)
 
+    def controlled(self, *additional_control_qubits: int) -> Controlled:
+        return Controlled(*additional_control_qubits, basic_gate=self)
+
+    def adjoint(self) -> Adjoint:
+        return Adjoint(basic_gate=self)
+
 
 @yaml.register_class
 class Controlled(Modified[TBasicGate]):
-    def __init__(self, *control_qubits: int, basic_gate: TBasicGate | Controlled[TBasicGate]) -> None:
+    def __init__(self, *control_qubits: int, basic_gate: TBasicGate | Controlled[TBasicGate] | Modified) -> None:
         # If doing Controlled of another Controlled, combine into one with all control qubits.
         if isinstance(basic_gate, Controlled) and isinstance(basic_gate.basic_gate, Gate):
             control_qubits += basic_gate.control_qubits
@@ -493,33 +499,6 @@ class Controlled(Modified[TBasicGate]):
     def name(self) -> str:
         return "C" * len(self.control_qubits) + self.basic_gate.name
 
-    def adjoint(self) -> ControlledAdjoint[TBasicGate]:
-        """
-        Returns the adjoint (conjugate transpose) of this controlled gate.
-
-        This method constructs and returns a new controlled gate where the underlying basic gate is replaced by its adjoint.
-        The control qubits remain the same, and the resulting gate's matrix is the conjugate transpose of the current gate's matrix.
-
-        Returns:
-            ControlledAdjoint: A new ControlledAdjoint gate instance representing the adjoint of this controlled gate.
-        """
-        return ControlledAdjoint(*self.control_qubits, basic_gate=self.basic_gate)
-
-    def controlled(self, *additional_control_qubits: int) -> Controlled[TBasicGate]:
-        """
-        Creates a new controlled gate with additional control qubits.
-
-        This method returns a new instance of a Controlled gate where the provided additional qubits serve as extra control qubits,
-        and the current controlled gate is used as the target. The resulting gate operates on all control qubits (existing and additional) and the target qubits.
-
-        Args:
-            *additional_control_qubits (int): One or more integer indices specifying the additional control qubits.
-
-        Returns:
-            Controlled: A new Controlled gate instance that wraps this controlled gate with the specified additional control qubits.
-        """
-        return Controlled(*additional_control_qubits, basic_gate=self)
-
 
 @yaml.register_class
 class Adjoint(Modified[TBasicGate]):
@@ -527,7 +506,7 @@ class Adjoint(Modified[TBasicGate]):
     Represents the adjoint (conjugate transpose) of a unitary gate.
     """
 
-    def __init__(self, basic_gate: TBasicGate) -> None:
+    def __init__(self, basic_gate: TBasicGate | Modified) -> None:
         super().__init__(basic_gate=basic_gate)
 
     def _generate_matrix(self) -> np.ndarray:
@@ -546,63 +525,14 @@ class Adjoint(Modified[TBasicGate]):
         """
         return self.basic_gate.name + "†"
 
-    def controlled(self, *control_qubits: int) -> ControlledAdjoint[TBasicGate]:
-        """
-        Creates a controlled version of this adjoint gate.
-
-        This method returns a new instance of a Controlled gate where the provided qubits serve as the
-        control qubits and the current adjoint gate is used as the target. The resulting gate operates
-        on both the control and target qubits.
-
-        Args:
-            *control_qubits (int): One or more integer indices specifying the control qubits.
-
-        Returns:
-            ControlledAdjoint: A new ControlledAdjoint gate instance that wraps this adjoint gate with the specified control qubits.
-        """
-        return ControlledAdjoint(*control_qubits, basic_gate=self.basic_gate)
-
     def adjoint(self) -> TBasicGate:
         """
-        Returns the original basic gate before the adjoint was applied.
+        The adjoint of the adjoint is the original gate.
 
         Returns:
-            TBasicGate: The original basic gate that this adjoint gate is derived from.
+            TBasicGate: The original gate that this adjoint is derived from.
         """
         return self.basic_gate
-
-
-@yaml.register_class
-class ControlledAdjoint(Controlled[TBasicGate]):
-    """
-    Represents the adjoint of a controlled gate.
-    """
-
-    def __init__(self, *control_qubits: int, basic_gate: TBasicGate) -> None:
-        """
-        Initialize a ControlledAdjoint gate.
-
-        Args:
-            *control_qubits (int): One or more integer indices specifying the control qubits.
-            basic_gate (TBasicGate): The underlying basic gate for which this is the controlled adjoint.
-        """
-        super().__init__(*control_qubits, basic_gate=basic_gate)
-
-    def _generate_matrix(self) -> np.ndarray:
-        return self.basic_gate.matrix.conj().T
-
-    @property
-    def name(self) -> str:
-        """
-        Get the name of the controlled adjoint gate.
-
-        The name is constructed by prepending "C" for each control qubit and appending an adjoint symbol (†) to the name of the underlying gate.
-        For example, if there are 2 control qubits and the underlying gate's name is "X", this property returns "CCX†".
-
-        Returns:
-            str: The name of the controlled adjoint gate.
-        """
-        return "C" * len(self.control_qubits) + self.basic_gate.name + "†"
 
 
 @yaml.register_class
