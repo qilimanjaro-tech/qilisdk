@@ -919,3 +919,27 @@ def test_apply_digital_simulation_method_unsupported_method():
     backend = CudaBackend(sampling_method=FakeSamplingMethod.UNSUPPORTED_METHOD)
     with pytest.raises(ValueError, match="Unsupported sampling method: unsupported_method"):
         backend._apply_digital_simulation_method()
+
+
+@pytest.mark.parametrize("method", [CudaSamplingMethod.MATRIX_PRODUCT_STATE, CudaSamplingMethod.TENSOR_NETWORK])
+def test_expectation_for_methods_raises(monkeypatch, method):
+    monkeypatch.setattr("cudaq.make_kernel", dummy_make_kernel)
+    monkeypatch.setattr("cudaq.set_target", lambda target: None)
+    c = Circuit(nqubits=1)
+    f = DigitalPropagation(circuit=c)
+    r = Readout().with_expectation(observables=[pauli_z(0)])
+    backend = CudaBackend(sampling_method=method)
+    with pytest.raises(ValueError, match="Only Sampling"):
+        backend.execute(f, r)
+
+
+@pytest.mark.parametrize("method", [CudaSamplingMethod.MATRIX_PRODUCT_STATE, CudaSamplingMethod.TENSOR_NETWORK])
+def test_tomography_for_methods_raises(monkeypatch, method):
+    monkeypatch.setattr("cudaq.make_kernel", dummy_make_kernel)
+    monkeypatch.setattr("cudaq.set_target", lambda target: None)
+    c = Circuit(nqubits=1)
+    f = DigitalPropagation(circuit=c)
+    r = Readout().with_state_tomography()
+    backend = CudaBackend(sampling_method=method)
+    with pytest.raises(ValueError, match="Only Sampling"):
+        backend.execute(f, r)
