@@ -749,26 +749,23 @@ TEST(BraPythonTest, Valid) {
 }
 
 TEST(ZeroTest, NegativeNqubits_Throws) {
-    EXPECT_THROW(QTensorCpp::zero(-1, "ket"), py::value_error);
+    EXPECT_THROW(QTensorCpp::zero(-1), py::value_error);
 }
 
 TEST(ZeroTest, Ket_Type) {
-    QTensorCpp q = QTensorCpp::zero(1, "ket");
+    QTensorCpp q = QTensorCpp::zero(2);
     EXPECT_TRUE(q.is_ket());
+    EXPECT_NEAR(q.get_data().coeff(0, 0).real(), 1.0, 1e-10);
 }
 
-TEST(ZeroTest, Bra_Type) {
-    QTensorCpp q = QTensorCpp::zero(1, "bra");
-    EXPECT_TRUE(q.is_bra());
+TEST(OneTest, NegativeNqubits_Throws) {
+    EXPECT_THROW(QTensorCpp::one(-1), py::value_error);
 }
 
-TEST(ZeroTest, Operator_Type) {
-    QTensorCpp q = QTensorCpp::zero(1, "operator");
-    EXPECT_TRUE(q.is_operator());
-}
-
-TEST(ZeroTest, InvalidType_Throws) {
-    EXPECT_THROW(QTensorCpp::zero(1, "vector"), py::value_error);
+TEST(OneTest, Ket_Type) {
+    QTensorCpp q = QTensorCpp::one(2);
+    EXPECT_TRUE(q.is_ket());
+    EXPECT_NEAR(q.get_data().coeff(3, 0).real(), 1.0, 1e-10);
 }
 
 TEST(IdentityTest, Is2x2Identity) {
@@ -1210,7 +1207,7 @@ TEST(ExpectationValueTest, ExactOperator) {
 }
 
 TEST(ExpectationValueTest, SampledZeroState_Throws) {
-    QTensorCpp q(QTensorCpp::zero(2, "operator"));
+    QTensorCpp q(QTensorCpp(SparseMatrix(2, 2)));
     q.compute_eigendecomposition();
     QTensorCpp op(make_identity2());
     EXPECT_THROW(q.expectation_value(op, 10), py::value_error);
@@ -1592,7 +1589,7 @@ TEST(SqrtTest, NonOperator_Throws) {
 }
 
 TEST(SqrtTest, ZeroMatrix_SpecialCase) {
-    QTensorCpp zero = QTensorCpp::zero(2, "operator");
+    QTensorCpp zero = QTensorCpp(SparseMatrix(2, 2));
     ASSERT_NO_THROW(zero.sqrt());
 }
 

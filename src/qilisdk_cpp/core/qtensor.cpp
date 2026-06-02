@@ -748,30 +748,47 @@ QTensorCpp QTensorCpp::ket(const std::vector<int>& qubit_values) {
     return result;
 }
 
-QTensorCpp QTensorCpp::zero(int nqubits, std::string qtensor_type) {
+QTensorCpp QTensorCpp::zero(int nqubits) {
     /*
-    Construct a QTensor of the given shape filled with zeros. The number of rows and columns must be powers of 2.
+    Construct a |0..0> ket vector QTensor for a given number of qubits.
 
     Args:
-        nqubits (int): The number of qubits, which determines the shape of the QTensor. The number of rows and columns will be 2^nqubits.
-        qtensor_type (std::string): The type of QTensor to create, which can be "ket", "bra", or "operator".
+        nqubits (int): The number of qubits, which determines the size of the zero statevector (2^nqubits x 1).
 
     Returns:
-        QTensorCpp: A QTensor of the specified shape filled with zeros.
+        QTensorCpp: A QTensor representing the |0..0> ket vector for the specified number of qubits.
     */
     if (nqubits < 0) {
         throw py::value_error("Number of qubits must be non-negative");
     }
     int dim = 1 << nqubits;
-    if (qtensor_type == "ket") {
-        return QTensorCpp(dim, 1);
-    } else if (qtensor_type == "bra") {
-        return QTensorCpp(1, dim);
-    } else if (qtensor_type == "operator") {
-        return QTensorCpp(dim, dim);
-    } else {
-        throw py::value_error("Invalid qtensor type: " + qtensor_type + ". Must be 'ket', 'bra', or 'operator'");
+    QTensorCpp result(dim, 1);
+    result._data.reserve(1);
+    result._data.insert(0, 0) = 1.0;
+    result._data.makeCompressed();
+    return result;
+}
+
+QTensorCpp QTensorCpp::one(int nqubits) {
+    /*
+    Construct a |1..1> ket vector QTensor for a given number of qubits.
+
+    Args:
+        nqubits (int): The number of qubits, which determines the size of the one statevector (2^nqubits x 1).
+
+    Returns:
+        QTensorCpp: A QTensor representing the |1..1> ket vector for the specified number of qubits.
+    */
+    if (nqubits < 0) {
+        throw py::value_error("Number of qubits must be non-negative");
     }
+    int dim = 1 << nqubits;
+    QTensorCpp result(dim, 1);
+    int one_index = dim - 1;
+    result._data.reserve(1);
+    result._data.insert(one_index, 0) = 1.0;
+    result._data.makeCompressed();
+    return result;
 }
 
 QTensorCpp QTensorCpp::ket_python(const py::object& state) {

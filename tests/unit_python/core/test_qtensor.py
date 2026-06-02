@@ -788,15 +788,17 @@ def test_qtensor_identity():
 def test_qtensor_zero():
     qzero = QTensor.zero(2)
     qzero2 = zero(2)
-    qzero_ket = QTensor.zero(2, "ket")
-    qzero_bra = QTensor.zero(2, "bra")
-    expected = np.zeros((4, 4))
     expected_ket = np.zeros((4, 1))
-    expected_bra = np.zeros((1, 4))
-    np.testing.assert_array_equal(qzero.dense(), expected)
-    np.testing.assert_array_equal(qzero2.dense(), expected)
-    np.testing.assert_array_equal(qzero_ket.dense(), expected_ket)
-    np.testing.assert_array_equal(qzero_bra.dense(), expected_bra)
+    expected_ket[0, 0] = 1
+    np.testing.assert_array_equal(qzero.dense(), expected_ket)
+    np.testing.assert_array_equal(qzero2.dense(), expected_ket)
+
+
+def test_qtensor_one():
+    qone = QTensor.one(2)
+    expected_ket = np.zeros((4, 1))
+    expected_ket[3, 0] = 1
+    np.testing.assert_array_equal(qone.dense(), expected_ket)
 
 
 def test_qtensor_ghz():
