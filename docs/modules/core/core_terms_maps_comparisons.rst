@@ -67,7 +67,7 @@ or any other base variable and defer evaluation until values are provided.
     theta = Parameter("theta", 0.5)
     expr = Sin(theta) + Cos(2 * theta)
 
-    print(expr) # prints: "sin[theta] + cos[(2) * theta]""
+    print(expr) # prints: "sin[theta] + cos[(2) * theta]"
     print(expr.evaluate({})) # prints: "0.5" (using default parameter values)
 
     # You can also supply a different value at evaluation time:
