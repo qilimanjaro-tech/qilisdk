@@ -132,7 +132,8 @@ class QTensorCpp {
 
     // Static initializers for common states
     static QTensorCpp identity(int nqubits);
-    static QTensorCpp zero(int nqubits, std::string qtensor_type = "operator");
+    static QTensorCpp zero(int nqubits);
+    static QTensorCpp one(int nqubits);
     static QTensorCpp ket_python(const py::object& state);
     static QTensorCpp ket(const std::vector<int>& qubit_values);
     static QTensorCpp bra_python(const py::object& state);
