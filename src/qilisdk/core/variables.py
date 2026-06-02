@@ -29,6 +29,8 @@ from qilisdk.yaml import yaml
 
 from .types import Number, QiliEnum, RealNumber
 
+_DIVISION_MESSAGE = "Division by zero is not allowed"
+
 GenericVar = TypeVar("GenericVar", bound="Variable")
 CONST_KEY = "_const_"
 MAX_INT = np.iinfo(np.int64).max
@@ -885,7 +887,7 @@ class BaseVariable(ABC):
             raise NotImplementedError("Only division by real numbers is currently supported")
 
         if abs(other) < self.TOL:
-            raise ValueError("Division by zero is not allowed")
+            raise ValueError(_DIVISION_MESSAGE)
 
         if isinstance(other, np.generic):
             other = cast("RealNumber", other.item())
@@ -1751,7 +1753,7 @@ class Term:
             raise NotImplementedError("Only division by numbers is currently supported")
 
         if abs(other) < self.TOL:
-            raise ValueError("Division by zero is not allowed")
+            raise ValueError(_DIVISION_MESSAGE)
 
         other = 1 / other
         return self * other
@@ -2048,3 +2050,111 @@ class Cos(MathematicalMap):
 
     def __copy__(self) -> Cos:
         return Cos(super().__copy__())
+
+
+class Tan(MathematicalMap):
+    """Apply a tangent map to a parameter or term."""
+
+    MATH_SYMBOL = "tan"
+
+    def _apply_mathematical_map(self, value: Number) -> Number:  # noqa: PLR6301
+        if abs(np.cos(_assert_real(value))) < get_settings().atol:
+            raise ValueError("Tangent is not defined for values where cosine is zero.")
+        return float(np.tan(_assert_real(value)))
+
+    def __copy__(self) -> Tan:
+        return Tan(super().__copy__())
+
+
+class Exp(MathematicalMap):
+    """Apply an exponential map to a parameter or term."""
+
+    MATH_SYMBOL = "exp"
+
+    def _apply_mathematical_map(self, value: Number) -> Number:  # noqa: PLR6301
+        return float(np.exp(_assert_real(value)))
+
+    def __copy__(self) -> Exp:
+        return Exp(super().__copy__())
+
+
+class Log(MathematicalMap):
+    """Apply a logarithmic map to a parameter or term."""
+
+    MATH_SYMBOL = "log"
+
+    def _apply_mathematical_map(self, value: Number) -> Number:  # noqa: PLR6301
+        return float(np.log(_assert_real(value)))
+
+    def __copy__(self) -> Log:
+        return Log(super().__copy__())
+
+
+class Pow(MathematicalMap):
+    """Apply a power map to a parameter or term."""
+
+    MATH_SYMBOL = "pow"
+
+    def __init__(self, arg: Term | Parameter | BaseVariable, exponent: float) -> None:
+        """
+        Initializes a new power map.
+
+        Args:
+            arg (Term | Parameter | BaseVariable): the term, parameter or variable to which the power map is applied.
+            exponent (float): the exponent of the power map.
+        """
+        super().__init__(arg)
+        self._arg = arg
+        self._exponent = exponent
+
+    def _apply_mathematical_map(self, value: Number) -> Number:
+        if self._exponent < 0 and abs(value) < get_settings().atol:
+            raise ValueError(_DIVISION_MESSAGE)
+        result = value**self._exponent
+        return result
+
+    def __copy__(self) -> Pow:
+        return Pow(super().__copy__(), self._exponent)
+
+    def __repr__(self) -> str:
+        return f"{self.MATH_SYMBOL}[{self._arg}, {self._exponent}]"
+
+    __str__ = __repr__
+
+
+class Sqrt(MathematicalMap):
+    """Apply a square root map to a parameter or term."""
+
+    MATH_SYMBOL = "sqrt"
+
+    def _apply_mathematical_map(self, value: Number) -> Number:  # noqa: PLR6301
+        return float(np.sqrt(_assert_real(value)))
+
+    def __copy__(self) -> Sqrt:
+        return Sqrt(super().__copy__())
+
+
+class Inv(MathematicalMap):
+    """Apply an inverse map to a parameter or term."""
+
+    MATH_SYMBOL = "inv"
+
+    def _apply_mathematical_map(self, value: Number) -> Number:  # noqa: PLR6301
+        if abs(value) < get_settings().atol:
+            raise ValueError(_DIVISION_MESSAGE)
+        return float(1 / _assert_real(value))
+
+    def __copy__(self) -> Inv:
+        return Inv(super().__copy__())
+
+
+class Abs(MathematicalMap):
+    """Apply an absolute value map to a parameter or term."""
+
+    MATH_SYMBOL = "abs"
+
+    def _apply_mathematical_map(self, value: Number) -> Number:  # noqa: PLR6301
+        return float(abs(_assert_real(value)))
+
+    def __copy__(self) -> Abs:
+        return Abs(super().__copy__())
