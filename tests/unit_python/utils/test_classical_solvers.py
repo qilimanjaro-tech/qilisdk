@@ -76,7 +76,7 @@ def test_brute_force_maximize():
 def test_brute_force_integer_variable_enumeration():
     v = Variable("v", Domain.POSITIVE_INTEGER, bounds=(0, 3))
     m = Model("int_model")
-    m.set_objective(v)
+    m.set_objective(v * 1)
     _, sample = BruteForceSolver().solve(m)
     assert sample[v] == 0
 
