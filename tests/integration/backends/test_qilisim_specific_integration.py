@@ -23,7 +23,7 @@ from qilisdk.analog.hamiltonian import Z as pauli_z
 from qilisdk.analog.schedule import Schedule
 from qilisdk.backends.backend_config import AnalogMethod, DigitalMethod, ExecutionConfig, MonteCarloConfig
 from qilisdk.backends.qilisim import QiliSim
-from qilisdk.core.qtensor import InitialState, ket, QTensor
+from qilisdk.core.qtensor import InitialState, QTensor, ket
 from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, H, M, X, Y, Z
 from qilisdk.functionals import AnalogEvolution, DigitalPropagation, FunctionalResult
 from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
@@ -394,7 +394,7 @@ def test_variational_annealing_config_validation_raises():
         execution_config=ExecutionConfig(seed=42, num_threads=1),
     )
     # Override internal solver config to trigger validation failure
-    backend._solver_config["warmups"] = -1
+    backend._solver_config["variational_warmups"] = -1
     with pytest.raises(ValueError, match="Warmups cannot be negative"):
         backend.execute(
             AnalogEvolution(schedule=_make_annealing_schedule(), initial_state=InitialState.UNIFORM),
@@ -430,7 +430,6 @@ def test_variational_annealing_many_qubit_correct():
     assert isinstance(result, FunctionalResult)
     ev = result.get_expectation_values()[0]
     assert np.isclose(ev.real, -nqubits, atol=0.2)
-
 
 
 def test_matrix_free_complex_gate_on_mixed_state_stays_hermitian():

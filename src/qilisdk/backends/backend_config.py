@@ -122,17 +122,17 @@ class AnalogMethod(BaseSimulatorConfig):
         gt=0,
         description="Tolerance for the adaptive integrator method when `evolution_method='integrate_rk45_matrix_free'`.",
     )
-    shots: int = Field(
+    variational_shots: int = Field(
         default=1000,
         gt=0,
         description="Number of shots to use when estimating expectation values for the variational optimization when `evolution_method='variational_exponential'`.",
     )
-    warmups: int = Field(
+    variational_warmups: int = Field(
         default=100,
         ge=0,
         description="Number of warmup iterations to perform before collecting samples for the variational optimization when `evolution_method='variational_exponential'`.",
     )
-    order: int = Field(
+    variational_order: int = Field(
         default=2,
         gt=0,
         description="Order of the polynomial expansion used in the variational ansatz when `evolution_method='variational_exponential'`.",
@@ -145,9 +145,9 @@ class AnalogMethod(BaseSimulatorConfig):
             "arnoldi_dim": self.arnoldi_dim,
             "num_arnoldi_substeps": self.num_arnoldi_substeps,
             "adaptive_tol": self.adaptive_tol,
-            "shots": self.shots,
-            "warmups": self.warmups,
-            "order": self.order,
+            "variational_shots": self.variational_shots,
+            "variational_warmups": self.variational_warmups,
+            "variational_order": self.variational_order,
         }
 
         return d
@@ -182,7 +182,12 @@ class AnalogMethod(BaseSimulatorConfig):
         Returns:
             AnalogMethod: Configured variational-method analog configuration.
         """
-        return cls(evolution_method="variational_exponential", order=order, shots=shots, warmups=warmups)
+        return cls(
+            evolution_method="variational_exponential",
+            variational_order=order,
+            variational_shots=shots,
+            variational_warmups=warmups,
+        )
 
     @classmethod
     def adaptive_integrator(cls, *, tol: float = 1e-2) -> AnalogMethod:

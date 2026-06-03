@@ -48,18 +48,18 @@ class TestExpectationReadout:
     def test_qtensor_observables_auto_set(self):
         obs = [pauli_z(0)]
         ro = ExpectationReadout(observables=obs)
-        assert len(ro.qtensor_observables) == 1
-        assert isinstance(ro.qtensor_observables[0], QTensor)
+        expanded = ro.expand_observables(nqubits=1)
+        assert len(expanded) == 1
+        assert isinstance(expanded[0], QTensor)
 
     def test_qtensor_observable_passthrough(self):
         qt = QTensor(np.array([[1, 0], [0, -1]], dtype=np.complex128))
         ro = ExpectationReadout(observables=[qt])
-        assert ro.qtensor_observables[0] is qt
+        assert ro.expand_observables(nqubits=1)[0] == qt
 
     def test_scale_observables(self):
         ro = ExpectationReadout(observables=[pauli_z(0)])
-        ro.expand_observables(nqubits=2)
-        assert ro.qtensor_observables[0].shape == (4, 4)
+        assert ro.expand_observables(nqubits=2)[0].shape == (4, 4)
 
     def test_invalid_observable_type_raises(self):
         with pytest.raises(ValueError, match="Invalid Observable"):

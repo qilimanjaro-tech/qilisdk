@@ -1061,6 +1061,12 @@ def test_initial_state_uniform_as_qtensor():
     assert result.shape == (4, 1)
 
 
+def test_initial_state_one_as_qtensor():
+    result = InitialState.ONE.as_qtensor(2)
+    assert isinstance(result, QTensor)
+    assert result.shape == (4, 1)
+
+
 def test_initial_state_unknown_raises():
     class FakeState:
         name = "FAKE"

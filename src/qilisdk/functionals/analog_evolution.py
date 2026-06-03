@@ -72,16 +72,11 @@ class AnalogEvolution(PrimitiveFunctional):
     @property
     def initial_state(self) -> QTensor | InitialState:
         """
-        The initial state of the simulation, if provided.
+        The initial state of the simulation.
 
         Returns:
             QTensor | InitialState: The initial state.
-
-        Raises:
-            ValueError: If no initial state was provided for this functional.
         """
-        if self._initial_state is None:
-            raise ValueError("No initial state was provided for this functional.")
         return self._initial_state
 
     def _iter_parameter_children(self) -> Iterator[Parameterizable]:

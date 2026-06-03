@@ -795,14 +795,14 @@ QiliSimConfig parse_solver_params(const py::dict& solver_params) {
     if (solver_params.contains("measurement_collapse")) {
         config.set_measurement_collapse(solver_params["measurement_collapse"].cast<bool>());
     }
-    if (solver_params.contains("order")) {
-        config.set_order(solver_params["order"].cast<int>());
+    if (solver_params.contains("variational_order")) {
+        config.set_order(solver_params["variational_order"].cast<int>());
     }
-    if (solver_params.contains("shots")) {
-        config.set_shots(solver_params["shots"].cast<int>());
+    if (solver_params.contains("variational_shots")) {
+        config.set_shots(solver_params["variational_shots"].cast<int>());
     }
-    if (solver_params.contains("warmups")) {
-        config.set_warmups(solver_params["warmups"].cast<int>());
+    if (solver_params.contains("variational_warmups")) {
+        config.set_warmups(solver_params["variational_warmups"].cast<int>());
     }
     if (config.get_num_threads() <= 0) {
         config.set_num_threads(1);

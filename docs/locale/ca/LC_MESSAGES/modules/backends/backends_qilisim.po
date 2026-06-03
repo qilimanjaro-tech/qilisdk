@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-22 15:29+0200\n"
+"POT-Creation-Date: 2026-06-03 17:26+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -32,10 +32,10 @@ msgid ""
 "is required."
 msgstr ""
 "El backend **QiliSim** és el simulador de CPU per defecte desenvolupat "
-"per Qilimanjaro i escrit en C++. Implementa tots els funcionals primitius "
-"de manera nativa, suporta un model de soroll en totes les rutes d'execució "
-"i s'inclou amb la instal·lació principal de ``qilisdk`` — no requereix cap "
-"dependència ni maquinari addicional."
+"per Qilimanjaro i escrit en C++. Implementa tots els funcionals primitius"
+" de manera nativa, suporta un model de soroll en totes les rutes "
+"d'execució i s'inclou amb la instal·lació principal de ``qilisdk`` — no "
+"requereix cap dependència ni maquinari addicional."
 
 #: ../../modules/backends/backends_qilisim.rst:9
 msgid "Installation"
@@ -258,16 +258,18 @@ msgid "Variational annealing"
 msgstr "Recuit variacional"
 
 #: ../../modules/backends/backends_qilisim.rst:131
+#, fuzzy
 msgid ""
-"Only availalbe for X to Z annealing schedules. Can be used to simulate "
+"Only available for X to Z annealing schedules. Can be used to simulate "
 "large (i.e. 60+ qubits) systems at the cost of accuracy. Set `order=1` "
 "for a quicker but less accurate simulation. Increasing warmups can also "
 "improve accuracy at the cost of time."
 msgstr ""
-"Només disponible per a schedules de recuit de X a Z. Es pot utilitzar per "
-"simular sistemes grans (és a dir, 60+ qubits) a costa de la precisió. "
+"Només disponible per a schedules de recuit de X a Z. Es pot utilitzar per"
+" simular sistemes grans (és a dir, 60+ qubits) a costa de la precisió. "
 "Establiu `order=1` per a una simulació més ràpida però menys precisa. "
-"Augmentar els escalfaments també pot millorar la precisió a costa del temps."
+"Augmentar els escalfaments també pot millorar la precisió a costa del "
+"temps."
 
 #: ../../modules/backends/backends_qilisim.rst:132
 msgid ""
@@ -450,7 +452,7 @@ msgstr ""
 "d'estat in situ (rellevant per a mesures a mig circuit i computació de "
 "reservoris); per defecte ``False``."
 
-#: ../../modules/backends/backends_qilisim.rst:209
+#: ../../modules/backends/backends_qilisim.rst:212
 msgid "Noise model support"
 msgstr "Suport del model de soroll"
 

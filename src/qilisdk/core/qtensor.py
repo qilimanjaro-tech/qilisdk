@@ -43,6 +43,7 @@ class InitialState(Enum):
 
     UNIFORM = "uniform"
     ZERO = "zero"
+    ONE = "one"
 
     def as_qtensor(self, nqubits: int) -> QTensor:
         """
@@ -58,9 +59,11 @@ class InitialState(Enum):
             ValueError: If the symbolic initial state is not recognized.
         """
         if self == InitialState.ZERO:
-            return QTensor.zero(nqubits, "ket")
+            return QTensor.zero(nqubits)
         if self == InitialState.UNIFORM:
             return QTensor.uniform(nqubits)
+        if self == InitialState.ONE:
+            return QTensor.one(nqubits)
         raise ValueError(f"Unknown symbolic QTensor: {self.name}")
 
 

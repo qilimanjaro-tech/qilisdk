@@ -1654,9 +1654,9 @@ _unknown_initial_state = 42
 TEST(ParseSolverParams, OrderShotsWarmupsAreApplied) {
     py::gil_scoped_acquire gil;
     py::dict params;
-    params["order"] = py::int_(3);
-    params["shots"] = py::int_(200);
-    params["warmups"] = py::int_(50);
+    params["variational_order"] = py::int_(3);
+    params["variational_shots"] = py::int_(200);
+    params["variational_warmups"] = py::int_(50);
     QiliSimConfig config;
     EXPECT_NO_THROW(config = parse_solver_params(params));
     EXPECT_EQ(config.get_order(), 3);

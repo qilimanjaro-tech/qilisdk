@@ -146,15 +146,6 @@ def test_analog_evolution_set_parameter_values_clears_interpolator_cache():
     assert _isclose_cache(schedule.coefficients["H"][0.5], 2.0)
 
 
-def test_analog_evolution_initial_state_none_raises():
-    hamiltonian = Hamiltonian({(PauliZ(0),): 1.0})
-    schedule = Schedule(hamiltonians={"h": hamiltonian}, dt=0.1)
-    functional = AnalogEvolution(schedule=schedule, initial_state=ket(0).unit())
-    functional._initial_state = None
-    with pytest.raises(ValueError, match="No initial state was provided"):
-        _ = functional.initial_state
-
-
 def test_analog_evolution_set_parameter_bounds_propagates_to_schedule():
     """AnalogEvolution.set_parameter_bounds must update bounds in the Schedule."""
     p = Parameter("coeff", 2.0, bounds=(0.0, 3.0))
