@@ -47,12 +47,7 @@ if TYPE_CHECKING:
     from qilisdk.analog.hamiltonian import Hamiltonian
 
 
-def _assert_real(number: Number) -> float:
-    if isinstance(number, complex):
-        if abs(number.imag) < get_settings().atol:
-            return number.real
-        raise ValueError("Complex Number encountered when expecting only real values to be present.")
-    return number
+_EMPTY_GRAPH_MSG = "the graph must have at least one edge."
 
 
 class SlackCounter:
@@ -521,39 +516,85 @@ class Model:
     @classmethod
     def knapsack(
         cls,
-        values: list[Number],
-        weights: list[Number],
+        values: list[float],
+        weights: list[float],
         max_weight: float,
         label: str = "Knapsack",
         lagrange_multiplier: float = 100,
     ) -> Model:
         """Factory method to generate a knapsack model.
 
+        Implements the full Ising Hamiltonian of Lucas (2014), §5.2 with the
+        log-trick from §2.4 (Eqs. 49-50):
+
+        .. math::
+
+            H = A\\!\\left(\\sum_{k=0}^{M} c_k w_k - \\sum_\\alpha w_\\alpha x_\\alpha\\right)^2
+              - B\\sum_\\alpha c_\\alpha x_\\alpha
+
+        The binary variables ``w0, …, wM`` (``M = ⌊log₂ W⌋``) encode the total
+        knapsack weight with coefficients ``c_k = 2^k`` (``k < M``) and
+        ``c_M = W + 1 - 2^M``, covering every integer weight from 0 to *W*.  No
+        inequality or equality constraints are added; the entire problem lives in
+        the unconstrained objective.  The penalty scale must satisfy
+        ``A > B · max(values)``; with the defaults ``A = lagrange_multiplier``
+        and ``B = 1`` this requires ``lagrange_multiplier > max(values)``.
+        The total spin count is ``N + ⌊log₂ W⌋ + 1``.
+
         Args:
             values (list[Number]): the value of each item.
-            weights (list[Number]): the weight of each item.
-            max_weight (float): the maximum weight that can be put in the knapsack.
+            weights (list[Number]): the non-negative integer weight of each item.
+            max_weight (float): the maximum integer weight the knapsack can carry.
             label (str, optional): the model label. Defaults to "Knapsack".
-            lagrange_multiplier (float, optional): the lagrange multiplier value to be used for the constraint in the model.
+            lagrange_multiplier (float, optional): penalty scale *A*. Must exceed
+                ``max(values)`` for the solution to be correct. Defaults to 100.
 
         Returns:
             Model: a model of the knapsack problem with the given parameters.
 
         Raises:
-            ValueError: if the number of values and weights are different.
+            ValueError: if the number of values and weights differ.
             ValueError: if the number of items is zero.
+            ValueError: if weights or max_weight are not non-negative integers.
+            ValueError: if max_weight is not a positive integer.
         """
         num_items = len(values)
         if len(weights) != num_items:
-            raise ValueError("the number of weights must be equal to the number of values.")
-        bin_vars = [BinaryVariable(f"b{i}") for i in range(num_items)]
+            raise ValueError("The number of weights must be equal to the number of values.")
+        if num_items == 0:
+            raise ValueError("The number of items must be greater than zero.")
+
+        int_weights = [round(float(w)) for w in weights]
+        int_max = round(float(max_weight))
+        tol = get_settings().atol
+        if (
+            any(abs(float(w) - iw) > tol for w, iw in zip(weights, int_weights))
+            or abs(float(max_weight) - int_max) > tol
+        ):
+            raise ValueError("Knapsack weights and max_weight must be non-negative integers for the Ising formulation.")
+        if any(iw < 0 for iw in int_weights):
+            raise ValueError("Knapsack weights must be non-negative integers.")
+        if int_max <= 0:
+            raise ValueError("max_weight must be a positive integer.")
+
+        x = [BinaryVariable(f"b{i}") for i in range(num_items)]
+
+        # Binary weight encoding: M+1 bits, coefficients [1, 2, …, 2^(M-1), W+1-2^M].
+        # Covers every integer 0..W; any bit assignment automatically respects the bound.
+        M = int_max.bit_length() - 1
+        coeffs = [1 << k for k in range(M)] + [int_max + 1 - (1 << M)]
+        w_bits = [BinaryVariable(f"w{k}") for k in range(M + 1)]
+        weight_encoded = sum(coeffs[k] * w_bits[k] for k in range(M + 1))
+        weight_items = sum(int_weights[i] * x[i] for i in range(num_items))
+        value_term = sum(values[i] * x[i] for i in range(num_items))
+
+        # H = A*(weight mismatch)^2 - B*total_value  (B=1, A=lagrange_multiplier)
+        H = lagrange_multiplier * (weight_encoded - weight_items) ** 2 - value_term
+        if isinstance(H, Number):
+            raise ValueError("The objective term is constant; the problem is trivial.")
+
         model = cls(label)
-        objective = sum(values[i] * bin_vars[i] for i in range(num_items))
-        if isinstance(objective, Number):
-            raise ValueError("the number of items must be greater than zero.")
-        model.set_objective(objective, sense=ObjectiveSense.MAXIMIZE)
-        constraint = LEQ(sum(weights[i] * bin_vars[i] for i in range(num_items)), max_weight)
-        model.add_constraint("maximum weight", constraint, lagrange_multiplier=lagrange_multiplier)
+        model.set_objective(H)
         return model
 
     @classmethod
@@ -578,18 +619,14 @@ class Model:
         model = cls(label)
         variables = [BinaryVariable(f"x{i}") for i in range(num_variables)]
         generator = np.random.default_rng(seed)
+        term = Term([0], Operation.ADD)
         for i in range(num_variables):
-            model.set_objective(
-                model.objective.term
-                + generator.uniform(low=coefficient_range[0], high=coefficient_range[1]) * variables[i]
-            )
+            term += generator.uniform(low=coefficient_range[0], high=coefficient_range[1]) * variables[i]
             for j in range(i + 1, num_variables):
-                model.set_objective(
-                    model.objective.term
-                    + generator.uniform(low=coefficient_range[0], high=coefficient_range[1])
-                    * variables[i]
-                    * variables[j]
+                term += (
+                    generator.uniform(low=coefficient_range[0], high=coefficient_range[1]) * variables[i] * variables[j]
                 )
+        model.set_objective(term)
         return model
 
     @classmethod
@@ -647,7 +684,7 @@ class Model:
             (1 if weights is None else weights[i]) * (x[u] + x[v] - 2 * x[u] * x[v]) for i, (u, v) in enumerate(edges)
         )
         if isinstance(objective, Number):
-            raise ValueError("the graph must have at least one edge.")
+            raise ValueError(_EMPTY_GRAPH_MSG)
         model.set_objective(objective, sense=ObjectiveSense.MAXIMIZE)
         return model
 
@@ -661,32 +698,46 @@ class Model:
     ) -> Model:
         """Factory method to generate a graph coloring model.
 
-        Each vertex is assigned exactly one color and no two adjacent vertices may share a color.
-        This is a feasibility problem: the solver finds a valid ``num_colors``-coloring if one exists.
+        Implements the full Ising Hamiltonian of Lucas (2014), Eq. 51:
+
+        .. math::
+
+            H = A \\sum_v \\left(1 - \\sum_i x_{v,i}\\right)^2
+              + A \\sum_{(uv)\\in E} \\sum_i x_{u,i}\\, x_{v,i}
+
+        Both penalty terms — vertex uniqueness and edge conflicts — are encoded
+        directly as the quadratic objective with no separate constraints or slack
+        variables.  The ground state ``H = 0`` exists if and only if a valid
+        ``num_colors``-coloring of the graph exists.
 
         Args:
             edges (list[tuple[int, int]]): the edges of the graph as ``(u, v)`` pairs.
             num_colors (int): the number of colors available.
             label (str, optional): the model label. Defaults to "Graph Coloring".
-            lagrange_multiplier (float, optional): the lagrange multiplier value to be used for the constraints in the model.
+            lagrange_multiplier (float, optional): penalty scale *A* applied to
+                both terms. Defaults to 100.
 
         Returns:
             Model: a model of the graph coloring problem for the given graph.
         """
         nodes = sorted({n for u, v in edges for n in (u, v)})
         x = {(n, k): BinaryVariable(f"x{n}_{k}") for n in nodes for k in range(num_colors)}
-        model = cls(label)
-        for n in nodes:
-            model.add_constraint(
-                f"one_color_{n}",
-                EQ(sum(x[n, k] for k in range(num_colors)), 1),
-                lagrange_multiplier=lagrange_multiplier,
-            )
+
+        terms = []
+        # Term 1: vertex uniqueness — A*(1 - sum_k x_{v,k})^2 per vertex
+        for v in nodes:
+            color_sum = sum(x[v, k] for k in range(num_colors))
+            terms.append(lagrange_multiplier * (1 - color_sum) ** 2)
+        # Term 2: edge conflict — A*x_{u,k}*x_{v,k} per (edge, color) pair
         for u, v in edges:
             for k in range(num_colors):
-                model.add_constraint(
-                    f"conflict_{u}_{v}_{k}", LEQ(x[u, k] + x[v, k], 1), lagrange_multiplier=lagrange_multiplier
-                )
+                terms.append(lagrange_multiplier * x[u, k] * x[v, k])
+
+        model = cls(label)
+        if terms:
+            H = sum(terms)
+            if not isinstance(H, Number):
+                model.set_objective(H)
         return model
 
     @classmethod
@@ -699,15 +750,29 @@ class Model:
     ) -> Model:
         """Factory method to generate a travelling salesman model.
 
-        Binary variables ``x[i][t]`` encode whether city ``i`` is visited at position ``t``.
-        Two sets of constraints enforce a valid tour: each city is visited exactly once, and
-        each position in the tour is occupied by exactly one city.
+        Implements the full Ising Hamiltonian of Lucas (2014), §7.2 (Eqs. 56-57):
+
+        .. math::
+
+            H = A\\sum_v\\!\\left(1-\\sum_j x_{v,j}\\right)^2
+              + A\\sum_j\\!\\left(1-\\sum_v x_{v,j}\\right)^2
+              + B\\sum_{(uv)\\in E} W_{uv}\\sum_j x_{u,j}\\,x_{v,j+1}
+
+        City 0 is fixed at tour position 0, breaking the rotational symmetry and
+        reducing the spin count from N² to (N-1)².  Binary variable
+        ``x[i][t]`` (``i,t`` ∈ 1…N-1) encodes whether city ``i`` is at position
+        ``t``; city 0 at position 0 is implicit.  Both constraint penalties and
+        the distance objective are combined into a single unconstrained Hamiltonian
+        with no separate constraints.  The penalty scale must satisfy
+        ``A > B·max(distances)``; with ``A = lagrange_multiplier`` and ``B = 1``
+        this requires ``lagrange_multiplier > max(distances)``.
 
         Args:
             edges (list[tuple[int, int]]): list of undirected edges as ``(city_i, city_j)`` pairs.
             distances (list[float]): travel cost for each edge, parallel to ``edges``.
             label (str, optional): the model label. Defaults to "Travelling Salesman".
-            lagrange_multiplier (float, optional): the lagrange multiplier value to be used for the constraints in the model.
+            lagrange_multiplier (float, optional): penalty scale *A* for the
+                tour-validity terms. Defaults to 100.
 
         Returns:
             Model: a model of the travelling salesman problem for the given graph.
@@ -718,80 +783,40 @@ class Model:
         if len(edges) != len(distances):
             raise ValueError("edges and distances must have the same length.")
         n = max(node for edge in edges for node in edge) + 1
-        x = [[BinaryVariable(f"x{i}_{t}") for t in range(n)] for i in range(n)]
-        model = cls(label)
-        objective = sum(
-            distances[k] * (x[i][t] * x[j][(t + 1) % n] + x[j][t] * x[i][(t + 1) % n])
-            for k, (i, j) in enumerate(edges)
-            for t in range(n)
-        )
-        if isinstance(objective, Number):
-            raise ValueError("the graph must have at least one edge.")
-        model.set_objective(objective)
-        for i in range(n):
-            model.add_constraint(
-                f"city_{i}", EQ(sum(x[i][t] for t in range(n)), 1), lagrange_multiplier=lagrange_multiplier
-            )
-        for t in range(n):
-            model.add_constraint(
-                f"position_{t}", EQ(sum(x[i][t] for i in range(n)), 1), lagrange_multiplier=lagrange_multiplier
-            )
-        return model
+        # x[i-1][t-1] = 1 iff city i is at position t, for i,t in 1..n-1
+        x = [[BinaryVariable(f"x{i}_{t}") for t in range(1, n)] for i in range(1, n)]
 
-    def brute_force(self) -> tuple[dict[str, Number], dict[BaseVariable, RealNumber]]:
-        """Solve the model by brute-force enumeration of all variable assignments.
-
-        Binary variables are assigned values from {0, 1}. Any other ``Variable`` is decomposed
-        via its encoding: all bit patterns are enumerated and decoded to their representable
-        values, so the search covers every value the encoding can express regardless of domain.
-
-        Returns:
-            dict[str, Number]: a dictionary mapping the label of the objective and each constraint to their evaluated value at the optimal solution.
-            dict[BaseVariable, RealNumber]: a dictionary mapping each variable to its value in the optimal solution.
-
-        Raises:
-            ValueError: if the model contains a variable that has no encoding (i.e. is not a
-                BinaryVariable or a bounded Variable).
-        """
-        variables = self.variables()
-
-        domains: list[list[RealNumber]] = []
-        for v in variables:
-            if isinstance(v, BinaryVariable):
-                domains.append([0, 1])
-            elif isinstance(v, Variable):
-                n_bits = v.num_binary_equivalent()
-                seen: set[RealNumber] = set()
-                vals: list[RealNumber] = []
-                for bits_int in range(2**n_bits):
-                    bits = [(bits_int >> b) & 1 for b in range(n_bits)]
-                    val = v.evaluate(bits)
-                    if val not in seen:
-                        seen.add(val)
-                        vals.append(val)
-                domains.append(vals)
+        terms = []
+        # City-uniqueness: A*(1 - sum_t x_{v,t})^2 for each free city v
+        for i in range(1, n):
+            city_sum = sum(x[i - 1][t - 1] for t in range(1, n))
+            terms.append(lagrange_multiplier * (1 - city_sum) ** 2)
+        # Position-uniqueness: A*(1 - sum_v x_{v,t})^2 for each free position t
+        for t in range(1, n):
+            pos_sum = sum(x[i - 1][t - 1] for i in range(1, n))
+            terms.append(lagrange_multiplier * (1 - pos_sum) ** 2)
+        # Distance objective (B = 1)
+        for k, (u, v) in enumerate(edges):
+            w = distances[k]
+            if u == 0 or v == 0:
+                # Edge involving city 0 (fixed at position 0):
+                # forward leg 0→j at position 1, backward leg j→0 at position n-1.
+                j = v if u == 0 else u
+                terms.extend([w * x[j - 1][0], w * x[j - 1][n - 2]])
             else:
-                raise ValueError(f"Brute-force enumeration is not supported for variable {v} of domain {v.domain}.")
+                # Both cities are free; sum over interior positions 1..n-2.
+                for t in range(1, n - 1):
+                    terms.extend([w * x[u - 1][t - 1] * x[v - 1][t], w * x[v - 1][t - 1] * x[u - 1][t]])
 
-        total_combinations = 1
-        for d in domains:
-            total_combinations *= len(d)
-        if total_combinations > 1024:  # noqa: PLR2004
-            logger.warning(
-                f"Model has {total_combinations} combinations, brute-force enumeration may take a long time."
-            )
+        if not terms:
+            raise ValueError(_EMPTY_GRAPH_MSG)
+        H = sum(terms)
+        if isinstance(H, Number):
+            raise ValueError(_EMPTY_GRAPH_MSG)
 
-        best_sample: dict[BaseVariable, RealNumber] = {}
-        best_objective_value = float("inf")
-        for values in itertools.product(*domains):
-            sample = dict(zip(variables, values))
-            results = self.evaluate(sample)
-            objective_value = _assert_real(results[self.objective.label])
-            penalty = sum(_assert_real(results[c.label]) for c in self.constraints)
-            if objective_value + penalty < best_objective_value:
-                best_objective_value = objective_value + penalty
-                best_sample = sample
-        return self.evaluate(best_sample), best_sample
+        model = cls(label)
+        model.set_objective(H)
+        return model
 
 
 class _Linearizer:

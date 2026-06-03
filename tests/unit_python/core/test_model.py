@@ -37,6 +37,7 @@ from qilisdk.core.variables import (
     Term,
     Variable,
 )
+from qilisdk.utils.classical_solvers import BruteForceSolver
 
 
 # ---------- SlackCounter ----------
@@ -244,10 +245,11 @@ def test_model_to_ham():
 def test_model_knapsack_basic():
     m = Model.knapsack(values=[3, 2, 5], weights=[2, 1, 3], max_weight=4)
     assert m.label == "Knapsack"
-    assert len(m.variables()) == 3
-    assert len(m.constraints) == 1
-    assert m.constraints[0].label == "maximum weight"
-    assert m.objective.sense == ObjectiveSense.MAXIMIZE
+    # 3 item bits (b0..b2) + 3 weight bits (w0..w2, floor(log2(4))=2 → M+1=3)
+    assert len(m.variables()) == 6
+    # Full Ising Hamiltonian is entirely in the objective — no constraints
+    assert len(m.constraints) == 0
+    assert m.objective.sense == ObjectiveSense.MINIMIZE
 
 
 def test_model_knapsack_custom_label():
@@ -260,12 +262,18 @@ def test_model_knapsack_mismatched_lengths():
         Model.knapsack(values=[1, 2, 3], weights=[1, 2], max_weight=5)
 
 
+def test_model_knapsack_negative_weight():
+    with pytest.raises(ValueError, match=r"non-negative"):
+        Model.knapsack(values=[1, 2], weights=[-1, 2], max_weight=5)
+
+
 def test_model_knapsack_brute_force_solution():
     # items: value=5 weight=3, value=4 weight=2; max_weight=3
     # optimal: b0=1 only (value=5, weight=3); taking both violates constraint (weight=5>3)
     m = Model.knapsack(values=[5, 4], weights=[3, 2], max_weight=3)
-    _, sample = m.brute_force()
-    b0, b1 = list(sample.keys())
+    _, sample = BruteForceSolver().solve(m)
+    by_label = {v.label: v for v in m.variables()}
+    b0, b1 = by_label["b0"], by_label["b1"]
     assert 3 * sample[b0] + 2 * sample[b1] <= 3
     assert sample[b0] == 1
     assert sample[b1] == 0
@@ -297,7 +305,7 @@ def test_model_factoring_basic():
     assert m.label == "Factoring"
     assert len(m.constraints) == 0
     # brute-force should find factors: 6 = 2*3 → x0=0,x1=1 and y0=1,y1=0 (or permutations)
-    results, _ = m.brute_force()
+    results, _ = BruteForceSolver().solve(m)
     obj_val = next(iter(results.values()))
     assert obj_val == 0
 
@@ -331,7 +339,7 @@ def test_model_max_cut_brute_force_solution():
     # Path graph 0-1-2: max cut = 2 (put nodes 0,2 on one side, node 1 on the other).
     # evaluate() negates MAXIMIZE objectives, so brute_force returns the negated value (-2).
     m = Model.max_cut(edges=[(0, 1), (1, 2)])
-    results, _ = m.brute_force()
+    results, _ = BruteForceSolver().solve(m)
     obj_val = results[m.objective.label]
     assert obj_val == -2
 
@@ -340,8 +348,8 @@ def test_model_graph_coloring_basic():
     # Triangle graph needs 3 colors
     m = Model.graph_coloring(edges=[(0, 1), (1, 2), (0, 2)], num_colors=3)
     assert m.label == "Graph Coloring"
-    # one_color constraint per node (3) + conflict constraint per (edge, color) (3*3=9) = 12
-    assert len(m.constraints) == 12
+    # Full Ising Hamiltonian is entirely in the objective — no constraints (Lucas Eq. 51)
+    assert len(m.constraints) == 0
     assert len(m.variables()) == 9  # 3 nodes * 3 colors
 
 
@@ -350,13 +358,10 @@ def test_model_graph_coloring_custom_label():
     assert m.label == "MyColoring"
 
 
-def test_model_graph_coloring_constraint_labels():
+def test_model_graph_coloring_no_constraints():
+    # Lucas Eq. 51: entire Hamiltonian is the objective — no constraints at all
     m = Model.graph_coloring(edges=[(0, 1)], num_colors=2)
-    labels = {c.label for c in m.constraints}
-    assert "one_color_0" in labels
-    assert "one_color_1" in labels
-    assert "conflict_0_1_0" in labels
-    assert "conflict_0_1_1" in labels
+    assert len(m.constraints) == 0
 
 
 def test_model_travelling_salesman_basic():
@@ -364,8 +369,9 @@ def test_model_travelling_salesman_basic():
     distances = [1.0, 2.0, 3.0]
     m = Model.travelling_salesman(edges, distances)
     assert m.label == "Travelling Salesman"
-    assert len(m.variables()) == 9  # 3 cities * 3 positions
-    assert len(m.constraints) == 6  # 3 city + 3 position constraints
+    # City 0 fixed at position 0 (Lucas §7.2): (N-1)^2 = 4 variables, no constraints
+    assert len(m.variables()) == 4
+    assert len(m.constraints) == 0
 
 
 def test_model_travelling_salesman_custom_label():
@@ -380,45 +386,37 @@ def test_model_travelling_salesman_mismatched_lengths():
         Model.travelling_salesman([(0, 1), (1, 2)], [1.0])
 
 
-def test_model_travelling_salesman_constraint_labels():
+def test_model_travelling_salesman_no_constraints():
+    # Lucas §7.2: entire Hamiltonian is the objective — no constraints at all
     edges = [(0, 1), (0, 2), (1, 2)]
     distances = [1.0, 2.0, 3.0]
     m = Model.travelling_salesman(edges, distances)
-    labels = {c.label for c in m.constraints}
-    assert "city_0" in labels
-    assert "city_1" in labels
-    assert "city_2" in labels
-    assert "position_0" in labels
-    assert "position_1" in labels
-    assert "position_2" in labels
+    assert len(m.constraints) == 0
 
 
 def test_model_travelling_salesman_evaluate_valid_tour():
     edges = [(0, 1), (0, 2), (1, 2)]
     distances = [1.0, 2.0, 3.0]
     m = Model.travelling_salesman(edges, distances)
-    # Tour: city 0 → city 1 → city 2 → city 0 (cost = 1 + 3 + 2 = 6)
+    # Tour: city 0 (fixed at pos 0) → city 1 (pos 1) → city 2 (pos 2) → city 0
+    # Penalty terms = 0 (valid tour), distance = d(0,1)+d(1,2)+d(2,0) = 1+3+2 = 6.
+    # H = A*0 + 6 = 6.
     vars_by_label = {v.label: v for v in m.variables()}
     sample = dict.fromkeys(m.variables(), 0)
-    sample[vars_by_label["x0_0"]] = 1
-    sample[vars_by_label["x1_1"]] = 1
-    sample[vars_by_label["x2_2"]] = 1
+    sample[vars_by_label["x1_1"]] = 1  # city 1 at position 1
+    sample[vars_by_label["x2_2"]] = 1  # city 2 at position 2
     results = m.evaluate(sample)
-    for i in range(3):
-        assert results[f"city_{i}"] == 0
-    for t in range(3):
-        assert results[f"position_{t}"] == 0
     assert results[m.objective.label] == 6
 
 
-# ---------- Model.brute_force ----------
+# ---------- BruteForceSolver ----------
 
 
 def test_brute_force_minimize():
     m = Model("bf_min")
     x, y = BinaryVariable("x"), BinaryVariable("y")
     m.set_objective(x + 2 * y, sense=ObjectiveSense.MINIMIZE)
-    results, sample = m.brute_force()
+    results, sample = BruteForceSolver().solve(m)
     assert sample[x] == 0
     assert sample[y] == 0
     assert results[m.objective.label] == 0
@@ -428,7 +426,7 @@ def test_brute_force_maximize():
     m = Model("bf_max")
     x, y = BinaryVariable("x"), BinaryVariable("y")
     m.set_objective(x + 2 * y, sense=ObjectiveSense.MAXIMIZE)
-    results, sample = m.brute_force()
+    results, sample = BruteForceSolver().solve(m)
     assert sample[x] == 1
     assert sample[y] == 1
     # evaluate() negates MAXIMIZE objectives, so the returned value is -(x + 2y) = -3.
@@ -439,8 +437,9 @@ def test_brute_force_respects_constraints():
     # Without constraint handling, brute_force would greedily pick all items (value=18, weight=14)
     # which violates max_weight=5. The correct answer is b0=1,b1=1 (value=7, weight=5).
     m = Model.knapsack(values=[3, 4, 5, 6], weights=[2, 3, 4, 5], max_weight=5)
-    _, sample = m.brute_force()
-    b0, b1, b2, b3 = list(sample.keys())
+    _, sample = BruteForceSolver().solve(m)
+    by_label = {v.label: v for v in m.variables()}
+    b0, b1, b2, b3 = by_label["b0"], by_label["b1"], by_label["b2"], by_label["b3"]
     assert 2 * sample[b0] + 3 * sample[b1] + 4 * sample[b2] + 5 * sample[b3] <= 5
     assert sample[b0] == 1
     assert sample[b1] == 1
@@ -453,7 +452,7 @@ def test_brute_force_returns_evaluate_dict():
     x = BinaryVariable("x")
     m.set_objective(x + 0, sense=ObjectiveSense.MINIMIZE)
     m.add_constraint("must_be_zero", EQ(x, 0))
-    results, _ = m.brute_force()
+    results, _ = BruteForceSolver().solve(m)
     # results should contain both the objective label and the constraint label
     assert m.objective.label in results
     assert "must_be_zero" in results
@@ -463,17 +462,17 @@ def test_brute_force_with_bounded_variable():
     m = Model("bf_bounded")
     v = Variable("v", Domain.POSITIVE_INTEGER, bounds=(0, 3))
     m.set_objective(v + 0, sense=ObjectiveSense.MINIMIZE)
-    _, sample = m.brute_force()
+    _, sample = BruteForceSolver().solve(m)
     assert sample[v] == 0
 
 
 def test_brute_force_raises_for_unsupported_variable():
-    # SpinVariable is not BinaryVariable or Variable, so brute_force raises ValueError.
+    # SpinVariable is not BinaryVariable or Variable, so BruteForceSolver raises ValueError.
     m = Model("bf_spin")
     s = SpinVariable("s")
     m.set_objective(s + 0)
     with pytest.raises(ValueError):  # noqa: PT011
-        m.brute_force()
+        BruteForceSolver().solve(m)
 
 
 # ---------- QUBO ----------
