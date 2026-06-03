@@ -23,9 +23,10 @@ from qilisdk.analog.hamiltonian import Z as pauli_z
 from qilisdk.analog.schedule import Schedule
 from qilisdk.backends.backend_config import AnalogMethod, DigitalMethod, ExecutionConfig, MonteCarloConfig
 from qilisdk.backends.qilisim import QiliSim
-from qilisdk.core.qtensor import ket
+from qilisdk.core.qtensor import QTensor, ket
 from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, H, M, X, Y, Z
 from qilisdk.functionals import AnalogEvolution, DigitalPropagation, FunctionalResult
+from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
 from qilisdk.readout import Readout, SamplingReadout
 
 analog_methods = [
@@ -272,3 +273,66 @@ def test_mid_circuit_measurement_collapse():
     assert "00" in samples
     assert "10" in samples
     assert samples["00"] + samples["10"] == 50
+
+
+def test_matrix_free_complex_gate_on_mixed_state_stays_hermitian():
+    """Regression: ``rho -> U rho U†`` on the matrix-free path must use ``U†`` (conjugate
+    transpose), not ``U*`` (conjugate).
+
+    A qubit reset turns the state into a *mixed* density matrix, so gate application takes
+    the density-matrix (``LeftAndRight``) path. With a complex, non-symmetric single-qubit
+    gate (``U2``), the buggy right-multiplication computed ``U rho U*`` instead of ``U rho U†``,
+    producing a non-Hermitian state and raising "imaginary expectation value". Real-symmetric
+    (X/Z/H) and diagonal (S/T) gates are unaffected, which is why this slipped through.
+
+    This guards the regression three ways: the run must succeed with real expectation values,
+    the matrix-free path must agree with the explicit-matrix path, and the tomographed state
+    must remain a valid (Hermitian) density matrix.
+    """
+
+    def _build() -> QuantumReservoir:
+        pre = Circuit(2)
+        pre.add(U2(1, phi=ReservoirInput("phi", 0.1), gamma=ReservoirInput("gamma", 0.1)))
+        layer = ReservoirLayer(
+            evolution_dynamics=Schedule(
+                hamiltonians={"h": pauli_z(0) + pauli_z(1) + pauli_z(0) * pauli_z(1) + 0.5 * (pauli_x(0) + pauli_x(1))},
+                total_time=1.0,
+                dt=0.1,
+            ),
+            input_encoding=pre,
+            qubits_to_reset=[0],
+        )
+        return QuantumReservoir(
+            initial_state=QTensor.uniform(2).to_density_matrix(),
+            reservoir_layer=layer,
+            input_per_layer=[{"phi": 0.2, "gamma": 0.1}, {"phi": 0.3, "gamma": 0.2}],
+        )
+
+    readout = (
+        Readout()
+        .with_expectation(observables=[pauli_z(0), pauli_z(1), pauli_z(0) * pauli_z(1)])
+        .with_state_tomography()
+    )
+
+    # The buggy matrix-free path raised "imaginary expectation value" here.
+    matrix_free = QiliSim(digital_simulation_method=DigitalMethod(matrix_free=True)).execute(_build(), readout)
+    explicit = QiliSim(digital_simulation_method=DigitalMethod(matrix_free=False)).execute(_build(), readout)
+
+    mf_values = np.asarray(matrix_free.get_expectation_values())
+    explicit_values = np.asarray(explicit.get_expectation_values())
+
+    # Matrix-free must match the explicit-matrix ground truth.
+    np.testing.assert_allclose(mf_values, explicit_values, atol=1e-9)
+
+    def _dense(qtensor) -> np.ndarray:
+        data = qtensor.data
+        return np.asarray(data.todense() if hasattr(data, "todense") else data)
+
+    # The state after reset + complex gate must stay Hermitian and trace-1. The bug produced
+    # states off by ~17 from their adjoint; here we require agreement to numerical precision.
+    mf_state = _dense(matrix_free.get_state())
+    np.testing.assert_allclose(mf_state, mf_state.conj().T, atol=1e-9)
+    assert abs(np.trace(mf_state) - 1.0) < 1e-9
+
+    # And it must match the explicit-matrix path's state.
+    np.testing.assert_allclose(mf_state, _dense(explicit.get_state()), atol=1e-9)
