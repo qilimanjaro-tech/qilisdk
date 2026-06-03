@@ -783,6 +783,91 @@ def test_calculate_eigenvalues():
     assert np.allclose(eigenvalues[-1], evals_h2)
 
 
+def test_schedule_constant():
+    dt = 1
+    H1 = PauliZ(0).to_hamiltonian()
+    sched = Schedule.constant(H1, total_time=10, dt=dt)
+    assert sched.hamiltonians == {"constant": H1}
+    assert _isclose(sched.coefficients["constant"][0], 1.0)
+    assert _isclose(sched.coefficients["constant"][5], 1.0)
+    assert _isclose(sched.coefficients["constant"][10], 1.0)
+    assert _isclose(sched.T, 10.0)
+
+
+def test_schedule_linear_list_single_delegates_to_constant():
+    dt = 1
+    H1 = PauliX(0).to_hamiltonian()
+    sched = Schedule.linear_list([H1], total_time=10, dt=dt)
+    assert "constant" in sched.hamiltonians
+    assert _isclose(sched.coefficients["constant"][0], 1.0)
+    assert _isclose(sched.coefficients["constant"][10], 1.0)
+
+
+def test_schedule_linear_list_two_delegates_to_linear():
+    dt = 1
+    H1 = PauliX(0).to_hamiltonian()
+    H2 = PauliZ(0).to_hamiltonian()
+    sched = Schedule.linear_list([H1, H2], total_time=10, dt=dt)
+    assert sched.hamiltonians == {"driver": H1, "problem": H2}
+    assert _isclose(sched.coefficients["driver"][0], 1.0)
+    assert _isclose(sched.coefficients["problem"][10], 1.0)
+
+
+def test_schedule_linear_list_three():
+    dt = 1
+    H1 = PauliX(0).to_hamiltonian()
+    H2 = PauliZ(0).to_hamiltonian()
+    H3 = PauliX(0).to_hamiltonian()
+    sched = Schedule.linear_list([H1, H2, H3], total_time=10, dt=dt)
+    assert sched.hamiltonians == {"h0": H1, "h1": H2, "h2": H3}
+
+    # boundary values
+    assert _isclose(sched.coefficients["h0"][0], 1.0)
+    assert _isclose(sched.coefficients["h0"][5], 0.0)
+    assert _isclose(sched.coefficients["h0"][10], 0.0)
+
+    assert _isclose(sched.coefficients["h1"][0], 0.0)
+    assert _isclose(sched.coefficients["h1"][5], 1.0)
+    assert _isclose(sched.coefficients["h1"][10], 0.0)
+
+    assert _isclose(sched.coefficients["h2"][0], 0.0)
+    assert _isclose(sched.coefficients["h2"][5], 0.0)
+    assert _isclose(sched.coefficients["h2"][10], 1.0)
+
+    # coefficients sum to 1 at all sampled times
+    for t in sched.tlist:
+        total = sum(sched.coefficients[f"h{i}"][t] for i in range(3))
+        assert _isclose(total, 1.0), f"sum={total} at t={t}"
+
+
+def test_schedule_linear_list_four():
+    dt = 1
+    hamiltonians = [
+        PauliX(0).to_hamiltonian(),
+        PauliZ(0).to_hamiltonian(),
+        PauliX(0).to_hamiltonian(),
+        PauliZ(0).to_hamiltonian(),
+    ]
+    sched = Schedule.linear_list(hamiltonians, total_time=9, dt=dt)
+    assert list(sched.hamiltonians.keys()) == ["h0", "h1", "h2", "h3"]
+
+    # each Hamiltonian peaks at its own segment boundary
+    assert _isclose(sched.coefficients["h0"][0], 1.0)
+    assert _isclose(sched.coefficients["h1"][3], 1.0)
+    assert _isclose(sched.coefficients["h2"][6], 1.0)
+    assert _isclose(sched.coefficients["h3"][9], 1.0)
+
+    # coefficients sum to 1 at transition midpoints
+    for t in [1.5, 4.5, 7.5]:
+        total = sum(sched.coefficients[f"h{i}"][t] for i in range(4))
+        assert _isclose(total, 1.0), f"sum={total} at t={t}"
+
+
+def test_schedule_linear_list_empty_raises():
+    with pytest.raises(ValueError, match=r"At least one Hamiltonian"):
+        Schedule.linear_list([], total_time=10)
+
+
 def test_calculate_eigenvalues_with_too_many_qubits_runs_but_warns(monkeypatch):
     class DummyQTensor:
         def __init__(self, nqubits):
