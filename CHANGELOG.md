@@ -1,3 +1,21 @@
+# qilisdk 0.2.0 (2026-06-03)
+
+## Features
+
+- New CudaSamplingMethods - CPU and STATE_VECTOR_MGPU, to tell the CudaBackend to use CPU or multiple GPUs, respectively. Multiple GPU statevector simulation requires a very specific setup, check the latest NVIDIA docs to see what versions of the various libraries they recommend. 
+
+  The performance of post-processing CUDA samples has also been improved. When calculating an observable cost function from samples, previously .get_probabilities() was used which if the results contained a state (as per the output of CUDA dynamics), would be 2^n values, rather than just the number of samples. ([PR #217](https://github.com/qilimanjaro-tech/qilisdk/pull/217))
+
+## Bugfixes
+
+- Fixed a bug in which the `CudaBackend` would crash if the user requested expectation values or a state from an MPS or tensor simulation. Now an error is correctly raised, telling the user to use sampling instead. This information has also been added to the docs. ([PR #221](https://github.com/qilimanjaro-tech/qilisdk/pull/221))
+- Fixed a bug in the `QiliSim` matrix-free digital simulator where applying a complex, non-symmetric single-qubit gate (such as `U2` or `U3`) to a *mixed* density matrix computed `U·ρ·U*` (complex conjugate) instead of `U·ρ·U†` (conjugate transpose). This produced a non-Hermitian state and could raise a spurious "imaginary expectation value" error. Real-symmetric gates (`X`, `Z`, `H`) and diagonal gates (`S`, `T`) were unaffected. This most commonly surfaced in `QuantumReservoir` runs, where resetting a qubit turns the state mixed before the next layer's input-encoding gate is applied. ([PR #227](https://github.com/qilimanjaro-tech/qilisdk/pull/227))
+
+## Misc
+
+- [PR #223](https://github.com/qilimanjaro-tech/qilisdk/pull/223)
+
+
 # qilisdk 0.2.0 (2026-05-26)
 
 ## Features
