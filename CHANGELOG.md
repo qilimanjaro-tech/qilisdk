@@ -1,4 +1,4 @@
-# qilisdk 0.2.0 (2026-06-03)
+# qilisdk 0.2.0.post1 (2026-06-03)
 
 ## Features
 
