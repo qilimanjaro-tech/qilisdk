@@ -1002,3 +1002,98 @@ def test_to_qubo_linearises_quartic_monomial():
     assert len(aux_labels) == 2
     best_args, _ = _qubo_minimum(qubo)
     assert best_args[a] * best_args[b] * best_args[c] * best_args[d] == 1
+
+
+def test_generate_encoding_constraints_idempotent():
+    m = Model("enc")
+    v = Variable("v", Domain.POSITIVE_INTEGER, bounds=(0, 3))
+    m.add_constraint("c1", EQ(v, 1))
+    enc_count = len(m.encoding_constraints)
+    assert enc_count > 0
+    m.add_constraint("c2", LEQ(v, 2))  # v's encoding constraints already exist — must not duplicate
+    assert len(m.encoding_constraints) == enc_count
+
+
+def test_model_str_with_encoding_constraints():
+    m = Model("enc_str")
+    v = Variable("v", Domain.POSITIVE_INTEGER, bounds=(0, 3))
+    m.add_constraint("c", EQ(v, 1))
+    s = str(m)
+    assert "subject to the encoding constraint/s:" in s
+
+
+def test_model_knapsack_zero_items():
+    with pytest.raises(ValueError, match=r"number of items must be greater than zero"):
+        Model.knapsack(values=[], weights=[], max_weight=5)
+
+
+def test_model_knapsack_non_integer_max_weight():
+    with pytest.raises(ValueError, match=r"non-negative integers"):
+        Model.knapsack(values=[1], weights=[1], max_weight=1.5)
+
+
+def test_model_knapsack_zero_max_weight():
+    with pytest.raises(ValueError, match=r"max_weight must be a positive integer"):
+        Model.knapsack(values=[1], weights=[1], max_weight=0)
+
+
+def test_model_max_cut_empty_edges():
+    with pytest.raises(ValueError, match=r"the graph must have at least one edge"):
+        Model.max_cut(edges=[])
+
+
+def test_model_travelling_salesman_reversed_city0_edge():
+    # Edge (2, 0) has v == 0 and u != 0, exercising the `else u` branch (j = u).
+    edges = [(0, 1), (2, 0), (1, 2)]
+    distances = [1.0, 2.0, 3.0]
+    m = Model.travelling_salesman(edges, distances)
+    assert len(m.variables()) == 4  # (N-1)^2 with N=3
+
+
+def test_model_to_qubo_lagrange_multiplier_override():
+    m = Model("lm_override")
+    b = BinaryVariable("b")
+    term = b * 1
+    m.set_objective(term)
+    m.add_constraint("c", EQ(b, 0), lagrange_multiplier=100)
+    # "c" is already in the dict → the model's default (100) must NOT overwrite it.
+    q = m.to_qubo(lagrange_multiplier_dict={"c": 42})
+    assert q.lagrange_multipliers.get("c") == 42
+
+
+def test_linearizer_reduce_non_term():
+    linearizer = _Linearizer()
+    assert linearizer.reduce(42) == 42
+
+
+def test_compute_lower_upper_limits_mul_positive_coefficient():
+    q = QUBO("test")
+    b = BinaryVariable("b")
+    mul_term = 2 * b  # MUL term, positive coefficient
+    _, lower, upper = q._compute_lower_and_upper_limits(mul_term)
+    assert upper == 2
+    assert lower == 0
+
+
+def test_compute_lower_upper_limits_mul_negative_coefficient():
+    q = QUBO("test")
+    b = BinaryVariable("b")
+    mul_term = -2 * b  # MUL term, negative coefficient
+    _, lower, upper = q._compute_lower_and_upper_limits(mul_term)
+    assert lower == -2
+    assert upper == 0
+
+
+def test_compute_lower_upper_limits_unsupported_operation():
+    q = QUBO("test")
+    b = BinaryVariable("b")
+    sub_term = Term([b, 1], Operation.SUB)
+    with pytest.raises(ValueError, match=r"Operation .* in constraint is not supported"):
+        q._compute_lower_and_upper_limits(sub_term)
+
+
+def test_qubo_set_objective_cubic_without_linearizer_raises():
+    q = QUBO("test")
+    x, y, z = BinaryVariable("x"), BinaryVariable("y"), BinaryVariable("z")
+    with pytest.raises(ValueError, match=r"QUBO objective can not contain terms of order higher than 2"):
+        q.set_objective(x * y * z)
