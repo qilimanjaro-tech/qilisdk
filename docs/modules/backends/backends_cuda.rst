@@ -65,31 +65,43 @@ Configuration
 
 The CUDA backend exposes a single configuration parameter —
 :class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod` — that selects the underlying CUDA-Q
-target used for **digital** circuits. Analog evolution always runs on the ``dynamics`` target and
-ignores this setting.
+target used for **digital** circuits. If no method is specified, ``STATE_VECTOR`` is used.
+Analog evolution always runs on the ``dynamics`` target and ignores this setting. 
 
 .. list-table::
    :header-rows: 1
-   :widths: 25 60 15
+   :widths: 25 60 15 15 15
 
    * - Method
-     - CUDA-Q target (and fallback)
-     - Default
+     - CUDA-Q target
+     - Supports Sampling
+     - Supports Expectation Values
+     - Supports State Tomography
    * - :class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.STATE_VECTOR`
-     - ``nvidia`` (GPU) when a GPU is available, otherwise ``qpp-cpu``. Precision matches :class:`~qilisdk.settings.Precision`.
+     - ``nvidia`` when a GPU is available, otherwise ``qpp-cpu``. Precision matches :class:`~qilisdk.settings.Precision`.
+     - |y|
+     - |y|
      - |y|
    * - :class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.STATE_VECTOR_MGPU`
-     - ``nvidia-mgpu`` (multiple GPUs) when multiple GPUs are available, otherwise falls back to ``nvidia``.
-     - 
+     - ``nvidia-mgpu`` when multiple GPUs are available, otherwise falls back to ``nvidia``.
+     - |y|
+     - |y|
+     - |y|
    * - :class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.TENSOR_NETWORK`
      - ``tensornet``. Good for shallow, wide circuits.
-     -
+     - |y|
+     - |n|
+     - |n|
    * - :class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.MATRIX_PRODUCT_STATE`
      - ``tensornet-mps``. Good for low-entanglement, long circuits.
-     -
+     - |y|
+     - |n|
+     - |n|
    * - :class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.CPU`
      - ``cpu``. Force running on CPU. Mostly useful for benchmarking.
-     -
+     - |y|
+     - |y|
+     - |y|
 
 Set the method at construction time:
 

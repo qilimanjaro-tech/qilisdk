@@ -794,8 +794,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
                 if (c0 & control_mask) {
                     Eigen::VectorXcd temp0 = output_state.col(c0);
                     Eigen::VectorXcd temp1 = output_state.col(c1);
-                    output_state.col(c0) = base_matrix_conj(0, 0) * temp0 + base_matrix_conj(0, 1) * temp1;
-                    output_state.col(c1) = base_matrix_conj(1, 0) * temp0 + base_matrix_conj(1, 1) * temp1;
+                    output_state.col(c0) = base_matrix_conj(0, 0) * temp0 + base_matrix_conj(1, 0) * temp1;
+                    output_state.col(c1) = base_matrix_conj(0, 1) * temp0 + base_matrix_conj(1, 1) * temp1;
                 }
             }
         } else if (application_type == MatrixFreeApplicationType::LeftAndRight) {
@@ -833,8 +833,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
                     if (c0 & control_mask) {
                         Eigen::VectorXcd temp0 = output_state.col(c0);
                         Eigen::VectorXcd temp1 = output_state.col(c1);
-                        output_state.col(c0) = base_matrix_conj(0, 0) * temp0 + base_matrix_conj(0, 1) * temp1;
-                        output_state.col(c1) = base_matrix_conj(1, 0) * temp0 + base_matrix_conj(1, 1) * temp1;
+                        output_state.col(c0) = base_matrix_conj(0, 0) * temp0 + base_matrix_conj(1, 0) * temp1;
+                        output_state.col(c1) = base_matrix_conj(0, 1) * temp0 + base_matrix_conj(1, 1) * temp1;
                     }
                 }
             }
@@ -885,8 +885,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
                 long c1 = c0 + stride;
                 Eigen::VectorXcd temp0 = output_state.col(c0);
                 Eigen::VectorXcd temp1 = output_state.col(c1);
-                output_state.col(c0) = base_matrix_conj(0, 0) * temp0 + base_matrix_conj(0, 1) * temp1;
-                output_state.col(c1) = base_matrix_conj(1, 0) * temp0 + base_matrix_conj(1, 1) * temp1;
+                output_state.col(c0) = base_matrix_conj(0, 0) * temp0 + base_matrix_conj(1, 0) * temp1;
+                output_state.col(c1) = base_matrix_conj(0, 1) * temp0 + base_matrix_conj(1, 1) * temp1;
             }
         } else if (application_type == MatrixFreeApplicationType::LeftAndRight) {
             DenseMatrix base_matrix_conj = base_matrix.conjugate().transpose();
@@ -919,8 +919,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
                     long c1 = c0 + stride;
                     Eigen::VectorXcd temp0 = output_state.col(c0);
                     Eigen::VectorXcd temp1 = output_state.col(c1);
-                    output_state.col(c0) = base_matrix_conj(0, 0) * temp0 + base_matrix_conj(0, 1) * temp1;
-                    output_state.col(c1) = base_matrix_conj(1, 0) * temp0 + base_matrix_conj(1, 1) * temp1;
+                    output_state.col(c0) = base_matrix_conj(0, 0) * temp0 + base_matrix_conj(1, 0) * temp1;
+                    output_state.col(c1) = base_matrix_conj(0, 1) * temp0 + base_matrix_conj(1, 1) * temp1;
                 }
             }
         }

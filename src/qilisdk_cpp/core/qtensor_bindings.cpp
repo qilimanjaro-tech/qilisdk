@@ -41,6 +41,7 @@ PYBIND11_MODULE(qtensor_module, m) {
         .def("norm", &QTensorCpp::norm)
         .def("normalized", &QTensorCpp::normalized)
         .def("zero", &QTensorCpp::zero)
+        .def("one", &QTensorCpp::one)
         .def("ket_python", &QTensorCpp::ket_python)
         .def("bra_python", &QTensorCpp::bra_python)
         .def("expectation_value_python", &QTensorCpp::expectation_value_python)
