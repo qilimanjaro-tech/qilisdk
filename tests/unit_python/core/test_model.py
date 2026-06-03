@@ -14,7 +14,7 @@
 
 
 import copy
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -932,10 +932,8 @@ def test_to_qubo_linearises_cubic_objective():
     qubo = m.to_qubo(linearization_lagrange_multiplier=50)
     aux_labels = [v.label for v in qubo.variables() if v.label.startswith("_linearization_aux")]
     assert len(aux_labels) == 1
-    # Exactly one Rosenberg constraint.
     rosenberg = [c for c in qubo.constraints if c.label.startswith("linearization_")]
     assert len(rosenberg) == 1
-    # Brute force: the QUBO optimum should have xyz = 1 and aux = x*y.
     best_args, _ = _qubo_minimum(qubo)
     assert best_args[x] * best_args[y] * best_args[z] == 1
 
@@ -947,7 +945,6 @@ def test_to_qubo_linearises_cubic_equality_constraint():
     m.add_constraint("forbid_triple", EQ(x * y * z, 0), lagrange_multiplier=20)
     qubo = m.to_qubo(linearization_lagrange_multiplier=50)
     best_args, _ = _qubo_minimum(qubo)
-    # The constraint forbids (1,1,1); best feasible is two out of three = 1.
     assert best_args[x] * best_args[y] * best_args[z] == 0
     assert best_args[x] + best_args[y] + best_args[z] == 2
 
@@ -969,7 +966,6 @@ def test_to_qubo_auxiliary_reused_between_objective_and_constraint():
     m.add_constraint("c", EQ(x * y * w, 0), lagrange_multiplier=10)
     qubo = m.to_qubo()
     aux_labels = [v.label for v in qubo.variables() if v.label.startswith("_linearization_aux")]
-    # The x*y pair is shared between the objective monomial and the EQ constraint penalty.
     assert len(aux_labels) == 1
 
 
@@ -997,7 +993,6 @@ def test_to_qubo_linearises_quartic_monomial():
     a, b, c, d = (BinaryVariable(name) for name in ("a", "b", "c", "d"))
     m.set_objective(-(a * b * c * d))  # minimise = maximise abcd
     qubo = m.to_qubo(linearization_lagrange_multiplier=100)
-    # A degree-4 monomial needs two substitutions to collapse to quadratic.
     aux_labels = [v.label for v in qubo.variables() if v.label.startswith("_linearization_aux")]
     assert len(aux_labels) == 2
     best_args, _ = _qubo_minimum(qubo)
@@ -1010,7 +1005,7 @@ def test_generate_encoding_constraints_idempotent():
     m.add_constraint("c1", EQ(v, 1))
     enc_count = len(m.encoding_constraints)
     assert enc_count > 0
-    m.add_constraint("c2", LEQ(v, 2))  # v's encoding constraints already exist — must not duplicate
+    m.add_constraint("c2", LEQ(v, 2))
     assert len(m.encoding_constraints) == enc_count
 
 
@@ -1037,17 +1032,34 @@ def test_model_knapsack_zero_max_weight():
         Model.knapsack(values=[1], weights=[1], max_weight=0)
 
 
+def test_model_knapsack_trivial_hamiltonian_raises():
+    with patch("qilisdk.core.model.BinaryVariable", return_value=0):
+        with pytest.raises(ValueError, match=r"trivial"):
+            Model.knapsack(values=[1, 2], weights=[1, 2], max_weight=3)
+
+
 def test_model_max_cut_empty_edges():
-    with pytest.raises(ValueError, match=r"the graph must have at least one edge"):
+    with pytest.raises(ValueError, match=r"The graph must have at least one edge"):
         Model.max_cut(edges=[])
 
 
 def test_model_travelling_salesman_reversed_city0_edge():
-    # Edge (2, 0) has v == 0 and u != 0, exercising the `else u` branch (j = u).
     edges = [(0, 1), (2, 0), (1, 2)]
     distances = [1.0, 2.0, 3.0]
     m = Model.travelling_salesman(edges, distances)
     assert len(m.variables()) == 4  # (N-1)^2 with N=3
+
+
+def test_model_travelling_salesman_empty_terms_raises():
+    with patch("builtins.max", return_value=0):
+        with pytest.raises(ValueError, match="at least one edge"):
+            Model.travelling_salesman([], [])
+
+
+def test_model_travelling_salesman_trivial_hamiltonian_raises():
+    with patch("qilisdk.core.model.BinaryVariable", return_value=0):
+        with pytest.raises(ValueError, match="at least one edge"):
+            Model.travelling_salesman([(0, 1), (1, 2), (0, 2)], [1.0, 2.0, 3.0])
 
 
 def test_model_to_qubo_lagrange_multiplier_override():
@@ -1056,7 +1068,6 @@ def test_model_to_qubo_lagrange_multiplier_override():
     term = b * 1
     m.set_objective(term)
     m.add_constraint("c", EQ(b, 0), lagrange_multiplier=100)
-    # "c" is already in the dict → the model's default (100) must NOT overwrite it.
     q = m.to_qubo(lagrange_multiplier_dict={"c": 42})
     assert q.lagrange_multipliers.get("c") == 42
 
@@ -1069,7 +1080,7 @@ def test_linearizer_reduce_non_term():
 def test_compute_lower_upper_limits_mul_positive_coefficient():
     q = QUBO("test")
     b = BinaryVariable("b")
-    mul_term = 2 * b  # MUL term, positive coefficient
+    mul_term = 2 * b
     _, lower, upper = q._compute_lower_and_upper_limits(mul_term)
     assert upper == 2
     assert lower == 0
@@ -1078,7 +1089,7 @@ def test_compute_lower_upper_limits_mul_positive_coefficient():
 def test_compute_lower_upper_limits_mul_negative_coefficient():
     q = QUBO("test")
     b = BinaryVariable("b")
-    mul_term = -2 * b  # MUL term, negative coefficient
+    mul_term = -2 * b
     _, lower, upper = q._compute_lower_and_upper_limits(mul_term)
     assert lower == -2
     assert upper == 0
@@ -1097,3 +1108,81 @@ def test_qubo_set_objective_cubic_without_linearizer_raises():
     x, y, z = BinaryVariable("x"), BinaryVariable("y"), BinaryVariable("z")
     with pytest.raises(ValueError, match=r"QUBO objective can not contain terms of order higher than 2"):
         q.set_objective(x * y * z)
+
+
+def test_linearizer_reduce_nested_add_element():
+    x, y, z = BinaryVariable("x"), BinaryVariable("y"), BinaryVariable("z")
+    inner = x + y
+    outer = Term([inner, z], Operation.ADD)
+    linearizer = _Linearizer()
+    result = linearizer.reduce(outer)
+    assert result.degree <= 2
+
+
+def test_linearizer_reduce_returns_non_add_non_mul_term_unchanged():
+    b = BinaryVariable("b")
+    sub_term = Term([b, 1], Operation.SUB)
+    linearizer = _Linearizer()
+    result = linearizer.reduce(sub_term)
+    assert result is sub_term
+
+
+def test_linearizer_reduce_monomial_nested_sub_term_raises():
+    x, y, z, w = BinaryVariable("x"), BinaryVariable("y"), BinaryVariable("z"), BinaryVariable("w")
+    inner_add = x + y
+    nested_mul = Term([inner_add, z, w], Operation.MUL)
+    linearizer = _Linearizer()
+    with pytest.raises(ValueError, match=r"does not support nested sub-term"):
+        linearizer._reduce_monomial(nested_mul)
+
+
+def test_linearizer_reduce_add_with_nested_add_sub_term():
+    x, y, z, w = BinaryVariable("x"), BinaryVariable("y"), BinaryVariable("z"), BinaryVariable("w")
+    cubic = x * y * z
+    inner_add = cubic + w
+    outer_add = Term([inner_add, w], Operation.ADD)
+    linearizer = _Linearizer()
+    result = linearizer.reduce(outer_add)
+    assert result.degree <= 2
+
+
+def test_linearizer_reduce_add_with_preserved_sub_term_element():
+    # Line 897: ADD term containing a non-MUL Term hits coeff * self.reduce(element).
+    # SUB sub-terms are NOT flattened by Term.__init__ (unlike same-operation ADD terms),
+    # so the SUB Term survives as a dict key and is seen by the reduce loop.
+    x, y, z = BinaryVariable("x"), BinaryVariable("y"), BinaryVariable("z")
+    sub_term = Term([x, y], Operation.SUB)
+    outer = Term([sub_term, z], Operation.ADD)
+    linearizer = _Linearizer()
+    result = linearizer.reduce(outer)
+    assert isinstance(result, Term)
+    assert result.operation == Operation.ADD
+
+
+def test_linearizer_reduce_monomial_wraps_constant_in_term():
+    linearizer = _Linearizer()
+    mock_monomial = MagicMock()
+    mock_monomial.operation = Operation.MUL
+    mock_monomial.degree = 3
+    mock_monomial.__iter__ = MagicMock(return_value=iter([]))  # no elements → variables stays []
+    result = linearizer._reduce_monomial(mock_monomial)
+    assert isinstance(result, Term)
+    assert result.operation == Operation.MUL
+
+
+def test_compute_lower_upper_limits_add_negative_coefficient():
+    q = QUBO("test")
+    b1, b2 = BinaryVariable("b1"), BinaryVariable("b2")
+    h = b1 - b2
+    _, lower, upper = q._compute_lower_and_upper_limits(h)
+    assert lower == -1
+    assert upper == 1
+
+
+def test_qubo_copy_includes_encoding_constraints():
+    q = QUBO("test")
+    b = BinaryVariable("b")
+    q.set_objective(2 * b)
+    q._encoding_constraints["enc"] = Constraint("enc", EQ(b, 0))
+    q2 = copy.copy(q)
+    assert "enc" in q2._encoding_constraints

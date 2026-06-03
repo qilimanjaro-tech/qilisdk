@@ -13,12 +13,10 @@
 # limitations under the License.
 from __future__ import annotations
 
-# import numpy as np
 import copy
 import itertools
 from typing import TYPE_CHECKING, Literal, Mapping, Type
 
-# import cupy as np
 import numpy as np
 from loguru import logger
 
@@ -47,7 +45,7 @@ if TYPE_CHECKING:
     from qilisdk.analog.hamiltonian import Hamiltonian
 
 
-_EMPTY_GRAPH_MSG = "the graph must have at least one edge."
+_EMPTY_GRAPH_MSG = "The graph must have at least one edge."
 
 
 class SlackCounter:
