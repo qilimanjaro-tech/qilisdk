@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../tutorials/introductions/intro_circuits.rst:2
 msgid "Quantum Circuits"
-msgstr "Circuits Quàntics"
+msgstr "Circuits quàntics"
 
 #: ../../tutorials/introductions/intro_circuits.rst:4
 msgid ""
@@ -36,7 +36,7 @@ msgstr ""
 
 #: ../../tutorials/introductions/intro_circuits.rst:8
 msgid "What is a Quantum Circuit?"
-msgstr "Què és un Circuit Quàntic?"
+msgstr "Què és un circuit quàntic?"
 
 #: ../../tutorials/introductions/intro_circuits.rst:10
 msgid ""
@@ -82,7 +82,7 @@ msgstr ""
 
 #: ../../tutorials/introductions/intro_circuits.rst:36
 msgid "What Are Quantum Gates?"
-msgstr "Què Són les Portes Quàntiques?"
+msgstr "Què són les portes quàntiques?"
 
 #: ../../tutorials/introductions/intro_circuits.rst:38
 #, python-brace-format
@@ -229,7 +229,7 @@ msgstr ""
 
 #: ../../tutorials/introductions/intro_circuits.rst:94
 msgid "What Does Each Quantum Gate Do?"
-msgstr "Què Fa Cada Porta Quàntica?"
+msgstr "Què fa cada porta quàntica?"
 
 #: ../../tutorials/introductions/intro_circuits.rst:96
 msgid ""
@@ -252,7 +252,7 @@ msgstr ""
 
 #: ../../tutorials/introductions/intro_circuits.rst:105
 msgid "Gate Name/s"
-msgstr "Nom/s de la Porta"
+msgstr "Nom/s de la porta"
 
 #: ../../tutorials/introductions/intro_circuits.rst:106
 msgid "Description"
@@ -260,7 +260,7 @@ msgstr "Descripció"
 
 #: ../../tutorials/introductions/intro_circuits.rst:107
 msgid "Matrix Representation"
-msgstr "Representació Matricial"
+msgstr "Representació matricial"
 
 #: ../../tutorials/introductions/intro_circuits.rst:108
 msgid "X"
@@ -491,7 +491,7 @@ msgstr ""
 
 #: ../../tutorials/introductions/intro_circuits.rst:144
 msgid "Generic Controlled Gates"
-msgstr "Portes Controlades Genèriques"
+msgstr "Portes controlades genèriques"
 
 #: ../../tutorials/introductions/intro_circuits.rst:145
 msgid ""
@@ -539,7 +539,7 @@ msgstr ""
 
 #: ../../tutorials/introductions/intro_circuits.rst:152
 msgid "How Can We Simulate These Circuits?"
-msgstr "Com Podem Simular Aquests Circuits?"
+msgstr "Com podem simular aquests circuits?"
 
 #: ../../shared/install_note.rst:1
 msgid ""
@@ -649,7 +649,7 @@ msgstr ""
 
 #: ../../tutorials/introductions/intro_circuits.rst:225
 msgid "Further Reading"
-msgstr "Lectures Addicionals"
+msgstr "Lectures addicionals"
 
 #: ../../tutorials/introductions/intro_circuits.rst:227
 msgid "`Quantum Circuit`_"

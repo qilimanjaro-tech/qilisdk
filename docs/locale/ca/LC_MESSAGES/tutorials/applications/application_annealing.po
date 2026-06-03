@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../tutorials/applications/application_annealing.rst:2
 msgid "Optimization with Quantum Annealing"
-msgstr "Optimització amb Recuita Quàntica"
+msgstr "Optimització amb recuita quàntica"
 
 #: ../../tutorials/applications/application_annealing.rst:4
 msgid ""
@@ -45,7 +45,7 @@ msgstr ""
 
 #: ../../tutorials/applications/application_annealing.rst:13
 msgid "The Problem"
-msgstr "El Problema"
+msgstr "El problema"
 
 #: ../../shared/team_building.rst:1
 msgid ""
@@ -208,7 +208,7 @@ msgstr ""
 
 #: ../../tutorials/applications/application_annealing.rst:18
 msgid "The Solution"
-msgstr "La Solució"
+msgstr "La solució"
 
 #: ../../tutorials/applications/application_annealing.rst:20
 msgid ""
@@ -303,7 +303,7 @@ msgstr ""
 
 #: ../../tutorials/applications/application_annealing.rst:57
 msgid "The Implementation"
-msgstr "La Implementació"
+msgstr "La implementació"
 
 #: ../../tutorials/applications/application_annealing.rst:59
 msgid ""
@@ -364,7 +364,7 @@ msgstr ""
 
 #: ../../tutorials/applications/application_annealing.rst:123
 msgid "Further Reading"
-msgstr "Lectura Addicional"
+msgstr "Lectura addicional"
 
 #: ../../tutorials/applications/application_annealing.rst:125
 msgid "`QUBO`_"

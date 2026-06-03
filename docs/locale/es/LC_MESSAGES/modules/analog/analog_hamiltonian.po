@@ -56,7 +56,7 @@ msgstr ""
 
 #: ../../modules/analog/analog_hamiltonian.rst:14
 msgid "List of Operations"
-msgstr "Lista de Operaciones"
+msgstr "Lista de operaciones"
 
 #: ../../modules/analog/analog_hamiltonian.rst:16
 msgid "**Arithmetic operations**:"

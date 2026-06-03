@@ -22,7 +22,7 @@ msgstr ""
 #: ../../modules/functionals/functionals_time_evolution.rst:2
 #, fuzzy
 msgid "Analog Evolution"
-msgstr "Evolución Temporal"
+msgstr "Evolución temporal"
 
 #: ../../modules/functionals/functionals_time_evolution.rst:8
 msgid "Go to a specific subheading of a page."

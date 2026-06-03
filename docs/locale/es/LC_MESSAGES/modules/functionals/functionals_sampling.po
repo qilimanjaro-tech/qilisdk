@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../modules/functionals/functionals_sampling.rst:2
 msgid "Digital Propogation"
-msgstr "Propagación Digital"
+msgstr "Propagación digital"
 
 #: ../../modules/functionals/functionals_sampling.rst:8
 msgid "Go to a specific subheading of a page."

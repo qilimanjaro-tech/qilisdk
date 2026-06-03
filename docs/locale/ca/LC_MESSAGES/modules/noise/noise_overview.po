@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../modules/noise/noise_overview.rst:2
 msgid "Overview"
-msgstr "Visió General"
+msgstr "Visió general"
 
 #: ../../modules/noise/noise_overview.rst:4
 msgid ""
@@ -45,7 +45,7 @@ msgstr "Backend"
 
 #: ../../modules/noise/noise_overview.rst:14
 msgid "Noise Models Supported"
-msgstr "Models de Soroll Compatibles"
+msgstr "Models de soroll compatibles"
 
 #: ../../modules/noise/noise_overview.rst:16
 msgid ":class:`~qilisdk.backends.qilisim.QiliSim`"
@@ -98,7 +98,7 @@ msgstr ""
 
 #: ../../modules/noise/noise_overview.rst:54
 msgid "Summary of Noise Types"
-msgstr "Resum dels Tipus de Soroll"
+msgstr "Resum dels tipus de soroll"
 
 #: ../../modules/noise/noise_overview.rst:56
 msgid ""
@@ -112,15 +112,15 @@ msgstr ""
 
 #: ../../modules/noise/noise_overview.rst:64
 msgid "Noise Type"
-msgstr "Tipus de Soroll"
+msgstr "Tipus de soroll"
 
 #: ../../modules/noise/noise_overview.rst:64
 msgid "Digital Propogation"
-msgstr "Propagació Digital"
+msgstr "Propagació digital"
 
 #: ../../modules/noise/noise_overview.rst:64
 msgid "Analog Evolution"
-msgstr "Evolució Analògica"
+msgstr "Evolució analògica"
 
 #: ../../modules/noise/noise_overview.rst:66
 msgid ":class:`~qilisdk.noise.representations.KrausChannel`"

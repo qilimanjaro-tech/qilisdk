@@ -186,7 +186,7 @@ msgstr ""
 
 #: ../../modules/analog/analog_schedule.rst:98
 msgid "Parameterized Schedules"
-msgstr "Schedules Parametrizados"
+msgstr "Schedules parametrizados"
 
 #: ../../modules/analog/analog_schedule.rst:99
 msgid ""
