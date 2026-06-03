@@ -130,6 +130,90 @@ const double kInvSqrt2 = 1.0 / std::sqrt(2.0);
 const std::complex<double> kTPhase = std::exp(std::complex<double>(0.0, M_PI / 4.0));
 const std::complex<double> kTPhaseConj = std::conj(kTPhase);
 
+// A complex, NON-symmetric single-qubit unitary (a general U3-style rotation).
+// The off-diagonal entries differ (U(0,1) != U(1,0)) and are complex, so for this
+// gate U* (conjugate) != U† (conjugate transpose). This is exactly the case that
+// distinguishes a correct rho -> U rho U† from the buggy rho -> U rho U*.
+DenseMatrix asymComplexU() {
+    const double theta = 2.0;
+    const double phi = 0.7;
+    const double lambda = 1.3;
+    const double c = std::cos(theta / 2.0);
+    const double s = std::sin(theta / 2.0);
+    DenseMatrix u(2, 2);
+    u(0, 0) = c;
+    u(0, 1) = -std::exp(std::complex<double>(0.0, lambda)) * s;
+    u(1, 0) = std::exp(std::complex<double>(0.0, phi)) * s;
+    u(1, 1) = std::exp(std::complex<double>(0.0, phi + lambda)) * c;
+    return u;
+}
+
+// Embed a single-qubit operator acting on `target` into the full 2^nqubits space.
+// Matches the simulator's big-endian convention: qubit q corresponds to bit (nqubits-1-q).
+DenseMatrix embedSingleQubit(const DenseMatrix& u, int target, int nqubits) {
+    const int dim = 1 << nqubits;
+    const int tbit = nqubits - 1 - target;
+    DenseMatrix full = DenseMatrix::Zero(dim, dim);
+    for (int i = 0; i < dim; ++i) {
+        for (int j = 0; j < dim; ++j) {
+            bool rest_matches = true;
+            for (int b = 0; b < nqubits; ++b) {
+                if (b == tbit) {
+                    continue;
+                }
+                if (((i >> b) & 1) != ((j >> b) & 1)) {
+                    rest_matches = false;
+                    break;
+                }
+            }
+            if (rest_matches) {
+                full(i, j) = u((i >> tbit) & 1, (j >> tbit) & 1);
+            }
+        }
+    }
+    return full;
+}
+
+// Embed a controlled single-qubit operator (single control) into the full space.
+DenseMatrix embedControlledSingleQubit(const DenseMatrix& u, int control, int target, int nqubits) {
+    const int dim = 1 << nqubits;
+    const int tbit = nqubits - 1 - target;
+    const int cbit = nqubits - 1 - control;
+    DenseMatrix full = DenseMatrix::Zero(dim, dim);
+    for (int i = 0; i < dim; ++i) {
+        if (((i >> cbit) & 1) == 0) {
+            full(i, i) = 1.0;  // control not set -> identity
+            continue;
+        }
+        for (int j = 0; j < dim; ++j) {
+            if (((j >> cbit) & 1) == 0) {
+                continue;
+            }
+            bool rest_matches = true;
+            for (int b = 0; b < nqubits; ++b) {
+                if (b == tbit) {
+                    continue;
+                }
+                if (((i >> b) & 1) != ((j >> b) & 1)) {
+                    rest_matches = false;
+                    break;
+                }
+            }
+            if (rest_matches) {
+                full(i, j) = u((i >> tbit) & 1, (j >> tbit) & 1);
+            }
+        }
+    }
+    return full;
+}
+
+// A genuinely mixed two-qubit Hermitian density matrix (trace 1).
+DenseMatrix mixedTwoQubitDensityMatrix() {
+    DenseMatrix bell = (ket00() + ket11()) * kInvSqrt2;
+    DenseMatrix rho = 0.7 * ketbra(bell) + 0.3 * ketbra(ket01());
+    return rho;
+}
+
 }  // namespace
 
 TEST(MatrixFreeOperator, NameAndTargetQubitAccessors) {
@@ -1009,6 +1093,57 @@ TEST(MatrixFreeOperator, ControlledCustomGate_LeftAndRight_Control0Target1_Ket10
     DenseMatrix rho = ketbra(ket10());
     op.apply(rho, MatrixFreeApplicationType::LeftAndRight);
     ASSERT_TRUE(rho.isApprox(ketbra(ket11()), 1e-10)) << "Controlled Custom X LAR |10><10| should be approximately |11><11|, but got:\n" << rho;
+}
+
+// --- Regression tests for the rho -> U rho U† density-matrix path with a COMPLEX,
+// --- NON-symmetric gate. The right multiplication must apply U† (conjugate transpose),
+// --- not U* (conjugate). For real-symmetric gates (X, Z, H) and diagonal gates (S, T)
+// --- these coincide, which is why the bug was only triggered by gates like U2/U3.
+
+TEST(MatrixFreeOperator, AsymComplexGate_Right_DensityMatrix_GivesRhoUdag) {
+    DenseMatrix u = asymComplexU();
+    Gate g("AsymU", u.sparseView(), {}, {0}, {});
+    MatrixFreeOperator op(g);
+    DenseMatrix rho = dmPlus();
+    DenseMatrix expected = rho * u.adjoint();
+    op.apply(rho, MatrixFreeApplicationType::Right);
+    ASSERT_TRUE(rho.isApprox(expected, 1e-10)) << "Right must compute rho*U† (conjugate transpose), got:\n" << rho << "\nexpected:\n" << expected;
+}
+
+TEST(MatrixFreeOperator, AsymComplexGate_LeftAndRight_GivesUrhoUdagAndStaysHermitian) {
+    DenseMatrix u = asymComplexU();
+    Gate g("AsymU", u.sparseView(), {}, {0}, {});
+    MatrixFreeOperator op(g);
+    DenseMatrix rho = dmPlus();
+    DenseMatrix expected = u * rho * u.adjoint();
+    op.apply(rho, MatrixFreeApplicationType::LeftAndRight);
+    ASSERT_TRUE(rho.isApprox(expected, 1e-10)) << "LeftAndRight must compute U rho U†, got:\n" << rho << "\nexpected:\n" << expected;
+    // The whole point: a Hermitian input must stay Hermitian (the bug produced U rho U*, which is not).
+    ASSERT_TRUE(rho.isApprox(rho.adjoint(), 1e-10)) << "U rho U† of a Hermitian rho must stay Hermitian, got:\n" << rho;
+}
+
+TEST(MatrixFreeOperator, AsymComplexGate_LeftAndRight_TwoQubitTarget1_MixedState) {
+    DenseMatrix u = asymComplexU();
+    Gate g("AsymU", u.sparseView(), {}, {1}, {});  // target qubit 1 -> exercises the strided embedding
+    MatrixFreeOperator op(g);
+    DenseMatrix rho = mixedTwoQubitDensityMatrix();
+    DenseMatrix full = embedSingleQubit(u, 1, 2);
+    DenseMatrix expected = full * rho * full.adjoint();
+    op.apply(rho, MatrixFreeApplicationType::LeftAndRight);
+    ASSERT_TRUE(rho.isApprox(expected, 1e-10)) << "2-qubit U rho U† mismatch, got:\n" << rho << "\nexpected:\n" << expected;
+    ASSERT_TRUE(rho.isApprox(rho.adjoint(), 1e-10)) << "Result must stay Hermitian, got:\n" << rho;
+}
+
+TEST(MatrixFreeOperator, ControlledAsymComplexGate_LeftAndRight_MixedStateStaysHermitian) {
+    DenseMatrix u = asymComplexU();
+    Gate g("AsymU", u.sparseView(), {0}, {1}, {});  // control 0, target 1
+    MatrixFreeOperator op(g);
+    DenseMatrix rho = mixedTwoQubitDensityMatrix();
+    DenseMatrix full = embedControlledSingleQubit(u, 0, 1, 2);
+    DenseMatrix expected = full * rho * full.adjoint();
+    op.apply(rho, MatrixFreeApplicationType::LeftAndRight);
+    ASSERT_TRUE(rho.isApprox(expected, 1e-10)) << "Controlled U rho U† mismatch, got:\n" << rho << "\nexpected:\n" << expected;
+    ASSERT_TRUE(rho.isApprox(rho.adjoint(), 1e-10)) << "Result must stay Hermitian, got:\n" << rho;
 }
 
 // GCOV_EXCL_BR_STOP

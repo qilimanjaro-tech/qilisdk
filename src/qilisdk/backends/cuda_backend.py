@@ -254,6 +254,15 @@ class CudaBackend(Backend):
         qubits = kernel.qalloc(functional.circuit.nqubits)
         og_param = None
 
+        # If it's MPS or TN, we can't get the state, only samples
+        if self.sampling_method in {
+            CudaSamplingMethod.TENSOR_NETWORK,
+            CudaSamplingMethod.MATRIX_PRODUCT_STATE,
+        } and not all(ro.is_sampling_readout() for ro in readout):
+            raise ValueError(
+                f"Only Sampling Readouts are supported for {self.sampling_method.value.upper()} simulation."
+            )
+
         # Apply parameter perturbations
         if self._noise_model:
             og_param = copy(functional.get_parameters())

@@ -96,11 +96,11 @@ def test_adaptive_creates_okay():
 
 def test_qilisim_invalid_config_types():
     with pytest.raises(ValueError, match="not a valid analog simulation method"):
-        QiliSim(analog_simulation_method=DigitalMethod())  # type:ignore[arg-type]
+        QiliSim(analog_simulation_method=DigitalMethod())  # type: ignore[arg-type]
     with pytest.raises(ValueError, match="not a valid digital simulation method"):
-        QiliSim(digital_simulation_method=AnalogMethod.integrator())  # type:ignore[arg-type]
+        QiliSim(digital_simulation_method=AnalogMethod.integrator())  # type: ignore[arg-type]
     with pytest.raises(ValueError, match="not a valid execution configuration"):
-        QiliSim(execution_config=AnalogMethod.integrator())  # type:ignore[arg-type]
+        QiliSim(execution_config=AnalogMethod.integrator())  # type: ignore[arg-type]
 
 
 class QiliSimMock:
