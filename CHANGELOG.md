@@ -1,3 +1,10 @@
+# qilisdk 0.2.0.post2 (2026-06-04)
+
+## Misc
+
+- [PR #229](https://github.com/qilimanjaro-tech/qilisdk/pull/229)
+
+
 # qilisdk 0.2.0.post1 (2026-06-03)
 
 ## Features
