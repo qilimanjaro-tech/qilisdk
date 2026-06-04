@@ -440,4 +440,10 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const Sp
         state = state * state.adjoint();
     }
 }
+
+
+void sampling_stabilizer(const std::vector<Gate>& gates, int n_qubits, const StabilizerStateSum& initial_state, NoiseModelCpp& noise_model_cpp, StabilizerStateSum& state, std::vector<py::object>& intermediate_results, const QiliSimConfig& config, const py::object& readout) {
+    // TODO(luke)
+}
+
 // GCOV_EXCL_BR_STOP

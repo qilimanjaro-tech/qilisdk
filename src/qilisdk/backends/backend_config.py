@@ -337,6 +337,12 @@ class DigitalMethod(BaseSimulatorConfig):
             for statevector simulation. Defaults to ``True``.
     """
 
+    sampling_method: str = Field(
+        default="statevector_matrix_free",
+        description=(
+            "Digital simulation method to use. This is set automatically by the preferred constructors like `statevector`."
+        ),
+    )
     max_cache_size: int = Field(
         default=1000,
         ge=0,
@@ -354,14 +360,22 @@ class DigitalMethod(BaseSimulatorConfig):
         default=True,
         description="Whether to use the matrix-free implementation for statevector simulation.",
     )
+    stabilizer_max_states: int = Field(
+        default=100,
+        ge=1,
+        description=(
+            "Maximum number of stabilizer states to track when using the stabilizer digital simulation method."
+        ),
+    )
 
     def get_config(self) -> SolverConfigDict:
         """Return digital simulation settings in backend-compatible key names."""
         return {
             "max_cache_size": self.max_cache_size,
-            "sampling_method": "statevector_matrix_free" if self.matrix_free else "statevector",
+            "sampling_method": self.sampling_method,
             "normalize_after_each_gate": self.normalize_after_each_gate,
             "combine_single_qubit_gates": self.combine_single_qubit_gates,
+            "stabilizer_max_states": self.stabilizer_max_states,
         }
 
     @classmethod
@@ -389,8 +403,21 @@ class DigitalMethod(BaseSimulatorConfig):
             DigitalMethod: Configured statevector digital configuration.
         """
         return cls(
+            sampling_method="statevector_matrix_free" if matrix_free else "statevector",
             max_cache_size=max_cache_size,
             normalize_after_each_gate=normalize_after_each_gate,
             combine_single_qubit_gates=combine_single_qubit_gates,
             matrix_free=matrix_free,
+        )
+
+    @classmethod
+    def stabilizer(cls, max_states: int = 100) -> DigitalMethod:
+        """Return a stabilizer-based simulation configuration.
+
+        Args:
+            max_states (int): Maximum number of stabilizer states to track. Defaults to ``100``.
+        """
+        return DigitalMethod(
+            sampling_method="stabilizer",
+            stabilizer_max_states=max_states,
         )

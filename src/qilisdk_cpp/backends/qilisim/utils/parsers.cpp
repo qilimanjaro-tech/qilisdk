@@ -23,6 +23,24 @@
 
 #pragma GCC visibility push(default)
 
+py::object construct_result_object(const StabilizerStateSum& state, const py::object& readout, NoiseModelCpp& noise_model_cpp, int n_qubits, const QiliSimConfig& config, const std::vector<bool>& qubits_to_measure) {
+    // TODO(luke)
+    py::list results;
+    bool expand_samples = false;
+    int nshots = config.get_shots();
+    std::map<std::string, int> counts = state.sample(nshots);
+    py::dict samples_py;
+    for (const auto& pair : counts) {
+        samples_py[py::cast(pair.first)] = py::cast(pair.second);
+    }
+    py::list qubits_to_measure_list;
+    for (size_t i = 0; i < size_t(n_qubits); ++i) {
+        qubits_to_measure_list.append(i);
+    }
+    results.append(SamplingReadoutResult.attr("from_samples")("samples"_a = samples_py, "qubits_to_measure"_a = qubits_to_measure_list, "nqubits"_a = n_qubits, "expand_samples"_a = expand_samples));
+    return ReadoutCompositeResults.attr("from_list")(results);
+}
+
 py::object construct_result_object(const ExponentialAnsatz& state, const py::object& readout, int n_qubits) {
     py::list results;
     for (py::handle ro_handle : readout) {
@@ -42,12 +60,11 @@ py::object construct_result_object(const ExponentialAnsatz& state, const py::obj
             results.append(ExpectationReadoutResult.attr("from_expectations")("expectation_values"_a = expectations_py));
         } else if (py::isinstance(ro, SamplingReadout)) {
             SampleSet samples = state.draw_samples();
-            int n_shots = ro.attr("nshots").cast<int>();
             bool expand_samples = ro.attr("expand_samples").cast<bool>();
             std::map<std::string, int> counts;
             for (const auto& config : samples.configs) {
                 std::string bitstring = "";
-                for (size_t i = 0; i < n_qubits; ++i) {
+                for (size_t i = 0; i < size_t(n_qubits); ++i) {
                     bitstring = (config[i] ? "1" : "0") + bitstring;
                 }
                 counts[bitstring]++;
@@ -57,7 +74,7 @@ py::object construct_result_object(const ExponentialAnsatz& state, const py::obj
                 samples_py[py::cast(pair.first)] = py::cast(pair.second);
             }
             py::list qubits_to_measure_list;
-            for (size_t i = 0; i < n_qubits; ++i) {
+            for (size_t i = 0; i < size_t(n_qubits); ++i) {
                 qubits_to_measure_list.append(i);
             }
             results.append(SamplingReadoutResult.attr("from_samples")("samples"_a = samples_py, "qubits_to_measure"_a = qubits_to_measure_list, "nqubits"_a = n_qubits, "expand_samples"_a = expand_samples));
@@ -568,6 +585,20 @@ SparseMatrix parse_initial_state(const py::object& initial_state, double atol, i
     return rho;
 }
 
+StabilizerStateSum parse_initial_state_stabilizer(const py::object& initial_state, int nqubits) {
+    /*
+    Extract the initial state as a StabilizerStateSum from a StabilizerState or StabilizerStateSum object.
+
+    Args:
+        initial_state (py::object): The initial state as a StabilizerState or StabilizerStateSum object.
+
+    Returns:
+        StabilizerStateSum: The initial state as a StabilizerStateSum object.
+    */
+   // TODO(luke)
+   return StabilizerStateSum(nqubits);
+}
+
 std::vector<Gate> parse_gates(const py::object& circuit, double atol, const py::object& noise_model) {
     /*
     Extract gates from a circuit object.
@@ -803,6 +834,9 @@ QiliSimConfig parse_solver_params(const py::dict& solver_params) {
     }
     if (solver_params.contains("variational_warmups")) {
         config.set_warmups(solver_params["variational_warmups"].cast<int>());
+    }
+    if (solver_params.contains("stabilizer_max_states")) {
+        config.set_stabilizer_max_states(solver_params["stabilizer_max_states"].cast<int>());
     }
     if (config.get_num_threads() <= 0) {
         config.set_num_threads(1);
