@@ -15,6 +15,7 @@
 import numpy as np
 import pytest
 
+from qilisdk.analog import Hamiltonian
 from qilisdk.analog import Z as pauli_z
 from qilisdk.core import QTensor
 from qilisdk.readout import ExpectationReadout, SamplingReadout, StateTomographyReadout
@@ -46,20 +47,22 @@ class TestExpectationReadout:
         assert ro.nshots == 0
 
     def test_qtensor_observables_auto_set(self):
-        obs = [pauli_z(0)]
+        obs = [QTensor(np.array([[1, 0], [0, -1]], dtype=np.complex128))]
         ro = ExpectationReadout(observables=obs)
-        expanded = ro.expand_observables(nqubits=1)
+        expanded = ro.expanded_observables(nqubits=1)
         assert len(expanded) == 1
         assert isinstance(expanded[0], QTensor)
 
     def test_qtensor_observable_passthrough(self):
         qt = QTensor(np.array([[1, 0], [0, -1]], dtype=np.complex128))
         ro = ExpectationReadout(observables=[qt])
-        assert ro.expand_observables(nqubits=1)[0] == qt
+        assert ro.expanded_observables(nqubits=1)[0] == qt
 
     def test_scale_observables(self):
-        ro = ExpectationReadout(observables=[pauli_z(0)])
-        assert ro.expand_observables(nqubits=2)[0].shape == (4, 4)
+        ro = ExpectationReadout(observables=[pauli_z(0), QTensor(np.array([[0, 1], [1, 0]], dtype=np.complex128))])
+        expanded = ro.expanded_observables(nqubits=2)
+        assert isinstance(expanded[0], Hamiltonian)
+        assert isinstance(expanded[1], QTensor)
 
     def test_invalid_observable_type_raises(self):
         with pytest.raises(ValueError, match="Invalid Observable"):
