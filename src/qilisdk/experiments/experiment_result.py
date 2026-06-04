@@ -278,3 +278,11 @@ class TwoTonesExperimentResult(ExperimentResult):
 
     plot_title: ClassVar[str] = "TwoTones"
     """Default title for TwoTones experiment plots."""
+
+
+@yaml.register_class
+class TwoTonesVersusFluxExperimentResult(ExperimentResult):
+    """Result container for TwoTones experiments swept vs flux bias."""
+
+    plot_title: ClassVar[str] = "TwoTonesVersusFlux"
+    """Default title for TwoTones versus flux experiment plots."""
