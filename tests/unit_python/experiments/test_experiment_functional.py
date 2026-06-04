@@ -14,8 +14,14 @@
 
 import numpy as np
 
-from qilisdk.experiments import ExperimentFunctional, RabiExperiment, T1Experiment, T2Experiment, TwoTonesExperiment
-from qilisdk.experiments.experiment_functional import TwoTonesVersusFluxExperiment
+from qilisdk.experiments import (
+    ExperimentFunctional,
+    RabiExperiment,
+    T1Experiment,
+    T2Experiment,
+    TwoTonesAtFluxBiasExperiment,
+    TwoTonesVsFluxBiasExperiment,
+)
 
 
 def test_experiment_functional_initialization():
@@ -53,7 +59,7 @@ def test_two_tones_experiment_initialization():
     freq_start = 4.0
     freq_stop = 5.0
     freq_step = 5.0
-    two_tones_exp = TwoTonesExperiment(
+    two_tones_exp = TwoTonesAtFluxBiasExperiment(
         qubit=qubit, frequency_start=freq_start, frequency_stop=freq_stop, frequency_step=freq_step
     )
     assert two_tones_exp.qubit == qubit
@@ -70,7 +76,7 @@ def test_two_tones_versus_flux_experiment_initialization():
     flux_start = -1.0
     flux_stop = 1.0
     flux_step = 0.5
-    two_tones_flux_exp = TwoTonesVersusFluxExperiment(
+    two_tones_flux_exp = TwoTonesVsFluxBiasExperiment(
         qubit=qubit,
         frequency_start=freq_start,
         frequency_stop=freq_stop,

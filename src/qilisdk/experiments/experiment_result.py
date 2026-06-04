@@ -273,16 +273,16 @@ class T2ExperimentResult(ExperimentResult):
 
 
 @yaml.register_class
-class TwoTonesExperimentResult(ExperimentResult):
+class TwoTonesAtFluxBiasExperimentResult(ExperimentResult):
     """Result container for TwoTones experiments."""
 
-    plot_title: ClassVar[str] = "TwoTones"
-    """Default title for TwoTones experiment plots."""
+    plot_title: ClassVar[str] = "TwoTonesAtFluxBias"
+    """Default title for TwoTones at flux bias experiment plots."""
 
 
 @yaml.register_class
-class TwoTonesVersusFluxExperimentResult(ExperimentResult):
+class TwoTonesVsFluxBiasExperimentResult(ExperimentResult):
     """Result container for TwoTones experiments swept vs flux bias."""
 
-    plot_title: ClassVar[str] = "TwoTonesVersusFlux"
-    """Default title for TwoTones versus flux experiment plots."""
+    plot_title: ClassVar[str] = "TwoTonesVsFluxBias"
+    """Default title for TwoTones versus flux bias experiment plots."""

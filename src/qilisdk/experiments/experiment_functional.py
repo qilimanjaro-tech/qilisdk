@@ -21,8 +21,8 @@ from qilisdk.experiments.experiment_result import (
     RabiExperimentResult,
     T1ExperimentResult,
     T2ExperimentResult,
-    TwoTonesExperimentResult,
-    TwoTonesVersusFluxExperimentResult,
+    TwoTonesAtFluxBiasExperimentResult,
+    TwoTonesVsFluxBiasExperimentResult,
 )
 from qilisdk.functionals.functional import Functional
 from qilisdk.yaml import yaml
@@ -161,14 +161,14 @@ class T2Experiment(ExperimentFunctional[T2ExperimentResult]):
 
 
 @yaml.register_class
-class TwoTonesExperiment(ExperimentFunctional[TwoTonesExperimentResult]):
+class TwoTonesAtFluxBiasExperiment(ExperimentFunctional[TwoTonesAtFluxBiasExperimentResult]):
     """Two-tone spectroscopy functional for a single qubit.
 
     Sweeps a drive tone frequency while monitoring the readout tone to
     identify the qubit transition frequency.
     """
 
-    result_type: ClassVar[type[TwoTonesExperimentResult]] = TwoTonesExperimentResult
+    result_type: ClassVar[type[TwoTonesAtFluxBiasExperimentResult]] = TwoTonesAtFluxBiasExperimentResult
     """Result type returned by this functional."""
 
     def __init__(self, qubit: int, frequency_start: float, frequency_stop: float, frequency_step: float) -> None:
@@ -214,14 +214,14 @@ class TwoTonesExperiment(ExperimentFunctional[TwoTonesExperimentResult]):
 
 
 @yaml.register_class
-class TwoTonesVersusFluxExperiment(ExperimentFunctional[TwoTonesVersusFluxExperimentResult]):
+class TwoTonesVsFluxBiasExperiment(ExperimentFunctional[TwoTonesVsFluxBiasExperimentResult]):
     """Two-tone spectroscopy functional for a single qubit, swept vs flux bias.
 
     Sweeps a drive tone frequency while monitoring the readout tone to
     identify the qubit transition frequency as a function of flux bias.
     """
 
-    result_type: ClassVar[type[TwoTonesVersusFluxExperimentResult]] = TwoTonesVersusFluxExperimentResult
+    result_type: ClassVar[type[TwoTonesVsFluxBiasExperimentResult]] = TwoTonesVsFluxBiasExperimentResult
     """Result type returned by this functional."""
 
     def __init__(
