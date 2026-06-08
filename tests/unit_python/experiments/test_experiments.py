@@ -78,10 +78,9 @@ def test_experiment_plotting(monkeypatch):
 
 def test_t1_plotting(monkeypatch):
     monkeypatch.setattr(plt, "show", lambda: None)
-    # monkeypatch.setattr(plt.Figure, "savefig", lambda self, *args, **kwargs: None)
+    monkeypatch.setattr(plt.Figure, "savefig", lambda self, *args, **kwargs: None)
 
     rng = np.random.default_rng(seed=42)
-    # tau = np.array([0, 100, 200, 400, 800, 1600, 3200])
     tau = np.arange(0, 3200, 100)
     decay = np.exp(-tau / 1000.0)
     noise = rng.normal(0, 0.02, size=(len(tau), 2))
@@ -97,7 +96,7 @@ def test_t1_plotting(monkeypatch):
 
 def test_rabi_plotting(monkeypatch):
     monkeypatch.setattr(plt, "show", lambda: None)
-    # monkeypatch.setattr(plt.Figure, "savefig", lambda self, *args, **kwargs: None)
+    monkeypatch.setattr(plt.Figure, "savefig", lambda self, *args, **kwargs: None)
 
     rng = np.random.default_rng(seed=42)
     drive_durations = np.arange(0, 500, 5)
@@ -117,7 +116,7 @@ def test_rabi_plotting(monkeypatch):
 
 def test_two_tones_at_flux_bias_plotting(monkeypatch):
     monkeypatch.setattr(plt, "show", lambda: None)
-    # monkeypatch.setattr(plt.Figure, "savefig", lambda self, *args, **kwargs: None)
+    monkeypatch.setattr(plt.Figure, "savefig", lambda self, *args, **kwargs: None)
 
     rng = np.random.default_rng(seed=42)
     f_qubit = 5.0e9
@@ -139,7 +138,7 @@ def test_two_tones_at_flux_bias_plotting(monkeypatch):
 
 def test_two_tones_vs_flux_bias_plotting(monkeypatch):
     monkeypatch.setattr(plt, "show", lambda: None)
-    # monkeypatch.setattr(plt.Figure, "savefig", lambda self, *args, **kwargs: None)
+    monkeypatch.setattr(plt.Figure, "savefig", lambda self, *args, **kwargs: None)
 
     rng = np.random.default_rng(seed=42)
     freqs2d = np.arange(4.0e9, 6.0e9, 10e6)
@@ -167,7 +166,7 @@ def test_two_tones_vs_flux_bias_plotting(monkeypatch):
 
 def test_t2_plotting(monkeypatch):
     monkeypatch.setattr(plt, "show", lambda: None)
-    # monkeypatch.setattr(plt.Figure, "savefig", lambda self, *args, **kwargs: None)
+    monkeypatch.setattr(plt.Figure, "savefig", lambda self, *args, **kwargs: None)
 
     rng = np.random.default_rng(seed=42)
     tau = np.arange(0, 10, 0.05)

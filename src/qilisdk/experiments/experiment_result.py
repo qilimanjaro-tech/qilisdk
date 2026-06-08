@@ -410,20 +410,20 @@ class TwoTonesAtFluxBiasExperimentResult(ExperimentResult):
             db (bool): Whether to plot the fit in dB scale.
         """
 
-        def _lorentzian(f: np.ndarray, f0: float, gamma: float, A: float, B: float) -> np.ndarray:
+        def _lorentzian(f: np.ndarray, f0: float, gamma: float, a: float, b: float) -> np.ndarray:
             """Lorentzian model for TwoTones at flux bias measurement.
 
             Args:
                 f (np.ndarray): Frequency array (in Hz).
                 f0 (float): Resonance frequency (in Hz).
                 gamma (float): Full width at half maximum (FWHM) of the resonance (in Hz).
-                A (float): Amplitude of the Lorentzian dip.
-                B (float): Baseline offset.
+                a (float): Amplitude of the Lorentzian dip.
+                b (float): Baseline offset.
 
             Returns:
                 np.ndarray: The modeled Lorentzian curve values at frequency f.
             """
-            return B - A / (1 + ((f - f0) / (gamma / 2)) ** 2)
+            return b - a / (1 + ((f - f0) / (gamma / 2)) ** 2)
 
         y_linear = 10 ** (y_values / 20) if db else y_values
 
@@ -435,9 +435,9 @@ class TwoTonesAtFluxBiasExperimentResult(ExperimentResult):
                 float(y_linear.min()),
             ]
         popt, _ = curve_fit(_lorentzian, x_values, y_linear, p0=initial_guess)
-        f0_fit, gamma_fit, A_fit, B_fit = popt
+        f0_fit, gamma_fit, a_fit, b_fit = popt
         f_fit = np.linspace(min(x_values), max(x_values), 1000)
-        y_fit = _lorentzian(f_fit, f0_fit, gamma_fit, A_fit, B_fit)
+        y_fit = _lorentzian(f_fit, f0_fit, gamma_fit, a_fit, b_fit)
         if db:
             y_fit = 20 * np.log10(np.abs(y_fit))
         plt.plot(f_fit, y_fit, label=f"Lorentzian Fit (f0={f0_fit:.2f} Hz, gamma={gamma_fit:.2f} Hz)")
