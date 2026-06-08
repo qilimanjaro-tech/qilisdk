@@ -105,6 +105,12 @@ class ExperimentResult(FunctionalResult):
         Fit a user-provided function to the experimental data.
 
         This should be implemented by subclasses to provide specific fitting functionality relevant to the experiment type.
+
+        Args:
+            x_values (np.ndarray): The independent variable data (e.g., frequencies, drive durations).
+            y_values (np.ndarray): The dependent variable data (e.g., measured signal).
+            initial_guess (list[float] | None): Optional initial guess for the fit parameters. The specific parameters depend on the fit model used by the subclass.
+            db (bool): Whether the data is in dB scale. This can affect how the fit is performed and plotted.
         """
 
     def plot(
@@ -119,12 +125,22 @@ class ExperimentResult(FunctionalResult):
             save_to (str | None): Optional path or directory to save the
                 generated plot. If a directory is provided, the filename is
                 automatically generated as ``{plot_title}_qubit{qubit}.png``.
+            initial_guess (list[float] | None): Optional initial guess for the fit parameters, passed to the `add_fit` method.
+            db (bool): Whether to plot the S21 data in dB scale.
+            fit (bool): Whether to perform and plot the fit using the `add_fit` method.
 
         Raises:
             NotImplementedError: If the experiment data has more than 2 dimensions.
         """
 
         def save_figure(figure: Figure, save_to: str | Path) -> None:
+            """
+            Save the figure to disk, handling both file and directory paths.
+
+            Args:
+                figure (Figure): The Matplotlib figure to save.
+                save_to (str | Path): The path or directory where the figure should be saved.
+            """
             save_to = Path(save_to)
 
             # If a directory was given, append the default filename
@@ -135,7 +151,15 @@ class ExperimentResult(FunctionalResult):
             figure.savefig(save_to)
 
         def plot_1d(s21: np.ndarray, dims: list[Dimension], db: bool = False, fit: bool = True) -> None:
-            """Plot 1d"""
+            """
+            Plot 1D S21 data.
+
+            Args:
+                s21 (np.ndarray): The S21 data to plot, either in linear or dB scale.
+                dims (list[Dimension]): The dimensions of the experiment, used for labeling axes.
+                db (bool): Whether the data is in dB scale, affecting axis labels and fit behavior.
+                fit (bool): Whether to perform and plot the fit using the `add_fit` method.
+            """
             x_labels, x_values = dims[0].labels, dims[0].values
 
             fig, ax1 = plt.subplots()
@@ -170,7 +194,16 @@ class ExperimentResult(FunctionalResult):
 
         # pylint: disable=too-many-locals
         def plot_2d(s21: np.ndarray, dims: list[Dimension], db: bool = False, fit: bool = True) -> None:
-            """Plot 2d"""
+            """
+            Plot 2D S21 data as a color mesh.
+
+            Args:
+                s21 (np.ndarray): The 2D S21 data to plot, either in linear or dB scale.
+                dims (list[Dimension]): The dimensions of the experiment, used for labeling axes.
+                db (bool): Whether the data is in dB scale, affecting axis labels and fit behavior.
+                fit (bool): Whether to perform and plot the fit using the `add_fit` method.
+            """
+
             x_labels, x_values = dims[0].labels, dims[0].values
             y_labels, y_values = dims[1].labels, dims[1].values
 
