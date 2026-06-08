@@ -29,12 +29,19 @@ from qilisdk.analog.hamiltonian import Hamiltonian, PauliZ
 from qilisdk.analog.schedule import Schedule
 from qilisdk.core.qtensor import ket
 from qilisdk.cost_functions.observable_cost_function import ObservableCostFunction
-from qilisdk.experiments.experiment_functional import RabiExperiment, T1Experiment, T2Experiment, TwoTonesExperiment
+from qilisdk.experiments.experiment_functional import (
+    RabiExperiment,
+    T1Experiment,
+    T2Experiment,
+    TwoTonesAtFluxBiasExperiment,
+    TwoTonesVsFluxBiasExperiment,
+)
 from qilisdk.experiments.experiment_result import (
     RabiExperimentResult,
     T1ExperimentResult,
     T2ExperimentResult,
-    TwoTonesExperimentResult,
+    TwoTonesAtFluxBiasExperimentResult,
+    TwoTonesVsFluxBiasExperimentResult,
 )
 from qilisdk.functionals.analog_evolution import AnalogEvolution
 from qilisdk.functionals.digital_propagation import DigitalPropagation
@@ -48,6 +55,7 @@ from qilisdk.speqtrum.speqtrum_models import (
     _require_t1_experiment_result,
     _require_t2_experiment_result,
     _require_two_tones_experiment_result,
+    _require_two_tones_vs_flux_bias_experiment_result,
     _require_variational_program_result,
 )
 
@@ -74,7 +82,8 @@ from qilisdk.speqtrum.speqtrum_models import (
     RabiExperimentPayload,
     T1ExperimentPayload,
     T2ExperimentPayload,
-    TwoTonesExperimentPayload,
+    TwoTonesAtFluxBiasExperimentPayload,
+    TwoTonesVsFluxBiasExperimentPayload,
     VariationalProgramPayload,
 )
 
@@ -147,15 +156,39 @@ def test_t2_experiment_payload():
     assert deserialized_experiment.wait_duration_values == experiment.wait_duration_values
 
 
-def test_two_tones_experiment_payload():
-    experiment = TwoTonesExperiment(qubit=0, frequency_start=4.9e9, frequency_stop=5.1e9, frequency_step=1e6)
-    payload = TwoTonesExperimentPayload(two_tones_experiment=experiment)
+def test_two_tones_at_flux_bias_experiment_payload():
+    experiment = TwoTonesAtFluxBiasExperiment(qubit=0, frequency_start=4.9e9, frequency_stop=5.1e9, frequency_step=1e6)
+    payload = TwoTonesAtFluxBiasExperimentPayload(two_tones_experiment=experiment)
     serialized_experiment = payload._serialize_two_tones_experiment(two_tones_experiment=experiment, _info={})
     deserialized_experiment = payload._load_two_tones_experiment(serialized_experiment)
     assert deserialized_experiment.qubit == experiment.qubit
     assert deserialized_experiment.frequency_start == experiment.frequency_start
     assert deserialized_experiment.frequency_stop == experiment.frequency_stop
     assert deserialized_experiment.frequency_step == experiment.frequency_step
+
+
+def test_two_tones_vs_flux_bias_experiment_payload():
+    experiment = TwoTonesVsFluxBiasExperiment(
+        qubit=0,
+        frequency_start=4.9e9,
+        frequency_stop=5.1e9,
+        frequency_step=1e6,
+        flux_start=0.0,
+        flux_stop=1.0,
+        flux_step=0.1,
+    )
+    payload = TwoTonesVsFluxBiasExperimentPayload(two_tones_vs_flux_experiment=experiment)
+    serialized_experiment = payload._serialize_two_tones_vs_flux_experiment(
+        two_tones_vs_flux_experiment=experiment, _info={}
+    )
+    deserialized_experiment = payload._load_two_tones_vs_flux_experiment(serialized_experiment)
+    assert deserialized_experiment.qubit == experiment.qubit
+    assert deserialized_experiment.frequency_start == experiment.frequency_start
+    assert deserialized_experiment.frequency_stop == experiment.frequency_stop
+    assert deserialized_experiment.frequency_step == experiment.frequency_step
+    assert deserialized_experiment.flux_start == experiment.flux_start
+    assert deserialized_experiment.flux_stop == experiment.flux_stop
+    assert deserialized_experiment.flux_step == experiment.flux_step
 
 
 def test_execute_result_sampling():
@@ -265,22 +298,42 @@ def test_execute_result_t2_experiment():
 
 def test_execute_result_two_tones_experiment():
     execute_type = ExecuteType.TWO_TONES_EXPERIMENT
-    two_tones_experiment_result = TwoTonesExperimentResult(
+    two_tones_experiment_result = TwoTonesAtFluxBiasExperimentResult(
         qubit=0,
         data=[[0.1, 0.2], [0.3, 0.4]],
         dims=[],
     )
     result = ExecuteResult(
         type=execute_type,
-        two_tones_experiment_result=two_tones_experiment_result,
+        two_tones_at_flux_bias_experiment_result=two_tones_experiment_result,
     )
-    serialized_result = result._serialize_two_tones_experiment_result(
-        two_tones_experiment_result=result.two_tones_experiment_result, _info={}
+    serialized_result = result._serialize_two_tones_at_flux_bias_experiment_result(
+        two_tones_at_flux_bias_experiment_result=result.two_tones_at_flux_bias_experiment_result, _info={}
     )
-    deserialized_result = result._load_two_tones_experiment_result(serialized_result)
+    deserialized_result = result._load_two_tones_at_flux_bias_experiment_result(serialized_result)
     assert deserialized_result.qubit == two_tones_experiment_result.qubit
     assert deserialized_result.data == two_tones_experiment_result.data
     assert deserialized_result.dims == two_tones_experiment_result.dims
+
+
+def test_execute_result_two_tones_vs_flux_bias_experiment():
+    execute_type = ExecuteType.TWO_TONES_VS_FLUX_BIAS_EXPERIMENT
+    two_tones_vs_flux_bias_result = TwoTonesVsFluxBiasExperimentResult(
+        qubit=0,
+        data=[[0.1, 0.2], [0.3, 0.4]],
+        dims=[],
+    )
+    result = ExecuteResult(
+        type=execute_type,
+        two_tones_vs_flux_bias_experiment_result=two_tones_vs_flux_bias_result,
+    )
+    serialized_result = result._serialize_two_tones_vs_flux_bias_experiment_result(
+        two_tones_vs_flux_bias_experiment_result=result.two_tones_vs_flux_bias_experiment_result, _info={}
+    )
+    deserialized_result = result._load_two_tones_vs_flux_bias_experiment_result(serialized_result)
+    assert deserialized_result.qubit == two_tones_vs_flux_bias_result.qubit
+    assert deserialized_result.data == two_tones_vs_flux_bias_result.data
+    assert deserialized_result.dims == two_tones_vs_flux_bias_result.dims
 
 
 def test_requires():
@@ -290,7 +343,8 @@ def test_requires():
     good_result.rabi_experiment_result = MagicMock()
     good_result.t1_experiment_result = MagicMock()
     good_result.t2_experiment_result = MagicMock()
-    good_result.two_tones_experiment_result = MagicMock()
+    good_result.two_tones_at_flux_bias_experiment_result = MagicMock()
+    good_result.two_tones_vs_flux_bias_experiment_result = MagicMock()
 
     bad_result = MagicMock()
     bad_result.functional_result = None
@@ -298,7 +352,8 @@ def test_requires():
     bad_result.rabi_experiment_result = None
     bad_result.t1_experiment_result = None
     bad_result.t2_experiment_result = None
-    bad_result.two_tones_experiment_result = None
+    bad_result.two_tones_at_flux_bias_experiment_result = None
+    bad_result.two_tones_vs_flux_bias_experiment_result = None
 
     assert _require_variational_program_result(good_result) is good_result.variational_program_result
     with pytest.raises(RuntimeError, match="did not return a variational_program_result"):
@@ -320,9 +375,16 @@ def test_requires():
     with pytest.raises(RuntimeError, match="did not return a t2_experiment_result"):
         _require_t2_experiment_result(bad_result)
 
-    assert _require_two_tones_experiment_result(good_result) is good_result.two_tones_experiment_result
-    with pytest.raises(RuntimeError, match="did not return a two_tones_experiment_result"):
+    assert _require_two_tones_experiment_result(good_result) is good_result.two_tones_at_flux_bias_experiment_result
+    with pytest.raises(RuntimeError, match="did not return a two_tones_at_flux_bias_experiment_result"):
         _require_two_tones_experiment_result(bad_result)
+
+    assert (
+        _require_two_tones_vs_flux_bias_experiment_result(good_result)
+        is good_result.two_tones_vs_flux_bias_experiment_result
+    )
+    with pytest.raises(RuntimeError, match="did not return a two_tones_vs_flux_bias_experiment_result"):
+        _require_two_tones_vs_flux_bias_experiment_result(bad_result)
 
 
 def test_typed_job_detail():
