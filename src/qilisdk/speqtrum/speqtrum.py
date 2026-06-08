@@ -32,9 +32,8 @@ from qilisdk.experiments import (
     T1ExperimentResult,
     T2Experiment,
     T2ExperimentResult,
-    TwoTonesExperiment,
-    TwoTonesExperimentResult,
 )
+from qilisdk.experiments.experiment_functional import TwoTonesAtFluxBiasExperiment, TwoTonesVsFluxBiasExperiment
 from qilisdk.functionals import (
     AnalogEvolution,
     DigitalPropagation,
@@ -63,12 +62,17 @@ from .speqtrum_models import (
     T1ExperimentPayload,
     T2ExperimentPayload,
     Token,
-    TwoTonesExperimentPayload,
+    TwoTonesAtFluxBiasExperimentPayload,
+    TwoTonesVsFluxBiasExperimentPayload,
     TypedJobDetail,
     VariationalProgramPayload,
 )
 
 if TYPE_CHECKING:
+    from qilisdk.experiments.experiment_result import (
+        TwoTonesAtFluxBiasExperimentResult,
+        TwoTonesVsFluxBiasExperimentResult,
+    )
     from qilisdk.functionals.functional import Functional, PrimitiveFunctional
     from qilisdk.readout import E, Readout, S, T
 
@@ -704,7 +708,8 @@ class SpeQtrum:
         * :class:`~qilisdk.experiments.experiment_functional.RabiExperiment`
         * :class:`~qilisdk.experiments.experiment_functional.T1Experiment`
         * :class:`~qilisdk.experiments.experiment_functional.T2Experiment`
-        * :class:`~qilisdk.experiments.experiment_functional.TwoTonesExperiment`
+        * :class:`~qilisdk.experiments.experiment_functional.TwoTonesAtFluxBiasExperiment`
+        * :class:`~qilisdk.experiments.experiment_functional.TwoTonesVsFluxBiasExperiment`
 
         Args:
             functional: A fully configured functional instance that defines the quantum workload.
@@ -732,8 +737,11 @@ class SpeQtrum:
         if isinstance(functional, T2Experiment):
             return self._submit_t2(functional, device, job_name)
 
-        if isinstance(functional, TwoTonesExperiment):
+        if isinstance(functional, TwoTonesAtFluxBiasExperiment):
             return self._submit_two_tones(functional, device, job_name)
+
+        if isinstance(functional, TwoTonesVsFluxBiasExperiment):
+            return self._submit_two_tones_vs_flux_bias(functional, device, job_name)
 
         # Functionals with readout
 
@@ -899,22 +907,24 @@ class SpeQtrum:
         return JobHandle.t2_experiment(job.id)
 
     def _submit_two_tones(
-        self, two_tones_experiment: TwoTonesExperiment, device: str, job_name: str | None = None
-    ) -> JobHandle[TwoTonesExperimentResult]:
-        """Submit a Two-Tones experiment to the SpeQtrum API.
+        self, two_tones_experiment: TwoTonesAtFluxBiasExperiment, device: str, job_name: str | None = None
+    ) -> JobHandle[TwoTonesAtFluxBiasExperimentResult]:
+        """Submit a Two-Tones at flux bias experiment to the SpeQtrum API.
 
         Args:
-            two_tones_experiment (TwoTonesExperiment): The experiment to execute.
+            two_tones_experiment (TwoTonesAtFluxBiasExperiment): The experiment to execute.
             device (str): Target device code.
             job_name (str | None): Optional human-readable job name.
 
         Returns:
-            JobHandle[TwoTonesExperimentResult]: A handle for tracking the
+            JobHandle[TwoTonesAtFluxBiasExperimentResult]: A handle for tracking the
             submitted job.
         """
         payload = ExecutePayload(
             type=ExecuteType.TWO_TONES_EXPERIMENT,
-            two_tones_experiment_payload=TwoTonesExperimentPayload(two_tones_experiment=two_tones_experiment),
+            two_tones_at_flux_bias_experiment_payload=TwoTonesAtFluxBiasExperimentPayload(
+                two_tones_experiment=two_tones_experiment
+            ),
         )
         json = {
             "device_code": device,
@@ -934,6 +944,45 @@ class SpeQtrum:
         job = JobId(**response.json())
         logger.info("Two-Tones experiment job submitted: {}", job.id)
         return JobHandle.two_tones_experiment(job.id)
+
+    def _submit_two_tones_vs_flux_bias(
+        self, two_tones_vs_flux_bias_experiment: TwoTonesVsFluxBiasExperiment, device: str, job_name: str | None = None
+    ) -> JobHandle[TwoTonesVsFluxBiasExperimentResult]:
+        """Submit a Two-Tones vs flux bias experiment to the SpeQtrum API.
+
+        Args:
+            two_tones_vs_flux_bias_experiment (TwoTonesVsFluxBiasExperiment): The experiment to execute.
+            device (str): Target device code.
+            job_name (str | None): Optional human-readable job name.
+
+        Returns:
+            JobHandle[TwoTonesVsFluxBiasExperimentResult]: A handle for tracking the
+            submitted job.
+        """
+        payload = ExecutePayload(
+            type=ExecuteType.TWO_TONES_VS_FLUX_BIAS_EXPERIMENT,
+            two_tones_vs_flux_bias_experiment_payload=TwoTonesVsFluxBiasExperimentPayload(
+                two_tones_vs_flux_experiment=two_tones_vs_flux_bias_experiment
+            ),
+        )
+        json = {
+            "device_code": device,
+            "payload": payload.model_dump_json(),
+            "job_type": JobType.PULSE,
+            "meta": {},
+        }
+        if job_name:
+            json["name"] = job_name
+        logger.debug("Executing Two-Tones vs flux bias experiment on device {}", device)
+        with self._create_client() as client:
+            response = client.post(
+                _EXECUTE_URL,
+                json=json,
+                extensions=_request_extensions(context="Executing Two-Tones vs flux bias experiment"),
+            )
+        job = JobId(**response.json())
+        logger.info("Two-Tones vs flux bias experiment job submitted: {}", job.id)
+        return JobHandle.two_tones_vs_flux_bias_experiment(job.id)
 
     def _submit_analog_evolution(
         self, functional: AnalogEvolution, device: str, readout: Readout[S, E, T], job_name: str | None = None

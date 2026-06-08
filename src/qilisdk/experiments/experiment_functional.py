@@ -21,7 +21,8 @@ from qilisdk.experiments.experiment_result import (
     RabiExperimentResult,
     T1ExperimentResult,
     T2ExperimentResult,
-    TwoTonesExperimentResult,
+    TwoTonesAtFluxBiasExperimentResult,
+    TwoTonesVsFluxBiasExperimentResult,
 )
 from qilisdk.functionals.functional import Functional
 from qilisdk.yaml import yaml
@@ -160,14 +161,14 @@ class T2Experiment(ExperimentFunctional[T2ExperimentResult]):
 
 
 @yaml.register_class
-class TwoTonesExperiment(ExperimentFunctional[TwoTonesExperimentResult]):
+class TwoTonesAtFluxBiasExperiment(ExperimentFunctional[TwoTonesAtFluxBiasExperimentResult]):
     """Two-tone spectroscopy functional for a single qubit.
 
     Sweeps a drive tone frequency while monitoring the readout tone to
     identify the qubit transition frequency.
     """
 
-    result_type: ClassVar[type[TwoTonesExperimentResult]] = TwoTonesExperimentResult
+    result_type: ClassVar[type[TwoTonesAtFluxBiasExperimentResult]] = TwoTonesAtFluxBiasExperimentResult
     """Result type returned by this functional."""
 
     def __init__(self, qubit: int, frequency_start: float, frequency_stop: float, frequency_step: float) -> None:
@@ -210,3 +211,98 @@ class TwoTonesExperiment(ExperimentFunctional[TwoTonesExperimentResult]):
             float: Frequency increment between sweep points (in Hz).
         """
         return self._frequency_step
+
+
+@yaml.register_class
+class TwoTonesVsFluxBiasExperiment(ExperimentFunctional[TwoTonesVsFluxBiasExperimentResult]):
+    """Two-tone spectroscopy functional for a single qubit, swept vs flux bias.
+
+    Sweeps a drive tone frequency while monitoring the readout tone to
+    identify the qubit transition frequency as a function of flux bias.
+    """
+
+    result_type: ClassVar[type[TwoTonesVsFluxBiasExperimentResult]] = TwoTonesVsFluxBiasExperimentResult
+    """Result type returned by this functional."""
+
+    def __init__(
+        self,
+        qubit: int,
+        frequency_start: float,
+        frequency_stop: float,
+        frequency_step: float,
+        flux_start: float,
+        flux_stop: float,
+        flux_step: float,
+    ) -> None:
+        """Initialize a two-tone spectroscopy functional, swept vs flux bias.
+
+        Args:
+            qubit (int): The physical qubit index on which the experiment is performed.
+            frequency_start (float): Starting frequency of the swept drive tone (in Hz).
+            frequency_stop (float): Ending frequency of the swept drive tone (in Hz).
+            frequency_step (float): Frequency increment between sweep points (in Hz).
+            flux_start (float): Starting value of the flux bias sweep (in units of flux quantum).
+            flux_stop (float): Ending value of the flux bias sweep (in units of flux quantum).
+            flux_step (float): Increment between flux bias sweep points (in units of flux quantum).
+        """
+        super().__init__(qubit=qubit)
+        self._frequency_start: float = frequency_start
+        self._frequency_stop: float = frequency_stop
+        self._frequency_step: float = frequency_step
+        self._flux_start: float = flux_start
+        self._flux_stop: float = flux_stop
+        self._flux_step: float = flux_step
+
+    @property
+    def frequency_start(self) -> float:
+        """Start frequency for the drive tone sweep.
+
+        Returns:
+            float: Starting frequency of the drive tone (in Hz).
+        """
+        return self._frequency_start
+
+    @property
+    def frequency_stop(self) -> float:
+        """Stop frequency for the drive tone sweep.
+
+        Returns:
+            float: Ending frequency of the drive tone (in Hz).
+        """
+        return self._frequency_stop
+
+    @property
+    def frequency_step(self) -> float:
+        """Step size for the drive tone sweep.
+
+        Returns:
+            float: Frequency increment between sweep points (in Hz).
+        """
+        return self._frequency_step
+
+    @property
+    def flux_start(self) -> float:
+        """Start value for the flux bias sweep.
+
+        Returns:
+            float: Starting value of the flux bias (in units of flux quantum).
+        """
+        return self._flux_start
+
+    @property
+    def flux_stop(self) -> float:
+        """Stop value for the flux bias sweep.
+
+        Returns:
+            float: Ending value of the flux bias (in units of flux quantum).
+        """
+        return self._flux_stop
+
+    @property
+    def flux_step(self) -> float:
+        """Step size for the flux bias sweep.
+
+        Returns:
+            float: Increment between flux bias sweep points (in units of flux quantum).
+        """
+        return self._flux_step

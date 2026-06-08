@@ -14,7 +14,14 @@
 
 import numpy as np
 
-from qilisdk.experiments import ExperimentFunctional, RabiExperiment, T1Experiment, T2Experiment, TwoTonesExperiment
+from qilisdk.experiments import (
+    ExperimentFunctional,
+    RabiExperiment,
+    T1Experiment,
+    T2Experiment,
+    TwoTonesAtFluxBiasExperiment,
+    TwoTonesVsFluxBiasExperiment,
+)
 
 
 def test_experiment_functional_initialization():
@@ -52,10 +59,36 @@ def test_two_tones_experiment_initialization():
     freq_start = 4.0
     freq_stop = 5.0
     freq_step = 5.0
-    two_tones_exp = TwoTonesExperiment(
+    two_tones_exp = TwoTonesAtFluxBiasExperiment(
         qubit=qubit, frequency_start=freq_start, frequency_stop=freq_stop, frequency_step=freq_step
     )
     assert two_tones_exp.qubit == qubit
     assert np.isclose(two_tones_exp.frequency_start, freq_start)
     assert np.isclose(two_tones_exp.frequency_stop, freq_stop)
     assert np.isclose(two_tones_exp.frequency_step, freq_step)
+
+
+def test_two_tones_versus_flux_experiment_initialization():
+    qubit = 0
+    freq_start = 4.0
+    freq_stop = 5.0
+    freq_step = 5.0
+    flux_start = -1.0
+    flux_stop = 1.0
+    flux_step = 0.5
+    two_tones_flux_exp = TwoTonesVsFluxBiasExperiment(
+        qubit=qubit,
+        frequency_start=freq_start,
+        frequency_stop=freq_stop,
+        frequency_step=freq_step,
+        flux_start=flux_start,
+        flux_stop=flux_stop,
+        flux_step=flux_step,
+    )
+    assert two_tones_flux_exp.qubit == qubit
+    assert np.isclose(two_tones_flux_exp.frequency_start, freq_start)
+    assert np.isclose(two_tones_flux_exp.frequency_stop, freq_stop)
+    assert np.isclose(two_tones_flux_exp.frequency_step, freq_step)
+    assert np.isclose(two_tones_flux_exp.flux_start, flux_start)
+    assert np.isclose(two_tones_flux_exp.flux_stop, flux_stop)
+    assert np.isclose(two_tones_flux_exp.flux_step, flux_step)
