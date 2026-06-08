@@ -243,6 +243,45 @@ class RabiExperimentResult(ExperimentResult):
     plot_title: ClassVar[str] = "Rabi"
     """Default title for Rabi experiment plots."""
 
+    @staticmethod
+    def add_fit(
+        x_values: np.ndarray, y_values: np.ndarray, initial_guess: list[float] | None = None, db: bool = False
+    ) -> None:
+        """
+        Fit a sinusoidal curve to the Rabi experiment data.
+
+        Args:
+            x_values (np.ndarray): The independent variable data (e.g., drive durations in nanoseconds).
+            y_values (np.ndarray): The dependent variable data (e.g., measured signal).
+            initial_guess (list[float] | None): Optional initial guess for the fit parameters [a, f_rabi, phi, b].
+                If None, a default guess is generated based on the data.
+            db (bool): Whether the data is in dB scale. Non-finite dB values (e.g. -inf at zero crossings)
+                are excluded from the fit.
+        """
+
+        def _rabi_model(t: np.ndarray, a: float, f_rabi: float, phi: float, b: float) -> np.ndarray:
+            return a * np.cos(2 * np.pi * f_rabi * t + phi) + b
+
+        y_linear = 10 ** (y_values / 20) if db else y_values
+
+        if initial_guess is None:
+            amplitude_guess = (y_linear.max() - y_linear.min()) / 2
+            baseline_guess = y_linear.mean()
+            fft_freqs = np.fft.rfftfreq(len(x_values), d=(x_values[1] - x_values[0]))
+            fft_magnitudes = np.abs(np.fft.rfft(y_linear - baseline_guess))
+            fft_magnitudes[0] = 0
+            freq_guess = float(fft_freqs[np.argmax(fft_magnitudes)])
+            initial_guess = [amplitude_guess, freq_guess, 0.0, baseline_guess]
+
+        popt, _ = curve_fit(_rabi_model, x_values, y_linear, p0=initial_guess)
+        a_fit, f_rabi_fit, phi_fit, b_fit = popt
+        t_fit = np.linspace(min(x_values), max(x_values), 1000)
+        y_fit = _rabi_model(t_fit, a_fit, f_rabi_fit, phi_fit, b_fit)
+        if db:
+            y_fit = 20 * np.log10(np.abs(y_fit))
+        plt.plot(t_fit, y_fit, label=f"Sinusoidal Fit (f_rabi={f_rabi_fit * 1e3:.2f} MHz)")
+        plt.legend()
+
 
 @yaml.register_class
 class T1ExperimentResult(ExperimentResult):
@@ -279,39 +318,18 @@ class T1ExperimentResult(ExperimentResult):
             """
             return a * np.exp(-t / t1) + b
 
-        def _t1_decay_model_db(t: np.ndarray, m: float, c: float) -> np.ndarray:
-            """Linear model for T1 measurement in dB scale.
+        y_linear = 10 ** (y_values / 20) if db else y_values
 
-            An exponential decay a*exp(-t/t1) becomes a straight line in dB:
-            20*log10(a) - (20/ln10) * t/t1 = m*t + c
+        if initial_guess is None:
+            initial_guess = [y_linear.max() - y_linear.min(), (x_values.max() - x_values.min()) / 3, y_linear.min()]
 
-            Args:
-                t (np.ndarray): Time array (in microseconds).
-                m (float): Slope, related to T1 by T1 = -20 / (ln(10) * m).
-                c (float): Intercept (in dB).
-
-            Returns:
-                np.ndarray: The modeled linear decay in dB at time t.
-            """
-            return m * t + c
-
+        popt, _ = curve_fit(_t1_decay_model, x_values, y_linear, p0=initial_guess)
+        a_fit, t1_fit, b_fit = popt
         t_fit = np.linspace(min(x_values), max(x_values), 100)
+        y_fit = _t1_decay_model(t_fit, a_fit, t1_fit, b_fit)
         if db:
-            if initial_guess is None:
-                slope_guess = float((y_values[-1] - y_values[0]) / (x_values[-1] - x_values[0]))
-                initial_guess = [slope_guess, float(y_values[0])]
-            popt, _ = curve_fit(_t1_decay_model_db, x_values, y_values, p0=initial_guess)
-            m_fit, c_fit = popt
-            t1_fit = -20.0 / (np.log(10) * m_fit)
-            y_fit = _t1_decay_model_db(t_fit, m_fit, c_fit)
-            plt.plot(t_fit, y_fit, label=f"Linear Fit (T1={t1_fit:.2f} ns)")
-        else:
-            if initial_guess is None:
-                initial_guess = [y_values.max() - y_values.min(), (x_values.max() - x_values.min()) / 3, y_values.min()]
-            popt, _ = curve_fit(_t1_decay_model, x_values, y_values, p0=initial_guess)
-            a_fit, t1_fit, b_fit = popt
-            y_fit = _t1_decay_model(t_fit, a_fit, t1_fit, b_fit)
-            plt.plot(t_fit, y_fit, label=f"Exponential Fit (T1={t1_fit:.2f} ns)")
+            y_fit = 20 * np.log10(np.abs(y_fit))
+        plt.plot(t_fit, y_fit, label=f"Exponential Fit (T1={t1_fit:.2f} ns)")
         plt.legend()
 
 
@@ -351,18 +369,22 @@ class T2ExperimentResult(ExperimentResult):
             """
             return a * np.exp(-t / t2) * np.cos(2 * np.pi * f_detune * t + phi) + b
 
+        y_linear = 10 ** (y_values / 20) if db else y_values
+
         if initial_guess is None:
             initial_guess = [
-                y_values.max() - y_values.min(),
+                y_linear.max() - y_linear.min(),
                 (x_values.max() - x_values.min()) / 3,
                 1.0,
                 0.0,
-                y_values.min(),
+                y_linear.min(),
             ]
-        popt, _ = curve_fit(_t2_decay_model, x_values, y_values, p0=initial_guess)
+        popt, _ = curve_fit(_t2_decay_model, x_values, y_linear, p0=initial_guess)
         a_fit, t2_fit, f_detune_fit, phi_fit, b_fit = popt
         t_fit = np.linspace(min(x_values), max(x_values), 100)
         y_fit = _t2_decay_model(t_fit, a_fit, t2_fit, f_detune_fit, phi_fit, b_fit)
+        if db:
+            y_fit = 20 * np.log10(np.abs(y_fit))
         plt.plot(t_fit, y_fit, label=f"Decaying Sinusoid Fit (T2={t2_fit:.2f} ns, f_detune={f_detune_fit:.2f} MHz)")
         plt.legend()
 
@@ -403,17 +425,21 @@ class TwoTonesAtFluxBiasExperimentResult(ExperimentResult):
             """
             return B - A / (1 + ((f - f0) / (gamma / 2)) ** 2)
 
+        y_linear = 10 ** (y_values / 20) if db else y_values
+
         if initial_guess is None:
             initial_guess = [
-                float(x_values[np.argmin(y_values)]),
+                float(x_values[np.argmin(y_linear)]),
                 float((x_values.max() - x_values.min()) / 20),
-                float(y_values.max() - y_values.min()),
-                float(y_values.min()),
+                float(y_linear.max() - y_linear.min()),
+                float(y_linear.min()),
             ]
-        popt, _ = curve_fit(_lorentzian, x_values, y_values, p0=initial_guess)
+        popt, _ = curve_fit(_lorentzian, x_values, y_linear, p0=initial_guess)
         f0_fit, gamma_fit, A_fit, B_fit = popt
         f_fit = np.linspace(min(x_values), max(x_values), 1000)
         y_fit = _lorentzian(f_fit, f0_fit, gamma_fit, A_fit, B_fit)
+        if db:
+            y_fit = 20 * np.log10(np.abs(y_fit))
         plt.plot(f_fit, y_fit, label=f"Lorentzian Fit (f0={f0_fit:.2f} Hz, gamma={gamma_fit:.2f} Hz)")
         plt.legend()
 

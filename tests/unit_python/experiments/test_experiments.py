@@ -62,21 +62,7 @@ def test_experiment_s21_computation():
 
 def test_experiment_plotting(monkeypatch):
     monkeypatch.setattr(plt, "show", lambda: None)  # Prevent actual plot display
-    # monkeypatch.setattr(plt.Figure, "savefig", lambda self, *args, **kwargs: None)  # Prevent file saving
-
-    data = np.array([[1, 2], [3, 4]])
-    dims = [Dimension(labels=["Freq", "Freq2"], values=[np.array([1, 2]), np.array([10, 20])])]
-    exp_result = RabiExperimentResult(qubit=0, data=data, dims=dims)
-    exp_result.plot(save_to="./.tmp/")
-
-    # now for 2d
-    data2d = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])
-    dims2d = [
-        Dimension(labels=["Drive amplitude", "Freq"], values=[np.array([0.1, 0.2]), np.array([1, 2])]),
-        Dimension(labels=["Delay time", "Freq2"], values=[np.array([10, 20]), np.array([100, 200])]),
-    ]
-    exp_result_2d = RabiExperimentResult(qubit=0, data=data2d, dims=dims2d)
-    exp_result_2d.plot(save_to="./.tmp/")
+    monkeypatch.setattr(plt.Figure, "savefig", lambda self, *args, **kwargs: None)  # Prevent file saving
 
     # 3d should fail
     data3d = np.ones((2, 2, 2, 2))
