@@ -45,6 +45,7 @@ class StabilizerState {
         const std::bitset<MAX_ROWS_STABILIZER>& get_phases() const { return phases; }
         int get_nqubits() const { return nqubits; }
         void apply_gate(const Gate& gate);
+        std::string sample() const;
 };
 
 class StabilizerStateSum {
