@@ -356,4 +356,10 @@ std::ostream& operator<<(std::ostream& os, const std::vector<Gate>& gates) {
     return os;
 }
 
+// Stream output for a single gate (for debugging)
+std::ostream& operator<<(std::ostream& os, const Gate& gate) {
+    os << gate.get_id();
+    return os;
+}
+
 // GCOV_EXCL_BR_STOP

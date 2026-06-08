@@ -95,9 +95,6 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrix& 
         config (QiliSimConfig): The simulation configuration.
         readout (py::object): A list with readout information to determine when and what to measure.
 
-    Returns:
-        SamplingResult: A result object containing the measurement samples and computed probabilities.
-
     Raises:
         py::value_error: If functional is not a Sampling instance.
         py::value_error: If n_qubits is non-positive.
@@ -304,9 +301,6 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const Sp
         config (QiliSimConfig): The simulation configuration.
         readout (py::object): A list with readout information to determine when and what to measure.
 
-    Returns:
-        SamplingResult: A result object containing the measurement samples and computed probabilities.
-
     Raises:
         py::value_error: If functional is not a Sampling instance.
         py::value_error: If n_qubits is non-positive.
@@ -441,9 +435,35 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const Sp
     }
 }
 
+#include <iostream>
 
 void sampling_stabilizer(const std::vector<Gate>& gates, int n_qubits, const StabilizerStateSum& initial_state, NoiseModelCpp& noise_model_cpp, StabilizerStateSum& state, std::vector<py::object>& intermediate_results, const QiliSimConfig& config, const py::object& readout) {
-    // TODO(luke)
+    /*
+    Execute a sampling functional using a stabilizer simulator.
+
+    Args:
+        gates (std::vector<Gate>&): The list of gates in the circuit.
+        n_qubits (int): The number of qubits in the circuit.
+        initial_state (StabilizerStateSum&): The initial state of the system as a sum of stabilizer states.
+        noise_model_cpp (NoiseModelCpp&): The noise model to apply during simulation.
+        state (StabilizerStateSum&): The final state after applying all gates as a sum of stabilizer states.
+        intermediate_results (std::vector<py::object>&): A vector to store intermediate results after each set of measurements.
+        config (QiliSimConfig): The simulation configuration.
+        readout (py::object): A list with readout information to determine when and what to measure.
+    */
+
+    // We start with the initial state
+    state = initial_state;
+
+    // Then we apply each gate
+    std::vector<bool> qubits_measured(n_qubits, false);
+    for (int i = 0; i < int(gates.size()); ++i) {
+        const auto& gate = gates[i];
+        std::cout << "Applying gate: " << gate << std::endl;
+        state.apply_gate(gate);
+        std::cout << "State after gate:\n" << state << std::endl;
+    }
+
 }
 
 // GCOV_EXCL_BR_STOP
