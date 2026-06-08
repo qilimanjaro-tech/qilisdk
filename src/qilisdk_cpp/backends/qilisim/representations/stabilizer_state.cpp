@@ -39,11 +39,30 @@ std::ostream& operator<<(std::ostream& os, const StabilizerStateSum& sss) {
 
 std::map<std::string, int> StabilizerStateSum::sample(int nshots) const {
     // TODO(luke): implement sampling from a StabilizerStateSum
-    std::string samples_str = "";
-    for (size_t i = 0; i < nqubits; ++i) {
-        samples_str += "0";
+    // std::string samples_str = "";
+    // for (size_t i = 0; i < nqubits; ++i) {
+    //     samples_str += "0";
+    // }
+    // return {{samples_str, nshots}};
+
+    std::map<std::string, int> sample_counts;
+
+    // Repeat for each shot:
+    for (int shot = 0; shot < nshots; ++shot) {
+
+        // First, pick an element of the sum according to the probabilities given by the coefficients
+
+        // From that, check if the state is deterministic
+
+        // If so, return the deterministic sample 
+
+        // If not, sample from the distribution given by the stabilizer state
+
     }
-    return {{samples_str, nshots}};
+
+    // Return the counts
+    return sample_counts;
+
 }
 
 void StabilizerState::apply_gate(const Gate& gate) {
