@@ -55,6 +55,9 @@ class ExperimentResult(FunctionalResult):
     plot_title: ClassVar[str]
     """Default plot title; subclasses provide the concrete label."""
 
+    colorbar_label: ClassVar[str] = r"$|S_{21}|$"
+    """Default colorbar label for 2D plots; can be overridden by subclasses if needed."""
+
     def __init__(self, qubit: int, data: np.ndarray, dims: list[Dimension]) -> None:
         """Initialize an experiment result.
 
@@ -94,12 +97,19 @@ class ExperimentResult(FunctionalResult):
         """
         return 20 * np.log10(self.s21_modulus)
 
-    def add_fit(self, initial_guess: list[float] | None = None) -> None:
-        """Fit a user-provided function to the experimental data.
+    @staticmethod
+    def add_fit(
+        x_values: np.ndarray, y_values: np.ndarray, initial_guess: list[float] | None = None, db: bool = False
+    ) -> None:
+        """
+        Fit a user-provided function to the experimental data.
+
         This should be implemented by subclasses to provide specific fitting functionality relevant to the experiment type.
         """
 
-    def plot(self, save_to: str | None = None, initial_guess: list[float] | None = None) -> None:
+    def plot(
+        self, save_to: str | None = None, initial_guess: list[float] | None = None, db: bool = False, fit: bool = True
+    ) -> None:
         """Plot the S21 parameter from experiment results.
 
         Automatically detects whether the dataset is 1D or 2D and creates
@@ -124,14 +134,14 @@ class ExperimentResult(FunctionalResult):
             save_to.parent.mkdir(parents=True, exist_ok=True)
             figure.savefig(save_to)
 
-        def plot_1d(s21: np.ndarray, dims: list[Dimension]) -> None:
+        def plot_1d(s21: np.ndarray, dims: list[Dimension], db: bool = False, fit: bool = True) -> None:
             """Plot 1d"""
             x_labels, x_values = dims[0].labels, dims[0].values
 
             fig, ax1 = plt.subplots()
             ax1.set_title(f"{self.plot_title} - Qubit {self.qubit}")
             ax1.set_xlabel(x_labels[0])
-            ax1.set_ylabel(r"$|S_{21}|$")
+            ax1.set_ylabel(r"$|S_{21}|$ ∝ Voltage" if not db else r"$|S_{21}|$ (dB)")
             ax1.plot(x_values[0], s21, ".")
 
             if len(x_labels) > 1:
@@ -149,15 +159,17 @@ class ExperimentResult(FunctionalResult):
                 # Force scientific notation
                 ax2.ticklabel_format(axis="x", style="sci", scilimits=(-3, 3))
 
-            self.add_fit(initial_guess=initial_guess)
+            if fit:
+                self.add_fit(x_values[0], s21, initial_guess=initial_guess, db=db)
 
             if save_to:
                 save_figure(fig, save_to)
 
             plt.show()
+            plt.close(fig)
 
         # pylint: disable=too-many-locals
-        def plot_2d(s21: np.ndarray, dims: list[Dimension]) -> None:
+        def plot_2d(s21: np.ndarray, dims: list[Dimension], db: bool = False, fit: bool = True) -> None:
             """Plot 2d"""
             x_labels, x_values = dims[0].labels, dims[0].values
             y_labels, y_values = dims[1].labels, dims[1].values
@@ -175,7 +187,8 @@ class ExperimentResult(FunctionalResult):
             ax1.ticklabel_format(axis="both", style="sci", scilimits=(-3, 3))
 
             mesh = ax1.pcolormesh(x_edges, y_edges, s21.T, cmap="viridis", shading="auto")
-            fig.colorbar(mesh, ax=ax1)
+            colorbar_label = self.colorbar_label + " ∝ Voltage" if not db else self.colorbar_label + " (dB)"
+            fig.colorbar(mesh, ax=ax1, label=colorbar_label)
 
             if len(x_labels) > 1:
                 # Create secondary x-axis
@@ -203,19 +216,22 @@ class ExperimentResult(FunctionalResult):
                 # Force scientific notation
                 ax3.ticklabel_format(axis="y", style="sci", scilimits=(-3, 3))
 
-            self.add_fit(initial_guess=initial_guess)
+            if fit:
+                self.add_fit(x_values[0], s21, initial_guess=initial_guess, db=db)
 
             if save_to:
                 save_figure(fig, save_to)
 
             plt.tight_layout()
             plt.show()
+            plt.close(fig)
 
-        n_dimensions = len(self.s21_modulus.shape)
+        to_plot = self.s21_db if db else self.s21_modulus
+        n_dimensions = len(to_plot.shape)
         if n_dimensions == 1:
-            plot_1d(self.s21_modulus, self.dims)
+            plot_1d(to_plot, self.dims, db=db, fit=fit)
         elif n_dimensions == 2:  # noqa: PLR2004
-            plot_2d(self.s21_modulus, self.dims)
+            plot_2d(to_plot, self.dims, db=db, fit=fit)
         else:
             raise NotImplementedError("3D and higher dimension plots are not supported yet.")
 
@@ -235,8 +251,19 @@ class T1ExperimentResult(ExperimentResult):
     plot_title: ClassVar[str] = "T1"
     """Default title for T1 experiment plots."""
 
-    def add_fit(self, initial_guess: list[float] | None = None) -> None:
-        """Fit an exponential decay curve to the T1 experiment data."""
+    @staticmethod
+    def add_fit(
+        x_values: np.ndarray, y_values: np.ndarray, initial_guess: list[float] | None = None, db: bool = False
+    ) -> None:
+        """
+        Fit an exponential decay curve to the T1 experiment data.
+
+        Args:
+            x_values (list[np.ndarray]): The independent variable data (e.g., delay times).
+            y_values (np.ndarray): The dependent variable data (e.g., measured signal).
+            initial_guess (list[float] | None): Optional initial guess for the fit parameters [a, t1, b]. If None, a default guess is generated based on the data.
+            db (bool): Whether to plot the fit in dB scale.
+        """
 
         def _t1_decay_model(t: np.ndarray, a: float, t1: float, b: float) -> np.ndarray:
             """Exponential decay model for T1 measurement.
@@ -252,15 +279,39 @@ class T1ExperimentResult(ExperimentResult):
             """
             return a * np.exp(-t / t1) + b
 
-        x_data = self.dims[0].values[0].flatten()
-        y_data = self.s21_modulus.flatten()
-        if initial_guess is None:
-            initial_guess = [y_data.max() - y_data.min(), (x_data.max() - x_data.min()) / 3, y_data.min()]
-        popt, _ = curve_fit(_t1_decay_model, x_data, y_data, p0=initial_guess)
-        a_fit, t1_fit, b_fit = popt
-        t_fit = np.linspace(min(x_data), max(x_data), 100)
-        y_fit = _t1_decay_model(t_fit, a_fit, t1_fit, b_fit)
-        plt.plot(t_fit, y_fit, label=f"Exponential Fit (T1={t1_fit:.2f} μs)")
+        def _t1_decay_model_db(t: np.ndarray, m: float, c: float) -> np.ndarray:
+            """Linear model for T1 measurement in dB scale.
+
+            An exponential decay a*exp(-t/t1) becomes a straight line in dB:
+            20*log10(a) - (20/ln10) * t/t1 = m*t + c
+
+            Args:
+                t (np.ndarray): Time array (in microseconds).
+                m (float): Slope, related to T1 by T1 = -20 / (ln(10) * m).
+                c (float): Intercept (in dB).
+
+            Returns:
+                np.ndarray: The modeled linear decay in dB at time t.
+            """
+            return m * t + c
+
+        t_fit = np.linspace(min(x_values), max(x_values), 100)
+        if db:
+            if initial_guess is None:
+                slope_guess = float((y_values[-1] - y_values[0]) / (x_values[-1] - x_values[0]))
+                initial_guess = [slope_guess, float(y_values[0])]
+            popt, _ = curve_fit(_t1_decay_model_db, x_values, y_values, p0=initial_guess)
+            m_fit, c_fit = popt
+            t1_fit = -20.0 / (np.log(10) * m_fit)
+            y_fit = _t1_decay_model_db(t_fit, m_fit, c_fit)
+            plt.plot(t_fit, y_fit, label=f"Linear Fit (T1={t1_fit:.2f} ns)")
+        else:
+            if initial_guess is None:
+                initial_guess = [y_values.max() - y_values.min(), (x_values.max() - x_values.min()) / 3, y_values.min()]
+            popt, _ = curve_fit(_t1_decay_model, x_values, y_values, p0=initial_guess)
+            a_fit, t1_fit, b_fit = popt
+            y_fit = _t1_decay_model(t_fit, a_fit, t1_fit, b_fit)
+            plt.plot(t_fit, y_fit, label=f"Exponential Fit (T1={t1_fit:.2f} ns)")
         plt.legend()
 
 
@@ -271,6 +322,50 @@ class T2ExperimentResult(ExperimentResult):
     plot_title: ClassVar[str] = "T2"
     """Default title for T2 experiment plots."""
 
+    @staticmethod
+    def add_fit(
+        x_values: np.ndarray, y_values: np.ndarray, initial_guess: list[float] | None = None, db: bool = False
+    ) -> None:
+        """
+        Fit a decaying sinusoid curve to the T2 experiment data.
+
+        Args:
+            x_values (list[np.ndarray]): The independent variable data (e.g., delay times).
+            y_values (np.ndarray): The dependent variable data (e.g., measured signal).
+            initial_guess (list[float] | None): Optional initial guess for the fit parameters [a, t2, f_detune, phi, b]. If None, a default guess is generated based on the data.
+            db (bool): Whether to plot the fit in dB scale.
+        """
+
+        def _t2_decay_model(t: np.ndarray, a: float, t2: float, f_detune: float, phi: float, b: float) -> np.ndarray:
+            """Decaying sinusoid model for T2 measurement.
+
+            Args:
+                t (np.ndarray): Time array (in microseconds).
+                a (float): Amplitude of the decay.
+                t2 (float): T2 dephasing time (in microseconds).
+                f_detune (float): Detuning frequency of the oscillations (in MHz).
+                phi (float): Phase offset of the oscillations (in radians).
+                b (float): Baseline offset.
+            Returns:
+                np.ndarray: The modeled decaying sinusoid values at time t.
+            """
+            return a * np.exp(-t / t2) * np.cos(2 * np.pi * f_detune * t + phi) + b
+
+        if initial_guess is None:
+            initial_guess = [
+                y_values.max() - y_values.min(),
+                (x_values.max() - x_values.min()) / 3,
+                1.0,
+                0.0,
+                y_values.min(),
+            ]
+        popt, _ = curve_fit(_t2_decay_model, x_values, y_values, p0=initial_guess)
+        a_fit, t2_fit, f_detune_fit, phi_fit, b_fit = popt
+        t_fit = np.linspace(min(x_values), max(x_values), 100)
+        y_fit = _t2_decay_model(t_fit, a_fit, t2_fit, f_detune_fit, phi_fit, b_fit)
+        plt.plot(t_fit, y_fit, label=f"Decaying Sinusoid Fit (T2={t2_fit:.2f} ns, f_detune={f_detune_fit:.2f} MHz)")
+        plt.legend()
+
 
 @yaml.register_class
 class TwoTonesAtFluxBiasExperimentResult(ExperimentResult):
@@ -279,10 +374,52 @@ class TwoTonesAtFluxBiasExperimentResult(ExperimentResult):
     plot_title: ClassVar[str] = "TwoTonesAtFluxBias"
     """Default title for TwoTones at flux bias experiment plots."""
 
+    @staticmethod
+    def add_fit(
+        x_values: np.ndarray, y_values: np.ndarray, initial_guess: list[float] | None = None, db: bool = False
+    ) -> None:
+        """
+        Fit a Lorentzian curve to the TwoTones at flux bias experiment data.
+
+        Args:
+            x_values (list[np.ndarray]): The independent variable data (e.g., frequencies).
+            y_values (np.ndarray): The dependent variable data (e.g., measured signal).
+            initial_guess (list[float] | None): Optional initial guess for the fit parameters [f0, gamma, A, B]. If None, a default guess is generated based on the data.
+            db (bool): Whether to plot the fit in dB scale.
+        """
+
+        def _lorentzian(f: np.ndarray, f0: float, gamma: float, A: float, B: float) -> np.ndarray:
+            """Lorentzian model for TwoTones at flux bias measurement.
+
+            Args:
+                f (np.ndarray): Frequency array (in Hz).
+                f0 (float): Resonance frequency (in Hz).
+                gamma (float): Full width at half maximum (FWHM) of the resonance (in Hz).
+                A (float): Amplitude of the Lorentzian dip.
+                B (float): Baseline offset.
+
+            Returns:
+                np.ndarray: The modeled Lorentzian curve values at frequency f.
+            """
+            return B - A / (1 + ((f - f0) / (gamma / 2)) ** 2)
+
+        if initial_guess is None:
+            initial_guess = [
+                float(x_values[np.argmin(y_values)]),
+                float((x_values.max() - x_values.min()) / 20),
+                float(y_values.max() - y_values.min()),
+                float(y_values.min()),
+            ]
+        popt, _ = curve_fit(_lorentzian, x_values, y_values, p0=initial_guess)
+        f0_fit, gamma_fit, A_fit, B_fit = popt
+        f_fit = np.linspace(min(x_values), max(x_values), 1000)
+        y_fit = _lorentzian(f_fit, f0_fit, gamma_fit, A_fit, B_fit)
+        plt.plot(f_fit, y_fit, label=f"Lorentzian Fit (f0={f0_fit:.2f} Hz, gamma={gamma_fit:.2f} Hz)")
+        plt.legend()
+
 
 @yaml.register_class
 class TwoTonesVsFluxBiasExperimentResult(ExperimentResult):
     """Result container for TwoTones experiments swept vs flux bias."""
 
     plot_title: ClassVar[str] = "TwoTonesVsFluxBias"
-    """Default title for TwoTones versus flux bias experiment plots."""
