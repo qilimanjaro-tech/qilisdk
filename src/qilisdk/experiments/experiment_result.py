@@ -217,6 +217,7 @@ class ExperimentResult(FunctionalResult):
 
         x_values = [x_override.transform(x) for x in x_values] if x_override else x_values
         y_values = [y_override.transform(y) for y in y_values] if y_override else y_values
+        z_values = z_override.transform(s21) if z_override else s21
 
         x_edges = np.linspace(x_values[0].min(), x_values[0].max(), len(x_values[0]) + 1)
         y_edges = np.linspace(y_values[0].min(), y_values[0].max(), len(y_values[0]) + 1)
@@ -227,7 +228,7 @@ class ExperimentResult(FunctionalResult):
         ax1.set_ylabel(y_override.label if y_override and y_override.label else y_labels[0])
         ax1.ticklabel_format(axis="both", style="sci", scilimits=(-3, 3))
 
-        mesh = ax1.pcolormesh(x_edges, y_edges, s21.T, cmap="viridis", shading="auto")
+        mesh = ax1.pcolormesh(x_edges, y_edges, z_values.T, cmap="viridis", shading="auto")
         z_label = z_override.label if z_override and z_override.label else r"$|S_{21}|$"
         colorbar_label = z_label + " ∝ Voltage" if not db else z_label + " (dB)"
         fig.colorbar(mesh, ax=ax1, label=colorbar_label)
@@ -245,9 +246,6 @@ class ExperimentResult(FunctionalResult):
             ax3.set_ylim(min(y_values[1]), max(y_values[1]))
             ax3.set_yticks(np.linspace(min(y_values[1]), max(y_values[1]), num=6))
             ax3.ticklabel_format(axis="y", style="sci", scilimits=(-3, 3))
-
-        if fit:
-            self.add_fit(x_values[0], s21, initial_guess=initial_guess, db=db)
 
         if save_to:
             self._save_figure(fig, save_to)
