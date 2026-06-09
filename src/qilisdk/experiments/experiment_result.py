@@ -43,18 +43,8 @@ class Dimension:
         self.values = values
 
 
-class DimOverride:
-    """Label and value transform override for a single plot dimension."""
-
-    def __init__(self, label: str = "", transform: Callable = lambda x: x) -> None:
-        """Initialize a DimOverride.
-
-        Args:
-            label (str): Axis label to use instead of the dimension's default.
-            transform (Callable): Function applied to the dimension's values before plotting.
-        """
-        self.label = label
-        self.transform = transform
+DimensionOverride = Callable[[Dimension], Dimension]
+"""Callable that takes a Dimension and returns a transformed Dimension."""
 
 
 @yaml.register_class
@@ -69,8 +59,8 @@ class ExperimentResult(FunctionalResult):
     plot_title: ClassVar[str]
     """Default plot title; subclasses provide the concrete label."""
 
-    dims_override: ClassVar[dict[int, DimOverride]] = {}
-    """Per-dimension label and value transform overrides; keyed by dimension index."""
+    dims_override: ClassVar[list[DimensionOverride | None]] = []
+    """Per-dimension overrides; each entry is a callable transforming that dimension, or None to use the default."""
 
     fit_by_default: ClassVar[bool] = False
     """Whether to perform fitting by default when plotting; can be overridden by subclasses if needed."""
@@ -162,16 +152,16 @@ class ExperimentResult(FunctionalResult):
             save_to (str | None): Optional path or directory to save the figure.
             initial_guess (list[float] | None): Optional initial guess passed to `add_fit`.
         """
-        x_labels, x_values = dims[0].labels, dims[0].values
-        x_override = self.dims_override.get(0)
-        y_override = self.dims_override.get(1)
+        x_dim = self.dims_override[0](dims[0]) if len(self.dims_override) > 0 and self.dims_override[0] else dims[0]
+        x_labels, x_values = x_dim.labels, x_dim.values
+        y_override = self.dims_override[1] if len(self.dims_override) > 1 else None
 
         fig, ax1 = plt.subplots()
         ax1.set_title(f"{self.plot_title} - Qubit {self.qubit}")
-        ax1.set_xlabel(x_override.label if x_override and x_override.label else x_labels[0])
+        ax1.set_xlabel(x_labels[0])
         default_y_label = r"$|S_{21}|$ ∝ Voltage" if not db else r"$|S_{21}|$ (dB)"
-        ax1.set_ylabel(y_override.label if y_override and y_override.label else default_y_label)
-        x_values = [x_override.transform(x) for x in x_values] if x_override else x_values
+        y_dim_input = Dimension(labels=[default_y_label], values=[s21])
+        ax1.set_ylabel(y_override(y_dim_input).labels[0] if y_override else default_y_label)
         ax1.plot(x_values[0], s21, ".")
 
         if len(x_labels) > 1:
@@ -209,27 +199,27 @@ class ExperimentResult(FunctionalResult):
             save_to (str | None): Optional path or directory to save the figure.
             initial_guess (list[float] | None): Optional initial guess passed to `add_fit`.
         """
-        x_labels, x_values = dims[0].labels, dims[0].values
-        y_labels, y_values = dims[1].labels, dims[1].values
-        x_override = self.dims_override.get(0)
-        y_override = self.dims_override.get(1)
-        z_override = self.dims_override.get(2)
+        x_dim = self.dims_override[0](dims[0]) if len(self.dims_override) > 0 and self.dims_override[0] else dims[0]
+        y_dim = self.dims_override[1](dims[1]) if len(self.dims_override) > 1 and self.dims_override[1] else dims[1]
+        z_override = self.dims_override[2] if len(self.dims_override) > 2 else None  # noqa: PLR2004
+        x_labels, x_values = x_dim.labels, x_dim.values
+        y_labels, y_values = y_dim.labels, y_dim.values
 
-        x_values = [x_override.transform(x) for x in x_values] if x_override else x_values
-        y_values = [y_override.transform(y) for y in y_values] if y_override else y_values
-        z_values = z_override.transform(s21) if z_override else s21
+        z_dim_input = Dimension(labels=[r"$|S_{21}|$"], values=[s21])
+        z_dim = z_override(z_dim_input) if z_override else z_dim_input
+        z_values = z_dim.values[0]
 
         x_edges = np.linspace(x_values[0].min(), x_values[0].max(), len(x_values[0]) + 1)
         y_edges = np.linspace(y_values[0].min(), y_values[0].max(), len(y_values[0]) + 1)
 
         fig, ax1 = plt.subplots()
         ax1.set_title(f"{self.plot_title} - Qubit {self.qubit}")
-        ax1.set_xlabel(x_override.label if x_override and x_override.label else x_labels[0])
-        ax1.set_ylabel(y_override.label if y_override and y_override.label else y_labels[0])
+        ax1.set_xlabel(x_labels[0])
+        ax1.set_ylabel(y_labels[0])
         ax1.ticklabel_format(axis="both", style="sci", scilimits=(-3, 3))
 
         mesh = ax1.pcolormesh(x_edges, y_edges, z_values.T, cmap="viridis", shading="auto")
-        z_label = z_override.label if z_override and z_override.label else r"$|S_{21}|$"
+        z_label = z_dim.labels[0]
         colorbar_label = z_label + " ∝ Voltage" if not db else z_label + " (dB)"
         fig.colorbar(mesh, ax=ax1, label=colorbar_label)
 
@@ -342,9 +332,9 @@ class T1ExperimentResult(ExperimentResult):
     plot_title: ClassVar[str] = "T1"
     """Default title for T1 experiment plots."""
 
-    dims_override: ClassVar[dict[int, DimOverride]] = {
-        0: DimOverride(label=r"Time ($\mu$s)", transform=lambda x: x * 1e-3),
-    }
+    dims_override: ClassVar[list[DimensionOverride | None]] = [
+        lambda dim: Dimension(labels=[r"Time ($\mu$s)"], values=[v * 1e-3 for v in dim.values]),
+    ]
     """Override x-axis to display in microseconds with appropriate label."""
 
     fit_by_default: ClassVar[bool] = True
@@ -457,9 +447,9 @@ class TwoTonesAtFluxBiasExperimentResult(ExperimentResult):
     plot_title: ClassVar[str] = "Two Tones At Flux Bias"
     """Default title for TwoTones at flux bias experiment plots."""
 
-    dims_override: ClassVar[dict[int, DimOverride]] = {
-        0: DimOverride(label=r"Frequency (GHz)", transform=lambda x: x * 1e-9),
-    }
+    dims_override: ClassVar[list[DimensionOverride | None]] = [
+        lambda dim: Dimension(labels=[r"Frequency (GHz)"], values=[v * 1e-9 for v in dim.values]),
+    ]
     """Override x-axis to display in GHz with appropriate label."""
 
     @staticmethod
@@ -517,8 +507,8 @@ class TwoTonesVsFluxBiasExperimentResult(ExperimentResult):
     plot_title: ClassVar[str] = "Two Tones Vs Flux Bias"
     """Default title for TwoTones vs flux bias experiment plots."""
 
-    dims_override: ClassVar[dict[int, DimOverride]] = {
-        0: DimOverride(label=r"$\Phi_z~(\Phi_0)$"),
-        1: DimOverride(label=r"LO Frequency (GHz)", transform=lambda y: y * 1e-9),
-    }
+    dims_override: ClassVar[list[DimensionOverride | None]] = [
+        lambda dim: Dimension(labels=[r"$\Phi_z~(\Phi_0)$"], values=dim.values),
+        lambda dim: Dimension(labels=[r"LO Frequency (GHz)"], values=[v * 1e-9 for v in dim.values]),
+    ]
     """Override axis labels and convert y-axis from Hz to GHz."""
