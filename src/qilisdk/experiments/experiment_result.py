@@ -69,9 +69,6 @@ class ExperimentResult(FunctionalResult):
     plot_title: ClassVar[str]
     """Default plot title; subclasses provide the concrete label."""
 
-    colorbar_label: ClassVar[str] = r"$|S_{21}|$"
-    """Default colorbar label for 2D plots; can be overridden by subclasses if needed."""
-
     dims_override: ClassVar[dict[int, DimOverride]] = {}
     """Per-dimension label and value transform overrides; keyed by dimension index."""
 
@@ -216,6 +213,7 @@ class ExperimentResult(FunctionalResult):
         y_labels, y_values = dims[1].labels, dims[1].values
         x_override = self.dims_override.get(0)
         y_override = self.dims_override.get(1)
+        z_override = self.dims_override.get(2)
 
         x_values = [x_override.transform(x) for x in x_values] if x_override else x_values
         y_values = [y_override.transform(y) for y in y_values] if y_override else y_values
@@ -230,7 +228,8 @@ class ExperimentResult(FunctionalResult):
         ax1.ticklabel_format(axis="both", style="sci", scilimits=(-3, 3))
 
         mesh = ax1.pcolormesh(x_edges, y_edges, s21.T, cmap="viridis", shading="auto")
-        colorbar_label = self.colorbar_label + " ∝ Voltage" if not db else self.colorbar_label + " (dB)"
+        z_label = z_override.label if z_override and z_override.label else r"$|S_{21}|$"
+        colorbar_label = z_label + " ∝ Voltage" if not db else z_label + " (dB)"
         fig.colorbar(mesh, ax=ax1, label=colorbar_label)
 
         if len(x_labels) > 1:
