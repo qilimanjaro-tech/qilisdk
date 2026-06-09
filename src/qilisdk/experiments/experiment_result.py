@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from pathlib import Path
-from typing import ClassVar
+from typing import Callable, ClassVar
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -57,6 +57,18 @@ class ExperimentResult(FunctionalResult):
 
     colorbar_label: ClassVar[str] = r"$|S_{21}|$"
     """Default colorbar label for 2D plots; can be overridden by subclasses if needed."""
+
+    x_value: ClassVar[Callable] = staticmethod(lambda x: x)
+    """Transform applied to x-axis values before plotting; can be overridden by subclasses if needed."""
+
+    x_label_override: ClassVar[str] = ""
+    """Default x-axis label for plots; can be overridden by subclasses if needed."""
+
+    y_value: ClassVar[Callable] = staticmethod(lambda y: y)
+    """Transform applied to y-axis values before plotting; can be overridden by subclasses if needed."""
+
+    y_label_override: ClassVar[str] = ""
+    """Default y-axis label for plots; can be overridden by subclasses if needed."""
 
     def __init__(self, qubit: int, data: np.ndarray, dims: list[Dimension]) -> None:
         """Initialize an experiment result.
@@ -164,8 +176,9 @@ class ExperimentResult(FunctionalResult):
 
             fig, ax1 = plt.subplots()
             ax1.set_title(f"{self.plot_title} - Qubit {self.qubit}")
-            ax1.set_xlabel(x_labels[0])
-            ax1.set_ylabel(r"$|S_{21}|$ ∝ Voltage" if not db else r"$|S_{21}|$ (dB)")
+            ax1.set_xlabel(self.x_label_override or x_labels[0])
+            ax1.set_ylabel(self.y_label_override or (r"$|S_{21}|$ ∝ Voltage" if not db else r"$|S_{21}|$ (dB)"))
+            x_values = [self.x_value(x) for x in x_values]
             ax1.plot(x_values[0], s21, ".")
 
             if len(x_labels) > 1:
@@ -173,7 +186,7 @@ class ExperimentResult(FunctionalResult):
                 ax2 = ax1.twiny()
 
                 # Set labels
-                ax2.set_xlabel(x_labels[1])
+                ax2.set_xlabel(self.x_label_override or x_labels[1])
                 ax2.set_xlim(min(x_values[1]), max(x_values[1]))
 
                 # Set tick locations
@@ -207,14 +220,17 @@ class ExperimentResult(FunctionalResult):
             x_labels, x_values = dims[0].labels, dims[0].values
             y_labels, y_values = dims[1].labels, dims[1].values
 
+            x_values = [self.x_value(x) for x in x_values]
+            y_values = [self.y_value(y) for y in y_values]
+
             # Create x and y edge arrays by extrapolating the edges
             x_edges = np.linspace(x_values[0].min(), x_values[0].max(), len(x_values[0]) + 1)
             y_edges = np.linspace(y_values[0].min(), y_values[0].max(), len(y_values[0]) + 1)
 
             fig, ax1 = plt.subplots()
             ax1.set_title(f"{self.plot_title} - Qubit {self.qubit}")
-            ax1.set_xlabel(x_labels[0])
-            ax1.set_ylabel(y_labels[0])
+            ax1.set_xlabel(self.x_label_override or x_labels[0])
+            ax1.set_ylabel(self.y_label_override or y_labels[0])
 
             # Force scientific notation
             ax1.ticklabel_format(axis="both", style="sci", scilimits=(-3, 3))
@@ -228,7 +244,7 @@ class ExperimentResult(FunctionalResult):
                 ax2 = ax1.twiny()
 
                 # Set labels
-                ax2.set_xlabel(x_labels[1])
+                ax2.set_xlabel(self.x_label_override or x_labels[1])
                 ax2.set_xlim(min(x_values[1]), max(x_values[1]))
 
                 # Set tick locations
@@ -237,14 +253,15 @@ class ExperimentResult(FunctionalResult):
 
                 # Force scientific notation
                 ax2.ticklabel_format(axis="x", style="sci", scilimits=(-3, 3))
+
             if len(y_labels) > 1:
                 ax3 = ax1.twinx()
-                ax3.set_ylabel(y_labels[1])
+                ax3.set_ylabel(self.y_label_override or y_labels[1])
                 ax3.set_ylim(min(y_values[1]), max(y_values[1]))
 
                 # Set tick locations
                 ax3_ticks = np.linspace(min(y_values[1]), max(y_values[1]), num=6)
-                ax3.set_xticks(ax3_ticks)
+                ax3.set_yticks(ax3_ticks)
 
                 # Force scientific notation
                 ax3.ticklabel_format(axis="y", style="sci", scilimits=(-3, 3))
@@ -312,7 +329,7 @@ class RabiExperimentResult(ExperimentResult):
         y_fit = _rabi_model(t_fit, a_fit, f_rabi_fit, phi_fit, b_fit)
         if db:
             y_fit = 20 * np.log10(np.abs(y_fit))
-        plt.plot(t_fit, y_fit, label=f"Sinusoidal Fit (f_rabi={f_rabi_fit * 1e3:.2f} MHz)")
+        plt.plot(t_fit, y_fit, label=f"Fit: f_rabi={f_rabi_fit * 1e3:.2f} MHz")
         plt.legend()
 
 
@@ -321,7 +338,9 @@ class T1ExperimentResult(ExperimentResult):
     """Result container for T1 relaxation experiments."""
 
     plot_title: ClassVar[str] = "T1"
-    """Default title for T1 experiment plots."""
+    x_value: ClassVar[Callable] = staticmethod(lambda x: x * 1e-3)
+    x_label_override: ClassVar[str] = r"Time ($\mu$s)"
+    """Overrides for T1 experiment plots to use microseconds on the x-axis and a specific label."""
 
     @staticmethod
     def add_fit(
@@ -356,13 +375,14 @@ class T1ExperimentResult(ExperimentResult):
         if initial_guess is None:
             initial_guess = [y_linear.max() - y_linear.min(), (x_values.max() - x_values.min()) / 3, y_linear.min()]
 
-        popt, _ = curve_fit(_t1_decay_model, x_values, y_linear, p0=initial_guess)
+        popt, pcov = curve_fit(_t1_decay_model, x_values, y_linear, p0=initial_guess)
         a_fit, t1_fit, b_fit = popt
+        t1_err = np.sqrt(pcov[1, 1])
         t_fit = np.linspace(min(x_values), max(x_values), 100)
         y_fit = _t1_decay_model(t_fit, a_fit, t1_fit, b_fit)
         if db:
             y_fit = 20 * np.log10(np.abs(y_fit))
-        plt.plot(t_fit, y_fit, label=f"Exponential Fit (T1={t1_fit:.2f} ns)")
+        plt.plot(t_fit, y_fit, label=f"Fit: T1={t1_fit:.2f} ± {t1_err:.2f} μs")
         plt.legend()
 
 
@@ -418,7 +438,7 @@ class T2ExperimentResult(ExperimentResult):
         y_fit = _t2_decay_model(t_fit, a_fit, t2_fit, f_detune_fit, phi_fit, b_fit)
         if db:
             y_fit = 20 * np.log10(np.abs(y_fit))
-        plt.plot(t_fit, y_fit, label=f"Decaying Sinusoid Fit (T2={t2_fit:.2f} ns, f_detune={f_detune_fit:.2f} MHz)")
+        plt.plot(t_fit, y_fit, label=f"Fit: T2={t2_fit:.2f} ns, f_detune={f_detune_fit:.2f} MHz")
         plt.legend()
 
 
@@ -426,8 +446,14 @@ class T2ExperimentResult(ExperimentResult):
 class TwoTonesAtFluxBiasExperimentResult(ExperimentResult):
     """Result container for TwoTones experiments."""
 
-    plot_title: ClassVar[str] = "TwoTonesAtFluxBias"
+    plot_title: ClassVar[str] = "Two Tones At Flux Bias"
     """Default title for TwoTones at flux bias experiment plots."""
+
+    x_value: ClassVar[Callable] = staticmethod(lambda x: x * 1e-9)
+    """Override to convert x-axis values from Hz to GHz for TwoTones at flux bias experiments."""
+
+    x_label_override: ClassVar[str] = r"Frequency (GHz)"
+    """Override x-axis label for TwoTones at flux bias experiment plots."""
 
     @staticmethod
     def add_fit(
@@ -447,22 +473,22 @@ class TwoTonesAtFluxBiasExperimentResult(ExperimentResult):
             """Lorentzian model for TwoTones at flux bias measurement.
 
             Args:
-                f (np.ndarray): Frequency array (in Hz).
-                f0 (float): Resonance frequency (in Hz).
-                gamma (float): Full width at half maximum (FWHM) of the resonance (in Hz).
-                a (float): Amplitude of the Lorentzian dip.
+                f (np.ndarray): Frequency array (in GHz).
+                f0 (float): Resonance frequency (in GHz).
+                gamma (float): Full width at half maximum (FWHM) of the resonance (in GHz).
+                a (float): Amplitude of the Lorentzian peak.
                 b (float): Baseline offset.
 
             Returns:
                 np.ndarray: The modeled Lorentzian curve values at frequency f.
             """
-            return b - a / (1 + ((f - f0) / (gamma / 2)) ** 2)
+            return b + a / (1 + ((f - f0) / (gamma / 2)) ** 2)
 
         y_linear = 10 ** (y_values / 20) if db else y_values
 
         if initial_guess is None:
             initial_guess = [
-                float(x_values[np.argmin(y_linear)]),
+                float(x_values[np.argmax(y_linear)]),
                 float((x_values.max() - x_values.min()) / 20),
                 float(y_linear.max() - y_linear.min()),
                 float(y_linear.min()),
@@ -473,7 +499,7 @@ class TwoTonesAtFluxBiasExperimentResult(ExperimentResult):
         y_fit = _lorentzian(f_fit, f0_fit, gamma_fit, a_fit, b_fit)
         if db:
             y_fit = 20 * np.log10(np.abs(y_fit))
-        plt.plot(f_fit, y_fit, label=f"Lorentzian Fit (f0={f0_fit:.2f} Hz, gamma={gamma_fit:.2f} Hz)")
+        plt.plot(f_fit, y_fit, label=f"Fit: f0={f0_fit:.2f} GHz, gamma={gamma_fit:.2f} GHz")
         plt.legend()
 
 
@@ -481,4 +507,8 @@ class TwoTonesAtFluxBiasExperimentResult(ExperimentResult):
 class TwoTonesVsFluxBiasExperimentResult(ExperimentResult):
     """Result container for TwoTones experiments swept vs flux bias."""
 
-    plot_title: ClassVar[str] = "TwoTonesVsFluxBias"
+    plot_title: ClassVar[str] = "Two Tones Vs Flux Bias"
+    # x label should be \phi_z (\phi_0)
+    x_label_override: ClassVar[str] = r"$\Phi_z~(\Phi_0)$"
+    y_label_override: ClassVar[str] = r"LO Frequency (GHz)"
+    y_value: ClassVar[Callable] = staticmethod(lambda y: y * 1e-9)

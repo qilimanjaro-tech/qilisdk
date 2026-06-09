@@ -119,15 +119,16 @@ def test_two_tones_at_flux_bias_plotting(monkeypatch):
     monkeypatch.setattr(plt.Figure, "savefig", lambda self, *args, **kwargs: None)
 
     rng = np.random.default_rng(seed=42)
-    f_qubit = 5.0e9
-    linewidth = 20e6
-    freqs = np.arange(4.5e9, 5.5e9, 5e6)
-    s21_mag = 1.0 - 0.6 / (1 + ((freqs - f_qubit) / (linewidth / 2)) ** 2)
-    s21_mag += rng.normal(0, 0.01, size=s21_mag.shape)
-    phase = np.full_like(freqs, np.pi / 6) + 0.3 / (1 + ((freqs - f_qubit) / (linewidth / 2)) ** 2)
+    freqs = np.arange(2.0e8, 4.5e8, 2.5e6)
+    f_qubit = 3.9e8
+    linewidth = 15e6
+    s21_mag = 0.65 + 0.55 / (1 + ((freqs - f_qubit) / (linewidth / 2)) ** 2)
+    s21_mag += 0.1 / (1 + ((freqs - 2.9e8) / (5e6)) ** 2)
+    s21_mag += rng.normal(0, 0.025, size=s21_mag.shape)
+    phase = np.full_like(freqs, np.pi / 6)
     s21_complex = s21_mag * np.exp(1j * phase)
     data_at = np.stack([s21_complex.real, s21_complex.imag], axis=-1)
-    dims_at = [Dimension(labels=["Drive frequency (Hz)"], values=[freqs])]
+    dims_at = [Dimension(labels=["IF Frequency (Hz)"], values=[freqs])]
     result_at = TwoTonesAtFluxBiasExperimentResult(qubit=0, data=data_at, dims=dims_at)
 
     result_at.plot(save_to="./.tmp/test_two_tones_at.png", db=False, fit=False)
