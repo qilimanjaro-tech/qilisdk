@@ -220,7 +220,8 @@ class ExperimentResult(FunctionalResult):
 
         mesh = ax1.pcolormesh(x_edges, y_edges, z_values.T, cmap="viridis", shading="auto")
         z_label = z_dim.labels[0]
-        colorbar_label = z_label + " ∝ Voltage" if not db else z_label + " (dB)"
+        default_z_label = r"$|S_{21}|$ ∝ Voltage" if not db else r"$|S_{21}|$ (dB)"
+        colorbar_label = z_label if z_override else default_z_label
         fig.colorbar(mesh, ax=ax1, label=colorbar_label)
 
         if len(x_labels) > 1:
