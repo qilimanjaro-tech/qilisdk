@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from pathlib import Path
-from typing import ClassVar
+from typing import Callable, ClassVar
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -43,6 +43,10 @@ class Dimension:
         self.values = values
 
 
+DimensionOverride = Callable[[Dimension], Dimension]
+"""Callable that takes a Dimension and returns a transformed Dimension."""
+
+
 @yaml.register_class
 class ExperimentResult(FunctionalResult):
     """Base class for storing and visualizing experiment results.
@@ -55,8 +59,11 @@ class ExperimentResult(FunctionalResult):
     plot_title: ClassVar[str]
     """Default plot title; subclasses provide the concrete label."""
 
-    colorbar_label: ClassVar[str] = r"$|S_{21}|$"
-    """Default colorbar label for 2D plots; can be overridden by subclasses if needed."""
+    dims_override: ClassVar[list[DimensionOverride | None]] = []
+    """Per-dimension overrides; each entry is a callable transforming that dimension, or None to use the default."""
+
+    fit_by_default: ClassVar[bool] = False
+    """Whether to perform fitting by default when plotting; can be overridden by subclasses if needed."""
 
     def __init__(self, qubit: int, data: np.ndarray, dims: list[Dimension]) -> None:
         """Initialize an experiment result.
@@ -113,8 +120,136 @@ class ExperimentResult(FunctionalResult):
             db (bool): Whether the data is in dB scale. This can affect how the fit is performed and plotted.
         """
 
+    def _save_figure(self, figure: Figure, save_to: str | Path) -> None:
+        """Save the figure to disk, handling both file and directory paths.
+
+        Args:
+            figure (Figure): The Matplotlib figure to save.
+            save_to (str | Path): The path or directory where the figure should be saved.
+        """
+        save_to = Path(save_to)
+        if save_to.is_dir():
+            save_to /= f"{self.plot_title}_qubit{self.qubit}.png"
+        save_to.parent.mkdir(parents=True, exist_ok=True)
+        figure.savefig(save_to)
+
+    def _plot_1d(
+        self,
+        s21: np.ndarray,
+        dims: list[Dimension],
+        db: bool = False,
+        fit: bool = False,
+        save_to: str | None = None,
+        initial_guess: list[float] | None = None,
+    ) -> None:
+        """Plot 1D S21 data.
+
+        Args:
+            s21 (np.ndarray): The S21 data to plot, either in linear or dB scale.
+            dims (list[Dimension]): The dimensions of the experiment, used for labeling axes.
+            db (bool): Whether the data is in dB scale, affecting axis labels and fit behavior.
+            fit (bool): Whether to perform and plot the fit using the `add_fit` method.
+            save_to (str | None): Optional path or directory to save the figure.
+            initial_guess (list[float] | None): Optional initial guess passed to `add_fit`.
+        """
+        x_dim = self.dims_override[0](dims[0]) if len(self.dims_override) > 0 and self.dims_override[0] else dims[0]
+        x_labels, x_values = x_dim.labels, x_dim.values
+        y_override = self.dims_override[1] if len(self.dims_override) > 1 else None
+
+        fig, ax1 = plt.subplots()
+        ax1.set_title(f"{self.plot_title} - Qubit {self.qubit}")
+        ax1.set_xlabel(x_labels[0])
+        default_y_label = r"$|S_{21}|$ ∝ Voltage" if not db else r"$|S_{21}|$ (dB)"
+        y_dim_input = Dimension(labels=[default_y_label], values=[s21])
+        ax1.set_ylabel(y_override(y_dim_input).labels[0] if y_override else default_y_label)
+        ax1.plot(x_values[0], s21, ".")
+
+        if len(x_labels) > 1:
+            ax2 = ax1.twiny()
+            ax2.set_xlabel(x_labels[1])
+            ax2.set_xlim(min(x_values[1]), max(x_values[1]))
+            ax2.set_xticks(np.linspace(min(x_values[1]), max(x_values[1]), num=6))
+            ax2.ticklabel_format(axis="x", style="sci", scilimits=(-3, 3))
+
+        if fit:
+            self.add_fit(x_values[0], s21, initial_guess=initial_guess, db=db)
+
+        if save_to:
+            self._save_figure(fig, save_to)
+
+        plt.show()
+        plt.close(fig)
+
+    def _plot_2d(
+        self,
+        s21: np.ndarray,
+        dims: list[Dimension],
+        db: bool = False,
+        fit: bool = False,
+        save_to: str | None = None,
+        initial_guess: list[float] | None = None,
+    ) -> None:
+        """Plot 2D S21 data as a color mesh.
+
+        Args:
+            s21 (np.ndarray): The 2D S21 data to plot, either in linear or dB scale.
+            dims (list[Dimension]): The dimensions of the experiment, used for labeling axes.
+            db (bool): Whether the data is in dB scale, affecting axis labels and fit behavior.
+            fit (bool): Whether to perform and plot the fit using the `add_fit` method.
+            save_to (str | None): Optional path or directory to save the figure.
+            initial_guess (list[float] | None): Optional initial guess passed to `add_fit`.
+        """
+        x_dim = self.dims_override[0](dims[0]) if len(self.dims_override) > 0 and self.dims_override[0] else dims[0]
+        y_dim = self.dims_override[1](dims[1]) if len(self.dims_override) > 1 and self.dims_override[1] else dims[1]
+        z_override = self.dims_override[2] if len(self.dims_override) > 2 else None  # noqa: PLR2004
+        x_labels, x_values = x_dim.labels, x_dim.values
+        y_labels, y_values = y_dim.labels, y_dim.values
+
+        z_dim_input = Dimension(labels=[r"$|S_{21}|$"], values=[s21])
+        z_dim = z_override(z_dim_input) if z_override else z_dim_input
+        z_values = z_dim.values[0]
+
+        x_edges = np.linspace(x_values[0].min(), x_values[0].max(), len(x_values[0]) + 1)
+        y_edges = np.linspace(y_values[0].min(), y_values[0].max(), len(y_values[0]) + 1)
+
+        fig, ax1 = plt.subplots()
+        ax1.set_title(f"{self.plot_title} - Qubit {self.qubit}")
+        ax1.set_xlabel(x_labels[0])
+        ax1.set_ylabel(y_labels[0])
+        ax1.ticklabel_format(axis="both", style="sci", scilimits=(-3, 3))
+
+        mesh = ax1.pcolormesh(x_edges, y_edges, z_values.T, cmap="viridis", shading="auto")
+        z_label = z_dim.labels[0]
+        colorbar_label = z_label + " ∝ Voltage" if not db else z_label + " (dB)"
+        fig.colorbar(mesh, ax=ax1, label=colorbar_label)
+
+        if len(x_labels) > 1:
+            ax2 = ax1.twiny()
+            ax2.set_xlabel(x_labels[1])
+            ax2.set_xlim(min(x_values[1]), max(x_values[1]))
+            ax2.set_xticks(np.linspace(min(x_values[1]), max(x_values[1]), num=6))
+            ax2.ticklabel_format(axis="x", style="sci", scilimits=(-3, 3))
+
+        if len(y_labels) > 1:
+            ax3 = ax1.twinx()
+            ax3.set_ylabel(y_labels[1])
+            ax3.set_ylim(min(y_values[1]), max(y_values[1]))
+            ax3.set_yticks(np.linspace(min(y_values[1]), max(y_values[1]), num=6))
+            ax3.ticklabel_format(axis="y", style="sci", scilimits=(-3, 3))
+
+        if save_to:
+            self._save_figure(fig, save_to)
+
+        plt.tight_layout()
+        plt.show()
+        plt.close(fig)
+
     def plot(
-        self, save_to: str | None = None, initial_guess: list[float] | None = None, db: bool = False, fit: bool = True
+        self,
+        save_to: str | None = None,
+        initial_guess: list[float] | None = None,
+        db: bool = False,
+        fit: bool | None = None,
     ) -> None:
         """Plot the S21 parameter from experiment results.
 
@@ -127,144 +262,18 @@ class ExperimentResult(FunctionalResult):
                 automatically generated as ``{plot_title}_qubit{qubit}.png``.
             initial_guess (list[float] | None): Optional initial guess for the fit parameters, passed to the `add_fit` method.
             db (bool): Whether to plot the S21 data in dB scale.
-            fit (bool): Whether to perform and plot the fit using the `add_fit` method.
+            fit (bool | None): Whether to perform and plot the fit using the `add_fit` method. If None, the class-level `fit_by_default` is used.
 
         Raises:
             NotImplementedError: If the experiment data has more than 2 dimensions.
         """
-
-        def save_figure(figure: Figure, save_to: str | Path) -> None:
-            """
-            Save the figure to disk, handling both file and directory paths.
-
-            Args:
-                figure (Figure): The Matplotlib figure to save.
-                save_to (str | Path): The path or directory where the figure should be saved.
-            """
-            save_to = Path(save_to)
-
-            # If a directory was given, append the default filename
-            if save_to.is_dir():
-                save_to /= f"{self.plot_title}_qubit{self.qubit}.png"
-
-            save_to.parent.mkdir(parents=True, exist_ok=True)
-            figure.savefig(save_to)
-
-        def plot_1d(s21: np.ndarray, dims: list[Dimension], db: bool = False, fit: bool = True) -> None:
-            """
-            Plot 1D S21 data.
-
-            Args:
-                s21 (np.ndarray): The S21 data to plot, either in linear or dB scale.
-                dims (list[Dimension]): The dimensions of the experiment, used for labeling axes.
-                db (bool): Whether the data is in dB scale, affecting axis labels and fit behavior.
-                fit (bool): Whether to perform and plot the fit using the `add_fit` method.
-            """
-            x_labels, x_values = dims[0].labels, dims[0].values
-
-            fig, ax1 = plt.subplots()
-            ax1.set_title(f"{self.plot_title} - Qubit {self.qubit}")
-            ax1.set_xlabel(x_labels[0])
-            ax1.set_ylabel(r"$|S_{21}|$ ∝ Voltage" if not db else r"$|S_{21}|$ (dB)")
-            ax1.plot(x_values[0], s21, ".")
-
-            if len(x_labels) > 1:
-                # Create secondary x-axis
-                ax2 = ax1.twiny()
-
-                # Set labels
-                ax2.set_xlabel(x_labels[1])
-                ax2.set_xlim(min(x_values[1]), max(x_values[1]))
-
-                # Set tick locations
-                ax2_ticks = np.linspace(min(x_values[1]), max(x_values[1]), num=6)
-                ax2.set_xticks(ax2_ticks)
-
-                # Force scientific notation
-                ax2.ticklabel_format(axis="x", style="sci", scilimits=(-3, 3))
-
-            if fit:
-                self.add_fit(x_values[0], s21, initial_guess=initial_guess, db=db)
-
-            if save_to:
-                save_figure(fig, save_to)
-
-            plt.show()
-            plt.close(fig)
-
-        # pylint: disable=too-many-locals
-        def plot_2d(s21: np.ndarray, dims: list[Dimension], db: bool = False, fit: bool = True) -> None:
-            """
-            Plot 2D S21 data as a color mesh.
-
-            Args:
-                s21 (np.ndarray): The 2D S21 data to plot, either in linear or dB scale.
-                dims (list[Dimension]): The dimensions of the experiment, used for labeling axes.
-                db (bool): Whether the data is in dB scale, affecting axis labels and fit behavior.
-                fit (bool): Whether to perform and plot the fit using the `add_fit` method.
-            """
-
-            x_labels, x_values = dims[0].labels, dims[0].values
-            y_labels, y_values = dims[1].labels, dims[1].values
-
-            # Create x and y edge arrays by extrapolating the edges
-            x_edges = np.linspace(x_values[0].min(), x_values[0].max(), len(x_values[0]) + 1)
-            y_edges = np.linspace(y_values[0].min(), y_values[0].max(), len(y_values[0]) + 1)
-
-            fig, ax1 = plt.subplots()
-            ax1.set_title(f"{self.plot_title} - Qubit {self.qubit}")
-            ax1.set_xlabel(x_labels[0])
-            ax1.set_ylabel(y_labels[0])
-
-            # Force scientific notation
-            ax1.ticklabel_format(axis="both", style="sci", scilimits=(-3, 3))
-
-            mesh = ax1.pcolormesh(x_edges, y_edges, s21.T, cmap="viridis", shading="auto")
-            colorbar_label = self.colorbar_label + " ∝ Voltage" if not db else self.colorbar_label + " (dB)"
-            fig.colorbar(mesh, ax=ax1, label=colorbar_label)
-
-            if len(x_labels) > 1:
-                # Create secondary x-axis
-                ax2 = ax1.twiny()
-
-                # Set labels
-                ax2.set_xlabel(x_labels[1])
-                ax2.set_xlim(min(x_values[1]), max(x_values[1]))
-
-                # Set tick locations
-                ax2_ticks = np.linspace(min(x_values[1]), max(x_values[1]), num=6)
-                ax2.set_xticks(ax2_ticks)
-
-                # Force scientific notation
-                ax2.ticklabel_format(axis="x", style="sci", scilimits=(-3, 3))
-            if len(y_labels) > 1:
-                ax3 = ax1.twinx()
-                ax3.set_ylabel(y_labels[1])
-                ax3.set_ylim(min(y_values[1]), max(y_values[1]))
-
-                # Set tick locations
-                ax3_ticks = np.linspace(min(y_values[1]), max(y_values[1]), num=6)
-                ax3.set_xticks(ax3_ticks)
-
-                # Force scientific notation
-                ax3.ticklabel_format(axis="y", style="sci", scilimits=(-3, 3))
-
-            if fit:
-                self.add_fit(x_values[0], s21, initial_guess=initial_guess, db=db)
-
-            if save_to:
-                save_figure(fig, save_to)
-
-            plt.tight_layout()
-            plt.show()
-            plt.close(fig)
-
         to_plot = self.s21_db if db else self.s21_modulus
         n_dimensions = len(to_plot.shape)
+        should_fit = fit if fit is not None else self.fit_by_default
         if n_dimensions == 1:
-            plot_1d(to_plot, self.dims, db=db, fit=fit)
+            self._plot_1d(to_plot, self.dims, db=db, fit=should_fit, save_to=save_to, initial_guess=initial_guess)
         elif n_dimensions == 2:  # noqa: PLR2004
-            plot_2d(to_plot, self.dims, db=db, fit=fit)
+            self._plot_2d(to_plot, self.dims, db=db, fit=should_fit, save_to=save_to, initial_guess=initial_guess)
         else:
             raise NotImplementedError("3D and higher dimension plots are not supported yet.")
 
@@ -312,7 +321,7 @@ class RabiExperimentResult(ExperimentResult):
         y_fit = _rabi_model(t_fit, a_fit, f_rabi_fit, phi_fit, b_fit)
         if db:
             y_fit = 20 * np.log10(np.abs(y_fit))
-        plt.plot(t_fit, y_fit, label=f"Sinusoidal Fit (f_rabi={f_rabi_fit * 1e3:.2f} MHz)")
+        plt.plot(t_fit, y_fit, label=f"Fit: f_rabi={f_rabi_fit * 1e3:.2f} MHz")
         plt.legend()
 
 
@@ -322,6 +331,14 @@ class T1ExperimentResult(ExperimentResult):
 
     plot_title: ClassVar[str] = "T1"
     """Default title for T1 experiment plots."""
+
+    dims_override: ClassVar[list[DimensionOverride | None]] = [
+        lambda dim: Dimension(labels=[r"Time ($\mu$s)"], values=[v * 1e-3 for v in dim.values]),
+    ]
+    """Override x-axis to display in microseconds with appropriate label."""
+
+    fit_by_default: ClassVar[bool] = True
+    """T1 experiments typically benefit from fitting, so we set this to True by default."""
 
     @staticmethod
     def add_fit(
@@ -356,13 +373,14 @@ class T1ExperimentResult(ExperimentResult):
         if initial_guess is None:
             initial_guess = [y_linear.max() - y_linear.min(), (x_values.max() - x_values.min()) / 3, y_linear.min()]
 
-        popt, _ = curve_fit(_t1_decay_model, x_values, y_linear, p0=initial_guess)
+        popt, pcov = curve_fit(_t1_decay_model, x_values, y_linear, p0=initial_guess)
         a_fit, t1_fit, b_fit = popt
+        t1_err = np.sqrt(np.diag(pcov))[1]
         t_fit = np.linspace(min(x_values), max(x_values), 100)
         y_fit = _t1_decay_model(t_fit, a_fit, t1_fit, b_fit)
         if db:
             y_fit = 20 * np.log10(np.abs(y_fit))
-        plt.plot(t_fit, y_fit, label=f"Exponential Fit (T1={t1_fit:.2f} ns)")
+        plt.plot(t_fit, y_fit, label=f"Fit: T1={t1_fit:.2f} ± {t1_err:.2f} μs")
         plt.legend()
 
 
@@ -418,7 +436,7 @@ class T2ExperimentResult(ExperimentResult):
         y_fit = _t2_decay_model(t_fit, a_fit, t2_fit, f_detune_fit, phi_fit, b_fit)
         if db:
             y_fit = 20 * np.log10(np.abs(y_fit))
-        plt.plot(t_fit, y_fit, label=f"Decaying Sinusoid Fit (T2={t2_fit:.2f} ns, f_detune={f_detune_fit:.2f} MHz)")
+        plt.plot(t_fit, y_fit, label=f"Fit: T2={t2_fit:.2f} ns, f_detune={f_detune_fit:.2f} MHz")
         plt.legend()
 
 
@@ -426,8 +444,13 @@ class T2ExperimentResult(ExperimentResult):
 class TwoTonesAtFluxBiasExperimentResult(ExperimentResult):
     """Result container for TwoTones experiments."""
 
-    plot_title: ClassVar[str] = "TwoTonesAtFluxBias"
+    plot_title: ClassVar[str] = "Two Tones At Flux Bias"
     """Default title for TwoTones at flux bias experiment plots."""
+
+    dims_override: ClassVar[list[DimensionOverride | None]] = [
+        lambda dim: Dimension(labels=[r"Frequency (GHz)"], values=[v * 1e-9 for v in dim.values]),
+    ]
+    """Override x-axis to display in GHz with appropriate label."""
 
     @staticmethod
     def add_fit(
@@ -447,22 +470,22 @@ class TwoTonesAtFluxBiasExperimentResult(ExperimentResult):
             """Lorentzian model for TwoTones at flux bias measurement.
 
             Args:
-                f (np.ndarray): Frequency array (in Hz).
-                f0 (float): Resonance frequency (in Hz).
-                gamma (float): Full width at half maximum (FWHM) of the resonance (in Hz).
-                a (float): Amplitude of the Lorentzian dip.
+                f (np.ndarray): Frequency array (in GHz).
+                f0 (float): Resonance frequency (in GHz).
+                gamma (float): Full width at half maximum (FWHM) of the resonance (in GHz).
+                a (float): Amplitude of the Lorentzian peak.
                 b (float): Baseline offset.
 
             Returns:
                 np.ndarray: The modeled Lorentzian curve values at frequency f.
             """
-            return b - a / (1 + ((f - f0) / (gamma / 2)) ** 2)
+            return b + a / (1 + ((f - f0) / (gamma / 2)) ** 2)
 
         y_linear = 10 ** (y_values / 20) if db else y_values
 
         if initial_guess is None:
             initial_guess = [
-                float(x_values[np.argmin(y_linear)]),
+                float(x_values[np.argmax(y_linear)]),
                 float((x_values.max() - x_values.min()) / 20),
                 float(y_linear.max() - y_linear.min()),
                 float(y_linear.min()),
@@ -473,7 +496,7 @@ class TwoTonesAtFluxBiasExperimentResult(ExperimentResult):
         y_fit = _lorentzian(f_fit, f0_fit, gamma_fit, a_fit, b_fit)
         if db:
             y_fit = 20 * np.log10(np.abs(y_fit))
-        plt.plot(f_fit, y_fit, label=f"Lorentzian Fit (f0={f0_fit:.2f} Hz, gamma={gamma_fit:.2f} Hz)")
+        plt.plot(f_fit, y_fit, label=f"Fit: f0={f0_fit:.2f} GHz, gamma={gamma_fit:.2f} GHz")
         plt.legend()
 
 
@@ -481,4 +504,11 @@ class TwoTonesAtFluxBiasExperimentResult(ExperimentResult):
 class TwoTonesVsFluxBiasExperimentResult(ExperimentResult):
     """Result container for TwoTones experiments swept vs flux bias."""
 
-    plot_title: ClassVar[str] = "TwoTonesVsFluxBias"
+    plot_title: ClassVar[str] = "Two Tones Vs Flux Bias"
+    """Default title for TwoTones vs flux bias experiment plots."""
+
+    dims_override: ClassVar[list[DimensionOverride | None]] = [
+        lambda dim: Dimension(labels=[r"$\Phi_z~(\Phi_0)$"], values=dim.values),
+        lambda dim: Dimension(labels=[r"LO Frequency (GHz)"], values=[v * 1e-9 for v in dim.values]),
+    ]
+    """Override axis labels and convert y-axis from Hz to GHz."""
