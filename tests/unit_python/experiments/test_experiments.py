@@ -92,6 +92,7 @@ def test_t1_plotting(monkeypatch):
     dims = [Dimension(labels=["Time"], values=[tau])]
     t1_result = T1ExperimentResult(qubit=0, data=amplitudes, dims=dims)
 
+    t1_result.plot(save_to="./.tmp/test_t1_default.png")
     t1_result.plot(save_to="./.tmp/test_t1.png", db=False, fit=False)
     t1_result.plot(save_to="./.tmp/test_t1_db.png", db=True, fit=False)
     t1_result.plot(save_to="./.tmp/test_t1_fit.png", db=False, fit=True)
@@ -113,6 +114,7 @@ def test_rabi_plotting(monkeypatch):
     dims_rabi = [Dimension(labels=["Drive duration (ns)"], values=[drive_durations])]
     result_rabi = RabiExperimentResult(qubit=0, data=data_rabi, dims=dims_rabi)
 
+    result_rabi.plot(save_to="./.tmp/test_rabi_default.png")
     result_rabi.plot(save_to="./.tmp/test_rabi.png", db=False, fit=False)
     result_rabi.plot(save_to="./.tmp/test_rabi_db.png", db=True, fit=False)
     result_rabi.plot(save_to="./.tmp/test_rabi_fit.png", db=False, fit=True)
@@ -137,6 +139,7 @@ def test_two_tones_at_flux_bias_plotting(monkeypatch):
     dims_at = [Dimension(labels=["IF Frequency (Hz)"], values=[freqs])]
     result_at = TwoTonesAtFluxBiasExperimentResult(qubit=0, data=data_at, dims=dims_at)
 
+    result_at.plot(save_to="./.tmp/test_two_tones_at_default.png")
     result_at.plot(save_to="./.tmp/test_two_tones_at.png", db=False, fit=False)
     result_at.plot(save_to="./.tmp/test_two_tones_at_db.png", db=True, fit=False)
     result_at.plot(save_to="./.tmp/test_two_tones_at_fit.png", db=False, fit=True)
@@ -166,6 +169,7 @@ def test_two_tones_vs_flux_bias_plotting(monkeypatch):
     ]
     result_vs = TwoTonesVsFluxBiasExperimentResult(qubit=0, data=data_vs, dims=dims_vs)
 
+    result_vs.plot(save_to="./.tmp/test_two_tones_vs_default.png")
     result_vs.plot(save_to="./.tmp/test_two_tones_vs.png", db=False, fit=False)
     result_vs.plot(save_to="./.tmp/test_two_tones_vs_db.png", db=True, fit=False)
     result_vs.plot(save_to="./.tmp/test_two_tones_vs_fit.png", db=False, fit=True)
@@ -188,6 +192,7 @@ def test_t2_plotting(monkeypatch):
     dims_t2 = [Dimension(labels=["Wait duration (μs)"], values=[tau])]
     result_t2 = T2ExperimentResult(qubit=0, data=data_t2, dims=dims_t2)
 
+    result_t2.plot(save_to="./.tmp/test_t2_default.png")
     result_t2.plot(save_to="./.tmp/test_t2.png", db=False, fit=False)
     result_t2.plot(save_to="./.tmp/test_t2_db.png", db=True, fit=False)
     result_t2.plot(save_to="./.tmp/test_t2_fit.png", db=False, fit=True)

@@ -43,6 +43,20 @@ class Dimension:
         self.values = values
 
 
+class DimOverride:
+    """Label and value transform override for a single plot dimension."""
+
+    def __init__(self, label: str = "", transform: Callable = lambda x: x) -> None:
+        """Initialize a DimOverride.
+
+        Args:
+            label (str): Axis label to use instead of the dimension's default.
+            transform (Callable): Function applied to the dimension's values before plotting.
+        """
+        self.label = label
+        self.transform = transform
+
+
 @yaml.register_class
 class ExperimentResult(FunctionalResult):
     """Base class for storing and visualizing experiment results.
@@ -58,17 +72,11 @@ class ExperimentResult(FunctionalResult):
     colorbar_label: ClassVar[str] = r"$|S_{21}|$"
     """Default colorbar label for 2D plots; can be overridden by subclasses if needed."""
 
-    x_value: ClassVar[Callable] = staticmethod(lambda x: x)
-    """Transform applied to x-axis values before plotting; can be overridden by subclasses if needed."""
+    dims_override: ClassVar[dict[int, DimOverride]] = {}
+    """Per-dimension label and value transform overrides; keyed by dimension index."""
 
-    x_label_override: ClassVar[str] = ""
-    """Default x-axis label for plots; can be overridden by subclasses if needed."""
-
-    y_value: ClassVar[Callable] = staticmethod(lambda y: y)
-    """Transform applied to y-axis values before plotting; can be overridden by subclasses if needed."""
-
-    y_label_override: ClassVar[str] = ""
-    """Default y-axis label for plots; can be overridden by subclasses if needed."""
+    fit_by_default: ClassVar[bool] = False
+    """Whether to perform fitting by default when plotting; can be overridden by subclasses if needed."""
 
     def __init__(self, qubit: int, data: np.ndarray, dims: list[Dimension]) -> None:
         """Initialize an experiment result.
@@ -143,7 +151,7 @@ class ExperimentResult(FunctionalResult):
         s21: np.ndarray,
         dims: list[Dimension],
         db: bool = False,
-        fit: bool = True,
+        fit: bool = False,
         save_to: str | None = None,
         initial_guess: list[float] | None = None,
     ) -> None:
@@ -158,17 +166,20 @@ class ExperimentResult(FunctionalResult):
             initial_guess (list[float] | None): Optional initial guess passed to `add_fit`.
         """
         x_labels, x_values = dims[0].labels, dims[0].values
+        x_override = self.dims_override.get(0)
+        y_override = self.dims_override.get(1)
 
         fig, ax1 = plt.subplots()
         ax1.set_title(f"{self.plot_title} - Qubit {self.qubit}")
-        ax1.set_xlabel(self.x_label_override or x_labels[0])
-        ax1.set_ylabel(self.y_label_override or (r"$|S_{21}|$ ∝ Voltage" if not db else r"$|S_{21}|$ (dB)"))
-        x_values = [self.x_value(x) for x in x_values]
+        ax1.set_xlabel(x_override.label if x_override and x_override.label else x_labels[0])
+        default_y_label = r"$|S_{21}|$ ∝ Voltage" if not db else r"$|S_{21}|$ (dB)"
+        ax1.set_ylabel(y_override.label if y_override and y_override.label else default_y_label)
+        x_values = [x_override.transform(x) for x in x_values] if x_override else x_values
         ax1.plot(x_values[0], s21, ".")
 
         if len(x_labels) > 1:
             ax2 = ax1.twiny()
-            ax2.set_xlabel(self.x_label_override or x_labels[1])
+            ax2.set_xlabel(x_labels[1])
             ax2.set_xlim(min(x_values[1]), max(x_values[1]))
             ax2.set_xticks(np.linspace(min(x_values[1]), max(x_values[1]), num=6))
             ax2.ticklabel_format(axis="x", style="sci", scilimits=(-3, 3))
@@ -187,7 +198,7 @@ class ExperimentResult(FunctionalResult):
         s21: np.ndarray,
         dims: list[Dimension],
         db: bool = False,
-        fit: bool = True,
+        fit: bool = False,
         save_to: str | None = None,
         initial_guess: list[float] | None = None,
     ) -> None:
@@ -203,17 +214,19 @@ class ExperimentResult(FunctionalResult):
         """
         x_labels, x_values = dims[0].labels, dims[0].values
         y_labels, y_values = dims[1].labels, dims[1].values
+        x_override = self.dims_override.get(0)
+        y_override = self.dims_override.get(1)
 
-        x_values = [self.x_value(x) for x in x_values]
-        y_values = [self.y_value(y) for y in y_values]
+        x_values = [x_override.transform(x) for x in x_values] if x_override else x_values
+        y_values = [y_override.transform(y) for y in y_values] if y_override else y_values
 
         x_edges = np.linspace(x_values[0].min(), x_values[0].max(), len(x_values[0]) + 1)
         y_edges = np.linspace(y_values[0].min(), y_values[0].max(), len(y_values[0]) + 1)
 
         fig, ax1 = plt.subplots()
         ax1.set_title(f"{self.plot_title} - Qubit {self.qubit}")
-        ax1.set_xlabel(self.x_label_override or x_labels[0])
-        ax1.set_ylabel(self.y_label_override or y_labels[0])
+        ax1.set_xlabel(x_override.label if x_override and x_override.label else x_labels[0])
+        ax1.set_ylabel(y_override.label if y_override and y_override.label else y_labels[0])
         ax1.ticklabel_format(axis="both", style="sci", scilimits=(-3, 3))
 
         mesh = ax1.pcolormesh(x_edges, y_edges, s21.T, cmap="viridis", shading="auto")
@@ -222,14 +235,14 @@ class ExperimentResult(FunctionalResult):
 
         if len(x_labels) > 1:
             ax2 = ax1.twiny()
-            ax2.set_xlabel(self.x_label_override or x_labels[1])
+            ax2.set_xlabel(x_labels[1])
             ax2.set_xlim(min(x_values[1]), max(x_values[1]))
             ax2.set_xticks(np.linspace(min(x_values[1]), max(x_values[1]), num=6))
             ax2.ticklabel_format(axis="x", style="sci", scilimits=(-3, 3))
 
         if len(y_labels) > 1:
             ax3 = ax1.twinx()
-            ax3.set_ylabel(self.y_label_override or y_labels[1])
+            ax3.set_ylabel(y_labels[1])
             ax3.set_ylim(min(y_values[1]), max(y_values[1]))
             ax3.set_yticks(np.linspace(min(y_values[1]), max(y_values[1]), num=6))
             ax3.ticklabel_format(axis="y", style="sci", scilimits=(-3, 3))
@@ -245,7 +258,11 @@ class ExperimentResult(FunctionalResult):
         plt.close(fig)
 
     def plot(
-        self, save_to: str | None = None, initial_guess: list[float] | None = None, db: bool = False, fit: bool = True
+        self,
+        save_to: str | None = None,
+        initial_guess: list[float] | None = None,
+        db: bool = False,
+        fit: bool | None = None,
     ) -> None:
         """Plot the S21 parameter from experiment results.
 
@@ -258,17 +275,18 @@ class ExperimentResult(FunctionalResult):
                 automatically generated as ``{plot_title}_qubit{qubit}.png``.
             initial_guess (list[float] | None): Optional initial guess for the fit parameters, passed to the `add_fit` method.
             db (bool): Whether to plot the S21 data in dB scale.
-            fit (bool): Whether to perform and plot the fit using the `add_fit` method.
+            fit (bool | None): Whether to perform and plot the fit using the `add_fit` method. If None, the class-level `fit_by_default` is used.
 
         Raises:
             NotImplementedError: If the experiment data has more than 2 dimensions.
         """
         to_plot = self.s21_db if db else self.s21_modulus
         n_dimensions = len(to_plot.shape)
+        should_fit = fit if fit is not None else self.fit_by_default
         if n_dimensions == 1:
-            self._plot_1d(to_plot, self.dims, db=db, fit=fit, save_to=save_to, initial_guess=initial_guess)
+            self._plot_1d(to_plot, self.dims, db=db, fit=should_fit, save_to=save_to, initial_guess=initial_guess)
         elif n_dimensions == 2:  # noqa: PLR2004
-            self._plot_2d(to_plot, self.dims, db=db, fit=fit, save_to=save_to, initial_guess=initial_guess)
+            self._plot_2d(to_plot, self.dims, db=db, fit=should_fit, save_to=save_to, initial_guess=initial_guess)
         else:
             raise NotImplementedError("3D and higher dimension plots are not supported yet.")
 
@@ -325,9 +343,15 @@ class T1ExperimentResult(ExperimentResult):
     """Result container for T1 relaxation experiments."""
 
     plot_title: ClassVar[str] = "T1"
-    x_value: ClassVar[Callable] = staticmethod(lambda x: x * 1e-3)
-    x_label_override: ClassVar[str] = r"Time ($\mu$s)"
-    """Overrides for T1 experiment plots to use microseconds on the x-axis and a specific label."""
+    """Default title for T1 experiment plots."""
+
+    dims_override: ClassVar[dict[int, DimOverride]] = {
+        0: DimOverride(label=r"Time ($\mu$s)", transform=lambda x: x * 1e-3),
+    }
+    """Override x-axis to display in microseconds with appropriate label."""
+
+    fit_by_default: ClassVar[bool] = True
+    """T1 experiments typically benefit from fitting, so we set this to True by default."""
 
     @staticmethod
     def add_fit(
@@ -364,7 +388,7 @@ class T1ExperimentResult(ExperimentResult):
 
         popt, pcov = curve_fit(_t1_decay_model, x_values, y_linear, p0=initial_guess)
         a_fit, t1_fit, b_fit = popt
-        t1_err = np.sqrt(pcov[1, 1])
+        t1_err = np.sqrt(np.diag(pcov))[1]
         t_fit = np.linspace(min(x_values), max(x_values), 100)
         y_fit = _t1_decay_model(t_fit, a_fit, t1_fit, b_fit)
         if db:
@@ -436,11 +460,10 @@ class TwoTonesAtFluxBiasExperimentResult(ExperimentResult):
     plot_title: ClassVar[str] = "Two Tones At Flux Bias"
     """Default title for TwoTones at flux bias experiment plots."""
 
-    x_value: ClassVar[Callable] = staticmethod(lambda x: x * 1e-9)
-    """Override to convert x-axis values from Hz to GHz for TwoTones at flux bias experiments."""
-
-    x_label_override: ClassVar[str] = r"Frequency (GHz)"
-    """Override x-axis label for TwoTones at flux bias experiment plots."""
+    dims_override: ClassVar[dict[int, DimOverride]] = {
+        0: DimOverride(label=r"Frequency (GHz)", transform=lambda x: x * 1e-9),
+    }
+    """Override x-axis to display in GHz with appropriate label."""
 
     @staticmethod
     def add_fit(
@@ -495,7 +518,10 @@ class TwoTonesVsFluxBiasExperimentResult(ExperimentResult):
     """Result container for TwoTones experiments swept vs flux bias."""
 
     plot_title: ClassVar[str] = "Two Tones Vs Flux Bias"
-    # x label should be \phi_z (\phi_0)
-    x_label_override: ClassVar[str] = r"$\Phi_z~(\Phi_0)$"
-    y_label_override: ClassVar[str] = r"LO Frequency (GHz)"
-    y_value: ClassVar[Callable] = staticmethod(lambda y: y * 1e-9)
+    """Default title for TwoTones vs flux bias experiment plots."""
+
+    dims_override: ClassVar[dict[int, DimOverride]] = {
+        0: DimOverride(label=r"$\Phi_z~(\Phi_0)$"),
+        1: DimOverride(label=r"LO Frequency (GHz)", transform=lambda y: y * 1e-9),
+    }
+    """Override axis labels and convert y-axis from Hz to GHz."""
