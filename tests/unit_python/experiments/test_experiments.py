@@ -26,6 +26,9 @@ from qilisdk.experiments import (
     TwoTonesVsFluxBiasExperimentResult,
 )
 
+# Set this to True if you want to actually save the plots during testing
+_DEBUG_PLOTS = False
+
 
 def test_dimension_initialization():
     dim = Dimension(labels=["Drive amplitude"], values=[np.array([0.1, 0.2, 0.3])])
@@ -78,7 +81,8 @@ def test_experiment_plotting(monkeypatch):
 
 def test_t1_plotting(monkeypatch):
     monkeypatch.setattr(plt, "show", lambda: None)
-    monkeypatch.setattr(plt.Figure, "savefig", lambda self, *args, **kwargs: None)
+    if not _DEBUG_PLOTS:
+        monkeypatch.setattr(plt.Figure, "savefig", lambda self, *args, **kwargs: None)
 
     rng = np.random.default_rng(seed=42)
     tau = np.arange(0, 3200, 100)
@@ -96,7 +100,8 @@ def test_t1_plotting(monkeypatch):
 
 def test_rabi_plotting(monkeypatch):
     monkeypatch.setattr(plt, "show", lambda: None)
-    monkeypatch.setattr(plt.Figure, "savefig", lambda self, *args, **kwargs: None)
+    if not _DEBUG_PLOTS:
+        monkeypatch.setattr(plt.Figure, "savefig", lambda self, *args, **kwargs: None)
 
     rng = np.random.default_rng(seed=42)
     drive_durations = np.arange(0, 500, 5)
@@ -116,7 +121,8 @@ def test_rabi_plotting(monkeypatch):
 
 def test_two_tones_at_flux_bias_plotting(monkeypatch):
     monkeypatch.setattr(plt, "show", lambda: None)
-    monkeypatch.setattr(plt.Figure, "savefig", lambda self, *args, **kwargs: None)
+    if not _DEBUG_PLOTS:
+        monkeypatch.setattr(plt.Figure, "savefig", lambda self, *args, **kwargs: None)
 
     rng = np.random.default_rng(seed=42)
     freqs = np.arange(2.0e8, 4.5e8, 2.5e6)
@@ -139,7 +145,8 @@ def test_two_tones_at_flux_bias_plotting(monkeypatch):
 
 def test_two_tones_vs_flux_bias_plotting(monkeypatch):
     monkeypatch.setattr(plt, "show", lambda: None)
-    monkeypatch.setattr(plt.Figure, "savefig", lambda self, *args, **kwargs: None)
+    if not _DEBUG_PLOTS:
+        monkeypatch.setattr(plt.Figure, "savefig", lambda self, *args, **kwargs: None)
 
     rng = np.random.default_rng(seed=42)
     freqs2d = np.arange(4.0e9, 6.0e9, 10e6)
@@ -167,7 +174,8 @@ def test_two_tones_vs_flux_bias_plotting(monkeypatch):
 
 def test_t2_plotting(monkeypatch):
     monkeypatch.setattr(plt, "show", lambda: None)
-    monkeypatch.setattr(plt.Figure, "savefig", lambda self, *args, **kwargs: None)
+    if not _DEBUG_PLOTS:
+        monkeypatch.setattr(plt.Figure, "savefig", lambda self, *args, **kwargs: None)
 
     rng = np.random.default_rng(seed=42)
     tau = np.arange(0, 10, 0.05)
