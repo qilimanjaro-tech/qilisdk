@@ -15,6 +15,16 @@
 #include "stabilizer_state.h"
 
 std::ostream& operator<<(std::ostream& os, const StabilizerStateSum& sss) {
+    /*
+    Print a StabilizerStateSum in a human-readable format. This is mostly for debugging purposes.
+
+    Args:
+        os (std::ostream&): The output stream to print to.
+        sss (StabilizerStateSum&): The StabilizerStateSum to print.
+
+    Returns:
+        std::ostream&: The output stream after printing.
+    */
     os << "StabilizerStateSum with " << sss.get_states().size() << " terms:\n";
     for (size_t i = 0; i < sss.get_states().size(); ++i) {
         const int n = sss.get_states()[i].get_nqubits();
@@ -38,6 +48,12 @@ std::ostream& operator<<(std::ostream& os, const StabilizerStateSum& sss) {
 }
 
 std::string StabilizerState::sample() const {
+    /*
+    Sample from the StabilizerState using the standard tableau method.
+
+    Returns:
+        std::string: The sampled bitstring.
+    */
     auto x = x_bits;
     auto z = z_bits;
     auto ph = phases;
@@ -57,10 +73,11 @@ std::string StabilizerState::sample() const {
             // g_i <- g_i * g_p eliminates the X_k component from g_i.
             for (int i = 0; i < nqubits; ++i) {
                 if (i != p && x[k][i]) {
-                    // Phase contribution: (-1)^(z_i · x_p) from commuting Z^z_i past X^x_p.
                     int contrib = 0;
-                    for (int q = 0; q < nqubits; ++q)
+                    for (int q = 0; q < nqubits; ++q) {
+                        if (x[q][i] && z[q][p]) contrib ^= 1;
                         if (z[q][i] && x[q][p]) contrib ^= 1;
+                    }
                     // new_phase[i] = phase[i] ^ phase[p] ^ contrib
                     if ((bool)ph[p] ^ (bool)contrib) ph.flip(i);
                     // Update x and z: bit-i of each row (strided write — unavoidable in column-major).
@@ -104,8 +121,10 @@ std::string StabilizerState::sample() const {
             // rowsum: h <- h * g  (same phase formula as in the random branch)
             auto rs = [&](Row& h, const Row& g) {
                 int contrib = 0;
-                for (int q = 0; q < nqubits; ++q)
+                for (int q = 0; q < nqubits; ++q) {
+                    if (h.xb[q] && g.zb[q]) contrib ^= 1;
                     if (h.zb[q] && g.xb[q]) contrib ^= 1;
+                }
                 h.ph = h.ph ^ g.ph ^ (bool)contrib;
                 for (int q = 0; q < nqubits; ++q) {
                     h.xb[q] = h.xb[q] ^ (bool)g.xb[q];
@@ -145,6 +164,16 @@ std::string StabilizerState::sample() const {
 }
 
 std::map<std::string, int> StabilizerStateSum::sample(int nshots) const {
+    /*
+    Sample from the StabilizerStateSum. This is done by first picking a StabilizerState 
+    according to the probabilities given by the coefficients, then sampling from that state.
+
+    Args:
+        nshots (int): The number of samples to draw.
+
+    Returns:
+        std::map<std::string, int>: A map from bitstrings to counts.
+    */
 
     // Repeat for each shot:
     std::map<std::string, int> sample_counts;
@@ -176,6 +205,12 @@ std::map<std::string, int> StabilizerStateSum::sample(int nshots) const {
 }
 
 void StabilizerState::apply_gate(const Gate& gate) {
+    /*
+    Apply a gate to the StabilizerState. This uses the standard tableau update rules for Clifford gates. Non-Clifford gates are not supported here.
+
+    Args:
+        gate (Gate&): The gate to apply.
+    */
 
     // Get info about the gate
     const std::string name = gate.get_name();
@@ -195,9 +230,6 @@ void StabilizerState::apply_gate(const Gate& gate) {
         } else if (name == "S") {
             phases ^= (x_bits[i] & z_bits[i]);
             z_bits[i] ^= x_bits[i];
-        } else if (name == "Sdg") {
-            phases ^= (x_bits[i] & ~z_bits[i]);
-            z_bits[i] ^= x_bits[i];
         } else if (name == "X") {
             phases ^= z_bits[i];
         } else if (name == "Y") {
@@ -215,7 +247,7 @@ void StabilizerState::apply_gate(const Gate& gate) {
             z_bits[i] ^= z_bits[j];
         } else if (name == "Z") {
             // CZ: qubits i, j — phase computed before modifying z[i], z[j]
-            phases ^= (x_bits[i] & x_bits[j] & ~(z_bits[i] ^ z_bits[j]));
+            phases ^= (x_bits[i] & x_bits[j] & (z_bits[i] ^ z_bits[j]));
             z_bits[j] ^= x_bits[i];
             z_bits[i] ^= x_bits[j];
         }
@@ -223,8 +255,14 @@ void StabilizerState::apply_gate(const Gate& gate) {
 }
 
 void StabilizerStateSum::apply_gate(const Gate& gate) {
+    /*
+    Apply a gate to the StabilizerStateSum. Clifford gates get applied to each state in the sum.  Non-Clifford gates expand the sum.
+
+    Args:
+        gate (Gate&): The gate to apply.
+    */
     const std::string name = gate.get_name();
-    if (name == "H" || name == "S" || name == "Sdg" || name == "X" || name == "Y" || name == "Z" || name == "SWAP") {
+    if ((name == "H" || name == "S" || name == "X" || name == "Y" || name == "Z" || name == "SWAP") && gate.get_control_qubits().size() <= 1) {
         for (auto& state : states) {
             state.apply_gate(gate);
         }

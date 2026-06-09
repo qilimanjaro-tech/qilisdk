@@ -459,9 +459,7 @@ void sampling_stabilizer(const std::vector<Gate>& gates, int n_qubits, const Sta
     std::vector<bool> qubits_measured(n_qubits, false);
     for (int i = 0; i < int(gates.size()); ++i) {
         const auto& gate = gates[i];
-        std::cout << "Applying gate: " << gate << std::endl;
         state.apply_gate(gate);
-        std::cout << "State after gate:\n" << state << std::endl;
     }
 
 }
