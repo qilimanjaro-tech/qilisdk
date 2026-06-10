@@ -33,7 +33,7 @@ from qilisdk.experiments import (
     T2Experiment,
     T2ExperimentResult,
 )
-from qilisdk.experiments.experiment_functional import TwoTonesAtFluxBiasExperiment, TwoTonesVsFluxBiasExperiment
+from qilisdk.experiments.experiment_functional import TwoTonesAtFixedFluxBiasExperiment, TwoTonesVsFluxBiasExperiment
 from qilisdk.functionals import (
     AnalogEvolution,
     DigitalPropagation,
@@ -62,7 +62,7 @@ from .speqtrum_models import (
     T1ExperimentPayload,
     T2ExperimentPayload,
     Token,
-    TwoTonesAtFluxBiasExperimentPayload,
+    TwoTonesAtFixedFluxBiasExperimentPayload,
     TwoTonesVsFluxBiasExperimentPayload,
     TypedJobDetail,
     VariationalProgramPayload,
@@ -708,7 +708,7 @@ class SpeQtrum:
         * :class:`~qilisdk.experiments.experiment_functional.RabiExperiment`
         * :class:`~qilisdk.experiments.experiment_functional.T1Experiment`
         * :class:`~qilisdk.experiments.experiment_functional.T2Experiment`
-        * :class:`~qilisdk.experiments.experiment_functional.TwoTonesAtFluxBiasExperiment`
+        * :class:`~qilisdk.experiments.experiment_functional.TwoTonesAtFixedFluxBiasExperiment`
         * :class:`~qilisdk.experiments.experiment_functional.TwoTonesVsFluxBiasExperiment`
 
         Args:
@@ -737,7 +737,7 @@ class SpeQtrum:
         if isinstance(functional, T2Experiment):
             return self._submit_t2(functional, device, job_name)
 
-        if isinstance(functional, TwoTonesAtFluxBiasExperiment):
+        if isinstance(functional, TwoTonesAtFixedFluxBiasExperiment):
             return self._submit_two_tones(functional, device, job_name)
 
         if isinstance(functional, TwoTonesVsFluxBiasExperiment):
@@ -813,7 +813,7 @@ class SpeQtrum:
         """
         payload = ExecutePayload(
             type=ExecuteType.RABI_EXPERIMENT,
-            rabi_experiment_payload=RabiExperimentPayload(rabi_experiment=rabi_experiment),
+            rabi_experiment_payload=RabiExperimentPayload(experiment=rabi_experiment),
         )
         json = {
             "device_code": device,
@@ -849,7 +849,7 @@ class SpeQtrum:
         """
         payload = ExecutePayload(
             type=ExecuteType.T1_EXPERIMENT,
-            t1_experiment_payload=T1ExperimentPayload(t1_experiment=t1_experiment),
+            t1_experiment_payload=T1ExperimentPayload(experiment=t1_experiment),
         )
         json = {
             "device_code": device,
@@ -885,7 +885,7 @@ class SpeQtrum:
         """
         payload = ExecutePayload(
             type=ExecuteType.T2_EXPERIMENT,
-            t2_experiment_payload=T2ExperimentPayload(t2_experiment=t2_experiment),
+            t2_experiment_payload=T2ExperimentPayload(experiment=t2_experiment),
         )
         json = {
             "device_code": device,
@@ -907,23 +907,23 @@ class SpeQtrum:
         return JobHandle.t2_experiment(job.id)
 
     def _submit_two_tones(
-        self, two_tones_experiment: TwoTonesAtFluxBiasExperiment, device: str, job_name: str | None = None
+        self, two_tones_experiment: TwoTonesAtFixedFluxBiasExperiment, device: str, job_name: str | None = None
     ) -> JobHandle[TwoTonesAtFixedFluxBiasExperimentResult]:
         """Submit a Two-Tones at flux bias experiment to the SpeQtrum API.
 
         Args:
-            two_tones_experiment (TwoTonesAtFluxBiasExperiment): The experiment to execute.
+            two_tones_experiment (TwoTonesAtFixedFluxBiasExperiment): The experiment to execute.
             device (str): Target device code.
             job_name (str | None): Optional human-readable job name.
 
         Returns:
-            JobHandle[TwoTonesAtFluxBiasExperimentResult]: A handle for tracking the
+            JobHandle[TwoTonesAtFixedFluxBiasExperimentResult]: A handle for tracking the
             submitted job.
         """
         payload = ExecutePayload(
             type=ExecuteType.TWO_TONES_AT_FIXED_FLUX_EXPERIMENT,
-            two_tones_at_flux_bias_experiment_payload=TwoTonesAtFluxBiasExperimentPayload(
-                two_tones_experiment=two_tones_experiment
+            two_tones_at_flux_bias_experiment_payload=TwoTonesAtFixedFluxBiasExperimentPayload(
+                experiment=two_tones_experiment
             ),
         )
         json = {
@@ -962,7 +962,7 @@ class SpeQtrum:
         payload = ExecutePayload(
             type=ExecuteType.TWO_TONES_VS_FLUX_BIAS_EXPERIMENT,
             two_tones_vs_flux_bias_experiment_payload=TwoTonesVsFluxBiasExperimentPayload(
-                two_tones_vs_flux_experiment=two_tones_vs_flux_bias_experiment
+                experiment=two_tones_vs_flux_bias_experiment
             ),
         )
         json = {

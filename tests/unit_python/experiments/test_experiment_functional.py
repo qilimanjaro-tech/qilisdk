@@ -19,7 +19,7 @@ from qilisdk.experiments import (
     RabiExperiment,
     T1Experiment,
     T2Experiment,
-    TwoTonesAtFluxBiasExperiment,
+    TwoTonesAtFixedFluxBiasExperiment,
     TwoTonesVsFluxBiasExperiment,
 )
 
@@ -77,7 +77,7 @@ def test_two_tones_experiment_initialization():
     freq_stop = 5.0
     freq_step = 5.0
 
-    two_tones_exp = TwoTonesAtFluxBiasExperiment(
+    two_tones_exp = TwoTonesAtFixedFluxBiasExperiment(
         qubit=qubit,
         averages=averages,
         frequency_start=freq_start,

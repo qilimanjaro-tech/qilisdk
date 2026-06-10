@@ -175,7 +175,7 @@ class T2Experiment(ExperimentFunctional[T2ExperimentResult]):
 
 
 @yaml.register_class
-class TwoTonesAtFluxBiasExperiment(ExperimentFunctional[TwoTonesAtFixedFluxBiasExperimentResult]):
+class TwoTonesAtFixedFluxBiasExperiment(ExperimentFunctional[TwoTonesAtFixedFluxBiasExperimentResult]):
     """Two-tone spectroscopy functional for a single qubit.
 
     Sweeps a drive tone frequency while monitoring the readout tone to

@@ -36,7 +36,7 @@ from qilisdk.experiments.experiment_functional import (
     RabiExperiment,
     T1Experiment,
     T2Experiment,
-    TwoTonesAtFluxBiasExperiment,
+    TwoTonesAtFixedFluxBiasExperiment,
     TwoTonesVsFluxBiasExperiment,
 )
 from qilisdk.functionals.analog_evolution import AnalogEvolution
@@ -148,7 +148,7 @@ class FakeT2Experiment(T2Experiment):
     def __init__(self): ...
 
 
-class FakeTwoTonesAtFluxBiasExperiment(TwoTonesAtFluxBiasExperiment):
+class FakeTwoTonesAtFluxBiasExperiment(TwoTonesAtFixedFluxBiasExperiment):
     def __init__(self): ...
 
 
@@ -263,7 +263,7 @@ def test_submit_dispatches_to_t2_experiment_handler(monkeypatch):
 
 
 def test_submit_dispatches_to_two_tones_at_flux_bias_handler(monkeypatch):
-    monkeypatch.setattr(speqtrum, "TwoTonesAtFluxBiasExperiment", FakeTwoTonesAtFluxBiasExperiment)
+    monkeypatch.setattr(speqtrum, "TwoTonesAtFixedFluxBiasExperiment", FakeTwoTonesAtFluxBiasExperiment)
     monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
     monkeypatch.setattr(
         speqtrum.SpeQtrum,
