@@ -26,6 +26,9 @@ from qilisdk.experiments import (
     TwoTonesVsFluxBiasExperimentResult,
 )
 
+# Set this to True if you want to actually save the plots during testing
+_DEBUG_PLOTS = False
+
 
 def test_dimension_initialization():
     dim = Dimension(labels=["Drive amplitude"], values=[np.array([0.1, 0.2, 0.3])])
@@ -78,7 +81,8 @@ def test_experiment_plotting(monkeypatch):
 
 def test_t1_plotting(monkeypatch):
     monkeypatch.setattr(plt, "show", lambda: None)
-    monkeypatch.setattr(plt.Figure, "savefig", lambda self, *args, **kwargs: None)
+    if not _DEBUG_PLOTS:
+        monkeypatch.setattr(plt.Figure, "savefig", lambda self, *args, **kwargs: None)
 
     rng = np.random.default_rng(seed=42)
     tau = np.arange(0, 3200, 100)
@@ -88,15 +92,15 @@ def test_t1_plotting(monkeypatch):
     dims = [Dimension(labels=["Time"], values=[tau])]
     t1_result = T1ExperimentResult(qubit=0, data=amplitudes, dims=dims)
 
-    t1_result.plot(save_to="./.tmp/test_t1.png", db=False, fit=False)
-    t1_result.plot(save_to="./.tmp/test_t1_db.png", db=True, fit=False)
-    t1_result.plot(save_to="./.tmp/test_t1_fit.png", db=False, fit=True)
-    t1_result.plot(save_to="./.tmp/test_t1_db_fit.png", db=True, fit=True)
+    t1_result.plot(save_to="./.tmp/test_t1_default.png")
+    t1_result.plot(save_to="./.tmp/test_t1.png", fit=False)
+    t1_result.plot(save_to="./.tmp/test_t1_fit.png", fit=True)
 
 
 def test_rabi_plotting(monkeypatch):
     monkeypatch.setattr(plt, "show", lambda: None)
-    monkeypatch.setattr(plt.Figure, "savefig", lambda self, *args, **kwargs: None)
+    if not _DEBUG_PLOTS:
+        monkeypatch.setattr(plt.Figure, "savefig", lambda self, *args, **kwargs: None)
 
     rng = np.random.default_rng(seed=42)
     drive_durations = np.arange(0, 500, 5)
@@ -108,37 +112,39 @@ def test_rabi_plotting(monkeypatch):
     dims_rabi = [Dimension(labels=["Drive duration (ns)"], values=[drive_durations])]
     result_rabi = RabiExperimentResult(qubit=0, data=data_rabi, dims=dims_rabi)
 
-    result_rabi.plot(save_to="./.tmp/test_rabi.png", db=False, fit=False)
-    result_rabi.plot(save_to="./.tmp/test_rabi_db.png", db=True, fit=False)
-    result_rabi.plot(save_to="./.tmp/test_rabi_fit.png", db=False, fit=True)
-    result_rabi.plot(save_to="./.tmp/test_rabi_db_fit.png", db=True, fit=True)
+    result_rabi.plot(save_to="./.tmp/test_rabi_default.png")
+    result_rabi.plot(save_to="./.tmp/test_rabi.png", fit=False)
+    result_rabi.plot(save_to="./.tmp/test_rabi_connected.png", fit=False, connect_points=True)
+    result_rabi.plot(save_to="./.tmp/test_rabi_fit.png", fit=True)
 
 
 def test_two_tones_at_flux_bias_plotting(monkeypatch):
     monkeypatch.setattr(plt, "show", lambda: None)
-    monkeypatch.setattr(plt.Figure, "savefig", lambda self, *args, **kwargs: None)
+    if not _DEBUG_PLOTS:
+        monkeypatch.setattr(plt.Figure, "savefig", lambda self, *args, **kwargs: None)
 
     rng = np.random.default_rng(seed=42)
-    f_qubit = 5.0e9
-    linewidth = 20e6
-    freqs = np.arange(4.5e9, 5.5e9, 5e6)
-    s21_mag = 1.0 - 0.6 / (1 + ((freqs - f_qubit) / (linewidth / 2)) ** 2)
-    s21_mag += rng.normal(0, 0.01, size=s21_mag.shape)
-    phase = np.full_like(freqs, np.pi / 6) + 0.3 / (1 + ((freqs - f_qubit) / (linewidth / 2)) ** 2)
+    freqs = np.arange(2.0e8, 4.5e8, 2.5e6)
+    f_qubit = 3.9e8
+    linewidth = 15e6
+    s21_mag = 0.65 + 0.55 / (1 + ((freqs - f_qubit) / (linewidth / 2)) ** 2)
+    s21_mag += 0.1 / (1 + ((freqs - 2.9e8) / (5e6)) ** 2)
+    s21_mag += rng.normal(0, 0.025, size=s21_mag.shape)
+    phase = np.full_like(freqs, np.pi / 6)
     s21_complex = s21_mag * np.exp(1j * phase)
     data_at = np.stack([s21_complex.real, s21_complex.imag], axis=-1)
-    dims_at = [Dimension(labels=["Drive frequency (Hz)"], values=[freqs])]
+    dims_at = [Dimension(labels=["IF Frequency (Hz)"], values=[freqs])]
     result_at = TwoTonesAtFluxBiasExperimentResult(qubit=0, data=data_at, dims=dims_at)
 
-    result_at.plot(save_to="./.tmp/test_two_tones_at.png", db=False, fit=False)
-    result_at.plot(save_to="./.tmp/test_two_tones_at_db.png", db=True, fit=False)
-    result_at.plot(save_to="./.tmp/test_two_tones_at_fit.png", db=False, fit=True)
-    result_at.plot(save_to="./.tmp/test_two_tones_at_db_fit.png", db=True, fit=True)
+    result_at.plot(save_to="./.tmp/test_two_tones_at_default.png")
+    result_at.plot(save_to="./.tmp/test_two_tones_at.png", fit=False)
+    result_at.plot(save_to="./.tmp/test_two_tones_at_fit.png", fit=True)
 
 
 def test_two_tones_vs_flux_bias_plotting(monkeypatch):
     monkeypatch.setattr(plt, "show", lambda: None)
-    monkeypatch.setattr(plt.Figure, "savefig", lambda self, *args, **kwargs: None)
+    if not _DEBUG_PLOTS:
+        monkeypatch.setattr(plt.Figure, "savefig", lambda self, *args, **kwargs: None)
 
     rng = np.random.default_rng(seed=42)
     freqs2d = np.arange(4.0e9, 6.0e9, 10e6)
@@ -158,15 +164,15 @@ def test_two_tones_vs_flux_bias_plotting(monkeypatch):
     ]
     result_vs = TwoTonesVsFluxBiasExperimentResult(qubit=0, data=data_vs, dims=dims_vs)
 
-    result_vs.plot(save_to="./.tmp/test_two_tones_vs.png", db=False, fit=False)
-    result_vs.plot(save_to="./.tmp/test_two_tones_vs_db.png", db=True, fit=False)
-    result_vs.plot(save_to="./.tmp/test_two_tones_vs_fit.png", db=False, fit=True)
-    result_vs.plot(save_to="./.tmp/test_two_tones_vs_db_fit.png", db=True, fit=True)
+    result_vs.plot(save_to="./.tmp/test_two_tones_vs_default.png")
+    result_vs.plot(save_to="./.tmp/test_two_tones_vs.png", fit=False)
+    result_vs.plot(save_to="./.tmp/test_two_tones_vs_fit.png", fit=True)
 
 
 def test_t2_plotting(monkeypatch):
     monkeypatch.setattr(plt, "show", lambda: None)
-    monkeypatch.setattr(plt.Figure, "savefig", lambda self, *args, **kwargs: None)
+    if not _DEBUG_PLOTS:
+        monkeypatch.setattr(plt.Figure, "savefig", lambda self, *args, **kwargs: None)
 
     rng = np.random.default_rng(seed=42)
     tau = np.arange(0, 10, 0.05)
@@ -179,7 +185,6 @@ def test_t2_plotting(monkeypatch):
     dims_t2 = [Dimension(labels=["Wait duration (μs)"], values=[tau])]
     result_t2 = T2ExperimentResult(qubit=0, data=data_t2, dims=dims_t2)
 
-    result_t2.plot(save_to="./.tmp/test_t2.png", db=False, fit=False)
-    result_t2.plot(save_to="./.tmp/test_t2_db.png", db=True, fit=False)
-    result_t2.plot(save_to="./.tmp/test_t2_fit.png", db=False, fit=True)
-    result_t2.plot(save_to="./.tmp/test_t2_db_fit.png", db=True, fit=True)
+    result_t2.plot(save_to="./.tmp/test_t2_default.png")
+    result_t2.plot(save_to="./.tmp/test_t2.png", fit=False)
+    result_t2.plot(save_to="./.tmp/test_t2_fit.png", fit=True)
