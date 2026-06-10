@@ -16,7 +16,7 @@ from .experiment_functional import (
     RabiExperiment,
     T1Experiment,
     T2Experiment,
-    TwoTonesAtFluxBiasExperiment,
+    TwoTonesAtFixedFluxBiasExperiment,
     TwoTonesVsFluxBiasExperiment,
 )
 from .experiment_result import (
@@ -25,7 +25,7 @@ from .experiment_result import (
     RabiExperimentResult,
     T1ExperimentResult,
     T2ExperimentResult,
-    TwoTonesAtFluxBiasExperimentResult,
+    TwoTonesAtFixedFluxBiasExperimentResult,
     TwoTonesVsFluxBiasExperimentResult,
 )
 
@@ -39,8 +39,8 @@ __all__ = [
     "T1ExperimentResult",
     "T2Experiment",
     "T2ExperimentResult",
-    "TwoTonesAtFluxBiasExperiment",
-    "TwoTonesAtFluxBiasExperimentResult",
+    "TwoTonesAtFixedFluxBiasExperiment",
+    "TwoTonesAtFixedFluxBiasExperimentResult",
     "TwoTonesVsFluxBiasExperiment",
     "TwoTonesVsFluxBiasExperimentResult",
 ]
