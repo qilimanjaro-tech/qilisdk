@@ -70,15 +70,17 @@ class ExperimentResult(FunctionalResult):
     fit_by_default: ClassVar[bool] = False
     """Whether to perform fitting by default when plotting; can be overridden by subclasses if needed."""
 
-    def __init__(self, qubit: int, data: np.ndarray, dims: list[Dimension]) -> None:
+    def __init__(self, qubit: int, averages: int, data: np.ndarray, dims: list[Dimension]) -> None:
         """Initialize an experiment result.
 
         Args:
             qubit (int): The qubit index on which the experiment was performed.
+            averages (int): Number of averages acquired for the experiment.
             data (np.ndarray): Raw experimental data array.
             dims (list[Dimension]): Sweep dimensions of the experiment.
         """
         self.qubit = qubit
+        self.averages = averages
         self.data = data
         self.dims = dims
 
@@ -470,10 +472,10 @@ class T2ExperimentResult(ExperimentResult):
 
 
 @yaml.register_class
-class TwoTonesAtFluxBiasExperimentResult(ExperimentResult):
-    """Result container for TwoTones experiments."""
+class TwoTonesAtFixedFluxBiasExperimentResult(ExperimentResult):
+    """Result container for Two Tones at Fixed Flux Bias experiments."""
 
-    plot_title: ClassVar[str] = "Two Tones At Flux Bias"
+    plot_title: ClassVar[str] = "Two Tones at Fixed Flux Bias"
     """Default title for TwoTones at flux bias experiment plots."""
 
     dims_override: ClassVar[list[DimensionOverride | None]] = [
@@ -484,7 +486,7 @@ class TwoTonesAtFluxBiasExperimentResult(ExperimentResult):
     @staticmethod
     def add_fit(x_values: np.ndarray, y_values: np.ndarray, initial_guess: list[float] | None = None) -> None:
         """
-        Fit a Lorentzian curve to the TwoTones at flux bias experiment data.
+        Fit a Lorentzian curve to the Two Tones at Fixed Flux Bias experiment data.
 
         Args:
             x_values (list[np.ndarray]): The independent variable data (e.g., frequencies).
@@ -524,7 +526,7 @@ class TwoTonesAtFluxBiasExperimentResult(ExperimentResult):
 
 @yaml.register_class
 class TwoTonesVsFluxBiasExperimentResult(ExperimentResult):
-    """Result container for TwoTones experiments swept vs flux bias."""
+    """Result container for TwoTones vs Flux Bias experiments swept vs flux bias."""
 
     plot_title: ClassVar[str] = "Two Tones Vs Flux Bias"
     """Default title for TwoTones vs flux bias experiment plots."""
