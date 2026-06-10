@@ -395,7 +395,9 @@ def test_requires():
     with pytest.raises(RuntimeError, match="did not return a t2_experiment_result"):
         _require_t2_experiment_result(bad_result)
 
-    assert _require_two_tones_experiment_result(good_result) is good_result.two_tones_at_fixed_flux_bias_experiment_result
+    assert (
+        _require_two_tones_experiment_result(good_result) is good_result.two_tones_at_fixed_flux_bias_experiment_result
+    )
     with pytest.raises(RuntimeError, match="did not return a two_tones_at_fixed_flux_bias_experiment_result"):
         _require_two_tones_experiment_result(bad_result)
 

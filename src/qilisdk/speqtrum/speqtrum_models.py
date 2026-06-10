@@ -30,7 +30,10 @@ from qilisdk.experiments import (
     T2ExperimentResult,
 )
 from qilisdk.experiments.experiment_functional import TwoTonesAtFixedFluxBiasExperiment, TwoTonesVsFluxBiasExperiment
-from qilisdk.experiments.experiment_result import TwoTonesAtFixedFluxBiasExperimentResult, TwoTonesVsFluxBiasExperimentResult
+from qilisdk.experiments.experiment_result import (
+    TwoTonesAtFixedFluxBiasExperimentResult,
+    TwoTonesVsFluxBiasExperimentResult,
+)
 from qilisdk.functionals import (
     AnalogEvolution,
     DigitalPropagation,
@@ -295,9 +298,7 @@ class TwoTonesVsFluxBiasExperimentPayload(SpeQtrumModel):
     experiment: TwoTonesVsFluxBiasExperiment = Field(...)
 
     @field_serializer("experiment")
-    def _serialize_experiment(
-        self, experiment: TwoTonesVsFluxBiasExperiment, _info
-    ):
+    def _serialize_experiment(self, experiment: TwoTonesVsFluxBiasExperiment, _info):
         return serialize(experiment)
 
     @field_validator("experiment", mode="before")
