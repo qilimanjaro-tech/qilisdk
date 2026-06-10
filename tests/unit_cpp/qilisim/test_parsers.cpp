@@ -22,7 +22,7 @@ namespace py = pybind11;
 
 TEST(ParseHamiltonians, MatrixFreeEmptyThrows) {
     py::list empty;
-    EXPECT_ANY_THROW(parse_hamiltonians_matrix_free(empty));
+    EXPECT_ANY_THROW(parse_hamiltonians_matrix_free(1, empty));
 }
 
 TEST(ParseHamiltonians, MatrixFreeSingleTerm) {
@@ -37,8 +37,8 @@ TEST(ParseHamiltonians, MatrixFreeSingleTerm) {
     py::list Hs;
     Hs.append(fake_H);
 
-    std::vector<MatrixFreeHamiltonian> result = parse_hamiltonians_matrix_free(Hs);
-    std::vector<MatrixFreeHamiltonian> expected = {MatrixFreeHamiltonian(MatrixFreeOperator("X", 0))};
+    std::vector<MatrixFreeHamiltonian> result = parse_hamiltonians_matrix_free(1, Hs);
+    std::vector<MatrixFreeHamiltonian> expected = {MatrixFreeHamiltonian(1, MatrixFreeOperator("X", 0))};
     EXPECT_EQ(result.size(), 1);
     EXPECT_EQ(result[0], expected[0]);
 }
@@ -804,7 +804,7 @@ TEST(ParseObservablesMatrixFree, HamiltonianObservable) {
     )");
 
     py::object fake_obs = py::globals()["fake_obs_hamiltonian"];
-    auto result = parse_observables_matrix_free(fake_obs);
+    auto result = parse_observables_matrix_free(1, fake_obs);
 
     ASSERT_EQ(result.size(), 1u);
 }
@@ -817,10 +817,10 @@ TEST(ParseObservablesMatrixFree, PauliOperatorObservable) {
     )");
 
     py::object fake_obs = py::globals()["fake_obs_pauli"];
-    auto result = parse_observables_matrix_free(fake_obs);
+    auto result = parse_observables_matrix_free(1, fake_obs);
 
     ASSERT_EQ(result.size(), 1u);
-    EXPECT_EQ(result[0], MatrixFreeHamiltonian(MatrixFreeOperator("Z", 1)));
+    EXPECT_EQ(result[0], MatrixFreeHamiltonian(1, MatrixFreeOperator("Z", 1)));
 }
 
 TEST(ParseObservablesMatrixFree, MultipleMixedObservables) {
@@ -831,7 +831,7 @@ TEST(ParseObservablesMatrixFree, MultipleMixedObservables) {
     )");
 
     py::object fake_obs = py::globals()["fake_obs_mixed"];
-    auto result = parse_observables_matrix_free(fake_obs);
+    auto result = parse_observables_matrix_free(2, fake_obs);
 
     EXPECT_EQ(result.size(), 2u);
 }
@@ -845,7 +845,7 @@ TEST(ParseObservablesMatrixFree, QTensorObservableThrows) {
     )");
 
     py::object fake_obs = py::globals()["fake_obs_qtensor"];
-    EXPECT_THROW(parse_observables_matrix_free(fake_obs), py::value_error);
+    EXPECT_THROW(parse_observables_matrix_free(1, fake_obs), py::value_error);
 }
 
 TEST(ParseObservablesMatrixFree, UnrecognizedTypeThrows) {
@@ -857,7 +857,7 @@ TEST(ParseObservablesMatrixFree, UnrecognizedTypeThrows) {
     )");
 
     py::object fake_obs = py::globals()["fake_obs_unknown"];
-    EXPECT_THROW(parse_observables_matrix_free(fake_obs), py::value_error);
+    EXPECT_THROW(parse_observables_matrix_free(1, fake_obs), py::value_error);
 }
 
 TEST(ParseObservablesMatrixFree, EmptyObservablesReturnsEmpty) {
@@ -867,7 +867,7 @@ TEST(ParseObservablesMatrixFree, EmptyObservablesReturnsEmpty) {
     )");
 
     py::object fake_obs = py::globals()["fake_obs_empty"];
-    auto result = parse_observables_matrix_free(fake_obs);
+    auto result = parse_observables_matrix_free(1, fake_obs);
     EXPECT_TRUE(result.empty());
 }
 
@@ -1076,7 +1076,7 @@ TEST(ParseInitialState, BasicDensityMatrix) {
     )");
 
     py::object fake_state = py::globals()["fake_initial_state_basic"];
-    auto result = parse_initial_state(fake_state, 1e-10);
+    auto result = parse_initial_state(fake_state, 1e-10, 1);
 
     EXPECT_EQ(result.rows(), 2);
     EXPECT_EQ(result.cols(), 2);
@@ -1095,7 +1095,7 @@ TEST(ParseInitialState, FourByFourState) {
     )");
 
     py::object fake_state = py::globals()["fake_initial_state_4x4"];
-    auto result = parse_initial_state(fake_state, 1e-10);
+    auto result = parse_initial_state(fake_state, 1e-10, 2);
 
     EXPECT_EQ(result.rows(), 4);
     EXPECT_EQ(result.cols(), 4);
@@ -1581,6 +1581,87 @@ TEST(ConstructResults, BadReadoutTypeThrows) {
     QiliSimConfig config;
     std::vector<bool> qubits_to_measure = {true};
     EXPECT_THROW({ auto results = construct_result_object(state, readout, noise_model_cpp, n_qubits, config, qubits_to_measure); }, py::value_error);
+}
+
+TEST(ConstructResultsExponentialAnsatz, WithExpectationReadout_Succeeds) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.readout import ExpectationReadout
+from qilisdk.analog.hamiltonian import Z
+_ea_ro_exp = [ExpectationReadout(observables=[Z(0)])]
+    )");
+    ExponentialAnsatz state(1, 1, 50, 0);
+    py::list readout = py::globals()["_ea_ro_exp"].cast<py::list>();
+    EXPECT_NO_THROW({ auto result = construct_result_object(state, readout, 1); });
+}
+
+TEST(ConstructResultsExponentialAnsatz, WithSamplingReadout_Succeeds) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.readout import SamplingReadout
+_ea_ro_samp = [SamplingReadout(nshots=10)]
+    )");
+    ExponentialAnsatz state(1, 1, 50, 0);
+    py::list readout = py::globals()["_ea_ro_samp"].cast<py::list>();
+    EXPECT_NO_THROW({ auto result = construct_result_object(state, readout, 1); });
+}
+
+TEST(ConstructResultsExponentialAnsatz, WithUnsupportedReadout_Throws) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.readout import StateTomographyReadout
+_ea_ro_bad = [StateTomographyReadout()]
+    )");
+    ExponentialAnsatz state(1, 1, 50, 0);
+    py::list readout = py::globals()["_ea_ro_bad"].cast<py::list>();
+    EXPECT_THROW({ auto result = construct_result_object(state, readout, 1); }, py::value_error);
+}
+
+TEST(ParseInitialState, WithQTensorObject_Succeeds) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.core.qtensor import QTensor
+import scipy.sparse as sp, numpy as np
+_parse_is_qtensor = QTensor(sp.csr_matrix(np.array([[1.+0j], [0.]], dtype=complex)))
+    )");
+    py::object qs = py::globals()["_parse_is_qtensor"];
+    SparseMatrix result;
+    EXPECT_NO_THROW(result = parse_initial_state(qs, 1e-12, 1));
+    EXPECT_EQ(result.rows(), 2);
+    EXPECT_EQ(result.cols(), 1);
+}
+
+TEST(ParseInitialState, WithInitialStateEnum_Succeeds) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.core.qtensor import InitialState
+_parse_is_uniform = InitialState.UNIFORM
+    )");
+    py::object is_obj = py::globals()["_parse_is_uniform"];
+    SparseMatrix result;
+    EXPECT_NO_THROW(result = parse_initial_state(is_obj, 1e-12, 1));
+}
+
+TEST(ParseInitialState, UnknownType_ThrowsValueError) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+_unknown_initial_state = 42
+    )");
+    py::object obj = py::globals()["_unknown_initial_state"];
+    EXPECT_THROW(parse_initial_state(obj, 1e-12, 1), py::value_error);
+}
+
+TEST(ParseSolverParams, OrderShotsWarmupsAreApplied) {
+    py::gil_scoped_acquire gil;
+    py::dict params;
+    params["variational_order"] = py::int_(3);
+    params["variational_shots"] = py::int_(200);
+    params["variational_warmups"] = py::int_(50);
+    QiliSimConfig config;
+    EXPECT_NO_THROW(config = parse_solver_params(params));
+    EXPECT_EQ(config.get_order(), 3);
+    EXPECT_EQ(config.get_shots(), 200);
+    EXPECT_EQ(config.get_warmups(), 50);
 }
 
 // GCOV_EXCL_BR_STOP

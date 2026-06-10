@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../modules/noise/noise.rst:2
 msgid "Noise"
-msgstr "Ruido"
+msgstr "Noise"
 
 #~ msgid "Noise Models"
 #~ msgstr "Modelos de Ruido"

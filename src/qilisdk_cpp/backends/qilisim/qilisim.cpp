@@ -24,6 +24,7 @@
 #include "digital/sampling.h"
 #include "noise/noise_model.h"
 #include "qilisim.h"
+#include "representations/exponential_ansatz.h"
 #include "representations/matrix_free_hamiltonian.h"
 #include "utils/parsers.h"
 #include "utils/random.h"
@@ -96,7 +97,7 @@ py::object QiliSimCpp::execute_digital_propagation(const py::object& functional,
         initial_state_cpp.coeffRef(0, 0) = 1.0;
         initial_state_cpp.makeCompressed();
     } else {
-        initial_state_cpp = parse_initial_state(initial_state, config.get_atol());
+        initial_state_cpp = parse_initial_state(initial_state, config.get_atol(), n_qubits);
     }
     if (config.get_sampling_method() == "statevector_matrix_free") {
         sampling_matrix_free(gates, n_qubits, initial_state_cpp, noise_model_cpp, state_dense, intermediate_results, config, readout);
@@ -171,6 +172,7 @@ py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, co
     py::list hamiltonians_keys = hamiltonians_full.attr("keys")();
     py::list hamiltonians_values = hamiltonians_full.attr("values")();
     py::object steps = functional.attr("schedule").attr("tlist");
+    int n_qubits = functional.attr("schedule").attr("nqubits").cast<int>();
 
     // Get parameters
     QiliSimConfig config = parse_solver_params(solver_params);
@@ -178,57 +180,93 @@ py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, co
         config.set_store_intermediate_results(true);
     }
 
-    // Common between methods
-    SparseMatrix rho_0 = parse_initial_state(initial_state, config.get_atol());
-    int nqubits = static_cast<int>(std::log2(rho_0.rows()));
-    NoiseModelCpp noise_model_cpp = parse_noise_model(noise_model, nqubits, config.get_atol());
-    std::vector<std::vector<double>> parameters_list = parse_coefficients(schedule, hamiltonians_keys, steps);
-    std::vector<double> step_list = parse_time_steps(steps);
-
-    // Depending on the method, call the internal implementation
-    std::vector<DenseMatrix> intermediate_rhos;
-    DenseMatrix rho_t;
-    std::vector<double> expectation_values;
-    if (config.get_time_evolution_method() == "integrate_rk4_matrix_free" || config.get_time_evolution_method() == "integrate_rk45_matrix_free") {
-        // Parse the Hamiltonians
-        std::vector<MatrixFreeHamiltonian> hamiltonians = parse_hamiltonians_matrix_free(hamiltonians_values);
-        if (hamiltonians.size() != parameters_list.size()) {
-            throw py::value_error("Number of Hamiltonians does not match number of parameter lists");
+    // A scalable method, so we should never construct any matrix or state
+    if (config.get_time_evolution_method() == "variational_exponential") {
+        // Ensure that the initial state is a plus state (a InitialState)
+        if (!py::isinstance(initial_state, InitialState) || initial_state.attr("name").cast<std::string>() != "UNIFORM") {
+            throw py::value_error("Initial state must be a InitialState.UNIFORM instance for the variational annealing method.");
         }
 
-        // Call the implementation
-        time_evolution_matrix_free(rho_0, hamiltonians, parameters_list, step_list, noise_model_cpp, config, rho_t, intermediate_rhos);
+        // Parse things
+        std::vector<MatrixFreeHamiltonian> hamiltonians = parse_hamiltonians_matrix_free(n_qubits, hamiltonians_values);
+        ExponentialAnsatz rho_t(n_qubits, config.get_order(), config.get_shots(), config.get_warmups());
+        std::vector<std::vector<double>> parameters_list = parse_coefficients(schedule, hamiltonians_keys, steps);
+        std::vector<double> step_list = parse_time_steps(steps);
 
-    } else if (config.get_time_evolution_method() == "integrate_rk4" || config.get_time_evolution_method() == "arnoldi" || config.get_time_evolution_method() == "direct") {
-        // Parse the Hamiltonians
-        std::vector<SparseMatrix> hamiltonians = parse_hamiltonians(hamiltonians_values, config.get_atol());
-        if (hamiltonians.size() != parameters_list.size()) {
-            throw py::value_error("Number of Hamiltonians does not match number of parameter lists");
+        // Make sure the first Hamiltonian only has X terms
+        for (const auto& [ps, coeff] : hamiltonians[0].get_operators()) {
+            if ((ps.x_mask.count() + ps.z_mask.count()) != ps.x_mask.count()) {
+                throw py::value_error("The first Hamiltonian in the schedule must only contain X terms for the variational annealing method.");
+            }
         }
 
-        // Call the implementation
-        time_evolution(rho_0, hamiltonians, parameters_list, step_list, noise_model_cpp, config, rho_t, intermediate_rhos);
+        // Make sure the last Hamiltonian only has Z terms
+        for (const auto& [ps, coeff] : hamiltonians.back().get_operators()) {
+            if ((ps.x_mask.count() + ps.z_mask.count()) != ps.z_mask.count()) {
+                throw py::value_error("The last Hamiltonian in the schedule must only contain Z terms for the variational annealing method.");
+            }
+        }
 
+        // Run the evolution
+        time_evolution_variational_exponential(rho_t, hamiltonians, parameters_list, step_list, config);
+
+        // Construct the result object
+        py::object result = construct_result_object(rho_t, readout, n_qubits);
+        return FunctionalResult("readout_results"_a = result);
+
+        // In all of these methods the state is fully stored
     } else {
-        throw py::value_error("Unknown time evolution method: " + config.get_time_evolution_method());
-    }
+        // Common between methods
+        SparseMatrix rho_0 = parse_initial_state(initial_state, config.get_atol(), n_qubits);
+        int nqubits = static_cast<int>(std::log2(rho_0.rows()));
+        NoiseModelCpp noise_model_cpp = parse_noise_model(noise_model, nqubits, config.get_atol());
+        std::vector<std::vector<double>> parameters_list = parse_coefficients(schedule, hamiltonians_keys, steps);
+        std::vector<double> step_list = parse_time_steps(steps);
 
-    // Construct the result object
-    int n_qubits = functional.attr("schedule").attr("nqubits").cast<int>();
-    std::vector<bool> qubits_to_measure(n_qubits, true);
-    py::object result = construct_result_object(rho_t, readout, noise_model_cpp, n_qubits, config, qubits_to_measure);
-    bool store_intermediate_results = functional.attr("store_intermediate_results").cast<bool>();
+        // Depending on the method, call the internal implementation
+        std::vector<DenseMatrix> intermediate_rhos;
+        DenseMatrix rho_t;
+        std::vector<double> expectation_values;
+        if (config.get_time_evolution_method() == "integrate_rk4_matrix_free" || config.get_time_evolution_method() == "integrate_rk45_matrix_free") {
+            // Parse the Hamiltonians
+            std::vector<MatrixFreeHamiltonian> hamiltonians = parse_hamiltonians_matrix_free(nqubits, hamiltonians_values);
+            if (hamiltonians.size() != parameters_list.size()) {
+                throw py::value_error("Number of Hamiltonians does not match number of parameter lists");
+            }
 
-    // If we have intermediates, process them too
-    if (store_intermediate_results) {
-        py::list inter_results;
-        for (size_t step = 0; step < intermediate_rhos.size(); ++step) {
-            auto& rho_intermediate = intermediate_rhos[step];
-            inter_results.append(construct_result_object(rho_intermediate, readout, noise_model_cpp, n_qubits, config, qubits_to_measure));
+            // Call the implementation
+            time_evolution_matrix_free(rho_0, hamiltonians, parameters_list, step_list, noise_model_cpp, config, rho_t, intermediate_rhos);
+
+        } else if (config.get_time_evolution_method() == "integrate_rk4" || config.get_time_evolution_method() == "arnoldi" || config.get_time_evolution_method() == "direct") {
+            // Parse the Hamiltonians
+            std::vector<SparseMatrix> hamiltonians = parse_hamiltonians(hamiltonians_values, config.get_atol());
+            if (hamiltonians.size() != parameters_list.size()) {
+                throw py::value_error("Number of Hamiltonians does not match number of parameter lists");
+            }
+
+            // Call the implementation
+            time_evolution(rho_0, hamiltonians, parameters_list, step_list, noise_model_cpp, config, rho_t, intermediate_rhos);
+
+        } else {
+            throw py::value_error("Unknown time evolution method: " + config.get_time_evolution_method());  // GCOV_EXCL_LINE
         }
-        return FunctionalResult("readout_results"_a = result, "intermediate_results"_a = inter_results);
+
+        // Construct the result object
+        std::vector<bool> qubits_to_measure(n_qubits, true);
+        py::object result = construct_result_object(rho_t, readout, noise_model_cpp, n_qubits, config, qubits_to_measure);
+        bool store_intermediate_results = functional.attr("store_intermediate_results").cast<bool>();
+
+        // If we have intermediates, process them too
+        if (store_intermediate_results) {
+            py::list inter_results;
+            for (size_t step = 0; step < intermediate_rhos.size(); ++step) {
+                auto& rho_intermediate = intermediate_rhos[step];
+                inter_results.append(construct_result_object(rho_intermediate, readout, noise_model_cpp, n_qubits, config, qubits_to_measure));
+            }
+            return FunctionalResult("readout_results"_a = result, "intermediate_results"_a = inter_results);
+        }
+        return FunctionalResult("readout_results"_a = result);
     }
-    return FunctionalResult("readout_results"_a = result);
 }
 
 // The public execute_sampling
@@ -275,7 +313,7 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
     NoiseModelCpp noise_model_cpp = parse_noise_model(noise_model, n_qubits, config.get_atol());
 
     py::object initial_state = functional.attr("initial_state");
-    SparseMatrix rho_0 = parse_initial_state(initial_state, config.get_atol());
+    SparseMatrix rho_0 = parse_initial_state(initial_state, config.get_atol(), n_qubits);
     // Ensure state is always a density matrix (matching Python's to_density_matrix())
     DenseMatrix state;
     if (rho_0.cols() == 1) {
@@ -341,7 +379,8 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
                 std::vector<DenseMatrix> intermediate_rhos;
                 if (config.get_time_evolution_method() == "integrate_rk4_matrix_free") {
                     // Parse the Hamiltonians
-                    std::vector<MatrixFreeHamiltonian> hamiltonians = parse_hamiltonians_matrix_free(hamiltonians_values);
+                    int n_qubits = functional.attr("nqubits").cast<int>();
+                    std::vector<MatrixFreeHamiltonian> hamiltonians = parse_hamiltonians_matrix_free(n_qubits, hamiltonians_values);
                     if (hamiltonians.size() != parameters_list.size()) {
                         throw py::value_error("Number of Hamiltonians does not match number of parameter lists");
                     }

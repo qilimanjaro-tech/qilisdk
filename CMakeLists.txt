@@ -82,16 +82,6 @@ else()
     set(RPATH_ORIGIN "$ORIGIN")
 endif()
 
-# QTensor
-pybind11_add_module(qtensor_module SHARED src/qilisdk_cpp/core/qtensor_bindings.cpp)
-file(GLOB QTENSOR_SOURCES src/qilisdk_cpp/core/*.cpp)
-target_sources(qtensor_module PRIVATE ${QTENSOR_SOURCES})
-target_link_libraries(qtensor_module PRIVATE qilisdk_libs)
-set_target_properties(qtensor_module PROPERTIES
-    BUILD_RPATH "${RPATH_ORIGIN}"
-    INSTALL_RPATH "${RPATH_ORIGIN}"
-)
-
 # QiliSim
 pybind11_add_module(qilisim_module SHARED src/qilisdk_cpp/backends/qilisim/qilisim_bindings.cpp)
 file(GLOB QILISIM_SOURCES src/qilisdk_cpp/backends/qilisim/*.cpp)
@@ -100,6 +90,17 @@ list(APPEND QILISIM_SOURCES ${QILISIM_SUBDIR_SOURCES})
 target_sources(qilisim_module PRIVATE ${QILISIM_SOURCES})
 target_link_libraries(qilisim_module PRIVATE qilisdk_libs)
 set_target_properties(qilisim_module PROPERTIES
+    BUILD_RPATH "${RPATH_ORIGIN}"
+    INSTALL_RPATH "${RPATH_ORIGIN}"
+)
+
+# QTensor
+pybind11_add_module(qtensor_module SHARED src/qilisdk_cpp/core/qtensor_bindings.cpp)
+file(GLOB QTENSOR_SOURCES src/qilisdk_cpp/core/*.cpp)
+target_sources(qtensor_module PRIVATE ${QTENSOR_SOURCES})
+target_link_libraries(qtensor_module PRIVATE qilisdk_libs)
+target_link_libraries(qtensor_module PRIVATE qilisim_module)  # QTensor depends on some QiliSim types for now
+set_target_properties(qtensor_module PROPERTIES
     BUILD_RPATH "${RPATH_ORIGIN}"
     INSTALL_RPATH "${RPATH_ORIGIN}"
 )

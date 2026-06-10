@@ -25,7 +25,7 @@ from loguru import logger
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator, PauliX, PauliY, PauliZ
 from qilisdk.backends.backend import Backend
-from qilisdk.core.qtensor import QTensor
+from qilisdk.core.qtensor import InitialState, QTensor
 from qilisdk.digital.circuit_transpiler_passes import DecomposeMultiControlledGatesPass
 from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import (
@@ -401,11 +401,17 @@ class CudaBackend(Backend):
         for delta in hamiltonian_deltas:
             cuda_hamiltonian += delta
 
+        if isinstance(functional.initial_state, InitialState):
+            state_as_qtensor = functional.initial_state.as_qtensor(functional.schedule.nqubits)
+        else:
+            state_as_qtensor = functional.initial_state
+        state_as_cuda = self._qtensor_initial_state_to_cuda(state_as_qtensor)
+
         evolution_result = evolve(
             hamiltonian=cuda_hamiltonian,
             dimensions=dict.fromkeys(range(functional.schedule.nqubits), 2),
             schedule=cuda_schedule,
-            initial_state=self._qtensor_initial_state_to_cuda(functional.initial_state),
+            initial_state=state_as_cuda,
             observables=cuda_observables,
             collapse_operators=jump_operators,
             store_intermediate_results=functional.store_intermediate_results,

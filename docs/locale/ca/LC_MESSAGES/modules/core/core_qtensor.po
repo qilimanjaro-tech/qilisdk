@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-05 15:18+0200\n"
+"POT-Creation-Date: 2026-06-03 17:26+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -32,7 +32,8 @@ msgid ""
 msgstr ""
 "El mòdul :mod:`~qilisdk.core.qtensor` defineix la classe "
 ":class:`~qilisdk.core.qtensor.QTensor` i funcions auxiliars relacionades "
-"per representar i manipular estats quàntics i operadors en forma dispersa."
+"per representar i manipular estats quàntics i operadors en forma "
+"dispersa."
 
 #: ../../modules/core/core_qtensor.rst:8
 msgid ""
@@ -107,14 +108,24 @@ msgstr ""
 "dimensió especificada"
 
 #: ../../modules/core/core_qtensor.rst:65
+#, fuzzy
 msgid ""
-":func:`~qilisdk.core.qtensor.zero` for generating zero tensors of "
-"specified dimension"
+":func:`~qilisdk.core.qtensor.zero` for generating statevectors in the "
+"all-zero state."
 msgstr ""
 ":func:`~qilisdk.core.qtensor.zero` per generar tensors zero de la "
 "dimensió especificada"
 
 #: ../../modules/core/core_qtensor.rst:66
+#, fuzzy
+msgid ""
+":func:`~qilisdk.core.qtensor.one` for generating statevectors in the all-"
+"one state."
+msgstr ""
+":func:`~qilisdk.core.qtensor.zero` per generar tensors zero de la "
+"dimensió especificada"
+
+#: ../../modules/core/core_qtensor.rst:67
 msgid ""
 ":func:`~qilisdk.core.qtensor.ghz` for generating GHZ states of specified "
 "number of qubits"
@@ -122,7 +133,7 @@ msgstr ""
 ":func:`~qilisdk.core.qtensor.ghz` per generar estats GHZ del nombre de "
 "qubits especificat"
 
-#: ../../modules/core/core_qtensor.rst:67
+#: ../../modules/core/core_qtensor.rst:68
 msgid ""
 ":meth:`~qilisdk.core.qtensor.QTensor.uniform` for generating uniform "
 "superposition states of specified number of qubits"
@@ -145,8 +156,8 @@ msgid ""
 ":attr:`.data<qilisdk.core.qtensor.QTensor.data>`: get the underlying "
 "sparse matrix (SciPy CSR format)"
 msgstr ""
-":attr:`.data<qilisdk.core.qtensor.QTensor.data>`: obté la matriu "
-"dispersa subjacent (format SciPy CSR)"
+":attr:`.data<qilisdk.core.qtensor.QTensor.data>`: obté la matriu dispersa"
+" subjacent (format SciPy CSR)"
 
 #: ../../modules/core/core_qtensor.rst:111
 msgid ""
@@ -185,8 +196,8 @@ msgid ""
 ":meth:`.transpose()<qilisdk.core.qtensor.QTensor.transpose>`: matrix "
 "transpose"
 msgstr ""
-":meth:`.transpose()<qilisdk.core.qtensor.QTensor.transpose>`: transposada "
-"de la matriu"
+":meth:`.transpose()<qilisdk.core.qtensor.QTensor.transpose>`: transposada"
+" de la matriu"
 
 #: ../../modules/core/core_qtensor.rst:119
 msgid ":meth:`.exp()<qilisdk.core.qtensor.QTensor.exp>`: matrix exponential"
@@ -198,7 +209,9 @@ msgstr ":meth:`.log()<qilisdk.core.qtensor.QTensor.log>`: logaritme matricial"
 
 #: ../../modules/core/core_qtensor.rst:121
 msgid ":meth:`.sqrt()<qilisdk.core.qtensor.QTensor.sqrt>`: matrix square root"
-msgstr ":meth:`.sqrt()<qilisdk.core.qtensor.QTensor.sqrt>`: arrel quadrada matricial"
+msgstr ""
+":meth:`.sqrt()<qilisdk.core.qtensor.QTensor.sqrt>`: arrel quadrada "
+"matricial"
 
 #: ../../modules/core/core_qtensor.rst:122
 msgid ""
@@ -210,7 +223,9 @@ msgstr ""
 
 #: ../../modules/core/core_qtensor.rst:123
 msgid ":meth:`.pow(exponent)<qilisdk.core.qtensor.QTensor.pow>`: matrix power"
-msgstr ":meth:`.pow(exponent)<qilisdk.core.qtensor.QTensor.pow>`: potència matricial"
+msgstr ""
+":meth:`.pow(exponent)<qilisdk.core.qtensor.QTensor.pow>`: potència "
+"matricial"
 
 #: ../../modules/core/core_qtensor.rst:124
 msgid ""
@@ -249,8 +264,8 @@ msgid ""
 ":meth:`.dot(other)<qilisdk.core.qtensor.QTensor.dot>`: Frobenius inner "
 "product with another QTensor"
 msgstr ""
-":meth:`.dot(other)<qilisdk.core.qtensor.QTensor.dot>`: producte intern "
-"de Frobenius amb un altre QTensor"
+":meth:`.dot(other)<qilisdk.core.qtensor.QTensor.dot>`: producte intern de"
+" Frobenius amb un altre QTensor"
 
 #: ../../modules/core/core_qtensor.rst:130
 msgid "As well as some quantum-specific transformations:"
@@ -312,8 +327,8 @@ msgid ""
 ":meth:`.partial_trace(keep)<qilisdk.core.qtensor.QTensor.ptrace>`: "
 "partial trace"
 msgstr ""
-":meth:`.partial_trace(keep)<qilisdk.core.qtensor.QTensor.ptrace>`: "
-"traça parcial"
+":meth:`.partial_trace(keep)<qilisdk.core.qtensor.QTensor.ptrace>`: traça "
+"parcial"
 
 #: ../../modules/core/core_qtensor.rst:139
 msgid ""
@@ -367,3 +382,4 @@ msgstr ""
 
 #~ msgid "Go to a specific subheading of a page."
 #~ msgstr "Aneu a un subapartat específic d'una pàgina."
+

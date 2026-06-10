@@ -18,6 +18,7 @@
 #include "../../../libs/eigen.h"
 #include "../config/qilisim_config.h"
 #include "../noise/noise_model.h"
+#include "../representations/exponential_ansatz.h"
 #include "../representations/matrix_free_hamiltonian.h"
 
 // GCOV_EXCL_BR_START
@@ -25,5 +26,7 @@
 void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, NoiseModelCpp& noise_model_cpp, QiliSimConfig& config, DenseMatrix& rho_t, std::vector<DenseMatrix>& intermediate_rhos);
 
 void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, NoiseModelCpp& noise_model_cpp, QiliSimConfig& config, DenseMatrix& rho_t, std::vector<DenseMatrix>& intermediate_rhos);
+
+void time_evolution_variational_exponential(ExponentialAnsatz& rho_t_as_h, const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, QiliSimConfig& config);
 
 // GCOV_EXCL_BR_STOP
