@@ -40,7 +40,7 @@ from qilisdk.experiments.experiment_result import (
     RabiExperimentResult,
     T1ExperimentResult,
     T2ExperimentResult,
-    TwoTonesAtFluxBiasExperimentResult,
+    TwoTonesAtFixedFluxBiasExperimentResult,
     TwoTonesVsFluxBiasExperimentResult,
 )
 from qilisdk.functionals.analog_evolution import AnalogEvolution
@@ -130,38 +130,48 @@ def test_variational_program_payload():
 
 
 def test_rabi_experiment_payload():
-    experiment = RabiExperiment(qubit=0, drive_duration_values=[10, 20, 30])
+    experiment = RabiExperiment(qubit=0, averages=1000, drive_duration_values=[10, 20, 30])
     payload = RabiExperimentPayload(rabi_experiment=experiment)
     serialized_experiment = payload._serialize_rabi_experiment(rabi_experiment=experiment, _info={})
     deserialized_experiment = payload._load_rabi_experiment(serialized_experiment)
     assert deserialized_experiment.qubit == experiment.qubit
+    assert deserialized_experiment.averages == experiment.averages
     assert deserialized_experiment.drive_duration_values == experiment.drive_duration_values
 
 
 def test_t1_experiment_payload():
-    experiment = T1Experiment(qubit=0, wait_duration_values=[10, 20, 30])
+    experiment = T1Experiment(qubit=0, averages=1000, wait_duration_values=[10, 20, 30])
     payload = T1ExperimentPayload(t1_experiment=experiment)
     serialized_experiment = payload._serialize_t1_experiment(t1_experiment=experiment, _info={})
     deserialized_experiment = payload._load_t1_experiment(serialized_experiment)
     assert deserialized_experiment.qubit == experiment.qubit
+    assert deserialized_experiment.averages == experiment.averages
     assert deserialized_experiment.wait_duration_values == experiment.wait_duration_values
 
 
 def test_t2_experiment_payload():
-    experiment = T2Experiment(qubit=0, wait_duration_values=[10, 20, 30])
+    experiment = T2Experiment(qubit=0, averages=1000, wait_duration_values=[10, 20, 30])
     payload = T2ExperimentPayload(t2_experiment=experiment)
     serialized_experiment = payload._serialize_t2_experiment(t2_experiment=experiment, _info={})
     deserialized_experiment = payload._load_t2_experiment(serialized_experiment)
     assert deserialized_experiment.qubit == experiment.qubit
+    assert deserialized_experiment.averages == experiment.averages
     assert deserialized_experiment.wait_duration_values == experiment.wait_duration_values
 
 
 def test_two_tones_at_flux_bias_experiment_payload():
-    experiment = TwoTonesAtFluxBiasExperiment(qubit=0, frequency_start=4.9e9, frequency_stop=5.1e9, frequency_step=1e6)
+    experiment = TwoTonesAtFluxBiasExperiment(
+        qubit=0,
+        averages=1000,
+        frequency_start=4.9e9,
+        frequency_stop=5.1e9,
+        frequency_step=1e6,
+    )
     payload = TwoTonesAtFluxBiasExperimentPayload(two_tones_experiment=experiment)
     serialized_experiment = payload._serialize_two_tones_experiment(two_tones_experiment=experiment, _info={})
     deserialized_experiment = payload._load_two_tones_experiment(serialized_experiment)
     assert deserialized_experiment.qubit == experiment.qubit
+    assert deserialized_experiment.averages == experiment.averages
     assert deserialized_experiment.frequency_start == experiment.frequency_start
     assert deserialized_experiment.frequency_stop == experiment.frequency_stop
     assert deserialized_experiment.frequency_step == experiment.frequency_step
@@ -170,6 +180,7 @@ def test_two_tones_at_flux_bias_experiment_payload():
 def test_two_tones_vs_flux_bias_experiment_payload():
     experiment = TwoTonesVsFluxBiasExperiment(
         qubit=0,
+        averages=1000,
         frequency_start=4.9e9,
         frequency_stop=5.1e9,
         frequency_step=1e6,
@@ -183,6 +194,7 @@ def test_two_tones_vs_flux_bias_experiment_payload():
     )
     deserialized_experiment = payload._load_two_tones_vs_flux_experiment(serialized_experiment)
     assert deserialized_experiment.qubit == experiment.qubit
+    assert deserialized_experiment.averages == experiment.averages
     assert deserialized_experiment.frequency_start == experiment.frequency_start
     assert deserialized_experiment.frequency_stop == experiment.frequency_stop
     assert deserialized_experiment.frequency_step == experiment.frequency_step
@@ -240,6 +252,7 @@ def test_execute_result_rabi_experiment():
     execute_type = ExecuteType.RABI_EXPERIMENT
     rabi_experiment_result = RabiExperimentResult(
         qubit=0,
+        averages=1000,
         data=[[0.1, 0.2], [0.3, 0.4]],
         dims=[],
     )
@@ -252,6 +265,7 @@ def test_execute_result_rabi_experiment():
     )
     deserialized_result = result._load_rabi_experiment_result(serialized_result)
     assert deserialized_result.qubit == rabi_experiment_result.qubit
+    assert deserialized_result.averages == rabi_experiment_result.averages
     assert deserialized_result.data == rabi_experiment_result.data
     assert deserialized_result.dims == rabi_experiment_result.dims
 
@@ -260,6 +274,7 @@ def test_execute_result_t1_experiment():
     execute_type = ExecuteType.T1_EXPERIMENT
     t1_experiment_result = T1ExperimentResult(
         qubit=0,
+        averages=1000,
         data=[[0.1, 0.2], [0.3, 0.4]],
         dims=[],
     )
@@ -272,6 +287,7 @@ def test_execute_result_t1_experiment():
     )
     deserialized_result = result._load_t1_experiment_result(serialized_result)
     assert deserialized_result.qubit == t1_experiment_result.qubit
+    assert deserialized_result.averages == t1_experiment_result.averages
     assert deserialized_result.data == t1_experiment_result.data
     assert deserialized_result.dims == t1_experiment_result.dims
 
@@ -280,6 +296,7 @@ def test_execute_result_t2_experiment():
     execute_type = ExecuteType.T2_EXPERIMENT
     t2_experiment_result = T2ExperimentResult(
         qubit=0,
+        averages=1000,
         data=[[0.1, 0.2], [0.3, 0.4]],
         dims=[],
     )
@@ -292,14 +309,16 @@ def test_execute_result_t2_experiment():
     )
     deserialized_result = result._load_t2_experiment_result(serialized_result)
     assert deserialized_result.qubit == t2_experiment_result.qubit
+    assert deserialized_result.averages == t2_experiment_result.averages
     assert deserialized_result.data == t2_experiment_result.data
     assert deserialized_result.dims == t2_experiment_result.dims
 
 
 def test_execute_result_two_tones_experiment():
-    execute_type = ExecuteType.TWO_TONES_EXPERIMENT
-    two_tones_experiment_result = TwoTonesAtFluxBiasExperimentResult(
+    execute_type = ExecuteType.TWO_TONES_AT_FIXED_FLUX_EXPERIMENT
+    two_tones_experiment_result = TwoTonesAtFixedFluxBiasExperimentResult(
         qubit=0,
+        averages=1000,
         data=[[0.1, 0.2], [0.3, 0.4]],
         dims=[],
     )
@@ -312,6 +331,7 @@ def test_execute_result_two_tones_experiment():
     )
     deserialized_result = result._load_two_tones_at_flux_bias_experiment_result(serialized_result)
     assert deserialized_result.qubit == two_tones_experiment_result.qubit
+    assert deserialized_result.averages == two_tones_experiment_result.averages
     assert deserialized_result.data == two_tones_experiment_result.data
     assert deserialized_result.dims == two_tones_experiment_result.dims
 
@@ -320,6 +340,7 @@ def test_execute_result_two_tones_vs_flux_bias_experiment():
     execute_type = ExecuteType.TWO_TONES_VS_FLUX_BIAS_EXPERIMENT
     two_tones_vs_flux_bias_result = TwoTonesVsFluxBiasExperimentResult(
         qubit=0,
+        averages=1000,
         data=[[0.1, 0.2], [0.3, 0.4]],
         dims=[],
     )
@@ -332,6 +353,7 @@ def test_execute_result_two_tones_vs_flux_bias_experiment():
     )
     deserialized_result = result._load_two_tones_vs_flux_bias_experiment_result(serialized_result)
     assert deserialized_result.qubit == two_tones_vs_flux_bias_result.qubit
+    assert deserialized_result.averages == two_tones_vs_flux_bias_result.averages
     assert deserialized_result.data == two_tones_vs_flux_bias_result.data
     assert deserialized_result.dims == two_tones_vs_flux_bias_result.dims
 

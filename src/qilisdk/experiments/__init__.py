@@ -25,7 +25,7 @@ from .experiment_result import (
     RabiExperimentResult,
     T1ExperimentResult,
     T2ExperimentResult,
-    TwoTonesAtFluxBiasExperimentResult,
+    TwoTonesAtFixedFluxBiasExperimentResult,
     TwoTonesVsFluxBiasExperimentResult,
 )
 

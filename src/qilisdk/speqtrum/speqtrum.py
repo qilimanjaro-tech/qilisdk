@@ -70,7 +70,7 @@ from .speqtrum_models import (
 
 if TYPE_CHECKING:
     from qilisdk.experiments.experiment_result import (
-        TwoTonesAtFluxBiasExperimentResult,
+        TwoTonesAtFixedFluxBiasExperimentResult,
         TwoTonesVsFluxBiasExperimentResult,
     )
     from qilisdk.functionals.functional import Functional, PrimitiveFunctional
@@ -908,7 +908,7 @@ class SpeQtrum:
 
     def _submit_two_tones(
         self, two_tones_experiment: TwoTonesAtFluxBiasExperiment, device: str, job_name: str | None = None
-    ) -> JobHandle[TwoTonesAtFluxBiasExperimentResult]:
+    ) -> JobHandle[TwoTonesAtFixedFluxBiasExperimentResult]:
         """Submit a Two-Tones at flux bias experiment to the SpeQtrum API.
 
         Args:
@@ -921,7 +921,7 @@ class SpeQtrum:
             submitted job.
         """
         payload = ExecutePayload(
-            type=ExecuteType.TWO_TONES_EXPERIMENT,
+            type=ExecuteType.TWO_TONES_AT_FIXED_FLUX_EXPERIMENT,
             two_tones_at_flux_bias_experiment_payload=TwoTonesAtFluxBiasExperimentPayload(
                 two_tones_experiment=two_tones_experiment
             ),

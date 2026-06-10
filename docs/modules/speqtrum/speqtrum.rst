@@ -209,13 +209,13 @@ functional objects mirror the interfaces described in the :doc:`/modules/functio
     )[0].code
 
     # Rabi experiment: sweep drive durations
-    rabi = RabiExperiment(qubit=0, drive_duration_values=np.linspace(0, 200, 21))
+    rabi = RabiExperiment(qubit=0, averages=10_000, drive_duration_values=np.linspace(0, 200, 21))
     rabi_handle = client.submit(rabi, device=device)
     rabi_response = client.wait_for_job(rabi_handle, timeout=600)
     rabi_result = rabi_response.get_results()
 
     # T1 relaxation experiment: sweep wait durations
-    t1 = T1Experiment(qubit=0, wait_duration_values=np.linspace(0, 400, 41))
+    t1 = T1Experiment(qubit=0, averages=10_000, wait_duration_values=np.linspace(0, 400, 41))
     t1_handle = client.submit(t1, device=device)
     t1_response = client.wait_for_job(t1_handle, timeout=600)
     t1_result = t1_response.get_results()

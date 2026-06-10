@@ -30,7 +30,7 @@ from qilisdk.experiments import (
     T2ExperimentResult,
 )
 from qilisdk.experiments.experiment_functional import TwoTonesAtFluxBiasExperiment, TwoTonesVsFluxBiasExperiment
-from qilisdk.experiments.experiment_result import TwoTonesAtFluxBiasExperimentResult, TwoTonesVsFluxBiasExperimentResult
+from qilisdk.experiments.experiment_result import TwoTonesAtFixedFluxBiasExperimentResult, TwoTonesVsFluxBiasExperimentResult
 from qilisdk.functionals import (
     AnalogEvolution,
     DigitalPropagation,
@@ -113,7 +113,7 @@ class ExecuteType(str, Enum):
     RABI_EXPERIMENT = "rabi_experiment"
     T1_EXPERIMENT = "t1_experiment"
     T2_EXPERIMENT = "t2_experiment"
-    TWO_TONES_EXPERIMENT = "two_tones_experiment"
+    TWO_TONES_AT_FIXED_FLUX_EXPERIMENT = "two_tones_at_fixed_flux_experiment"
     TWO_TONES_VS_FLUX_BIAS_EXPERIMENT = "two_tones_vs_flux_bias_experiment"
 
 
@@ -340,7 +340,7 @@ class ExecuteResult(SpeQtrumModel):
     rabi_experiment_result: RabiExperimentResult | None = None
     t1_experiment_result: T1ExperimentResult | None = None
     t2_experiment_result: T2ExperimentResult | None = None
-    two_tones_at_flux_bias_experiment_result: TwoTonesAtFluxBiasExperimentResult | None = None
+    two_tones_at_flux_bias_experiment_result: TwoTonesAtFixedFluxBiasExperimentResult | None = None
     two_tones_vs_flux_bias_experiment_result: TwoTonesVsFluxBiasExperimentResult | None = None
 
     @field_serializer("functional_result")
@@ -395,7 +395,7 @@ class ExecuteResult(SpeQtrumModel):
 
     @field_serializer("two_tones_at_flux_bias_experiment_result")
     def _serialize_two_tones_at_flux_bias_experiment_result(
-        self, two_tones_at_flux_bias_experiment_result: TwoTonesAtFluxBiasExperimentResult, _info
+        self, two_tones_at_flux_bias_experiment_result: TwoTonesAtFixedFluxBiasExperimentResult, _info
     ):
         return (
             serialize(two_tones_at_flux_bias_experiment_result)
@@ -406,7 +406,7 @@ class ExecuteResult(SpeQtrumModel):
     @field_validator("two_tones_at_flux_bias_experiment_result", mode="before")
     def _load_two_tones_at_flux_bias_experiment_result(cls, v):
         if isinstance(v, str) and v.startswith("!"):
-            return deserialize(v, TwoTonesAtFluxBiasExperimentResult)
+            return deserialize(v, TwoTonesAtFixedFluxBiasExperimentResult)
         return v
 
     @field_serializer("two_tones_vs_flux_bias_experiment_result")
@@ -520,7 +520,7 @@ def _require_t2_experiment_result(result: ExecuteResult) -> T2ExperimentResult:
     return result.t2_experiment_result
 
 
-def _require_two_tones_experiment_result(result: ExecuteResult) -> TwoTonesAtFluxBiasExperimentResult:
+def _require_two_tones_experiment_result(result: ExecuteResult) -> TwoTonesAtFixedFluxBiasExperimentResult:
     """Extract and return the ``TwoTonesAtFluxBiasExperimentResult`` from *result*.
 
     Args:
@@ -688,8 +688,8 @@ class JobHandle(SpeQtrumModel, Generic[TFunctionalResult_co]):
 
     @classmethod
     def two_tones_experiment(
-        cls: type[JobHandle[TwoTonesAtFluxBiasExperimentResult]], job_id: int
-    ) -> JobHandle[TwoTonesAtFluxBiasExperimentResult]:
+        cls: type[JobHandle[TwoTonesAtFixedFluxBiasExperimentResult]], job_id: int
+    ) -> JobHandle[TwoTonesAtFixedFluxBiasExperimentResult]:
         """Create a handle for a Two-Tones at flux bias experiment job.
 
         Args:
@@ -701,7 +701,7 @@ class JobHandle(SpeQtrumModel, Generic[TFunctionalResult_co]):
         """
         return cls(
             id=job_id,
-            execute_type=ExecuteType.TWO_TONES_EXPERIMENT,
+            execute_type=ExecuteType.TWO_TONES_AT_FIXED_FLUX_EXPERIMENT,
             extractor=_require_two_tones_experiment_result,
         )
 
