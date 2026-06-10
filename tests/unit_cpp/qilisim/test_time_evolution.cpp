@@ -67,7 +67,7 @@ SparseMatrix amp_damp_jump() {
 
 MatrixFreeHamiltonian make_matrix_free_H(std::complex<double> coeff, int target_qubit, std::string name) {
     MatrixFreeOperator op(name, {}, {target_qubit}, DenseMatrix());
-    return MatrixFreeHamiltonian({{coeff, {op}}});
+    return MatrixFreeHamiltonian(1, op, coeff);
 }
 
 struct TimeEvolutionOutputs {
@@ -849,6 +849,40 @@ TEST_F(TimeEvolutionAdaptiveTest, TighterAdaptiveTolDoesNotThrow) {
     config.set_adaptive_tol(1e-6);
     auto out = run_time_evolution_mf(pure_plus_sparse(), hamiltonians, params, steps, empty_noise, {}, config);
     EXPECT_NEAR(std::real(out.rho_t.trace()), 1.0, kTol);
+}
+
+class TimeEvolutionVariationalTest : public ::testing::Test {
+   protected:
+    MatrixFreeHamiltonian H_X = make_matrix_free_H(1.0, 0, "X");
+    MatrixFreeHamiltonian H_Z = make_matrix_free_H(1.0, 0, "Z");
+    std::vector<MatrixFreeHamiltonian> hamiltonians = {H_X, H_Z};
+    // Coefficients: linear interpolation from X to Z
+    std::vector<std::vector<double>> params = {{1.0, 0.0}, {0.0, 1.0}};
+    std::vector<double> step_list = {0.5, 1.0};
+    QiliSimConfig config;
+
+    void SetUp() override {
+        config.set_shots(50);
+        config.set_warmups(0);
+        config.set_order(1);
+    }
+};
+
+TEST_F(TimeEvolutionVariationalTest, DoesNotThrowForValidInput) {
+    ExponentialAnsatz rho_t(1, 1, 50, 0);
+    EXPECT_NO_THROW(time_evolution_variational_exponential(rho_t, hamiltonians, params, step_list, config));
+}
+
+TEST_F(TimeEvolutionVariationalTest, TermCountUnchangedAfterEvolution) {
+    ExponentialAnsatz rho_t(1, 1, 50, 0);
+    size_t initial_terms = rho_t.get_terms().size();
+    time_evolution_variational_exponential(rho_t, hamiltonians, params, step_list, config);
+    EXPECT_EQ(rho_t.get_terms().size(), initial_terms);
+}
+
+TEST_F(TimeEvolutionVariationalTest, EmptyHamiltonianListThrows) {
+    ExponentialAnsatz rho_t(1, 1, 50, 0);
+    EXPECT_ANY_THROW(time_evolution_variational_exponential(rho_t, {}, {}, {}, config));
 }
 
 // GCOV_EXCL_BR_STOP

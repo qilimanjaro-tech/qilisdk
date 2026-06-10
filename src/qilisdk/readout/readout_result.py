@@ -339,10 +339,10 @@ class ExpectationReadoutResult(ReadoutResult[ExpectationReadout]):
 
     @classmethod
     def from_state(cls, expectation_readout: ExpectationReadout, state: QTensor) -> Self:
-        expectation_readout.expand_observables(nqubits=state.nqubits)
         try:
             expectation_values: list[int | float] = [
-                _assert_real((expect_val(o, state))) for o in expectation_readout.qtensor_observables
+                _assert_real((expect_val(o, state)))
+                for o in expectation_readout.expanded_observables(nqubits=state.nqubits)
             ]
         except ValueError:
             raise ValueError(

@@ -23,6 +23,51 @@
 
 #pragma GCC visibility push(default)
 
+py::object construct_result_object(const ExponentialAnsatz& state, const py::object& readout, int n_qubits) {
+    py::list results;
+    for (py::handle ro_handle : readout) {
+        py::object ro = py::reinterpret_borrow<py::object>(ro_handle);
+        if (py::isinstance(ro, ExpectationReadout)) {
+            std::vector<std::complex<double>> expectations;
+            // parse the observables for which we need to compute the expectation values
+            std::vector<MatrixFreeHamiltonian> observables = parse_observables_matrix_free(n_qubits, ro.attr("observables"));
+            for (const auto& obs : observables) {
+                double exp_val = state.expectation_value(obs);
+                expectations.push_back(exp_val);
+            }
+            py::list expectations_py;
+            for (const auto& exp_val : expectations) {
+                expectations_py.append(py::cast(exp_val));
+            }
+            results.append(ExpectationReadoutResult.attr("from_expectations")("expectation_values"_a = expectations_py));
+        } else if (py::isinstance(ro, SamplingReadout)) {
+            SampleSet samples = state.draw_samples();
+            int n_shots = ro.attr("nshots").cast<int>();
+            bool expand_samples = ro.attr("expand_samples").cast<bool>();
+            std::map<std::string, int> counts;
+            for (const auto& config : samples.configs) {
+                std::string bitstring = "";
+                for (size_t i = 0; i < n_qubits; ++i) {
+                    bitstring = (config[i] ? "1" : "0") + bitstring;
+                }
+                counts[bitstring]++;
+            }
+            py::dict samples_py;
+            for (const auto& pair : counts) {
+                samples_py[py::cast(pair.first)] = py::cast(pair.second);
+            }
+            py::list qubits_to_measure_list;
+            for (size_t i = 0; i < n_qubits; ++i) {
+                qubits_to_measure_list.append(i);
+            }
+            results.append(SamplingReadoutResult.attr("from_samples")("samples"_a = samples_py, "qubits_to_measure"_a = qubits_to_measure_list, "nqubits"_a = n_qubits, "expand_samples"_a = expand_samples));
+        } else {
+            throw py::value_error("Unsupported Readout Method provided. Only ExpectationReadout or SamplingReadout are supported when using the variational annealing method.");
+        }
+    }
+    return ReadoutCompositeResults.attr("from_list")(results);
+}
+
 py::object construct_result_object(const DenseMatrix& state_dense, const py::object& readout, NoiseModelCpp& noise_model_cpp, int n_qubits, const QiliSimConfig& config, const std::vector<bool>& qubits_to_measure) {
     /*
     Construct a result object for a given state and readout.
@@ -80,11 +125,12 @@ py::object construct_result_object(const DenseMatrix& state_dense, const py::obj
     return ReadoutCompositeResults.attr("from_list")(results);
 }
 
-std::vector<MatrixFreeHamiltonian> parse_hamiltonians_matrix_free(const py::object& Hs) {
+std::vector<MatrixFreeHamiltonian> parse_hamiltonians_matrix_free(int nqubits, const py::object& Hs) {
     /*
     Extract Hamiltonian terms in matrix-free form from a list of objects.
 
     Args:
+        nqubits (int): The total number of qubits.
         Hs (py::object): A list of Hamiltonian objects.
 
     Returns:
@@ -97,7 +143,7 @@ std::vector<MatrixFreeHamiltonian> parse_hamiltonians_matrix_free(const py::obje
     // For each Hamiltonian, we need to extract the terms, which are pairs of (coefficient, list of Pauli operators)
     std::vector<MatrixFreeHamiltonian> H_list;
     for (auto& hamiltonian : Hs) {
-        MatrixFreeHamiltonian H;
+        MatrixFreeHamiltonian H(nqubits);
         py::object elements = hamiltonian.attr("elements").attr("items")();
         for (auto& element : elements) {
             py::tuple term = element.cast<py::tuple>();
@@ -352,11 +398,12 @@ NoiseModelCpp parse_noise_model(const py::object& noise_model, int nqubits, doub
     return noise_model_cpp;
 }
 
-std::vector<MatrixFreeHamiltonian> parse_observables_matrix_free(const py::object& observables) {
+std::vector<MatrixFreeHamiltonian> parse_observables_matrix_free(int nqubits, const py::object& observables) {
     /*
     Extract observables from a list of objects.
 
     Args:
+        nqubits (int): The total number of qubits.
         observables (py::object): A list of observable objects, which can be Hamiltonians or PauliOperators.
 
     Returns:
@@ -369,12 +416,12 @@ std::vector<MatrixFreeHamiltonian> parse_observables_matrix_free(const py::objec
     std::vector<MatrixFreeHamiltonian> observable_matrices;
     for (auto obs : observables) {
         if (py::isinstance(obs, Hamiltonian)) {
-            std::vector<MatrixFreeHamiltonian> H = parse_hamiltonians_matrix_free(py::make_tuple(obs));
+            std::vector<MatrixFreeHamiltonian> H = parse_hamiltonians_matrix_free(nqubits, py::make_tuple(obs));
             observable_matrices.insert(observable_matrices.end(), H.begin(), H.end());
         } else if (py::isinstance(obs, PauliOperator)) {
             std::string name = obs.attr("name").cast<std::string>();
             int target = obs.attr("qubit").cast<int>();
-            observable_matrices.push_back(MatrixFreeHamiltonian(MatrixFreeOperator(name, target)));
+            observable_matrices.push_back(MatrixFreeHamiltonian(nqubits, MatrixFreeOperator(name, target)));
         } else if (py::isinstance(obs, QTensor)) {
             throw py::value_error("Matrix-free parsing of QTensor observables is not currently supported.");
         } else {
@@ -496,18 +543,27 @@ std::vector<double> parse_time_steps(const py::object& steps) {
     return step_list;
 }
 
-SparseMatrix parse_initial_state(const py::object& initial_state, double atol) {
+SparseMatrix parse_initial_state(const py::object& initial_state, double atol, int nqubits) {
     /*
     Extract the initial state from a QTensor object.
 
     Args:
-        initial_state (py::object): The initial state as a QTensor.
+        initial_state (py::object): The initial state as a QTensor or InitialState object.
         atol (double): Absolute tolerance for numerical operations.
+        nqubits (int): The total number of qubits.
 
     Returns:
         SparseMatrix: The initial state as a sparse matrix.
     */
-    py::object spm = initial_state.attr("data");
+    py::object spm;
+    if (py::isinstance(initial_state, InitialState)) {
+        spm = initial_state.attr("as_qtensor")(nqubits).attr("data");
+    } else if (py::isinstance(initial_state, QTensor) || py::hasattr(initial_state, "data")) {
+        spm = initial_state.attr("data");
+    } else {
+        std::string type_name = py::type::of(initial_state).attr("__name__").cast<std::string>();
+        throw py::value_error("Initial state type not recognized: " + type_name);
+    }
     SparseMatrix rho = from_spmatrix(spm, atol);
     return rho;
 }
@@ -738,6 +794,15 @@ QiliSimConfig parse_solver_params(const py::dict& solver_params) {
     }
     if (solver_params.contains("measurement_collapse")) {
         config.set_measurement_collapse(solver_params["measurement_collapse"].cast<bool>());
+    }
+    if (solver_params.contains("variational_order")) {
+        config.set_order(solver_params["variational_order"].cast<int>());
+    }
+    if (solver_params.contains("variational_shots")) {
+        config.set_shots(solver_params["variational_shots"].cast<int>());
+    }
+    if (solver_params.contains("variational_warmups")) {
+        config.set_warmups(solver_params["variational_warmups"].cast<int>());
     }
     if (config.get_num_threads() <= 0) {
         config.set_num_threads(1);

@@ -295,7 +295,7 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
             double t_start = (step_ind > 0) ? step_list[step_ind - 1] : 0.0;
             double dt = step_list[step_ind] - t_start;
 
-            // Perform the iteration depending on the method
+            // Perform the iteration
             iter_rk4(rho_t, t_start, dt, step_list, hamiltonians, parameters_list, jump_operators, is_unitary_on_statevector);
 
             // If we should store intermediates, do it here
@@ -314,6 +314,44 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
     // If we have statevector/s but we should return a density matrix
     if (use_monte_carlo || (!input_was_vector && rho_t.cols() == 1)) {
         rho_t = trajectories_to_density_matrix(rho_t);
+    }
+}
+
+void time_evolution_variational_exponential(ExponentialAnsatz& rho_t, const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, QiliSimConfig& config) {
+    /*
+    Execute an approximate time evolution functional using a variational approach with an exponential ansatz.
+    The state at each point is represented as the exponential of a weighted sum of Pauli strings acting on the + state.
+
+    Args:
+        rho_t (ExponentialAnsatz&): Output parameter to hold the final state after evolution, represented as an ExponentialAnsatz.
+        hamiltonians (std::vector<MatrixFreeHamiltonian>): The list of Hamiltonian terms.
+        parameters_list (std::vector<std::vector<double>>): The list of parameter values for each Hamiltonian term at each time step.
+        step_list (std::vector<double>): The list of time steps.
+        config (QiliSimConfig&): Configuration parameters for the time evolution.
+    */
+
+    // Set the number of threads
+#if defined(_OPENMP)
+    Eigen::setNbThreads(config.get_num_threads());
+    omp_set_num_threads(config.get_num_threads());
+#endif
+
+    // Some checks
+    config.validate();
+    if (hamiltonians.size() <= 0) {
+        throw std::invalid_argument("At least one Hamiltonian must be provided");
+    }
+
+    // Set up the ansatz
+    int n_qubits = hamiltonians[0].get_nqubits();
+    rho_t = ExponentialAnsatz(n_qubits, config.get_order(), config.get_shots(), config.get_warmups());
+    rho_t.set_shots(config.get_num_monte_carlo_trajectories());
+
+    // Fixed-step RK4 loop
+    for (size_t step_ind = 0; step_ind < step_list.size(); ++step_ind) {
+        double t_start = (step_ind > 0) ? step_list[step_ind - 1] : 0.0;
+        double dt = step_list[step_ind] - t_start;
+        iter_rk4(rho_t, t_start, dt, step_list, hamiltonians, parameters_list);
     }
 }
 

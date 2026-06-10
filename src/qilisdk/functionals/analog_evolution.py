@@ -16,7 +16,7 @@ from typing import Callable, ClassVar, Iterator
 from qilisdk.analog.schedule import Schedule
 from qilisdk.core import Parameter
 from qilisdk.core.parameterizable import Parameterizable
-from qilisdk.core.qtensor import QTensor
+from qilisdk.core.qtensor import InitialState, QTensor
 from qilisdk.functionals.functional import PrimitiveFunctional
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.yaml import yaml
@@ -47,27 +47,37 @@ class AnalogEvolution(PrimitiveFunctional):
     def __init__(
         self,
         schedule: Schedule,
-        initial_state: QTensor,
+        initial_state: QTensor | InitialState,
         store_intermediate_results: bool = False,
     ) -> None:
         """
         Args:
             schedule (Schedule): Annealing or control schedule describing the Hamiltonian evolution.
-            initial_state (QTensor): Quantum state used as the simulation starting point.
+            initial_state (QTensor | InitialState): Quantum state used as the simulation starting point. If a symbolic state is provided, it will be resolved during execution.
             store_intermediate_results (bool, optional): Keep intermediate states if produced by the backend. Defaults to False.
 
         Raises:
             ValueError: if the number of qubits of the initial state doesn't match the number of qubits in the schedule.
         """
         super().__init__()
-        self.initial_state = initial_state
+        self._initial_state = initial_state
         self.schedule = schedule
         self.store_intermediate_results = store_intermediate_results
 
-        if initial_state.nqubits != schedule.nqubits:
+        if isinstance(initial_state, QTensor) and initial_state.nqubits != schedule.nqubits:
             raise ValueError(
                 f"The initial state provided acts on {initial_state.nqubits} qubits while the schedule acts on {schedule.nqubits} qubits"
             )
+
+    @property
+    def initial_state(self) -> QTensor | InitialState:
+        """
+        The initial state of the simulation.
+
+        Returns:
+            QTensor | InitialState: The initial state.
+        """
+        return self._initial_state
 
     def _iter_parameter_children(self) -> Iterator[Parameterizable]:
         """Yield the schedule as the sole parameterizable child.

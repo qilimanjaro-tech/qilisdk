@@ -108,6 +108,7 @@ dev = [
     "pytest-cov>=7.1.0",
     "gcovr>=8.6",
     "ty>=0.0.33",
+    "diff-cover>=10.2.1",
 ]
 docs = [
     "astroid<3.2",
@@ -127,6 +128,9 @@ docs = [
 [tool.uv]
 # openfermion 1.7.1 caps requests~=2.32.2; override until upstream loosens.
 override-dependencies = ["nbconvert >= 7.17.0", "requests>=2.33.0"]
+required-environments = [
+    "sys_platform == 'linux' and platform_machine == 'aarch64'",
+]
 conflicts = [
     [
       { extra = "cuda12" },
