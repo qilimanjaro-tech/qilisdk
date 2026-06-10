@@ -64,11 +64,13 @@ class ExperimentFunctional(Functional, ABC, Generic[TResult_co]):
 
     @property
     def averages(self) -> int:
-        """The physical qubit index on which the experiment is performed.
+        """
+        Number of averages to acquire for the experiment.
 
         Returns:
-            int: Index of the qubit.
+            int: Number of averages.
         """
+
         return self._averages
 
 
