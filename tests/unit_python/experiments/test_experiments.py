@@ -12,9 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from unittest.mock import MagicMock
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
+from loguru import logger
 
 from qilisdk.experiments import (
     Dimension,
@@ -102,6 +105,16 @@ def test_t1_plotting(monkeypatch):
     t1_result.plot(save_to="./.tmp/test_t1_default.png")
     t1_result.plot(save_to="./.tmp/test_t1.png", fit=False)
     t1_result.plot(save_to="./.tmp/test_t1_fit.png", fit=True)
+    t1_result.plot(save_to="./.tmp/test_t1_phase.png", fit=False, plot_type="phase")
+    t1_result.plot(save_to="./.tmp/test_t1_db.png", fit=False, plot_type="db")
+
+    # need to monkeypatch the logger to catch the warning about fitting only being implemented for amplitude plots
+    fakeWarning = MagicMock()
+    monkeypatch.setattr(logger, "warning", fakeWarning)
+    t1_result.plot(save_to="./.tmp/test_t1_phase_fit.png", fit=True, plot_type="phase")
+    fakeWarning.assert_called_with(
+        "Fitting is only implemented for amplitude plots. Ignoring fit request for non-amplitude plot."
+    )
 
 
 def test_rabi_plotting(monkeypatch):
@@ -124,6 +137,15 @@ def test_rabi_plotting(monkeypatch):
     result_rabi.plot(save_to="./.tmp/test_rabi.png", fit=False)
     result_rabi.plot(save_to="./.tmp/test_rabi_connected.png", fit=False, connect_points=True)
     result_rabi.plot(save_to="./.tmp/test_rabi_fit.png", fit=True)
+    result_rabi.plot(save_to="./.tmp/test_rabi_phase.png", fit=False, plot_type="phase")
+    result_rabi.plot(save_to="./.tmp/test_rabi_db.png", fit=False, plot_type="db")
+
+    fakeWarning = MagicMock()
+    monkeypatch.setattr(logger, "warning", fakeWarning)
+    result_rabi.plot(save_to="./.tmp/test_rabi_phase_fit.png", fit=True, plot_type="phase")
+    fakeWarning.assert_called_with(
+        "Fitting is only implemented for amplitude plots. Ignoring fit request for non-amplitude plot."
+    )
 
 
 def test_two_tones_at_flux_bias_plotting(monkeypatch):
@@ -148,6 +170,15 @@ def test_two_tones_at_flux_bias_plotting(monkeypatch):
     result_at.plot(save_to="./.tmp/test_two_tones_at_default.png")
     result_at.plot(save_to="./.tmp/test_two_tones_at.png", fit=False)
     result_at.plot(save_to="./.tmp/test_two_tones_at_fit.png", fit=True)
+    result_at.plot(save_to="./.tmp/test_two_tones_at_phase.png", fit=False, plot_type="phase")
+    result_at.plot(save_to="./.tmp/test_two_tones_at_db.png", fit=False, plot_type="db")
+
+    fakeWarning = MagicMock()
+    monkeypatch.setattr(logger, "warning", fakeWarning)
+    result_at.plot(save_to="./.tmp/test_two_tones_at_phase_fit.png", fit=True, plot_type="phase")
+    fakeWarning.assert_called_with(
+        "Fitting is only implemented for amplitude plots. Ignoring fit request for non-amplitude plot."
+    )
 
 
 def test_two_tones_vs_flux_bias_plotting(monkeypatch):
@@ -177,6 +208,15 @@ def test_two_tones_vs_flux_bias_plotting(monkeypatch):
     result_vs.plot(save_to="./.tmp/test_two_tones_vs_default.png")
     result_vs.plot(save_to="./.tmp/test_two_tones_vs.png", fit=False)
     result_vs.plot(save_to="./.tmp/test_two_tones_vs_fit.png", fit=True)
+    result_vs.plot(save_to="./.tmp/test_two_tones_vs_phase.png", fit=False, plot_type="phase")
+    result_vs.plot(save_to="./.tmp/test_two_tones_vs_db.png", fit=False, plot_type="db")
+
+    fakeWarning = MagicMock()
+    monkeypatch.setattr(logger, "warning", fakeWarning)
+    result_vs.plot(save_to="./.tmp/test_two_tones_vs_phase_fit.png", fit=True, plot_type="phase")
+    fakeWarning.assert_called_with(
+        "Fitting is only implemented for amplitude plots. Ignoring fit request for non-amplitude plot."
+    )
 
 
 def test_t2_plotting(monkeypatch):
@@ -199,3 +239,12 @@ def test_t2_plotting(monkeypatch):
     result_t2.plot(save_to="./.tmp/test_t2_default.png")
     result_t2.plot(save_to="./.tmp/test_t2.png", fit=False)
     result_t2.plot(save_to="./.tmp/test_t2_fit.png", fit=True)
+    result_t2.plot(save_to="./.tmp/test_t2_phase.png", fit=False, plot_type="phase")
+    result_t2.plot(save_to="./.tmp/test_t2_db.png", fit=False, plot_type="db")
+
+    fakeWarning = MagicMock()
+    monkeypatch.setattr(logger, "warning", fakeWarning)
+    result_t2.plot(save_to="./.tmp/test_t2_phase_fit.png", fit=True, plot_type="phase")
+    fakeWarning.assert_called_with(
+        "Fitting is only implemented for amplitude plots. Ignoring fit request for non-amplitude plot."
+    )
