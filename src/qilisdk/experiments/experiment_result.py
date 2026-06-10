@@ -266,6 +266,7 @@ class ExperimentResult(FunctionalResult):
     def plot(
         self,
         save_to: str | None = None,
+        *,
         initial_guess: list[float] | None = None,
         fit: bool | None = None,
         connect_points: bool = False,
