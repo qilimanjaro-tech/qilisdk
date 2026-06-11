@@ -18,11 +18,11 @@ from typing import TYPE_CHECKING
 from loguru import logger
 from qilisim_module import QiliSimCpp  # ty:ignore[unresolved-import]
 
+from qilisdk.core.qtensor import InitialState
 from qilisdk.settings import get_settings
 
 from .backend import Backend
 from .backend_config import AnalogMethod, DigitalMethod, ExecutionConfig, SolverConfigDict
-from qilisdk.core.qtensor import InitialState
 
 if TYPE_CHECKING:
     from qilisdk.core import QTensor
@@ -132,7 +132,10 @@ class QiliSim(Backend):
         return dict(self._solver_config)
 
     def _execute_digital_propagation(
-        self, functional: DigitalPropagation, readout: list[ReadoutMethod], initial_state: QTensor | InitialState = InitialState.ZERO,
+        self,
+        functional: DigitalPropagation,
+        readout: list[ReadoutMethod],
+        initial_state: QTensor | InitialState = InitialState.ZERO,
     ) -> FunctionalResult:
         """Execute a digital-circuit propagation functional and return measurement results.
 

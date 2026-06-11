@@ -33,13 +33,7 @@ class StabilizerState {
         int nqubits;
 
     public:
-        StabilizerState(int nqubits) : nqubits(nqubits) {
-            x_bits.resize(nqubits);
-            z_bits.resize(nqubits);
-            for (int i = 0; i < nqubits; ++i) {
-                z_bits[i].set(i);
-            }
-        }
+        StabilizerState(int nqubits);
         const std::vector<std::bitset<MAX_ROWS_STABILIZER>>& get_x_bits() const { return x_bits; }
         const std::vector<std::bitset<MAX_ROWS_STABILIZER>>& get_z_bits() const { return z_bits; }
         const std::bitset<MAX_ROWS_STABILIZER>& get_phases() const { return phases; }

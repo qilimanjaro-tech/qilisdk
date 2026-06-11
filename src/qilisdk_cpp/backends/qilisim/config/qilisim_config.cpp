@@ -63,6 +63,9 @@ void QiliSimConfig::validate() const {
     if (warmups < 0) {
         throw py::value_error("Warmups cannot be negative.");
     }
+    if (order > 4) {
+        throw py::value_error("Order greater than 4 not supported yet.");
+    }
 }
 
 // GCOV_EXCL_BR_STOP
