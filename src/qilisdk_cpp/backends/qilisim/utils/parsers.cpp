@@ -572,6 +572,13 @@ SparseMatrix parse_initial_state(const py::object& initial_state, double atol, i
     Returns:
         SparseMatrix: The initial state as a sparse matrix.
     */
+    if (initial_state.is_none()) {
+        long dim = 1L << nqubits;
+        SparseMatrix rho(dim, 1);
+        rho.insert(0, 0) = 1.0;
+        rho.makeCompressed();
+        return rho;
+    }
     py::object spm;
     if (py::isinstance(initial_state, InitialState)) {
         spm = initial_state.attr("as_qtensor")(nqubits).attr("data");

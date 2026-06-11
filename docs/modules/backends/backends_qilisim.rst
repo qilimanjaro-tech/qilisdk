@@ -150,9 +150,7 @@ Example, using the adaptive integrator:
 Digital simulation methods
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Digital execution is currently always state-vector based; the
-:class:`~qilisdk.backends.backend_config.DigitalMethod` configuration tunes its performance
-characteristics rather than choosing a different algorithm:
+There are currently two digital simulation methods available. The first is a statevector simulator, which can be configured through the options:
 
 .. list-table::
    :header-rows: 1
@@ -178,6 +176,26 @@ characteristics rather than choosing a different algorithm:
             matrix_free=False,
             normalize_after_each_gate=True,
         ),
+    )
+
+The second is a stabilizer simulator, which can efficiently simulate circuits composed of Clifford gates and Pauli measurements,
+at the cost of being slower if the circuit contains many non-Clifford gates. It has the following options:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 35 65
+
+   * - Option
+     - Meaning
+   * - ``max_states``
+     - Maximum number of terms in the stabilizer sum. Increasing this can improve accuracy at the cost of memory and runtime.
+
+.. code-block:: python
+
+    from qilisdk.backends import DigitalMethod, QiliSim
+
+    backend = QiliSim(
+        digital_simulation_method=DigitalMethod.stabilizer(max_states=1000),
     )
 
 Execution and Monte Carlo

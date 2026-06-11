@@ -14,6 +14,9 @@
 
 #include "stabilizer_state.h"
 
+#include <algorithm>
+#include <numeric>
+
 StabilizerState::StabilizerState(int nqubits) : nqubits(nqubits) {
     /*
     Initialize a StabilizerState to the |0⟩^n state. This means that the Z stabilizers are Z_i for each qubit i, and there are no X stabilizers.
@@ -559,6 +562,30 @@ void StabilizerStateSum::apply_gate(const Gate& gate) {
     }
 
     // Copy the new states and coeffs back over
+    states = std::move(new_states);
+    coefficients = std::move(new_coeffs);
+
+    // Truncate to max_terms if enabled
+    if (max_terms > 0 && static_cast<int>(states.size()) > max_terms) {
+        truncate();
+    }
+}
+
+void StabilizerStateSum::truncate() {
+    // Sort indices by descending amplitude and keep only the top max_terms
+    std::vector<size_t> indices(states.size());
+    std::iota(indices.begin(), indices.end(), 0);
+    std::partial_sort(indices.begin(), indices.begin() + max_terms, indices.end(), [this](size_t a, size_t b) { return std::norm(coefficients[a]) > std::norm(coefficients[b]); });
+    indices.resize(max_terms);
+
+    std::vector<StabilizerState> new_states;
+    std::vector<std::complex<double>> new_coeffs;
+    new_states.reserve(max_terms);
+    new_coeffs.reserve(max_terms);
+    for (size_t i : indices) {
+        new_states.push_back(std::move(states[i]));
+        new_coeffs.push_back(coefficients[i]);
+    }
     states = std::move(new_states);
     coefficients = std::move(new_coeffs);
 }

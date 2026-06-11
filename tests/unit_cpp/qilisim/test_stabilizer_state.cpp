@@ -79,7 +79,7 @@ TEST(StabilizerStateConstructor, InitialPhasesAreZero) {
 }
 
 TEST(StabilizerStateConstructor, ThrowsWhenTooManyQubits) {
-    EXPECT_THROW(StabilizerState(MAX_ROWS_STABILIZER), std::invalid_argument);
+    EXPECT_THROW(StabilizerState{MAX_ROWS_STABILIZER}, std::invalid_argument);
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -247,6 +247,54 @@ TEST(Rowsum, MultiplyIdentityRow_NoChange) {
     EXPECT_FALSE(s.get_phases()[0]);
 }
 
+TEST(Rowsum, XStabilizer_XBitsFlipped) {
+    // After H on qubit 0, row 0 is X0 (x_bits[0][0]=1).
+    // rowsum(0, 0) multiplies X0 by itself: X*X = I.
+    StabilizerState s(1);
+    Gate h = makeGate("H", {}, {0});
+    s.apply_gate(h);
+    EXPECT_TRUE(s.get_x_bits()[0][0]);
+    s.rowsum(0, 0);
+    EXPECT_FALSE(s.get_x_bits()[0][0]);
+    EXPECT_FALSE(s.get_phases()[0]);
+}
+
+TEST(Rowsum, YStabilizer_PhaseContribution) {
+    // After H then S on qubit 0, row 0 is Y0 (x and z bits both set).
+    // rowsum(0, 0) multiplies Y0 by itself: Y*Y = I.
+    StabilizerState s(1);
+    Gate h = makeGate("H", {}, {0});
+    Gate sg = makeGate("S", {}, {0});
+    s.apply_gate(h);
+    s.apply_gate(sg);
+    EXPECT_TRUE(s.get_x_bits()[0][0]);
+    EXPECT_TRUE(s.get_z_bits()[0][0]);
+    s.rowsum(0, 0);
+    EXPECT_FALSE(s.get_x_bits()[0][0]);
+    EXPECT_FALSE(s.get_z_bits()[0][0]);
+    EXPECT_FALSE(s.get_phases()[0]);
+}
+
+TEST(Sample, MultipleAnticommutingRows_CleanupLoopRuns) {
+    // Build a 2-qubit state where two rows both have X on qubit 0:
+    //   Apply X, H, S on qubit 0 -> Row 0 = -Y0 (x0=1, z0=1, phase=-1)
+    //   rowsum(1, 0) -> Row 1 = -Y0Z1 (also has X on qubit 0)
+    // Sampling qubit 0 triggers the multi-anticommuting cleanup loop.
+    StabilizerState s(2);
+    Gate x = makeGate("X", {}, {0});
+    Gate h = makeGate("H", {}, {0});
+    Gate sg = makeGate("S", {}, {0});
+    s.apply_gate(x);
+    s.apply_gate(h);
+    s.apply_gate(sg);
+    s.rowsum(1, 0);
+    // Both rows now have X on qubit 0 - sampling must clean this up
+    std::string result = s.sample();
+    ASSERT_EQ(result.size(), 2u);
+    for (char c : result)
+        EXPECT_TRUE(c == '0' || c == '1');
+}
+
 // ──────────────────────────────────────────────────────────────────────────────
 // project_z
 // ──────────────────────────────────────────────────────────────────────────────
@@ -290,6 +338,22 @@ TEST(ProjectZ, ProjectBellStateToOne_CollapsesBothQubits) {
     s.project_z(0, true);
     EXPECT_TRUE(s.z_eigenvalue(0));
     EXPECT_TRUE(s.z_eigenvalue(1));
+}
+
+TEST(ProjectZ, MultipleAnticommutingRows_InternalRowsumCalled) {
+    // Build state where two rows have X on qubit 0 so project_z must rowsum them.
+    // X, H, S on qubit 0 gives Row 0 = -Y0; rowsum(1, 0) makes Row 1 = -Y0Z1.
+    StabilizerState s(2);
+    Gate x = makeGate("X", {}, {0});
+    Gate h = makeGate("H", {}, {0});
+    Gate sg = makeGate("S", {}, {0});
+    s.apply_gate(x);
+    s.apply_gate(h);
+    s.apply_gate(sg);
+    s.rowsum(1, 0);
+    s.project_z(0, false);
+    EXPECT_EQ(s.find_x_pivot(0), -1);
+    EXPECT_FALSE(s.z_eigenvalue(0));
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -368,7 +432,7 @@ TEST(Sample, BellState_SamplesAreCorrelated) {
         else if (r == "11")
             both_one++;
         else
-            mixed++;
+            mixed++;  // GCOV_EXCL_LINE
     }
     EXPECT_EQ(mixed, 0) << "Bell state should never yield mixed 01 or 10 outcomes";
     EXPECT_GT(both_zero, 0);
@@ -514,6 +578,89 @@ TEST(StabilizerStateSum, Sample_TotalCountMatchesNshots) {
     for (auto& kv : counts)
         total += kv.second;
     EXPECT_EQ(total, nshots);
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// max_terms truncation
+// ──────────────────────────────────────────────────────────────────────────────
+
+TEST(StabilizerStateSum, MaxTerms_DefaultIsZero) {
+    StabilizerStateSum sss(1);
+    EXPECT_EQ(sss.get_max_terms(), 0);
+}
+
+TEST(StabilizerStateSum, MaxTerms_SetAndGet) {
+    StabilizerStateSum sss(1);
+    sss.set_max_terms(5);
+    EXPECT_EQ(sss.get_max_terms(), 5);
+}
+
+TEST(StabilizerStateSum, MaxTerms_ZeroDisablesTruncation) {
+    // max_terms = 0 means no truncation: T on |+⟩ should still expand to 2 terms
+    StabilizerStateSum sss(1);
+    sss.set_max_terms(0);
+    Gate h = makeGate("H", {}, {0});
+    Gate t = makeGate("T", {}, {0});
+    sss.apply_gate(h);
+    sss.apply_gate(t);
+    EXPECT_EQ(sss.get_states().size(), 2u);
+}
+
+TEST(StabilizerStateSum, MaxTerms_TruncatesToLimit) {
+    // Three T-gates on |+⟩ would produce up to 8 terms; cap at 3
+    StabilizerStateSum sss(3);
+    sss.set_max_terms(3);
+    Gate h0 = makeGate("H", {}, {0});
+    Gate h1 = makeGate("H", {}, {1});
+    Gate h2 = makeGate("H", {}, {2});
+    Gate t0 = makeGate("T", {}, {0});
+    Gate t1 = makeGate("T", {}, {1});
+    Gate t2 = makeGate("T", {}, {2});
+    sss.apply_gate(h0);
+    sss.apply_gate(h1);
+    sss.apply_gate(h2);
+    sss.apply_gate(t0);
+    sss.apply_gate(t1);
+    sss.apply_gate(t2);
+    EXPECT_LE(static_cast<int>(sss.get_states().size()), 3);
+    EXPECT_EQ(sss.get_states().size(), sss.get_coefficients().size());
+}
+
+TEST(StabilizerStateSum, MaxTerms_KeepsLargestAmplitudes) {
+    // After H then T on a single qubit the two branches have equal amplitudes (both 1/√2).
+    // With max_terms = 1, only one term remains and it has the larger (or equal) amplitude.
+    StabilizerStateSum sss(1);
+    sss.set_max_terms(1);
+    Gate h = makeGate("H", {}, {0});
+    Gate t = makeGate("T", {}, {0});
+    sss.apply_gate(h);
+    sss.apply_gate(t);
+    ASSERT_EQ(sss.get_states().size(), 1u);
+    // Remaining coefficient must have |c|^2 = 0.5 (was 1/√2 before truncation)
+    double norm = std::norm(sss.get_coefficients()[0]);
+    EXPECT_NEAR(norm, 0.5, 1e-9);
+}
+
+TEST(StabilizerStateSum, MaxTerms_LargerThanSumNoTruncation) {
+    // max_terms larger than the number of terms — nothing should be removed
+    StabilizerStateSum sss(1);
+    sss.set_max_terms(100);
+    Gate h = makeGate("H", {}, {0});
+    Gate t = makeGate("T", {}, {0});
+    sss.apply_gate(h);
+    sss.apply_gate(t);
+    EXPECT_EQ(sss.get_states().size(), 2u);
+}
+
+TEST(StabilizerStateSum, MaxTerms_CliffordGatesNotTruncated) {
+    // Clifford gates never branch, so max_terms = 1 should not affect them
+    StabilizerStateSum sss(2);
+    sss.set_max_terms(1);
+    Gate h = makeGate("H", {}, {0});
+    Gate cnot = makeGate("X", {0}, {1});
+    sss.apply_gate(h);
+    sss.apply_gate(cnot);
+    EXPECT_EQ(sss.get_states().size(), 1u);
 }
 
 // GCOV_EXCL_BR_STOP

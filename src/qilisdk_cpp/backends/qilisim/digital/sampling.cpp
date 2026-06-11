@@ -454,6 +454,7 @@ void sampling_stabilizer(const std::vector<Gate>& gates, int n_qubits, const Sta
 
     // We start with the initial state
     state = initial_state;
+    state.set_max_terms(config.get_stabilizer_max_states());
 
     // Then we apply each gate
     std::vector<bool> qubits_measured(n_qubits, false);

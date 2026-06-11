@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-03 17:26+0200\n"
+"POT-Creation-Date: 2026-06-11 15:05+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -339,29 +339,25 @@ msgstr "Mètodes de simulació digital"
 
 #: ../../modules/backends/backends_qilisim.rst:153
 msgid ""
-"Digital execution is currently always state-vector based; the "
-":class:`~qilisdk.backends.backend_config.DigitalMethod` configuration "
-"tunes its performance characteristics rather than choosing a different "
-"algorithm:"
+"There are currently two digital simulation methods available. The first "
+"is a statevector simulator, which can be configured through the options:"
 msgstr ""
-"L'execució digital es basa actualment sempre en vector d'estat; la "
-"configuració :class:`~qilisdk.backends.backend_config.DigitalMethod` "
-"ajusta les seves característiques de rendiment en lloc de triar un "
-"algoritme diferent:"
 
-#: ../../modules/backends/backends_qilisim.rst:161
+#: ../../modules/backends/backends_qilisim.rst:159
+#: ../../modules/backends/backends_qilisim.rst:188
 msgid "Option"
 msgstr "Opció"
 
-#: ../../modules/backends/backends_qilisim.rst:162
+#: ../../modules/backends/backends_qilisim.rst:160
+#: ../../modules/backends/backends_qilisim.rst:189
 msgid "Meaning"
 msgstr "Significat"
 
-#: ../../modules/backends/backends_qilisim.rst:163
+#: ../../modules/backends/backends_qilisim.rst:161
 msgid "``matrix_free``"
 msgstr "``matrix_free``"
 
-#: ../../modules/backends/backends_qilisim.rst:164
+#: ../../modules/backends/backends_qilisim.rst:162
 msgid ""
 "Apply gates directly to the statevector instead of building dense "
 "matrices. Default ``True``."
@@ -369,21 +365,21 @@ msgstr ""
 "Aplica les portes directament al vector d'estat en lloc de construir "
 "matrius denses. Per defecte ``True``."
 
-#: ../../modules/backends/backends_qilisim.rst:165
+#: ../../modules/backends/backends_qilisim.rst:163
 msgid "``max_cache_size``"
 msgstr "``max_cache_size``"
 
-#: ../../modules/backends/backends_qilisim.rst:166
+#: ../../modules/backends/backends_qilisim.rst:164
 msgid "Maximum number of precomputed gate matrices cached between executions."
 msgstr ""
 "Nombre màxim de matrius de porta precomputades emmagatzemades en memòria "
 "cau entre execucions."
 
-#: ../../modules/backends/backends_qilisim.rst:167
+#: ../../modules/backends/backends_qilisim.rst:165
 msgid "``combine_single_qubit_gates``"
 msgstr "``combine_single_qubit_gates``"
 
-#: ../../modules/backends/backends_qilisim.rst:168
+#: ../../modules/backends/backends_qilisim.rst:166
 msgid ""
 "Merge adjacent single-qubit gates into a single operation before "
 "propagating. Disabled if gate-specific noise is used."
@@ -391,11 +387,11 @@ msgstr ""
 "Fusiona portes d'un sol qubit adjacents en una única operació abans de "
 "propagar. Desactivat si s'utilitza soroll específic de porta."
 
-#: ../../modules/backends/backends_qilisim.rst:169
+#: ../../modules/backends/backends_qilisim.rst:167
 msgid "``normalize_after_each_gate``"
 msgstr "``normalize_after_each_gate``"
 
-#: ../../modules/backends/backends_qilisim.rst:170
+#: ../../modules/backends/backends_qilisim.rst:168
 msgid ""
 "Renormalize the statevector after each gate to mitigate numerical drift, "
 "at a runtime cost."
@@ -403,11 +399,29 @@ msgstr ""
 "Renormalitza el vector d'estat després de cada porta per mitigar la "
 "deriva numèrica, amb un cost de temps d'execució."
 
-#: ../../modules/backends/backends_qilisim.rst:184
+#: ../../modules/backends/backends_qilisim.rst:181
+msgid ""
+"The second is a stabilizer simulator, which can efficiently simulate "
+"circuits composed of Clifford gates and Pauli measurements, at the cost "
+"of being slower if the circuit contains many non-Clifford gates. It has "
+"the following options:"
+msgstr ""
+
+#: ../../modules/backends/backends_qilisim.rst:190
+msgid "``max_states``"
+msgstr "``max_states``"
+
+#: ../../modules/backends/backends_qilisim.rst:191
+msgid ""
+"Maximum number of terms in the stabilizer sum. Increasing this can "
+"improve accuracy at the cost of memory and runtime."
+msgstr ""
+
+#: ../../modules/backends/backends_qilisim.rst:202
 msgid "Execution and Monte Carlo"
 msgstr "Execució i Monte Carlo"
 
-#: ../../modules/backends/backends_qilisim.rst:186
+#: ../../modules/backends/backends_qilisim.rst:204
 msgid ""
 ":class:`~qilisdk.backends.backend_config.ExecutionConfig` controls "
 "threading, randomness, and optional Monte Carlo trajectory sampling for "
@@ -417,13 +431,13 @@ msgstr ""
 "fils, l'aleatorietat i el mostreig opcional de trajectòries de Monte "
 "Carlo per a simulacions de sistemes oberts."
 
-#: ../../modules/backends/backends_qilisim.rst:189
+#: ../../modules/backends/backends_qilisim.rst:207
 msgid "``num_threads=0`` (default) lets the simulator use every physical core."
 msgstr ""
 "``num_threads=0`` (per defecte) permet al simulador utilitzar tots els "
 "nuclis físics."
 
-#: ../../modules/backends/backends_qilisim.rst:190
+#: ../../modules/backends/backends_qilisim.rst:208
 msgid ""
 "``seed=None`` (default) draws a fresh random seed at construction time; "
 "pass an integer for reproducibility."
@@ -431,7 +445,7 @@ msgstr ""
 "``seed=None`` (per defecte) genera una nova llavor aleatòria en el moment"
 " de la construcció; passeu un enter per a reproducibilitat."
 
-#: ../../modules/backends/backends_qilisim.rst:192
+#: ../../modules/backends/backends_qilisim.rst:210
 msgid ""
 "``monte_carlo=MonteCarloConfig(trajectories=N)`` enables stochastic "
 "trajectory sampling for noise models that admit a Monte Carlo unraveling;"
@@ -442,7 +456,7 @@ msgstr ""
 "unraveling de Monte Carlo; deixeu-ho a ``None`` per a una evolució "
 "determinista de l'equació mestra."
 
-#: ../../modules/backends/backends_qilisim.rst:195
+#: ../../modules/backends/backends_qilisim.rst:213
 msgid ""
 "``measurement_collapse`` controls whether measurements collapse the "
 "statevector in place (relevant for mid-circuit measurement and reservoir "
@@ -452,11 +466,11 @@ msgstr ""
 "d'estat in situ (rellevant per a mesures a mig circuit i computació de "
 "reservoris); per defecte ``False``."
 
-#: ../../modules/backends/backends_qilisim.rst:212
+#: ../../modules/backends/backends_qilisim.rst:230
 msgid "Noise model support"
 msgstr "Suport del model de soroll"
 
-#: ../../modules/backends/backends_qilisim.rst:214
+#: ../../modules/backends/backends_qilisim.rst:232
 msgid ""
 "Any :class:`~qilisdk.noise.NoiseModel` accepted by the SDK can be passed "
 "directly to the constructor; QiliSim applies it inside the C++ solver, so"
@@ -544,4 +558,20 @@ msgstr ""
 #~ "``qilisdk`` installation, so no extra "
 #~ "package is required:"
 #~ msgstr ""
+
+#~ msgid ""
+#~ "Digital execution is currently always "
+#~ "state-vector based; the "
+#~ ":class:`~qilisdk.backends.backend_config.DigitalMethod` "
+#~ "configuration tunes its performance "
+#~ "characteristics rather than choosing a "
+#~ "different algorithm:"
+#~ msgstr ""
+#~ "L'execució digital es basa actualment "
+#~ "sempre en vector d'estat; la "
+#~ "configuració "
+#~ ":class:`~qilisdk.backends.backend_config.DigitalMethod` ajusta"
+#~ " les seves característiques de rendiment"
+#~ " en lloc de triar un algoritme "
+#~ "diferent:"
 

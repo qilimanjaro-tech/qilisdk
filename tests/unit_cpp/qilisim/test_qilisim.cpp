@@ -118,6 +118,42 @@ _samp_mf = DigitalPropagation(circuit=_c_mf)
     EXPECT_NO_THROW(sim.execute_digital_propagation(py::globals()["_samp_mf"], py::list(), py::none(), py::none(), p));
 }
 
+TEST_F(ExecuteSamplingTest, StatevectorMethod_XGate_Succeeds) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.functionals.digital_propagation import DigitalPropagation
+from qilisdk.digital.circuit import Circuit
+from qilisdk.digital.gates import X
+
+_c_sv = Circuit(nqubits=1)
+_c_sv.add(X(0))
+_samp_sv = DigitalPropagation(circuit=_c_sv)
+    )");
+    py::dict p;
+    p["sampling_method"] = py::str("statevector");
+    EXPECT_NO_THROW(sim.execute_digital_propagation(py::globals()["_samp_sv"], py::list(), py::none(), py::none(), p));
+}
+
+TEST_F(ExecuteSamplingTest, StabilizerMethod_XGate_Succeeds) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.functionals.digital_propagation import DigitalPropagation
+from qilisdk.readout import SamplingReadout
+from qilisdk.digital.circuit import Circuit
+from qilisdk.digital.gates import X
+
+_c_stab = Circuit(nqubits=1)
+_c_stab.add(X(0))
+_samp_stab = DigitalPropagation(circuit=_c_stab)
+_readout_stab = [SamplingReadout(nshots=10)]
+    )");
+    py::dict p;
+    p["sampling_method"] = py::str("stabilizer");
+    py::object result;
+    ASSERT_NO_THROW(result = sim.execute_digital_propagation(py::globals()["_samp_stab"], py::globals()["_readout_stab"], py::none(), py::none(), p));
+    EXPECT_TRUE(py::hasattr(result, "sampling"));
+}
+
 TEST_F(ExecuteSamplingTest, NonNormalizedGate_NormalizationBranchExecuted) {
     py::gil_scoped_acquire gil;
     py::exec(R"(

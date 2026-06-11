@@ -50,8 +50,10 @@ class StabilizerState {
 class StabilizerStateSum {
    private:
     int nqubits;
+    int max_terms = 0;
     std::vector<StabilizerState> states;
     std::vector<std::complex<double>> coefficients;
+    void truncate();
 
    public:
     StabilizerStateSum(int nqubits) : nqubits(nqubits) {
@@ -64,6 +66,8 @@ class StabilizerStateSum {
     friend std::ostream& operator<<(std::ostream& os, const StabilizerStateSum& sss);
     std::map<std::string, int> sample(int nshots) const;
     int get_nqubits() const { return nqubits; }
+    int get_max_terms() const { return max_terms; }
+    void set_max_terms(int n) { max_terms = n; }
     void apply_gate(const Gate& gate);
 };
 
