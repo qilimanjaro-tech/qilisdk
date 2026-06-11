@@ -595,8 +595,8 @@ StabilizerStateSum parse_initial_state_stabilizer(const py::object& initial_stat
     Returns:
         StabilizerStateSum: The initial state as a StabilizerStateSum object.
     */
-   // TODO(luke)
-   return StabilizerStateSum(nqubits);
+    // TODO(luke)
+    return StabilizerStateSum(nqubits);
 }
 
 std::vector<Gate> parse_gates(const py::object& circuit, double atol, const py::object& noise_model) {

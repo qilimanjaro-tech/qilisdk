@@ -17,7 +17,7 @@
 StabilizerState::StabilizerState(int nqubits) : nqubits(nqubits) {
     /*
     Initialize a StabilizerState to the |0⟩^n state. This means that the Z stabilizers are Z_i for each qubit i, and there are no X stabilizers.
-    
+
     Args:
         nqubits (int): The number of qubits in the state.
 
@@ -67,15 +67,9 @@ std::ostream& operator<<(std::ostream& os, const StabilizerStateSum& sss) {
     return os;
 }
 
-static bool z_phase_by_ge(
-        const std::vector<std::bitset<MAX_ROWS_STABILIZER>>& x,
-        const std::vector<std::bitset<MAX_ROWS_STABILIZER>>& z,
-        const std::bitset<MAX_ROWS_STABILIZER>& ph,
-        int n, 
-        int target
-    ) {
+static bool z_phase_by_ge(const std::vector<std::bitset<MAX_ROWS_STABILIZER>>& x, const std::vector<std::bitset<MAX_ROWS_STABILIZER>>& z, const std::bitset<MAX_ROWS_STABILIZER>& ph, int n, int target) {
     /*
-    Gaussian elimination to find the Z_target eigenvalue in a stabilizer tableau. 
+    Gaussian elimination to find the Z_target eigenvalue in a stabilizer tableau.
     This is used during sampling when we have a deterministic outcome for a qubit.
 
     Args:
@@ -88,7 +82,7 @@ static bool z_phase_by_ge(
     Returns:
         bool: The Z_target eigenvalue: false = +1, true = -1.
     */
-    
+
     // Convert the tableau into a more convenient format for Gaussian elimination
     struct Row {
         std::vector<bool> xb;
@@ -124,7 +118,7 @@ static bool z_phase_by_ge(
         }
     };
 
-    // Set up the target row for elimination: we want to find a combination of the stabilizers that 
+    // Set up the target row for elimination: we want to find a combination of the stabilizers that
     // give us Z_target, then read off the phase of that combination
     Row tgt;
     tgt.xb.assign(n, false);
@@ -139,8 +133,9 @@ static bool z_phase_by_ge(
         bool is_x = bit < n;
         int pivot = -1;
         for (int r = pivot_row; r < n; ++r) {
-            if (is_x ? rows[r].xb[q] : rows[r].zb[q]) { 
-                pivot = r; break;
+            if (is_x ? rows[r].xb[q] : rows[r].zb[q]) {
+                pivot = r;
+                break;
             }
         }
         if (pivot < 0) {
@@ -152,27 +147,27 @@ static bool z_phase_by_ge(
                 rowsum_local(rows[r], rows[pivot_row]);
             }
         }
-        if (is_x ? tgt.xb[q] : tgt.zb[q]) rowsum_local(tgt, rows[pivot_row]);
+        if (is_x ? tgt.xb[q] : tgt.zb[q])
+            rowsum_local(tgt, rows[pivot_row]);
         ++pivot_row;
     }
-    
+
     // Return the phase of the resulting row, which gives the Z_target eigenvalue
     return tgt.ph;
-
 }
 
 std::string StabilizerState::sample() const {
     /*
-    Sample from the StabilizerState. 
-    This is done by iterating through each qubit and determining whether the outcome is random or deterministic. 
-    
-    For random outcomes, we perform the necessary row operations to collapse the state and record the outcome. 
+    Sample from the StabilizerState.
+    This is done by iterating through each qubit and determining whether the outcome is random or deterministic.
+
+    For random outcomes, we perform the necessary row operations to collapse the state and record the outcome.
     For deterministic outcomes, we use Gaussian elimination to find the Z eigenvalue.
 
     Returns:
         std::string: A bitstring representing the measurement outcome for each qubit.
     */
-    
+
     // Create copies of the tableau data structures that we can modify during sampling
     auto x = x_bits;
     auto z = z_bits;
@@ -185,29 +180,36 @@ std::string StabilizerState::sample() const {
     for (int k = 0; k < nqubits; ++k) {
         int p = -1;
         for (int i = 0; i < nqubits; ++i) {
-            if (x[k][i]) { p = i; break; }
+            if (x[k][i]) {
+                p = i;
+                break;
+            }
         }
 
         // We have a random outcome if we have an X stabilizer that anticommutes with Z_k
         if (p >= 0) {
-            
-            // To collapse the state, we first need to make sure that the X stabilizer is the only one that anticommutes with Z_k. 
+            // To collapse the state, we first need to make sure that the X stabilizer is the only one that anticommutes with Z_k.
             // We do this by rowsumming it into any other stabilizer that anticommutes with Z_k.
             for (int i = 0; i < nqubits; ++i) {
                 if (i != p && x[k][i]) {
                     int contrib = 0;
                     for (int q = 0; q < nqubits; ++q) {
-                        if (x[q][i] && z[q][p]) contrib ^= 1;
-                        if (z[q][i] && x[q][p]) contrib ^= 1;
+                        if (x[q][i] && z[q][p])
+                            contrib ^= 1;
+                        if (z[q][i] && x[q][p])
+                            contrib ^= 1;
                     }
-                    if ((bool)ph[p] ^ (bool)contrib) ph.flip(i);
+                    if ((bool)ph[p] ^ (bool)contrib)
+                        ph.flip(i);
                     for (int q = 0; q < nqubits; ++q) {
-                        if (x[q][p]) x[q].flip(i);
-                        if (z[q][p]) z[q].flip(i);
+                        if (x[q][p])
+                            x[q].flip(i);
+                        if (z[q][p])
+                            z[q].flip(i);
                     }
                 }
             }
-            
+
             // Flip a coin to decide the outcome of the measurement for this qubit
             int b = rand() & 1;
 
@@ -224,7 +226,7 @@ std::string StabilizerState::sample() const {
             }
             result[k] = b ? '1' : '0';
 
-        // Otherwise the outcome is deterministic: we can read off the Z eigenvalue using Gaussian elimination on the tableau
+            // Otherwise the outcome is deterministic: we can read off the Z eigenvalue using Gaussian elimination on the tableau
         } else {
             result[k] = z_phase_by_ge(x, z, ph, nqubits, k) ? '1' : '0';
         }
@@ -235,7 +237,7 @@ std::string StabilizerState::sample() const {
 
 std::map<std::string, int> StabilizerStateSum::sample(int nshots) const {
     /*
-    Sample from the StabilizerStateSum. This is done by first picking a StabilizerState 
+    Sample from the StabilizerStateSum. This is done by first picking a StabilizerState
     according to the probabilities given by the coefficients, then sampling from that state.
 
     Args:
@@ -248,10 +250,9 @@ std::map<std::string, int> StabilizerStateSum::sample(int nshots) const {
     // Repeat for each shot:
     std::map<std::string, int> sample_counts;
     for (int shot = 0; shot < nshots; ++shot) {
-
         // First, pick an element of the sum according to the probabilities given by the coefficients
         // int index = 0;
-        double r = ((double) rand() / (RAND_MAX));
+        double r = ((double)rand() / (RAND_MAX));
         double cumulative_prob = 0.0;
         size_t index = 0;
         for (size_t i = 0; i < coefficients.size(); ++i) {
@@ -266,12 +267,10 @@ std::map<std::string, int> StabilizerStateSum::sample(int nshots) const {
         const StabilizerState& state = states[index];
         std::string sample_str = state.sample();
         sample_counts[sample_str]++;
-
     }
 
     // Return the counts
     return sample_counts;
-
 }
 
 void StabilizerState::apply_gate(const Gate& gate) {
@@ -294,34 +293,34 @@ void StabilizerState::apply_gate(const Gate& gate) {
         std::swap(x_bits[i], x_bits[j]);
         std::swap(z_bits[i], z_bits[j]);
 
-    // For gates without controls
+        // For gates without controls
     } else if (controls.empty()) {
         int i = targets[0];
-        
+
         // H means X <-> Z and phase flips if we have both X and Z
         if (name == "H") {
             phases ^= (x_bits[i] & z_bits[i]);
             std::swap(x_bits[i], z_bits[i]);
 
-        // S means X -> Y -> -X and Z -> Z, so phase flips if we have both X and Z (Y case) or if we have X but not Z (X case)
+            // S means X -> Y -> -X and Z -> Z, so phase flips if we have both X and Z (Y case) or if we have X but not Z (X case)
         } else if (name == "S") {
             phases ^= (x_bits[i] & z_bits[i]);
             z_bits[i] ^= x_bits[i];
 
-        // X means Z -> -Z
+            // X means Z -> -Z
         } else if (name == "X") {
             phases ^= z_bits[i];
-        
-        // Y means X -> -X, Z -> -Z, so phase flips if we have either but not both
+
+            // Y means X -> -X, Z -> -Z, so phase flips if we have either but not both
         } else if (name == "Y") {
             phases ^= (x_bits[i] ^ z_bits[i]);
 
-        // Z means X -> -X
+            // Z means X -> -X
         } else if (name == "Z") {
             phases ^= x_bits[i];
         }
 
-    // Gates with a single control
+        // Gates with a single control
     } else if (controls.size() == 1) {
         int i = controls[0], j = targets[0];
 
@@ -331,13 +330,23 @@ void StabilizerState::apply_gate(const Gate& gate) {
             x_bits[j] ^= x_bits[i];
             z_bits[i] ^= z_bits[j];
 
-        // CZ means X_i -> X_i Z_j, X_j -> Z_i X_j, so phase flips if we have X on one and Z on the other (but not both)
+            // CZ means X_i -> X_i Z_j, X_j -> Z_i X_j, so phase flips if we have X on one and Z on the other (but not both)
         } else if (name == "Z") {
             phases ^= (x_bits[i] & x_bits[j] & (z_bits[i] ^ z_bits[j]));
             z_bits[j] ^= x_bits[i];
             z_bits[i] ^= x_bits[j];
         }
 
+        // Gates with two controls (Toffoli family): called by StabilizerStateSum after branching on controls[0]=1,
+        // so the effective operation is CNOT(controls[1], target)
+    } else if (controls.size() == 2) {
+        int i = controls[1], j = targets[0];
+
+        if (name == "X") {
+            phases ^= (x_bits[i] & z_bits[j] & ~(x_bits[j] ^ z_bits[i]));
+            x_bits[j] ^= x_bits[i];
+            z_bits[i] ^= z_bits[j];
+        }
     }
 }
 
@@ -359,9 +368,6 @@ int StabilizerState::find_x_pivot(int q) const {
     return -1;
 }
 
-// Computes the phase contribution when multiplying two Pauli operators on a single qubit.
-// Returns an integer in {0, 1, 2, 3} representing multiples of i (i^n).
-// x1,z1: Pauli on qubit from row i; x2,z2: Pauli on qubit from row h (the one being updated).
 static int pauli_phase(bool x1, bool z1, bool x2, bool z2) {
     /*
     Computes the phase contribution when multiplying two Pauli operators on a single qubit.
@@ -374,20 +380,23 @@ static int pauli_phase(bool x1, bool z1, bool x2, bool z2) {
         z2 (bool): Whether the second operator has a Z on this qubit.
 
     Returns:
-        int: An integer in {0, 1, 2, 3} representing multiples of i (i^n). 
+        int: An integer in {0, 1, 2, 3} representing multiples of i (i^n).
              0 means no phase, 2 means a -1 phase, and 1 or 3 would mean ±i (which should not happen for valid stabilizer products).
     */
-    if (!x1 && !z1) return 0; // I * anything = no phase
-    if ( x1 &&  z1) return z2 - x2; // Y case: z2 - x2 in {-1, 0, 1} -> mod 4
-    if ( x1 && !z1) return z2 * (2*x2 - 1); // X case
-    if (!x1 &&  z1) return x2 * (1 - 2*z2); // Z case
+    if (!x1 && !z1)
+        return 0;  // I * anything = no phase
+    if (x1 && z1)
+        return z2 - x2;  // Y case: z2 - x2 in {-1, 0, 1} -> mod 4
+    if (x1 && !z1)
+        return z2 * (2 * x2 - 1);  // X case
+    if (!x1 && z1)
+        return x2 * (1 - 2 * z2);  // Z case
     return 0;
 }
 
-// Row h <- row_h * row_i, with correct phase update.
 void StabilizerState::rowsum(int h, int i) {
     /*
-    Perform the row sum operation on the tableau, which corresponds to 
+    Perform the row sum operation on the tableau, which corresponds to
     multiplying the stabilizer in row h by the stabilizer in row i. This mutates the tableau in place.
 
     Args:
@@ -399,8 +408,8 @@ void StabilizerState::rowsum(int h, int i) {
     int exp = 0;
 
     // Add phase contributions from the two input rows
-    exp += 2 * (int)phases[i]; // existing phase of row i: +1 -> 0, -1 -> 2 (in units of i^2)
-    exp += 2 * (int)phases[h]; // existing phase of row h
+    exp += 2 * (int)phases[i];  // existing phase of row i: +1 -> 0, -1 -> 2 (in units of i^2)
+    exp += 2 * (int)phases[h];  // existing phase of row h
     for (int q = 0; q < nqubits; ++q) {
         exp += pauli_phase(x_bits[q][i], z_bits[q][i], x_bits[q][h], z_bits[q][h]);
     }
@@ -411,21 +420,29 @@ void StabilizerState::rowsum(int h, int i) {
 
     // Update Pauli content: XOR the bit columns
     for (int q = 0; q < nqubits; ++q) {
-        if (x_bits[q][i]) x_bits[q].flip(h);
-        if (z_bits[q][i]) z_bits[q].flip(h);
+        if (x_bits[q][i])
+            x_bits[q].flip(h);
+        if (z_bits[q][i])
+            z_bits[q].flip(h);
     }
 }
 
-// Project onto Z_q = (-1)^outcome. Assumes x_bits[q] is not all-zero (random outcome).
-// Mutates this state in place.
 void StabilizerState::project_z(int q, bool outcome) {
+    /*
+    Project the state onto the Z_q = (-1)^outcome eigenspace.
+    This is used during sampling when we have a random outcome for a qubit, and we need to collapse the state accordingly.
+
+    Args:
+        q (int): The index of the qubit to project.
+        outcome (bool): The measurement outcome for Z_q: false = +1, true = -1.
+    */
     int p = find_x_pivot(q);
 
     // Rowsum every other generator that anticommutes with Z_q into row p first,
     // so that after we overwrite row p, all others commute with the new stabilizer.
     for (int r = 0; r < nqubits; ++r) {
         if (r != p && x_bits[q][r]) {
-            rowsum(r, p); // row r <- row_r * row_p, with phase update
+            rowsum(r, p);  // row r <- row_r * row_p, with phase update
         }
     }
 
@@ -437,80 +454,111 @@ void StabilizerState::project_z(int q, bool outcome) {
     phases[p] = outcome;
 }
 
-// Call only when find_x_pivot(q) == -1 (outcome is deterministic).
-// Returns the Z_q eigenvalue: false = +1, true = -1.
 bool StabilizerState::z_eigenvalue(int q) const {
+    /*
+    Find the Z_q eigenvalue using Gaussian elimination on the tableau.
+    This is only valid to call when we have already determined that the outcome is
+    deterministic (i.e. there are no X stabilizers that anticommute with Z_q).
+
+    Args:
+        q (int): The index of the qubit to find the Z eigenvalue for.
+
+    Returns:
+        bool: The Z_q eigenvalue: false = +1, true = -1.
+    */
     return z_phase_by_ge(x_bits, z_bits, phases, nqubits, q);
 }
 
 void StabilizerStateSum::apply_gate(const Gate& gate) {
     /*
-    Apply a gate to the StabilizerStateSum. Clifford gates get applied to each state in the sum.  Non-Clifford gates expand the sum.
+    Apply a gate to the StabilizerStateSum.
+    Clifford gates get applied to each state in the sum.
+    Non-Clifford gates expand the sum by branching on qubit eigenstates.
 
     Args:
         gate (Gate&): The gate to apply.
     */
     const std::string name = gate.get_name();
+    const auto& controls = gate.get_control_qubits();
+    const auto& targets = gate.get_target_qubits();
 
     // If it's a clifford gate with at most one control, we can just apply it to each state in the sum
-    if ((name == "H" || name == "S" || name == "X" || name == "Y" ||
-         name == "Z" || name == "SWAP") && gate.get_control_qubits().size() <= 1) {
+    if ((name == "H" || name == "S" || name == "X" || name == "Y" || name == "Z" || name == "SWAP") && controls.size() <= 1) {
         for (auto& state : states) {
             state.apply_gate(gate);
         }
+        return;
+    }
 
-    // If it's a T gate without controls, we need to expand the sum
-    } else if (name == "T" && gate.get_control_qubits().empty()) {
-        int q = gate.get_target_qubits()[0];
+    // For non-Clifford gates we branch on the eigenvalue of a qubit
+    int branch_qubit = -1;
+    std::function<void(StabilizerState&, std::complex<double>&)> on_zero;
+    std::function<void(StabilizerState&, std::complex<double>&)> on_one;
 
-        // T|ψ⟩ = P₀|ψ⟩  +  e^{iπ/4} · P₁|ψ⟩
-        // where P₀, P₁ project onto Z_q = ±1 eigenstates.
+    // T gates: branch on the target qubit. On the 0 branch we do nothing, on the 1 branch we apply a phase of e^{iπ/4}
+    if (name == "T" && controls.empty()) {
         static const std::complex<double> t_phase = std::exp(std::complex<double>(0.0, M_PI / 4.0));
-        
-        // The new sum to fill
-        std::vector<StabilizerState> new_states;
-        std::vector<std::complex<double>> new_coeffs;
-        new_states.reserve(states.size() * 2);
-        new_coeffs.reserve(states.size() * 2);
+        branch_qubit = targets[0];
+        on_zero = [](StabilizerState&, std::complex<double>&) {};
+        on_one = [](StabilizerState&, std::complex<double>& c) { c *= t_phase; };
 
-        // For each of the current states
-        for (int k = 0; k < static_cast<int>(states.size()); ++k) {
-            const StabilizerState& s = states[k];
-            const std::complex<double> c = coefficients[k];
+        // Toffoli gates: branch on the first control. On the 0 branch we do nothing, on the 1 branch we apply a CNOT from the second control to the target
+    } else if (name == "X" && controls.size() == 2) {
+        branch_qubit = controls[0];
+        on_zero = [](StabilizerState&, std::complex<double>&) {};
+        on_one = [&gate](StabilizerState& s, std::complex<double>&) { s.apply_gate(gate); };
 
-            // Check if we have a deterministic or random outcome for qubit q
-            bool is_random = (s.find_x_pivot(q) != -1);
-
-            // If it's deterministic, we only get one branch, the coefficient depends on the Z eigenvalue
-            if (!is_random) {
-                bool outcome = s.z_eigenvalue(q);
-                if (!outcome) {
-                    new_states.push_back(s);
-                    new_coeffs.push_back(c);
-                } else {
-                    new_states.push_back(s);
-                    new_coeffs.push_back(c * t_phase);
-                }
-            // If it's random, we have two branches: one for each outcome
-            } else {
-                static const double inv_sqrt2 = 1.0 / std::sqrt(2.0);
-                StabilizerState s0 = s;
-                s0.project_z(q, false);
-                new_states.push_back(std::move(s0));
-                new_coeffs.push_back(c * inv_sqrt2);
-                StabilizerState s1 = s;
-                s1.project_z(q, true);
-                new_states.push_back(std::move(s1));
-                new_coeffs.push_back(c * t_phase * inv_sqrt2);
-            }
-        }
-
-        // Copy everything over
-        states = std::move(new_states);
-        coefficients = std::move(new_coeffs);
-
-    // Only allow certain gates
+        // Otherwise not supported
     } else {
         throw std::runtime_error("Gate " + name + " not supported for StabilizerStateSum yet");
     }
+
+    // Branch: for each current (state, coeff), split on the eigenvalue of branch_qubit
+    const double inv_sqrt2 = 1.0 / std::sqrt(2.0);
+    std::vector<StabilizerState> new_states;
+    std::vector<std::complex<double>> new_coeffs;
+    new_states.reserve(states.size() * 2);
+    new_coeffs.reserve(states.size() * 2);
+
+    // Need to branch each state
+    for (int k = 0; k < static_cast<int>(states.size()); ++k) {
+        // Check if the outcome of the branch_qubit is deterministic or not
+        bool is_random = (states[k].find_x_pivot(branch_qubit) != -1);
+
+        // Deterministic outcome: one branch, choose the right callback
+        if (!is_random) {
+            bool outcome = states[k].z_eigenvalue(branch_qubit);
+            StabilizerState new_s = states[k];
+            std::complex<double> new_c = coefficients[k];
+            if (!outcome) {
+                on_zero(new_s, new_c);
+            } else {
+                on_one(new_s, new_c);
+            }
+            new_states.push_back(std::move(new_s));
+            new_coeffs.push_back(new_c);
+
+            // Otherwise if it's a random outcome we make two branches, each weighted by 1/√2
+        } else {
+            // Branch on zero
+            StabilizerState s0 = states[k];
+            s0.project_z(branch_qubit, false);
+            std::complex<double> c0 = coefficients[k] * inv_sqrt2;
+            on_zero(s0, c0);
+            new_states.push_back(std::move(s0));
+            new_coeffs.push_back(c0);
+
+            // Branch on one
+            StabilizerState s1 = states[k];
+            s1.project_z(branch_qubit, true);
+            std::complex<double> c1 = coefficients[k] * inv_sqrt2;
+            on_one(s1, c1);
+            new_states.push_back(std::move(s1));
+            new_coeffs.push_back(c1);
+        }
+    }
+
+    // Copy the new states and coeffs back over
+    states = std::move(new_states);
+    coefficients = std::move(new_coeffs);
 }

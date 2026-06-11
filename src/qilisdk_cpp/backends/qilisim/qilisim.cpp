@@ -93,7 +93,6 @@ py::object QiliSimCpp::execute_digital_propagation(const py::object& functional,
     std::vector<py::object> intermediate_results;
     py::object result;
     if (config.get_sampling_method() == "stabilizer") {
-
         int max_states = config.get_stabilizer_max_states();
         std::cout << "Using stabilizer method with max states: " << max_states << std::endl;
 
@@ -112,7 +111,6 @@ py::object QiliSimCpp::execute_digital_propagation(const py::object& functional,
         result = construct_result_object(state_stabilizer, readout, noise_model_cpp, n_qubits, config, final_qubits_to_measure);
 
     } else {
-        
         // Get the initial state
         DenseMatrix state_dense;
         SparseMatrix initial_state_cpp;
@@ -127,7 +125,6 @@ py::object QiliSimCpp::execute_digital_propagation(const py::object& functional,
 
         // Construct the final result object
         result = construct_result_object(state_dense, readout, noise_model_cpp, n_qubits, config, final_qubits_to_measure);
-
     }
 
     // If we have intermediate results, return them as well

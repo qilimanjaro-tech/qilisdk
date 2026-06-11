@@ -461,7 +461,6 @@ void sampling_stabilizer(const std::vector<Gate>& gates, int n_qubits, const Sta
         const auto& gate = gates[i];
         state.apply_gate(gate);
     }
-
 }
 
 // GCOV_EXCL_BR_STOP

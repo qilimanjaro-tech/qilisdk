@@ -13,11 +13,12 @@
 // limitations under the License.
 #pragma once
 
+#include <bitset>
 #include <complex>
+#include <functional>
 #include <map>
 #include <set>
 #include <vector>
-#include <bitset>
 
 #include "../digital/gate.h"
 
@@ -26,42 +27,44 @@
 const int MAX_ROWS_STABILIZER = 512;
 
 class StabilizerState {
-    private:
-        std::vector<std::bitset<MAX_ROWS_STABILIZER>> x_bits;
-        std::vector<std::bitset<MAX_ROWS_STABILIZER>> z_bits;
-        std::bitset<MAX_ROWS_STABILIZER> phases;
-        int nqubits;
+   private:
+    std::vector<std::bitset<MAX_ROWS_STABILIZER>> x_bits;
+    std::vector<std::bitset<MAX_ROWS_STABILIZER>> z_bits;
+    std::bitset<MAX_ROWS_STABILIZER> phases;
+    int nqubits;
 
-    public:
-        StabilizerState(int nqubits);
-        const std::vector<std::bitset<MAX_ROWS_STABILIZER>>& get_x_bits() const { return x_bits; }
-        const std::vector<std::bitset<MAX_ROWS_STABILIZER>>& get_z_bits() const { return z_bits; }
-        const std::bitset<MAX_ROWS_STABILIZER>& get_phases() const { return phases; }
-        int get_nqubits() const { return nqubits; }
-        void apply_gate(const Gate& gate);
-        std::string sample() const;
-        void project_z(int q, bool outcome);
-        int find_x_pivot(int q) const;
-        void rowsum(int h, int i);
-        bool z_eigenvalue(int q) const;
-
+   public:
+    StabilizerState(int nqubits);
+    const std::vector<std::bitset<MAX_ROWS_STABILIZER>>& get_x_bits() const { return x_bits; }
+    const std::vector<std::bitset<MAX_ROWS_STABILIZER>>& get_z_bits() const { return z_bits; }
+    const std::bitset<MAX_ROWS_STABILIZER>& get_phases() const { return phases; }
+    int get_nqubits() const { return nqubits; }
+    void apply_gate(const Gate& gate);
+    std::string sample() const;
+    void project_z(int q, bool outcome);
+    int find_x_pivot(int q) const;
+    void rowsum(int h, int i);
+    bool z_eigenvalue(int q) const;
 };
 
 class StabilizerStateSum {
-    private:
-        int nqubits;
-        std::vector<StabilizerState> states;
-        std::vector<std::complex<double>> coefficients;
-    
-    public:
-        StabilizerStateSum(int nqubits) : nqubits(nqubits) { states.emplace_back(nqubits); coefficients.push_back(1.0); }
-        StabilizerStateSum(const std::vector<StabilizerState>& states, const std::vector<std::complex<double>>& coefficients) : states(states), coefficients(coefficients) {}
-        const std::vector<StabilizerState>& get_states() const { return states; }
-        const std::vector<std::complex<double>>& get_coefficients() const { return coefficients; }
-        friend std::ostream& operator<<(std::ostream& os, const StabilizerStateSum& sss);
-        std::map<std::string, int> sample(int nshots) const;
-        int get_nqubits() const { return nqubits; }
-        void apply_gate(const Gate& gate);
+   private:
+    int nqubits;
+    std::vector<StabilizerState> states;
+    std::vector<std::complex<double>> coefficients;
+
+   public:
+    StabilizerStateSum(int nqubits) : nqubits(nqubits) {
+        states.emplace_back(nqubits);
+        coefficients.push_back(1.0);
+    }
+    StabilizerStateSum(const std::vector<StabilizerState>& states, const std::vector<std::complex<double>>& coefficients) : states(states), coefficients(coefficients) {}
+    const std::vector<StabilizerState>& get_states() const { return states; }
+    const std::vector<std::complex<double>>& get_coefficients() const { return coefficients; }
+    friend std::ostream& operator<<(std::ostream& os, const StabilizerStateSum& sss);
+    std::map<std::string, int> sample(int nshots) const;
+    int get_nqubits() const { return nqubits; }
+    void apply_gate(const Gate& gate);
 };
 
 // GCOV_EXCL_BR_STOP
