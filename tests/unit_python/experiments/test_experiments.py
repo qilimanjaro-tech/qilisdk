@@ -248,3 +248,18 @@ def test_t2_plotting(monkeypatch):
     fakeWarning.assert_called_with(
         "Fitting is only implemented for amplitude plots. Ignoring fit request for non-amplitude plot."
     )
+
+
+def test_experiment_printing():
+    data = np.array([[1, 2], [3, 4]])
+    qubit = 0
+    averages = 1000
+    dims = [Dimension(labels=["Freq"], values=[np.array([1, 2])])]
+
+    exp_result = ExperimentResult(qubit=qubit, averages=averages, data=data, dims=dims)
+
+    expected_str = (
+        "ExperimentResult(qubit=0, averages=1000, data=[[1 2]\n [3 4]], "
+        "dims=[Dimension(labels=['Freq'], values=[array([1, 2])])])"
+    )
+    assert str(exp_result) == expected_str
