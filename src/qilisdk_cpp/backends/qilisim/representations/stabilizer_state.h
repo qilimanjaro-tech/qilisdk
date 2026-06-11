@@ -60,7 +60,7 @@ class StabilizerStateSum {
         states.emplace_back(nqubits);
         coefficients.push_back(1.0);
     }
-    StabilizerStateSum(const std::vector<StabilizerState>& states, const std::vector<std::complex<double>>& coefficients) : states(states), coefficients(coefficients) {}
+    StabilizerStateSum(int nqubits, const std::vector<StabilizerState>& states, const std::vector<std::complex<double>>& coefficients) : states(states), coefficients(coefficients), nqubits(nqubits) {}
     const std::vector<StabilizerState>& get_states() const { return states; }
     const std::vector<std::complex<double>>& get_coefficients() const { return coefficients; }
     friend std::ostream& operator<<(std::ostream& os, const StabilizerStateSum& sss);

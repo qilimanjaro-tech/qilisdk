@@ -100,12 +100,8 @@ py::object QiliSimCpp::execute_digital_propagation(const py::object& functional,
         StabilizerStateSum initial_state_stabilizer = parse_initial_state_stabilizer(initial_state, n_qubits);
         StabilizerStateSum state_stabilizer = initial_state_stabilizer;
 
-        std::cout << "Initial state: " << initial_state_stabilizer << std::endl;
-
         // Run the simulation
         sampling_stabilizer(gates, n_qubits, initial_state_stabilizer, noise_model_cpp, state_stabilizer, intermediate_results, config, readout);
-
-        std::cout << "Final state: " << state_stabilizer << std::endl;
 
         // Construct the final result object
         result = construct_result_object(state_stabilizer, readout, noise_model_cpp, n_qubits, config, final_qubits_to_measure);

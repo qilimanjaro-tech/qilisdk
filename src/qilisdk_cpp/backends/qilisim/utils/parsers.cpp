@@ -24,24 +24,64 @@
 #pragma GCC visibility push(default)
 
 py::object construct_result_object(const StabilizerStateSum& state, const py::object& readout, NoiseModelCpp& noise_model_cpp, int n_qubits, const QiliSimConfig& config, const std::vector<bool>& qubits_to_measure) {
-    // TODO(luke)
+    /*
+    Construct a result object for a given StabilizerStateSum and readout.
+
+    Args:
+        state (StabilizerStateSum&): The StabilizerStateSum for which to construct the result.
+        readout (py::object): A list with readout
+        noise_model_cpp (NoiseModelCpp&): The noise model to apply during simulation.
+        n_qubits (int): The number of qubits in the circuit.
+        config (QiliSimConfig): The simulation configuration.
+        qubits_to_measure (std::map<int, std::vector<bool>>&): A map indicating which qubits to measure after each gate.
+        gate_ind (int): The index of the gate after which this state was obtained.
+
+    Returns:
+        py::object: The result object for the given state and readout.
+
+    Raises:
+        py::value_error: If an unsupported readout method is provided.
+    */
+    srand(config.get_seed());
     py::list results;
-    bool expand_samples = false;
-    int nshots = config.get_shots();
-    std::map<std::string, int> counts = state.sample(nshots);
-    py::dict samples_py;
-    for (const auto& pair : counts) {
-        samples_py[py::cast(pair.first)] = py::cast(pair.second);
+    for (py::handle ro_handle : readout) {
+        py::object ro = py::reinterpret_borrow<py::object>(ro_handle);
+        if (py::isinstance(ro, SamplingReadout)) {
+            int nshots = ro.attr("nshots").cast<int>();
+            bool expand_samples = ro.attr("expand_samples").cast<bool>();
+            std::map<std::string, int> counts = state.sample(nshots);
+            py::dict samples_py;
+            for (const auto& pair : counts) {
+                samples_py[py::cast(pair.first)] = py::cast(pair.second);
+            }
+            py::list qubits_to_measure_list;
+            for (size_t i = 0; i < size_t(n_qubits); ++i) {
+                qubits_to_measure_list.append(i);
+            }
+            results.append(SamplingReadoutResult.attr("from_samples")("samples"_a = samples_py, "qubits_to_measure"_a = qubits_to_measure_list, "nqubits"_a = n_qubits, "expand_samples"_a = expand_samples));
+        } else {
+            std::string ro_repr = py::repr(ro).cast<std::string>();
+            throw py::value_error("Unsupported Readout Method for stabilizer backend: " + ro_repr);
+        }
     }
-    py::list qubits_to_measure_list;
-    for (size_t i = 0; i < size_t(n_qubits); ++i) {
-        qubits_to_measure_list.append(i);
-    }
-    results.append(SamplingReadoutResult.attr("from_samples")("samples"_a = samples_py, "qubits_to_measure"_a = qubits_to_measure_list, "nqubits"_a = n_qubits, "expand_samples"_a = expand_samples));
     return ReadoutCompositeResults.attr("from_list")(results);
 }
 
 py::object construct_result_object(const ExponentialAnsatz& state, const py::object& readout, int n_qubits) {
+    /*
+    Construct a result object for a given ExponentialAnsatz state and readout.
+
+    Args:
+        state (ExponentialAnsatz&): The ExponentialAnsatz state for which to construct the result.
+        readout (py::object): A list with readout
+        n_qubits (int): The number of qubits in the circuit.
+
+    Returns:
+        py::object: The result object for the given state and readout.
+
+    Raises:
+        py::value_error: If an unsupported readout method is provided.
+    */
     py::list results;
     for (py::handle ro_handle : readout) {
         py::object ro = py::reinterpret_borrow<py::object>(ro_handle);
@@ -100,6 +140,9 @@ py::object construct_result_object(const DenseMatrix& state_dense, const py::obj
 
     Returns:
         py::object: The result object for the given state and readout.
+
+    Raises:
+        py::value_error: If an unsupported readout method is provided.
     */
     py::list results;
     py::array final_state_numpy = to_numpy(state_dense);
@@ -602,7 +645,29 @@ StabilizerStateSum parse_initial_state_stabilizer(const py::object& initial_stat
     Returns:
         StabilizerStateSum: The initial state as a StabilizerStateSum object.
     */
-    // TODO(luke)
+    if (initial_state.is_none()) {
+        return StabilizerStateSum(nqubits);
+    }
+    if (py::isinstance(initial_state, InitialState)) {
+        if (initial_state.attr("name").cast<std::string>() == "UNIFORM") {
+            StabilizerState uniform_state(nqubits);
+            for (int i = 0; i < nqubits; ++i) {
+                Gate H_gate("H", SparseMatrix(), {}, {i}, {});
+                uniform_state.apply_gate(H_gate);
+            }
+            StabilizerStateSum state(nqubits, std::vector<StabilizerState>{uniform_state}, std::vector<std::complex<double>>{1.0});
+            return state;
+        } else if (initial_state.attr("name").cast<std::string>() == "ONE") {
+            StabilizerState one_state(nqubits);
+            for (int i = 0; i < nqubits; ++i) {
+                Gate X_gate("X", SparseMatrix(), {}, {i}, {});
+                one_state.apply_gate(X_gate);
+            }
+            StabilizerStateSum state(nqubits, std::vector<StabilizerState>{one_state}, std::vector<std::complex<double>>{1.0});
+            return state;
+        } else {
+            return StabilizerStateSum(nqubits);
+        }
     return StabilizerStateSum(nqubits);
 }
 

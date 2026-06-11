@@ -493,71 +493,106 @@ void StabilizerStateSum::apply_gate(const Gate& gate) {
         return;
     }
 
-    // For non-Clifford gates we branch on the eigenvalue of a qubit
+    // Each callback receives the projected StabilizerState and its coefficient, and returns a
+    // StabilizerStateSum whose terms are all added into the new sum
+    using BranchFn = std::function<StabilizerStateSum(const StabilizerState&, std::complex<double>)>;
     int branch_qubit = -1;
-    std::function<void(StabilizerState&, std::complex<double>&)> on_zero;
-    std::function<void(StabilizerState&, std::complex<double>&)> on_one;
+    BranchFn on_zero, on_one;
 
     // T gates: branch on the target qubit. On the 0 branch we do nothing, on the 1 branch we apply a phase of e^{iπ/4}
     if (name == "T" && controls.empty()) {
         static const std::complex<double> t_phase = std::exp(std::complex<double>(0.0, M_PI / 4.0));
         branch_qubit = targets[0];
-        on_zero = [](StabilizerState&, std::complex<double>&) {};
-        on_one = [](StabilizerState&, std::complex<double>& c) { c *= t_phase; };
+        on_zero = [](const StabilizerState& s, std::complex<double> c) { return StabilizerStateSum({s}, {c}); };
+        on_one = [](const StabilizerState& s, std::complex<double> c) { return StabilizerStateSum({s}, {c * t_phase}); };
 
         // Toffoli gates: branch on the first control. On the 0 branch we do nothing, on the 1 branch we apply a CNOT from the second control to the target
     } else if (name == "X" && controls.size() == 2) {
         branch_qubit = controls[0];
-        on_zero = [](StabilizerState&, std::complex<double>&) {};
-        on_one = [&gate](StabilizerState& s, std::complex<double>&) { s.apply_gate(gate); };
+        on_zero = [](const StabilizerState& s, std::complex<double> c) { return StabilizerStateSum({s}, {c}); };
+        on_one = [&gate](const StabilizerState& s, std::complex<double> c) {
+            StabilizerState s1 = s;
+            s1.apply_gate(gate);
+            return StabilizerStateSum({s1}, {c});
+        };
+
+        // Arbitrary single-qubit gate: the two columns of the 2x2 matrix give the output states for |0⟩ and |1⟩ inputs
+        // U|0⟩ = u00|0⟩ + u10|1⟩  and  U|1⟩ = u01|0⟩ + u11|1⟩
+    } else if (controls.empty() && targets.size() == 1) {
+        branch_qubit = targets[0];
+        SparseMatrix base = gate.get_base_matrix();
+        std::complex<double> u00 = base.coeff(0, 0), u01 = base.coeff(0, 1);
+        std::complex<double> u10 = base.coeff(1, 0), u11 = base.coeff(1, 1);
+        Gate x_gate("X", base, {}, {branch_qubit}, {});
+        const double tol = 1e-12;
+        on_zero = [u00, u10, tol, x_gate](const StabilizerState& s, std::complex<double> c) {
+            std::vector<StabilizerState> ss;
+            std::vector<std::complex<double>> cs;
+            if (std::abs(u00) > tol) {
+                ss.push_back(s);
+                cs.push_back(c * u00);
+            }
+            if (std::abs(u10) > tol) {
+                StabilizerState s1 = s;
+                s1.apply_gate(x_gate);
+                ss.push_back(std::move(s1));
+                cs.push_back(c * u10);
+            }
+            return StabilizerStateSum(ss, cs);
+        };
+        on_one = [u01, u11, tol, x_gate](const StabilizerState& s, std::complex<double> c) {
+            std::vector<StabilizerState> ss;
+            std::vector<std::complex<double>> cs;
+            if (std::abs(u01) > tol) {
+                StabilizerState s0 = s;
+                s0.apply_gate(x_gate);
+                ss.push_back(std::move(s0));
+                cs.push_back(c * u01);
+            }
+            if (std::abs(u11) > tol) {
+                ss.push_back(s);
+                cs.push_back(c * u11);
+            }
+            return StabilizerStateSum(ss, cs);
+        };
 
         // Otherwise not supported
     } else {
         throw std::runtime_error("Gate " + name + " not supported for StabilizerStateSum yet");
     }
 
-    // Branch: for each current (state, coeff), split on the eigenvalue of branch_qubit
+    // Branch: for each current (state, coeff), split on the Z eigenvalue of branch_qubit and collect all
+    // terms from the StabilizerStateSum returned by the appropriate callback.
     const double inv_sqrt2 = 1.0 / std::sqrt(2.0);
     std::vector<StabilizerState> new_states;
     std::vector<std::complex<double>> new_coeffs;
     new_states.reserve(states.size() * 2);
     new_coeffs.reserve(states.size() * 2);
 
-    // Need to branch each state
+    auto append_sss = [&](StabilizerStateSum sss) {
+        for (auto& s : sss.get_states())
+            new_states.push_back(std::move(s));
+        for (auto& c : sss.get_coefficients())
+            new_coeffs.push_back(c);
+    };
+
     for (int k = 0; k < static_cast<int>(states.size()); ++k) {
-        // Check if the outcome of the branch_qubit is deterministic or not
         bool is_random = (states[k].find_x_pivot(branch_qubit) != -1);
 
-        // Deterministic outcome: one branch, choose the right callback
+        // Deterministic outcome: call the matching callback
         if (!is_random) {
             bool outcome = states[k].z_eigenvalue(branch_qubit);
-            StabilizerState new_s = states[k];
-            std::complex<double> new_c = coefficients[k];
-            if (!outcome) {
-                on_zero(new_s, new_c);
-            } else {
-                on_one(new_s, new_c);
-            }
-            new_states.push_back(std::move(new_s));
-            new_coeffs.push_back(new_c);
+            append_sss(outcome ? on_one(states[k], coefficients[k]) : on_zero(states[k], coefficients[k]));
 
-            // Otherwise if it's a random outcome we make two branches, each weighted by 1/√2
+            // Random outcome: project to each eigenstate (weight 1/√2) and call both callbacks
         } else {
-            // Branch on zero
             StabilizerState s0 = states[k];
             s0.project_z(branch_qubit, false);
-            std::complex<double> c0 = coefficients[k] * inv_sqrt2;
-            on_zero(s0, c0);
-            new_states.push_back(std::move(s0));
-            new_coeffs.push_back(c0);
+            append_sss(on_zero(s0, coefficients[k] * inv_sqrt2));
 
-            // Branch on one
             StabilizerState s1 = states[k];
             s1.project_z(branch_qubit, true);
-            std::complex<double> c1 = coefficients[k] * inv_sqrt2;
-            on_one(s1, c1);
-            new_states.push_back(std::move(s1));
-            new_coeffs.push_back(c1);
+            append_sss(on_one(s1, coefficients[k] * inv_sqrt2));
         }
     }
 
@@ -572,12 +607,15 @@ void StabilizerStateSum::apply_gate(const Gate& gate) {
 }
 
 void StabilizerStateSum::truncate() {
-    // Sort indices by descending amplitude and keep only the top max_terms
+    /*
+    Truncate the StabilizerStateSum to keep only the top max_terms terms by coefficient
+    magnitude. This is a heuristic to prevent exponential blowup of the number of terms
+    after applying many non-Clifford gates.
+    */
     std::vector<size_t> indices(states.size());
     std::iota(indices.begin(), indices.end(), 0);
     std::partial_sort(indices.begin(), indices.begin() + max_terms, indices.end(), [this](size_t a, size_t b) { return std::norm(coefficients[a]) > std::norm(coefficients[b]); });
     indices.resize(max_terms);
-
     std::vector<StabilizerState> new_states;
     std::vector<std::complex<double>> new_coeffs;
     new_states.reserve(max_terms);

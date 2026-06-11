@@ -40,6 +40,22 @@ Gate makeGate(const std::string& name, const std::vector<int>& controls, const s
     return Gate(name, make2x2Identity(), controls, targets, {});
 }
 
+// RX(theta) matrix: [[cos(t/2), -i*sin(t/2)], [-i*sin(t/2), cos(t/2)]]
+SparseMatrix makeRXMatrix(double theta) {
+    SparseMatrix m(2, 2);
+    double c = std::cos(theta / 2.0), s = std::sin(theta / 2.0);
+    m.insert(0, 0) = std::complex<double>(c, 0);
+    m.insert(0, 1) = std::complex<double>(0, -s);
+    m.insert(1, 0) = std::complex<double>(0, -s);
+    m.insert(1, 1) = std::complex<double>(c, 0);
+    m.makeCompressed();
+    return m;
+}
+
+Gate makeRX(double theta, int target) {
+    return Gate("RX", makeRXMatrix(theta), {}, {target}, {});
+}
+
 }  // namespace
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -555,8 +571,9 @@ TEST(StabilizerStateSum, ApplyGate_Toffoli_RandomControl_ExpandsSum) {
 }
 
 TEST(StabilizerStateSum, ApplyGate_UnsupportedGate_Throws) {
-    StabilizerStateSum sss(1);
-    Gate bad = makeGate("RZ", {}, {0});
+    // Controlled single-qubit non-Clifford gates are not yet supported
+    StabilizerStateSum sss(2);
+    Gate bad = makeGate("RZ", {0}, {1});
     EXPECT_THROW(sss.apply_gate(bad), std::runtime_error);
 }
 
@@ -661,6 +678,67 @@ TEST(StabilizerStateSum, MaxTerms_CliffordGatesNotTruncated) {
     sss.apply_gate(h);
     sss.apply_gate(cnot);
     EXPECT_EQ(sss.get_states().size(), 1u);
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Arbitrary single-qubit gate (Pauli decomposition path)
+// ──────────────────────────────────────────────────────────────────────────────
+
+TEST(StabilizerStateSum, ArbitraryGate_RX_Pi_On_Zero_OneTermResult) {
+    // RX(π)|0⟩ = -i|1⟩: u00 = 0 so only the u10 (X-flip) branch is created
+    StabilizerStateSum sss(1);
+    sss.apply_gate(makeRX(M_PI, 0));
+    ASSERT_EQ(sss.get_states().size(), 1u);
+    EXPECT_NEAR(std::norm(sss.get_coefficients()[0]), 1.0, 1e-9);
+    EXPECT_TRUE(sss.get_states()[0].z_eigenvalue(0));  // qubit ended in |1⟩
+}
+
+TEST(StabilizerStateSum, ArbitraryGate_RX_HalfPi_On_Zero_TwoTermResult) {
+    // RX(π/2)|0⟩ = cos(π/4)|0⟩ - i·sin(π/4)|1⟩: both u00 and u10 nonzero
+    StabilizerStateSum sss(1);
+    sss.apply_gate(makeRX(M_PI / 2.0, 0));
+    EXPECT_EQ(sss.get_states().size(), 2u);
+    EXPECT_EQ(sss.get_coefficients().size(), 2u);
+    double total_prob = 0.0;
+    for (const auto& c : sss.get_coefficients())
+        total_prob += std::norm(c);
+    EXPECT_NEAR(total_prob, 1.0, 1e-9);
+}
+
+TEST(StabilizerStateSum, ArbitraryGate_RX_Pi_On_One_OneTermResult) {
+    // RX(π)|1⟩ = -i|0⟩: u11 = 0 so only the u01 (X-flip) branch is created via on_one
+    StabilizerStateSum sss(1);
+    sss.apply_gate(makeGate("X", {}, {0}));  // prepare |1⟩
+    sss.apply_gate(makeRX(M_PI, 0));
+    ASSERT_EQ(sss.get_states().size(), 1u);
+    EXPECT_FALSE(sss.get_states()[0].z_eigenvalue(0));  // qubit ended in |0⟩
+}
+
+TEST(StabilizerStateSum, ArbitraryGate_RX_HalfPi_On_One_TwoTermResult) {
+    // RX(π/2)|1⟩: both u01 and u11 nonzero → two terms via on_one
+    StabilizerStateSum sss(1);
+    sss.apply_gate(makeGate("X", {}, {0}));  // prepare |1⟩
+    sss.apply_gate(makeRX(M_PI / 2.0, 0));
+    EXPECT_EQ(sss.get_states().size(), 2u);
+}
+
+TEST(StabilizerStateSum, ArbitraryGate_RX_On_Superposition_BothBranchesHit) {
+    // H then RX on qubit in superposition: random Z eigenvalue exercises both on_zero and on_one
+    StabilizerStateSum sss(1);
+    sss.apply_gate(makeGate("H", {}, {0}));  // prepare |+⟩
+    sss.apply_gate(makeRX(M_PI / 2.0, 0));
+    EXPECT_GT(sss.get_states().size(), 0u);
+    EXPECT_EQ(sss.get_states().size(), sss.get_coefficients().size());
+}
+
+TEST(StabilizerStateSum, ArbitraryGate_IdentityMatrix_DeterministicState_NoChange) {
+    // Identity on |0⟩: deterministic Z eigenvalue, goes through on_zero which returns one term unchanged
+    StabilizerStateSum sss(1);
+    Gate id("ID", make2x2Identity(), {}, {0}, {});
+    sss.apply_gate(id);
+    ASSERT_EQ(sss.get_states().size(), 1u);
+    EXPECT_NEAR(std::norm(sss.get_coefficients()[0]), 1.0, 1e-9);
+    EXPECT_FALSE(sss.get_states()[0].z_eigenvalue(0));  // still |0⟩
 }
 
 // GCOV_EXCL_BR_STOP
