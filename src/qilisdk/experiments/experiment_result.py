@@ -43,6 +43,9 @@ class Dimension:
         self.labels = labels
         self.values = values
 
+    def __repr__(self) -> str:
+        return f"Dimension(labels={self.labels}, values={self.values})"
+
 
 _LABEL_AMPLITUDE = "Amplitude (V)"
 _LABEL_PHASE = "Phase (rad)"
@@ -329,6 +332,9 @@ class ExperimentResult(FunctionalResult):
             )
         else:
             raise NotImplementedError("3D and higher dimension plots are not supported yet.")
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(qubit={self.qubit}, averages={self.averages}, data={self.data}, dims={self.dims})"
 
 
 @yaml.register_class
