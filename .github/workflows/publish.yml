@@ -31,7 +31,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, windows-latest]
+        # PyPI gets the full platform set; the pyx indexes (speqtrum / euroqcs) are Linux x86_64 only.
+        os: ${{ fromJSON((inputs.index || 'pypi') == 'pypi' && '["ubuntu-latest", "ubuntu-24.04-arm", "macos-latest", "windows-latest"]' || '["ubuntu-latest"]') }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -77,8 +78,6 @@ jobs:
           name: sdist
           path: dist/*.tar.gz
 
-  # PyPI publish via OIDC trusted publishing. Runs automatically on every
-  # released GitHub release, and on a manual dispatch when index == pypi.
   deploy-pypi:
     name: Publish to PyPI
     runs-on: ubuntu-latest
@@ -118,9 +117,6 @@ jobs:
           --check-url https://pypi.org/simple/qilisdk/
           ${{ inputs.dry_run && '--dry-run' || '' }}
 
-  # Manual publish to a Qilimanjaro pyx index (speqtrum / euroqcs). Only runs on
-  # a workflow_dispatch where a non-pypi index is selected. Authenticated with
-  # the PYX_API_KEY secret rather than OIDC.
   deploy-index:
     name: Publish to ${{ inputs.index }}
     runs-on: ubuntu-latest
@@ -129,8 +125,6 @@ jobs:
     permissions:
       contents: read
     steps:
-      # Checkout is required so `uv publish --index <name>` can resolve the
-      # index's publish-url from pyproject.toml's [[tool.uv.index]] table.
       - uses: actions/checkout@v5
         with:
           fetch-depth: 1
@@ -160,5 +154,4 @@ jobs:
         run: >-
           uv publish
           --index ${{ inputs.index }}
-          --check-url https://api.pyx.dev/simple/qilimanjaro/${{ inputs.index }}
           ${{ inputs.dry_run && '--dry-run' || '' }}
