@@ -14,7 +14,7 @@
 
 
 import copy
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -33,9 +33,11 @@ from qilisdk.core.variables import (
     Domain,
     OneHot,
     Operation,
+    SpinVariable,
     Term,
     Variable,
 )
+from qilisdk.utils.classical_solvers import BruteForceSolver
 
 
 # ---------- SlackCounter ----------
@@ -235,6 +237,242 @@ def test_model_to_ham():
     assert m.to_qubo().to_hamiltonian() == (
         (1 - Z(0)) / 2 + 2 * (1 - Z(1)) / 2 + 3 * (1 - Z(2)) / 2 + 10 * ((1 - Z(0)) / 2) * ((1 - Z(0)) / 2)
     )
+
+
+# ---------- Model constructors ----------
+
+
+def test_model_knapsack_basic():
+    m = Model.knapsack(values=[3, 2, 5], weights=[2, 1, 3], max_weight=4)
+    assert m.label == "Knapsack"
+    # 3 item bits (b0..b2) + 3 weight bits (w0..w2, floor(log2(4))=2 → M+1=3)
+    assert len(m.variables()) == 6
+    # Full Ising Hamiltonian is entirely in the objective — no constraints
+    assert len(m.constraints) == 0
+    assert m.objective.sense == ObjectiveSense.MINIMIZE
+
+
+def test_model_knapsack_custom_label():
+    m = Model.knapsack(values=[1, 2], weights=[1, 1], max_weight=1, label="MyKnapsack")
+    assert m.label == "MyKnapsack"
+
+
+def test_model_knapsack_mismatched_lengths():
+    with pytest.raises(ValueError, match=r"number of weights must be equal"):
+        Model.knapsack(values=[1, 2, 3], weights=[1, 2], max_weight=5)
+
+
+def test_model_knapsack_negative_weight():
+    with pytest.raises(ValueError, match=r"non-negative"):
+        Model.knapsack(values=[1, 2], weights=[-1, 2], max_weight=5)
+
+
+def test_model_knapsack_brute_force_solution():
+    # items: value=5 weight=3, value=4 weight=2; max_weight=3
+    # optimal: b0=1 only (value=5, weight=3); taking both violates constraint (weight=5>3)
+    m = Model.knapsack(values=[5, 4], weights=[3, 2], max_weight=3)
+    _, sample = BruteForceSolver().solve(m)
+    by_label = {v.label: v for v in m.variables()}
+    b0, b1 = by_label["b0"], by_label["b1"]
+    assert 3 * sample[b0] + 2 * sample[b1] <= 3
+    assert sample[b0] == 1
+    assert sample[b1] == 0
+
+
+def test_model_random_ising_structure():
+    m = Model.random_ising(num_variables=3)
+    assert m.label == "Random Ising"
+    assert len(m.variables()) == 3
+    assert len(m.constraints) == 0
+
+
+def test_model_random_ising_custom_label_and_seed():
+    m1 = Model.random_ising(num_variables=4, seed=42, label="RandIsing")
+    m2 = Model.random_ising(num_variables=4, seed=42)
+    assert m1.label == "RandIsing"
+    # Same seed produces identical objective terms
+    assert hash(m1.objective.term) == hash(m2.objective.term)
+
+
+def test_model_random_ising_different_seeds_differ():
+    m1 = Model.random_ising(num_variables=4, seed=1)
+    m2 = Model.random_ising(num_variables=4, seed=2)
+    assert hash(m1.objective.term) != hash(m2.objective.term)
+
+
+def test_model_factoring_basic():
+    m = Model.factoring(6)
+    assert m.label == "Factoring"
+    assert len(m.constraints) == 0
+    # brute-force should find factors: 6 = 2*3 → x0=0,x1=1 and y0=1,y1=0 (or permutations)
+    results, _ = BruteForceSolver().solve(m)
+    obj_val = next(iter(results.values()))
+    assert obj_val == 0
+
+
+def test_model_factoring_custom_label():
+    m = Model.factoring(4, label="Factor4")
+    assert m.label == "Factor4"
+
+
+def test_model_max_cut_basic():
+    # Triangle graph: 3 nodes, 3 edges
+    m = Model.max_cut(edges=[(0, 1), (1, 2), (0, 2)])
+    assert m.label == "Max-Cut"
+    assert m.objective.sense == ObjectiveSense.MAXIMIZE
+    assert len(m.variables()) == 3
+    assert len(m.constraints) == 0
+
+
+def test_model_max_cut_custom_label_and_weights():
+    m = Model.max_cut(edges=[(0, 1), (1, 2)], weights=[2.0, 3.0], label="WMax-Cut")
+    assert m.label == "WMax-Cut"
+    assert len(m.variables()) == 3
+
+
+def test_model_max_cut_mismatched_weights():
+    with pytest.raises(ValueError, match=r"number of weights must be equal"):
+        Model.max_cut(edges=[(0, 1), (1, 2)], weights=[1.0])
+
+
+def test_model_max_cut_brute_force_solution():
+    # Path graph 0-1-2: max cut = 2 (put nodes 0,2 on one side, node 1 on the other).
+    # evaluate() negates MAXIMIZE objectives, so brute_force returns the negated value (-2).
+    m = Model.max_cut(edges=[(0, 1), (1, 2)])
+    results, _ = BruteForceSolver().solve(m)
+    obj_val = results[m.objective.label]
+    assert obj_val == -2
+
+
+def test_model_graph_coloring_basic():
+    # Triangle graph needs 3 colors
+    m = Model.graph_coloring(edges=[(0, 1), (1, 2), (0, 2)], num_colors=3)
+    assert m.label == "Graph Coloring"
+    # Full Ising Hamiltonian is entirely in the objective — no constraints (Lucas Eq. 51)
+    assert len(m.constraints) == 0
+    assert len(m.variables()) == 9  # 3 nodes * 3 colors
+
+
+def test_model_graph_coloring_custom_label():
+    m = Model.graph_coloring(edges=[(0, 1)], num_colors=2, label="MyColoring")
+    assert m.label == "MyColoring"
+
+
+def test_model_graph_coloring_no_constraints():
+    # Lucas Eq. 51: entire Hamiltonian is the objective — no constraints at all
+    m = Model.graph_coloring(edges=[(0, 1)], num_colors=2)
+    assert len(m.constraints) == 0
+
+
+def test_model_travelling_salesman_basic():
+    edges = [(0, 1), (0, 2), (1, 2)]
+    distances = [1.0, 2.0, 3.0]
+    m = Model.travelling_salesman(edges, distances)
+    assert m.label == "Travelling Salesman"
+    # City 0 fixed at position 0 (Lucas §7.2): (N-1)^2 = 4 variables, no constraints
+    assert len(m.variables()) == 4
+    assert len(m.constraints) == 0
+
+
+def test_model_travelling_salesman_custom_label():
+    edges = [(0, 1)]
+    distances = [1.0]
+    m = Model.travelling_salesman(edges, distances, label="TSP")
+    assert m.label == "TSP"
+
+
+def test_model_travelling_salesman_mismatched_lengths():
+    with pytest.raises(ValueError, match=r"edges and distances must have the same length"):
+        Model.travelling_salesman([(0, 1), (1, 2)], [1.0])
+
+
+def test_model_travelling_salesman_no_constraints():
+    # Lucas §7.2: entire Hamiltonian is the objective — no constraints at all
+    edges = [(0, 1), (0, 2), (1, 2)]
+    distances = [1.0, 2.0, 3.0]
+    m = Model.travelling_salesman(edges, distances)
+    assert len(m.constraints) == 0
+
+
+def test_model_travelling_salesman_evaluate_valid_tour():
+    edges = [(0, 1), (0, 2), (1, 2)]
+    distances = [1.0, 2.0, 3.0]
+    m = Model.travelling_salesman(edges, distances)
+    # Tour: city 0 (fixed at pos 0) → city 1 (pos 1) → city 2 (pos 2) → city 0
+    # Penalty terms = 0 (valid tour), distance = d(0,1)+d(1,2)+d(2,0) = 1+3+2 = 6.
+    # H = A*0 + 6 = 6.
+    vars_by_label = {v.label: v for v in m.variables()}
+    sample = dict.fromkeys(m.variables(), 0)
+    sample[vars_by_label["x1_1"]] = 1  # city 1 at position 1
+    sample[vars_by_label["x2_2"]] = 1  # city 2 at position 2
+    results = m.evaluate(sample)
+    assert results[m.objective.label] == 6
+
+
+# ---------- BruteForceSolver ----------
+
+
+def test_brute_force_minimize():
+    m = Model("bf_min")
+    x, y = BinaryVariable("x"), BinaryVariable("y")
+    m.set_objective(x + 2 * y, sense=ObjectiveSense.MINIMIZE)
+    results, sample = BruteForceSolver().solve(m)
+    assert sample[x] == 0
+    assert sample[y] == 0
+    assert results[m.objective.label] == 0
+
+
+def test_brute_force_maximize():
+    m = Model("bf_max")
+    x, y = BinaryVariable("x"), BinaryVariable("y")
+    m.set_objective(x + 2 * y, sense=ObjectiveSense.MAXIMIZE)
+    results, sample = BruteForceSolver().solve(m)
+    assert sample[x] == 1
+    assert sample[y] == 1
+    # evaluate() negates MAXIMIZE objectives, so the returned value is -(x + 2y) = -3.
+    assert results[m.objective.label] == -3
+
+
+def test_brute_force_respects_constraints():
+    # Without constraint handling, brute_force would greedily pick all items (value=18, weight=14)
+    # which violates max_weight=5. The correct answer is b0=1,b1=1 (value=7, weight=5).
+    m = Model.knapsack(values=[3, 4, 5, 6], weights=[2, 3, 4, 5], max_weight=5)
+    _, sample = BruteForceSolver().solve(m)
+    by_label = {v.label: v for v in m.variables()}
+    b0, b1, b2, b3 = by_label["b0"], by_label["b1"], by_label["b2"], by_label["b3"]
+    assert 2 * sample[b0] + 3 * sample[b1] + 4 * sample[b2] + 5 * sample[b3] <= 5
+    assert sample[b0] == 1
+    assert sample[b1] == 1
+    assert sample[b2] == 0
+    assert sample[b3] == 0
+
+
+def test_brute_force_returns_evaluate_dict():
+    m = Model("bf_eval")
+    x = BinaryVariable("x")
+    m.set_objective(x + 0, sense=ObjectiveSense.MINIMIZE)
+    m.add_constraint("must_be_zero", EQ(x, 0))
+    results, _ = BruteForceSolver().solve(m)
+    # results should contain both the objective label and the constraint label
+    assert m.objective.label in results
+    assert "must_be_zero" in results
+
+
+def test_brute_force_with_bounded_variable():
+    m = Model("bf_bounded")
+    v = Variable("v", Domain.POSITIVE_INTEGER, bounds=(0, 3))
+    m.set_objective(v + 0, sense=ObjectiveSense.MINIMIZE)
+    _, sample = BruteForceSolver().solve(m)
+    assert sample[v] == 0
+
+
+def test_brute_force_raises_for_unsupported_variable():
+    # SpinVariable is not BinaryVariable or Variable, so BruteForceSolver raises ValueError.
+    m = Model("bf_spin")
+    s = SpinVariable("s")
+    m.set_objective(s + 0)
+    with pytest.raises(ValueError):  # noqa: PT011
+        BruteForceSolver().solve(m)
 
 
 # ---------- QUBO ----------
@@ -694,10 +932,8 @@ def test_to_qubo_linearises_cubic_objective():
     qubo = m.to_qubo(linearization_lagrange_multiplier=50)
     aux_labels = [v.label for v in qubo.variables() if v.label.startswith("_linearization_aux")]
     assert len(aux_labels) == 1
-    # Exactly one Rosenberg constraint.
     rosenberg = [c for c in qubo.constraints if c.label.startswith("linearization_")]
     assert len(rosenberg) == 1
-    # Brute force: the QUBO optimum should have xyz = 1 and aux = x*y.
     best_args, _ = _qubo_minimum(qubo)
     assert best_args[x] * best_args[y] * best_args[z] == 1
 
@@ -709,7 +945,6 @@ def test_to_qubo_linearises_cubic_equality_constraint():
     m.add_constraint("forbid_triple", EQ(x * y * z, 0), lagrange_multiplier=20)
     qubo = m.to_qubo(linearization_lagrange_multiplier=50)
     best_args, _ = _qubo_minimum(qubo)
-    # The constraint forbids (1,1,1); best feasible is two out of three = 1.
     assert best_args[x] * best_args[y] * best_args[z] == 0
     assert best_args[x] + best_args[y] + best_args[z] == 2
 
@@ -731,7 +966,6 @@ def test_to_qubo_auxiliary_reused_between_objective_and_constraint():
     m.add_constraint("c", EQ(x * y * w, 0), lagrange_multiplier=10)
     qubo = m.to_qubo()
     aux_labels = [v.label for v in qubo.variables() if v.label.startswith("_linearization_aux")]
-    # The x*y pair is shared between the objective monomial and the EQ constraint penalty.
     assert len(aux_labels) == 1
 
 
@@ -759,8 +993,196 @@ def test_to_qubo_linearises_quartic_monomial():
     a, b, c, d = (BinaryVariable(name) for name in ("a", "b", "c", "d"))
     m.set_objective(-(a * b * c * d))  # minimise = maximise abcd
     qubo = m.to_qubo(linearization_lagrange_multiplier=100)
-    # A degree-4 monomial needs two substitutions to collapse to quadratic.
     aux_labels = [v.label for v in qubo.variables() if v.label.startswith("_linearization_aux")]
     assert len(aux_labels) == 2
     best_args, _ = _qubo_minimum(qubo)
     assert best_args[a] * best_args[b] * best_args[c] * best_args[d] == 1
+
+
+def test_generate_encoding_constraints_idempotent():
+    m = Model("enc")
+    v = Variable("v", Domain.POSITIVE_INTEGER, bounds=(0, 3))
+    m.add_constraint("c1", EQ(v, 1))
+    enc_count = len(m.encoding_constraints)
+    assert enc_count > 0
+    m.add_constraint("c2", LEQ(v, 2))
+    assert len(m.encoding_constraints) == enc_count
+
+
+def test_model_str_with_encoding_constraints():
+    m = Model("enc_str")
+    v = Variable("v", Domain.POSITIVE_INTEGER, bounds=(0, 3))
+    m.add_constraint("c", EQ(v, 1))
+    s = str(m)
+    assert "subject to the encoding constraint/s:" in s
+
+
+def test_model_knapsack_zero_items():
+    with pytest.raises(ValueError, match=r"number of items must be greater than zero"):
+        Model.knapsack(values=[], weights=[], max_weight=5)
+
+
+def test_model_knapsack_non_integer_max_weight():
+    with pytest.raises(ValueError, match=r"non-negative integers"):
+        Model.knapsack(values=[1], weights=[1], max_weight=1.5)
+
+
+def test_model_knapsack_zero_max_weight():
+    with pytest.raises(ValueError, match=r"max_weight must be a positive integer"):
+        Model.knapsack(values=[1], weights=[1], max_weight=0)
+
+
+def test_model_knapsack_trivial_hamiltonian_raises():
+    with patch("qilisdk.core.model.BinaryVariable", return_value=0):
+        with pytest.raises(ValueError, match=r"trivial"):
+            Model.knapsack(values=[1, 2], weights=[1, 2], max_weight=3)
+
+
+def test_model_max_cut_empty_edges():
+    with pytest.raises(ValueError, match=r"The graph must have at least one edge"):
+        Model.max_cut(edges=[])
+
+
+def test_model_travelling_salesman_reversed_city0_edge():
+    edges = [(0, 1), (2, 0), (1, 2)]
+    distances = [1.0, 2.0, 3.0]
+    m = Model.travelling_salesman(edges, distances)
+    assert len(m.variables()) == 4  # (N-1)^2 with N=3
+
+
+def test_model_travelling_salesman_empty_terms_raises():
+    with patch("builtins.max", return_value=0):
+        with pytest.raises(ValueError, match="at least one edge"):
+            Model.travelling_salesman([], [])
+
+
+def test_model_travelling_salesman_trivial_hamiltonian_raises():
+    with patch("qilisdk.core.model.BinaryVariable", return_value=0):
+        with pytest.raises(ValueError, match="at least one edge"):
+            Model.travelling_salesman([(0, 1), (1, 2), (0, 2)], [1.0, 2.0, 3.0])
+
+
+def test_model_to_qubo_lagrange_multiplier_override():
+    m = Model("lm_override")
+    b = BinaryVariable("b")
+    term = b * 1
+    m.set_objective(term)
+    m.add_constraint("c", EQ(b, 0), lagrange_multiplier=100)
+    q = m.to_qubo(lagrange_multiplier_dict={"c": 42})
+    assert q.lagrange_multipliers.get("c") == 42
+
+
+def test_linearizer_reduce_non_term():
+    linearizer = _Linearizer()
+    assert linearizer.reduce(42) == 42
+
+
+def test_compute_lower_upper_limits_mul_positive_coefficient():
+    q = QUBO("test")
+    b = BinaryVariable("b")
+    mul_term = 2 * b
+    _, lower, upper = q._compute_lower_and_upper_limits(mul_term)
+    assert upper == 2
+    assert lower == 0
+
+
+def test_compute_lower_upper_limits_mul_negative_coefficient():
+    q = QUBO("test")
+    b = BinaryVariable("b")
+    mul_term = -2 * b
+    _, lower, upper = q._compute_lower_and_upper_limits(mul_term)
+    assert lower == -2
+    assert upper == 0
+
+
+def test_compute_lower_upper_limits_unsupported_operation():
+    q = QUBO("test")
+    b = BinaryVariable("b")
+    sub_term = Term([b, 1], Operation.SUB)
+    with pytest.raises(ValueError, match=r"Operation .* in constraint is not supported"):
+        q._compute_lower_and_upper_limits(sub_term)
+
+
+def test_qubo_set_objective_cubic_without_linearizer_raises():
+    q = QUBO("test")
+    x, y, z = BinaryVariable("x"), BinaryVariable("y"), BinaryVariable("z")
+    with pytest.raises(ValueError, match=r"QUBO objective can not contain terms of order higher than 2"):
+        q.set_objective(x * y * z)
+
+
+def test_linearizer_reduce_nested_add_element():
+    x, y, z = BinaryVariable("x"), BinaryVariable("y"), BinaryVariable("z")
+    inner = x + y
+    outer = Term([inner, z], Operation.ADD)
+    linearizer = _Linearizer()
+    result = linearizer.reduce(outer)
+    assert result.degree <= 2
+
+
+def test_linearizer_reduce_returns_non_add_non_mul_term_unchanged():
+    b = BinaryVariable("b")
+    sub_term = Term([b, 1], Operation.SUB)
+    linearizer = _Linearizer()
+    result = linearizer.reduce(sub_term)
+    assert result is sub_term
+
+
+def test_linearizer_reduce_monomial_nested_sub_term_raises():
+    x, y, z, w = BinaryVariable("x"), BinaryVariable("y"), BinaryVariable("z"), BinaryVariable("w")
+    inner_add = x + y
+    nested_mul = Term([inner_add, z, w], Operation.MUL)
+    linearizer = _Linearizer()
+    with pytest.raises(ValueError, match=r"does not support nested sub-term"):
+        linearizer._reduce_monomial(nested_mul)
+
+
+def test_linearizer_reduce_add_with_nested_add_sub_term():
+    x, y, z, w = BinaryVariable("x"), BinaryVariable("y"), BinaryVariable("z"), BinaryVariable("w")
+    cubic = x * y * z
+    inner_add = cubic + w
+    outer_add = Term([inner_add, w], Operation.ADD)
+    linearizer = _Linearizer()
+    result = linearizer.reduce(outer_add)
+    assert result.degree <= 2
+
+
+def test_linearizer_reduce_add_with_preserved_sub_term_element():
+    # Line 897: ADD term containing a non-MUL Term hits coeff * self.reduce(element).
+    # SUB sub-terms are NOT flattened by Term.__init__ (unlike same-operation ADD terms),
+    # so the SUB Term survives as a dict key and is seen by the reduce loop.
+    x, y, z = BinaryVariable("x"), BinaryVariable("y"), BinaryVariable("z")
+    sub_term = Term([x, y], Operation.SUB)
+    outer = Term([sub_term, z], Operation.ADD)
+    linearizer = _Linearizer()
+    result = linearizer.reduce(outer)
+    assert isinstance(result, Term)
+    assert result.operation == Operation.ADD
+
+
+def test_linearizer_reduce_monomial_wraps_constant_in_term():
+    linearizer = _Linearizer()
+    mock_monomial = MagicMock()
+    mock_monomial.operation = Operation.MUL
+    mock_monomial.degree = 3
+    mock_monomial.__iter__ = MagicMock(return_value=iter([]))  # no elements → variables stays []
+    result = linearizer._reduce_monomial(mock_monomial)
+    assert isinstance(result, Term)
+    assert result.operation == Operation.MUL
+
+
+def test_compute_lower_upper_limits_add_negative_coefficient():
+    q = QUBO("test")
+    b1, b2 = BinaryVariable("b1"), BinaryVariable("b2")
+    h = b1 - b2
+    _, lower, upper = q._compute_lower_and_upper_limits(h)
+    assert lower == -1
+    assert upper == 1
+
+
+def test_qubo_copy_includes_encoding_constraints():
+    q = QUBO("test")
+    b = BinaryVariable("b")
+    q.set_objective(2 * b)
+    q._encoding_constraints["enc"] = Constraint("enc", EQ(b, 0))
+    q2 = copy.copy(q)
+    assert "enc" in q2._encoding_constraints
