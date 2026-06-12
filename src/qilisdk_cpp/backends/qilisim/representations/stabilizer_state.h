@@ -39,21 +39,21 @@ class StabilizerState {
     const std::vector<std::bitset<MAX_ROWS_STABILIZER>>& get_z_bits() const { return z_bits; }
     const std::bitset<MAX_ROWS_STABILIZER>& get_phases() const { return phases; }
     int get_nqubits() const { return nqubits; }
-    void apply_gate(const Gate& gate);
-    std::string sample() const;
+    std::complex<double> apply_gate(const Gate& gate);
+    std::pair<bool, std::string> sample() const;
     void project_z(int q, bool outcome);
     int find_x_pivot(int q) const;
     void rowsum(int h, int i);
     bool z_eigenvalue(int q) const;
+    std::complex<double> one_branch_phase(int q) const;
 };
 
 class StabilizerStateSum {
    private:
-    int nqubits;
+    int nqubits = 0;
     int max_terms = 0;
-    std::vector<StabilizerState> states;
-    std::vector<std::complex<double>> coefficients;
-    void truncate();
+    std::vector<StabilizerState> states = {};
+    std::vector<std::complex<double>> coefficients = {};
 
    public:
     StabilizerStateSum(int nqubits) : nqubits(nqubits) {
@@ -69,6 +69,9 @@ class StabilizerStateSum {
     int get_max_terms() const { return max_terms; }
     void set_max_terms(int n) { max_terms = n; }
     void apply_gate(const Gate& gate);
+    void truncate();
+    void combine_duplicates();
+    void normalize();
 };
 
 // GCOV_EXCL_BR_STOP

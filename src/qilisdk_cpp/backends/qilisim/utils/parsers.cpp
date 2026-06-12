@@ -668,6 +668,9 @@ StabilizerStateSum parse_initial_state_stabilizer(const py::object& initial_stat
         } else {
             return StabilizerStateSum(nqubits);
         }
+    } else {
+        throw py::value_error("Initial state type not recognized for stabilizer backend. Only InitialState or None are supported.");
+    }
     return StabilizerStateSum(nqubits);
 }
 

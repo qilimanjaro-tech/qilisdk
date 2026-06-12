@@ -361,10 +361,9 @@ class DigitalMethod(BaseSimulatorConfig):
         description="Whether to use the matrix-free implementation for statevector simulation.",
     )
     stabilizer_max_states: int = Field(
-        default=100,
-        ge=1,
+        default=0,
         description=(
-            "Maximum number of stabilizer states to track when using the stabilizer digital simulation method."
+            "Maximum number of stabilizer states to track when using the stabilizer digital simulation method. Set to zero or less for unlimited.",
         ),
     )
 
@@ -411,11 +410,11 @@ class DigitalMethod(BaseSimulatorConfig):
         )
 
     @classmethod
-    def stabilizer(cls, max_states: int = 100) -> DigitalMethod:
+    def stabilizer(cls, max_states: int = 0) -> DigitalMethod:
         """Return a stabilizer-based simulation configuration.
 
         Args:
-            max_states (int): Maximum number of stabilizer states to track. Defaults to ``100``.
+            max_states (int): Maximum number of stabilizer states to track. Set to zero or less for unlimited. Defaults to ``0``.
         """
         return DigitalMethod(
             sampling_method="stabilizer",

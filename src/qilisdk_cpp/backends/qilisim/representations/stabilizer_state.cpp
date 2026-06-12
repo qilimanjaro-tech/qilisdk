@@ -50,22 +50,23 @@ std::ostream& operator<<(std::ostream& os, const StabilizerStateSum& sss) {
     */
     os << "StabilizerStateSum with " << sss.get_states().size() << " terms:\n";
     for (size_t i = 0; i < sss.get_states().size(); ++i) {
+        os << "Term " << i << ":\n";
         const int n = sss.get_states()[i].get_nqubits();
         auto truncate = [n](const std::bitset<MAX_ROWS_STABILIZER>& bs) {
             auto s = bs.to_string().substr(MAX_ROWS_STABILIZER - n);
             std::reverse(s.begin(), s.end());
             return s;
         };
-        os << "Coefficient: " << sss.get_coefficients()[i] << "\n";
-        os << "X stabilizers:\n";
+        os << "  Coefficient: " << sss.get_coefficients()[i] << " (norm " << std::norm(sss.get_coefficients()[i]) << ")\n";
+        os << "  X stabilizers:\n";
         for (int j = 0; j < n; ++j) {
-            os << "For qubit " << j << ": " << truncate(sss.get_states()[i].get_x_bits()[j]) << "\n";
+            os << "    For qubit " << j << ": " << truncate(sss.get_states()[i].get_x_bits()[j]) << "\n";
         }
-        os << "Z stabilizers:\n";
+        os << "  Z stabilizers:\n";
         for (int j = 0; j < n; ++j) {
-            os << "For qubit " << j << ": " << truncate(sss.get_states()[i].get_z_bits()[j]) << "\n";
+            os << "    For qubit " << j << ": " << truncate(sss.get_states()[i].get_z_bits()[j]) << "\n";
         }
-        os << "Phases: " << truncate(sss.get_states()[i].get_phases()) << "\n";
+        os << "  Phases: " << truncate(sss.get_states()[i].get_phases()) << "\n";
     }
     return os;
 }
@@ -159,7 +160,7 @@ static bool z_phase_by_ge(const std::vector<std::bitset<MAX_ROWS_STABILIZER>>& x
     return tgt.ph;
 }
 
-std::string StabilizerState::sample() const {
+std::pair<bool, std::string> StabilizerState::sample() const {
     /*
     Sample from the StabilizerState.
     This is done by iterating through each qubit and determining whether the outcome is random or deterministic.
@@ -168,7 +169,9 @@ std::string StabilizerState::sample() const {
     For deterministic outcomes, we use Gaussian elimination to find the Z eigenvalue.
 
     Returns:
-        std::string: A bitstring representing the measurement outcome for each qubit.
+        std::pair<bool, std::string>: The phase of the result (true = -1, false = +1) and a bitstring
+            representing the measurement outcome for each qubit. For example, measuring |-> and getting
+            |1> returns {true, "1"} because the coefficient of |1> in (|0>-|1>)/sqrt(2) is negative.
     */
 
     // Create copies of the tableau data structures that we can modify during sampling
@@ -178,6 +181,9 @@ std::string StabilizerState::sample() const {
 
     // The bitstring to return
     std::string result(nqubits, '0');
+
+    // Track the overall phase of the measurement outcome (XOR of per-qubit phase contributions)
+    bool phase_bit = false;
 
     // For each qubit, determine if the outcome is random or deterministic
     for (int k = 0; k < nqubits; ++k) {
@@ -213,6 +219,10 @@ std::string StabilizerState::sample() const {
                 }
             }
 
+            // Capture the pivot phase before overwriting it: if the pivot stabilizer has phase -1
+            // and the outcome is |1>, the amplitude carries a factor of -1.
+            bool pivot_phase = (bool)ph[p];
+
             // Flip a coin to decide the outcome of the measurement for this qubit
             int b = rand() & 1;
 
@@ -229,13 +239,18 @@ std::string StabilizerState::sample() const {
             }
             result[k] = b ? '1' : '0';
 
+            // The phase contribution for this qubit is -1 only when the pivot had phase -1 AND the outcome is |1>
+            if (b && pivot_phase)
+                phase_bit = !phase_bit;
+
             // Otherwise the outcome is deterministic: we can read off the Z eigenvalue using Gaussian elimination on the tableau
         } else {
             result[k] = z_phase_by_ge(x, z, ph, nqubits, k) ? '1' : '0';
+            // Deterministic outcomes are definite eigenstates, so they always contribute phase +1
         }
     }
 
-    return result;
+    return {phase_bit, result};
 }
 
 std::map<std::string, int> StabilizerStateSum::sample(int nshots) const {
@@ -250,44 +265,107 @@ std::map<std::string, int> StabilizerStateSum::sample(int nshots) const {
         std::map<std::string, int>: A map from bitstrings to counts.
     */
 
-    // Repeat for each shot:
+    // We do more samples than needed here to allow for some interference.
+    // States are picked UNIFORMLY (not proportionally to |c_i|^2). With |c_i|^2-proportional picking
+    // the accumulated amplitude estimator is E[pre_samples[b]] ∝ sum_i |c_i|^2 * <b|s_i> * c_i,
+    // which is biased when norms are unequal. With uniform picking (1/M per term) the estimator is
+    // E[pre_samples[b]] ∝ sum_i <b|s_i> * c_i = A(b), which is the correct interference amplitude.
+    const size_t M = states.size();
+    const int extra_sample_factor = 10;
+    std::map<std::string, std::complex<double>> pre_samples;
+    for (int shot = 0; shot < nshots * extra_sample_factor; ++shot) {
+
+        // Pick a state uniformly
+        size_t index = static_cast<size_t>((static_cast<double>(rand()) / (static_cast<double>(RAND_MAX) + 1.0)) * M);
+        
+        // Sample from that
+        const StabilizerState& state = states[index];
+        auto [phase, sample_str] = state.sample();
+        if (phase) {
+            pre_samples[sample_str] -= coefficients[index];
+        } else {
+            pre_samples[sample_str] += coefficients[index];
+        }
+
+        // TODO Instead, I want to do the following:
+
+        // TODO Pick a state with probability proportional to |c_i|^2
+
+        // TODO Sample from it
+
+        // TODO Get the amplitude of that bitstring for the whole StabilizerStateSum, i.e. <b|ψ> = sum_i c_i <b|s_i>
+
+        // TODO Save this as pre_samples[b] = p
+        
+    }
+
+    // Convert to probabilities for each bitstring
+    std::map<std::string, double> probabilities;
+    double total = 0.0;
+    for (const auto& [sample_str, amp] : pre_samples) {
+        probabilities[sample_str] = std::norm(amp);
+        total += probabilities[sample_str];
+    }
+
+    // Normalize probabilities
+    for (auto& [sample_str, prob] : probabilities) {
+        prob /= total;
+    }
+
+    // Sample from these
     std::map<std::string, int> sample_counts;
     for (int shot = 0; shot < nshots; ++shot) {
-        // First, pick an element of the sum according to the probabilities given by the coefficients
-        // int index = 0;
         double r = ((double)rand() / (RAND_MAX));
         double cumulative_prob = 0.0;
-        size_t index = 0;
-        for (size_t i = 0; i < coefficients.size(); ++i) {
-            cumulative_prob += std::norm(coefficients[i]);
+        for (const auto& [sample_str, prob] : probabilities) {
+            cumulative_prob += prob;
             if (r < cumulative_prob) {
-                index = i;
+                sample_counts[sample_str]++;
                 break;
             }
         }
-
-        // Sample from that
-        const StabilizerState& state = states[index];
-        std::string sample_str = state.sample();
-        sample_counts[sample_str]++;
     }
 
     // Return the counts
     return sample_counts;
 }
 
-void StabilizerState::apply_gate(const Gate& gate) {
+std::complex<double> StabilizerState::apply_gate(const Gate& gate) {
     /*
     Apply a gate to the StabilizerState. This uses the standard tableau update rules for Clifford gates. Non-Clifford gates are not supported here.
 
     Args:
         gate (Gate&): The gate to apply.
+
+    Returns:
+        std::complex<double>: The global phase factor introduced by the gate on this particular state.
+            The tableau update rules track phase changes through anticommutation relations, but they
+            miss the direct-action phase when a gate is applied to a deterministic Z eigenstate with
+            no X component (e.g. S|1>=i|1>, Z|1>=-|1>). The caller must multiply its coefficient
+            by this returned value.
     */
 
     // Get info about the gate
     const std::string name = gate.get_name();
     const auto& controls = gate.get_control_qubits();
     const auto& targets = gate.get_target_qubits();
+
+    // Compute the global phase that the tableau rules miss for single-qubit gates
+    std::complex<double> global_phase = 1.0;
+    if (controls.empty() && targets.size() == 1) {
+        int q = targets[0];
+        if (find_x_pivot(q) == -1) {
+            bool in_one = z_eigenvalue(q);
+            if (name == "S" && in_one) {
+                global_phase = std::complex<double>(0, 1);   // S|1> = i|1>
+            } else if (name == "Z" && in_one) {
+                global_phase = std::complex<double>(-1, 0);  // Z|1> = -|1>
+            } else if (name == "Y") {
+                global_phase = in_one ? std::complex<double>(0, -1)  // Y|1> = -i|0>
+                                      : std::complex<double>(0, 1);  // Y|0> = i|1>
+            }
+        }
+    }
 
     // SWAP is easy, we just swap the corresponding rows in the tableau
     if (name == "SWAP") {
@@ -351,6 +429,8 @@ void StabilizerState::apply_gate(const Gate& gate) {
             z_bits[i] ^= z_bits[j];
         }
     }
+
+    return global_phase;
 }
 
 int StabilizerState::find_x_pivot(int q) const {
@@ -472,6 +552,35 @@ bool StabilizerState::z_eigenvalue(int q) const {
     return z_phase_by_ge(x_bits, z_bits, phases, nqubits, q);
 }
 
+std::complex<double> StabilizerState::one_branch_phase(int q) const {
+    /*
+    Return the phase of the |1> amplitude for qubit q in the current state.
+    This is used when branching on qubit q: the |1> branch coefficient must be
+    multiplied by this phase to account for the local superposition structure.
+
+    For the four X/Y eigenstates of qubit q (determined by the pivot row p):
+        +X (z=0, phase=0) -> |+>,  <1|+>  = +1/√2, phase = +1
+        -X (z=0, phase=1) -> |->,  <1|->  = -1/√2, phase = -1
+        +Y (z=1, phase=0) -> |Y+>, <1|Y+> = +i/√2, phase = +i
+        -Y (z=1, phase=1) -> |Y->, <1|Y-> = -i/√2, phase = -i
+
+    The |0> amplitude phase is always +1, so no correction is needed for the |0> branch.
+    Returns 1.0 if qubit q is in a deterministic Z eigenstate (no branching phase needed).
+
+    Args:
+        q (int): The index of the qubit being branched on.
+
+    Returns:
+        std::complex<double>: The phase factor for the |1> branch.
+    */
+    int p = find_x_pivot(q);
+    if (p == -1) return {1.0, 0.0};
+    std::complex<double> phase = {1.0, 0.0};
+    if (z_bits[q][p]) phase *= std::complex<double>(0.0, 1.0);  // i for Y component
+    if (phases[p])    phase *= std::complex<double>(-1.0, 0.0); // -1 for negative stabilizer
+    return phase;
+}
+
 void StabilizerStateSum::apply_gate(const Gate& gate) {
     /*
     Apply a gate to the StabilizerStateSum.
@@ -485,10 +594,11 @@ void StabilizerStateSum::apply_gate(const Gate& gate) {
     const auto& controls = gate.get_control_qubits();
     const auto& targets = gate.get_target_qubits();
 
-    // If it's a clifford gate with at most one control, we can just apply it to each state in the sum
+    // If it's a clifford gate with at most one control, we can just apply it to each state in the sum.
+    // apply_gate returns the global phase it couldn't encode in the tableau; multiply it into the coefficient.
     if ((name == "H" || name == "S" || name == "X" || name == "Y" || name == "Z" || name == "SWAP") && controls.size() <= 1) {
-        for (auto& state : states) {
-            state.apply_gate(gate);
+        for (size_t k = 0; k < states.size(); ++k) {
+            coefficients[k] *= states[k].apply_gate(gate);
         }
         return;
     }
@@ -503,17 +613,17 @@ void StabilizerStateSum::apply_gate(const Gate& gate) {
     if (name == "T" && controls.empty()) {
         static const std::complex<double> t_phase = std::exp(std::complex<double>(0.0, M_PI / 4.0));
         branch_qubit = targets[0];
-        on_zero = [](const StabilizerState& s, std::complex<double> c) { return StabilizerStateSum({s}, {c}); };
-        on_one = [](const StabilizerState& s, std::complex<double> c) { return StabilizerStateSum({s}, {c * t_phase}); };
+        on_zero = [](const StabilizerState& s, std::complex<double> c) { return StabilizerStateSum(s.get_nqubits(), {s}, {c}); };
+        on_one = [](const StabilizerState& s, std::complex<double> c) { return StabilizerStateSum(s.get_nqubits(), {s}, {c * t_phase}); };
 
         // Toffoli gates: branch on the first control. On the 0 branch we do nothing, on the 1 branch we apply a CNOT from the second control to the target
     } else if (name == "X" && controls.size() == 2) {
         branch_qubit = controls[0];
-        on_zero = [](const StabilizerState& s, std::complex<double> c) { return StabilizerStateSum({s}, {c}); };
+        on_zero = [](const StabilizerState& s, std::complex<double> c) { return StabilizerStateSum(s.get_nqubits(), {s}, {c}); };
         on_one = [&gate](const StabilizerState& s, std::complex<double> c) {
             StabilizerState s1 = s;
-            s1.apply_gate(gate);
-            return StabilizerStateSum({s1}, {c});
+            auto phase = s1.apply_gate(gate);
+            return StabilizerStateSum(s.get_nqubits(), {s1}, {c * phase});
         };
 
         // Arbitrary single-qubit gate: the two columns of the 2x2 matrix give the output states for |0⟩ and |1⟩ inputs
@@ -538,7 +648,7 @@ void StabilizerStateSum::apply_gate(const Gate& gate) {
                 ss.push_back(std::move(s1));
                 cs.push_back(c * u10);
             }
-            return StabilizerStateSum(ss, cs);
+            return StabilizerStateSum(s.get_nqubits(), ss, cs);
         };
         on_one = [u01, u11, tol, x_gate](const StabilizerState& s, std::complex<double> c) {
             std::vector<StabilizerState> ss;
@@ -553,7 +663,7 @@ void StabilizerStateSum::apply_gate(const Gate& gate) {
                 ss.push_back(s);
                 cs.push_back(c * u11);
             }
-            return StabilizerStateSum(ss, cs);
+            return StabilizerStateSum(s.get_nqubits(), ss, cs);
         };
 
         // Otherwise not supported
@@ -569,6 +679,7 @@ void StabilizerStateSum::apply_gate(const Gate& gate) {
     new_states.reserve(states.size() * 2);
     new_coeffs.reserve(states.size() * 2);
 
+    // Add the terms from a StabilizerStateSum into the new sum we're building after branching
     auto append_sss = [&](StabilizerStateSum sss) {
         for (auto& s : sss.get_states())
             new_states.push_back(std::move(s));
@@ -576,7 +687,10 @@ void StabilizerStateSum::apply_gate(const Gate& gate) {
             new_coeffs.push_back(c);
     };
 
+    // Fo each state
     for (int k = 0; k < static_cast<int>(states.size()); ++k) {
+        
+        // Check if it's deterministic
         bool is_random = (states[k].find_x_pivot(branch_qubit) != -1);
 
         // Deterministic outcome: call the matching callback
@@ -584,15 +698,20 @@ void StabilizerStateSum::apply_gate(const Gate& gate) {
             bool outcome = states[k].z_eigenvalue(branch_qubit);
             append_sss(outcome ? on_one(states[k], coefficients[k]) : on_zero(states[k], coefficients[k]));
 
-            // Random outcome: project to each eigenstate (weight 1/√2) and call both callbacks
+            // Random outcome: project to each eigenstate (weight 1/√2) and call both callbacks.
+            // The |1> branch coefficient must also include the local superposition phase phi:
+            // for +X -> phi=+1, for -X -> phi=-1, for +Y -> phi=+i, for -Y -> phi=-i.
+            // The |0> branch phase is always +1.
         } else {
+            std::complex<double> phi = states[k].one_branch_phase(branch_qubit);
+
             StabilizerState s0 = states[k];
             s0.project_z(branch_qubit, false);
             append_sss(on_zero(s0, coefficients[k] * inv_sqrt2));
 
             StabilizerState s1 = states[k];
             s1.project_z(branch_qubit, true);
-            append_sss(on_one(s1, coefficients[k] * inv_sqrt2));
+            append_sss(on_one(s1, coefficients[k] * inv_sqrt2 * phi));
         }
     }
 
@@ -600,18 +719,37 @@ void StabilizerStateSum::apply_gate(const Gate& gate) {
     states = std::move(new_states);
     coefficients = std::move(new_coeffs);
 
-    // Truncate to max_terms if enabled
-    if (max_terms > 0 && static_cast<int>(states.size()) > max_terms) {
-        truncate();
-    }
+    // Simplify the state as much as possible
+    truncate();
+    combine_duplicates();
+    normalize();
+
 }
+
+#include <iostream>
 
 void StabilizerStateSum::truncate() {
     /*
     Truncate the StabilizerStateSum to keep only the top max_terms terms by coefficient
     magnitude. This is a heuristic to prevent exponential blowup of the number of terms
     after applying many non-Clifford gates.
+
+    Also, check that there are not equal steady states, if so, combine their coefficients.
     */
+    
+    // Don't truncate if max_terms <= 0
+    if (max_terms <= 0) {
+        return;
+    }
+    
+    // End early if we don't have more than max_terms terms
+    if (states.size() <= max_terms) {
+        return;
+    }
+    
+    std::cout << "Truncating from " << states.size() << " terms to " << max_terms << " terms." << std::endl;
+
+    // Sort by coefficient magnitude and keep only the top max_terms terms
     std::vector<size_t> indices(states.size());
     std::iota(indices.begin(), indices.end(), 0);
     std::partial_sort(indices.begin(), indices.begin() + max_terms, indices.end(), [this](size_t a, size_t b) { return std::norm(coefficients[a]) > std::norm(coefficients[b]); });
@@ -620,10 +758,70 @@ void StabilizerStateSum::truncate() {
     std::vector<std::complex<double>> new_coeffs;
     new_states.reserve(max_terms);
     new_coeffs.reserve(max_terms);
-    for (size_t i : indices) {
-        new_states.push_back(std::move(states[i]));
-        new_coeffs.push_back(coefficients[i]);
+    for (size_t idx : indices) {
+        new_states.push_back(std::move(states[idx]));
+        new_coeffs.push_back(coefficients[idx]);
     }
+
+    // Copy the new states and coeffs back over
     states = std::move(new_states);
     coefficients = std::move(new_coeffs);
+
+}
+
+void StabilizerStateSum::combine_duplicates() {
+    /*
+    Combine duplicate StabilizerStates in the sum by adding their coefficients.
+    */
+    
+    // Prepare the arrays to fill
+    std::cout << "Combining duplicates among " << states.size() << " terms." << std::endl;
+    std::vector<StabilizerState> new_states;
+    std::vector<std::complex<double>> new_coeffs;
+    new_states.reserve(states.size());
+    new_coeffs.reserve(coefficients.size());
+    
+    // For each state, add it and hash it
+    std::unordered_map<std::string, size_t> state_to_index;
+    for (size_t i = 0; i < states.size(); ++i) {
+        const StabilizerState& s = states[i];
+        std::string key;
+        for (const auto& xb : s.get_x_bits()) {
+            key += xb.to_string();
+        }
+        for (const auto& zb : s.get_z_bits()) {
+            key += zb.to_string();
+        }
+        key += s.get_phases().to_string();
+        auto it = state_to_index.find(key);
+        if (it != state_to_index.end()) {
+            new_coeffs[it->second] += coefficients[i];
+        } else {
+            state_to_index[key] = new_states.size();
+            new_states.push_back(s);
+            new_coeffs.push_back(coefficients[i]);
+        }
+    }
+    
+    // Move the new states and coeffs back over
+    std::cout << "Combined into " << new_states.size() << " unique terms." << std::endl;
+    states = std::move(new_states);
+    coefficients = std::move(new_coeffs);
+
+}
+
+void StabilizerStateSum::normalize() {
+    /*
+    Normalize the StabilizerStateSum so that the sum of the squared magnitudes of the coefficients is 1.
+    */
+    double norm = 0.0;
+    for (const auto& c : coefficients) {
+        norm += std::norm(c);
+    }
+    norm = std::sqrt(norm);
+    if (norm > 0) {
+        for (auto& c : coefficients) {
+            c /= norm;
+        }
+    }
 }
