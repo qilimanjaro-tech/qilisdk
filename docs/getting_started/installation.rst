@@ -56,27 +56,57 @@ If you want to get the newest features (those that we're still working on), you 
 but be aware that this is not recommended for most users, and we make no promises that the latest code will be stable.
 
 Support for Windows is limited, so we recommend using WSL, which can be installed as per 
-`this guide <https://learn.microsoft.com/en-us/windows/wsl/install>`__.
+`this guide <https://learn.microsoft.com/en-us/windows/wsl/install>`__. 
+With this you should then following the Linux instructions below.
+If you must use pure Windows, the Windows instructions below should work, although they disable certain code features (notably some parallelized loops).
 
-First, make sure you have a Python, pip, git, and build-essentials installed. For Ubuntu/Debian, you can run:
+First, make sure you have Python, pip, git, cmake and a C++ compiler installed:
 
-.. code-block:: bash
+.. tabs::
 
-    sudo apt update
-    sudo apt install python3 python3-pip git build-essential
+    .. group-tab:: Linux
 
-or on MacOS with:
+        .. code-block:: bash
 
-.. code-block:: bash
+            sudo apt update
+            sudo apt install python3 python3-pip git build-essential
 
-    xcode-select --install
-    brew install python git ninja cmake
+    .. group-tab:: Mac OSX
+
+        .. code-block:: bash
+
+            xcode-select --install
+            brew install python git ninja cmake
+
+    .. group-tab:: Windows
+
+         - Install Python via the Microsoft Store.
+
+         - Install Git via https://git-scm.com/install/windows.
+
+         - Install C++ build tools by installing the "C/C++ Extension Pack" extension for VSCode.
 
 Install uv globally with:
 
-.. code-block:: bash
+.. tabs::
 
-    curl -LsSf https://astral.sh/uv/install.sh | sh
+    .. group-tab:: Linux
+
+        .. code-block:: bash
+
+            curl -LsSf https://astral.sh/uv/install.sh | sh
+
+    .. group-tab:: Mac OSX
+
+        .. code-block:: bash
+
+            curl -LsSf https://astral.sh/uv/install.sh | sh
+
+    .. group-tab:: Windows
+
+        .. code-block:: bash
+
+            powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 
 Then, clone (i.e. download) and enter the repository:
 
@@ -85,12 +115,35 @@ Then, clone (i.e. download) and enter the repository:
     git clone https://github.com/qilimanjaro-tech/qilisdk
     cd qilisdk
 
-Create a new virtual environment using uv and activate it:
+Create a new virtual environment using uv:
 
 .. code-block:: bash
 
     uv venv
-    source .venv/bin/activate
+
+Then activate the environment:
+
+.. tabs::
+
+    .. group-tab:: Linux
+
+        .. code-block:: bash
+
+            source .venv/bin/activate
+
+    .. group-tab:: Mac OSX
+
+        .. code-block:: bash
+
+            source .venv/bin/activate
+
+    .. group-tab:: Windows
+
+        .. code-block:: bash
+
+            .venv\Scripts\activate
+
+.. code-block:: bash
 
 To then install QiliSDK into this new environment, run:
 

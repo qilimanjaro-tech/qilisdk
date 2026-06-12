@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from enum import Enum
 from unittest.mock import MagicMock, patch
 
 import numpy as np
@@ -20,7 +21,7 @@ import pytest
 from qilisdk.analog.hamiltonian import Hamiltonian
 from qilisdk.backends.cuda_backend import cudaq_to_standard, reverse_bits
 from qilisdk.core import Parameter
-from qilisdk.core.qtensor import QTensor, ket
+from qilisdk.core.qtensor import InitialState, QTensor, ket
 from qilisdk.functionals.analog_evolution import AnalogEvolution
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirLayer
@@ -210,7 +211,7 @@ def test_state_vector_with_gpu(mock_sample, mock_make_kernel, mock_set_target, m
     backend = CudaBackend(sampling_method=CudaSamplingMethod.STATE_VECTOR)
     circuit = Circuit(nqubits=1)
     result = backend.execute(DigitalPropagation(circuit), Readout().with_sampling(nshots=10))
-    float_precision = "fp32" if get_settings().complex_precision == Precision.COMPLEX_64 else "fp64"
+    float_precision = "fp64" if get_settings().complex_precision == Precision.COMPLEX_64 else "fp32"
     mock_set_target.assert_called_with("nvidia", option=float_precision)
     assert isinstance(result, FunctionalResult)
     assert result.get_samples() == {"0": 1000}
@@ -834,6 +835,29 @@ def test_qtensor_observable_to_hamiltonian_wrong_nqubits_raises():
         backend._qtensor_observable_to_hamiltonian(obs, nqubits=1)
 
 
+def test_time_dependent_hamiltonian_cuda_initial_state_enum(monkeypatch):
+
+    dummy_return = MagicMock()
+    dummy_return.final_state = MagicMock(return_value=np.array([1 / np.sqrt(2), 1 / np.sqrt(2)]))
+    dummy_evolve = MagicMock(return_value=dummy_return)
+    monkeypatch.setattr("qilisdk.backends.cuda_backend.evolve", dummy_evolve)
+    monkeypatch.setattr("qilisdk.backends.cuda_backend.cudaq.set_target", lambda target: None)
+    monkeypatch.setattr("qilisdk.backends.cuda_backend.State.from_data", MagicMock(return_value=None))
+
+    schedule = Schedule(
+        dt=1,
+        hamiltonians={"h": pauli_z(0)},
+        coefficients={"h": {(0, 10): lambda t: 1 - t / 10}},
+    )
+    backend = CudaBackend()
+    res = backend.execute(
+        AnalogEvolution(schedule=schedule, initial_state=InitialState.UNIFORM),
+        Readout().with_state_tomography(),
+    )
+    assert isinstance(res, FunctionalResult)
+    assert dummy_evolve.called
+
+
 def test_qtensor_initial_state_bra_converted_to_ket():
     # A bra should be converted to a ket (adjoint)
     bra = ket(0).adjoint()
@@ -842,3 +866,103 @@ def test_qtensor_initial_state_bra_converted_to_ket():
     with patch("qilisdk.backends.cuda_backend.State.from_data", state_mock):
         CudaBackend._qtensor_initial_state_to_cuda(bra)
         state_mock.assert_called_once()
+
+
+def test_apply_digital_simulation_method_state_vector_no_gpu(monkeypatch):
+    backend = CudaBackend(sampling_method=CudaSamplingMethod.STATE_VECTOR)
+    mock_set_target = MagicMock()
+    mock_num_gpus = MagicMock(return_value=0)
+    monkeypatch.setattr("cudaq.set_target", mock_set_target)
+    monkeypatch.setattr("cudaq.num_available_gpus", mock_num_gpus)
+    backend._apply_digital_simulation_method()
+    mock_set_target.assert_called_once_with("qpp-cpu")
+
+
+def test_apply_digital_simulation_method_state_vector_with_gpu(monkeypatch):
+    backend = CudaBackend(sampling_method=CudaSamplingMethod.STATE_VECTOR)
+    mock_set_target = MagicMock()
+    mock_num_gpus = MagicMock(return_value=1)
+    monkeypatch.setattr("cudaq.set_target", mock_set_target)
+    monkeypatch.setattr("cudaq.num_available_gpus", mock_num_gpus)
+    backend._apply_digital_simulation_method()
+    float_precision = "fp64" if get_settings().complex_precision == Precision.COMPLEX_64 else "fp32"
+    mock_set_target.assert_called_once_with("nvidia", option=float_precision)
+
+
+def test_apply_digital_simulation_method_tensor_network(monkeypatch):
+    backend = CudaBackend(sampling_method=CudaSamplingMethod.TENSOR_NETWORK)
+    mock_set_target = MagicMock()
+    monkeypatch.setattr("cudaq.set_target", mock_set_target)
+    backend._apply_digital_simulation_method()
+    mock_set_target.assert_called_once_with("tensornet")
+
+
+def test_apply_digital_simulation_method_matrix_product_state(monkeypatch):
+    backend = CudaBackend(sampling_method=CudaSamplingMethod.MATRIX_PRODUCT_STATE)
+    mock_set_target = MagicMock()
+    monkeypatch.setattr("cudaq.set_target", mock_set_target)
+    backend._apply_digital_simulation_method()
+    mock_set_target.assert_called_once_with("tensornet-mps")
+
+
+def test_apply_digital_simulation_method_state_vector_mgpu_multiple_gpus(monkeypatch):
+    backend = CudaBackend(sampling_method=CudaSamplingMethod.STATE_VECTOR_MGPU)
+    mock_set_target = MagicMock()
+    mock_num_gpus = MagicMock(return_value=4)
+    monkeypatch.setattr("cudaq.set_target", mock_set_target)
+    monkeypatch.setattr("cudaq.num_available_gpus", mock_num_gpus)
+    backend._apply_digital_simulation_method()
+    float_precision = "fp64" if get_settings().complex_precision == Precision.COMPLEX_64 else "fp32"
+    mock_set_target.assert_called_once_with("nvidia", option="mgpu," + float_precision)
+
+
+def test_apply_digital_simulation_method_state_vector_mgpu_single_gpu(monkeypatch):
+    backend = CudaBackend(sampling_method=CudaSamplingMethod.STATE_VECTOR_MGPU)
+    mock_set_target = MagicMock()
+    mock_num_gpus = MagicMock(return_value=1)
+    monkeypatch.setattr("cudaq.set_target", mock_set_target)
+    monkeypatch.setattr("cudaq.num_available_gpus", mock_num_gpus)
+    backend._apply_digital_simulation_method()
+    float_precision = "fp64" if get_settings().complex_precision == Precision.COMPLEX_64 else "fp32"
+    mock_set_target.assert_called_once_with("nvidia", option=float_precision)
+
+
+def test_apply_digital_simulation_method_cpu(monkeypatch):
+    backend = CudaBackend(sampling_method=CudaSamplingMethod.CPU)
+    mock_set_target = MagicMock()
+    monkeypatch.setattr("cudaq.set_target", mock_set_target)
+    backend._apply_digital_simulation_method()
+    mock_set_target.assert_called_once_with("qpp-cpu")
+
+
+def test_apply_digital_simulation_method_unsupported_method():
+    class FakeSamplingMethod(Enum):
+        UNSUPPORTED_METHOD = "unsupported_method"
+
+    backend = CudaBackend(sampling_method=FakeSamplingMethod.UNSUPPORTED_METHOD)
+    with pytest.raises(ValueError, match="Unsupported sampling method: unsupported_method"):
+        backend._apply_digital_simulation_method()
+
+
+@pytest.mark.parametrize("method", [CudaSamplingMethod.MATRIX_PRODUCT_STATE, CudaSamplingMethod.TENSOR_NETWORK])
+def test_expectation_for_methods_raises(monkeypatch, method):
+    monkeypatch.setattr("cudaq.make_kernel", dummy_make_kernel)
+    monkeypatch.setattr("cudaq.set_target", lambda target: None)
+    c = Circuit(nqubits=1)
+    f = DigitalPropagation(circuit=c)
+    r = Readout().with_expectation(observables=[pauli_z(0)])
+    backend = CudaBackend(sampling_method=method)
+    with pytest.raises(ValueError, match="Only Sampling"):
+        backend.execute(f, r)
+
+
+@pytest.mark.parametrize("method", [CudaSamplingMethod.MATRIX_PRODUCT_STATE, CudaSamplingMethod.TENSOR_NETWORK])
+def test_tomography_for_methods_raises(monkeypatch, method):
+    monkeypatch.setattr("cudaq.make_kernel", dummy_make_kernel)
+    monkeypatch.setattr("cudaq.set_target", lambda target: None)
+    c = Circuit(nqubits=1)
+    f = DigitalPropagation(circuit=c)
+    r = Readout().with_state_tomography()
+    backend = CudaBackend(sampling_method=method)
+    with pytest.raises(ValueError, match="Only Sampling"):
+        backend.execute(f, r)

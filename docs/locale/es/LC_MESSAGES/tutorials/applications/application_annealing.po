@@ -364,6 +364,11 @@ msgid ""
 "other team) are the optimal solutions to our problem, with 9 being the "
 "highest obtainable compatibility score."
 msgstr ""
+"Como puede verse en estos resultados, las muestras satisfacen la "
+"restricción (es decir, tienen exactamente dos 1's). Más concretamente, "
+"las dos muestras \"0110\" y \"1001\" (correspondientes a Alice/Dave en un "
+"equipo y Bob/Carol en el otro) son las soluciones óptimas a nuestro "
+"problema, siendo 9 la puntuación de compatibilidad máxima obtenible."
 
 #: ../../tutorials/applications/application_annealing.rst:123
 msgid "Further Reading"

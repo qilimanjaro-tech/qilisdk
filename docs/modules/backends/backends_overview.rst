@@ -60,7 +60,7 @@ drivers to be present on the system.
      - Key dependency
      - Notes
    * - :class:`QiliSim <qilisdk.backends.qilisim.QiliSim>`
-     - ``qilisim``
+     - --
      - None
      - CPU based; no special hardware needs.
    * - :class:`CudaBackend <qilisdk.backends.cuda_backend.CudaBackend>`
@@ -76,6 +76,12 @@ Functional Support
 ------------------
 
 The table below summarizes which primitive :mod:`~qilisdk.functionals` each backend can execute.
+
+Legend:
+
+- |y| Fully supported by the backend's native simulator.
+- |p| Partially supported — see the per-backend page for the exact limitation.
+- |n| Not supported.
 
 .. list-table::
    :header-rows: 1
@@ -94,12 +100,23 @@ The table below summarizes which primitive :mod:`~qilisdk.functionals` each back
    * - :class:`CudaBackend <qilisdk.backends.cuda_backend.CudaBackend>`
      - |y|
      - |y|
-     - |y|
+     - |p|
      - |y|
    * - :class:`QutipBackend <qilisdk.backends.qutip_backend.QutipBackend>`
      - |y|
      - |y|
-     - |y|
+     - |p|
      - |y|
 
-.. |y| unicode:: U+2713
+.. note::
+
+   ``QuantumReservoir`` is fully native only on QiliSim. On the :class:`CudaBackend` and
+   :class:`QutipBackend` the ``Circuit`` reservoir steps are evaluated as dense QTensor unitaries on CPU, while
+   ``Schedule`` steps still use the backend's native analog solver. Attaching a
+   :class:`~qilisdk.noise.NoiseModel` to a reservoir run is ignored on both :class:`CudaBackend` and
+   :class:`QutipBackend`.
+   (a warning is logged).
+
+.. |y| unicode:: U+2705
+.. |p| unicode:: U+1F7E1
+.. |n| unicode:: U+274C

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-05 15:18+0200\n"
+"POT-Creation-Date: 2026-05-20 15:11+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../modules/digital/digital_overview.rst:2
 msgid "Overview"
-msgstr "Visión general"
+msgstr "Descripción general"
 
 #: ../../modules/digital/digital_overview.rst:4
 msgid ""
@@ -51,4 +51,15 @@ msgstr ""
 
 #: ../../modules/digital/digital_overview.rst:9
 msgid ":doc:`digital_ansatz`: Predefined circuits that can serve as Ansätze."
-msgstr ":doc:`digital_ansatz`: Circuitos predefinidos que pueden servir como Ansätze."
+msgstr ""
+":doc:`digital_ansatz`: Circuitos predefinidos que pueden servir como "
+"Ansätze."
+
+#: ../../modules/digital/digital_overview.rst:10
+msgid ""
+":doc:`digital_qir`: Import and export circuits to / from the QIR Base "
+"Profile."
+msgstr ""
+":doc:`digital_qir`: Importa y exporta circuitos desde / hacia el Perfil "
+"Base de QIR."
+

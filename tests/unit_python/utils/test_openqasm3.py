@@ -21,7 +21,7 @@ import pytest
 
 from qilisdk.core import Parameter
 from qilisdk.digital import CNOT, CZ, RX, RY, RZ, U1, U2, U3, Adjoint, Circuit, Controlled, H, M, S, T, X, Y, Z
-from qilisdk.utils.openqasm3 import from_qasm3, from_qasm3_file, to_qasm3, to_qasm3_file
+from qilisdk.utils.openqasm import from_qasm3, from_qasm3_file, to_qasm3, to_qasm3_file
 
 
 def test_quantum_reg():
@@ -1644,6 +1644,31 @@ h q[1];
     c = from_qasm3(original_qasm)
     qasm = to_qasm3(c)
     assert qasm.strip() == original_qasm.strip()
+
+
+def test_circuit_with_measurements_roundtrip():
+    qasm = """
+    OPENQASM 3.0;
+     include "stdgates.inc";
+     qubit[2] q;
+     h q[0];
+     ctrl @ x q[0], q[1];
+     measure q[0,1];
+    """
+    c = from_qasm3(qasm)
+    qasm = to_qasm3(c)
+    assert qasm.strip() == qasm.strip()
+
+
+def test_reverse_roundtrip():
+    c = Circuit(2)
+    c.add(X(0))
+    c.add(CNOT(0, 1))
+    c.add(CZ(0, 1))
+    c.add(M(0, 1))
+    qasm = to_qasm3(c)
+    circ = from_qasm3(qasm)
+    assert circ == c
 
 
 def test_to_file():

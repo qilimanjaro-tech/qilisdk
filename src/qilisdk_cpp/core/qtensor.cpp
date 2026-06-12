@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "qtensor.h"
+#include "../backends/qilisim/utils/parsers.h"
 #include "../libs/numpy.h"
 #include "../libs/pybind.h"
 
@@ -21,8 +22,10 @@
 
 // GCOV_EXCL_BR_START
 
+#ifndef _WIN32
 #if defined(_OPENMP)
-#pragma omp declare reduction(complex_double_reduction : std::complex <double> : omp_out += omp_in) initializer(omp_priv = std::complex <double>(0.0, 0.0))
+#pragma omp declare reduction(complex_double_reduction : std::complex<double> : omp_out += omp_in) initializer(omp_priv = std::complex<double>(0.0, 0.0))
+#endif
 #endif
 
 DenseMatrix _get_dense_eigenvectors(const std::vector<SparseMatrix>& evecs) {
@@ -746,30 +749,47 @@ QTensorCpp QTensorCpp::ket(const std::vector<int>& qubit_values) {
     return result;
 }
 
-QTensorCpp QTensorCpp::zero(int nqubits, std::string qtensor_type) {
+QTensorCpp QTensorCpp::zero(int nqubits) {
     /*
-    Construct a QTensor of the given shape filled with zeros. The number of rows and columns must be powers of 2.
+    Construct a |0..0> ket vector QTensor for a given number of qubits.
 
     Args:
-        nqubits (int): The number of qubits, which determines the shape of the QTensor. The number of rows and columns will be 2^nqubits.
-        qtensor_type (std::string): The type of QTensor to create, which can be "ket", "bra", or "operator".
+        nqubits (int): The number of qubits, which determines the size of the zero statevector (2^nqubits x 1).
 
     Returns:
-        QTensorCpp: A QTensor of the specified shape filled with zeros.
+        QTensorCpp: A QTensor representing the |0..0> ket vector for the specified number of qubits.
     */
     if (nqubits < 0) {
         throw py::value_error("Number of qubits must be non-negative");
     }
     int dim = 1 << nqubits;
-    if (qtensor_type == "ket") {
-        return QTensorCpp(dim, 1);
-    } else if (qtensor_type == "bra") {
-        return QTensorCpp(1, dim);
-    } else if (qtensor_type == "operator") {
-        return QTensorCpp(dim, dim);
-    } else {
-        throw py::value_error("Invalid qtensor type: " + qtensor_type + ". Must be 'ket', 'bra', or 'operator'");
+    QTensorCpp result(dim, 1);
+    result._data.reserve(1);
+    result._data.insert(0, 0) = 1.0;
+    result._data.makeCompressed();
+    return result;
+}
+
+QTensorCpp QTensorCpp::one(int nqubits) {
+    /*
+    Construct a |1..1> ket vector QTensor for a given number of qubits.
+
+    Args:
+        nqubits (int): The number of qubits, which determines the size of the one statevector (2^nqubits x 1).
+
+    Returns:
+        QTensorCpp: A QTensor representing the |1..1> ket vector for the specified number of qubits.
+    */
+    if (nqubits < 0) {
+        throw py::value_error("Number of qubits must be non-negative");
     }
+    int dim = 1 << nqubits;
+    QTensorCpp result(dim, 1);
+    int one_index = dim - 1;
+    result._data.reserve(1);
+    result._data.insert(one_index, 0) = 1.0;
+    result._data.makeCompressed();
+    return result;
 }
 
 QTensorCpp QTensorCpp::ket_python(const py::object& state) {
@@ -1423,11 +1443,74 @@ std::complex<double> QTensorCpp::expectation_value_python(const py::object& othe
     */
     if (py::isinstance<QTensorCpp>(other)) {
         return expectation_value(other.cast<QTensorCpp>(), nshots);
+    } else if (py::hasattr(other, "_elements")) {
+        int nqubits = int(std::log2(_data.rows()));
+        py::list hamiltonians_py;
+        hamiltonians_py.append(other);
+        std::vector<MatrixFreeHamiltonian> hamiltonians = parse_hamiltonians_matrix_free(nqubits, hamiltonians_py);
+        return expectation_value(hamiltonians[0]);
     } else if (py::hasattr(other, "_qtensor_cpp")) {
         return expectation_value(other.attr("_qtensor_cpp").cast<QTensorCpp>(), nshots);
     } else {
         throw py::value_error("Other object must be a QTensor");
     }
+}
+
+std::complex<double> QTensorCpp::expectation_value(const MatrixFreeHamiltonian& other) const {
+    /*
+    Compute the expectation value of a matrix-free Hamiltonian with respect to this QTensor.
+
+    Args:
+        other (MatrixFreeHamiltonian): The matrix-free Hamiltonian for which to compute the expectation value with respect to this QTensor.
+
+    Returns:
+        std::complex<double>: The expectation value of the matrix-free Hamiltonian with respect to this QTensor.
+    */
+
+    std::complex<double> expectation = 0.0;
+
+    // For kets we need to do <psi|H|psi> by applying H to the left and then taking the inner product with |psi>
+    if (_data.cols() == 1) {
+        DenseMatrix psi_dense = _data;
+        DenseMatrix H_psi_dense;
+        other.apply(psi_dense, MatrixFreeApplicationType::Left, H_psi_dense);
+#ifndef _WIN32
+#if defined(_OPENMP)
+#pragma omp parallel for reduction(complex_double_reduction : expectation) schedule(static)
+#endif
+#endif
+        for (int i = 0; i < H_psi_dense.rows(); ++i) {
+            expectation += std::conj(psi_dense(i, 0)) * H_psi_dense(i, 0);
+        }
+        // for bras we need to do <psi|H by applying H to the right and then taking the inner product with |psi>
+    } else if (_data.rows() == 1) {
+        DenseMatrix psi_dense = _data.adjoint();
+        DenseMatrix H_psi_dense;
+        other.apply(psi_dense, MatrixFreeApplicationType::Right, H_psi_dense);
+#ifndef _WIN32
+#if defined(_OPENMP)
+#pragma omp parallel for reduction(complex_double_reduction : expectation) schedule(static)
+#endif
+#endif
+        for (int i = 0; i < H_psi_dense.cols(); ++i) {
+            expectation += H_psi_dense(0, i) * std::conj(psi_dense(0, i));
+        }
+    } else {
+        // need to do trace(H * rho) for a general operator and density matrix
+        DenseMatrix rho_dense = _data;
+        DenseMatrix H_rho_dense;
+        other.apply(rho_dense, MatrixFreeApplicationType::Left, H_rho_dense);
+#ifndef _WIN32
+#if defined(_OPENMP)
+#pragma omp parallel for reduction(complex_double_reduction : expectation) schedule(static)
+#endif
+#endif
+        for (int i = 0; i < H_rho_dense.rows(); ++i) {
+            expectation += std::real(H_rho_dense(i, i));
+        }
+    }
+
+    return expectation;
 }
 
 std::complex<double> QTensorCpp::expectation_value(const QTensorCpp& other, int nshots) const {
@@ -1450,8 +1533,10 @@ std::complex<double> QTensorCpp::expectation_value(const QTensorCpp& other, int 
         if (is_ket()) {
             // return (adjoint() * other * (*this)).trace();
             std::complex<double> expectation = 0.0;
+#ifndef _WIN32
 #if defined(_OPENMP)
 #pragma omp parallel for reduction(complex_double_reduction : expectation) schedule(static)
+#endif
 #endif
             for (int k = 0; k < other._data.outerSize(); ++k) {
                 for (typename SparseMatrix::InnerIterator it(other._data, k); it; ++it) {
@@ -1465,8 +1550,10 @@ std::complex<double> QTensorCpp::expectation_value(const QTensorCpp& other, int 
 
         } else if (is_bra()) {
             std::complex<double> expectation = 0.0;
+#ifndef _WIN32
 #if defined(_OPENMP)
 #pragma omp parallel for reduction(complex_double_reduction : expectation) schedule(static)
+#endif
 #endif
             for (int k = 0; k < other._data.outerSize(); ++k) {
                 for (typename SparseMatrix::InnerIterator it(other._data, k); it; ++it) {
@@ -1480,8 +1567,10 @@ std::complex<double> QTensorCpp::expectation_value(const QTensorCpp& other, int 
         } else {
             // return (other * (*this)).trace();
             std::complex<double> expectation = 0.0;
+#ifndef _WIN32
 #if defined(_OPENMP)
 #pragma omp parallel for reduction(complex_double_reduction : expectation) schedule(static)
+#endif
 #endif
             for (int k = 0; k < other._data.outerSize(); ++k) {
                 for (typename SparseMatrix::InnerIterator it(other._data, k); it; ++it) {

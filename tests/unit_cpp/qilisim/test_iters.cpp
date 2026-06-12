@@ -66,7 +66,7 @@ DenseMatrix pauli_z() {
 
 MatrixFreeHamiltonian make_matrix_free_H(std::complex<double> coeff, int qubit, const std::string& pauli) {
     MatrixFreeOperator op(pauli, {}, {qubit}, DenseMatrix());
-    return MatrixFreeHamiltonian({{coeff, {op}}});
+    return MatrixFreeHamiltonian(1, op, coeff);
 }
 
 }  // namespace
@@ -938,6 +938,31 @@ TEST_F(IterIntegrateMatrixFreeLindbladTest, MatchesSparseOverloadForShortTime) {
     iter_rk4(rho_mf, 0.0, dt, {}, {H_mf}, {{1.0}}, {jump}, false);
     DenseMatrix result_sp = iter_rk4_matrix(rho_sp, dt, H_sparse, {jump}, false);
     EXPECT_TRUE(rho_mf.isApprox(result_sp, kTolLoose));
+}
+
+class IterRK4ExponentialAnsatzTest : public ::testing::Test {
+   protected:
+    double dt = 0.1;
+    MatrixFreeHamiltonian H_X = make_matrix_free_H(1.0, 0, "X");
+    MatrixFreeHamiltonian H_Z = make_matrix_free_H(1.0, 0, "Z");
+};
+
+TEST_F(IterRK4ExponentialAnsatzTest, DoesNotThrowForValidInput) {
+    ExponentialAnsatz rho(1, 1, 50, 0);
+    std::vector<double> step_list = {0.5, 1.0};
+    std::vector<MatrixFreeHamiltonian> hamiltonians = {H_X, H_Z};
+    std::vector<std::vector<double>> params = {{1.0, 0.0}, {0.0, 1.0}};
+    EXPECT_NO_THROW(iter_rk4(rho, 0.0, dt, step_list, hamiltonians, params));
+}
+
+TEST_F(IterRK4ExponentialAnsatzTest, TermCountUnchangedAfterStep) {
+    ExponentialAnsatz rho(1, 1, 50, 0);
+    size_t initial_terms = rho.get_terms().size();
+    std::vector<double> step_list = {0.5, 1.0};
+    std::vector<MatrixFreeHamiltonian> hamiltonians = {H_X, H_Z};
+    std::vector<std::vector<double>> params = {{1.0, 0.0}, {0.0, 1.0}};
+    iter_rk4(rho, 0.0, dt, step_list, hamiltonians, params);
+    EXPECT_EQ(rho.get_terms().size(), initial_terms);
 }
 
 // GCOV_EXCL_BR_STOP

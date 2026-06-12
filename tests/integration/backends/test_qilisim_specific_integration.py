@@ -23,9 +23,10 @@ from qilisdk.analog.hamiltonian import Z as pauli_z
 from qilisdk.analog.schedule import Schedule
 from qilisdk.backends.backend_config import AnalogMethod, DigitalMethod, ExecutionConfig, MonteCarloConfig
 from qilisdk.backends.qilisim import QiliSim
-from qilisdk.core.qtensor import ket
+from qilisdk.core.qtensor import InitialState, QTensor, ket
 from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, H, M, X, Y, Z
 from qilisdk.functionals import AnalogEvolution, DigitalPropagation, FunctionalResult
+from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
 from qilisdk.readout import Readout, SamplingReadout
 
 analog_methods = [
@@ -272,3 +273,223 @@ def test_mid_circuit_measurement_collapse():
     assert "00" in samples
     assert "10" in samples
     assert samples["00"] + samples["10"] == 50
+
+
+# --- Variational annealing (variational_exponential method) ---
+
+
+def _make_annealing_schedule():
+    """Simple 1-qubit X→Z annealing schedule."""
+    T = 10
+    steps = 100
+    return Schedule(
+        dt=T / steps,
+        hamiltonians={"h_x": -pauli_x(0), "h_z": pauli_z(0)},
+        coefficients={
+            "h_x": {(0, T): lambda t: 1 - t / T},
+            "h_z": {(0, T): lambda t: t / T},
+        },
+    )
+
+
+def _make_many_qubit_annealing_schedule(nqubits):
+    """n-qubit X→ZZ annealing schedule."""
+    hamiltonians = {"h_x": -sum(pauli_x(i) for i in range(nqubits)), "h_z": sum(pauli_z(i) for i in range(nqubits))}
+    T = 10
+    steps = 100
+    coefficients = {
+        "h_x": {(0, T): lambda t: 1 - t / T},
+        "h_z": {(0, T): lambda t: t / T},
+    }
+    return Schedule(dt=T / steps, hamiltonians=hamiltonians, coefficients=coefficients)
+
+
+@pytest.mark.parametrize(
+    "readout",
+    [
+        Readout().with_expectation(observables=[pauli_z(0)]),
+        Readout().with_sampling(nshots=50),
+    ],
+)
+def test_variational_annealing_runs(readout):
+
+    backend = QiliSim(
+        analog_simulation_method=AnalogMethod.variational_annealing(order=1, shots=100, warmups=5),
+        execution_config=ExecutionConfig(seed=42, num_threads=1),
+    )
+    result = backend.execute(
+        AnalogEvolution(schedule=_make_annealing_schedule(), initial_state=InitialState.UNIFORM),
+        readout=readout,
+    )
+    assert isinstance(result, FunctionalResult)
+
+
+def test_variational_annealing_expectation_value_bounded():
+    backend = QiliSim(
+        analog_simulation_method=AnalogMethod.variational_annealing(order=1, shots=200, warmups=10),
+        execution_config=ExecutionConfig(seed=42, num_threads=1),
+    )
+    result = backend.execute(
+        AnalogEvolution(schedule=_make_annealing_schedule(), initial_state=InitialState.UNIFORM),
+        readout=Readout().with_expectation(observables=[pauli_z(0)]),
+    )
+    assert isinstance(result, FunctionalResult)
+    ev = result.get_expectation_values()[0]
+    assert -1.00001 <= ev.real <= 1.00001
+
+
+def test_variational_annealing_wrong_initial_state_raises():
+    backend = QiliSim(
+        analog_simulation_method=AnalogMethod.variational_annealing(order=1, shots=50, warmups=0),
+        execution_config=ExecutionConfig(seed=42, num_threads=1),
+    )
+    with pytest.raises(ValueError, match="Initial state must be"):
+        backend.execute(
+            AnalogEvolution(schedule=_make_annealing_schedule(), initial_state=ket(0)),
+            readout=Readout().with_expectation(observables=[pauli_z(0)]),
+        )
+
+
+def test_variational_annealing_non_x_first_hamiltonian_raises():
+
+    bad_schedule = Schedule(
+        dt=1,
+        hamiltonians={"h_z1": pauli_z(0), "h_z2": pauli_z(0)},
+        coefficients={"h_z1": {(0, 4): lambda t: 1 - t / 4}, "h_z2": {(0, 4): lambda t: t / 4}},
+    )
+    backend = QiliSim(
+        analog_simulation_method=AnalogMethod.variational_annealing(order=1, shots=50, warmups=0),
+        execution_config=ExecutionConfig(seed=42, num_threads=1),
+    )
+    with pytest.raises(ValueError, match="The first Hamiltonian"):
+        backend.execute(
+            AnalogEvolution(schedule=bad_schedule, initial_state=InitialState.UNIFORM),
+            readout=Readout().with_expectation(observables=[pauli_z(0)]),
+        )
+
+
+def test_variational_annealing_non_z_final_hamiltonian_raises():
+
+    bad_schedule = Schedule(
+        dt=1,
+        hamiltonians={"h_x": pauli_x(0), "h_y": pauli_y(0)},
+        coefficients={"h_x": {(0, 4): lambda t: 1 - t / 4}, "h_y": {(0, 4): lambda t: t / 4}},
+    )
+    backend = QiliSim(
+        analog_simulation_method=AnalogMethod.variational_annealing(order=1, shots=50, warmups=0),
+        execution_config=ExecutionConfig(seed=42, num_threads=1),
+    )
+    with pytest.raises(ValueError, match="The last Hamiltonian"):
+        backend.execute(
+            AnalogEvolution(schedule=bad_schedule, initial_state=InitialState.UNIFORM),
+            readout=Readout().with_expectation(observables=[pauli_z(0)]),
+        )
+
+
+def test_variational_annealing_config_validation_raises():
+    """Negative warmups should raise a validation error."""
+
+    backend = QiliSim(
+        analog_simulation_method=AnalogMethod.variational_annealing(order=1, shots=50, warmups=0),
+        execution_config=ExecutionConfig(seed=42, num_threads=1),
+    )
+    # Override internal solver config to trigger validation failure
+    backend._solver_config["variational_warmups"] = -1
+    with pytest.raises(ValueError, match="Warmups cannot be negative"):
+        backend.execute(
+            AnalogEvolution(schedule=_make_annealing_schedule(), initial_state=InitialState.UNIFORM),
+            readout=Readout().with_expectation(observables=[pauli_z(0)]),
+        )
+
+
+def test_variational_annealing_single_qubit_correct():
+    backend = QiliSim(
+        analog_simulation_method=AnalogMethod.variational_annealing(),
+        execution_config=ExecutionConfig(seed=42, num_threads=1),
+    )
+    result = backend.execute(
+        AnalogEvolution(schedule=_make_annealing_schedule(), initial_state=InitialState.UNIFORM),
+        readout=Readout().with_expectation(observables=[pauli_z(0)]),
+    )
+    assert isinstance(result, FunctionalResult)
+    ev = result.get_expectation_values()[0]
+    assert np.isclose(ev.real, -1.0, atol=0.2)
+
+
+def test_variational_annealing_many_qubit_correct():
+    nqubits = 5
+    backend = QiliSim(
+        analog_simulation_method=AnalogMethod.variational_annealing(),
+        execution_config=ExecutionConfig(seed=42, num_threads=1),
+    )
+    observable = sum(pauli_z(i) for i in range(nqubits))
+    result = backend.execute(
+        AnalogEvolution(schedule=_make_many_qubit_annealing_schedule(nqubits), initial_state=InitialState.UNIFORM),
+        readout=Readout().with_expectation(observables=[observable]),
+    )
+    assert isinstance(result, FunctionalResult)
+    ev = result.get_expectation_values()[0]
+    assert np.isclose(ev.real, -nqubits, atol=0.2)
+
+
+def test_matrix_free_complex_gate_on_mixed_state_stays_hermitian():
+    """Regression: ``rho -> U rho U†`` on the matrix-free path must use ``U†`` (conjugate
+    transpose), not ``U*`` (conjugate).
+
+    A qubit reset turns the state into a *mixed* density matrix, so gate application takes
+    the density-matrix (``LeftAndRight``) path. With a complex, non-symmetric single-qubit
+    gate (``U2``), the buggy right-multiplication computed ``U rho U*`` instead of ``U rho U†``,
+    producing a non-Hermitian state and raising "imaginary expectation value". Real-symmetric
+    (X/Z/H) and diagonal (S/T) gates are unaffected, which is why this slipped through.
+
+    This guards the regression three ways: the run must succeed with real expectation values,
+    the matrix-free path must agree with the explicit-matrix path, and the tomographed state
+    must remain a valid (Hermitian) density matrix.
+    """
+
+    def _build() -> QuantumReservoir:
+        pre = Circuit(2)
+        pre.add(U2(1, phi=ReservoirInput("phi", 0.1), gamma=ReservoirInput("gamma", 0.1)))
+        layer = ReservoirLayer(
+            evolution_dynamics=Schedule(
+                hamiltonians={"h": pauli_z(0) + pauli_z(1) + pauli_z(0) * pauli_z(1) + 0.5 * (pauli_x(0) + pauli_x(1))},
+                total_time=1.0,
+                dt=0.1,
+            ),
+            input_encoding=pre,
+            qubits_to_reset=[0],
+        )
+        return QuantumReservoir(
+            initial_state=QTensor.uniform(2).to_density_matrix(),
+            reservoir_layer=layer,
+            input_per_layer=[{"phi": 0.2, "gamma": 0.1}, {"phi": 0.3, "gamma": 0.2}],
+        )
+
+    readout = (
+        Readout()
+        .with_expectation(observables=[pauli_z(0), pauli_z(1), pauli_z(0) * pauli_z(1)])
+        .with_state_tomography()
+    )
+
+    # The buggy matrix-free path raised "imaginary expectation value" here.
+    matrix_free = QiliSim(digital_simulation_method=DigitalMethod(matrix_free=True)).execute(_build(), readout)
+    explicit = QiliSim(digital_simulation_method=DigitalMethod(matrix_free=False)).execute(_build(), readout)
+
+    mf_values = np.asarray(matrix_free.get_expectation_values())
+    explicit_values = np.asarray(explicit.get_expectation_values())
+
+    # Matrix-free must match the explicit-matrix ground truth.
+    np.testing.assert_allclose(mf_values, explicit_values, atol=1e-9)
+
+    def _dense(qtensor) -> np.ndarray:
+        data = qtensor.data
+        return np.asarray(data.todense() if hasattr(data, "todense") else data)
+
+    # The state after reset + complex gate must stay Hermitian and trace-1. The bug produced
+    # states off by ~17 from their adjoint; here we require agreement to numerical precision.
+    mf_state = _dense(matrix_free.get_state())
+    np.testing.assert_allclose(mf_state, mf_state.conj().T, atol=1e-9)
+    assert abs(np.trace(mf_state) - 1.0) < 1e-9
+
+    # And it must match the explicit-matrix path's state.
+    np.testing.assert_allclose(mf_state, _dense(explicit.get_state()), atol=1e-9)

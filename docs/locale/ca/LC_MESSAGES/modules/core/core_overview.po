@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-05 15:18+0200\n"
+"POT-Creation-Date: 2026-05-20 15:11+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -67,10 +67,11 @@ msgstr ":doc:`core_model` per construir programes d'optimització amb restriccio
 msgid ":doc:`core_qubo` to convert models to QUBO format."
 msgstr ":doc:`core_qubo` per convertir models al format QUBO."
 
-#: ../../modules/core/core_overview.rst:14
+#: ../../modules/core/core_overview.rst:15
 msgid ""
 ":doc:`core_qtensor` to manage sparse quantum objects, such as states and "
 "operators."
 msgstr ""
 ":doc:`core_qtensor` per gestionar objectes quàntics dispersos, com ara "
 "estats i operadors."
+

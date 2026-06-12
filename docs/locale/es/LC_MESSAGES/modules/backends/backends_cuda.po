@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-05 15:18+0200\n"
+"POT-Creation-Date: 2026-06-03 17:26+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -25,92 +25,360 @@ msgstr "Backend CUDA"
 
 #: ../../modules/backends/backends_cuda.rst:4
 msgid ""
-"The **CUDA** backend leverages NVIDIA GPUs via the ``cuda-quantum`` "
-"framework for both digital and analog simulations. When no compatible GPU"
-" is detected it automatically falls back to cpu-based targets, so you can"
-" prototype on commodity hardware before moving to accelerated machines."
+"The **CUDA** backend leverages NVIDIA GPUs via the `cuda-quantum "
+"<https://github.com/NVIDIA/cuda-quantum>`_ framework. When no compatible "
+"GPU is detected it transparently falls back to a CPU target, so the same "
+"code prototyped on a laptop will also run on an accelerated machine."
 msgstr ""
 "El backend **CUDA** aprovecha las GPU de NVIDIA a través del framework "
-"``cuda-quantum`` para simulaciones tanto digitales como analógicas. Cuando "
-"no se detecta ninguna GPU compatible, recurre automáticamente a destinos "
-"basados en CPU, de modo que puede crear prototipos en hardware convencional "
-"antes de migrar a máquinas con aceleración."
+"`cuda-quantum <https://github.com/NVIDIA/cuda-quantum>`_. Cuando no se "
+"detecta ninguna GPU compatible recae de forma transparente en un destino "
+"de CPU, de modo que el mismo código creado en un portátil también "
+"funcionará en una máquina con aceleración."
 
-#: ../../modules/backends/backends_cuda.rst:9
+#: ../../modules/backends/backends_cuda.rst:10
 msgid "Installation"
 msgstr "Instalación"
 
-#: ../../modules/backends/backends_cuda.rst:16
-msgid "Initialization"
-msgstr "Inicialización"
-
-#: ../../modules/backends/backends_cuda.rst:27
-msgid "Capabilities"
-msgstr "Capacidades"
-
-#: ../../modules/backends/backends_cuda.rst:29
-msgid ""
-"Digital circuits through "
-":class:`~qilisdk.functionals.digital_propagation.DigitalPropagation`."
-msgstr ""
-"Circuitos digitales mediante "
-":class:`~qilisdk.functionals.digital_propagation.DigitalPropagation`."
-
-#: ../../modules/backends/backends_cuda.rst:30
-msgid ""
-"Analog dynamics for "
-":class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`, powered "
-"by ``cudaq.evolve``."
-msgstr ""
-"Dinámica analógica para "
-":class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`, impulsada "
-"por ``cudaq.evolve``."
-
-#: ../../modules/backends/backends_cuda.rst:31
-msgid ""
-"Hybrid execution when paired with "
-":class:`~qilisdk.functionals.variational_program.VariationalProgram`."
-msgstr ""
-"Ejecución híbrida cuando se combina con "
-":class:`~qilisdk.functionals.variational_program.VariationalProgram`."
-
-#: ../../modules/backends/backends_cuda.rst:34
-msgid "Sampling methods"
-msgstr "Métodos de muestreo"
-
-#: ../../modules/backends/backends_cuda.rst:36
-msgid ""
-":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.STATE_VECTOR`: "
-"Full state-vector simulation (switches to CPU if a GPU is unavailable)."
-msgstr ""
-":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.STATE_VECTOR`: "
-"Simulación completa de vector de estado (cambia a CPU si no hay GPU disponible)."
+#: ../../modules/backends/backends_cuda.rst:17
+msgid "Quick start"
+msgstr "Inicio rápido"
 
 #: ../../modules/backends/backends_cuda.rst:37
-msgid ""
-":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.TENSOR_NETWORK`:"
-" Tensor-network contraction, suited for shallow yet wide circuits."
-msgstr ""
-":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.TENSOR_NETWORK`:"
-" Contracción de redes tensoriales, adecuada para circuitos poco profundos "
-"pero anchos."
+msgid "Functional support"
+msgstr "Soporte de funcionales"
 
-#: ../../modules/backends/backends_cuda.rst:38
+#: ../../modules/backends/backends_cuda.rst:43
+msgid "Functional"
+msgstr "Funcional"
+
+#: ../../modules/backends/backends_cuda.rst:44
+msgid "Support"
+msgstr "Soporte"
+
+#: ../../modules/backends/backends_cuda.rst:45
+msgid "Notes"
+msgstr "Notas"
+
+#: ../../modules/backends/backends_cuda.rst:46
+msgid ":class:`~qilisdk.functionals.digital_propagation.DigitalPropagation`"
+msgstr ":class:`~qilisdk.functionals.digital_propagation.DigitalPropagation`"
+
+#: ../../modules/backends/backends_cuda.rst:47
+#: ../../modules/backends/backends_cuda.rst:50
+#: ../../modules/backends/backends_cuda.rst:56
+#: ../../modules/backends/backends_cuda.rst:82
+#: ../../modules/backends/backends_cuda.rst:83
+#: ../../modules/backends/backends_cuda.rst:84
+#: ../../modules/backends/backends_cuda.rst:87
+#: ../../modules/backends/backends_cuda.rst:88
+#: ../../modules/backends/backends_cuda.rst:89
+#: ../../modules/backends/backends_cuda.rst:92
+#: ../../modules/backends/backends_cuda.rst:97
+#: ../../modules/backends/backends_cuda.rst:102
+#: ../../modules/backends/backends_cuda.rst:103
+#: ../../modules/backends/backends_cuda.rst:104
+msgid "|y|"
+msgstr "|y|"
+
+#: ../../modules/backends/backends_cuda.rst:48
 msgid ""
-":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.MATRIX_PRODUCT_STATE`:"
-" Matrix-product-state simulation for low-entanglement workloads."
+"Native CUDA-Q kernel. Sampling method selected via "
+":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod`. Intermediate "
+"measurements raise ``NotImplementedError``."
 msgstr ""
-":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.MATRIX_PRODUCT_STATE`:"
-" Simulación de estado producto de matrices para cargas de trabajo con bajo "
+"Kernel CUDA-Q nativo. El método de muestreo se selecciona mediante "
+":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod`. Las "
+"mediciones intermedias lanzan ``NotImplementedError``."
+
+#: ../../modules/backends/backends_cuda.rst:49
+msgid ":class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`"
+msgstr ":class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`"
+
+#: ../../modules/backends/backends_cuda.rst:51
+msgid ""
+"Driven by ``cudaq.evolve`` on the ``dynamics`` target (always GPU-"
+"accelerated when available, independent of the digital sampling method)."
+msgstr ""
+"Impulsada por ``cudaq.evolve`` sobre el target ``dynamics`` (siempre "
+"acelerada por GPU cuando está disponible, con independencia del método de"
+" muestreo digital)."
+
+#: ../../modules/backends/backends_cuda.rst:52
+msgid ":class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir`"
+msgstr ":class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir`"
+
+#: ../../modules/backends/backends_cuda.rst:53
+msgid "|p|"
+msgstr "|p|"
+
+#: ../../modules/backends/backends_cuda.rst:54
+msgid ""
+"The CudaBackend does not natively implement "
+":meth:`Backend._execute_quantum_reservoir "
+"<qilisdk.backends.backend.Backend._execute_quantum_reservoir>`. Circuit "
+"steps inside the reservoir layer fall back to dense ``QTensor`` unitary "
+"multiplication on CPU; ``Schedule`` steps still use CUDA-Q's ``evolve``. "
+"Any attached noise model is ignored."
+msgstr ""
+"CudaBackend no implementa :meth:`Backend._execute_quantum_reservoir "
+"<qilisdk.backends.backend.Backend._execute_quantum_reservoir>`. Los pasos"
+" ``Circuit`` dentro de la capa del reservorio recaen en una "
+"multiplicación unitaria ``QTensor`` densa en CPU; los pasos ``Schedule`` "
+"siguen utilizando ``evolve`` de CUDA-Q. Cualquier modelo de ruido adjunto"
+" se ignora."
+
+#: ../../modules/backends/backends_cuda.rst:55
+msgid ":class:`~qilisdk.functionals.variational_program.VariationalProgram`"
+msgstr ":class:`~qilisdk.functionals.variational_program.VariationalProgram`"
+
+#: ../../modules/backends/backends_cuda.rst:57
+msgid "Reuses the digital/analog handlers above for each optimization step."
+msgstr ""
+"Reutiliza los manejadores digital/analógico anteriores en cada paso de "
+"optimización."
+
+#: ../../modules/backends/backends_cuda.rst:64
+msgid "Configuration"
+msgstr "Configuración"
+
+#: ../../modules/backends/backends_cuda.rst:66
+msgid ""
+"The CUDA backend exposes a single configuration parameter — "
+":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod` — that selects"
+" the underlying CUDA-Q target used for **digital** circuits. If no method"
+" is specified, ``STATE_VECTOR`` is used. Analog evolution always runs on "
+"the ``dynamics`` target and ignores this setting."
+msgstr ""
+"El backend CUDA expone un único parámetro de configuración — "
+":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod` — que "
+"selecciona el target subyacente de CUDA-Q utilizado para los circuitos "
+"**digitales**. Si no se especifica ningún método, se utiliza "
+"``STATE_VECTOR``. La evolución analógica siempre se ejecuta sobre el "
+"target ``dynamics`` e ignora esta opción."
+
+#: ../../modules/backends/backends_cuda.rst:75
+msgid "Method"
+msgstr "Método"
+
+#: ../../modules/backends/backends_cuda.rst:76
+msgid "CUDA-Q target"
+msgstr "Target de CUDA-Q"
+
+#: ../../modules/backends/backends_cuda.rst:77
+msgid "Supports Sampling"
+msgstr "Admite muestreo"
+
+#: ../../modules/backends/backends_cuda.rst:78
+msgid "Supports Expectation Values"
+msgstr "Admite valores esperados"
+
+#: ../../modules/backends/backends_cuda.rst:79
+msgid "Supports State Tomography"
+msgstr "Admite tomografía de estado"
+
+#: ../../modules/backends/backends_cuda.rst:80
+msgid ":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.STATE_VECTOR`"
+msgstr ":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.STATE_VECTOR`"
+
+#: ../../modules/backends/backends_cuda.rst:81
+msgid ""
+"``nvidia`` when a GPU is available, otherwise ``qpp-cpu``. Precision "
+"matches :class:`~qilisdk.settings.Precision`."
+msgstr ""
+"``nvidia`` cuando hay una GPU disponible, en caso contrario ``qpp-cpu``."
+" La precisión coincide con :class:`~qilisdk.settings.Precision`."
+
+#: ../../modules/backends/backends_cuda.rst:85
+msgid ":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.STATE_VECTOR_MGPU`"
+msgstr ":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.STATE_VECTOR_MGPU`"
+
+#: ../../modules/backends/backends_cuda.rst:86
+msgid ""
+"``nvidia-mgpu`` when multiple GPUs are available, otherwise falls back to"
+" ``nvidia``."
+msgstr ""
+"``nvidia-mgpu`` cuando hay varias GPUs disponibles, en caso contrario "
+"recurre a ``nvidia``."
+
+#: ../../modules/backends/backends_cuda.rst:90
+msgid ":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.TENSOR_NETWORK`"
+msgstr ":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.TENSOR_NETWORK`"
+
+#: ../../modules/backends/backends_cuda.rst:91
+msgid "``tensornet``. Good for shallow, wide circuits."
+msgstr "``tensornet``. Adecuado para circuitos poco profundos pero anchos."
+
+#: ../../modules/backends/backends_cuda.rst:93
+#: ../../modules/backends/backends_cuda.rst:94
+#: ../../modules/backends/backends_cuda.rst:98
+#: ../../modules/backends/backends_cuda.rst:99
+msgid "|n|"
+msgstr "|n|"
+
+#: ../../modules/backends/backends_cuda.rst:95
+msgid ":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.MATRIX_PRODUCT_STATE`"
+msgstr ":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.MATRIX_PRODUCT_STATE`"
+
+#: ../../modules/backends/backends_cuda.rst:96
+msgid "``tensornet-mps``. Good for low-entanglement, long circuits."
+msgstr ""
+"``tensornet-mps``. Adecuado para circuitos largos con bajo "
 "entrelazamiento."
 
-#: ../../modules/backends/backends_cuda.rst:41
-msgid "Example"
-msgstr "Ejemplo"
+#: ../../modules/backends/backends_cuda.rst:100
+msgid ":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.CPU`"
+msgstr ":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.CPU`"
 
-#: ../../modules/backends/backends_cuda.rst:65
-msgid "**Output**"
-msgstr "**Salida**"
+#: ../../modules/backends/backends_cuda.rst:101
+msgid "``cpu``. Force running on CPU. Mostly useful for benchmarking."
+msgstr ""
+"``cpu``. Fuerza la ejecución en CPU. Útil principalmente para "
+"benchmarking."
+
+#: ../../modules/backends/backends_cuda.rst:106
+msgid "Set the method at construction time:"
+msgstr "Defina el método en el momento de la construcción:"
+
+#: ../../modules/backends/backends_cuda.rst:115
+msgid "Noise model support"
+msgstr "Soporte de modelos de ruido"
+
+#: ../../modules/backends/backends_cuda.rst:117
+msgid ""
+"A :class:`~qilisdk.noise.NoiseModel` can be passed to "
+"``CudaBackend(noise_model=…)``:"
+msgstr ""
+"Puede pasarse un :class:`~qilisdk.noise.NoiseModel` a "
+"``CudaBackend(noise_model=…)``:"
+
+#: ../../modules/backends/backends_cuda.rst:119
+msgid ""
+"For :class:`~qilisdk.functionals.digital_propagation.DigitalPropagation`,"
+" qilisdk noise channels are translated into a ``cudaq.NoiseModel`` (Kraus"
+" channels for static / time-derived noise, parameter perturbations "
+"applied to the circuit). With noise enabled, only a single "
+":class:`~qilisdk.readout.SamplingReadout` is supported."
+msgstr ""
+"Para "
+":class:`~qilisdk.functionals.digital_propagation.DigitalPropagation`, los"
+" canales de ruido de qilisdk se traducen a un ``cudaq.NoiseModel`` "
+"(canales de Kraus para ruido estático o derivado del tiempo, "
+"perturbaciones de parámetros aplicadas al circuito). Con ruido activado, "
+"solo se admite una única :class:`~qilisdk.readout.SamplingReadout`."
+
+#: ../../modules/backends/backends_cuda.rst:123
+msgid ""
+"For :class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`, "
+"Lindblad-compatible noise channels become CUDA-Q jump operators and "
+"Hamiltonian deltas fed to ``cudaq.evolve``."
+msgstr ""
+"Para :class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`, los "
+"canales de ruido compatibles con Lindblad se convierten en operadores de "
+"salto de CUDA-Q y en deltas del Hamiltoniano que se pasan a "
+"``cudaq.evolve``."
+
+#: ../../modules/backends/backends_cuda.rst:125
+msgid ""
+"For :class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir`, "
+"the fallback implementation drops the noise model (a warning is logged)."
+msgstr ""
+"Para :class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir`, "
+"la implementación de fallback descarta el modelo de ruido (se emite un "
+"aviso en el log)."
+
+#: ../../modules/backends/backends_cuda.rst:128
+msgid ""
+"Example: a depolarising channel applied to every gate of a digital "
+"circuit:"
+msgstr ""
+"Ejemplo: un canal despolarizador aplicado a cada puerta de un circuito "
+"digital:"
 
 #~ msgid "Go to a specific subheading of a page."
 #~ msgstr "Ir a un subtítulo específico de una página."
+
+#~ msgid "Capabilities"
+#~ msgstr "Capacidades"
+
+#~ msgid "Example"
+#~ msgstr "Ejemplo"
+
+#~ msgid "**Output**"
+#~ msgstr "**Salida**"
+
+#~ msgid "Sampling methods"
+#~ msgstr "Métodos de muestreo"
+
+#~ msgid "How each sampling method covers the functionals"
+#~ msgstr "Cómo cada método de muestreo cubre los funcionales"
+
+#~ msgid ""
+#~ "The table below shows which functionals"
+#~ " are affected by ``sampling_method``. Rows"
+#~ " marked |n| are unaffected — the "
+#~ "method is simply ignored for those "
+#~ "execution paths."
+#~ msgstr ""
+#~ "La tabla siguiente muestra qué "
+#~ "funcionales se ven afectados por "
+#~ "``sampling_method``. Las filas marcadas con"
+#~ " |n| no se ven afectadas — el"
+#~ " método simplemente se ignora en esas"
+#~ " rutas de ejecución."
+
+#~ msgid "Sampling method"
+#~ msgstr "Método de muestreo"
+
+#~ msgid "DigitalPropagation"
+#~ msgstr "DigitalPropagation"
+
+#~ msgid "AnalogEvolution"
+#~ msgstr "AnalogEvolution"
+
+#~ msgid "QuantumReservoir"
+#~ msgstr "QuantumReservoir"
+
+#~ msgid "VariationalProgram"
+#~ msgstr "VariationalProgram"
+
+#~ msgid "``STATE_VECTOR``"
+#~ msgstr "``STATE_VECTOR``"
+
+#~ msgid "|n| ``dynamics``"
+#~ msgstr "|n| ``dynamics``"
+
+#~ msgid "|p| Circuit steps via QTensor; Schedule steps via ``dynamics``"
+#~ msgstr "|p| Pasos Circuit vía QTensor; pasos Schedule vía ``dynamics``"
+
+#~ msgid "|y| (delegates to digital/analog)"
+#~ msgstr "|y| (delega en digital/analógico)"
+
+#~ msgid "``TENSOR_NETWORK``"
+#~ msgstr "``TENSOR_NETWORK``"
+
+#~ msgid "``MATRIX_PRODUCT_STATE``"
+#~ msgstr "``MATRIX_PRODUCT_STATE``"
+
+#~ msgid ""
+#~ "In short: ``sampling_method`` only changes "
+#~ "how a **digital** circuit is simulated."
+#~ " Analog evolution always uses "
+#~ "``cudaq.evolve`` on the ``dynamics`` target;"
+#~ " for reservoirs, only the analog "
+#~ "sub-step benefits from CUDA-Q (the "
+#~ "digital sub-circuits run on CPU "
+#~ "through ``QTensor``)."
+#~ msgstr ""
+#~ "En resumen: ``sampling_method`` solo cambia"
+#~ " cómo se simula un circuito "
+#~ "**digital**. La evolución analógica siempre"
+#~ " usa ``cudaq.evolve`` sobre el target "
+#~ "``dynamics``; en los reservorios, solo "
+#~ "el subpaso analógico se beneficia de "
+#~ "CUDA-Q (los subcircuitos digitales se "
+#~ "ejecutan en CPU mediante ``QTensor``)."
+
+#~ msgid "Default"
+#~ msgstr "Por defecto"
+

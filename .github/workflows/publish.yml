@@ -4,6 +4,25 @@ on:
   release:
     types: [released]
   workflow_dispatch:
+    inputs:
+      index:
+        description: "Target index to publish the built distributions to"
+        type: choice
+        default: pypi
+        options:
+          - pypi
+          - speqtrum
+          - euroqcs
+      dry_run:
+        description: "Build and validate the distributions, but do not upload them"
+        type: boolean
+        default: false
+
+# Never run two publishes for the same target at once, and never cancel one
+# mid-upload (a partial upload to an index can be impossible to recover from).
+concurrency:
+  group: publish-${{ github.event.release.tag_name || github.ref }}
+  cancel-in-progress: false
 
 jobs:
   build-wheels:
@@ -12,18 +31,22 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        # PyPI gets the full platform set; the pyx indexes (speqtrum / euroqcs) are Linux x86_64 only.
+        os: ${{ fromJSON((inputs.index || 'pypi') == 'pypi' && '["ubuntu-latest", "ubuntu-24.04-arm", "macos-latest", "windows-latest"]' || '["ubuntu-latest"]') }}
     steps:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 1
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.20.0
+        uses: pypa/cibuildwheel@v4.0.0
         env:
           CIBW_BUILD: "cp311-* cp312-* cp313-*"
           CIBW_SKIP: "*-musllinux_*"
           CIBW_MANYLINUX_X86_64_IMAGE: "manylinux_2_28"
+          CIBW_MANYLINUX_AARCH64_IMAGE: "manylinux_2_28"
+          CIBW_ARCHS_LINUX: ${{ matrix.os == 'ubuntu-24.04-arm' && 'aarch64' || 'x86_64' }}
           CIBW_ARCHS_MACOS: "x86_64 arm64"
+          CIBW_ARCHS_WINDOWS: "AMD64"
         with:
           output-dir: dist
       - name: Upload wheels
@@ -40,7 +63,7 @@ jobs:
         with:
           fetch-depth: 1
       - name: Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@v8.2.0
         with:
           enable-cache: true
           cache-dependency-glob: |
@@ -55,12 +78,11 @@ jobs:
           name: sdist
           path: dist/*.tar.gz
 
-  deploy:
-    name: Deploy to PyPI
+  deploy-pypi:
+    name: Publish to PyPI
     runs-on: ubuntu-latest
     needs: [build-wheels, build-sdist]
-    env:
-      HOME_REPO: /home/repo
+    if: ${{ (inputs.index || 'pypi') == 'pypi' }}
     environment:
       name: pypi
       url: https://pypi.org/p/qilisdk
@@ -80,8 +102,56 @@ jobs:
           name: sdist
           path: dist
       - name: Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@v8.2.0
         with:
           enable-cache: false
           python-version: "3.13"
-      - run: uv publish --trusted-publishing always
+      - name: List & validate distributions
+        run: |
+          ls -lh dist
+          uvx twine check dist/*
+      - name: Publish to PyPI
+        run: >-
+          uv publish
+          --trusted-publishing always
+          --check-url https://pypi.org/simple/qilisdk/
+          ${{ inputs.dry_run && '--dry-run' || '' }}
+
+  deploy-index:
+    name: Publish to ${{ inputs.index }}
+    runs-on: ubuntu-latest
+    needs: [build-wheels, build-sdist]
+    if: ${{ (inputs.index || 'pypi') != 'pypi' }}
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+      - name: Download wheels
+        uses: actions/download-artifact@v4
+        with:
+          pattern: wheels-*
+          path: dist
+          merge-multiple: true
+      - name: Download sdist
+        uses: actions/download-artifact@v4
+        with:
+          name: sdist
+          path: dist
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.2.0
+        with:
+          enable-cache: false
+          python-version: "3.13"
+      - name: List & validate distributions
+        run: |
+          ls -lh dist
+          uvx twine check dist/*
+      - name: Publish to ${{ inputs.index }}
+        env:
+          PYX_API_KEY: ${{ secrets.PYX_API_KEY }}
+        run: >-
+          uv publish
+          --index ${{ inputs.index }}
+          ${{ inputs.dry_run && '--dry-run' || '' }}

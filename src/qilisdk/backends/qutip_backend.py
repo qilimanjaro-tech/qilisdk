@@ -24,7 +24,7 @@ from qutip_qip.operations.gateclass import SingleQubitGate, is_qutip5
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator
 from qilisdk.backends.backend import Backend
-from qilisdk.core.qtensor import QTensor, tensor_prod
+from qilisdk.core.qtensor import InitialState, QTensor, tensor_prod
 from qilisdk.digital import RX, RY, RZ, SWAP, U1, U2, U3, Circuit, H, I, M, S, T, X, Y, Z
 from qilisdk.digital.circuit_transpiler_passes import DecomposeMultiControlledGatesPass
 from qilisdk.digital.exceptions import UnsupportedGateError
@@ -213,17 +213,21 @@ class QutipBackend(Backend):
             for i, h in enumerate(functional.schedule.hamiltonians)
         ]
         state_dim = []
-        if functional.initial_state.is_density_matrix():
-            state_dim = [[2 for _ in range(functional.initial_state.nqubits)] for _ in range(2)]
-        elif functional.initial_state.is_bra():
-            state_dim = [[1], [2 for _ in range(functional.initial_state.nqubits)]]
-        elif functional.initial_state.is_ket():
-            state_dim = [[2 for _ in range(functional.initial_state.nqubits)], [1]]
+        if isinstance(functional.initial_state, InitialState):
+            initial_state = functional.initial_state.as_qtensor(functional.schedule.nqubits)
+        else:
+            initial_state = functional.initial_state
+        if initial_state.is_density_matrix():
+            state_dim = [[2 for _ in range(initial_state.nqubits)] for _ in range(2)]
+        elif initial_state.is_bra():
+            state_dim = [[1], [2 for _ in range(initial_state.nqubits)]]
+        elif initial_state.is_ket():
+            state_dim = [[2 for _ in range(initial_state.nqubits)], [1]]
         else:
             logger.error("Invalid initial state provided")
             raise ValueError("invalid initial state provided.")
 
-        qutip_init_state = Qobj(functional.initial_state.dense(), dims=state_dim)
+        qutip_init_state = Qobj(initial_state.dense(), dims=state_dim)
 
         qutip_obs: list[Qobj] = []
 

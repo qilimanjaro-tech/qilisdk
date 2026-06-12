@@ -361,6 +361,11 @@ msgid ""
 "other team) are the optimal solutions to our problem, with 9 being the "
 "highest obtainable compatibility score."
 msgstr ""
+"Com podeu veure d'aquests resultats, les mostres satisfan la restricció "
+"(és a dir, tenen exactament dos 1's). Més concretament, les dues mostres "
+"\"0110\" i \"1001\" (corresponents a Alice/Dave en un equip i Bob/Carol "
+"en l'altre) són les solucions òptimes al nostre problema, amb 9 sent la "
+"puntuació de compatibilitat màxima assolible."
 
 #: ../../tutorials/applications/application_annealing.rst:123
 msgid "Further Reading"

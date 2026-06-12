@@ -1,6 +1,6 @@
 [project]
 name = "qilisdk"
-version = "0.1.9"
+version = "0.2.1"
 description = "QiliSDK is a Python framework for writing digital and analog quantum algorithms and executing them across multiple quantum backends. Its modular design streamlines the development process and enables easy integration with a variety of quantum platforms."
 readme = "README.md"
 authors = [{name = "Qilimanjaro Quantum Tech", email = "info@qilimanjaro.tech"}]
@@ -8,9 +8,11 @@ requires-python = ">=3.11"
 keywords = ["qilimanjaro", "quantum computing", "digital quantum computing", "analog quantum computing"]
 urls = { "Homepage" = "https://github.com/qilimanjaro-tech/qilisdk", "Documentation" = "https://qilimanjaro-tech.github.io/qilisdk/", "Source" = "https://github.com/qilimanjaro-tech/qilisdk", "Issues" = "https://github.com/qilimanjaro-tech/qilisdk/issues", "Changelog" = "https://github.com/qilimanjaro-tech/qilisdk/blob/main/CHANGELOG.md" }
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Environment :: Console",
     "Operating System :: POSIX :: Linux",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: MacOS",
     "License :: OSI Approved :: Apache Software License",
     "Topic :: Scientific/Engineering",
     "Topic :: Scientific/Engineering :: Physics",
@@ -36,9 +38,8 @@ dependencies = [
     "py-cpuinfo>=9.0.0",
     "setuptools>=82.0.1",
     "gputil>=1.4.0",
-    "mkl-service>=2.6.1; sys_platform != 'darwin'",
+    "mkl-service>=2.6.1; sys_platform != 'darwin' and platform_machine != 'aarch64'",
     "rustworkx>=0.17.1",
-    "openqasm3[parser]>=1.0.1",
     "psutil>=7.2.2",
 ]
 
@@ -47,10 +48,10 @@ cuda = [
     "qilisdk[cuda12]"
 ]
 cuda12 = [
-    "cuda-quantum-cu12==0.14.0",
+    "cuda-quantum-cu12==0.14.2",
 ]
 cuda13 = [
-    "cuda-quantum-cu13==0.14.0"
+    "cuda-quantum-cu13==0.14.2"
 ]
 speqtrum = [
     "httpx==0.28.1",
@@ -64,23 +65,35 @@ qutip = [
 openfermion = [
     "openfermion>=1.7.1",
 ]
+qir = [
+    "pyqir>=0.10.0",
+]
+openqasm = [
+    "openqasm3[parser]>=1.0.1",
+]
 all = [
     "qilisdk[cuda12]",
     "qilisdk[speqtrum]",
     "qilisdk[qutip]",
     "qilisdk[openfermion]",
+    "qilisdk[qir]",
+    "qilisdk[openqasm]",
 ]
 all-cu12 = [
     "qilisdk[cuda12]",
     "qilisdk[speqtrum]",
     "qilisdk[qutip]",
     "qilisdk[openfermion]",
+    "qilisdk[qir]",
+    "qilisdk[openqasm]",
 ]
 all-cu13 = [
     "qilisdk[cuda13]",
     "qilisdk[speqtrum]",
     "qilisdk[qutip]",
     "qilisdk[openfermion]",
+    "qilisdk[qir]",
+    "qilisdk[openqasm]",
 ]
 
 [dependency-groups]
@@ -95,6 +108,7 @@ dev = [
     "pytest-cov>=7.1.0",
     "gcovr>=8.6",
     "ty>=0.0.33",
+    "diff-cover>=10.2.1",
 ]
 docs = [
     "astroid<3.2",
@@ -105,13 +119,18 @@ docs = [
     "sphinx-automodapi>=0.20.0",
     "sphinx-design>=0.7.0",
     "sphinx-mdinclude>=0.6.2",
-    "sphinx-multiversion>=0.2.4",
-    "sphinxawesome-theme>=5.3.2",
+    "sphinx-multiversion==0.2.4",
+    "sphinxawesome-theme==5.3.2",
     "sphinx-intl",
+    "sphinx-tabs>=3.5.0",
 ]
 
 [tool.uv]
-override-dependencies = ["nbconvert >= 7.17.0"]
+# openfermion 1.7.1 caps requests~=2.32.2; override until upstream loosens.
+override-dependencies = ["nbconvert >= 7.17.0", "requests>=2.33.0"]
+required-environments = [
+    "sys_platform == 'linux' and platform_machine == 'aarch64'",
+]
 conflicts = [
     [
       { extra = "cuda12" },
@@ -133,13 +152,25 @@ conflicts = [
 
 [tool.uv.sources]
 sphinx-multiversion = { git = "https://github.com/sphinx-contrib/multiversion", branch = "main"}
-numpy = [{ index = "numpy-mkl", marker = "sys_platform != 'darwin'" }]
-scipy = [{ index = "numpy-mkl", marker = "sys_platform != 'darwin'" }]
-mkl-service = [{ index = "numpy-mkl", marker = "sys_platform != 'darwin'" }]
+numpy = [{ index = "numpy-mkl", marker = "sys_platform != 'darwin' and platform_machine != 'aarch64'" }]
+scipy = [{ index = "numpy-mkl", marker = "sys_platform != 'darwin' and platform_machine != 'aarch64'" }]
+mkl-service = [{ index = "numpy-mkl", marker = "sys_platform != 'darwin' and platform_machine != 'aarch64'" }]
 
 [[tool.uv.index]]
 name = "numpy-mkl"
 url = "https://urob.github.io/numpy-mkl"
+explicit = true
+
+[[tool.uv.index]]
+name = "speqtrum"
+url = "https://api.pyx.dev/simple/qilimanjaro/speqtrum"
+publish-url = "https://api.pyx.dev/v1/upload/qilimanjaro/speqtrum"
+explicit = true
+
+[[tool.uv.index]]
+name = "euroqcs"
+url = "https://api.pyx.dev/simple/qilimanjaro/euroqcs"
+publish-url = "https://api.pyx.dev/v1/upload/qilimanjaro/euroqcs"
 explicit = true
 
 [build-system]
@@ -164,6 +195,11 @@ exclude = [
 cmake.args = ["-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON"]
 cmake.build-type = "Release"
 editable.verbose = false
+
+[[tool.scikit-build.overrides]]
+if.platform-system = "^win32$"
+inherit.cmake.args = "append"
+cmake.args = ["-A", "x64"]
 
 [tool.scikit-build.wheel]
 packages = ["src/qilisdk"]
@@ -282,4 +318,4 @@ markers = [
 package = "qilisdk"
 directory = "changes"
 filename = "CHANGELOG.md"
-issue_format = "[PR #{issue}](https://github.com/qilimanjaro-tech/qilisdk/pulls/{issue})"
+issue_format = "[PR #{issue}](https://github.com/qilimanjaro-tech/qilisdk/pull/{issue})"

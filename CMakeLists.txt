@@ -24,8 +24,19 @@ if(NOT COMPILER_EXISTS OR CMAKE_CXX_COMPILER STREQUAL "")
     message(FATAL_ERROR "[QiliSDK C++] No C++ compiler found. Please install one (e.g. \"sudo apt install build-essential\" on Ubuntu or \"xcode-select --install\" on macOS) and try again.")
 endif()
 
+# Make sure we have 64-bit toolchain
+if(MSVC AND CMAKE_SIZEOF_VOID_P EQUAL 4)
+    message(FATAL_ERROR "[QiliSDK C++] Detected a 32-bit MSVC toolchain (Win32), but Python is expected to be 64-bit. Re-run with CMAKE_GENERATOR_PLATFORM=x64 (or pass -A x64).")
+endif()
+
 # pybind should already be installed via the dependencies
 set(pybind11_DIR "${CMAKE_CURRENT_LIST_DIR}/.venv/share/cmake/pybind11")
+
+# Windows needs some extra help finding Python
+if(MSVC)
+set(PYBIND11_FINDPYTHON ON)
+find_package(Python COMPONENTS Interpreter Development REQUIRED)
+endif()
 find_package(pybind11 REQUIRED)
 
 # This is optional, but should be available as part of most compilers
@@ -56,7 +67,11 @@ message(STATUS "[QiliSDK C++] Using Eigen version: ${EIGEN3_VERSION}")
 message(STATUS "[QiliSDK C++] All dependencies found, preparing build files")
 
 # The common libs
+if(MSVC)
+add_library(qilisdk_libs STATIC)
+else()
 pybind11_add_module(qilisdk_libs SHARED)
+endif()
 file(GLOB LIBS_SOURCES src/qilisdk_cpp/libs/*.cpp)
 target_sources(qilisdk_libs PRIVATE ${LIBS_SOURCES})
 
@@ -67,16 +82,6 @@ else()
     set(RPATH_ORIGIN "$ORIGIN")
 endif()
 
-# QTensor
-pybind11_add_module(qtensor_module SHARED src/qilisdk_cpp/core/qtensor_bindings.cpp)
-file(GLOB QTENSOR_SOURCES src/qilisdk_cpp/core/*.cpp)
-target_sources(qtensor_module PRIVATE ${QTENSOR_SOURCES})
-target_link_libraries(qtensor_module PRIVATE qilisdk_libs)
-set_target_properties(qtensor_module PROPERTIES
-    BUILD_RPATH "${RPATH_ORIGIN}"
-    INSTALL_RPATH "${RPATH_ORIGIN}"
-)
-
 # QiliSim
 pybind11_add_module(qilisim_module SHARED src/qilisdk_cpp/backends/qilisim/qilisim_bindings.cpp)
 file(GLOB QILISIM_SOURCES src/qilisdk_cpp/backends/qilisim/*.cpp)
@@ -85,6 +90,17 @@ list(APPEND QILISIM_SOURCES ${QILISIM_SUBDIR_SOURCES})
 target_sources(qilisim_module PRIVATE ${QILISIM_SOURCES})
 target_link_libraries(qilisim_module PRIVATE qilisdk_libs)
 set_target_properties(qilisim_module PROPERTIES
+    BUILD_RPATH "${RPATH_ORIGIN}"
+    INSTALL_RPATH "${RPATH_ORIGIN}"
+)
+
+# QTensor
+pybind11_add_module(qtensor_module SHARED src/qilisdk_cpp/core/qtensor_bindings.cpp)
+file(GLOB QTENSOR_SOURCES src/qilisdk_cpp/core/*.cpp)
+target_sources(qtensor_module PRIVATE ${QTENSOR_SOURCES})
+target_link_libraries(qtensor_module PRIVATE qilisdk_libs)
+target_link_libraries(qtensor_module PRIVATE qilisim_module)  # QTensor depends on some QiliSim types for now
+set_target_properties(qtensor_module PROPERTIES
     BUILD_RPATH "${RPATH_ORIGIN}"
     INSTALL_RPATH "${RPATH_ORIGIN}"
 )
@@ -103,8 +119,10 @@ foreach(module ${MODULES_TO_BUILD})
         target_compile_options(${module} PRIVATE -Wall -Wextra -Wpedantic)
     endif()
 
-    # Make everything visible, so that the test suite can access internal functions
-    target_compile_options(${module} PRIVATE -fvisibility=default)
+    # Make everything visible on compilers that support this flag
+    if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        target_compile_options(${module} PRIVATE -fvisibility=default)
+    endif()
 
     # Link libraries and include directories
     target_link_libraries(${module} PUBLIC Eigen3::Eigen)

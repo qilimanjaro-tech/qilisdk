@@ -749,26 +749,23 @@ TEST(BraPythonTest, Valid) {
 }
 
 TEST(ZeroTest, NegativeNqubits_Throws) {
-    EXPECT_THROW(QTensorCpp::zero(-1, "ket"), py::value_error);
+    EXPECT_THROW(QTensorCpp::zero(-1), py::value_error);
 }
 
 TEST(ZeroTest, Ket_Type) {
-    QTensorCpp q = QTensorCpp::zero(1, "ket");
+    QTensorCpp q = QTensorCpp::zero(2);
     EXPECT_TRUE(q.is_ket());
+    EXPECT_NEAR(q.get_data().coeff(0, 0).real(), 1.0, 1e-10);
 }
 
-TEST(ZeroTest, Bra_Type) {
-    QTensorCpp q = QTensorCpp::zero(1, "bra");
-    EXPECT_TRUE(q.is_bra());
+TEST(OneTest, NegativeNqubits_Throws) {
+    EXPECT_THROW(QTensorCpp::one(-1), py::value_error);
 }
 
-TEST(ZeroTest, Operator_Type) {
-    QTensorCpp q = QTensorCpp::zero(1, "operator");
-    EXPECT_TRUE(q.is_operator());
-}
-
-TEST(ZeroTest, InvalidType_Throws) {
-    EXPECT_THROW(QTensorCpp::zero(1, "vector"), py::value_error);
+TEST(OneTest, Ket_Type) {
+    QTensorCpp q = QTensorCpp::one(2);
+    EXPECT_TRUE(q.is_ket());
+    EXPECT_NEAR(q.get_data().coeff(3, 0).real(), 1.0, 1e-10);
 }
 
 TEST(IdentityTest, Is2x2Identity) {
@@ -1210,7 +1207,7 @@ TEST(ExpectationValueTest, ExactOperator) {
 }
 
 TEST(ExpectationValueTest, SampledZeroState_Throws) {
-    QTensorCpp q(QTensorCpp::zero(2, "operator"));
+    QTensorCpp q(QTensorCpp(SparseMatrix(2, 2)));
     q.compute_eigendecomposition();
     QTensorCpp op(make_identity2());
     EXPECT_THROW(q.expectation_value(op, 10), py::value_error);
@@ -1592,7 +1589,7 @@ TEST(SqrtTest, NonOperator_Throws) {
 }
 
 TEST(SqrtTest, ZeroMatrix_SpecialCase) {
-    QTensorCpp zero = QTensorCpp::zero(2, "operator");
+    QTensorCpp zero = QTensorCpp(SparseMatrix(2, 2));
     ASSERT_NO_THROW(zero.sqrt());
 }
 
@@ -1762,6 +1759,59 @@ TEST(ResetQubitsTest, ResetToZeroState) {
     QTensorCpp r = q.reset_qubits({0, 1});
     EXPECT_TRUE(r.is_density_matrix());
     EXPECT_NEAR(r.get_data().coeff(0, 0).real(), 1.0, 1e-10);
+}
+
+// --- MatrixFree expectation_value overload ---
+
+static MatrixFreeHamiltonian make_mf_z() {
+    MatrixFreeHamiltonian h(1);
+    h.add({1.0, 0.0}, MatrixFreeOperator("Z", 0));
+    return h;
+}
+
+static MatrixFreeHamiltonian make_mf_x() {
+    MatrixFreeHamiltonian h(1);
+    h.add({1.0, 0.0}, MatrixFreeOperator("X", 0));
+    return h;
+}
+
+TEST(ExpectationValueMatrixFree, KetZeroWithZ_GivesOne) {
+    // <0|Z|0> = 1
+    QTensorCpp ket(make_ket0());
+    auto ev = ket.expectation_value(make_mf_z());
+    EXPECT_NEAR(ev.real(), 1.0, 1e-10);
+    EXPECT_NEAR(ev.imag(), 0.0, 1e-10);
+}
+
+TEST(ExpectationValueMatrixFree, KetOneWithZ_GivesMinusOne) {
+    // <1|Z|1> = -1
+    QTensorCpp ket(make_ket1());
+    auto ev = ket.expectation_value(make_mf_z());
+    EXPECT_NEAR(ev.real(), -1.0, 1e-10);
+}
+
+TEST(ExpectationValueMatrixFree, BraZeroWithZ_GivesOne) {
+    // <0|Z|0> = 1 (bra form)
+    SparseMatrix bra_m(1, 2);
+    bra_m.insert(0, 0) = 1.0;
+    bra_m.makeCompressed();
+    QTensorCpp bra(bra_m);
+    auto ev = bra.expectation_value(make_mf_z());
+    EXPECT_NEAR(ev.real(), 1.0, 1e-10);
+}
+
+TEST(ExpectationValueMatrixFree, DensityMatrixZeroWithZ_GivesOne) {
+    // tr(Z * |0><0|) = 1
+    QTensorCpp dm(make_dm_pure0());
+    auto ev = dm.expectation_value(make_mf_z());
+    EXPECT_NEAR(ev.real(), 1.0, 1e-10);
+}
+
+TEST(ExpectationValueMatrixFree, KetZeroWithX_GivesZero) {
+    // <0|X|0> = 0
+    QTensorCpp ket(make_ket0());
+    auto ev = ket.expectation_value(make_mf_x());
+    EXPECT_NEAR(ev.real(), 0.0, 1e-10);
 }
 
 // GCOV_EXCL_BR_STOP

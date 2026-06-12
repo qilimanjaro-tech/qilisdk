@@ -96,11 +96,11 @@ def test_adaptive_creates_okay():
 
 def test_qilisim_invalid_config_types():
     with pytest.raises(ValueError, match="not a valid analog simulation method"):
-        QiliSim(analog_simulation_method=DigitalMethod())  # type:ignore[arg-type]
+        QiliSim(analog_simulation_method=DigitalMethod())  # type: ignore[arg-type]
     with pytest.raises(ValueError, match="not a valid digital simulation method"):
-        QiliSim(digital_simulation_method=AnalogMethod.integrator())  # type:ignore[arg-type]
+        QiliSim(digital_simulation_method=AnalogMethod.integrator())  # type: ignore[arg-type]
     with pytest.raises(ValueError, match="not a valid execution configuration"):
-        QiliSim(execution_config=AnalogMethod.integrator())  # type:ignore[arg-type]
+        QiliSim(execution_config=AnalogMethod.integrator())  # type: ignore[arg-type]
 
 
 class QiliSimMock:
@@ -226,3 +226,22 @@ def test_qilisim_repr():
     repr_str = str(backend)
     assert "QiliSim" in repr_str
     assert "QiliSim" in repr_str
+
+
+def test_qilisim_variational_annealing_runs(monkeypatch):
+    backend = QiliSim(analog_simulation_method=AnalogMethod.variational_annealing(order=2, shots=1000, warmups=100))
+    hamiltonian = pauli_z(0)
+    schedule = Schedule(hamiltonians={"h": hamiltonian}, dt=0.1)
+    initial_state = ket(0)
+    func = AnalogEvolution(schedule=schedule, initial_state=initial_state)
+
+    mock_execute_analog_evolution = MagicMock(return_value=FunctionalResult(readout_results={}))
+
+    monkeypatch.setattr(
+        "qilisdk.backends.qilisim.QiliSim._execute_analog_evolution",
+        mock_execute_analog_evolution,
+    )
+
+    result = backend.execute(func, Readout().with_expectation(observables=[pauli_z(0)]))
+    assert result is not None
+    mock_execute_analog_evolution.assert_called_once()

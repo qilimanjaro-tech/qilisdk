@@ -14,6 +14,7 @@
 from __future__ import annotations
 
 from copy import copy
+from enum import Enum
 from typing import TYPE_CHECKING, Literal
 
 import numpy as np
@@ -26,11 +27,44 @@ from qilisdk.utils.visualization.style import QTensorStyle
 from qilisdk.yaml import yaml
 
 if TYPE_CHECKING:
+    from qilisdk.analog import Hamiltonian
     from qilisdk.core.types import Number
 
 Complex = int | float | complex
 NormTypes = Literal["auto", "frobenius", "trace", "l1", "l2", "inf", "nuclear"] | int
 QTensorType = Literal["ket", "bra", "operator"]
+
+
+# Enum containing state presets like +, 0 etc.
+class InitialState(Enum):
+    """
+    Enumeration of symbolic initial states that can be used to specify the initial state of an evolution without needing to construct the corresponding QTensor manually.
+    """
+
+    UNIFORM = "uniform"
+    ZERO = "zero"
+    ONE = "one"
+
+    def as_qtensor(self, nqubits: int) -> QTensor:
+        """
+        Convert the symbolic initial state to a QTensor.
+
+        Args:
+            nqubits (int): The number of qubits in the system, which determines the size of the resulting QTensor.
+
+        Returns:
+            QTensor: A QTensor representing the specified initial state for the given number of qubits.
+
+        Raises:
+            ValueError: If the symbolic initial state is not recognized.
+        """
+        if self == InitialState.ZERO:
+            return QTensor.zero(nqubits)
+        if self == InitialState.UNIFORM:
+            return QTensor.uniform(nqubits)
+        if self == InitialState.ONE:
+            return QTensor.one(nqubits)
+        raise ValueError(f"Unknown symbolic QTensor: {self.name}")
 
 
 @yaml.register_class
@@ -530,18 +564,30 @@ class QTensor:
         return QTensor(QTensorCpp.bra_python(state))
 
     @classmethod
-    def zero(cls, nqubits: int, qtensor_type: QTensorType = "operator") -> QTensor:
+    def zero(cls, nqubits: int) -> QTensor:
         """
-        Create a QTensor representing the zero matrix of the specified shape.
+        Create a QTensor representing the |0..0> statevector.
 
         Args:
-            nqubits (int): The number of qubits, which determines the size of the zero matrix (2^nqubits x 2^nqubits).
-            qtensor_type (QTensorType): The type of QTensor to create ("ket", "bra", or "operator"), which determines the shape of the zero matrix.
+            nqubits (int): The number of qubits, which determines the size of the zero statevector (2^nqubits x 1).
 
         Returns:
-            QTensor: A new QTensor representing the zero matrix.
+            QTensor: A new QTensor representing the zero statevector.
         """
-        return QTensor(QTensorCpp.zero(nqubits, qtensor_type))
+        return QTensor(QTensorCpp.zero(nqubits))
+
+    @classmethod
+    def one(cls, nqubits: int) -> QTensor:
+        """
+        Create a QTensor representing the |1..1> statevector.
+
+        Args:
+            nqubits (int): The number of qubits, which determines the size of the one statevector (2^nqubits x 1).
+
+        Returns:
+            QTensor: A new QTensor representing the one statevector.
+        """
+        return QTensor(QTensorCpp.one(nqubits))
 
     @classmethod
     def identity(cls, nqubits: int) -> QTensor:
@@ -757,14 +803,14 @@ class QTensor:
         self._qtensor_cpp.compute_eigendecomposition()
         return [QTensor(vec) for vec in self._qtensor_cpp.get_eigenvectors_python()]
 
-    def expectation_value(self, other: QTensor, nshots: int = 0) -> complex:
+    def expectation_value(self, other: QTensor | Hamiltonian, nshots: int = 0) -> complex:
         """
         Compute the expectation value of another QTensor with respect to this QTensor.
 
         For state vectors, this corresponds to :math:`⟨\\psi|O|\\psi⟩`. For operators, it corresponds to :math:`\\text{tr}(\\rho O)`.
 
         Args:
-            other (QTensor): The other QTensor to compute the expectation value with.
+            other (QTensor | Hamiltonian): The other QTensor or Hamiltonian to compute the expectation value with.
             nshots (int, optional): The number of shots to use for a stochastic estimation of the expectation value. If 0 or negative, the exact expectation value is computed using the trace formula.
 
         Returns:
@@ -839,7 +885,7 @@ def bra(*state: int) -> QTensor:
     return QTensor.bra(*state)
 
 
-def expect_val(operator: QTensor, state: QTensor) -> complex:
+def expect_val(operator: QTensor | Hamiltonian, state: QTensor) -> complex:
     """
     Wrapper for backwards compatibility: see QTensor.expectation_value().
 
@@ -880,18 +926,17 @@ def reset_qubits(state: QTensor, qubits: list[int]) -> QTensor:
     return state.reset_qubits(set(qubits))
 
 
-def zero(nqubits: int, qtensor_type: QTensorType = "operator") -> QTensor:
+def zero(nqubits: int) -> QTensor:
     """
     Wrapper for backwards compatibility: see QTensor.zero().
 
     Args:
-        nqubits (int): The number of qubits, which determines the size of the zero matrix (2^nqubits x 2^nqubits).
-        qtensor_type (QTensorType): The type of QTensor to create ("ket", "bra", or "operator"), which determines the shape of the zero matrix.
+        nqubits (int): The number of qubits, which determines the size of the zero statevector (2^nqubits x 1).
 
     Returns:
-        QTensor: A new QTensor representing the zero matrix.
+        QTensor: A new QTensor representing the zero statevector.
     """
-    return QTensor.zero(nqubits, qtensor_type)
+    return QTensor.zero(nqubits)
 
 
 def basis_state(n: int, N: int) -> QTensor:
