@@ -14,6 +14,7 @@
 #pragma once
 
 #include <set>
+#include "../backends/qilisim/representations/matrix_free_hamiltonian.h"
 #include "../libs/eigen.h"
 #include "../libs/pybind.h"
 
@@ -120,6 +121,7 @@ class QTensorCpp {
     std::vector<double> probabilities() const;
     py::list probabilities_python() const;
     std::complex<double> expectation_value(const QTensorCpp& other, int nshots = 0) const;
+    std::complex<double> expectation_value(const MatrixFreeHamiltonian& other) const;
     std::complex<double> expectation_value_python(const py::object& other, int nshots = 0) const;
     QTensorCpp partial_trace_python(const py::object& keep) const;
     QTensorCpp partial_trace(const std::set<int>& keep) const;

@@ -11,14 +11,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from .experiment_functional import ExperimentFunctional, RabiExperiment, T1Experiment, T2Experiment, TwoTonesExperiment
+from .experiment_functional import (
+    ExperimentFunctional,
+    RabiExperiment,
+    T1Experiment,
+    T2Experiment,
+    TwoTonesAtFixedFluxBiasExperiment,
+    TwoTonesVsFluxBiasExperiment,
+)
 from .experiment_result import (
     Dimension,
     ExperimentResult,
     RabiExperimentResult,
     T1ExperimentResult,
     T2ExperimentResult,
-    TwoTonesExperimentResult,
+    TwoTonesAtFixedFluxBiasExperimentResult,
+    TwoTonesVsFluxBiasExperimentResult,
 )
 
 __all__ = [
@@ -31,6 +39,8 @@ __all__ = [
     "T1ExperimentResult",
     "T2Experiment",
     "T2ExperimentResult",
-    "TwoTonesExperiment",
-    "TwoTonesExperimentResult",
+    "TwoTonesAtFixedFluxBiasExperiment",
+    "TwoTonesAtFixedFluxBiasExperimentResult",
+    "TwoTonesVsFluxBiasExperiment",
+    "TwoTonesVsFluxBiasExperimentResult",
 ]

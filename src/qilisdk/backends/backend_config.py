@@ -89,8 +89,7 @@ class AnalogMethod(BaseSimulatorConfig):
 
     Args:
         evolution_method (str): Analog time-evolution method to use:
-            ``"direct"``, ``"arnoldi"``, ``"integrate_rk4"``, ``"integrate_rk45_matrix_free"``, or
-            ``"integrate_rk4_matrix_free"``. Defaults to ``"integrate_rk4_matrix_free"``.
+            ``"direct"``, ``"arnoldi"``, ``"integrate_rk4"``, ``"integrate_rk45_matrix_free"``, ``"integrate_rk4_matrix_free"``, or ``"variational_exponential"``. Defaults to ``"integrate_rk4_matrix_free"``.
         arnoldi_dim (int): Dimension of the Arnoldi Krylov subspace used
             when ``evolution_method="arnoldi"``. Defaults to ``10``.
         num_arnoldi_substeps (int): Number of integration substeps per
@@ -98,10 +97,15 @@ class AnalogMethod(BaseSimulatorConfig):
     """
 
     evolution_method: Literal[
-        "direct", "arnoldi", "integrate_rk4", "integrate_rk45_matrix_free", "integrate_rk4_matrix_free"
+        "direct",
+        "arnoldi",
+        "integrate_rk4",
+        "integrate_rk45_matrix_free",
+        "integrate_rk4_matrix_free",
+        "variational_exponential",
     ] = Field(
         default="integrate_rk4_matrix_free",
-        description="Analog time-evolution method to use: 'direct', 'arnoldi', 'integrate_rk4', 'integrate_rk45_matrix_free', or 'integrate_rk4_matrix_free'.",
+        description="Analog time-evolution method to use: 'direct', 'arnoldi', 'integrate_rk4', 'integrate_rk45_matrix_free', 'integrate_rk4_matrix_free', or 'variational_exponential'.",
     )
     arnoldi_dim: int = Field(
         default=10,
@@ -118,6 +122,21 @@ class AnalogMethod(BaseSimulatorConfig):
         gt=0,
         description="Tolerance for the adaptive integrator method when `evolution_method='integrate_rk45_matrix_free'`.",
     )
+    variational_shots: int = Field(
+        default=1000,
+        gt=0,
+        description="Number of shots to use when estimating expectation values for the variational optimization when `evolution_method='variational_exponential'`.",
+    )
+    variational_warmups: int = Field(
+        default=100,
+        ge=0,
+        description="Number of warmup iterations to perform before collecting samples for the variational optimization when `evolution_method='variational_exponential'`.",
+    )
+    variational_order: int = Field(
+        default=2,
+        gt=0,
+        description="Order of the polynomial expansion used in the variational ansatz when `evolution_method='variational_exponential'`.",
+    )
 
     def get_config(self) -> SolverConfigDict:
         """Return a complete analog solver configuration for the C++ backend."""
@@ -126,6 +145,9 @@ class AnalogMethod(BaseSimulatorConfig):
             "arnoldi_dim": self.arnoldi_dim,
             "num_arnoldi_substeps": self.num_arnoldi_substeps,
             "adaptive_tol": self.adaptive_tol,
+            "variational_shots": self.variational_shots,
+            "variational_warmups": self.variational_warmups,
+            "variational_order": self.variational_order,
         }
 
         return d
@@ -144,6 +166,28 @@ class AnalogMethod(BaseSimulatorConfig):
         """
         evolution_method = "integrate_rk4_matrix_free" if matrix_free else "integrate_rk4"
         return cls(evolution_method=evolution_method)
+
+    @classmethod
+    def variational_annealing(cls, *, order: int = 2, shots: int = 1000, warmups: int = 100) -> AnalogMethod:
+        """
+        Anneal a variational ansatz rather than the full state.
+
+        Based on this paper: https://arxiv.org/pdf/2403.05147
+
+        Args:
+            order (int): Order of the polynomial expansion used in the variational ansatz.
+            shots (int): Number of samples to use when estimating expectation values for the variational optimization.
+            warmups (int): Number of warmup iterations to perform before collecting samples for the variational optimization.
+
+        Returns:
+            AnalogMethod: Configured variational-method analog configuration.
+        """
+        return cls(
+            evolution_method="variational_exponential",
+            variational_order=order,
+            variational_shots=shots,
+            variational_warmups=warmups,
+        )
 
     @classmethod
     def adaptive_integrator(cls, *, tol: float = 1e-2) -> AnalogMethod:

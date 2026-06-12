@@ -253,7 +253,7 @@ class Backend(ABC):
                     else final_state
                 )
             elif isinstance(ro, ExpectationReadout):
-                ro.expand_observables(nqubits=final_state.nqubits)
+                ro.expanded_observables(nqubits=final_state.nqubits)
                 expectation_result: ExpectationReadoutResult = ExpectationReadoutResult.from_state(
                     expectation_readout=ro, state=final_state
                 )

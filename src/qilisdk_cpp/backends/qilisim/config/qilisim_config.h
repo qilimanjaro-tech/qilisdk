@@ -34,7 +34,10 @@ class QiliSimConfig {
     bool combine_single_qubit_gates = true;
     bool normalize_after_each_gate = false;
     double adaptive_tol = 1e-2;
-    bool measurement_collapse = true;
+    bool measurement_collapse = false;
+    int order = 2;
+    int shots = 1000;
+    int warmups = 100;
 
    public:
     // Getters
@@ -53,6 +56,9 @@ class QiliSimConfig {
     bool get_normalize_after_gate() const { return normalize_after_each_gate; }
     bool get_combine_single_qubit_gates() const { return combine_single_qubit_gates; }
     bool get_measurement_collapse() const { return measurement_collapse; }
+    int get_order() const { return order; }
+    int get_shots() const { return shots; }
+    int get_warmups() const { return warmups; }
 
     // Setters
     void set_monte_carlo(bool value) { monte_carlo = value; }
@@ -70,6 +76,9 @@ class QiliSimConfig {
     void set_normalize_after_gate(bool value) { normalize_after_each_gate = value; }
     void set_combine_single_qubit_gates(bool value) { combine_single_qubit_gates = value; }
     void set_measurement_collapse(bool value) { measurement_collapse = value; }
+    void set_order(int value) { order = value; }
+    void set_shots(int value) { shots = value; }
+    void set_warmups(int value) { warmups = value; }
 
     // Initialize with default values
     QiliSimConfig() = default;

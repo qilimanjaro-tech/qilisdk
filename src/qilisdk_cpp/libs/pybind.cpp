@@ -26,6 +26,7 @@ py::object sparray;
 py::dtype dtype;
 py::object py_complex;
 py::object QTensor;
+py::object InitialState;
 py::object Hamiltonian;
 py::object PauliOperator;
 py::object NoiseModel;
@@ -68,6 +69,7 @@ void initialize_all_pybind_types() {
     StateTomographyReadoutResult = py::module_::import("qilisdk.readout.readout_result").attr("StateTomographyReadoutResult");
     ReadoutCompositeResults = py::module_::import("qilisdk.readout.readout_result").attr("ReadoutCompositeResults");
     QTensor = py::module_::import("qilisdk.core.qtensor").attr("QTensor");
+    InitialState = py::module_::import("qilisdk.core.qtensor").attr("InitialState");
     Hamiltonian = py::module_::import("qilisdk.analog.hamiltonian").attr("Hamiltonian");
     PauliOperator = py::module_::import("qilisdk.analog.hamiltonian").attr("PauliOperator");
     NoiseModel = py::module_::import("qilisdk.noise.noise_model").attr("NoiseModel");
@@ -109,6 +111,7 @@ void finalize_all_pybind_types() {
     StateTomographyReadoutResult = py::object();
     ReadoutCompositeResults = py::object();
     QTensor = py::object();
+    InitialState = py::object();
     Hamiltonian = py::object();
     PauliOperator = py::object();
     NoiseModel = py::object();

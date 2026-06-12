@@ -133,10 +133,8 @@ class ExpectationReadout(ReadoutMethod):
             raise ValueError("Invalid Observable: All observables need to be QTensors or a Hamiltonian.")
         self._nshots: int = nshots
         self._observables: list[Hamiltonian | QTensor] = observables
-        self._qtensor_observables: list[QTensor] = [
-            (o if isinstance(o, QTensor) else o.to_qtensor()) for o in self.observables
-        ]
         self._scaled_nqubits: int | None = None
+        self._expanded_observables: list[Hamiltonian | QTensor] | None = None
 
     @property
     def nshots(self) -> int:
@@ -152,28 +150,25 @@ class ExpectationReadout(ReadoutMethod):
         """
         return self._observables
 
-    @property
-    def qtensor_observables(self) -> list[QTensor]:
-        """
-        The observables converted to :class:`~qilisdk.core.QTensor` form, populated automatically; not intended to be set manually.
-        """
-        return self._qtensor_observables
-
-    def expand_observables(self, nqubits: int) -> None:
+    def expanded_observables(self, nqubits: int) -> list[Hamiltonian | QTensor]:
         """Scale each observable to match a given number of qubits.
 
         The conversion is cached: calling this method again with the same
         ``nqubits`` value is a no-op.
 
+        Note that only QTensors are expanded, Hamiltonians are returned as-is.
+
         Args:
             nqubits (int): Target qubit count to scale the observables to.
+
+        Returns:
+            list[Hamiltonian | QTensor]: The scaled observables as QTensors.
         """
-        if self._scaled_nqubits == nqubits:
-            return
-        self._qtensor_observables = [
-            (o.expand(nqubits) if isinstance(o, QTensor) else o.to_qtensor(nqubits)) for o in self.observables
-        ]
+        if self._scaled_nqubits == nqubits and self._expanded_observables is not None:
+            return self._expanded_observables
+        self._expanded_observables = [(o.expand(nqubits) if isinstance(o, QTensor) else o) for o in self.observables]
         self._scaled_nqubits = nqubits
+        return self._expanded_observables
 
 
 @yaml.register_class

@@ -7,27 +7,37 @@
 # Time estimate: 1 minute
 # --------------------------------------------------------------------------
 
-# Save the current directory so we can return to it later
-ORIG_DIR=$(pwd)
+# Assuming we're in the root directory, change to docs directory
+cd docs
 
-# Change to the root directory of the project
-cd "$(dirname "$(dirname "$(realpath "$0")")")"
+# Update the .po files from the docs source files
+make gettext
 
+# Check for missing translations in the .po files
 MISSING=0
 FUZZY=0
-
-for file in $(find ./docs/ -name "*.po"); do
-    # match msgid blocks (single or multiline) followed by an empty msgstr
-    if grep -Pzo 'msgid ".*"\n(?:".*"\n)*msgstr ""\n(?!")' "$file" > /dev/null 2>&1; then
+for file in $(find ./ -name "*.po"); do
+    # match non-empty msgid followed immediately by empty msgstr (not a multiline continuation)
+    if grep -Pzo 'msgid ".+"\nmsgstr ""\n(?!")' "$file" > /dev/null 2>&1; then
         echo "Missing translations in $file"
         MISSING=$((MISSING + 1))
     fi
-    # match fuzzy translations, excluding the file header (which always has msgid "")
-    if grep -Pzo '#, fuzzy\nmsgid ".+"' "$file" > /dev/null 2>&1; then
+    # match fuzzy translations, skipping the header block (which has empty msgid "")
+    if awk '/^#, fuzzy/{fuzzy=1;next} fuzzy&&/^msgid ".+"/{found=1;exit} fuzzy&&/^msgid/{fuzzy=0} END{exit !found}' "$file"; then
         echo "Fuzzy translations in $file"
         FUZZY=$((FUZZY + 1))
     fi
 done
 
+# Output summary
 echo "Total files with missing translations: $MISSING"
 echo "Total files with fuzzy translations: $FUZZY"
+
+# Return to the root directory
+cd ..
+
+# Return non-zero exit code if any missing or fuzzy translations were found
+if [[ $MISSING -gt 0 ]] || [[ $FUZZY -gt 0 ]]; then
+    echo "Error: Missing or fuzzy translations found. Please update the .po files." >&2
+    exit 1
+fi

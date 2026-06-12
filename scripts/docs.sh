@@ -157,5 +157,8 @@ rm -rf .tmp/.docs_test
 # Return to the original directory
 cd "$ORIG_DIR"
 
-[[ $FAIL -eq 0 ]]
+# Return non-zero exit code if any tests failed
+if [[ $FAIL -gt 0 ]]; then
+    exit 1
+fi
 

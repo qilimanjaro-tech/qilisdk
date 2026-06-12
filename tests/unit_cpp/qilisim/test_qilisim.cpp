@@ -204,7 +204,7 @@ _c_intermediate.add(M(0))
 _c_intermediate.add(H(0))
 _c_intermediate.add(M(0))
 _samp_intermediate = DigitalPropagation(circuit=_c_intermediate)
-_solver_params = {"collapse_measurements": True}
+_solver_params = {"measurement_collapse": True}
 _readout_intermediate = [SamplingReadout(nshots=1000)]
     )");
     py::object result;
@@ -233,7 +233,7 @@ _c_intermediate.add(M(0))
 _c_intermediate.add(H(0))
 _c_intermediate.add(M(0))
 _samp_intermediate = DigitalPropagation(circuit=_c_intermediate)
-_solver_params = {"collapse_measurements": True}
+_solver_params = {"measurement_collapse": True}
 _readout_intermediate = [SamplingReadout(nshots=1000)]
     )");
     py::object result;
@@ -417,7 +417,7 @@ class _TEMatchingParam(AnalogEvolution):
     def __init__(self):
         object.__init__(self)
         self.schedule = _FakeScheduleWithParam()
-        self.initial_state = _rho_nm_match
+        self._initial_state = _rho_nm_match
         self.store_intermediate_results = False
 
 _te_nm_match = _TEMatchingParam()
@@ -456,7 +456,7 @@ class _TE_MM_MF(AnalogEvolution):
     def __init__(self):
         object.__init__(self)
         self.schedule = _FakeSched_MM_MF()
-        self.initial_state = _rho_mm_mf
+        self._initial_state = _rho_mm_mf
         self.store_intermediate_results = False
 
 _te_mm_mf = _TE_MM_MF()
@@ -492,7 +492,7 @@ class _TE_MM_Std(AnalogEvolution):
     def __init__(self):
         object.__init__(self)
         self.schedule = _FakeSched_MM_Std()
-        self.initial_state = _rho_mm_std
+        self._initial_state = _rho_mm_std
         self.store_intermediate_results = False
 
 _te_mm_std = _TE_MM_Std()
@@ -550,6 +550,217 @@ _reservoir = QuantumReservoir(
     ASSERT_NO_THROW(result = sim.execute_quantum_reservoir(py::globals()["_reservoir"], py::list(), py::none(), empty_solver_params()));
     EXPECT_TRUE(py::hasattr(result, "readout_results"));
     EXPECT_TRUE(py::hasattr(result, "intermediate_results"));
+}
+
+TEST_F(ExecuteTimeEvolutionTest, VariationalExponential_NonUniformInitialState_Throws) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.functionals.analog_evolution import AnalogEvolution
+from qilisdk.analog.schedule import Schedule
+from qilisdk.analog.hamiltonian import X, Z
+from qilisdk.core.qtensor import QTensor, ket
+import scipy.sparse as sp, numpy as np
+
+_sched_var_bad = Schedule(
+    hamiltonians={"h_x": X(0), "h_z": Z(0)},
+    coefficients={"h_x": {(0, 2): lambda t: 1 - t/2}, "h_z": {(0, 2): lambda t: t/2}},
+    dt=1,
+)
+_rho_var_bad = QTensor(sp.csr_matrix(np.array([[1.+0j], [0.]], dtype=complex)))
+_te_var_bad = AnalogEvolution(schedule=_sched_var_bad, initial_state=_rho_var_bad)
+    )");
+    py::dict p;
+    p["evolution_method"] = py::str("variational_exponential");
+    p["order"] = py::int_(1);
+    p["shots"] = py::int_(50);
+    p["warmups"] = py::int_(0);
+    EXPECT_THROW(sim.execute_analog_evolution(py::globals()["_te_var_bad"], py::list(), py::none(), p), py::value_error);
+}
+
+TEST_F(ExecuteTimeEvolutionTest, VariationalExponential_FirstHamiltonianNotXOnly_Throws) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.functionals.analog_evolution import AnalogEvolution
+from qilisdk.analog.schedule import Schedule
+from qilisdk.analog.hamiltonian import Z
+from qilisdk.core.qtensor import InitialState
+
+_sched_var_nox = Schedule(
+    hamiltonians={"h_z1": Z(0), "h_z2": Z(0)},
+    coefficients={"h_z1": {(0, 2): lambda t: 1 - t/2}, "h_z2": {(0, 2): lambda t: t/2}},
+    dt=1,
+)
+_te_var_nox = AnalogEvolution(schedule=_sched_var_nox, initial_state=InitialState.UNIFORM)
+    )");
+    py::dict p;
+    p["evolution_method"] = py::str("variational_exponential");
+    p["order"] = py::int_(1);
+    p["shots"] = py::int_(50);
+    p["warmups"] = py::int_(0);
+    EXPECT_THROW(sim.execute_analog_evolution(py::globals()["_te_var_nox"], py::list(), py::none(), p), py::value_error);
+}
+
+TEST_F(ExecuteTimeEvolutionTest, VariationalExponential_LastHamiltonianNotZOnly_Throws) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.functionals.analog_evolution import AnalogEvolution
+from qilisdk.analog.schedule import Schedule
+from qilisdk.analog.hamiltonian import X
+from qilisdk.core.qtensor import InitialState
+
+_sched_var_noz = Schedule(
+    hamiltonians={"h_x1": X(0), "h_x2": X(0)},
+    coefficients={"h_x1": {(0, 2): lambda t: 1 - t/2}, "h_x2": {(0, 2): lambda t: t/2}},
+    dt=1,
+)
+_te_var_noz = AnalogEvolution(schedule=_sched_var_noz, initial_state=InitialState.UNIFORM)
+    )");
+    py::dict p;
+    p["evolution_method"] = py::str("variational_exponential");
+    p["order"] = py::int_(1);
+    p["shots"] = py::int_(50);
+    p["warmups"] = py::int_(0);
+    EXPECT_THROW(sim.execute_analog_evolution(py::globals()["_te_var_noz"], py::list(), py::none(), p), py::value_error);
+}
+
+TEST_F(ExecuteTimeEvolutionTest, VariationalExponential_ValidXToZSchedule_Succeeds) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.functionals.analog_evolution import AnalogEvolution
+from qilisdk.analog.schedule import Schedule
+from qilisdk.analog.hamiltonian import X, Z
+from qilisdk.readout import ExpectationReadout
+from qilisdk.core.qtensor import InitialState
+
+_sched_var_ok = Schedule(
+    hamiltonians={"h_x": X(0), "h_z": Z(0)},
+    coefficients={"h_x": {(0, 2): lambda t: 1 - t/2}, "h_z": {(0, 2): lambda t: t/2}},
+    dt=1,
+)
+_te_var_ok = AnalogEvolution(schedule=_sched_var_ok, initial_state=InitialState.UNIFORM)
+_readout_var = [ExpectationReadout(observables=[Z(0)])]
+    )");
+    py::dict p;
+    p["evolution_method"] = py::str("variational_exponential");
+    p["order"] = py::int_(1);
+    p["shots"] = py::int_(50);
+    p["warmups"] = py::int_(0);
+    EXPECT_NO_THROW(sim.execute_analog_evolution(py::globals()["_te_var_ok"], py::globals()["_readout_var"], py::none(), p));
+}
+
+TEST_F(ExecuteTimeEvolutionTest, VariationalExponential_SamplingReadout_Succeeds) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.functionals.analog_evolution import AnalogEvolution
+from qilisdk.analog.schedule import Schedule
+from qilisdk.analog.hamiltonian import X, Z
+from qilisdk.readout import SamplingReadout
+from qilisdk.core.qtensor import InitialState
+
+_sched_var_samp = Schedule(
+    hamiltonians={"h_x": X(0), "h_z": Z(0)},
+    coefficients={"h_x": {(0, 2): lambda t: 1 - t/2}, "h_z": {(0, 2): lambda t: t/2}},
+    dt=1,
+)
+_te_var_samp = AnalogEvolution(schedule=_sched_var_samp, initial_state=InitialState.UNIFORM)
+_readout_var_samp = [SamplingReadout(nshots=20)]
+    )");
+    py::dict p;
+    p["evolution_method"] = py::str("variational_exponential");
+    p["order"] = py::int_(1);
+    p["shots"] = py::int_(50);
+    p["warmups"] = py::int_(0);
+    EXPECT_NO_THROW(sim.execute_analog_evolution(py::globals()["_te_var_samp"], py::globals()["_readout_var_samp"], py::none(), p));
+}
+
+TEST_F(ExecuteTimeEvolutionTest, IntegrateRK4Method_NoNoise_Succeeds) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.functionals.analog_evolution import AnalogEvolution
+from qilisdk.analog.schedule import Schedule
+from qilisdk.analog.hamiltonian import Z
+from qilisdk.core.qtensor import QTensor
+import scipy.sparse as sp, numpy as np
+
+_sched_rk4 = Schedule(hamiltonians={"h0": Z(0)}, dt=0.1, total_time=0.3)
+_rho_rk4 = QTensor(sp.csr_matrix(np.array([[1.+0j,0],[0,0]], dtype=complex)))
+_te_rk4 = AnalogEvolution(schedule=_sched_rk4, initial_state=_rho_rk4)
+    )");
+    py::dict p;
+    p["evolution_method"] = py::str("integrate_rk4");
+    EXPECT_NO_THROW(sim.execute_analog_evolution(py::globals()["_te_rk4"], py::list(), py::none(), p));
+}
+
+TEST_F(ExecuteTimeEvolutionTest, HamiltonianCountMismatch_IntegrateRK4_ThrowsValueError) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.functionals.analog_evolution import AnalogEvolution
+from qilisdk.analog.hamiltonian import Z
+from qilisdk.core.qtensor import QTensor
+import scipy.sparse as sp, numpy as np
+
+_rho_mm_rk4 = QTensor(sp.csr_matrix(np.array([[1.+0j,0],[0,0]], dtype=complex)))
+
+class _WeirdHams_RK4:
+    def keys(self): return ["h0"]
+    def values(self): return [Z(0), Z(0)]
+
+class _FakeSched_MM_RK4:
+    nqubits = 1
+    tlist = [0.1, 0.2, 0.3]
+    coefficients = {"h0": {0.1: 1.0, 0.2: 1.0, 0.3: 1.0}}
+    hamiltonians = _WeirdHams_RK4()
+    def get_parameters(self): return {}
+    def set_parameters(self, _): pass
+
+class _TE_MM_RK4(AnalogEvolution):
+    def __init__(self):
+        object.__init__(self)
+        self.schedule = _FakeSched_MM_RK4()
+        self._initial_state = _rho_mm_rk4
+        self.store_intermediate_results = False
+
+_te_mm_rk4 = _TE_MM_RK4()
+    )");
+    py::dict p;
+    p["evolution_method"] = py::str("integrate_rk4");
+    EXPECT_THROW(sim.execute_analog_evolution(py::globals()["_te_mm_rk4"], py::list(), py::none(), p), py::value_error);
+}
+
+TEST_F(ExecuteTimeEvolutionTest, UnknownEvolutionMethod_ThrowsValueError) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.functionals.analog_evolution import AnalogEvolution
+from qilisdk.analog.hamiltonian import Z
+from qilisdk.core.qtensor import QTensor
+import scipy.sparse as sp, numpy as np
+
+_rho_unknown = QTensor(sp.csr_matrix(np.array([[1.+0j,0],[0,0]], dtype=complex)))
+
+class _Hams_Unknown:
+    def keys(self): return ["h0"]
+    def values(self): return [Z(0)]
+
+class _FakeSched_Unknown:
+    nqubits = 1
+    tlist = [0.1, 0.2, 0.3]
+    coefficients = {"h0": {0.1: 1.0, 0.2: 1.0, 0.3: 1.0}}
+    hamiltonians = _Hams_Unknown()
+    def get_parameters(self): return {}
+    def set_parameters(self, _): pass
+
+class _TE_Unknown(AnalogEvolution):
+    def __init__(self):
+        object.__init__(self)
+        self.schedule = _FakeSched_Unknown()
+        self._initial_state = _rho_unknown
+        self.store_intermediate_results = False
+
+_te_unknown = _TE_Unknown()
+    )");
+    py::dict p;
+    p["evolution_method"] = py::str("not_a_real_method");
+    EXPECT_THROW(sim.execute_analog_evolution(py::globals()["_te_unknown"], py::list(), py::none(), p), py::value_error);
 }
 
 // GCOV_EXCL_BR_STOP

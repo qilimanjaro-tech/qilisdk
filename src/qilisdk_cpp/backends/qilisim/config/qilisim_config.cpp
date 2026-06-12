@@ -31,8 +31,9 @@ void QiliSimConfig::validate() const {
     if (num_arnoldi_substeps <= 0) {
         throw py::value_error("Number of Arnoldi substeps must be positive.");
     }
-    if (time_evolution_method != "arnoldi" && time_evolution_method != "direct" && time_evolution_method != "integrate_rk4" && time_evolution_method != "integrate_rk45_matrix_free" && time_evolution_method != "integrate_rk4_matrix_free") {
-        throw py::value_error("Evolution method must be one of 'direct', 'arnoldi', 'integrate_rk4', 'integrate_rk45_matrix_free', or 'integrate_rk4_matrix_free'.");
+    const std::string valid_evolution_methods = "'direct', 'arnoldi', 'variational_exponential', 'integrate_rk4', 'integrate_rk45_matrix_free', or 'integrate_rk4_matrix_free'";
+    if (valid_evolution_methods.find(time_evolution_method) == std::string::npos) {
+        throw py::value_error("Time evolution method must be one of " + valid_evolution_methods);
     }
     if (sampling_method != "statevector" && sampling_method != "statevector_matrix_free") {
         throw py::value_error("Sampling method must be one of 'statevector' or 'statevector_matrix_free'.");
@@ -45,6 +46,21 @@ void QiliSimConfig::validate() const {
     }
     if (this->atol <= 0) {
         throw py::value_error("Absolute tolerance must be positive.");
+    }
+    if (max_cache_size <= 0) {
+        throw py::value_error("Max cache size must be positive.");
+    }
+    if (adaptive_tol <= 0) {
+        throw py::value_error("Adaptive tolerance must be positive.");
+    }
+    if (order <= 0) {
+        throw py::value_error("Order must be positive.");
+    }
+    if (shots <= 0) {
+        throw py::value_error("Shots must be positive.");
+    }
+    if (warmups < 0) {
+        throw py::value_error("Warmups cannot be negative.");
     }
 }
 
