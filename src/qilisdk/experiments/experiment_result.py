@@ -12,10 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from pathlib import Path
-from typing import Callable, ClassVar
+from typing import Callable, ClassVar, Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
+from loguru import logger
 from matplotlib.figure import Figure
 from scipy.optimize import curve_fit
 
@@ -42,6 +43,13 @@ class Dimension:
         self.labels = labels
         self.values = values
 
+    def __repr__(self) -> str:
+        return f"Dimension(labels={self.labels}, values={self.values})"
+
+
+_LABEL_AMPLITUDE = "Amplitude (V)"
+_LABEL_PHASE = "Phase (rad)"
+_LABEL_DB = "Amplitude (dB)"
 
 DimensionOverride = Callable[[Dimension], Dimension]
 """Callable that takes a Dimension and returns a transformed Dimension."""
@@ -65,15 +73,17 @@ class ExperimentResult(FunctionalResult):
     fit_by_default: ClassVar[bool] = False
     """Whether to perform fitting by default when plotting; can be overridden by subclasses if needed."""
 
-    def __init__(self, qubit: int, data: np.ndarray, dims: list[Dimension]) -> None:
+    def __init__(self, qubit: int, averages: int, data: np.ndarray, dims: list[Dimension]) -> None:
         """Initialize an experiment result.
 
         Args:
             qubit (int): The qubit index on which the experiment was performed.
+            averages (int): Number of averages acquired for the experiment.
             data (np.ndarray): Raw experimental data array.
             dims (list[Dimension]): Sweep dimensions of the experiment.
         """
         self.qubit = qubit
+        self.averages = averages
         self.data = data
         self.dims = dims
 
@@ -103,6 +113,15 @@ class ExperimentResult(FunctionalResult):
             np.ndarray: ``20 * log10(abs(S21))`` expressed in dB.
         """
         return 20 * np.log10(self.s21_modulus)
+
+    @property
+    def s21_phase(self) -> np.ndarray:
+        """Phase of the S21 parameter in radians.
+
+        Returns:
+            np.ndarray: The angle of the complex S21 parameter.
+        """
+        return np.unwrap(np.angle(self.s21))
 
     @staticmethod
     def add_fit(x_values: np.ndarray, y_values: np.ndarray, initial_guess: list[float] | None = None) -> None:
@@ -138,6 +157,8 @@ class ExperimentResult(FunctionalResult):
         save_to: str | None = None,
         initial_guess: list[float] | None = None,
         connect_points: bool = False,
+        default_y_label: str = _LABEL_AMPLITUDE,
+        apply_y_override: bool = True,
     ) -> None:
         """Plot 1D S21 data.
 
@@ -148,15 +169,16 @@ class ExperimentResult(FunctionalResult):
             save_to (str | None): Optional path or directory to save the figure.
             initial_guess (list[float] | None): Optional initial guess passed to `add_fit`.
             connect_points (bool): Whether to connect data points with a grey dashed line.
+            default_y_label (str): Default y-axis label used when no dims_override is set for the y dimension.
+            apply_y_override (bool): Whether to apply dims_override for the y dimension. Set to False for non-amplitude plot types.
         """
         x_dim = self.dims_override[0](dims[0]) if len(self.dims_override) > 0 and self.dims_override[0] else dims[0]
         x_labels, x_values = x_dim.labels, x_dim.values
-        y_override = self.dims_override[1] if len(self.dims_override) > 1 else None
+        y_override = self.dims_override[1] if apply_y_override and len(self.dims_override) > 1 else None
 
         fig, ax1 = plt.subplots()
         ax1.set_title(f"{self.plot_title} - Qubit {self.qubit}")
         ax1.set_xlabel(x_labels[0])
-        default_y_label = r"$|S_{21}|$ ∝ Voltage"
         y_dim_input = Dimension(labels=[default_y_label], values=[s21])
         ax1.set_ylabel(y_override(y_dim_input).labels[0] if y_override else default_y_label)
         if connect_points:
@@ -186,6 +208,8 @@ class ExperimentResult(FunctionalResult):
         fit: bool = False,
         save_to: str | None = None,
         initial_guess: list[float] | None = None,
+        default_z_label: str = _LABEL_AMPLITUDE,
+        apply_z_override: bool = True,
     ) -> None:
         """Plot 2D S21 data as a color mesh.
 
@@ -195,14 +219,16 @@ class ExperimentResult(FunctionalResult):
             fit (bool): Whether to perform and plot the fit using the `add_fit` method.
             save_to (str | None): Optional path or directory to save the figure.
             initial_guess (list[float] | None): Optional initial guess passed to `add_fit`.
+            default_z_label (str): Default colorbar label used when no dims_override is set for the z dimension.
+            apply_z_override (bool): Whether to apply dims_override for the z dimension. Set to False for non-amplitude plot types.
         """
         x_dim = self.dims_override[0](dims[0]) if len(self.dims_override) > 0 and self.dims_override[0] else dims[0]
         y_dim = self.dims_override[1](dims[1]) if len(self.dims_override) > 1 and self.dims_override[1] else dims[1]
-        z_override = self.dims_override[2] if len(self.dims_override) > 2 else None  # noqa: PLR2004
+        z_override = self.dims_override[2] if apply_z_override and len(self.dims_override) > 2 else None  # noqa: PLR2004
         x_labels, x_values = x_dim.labels, x_dim.values
         y_labels, y_values = y_dim.labels, y_dim.values
 
-        z_dim_input = Dimension(labels=[r"$|S_{21}|$"], values=[s21])
+        z_dim_input = Dimension(labels=[default_z_label], values=[s21])
         z_dim = z_override(z_dim_input) if z_override else z_dim_input
         z_values = z_dim.values[0]
 
@@ -216,9 +242,7 @@ class ExperimentResult(FunctionalResult):
         ax1.ticklabel_format(axis="both", style="sci", scilimits=(-3, 3))
 
         mesh = ax1.pcolormesh(x_edges, y_edges, z_values.T, cmap="viridis", shading="auto")
-        z_label = z_dim.labels[0]
-        default_z_label = r"$|S_{21}|$ ∝ Voltage"
-        colorbar_label = z_label if z_override else default_z_label
+        colorbar_label = z_dim.labels[0]
         fig.colorbar(mesh, ax=ax1, label=colorbar_label)
 
         if len(x_labels) > 1:
@@ -245,9 +269,11 @@ class ExperimentResult(FunctionalResult):
     def plot(
         self,
         save_to: str | None = None,
+        *,
         initial_guess: list[float] | None = None,
         fit: bool | None = None,
         connect_points: bool = False,
+        plot_type: Literal["amplitude", "phase", "db"] = "amplitude",
     ) -> None:
         """Plot the S21 parameter from experiment results.
 
@@ -261,13 +287,28 @@ class ExperimentResult(FunctionalResult):
             initial_guess (list[float] | None): Optional initial guess for the fit parameters, passed to the `add_fit` method.
             fit (bool | None): Whether to perform and plot the fit using the `add_fit` method. If None, the class-level `fit_by_default` is used.
             connect_points (bool): Whether to connect data points with a grey dashed line (1D plots only).
+            plot_type (Literal["amplitude", "phase", "db"]): Whether to plot amplitude (default), phase, or magnitude in dB of the S21 parameter.
 
         Raises:
             NotImplementedError: If the experiment data has more than 2 dimensions.
         """
-        to_plot = self.s21_modulus
+        if plot_type == "phase":
+            to_plot = self.s21_phase
+            default_label = _LABEL_PHASE
+        elif plot_type == "db":
+            to_plot = self.s21_db
+            default_label = _LABEL_DB
+        else:
+            to_plot = self.s21_modulus
+            default_label = _LABEL_AMPLITUDE
+        is_amplitude = plot_type == "amplitude"
         n_dimensions = len(to_plot.shape)
         should_fit = fit if fit is not None else self.fit_by_default
+        if fit is not None and fit and not is_amplitude:
+            logger.warning(
+                "Fitting is only implemented for amplitude plots. Ignoring fit request for non-amplitude plot."
+            )
+            should_fit = False
         if n_dimensions == 1:
             self._plot_1d(
                 to_plot,
@@ -276,11 +317,24 @@ class ExperimentResult(FunctionalResult):
                 save_to=save_to,
                 initial_guess=initial_guess,
                 connect_points=connect_points,
+                default_y_label=default_label,
+                apply_y_override=is_amplitude,
             )
         elif n_dimensions == 2:  # noqa: PLR2004
-            self._plot_2d(to_plot, self.dims, fit=should_fit, save_to=save_to, initial_guess=initial_guess)
+            self._plot_2d(
+                to_plot,
+                self.dims,
+                fit=should_fit,
+                save_to=save_to,
+                initial_guess=initial_guess,
+                default_z_label=default_label,
+                apply_z_override=is_amplitude,
+            )
         else:
             raise NotImplementedError("3D and higher dimension plots are not supported yet.")
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(qubit={self.qubit}, averages={self.averages}, data={self.data}, dims={self.dims})"
 
 
 @yaml.register_class
@@ -425,10 +479,10 @@ class T2ExperimentResult(ExperimentResult):
 
 
 @yaml.register_class
-class TwoTonesAtFluxBiasExperimentResult(ExperimentResult):
-    """Result container for TwoTones experiments."""
+class TwoTonesAtFixedFluxBiasExperimentResult(ExperimentResult):
+    """Result container for Two Tones at Fixed Flux Bias experiments."""
 
-    plot_title: ClassVar[str] = "Two Tones At Flux Bias"
+    plot_title: ClassVar[str] = "Two Tones at Fixed Flux Bias"
     """Default title for TwoTones at flux bias experiment plots."""
 
     dims_override: ClassVar[list[DimensionOverride | None]] = [
@@ -439,7 +493,7 @@ class TwoTonesAtFluxBiasExperimentResult(ExperimentResult):
     @staticmethod
     def add_fit(x_values: np.ndarray, y_values: np.ndarray, initial_guess: list[float] | None = None) -> None:
         """
-        Fit a Lorentzian curve to the TwoTones at flux bias experiment data.
+        Fit a Lorentzian curve to the Two Tones at Fixed Flux Bias experiment data.
 
         Args:
             x_values (list[np.ndarray]): The independent variable data (e.g., frequencies).
@@ -479,7 +533,7 @@ class TwoTonesAtFluxBiasExperimentResult(ExperimentResult):
 
 @yaml.register_class
 class TwoTonesVsFluxBiasExperimentResult(ExperimentResult):
-    """Result container for TwoTones experiments swept vs flux bias."""
+    """Result container for TwoTones vs Flux Bias experiments swept vs flux bias."""
 
     plot_title: ClassVar[str] = "Two Tones Vs Flux Bias"
     """Default title for TwoTones vs flux bias experiment plots."""

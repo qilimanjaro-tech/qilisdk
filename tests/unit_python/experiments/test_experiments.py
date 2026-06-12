@@ -12,9 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from unittest.mock import MagicMock
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
+from loguru import logger
 
 from qilisdk.experiments import (
     Dimension,
@@ -22,7 +25,7 @@ from qilisdk.experiments import (
     RabiExperimentResult,
     T1ExperimentResult,
     T2ExperimentResult,
-    TwoTonesAtFluxBiasExperimentResult,
+    TwoTonesAtFixedFluxBiasExperimentResult,
     TwoTonesVsFluxBiasExperimentResult,
 )
 
@@ -39,16 +42,21 @@ def test_dimension_initialization():
 def test_experiment_result_init():
     data = np.array([[1, 2], [3, 4]])
     qubit = 0
+    averages = 1000
     dims = [Dimension(labels=["Freq"], values=[np.array([1, 2])])]
-    exp_result = ExperimentResult(qubit=qubit, data=data, dims=dims)
+
+    exp_result = ExperimentResult(qubit=qubit, averages=averages, data=data, dims=dims)
+
     assert exp_result.qubit == qubit
+    assert exp_result.averages == averages
     assert np.array_equal(exp_result.data, data)
     assert exp_result.dims == dims
 
 
 def test_experiment_s21_computation():
     data = np.array([[1, 2], [3, 4]])
-    exp_result = ExperimentResult(qubit=0, data=data, dims=[])
+
+    exp_result = ExperimentResult(qubit=0, averages=1000, data=data, dims=[])
 
     s21 = exp_result.s21
     expected_s21 = np.array([1 + 2j, 3 + 4j])
@@ -74,7 +82,8 @@ def test_experiment_plotting(monkeypatch):
         Dimension(labels=["Dim2", "Freq2"], values=[np.array([3, 4]), np.array([30, 40])]),
         Dimension(labels=["Dim3", "Freq3"], values=[np.array([5, 6]), np.array([50, 60])]),
     ]
-    exp_result_3d = RabiExperimentResult(qubit=0, data=data3d, dims=dims3d)
+    exp_result_3d = RabiExperimentResult(qubit=0, averages=1000, data=data3d, dims=dims3d)
+
     with pytest.raises(NotImplementedError, match="3D and higher"):
         exp_result_3d.plot(save_to="./.tmp/")
 
@@ -90,11 +99,22 @@ def test_t1_plotting(monkeypatch):
     noise = rng.normal(0, 0.02, size=(len(tau), 2))
     amplitudes = np.clip(decay[:, np.newaxis] + noise, 0, 1)
     dims = [Dimension(labels=["Time"], values=[tau])]
-    t1_result = T1ExperimentResult(qubit=0, data=amplitudes, dims=dims)
+
+    t1_result = T1ExperimentResult(qubit=0, averages=1000, data=amplitudes, dims=dims)
 
     t1_result.plot(save_to="./.tmp/test_t1_default.png")
     t1_result.plot(save_to="./.tmp/test_t1.png", fit=False)
     t1_result.plot(save_to="./.tmp/test_t1_fit.png", fit=True)
+    t1_result.plot(save_to="./.tmp/test_t1_phase.png", fit=False, plot_type="phase")
+    t1_result.plot(save_to="./.tmp/test_t1_db.png", fit=False, plot_type="db")
+
+    # need to monkeypatch the logger to catch the warning about fitting only being implemented for amplitude plots
+    fakeWarning = MagicMock()
+    monkeypatch.setattr(logger, "warning", fakeWarning)
+    t1_result.plot(save_to="./.tmp/test_t1_phase_fit.png", fit=True, plot_type="phase")
+    fakeWarning.assert_called_with(
+        "Fitting is only implemented for amplitude plots. Ignoring fit request for non-amplitude plot."
+    )
 
 
 def test_rabi_plotting(monkeypatch):
@@ -110,12 +130,22 @@ def test_rabi_plotting(monkeypatch):
     I += rng.normal(0, 0.01, size=I.shape)
     data_rabi = np.stack([I, Q], axis=-1)
     dims_rabi = [Dimension(labels=["Drive duration (ns)"], values=[drive_durations])]
-    result_rabi = RabiExperimentResult(qubit=0, data=data_rabi, dims=dims_rabi)
+
+    result_rabi = RabiExperimentResult(qubit=0, averages=1000, data=data_rabi, dims=dims_rabi)
 
     result_rabi.plot(save_to="./.tmp/test_rabi_default.png")
     result_rabi.plot(save_to="./.tmp/test_rabi.png", fit=False)
     result_rabi.plot(save_to="./.tmp/test_rabi_connected.png", fit=False, connect_points=True)
     result_rabi.plot(save_to="./.tmp/test_rabi_fit.png", fit=True)
+    result_rabi.plot(save_to="./.tmp/test_rabi_phase.png", fit=False, plot_type="phase")
+    result_rabi.plot(save_to="./.tmp/test_rabi_db.png", fit=False, plot_type="db")
+
+    fakeWarning = MagicMock()
+    monkeypatch.setattr(logger, "warning", fakeWarning)
+    result_rabi.plot(save_to="./.tmp/test_rabi_phase_fit.png", fit=True, plot_type="phase")
+    fakeWarning.assert_called_with(
+        "Fitting is only implemented for amplitude plots. Ignoring fit request for non-amplitude plot."
+    )
 
 
 def test_two_tones_at_flux_bias_plotting(monkeypatch):
@@ -134,11 +164,21 @@ def test_two_tones_at_flux_bias_plotting(monkeypatch):
     s21_complex = s21_mag * np.exp(1j * phase)
     data_at = np.stack([s21_complex.real, s21_complex.imag], axis=-1)
     dims_at = [Dimension(labels=["IF Frequency (Hz)"], values=[freqs])]
-    result_at = TwoTonesAtFluxBiasExperimentResult(qubit=0, data=data_at, dims=dims_at)
+
+    result_at = TwoTonesAtFixedFluxBiasExperimentResult(qubit=0, averages=1000, data=data_at, dims=dims_at)
 
     result_at.plot(save_to="./.tmp/test_two_tones_at_default.png")
     result_at.plot(save_to="./.tmp/test_two_tones_at.png", fit=False)
     result_at.plot(save_to="./.tmp/test_two_tones_at_fit.png", fit=True)
+    result_at.plot(save_to="./.tmp/test_two_tones_at_phase.png", fit=False, plot_type="phase")
+    result_at.plot(save_to="./.tmp/test_two_tones_at_db.png", fit=False, plot_type="db")
+
+    fakeWarning = MagicMock()
+    monkeypatch.setattr(logger, "warning", fakeWarning)
+    result_at.plot(save_to="./.tmp/test_two_tones_at_phase_fit.png", fit=True, plot_type="phase")
+    fakeWarning.assert_called_with(
+        "Fitting is only implemented for amplitude plots. Ignoring fit request for non-amplitude plot."
+    )
 
 
 def test_two_tones_vs_flux_bias_plotting(monkeypatch):
@@ -162,11 +202,21 @@ def test_two_tones_vs_flux_bias_plotting(monkeypatch):
         Dimension(labels=["Flux bias (Φ₀)"], values=[fluxes]),
         Dimension(labels=["Drive frequency (Hz)"], values=[freqs2d]),
     ]
-    result_vs = TwoTonesVsFluxBiasExperimentResult(qubit=0, data=data_vs, dims=dims_vs)
+
+    result_vs = TwoTonesVsFluxBiasExperimentResult(qubit=0, averages=1000, data=data_vs, dims=dims_vs)
 
     result_vs.plot(save_to="./.tmp/test_two_tones_vs_default.png")
     result_vs.plot(save_to="./.tmp/test_two_tones_vs.png", fit=False)
     result_vs.plot(save_to="./.tmp/test_two_tones_vs_fit.png", fit=True)
+    result_vs.plot(save_to="./.tmp/test_two_tones_vs_phase.png", fit=False, plot_type="phase")
+    result_vs.plot(save_to="./.tmp/test_two_tones_vs_db.png", fit=False, plot_type="db")
+
+    fakeWarning = MagicMock()
+    monkeypatch.setattr(logger, "warning", fakeWarning)
+    result_vs.plot(save_to="./.tmp/test_two_tones_vs_phase_fit.png", fit=True, plot_type="phase")
+    fakeWarning.assert_called_with(
+        "Fitting is only implemented for amplitude plots. Ignoring fit request for non-amplitude plot."
+    )
 
 
 def test_t2_plotting(monkeypatch):
@@ -183,8 +233,33 @@ def test_t2_plotting(monkeypatch):
     I += rng.normal(0, 0.002, size=I.shape)
     data_t2 = np.stack([I, Q], axis=-1)
     dims_t2 = [Dimension(labels=["Wait duration (μs)"], values=[tau])]
-    result_t2 = T2ExperimentResult(qubit=0, data=data_t2, dims=dims_t2)
+
+    result_t2 = T2ExperimentResult(qubit=0, averages=1000, data=data_t2, dims=dims_t2)
 
     result_t2.plot(save_to="./.tmp/test_t2_default.png")
     result_t2.plot(save_to="./.tmp/test_t2.png", fit=False)
     result_t2.plot(save_to="./.tmp/test_t2_fit.png", fit=True)
+    result_t2.plot(save_to="./.tmp/test_t2_phase.png", fit=False, plot_type="phase")
+    result_t2.plot(save_to="./.tmp/test_t2_db.png", fit=False, plot_type="db")
+
+    fakeWarning = MagicMock()
+    monkeypatch.setattr(logger, "warning", fakeWarning)
+    result_t2.plot(save_to="./.tmp/test_t2_phase_fit.png", fit=True, plot_type="phase")
+    fakeWarning.assert_called_with(
+        "Fitting is only implemented for amplitude plots. Ignoring fit request for non-amplitude plot."
+    )
+
+
+def test_experiment_printing():
+    data = np.array([[1, 2], [3, 4]])
+    qubit = 0
+    averages = 1000
+    dims = [Dimension(labels=["Freq"], values=[np.array([1, 2])])]
+
+    exp_result = ExperimentResult(qubit=qubit, averages=averages, data=data, dims=dims)
+
+    expected_str = (
+        "ExperimentResult(qubit=0, averages=1000, data=[[1 2]\n [3 4]], "
+        "dims=[Dimension(labels=['Freq'], values=[array([1, 2])])])"
+    )
+    assert str(exp_result) == expected_str

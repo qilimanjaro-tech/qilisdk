@@ -29,8 +29,11 @@ from qilisdk.experiments import (
     T2Experiment,
     T2ExperimentResult,
 )
-from qilisdk.experiments.experiment_functional import TwoTonesAtFluxBiasExperiment, TwoTonesVsFluxBiasExperiment
-from qilisdk.experiments.experiment_result import TwoTonesAtFluxBiasExperimentResult, TwoTonesVsFluxBiasExperimentResult
+from qilisdk.experiments.experiment_functional import TwoTonesAtFixedFluxBiasExperiment, TwoTonesVsFluxBiasExperiment
+from qilisdk.experiments.experiment_result import (
+    TwoTonesAtFixedFluxBiasExperimentResult,
+    TwoTonesVsFluxBiasExperimentResult,
+)
 from qilisdk.functionals import (
     AnalogEvolution,
     DigitalPropagation,
@@ -113,7 +116,7 @@ class ExecuteType(str, Enum):
     RABI_EXPERIMENT = "rabi_experiment"
     T1_EXPERIMENT = "t1_experiment"
     T2_EXPERIMENT = "t2_experiment"
-    TWO_TONES_EXPERIMENT = "two_tones_experiment"
+    TWO_TONES_AT_FIXED_FLUX_EXPERIMENT = "two_tones_at_fixed_flux_experiment"
     TWO_TONES_VS_FLUX_BIAS_EXPERIMENT = "two_tones_vs_flux_bias_experiment"
 
 
@@ -228,14 +231,14 @@ class VariationalProgramPayload(SpeQtrumModel):
 class RabiExperimentPayload(SpeQtrumModel):
     """Payload model wrapping a ``RabiExperiment`` for API submission."""
 
-    rabi_experiment: RabiExperiment = Field(...)
+    experiment: RabiExperiment = Field(...)
 
-    @field_serializer("rabi_experiment")
-    def _serialize_rabi_experiment(self, rabi_experiment: RabiExperiment, _info):
-        return serialize(rabi_experiment)
+    @field_serializer("experiment")
+    def _serialize_experiment(self, experiment: RabiExperiment, _info):
+        return serialize(experiment)
 
-    @field_validator("rabi_experiment", mode="before")
-    def _load_rabi_experiment(cls, v):
+    @field_validator("experiment", mode="before")
+    def _load_experiment(cls, v):
         if isinstance(v, str):
             return deserialize(v, RabiExperiment)
         return v
@@ -244,14 +247,14 @@ class RabiExperimentPayload(SpeQtrumModel):
 class T1ExperimentPayload(SpeQtrumModel):
     """Payload model wrapping a ``T1Experiment`` for API submission."""
 
-    t1_experiment: T1Experiment = Field(...)
+    experiment: T1Experiment = Field(...)
 
-    @field_serializer("t1_experiment")
-    def _serialize_t1_experiment(self, t1_experiment: T1Experiment, _info):
-        return serialize(t1_experiment)
+    @field_serializer("experiment")
+    def _serialize_experiment(self, experiment: T1Experiment, _info):
+        return serialize(experiment)
 
-    @field_validator("t1_experiment", mode="before")
-    def _load_t1_experiment(cls, v):
+    @field_validator("experiment", mode="before")
+    def _load_experiment(cls, v):
         if isinstance(v, str):
             return deserialize(v, T1Experiment)
         return v
@@ -260,48 +263,46 @@ class T1ExperimentPayload(SpeQtrumModel):
 class T2ExperimentPayload(SpeQtrumModel):
     """Payload model wrapping a ``T2Experiment`` for API submission."""
 
-    t2_experiment: T2Experiment = Field(...)
+    experiment: T2Experiment = Field(...)
 
-    @field_serializer("t2_experiment")
-    def _serialize_t2_experiment(self, t2_experiment: T2Experiment, _info):
-        return serialize(t2_experiment)
+    @field_serializer("experiment")
+    def _serialize_experiment(self, experiment: T2Experiment, _info):
+        return serialize(experiment)
 
-    @field_validator("t2_experiment", mode="before")
-    def _load_t2_experiment(cls, v):
+    @field_validator("experiment", mode="before")
+    def _load_experiment(cls, v):
         if isinstance(v, str):
             return deserialize(v, T2Experiment)
         return v
 
 
-class TwoTonesAtFluxBiasExperimentPayload(SpeQtrumModel):
-    """Payload model wrapping a ``TwoTonesAtFluxBiasExperiment`` for API submission."""
+class TwoTonesAtFixedFluxBiasExperimentPayload(SpeQtrumModel):
+    """Payload model wrapping a ``TwoTonesAtFixedFluxBiasExperiment`` for API submission."""
 
-    two_tones_experiment: TwoTonesAtFluxBiasExperiment = Field(...)
+    experiment: TwoTonesAtFixedFluxBiasExperiment = Field(...)
 
-    @field_serializer("two_tones_experiment")
-    def _serialize_two_tones_experiment(self, two_tones_experiment: TwoTonesAtFluxBiasExperiment, _info):
-        return serialize(two_tones_experiment)
+    @field_serializer("experiment")
+    def _serialize_experiment(self, experiment: TwoTonesAtFixedFluxBiasExperiment, _info):
+        return serialize(experiment)
 
-    @field_validator("two_tones_experiment", mode="before")
-    def _load_two_tones_experiment(cls, v):
+    @field_validator("experiment", mode="before")
+    def _load_experiment(cls, v):
         if isinstance(v, str):
-            return deserialize(v, TwoTonesAtFluxBiasExperiment)
+            return deserialize(v, TwoTonesAtFixedFluxBiasExperiment)
         return v
 
 
 class TwoTonesVsFluxBiasExperimentPayload(SpeQtrumModel):
     """Payload model wrapping a ``TwoTonesVsFluxBiasExperiment`` for API submission."""
 
-    two_tones_vs_flux_experiment: TwoTonesVsFluxBiasExperiment = Field(...)
+    experiment: TwoTonesVsFluxBiasExperiment = Field(...)
 
-    @field_serializer("two_tones_vs_flux_experiment")
-    def _serialize_two_tones_vs_flux_experiment(
-        self, two_tones_vs_flux_experiment: TwoTonesVsFluxBiasExperiment, _info
-    ):
-        return serialize(two_tones_vs_flux_experiment)
+    @field_serializer("experiment")
+    def _serialize_experiment(self, experiment: TwoTonesVsFluxBiasExperiment, _info):
+        return serialize(experiment)
 
-    @field_validator("two_tones_vs_flux_experiment", mode="before")
-    def _load_two_tones_vs_flux_experiment(cls, v):
+    @field_validator("experiment", mode="before")
+    def _load_experiment(cls, v):
         if isinstance(v, str):
             return deserialize(v, TwoTonesVsFluxBiasExperiment)
         return v
@@ -322,7 +323,7 @@ class ExecutePayload(SpeQtrumModel):
     rabi_experiment_payload: RabiExperimentPayload | None = None
     t1_experiment_payload: T1ExperimentPayload | None = None
     t2_experiment_payload: T2ExperimentPayload | None = None
-    two_tones_at_flux_bias_experiment_payload: TwoTonesAtFluxBiasExperimentPayload | None = None
+    two_tones_at_flux_bias_experiment_payload: TwoTonesAtFixedFluxBiasExperimentPayload | None = None
     two_tones_vs_flux_bias_experiment_payload: TwoTonesVsFluxBiasExperimentPayload | None = None
 
 
@@ -340,7 +341,7 @@ class ExecuteResult(SpeQtrumModel):
     rabi_experiment_result: RabiExperimentResult | None = None
     t1_experiment_result: T1ExperimentResult | None = None
     t2_experiment_result: T2ExperimentResult | None = None
-    two_tones_at_flux_bias_experiment_result: TwoTonesAtFluxBiasExperimentResult | None = None
+    two_tones_at_fixed_flux_bias_experiment_result: TwoTonesAtFixedFluxBiasExperimentResult | None = None
     two_tones_vs_flux_bias_experiment_result: TwoTonesVsFluxBiasExperimentResult | None = None
 
     @field_serializer("functional_result")
@@ -393,20 +394,20 @@ class ExecuteResult(SpeQtrumModel):
             return deserialize(v, T2ExperimentResult)
         return v
 
-    @field_serializer("two_tones_at_flux_bias_experiment_result")
-    def _serialize_two_tones_at_flux_bias_experiment_result(
-        self, two_tones_at_flux_bias_experiment_result: TwoTonesAtFluxBiasExperimentResult, _info
+    @field_serializer("two_tones_at_fixed_flux_bias_experiment_result")
+    def _serialize_two_tones_at_fixed_flux_bias_experiment_result(
+        self, two_tones_at_fixed_flux_bias_experiment_result: TwoTonesAtFixedFluxBiasExperimentResult, _info
     ):
         return (
-            serialize(two_tones_at_flux_bias_experiment_result)
-            if two_tones_at_flux_bias_experiment_result is not None
+            serialize(two_tones_at_fixed_flux_bias_experiment_result)
+            if two_tones_at_fixed_flux_bias_experiment_result is not None
             else None
         )
 
-    @field_validator("two_tones_at_flux_bias_experiment_result", mode="before")
-    def _load_two_tones_at_flux_bias_experiment_result(cls, v):
+    @field_validator("two_tones_at_fixed_flux_bias_experiment_result", mode="before")
+    def _load_ttwo_tones_at_fixed_flux_bias_experiment_result(cls, v):
         if isinstance(v, str) and v.startswith("!"):
-            return deserialize(v, TwoTonesAtFluxBiasExperimentResult)
+            return deserialize(v, TwoTonesAtFixedFluxBiasExperimentResult)
         return v
 
     @field_serializer("two_tones_vs_flux_bias_experiment_result")
@@ -520,23 +521,23 @@ def _require_t2_experiment_result(result: ExecuteResult) -> T2ExperimentResult:
     return result.t2_experiment_result
 
 
-def _require_two_tones_experiment_result(result: ExecuteResult) -> TwoTonesAtFluxBiasExperimentResult:
-    """Extract and return the ``TwoTonesAtFluxBiasExperimentResult`` from *result*.
+def _require_two_tones_experiment_result(result: ExecuteResult) -> TwoTonesAtFixedFluxBiasExperimentResult:
+    """Extract and return the ``TwoTonesAtFixedFluxBiasExperimentResult`` from *result*.
 
     Args:
         result (ExecuteResult): The execution result to inspect.
 
     Returns:
-        TwoTonesAtFluxBiasExperimentResult: The contained Two-Tones at flux bias experiment result.
+        TwoTonesAtFixedFluxBiasExperimentResult: The contained Two-Tones at flux bias experiment result.
 
     Raises:
         RuntimeError: If the ``two_tones_experiment_result`` field is ``None``.
     """
-    if result.two_tones_at_flux_bias_experiment_result is None:
+    if result.two_tones_at_fixed_flux_bias_experiment_result is None:
         raise RuntimeError(
-            "SpeQtrum did not return a two_tones_at_flux_bias_experiment_result for a Two-Tones at flux bias experiment execution."
+            "SpeQtrum did not return a two_tones_at_fixed_flux_bias_experiment_result for a Two-Tones at flux bias experiment execution."
         )
-    return result.two_tones_at_flux_bias_experiment_result
+    return result.two_tones_at_fixed_flux_bias_experiment_result
 
 
 def _require_two_tones_vs_flux_bias_experiment_result(result: ExecuteResult) -> TwoTonesVsFluxBiasExperimentResult:
@@ -688,20 +689,20 @@ class JobHandle(SpeQtrumModel, Generic[TFunctionalResult_co]):
 
     @classmethod
     def two_tones_experiment(
-        cls: type[JobHandle[TwoTonesAtFluxBiasExperimentResult]], job_id: int
-    ) -> JobHandle[TwoTonesAtFluxBiasExperimentResult]:
+        cls: type[JobHandle[TwoTonesAtFixedFluxBiasExperimentResult]], job_id: int
+    ) -> JobHandle[TwoTonesAtFixedFluxBiasExperimentResult]:
         """Create a handle for a Two-Tones at flux bias experiment job.
 
         Args:
             job_id (int): Numeric identifier returned by the SpeQtrum service.
 
         Returns:
-            JobHandle[TwoTonesAtFluxBiasExperimentResult]: A handle whose result type is
-            ``TwoTonesAtFluxBiasExperimentResult``.
+            JobHandle[TwoTonesAtFixedFluxBiasExperimentResult]: A handle whose result type is
+            ``TwoTonesAtFixedFluxBiasExperimentResult``.
         """
         return cls(
             id=job_id,
-            execute_type=ExecuteType.TWO_TONES_EXPERIMENT,
+            execute_type=ExecuteType.TWO_TONES_AT_FIXED_FLUX_EXPERIMENT,
             extractor=_require_two_tones_experiment_result,
         )
 
