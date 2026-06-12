@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../tutorials/introductions/intro_annealing.rst:2
 msgid "Quantum Annealing"
-msgstr "Recuita Quàntica"
+msgstr "Recuita quàntica"
 
 #: ../../tutorials/introductions/intro_annealing.rst:4
 msgid ""
@@ -35,7 +35,7 @@ msgstr ""
 
 #: ../../tutorials/introductions/intro_annealing.rst:8
 msgid "What is Quantum Annealing?"
-msgstr "Què és la Recuita Quàntica?"
+msgstr "Què és la recuita quàntica?"
 
 #: ../../tutorials/introductions/intro_annealing.rst:10
 msgid ""
@@ -80,7 +80,7 @@ msgstr ""
 
 #: ../../tutorials/introductions/intro_annealing.rst:24
 msgid "What is a Hamiltonian?"
-msgstr "Què és un Hamiltonià?"
+msgstr "Què és un hamiltonià?"
 
 #: ../../tutorials/introductions/intro_annealing.rst:26
 msgid ""
@@ -157,7 +157,7 @@ msgstr "H = X(0)X(1) - Z(0)"
 
 #: ../../tutorials/introductions/intro_annealing.rst:56
 msgid "What Do We Do Once We Have a Hamiltonian?"
-msgstr "Què Fem Un Cop Tenim un Hamiltonià?"
+msgstr "Què fem un cop tenim un hamiltonià?"
 
 #: ../../tutorials/introductions/intro_annealing.rst:58
 msgid ""
@@ -202,7 +202,7 @@ msgstr ""
 
 #: ../../tutorials/introductions/intro_annealing.rst:76
 msgid "How Do We Choose Our Hamiltonians?"
-msgstr "Com Triem els Nostres Hamiltonians?"
+msgstr "Com triem els nostres hamiltonians?"
 
 #: ../../tutorials/introductions/intro_annealing.rst:78
 msgid ""
@@ -260,7 +260,7 @@ msgstr ""
 
 #: ../../tutorials/introductions/intro_annealing.rst:109
 msgid "How Can We Simulate Annealing With QiliSDK?"
-msgstr "Com Podem Simular la Recuita amb QiliSDK?"
+msgstr "Com podem simular la recuita amb QiliSDK?"
 
 #: ../../shared/install_note.rst:1
 msgid ""
@@ -345,7 +345,7 @@ msgstr ""
 
 #: ../../tutorials/introductions/intro_annealing.rst:170
 msgid "Further Reading"
-msgstr "Lectures Addicionals"
+msgstr "Lectures addicionals"
 
 #: ../../tutorials/introductions/intro_annealing.rst:172
 msgid "`Adiabatic Theorem`_"

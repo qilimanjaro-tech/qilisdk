@@ -79,7 +79,7 @@ msgstr ""
 
 #: ../../modules/functionals/functionals_overview.rst:16
 msgid "Architecture Overview"
-msgstr "Descripción General de la Arquitectura"
+msgstr "Descripción general de la arquitectura"
 
 #: ../../modules/functionals/functionals_overview.rst:18
 msgid ""
@@ -123,7 +123,7 @@ msgstr ""
 
 #: ../../modules/functionals/functionals_overview.rst:30
 msgid "Result Objects"
-msgstr "Objetos de Resultado"
+msgstr "Objetos de resultado"
 
 #: ../../modules/functionals/functionals_overview.rst:32
 msgid ":class:`~qilisdk.functionals.functional_result.FunctionalResult`"

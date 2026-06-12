@@ -143,7 +143,7 @@ msgstr ""
 
 #: ../../modules/core/core_qtensor.rst:106
 msgid "Quantum Object Properties & Operations"
-msgstr "Propiedades y Operaciones de Objetos Cuánticos"
+msgstr "Propiedades y operaciones de objetos cuánticos"
 
 #: ../../modules/core/core_qtensor.rst:108
 msgid "All data are stored sparsely, but you can retrieve dense or sparse views:"
@@ -348,7 +348,7 @@ msgstr "Ejemplos:"
 
 #: ../../modules/core/core_qtensor.rst:201
 msgid "Extra Utilities"
-msgstr "Utilidades Adicionales"
+msgstr "Utilidades adicionales"
 
 #: ../../modules/core/core_qtensor.rst:203
 msgid "**Tensor product** with :func:`~qilisdk.core.qtensor.tensor_prod`"
@@ -360,7 +360,7 @@ msgstr "**Valor esperado** con :func:`~qilisdk.core.qtensor.expect_val`"
 
 #: ../../modules/core/core_qtensor.rst:236
 msgid "Visualization of Quantum States"
-msgstr "Visualización de Estados Cuánticos"
+msgstr "Visualización de estados cuánticos"
 
 #: ../../modules/core/core_qtensor.rst:238
 msgid ""

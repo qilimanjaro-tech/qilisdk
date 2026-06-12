@@ -38,7 +38,7 @@ msgstr "**Paquet base**"
 
 #: ../../getting_started/installation.rst:12
 msgid "**Optional extras**"
-msgstr "**Extras opcionals**"
+msgstr "**Extres opcionals**"
 
 #: ../../getting_started/installation.rst:14
 msgid ""
@@ -74,7 +74,7 @@ msgstr "**SpeQtrum** (enviament al núvol via :class:`~qilisdk.speqtrum`):"
 
 #: ../../getting_started/installation.rst:36
 msgid "You can combine extras:"
-msgstr "Podeu combinar extras:"
+msgstr "Podeu combinar extres:"
 
 #: ../../getting_started/installation.rst:44
 msgid "QiliSDK requires a python version 3.11 or higher."
