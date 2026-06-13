@@ -653,9 +653,10 @@ TEST(StabilizerStateSum, MaxTerms_KeepsLargestAmplitudes) {
     sss.apply_gate(h);
     sss.apply_gate(t);
     ASSERT_EQ(sss.get_states().size(), 1u);
-    // Remaining coefficient must have |c|^2 = 0.5 (was 1/√2 before truncation)
+    // The kept term had |c|^2 = 0.5 before truncation; normalize() (called after truncate) then
+    // rescales the lone survivor back to a unit-norm state, so |c|^2 = 1.
     double norm = std::norm(sss.get_coefficients()[0]);
-    EXPECT_NEAR(norm, 0.5, 1e-9);
+    EXPECT_NEAR(norm, 1.0, 1e-9);
 }
 
 TEST(StabilizerStateSum, MaxTerms_LargerThanSumNoTruncation) {
@@ -739,6 +740,214 @@ TEST(StabilizerStateSum, ArbitraryGate_IdentityMatrix_DeterministicState_NoChang
     ASSERT_EQ(sss.get_states().size(), 1u);
     EXPECT_NEAR(std::norm(sss.get_coefficients()[0]), 1.0, 1e-9);
     EXPECT_FALSE(sss.get_states()[0].z_eigenvalue(0));  // still |0⟩
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// amplitude(): relative phases must match a brute-force statevector (entangled states)
+// ──────────────────────────────────────────────────────────────────────────────
+
+namespace {
+
+using cd = std::complex<double>;
+
+int bitval(int idx, int q, int n) { return (idx >> (n - 1 - q)) & 1; }
+int setbitval(int idx, int q, int n, int v) {
+    int mask = 1 << (n - 1 - q);
+    return v ? (idx | mask) : (idx & ~mask);
+}
+
+// Apply a Clifford gate to a dense statevector using the canonical matrices.
+void denseApply(std::vector<cd>& sv, int n, const std::string& name, const std::vector<int>& ctr, const std::vector<int>& tgt) {
+    int dim = 1 << n;
+    std::vector<cd> out(dim, cd(0, 0));
+    const double s = 1.0 / std::sqrt(2.0);
+    if (name == "SWAP") {
+        for (int i = 0; i < dim; ++i) {
+            int a = bitval(i, tgt[0], n), b = bitval(i, tgt[1], n);
+            out[setbitval(setbitval(i, tgt[0], n, b), tgt[1], n, a)] += sv[i];
+        }
+        sv = out;
+        return;
+    }
+    if (ctr.empty()) {  // single-qubit
+        int t = tgt[0];
+        cd u00, u01, u10, u11;
+        if (name == "H") { u00 = s; u01 = s; u10 = s; u11 = -s; }
+        else if (name == "X") { u00 = 0; u01 = 1; u10 = 1; u11 = 0; }
+        else if (name == "Y") { u00 = 0; u01 = cd(0, -1); u10 = cd(0, 1); u11 = 0; }
+        else if (name == "Z") { u00 = 1; u01 = 0; u10 = 0; u11 = -1; }
+        else if (name == "S") { u00 = 1; u01 = 0; u10 = 0; u11 = cd(0, 1); }
+        for (int i = 0; i < dim; ++i) {
+            int tb = bitval(i, t, n);
+            int i0 = setbitval(i, t, n, 0), i1 = setbitval(i, t, n, 1);
+            if (tb == 0) { out[i0] += u00 * sv[i]; out[i1] += u10 * sv[i]; }
+            else { out[i0] += u01 * sv[i]; out[i1] += u11 * sv[i]; }
+        }
+        sv = out;
+        return;
+    }
+    // CNOT (name X) / CZ (name Z), single control
+    int c = ctr[0], t = tgt[0];
+    for (int i = 0; i < dim; ++i) {
+        if (name == "X") {
+            int j = bitval(i, c, n) ? setbitval(i, t, n, 1 - bitval(i, t, n)) : i;
+            out[j] += sv[i];
+        } else {  // CZ
+            cd v = sv[i];
+            if (bitval(i, c, n) && bitval(i, t, n)) v = -v;
+            out[i] += v;
+        }
+    }
+    sv = out;
+}
+
+double amplitudeMismatch(int n, const std::vector<std::tuple<std::string, std::vector<int>, std::vector<int>>>& ops) {
+    StabilizerState st(n);
+    int dim = 1 << n;
+    std::vector<cd> sv(dim, cd(0, 0));
+    sv[0] = 1.0;
+    for (const auto& [name, ctr, tgt] : ops) {
+        Gate g(name, make2x2Identity(), ctr, tgt, {});
+        st.apply_gate(g);
+        denseApply(sv, n, name, ctr, tgt);
+    }
+    // Compare up to a single global phase, anchored on the largest-magnitude dense amplitude.
+    int piv = 0;
+    double best = -1;
+    for (int i = 0; i < dim; ++i)
+        if (std::abs(sv[i]) > best) { best = std::abs(sv[i]); piv = i; }
+    std::string bpiv(n, '0');
+    for (int q = 0; q < n; ++q) bpiv[q] = bitval(piv, q, n) ? '1' : '0';
+    cd apiv = st.amplitude(bpiv);
+    if (std::abs(apiv) < 1e-9) return 1e9;
+    cd gp = sv[piv] / apiv;
+    double maxerr = 0;
+    for (int i = 0; i < dim; ++i) {
+        std::string b(n, '0');
+        for (int q = 0; q < n; ++q) b[q] = bitval(i, q, n) ? '1' : '0';
+        maxerr = std::max(maxerr, std::abs(sv[i] - gp * st.amplitude(b)));
+    }
+    return maxerr;
+}
+
+}  // namespace
+
+TEST(Amplitude, MatchesStatevector_EntangledPattern) {
+    // The pattern that exposed the entangled relative-phase bug (Clifford part of the failing circuit).
+    double e = amplitudeMismatch(2, {{"H", {}, {1}}, {"H", {}, {0}}, {"S", {}, {0}}, {"X", {1}, {0}}, {"H", {}, {1}}});
+    EXPECT_LT(e, 1e-6) << "amplitude() relative phases disagree with statevector by " << e;
+}
+
+TEST(Amplitude, MatchesStatevector_RandomCliffords) {
+    // Deterministic pseudo-random sweep of Clifford circuits on 3 qubits.
+    const char* singles[] = {"H", "X", "Y", "Z", "S"};
+    uint64_t rng = 0x9e3779b97f4a7c15ULL;
+    auto next = [&]() { rng ^= rng << 13; rng ^= rng >> 7; rng ^= rng << 17; return rng; };
+    double worst = 0;
+    for (int trial = 0; trial < 400; ++trial) {
+        int n = 3;
+        int ng = 4 + (next() % 8);
+        std::vector<std::tuple<std::string, std::vector<int>, std::vector<int>>> ops;
+        for (int g = 0; g < ng; ++g) {
+            if (next() % 4 == 0) {
+                int a = next() % n, b = next() % n;
+                if (a == b) b = (b + 1) % n;
+                ops.push_back({(next() % 2) ? "X" : "Z", {a}, {b}});
+            } else {
+                ops.push_back({singles[next() % 5], {}, {(int)(next() % n)}});
+            }
+        }
+        worst = std::max(worst, amplitudeMismatch(n, ops));
+    }
+    EXPECT_LT(worst, 1e-6) << "worst amplitude() vs statevector mismatch over random Cliffords = " << worst;
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// StabilizerStateSum::amplitude must match a brute-force statevector (incl. T gates)
+// ──────────────────────────────────────────────────────────────────────────────
+
+namespace {
+
+void denseApplyT(std::vector<cd>& sv, int n, int t) {
+    int dim = 1 << n;
+    cd ph = std::exp(cd(0, M_PI / 4.0));
+    for (int i = 0; i < dim; ++i)
+        if (bitval(i, t, n)) sv[i] *= ph;
+}
+
+SparseMatrix tMatrix() {
+    SparseMatrix m(2, 2);
+    m.insert(0, 0) = cd(1, 0);
+    m.insert(1, 1) = std::exp(cd(0, M_PI / 4.0));
+    m.makeCompressed();
+    return m;
+}
+
+// Build a StabilizerStateSum and a dense statevector from the same gate list, return max amplitude
+// mismatch up to a single global phase.
+double sumAmplitudeMismatch(int n, const std::vector<std::tuple<std::string, std::vector<int>, std::vector<int>>>& ops) {
+    StabilizerStateSum sum(n);
+    int dim = 1 << n;
+    std::vector<cd> sv(dim, cd(0, 0));
+    sv[0] = 1.0;
+    for (const auto& [name, ctr, tgt] : ops) {
+        if (name == "T") {
+            sum.apply_gate(Gate("T", tMatrix(), ctr, tgt, {}));
+            denseApplyT(sv, n, tgt[0]);
+        } else {
+            sum.apply_gate(Gate(name, make2x2Identity(), ctr, tgt, {}));
+            denseApply(sv, n, name, ctr, tgt);
+        }
+    }
+    int piv = 0;
+    double best = -1;
+    for (int i = 0; i < dim; ++i)
+        if (std::abs(sv[i]) > best) { best = std::abs(sv[i]); piv = i; }
+    std::string bpiv(n, '0');
+    for (int q = 0; q < n; ++q) bpiv[q] = bitval(piv, q, n) ? '1' : '0';
+    cd apiv = sum.amplitude(bpiv);
+    if (std::abs(apiv) < 1e-9) return 1e9;
+    cd gp = sv[piv] / apiv;
+    double maxerr = 0;
+    for (int i = 0; i < dim; ++i) {
+        std::string b(n, '0');
+        for (int q = 0; q < n; ++q) b[q] = bitval(i, q, n) ? '1' : '0';
+        maxerr = std::max(maxerr, std::abs(sv[i] - gp * sum.amplitude(b)));
+    }
+    return maxerr;
+}
+
+}  // namespace
+
+TEST(StabilizerStateSum, Amplitude_MatchesStatevector_TwoTGatesEntangled) {
+    // Reduced from a randomized failure: two T gates plus entangling Cliffords.
+    double e = sumAmplitudeMismatch(2, {
+        {"H", {}, {1}}, {"X", {}, {0}}, {"Y", {}, {0}}, {"X", {1}, {0}}, {"H", {}, {0}},
+        {"T", {}, {0}}, {"Y", {}, {1}}, {"X", {1}, {0}}, {"H", {}, {0}}, {"T", {}, {1}}, {"H", {}, {0}}});
+    EXPECT_LT(e, 1e-6) << "StabilizerStateSum amplitude disagrees with statevector by " << e;
+}
+
+TEST(StabilizerStateSum, Amplitude_MatchesStatevector_RandomWithT) {
+    const char* singles[] = {"H", "X", "Y", "Z", "S", "T"};
+    uint64_t rng = 0xD1B54A32D192ED03ULL;
+    auto next = [&]() { rng ^= rng << 13; rng ^= rng >> 7; rng ^= rng << 17; return rng; };
+    double worst = 0;
+    for (int trial = 0; trial < 400; ++trial) {
+        int n = 1 + (next() % 3);
+        int ng = 4 + (next() % 16);
+        std::vector<std::tuple<std::string, std::vector<int>, std::vector<int>>> ops;
+        for (int g = 0; g < ng; ++g) {
+            if (n > 1 && next() % 4 == 0) {
+                int a = next() % n, b = next() % n;
+                if (a == b) b = (b + 1) % n;
+                ops.push_back({(next() % 2) ? "X" : "Z", {a}, {b}});
+            } else {
+                ops.push_back({singles[next() % 6], {}, {(int)(next() % n)}});
+            }
+        }
+        worst = std::max(worst, sumAmplitudeMismatch(n, ops));
+    }
+    EXPECT_LT(worst, 1e-6) << "worst StabilizerStateSum amplitude vs statevector over random+T = " << worst;
 }
 
 // GCOV_EXCL_BR_STOP

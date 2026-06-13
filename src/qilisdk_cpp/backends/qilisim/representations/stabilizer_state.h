@@ -41,14 +41,26 @@ class StabilizerState {
     const std::vector<std::bitset<MAX_ROWS_STABILIZER>>& get_z_bits() const { return z_bits; }
     const std::bitset<MAX_ROWS_STABILIZER>& get_phases() const { return phases; }
     int get_nqubits() const { return nqubits; }
-    std::complex<double> apply_gate(const Gate& gate);
+    // track_global_phase controls whether the (relatively expensive) exact global-phase recovery
+    // is performed. It is only needed when this state is one term of a StabilizerStateSum with
+    // more than one term; for a lone stabilizer state the global phase is unobservable.
+    std::complex<double> apply_gate(const Gate& gate, bool track_global_phase = true);
     std::string sample() const;
     std::complex<double> amplitude(const std::string& b) const;
     void project_z(int q, bool outcome);
     int find_x_pivot(int q) const;
     void rowsum(int h, int i);
     bool z_eigenvalue(int q) const;
-    std::complex<double> one_branch_phase(int q) const;
+    // A computational basis bitstring guaranteed to have nonzero amplitude (used as a reference
+    // point for recovering the global phase a Clifford tableau update drops).
+    std::string representative() const;
+    // <b| G |this>, the exact (true) amplitude of basis state b after applying gate G to this state,
+    // computed from this state's amplitudes and G's action.
+    std::complex<double> matrix_element(const Gate& gate, const std::string& b) const;
+    // The global phase the tableau update for `gate` dropped, given the pre-gate state (*this) and
+    // the post-gate state `after`. Returns the unit-modulus factor the term's coefficient must be
+    // multiplied by so that interference between terms of a StabilizerStateSum stays correct.
+    std::complex<double> dropped_global_phase(const StabilizerState& after, const Gate& gate) const;
 };
 
 class StabilizerStateSum {
