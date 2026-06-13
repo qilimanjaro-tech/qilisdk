@@ -14,6 +14,8 @@
 
 #include "stabilizer_state.h"
 
+#include <iostream>
+
 #include <algorithm>
 #include <numeric>
 
@@ -106,16 +108,17 @@ static bool z_phase_by_ge(const std::vector<std::bitset<MAX_ROWS_STABILIZER>>& x
 
     // Helper to do row sum: row h <- row_h * row_g
     auto rowsum_local = [&](Row& h, const Row& g) {
-        int contrib = 0;
+        // Use mod-4 Pauli arithmetic (Aaronson-Gottesman g function) for correct phase tracking
+        int exp = 2 * (int)g.ph + 2 * (int)h.ph;
         for (int q = 0; q < n; ++q) {
-            if (h.xb[q] && g.zb[q]) {
-                contrib ^= 1;
-            }
-            if (h.zb[q] && g.xb[q]) {
-                contrib ^= 1;
-            }
+            bool x1 = g.xb[q], z1 = g.zb[q], x2 = h.xb[q], z2 = h.zb[q];
+            if (!x1 && !z1)      continue;
+            else if (x1 && z1)   exp += (int)z2 - (int)x2;
+            else if (x1 && !z1)  exp += (int)z2 * (2 * (int)x2 - 1);
+            else                 exp += (int)x2 * (1 - 2 * (int)z2);
         }
-        h.ph = h.ph ^ g.ph ^ bool(contrib);
+        exp = ((exp % 4) + 4) % 4;
+        h.ph = (exp == 2);
         for (int q = 0; q < n; ++q) {
             h.xb[q] = h.xb[q] ^ g.xb[q];
             h.zb[q] = h.zb[q] ^ g.zb[q];
@@ -160,7 +163,7 @@ static bool z_phase_by_ge(const std::vector<std::bitset<MAX_ROWS_STABILIZER>>& x
     return tgt.ph;
 }
 
-std::pair<bool, std::string> StabilizerState::sample() const {
+std::string StabilizerState::sample() const {
     /*
     Sample from the StabilizerState.
     This is done by iterating through each qubit and determining whether the outcome is random or deterministic.
@@ -169,9 +172,7 @@ std::pair<bool, std::string> StabilizerState::sample() const {
     For deterministic outcomes, we use Gaussian elimination to find the Z eigenvalue.
 
     Returns:
-        std::pair<bool, std::string>: The phase of the result (true = -1, false = +1) and a bitstring
-            representing the measurement outcome for each qubit. For example, measuring |-> and getting
-            |1> returns {true, "1"} because the coefficient of |1> in (|0>-|1>)/sqrt(2) is negative.
+        std::string: A bitstring representing the measurement outcome for each qubit.
     */
 
     // Create copies of the tableau data structures that we can modify during sampling
@@ -181,9 +182,6 @@ std::pair<bool, std::string> StabilizerState::sample() const {
 
     // The bitstring to return
     std::string result(nqubits, '0');
-
-    // Track the overall phase of the measurement outcome (XOR of per-qubit phase contributions)
-    bool phase_bit = false;
 
     // For each qubit, determine if the outcome is random or deterministic
     for (int k = 0; k < nqubits; ++k) {
@@ -197,19 +195,20 @@ std::pair<bool, std::string> StabilizerState::sample() const {
 
         // We have a random outcome if we have an X stabilizer that anticommutes with Z_k
         if (p >= 0) {
-            // To collapse the state, we first need to make sure that the X stabilizer is the only one that anticommutes with Z_k.
-            // We do this by rowsumming it into any other stabilizer that anticommutes with Z_k.
+            // Rowsum every other generator that anticommutes with Z_k into row p to isolate the pivot
             for (int i = 0; i < nqubits; ++i) {
                 if (i != p && x[k][i]) {
-                    int contrib = 0;
+                    int exp = 2 * (int)(bool)ph[p] + 2 * (int)(bool)ph[i];
                     for (int q = 0; q < nqubits; ++q) {
-                        if (x[q][i] && z[q][p])
-                            contrib ^= 1;
-                        if (z[q][i] && x[q][p])
-                            contrib ^= 1;
+                        bool x1 = (bool)x[q][p], z1 = (bool)z[q][p];
+                        bool x2 = (bool)x[q][i], z2 = (bool)z[q][i];
+                        if (!x1 && !z1)      continue;
+                        else if (x1 && z1)   exp += (int)z2 - (int)x2;
+                        else if (x1 && !z1)  exp += (int)z2 * (2 * (int)x2 - 1);
+                        else                 exp += (int)x2 * (1 - 2 * (int)z2);
                     }
-                    if ((bool)ph[p] ^ (bool)contrib)
-                        ph.flip(i);
+                    exp = ((exp % 4) + 4) % 4;
+                    if (exp == 2) ph.set(i); else ph.reset(i);
                     for (int q = 0; q < nqubits; ++q) {
                         if (x[q][p])
                             x[q].flip(i);
@@ -219,14 +218,10 @@ std::pair<bool, std::string> StabilizerState::sample() const {
                 }
             }
 
-            // Capture the pivot phase before overwriting it: if the pivot stabilizer has phase -1
-            // and the outcome is |1>, the amplitude carries a factor of -1.
-            bool pivot_phase = (bool)ph[p];
-
             // Flip a coin to decide the outcome of the measurement for this qubit
-            int b = rand() & 1;
+            int b = std::uniform_int_distribution<int>(0, 1)(rng);
 
-            // Finally, we overwrite the pivot row to set Z_k = (-1)^b, which collapses the state. The phase of that row is set to b as well.
+            // Overwrite the pivot row to set Z_k = (-1)^b, collapsing the state
             for (int q = 0; q < nqubits; ++q) {
                 x[q].reset(p);
                 z[q].reset(p);
@@ -239,18 +234,111 @@ std::pair<bool, std::string> StabilizerState::sample() const {
             }
             result[k] = b ? '1' : '0';
 
-            // The phase contribution for this qubit is -1 only when the pivot had phase -1 AND the outcome is |1>
-            if (b && pivot_phase)
-                phase_bit = !phase_bit;
-
-            // Otherwise the outcome is deterministic: we can read off the Z eigenvalue using Gaussian elimination on the tableau
+        // Otherwise the outcome is deterministic: read off the Z eigenvalue via Gaussian elimination
         } else {
             result[k] = z_phase_by_ge(x, z, ph, nqubits, k) ? '1' : '0';
-            // Deterministic outcomes are definite eigenstates, so they always contribute phase +1
         }
     }
 
-    return {phase_bit, result};
+    return result;
+}
+
+std::complex<double> StabilizerState::amplitude(const std::string& b) const {
+    /*
+    Compute the amplitude <b|s> for a given computational basis bitstring b.
+    This mirrors sample() but forces each qubit to the value in b instead of drawing randomly.
+    Returns 0 if b is incompatible with any deterministic stabilizer constraint.
+    The returned value includes the 1/sqrt(2)^k magnitude factor where k is the number of
+    random (X-pivot) qubits, and the full complex phase including ±i for Y stabilizers.
+
+    Args:
+        b (std::string): The bitstring to compute the amplitude for.
+
+    Returns:
+        std::complex<double>: The complex amplitude <b|s>.
+    */
+    auto x = x_bits; auto z = z_bits; auto ph = phases;
+    std::complex<double> amp = 1.0;
+    const double inv_sqrt2 = 1.0 / std::sqrt(2.0);
+
+    for (int k = 0; k < nqubits; ++k) {
+        int p = -1;
+        for (int i = 0; i < nqubits; ++i) {
+            if (x[k][i]) { p = i; break; }
+        }
+
+        if (p >= 0) {
+            // Isolate the pivot: rowsum every other generator anticommuting with Z_k into row p
+            for (int i = 0; i < nqubits; ++i) {
+                if (i != p && x[k][i]) {
+                    int exp = 2 * (int)(bool)ph[p] + 2 * (int)(bool)ph[i];
+                    for (int q = 0; q < nqubits; ++q) {
+                        bool x1 = (bool)x[q][p], z1 = (bool)z[q][p];
+                        bool x2 = (bool)x[q][i], z2 = (bool)z[q][i];
+                        if (!x1 && !z1)      continue;
+                        else if (x1 && z1)   exp += (int)z2 - (int)x2;
+                        else if (x1 && !z1)  exp += (int)z2 * (2 * (int)x2 - 1);
+                        else                 exp += (int)x2 * (1 - 2 * (int)z2);
+                    }
+                    exp = ((exp % 4) + 4) % 4;
+                    if (exp == 2) ph.set(i); else ph.reset(i);
+                    for (int q = 0; q < nqubits; ++q) {
+                        if (x[q][p]) x[q].flip(i);
+                        if (z[q][p]) z[q].flip(i);
+                    }
+                }
+            }
+
+            bool bk = (b[k] == '1');
+            bool pivot_phase = (bool)ph[p];
+            bool has_z = (bool)z[k][p];
+
+            // After collapse, earlier qubits j<k have no X in any row, only Z.
+            // The pivot's Z bits on already-fixed qubits each contribute (-1)^(z[j][p]*b[j]).
+            int z_on_prev = 0;
+            for (int j = 0; j < k; ++j) {
+                if ((bool)z[j][p] && b[j] == '1') z_on_prev ^= 1;
+            }
+
+            // |0> outcome: magnitude 1/sqrt(2), no superposition phase.
+            // |1> outcome: also carries i^has_z * (-1)^pivot_phase * (-1)^z_on_prev.
+            amp *= inv_sqrt2;
+            if (bk) {
+                if (has_z)       amp *= std::complex<double>(0.0, 1.0);
+                if (pivot_phase) amp *= std::complex<double>(-1.0, 0.0);
+                if (z_on_prev)   amp *= std::complex<double>(-1.0, 0.0);
+            }
+
+            // Collapse the working tableau to the chosen outcome
+            for (int q = 0; q < nqubits; ++q) { x[q].reset(p); z[q].reset(p); }
+            z[k].set(p);
+            if (bk) ph.set(p); else ph.reset(p);
+
+        } else {
+            // Deterministic outcome: return 0 if b doesn't match
+            bool expected = z_phase_by_ge(x, z, ph, nqubits, k);
+            if ((b[k] == '1') != expected) return {0.0, 0.0};
+        }
+    }
+
+    return amp;
+}
+
+std::complex<double> StabilizerStateSum::amplitude(const std::string& b) const {
+    /*
+    Compute the full amplitude <b|ψ> = sum_i c_i <b|s_i> for a given bitstring b.
+
+    Args:
+        b (std::string): The bitstring to compute the amplitude for.
+
+    Returns:
+        std::complex<double>: The total complex amplitude for b across all terms.
+    */
+    std::complex<double> total = 0.0;
+    for (size_t i = 0; i < states.size(); ++i) {
+        total += coefficients[i] * states[i].amplitude(b);
+    }
+    return total;
 }
 
 std::map<std::string, int> StabilizerStateSum::sample(int nshots) const {
@@ -265,38 +353,40 @@ std::map<std::string, int> StabilizerStateSum::sample(int nshots) const {
         std::map<std::string, int>: A map from bitstrings to counts.
     */
 
-    // We do more samples than needed here to allow for some interference.
-    // States are picked UNIFORMLY (not proportionally to |c_i|^2). With |c_i|^2-proportional picking
-    // the accumulated amplitude estimator is E[pre_samples[b]] ∝ sum_i |c_i|^2 * <b|s_i> * c_i,
-    // which is biased when norms are unequal. With uniform picking (1/M per term) the estimator is
-    // E[pre_samples[b]] ∝ sum_i <b|s_i> * c_i = A(b), which is the correct interference amplitude.
+    // Importance sampling: pick states proportionally to |c_i|^2 so that we naturally focus
+    // on bitstrings with the highest probability. For each sampled bitstring we compute the
+    // exact amplitude A(b) = sum_i c_i <b|s_i> using amplitude(), so pre_samples[b] is always
+    // exact (no Monte Carlo noise in the amplitude itself). We just need enough shots to discover
+    // all bitstrings with significant probability.
     const size_t M = states.size();
     const int extra_sample_factor = 10;
+
+    // Build a cumulative weight vector for efficient importance sampling
+    std::vector<double> cum_weights(M);
+    double total_weight = 0.0;
+    for (size_t i = 0; i < M; ++i) {
+        total_weight += std::norm(coefficients[i]);
+        cum_weights[i] = total_weight;
+    }
+
+    std::uniform_real_distribution<double> weight_dist(0.0, total_weight);
+    std::uniform_real_distribution<double> unit_dist(0.0, 1.0);
+
     std::map<std::string, std::complex<double>> pre_samples;
     for (int shot = 0; shot < nshots * extra_sample_factor; ++shot) {
 
-        // Pick a state uniformly
-        size_t index = static_cast<size_t>((static_cast<double>(rand()) / (static_cast<double>(RAND_MAX) + 1.0)) * M);
-        
-        // Sample from that
-        const StabilizerState& state = states[index];
-        auto [phase, sample_str] = state.sample();
-        if (phase) {
-            pre_samples[sample_str] -= coefficients[index];
-        } else {
-            pre_samples[sample_str] += coefficients[index];
+        // Pick a state with probability proportional to |c_i|^2
+        double r = weight_dist(rng);
+        size_t index = static_cast<size_t>(std::lower_bound(cum_weights.begin(), cum_weights.end(), r) - cum_weights.begin());
+        if (index >= M) index = M - 1;
+
+        // Sample a bitstring from that state
+        const std::string sample_str = states[index].sample();
+
+        // Compute the exact amplitude only on the first visit; repeated visits are identical.
+        if (!pre_samples.count(sample_str)) {
+            pre_samples[sample_str] = amplitude(sample_str);
         }
-
-        // TODO Instead, I want to do the following:
-
-        // TODO Pick a state with probability proportional to |c_i|^2
-
-        // TODO Sample from it
-
-        // TODO Get the amplitude of that bitstring for the whole StabilizerStateSum, i.e. <b|ψ> = sum_i c_i <b|s_i>
-
-        // TODO Save this as pre_samples[b] = p
-        
     }
 
     // Convert to probabilities for each bitstring
@@ -307,23 +397,27 @@ std::map<std::string, int> StabilizerStateSum::sample(int nshots) const {
         total += probabilities[sample_str];
     }
 
-    // Normalize probabilities
+    // Normalize probabilities (total is the captured probability mass; < 1 if support not fully discovered)
     for (auto& [sample_str, prob] : probabilities) {
         prob /= total;
     }
 
-    // Sample from these
+    // Build cumulative distribution and draw nshots samples with lower_bound
+    std::vector<std::pair<double, std::string>> cdf;
+    cdf.reserve(probabilities.size());
+    double cum = 0.0;
+    for (const auto& [sample_str, prob] : probabilities) {
+        cum += prob;
+        cdf.emplace_back(cum, sample_str);
+    }
+
     std::map<std::string, int> sample_counts;
     for (int shot = 0; shot < nshots; ++shot) {
-        double r = ((double)rand() / (RAND_MAX));
-        double cumulative_prob = 0.0;
-        for (const auto& [sample_str, prob] : probabilities) {
-            cumulative_prob += prob;
-            if (r < cumulative_prob) {
-                sample_counts[sample_str]++;
-                break;
-            }
-        }
+        double r = unit_dist(rng);
+        auto it = std::lower_bound(cdf.begin(), cdf.end(), std::make_pair(r, std::string{}),
+                                   [](const auto& a, const auto& b) { return a.first < b.first; });
+        const std::string& s = (it != cdf.end()) ? it->second : cdf.back().second;
+        sample_counts[s]++;
     }
 
     // Return the counts
@@ -726,8 +820,6 @@ void StabilizerStateSum::apply_gate(const Gate& gate) {
 
 }
 
-#include <iostream>
-
 void StabilizerStateSum::truncate() {
     /*
     Truncate the StabilizerStateSum to keep only the top max_terms terms by coefficient
@@ -747,8 +839,6 @@ void StabilizerStateSum::truncate() {
         return;
     }
     
-    std::cout << "Truncating from " << states.size() << " terms to " << max_terms << " terms." << std::endl;
-
     // Sort by coefficient magnitude and keep only the top max_terms terms
     std::vector<size_t> indices(states.size());
     std::iota(indices.begin(), indices.end(), 0);
@@ -775,7 +865,6 @@ void StabilizerStateSum::combine_duplicates() {
     */
     
     // Prepare the arrays to fill
-    std::cout << "Combining duplicates among " << states.size() << " terms." << std::endl;
     std::vector<StabilizerState> new_states;
     std::vector<std::complex<double>> new_coeffs;
     new_states.reserve(states.size());
@@ -804,7 +893,6 @@ void StabilizerStateSum::combine_duplicates() {
     }
     
     // Move the new states and coeffs back over
-    std::cout << "Combined into " << new_states.size() << " unique terms." << std::endl;
     states = std::move(new_states);
     coefficients = std::move(new_coeffs);
 

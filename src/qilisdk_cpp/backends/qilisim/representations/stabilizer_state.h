@@ -17,6 +17,7 @@
 #include <complex>
 #include <functional>
 #include <map>
+#include <random>
 #include <set>
 #include <vector>
 
@@ -32,6 +33,7 @@ class StabilizerState {
     std::vector<std::bitset<MAX_ROWS_STABILIZER>> z_bits;
     std::bitset<MAX_ROWS_STABILIZER> phases;
     int nqubits;
+    mutable std::mt19937_64 rng{std::random_device{}()};
 
    public:
     StabilizerState(int nqubits);
@@ -40,7 +42,8 @@ class StabilizerState {
     const std::bitset<MAX_ROWS_STABILIZER>& get_phases() const { return phases; }
     int get_nqubits() const { return nqubits; }
     std::complex<double> apply_gate(const Gate& gate);
-    std::pair<bool, std::string> sample() const;
+    std::string sample() const;
+    std::complex<double> amplitude(const std::string& b) const;
     void project_z(int q, bool outcome);
     int find_x_pivot(int q) const;
     void rowsum(int h, int i);
@@ -54,6 +57,7 @@ class StabilizerStateSum {
     int max_terms = 0;
     std::vector<StabilizerState> states = {};
     std::vector<std::complex<double>> coefficients = {};
+    mutable std::mt19937_64 rng{std::random_device{}()};
 
    public:
     StabilizerStateSum(int nqubits) : nqubits(nqubits) {
@@ -65,6 +69,7 @@ class StabilizerStateSum {
     const std::vector<std::complex<double>>& get_coefficients() const { return coefficients; }
     friend std::ostream& operator<<(std::ostream& os, const StabilizerStateSum& sss);
     std::map<std::string, int> sample(int nshots) const;
+    std::complex<double> amplitude(const std::string& b) const;
     int get_nqubits() const { return nqubits; }
     int get_max_terms() const { return max_terms; }
     void set_max_terms(int n) { max_terms = n; }
