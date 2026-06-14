@@ -18,7 +18,7 @@ from io import StringIO
 from pathlib import Path
 from typing import Any, TypeVar, overload
 
-from qilisdk.yaml import yaml
+from qilisdk.yaml import safe_yaml, yaml
 
 T = TypeVar("T")
 
@@ -68,29 +68,42 @@ def serialize_to(obj: Any, file: str) -> None:
 
 
 @overload
-def deserialize(string: str) -> Any: ...
+def deserialize(string: str, *, trust_code: bool = ...) -> Any: ...
 
 
 @overload
-def deserialize(string: str, cls: type[T]) -> T: ...
+def deserialize(string: str, cls: type[T], *, trust_code: bool = ...) -> T: ...
 
 
-def deserialize(string: str, cls: type[T] | None = None) -> Any | T:
+def deserialize(string: str, cls: type[T] | None = None, *, trust_code: bool = False) -> Any | T:
     """Deserialize a YAML string to an object.
+
+    By default this uses a safe, data-only loader: documents carrying the
+    code-bearing ``!function``/``!lambda`` tags, or ``!type``/``!PydanticModel``/
+    ``!defaultdict`` tags pointing at a name that is not on the deserialization
+    allow-list, are rejected with a :class:`DeserializationError` instead of
+    executing arbitrary code at parse time.
 
     Args:
         string (str): The YAML string to deserialize.
         cls (type[T], optional): The class type to cast the deserialized object to. Defaults to None.
+        trust_code (bool, optional): When ``True``, use the unrestricted loader
+            that reconstructs ``!function``/``!lambda`` via ``dill`` and imports
+            arbitrary ``!type``/``!PydanticModel``/``!defaultdict`` names. This
+            executes arbitrary code and MUST only ever be used on fully trusted
+            input; never wire it to network- or user-supplied data. Defaults to ``False``.
 
     Raises:
-        DeserializationError: If deserialization fails or the resulting object is not of the specified type.
+        DeserializationError: If deserialization fails, a code-bearing/non-allow-listed
+            tag is rejected, or the resulting object is not of the specified type.
 
     Returns:
         Any | T: The deserialized object, optionally cast to the specified class type.
     """
+    loader = yaml if trust_code else safe_yaml
     try:
         with StringIO(string) as stream:
-            result = yaml.load(stream)
+            result = loader.load(stream)
     except Exception as e:
         raise DeserializationError(f"Failed to deserialize YAML string: {e}") from e
     if cls is not None and not isinstance(result, cls):
@@ -99,28 +112,37 @@ def deserialize(string: str, cls: type[T] | None = None) -> Any | T:
 
 
 @overload
-def deserialize_from(file: str) -> Any: ...
+def deserialize_from(file: str, *, trust_code: bool = ...) -> Any: ...
 
 
 @overload
-def deserialize_from(file: str, cls: type[T]) -> T: ...
+def deserialize_from(file: str, cls: type[T], *, trust_code: bool = ...) -> T: ...
 
 
-def deserialize_from(file: str, cls: type[T] | None = None) -> Any | T:
+def deserialize_from(file: str, cls: type[T] | None = None, *, trust_code: bool = False) -> Any | T:
     """Deserialize a YAML file to an object.
+
+    By default this uses the same safe, data-only loader as :func:`deserialize`:
+    code-bearing or non-allow-listed tags are rejected rather than executed.
 
     Args:
         file (str): The file path of the YAML file to deserialize.
         cls (type[T], optional): The class type to cast the deserialized object to. Defaults to None.
+        trust_code (bool, optional): When ``True``, use the unrestricted loader
+            that executes arbitrary code via ``dill``/``__import__``. MUST only be
+            used on fully trusted files; never wire it to network- or
+            user-supplied paths. Defaults to ``False``.
 
     Raises:
-        DeserializationError: If deserialization fails or the resulting object is not of the specified type.
+        DeserializationError: If deserialization fails, a code-bearing/non-allow-listed
+            tag is rejected, or the resulting object is not of the specified type.
 
     Returns:
         Any | T: The deserialized object, optionally cast to the specified class type.
     """
+    loader = yaml if trust_code else safe_yaml
     try:
-        result = yaml.load(Path(file))
+        result = loader.load(Path(file))
     except Exception as e:
         raise DeserializationError(f"Failed to deserialize YAML string {e} from file {file}") from e
     if cls is not None and not isinstance(result, cls):
