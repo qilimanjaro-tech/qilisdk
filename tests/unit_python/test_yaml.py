@@ -19,21 +19,28 @@ from io import StringIO
 from types import SimpleNamespace
 
 import numpy as np
+import pytest
 from dill import dumps
 from loguru_caplog import loguru_caplog as caplog  # noqa: F401
 from pydantic import BaseModel
 from ruamel.yaml import YAML
+from ruamel.yaml.constructor import ConstructorError
 from scipy import sparse
 
 from qilisdk.core.model import Model
+from qilisdk.core.variables import Bitwise
 from qilisdk.yaml import (
     QiliYAML,
     function_constructor,
     function_representer,
     pydantic_model_constructor,
     pydantic_model_representer,
+    safe_yaml,
     type_constructor,
     type_representer,
+)
+from qilisdk.yaml import (
+    yaml as qilisdk_yaml,
 )
 
 yaml = YAML(typ="unsafe")
@@ -365,3 +372,48 @@ def test_type_constructor_direct():
     loaded = type_constructor(None, node)
 
     assert loaded is dict
+
+
+# -----------------------
+# Safe-by-default loader (QSDK-01 / QSDK-02)
+# -----------------------
+
+
+def test_safe_yaml_rejects_function_tag():
+    def f(x):
+        return x + 1
+
+    serialized = base64.b64encode(dumps(f, recurse=True)).decode("utf-8")
+    document = f"!function {serialized}\n"
+
+    with pytest.raises(ConstructorError):
+        safe_yaml.load(StringIO(document))
+
+
+def test_safe_yaml_rejects_lambda_tag():
+    g = lambda x: x * 2  # noqa: E731
+    serialized = base64.b64encode(dumps(g, recurse=True)).decode("utf-8")
+    document = f"!lambda {serialized}\n"
+
+    with pytest.raises(ConstructorError):
+        safe_yaml.load(StringIO(document))
+
+
+def test_safe_yaml_rejects_non_allowlisted_python_object_apply():
+    with pytest.raises(ConstructorError):
+        safe_yaml.load(StringIO("!!python/object/apply:os.system ['echo pwned']\n"))
+
+
+def test_safe_yaml_has_isolated_registry_from_trusted_loader():
+    # The two module-level loaders must NOT share a constructor registry, or
+    # overriding a tag on one would clobber the other.
+    assert qilisdk_yaml.constructor.yaml_constructors is not safe_yaml.constructor.yaml_constructors
+    # The trusted loader still has the real dill-backed lambda constructor.
+    assert (
+        qilisdk_yaml.constructor.yaml_constructors["!lambda"] is not safe_yaml.constructor.yaml_constructors["!lambda"]
+    )
+
+
+def test_safe_yaml_allows_allowlisted_type():
+    loaded = safe_yaml.load(StringIO("!type qilisdk.core.variables.Bitwise\n"))
+    assert loaded is Bitwise
