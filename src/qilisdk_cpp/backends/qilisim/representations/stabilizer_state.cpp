@@ -134,8 +134,10 @@ struct ZPhaseSolver {
         rph.assign(n, false);
         for (int r = 0; r < n; ++r) {
             for (int q = 0; q < n; ++q) {
-                if (x[q][r]) rx[r].set(q);
-                if (z[q][r]) rz[r].set(q);
+                if (x[q][r])
+                    rx[r].set(q);
+                if (z[q][r])
+                    rz[r].set(q);
             }
             rph[r] = bool(ph[r]);
         }
@@ -1365,14 +1367,14 @@ void StabilizerStateSum::combine_duplicates() {
         std::hash<std::bitset<MAX_ROWS_STABILIZER>> bh;
         size_t h = 1469598103934665603ULL;  // FNV-1a offset basis
         auto mix = [&](size_t v) { h = (h ^ v) * 1099511628211ULL; };
-        for (const auto& xb : s.get_x_bits()) mix(bh(xb));
-        for (const auto& zb : s.get_z_bits()) mix(bh(zb));
+        for (const auto& xb : s.get_x_bits())
+            mix(bh(xb));
+        for (const auto& zb : s.get_z_bits())
+            mix(bh(zb));
         mix(bh(s.get_phases()));
         return h;
     };
-    auto states_equal = [](const StabilizerState& a, const StabilizerState& b) {
-        return a.get_x_bits() == b.get_x_bits() && a.get_z_bits() == b.get_z_bits() && a.get_phases() == b.get_phases();
-    };
+    auto states_equal = [](const StabilizerState& a, const StabilizerState& b) { return a.get_x_bits() == b.get_x_bits() && a.get_z_bits() == b.get_z_bits() && a.get_phases() == b.get_phases(); };
     auto hash = [&](size_t i) { return hash_state(states[i]); };
     auto eq = [&](size_t a, size_t b) { return states_equal(states[a], states[b]); };
 
