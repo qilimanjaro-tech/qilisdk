@@ -26,6 +26,14 @@ from ruamel.yaml import YAML
 from ruamel.yaml.constructor import ConstructorError
 from scipy import sparse
 
+# Tag names for the SDK's typed / code-bearing YAML constructors. Defined once so the
+# literals are not duplicated across representers, constructors and the safe-loader wiring.
+_TAG_FUNCTION = "!function"
+_TAG_LAMBDA = "!lambda"
+_TAG_TYPE = "!type"
+_TAG_PYDANTIC_MODEL = "!PydanticModel"
+_TAG_DEFAULTDICT = "!defaultdict"
+
 
 def csr_representer(representer, data: sparse.csr_matrix):
     """
@@ -101,7 +109,7 @@ def defaultdict_representer(representer, data: defaultdict):
         else None
     )
     return representer.represent_mapping(
-        "!defaultdict",
+        _TAG_DEFAULTDICT,
         {"default_factory": factory_name, "items": dict(data)},
     )
 
@@ -128,7 +136,7 @@ def function_representer(representer, data):
     Represent a non-lambda function by serializing it.
     """
     serialized_function = base64.b64encode(dumps(data, recurse=True)).decode("utf-8")
-    return representer.represent_scalar("!function", serialized_function)
+    return representer.represent_scalar(_TAG_FUNCTION, serialized_function)
 
 
 def function_constructor(constructor, node):
@@ -144,7 +152,7 @@ def lambda_representer(representer, data):
     Represent a lambda function by serializing its code.
     """
     serialized_lambda = base64.b64encode(dumps(data, recurse=True)).decode("utf-8")
-    return representer.represent_scalar("!lambda", serialized_lambda)
+    return representer.represent_scalar(_TAG_LAMBDA, serialized_lambda)
 
 
 def lambda_constructor(constructor, node):
@@ -161,7 +169,7 @@ def pydantic_model_representer(representer, data):
     Representer for Pydantic Models.
     """
     value = {"type": f"{data.__class__.__module__}.{data.__class__.__name__}", "data": data.model_dump()}
-    return representer.represent_mapping("!PydanticModel", value)
+    return representer.represent_mapping(_TAG_PYDANTIC_MODEL, value)
 
 
 def pydantic_model_constructor(constructor, node):
@@ -216,7 +224,7 @@ def type_representer(representer, data: type):
     """
     path = f"{data.__module__}.{data.__qualname__}"
     # emit as a simple scalar under !type
-    return representer.represent_scalar("!type", path)
+    return representer.represent_scalar(_TAG_TYPE, path)
 
 
 def type_constructor(constructor, node):
@@ -329,7 +337,7 @@ def _resolve_allowlisted(path: str | None, tag: str):
 def safe_defaultdict_constructor(constructor, node):
     """Reconstruct a defaultdict, allowing only allow-listed factories."""
     mapping = constructor.construct_mapping(node, deep=True)
-    factory = _resolve_allowlisted(mapping["default_factory"], "!defaultdict")
+    factory = _resolve_allowlisted(mapping["default_factory"], _TAG_DEFAULTDICT)
     dd = defaultdict(factory)
     dd.update(mapping["items"])
     return dd
@@ -337,13 +345,13 @@ def safe_defaultdict_constructor(constructor, node):
 
 def safe_type_constructor(constructor, node):
     """Reconstruct a class/type, allowing only allow-listed import paths."""
-    return _resolve_allowlisted(node.value, "!type")
+    return _resolve_allowlisted(node.value, _TAG_TYPE)
 
 
 def safe_pydantic_model_constructor(constructor, node):
     """Reconstruct a Pydantic model, allowing only allow-listed model classes."""
     mapping = constructor.construct_mapping(node, deep=True)
-    model_cls = _resolve_allowlisted(mapping["type"], "!PydanticModel")
+    model_cls = _resolve_allowlisted(mapping["type"], _TAG_PYDANTIC_MODEL)
     return model_cls.model_validate(mapping["data"])
 
 
@@ -458,7 +466,7 @@ yaml.constructor.add_constructor("!np_scalar", np_scalar_constructor)
 
 # defaultdict
 yaml.representer.add_representer(defaultdict, defaultdict_representer)
-yaml.constructor.add_constructor("!defaultdict", defaultdict_constructor)
+yaml.constructor.add_constructor(_TAG_DEFAULTDICT, defaultdict_constructor)
 
 # NumPy arrays
 yaml.representer.add_representer(np.ndarray, ndarray_representer)
@@ -466,13 +474,13 @@ yaml.constructor.add_constructor("!ndarray", ndarray_constructor)
 
 # Python functions and lambdas
 yaml.representer.add_representer(types.FunctionType, function_representer)
-yaml.constructor.add_constructor("!function", function_constructor)
+yaml.constructor.add_constructor(_TAG_FUNCTION, function_constructor)
 yaml.representer.add_representer(types.LambdaType, lambda_representer)
-yaml.constructor.add_constructor("!lambda", lambda_constructor)
+yaml.constructor.add_constructor(_TAG_LAMBDA, lambda_constructor)
 
 # Pydantic models
 yaml.representer.add_representer(BaseModel, pydantic_model_representer)
-yaml.constructor.add_constructor("!PydanticModel", pydantic_model_constructor)
+yaml.constructor.add_constructor(_TAG_PYDANTIC_MODEL, pydantic_model_constructor)
 
 # Built-in complex numbers
 yaml.representer.add_representer(complex, complex_representer)
@@ -484,7 +492,7 @@ yaml.constructor.add_constructor("!tuple", tuple_constructor)
 
 # Built-in type
 yaml.representer.add_multi_representer(type, type_representer)
-yaml.constructor.add_constructor("!type", type_constructor)
+yaml.constructor.add_constructor(_TAG_TYPE, type_constructor)
 
 # Built-in deque
 yaml.representer.add_representer(deque, deque_representer)
@@ -509,13 +517,13 @@ safe_yaml.constructor.yaml_constructors = dict(yaml.constructor.yaml_constructor
 safe_yaml.constructor.yaml_multi_constructors = dict(yaml.constructor.yaml_multi_constructors)
 
 # Override the import-driven tags with allow-list-gated constructors.
-safe_yaml.constructor.yaml_constructors["!defaultdict"] = safe_defaultdict_constructor
-safe_yaml.constructor.yaml_constructors["!type"] = safe_type_constructor
-safe_yaml.constructor.yaml_constructors["!PydanticModel"] = safe_pydantic_model_constructor
+safe_yaml.constructor.yaml_constructors[_TAG_DEFAULTDICT] = safe_defaultdict_constructor
+safe_yaml.constructor.yaml_constructors[_TAG_TYPE] = safe_type_constructor
+safe_yaml.constructor.yaml_constructors[_TAG_PYDANTIC_MODEL] = safe_pydantic_model_constructor
 
 # Override the code-bearing tags: reject instead of running dill.
-safe_yaml.constructor.yaml_constructors["!function"] = _reject_code_constructor("!function")
-safe_yaml.constructor.yaml_constructors["!lambda"] = _reject_code_constructor("!lambda")
+safe_yaml.constructor.yaml_constructors[_TAG_FUNCTION] = _reject_code_constructor(_TAG_FUNCTION)
+safe_yaml.constructor.yaml_constructors[_TAG_LAMBDA] = _reject_code_constructor(_TAG_LAMBDA)
 
 # Gate ruamel's generic `!!python/...` object/import tags behind the allow-list.
 # The copied dict shares the class-level multi-constructor bound methods; replace
