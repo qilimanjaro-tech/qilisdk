@@ -198,6 +198,14 @@ def test_deserialize_data_round_trip_on_safe_path():
     assert loaded.default_factory is list
     assert loaded["a"] == [1]
 
+    # A defaultdict with no factory exercises the None-factory branch of the safe loader.
+    dd_none = defaultdict(None)
+    dd_none["x"] = 5
+    loaded_none = deserialize(serialize(dd_none))
+    assert isinstance(loaded_none, defaultdict)
+    assert loaded_none.default_factory is None
+    assert loaded_none["x"] == 5
+
     # Allow-listed `!type` value emitted by the SDK.
     assert deserialize(serialize(Bitwise)) is Bitwise
 
