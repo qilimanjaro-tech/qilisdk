@@ -352,7 +352,9 @@ def safe_pydantic_model_constructor(constructor, node):
     """Reconstruct a Pydantic model, allowing only allow-listed model classes."""
     mapping = constructor.construct_mapping(node, deep=True)
     model_cls = _resolve_allowlisted(mapping["type"], _TAG_PYDANTIC_MODEL)
-    return model_cls.model_validate(mapping["data"])
+    # Reachable only once a pydantic model FQN is added to SAFE_DESERIALIZATION_ALLOWLIST
+    # (none are today, so _resolve_allowlisted above raises first).
+    return model_cls.model_validate(mapping["data"])  # pragma: no cover
 
 
 def _reject_code_constructor(tag: str):
