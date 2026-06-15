@@ -17,7 +17,7 @@ mkdir -p coverage
 
 # Rebuild the C++ ensuring we build the test suite
 echo "Rebuilding C++ with tests enabled..."
-uv sync --all-groups --extra all-cu13 -Ccmake.build-type=Debug -Ccmake.define.tests=ON -Ccmake.define.coverage=ON --reinstall 2>&1
+uv sync -v --all-groups --extra all-cu13 -Ccmake.build-type=Debug -Ccmake.define.tests=ON -Ccmake.define.coverage=ON --reinstall 2>&1
 
 # Run the C++ test suite
 echo "Running C++ tests with coverage..."
