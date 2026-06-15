@@ -42,7 +42,7 @@ py::object construct_result_object(const StabilizerStateSum& state, const py::ob
     Raises:
         py::value_error: If an unsupported readout method is provided.
     */
-    srand(config.get_seed());
+    state.set_seed(static_cast<uint64_t>(config.get_seed()));
     py::list results;
     for (py::handle ro_handle : readout) {
         py::object ro = py::reinterpret_borrow<py::object>(ro_handle);

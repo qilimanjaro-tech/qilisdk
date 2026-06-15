@@ -15,6 +15,7 @@
 
 #include <bitset>
 #include <complex>
+#include <cstdint>
 #include <functional>
 #include <map>
 #include <random>
@@ -37,6 +38,7 @@ class StabilizerState {
 
    public:
     StabilizerState(int nqubits);
+    void set_seed(uint64_t seed) const { rng.seed(seed); }
     const std::vector<std::bitset<MAX_ROWS_STABILIZER>>& get_x_bits() const { return x_bits; }
     const std::vector<std::bitset<MAX_ROWS_STABILIZER>>& get_z_bits() const { return z_bits; }
     const std::bitset<MAX_ROWS_STABILIZER>& get_phases() const { return phases; }
@@ -76,7 +78,7 @@ class StabilizerStateSum {
         states.emplace_back(nqubits);
         coefficients.push_back(1.0);
     }
-    StabilizerStateSum(int nqubits, const std::vector<StabilizerState>& states, const std::vector<std::complex<double>>& coefficients) : states(states), coefficients(coefficients), nqubits(nqubits) {}
+    StabilizerStateSum(int nqubits, const std::vector<StabilizerState>& states, const std::vector<std::complex<double>>& coefficients) : nqubits(nqubits), states(states), coefficients(coefficients) {}
     const std::vector<StabilizerState>& get_states() const { return states; }
     const std::vector<std::complex<double>>& get_coefficients() const { return coefficients; }
     friend std::ostream& operator<<(std::ostream& os, const StabilizerStateSum& sss);
@@ -85,6 +87,14 @@ class StabilizerStateSum {
     int get_nqubits() const { return nqubits; }
     int get_max_terms() const { return max_terms; }
     void set_max_terms(int n) { max_terms = n; }
+    // Seed the sampler deterministically. The sum's own rng selects which term to sample from,
+    // and each term's rng samples a bitstring; both are seeded so that sampling is reproducible.
+    void set_seed(uint64_t seed) const {
+        rng.seed(seed);
+        for (size_t i = 0; i < states.size(); ++i) {
+            states[i].set_seed(seed + i + 1);
+        }
+    }
     void apply_gate(const Gate& gate);
     void truncate();
     void combine_duplicates();

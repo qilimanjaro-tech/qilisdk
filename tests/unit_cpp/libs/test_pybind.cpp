@@ -39,7 +39,7 @@ namespace {
 // Adds a temporary loguru sink that records every emitted message into `records`,
 // runs `emit`, then removes the sink again. The recorded strings are "{level}|{message}".
 void captureLogs(py::list records, const std::function<void()>& emit) {
-    auto sink = py::cpp_function([records](py::object message) { records.append(py::str(message)); });
+    auto sink = py::cpp_function([records](py::object message) mutable { records.append(py::str(message)); });
     py::object handler_id = logger.attr("add")(sink, py::arg("format") = "{level}|{message}", py::arg("level") = "DEBUG");
     emit();
     logger.attr("remove")(handler_id);

@@ -1664,4 +1664,99 @@ TEST(ParseSolverParams, OrderShotsWarmupsAreApplied) {
     EXPECT_EQ(config.get_warmups(), 50);
 }
 
+TEST(ParseSolverParams, StabilizerMaxStatesApplied) {
+    py::gil_scoped_acquire gil;
+    py::dict params;
+    params["stabilizer_max_states"] = py::int_(16);
+    QiliSimConfig config;
+    EXPECT_NO_THROW(config = parse_solver_params(params));
+    EXPECT_EQ(config.get_stabilizer_max_states(), 16);
+}
+
+TEST(ParseInitialStateStabilizer, NoneReturnsZeroState) {
+    py::gil_scoped_acquire gil;
+    auto state = parse_initial_state_stabilizer(py::none(), 2);
+    EXPECT_EQ(state.get_nqubits(), 2);
+    EXPECT_EQ(state.get_states().size(), 1u);
+}
+
+TEST(ParseInitialStateStabilizer, UniformAppliesHadamards) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.core.qtensor import InitialState
+        _stab_is_uniform = InitialState.UNIFORM
+    )");
+    py::object is_obj = py::globals()["_stab_is_uniform"];
+    auto state = parse_initial_state_stabilizer(is_obj, 2);
+    EXPECT_EQ(state.get_nqubits(), 2);
+    // After H on every qubit each qubit is in a superposition (random Z outcome).
+    EXPECT_NE(state.get_states()[0].find_x_pivot(0), -1);
+    EXPECT_NE(state.get_states()[0].find_x_pivot(1), -1);
+}
+
+TEST(ParseInitialStateStabilizer, OneAppliesXGates) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.core.qtensor import InitialState
+        _stab_is_one = InitialState.ONE
+    )");
+    py::object is_obj = py::globals()["_stab_is_one"];
+    auto state = parse_initial_state_stabilizer(is_obj, 2);
+    EXPECT_EQ(state.get_nqubits(), 2);
+    // |11>: every qubit has Z eigenvalue -1.
+    EXPECT_TRUE(state.get_states()[0].z_eigenvalue(0));
+    EXPECT_TRUE(state.get_states()[0].z_eigenvalue(1));
+}
+
+TEST(ParseInitialStateStabilizer, OtherNamedStateFallsBackToZero) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.core.qtensor import InitialState
+        _stab_is_zero = InitialState.ZERO
+    )");
+    py::object is_obj = py::globals()["_stab_is_zero"];
+    auto state = parse_initial_state_stabilizer(is_obj, 3);
+    EXPECT_EQ(state.get_nqubits(), 3);
+    // The unhandled named state falls back to the |00...0> stabilizer state.
+    EXPECT_FALSE(state.get_states()[0].z_eigenvalue(0));
+    EXPECT_FALSE(state.get_states()[0].z_eigenvalue(2));
+}
+
+TEST(ParseInitialStateStabilizer, UnrecognizedTypeThrows) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        _stab_is_bad = 123
+    )");
+    py::object obj = py::globals()["_stab_is_bad"];
+    EXPECT_THROW(parse_initial_state_stabilizer(obj, 1), py::value_error);
+}
+
+TEST(ConstructResultsStabilizer, SamplingReadout_Succeeds) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.readout import SamplingReadout
+        _stab_ro_samp = [SamplingReadout(nshots=10)]
+    )");
+    StabilizerStateSum state(1);
+    py::list readout = py::globals()["_stab_ro_samp"].cast<py::list>();
+    NoiseModelCpp noise_model_cpp;
+    QiliSimConfig config;
+    std::vector<bool> qubits_to_measure = {true};
+    EXPECT_NO_THROW({ auto result = construct_result_object(state, readout, noise_model_cpp, 1, config, qubits_to_measure); });
+}
+
+TEST(ConstructResultsStabilizer, UnsupportedReadoutThrows) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.readout import StateTomographyReadout
+        _stab_ro_bad = [StateTomographyReadout()]
+    )");
+    StabilizerStateSum state(1);
+    py::list readout = py::globals()["_stab_ro_bad"].cast<py::list>();
+    NoiseModelCpp noise_model_cpp;
+    QiliSimConfig config;
+    std::vector<bool> qubits_to_measure = {true};
+    EXPECT_THROW({ auto result = construct_result_object(state, readout, noise_model_cpp, 1, config, qubits_to_measure); }, py::value_error);
+}
+
 // GCOV_EXCL_BR_STOP

@@ -1112,6 +1112,196 @@ TEST(StabilizerStateSum, Sample_HTH_BiasedDistribution) {
     EXPECT_NEAR(p0, expected0, 0.05) << "P(0) for H,T,H was " << p0 << ", expected ≈ " << expected0;
 }
 
+// ──────────────────────────────────────────────────────────────────────────────
+// Coverage: sampling cleanup-loop phase branches, amplitude pure-Z reduction,
+// identity fallbacks, unsupported-gate throw, and small-amplitude guards.
+// ──────────────────────────────────────────────────────────────────────────────
+
+TEST(Sample, GHZ_CleanupLoop_PureXPivot) {
+    // A 3-qubit GHZ state: H(0), CNOT(0->1), CNOT(1->2). The X-stabilizer pivot row is XXX,
+    // so sampling qubit 0 must rowsum the other X-bearing rows into the pivot, exercising the
+    // X-case phase branch of the cleanup loop. Outcomes are perfectly correlated (000 or 111).
+    srand(11);
+    bool saw_zero = false, saw_one = false;
+    for (int trial = 0; trial < 60; ++trial) {
+        StabilizerState s(3);
+        s.apply_gate(makeGate("H", {}, {0}));
+        s.apply_gate(makeGate("X", {0}, {1}));
+        s.apply_gate(makeGate("X", {1}, {2}));
+        std::string r = s.sample();
+        ASSERT_EQ(r.size(), 3u);
+        EXPECT_TRUE(r == "000" || r == "111") << "GHZ sample was " << r;
+        if (r == "000")
+            saw_zero = true;
+        if (r == "111")
+            saw_one = true;
+    }
+    EXPECT_TRUE(saw_zero);
+    EXPECT_TRUE(saw_one);
+}
+
+TEST(Sample, ClusterState_MixedPauliPivot_AllPhaseBranches) {
+    // A linear cluster state: H on every qubit, then CZ along a chain. Its stabilizers mix X and Z
+    // across qubits (e.g. X0 Z1, Z0 X1 Z2, Z1 X2), so the sampling cleanup loop hits the pure-X
+    // (216-217), pure-Z (219) and combined phase branches, including the exp==2 phase-set (223).
+    srand(5);
+    for (int trial = 0; trial < 60; ++trial) {
+        StabilizerState s(4);
+        for (int q = 0; q < 4; ++q)
+            s.apply_gate(makeGate("H", {}, {q}));
+        s.apply_gate(makeGate("Z", {0}, {1}));
+        s.apply_gate(makeGate("Z", {1}, {2}));
+        s.apply_gate(makeGate("Z", {2}, {3}));
+        // Add an S to introduce a Y component on one pivot row.
+        s.apply_gate(makeGate("S", {}, {1}));
+        std::string r = s.sample();
+        ASSERT_EQ(r.size(), 4u);
+        for (char c : r)
+            EXPECT_TRUE(c == '0' || c == '1');
+    }
+}
+
+TEST(Sample, PivotRowWithPureZ_HitsZPhaseBranch) {
+    // Construct two stabilizer rows that both carry an X on qubit 0, where the pivot row also carries
+    // a pure Z on qubit 1 (row 0 = X0 Z1, row 1 = X0). Sampling qubit 0 then runs the cleanup loop,
+    // whose per-qubit phase accumulation hits the pure-X branch (q0) and the pure-Z branch (q1).
+    StabilizerState s(2);
+    s.apply_gate(makeGate("H", {}, {0}));  // row 0: X0  (row 1: Z1)
+    s.rowsum(0, 1);                        // row 0: X0 Z1
+    s.rowsum(1, 0);                        // row 1: Z1 * X0 Z1 = X0
+    std::string r = s.sample();
+    ASSERT_EQ(r.size(), 2u);
+    for (char c : r)
+        EXPECT_TRUE(c == '0' || c == '1');
+}
+
+TEST(Sample, PivotCleanup_NegativePhase_HitsExpEqualsTwo) {
+    // Same construction as PivotRowWithPureZ but with an added Z that flips the accumulated phase so
+    // the cleanup loop's modular exponent lands on 2, exercising the ph.set(i) branch.
+    srand(3);
+    for (int trial = 0; trial < 20; ++trial) {
+        StabilizerState s(2);
+        s.apply_gate(makeGate("H", {}, {0}));  // row 0: X0
+        s.apply_gate(makeGate("Z", {}, {0}));  // X0 -> -X0 (sets a phase on row 0)
+        s.rowsum(0, 1);                        // row 0: -X0 Z1
+        s.rowsum(1, 0);                        // row 1: X0 (carrying phase)
+        std::string r = s.sample();
+        ASSERT_EQ(r.size(), 2u);
+        for (char c : r)
+            EXPECT_TRUE(c == '0' || c == '1');
+    }
+}
+
+TEST(StabilizerStateSum, Sample_WideSupportFewShots_CoverageWarning) {
+    // A wide superposition (many T-branches across 6 qubits) sampled with very few shots cannot cover
+    // 95% of the probability mass, exercising the low-coverage warning path. Also stresses the
+    // weight-selection / importance-sampling loop with many terms.
+    srand(2024);
+    StabilizerStateSum sss(6);
+    for (int q = 0; q < 6; ++q) {
+        sss.apply_gate(makeGate("H", {}, {q}));
+        sss.apply_gate(makeGate("T", {}, {q}));
+    }
+    auto counts = sss.sample(1);
+    int total = 0;
+    for (auto& kv : counts)
+        total += kv.second;
+    EXPECT_EQ(total, 1);
+}
+
+TEST(Rowsum, ZTimesX_HitsPauliPhaseZCase) {
+    // rowsum where row i carries a Z and row h carries an X on the same qubit exercises the
+    // pauli_phase Z-case branch. After H(0) row 0 = X0; row 1 (the Z1 generator) times row 0 gives
+    // a well-defined Pauli product with a tracked phase.
+    StabilizerState s(2);
+    s.apply_gate(makeGate("H", {}, {0}));  // row 0 = X0
+    s.apply_gate(makeGate("S", {}, {1}));  // no effect on |0> for qubit 1, keeps Z1 generator
+    // row 1 is Z1; multiply row 1 by row 0 (X0): Z on q1 times X on q0 -> Z-case + X-case phases.
+    s.rowsum(1, 0);
+    EXPECT_TRUE(s.get_x_bits()[0][1]);  // row 1 now has X on qubit 0
+    EXPECT_TRUE(s.get_z_bits()[1][1]);  // row 1 still has Z on qubit 1
+}
+
+TEST(Amplitude, ClusterState_MatchesStatevector) {
+    // The cluster state has X-pivot generators that carry Z on non-pivot qubits, exercising the
+    // pure-Z reduction and its skip branches inside amplitude().
+    double e = amplitudeMismatch(4, {{"H", {}, {0}}, {"H", {}, {1}}, {"H", {}, {2}}, {"H", {}, {3}}, {"Z", {0}, {1}}, {"Z", {1}, {2}}, {"Z", {2}, {3}}});
+    EXPECT_LT(e, 1e-6) << "cluster-state amplitude disagrees with statevector by " << e;
+}
+
+TEST(Amplitude, WithSwap_MatchesStatevector) {
+    // Includes a SWAP gate so the dense reference application exercises its SWAP branch, and the
+    // stabilizer amplitude()/matrix_element SWAP handling is checked against it.
+    double e = amplitudeMismatch(3, {{"H", {}, {0}}, {"X", {0}, {1}}, {"SWAP", {}, {1, 2}}, {"S", {}, {2}}});
+    EXPECT_LT(e, 1e-6) << "circuit with SWAP disagrees with statevector by " << e;
+}
+
+TEST(StabilizerStateSum, WithSwap_AmplitudeMatchesStatevector) {
+    // SWAP plus a T gate through the StabilizerStateSum dense reference (denseApply SWAP branch).
+    double e = sumAmplitudeMismatch(3, {{"H", {}, {0}}, {"T", {}, {0}}, {"SWAP", {}, {0, 2}}, {"X", {2}, {1}}});
+    EXPECT_LT(e, 1e-6) << "sum circuit with SWAP disagrees with statevector by " << e;
+}
+
+TEST(Amplitude, GHZ_MatchesStatevector) {
+    // GHZ has X-block rank 1 with two pure-Z generators; exercises the pure-Z reduction loop
+    // (including the skip branches when a qubit has no Z pivot) inside amplitude().
+    double e = amplitudeMismatch(3, {{"H", {}, {0}}, {"X", {0}, {1}}, {"X", {1}, {2}}});
+    EXPECT_LT(e, 1e-6) << "GHZ amplitude disagrees with statevector by " << e;
+}
+
+TEST(Amplitude, GHZ_FourQubit_MatchesStatevector) {
+    // Larger GHZ: more pure-Z generators, more qubits without their own Z pivot.
+    double e = amplitudeMismatch(4, {{"H", {}, {0}}, {"X", {0}, {1}}, {"X", {1}, {2}}, {"X", {2}, {3}}});
+    EXPECT_LT(e, 1e-6) << "4-qubit GHZ amplitude disagrees with statevector by " << e;
+}
+
+TEST(StabilizerStateSum, UnsupportedThreeControlGate_Throws) {
+    // A gate with three controls is not supported by the tableau update and must throw.
+    StabilizerState s(4);
+    Gate bad("X", make2x2Identity(), {0, 1, 2}, {3}, {});
+    EXPECT_THROW(s.apply_gate(bad), std::invalid_argument);
+}
+
+TEST(StabilizerStateSum, Sample_LargeSuperposition_ManyBranches) {
+    // Many T gates on independent superposed qubits create a large weighted sum of stabilizer
+    // states, exercising the weight-selection clamp and the importance-sampling path.
+    srand(99);
+    StabilizerStateSum sss(4);
+    for (int q = 0; q < 4; ++q) {
+        sss.apply_gate(makeGate("H", {}, {q}));
+        sss.apply_gate(makeGate("T", {}, {q}));
+    }
+    auto counts = sss.sample(200);
+    int total = 0;
+    for (auto& kv : counts)
+        total += kv.second;
+    EXPECT_EQ(total, 200);
+}
+
+TEST(MatrixElement, UnknownSingleQubitGate_UsesIdentityFallback) {
+    // matrix_element on a single-qubit gate whose name is not a known Clifford falls back to the
+    // identity matrix element (clifford_elem identity branch). For the identity, <b|I|psi> = psi(b).
+    StabilizerState s(1);
+    s.apply_gate(makeGate("X", {}, {0}));  // state is |1>
+    Gate unknown("FOO", make2x2Identity(), {}, {0}, {});
+    std::complex<double> e1 = s.matrix_element(unknown, "1");
+    std::complex<double> e0 = s.matrix_element(unknown, "0");
+    EXPECT_NEAR(std::abs(e1), 1.0, 1e-9);  // amplitude of |1> is 1
+    EXPECT_NEAR(std::abs(e0), 0.0, 1e-9);  // amplitude of |0> is 0
+}
+
+TEST(MatrixElement, UnknownMultiQubitGate_UsesIdentityFallback) {
+    // A multi-qubit gate that is neither SWAP, CNOT, CZ nor Toffoli falls through to the identity
+    // fallback (returns amplitude(b) unchanged).
+    StabilizerState s(2);
+    s.apply_gate(makeGate("X", {}, {0}));                    // state is |10>
+    Gate unknown("ISWAP", make2x2Identity(), {1}, {0}, {});  // controlled "ISWAP"-named, unhandled
+    std::complex<double> e = s.matrix_element(unknown, "10");
+    EXPECT_NEAR(std::abs(e), 1.0, 1e-9);
+    std::complex<double> e_other = s.matrix_element(unknown, "01");
+    EXPECT_NEAR(std::abs(e_other), 0.0, 1e-9);
+}
+
 TEST(StabilizerStateSum, Sample_TGate_DoesNotChangeMeasurementProbabilities) {
     // T is diagonal, so it never changes Z-basis measurement statistics: |+⟩ stays 50/50.
     srand(321);

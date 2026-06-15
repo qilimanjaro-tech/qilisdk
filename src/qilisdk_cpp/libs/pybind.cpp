@@ -51,6 +51,7 @@ py::object ExpectationReadoutResult;
 py::object StateTomographyReadoutResult;
 py::object ReadoutResult;
 py::object ReadoutCompositeResults;
+py::object logger;
 
 void initialize_all_pybind_types() {
     Circuit = py::module_::import("qilisdk.digital.circuit").attr("Circuit");
