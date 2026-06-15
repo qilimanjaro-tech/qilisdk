@@ -452,6 +452,12 @@ void sampling_stabilizer(const std::vector<Gate>& gates, int n_qubits, const Sta
         readout (py::object): A list with readout information to determine when and what to measure.
     */
 
+    // Set the number of threads
+#if defined(_OPENMP)
+    omp_set_num_threads(config.get_num_threads());
+    Eigen::setNbThreads(config.get_num_threads());
+#endif
+
     // We start with the initial state
     state = initial_state;
     state.set_max_terms(config.get_stabilizer_max_states());
