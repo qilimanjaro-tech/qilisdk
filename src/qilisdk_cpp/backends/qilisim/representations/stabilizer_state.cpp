@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "stabilizer_state.h"
+#include "../../../libs/pybind.h"
 
 #include <iostream>
 
@@ -110,14 +111,18 @@ static bool z_phase_by_ge(const std::vector<std::bitset<MAX_ROWS_STABILIZER>>& x
 
     // Helper to do row sum: row h <- row_h * row_g
     auto rowsum_local = [&](Row& h, const Row& g) {
-        // Use mod-4 Pauli arithmetic (Aaronson-Gottesman g function) for correct phase tracking
         int exp = 2 * (int)g.ph + 2 * (int)h.ph;
         for (int q = 0; q < n; ++q) {
             bool x1 = g.xb[q], z1 = g.zb[q], x2 = h.xb[q], z2 = h.zb[q];
-            if (!x1 && !z1)      continue;
-            else if (x1 && z1)   exp += (int)z2 - (int)x2;
-            else if (x1 && !z1)  exp += (int)z2 * (2 * (int)x2 - 1);
-            else                 exp += (int)x2 * (1 - 2 * (int)z2);
+            if (!x1 && !z1) {
+                continue;
+            } else if (x1 && z1) {
+                exp += (int)z2 - (int)x2;
+            } else if (x1 && !z1) {
+                exp += (int)z2 * (2 * (int)x2 - 1);
+            } else {
+                exp += (int)x2 * (1 - 2 * (int)z2);
+            }
         }
         exp = ((exp % 4) + 4) % 4;
         h.ph = (exp == 2);
@@ -204,18 +209,28 @@ std::string StabilizerState::sample() const {
                     for (int q = 0; q < nqubits; ++q) {
                         bool x1 = (bool)x[q][p], z1 = (bool)z[q][p];
                         bool x2 = (bool)x[q][i], z2 = (bool)z[q][i];
-                        if (!x1 && !z1)      continue;
-                        else if (x1 && z1)   exp += (int)z2 - (int)x2;
-                        else if (x1 && !z1)  exp += (int)z2 * (2 * (int)x2 - 1);
-                        else                 exp += (int)x2 * (1 - 2 * (int)z2);
+                        if (!x1 && !z1)
+                            continue;
+                        else if (x1 && z1)
+                            exp += (int)z2 - (int)x2;
+                        else if (x1 && !z1)
+                            exp += (int)z2 * (2 * (int)x2 - 1);
+                        else
+                            exp += (int)x2 * (1 - 2 * (int)z2);
                     }
                     exp = ((exp % 4) + 4) % 4;
-                    if (exp == 2) ph.set(i); else ph.reset(i);
+                    if (exp == 2) {
+                        ph.set(i);
+                    } else {
+                        ph.reset(i);
+                    }
                     for (int q = 0; q < nqubits; ++q) {
-                        if (x[q][p])
+                        if (x[q][p]) {
                             x[q].flip(i);
-                        if (z[q][p])
+                        }
+                        if (z[q][p]) {
                             z[q].flip(i);
+                        }
                     }
                 }
             }
@@ -236,7 +251,7 @@ std::string StabilizerState::sample() const {
             }
             result[k] = b ? '1' : '0';
 
-        // Otherwise the outcome is deterministic: read off the Z eigenvalue via Gaussian elimination
+            // Otherwise the outcome is deterministic: read off the Z eigenvalue via Gaussian elimination
         } else {
             result[k] = z_phase_by_ge(x, z, ph, nqubits, k) ? '1' : '0';
         }
@@ -248,10 +263,6 @@ std::string StabilizerState::sample() const {
 std::complex<double> StabilizerState::amplitude(const std::string& b) const {
     /*
     Compute the amplitude <b|s> for a given computational basis bitstring b.
-    This mirrors sample() but forces each qubit to the value in b instead of drawing randomly.
-    Returns 0 if b is incompatible with any deterministic stabilizer constraint.
-    The returned value includes the 1/sqrt(2)^k magnitude factor where k is the number of
-    random (X-pivot) qubits, and the full complex phase including ±i for Y stabilizers.
 
     Args:
         b (std::string): The bitstring to compute the amplitude for.
@@ -259,12 +270,11 @@ std::complex<double> StabilizerState::amplitude(const std::string& b) const {
     Returns:
         std::complex<double>: The complex amplitude <b|s>.
     */
-    // Pull the n stabilizer generators into a row-major scratch tableau we can reduce in place.
-    // Row r is the Pauli (-1)^sgn[r] * tensor_q tau(X[r][q], Z[r][q]), where tau is the Hermitian
-    // single-qubit Pauli: tau(0,0)=I, tau(1,0)=X, tau(0,1)=Z, tau(1,1)=Y.
+
+    // Pull the n stabilizer generators into a row-major scratch tableau we can reduce in place
     const int n = nqubits;
     std::vector<std::vector<uint8_t>> X(n, std::vector<uint8_t>(n, 0)), Z(n, std::vector<uint8_t>(n, 0));
-    std::vector<int> p4(n, 0);  // overall phase as a power of i (mod 4); generators are real so 0 or 2
+    std::vector<int> p4(n, 0);
     for (int r = 0; r < n; ++r) {
         for (int q = 0; q < n; ++q) {
             X[r][q] = x_bits[q][r];
@@ -273,13 +283,13 @@ std::complex<double> StabilizerState::amplitude(const std::string& b) const {
         p4[r] = phases[r] ? 2 : 0;
     }
 
-    // i-power picked up multiplying two Hermitian Paulis on one qubit: tau(x1,z1)*tau(x2,z2) =
-    // i^m * tau(x1^x2, z1^z2). Derived from tau(x,z) = i^(xz) X^x Z^z.
+    // Helper to compute the phase when multiplying two Paulis together, given their X and Z bits
     auto mul_phase = [](int x1, int z1, int x2, int z2) {
         int m = x1 * z1 + x2 * z2 + 2 * z1 * x2 - ((x1 ^ x2) * (z1 ^ z2));
         return ((m % 4) + 4) % 4;
     };
-    // Multiply generator row src into row dst (dst <- dst * src), tracking the phase.
+
+    // Helper to do row sum: row h <- row_h * row_i, where * is the Pauli product. This updates the tableau in place and tracks the phase
     auto rowmul = [&](int dst, int src) {
         int acc = p4[dst] + p4[src];
         for (int q = 0; q < n; ++q) {
@@ -290,73 +300,97 @@ std::complex<double> StabilizerState::amplitude(const std::string& b) const {
         p4[dst] = ((acc % 4) + 4) % 4;
     };
 
-    // Gaussian-eliminate the X block into reduced row echelon form. Each resulting X-pivot row has
-    // X on exactly one pivot qubit cleared from every other row; the remaining rows are pure Z.
-    std::vector<int> pivot_qubit;  // pivot_qubit[a] = qubit whose X-column pivots on row a
+    // Gaussian-eliminate the X block into reduced row echelon form
+    std::vector<int> pivot_qubit;
     int rank = 0;
     for (int q = 0; q < n && rank < n; ++q) {
         int sel = -1;
         for (int r = rank; r < n; ++r) {
-            if (X[r][q]) { sel = r; break; }
+            if (X[r][q]) {
+                sel = r;
+                break;
+            }
         }
-        if (sel < 0) continue;
+        if (sel < 0)
+            continue;
         std::swap(X[sel], X[rank]);
         std::swap(Z[sel], Z[rank]);
         std::swap(p4[sel], p4[rank]);
         for (int r = 0; r < n; ++r) {
-            if (r != rank && X[r][q]) rowmul(r, rank);
+            if (r != rank && X[r][q])
+                rowmul(r, rank);
         }
         pivot_qubit.push_back(q);
         ++rank;
     }
-    const int r = rank;  // number of X-pivots: the support has size 2^r and amplitudes scale by 2^(-r/2)
+    const int r = rank;
 
-    // Rows [r, n) are now pure Z. Reduce their Z block to RREF so each fixes one (non-X-pivot) qubit.
+    // Rows [r, n) are now pure Z. Reduce their Z block to RREF so each fixes one (non-X-pivot) qubit
     std::vector<uint8_t> is_xpivot(n, 0);
-    for (int qa : pivot_qubit) is_xpivot[qa] = 1;
+    for (int qa : pivot_qubit) {
+        is_xpivot[qa] = 1;
+    }
     std::vector<int> zpivot_qubit(n - r, -1);
     int zrank = 0;
     for (int q = 0; q < n && zrank < n - r; ++q) {
-        if (is_xpivot[q]) continue;  // pure-Z rows carry no Z on X-pivot qubits (they commute)
+        // Pure-Z rows carry no Z on X-pivot qubits (they commute)
+        if (is_xpivot[q]) {
+            continue;
+        }
         int sel = -1;
         for (int row = r + zrank; row < n; ++row) {
-            if (Z[row][q]) { sel = row; break; }
+            if (Z[row][q]) {
+                sel = row;
+                break;
+            }
         }
-        if (sel < 0) continue;
+        if (sel < 0) {
+            continue;
+        }
         std::swap(X[sel], X[r + zrank]);
         std::swap(Z[sel], Z[r + zrank]);
         std::swap(p4[sel], p4[r + zrank]);
         for (int row = r; row < n; ++row) {
-            if (row != r + zrank && Z[row][q]) rowmul(row, r + zrank);
+            if (row != r + zrank && Z[row][q]) {
+                rowmul(row, r + zrank);
+            }
         }
         zpivot_qubit[zrank] = q;
         ++zrank;
     }
 
     // Build a concrete reference basis state in the support: X-pivot qubits are free (set to 0),
-    // and each pure-Z row fixes its Z-pivot qubit to that row's sign.
+    // and each pure-Z row fixes its Z-pivot qubit to that row's sign
     std::vector<uint8_t> ref(n, 0);
     for (int row = r; row < n; ++row) {
         int d = zpivot_qubit[row - r];
-        if (d < 0) continue;  // degenerate (shouldn't happen for a valid stabilizer state)
-        ref[d] = (p4[row] == 2) ? 1 : 0;  // (-1)^sign Z_d stabilizes |ref> => ref_d = sign
+        if (d < 0) {
+            continue;
+        }
+        ref[d] = (p4[row] == 2) ? 1 : 0;
     }
 
     // Determine which X-pivot generators map the reference toward b (free bits = b on pivot qubits),
-    // then check b is actually reachable (i.e. lies in the support).
+    // then check b is actually reachable (i.e. lies in the support)
     std::vector<int> subset;
     for (int a = 0; a < r; ++a) {
-        if ((b[pivot_qubit[a]] == '1') != (ref[pivot_qubit[a]] != 0)) subset.push_back(a);
+        if ((b[pivot_qubit[a]] == '1') != (ref[pivot_qubit[a]] != 0)) {
+            subset.push_back(a);
+        }
     }
     std::vector<uint8_t> target = ref;
     for (int a : subset) {
-        for (int q = 0; q < n; ++q) target[q] ^= X[a][q];  // X-pivot rows flip their X-support
+        for (int q = 0; q < n; ++q) {
+            target[q] ^= X[a][q];
+        }
     }
     for (int q = 0; q < n; ++q) {
-        if ((b[q] == '1') != (target[q] != 0)) return {0.0, 0.0};  // b not in the support
+        if ((b[q] == '1') != (target[q] != 0)) {
+            return {0.0, 0.0};
+        }
     }
 
-    // Multiply the selected X-pivot generators together into a single Pauli, tracking the phase.
+    // Multiply the selected X-pivot generators together into a single Pauli, tracking the phase
     std::vector<uint8_t> Xp(n, 0), Zp(n, 0);
     int pw = 0;
     for (int a : subset) {
@@ -365,29 +399,32 @@ std::complex<double> StabilizerState::amplitude(const std::string& b) const {
             Xp[q] ^= X[a][q];
             Zp[q] ^= Z[a][q];
         }
-        pw += p4[a];  // include the generator's sign ((-1) = i^2)
+        pw += p4[a];
     }
     pw = ((pw % 4) + 4) % 4;
 
-    // <b| (selected product) |ref> = i^pw * prod_q <b_q| tau(Xp,Zp) |ref_q>.
+    // <b| (selected product) |ref> = i^pw * prod_q <b_q| tau(Xp,Zp) |ref_q>
     std::complex<double> amp(1.0, 0.0);
     for (int q = 0; q < n; ++q) {
-        int x = Xp[q], zz = Zp[q], rq = ref[q];
+        int x = Xp[q];
+        int zz = Zp[q];
+        int rq = ref[q];
         if (x == 0) {
-            // Diagonal (I or Z): b_q must equal ref_q (guaranteed by the support check above).
-            if (zz && rq) amp = -amp;  // Z|1> = -|1>
+            if (zz && rq) {
+                amp = -amp;  // Z|1> = -|1>
+            }
         } else if (zz) {
             amp *= (rq == 0) ? std::complex<double>(0.0, 1.0)    // <1|Y|0> = i
                              : std::complex<double>(0.0, -1.0);  // <0|Y|1> = -i
         }
-        // tau = X contributes a factor of 1.
     }
     static const std::complex<double> ipow[4] = {{1, 0}, {0, 1}, {-1, 0}, {0, -1}};
     amp *= ipow[pw];
 
     // Apply the 2^(-r/2) magnitude of the equal superposition over the support.
     const double inv_sqrt2 = 1.0 / std::sqrt(2.0);
-    for (int a = 0; a < r; ++a) amp *= inv_sqrt2;
+    for (int a = 0; a < r; ++a)
+        amp *= inv_sqrt2;
 
     return amp;
 }
@@ -414,6 +451,12 @@ std::map<std::string, int> StabilizerStateSum::sample(int nshots) const {
     Sample from the StabilizerStateSum. This is done by first picking a StabilizerState
     according to the probabilities given by the coefficients, then sampling from that state.
 
+    Importance sampling: pick states proportionally to |c_i| so that we naturally focus
+    on bitstrings with the highest probability. For each sampled bitstring we compute the
+    exact amplitude A(b) = sum_i c_i <b|s_i> using amplitude(), so pre_samples[b] is always
+    exact (no Monte Carlo noise in the amplitude itself). We just need enough shots to discover
+    all bitstrings with significant probability.
+
     Args:
         nshots (int): The number of samples to draw.
 
@@ -421,11 +464,8 @@ std::map<std::string, int> StabilizerStateSum::sample(int nshots) const {
         std::map<std::string, int>: A map from bitstrings to counts.
     */
 
-    // Importance sampling: pick states proportionally to |c_i|^2 so that we naturally focus
-    // on bitstrings with the highest probability. For each sampled bitstring we compute the
-    // exact amplitude A(b) = sum_i c_i <b|s_i> using amplitude(), so pre_samples[b] is always
-    // exact (no Monte Carlo noise in the amplitude itself). We just need enough shots to discover
-    // all bitstrings with significant probability.
+    // We add an extra factor to try make sure we find all interesting bitstrings
+    // Could be made a seperate parameter, but the user can increase this by increasing the nshots anyway
     const size_t M = states.size();
     const int extra_sample_factor = 10;
 
@@ -433,31 +473,31 @@ std::map<std::string, int> StabilizerStateSum::sample(int nshots) const {
     std::vector<double> cum_weights(M);
     double total_weight = 0.0;
     for (size_t i = 0; i < M; ++i) {
-        total_weight += std::norm(coefficients[i]);
+        total_weight += std::abs(coefficients[i]);
         cum_weights[i] = total_weight;
     }
 
+    // Try to find all interesting bitstrings
     std::uniform_real_distribution<double> weight_dist(0.0, total_weight);
     std::uniform_real_distribution<double> unit_dist(0.0, 1.0);
-
     std::map<std::string, std::complex<double>> pre_samples;
     for (int shot = 0; shot < nshots * extra_sample_factor; ++shot) {
-
-        // Pick a state with probability proportional to |c_i|^2
+        // Pick a state with probability proportional to |c_i|
         double r = weight_dist(rng);
         size_t index = static_cast<size_t>(std::lower_bound(cum_weights.begin(), cum_weights.end(), r) - cum_weights.begin());
-        if (index >= M) index = M - 1;
+        if (index >= M)
+            index = M - 1;
 
         // Sample a bitstring from that state
         const std::string sample_str = states[index].sample();
 
-        // Compute the exact amplitude only on the first visit; repeated visits are identical.
+        // Compute the exact amplitude
         if (!pre_samples.count(sample_str)) {
             pre_samples[sample_str] = amplitude(sample_str);
         }
     }
 
-    // Convert to probabilities for each bitstring
+    // Convert to probabilities
     std::map<std::string, double> probabilities;
     double total = 0.0;
     for (const auto& [sample_str, amp] : pre_samples) {
@@ -465,25 +505,31 @@ std::map<std::string, int> StabilizerStateSum::sample(int nshots) const {
         total += probabilities[sample_str];
     }
 
-    // Normalize probabilities (total is the captured probability mass; < 1 if support not fully discovered)
+    // If the total doesn't cover enough, raise a warning
+    const float coverage_threshold = 0.95;
+    if (total < coverage_threshold) {
+        warning("Sampled probability mass is only " + std::to_string(total) + " (try increasing nshots to find more of the support)");
+    }
+
+    // Normalize probabilities
     for (auto& [sample_str, prob] : probabilities) {
         prob /= total;
     }
 
-    // Build cumulative distribution and draw nshots samples with lower_bound
+    // Build cumulative distribution
     std::vector<std::pair<double, std::string>> cdf;
     cdf.reserve(probabilities.size());
-    double cum = 0.0;
+    double so_far = 0.0;
     for (const auto& [sample_str, prob] : probabilities) {
-        cum += prob;
-        cdf.emplace_back(cum, sample_str);
+        so_far += prob;
+        cdf.emplace_back(so_far, sample_str);
     }
 
+    // Sample from this distribution
     std::map<std::string, int> sample_counts;
     for (int shot = 0; shot < nshots; ++shot) {
         double r = unit_dist(rng);
-        auto it = std::lower_bound(cdf.begin(), cdf.end(), std::make_pair(r, std::string{}),
-                                   [](const auto& a, const auto& b) { return a.first < b.first; });
+        auto it = std::lower_bound(cdf.begin(), cdf.end(), std::make_pair(r, std::string{}), [](const auto& a, const auto& b) { return a.first < b.first; });
         const std::string& s = (it != cdf.end()) ? it->second : cdf.back().second;
         sample_counts[s]++;
     }
@@ -583,6 +629,8 @@ std::complex<double> StabilizerState::apply_gate(const Gate& gate, bool track_gl
             x_bits[j] ^= x_bits[i];
             z_bits[i] ^= z_bits[j];
         }
+    } else {
+        throw std::invalid_argument("Unsupported gate with name " + name + " and controls " + std::to_string(controls.size()));
     }
 
     // Recover the global phase the tableau update dropped (only when it can matter).
@@ -728,7 +776,10 @@ std::string StabilizerState::representative() const {
     for (int k = 0; k < nqubits; ++k) {
         int p = -1;
         for (int i = 0; i < nqubits; ++i) {
-            if (x[k][i]) { p = i; break; }
+            if (x[k][i]) {
+                p = i;
+                break;
+            }
         }
         if (p >= 0) {
             // Isolate the pivot, exactly as sample() does, then collapse to the |0> outcome.
@@ -738,20 +789,32 @@ std::string StabilizerState::representative() const {
                     for (int q = 0; q < nqubits; ++q) {
                         bool x1 = (bool)x[q][p], z1 = (bool)z[q][p];
                         bool x2 = (bool)x[q][i], z2 = (bool)z[q][i];
-                        if (!x1 && !z1)      continue;
-                        else if (x1 && z1)   exp += (int)z2 - (int)x2;
-                        else if (x1 && !z1)  exp += (int)z2 * (2 * (int)x2 - 1);
-                        else                 exp += (int)x2 * (1 - 2 * (int)z2);
+                        if (!x1 && !z1)
+                            continue;
+                        else if (x1 && z1)
+                            exp += (int)z2 - (int)x2;
+                        else if (x1 && !z1)
+                            exp += (int)z2 * (2 * (int)x2 - 1);
+                        else
+                            exp += (int)x2 * (1 - 2 * (int)z2);
                     }
                     exp = ((exp % 4) + 4) % 4;
-                    if (exp == 2) ph.set(i); else ph.reset(i);
+                    if (exp == 2)
+                        ph.set(i);
+                    else
+                        ph.reset(i);
                     for (int q = 0; q < nqubits; ++q) {
-                        if (x[q][p]) x[q].flip(i);
-                        if (z[q][p]) z[q].flip(i);
+                        if (x[q][p])
+                            x[q].flip(i);
+                        if (z[q][p])
+                            z[q].flip(i);
                     }
                 }
             }
-            for (int q = 0; q < nqubits; ++q) { x[q].reset(p); z[q].reset(p); }
+            for (int q = 0; q < nqubits; ++q) {
+                x[q].reset(p);
+                z[q].reset(p);
+            }
             z[k].set(p);
             ph.reset(p);
             b[k] = '0';
@@ -767,22 +830,41 @@ std::string StabilizerState::representative() const {
 // name-driven, and so it is correct even for the internally-constructed flip gate the arbitrary
 // single-qubit path reuses under the name "X".
 static std::complex<double> clifford_elem(const std::string& name, int r, int c) {
+    /*
+    Compute the matrix element <r|U|c> for a single-qubit Clifford gate U, where r and c are 0 or 1.
+
+    Args:
+        name (std::string): The name of the Clifford gate ("H", "X", "Y", "Z", "S").
+        r (int): The row index (0 or 1).
+        c (int): The column index (0 or 1).
+
+    Returns:
+        std::complex<double>: The complex matrix element <r|U|c>.
+    */
     using cd = std::complex<double>;
     const double s = 1.0 / std::sqrt(2.0);
-    if (name == "H") return cd((r == 1 && c == 1) ? -s : s, 0.0);
-    if (name == "X") return (r != c) ? cd(1.0, 0.0) : cd(0.0, 0.0);
-    if (name == "Y") {
-        if (r == 1 && c == 0) return cd(0.0, 1.0);
-        if (r == 0 && c == 1) return cd(0.0, -1.0);
+    if (name == "H") {
+        return cd((r == 1 && c == 1) ? -s : s, 0.0);
+    } else if (name == "X") {
+        return (r != c) ? cd(1.0, 0.0) : cd(0.0, 0.0);
+    } else if (name == "Y") {
+        if (r == 1 && c == 0)
+            return cd(0.0, 1.0);
+        if (r == 0 && c == 1)
+            return cd(0.0, -1.0);
+        return cd(0.0, 0.0);
+    } else if (name == "Z") {
+        return (r == c) ? cd(r == 0 ? 1.0 : -1.0, 0.0) : cd(0.0, 0.0);
+    } else if (name == "S") {
+        if (r == 0 && c == 0)
+            return cd(1.0, 0.0);
+        if (r == 1 && c == 1)
+            return cd(0.0, 1.0);
         return cd(0.0, 0.0);
     }
-    if (name == "Z") return (r == c) ? cd(r == 0 ? 1.0 : -1.0, 0.0) : cd(0.0, 0.0);
-    if (name == "S") {
-        if (r == 0 && c == 0) return cd(1.0, 0.0);
-        if (r == 1 && c == 1) return cd(0.0, 1.0);
-        return cd(0.0, 0.0);
-    }
-    return (r == c) ? cd(1.0, 0.0) : cd(0.0, 0.0);  // identity fallback
+
+    // Fall back to the identity
+    return (r == c) ? cd(1.0, 0.0) : cd(0.0, 0.0);
 }
 
 std::complex<double> StabilizerState::matrix_element(const Gate& gate, const std::string& b) const {
@@ -803,44 +885,65 @@ std::complex<double> StabilizerState::matrix_element(const Gate& gate, const std
     const auto& controls = gate.get_control_qubits();
     const auto& targets = gate.get_target_qubits();
 
+    // SWAP is easy, we just swap the corresponding bits in b and look up the amplitude
     if (name == "SWAP") {
         std::string bp = b;
         std::swap(bp[targets[0]], bp[targets[1]]);
         return amplitude(bp);
     }
+
+    // For single-qubit gates, we need to sum over the two possible input states of the target qubit
     if (controls.empty() && targets.size() == 1) {
         int t = targets[0];
         int bt = (b[t] == '1') ? 1 : 0;
         std::complex<double> sum = 0.0;
         for (int a = 0; a < 2; ++a) {
             std::complex<double> u = clifford_elem(name, bt, a);
-            if (std::abs(u) < 1e-15) continue;
+            if (std::abs(u) < 1e-15) {
+                continue;
+            }
             std::string bp = b;
             bp[t] = a ? '1' : '0';
             sum += u * amplitude(bp);
         }
         return sum;
     }
+
+    // For gates with one control
     if (controls.size() == 1) {
-        int c = controls[0], t = targets[0];
-        if (name == "X") {  // CNOT: <b|CNOT|psi> = psi(CNOT b) since CNOT is a self-inverse permutation
+        int c = controls[0];
+        int t = targets[0];
+
+        // CNOT: <b|CNOT|psi> = psi(CNOT b) since CNOT is a self-inverse permutation
+        if (name == "X") {
             std::string bp = b;
-            if (b[c] == '1') bp[t] = (b[t] == '1') ? '0' : '1';
+            if (b[c] == '1') {
+                bp[t] = (b[t] == '1') ? '0' : '1';
+            }
             return amplitude(bp);
-        }
-        if (name == "Z") {  // CZ is diagonal with eigenvalue (-1)^(b_c * b_t)
+
+            // CZ is diagonal with eigenvalue (-1)^(b_c * b_t)
+        } else if (name == "Z") {
             std::complex<double> v = amplitude(b);
-            if (b[c] == '1' && b[t] == '1') v = -v;
+            if (b[c] == '1' && b[t] == '1') {
+                v = -v;
+            }
             return v;
         }
     }
-    if (controls.size() == 2 && name == "X") {  // Toffoli: flip target iff both controls are 1
+
+    // Toffoli flips the target iff both controls are 1
+    if (controls.size() == 2 && name == "X") {
         int c1 = controls[0], c2 = controls[1], t = targets[0];
         std::string bp = b;
-        if (b[c1] == '1' && b[c2] == '1') bp[t] = (b[t] == '1') ? '0' : '1';
+        if (b[c1] == '1' && b[c2] == '1') {
+            bp[t] = (b[t] == '1') ? '0' : '1';
+        }
         return amplitude(bp);
     }
-    return amplitude(b);  // identity fallback
+
+    // Fall back to the identity
+    return amplitude(b);
 }
 
 std::complex<double> StabilizerState::dropped_global_phase(const StabilizerState& after, const Gate& gate) const {
@@ -859,7 +962,9 @@ std::complex<double> StabilizerState::dropped_global_phase(const StabilizerState
     */
     const std::string b = after.representative();
     const std::complex<double> conv = after.amplitude(b);
-    if (std::abs(conv) < 1e-12) return {1.0, 0.0};  // reference not in support (should not happen)
+    if (std::abs(conv) < 1e-12) {
+        return {1.0, 0.0};
+    }
     const std::complex<double> truth = matrix_element(gate, b);
     std::complex<double> g = truth / conv;
     const double m = std::abs(g);
@@ -879,11 +984,9 @@ void StabilizerStateSum::apply_gate(const Gate& gate) {
     const auto& controls = gate.get_control_qubits();
     const auto& targets = gate.get_target_qubits();
 
-    // If it's a clifford gate with at most one control, we can just apply it to each state in the sum.
-    // apply_gate returns the global phase it couldn't encode in the tableau; multiply it into the coefficient.
+    // If it's a clifford gate with at most one control, we can just apply it to each state in the sum
     if ((name == "H" || name == "S" || name == "X" || name == "Y" || name == "Z" || name == "SWAP") && controls.size() <= 1) {
-        // The dropped global phase is a relative phase only when there is more than one term; for a
-        // single term it is an unobservable overall phase, so skip the (costly) recovery.
+        // The dropped global phase is a relative phase only when there is more than one term
         const bool track = states.size() > 1;
         for (size_t k = 0; k < states.size(); ++k) {
             coefficients[k] *= states[k].apply_gate(gate, track);
@@ -959,8 +1062,7 @@ void StabilizerStateSum::apply_gate(const Gate& gate) {
         throw std::runtime_error("Gate " + name + " not supported for StabilizerStateSum yet");
     }
 
-    // Branch: for each current (state, coeff), split on the Z eigenvalue of branch_qubit and collect all
-    // terms from the StabilizerStateSum returned by the appropriate callback.
+    // Branch: for each current (state, coeff), split on the Z eigenvalue of branch_qubit
     std::vector<StabilizerState> new_states;
     std::vector<std::complex<double>> new_coeffs;
     new_states.reserve(states.size() * 2);
@@ -968,15 +1070,16 @@ void StabilizerStateSum::apply_gate(const Gate& gate) {
 
     // Add the terms from a StabilizerStateSum into the new sum we're building after branching
     auto append_sss = [&](StabilizerStateSum sss) {
-        for (auto& s : sss.get_states())
+        for (auto& s : sss.get_states()) {
             new_states.push_back(std::move(s));
-        for (auto& c : sss.get_coefficients())
+        }
+        for (auto& c : sss.get_coefficients()) {
             new_coeffs.push_back(c);
+        }
     };
 
     // Fo each state
     for (int k = 0; k < static_cast<int>(states.size()); ++k) {
-        
         // Check if it's deterministic
         bool is_random = (states[k].find_x_pivot(branch_qubit) != -1);
 
@@ -985,25 +1088,18 @@ void StabilizerStateSum::apply_gate(const Gate& gate) {
             bool outcome = states[k].z_eigenvalue(branch_qubit);
             append_sss(outcome ? on_one(states[k], coefficients[k]) : on_zero(states[k], coefficients[k]));
 
-            // Random outcome: project onto each Z eigenstate and call both callbacks. Each branch's
-            // coefficient (magnitude 1/√2, plus a phase that for an entangled qubit depends on the
-            // whole state, not just the local pivot) is read off exactly: for a reference bitstring r
-            // in a branch's support, <r|parent> = coeff_branch * <r|branch>, so the coefficient is
-            // simply <r|parent> / <r|branch>. This handles both the |0> and |1> branch phases and
-            // makes no assumption about which qubit amplitude()'s convention treats as free.
+            // Random outcome: project onto each Z eigenstate and call both callbacks
         } else {
             StabilizerState s0 = states[k];
             s0.project_z(branch_qubit, false);
             StabilizerState s1 = states[k];
             s1.project_z(branch_qubit, true);
-
             const std::string r0 = s0.representative();
             const std::string r1 = s1.representative();
             const std::complex<double> d0 = s0.amplitude(r0);
             const std::complex<double> d1 = s1.amplitude(r1);
             const std::complex<double> a0 = (std::abs(d0) > 1e-12) ? states[k].amplitude(r0) / d0 : std::complex<double>(0.0, 0.0);
             const std::complex<double> a1 = (std::abs(d1) > 1e-12) ? states[k].amplitude(r1) / d1 : std::complex<double>(0.0, 0.0);
-
             append_sss(on_zero(s0, coefficients[k] * a0));
             append_sss(on_one(s1, coefficients[k] * a1));
         }
@@ -1017,7 +1113,6 @@ void StabilizerStateSum::apply_gate(const Gate& gate) {
     combine_duplicates();
     truncate();
     normalize();
-
 }
 
 void StabilizerStateSum::truncate() {
@@ -1028,17 +1123,17 @@ void StabilizerStateSum::truncate() {
 
     Also, check that there are not equal steady states, if so, combine their coefficients.
     */
-    
+
     // Don't truncate if max_terms <= 0
     if (max_terms <= 0) {
         return;
     }
-    
+
     // End early if we don't have more than max_terms terms
     if (states.size() <= max_terms) {
         return;
     }
-    
+
     // Sort by coefficient magnitude and keep only the top max_terms terms
     std::vector<size_t> indices(states.size());
     std::iota(indices.begin(), indices.end(), 0);
@@ -1056,20 +1151,19 @@ void StabilizerStateSum::truncate() {
     // Copy the new states and coeffs back over
     states = std::move(new_states);
     coefficients = std::move(new_coeffs);
-
 }
 
 void StabilizerStateSum::combine_duplicates() {
     /*
     Combine duplicate StabilizerStates in the sum by adding their coefficients.
     */
-    
+
     // Prepare the arrays to fill
     std::vector<StabilizerState> new_states;
     std::vector<std::complex<double>> new_coeffs;
     new_states.reserve(states.size());
     new_coeffs.reserve(coefficients.size());
-    
+
     // For each state, add it and hash it
     std::unordered_map<std::string, size_t> state_to_index;
     for (size_t i = 0; i < states.size(); ++i) {
@@ -1091,11 +1185,10 @@ void StabilizerStateSum::combine_duplicates() {
             new_coeffs.push_back(coefficients[i]);
         }
     }
-    
+
     // Move the new states and coeffs back over
     states = std::move(new_states);
     coefficients = std::move(new_coeffs);
-
 }
 
 void StabilizerStateSum::normalize() {

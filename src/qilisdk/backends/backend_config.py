@@ -362,9 +362,7 @@ class DigitalMethod(BaseSimulatorConfig):
     )
     stabilizer_max_states: int = Field(
         default=0,
-        description=(
-            "Maximum number of stabilizer states to track when using the stabilizer digital simulation method. Set to zero or less for unlimited.",
-        ),
+        description="Maximum number of stabilizer states to track when using the stabilizer digital simulation method. Set to zero or less for unlimited.",
     )
 
     def get_config(self) -> SolverConfigDict:

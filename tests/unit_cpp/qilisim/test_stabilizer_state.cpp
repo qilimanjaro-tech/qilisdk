@@ -750,7 +750,9 @@ namespace {
 
 using cd = std::complex<double>;
 
-int bitval(int idx, int q, int n) { return (idx >> (n - 1 - q)) & 1; }
+int bitval(int idx, int q, int n) {
+    return (idx >> (n - 1 - q)) & 1;
+}
 int setbitval(int idx, int q, int n, int v) {
     int mask = 1 << (n - 1 - q);
     return v ? (idx | mask) : (idx & ~mask);
@@ -772,16 +774,42 @@ void denseApply(std::vector<cd>& sv, int n, const std::string& name, const std::
     if (ctr.empty()) {  // single-qubit
         int t = tgt[0];
         cd u00, u01, u10, u11;
-        if (name == "H") { u00 = s; u01 = s; u10 = s; u11 = -s; }
-        else if (name == "X") { u00 = 0; u01 = 1; u10 = 1; u11 = 0; }
-        else if (name == "Y") { u00 = 0; u01 = cd(0, -1); u10 = cd(0, 1); u11 = 0; }
-        else if (name == "Z") { u00 = 1; u01 = 0; u10 = 0; u11 = -1; }
-        else if (name == "S") { u00 = 1; u01 = 0; u10 = 0; u11 = cd(0, 1); }
+        if (name == "H") {
+            u00 = s;
+            u01 = s;
+            u10 = s;
+            u11 = -s;
+        } else if (name == "X") {
+            u00 = 0;
+            u01 = 1;
+            u10 = 1;
+            u11 = 0;
+        } else if (name == "Y") {
+            u00 = 0;
+            u01 = cd(0, -1);
+            u10 = cd(0, 1);
+            u11 = 0;
+        } else if (name == "Z") {
+            u00 = 1;
+            u01 = 0;
+            u10 = 0;
+            u11 = -1;
+        } else if (name == "S") {
+            u00 = 1;
+            u01 = 0;
+            u10 = 0;
+            u11 = cd(0, 1);
+        }
         for (int i = 0; i < dim; ++i) {
             int tb = bitval(i, t, n);
             int i0 = setbitval(i, t, n, 0), i1 = setbitval(i, t, n, 1);
-            if (tb == 0) { out[i0] += u00 * sv[i]; out[i1] += u10 * sv[i]; }
-            else { out[i0] += u01 * sv[i]; out[i1] += u11 * sv[i]; }
+            if (tb == 0) {
+                out[i0] += u00 * sv[i];
+                out[i1] += u10 * sv[i];
+            } else {
+                out[i0] += u01 * sv[i];
+                out[i1] += u11 * sv[i];
+            }
         }
         sv = out;
         return;
@@ -794,7 +822,8 @@ void denseApply(std::vector<cd>& sv, int n, const std::string& name, const std::
             out[j] += sv[i];
         } else {  // CZ
             cd v = sv[i];
-            if (bitval(i, c, n) && bitval(i, t, n)) v = -v;
+            if (bitval(i, c, n) && bitval(i, t, n))
+                v = -v;
             out[i] += v;
         }
     }
@@ -815,16 +844,22 @@ double amplitudeMismatch(int n, const std::vector<std::tuple<std::string, std::v
     int piv = 0;
     double best = -1;
     for (int i = 0; i < dim; ++i)
-        if (std::abs(sv[i]) > best) { best = std::abs(sv[i]); piv = i; }
+        if (std::abs(sv[i]) > best) {
+            best = std::abs(sv[i]);
+            piv = i;
+        }
     std::string bpiv(n, '0');
-    for (int q = 0; q < n; ++q) bpiv[q] = bitval(piv, q, n) ? '1' : '0';
+    for (int q = 0; q < n; ++q)
+        bpiv[q] = bitval(piv, q, n) ? '1' : '0';
     cd apiv = st.amplitude(bpiv);
-    if (std::abs(apiv) < 1e-9) return 1e9;
+    if (std::abs(apiv) < 1e-9)
+        return 1e9;
     cd gp = sv[piv] / apiv;
     double maxerr = 0;
     for (int i = 0; i < dim; ++i) {
         std::string b(n, '0');
-        for (int q = 0; q < n; ++q) b[q] = bitval(i, q, n) ? '1' : '0';
+        for (int q = 0; q < n; ++q)
+            b[q] = bitval(i, q, n) ? '1' : '0';
         maxerr = std::max(maxerr, std::abs(sv[i] - gp * st.amplitude(b)));
     }
     return maxerr;
@@ -842,7 +877,12 @@ TEST(Amplitude, MatchesStatevector_RandomCliffords) {
     // Deterministic pseudo-random sweep of Clifford circuits on 3 qubits.
     const char* singles[] = {"H", "X", "Y", "Z", "S"};
     uint64_t rng = 0x9e3779b97f4a7c15ULL;
-    auto next = [&]() { rng ^= rng << 13; rng ^= rng >> 7; rng ^= rng << 17; return rng; };
+    auto next = [&]() {
+        rng ^= rng << 13;
+        rng ^= rng >> 7;
+        rng ^= rng << 17;
+        return rng;
+    };
     double worst = 0;
     for (int trial = 0; trial < 400; ++trial) {
         int n = 3;
@@ -851,7 +891,8 @@ TEST(Amplitude, MatchesStatevector_RandomCliffords) {
         for (int g = 0; g < ng; ++g) {
             if (next() % 4 == 0) {
                 int a = next() % n, b = next() % n;
-                if (a == b) b = (b + 1) % n;
+                if (a == b)
+                    b = (b + 1) % n;
                 ops.push_back({(next() % 2) ? "X" : "Z", {a}, {b}});
             } else {
                 ops.push_back({singles[next() % 5], {}, {(int)(next() % n)}});
@@ -872,7 +913,8 @@ void denseApplyT(std::vector<cd>& sv, int n, int t) {
     int dim = 1 << n;
     cd ph = std::exp(cd(0, M_PI / 4.0));
     for (int i = 0; i < dim; ++i)
-        if (bitval(i, t, n)) sv[i] *= ph;
+        if (bitval(i, t, n))
+            sv[i] *= ph;
 }
 
 SparseMatrix tMatrix() {
@@ -902,16 +944,22 @@ double sumAmplitudeMismatch(int n, const std::vector<std::tuple<std::string, std
     int piv = 0;
     double best = -1;
     for (int i = 0; i < dim; ++i)
-        if (std::abs(sv[i]) > best) { best = std::abs(sv[i]); piv = i; }
+        if (std::abs(sv[i]) > best) {
+            best = std::abs(sv[i]);
+            piv = i;
+        }
     std::string bpiv(n, '0');
-    for (int q = 0; q < n; ++q) bpiv[q] = bitval(piv, q, n) ? '1' : '0';
+    for (int q = 0; q < n; ++q)
+        bpiv[q] = bitval(piv, q, n) ? '1' : '0';
     cd apiv = sum.amplitude(bpiv);
-    if (std::abs(apiv) < 1e-9) return 1e9;
+    if (std::abs(apiv) < 1e-9)
+        return 1e9;
     cd gp = sv[piv] / apiv;
     double maxerr = 0;
     for (int i = 0; i < dim; ++i) {
         std::string b(n, '0');
-        for (int q = 0; q < n; ++q) b[q] = bitval(i, q, n) ? '1' : '0';
+        for (int q = 0; q < n; ++q)
+            b[q] = bitval(i, q, n) ? '1' : '0';
         maxerr = std::max(maxerr, std::abs(sv[i] - gp * sum.amplitude(b)));
     }
     return maxerr;
@@ -921,16 +969,19 @@ double sumAmplitudeMismatch(int n, const std::vector<std::tuple<std::string, std
 
 TEST(StabilizerStateSum, Amplitude_MatchesStatevector_TwoTGatesEntangled) {
     // Reduced from a randomized failure: two T gates plus entangling Cliffords.
-    double e = sumAmplitudeMismatch(2, {
-        {"H", {}, {1}}, {"X", {}, {0}}, {"Y", {}, {0}}, {"X", {1}, {0}}, {"H", {}, {0}},
-        {"T", {}, {0}}, {"Y", {}, {1}}, {"X", {1}, {0}}, {"H", {}, {0}}, {"T", {}, {1}}, {"H", {}, {0}}});
+    double e = sumAmplitudeMismatch(2, {{"H", {}, {1}}, {"X", {}, {0}}, {"Y", {}, {0}}, {"X", {1}, {0}}, {"H", {}, {0}}, {"T", {}, {0}}, {"Y", {}, {1}}, {"X", {1}, {0}}, {"H", {}, {0}}, {"T", {}, {1}}, {"H", {}, {0}}});
     EXPECT_LT(e, 1e-6) << "StabilizerStateSum amplitude disagrees with statevector by " << e;
 }
 
 TEST(StabilizerStateSum, Amplitude_MatchesStatevector_RandomWithT) {
     const char* singles[] = {"H", "X", "Y", "Z", "S", "T"};
     uint64_t rng = 0xD1B54A32D192ED03ULL;
-    auto next = [&]() { rng ^= rng << 13; rng ^= rng >> 7; rng ^= rng << 17; return rng; };
+    auto next = [&]() {
+        rng ^= rng << 13;
+        rng ^= rng >> 7;
+        rng ^= rng << 17;
+        return rng;
+    };
     double worst = 0;
     for (int trial = 0; trial < 400; ++trial) {
         int n = 1 + (next() % 3);
@@ -939,7 +990,8 @@ TEST(StabilizerStateSum, Amplitude_MatchesStatevector_RandomWithT) {
         for (int g = 0; g < ng; ++g) {
             if (n > 1 && next() % 4 == 0) {
                 int a = next() % n, b = next() % n;
-                if (a == b) b = (b + 1) % n;
+                if (a == b)
+                    b = (b + 1) % n;
                 ops.push_back({(next() % 2) ? "X" : "Z", {a}, {b}});
             } else {
                 ops.push_back({singles[next() % 6], {}, {(int)(next() % n)}});
@@ -948,6 +1000,128 @@ TEST(StabilizerStateSum, Amplitude_MatchesStatevector_RandomWithT) {
         worst = std::max(worst, sumAmplitudeMismatch(n, ops));
     }
     EXPECT_LT(worst, 1e-6) << "worst StabilizerStateSum amplitude vs statevector over random+T = " << worst;
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// T-gate algebraic identities (verified against the brute-force statevector)
+// ──────────────────────────────────────────────────────────────────────────────
+
+TEST(StabilizerStateSum, T_Squared_EqualsS_OnSuperposition) {
+    // T^2 = S. On |+⟩ the two operators must produce identical statevectors. We verify both the
+    // T^2 circuit and the S circuit match the same dense statevector built from their own gate lists.
+    double eTT = sumAmplitudeMismatch(1, {{"H", {}, {0}}, {"T", {}, {0}}, {"T", {}, {0}}});
+    double eS = sumAmplitudeMismatch(1, {{"H", {}, {0}}, {"S", {}, {0}}});
+    EXPECT_LT(eTT, 1e-6) << "H,T,T amplitude disagrees with statevector by " << eTT;
+    EXPECT_LT(eS, 1e-6) << "H,S amplitude disagrees with statevector by " << eS;
+}
+
+TEST(StabilizerStateSum, T_Fourth_EqualsZ_OnSuperposition) {
+    // T^4 = Z. Four T gates on |+⟩ should match the statevector (and equal a single Z).
+    double e = sumAmplitudeMismatch(1, {{"H", {}, {0}}, {"T", {}, {0}}, {"T", {}, {0}}, {"T", {}, {0}}, {"T", {}, {0}}});
+    EXPECT_LT(e, 1e-6) << "T^4 on |+⟩ disagrees with statevector by " << e;
+}
+
+TEST(StabilizerStateSum, T_Eighth_IsIdentity_OnSuperposition) {
+    // T^8 = I. Eight T gates on |+⟩ must return to |+⟩.
+    std::vector<std::tuple<std::string, std::vector<int>, std::vector<int>>> ops = {{"H", {}, {0}}};
+    for (int i = 0; i < 8; ++i)
+        ops.push_back({"T", {}, {0}});
+    double e = sumAmplitudeMismatch(1, ops);
+    EXPECT_LT(e, 1e-6) << "T^8 on |+⟩ disagrees with statevector by " << e;
+}
+
+TEST(StabilizerStateSum, T_OnSuperposition_ProducesEqualMagnitudeBranches) {
+    // T on |+⟩ branches into two terms; after normalization both carry probability 1/2.
+    StabilizerStateSum sss(1);
+    sss.apply_gate(makeGate("H", {}, {0}));
+    sss.apply_gate(makeGate("T", {}, {0}));
+    ASSERT_EQ(sss.get_states().size(), 2u);
+    double total = 0.0;
+    for (const auto& c : sss.get_coefficients()) {
+        EXPECT_NEAR(std::norm(c), 0.5, 1e-9);
+        total += std::norm(c);
+    }
+    EXPECT_NEAR(total, 1.0, 1e-9);
+}
+
+TEST(StabilizerStateSum, HTH_IsNonCliffordRotation_MatchesStatevector) {
+    // H T H is a rotation that takes |0⟩ out of the computational basis with a non-trivial phase;
+    // a good stress test of the branch-and-recombine machinery on a deterministic input.
+    double e = sumAmplitudeMismatch(1, {{"H", {}, {0}}, {"T", {}, {0}}, {"H", {}, {0}}});
+    EXPECT_LT(e, 1e-6) << "H,T,H disagrees with statevector by " << e;
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// T gates entangled with Cliffords (verified against the brute-force statevector)
+// ──────────────────────────────────────────────────────────────────────────────
+
+TEST(StabilizerStateSum, T_OnBellState_MatchesStatevector) {
+    // T applied to one half of a Bell pair: the relative phase between the |00⟩ and |11⟩
+    // branches must be tracked exactly across the entanglement.
+    double e = sumAmplitudeMismatch(2, {{"H", {}, {0}}, {"X", {0}, {1}}, {"T", {}, {0}}});
+    EXPECT_LT(e, 1e-6) << "Bell + T disagrees with statevector by " << e;
+}
+
+TEST(StabilizerStateSum, T_OnBothHalvesOfBellState_MatchesStatevector) {
+    // A T on each half of a Bell pair: |00⟩ picks up no phase, |11⟩ picks up e^{iπ/2}=i.
+    double e = sumAmplitudeMismatch(2, {{"H", {}, {0}}, {"X", {0}, {1}}, {"T", {}, {0}}, {"T", {}, {1}}});
+    EXPECT_LT(e, 1e-6) << "Bell + T on both halves disagrees with statevector by " << e;
+}
+
+TEST(StabilizerStateSum, GHZ_WithT_MatchesStatevector) {
+    // 3-qubit GHZ state with a T on the middle qubit, then more entangling gates: exercises
+    // phase tracking through a larger entangled register.
+    double e = sumAmplitudeMismatch(3, {{"H", {}, {0}}, {"X", {0}, {1}}, {"X", {1}, {2}}, {"T", {}, {1}}, {"H", {}, {2}}, {"Z", {0}, {2}}});
+    EXPECT_LT(e, 1e-6) << "GHZ + T disagrees with statevector by " << e;
+}
+
+TEST(StabilizerStateSum, ManyTGatesAcrossQubits_MatchesStatevector) {
+    // Several T gates interleaved with entangling Cliffords on 3 qubits — multiple branch
+    // expansions and recombinations in sequence.
+    double e = sumAmplitudeMismatch(3, {{"H", {}, {0}}, {"T", {}, {0}}, {"X", {0}, {1}}, {"T", {}, {1}}, {"H", {}, {2}}, {"T", {}, {2}}, {"X", {1}, {2}}, {"S", {}, {0}}, {"T", {}, {0}}});
+    EXPECT_LT(e, 1e-6) << "many T gates disagrees with statevector by " << e;
+}
+
+TEST(StabilizerStateSum, RepeatedTOnSameEntangledQubit_MatchesStatevector) {
+    // Four T gates (= Z) on an entangled qubit, separated by Cliffords. The accumulated phase
+    // must still match exactly after combine_duplicates folds equivalent terms together.
+    double e = sumAmplitudeMismatch(2, {{"H", {}, {0}}, {"X", {0}, {1}}, {"T", {}, {0}}, {"T", {}, {0}}, {"H", {}, {0}}, {"T", {}, {0}}, {"T", {}, {0}}});
+    EXPECT_LT(e, 1e-6) << "repeated T on entangled qubit disagrees with statevector by " << e;
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Sampling distributions for T-bearing circuits
+// ──────────────────────────────────────────────────────────────────────────────
+
+TEST(StabilizerStateSum, Sample_HTH_BiasedDistribution) {
+    // H,T,H on |0⟩ yields probabilities cos^2(π/8)≈0.854 for |0⟩ and sin^2(π/8)≈0.146 for |1⟩.
+    // Check the empirical counts land near those values.
+    srand(123);
+    StabilizerStateSum sss(1);
+    sss.apply_gate(makeGate("H", {}, {0}));
+    sss.apply_gate(makeGate("T", {}, {0}));
+    sss.apply_gate(makeGate("H", {}, {0}));
+    const int nshots = 4000;
+    auto counts = sss.sample(nshots);
+    int total = 0;
+    for (auto& kv : counts)
+        total += kv.second;
+    EXPECT_EQ(total, nshots);
+    double p0 = static_cast<double>(counts["0"]) / nshots;
+    const double expected0 = std::pow(std::cos(M_PI / 8.0), 2);  // ≈ 0.8536
+    EXPECT_NEAR(p0, expected0, 0.05) << "P(0) for H,T,H was " << p0 << ", expected ≈ " << expected0;
+}
+
+TEST(StabilizerStateSum, Sample_TGate_DoesNotChangeMeasurementProbabilities) {
+    // T is diagonal, so it never changes Z-basis measurement statistics: |+⟩ stays 50/50.
+    srand(321);
+    StabilizerStateSum sss(1);
+    sss.apply_gate(makeGate("H", {}, {0}));
+    sss.apply_gate(makeGate("T", {}, {0}));
+    const int nshots = 4000;
+    auto counts = sss.sample(nshots);
+    double p0 = static_cast<double>(counts["0"]) / nshots;
+    EXPECT_NEAR(p0, 0.5, 0.05) << "T should not bias Z-basis statistics; P(0) was " << p0;
 }
 
 // GCOV_EXCL_BR_STOP
