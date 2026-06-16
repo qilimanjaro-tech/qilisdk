@@ -117,6 +117,18 @@ foreach(module ${MODULES_TO_BUILD})
     if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         message(STATUS "[QiliSDK C++] Using GCC/Clang specific compile options")
         target_compile_options(${module} PRIVATE -Wall -Wextra -Wpedantic)
+
+        # Portable AVX2 + FMA baseline (~2015+ CPUs). Safe to ship in wheels, unlike
+        # -march=native (which bakes in the build machine's ISA, e.g. AVX-512 on Zen 4,
+        # and SIGILL-crashes on any CPU lacking it). The bigger AVX-512 win is captured
+        # safely per-function via runtime dispatch (target_clones) on the hot kernels.
+        # Guarded so older compilers / non-x86 toolchains (e.g. aarch64) skip it.
+        include(CheckCXXCompilerFlag)
+        check_cxx_compiler_flag("-march=x86-64-v3" QILISDK_HAS_X86_64_V3)
+        if (QILISDK_HAS_X86_64_V3)
+            message(STATUS "[QiliSDK C++] Targeting x86-64-v3 (AVX2 + FMA)")
+            target_compile_options(${module} PRIVATE -march=x86-64-v3)
+        endif()
     endif()
 
     # Make everything visible on compilers that support this flag

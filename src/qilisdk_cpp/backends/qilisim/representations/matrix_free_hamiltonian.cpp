@@ -53,8 +53,8 @@ void MatrixFreeHamiltonian::apply(const DenseMatrix& input_state, MatrixFreeAppl
     struct Term {
         Complex base_phase;      // coefficient * (-i)^n_Y, precomputed
         Complex base_phase_neg;  // -coefficient * (-i)^n_Y, precomputed
-        long flip_mask;                       // XOR of all X and Y qubit masks
-        long sign_mask;                       // OR of all Y and Z qubit masks (popcount parity = sign flip)
+        long flip_mask;          // XOR of all X and Y qubit masks
+        long sign_mask;          // OR of all Y and Z qubit masks (popcount parity = sign flip)
     };
 
     // Precompute things
