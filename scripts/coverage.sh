@@ -31,7 +31,7 @@ find "$COVERAGE_DIR" -name '*.gcno' | while IFS= read -r gcno; do
     want="${rel%.gcno}.gcda"
     canonical="$COVERAGE_DIR/$want"
     best=$(find "$COVERAGE_DIR" -path "*/$want" -printf '%d %p\n' 2>/dev/null | sort -rn | head -1 | cut -d' ' -f2-)
-    if [ -n "$best" ] && [ "$best" != "$canonical" ]; then
+    if [[ -n "$best" ]] && [[ "$best" != "$canonical" ]]; then
         mkdir -p "$(dirname "$canonical")"
         mv -f "$best" "$canonical"
     fi
