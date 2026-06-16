@@ -94,7 +94,6 @@ py::object QiliSimCpp::execute_digital_propagation(const py::object& functional,
     py::object result;
     if (config.get_sampling_method() == "stabilizer") {
         int max_states = config.get_stabilizer_max_states();
-        std::cout << "Using stabilizer method with max states: " << max_states << std::endl;
 
         // Parse the initial state as a stabilizer state
         StabilizerStateSum initial_state_stabilizer = parse_initial_state_stabilizer(initial_state, n_qubits);

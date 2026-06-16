@@ -26,7 +26,7 @@
 
 // GCOV_EXCL_BR_START
 
-const int MAX_ROWS_STABILIZER = 256;
+const int MAX_ROWS_STABILIZER = 1024;
 
 class StabilizerState {
    private:

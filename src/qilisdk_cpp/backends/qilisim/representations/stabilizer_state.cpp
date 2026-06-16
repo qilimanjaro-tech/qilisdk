@@ -36,13 +36,13 @@ StabilizerState::StabilizerState(int nqubits) : nqubits(nqubits) {
     Raises:
         std::invalid_argument: If nqubits is too large to fit in the tableau.
     */
+    if (nqubits > MAX_ROWS_STABILIZER) {
+        throw std::invalid_argument("Number of qubits should be at most " + std::to_string(MAX_ROWS_STABILIZER));
+    }
     x_bits.resize(nqubits);
     z_bits.resize(nqubits);
     for (int i = 0; i < nqubits; ++i) {
         z_bits[i].set(i);
-    }
-    if (2 * nqubits + 1 > MAX_ROWS_STABILIZER) {
-        throw std::invalid_argument("Number of qubits should be at most " + std::to_string(MAX_ROWS_STABILIZER / 2));
     }
 }
 

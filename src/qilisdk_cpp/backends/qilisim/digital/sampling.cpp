@@ -458,6 +458,16 @@ void sampling_stabilizer(const std::vector<Gate>& gates, int n_qubits, const Sta
     Eigen::setNbThreads(config.get_num_threads());
 #endif
 
+    // Throw a warning if we have noise, since the stabilizer simulator does not support noise models
+    if (!noise_model_cpp.is_empty()) {
+        warning("Noise models are not supported in the stabilizer simulator. Noise will be ignored.");
+    }
+
+    // Throw a warning if we are using monte-carlo sampling, since the stabilizer simulator does not support it
+    if (config.get_monte_carlo()) {
+        warning("Monte Carlo sampling is not supported in the stabilizer simulator. Monte Carlo will be ignored.");
+    }
+
     // We start with the initial state
     state = initial_state;
     state.set_max_terms(config.get_stabilizer_max_states());

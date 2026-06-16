@@ -195,7 +195,7 @@ at the cost of being slower if the circuit contains many non-Clifford gates. It 
     from qilisdk.backends import DigitalMethod, QiliSim
 
     backend = QiliSim(
-        digital_simulation_method=DigitalMethod.stabilizer(max_states=1000),
+        digital_simulation_method=DigitalMethod.stabilizer(max_states=100),
     )
 
 Execution and Monte Carlo
