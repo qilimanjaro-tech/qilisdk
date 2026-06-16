@@ -60,7 +60,7 @@ DenseMatrix iter_direct(const DenseMatrix& rho_0, double dt, const SparseMatrix&
 
     // If we're just doing unitary evolution on a statevector, we can exponentiate the Hamiltonian directly
     if (is_unitary_on_statevector) {
-        SparseMatrix U = exp_mat(currentH, std::complex<double>(0, -dt));
+        SparseMatrix U = exp_mat(currentH, Complex(0, -dt));
         return U * rho_0;
 
         // If we have jump operators, need to form the full superoperator and act on the vectorized density matrix
@@ -72,7 +72,7 @@ DenseMatrix iter_direct(const DenseMatrix& rho_0, double dt, const SparseMatrix&
 
         // Otherwise we just exponentiate the Hamiltonian
     } else {
-        SparseMatrix U = exp_mat(currentH, std::complex<double>(0, -dt));
+        SparseMatrix U = exp_mat(currentH, Complex(0, -dt));
         return U * rho_0 * U.adjoint();
     }
 }

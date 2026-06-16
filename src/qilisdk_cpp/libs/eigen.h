@@ -20,12 +20,31 @@
 
 // GCOV_EXCL_BR_START
 
-// Eigen specfic type defs
-typedef Eigen::SparseMatrix<std::complex<double>, Eigen::RowMajor> SparseMatrix;
-typedef Eigen::SparseMatrix<std::complex<double>, Eigen::ColMajor> SparseMatrixCol;
-typedef Eigen::MatrixXcd DenseMatrix;
-typedef Eigen::Triplet<std::complex<double>> Triplet;
-typedef std::vector<Eigen::Triplet<std::complex<double>>> Triplets;
+// Precision toggle: uncomment the following line to build the simulator in
+// single precision (float). Leave it commented for the default double precision.
+// Everything below derives from `Real`, so this single switch controls the
+// precision of all scalars, dense/sparse matrices and vectors.
+#define QILISIM_SINGLE_PRECISION
+
+#ifdef QILISIM_SINGLE_PRECISION
+typedef float Real;
+#else
+typedef double Real;
+#endif
+
+// QiliSim specific type defs
+typedef std::complex<Real> Complex;
+
+// Eigen specfic type defs (all derived from Complex/Real so they follow the toggle)
+typedef Eigen::SparseMatrix<Complex, Eigen::RowMajor> SparseMatrix;
+typedef Eigen::SparseMatrix<Complex, Eigen::ColMajor> SparseMatrixCol;
+typedef Eigen::Matrix<Complex, Eigen::Dynamic, Eigen::Dynamic> DenseMatrix;
+typedef Eigen::Matrix<Complex, Eigen::Dynamic, 1> DenseVector;
+typedef Eigen::Matrix<Complex, 1, Eigen::Dynamic> DenseRowVector;
+typedef Eigen::Matrix<Real, Eigen::Dynamic, Eigen::Dynamic> RealMatrix;
+typedef Eigen::Matrix<Real, Eigen::Dynamic, 1> RealVector;
+typedef Eigen::Triplet<Complex> Triplet;
+typedef std::vector<Triplet> Triplets;
 
 // Identity matrix constant
 const SparseMatrix I = []() {

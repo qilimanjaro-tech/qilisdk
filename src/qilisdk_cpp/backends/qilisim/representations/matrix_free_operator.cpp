@@ -18,12 +18,12 @@
 
 // GCOV_EXCL_BR_START
 
-const std::complex<double> imag(0.0, 1.0);
-const std::complex<double> imag_conj(0.0, -1.0);
-const double inv_sqrt_2 = 1.0 / std::sqrt(2.0);
+const Complex imag(0.0, 1.0);
+const Complex imag_conj(0.0, -1.0);
+const Real inv_sqrt_2 = 1.0 / std::sqrt(2.0);
 constexpr double pi = 3.14159265358979323846;
-const std::complex<double> t_phase = std::exp(std::complex<double>(0.0, pi / 4.0));
-const std::complex<double> t_phase_conj = std::conj(t_phase);
+const Complex t_phase = std::exp(Complex(0.0, pi / 4.0));
+const Complex t_phase_conj = std::conj(t_phase);
 
 void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationType application_type) const {
     /*
@@ -122,7 +122,7 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
                 long base = block * (stride << 1);
                 long i = base + offset;
                 long j = i + stride;
-                std::complex<double> temp = output_state(i);
+                Complex temp = output_state(i);
                 output_state(i) = output_state(j) * imag_conj;
                 output_state(j) = temp * imag;
             }
@@ -263,8 +263,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
                 long base = block * (stride << 1);
                 long i = base + offset;
                 long j = i + stride;
-                std::complex<double> temp_i = output_state(i);
-                std::complex<double> temp_j = output_state(j);
+                Complex temp_i = output_state(i);
+                Complex temp_j = output_state(j);
                 output_state(i) = (temp_i + temp_j) * inv_sqrt_2;
                 output_state(j) = (temp_i - temp_j) * inv_sqrt_2;
             }
@@ -278,8 +278,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
                 long base = block * (stride << 1);
                 long r0 = base + offset;
                 long r1 = r0 + stride;
-                Eigen::RowVectorXcd temp0 = output_state.row(r0);
-                Eigen::RowVectorXcd temp1 = output_state.row(r1);
+                DenseRowVector temp0 = output_state.row(r0);
+                DenseRowVector temp1 = output_state.row(r1);
                 output_state.row(r0) = (temp0 + temp1) * inv_sqrt_2;
                 output_state.row(r1) = (temp0 - temp1) * inv_sqrt_2;
             }
@@ -293,8 +293,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
                 long base = block * (stride << 1);
                 long c0 = base + offset;
                 long c1 = c0 + stride;
-                Eigen::VectorXcd temp0 = output_state.col(c0);
-                Eigen::VectorXcd temp1 = output_state.col(c1);
+                DenseVector temp0 = output_state.col(c0);
+                DenseVector temp1 = output_state.col(c1);
                 output_state.col(c0) = (temp0 + temp1) * inv_sqrt_2;
                 output_state.col(c1) = (temp0 - temp1) * inv_sqrt_2;
             }
@@ -312,8 +312,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
                     long base = block * (stride << 1);
                     long r0 = base + offset;
                     long r1 = r0 + stride;
-                    Eigen::RowVectorXcd temp0 = output_state.row(r0);
-                    Eigen::RowVectorXcd temp1 = output_state.row(r1);
+                    DenseRowVector temp0 = output_state.row(r0);
+                    DenseRowVector temp1 = output_state.row(r1);
                     output_state.row(r0) = (temp0 + temp1) * inv_sqrt_2;
                     output_state.row(r1) = (temp0 - temp1) * inv_sqrt_2;
                 }
@@ -326,8 +326,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
                     long base = block * (stride << 1);
                     long c0 = base + offset;
                     long c1 = c0 + stride;
-                    Eigen::VectorXcd temp0 = output_state.col(c0);
-                    Eigen::VectorXcd temp1 = output_state.col(c1);
+                    DenseVector temp0 = output_state.col(c0);
+                    DenseVector temp1 = output_state.col(c1);
                     output_state.col(c0) = (temp0 + temp1) * inv_sqrt_2;
                     output_state.col(c1) = (temp0 - temp1) * inv_sqrt_2;
                 }
@@ -757,8 +757,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
                 long i = base + offset;
                 if (i & control_mask) {
                     long j = i ^ mask;
-                    std::complex<double> temp_i = output_state(i);
-                    std::complex<double> temp_j = output_state(j);
+                    Complex temp_i = output_state(i);
+                    Complex temp_j = output_state(j);
                     output_state(i) = base_matrix(0, 0) * temp_i + base_matrix(0, 1) * temp_j;
                     output_state(j) = base_matrix(1, 0) * temp_i + base_matrix(1, 1) * temp_j;
                 }
@@ -774,8 +774,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
                 long r0 = base + offset;
                 long r1 = r0 + stride;
                 if (r0 & control_mask) {
-                    Eigen::RowVectorXcd temp0 = output_state.row(r0);
-                    Eigen::RowVectorXcd temp1 = output_state.row(r1);
+                    DenseRowVector temp0 = output_state.row(r0);
+                    DenseRowVector temp1 = output_state.row(r1);
                     output_state.row(r0) = base_matrix(0, 0) * temp0 + base_matrix(0, 1) * temp1;
                     output_state.row(r1) = base_matrix(1, 0) * temp0 + base_matrix(1, 1) * temp1;
                 }
@@ -792,8 +792,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
                 long c0 = base + offset;
                 long c1 = c0 + stride;
                 if (c0 & control_mask) {
-                    Eigen::VectorXcd temp0 = output_state.col(c0);
-                    Eigen::VectorXcd temp1 = output_state.col(c1);
+                    DenseVector temp0 = output_state.col(c0);
+                    DenseVector temp1 = output_state.col(c1);
                     output_state.col(c0) = base_matrix_conj(0, 0) * temp0 + base_matrix_conj(1, 0) * temp1;
                     output_state.col(c1) = base_matrix_conj(0, 1) * temp0 + base_matrix_conj(1, 1) * temp1;
                 }
@@ -814,8 +814,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
                     long r0 = base + offset;
                     long r1 = r0 + stride;
                     if (r0 & control_mask) {
-                        Eigen::RowVectorXcd temp0 = output_state.row(r0);
-                        Eigen::RowVectorXcd temp1 = output_state.row(r1);
+                        DenseRowVector temp0 = output_state.row(r0);
+                        DenseRowVector temp1 = output_state.row(r1);
                         output_state.row(r0) = base_matrix(0, 0) * temp0 + base_matrix(0, 1) * temp1;
                         output_state.row(r1) = base_matrix(1, 0) * temp0 + base_matrix(1, 1) * temp1;
                     }
@@ -831,8 +831,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
                     long c0 = base + offset;
                     long c1 = c0 + stride;
                     if (c0 & control_mask) {
-                        Eigen::VectorXcd temp0 = output_state.col(c0);
-                        Eigen::VectorXcd temp1 = output_state.col(c1);
+                        DenseVector temp0 = output_state.col(c0);
+                        DenseVector temp1 = output_state.col(c1);
                         output_state.col(c0) = base_matrix_conj(0, 0) * temp0 + base_matrix_conj(1, 0) * temp1;
                         output_state.col(c1) = base_matrix_conj(0, 1) * temp0 + base_matrix_conj(1, 1) * temp1;
                     }
@@ -852,8 +852,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
                 long base = block * (stride << 1);
                 long i = base + offset;
                 long j = i + stride;
-                std::complex<double> temp_i = output_state(i);
-                std::complex<double> temp_j = output_state(j);
+                Complex temp_i = output_state(i);
+                Complex temp_j = output_state(j);
                 output_state(i) = base_matrix(0, 0) * temp_i + base_matrix(0, 1) * temp_j;
                 output_state(j) = base_matrix(1, 0) * temp_i + base_matrix(1, 1) * temp_j;
             }
@@ -867,8 +867,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
                 long base = block * (stride << 1);
                 long r0 = base + offset;
                 long r1 = r0 + stride;
-                Eigen::RowVectorXcd temp0 = output_state.row(r0);
-                Eigen::RowVectorXcd temp1 = output_state.row(r1);
+                DenseRowVector temp0 = output_state.row(r0);
+                DenseRowVector temp1 = output_state.row(r1);
                 output_state.row(r0) = base_matrix(0, 0) * temp0 + base_matrix(0, 1) * temp1;
                 output_state.row(r1) = base_matrix(1, 0) * temp0 + base_matrix(1, 1) * temp1;
             }
@@ -883,8 +883,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
                 long base = block * (stride << 1);
                 long c0 = base + offset;
                 long c1 = c0 + stride;
-                Eigen::VectorXcd temp0 = output_state.col(c0);
-                Eigen::VectorXcd temp1 = output_state.col(c1);
+                DenseVector temp0 = output_state.col(c0);
+                DenseVector temp1 = output_state.col(c1);
                 output_state.col(c0) = base_matrix_conj(0, 0) * temp0 + base_matrix_conj(1, 0) * temp1;
                 output_state.col(c1) = base_matrix_conj(0, 1) * temp0 + base_matrix_conj(1, 1) * temp1;
             }
@@ -903,8 +903,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
                     long base = block * (stride << 1);
                     long r0 = base + offset;
                     long r1 = r0 + stride;
-                    Eigen::RowVectorXcd temp0 = output_state.row(r0);
-                    Eigen::RowVectorXcd temp1 = output_state.row(r1);
+                    DenseRowVector temp0 = output_state.row(r0);
+                    DenseRowVector temp1 = output_state.row(r1);
                     output_state.row(r0) = base_matrix(0, 0) * temp0 + base_matrix(0, 1) * temp1;
                     output_state.row(r1) = base_matrix(1, 0) * temp0 + base_matrix(1, 1) * temp1;
                 }
@@ -917,8 +917,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
                     long base = block * (stride << 1);
                     long c0 = base + offset;
                     long c1 = c0 + stride;
-                    Eigen::VectorXcd temp0 = output_state.col(c0);
-                    Eigen::VectorXcd temp1 = output_state.col(c1);
+                    DenseVector temp0 = output_state.col(c0);
+                    DenseVector temp1 = output_state.col(c1);
                     output_state.col(c0) = base_matrix_conj(0, 0) * temp0 + base_matrix_conj(1, 0) * temp1;
                     output_state.col(c1) = base_matrix_conj(0, 1) * temp0 + base_matrix_conj(1, 1) * temp1;
                 }

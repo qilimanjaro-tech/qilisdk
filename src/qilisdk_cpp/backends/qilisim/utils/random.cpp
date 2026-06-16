@@ -131,7 +131,7 @@ DenseMatrix get_vector_from_density_matrix(const DenseMatrix& rho_t, double atol
     // Find a non-zero diagonal element
     int non_zero_col = -1;
     for (int r = 0; r < rho_t.rows(); ++r) {
-        std::complex<double> val = rho_t(r, r);
+        Complex val = rho_t(r, r);
         if (std::abs(val) > atol) {
             non_zero_col = r;
             break;
@@ -169,7 +169,7 @@ SparseMatrix get_vector_from_density_matrix(const SparseMatrix& rho_t, double at
     // Find a non-zero diagonal element
     int non_zero_col = -1;
     for (int r = 0; r < rho_t.rows(); ++r) {
-        std::complex<double> val = rho_t.coeff(r, r);
+        Complex val = rho_t.coeff(r, r);
         if (std::abs(val) > atol) {
             non_zero_col = r;
             break;
@@ -182,7 +182,7 @@ SparseMatrix get_vector_from_density_matrix(const SparseMatrix& rho_t, double at
     // Extract the corresponding state vector
     Triplets state_vec_entries;
     for (int r = 0; r < rho_t.rows(); ++r) {
-        std::complex<double> val = rho_t.coeff(r, non_zero_col);
+        Complex val = rho_t.coeff(r, non_zero_col);
         if (std::abs(val) > atol) {
             state_vec_entries.emplace_back(Triplet(r, 0, val));
         }
@@ -339,7 +339,7 @@ SparseMatrix sample_from_density_matrix(const SparseMatrix& rho, int n_trajector
             for (int k = 0; k < state_vec.outerSize(); ++k) {
                 for (SparseMatrix::InnerIterator it(state_vec, k); it; ++it) {
                     int row = int(it.row());
-                    std::complex<double> val = it.value();
+                    Complex val = it.value();
                     new_mat_entries.emplace_back(Triplet(row, traj_index, val));
                 }
             }

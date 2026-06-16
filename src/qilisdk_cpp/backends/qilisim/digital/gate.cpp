@@ -75,7 +75,7 @@ Triplets Gate::tensor_product(Triplets& A, Triplets& B, int B_width) const {
     Triplets result;
     int row = 0;
     int col = 0;
-    std::complex<double> val = 0.0;
+    Complex val = 0.0;
     for (const auto& a : A) {
         for (const auto& b : B) {
             row = a.row() * B_width + b.row();
@@ -123,7 +123,7 @@ SparseMatrix Gate::base_to_full(const SparseMatrix& base_gate, int num_qubits, c
         for (SparseMatrix::InnerIterator it(base_gate, k); it; ++it) {
             int row = int(it.row());
             int col = int(it.col());
-            std::complex<double> val = it.value();
+            Complex val = it.value();
             out_entries.emplace_back(Triplet(row, col, val));
         }
     }
@@ -140,7 +140,7 @@ SparseMatrix Gate::base_to_full(const SparseMatrix& base_gate, int num_qubits, c
         for (const auto& entry : out_entries) {
             int row = int(entry.row());
             int col = int(entry.col());
-            std::complex<double> val = entry.value();
+            Complex val = entry.value();
             new_entries.emplace_back(Triplet(row + delta, col + delta, val));
         }
         for (int i = 0; i < delta; ++i) {
