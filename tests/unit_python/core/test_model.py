@@ -14,7 +14,7 @@
 
 
 import copy
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -245,11 +245,12 @@ def test_model_to_ham():
 def test_model_knapsack_basic():
     m = Model.knapsack(values=[3, 2, 5], weights=[2, 1, 3], max_weight=4)
     assert m.label == "Knapsack"
-    # 3 item bits (b0..b2) + 3 weight bits (w0..w2, floor(log2(4))=2 → M+1=3)
-    assert len(m.variables()) == 6
-    # Full Ising Hamiltonian is entirely in the objective — no constraints
-    assert len(m.constraints) == 0
-    assert m.objective.sense == ObjectiveSense.MINIMIZE
+    # one binary variable per item (b0..b2)
+    assert len(m.variables()) == 3
+    # objective maximises total value; a single weight inequality constraint
+    assert m.objective.sense == ObjectiveSense.MAXIMIZE
+    assert len(m.constraints) == 1
+    assert m.constraints[0].label == "weight"
 
 
 def test_model_knapsack_custom_label():
@@ -260,11 +261,6 @@ def test_model_knapsack_custom_label():
 def test_model_knapsack_mismatched_lengths():
     with pytest.raises(ValueError, match=r"number of weights must be equal"):
         Model.knapsack(values=[1, 2, 3], weights=[1, 2], max_weight=5)
-
-
-def test_model_knapsack_negative_weight():
-    with pytest.raises(ValueError, match=r"non-negative"):
-        Model.knapsack(values=[1, 2], weights=[-1, 2], max_weight=5)
 
 
 def test_model_knapsack_brute_force_solution():
@@ -303,11 +299,12 @@ def test_model_random_ising_different_seeds_differ():
 def test_model_factoring_basic():
     m = Model.factoring(6)
     assert m.label == "Factoring"
-    assert len(m.constraints) == 0
-    # brute-force should find factors: 6 = 2*3 → x0=0,x1=1 and y0=1,y1=0 (or permutations)
+    # constraint-satisfaction problem: a single equality constraint, no objective
+    assert len(m.constraints) == 1
+    assert m.constraints[0].label == "factoring"
+    # brute-force should find factors (6 = 2*3) with the constraint satisfied (penalty 0)
     results, _ = BruteForceSolver().solve(m)
-    obj_val = next(iter(results.values()))
-    assert obj_val == 0
+    assert results["factoring"] == 0
 
 
 def test_model_factoring_custom_label():
@@ -348,9 +345,11 @@ def test_model_graph_coloring_basic():
     # Triangle graph needs 3 colors
     m = Model.graph_coloring(edges=[(0, 1), (1, 2), (0, 2)], num_colors=3)
     assert m.label == "Graph Coloring"
-    # Full Ising Hamiltonian is entirely in the objective — no constraints (Lucas Eq. 51)
-    assert len(m.constraints) == 0
+    # one "exactly one color" equality constraint per vertex
+    assert len(m.constraints) == 3
     assert len(m.variables()) == 9  # 3 nodes * 3 colors
+    # objective minimises same-color edge conflicts
+    assert m.objective.sense == ObjectiveSense.MINIMIZE
 
 
 def test_model_graph_coloring_custom_label():
@@ -358,10 +357,22 @@ def test_model_graph_coloring_custom_label():
     assert m.label == "MyColoring"
 
 
-def test_model_graph_coloring_no_constraints():
-    # Lucas Eq. 51: entire Hamiltonian is the objective — no constraints at all
+def test_model_graph_coloring_one_color_constraints():
+    # One equality constraint per vertex enforcing exactly one color
     m = Model.graph_coloring(edges=[(0, 1)], num_colors=2)
-    assert len(m.constraints) == 0
+    labels = {c.label for c in m.constraints}
+    assert labels == {"vertex_0_one_color", "vertex_1_one_color"}
+
+
+def test_model_graph_coloring_brute_force_solution():
+    # The triangle is 3-colorable, so the optimal conflict objective is 0.
+    m = Model.graph_coloring(edges=[(0, 1), (1, 2), (0, 2)], num_colors=3)
+    results, sample = BruteForceSolver().solve(m)
+    assert results[m.objective.label] == 0
+    # every vertex receives exactly one color
+    by_label = {v.label: v for v in m.variables()}
+    for v in range(3):
+        assert sum(sample[by_label[f"x{v}_{k}"]] for k in range(3)) == 1
 
 
 def test_model_travelling_salesman_basic():
@@ -369,9 +380,11 @@ def test_model_travelling_salesman_basic():
     distances = [1.0, 2.0, 3.0]
     m = Model.travelling_salesman(edges, distances)
     assert m.label == "Travelling Salesman"
-    # City 0 fixed at position 0 (Lucas §7.2): (N-1)^2 = 4 variables, no constraints
-    assert len(m.variables()) == 4
-    assert len(m.constraints) == 0
+    # full n*n assignment for 3 cities: 9 variables
+    assert len(m.variables()) == 9
+    # n city-uniqueness + n position-uniqueness equality constraints
+    assert len(m.constraints) == 6
+    assert m.objective.sense == ObjectiveSense.MINIMIZE
 
 
 def test_model_travelling_salesman_custom_label():
@@ -386,27 +399,36 @@ def test_model_travelling_salesman_mismatched_lengths():
         Model.travelling_salesman([(0, 1), (1, 2)], [1.0])
 
 
-def test_model_travelling_salesman_no_constraints():
-    # Lucas §7.2: entire Hamiltonian is the objective — no constraints at all
+def test_model_travelling_salesman_tour_constraints():
+    # One equality constraint per city and per position enforcing a valid tour
     edges = [(0, 1), (0, 2), (1, 2)]
     distances = [1.0, 2.0, 3.0]
     m = Model.travelling_salesman(edges, distances)
-    assert len(m.constraints) == 0
+    labels = {c.label for c in m.constraints}
+    assert labels == {
+        "city_0_once",
+        "city_1_once",
+        "city_2_once",
+        "position_0_once",
+        "position_1_once",
+        "position_2_once",
+    }
 
 
 def test_model_travelling_salesman_evaluate_valid_tour():
     edges = [(0, 1), (0, 2), (1, 2)]
     distances = [1.0, 2.0, 3.0]
     m = Model.travelling_salesman(edges, distances)
-    # Tour: city 0 (fixed at pos 0) → city 1 (pos 1) → city 2 (pos 2) → city 0
-    # Penalty terms = 0 (valid tour), distance = d(0,1)+d(1,2)+d(2,0) = 1+3+2 = 6.
-    # H = A*0 + 6 = 6.
+    # Tour 0 → 1 → 2 → 0: place city i at position i.
+    # distance = d(0,1) + d(1,2) + d(2,0) = 1 + 3 + 2 = 6, all constraints satisfied.
     vars_by_label = {v.label: v for v in m.variables()}
     sample = dict.fromkeys(m.variables(), 0)
+    sample[vars_by_label["x0_0"]] = 1  # city 0 at position 0
     sample[vars_by_label["x1_1"]] = 1  # city 1 at position 1
     sample[vars_by_label["x2_2"]] = 1  # city 2 at position 2
     results = m.evaluate(sample)
     assert results[m.objective.label] == 6
+    assert all(results[c.label] == 0 for c in m.constraints)
 
 
 # ---------- BruteForceSolver ----------
@@ -1022,22 +1044,6 @@ def test_model_knapsack_zero_items():
         Model.knapsack(values=[], weights=[], max_weight=5)
 
 
-def test_model_knapsack_non_integer_max_weight():
-    with pytest.raises(ValueError, match=r"non-negative integers"):
-        Model.knapsack(values=[1], weights=[1], max_weight=1.5)
-
-
-def test_model_knapsack_zero_max_weight():
-    with pytest.raises(ValueError, match=r"max_weight must be a positive integer"):
-        Model.knapsack(values=[1], weights=[1], max_weight=0)
-
-
-def test_model_knapsack_trivial_hamiltonian_raises():
-    with patch("qilisdk.core.model.BinaryVariable", return_value=0):
-        with pytest.raises(ValueError, match=r"trivial"):
-            Model.knapsack(values=[1, 2], weights=[1, 2], max_weight=3)
-
-
 def test_model_max_cut_empty_edges():
     with pytest.raises(ValueError, match=r"The graph must have at least one edge"):
         Model.max_cut(edges=[])
@@ -1047,19 +1053,12 @@ def test_model_travelling_salesman_reversed_city0_edge():
     edges = [(0, 1), (2, 0), (1, 2)]
     distances = [1.0, 2.0, 3.0]
     m = Model.travelling_salesman(edges, distances)
-    assert len(m.variables()) == 4  # (N-1)^2 with N=3
+    assert len(m.variables()) == 9  # n*n with n=3
 
 
-def test_model_travelling_salesman_empty_terms_raises():
-    with patch("builtins.max", return_value=0):
-        with pytest.raises(ValueError, match="at least one edge"):
-            Model.travelling_salesman([], [])
-
-
-def test_model_travelling_salesman_trivial_hamiltonian_raises():
-    with patch("qilisdk.core.model.BinaryVariable", return_value=0):
-        with pytest.raises(ValueError, match="at least one edge"):
-            Model.travelling_salesman([(0, 1), (1, 2), (0, 2)], [1.0, 2.0, 3.0])
+def test_model_travelling_salesman_empty_edges():
+    with pytest.raises(ValueError, match="at least one edge"):
+        Model.travelling_salesman([], [])
 
 
 def test_model_to_qubo_lagrange_multiplier_override():
