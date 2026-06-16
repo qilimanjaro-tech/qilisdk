@@ -1189,7 +1189,9 @@ void StabilizerStateSum::apply_gate(const Gate& gate) {
 
     // T gates: branch on the target qubit. On the 0 branch we do nothing, on the 1 branch we apply a phase of e^{iπ/4}
     if (name == "T" && controls.empty()) {
-        static const std::complex<double> t_phase = std::exp(std::complex<double>(0.0, M_PI / 4.0));
+        // M_PI is not a standard C++ macro (undefined under MSVC without _USE_MATH_DEFINES), so use an explicit constant.
+        constexpr double pi = 3.14159265358979323846;
+        static const std::complex<double> t_phase = std::exp(std::complex<double>(0.0, pi / 4.0));
         branch_qubit = targets[0];
         on_zero = [](const StabilizerState& s, std::complex<double> c) { return StabilizerStateSum(s.get_nqubits(), {s}, {c}); };
         on_one = [](const StabilizerState& s, std::complex<double> c) { return StabilizerStateSum(s.get_nqubits(), {s}, {c * t_phase}); };
