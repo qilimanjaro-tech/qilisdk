@@ -257,7 +257,7 @@ class Schedule(Parameterizable):
         )
 
     @classmethod
-    def linear_list(
+    def chained_linear(
         cls,
         hamiltonians: list[Hamiltonian],
         total_time: float,

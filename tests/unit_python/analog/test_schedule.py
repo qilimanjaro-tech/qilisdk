@@ -794,31 +794,31 @@ def test_schedule_constant():
     assert _isclose(sched.T, 10.0)
 
 
-def test_schedule_linear_list_single_delegates_to_constant():
+def test_schedule_chained_linear_single_delegates_to_constant():
     dt = 1
     H1 = PauliX(0).to_hamiltonian()
-    sched = Schedule.linear_list([H1], total_time=10, dt=dt)
+    sched = Schedule.chained_linear([H1], total_time=10, dt=dt)
     assert "constant" in sched.hamiltonians
     assert _isclose(sched.coefficients["constant"][0], 1.0)
     assert _isclose(sched.coefficients["constant"][10], 1.0)
 
 
-def test_schedule_linear_list_two_delegates_to_linear():
+def test_schedule_chained_linear_two_delegates_to_linear():
     dt = 1
     H1 = PauliX(0).to_hamiltonian()
     H2 = PauliZ(0).to_hamiltonian()
-    sched = Schedule.linear_list([H1, H2], total_time=10, dt=dt)
+    sched = Schedule.chained_linear([H1, H2], total_time=10, dt=dt)
     assert sched.hamiltonians == {"driver": H1, "problem": H2}
     assert _isclose(sched.coefficients["driver"][0], 1.0)
     assert _isclose(sched.coefficients["problem"][10], 1.0)
 
 
-def test_schedule_linear_list_three():
+def test_schedule_chained_linear_three():
     dt = 1
     H1 = PauliX(0).to_hamiltonian()
     H2 = PauliZ(0).to_hamiltonian()
     H3 = PauliX(0).to_hamiltonian()
-    sched = Schedule.linear_list([H1, H2, H3], total_time=10, dt=dt)
+    sched = Schedule.chained_linear([H1, H2, H3], total_time=10, dt=dt)
     assert sched.hamiltonians == {"h0": H1, "h1": H2, "h2": H3}
 
     # boundary values
@@ -840,7 +840,7 @@ def test_schedule_linear_list_three():
         assert _isclose(total, 1.0), f"sum={total} at t={t}"
 
 
-def test_schedule_linear_list_four():
+def test_schedule_chained_linear_four():
     dt = 1
     hamiltonians = [
         PauliX(0).to_hamiltonian(),
@@ -848,7 +848,7 @@ def test_schedule_linear_list_four():
         PauliX(0).to_hamiltonian(),
         PauliZ(0).to_hamiltonian(),
     ]
-    sched = Schedule.linear_list(hamiltonians, total_time=9, dt=dt)
+    sched = Schedule.chained_linear(hamiltonians, total_time=9, dt=dt)
     assert list(sched.hamiltonians.keys()) == ["h0", "h1", "h2", "h3"]
 
     # each Hamiltonian peaks at its own segment boundary
@@ -863,9 +863,9 @@ def test_schedule_linear_list_four():
         assert _isclose(total, 1.0), f"sum={total} at t={t}"
 
 
-def test_schedule_linear_list_empty_raises():
+def test_schedule_chained_linear_empty_raises():
     with pytest.raises(ValueError, match=r"At least one Hamiltonian"):
-        Schedule.linear_list([], total_time=10)
+        Schedule.chained_linear([], total_time=10)
 
 
 def test_calculate_eigenvalues_with_too_many_qubits_runs_but_warns(monkeypatch):
