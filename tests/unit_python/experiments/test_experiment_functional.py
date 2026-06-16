@@ -14,48 +14,110 @@
 
 import numpy as np
 
-from qilisdk.experiments import ExperimentFunctional, RabiExperiment, T1Experiment, T2Experiment, TwoTonesExperiment
+from qilisdk.experiments import (
+    ExperimentFunctional,
+    RabiExperiment,
+    T1Experiment,
+    T2Experiment,
+    TwoTonesAtFixedFluxBiasExperiment,
+    TwoTonesVsFluxBiasExperiment,
+)
 
 
 def test_experiment_functional_initialization():
     qubit = 0
-    functional = ExperimentFunctional(qubit=qubit)
+    averages = 1000
+
+    functional = ExperimentFunctional(qubit=qubit, averages=averages)
+
     assert functional.qubit == qubit
+    assert functional.averages == averages
 
 
 def test_rabi_experiment_initialization():
     qubit = 0
+    averages = 1000
     values = np.array([0.1, 0.2, 0.3])
-    rabi_exp = RabiExperiment(qubit=qubit, drive_duration_values=values)
+
+    rabi_exp = RabiExperiment(qubit=qubit, averages=averages, drive_duration_values=values)
+
     assert rabi_exp.qubit == qubit
+    assert rabi_exp.averages == averages
     assert np.array_equal(rabi_exp.drive_duration_values, values)
 
 
 def test_t1_experiment_initialization():
     qubit = 0
+    averages = 1000
     values = np.array([10, 20, 30])
-    t1_exp = T1Experiment(qubit=qubit, wait_duration_values=values)
+
+    t1_exp = T1Experiment(qubit=qubit, averages=averages, wait_duration_values=values)
+
     assert t1_exp.qubit == qubit
+    assert t1_exp.averages == averages
     assert np.array_equal(t1_exp.wait_duration_values, values)
 
 
 def test_t2_experiment_initialization():
     qubit = 0
+    averages = 1000
     values = np.array([5, 15, 25])
-    t2_exp = T2Experiment(qubit=qubit, wait_duration_values=values)
+
+    t2_exp = T2Experiment(qubit=qubit, averages=averages, wait_duration_values=values)
+
     assert t2_exp.qubit == qubit
+    assert t2_exp.averages == averages
     assert np.array_equal(t2_exp.wait_duration_values, values)
 
 
 def test_two_tones_experiment_initialization():
     qubit = 0
+    averages = 1000
     freq_start = 4.0
     freq_stop = 5.0
     freq_step = 5.0
-    two_tones_exp = TwoTonesExperiment(
-        qubit=qubit, frequency_start=freq_start, frequency_stop=freq_stop, frequency_step=freq_step
+
+    two_tones_exp = TwoTonesAtFixedFluxBiasExperiment(
+        qubit=qubit,
+        averages=averages,
+        frequency_start=freq_start,
+        frequency_stop=freq_stop,
+        frequency_step=freq_step,
     )
+
     assert two_tones_exp.qubit == qubit
+    assert two_tones_exp.averages == averages
     assert np.isclose(two_tones_exp.frequency_start, freq_start)
     assert np.isclose(two_tones_exp.frequency_stop, freq_stop)
     assert np.isclose(two_tones_exp.frequency_step, freq_step)
+
+
+def test_two_tones_versus_flux_experiment_initialization():
+    qubit = 0
+    averages = 1000
+    freq_start = 4.0
+    freq_stop = 5.0
+    freq_step = 5.0
+    flux_start = -1.0
+    flux_stop = 1.0
+    flux_step = 0.5
+
+    two_tones_flux_exp = TwoTonesVsFluxBiasExperiment(
+        qubit=qubit,
+        averages=averages,
+        frequency_start=freq_start,
+        frequency_stop=freq_stop,
+        frequency_step=freq_step,
+        flux_start=flux_start,
+        flux_stop=flux_stop,
+        flux_step=flux_step,
+    )
+
+    assert two_tones_flux_exp.qubit == qubit
+    assert two_tones_flux_exp.averages == averages
+    assert np.isclose(two_tones_flux_exp.frequency_start, freq_start)
+    assert np.isclose(two_tones_flux_exp.frequency_stop, freq_stop)
+    assert np.isclose(two_tones_flux_exp.frequency_step, freq_step)
+    assert np.isclose(two_tones_flux_exp.flux_start, flux_start)
+    assert np.isclose(two_tones_flux_exp.flux_stop, flux_stop)
+    assert np.isclose(two_tones_flux_exp.flux_step, flux_step)
