@@ -22,7 +22,9 @@
 #include <set>
 #include <vector>
 
+#include "../../../libs/eigen.h"
 #include "../digital/gate.h"
+#include "../representations/matrix_free_hamiltonian.h"
 
 // GCOV_EXCL_BR_START
 
@@ -54,6 +56,8 @@ class StabilizerState {
     std::string representative(int* support_rank = nullptr) const;
     std::complex<double> matrix_element(const Gate& gate, const std::string& b) const;
     std::complex<double> dropped_global_phase(const StabilizerState& after, const Gate& gate) const;
+    DenseMatrix as_dense() const;
+    double expectation_value(const MatrixFreeHamiltonian& H) const;
 };
 
 class StabilizerStateSum {
@@ -88,6 +92,8 @@ class StabilizerStateSum {
     void truncate();
     void combine_duplicates();
     void normalize();
+    DenseMatrix as_dense() const;
+    double expectation_value(const MatrixFreeHamiltonian& H) const;
 };
 
 // GCOV_EXCL_BR_STOP

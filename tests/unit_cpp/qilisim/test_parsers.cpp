@@ -1745,11 +1745,55 @@ TEST(ConstructResultsStabilizer, SamplingReadout_Succeeds) {
     EXPECT_NO_THROW({ auto result = construct_result_object(state, readout, noise_model_cpp, 1, config, qubits_to_measure); });
 }
 
-TEST(ConstructResultsStabilizer, UnsupportedReadoutThrows) {
+TEST(ConstructResultsStabilizer, ExpectationReadout_Succeeds) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.readout import ExpectationReadout
+        from qilisdk.analog.hamiltonian import X
+        _stab_ro_exp = [ExpectationReadout(observables=[X(0)])]
+    )");
+    // |0> has <X(0)> = 0; this exercises the stabilizer ExpectationReadout branch.
+    StabilizerStateSum state(1);
+    py::list readout = py::globals()["_stab_ro_exp"].cast<py::list>();
+    NoiseModelCpp noise_model_cpp;
+    QiliSimConfig config;
+    std::vector<bool> qubits_to_measure = {true};
+    EXPECT_NO_THROW({ auto result = construct_result_object(state, readout, noise_model_cpp, 1, config, qubits_to_measure); });
+}
+
+TEST(ConstructResultsStabilizer, StateTomographyReadoutExact_Succeeds) {
     py::gil_scoped_acquire gil;
     py::exec(R"(
         from qilisdk.readout import StateTomographyReadout
-        _stab_ro_bad = [StateTomographyReadout()]
+        _stab_ro_tomo = [StateTomographyReadout()]
+    )");
+    StabilizerStateSum state(1);
+    py::list readout = py::globals()["_stab_ro_tomo"].cast<py::list>();
+    NoiseModelCpp noise_model_cpp;
+    QiliSimConfig config;
+    std::vector<bool> qubits_to_measure = {true};
+    EXPECT_NO_THROW({ auto result = construct_result_object(state, readout, noise_model_cpp, 1, config, qubits_to_measure); });
+}
+
+TEST(ConstructResultsStabilizer, StateTomographyReadoutNonExact_Throws) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.readout import StateTomographyReadout
+        _stab_ro_tomo_bad = [StateTomographyReadout(method="mle")]
+    )");
+    StabilizerStateSum state(1);
+    py::list readout = py::globals()["_stab_ro_tomo_bad"].cast<py::list>();
+    NoiseModelCpp noise_model_cpp;
+    QiliSimConfig config;
+    std::vector<bool> qubits_to_measure = {true};
+    EXPECT_THROW({ auto result = construct_result_object(state, readout, noise_model_cpp, 1, config, qubits_to_measure); }, py::value_error);
+}
+
+TEST(ConstructResultsStabilizer, UnsupportedReadoutThrows) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.readout import ReadoutMethod
+        _stab_ro_bad = [ReadoutMethod()]
     )");
     StabilizerStateSum state(1);
     py::list readout = py::globals()["_stab_ro_bad"].cast<py::list>();

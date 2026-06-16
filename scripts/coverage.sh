@@ -23,6 +23,20 @@ uv sync -v --all-groups --extra all-cu13 -Ccmake.build-type=Debug -Ccmake.define
 echo "Running C++ tests with coverage..."
 GCOV_PREFIX=./tests/unit_cpp/coverage GCOV_PREFIX_STRIP=5 ./tests/unit_cpp/test_cpp --gtest_brief=1
 
+# Realign the runtime .gcda files with their .gcno files
+echo "Realigning C++ coverage data..."
+COVERAGE_DIR=./tests/unit_cpp/coverage
+find "$COVERAGE_DIR" -name '*.gcno' | while IFS= read -r gcno; do
+    rel="${gcno#"$COVERAGE_DIR"/}"
+    want="${rel%.gcno}.gcda"
+    canonical="$COVERAGE_DIR/$want"
+    best=$(find "$COVERAGE_DIR" -path "*/$want" -printf '%d %p\n' 2>/dev/null | sort -rn | head -1 | cut -d' ' -f2-)
+    if [ -n "$best" ] && [ "$best" != "$canonical" ]; then
+        mkdir -p "$(dirname "$canonical")"
+        mv -f "$best" "$canonical"
+    fi
+done
+
 # Run Python coverage
 echo "Running Python tests with coverage..."
 python3 -m pytest --cov=qilisdk --cov-report=xml --cov-report=term-missing tests/unit_python/

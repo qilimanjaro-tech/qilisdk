@@ -502,6 +502,42 @@ _te_mm_mf = _TE_MM_MF()
     EXPECT_THROW(sim.execute_analog_evolution(py::globals()["_te_mm_mf"], py::list(), py::none(), p), py::value_error);
 }
 
+TEST_F(ExecuteTimeEvolutionTest, HamiltonianCountMismatch_RK4MatrixFree_ThrowsValueError) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.functionals.analog_evolution import AnalogEvolution
+from qilisdk.analog.hamiltonian import Z
+from qilisdk.core.qtensor import QTensor
+import scipy.sparse as sp, numpy as np
+
+_rho_mm_rk4 = QTensor(sp.csr_matrix(np.array([[1.+0j,0],[0,0]], dtype=complex)))
+
+class _WeirdHams_RK4:
+    def keys(self): return ["h0"]       # 1 key  -> parameters_list.size() == 1
+    def values(self): return [Z(0), Z(0)]  # 2 vals -> hamiltonians.size()  == 2
+
+class _FakeSched_MM_RK4:
+    nqubits = 1
+    tlist = [0.1, 0.2, 0.3]
+    coefficients = {"h0": {0.1: 1.0, 0.2: 1.0, 0.3: 1.0}}
+    hamiltonians = _WeirdHams_RK4()
+    def get_parameters(self): return {}
+    def set_parameters(self, _): pass
+
+class _TE_MM_RK4(AnalogEvolution):
+    def __init__(self):
+        object.__init__(self)
+        self.schedule = _FakeSched_MM_RK4()
+        self._initial_state = _rho_mm_rk4
+        self.store_intermediate_results = False
+
+_te_mm_rk4 = _TE_MM_RK4()
+    )");
+    py::dict p;
+    p["evolution_method"] = py::str("integrate_rk4_matrix_free");
+    EXPECT_THROW(sim.execute_analog_evolution(py::globals()["_te_mm_rk4"], py::list(), py::none(), p), py::value_error);
+}
+
 TEST_F(ExecuteTimeEvolutionTest, HamiltonianCountMismatch_Standard_ThrowsValueError) {
     py::gil_scoped_acquire gil;
     py::exec(R"(

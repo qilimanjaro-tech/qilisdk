@@ -437,7 +437,7 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const Sp
 
 #include <iostream>
 
-void sampling_stabilizer(const std::vector<Gate>& gates, int n_qubits, const StabilizerStateSum& initial_state, NoiseModelCpp& noise_model_cpp, StabilizerStateSum& state, std::vector<py::object>& intermediate_results, const QiliSimConfig& config, const py::object& readout) {
+void sampling_stabilizer(const std::vector<Gate>& gates, int n_qubits, const StabilizerStateSum& initial_state, NoiseModelCpp& noise_model_cpp, StabilizerStateSum& state, const QiliSimConfig& config, const py::object& readout) {
     /*
     Execute a sampling functional using a stabilizer simulator.
 

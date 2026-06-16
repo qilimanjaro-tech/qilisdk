@@ -95,7 +95,7 @@ TEST(StabilizerStateConstructor, InitialPhasesAreZero) {
 }
 
 TEST(StabilizerStateConstructor, ThrowsWhenTooManyQubits) {
-    EXPECT_THROW(StabilizerState{MAX_ROWS_STABILIZER}, std::invalid_argument);
+    EXPECT_THROW(StabilizerState{MAX_ROWS_STABILIZER + 1}, std::invalid_argument);
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -1312,6 +1312,103 @@ TEST(StabilizerStateSum, Sample_TGate_DoesNotChangeMeasurementProbabilities) {
     auto counts = sss.sample(nshots);
     double p0 = static_cast<double>(counts["0"]) / nshots;
     EXPECT_NEAR(p0, 0.5, 0.05) << "T should not bias Z-basis statistics; P(0) was " << p0;
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// expectation_value: must match the dense statevector reference (incl. T-gate sums)
+// ──────────────────────────────────────────────────────────────────────────────
+
+namespace {
+
+// Build a StabilizerStateSum from a gate list and return |stabilizer <H> - dense <H>|. The dense
+// reference is <v|H|v>/<v|v> on the exact statevector v = sum.as_dense(), which is the ground truth.
+double sumExpectationError(int n, const std::vector<std::tuple<std::string, std::vector<int>, std::vector<int>>>& ops, const MatrixFreeHamiltonian& H) {
+    StabilizerStateSum sum(n);
+    for (const auto& [name, ctr, tgt] : ops) {
+        if (name == "T") {
+            sum.apply_gate(Gate("T", tMatrix(), ctr, tgt, {}));
+        } else {
+            sum.apply_gate(Gate(name, make2x2Identity(), ctr, tgt, {}));
+        }
+    }
+    DenseMatrix v = sum.as_dense();
+    double nrm2 = 0.0;
+    for (int i = 0; i < v.rows(); ++i) {
+        nrm2 += std::norm(v(i, 0));
+    }
+    double dense_ev = H.expectation_value(v) / nrm2;
+    double stab_ev = sum.expectation_value(H);
+    return std::abs(stab_ev - dense_ev);
+}
+
+}  // namespace
+
+TEST(StabilizerStateSumExpectation, Bell_ZZ_IsOne) {
+    MatrixFreeHamiltonian H(2);
+    H.add(cd(1, 0), std::vector<MatrixFreeOperator>{MatrixFreeOperator("Z", 0), MatrixFreeOperator("Z", 1)});
+    EXPECT_LT(sumExpectationError(2, {{"H", {}, {0}}, {"X", {0}, {1}}}, H), 1e-9);
+}
+
+TEST(StabilizerStateSumExpectation, Bell_XX_IsOne_ZsAreZero) {
+    MatrixFreeHamiltonian Hxx(2);
+    Hxx.add(cd(1, 0), std::vector<MatrixFreeOperator>{MatrixFreeOperator("X", 0), MatrixFreeOperator("X", 1)});
+    MatrixFreeHamiltonian Hz(2);
+    Hz.add(cd(1, 0), MatrixFreeOperator("Z", 0));
+    const std::vector<std::tuple<std::string, std::vector<int>, std::vector<int>>> bell = {{"H", {}, {0}}, {"X", {0}, {1}}};
+    EXPECT_LT(sumExpectationError(2, bell, Hxx), 1e-9);
+    EXPECT_LT(sumExpectationError(2, bell, Hz), 1e-9);
+}
+
+TEST(StabilizerStateSumExpectation, TState_XYZ_CrossTerms) {
+    // H|0>,T -> (|0> + e^{i pi/4}|1>)/sqrt2: <X>=<Y>=1/sqrt2, <Z>=0. Exercises the two-term cross sum.
+    const std::vector<std::tuple<std::string, std::vector<int>, std::vector<int>>> ht = {{"H", {}, {0}}, {"T", {}, {0}}};
+    for (const char* p : {"X", "Y", "Z"}) {
+        MatrixFreeHamiltonian H(1);
+        H.add(cd(1, 0), MatrixFreeOperator(p, 0));
+        EXPECT_LT(sumExpectationError(1, ht, H), 1e-9) << "Pauli " << p;
+    }
+}
+
+TEST(StabilizerStateSumExpectation, RandomCircuitsWithT_MatchDense) {
+    std::mt19937 rng(0xC0FFEE);
+    const char* singles[] = {"H", "X", "Y", "Z", "S", "T"};
+    const char* paulis[] = {"X", "Y", "Z"};
+    double worst = 0.0;
+    for (int trial = 0; trial < 60; ++trial) {
+        const int n = 2 + static_cast<int>(rng() % 2);  // 2 or 3 qubits
+        std::vector<std::tuple<std::string, std::vector<int>, std::vector<int>>> ops;
+        const int ngates = 4 + static_cast<int>(rng() % 6);
+        for (int g = 0; g < ngates; ++g) {
+            if (rng() % 3 == 0) {  // CNOT
+                int c = static_cast<int>(rng() % n), t = static_cast<int>(rng() % n);
+                while (t == c) {
+                    t = static_cast<int>(rng() % n);
+                }
+                ops.push_back({"X", {c}, {t}});
+            } else {
+                ops.push_back({singles[rng() % 6], {}, {static_cast<int>(rng() % n)}});
+            }
+        }
+        // Random Hermitian Hamiltonian: a few real-coefficient multi-qubit Pauli terms.
+        MatrixFreeHamiltonian H(n);
+        const int nterms = 1 + static_cast<int>(rng() % 3);
+        for (int term = 0; term < nterms; ++term) {
+            std::vector<MatrixFreeOperator> ps;
+            for (int q = 0; q < n; ++q) {
+                int r = static_cast<int>(rng() % 4);  // 0 = identity on this qubit
+                if (r > 0) {
+                    ps.push_back(MatrixFreeOperator(paulis[r - 1], q));
+                }
+            }
+            if (ps.empty()) {
+                ps.push_back(MatrixFreeOperator("Z", 0));
+            }
+            const double coeff = (static_cast<double>(rng() % 200) - 100.0) / 50.0;
+            H.add(cd(coeff, 0), ps);
+        }
+        worst = std::max(worst, sumExpectationError(n, ops, H));
+    }
+    EXPECT_LT(worst, 1e-6) << "worst stabilizer-sum <H> vs dense over random+T circuits = " << worst;
 }
 
 // GCOV_EXCL_BR_STOP

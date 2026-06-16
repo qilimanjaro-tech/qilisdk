@@ -97,24 +97,14 @@ struct ZPhaseSolver {
     std::vector<bool> rph;                             // phase bit per row
     std::vector<std::pair<bool, int>> pivots;          // (is_x, qubit) for each accepted pivot, in order
 
-    // Symplectic phase exponent contributed by multiplying generator g (gx, gz) into h (hx, hz).
-    static int phase_exp(const std::bitset<MAX_ROWS_STABILIZER>& gx, const std::bitset<MAX_ROWS_STABILIZER>& gz, const std::bitset<MAX_ROWS_STABILIZER>& hx, const std::bitset<MAX_ROWS_STABILIZER>& hz, int n) {
-        int exp = 0;
-        for (int q = 0; q < n; ++q) {
-            bool x1 = gx[q], z1 = gz[q];
-            if (!x1 && !z1) {
-                continue;
-            }
-            bool x2 = hx[q], z2 = hz[q];
-            if (x1 && z1) {
-                exp += (int)z2 - (int)x2;
-            } else if (x1) {
-                exp += (int)z2 * (2 * (int)x2 - 1);
-            } else {
-                exp += (int)x2 * (1 - 2 * (int)z2);
-            }
-        }
-        return exp;
+    // Symplectic phase exponent contributed by multiplying generator g (gx, gz) into h (hx, hz)
+    static int phase_exp(const std::bitset<MAX_ROWS_STABILIZER>& gx, const std::bitset<MAX_ROWS_STABILIZER>& gz, const std::bitset<MAX_ROWS_STABILIZER>& hx, const std::bitset<MAX_ROWS_STABILIZER>& hz, int /*n*/) {
+        const std::bitset<MAX_ROWS_STABILIZER> Yg = gx & gz;   // g has Y here: contributes z2 - x2
+        const std::bitset<MAX_ROWS_STABILIZER> Xg = gx & ~gz;  // g has X here: contributes z2 * (2*x2 - 1)
+        const std::bitset<MAX_ROWS_STABILIZER> Zg = ~gx & gz;  // g has Z here: contributes x2 * (1 - 2*z2)
+        const std::bitset<MAX_ROWS_STABILIZER> plus = (Yg & hz & ~hx) | (Xg & hz & hx) | (Zg & hx & ~hz);
+        const std::bitset<MAX_ROWS_STABILIZER> minus = (Yg & hx & ~hz) | (Xg & hz & ~hx) | (Zg & hx & hz);
+        return static_cast<int>(plus.count()) - static_cast<int>(minus.count());
     }
 
     // row h <- row_h * row_g (Pauli product), updating its phase.
@@ -191,6 +181,31 @@ struct ZPhaseSolver {
             }
         }
         return tph;
+    }
+
+    // Expectation <P> of a bare Pauli P given by (tx, tz) on this pure stabilizer state:
+    //   +1 if P lies in the stabilizer group, -1 if -P does, and 0 otherwise.
+    // We reduce P against the same isolated pivots query() uses. If every X/Z component cancels then
+    // P equals (-1)^phase times the product of the corresponding generators, so P (or -P) is in the
+    // group and the accumulated phase is the sign. Any leftover support means P anticommutes with
+    // some generator, so it averages to zero.
+    int expectation_pauli(std::bitset<MAX_ROWS_STABILIZER> tx, std::bitset<MAX_ROWS_STABILIZER> tz) const {
+        bool tph = false;
+        for (size_t pr = 0; pr < pivots.size(); ++pr) {
+            bool is_x = pivots[pr].first;
+            int q = pivots[pr].second;
+            if (is_x ? tx[q] : tz[q]) {
+                int exp = 2 * (int)rph[pr] + 2 * (int)tph + phase_exp(rx[pr], rz[pr], tx, tz, n);
+                exp = ((exp % 4) + 4) % 4;
+                tph = (exp == 2);
+                tx ^= rx[pr];
+                tz ^= rz[pr];
+            }
+        }
+        if (tx.any() || tz.any()) {
+            return 0;
+        }
+        return tph ? -1 : 1;
     }
 };
 
@@ -565,7 +580,6 @@ std::map<std::string, int> StabilizerStateSum::sample(int nshots) const {
     // We add an extra factor to try make sure we find all interesting bitstrings
     // Could be made a seperate parameter, but the user can increase this by increasing the nshots anyway
     const size_t M = states.size();
-    const int extra_sample_factor = 10;
 
     // Build a cumulative weight vector for efficient importance sampling
     std::vector<double> cum_weights(M);
@@ -575,15 +589,10 @@ std::map<std::string, int> StabilizerStateSum::sample(int nshots) const {
         cum_weights[i] = total_weight;
     }
 
-    // Try to find all interesting bitstrings. The per-shot work (sampling a term via Gaussian
-    // elimination) is independent, so we fan the shots out across threads. Each thread uses its own
-    // engine seeded from a single draw of the shared rng; this keeps the result reproducible for a
-    // fixed thread count and avoids racing on rng state. We only collect the distinct bitstrings
-    // here (their exact amplitudes are computed afterwards).
-    const int total_shots = nshots * extra_sample_factor;
+    // Try to find all interesting bitstrings
+    const int total_shots = nshots;
     const uint64_t base_seed = rng();
     std::set<std::string> unique_samples;
-
 #if defined(_OPENMP)
 #pragma omp parallel
 #endif
@@ -598,15 +607,15 @@ std::map<std::string, int> StabilizerStateSum::sample(int nshots) const {
         std::mt19937_64 engine(base_seed + static_cast<uint64_t>(tid) + 1);
         std::uniform_real_distribution<double> weight_dist(0.0, total_weight);
         std::set<std::string> local_samples;
-
         const int lo = (tid * total_shots) / nthreads;
         const int hi = ((tid + 1) * total_shots) / nthreads;
         for (int shot = lo; shot < hi; ++shot) {
             // Pick a state with probability proportional to |c_i|
             double r = weight_dist(engine);
             size_t index = static_cast<size_t>(std::lower_bound(cum_weights.begin(), cum_weights.end(), r) - cum_weights.begin());
-            if (index >= M)
+            if (index >= M) {
                 index = M - 1;
+            }
 
             // Sample a bitstring from that state using this thread's engine
             local_samples.insert(states[index].sample(engine));
@@ -1328,7 +1337,7 @@ void StabilizerStateSum::truncate() {
     }
 
     // End early if we don't have more than max_terms terms
-    if (states.size() <= max_terms) {
+    if (int(states.size()) <= max_terms) {
         return;
     }
 
@@ -1410,4 +1419,260 @@ void StabilizerStateSum::normalize() {
             c /= norm;
         }
     }
+}
+
+DenseMatrix StabilizerState::as_dense() const {
+    /*
+    Convert the StabilizerState to a dense vector representation.
+    This is done by computing the amplitude of each computational basis state.
+
+    Returns:
+        DenseMatrix: The dense vector representation of the StabilizerState.
+    */
+    int dim = 1 << nqubits;
+    DenseMatrix result(dim, 1);
+    for (int i = 0; i < dim; ++i) {
+        std::string b = std::bitset<MAX_ROWS_STABILIZER>(i).to_string().substr(MAX_ROWS_STABILIZER - nqubits);
+        result(i, 0) = amplitude(b);
+    }
+    return result;
+}
+
+DenseMatrix StabilizerStateSum::as_dense() const {
+    /*
+    Convert the StabilizerStateSum to a dense matrix representation.
+    Each StabilizerState is converted to its dense vector, and the sum is computed.
+
+    Returns:
+        DenseMatrix: The dense matrix representation of the StabilizerStateSum.
+    */
+    int dim = 1 << nqubits;
+    DenseMatrix result(dim, 1);
+    result.setZero();
+    for (size_t k = 0; k < states.size(); ++k) {
+        DenseMatrix vec = states[k].as_dense();
+        result += coefficients[k] * vec;
+    }
+    return result;
+}
+
+double StabilizerState::expectation_value(const MatrixFreeHamiltonian& h) const {
+    /*
+    Compute the expectation value of a Hamiltonian with respect to the StabilizerState.
+    This is done by summing the expectation values of each term in the Hamiltonian.
+
+    Args:
+        h (MatrixFreeHamiltonian&): The Hamiltonian to compute the expectation value for.
+
+    Returns:
+        double: The expectation value <psi|H|psi> where |psi> is the StabilizerState.
+    */
+
+    // Reduce the tableau once; each Pauli term is then a cheap O(n^2/word) membership/sign query.
+    ZPhaseSolver solver;
+    solver.build(x_bits, z_bits, phases, nqubits);
+
+    // PauliString masks are bounded by MAX_QUBITS_PAULI, so never read past that when copying them.
+    const int nq = std::min(nqubits, MAX_QUBITS_PAULI);
+
+    // The operator map isn't random-access, so snapshot the terms to fan the per-term queries out.
+    const auto& operators = h.get_operators();
+    std::vector<const std::pair<const PauliString, std::complex<double>>*> terms;
+    terms.reserve(operators.size());
+    for (const auto& term : operators) {
+        terms.push_back(&term);
+    }
+
+    double total = 0.0;
+    const int nterms = static_cast<int>(terms.size());
+#if defined(_OPENMP)
+#pragma omp parallel for reduction(+ : total) schedule(static)
+#endif
+    for (int t = 0; t < nterms; ++t) {
+        const PauliString& pauli = terms[t]->first;
+        std::bitset<MAX_ROWS_STABILIZER> tx, tz;
+        for (int q = 0; q < nq; ++q) {
+            if (pauli.x_mask[q]) {
+                tx.set(q);
+            }
+            if (pauli.z_mask[q]) {
+                tz.set(q);
+            }
+        }
+        // <P> is real (+1/-1/0); a Hermitian Hamiltonian has real Pauli coefficients.
+        int ev = solver.expectation_pauli(tx, tz);
+        if (ev != 0) {
+            total += terms[t]->second.real() * ev;
+        }
+    }
+    return total;
+}
+
+namespace {
+
+// The support of a stabilizer state is an affine subspace of {0,1}^n: a base point plus the GF(2)
+// span of the X-supports of its X-pivot generators. Enumerating it lets us evaluate overlaps
+// <a|P|b> between two (generally non-orthogonal) stabilizer states by direct summation.
+struct Support {
+    std::string base;
+    std::vector<std::bitset<MAX_ROWS_STABILIZER>> dirs;  // difference-space basis (generator X-supports)
+};
+
+Support get_support(const StabilizerState& s) {
+    /*
+    Compute the support of a stabilizer state as an affine subspace of {0,1}^n.
+    The support is represented by a base point (a computational basis state with nonzero amplitude)
+    and a set of direction vectors (the X-supports of the X-pivot generators).
+
+    Args:
+        s (StabilizerState&): The stabilizer state to compute the support for.
+
+    Returns:
+        Support: The support of the stabilizer state.
+    */
+    Support sup;
+    sup.base = s.representative();
+    ZPhaseSolver solver;
+    solver.build(s.get_x_bits(), s.get_z_bits(), s.get_phases(), s.get_nqubits());
+    for (size_t pr = 0; pr < solver.pivots.size(); ++pr) {
+        if (solver.pivots[pr].first) {
+            sup.dirs.push_back(solver.rx[pr]);
+        }
+    }
+    return sup;
+}
+
+std::complex<double> pauli_overlap(const StabilizerState& a, const StabilizerState& b, const PauliString& P, const Support& supA) {
+    /*
+    Compute the overlap <a|P|b> between two stabilizer states a and b, where P is a Pauli operator.
+    The support of a is enumerated, and for each basis state x in the support,
+    the amplitude <x|a> is computed, and the corresponding basis state y = x XOR px is found,
+    where px is the X-support of P. The amplitude <y|b> is then computed, and the contribution
+    to the overlap is accumulated.
+
+    Args:
+        a (StabilizerState&): The first stabilizer state.
+        b (StabilizerState&): The second stabilizer state.
+        P (PauliString&): The Pauli operator.
+        supA (Support&): The support of the first stabilizer state.
+
+    Returns:
+        std::complex<double>: The overlap <a|P|b>.
+    */
+    const int n = a.get_nqubits();
+    const int k = static_cast<int>(supA.dirs.size());
+    const int MAX_SUPPORT_DIM = 24;
+    if (k > MAX_SUPPORT_DIM) {
+        throw std::runtime_error("StabilizerStateSum::expectation_value: an off-diagonal term has support dimension " + std::to_string(k) + " (> " + std::to_string(MAX_SUPPORT_DIM) + "); the cross-term overlap enumeration would be too expensive.");
+    }
+    const int nq = std::min(n, MAX_QUBITS_PAULI);
+    std::complex<double> total = 0.0;
+    const uint64_t lim = uint64_t(1) << k;
+    for (uint64_t m = 0; m < lim; ++m) {
+        // Build the support point x = base XOR (selected direction vectors).
+        std::string x = supA.base;
+        for (int d = 0; d < k; ++d) {
+            if ((m >> d) & 1u) {
+                const auto& dir = supA.dirs[d];
+                for (int q = 0; q < n; ++q) {
+                    if (dir[q]) {
+                        x[q] = (x[q] == '1') ? '0' : '1';
+                    }
+                }
+            }
+        }
+        const std::complex<double> amp_a = a.amplitude(x);
+        if (std::abs(amp_a) < 1e-15) {
+            continue;
+        }
+        // y = x XOR px is the only basis state P connects x to with nonzero matrix element.
+        std::string y = x;
+        for (int q = 0; q < nq; ++q) {
+            if (P.x_mask[q]) {
+                y[q] = (y[q] == '1') ? '0' : '1';
+            }
+        }
+        const std::complex<double> amp_b = b.amplitude(y);
+        if (std::abs(amp_b) < 1e-15) {
+            continue;
+        }
+        // <x|P|x^px>: Z gives (-1)^{x_q}, Y gives -i (x_q=0) or i (x_q=1), X and I give 1.
+        std::complex<double> mu(1.0, 0.0);
+        for (int q = 0; q < nq; ++q) {
+            const bool xq = (x[q] == '1');
+            if (P.z_mask[q] && !P.x_mask[q]) {
+                if (xq) {
+                    mu = -mu;
+                }
+            } else if (P.x_mask[q] && P.z_mask[q]) {
+                mu *= xq ? std::complex<double>(0.0, 1.0) : std::complex<double>(0.0, -1.0);
+            }
+        }
+        total += std::conj(amp_a) * mu * amp_b;
+    }
+    return total;
+}
+
+}  // namespace
+
+double StabilizerStateSum::expectation_value(const MatrixFreeHamiltonian& h) const {
+    /*
+    Compute the expectation value of a Hamiltonian with respect to the StabilizerStateSum.
+
+    |psi> = sum_i c_i |s_i> is a superposition of (generally non-orthogonal) stabilizer states, so
+        <psi|H|psi> = sum_{i,j} conj(c_i) c_j <s_i|H|s_j>
+    has both diagonal and off-diagonal terms. Diagonal terms use the fast tableau query; off-diagonal
+    terms use the support-enumeration overlap. Because the terms need not be orthogonal, |psi> is
+    generally unnormalised even when sum |c_i|^2 = 1, so we divide by <psi|psi>.
+
+    Args:
+        h (MatrixFreeHamiltonian&): The Hamiltonian to compute the expectation value for.
+
+    Returns:
+        double: The expectation value <psi|H|psi> / <psi|psi>.
+    */
+    const int M = static_cast<int>(states.size());
+    if (M == 0) {
+        return 0.0;
+    }
+
+    // Diagonal contributions: <s_i|H|s_i> (fast tableau path) and <s_i|s_i> = 1.
+    double numer = 0.0;
+    double denom = 0.0;
+    for (int i = 0; i < M; ++i) {
+        const double w = std::norm(coefficients[i]);
+        numer += w * states[i].expectation_value(h);
+        denom += w;
+    }
+
+    // Off-diagonal contributions. H is Hermitian so <s_i|H|s_j> = conj(<s_j|H|s_i>), and the {i,j}
+    // pair contributes 2 Re(conj(c_i) c_j <s_i|H|s_j>); the overlaps <s_i|s_j> feed the denominator.
+    if (M > 1) {
+        std::vector<Support> sup(M);
+        for (int i = 0; i < M; ++i) {
+            sup[i] = get_support(states[i]);
+        }
+        const auto& ops = h.get_operators();
+        const PauliString identity(nqubits);
+        for (int i = 0; i < M; ++i) {
+            for (int j = i + 1; j < M; ++j) {
+                // Enumerate the smaller support; <s_i|P|s_j> = conj(<s_j|P|s_i>).
+                const bool enum_i = sup[i].dirs.size() <= sup[j].dirs.size();
+                auto overlap = [&](const PauliString& P) { return enum_i ? pauli_overlap(states[i], states[j], P, sup[i]) : std::conj(pauli_overlap(states[j], states[i], P, sup[j])); };
+                std::complex<double> hij = 0.0;
+                for (const auto& [P, w] : ops) {
+                    hij += w * overlap(P);
+                }
+                const std::complex<double> sij = overlap(identity);
+                const std::complex<double> cc = std::conj(coefficients[i]) * coefficients[j];
+                numer += 2.0 * std::real(cc * hij);
+                denom += 2.0 * std::real(cc * sij);
+            }
+        }
+    }
+
+    if (std::abs(denom) < 1e-300) {
+        return 0.0;
+    }
+    return numer / denom;
 }

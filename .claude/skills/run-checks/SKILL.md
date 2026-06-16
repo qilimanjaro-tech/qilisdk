@@ -28,6 +28,5 @@ It prints `All checks passed successfully!` only when every stage passes.
 
 - Fix the actual cause; never weaken a check, skip a test, or lower coverage thresholds just to
   make it pass. If a check looks genuinely wrong or a fix is ambiguous, stop and ask the user.
-- Always run the full check suite after each set of fixes, even if the failure was in an early stage. This ensures that fixes don't cause new failures later in the pipeline and prevents having to ask the user to run the subscripts etc. manually.
-- Stick to simple commands that you have permission to run, like "grep", since otherwise the user will have to accept the usage of new tools. By sticking to "grep" and "bash scripts/checks.sh", this can be done fully automatically without any new command dependencies.
+- Always run the full check suite after each set of fixes, even if the failure was in an early stage. This ensures that fixes don't cause new failures later in the pipeline and prevents having to ask the user to run the subscripts etc. manually. Don't try to save time by only running part of the script, grep to find where the problem is, make the change, rerun the checks.sh.
 - Don't commit or push.

@@ -59,6 +59,27 @@ py::object construct_result_object(const StabilizerStateSum& state, const py::ob
                 qubits_to_measure_list.append(i);
             }
             results.append(SamplingReadoutResult.attr("from_samples")("samples"_a = samples_py, "qubits_to_measure"_a = qubits_to_measure_list, "nqubits"_a = n_qubits, "expand_samples"_a = expand_samples));
+        } else if (py::isinstance(ro, ExpectationReadout)) {
+            std::vector<std::complex<double>> expectations;
+            // parse the observables for which we need to compute the expectation values
+            std::vector<MatrixFreeHamiltonian> observables = parse_observables_matrix_free(n_qubits, ro.attr("observables"));
+            for (const auto& obs : observables) {
+                double exp_val = state.expectation_value(obs);
+                expectations.push_back(exp_val);
+            }
+            py::list expectations_py;
+            for (const auto& exp_val : expectations) {
+                expectations_py.append(py::cast(exp_val));
+            }
+            results.append(ExpectationReadoutResult.attr("from_expectations")("expectation_values"_a = expectations_py));
+        } else if (py::isinstance(ro, StateTomographyReadout)) {
+            std::string method = ro.attr("method").cast<std::string>();
+            if (method != "exact") {
+                throw py::value_error("State Tomography methods that are not exact are not supported yet.");
+            }
+            DenseMatrix final_state_dense = state.as_dense();
+            py::array final_state_numpy = to_numpy(final_state_dense);
+            results.append(StateTomographyReadoutResult("state"_a = QTensor(final_state_numpy)));
         } else {
             std::string ro_repr = py::repr(ro).cast<std::string>();
             throw py::value_error("Unsupported Readout Method for stabilizer backend: " + ro_repr);
