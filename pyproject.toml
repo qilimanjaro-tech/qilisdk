@@ -161,6 +161,18 @@ name = "numpy-mkl"
 url = "https://urob.github.io/numpy-mkl"
 explicit = true
 
+[[tool.uv.index]]
+name = "speqtrum"
+url = "https://api.pyx.dev/simple/qilimanjaro/speqtrum"
+publish-url = "https://api.pyx.dev/v1/upload/qilimanjaro/speqtrum"
+explicit = true
+
+[[tool.uv.index]]
+name = "euroqcs"
+url = "https://api.pyx.dev/simple/qilimanjaro/euroqcs"
+publish-url = "https://api.pyx.dev/v1/upload/qilimanjaro/euroqcs"
+explicit = true
+
 [build-system]
 requires = ["scikit-build-core", "pybind11>=2.13,<3"]
 build-backend = "scikit_build_core.build"
