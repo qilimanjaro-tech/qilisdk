@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-05 15:45+0200\n"
+"POT-Creation-Date: 2026-06-16 12:04+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -29,7 +29,7 @@ msgid ""
 " types of noise in quantum systems. These noise models can be integrated "
 "into quantum simulations to account for real-world imperfections and "
 "decoherence effects. A :class:`~qilisdk.noise.noise_model.NoiseModel` can"
-" contains various types of noise, each of which is then applied during "
+" contain various types of noise, each of which is then applied during "
 "simulation."
 msgstr ""
 "El módulo :mod:`qilisdk.noise` contiene clases que representan diferentes"
@@ -116,7 +116,7 @@ msgid "Noise Type"
 msgstr "Tipo de ruido"
 
 #: ../../modules/noise/noise_overview.rst:64
-msgid "Digital Propogation"
+msgid "Digital Propagation"
 msgstr "Propagación digital"
 
 #: ../../modules/noise/noise_overview.rst:64
@@ -166,3 +166,4 @@ msgstr ":class:`~qilisdk.noise.offset_perturbation.OffsetPerturbation`"
 #: ../../modules/noise/noise_overview.rst:86
 msgid ":class:`~qilisdk.noise.readout_assignment.ReadoutAssignment`"
 msgstr ":class:`~qilisdk.noise.readout_assignment.ReadoutAssignment`"
+
