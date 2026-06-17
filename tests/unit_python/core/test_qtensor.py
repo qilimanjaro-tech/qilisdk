@@ -43,6 +43,26 @@ def test_constructor_valid_ndarray():
     assert issparse(qobj.data)
 
 
+def test_from_numpy_coerces_mismatched_dtype_and_strides():
+    """QSDK-04: ``from_numpy`` must coerce a non-complex128 or non-contiguous
+    input to a contiguous complex128 buffer instead of reinterpreting the raw
+    bytes (which strides 16 B/element over a smaller/mismatched allocation and
+    reads out of bounds). Exercised via the uncoerced ``QTensorCpp`` path."""
+    from qtensor_module import QTensorCpp
+
+    expected = np.eye(4)
+    for dtype in (np.complex64, np.float64, np.float32, np.complex128):
+        result = np.asarray(QTensorCpp(np.eye(4, dtype=dtype)).as_numpy())
+        assert np.allclose(result, expected), f"dtype {np.dtype(dtype).name} mismatched"
+
+    # Non-contiguous complex128 view: strides must be honoured, not ignored.
+    base = np.arange(64, dtype=np.complex128).reshape(8, 8)
+    view = base[::2, ::2]
+    assert not view.flags["C_CONTIGUOUS"]
+    result = np.asarray(QTensorCpp(view).as_numpy())
+    assert np.allclose(result, np.ascontiguousarray(view))
+
+
 def test_constructor_valid_sparse():
     """QTensor should accept a valid SciPy sparse matrix."""
     sparse_mat = csc_array([[1, 0], [0, 1]])
