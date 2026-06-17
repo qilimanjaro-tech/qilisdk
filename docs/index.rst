@@ -48,6 +48,7 @@ Welcome to **QiliSDK**, a unified Python framework for developing, simulating, a
    getting_started/introduction
    getting_started/installation
    getting_started/quickstart
+   getting_started/serialization
 
 .. toctree::
    :maxdepth: 2
