@@ -888,6 +888,108 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
             }
         }
 
+        // A general gate acting on k target qubits (e.g. a fused block). We
+        // iterate over the 2^(num_qubits - k) "anchors" (basis states with all
+        // target bits zero); for each, gather the 2^k amplitudes that differ only
+        // in the target bits, multiply by the gate matrix, and scatter back. This
+        // touches the statevector once per fused block instead of once per gate.
+        //
+        // The matrix is applied in sparse (CSR) form so the per-anchor cost scales
+        // with the number of nonzero entries rather than (2^k)^2. Fused blocks made
+        // of permutations/diagonals (CNOT, Pauli, Z, S, T, CZ, ...) stay cheap,
+        // while genuinely dense blocks (e.g. stacked rotations) still work.
+    } else if (control_qubits.empty() && base_matrix.rows() == base_matrix.cols() && base_matrix.rows() == (1LL << target_qubits.size())) {
+        int k = static_cast<int>(target_qubits.size());
+        long dim_k = 1L << k;
+
+        // Full-state bit position of each (sorted) target qubit. In the dense
+        // matrix, local qubit li corresponds to bit (k - 1 - li), matching the
+        // big-endian convention used when the fused matrix was built.
+        std::vector<long> target_pos(k);
+        for (int li = 0; li < k; ++li) {
+            target_pos[li] = num_qubits - 1 - target_qubits[li];
+        }
+
+        // Precompute, for each matrix index m, the offset of its target bits
+        // within a full-state index.
+        std::vector<long> offsets(dim_k, 0);
+        for (long m = 0; m < dim_k; ++m) {
+            long off = 0;
+            for (int li = 0; li < k; ++li) {
+                if ((m >> (k - 1 - li)) & 1L) {
+                    off |= 1L << target_pos[li];
+                }
+            }
+            offsets[m] = off;
+        }
+
+        // Sorted (ascending) target bit positions, used to turn an anchor
+        // counter into a full-state index by inserting a zero bit at each
+        // target position (k cheap steps instead of scanning every free bit).
+        std::vector<long> sorted_target_pos = target_pos;
+        std::sort(sorted_target_pos.begin(), sorted_target_pos.end());
+        long num_anchors = 1L << (num_qubits - k);
+
+        // Build a compact CSR view of the gate matrix, skipping structural zeros
+        // (built once, not per anchor; (2^k)^2 work, negligible vs the state pass).
+        std::vector<long> row_start(dim_k + 1, 0);
+        std::vector<int> col_idx;
+        std::vector<Complex> values;
+        col_idx.reserve(dim_k * dim_k);
+        values.reserve(dim_k * dim_k);
+        for (long r = 0; r < dim_k; ++r) {
+            row_start[r] = static_cast<long>(col_idx.size());
+            for (long col = 0; col < dim_k; ++col) {
+                Complex v = base_matrix(r, col);
+                if (v != Complex(0.0, 0.0)) {
+                    col_idx.push_back(static_cast<int>(col));
+                    values.push_back(v);
+                }
+            }
+        }
+        row_start[dim_k] = static_cast<long>(col_idx.size());
+
+        if (output_state.cols() == 1) {
+#if defined(_OPENMP)
+#pragma omp parallel
+#endif
+            {
+                std::vector<Complex> in_buf(dim_k);
+                std::vector<Complex> out_buf(dim_k);
+#if defined(_OPENMP)
+#pragma omp for schedule(static)
+#endif
+                for (long c = 0; c < num_anchors; ++c) {
+                    // Insert a zero bit at each (ascending) target position so the
+                    // remaining bits of c land in the free positions in order.
+                    long anchor = c;
+                    for (int s = 0; s < k; ++s) {
+                        long p = sorted_target_pos[s];
+                        long lower = anchor & ((1L << p) - 1);
+                        long upper = anchor & ~((1L << p) - 1);
+                        anchor = lower | (upper << 1);
+                    }
+                    for (long m = 0; m < dim_k; ++m) {
+                        in_buf[m] = output_state(anchor + offsets[m]);
+                    }
+                    for (long r = 0; r < dim_k; ++r) {
+                        Complex s(0.0, 0.0);
+                        for (long j = row_start[r]; j < row_start[r + 1]; ++j) {
+                            s += values[j] * in_buf[col_idx[j]];
+                        }
+                        out_buf[r] = s;
+                    }
+                    for (long m = 0; m < dim_k; ++m) {
+                        output_state(anchor + offsets[m]) = out_buf[m];
+                    }
+                }
+            }
+        } else {
+            // Fusion is only applied to statevectors, so a dense multi-qubit
+            // gate should never reach the density-matrix paths.
+            throw std::invalid_argument("Dense multi-qubit (fused) operators are only supported for statevectors, not density matrices.");
+        }
+
     } else {
         std::stringstream ss;
         ss << "Unknown operator: " << get_id();
@@ -929,12 +1031,16 @@ MatrixFreeOperator::MatrixFreeOperator(const std::string& name, const std::vecto
         this->name = "Z";
     }
 
+    // A dense multi-qubit gate (e.g. produced by gate fusion): a full 2^k x 2^k
+    // unitary acting on k target qubits with no separate control structure.
+    bool is_dense_multi_qubit = this->control_qubits.empty() && this->base_matrix.rows() == this->base_matrix.cols() && this->base_matrix.rows() == (1LL << this->target_qubits.size());
+
     // Checks
     if (this->control_qubits.size() > 1 && !(this->name == "X" && this->control_qubits.size() == 2)) {
         throw py::value_error("MatrixFreeOperator only supports gates with 1 or fewer total control qubits (other than CCX).");
     }
-    if (this->target_qubits.size() != 1 && this->name != "SWAP" && this->name != "M") {
-        throw py::value_error("MatrixFreeOperator requires a gate with exactly 1 target qubit (other than SWAP or M).");
+    if (this->target_qubits.size() != 1 && this->name != "SWAP" && this->name != "M" && !is_dense_multi_qubit) {
+        throw py::value_error("MatrixFreeOperator requires a gate with exactly 1 target qubit (other than SWAP, M, or a dense multi-qubit gate).");
     }
 }
 

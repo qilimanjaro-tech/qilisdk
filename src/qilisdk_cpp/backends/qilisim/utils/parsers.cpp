@@ -792,6 +792,12 @@ QiliSimConfig parse_solver_params(const py::dict& solver_params) {
     if (solver_params.contains("combine_single_qubit_gates")) {
         config.set_combine_single_qubit_gates(solver_params["combine_single_qubit_gates"].cast<bool>());
     }
+    if (solver_params.contains("fuse_gates")) {
+        config.set_fuse_gates(solver_params["fuse_gates"].cast<bool>());
+    }
+    if (solver_params.contains("max_fused_qubits")) {
+        config.set_max_fused_qubits(solver_params["max_fused_qubits"].cast<int>());
+    }
     if (solver_params.contains("measurement_collapse")) {
         config.set_measurement_collapse(solver_params["measurement_collapse"].cast<bool>());
     }

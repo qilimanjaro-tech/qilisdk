@@ -385,4 +385,85 @@ TEST(CombineSingleQubitGatesTest, InterleavedMultiQubitGates_CountIsCorrect) {
     ASSERT_EQ(out.size(), static_cast<size_t>(2 * N - 1));
 }
 
+namespace {
+
+Gate Mgate(int q) {
+    return makeGate("M", identity2(), {}, {q});
+}
+Gate CCX(int c0, int c1, int t) {
+    return makeGate("CCX", pauliX(), {c0, c1}, {t});
+}
+
+// Overall unitary of a circuit (skipping measurements), as the ordered product
+// of each gate's full matrix on n qubits. Used to check that fusion preserves
+// the circuit semantics regardless of how gates are grouped.
+SparseMatrix circuitUnitary(const std::vector<Gate>& gates, int n) {
+    SparseMatrix u(1 << n, 1 << n);
+    u.setIdentity();
+    for (const auto& g : gates) {
+        if (g.get_name() == "M") {
+            continue;
+        }
+        u = g.get_full_matrix(n) * u;
+    }
+    return u;
+}
+
+}  // namespace
+
+TEST(FuseGatesTest, EmptyInput_ReturnsEmpty) {
+    EXPECT_TRUE(fuse_gates({}, 4).empty());
+}
+
+TEST(FuseGatesTest, SingleGate_PassedThroughUnchanged) {
+    auto out = fuse_gates({X(0)}, 4);
+    ASSERT_EQ(out.size(), 1u);
+    EXPECT_EQ(out[0].get_name(), "X");
+    EXPECT_TRUE(matricesApproxEqual(out[0].get_base_matrix(), pauliX()));
+}
+
+TEST(FuseGatesTest, TwoGatesSameQubit_FusedIntoProduct) {
+    // X then H on qubit 0 fuses into a single 2x2 gate equal to H * X.
+    auto out = fuse_gates({X(0), H(0)}, 4);
+    ASSERT_EQ(out.size(), 1u);
+    EXPECT_EQ(out[0].get_name(), "FUSED");
+    EXPECT_EQ(out[0].get_target_qubits(), std::vector<int>({0}));
+    SparseMatrix expected = hadamard() * pauliX();
+    EXPECT_TRUE(matricesApproxEqual(out[0].get_base_matrix(), expected));
+}
+
+TEST(FuseGatesTest, MeasurementActsAsBarrier) {
+    // Gates cannot fuse across a measurement.
+    auto out = fuse_gates({X(0), Mgate(0), H(0)}, 4);
+    ASSERT_EQ(out.size(), 3u);
+    EXPECT_EQ(out[0].get_name(), "X");
+    EXPECT_EQ(out[1].get_name(), "M");
+    EXPECT_EQ(out[2].get_name(), "H");
+}
+
+TEST(FuseGatesTest, GateWiderThanMax_PassedThrough) {
+    // A 3-qubit gate cannot fit a max width of 2, so it is passed through and
+    // forces the overlapping single-qubit block to close first.
+    auto out = fuse_gates({X(0), CCX(0, 1, 2)}, 2);
+    ASSERT_EQ(out.size(), 2u);
+    EXPECT_EQ(out[0].get_name(), "X");
+    EXPECT_EQ(out[1].get_name(), "X");  // CCX is normalized to "X" with two controls
+    EXPECT_EQ(out[1].get_control_qubits().size(), 2u);
+}
+
+TEST(FuseGatesTest, PreservesCircuitUnitary_Width3) {
+    std::vector<Gate> in = {H(0), CNOT(0, 1), RZ(1, 0.7), H(2), CNOT(1, 2), X(0), Z(2)};
+    for (int max_width : {1, 2, 3}) {
+        auto out = fuse_gates(in, max_width);
+        EXPECT_TRUE(matricesApproxEqual(circuitUnitary(out, 3), circuitUnitary(in, 3))) << "Fusion changed the circuit unitary at max_width=" << max_width;
+    }
+}
+
+TEST(FuseGatesTest, PreservesCircuitUnitary_DisjointBlocks) {
+    // Two independent runs on disjoint qubits, interleaved in time.
+    std::vector<Gate> in = {H(0), H(2), X(0), Z(2), CNOT(0, 1), CNOT(2, 3)};
+    auto out = fuse_gates(in, 4);
+    EXPECT_TRUE(matricesApproxEqual(circuitUnitary(out, 4), circuitUnitary(in, 4)));
+}
+
 // GCOV_EXCL_BR_STOP

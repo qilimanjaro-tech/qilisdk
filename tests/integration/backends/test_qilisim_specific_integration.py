@@ -219,6 +219,51 @@ def test_combine_single_qubit_gates(matrix_free):
     assert _counts_similar(res_combined.get_samples(), res_uncombined.get_samples(), total_shots=1000, tol=0.1)
 
 
+@pytest.mark.parametrize("max_fused_qubits", [2, 3, 4, 5])
+def test_fuse_gates_matches_unfused(max_fused_qubits):
+    # Gate fusion only activates with enough threads (it is a memory-bandwidth vs
+    # compute trade), so use num_threads=4 to exercise the fused path. The final
+    # statevector must match the unfused result up to numerical noise.
+    nqubits = 6
+    c = Circuit.random(
+        nqubits=nqubits, ngates=400, single_qubit_gates=[H, X, Y, Z, RX, RY, RZ, U1, U2, U3], two_qubit_gates=[CNOT]
+    )
+    backend_unfused = QiliSim(
+        execution_config=ExecutionConfig(seed=42, num_threads=4),
+        digital_simulation_method=DigitalMethod.statevector(matrix_free=True, fuse_gates=False),
+    )
+    backend_fused = QiliSim(
+        execution_config=ExecutionConfig(seed=42, num_threads=4),
+        digital_simulation_method=DigitalMethod.statevector(
+            matrix_free=True, fuse_gates=True, max_fused_qubits=max_fused_qubits
+        ),
+    )
+    readout = Readout().with_state_tomography()
+    state_unfused = np.asarray(backend_unfused.execute(DigitalPropagation(circuit=c), readout=readout).get_state().dense()).reshape(-1)
+    state_fused = np.asarray(backend_fused.execute(DigitalPropagation(circuit=c), readout=readout).get_state().dense()).reshape(-1)
+    fidelity = np.abs(np.vdot(state_unfused, state_fused)) / (np.linalg.norm(state_unfused) * np.linalg.norm(state_fused))
+    assert fidelity == pytest.approx(1.0, abs=1e-4)
+    assert np.max(np.abs(state_unfused - state_fused)) < 1e-3
+
+
+def test_fuse_gates_with_mid_circuit_measurement():
+    # Fusion must treat measurements as barriers; verify sampling still works.
+    circuit = Circuit(nqubits=3)
+    circuit.add(H(0))
+    circuit.add(CNOT(0, 1))
+    circuit.add(M(0))
+    circuit.add(H(1))
+    circuit.add(CNOT(1, 2))
+    circuit.add(M(1))
+    circuit.add(M(2))
+    backend = QiliSim(
+        execution_config=ExecutionConfig(seed=42, num_threads=4),
+        digital_simulation_method=DigitalMethod.statevector(matrix_free=True, fuse_gates=True),
+    )
+    result = backend.execute(DigitalPropagation(circuit=circuit), readout=Readout().with_sampling(nshots=500))
+    assert sum(result.get_samples().values()) == 500
+
+
 def test_matrix_free_time_evolution_versus_normal():
     dt = 0.1
     T = 10

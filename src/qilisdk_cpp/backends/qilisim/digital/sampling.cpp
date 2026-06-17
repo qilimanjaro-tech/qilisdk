@@ -349,9 +349,24 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const Sp
         state = sample_from_density_matrix(state, config.get_num_monte_carlo_trajectories(), config.get_seed());
     }
 
-    // Combine single-qubit gates for speed if not using noise models
+    // Optimize the gate list for speed if not using noise models. Gate fusion
+    // (which merges runs of gates on a small set of qubits into one dense
+    // multi-qubit gate) is only valid on the statevector path, so it requires a
+    // statevector or Monte-Carlo (per-trajectory statevector) state.
+    //
+    // Fusion trades fewer passes over the statevector (the memory-bandwidth
+    // bottleneck for large qubit counts) for extra arithmetic per fused block.
+    // That trade only pays off once there are enough threads to absorb the extra
+    // compute while memory bandwidth is saturated; single-threaded it is a net
+    // loss. The baseline saturates memory bandwidth around four threads, so we
+    // only fuse at or above that point and otherwise fall back to combining
+    // consecutive single-qubit gates.
+    const int min_threads_for_fusion = 4;
+    bool use_fusion = !has_noise && config.get_fuse_gates() && (is_statevector || monte_carlo) && config.get_num_threads() >= min_threads_for_fusion;
     std::vector<Gate> optimized_gates = gates;
-    if (!has_noise && config.get_combine_single_qubit_gates()) {
+    if (use_fusion) {
+        optimized_gates = fuse_gates(gates, config.get_max_fused_qubits());
+    } else if (!has_noise && config.get_combine_single_qubit_gates()) {
         optimized_gates = combine_single_qubit_gates(optimized_gates);
     }
 

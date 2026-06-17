@@ -14,6 +14,10 @@
 
 #include "circuit_optimizations.h"
 
+#include <algorithm>
+#include <map>
+#include <set>
+
 // GCOV_EXCL_BR_START
 
 std::vector<Gate> combine_single_qubit_gates(const std::vector<Gate>& gates) {
@@ -80,6 +84,173 @@ std::vector<Gate> combine_single_qubit_gates(const std::vector<Gate>& gates) {
     }
 
     return combined_gates;
+}
+
+namespace {
+
+// A block of gates being accumulated for fusion. `qubits` is the (sorted) set
+// of qubits the block acts on; `gate_indices` are indices into the original
+// gate list, kept in ascending (circuit) order.
+struct FusionBlock {
+    std::set<int> qubits;
+    std::vector<int> gate_indices;
+};
+
+// Build the single fused Gate represented by a block, or return the original
+// gate unchanged if the block holds only one gate (so specialized fast paths
+// such as X/H/CNOT are preserved).
+Gate build_fused_gate(const FusionBlock& block, const std::vector<Gate>& gates) {
+    if (block.gate_indices.size() == 1) {
+        return gates[block.gate_indices[0]];
+    }
+
+    // Map the block's qubits to a contiguous local index space [0, k).
+    std::vector<int> block_qubits(block.qubits.begin(), block.qubits.end());
+    int k = int(block_qubits.size());
+    std::map<int, int> to_local;
+    for (int li = 0; li < k; ++li) {
+        to_local[block_qubits[li]] = li;
+    }
+
+    // Compose the member gates' matrices on the local k-qubit register, in
+    // circuit order: M = G_{last} * ... * G_{first}.
+    SparseMatrix combined;
+    bool first = true;
+    for (int gi : block.gate_indices) {
+        const Gate& g = gates[gi];
+        std::vector<int> local_targets;
+        std::vector<int> local_controls;
+        for (int q : g.get_target_qubits()) {
+            local_targets.push_back(to_local[q]);
+        }
+        for (int q : g.get_control_qubits()) {
+            local_controls.push_back(to_local[q]);
+        }
+        Gate local_gate(g.get_name(), g.get_base_matrix(), local_controls, local_targets, g.get_parameters());
+        SparseMatrix local_full = local_gate.get_full_matrix(k);
+        if (first) {
+            combined = local_full;
+            first = false;
+        } else {
+            combined = local_full * combined;
+        }
+    }
+    combined.makeCompressed();
+
+    return Gate("FUSED", combined, {}, block_qubits, {});
+}
+
+}  // namespace
+
+std::vector<Gate> fuse_gates(const std::vector<Gate>& gates, int max_fused_qubits) {
+    /*
+    Fuse runs of adjacent gates acting on a small set of qubits into a single
+    dense multi-qubit gate.
+
+    The pass walks the circuit in order, greedily growing "blocks" of gates that
+    share qubits. A gate joins the blocks it overlaps as long as the resulting
+    qubit set stays within `max_fused_qubits`; otherwise the overlapping blocks
+    are closed (emitted) and the gate starts a fresh block. Because open blocks
+    always have mutually disjoint qubit sets, gates in different blocks commute,
+    so emitting blocks independently preserves the circuit's semantics.
+
+    Args:
+        gates (std::vector<Gate>&): The list of gates in the circuit.
+        max_fused_qubits (int): Maximum number of qubits a fused block may span.
+
+    Returns:
+        std::vector<Gate>: The fused gate list.
+    */
+    std::vector<Gate> result;
+    std::vector<FusionBlock> open_blocks;
+
+    // Emit a set of blocks in circuit order (by their earliest gate index).
+    auto emit_blocks = [&](std::vector<FusionBlock>& blocks) {
+        std::sort(blocks.begin(), blocks.end(), [](const FusionBlock& a, const FusionBlock& b) { return a.gate_indices.front() < b.gate_indices.front(); });
+        for (const auto& block : blocks) {
+            result.push_back(build_fused_gate(block, gates));
+        }
+    };
+
+    auto flush_all = [&]() {
+        emit_blocks(open_blocks);
+        open_blocks.clear();
+    };
+
+    for (int i = 0; i < int(gates.size()); ++i) {
+        const Gate& gate = gates[i];
+        std::vector<int> gate_qubits = gate.get_qubits();
+
+        // Measurements act as a barrier: everything before them must be applied
+        // first, and they are passed through unchanged.
+        if (gate.get_name() == "M") {
+            flush_all();
+            result.push_back(gate);
+            continue;
+        }
+
+        std::set<int> gate_qubit_set(gate_qubits.begin(), gate_qubits.end());
+
+        // Find all currently-open blocks that share a qubit with this gate.
+        std::vector<int> overlapping;
+        std::set<int> candidate_qubits = gate_qubit_set;
+        for (int b = 0; b < int(open_blocks.size()); ++b) {
+            bool overlaps = false;
+            for (int q : open_blocks[b].qubits) {
+                if (gate_qubit_set.count(q)) {
+                    overlaps = true;
+                    break;
+                }
+            }
+            if (overlaps) {
+                overlapping.push_back(b);
+                candidate_qubits.insert(open_blocks[b].qubits.begin(), open_blocks[b].qubits.end());
+            }
+        }
+
+        bool gate_fits = int(gate_qubit_set.size()) <= max_fused_qubits;
+        bool merged_fits = int(candidate_qubits.size()) <= max_fused_qubits;
+
+        if (gate_fits && merged_fits) {
+            // Merge the gate with all overlapping blocks into a single block.
+            FusionBlock merged;
+            merged.qubits = candidate_qubits;
+            for (int b : overlapping) {
+                merged.gate_indices.insert(merged.gate_indices.end(), open_blocks[b].gate_indices.begin(), open_blocks[b].gate_indices.end());
+            }
+            merged.gate_indices.push_back(i);
+            std::sort(merged.gate_indices.begin(), merged.gate_indices.end());
+
+            // Remove the merged blocks (erase from the back to keep indices valid).
+            std::sort(overlapping.begin(), overlapping.end());
+            for (auto it = overlapping.rbegin(); it != overlapping.rend(); ++it) {
+                open_blocks.erase(open_blocks.begin() + *it);
+            }
+            open_blocks.push_back(std::move(merged));
+        } else {
+            // The gate cannot join the blocks it touches, so close them.
+            std::vector<FusionBlock> to_emit;
+            std::sort(overlapping.begin(), overlapping.end());
+            for (auto it = overlapping.rbegin(); it != overlapping.rend(); ++it) {
+                to_emit.push_back(std::move(open_blocks[*it]));
+                open_blocks.erase(open_blocks.begin() + *it);
+            }
+            emit_blocks(to_emit);
+
+            if (gate_fits) {
+                FusionBlock block;
+                block.qubits = gate_qubit_set;
+                block.gate_indices.push_back(i);
+                open_blocks.push_back(std::move(block));
+            } else {
+                // Gate is wider than max_fused_qubits; pass it through unchanged.
+                result.push_back(gate);
+            }
+        }
+    }
+
+    flush_all();
+    return result;
 }
 
 // GCOV_EXCL_BR_STOP
