@@ -48,7 +48,7 @@ def test_from_numpy_coerces_mismatched_dtype_and_strides():
     input to a contiguous complex128 buffer instead of reinterpreting the raw
     bytes (which strides 16 B/element over a smaller/mismatched allocation and
     reads out of bounds). Exercised via the uncoerced ``QTensorCpp`` path."""
-    from qtensor_module import QTensorCpp
+    from qtensor_module import QTensorCpp  # noqa: PLC0415
 
     expected = np.eye(4)
     for dtype in (np.complex64, np.float64, np.float32, np.complex128):
