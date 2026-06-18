@@ -52,7 +52,7 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
     }
     unsigned long long mask = 1ULL << shift;
     long N = output_state.rows();
-    long stride = mask;
+    long stride = static_cast<long>(mask);
     long half = N >> 1;
     long dim = 1LL << num_qubits;
 
