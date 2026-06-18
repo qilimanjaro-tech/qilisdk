@@ -53,6 +53,9 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
                                 " is out of range for a " + std::to_string(num_qubits) + "-qubit state.");
     }
     unsigned long long mask = 1ULL << shift;
+    if (mask > static_cast<unsigned long long>(std::numeric_limits<long>::max())) {
+        throw std::out_of_range("MatrixFreeOperator target mask exceeds index range.");
+    }
     long N = output_state.rows();
     long stride = static_cast<long>(mask);
     long half = N >> 1;
