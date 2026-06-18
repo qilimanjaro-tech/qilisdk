@@ -47,7 +47,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
     int shift = num_qubits - 1 - target_qubits[0];
     constexpr int kMaskBitWidth = std::numeric_limits<unsigned long long>::digits;
     constexpr int kStrideBitWidth = std::numeric_limits<long>::digits;
-    if (shift < 0 || shift >= kMaskBitWidth || shift >= kStrideBitWidth) {
+    constexpr int kSafeShiftBitWidth = kMaskBitWidth < kStrideBitWidth ? kMaskBitWidth : kStrideBitWidth;
+    if (shift < 0 || shift >= kSafeShiftBitWidth) {
         throw std::out_of_range("MatrixFreeOperator target qubit " + std::to_string(target_qubits[0]) +
                                 " is out of range for a " + std::to_string(num_qubits) + "-qubit state.");
     }
