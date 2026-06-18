@@ -556,3 +556,83 @@ class TwoTonesFrequencyVsFluxQdacRampCWExperimentResult(ExperimentResult):
         lambda dim: Dimension(labels=[r"LO Frequency (GHz)"], values=[v * 1e-9 for v in dim.values]),
     ]
     """Override axis labels and convert y-axis from Hz to GHz."""
+
+
+@yaml.register_class
+class TwoTonesPulsedSoftExperimentResult(ExperimentResult):
+    """Result container for Two Tones Pulsed Soft experiments."""
+
+    plot_title: ClassVar[str] = "Two Tones Pulsed Soft"
+    """Default title for TwoTones pulsed soft experiment plots."""
+
+    dims_override: ClassVar[list[DimensionOverride | None]] = [
+        lambda dim: Dimension(labels=[r"Frequency (GHz)"], values=[v * 1e-9 for v in dim.values]),
+    ]
+    """Override x-axis to display in GHz with appropriate label."""
+
+    @staticmethod
+    def add_fit(x_values: np.ndarray, y_values: np.ndarray, initial_guess: list[float] | None = None) -> None:
+        """Fit a Lorentzian curve to the Two Tones Pulsed Soft experiment data.
+
+        Args:
+            x_values (np.ndarray): The independent variable data (frequencies in GHz).
+            y_values (np.ndarray): The dependent variable data (measured signal).
+            initial_guess (list[float] | None): Optional initial guess for [f0, gamma, A, B].
+        """
+
+        def _lorentzian(f: np.ndarray, f0: float, gamma: float, a: float, b: float) -> np.ndarray:
+            return b + a / (1 + ((f - f0) / (gamma / 2)) ** 2)
+
+        if initial_guess is None:
+            initial_guess = [
+                float(x_values[np.argmax(y_values)]),
+                float((x_values.max() - x_values.min()) / 20),
+                float(y_values.max() - y_values.min()),
+                float(y_values.min()),
+            ]
+        popt, _ = curve_fit(_lorentzian, x_values, y_values, p0=initial_guess)
+        f0_fit, gamma_fit, a_fit, b_fit = popt
+        f_fit = np.linspace(min(x_values), max(x_values), 1000)
+        y_fit = _lorentzian(f_fit, f0_fit, gamma_fit, a_fit, b_fit)
+        plt.plot(f_fit, y_fit, label=f"Fit: f0={f0_fit:.2f} GHz, gamma={gamma_fit:.2f} GHz")
+        plt.legend()
+
+
+@yaml.register_class
+class T1SoftSaturationHWLExperimentResult(ExperimentResult):
+    """Result container for T1 Soft Saturation Hardware Loop experiments."""
+
+    plot_title: ClassVar[str] = "T1 Soft Saturation HWL"
+    """Default title for T1 soft saturation HWL experiment plots."""
+
+    dims_override: ClassVar[list[DimensionOverride | None]] = [
+        lambda dim: Dimension(labels=[r"Time ($\mu$s)"], values=[v * 1e-3 for v in dim.values]),
+    ]
+    """Override x-axis to display in microseconds with appropriate label."""
+
+    fit_by_default: ClassVar[bool] = True
+    """T1 experiments typically benefit from fitting, so we set this to True by default."""
+
+    @staticmethod
+    def add_fit(x_values: np.ndarray, y_values: np.ndarray, initial_guess: list[float] | None = None) -> None:
+        """Fit an exponential decay curve to the T1 Soft Saturation HWL experiment data.
+
+        Args:
+            x_values (np.ndarray): The independent variable data (delay times in microseconds).
+            y_values (np.ndarray): The dependent variable data (measured signal).
+            initial_guess (list[float] | None): Optional initial guess for [a, t1, b].
+        """
+
+        def _t1_decay_model(t: np.ndarray, a: float, t1: float, b: float) -> np.ndarray:
+            return a * np.exp(-t / t1) + b
+
+        if initial_guess is None:
+            initial_guess = [y_values.max() - y_values.min(), (x_values.max() - x_values.min()) / 3, y_values.min()]
+
+        popt, pcov = curve_fit(_t1_decay_model, x_values, y_values, p0=initial_guess)
+        a_fit, t1_fit, b_fit = popt
+        t1_err = np.sqrt(np.diag(pcov))[1]
+        t_fit = np.linspace(min(x_values), max(x_values), 100)
+        y_fit = _t1_decay_model(t_fit, a_fit, t1_fit, b_fit)
+        plt.plot(t_fit, y_fit, label=f"Fit: T1={t1_fit:.2f} ± {t1_err:.2f} μs")
+        plt.legend()

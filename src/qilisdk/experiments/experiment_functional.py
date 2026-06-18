@@ -20,10 +20,12 @@ from qilisdk.experiments.experiment_result import (
     ExperimentResult,
     RabiExperimentResult,
     T1ExperimentResult,
+    T1SoftSaturationHWLExperimentResult,
     T2ExperimentResult,
     TwoTonesAtFixedFluxBiasExperimentResult,
+    TwoTonesFrequencyVsFluxQdacRampCWExperimentResult,
+    TwoTonesPulsedSoftExperimentResult,
     TwoTonesVsFluxBiasExperimentResult,
-    TwoTonesFrequencyVsFluxQdacRampCWExperimentResult
 )
 from qilisdk.functionals.functional import Functional
 from qilisdk.yaml import yaml
@@ -430,3 +432,98 @@ class TwoTonesFrequencyVsFluxQdacRampCWExperiment(ExperimentFunctional[TwoTonesF
             float: Increment between flux bias sweep points (in units of flux quantum).
         """
         return self._flux_step
+
+
+@yaml.register_class
+class TwoTonesPulsedSoftExperiment(ExperimentFunctional[TwoTonesPulsedSoftExperimentResult]):
+    """Two-tone pulsed spectroscopy functional using a soft Gaussian ring-up drive.
+
+    Sweeps the drive tone IF frequency while applying a smooth saturation pulse
+    to identify the qubit transition frequency at a fixed flux bias point.
+    """
+
+    result_type: ClassVar[type[TwoTonesPulsedSoftExperimentResult]] = TwoTonesPulsedSoftExperimentResult
+    """Result type returned by this functional."""
+
+    def __init__(
+        self,
+        qubit: int,
+        averages: int,
+        frequency_start: float,
+        frequency_stop: float,
+        frequency_step: float,
+    ) -> None:
+        """Initialize a two-tone pulsed soft spectroscopy functional.
+
+        Args:
+            qubit (int): The physical qubit index on which the experiment is performed.
+            averages (int): Number of averages to acquire for the experiment.
+            frequency_start (float): Starting IF frequency of the swept drive tone (in Hz).
+            frequency_stop (float): Ending IF frequency of the swept drive tone (in Hz).
+            frequency_step (float): Frequency increment between sweep points (in Hz).
+        """
+        super().__init__(qubit=qubit, averages=averages)
+        self._frequency_start: float = frequency_start
+        self._frequency_stop: float = frequency_stop
+        self._frequency_step: float = frequency_step
+
+    @property
+    def frequency_start(self) -> float:
+        """Start IF frequency for the drive tone sweep.
+
+        Returns:
+            float: Starting IF frequency of the drive tone (in Hz).
+        """
+        return self._frequency_start
+
+    @property
+    def frequency_stop(self) -> float:
+        """Stop IF frequency for the drive tone sweep.
+
+        Returns:
+            float: Ending IF frequency of the drive tone (in Hz).
+        """
+        return self._frequency_stop
+
+    @property
+    def frequency_step(self) -> float:
+        """Step size for the drive tone IF frequency sweep.
+
+        Returns:
+            float: Frequency increment between sweep points (in Hz).
+        """
+        return self._frequency_step
+
+
+@yaml.register_class
+class T1SoftSaturationHWLExperiment(ExperimentFunctional[T1SoftSaturationHWLExperimentResult]):
+    """T1 relaxation experiment using a soft Gaussian ring-up saturation drive with hardware loop.
+
+    Applies a smooth saturation pulse to excite the qubit and sweeps the delay
+    before readout to extract the relaxation time constant. All idle durations
+    are unrolled into a single QProgram for efficient hardware execution.
+    """
+
+    result_type: ClassVar[type[T1SoftSaturationHWLExperimentResult]] = T1SoftSaturationHWLExperimentResult
+    """Result type returned by this functional."""
+
+    def __init__(self, qubit: int, averages: int, wait_duration_values: np.ndarray) -> None:
+        """Initialize a T1 soft saturation hardware-loop experiment functional.
+
+        Args:
+            qubit (int): The physical qubit index on which the experiment is performed.
+            averages (int): Number of averages to acquire for the experiment.
+            wait_duration_values (np.ndarray): Array of waiting times (in nanoseconds)
+                between excitation and measurement.
+        """
+        super().__init__(qubit=qubit, averages=averages)
+        self._wait_duration_values: np.ndarray = wait_duration_values
+
+    @property
+    def wait_duration_values(self) -> np.ndarray:
+        """Waiting time sweep values.
+
+        Returns:
+            np.ndarray: The set of delay durations (in nanoseconds) used in the experiment.
+        """
+        return self._wait_duration_values
