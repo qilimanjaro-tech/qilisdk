@@ -63,6 +63,14 @@ def test_from_numpy_coerces_mismatched_dtype_and_strides():
     assert np.allclose(result, np.ascontiguousarray(view))
 
 
+def test_from_numpy_raises_when_array_is_not_convertible_to_complex128():
+    from qtensor_module import QTensorCpp  # noqa: PLC0415
+
+    bad = np.array([["not-a-number"]], dtype=object)
+    with pytest.raises(ValueError, match=r"Input array must be convertible to a 2D complex128 array\."):
+        QTensorCpp(bad)
+
+
 def test_constructor_valid_sparse():
     """QTensor should accept a valid SciPy sparse matrix."""
     sparse_mat = csc_array([[1, 0], [0, 1]])
