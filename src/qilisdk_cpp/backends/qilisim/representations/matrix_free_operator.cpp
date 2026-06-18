@@ -13,7 +13,10 @@
 // limitations under the License.
 
 #include "matrix_free_operator.h"
+#include <algorithm>
+#include <limits>
 #include <sstream>
+#include <stdexcept>
 #include "../../../libs/pybind.h"
 
 // GCOV_EXCL_BR_START
@@ -36,7 +39,21 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
 
     // Precompute things that are used in all branches
     int num_qubits = static_cast<int>(std::log2(output_state.rows()));
-    long long mask = 1LL << (num_qubits - 1 - target_qubits[0]);
+    // QSDK-05 defense-in-depth: indices are validated at parse time, but this
+    // kernel is also reachable via deserialized objects, so guard the shift so
+    // a bad target can never produce an undefined shift / wild mask.
+    if (target_qubits.empty()) {
+        throw std::out_of_range("MatrixFreeOperator has no target qubit.");
+    }
+    int shift = num_qubits - 1 - target_qubits[0];
+    constexpr int kMaskBitWidth = std::numeric_limits<unsigned long long>::digits;
+    constexpr int kStrideBitWidth = std::numeric_limits<long>::digits;
+    constexpr int kSafeShiftBitWidth = std::min(kMaskBitWidth, kStrideBitWidth);
+    if (shift < 0 || shift >= kSafeShiftBitWidth) {
+        throw std::out_of_range("MatrixFreeOperator target qubit " + std::to_string(target_qubits[0]) +
+                                " is out of range for a " + std::to_string(num_qubits) + "-qubit state.");
+    }
+    long mask = static_cast<long>(1ULL << shift);
     long N = output_state.rows();
     long stride = mask;
     long half = N >> 1;
