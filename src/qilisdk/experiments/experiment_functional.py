@@ -338,7 +338,9 @@ class TwoTonesVsFluxBiasExperiment(ExperimentFunctional[TwoTonesVsFluxBiasExperi
 
 
 @yaml.register_class
-class TwoTonesFrequencyVsFluxQdacRampCWExperiment(ExperimentFunctional[TwoTonesFrequencyVsFluxQdacRampCWExperimentResult]):
+class TwoTonesFrequencyVsFluxQdacRampCWExperiment(
+    ExperimentFunctional[TwoTonesFrequencyVsFluxQdacRampCWExperimentResult]
+):
     """Two-tone spectroscopy functional for a single qubit, swept vs flux bias using ramping through the QDAC and
     continous wave.
 
@@ -346,7 +348,9 @@ class TwoTonesFrequencyVsFluxQdacRampCWExperiment(ExperimentFunctional[TwoTonesF
     identify the qubit transition frequency as a function of flux bias.
     """
 
-    result_type: ClassVar[type[TwoTonesFrequencyVsFluxQdacRampCWExperimentResult]] = TwoTonesFrequencyVsFluxQdacRampCWExperimentResult
+    result_type: ClassVar[type[TwoTonesFrequencyVsFluxQdacRampCWExperimentResult]] = (
+        TwoTonesFrequencyVsFluxQdacRampCWExperimentResult
+    )
     """Result type returned by this functional."""
 
     def __init__(
