@@ -885,4 +885,34 @@ TEST_F(TimeEvolutionVariationalTest, EmptyHamiltonianListThrows) {
     EXPECT_ANY_THROW(time_evolution_variational_exponential(rho_t, {}, {}, {}, config));
 }
 
+TEST_F(TimeEvolutionTest, TimeDependentRateScalingDense) {
+    NoiseModelCpp noise;
+    // Mixed: a constant jump operator (empty series, scaled unchanged) and a time-dependent jump
+    // operator whose per-step sqrt(rate) series is applied at each step. Exercises both branches of
+    // the per-step rescaling loop in the dense evolution.
+    noise.add_jump_operator(amp_damp_jump());
+    noise.add_jump_operator(amp_damp_jump(), {0.0, 0.5, 1.0});
+    EXPECT_TRUE(noise.has_time_dependent_rates());
+    auto out = run_time_evolution(pure_plus_sparse(), hamiltonians, params, steps, noise, {}, config);
+    EXPECT_NEAR(std::real(out.rho_t.trace()), 1.0, kTol);
+}
+
+TEST_F(TimeEvolutionMatrixFreeTest, TimeDependentRateScalingMatrixFree) {
+    NoiseModelCpp noise;
+    // Mixed: a constant jump (empty series, scaled unchanged) and a time-dependent jump. Exercises
+    // both branches of the per-step rescaling loop in the matrix-free fixed-step evolution.
+    noise.add_jump_operator(amp_damp_jump());
+    noise.add_jump_operator(amp_damp_jump(), {0.0, 0.5, 1.0});
+    EXPECT_TRUE(noise.has_time_dependent_rates());
+    auto out = run_time_evolution_mf(pure_plus_sparse(), hamiltonians, params, steps, noise, {}, config);
+    EXPECT_NEAR(std::real(out.rho_t.trace()), 1.0, kTol);
+}
+
+TEST_F(TimeEvolutionMatrixFreeTest, TimeDependentRateAdaptiveThrows) {
+    config.set_time_evolution_method("integrate_rk45_matrix_free");
+    NoiseModelCpp noise;
+    noise.add_jump_operator(amp_damp_jump(), {0.0, 0.5, 1.0});
+    EXPECT_ANY_THROW(run_time_evolution_mf(pure_plus_sparse(), hamiltonians, params, steps, noise, {}, config));
+}
+
 // GCOV_EXCL_BR_STOP

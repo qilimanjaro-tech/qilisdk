@@ -34,6 +34,7 @@ from qilisdk.settings import get_settings
 
 if TYPE_CHECKING:
     from qilisdk.functionals import AnalogEvolution, DigitalPropagation
+    from qilisdk.noise import NoiseModel
     from qilisdk.readout import ReadoutMethod
 
 
@@ -79,13 +80,25 @@ class QutipBackend(Backend):
     notebooks.
     """
 
-    def __init__(self, nsteps: int = 10_000) -> None:
+    def __init__(self, nsteps: int = 10_000, noise_model: NoiseModel | None = None) -> None:
         """Instantiate a new :class:`QutipBackend`.
 
         Args:
             nsteps (int): The maximum number of internal steps for the
                 ODE solver. Defaults to ``10_000``.
+            noise_model (NoiseModel | None): Must be ``None``. The QuTiP
+                backend does not support noisy simulation; accepted only so
+                that passing a noise model raises a clear error rather than
+                an opaque ``TypeError``.
+
+        Raises:
+            NotImplementedError: If a noise model is provided.
         """
+        if noise_model is not None:
+            raise NotImplementedError(
+                "QutipBackend does not support noise models (neither digital channels nor "
+                "Lindblad/analog noise). Use QiliSim for noisy simulations."
+            )
         self.nsteps = nsteps
 
         super().__init__()

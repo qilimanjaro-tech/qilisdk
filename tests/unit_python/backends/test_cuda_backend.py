@@ -966,3 +966,34 @@ def test_tomography_for_methods_raises(monkeypatch, method):
     backend = CudaBackend(sampling_method=method)
     with pytest.raises(ValueError, match="Only Sampling"):
         backend.execute(f, r)
+
+
+def test_cuda_backend_rejects_time_dependent_lindblad_rate(monkeypatch):
+    monkeypatch.setattr("qilisdk.backends.cuda_backend.cudaq.set_target", lambda target: None)
+    monkeypatch.setattr("qilisdk.backends.cuda_backend.evolve", MagicMock())
+
+    noise_model = NoiseModel()
+    noise_model.add(LindbladGenerator([QTensor(np.array([[0, 1], [1, 0]]))], rates=[lambda t: 0.1 * t]))
+    schedule = Schedule.linear(pauli_z(0), pauli_z(0), 1.0, 0.1)
+    functional = AnalogEvolution(schedule=schedule, initial_state=InitialState.ZERO)
+
+    backend = CudaBackend(noise_model=noise_model)
+    with pytest.raises(NotImplementedError, match="time-dependent Lindblad rates"):
+        backend.execute(functional, Readout().with_expectation([pauli_z(0)]))
+
+
+def test_cuda_backend_rejects_per_qubit_time_dependent_lindblad_rate(monkeypatch):
+    monkeypatch.setattr("qilisdk.backends.cuda_backend.cudaq.set_target", lambda target: None)
+    monkeypatch.setattr("qilisdk.backends.cuda_backend.evolve", MagicMock())
+
+    noise_model = NoiseModel()
+    noise_model.add(
+        LindbladGenerator([QTensor(np.array([[0, 1], [0, 0]], dtype=complex))], rates=[lambda t: 0.1 * t]),
+        qubits=[0],
+    )
+    schedule = Schedule.linear(pauli_z(0), pauli_z(0), 1.0, 0.1)
+    functional = AnalogEvolution(schedule=schedule, initial_state=InitialState.ZERO)
+
+    backend = CudaBackend(noise_model=noise_model)
+    with pytest.raises(NotImplementedError, match="time-dependent Lindblad rates"):
+        backend.execute(functional, Readout().with_expectation([pauli_z(0)]))

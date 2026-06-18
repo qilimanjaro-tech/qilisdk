@@ -26,6 +26,7 @@ from qilisdk.core.qtensor import InitialState, QTensor, tensor_prod
 from qilisdk.functionals.analog_evolution import AnalogEvolution
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirLayer
+from qilisdk.noise import LindbladGenerator, NoiseModel
 from qilisdk.readout import Readout, SamplingReadout
 
 pytest.importorskip("qutip", reason="QuTiP backend tests require the 'qutip' optional dependency", exc_type=ImportError)
@@ -442,3 +443,10 @@ def test_get_qutip_observable_unsupported_type_raises():
     backend = QutipBackend()
     with pytest.raises(ValueError, match="unsupported observable type"):
         backend._to_qubip_observables(42, nqubits=1)
+
+
+def test_qutip_backend_rejects_noise_model():
+    nm = NoiseModel()
+    nm.add(LindbladGenerator([QTensor(np.array([[0, 1], [1, 0]]))], rates=[0.1]))
+    with pytest.raises(NotImplementedError, match="does not support noise"):
+        QutipBackend(noise_model=nm)

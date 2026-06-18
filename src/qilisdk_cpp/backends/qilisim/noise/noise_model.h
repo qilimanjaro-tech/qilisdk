@@ -22,8 +22,13 @@
 class NoiseModelCpp {
    private:
     bool has_something = false;
+    bool has_time_dependent_jumps = false;
 
     std::vector<SparseMatrix> cached_jump_operators;
+    // Per-step sqrt(rate(t)) multiplier for each jump operator, aligned by index with
+    // cached_jump_operators. An empty inner vector means the operator already has its (constant)
+    // rate folded in and must not be re-scaled per step.
+    std::vector<std::vector<double>> cached_jump_rate_series;
     std::vector<std::vector<SparseMatrix>> cached_kraus_operators_global;
     std::map<int, std::vector<std::vector<SparseMatrix>>> cached_kraus_operators_per_qubit;
     std::map<std::string, std::vector<std::vector<SparseMatrix>>> cached_kraus_operators_per_gate;
@@ -36,6 +41,7 @@ class NoiseModelCpp {
     bool is_empty() const;
 
     void add_jump_operator(const SparseMatrix& L);
+    void add_jump_operator(const SparseMatrix& base, const std::vector<double>& sqrt_rate_series);
     void add_kraus_operators_global(const std::vector<SparseMatrix>& Ks);
     void add_kraus_operators_per_qubit(int qubit, const std::vector<SparseMatrix>& Ks);
     void add_kraus_operators_per_gate(const std::string& gate_name, const std::vector<SparseMatrix>& Ks);
@@ -44,6 +50,8 @@ class NoiseModelCpp {
     void add_readout_error_per_qubit(int qubit, double p01, double p10);
 
     const std::vector<SparseMatrix>& get_jump_operators() const;
+    const std::vector<std::vector<double>>& get_jump_rate_series() const;
+    bool has_time_dependent_rates() const;
     const std::vector<std::vector<SparseMatrix>>& get_kraus_operators_global() const;
     const std::map<int, std::vector<std::vector<SparseMatrix>>>& get_kraus_operators_per_qubit() const;
     const std::map<std::string, std::vector<std::vector<SparseMatrix>>>& get_kraus_operators_per_gate() const;
