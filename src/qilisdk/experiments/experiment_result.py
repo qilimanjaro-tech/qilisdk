@@ -543,3 +543,16 @@ class TwoTonesVsFluxBiasExperimentResult(ExperimentResult):
         lambda dim: Dimension(labels=[r"LO Frequency (GHz)"], values=[v * 1e-9 for v in dim.values]),
     ]
     """Override axis labels and convert y-axis from Hz to GHz."""
+    
+@yaml.register_class
+class TwoTonesFrequencyVsFluxQdacRampCWExperimentResult(ExperimentResult):
+    """Result container for TwoTone vs Flux using Qdac ramping and continuous wave experiment."""
+
+    plot_title: ClassVar[str] = "Two Tones Vs Flux Bias CW"
+    """Default title for TwoTone vs flux Qdac ramping CW experiment plots."""
+
+    dims_override: ClassVar[list[DimensionOverride | None]] = [
+        lambda dim: Dimension(labels=[r"$\Phi_z~(\Phi_0)$"], values=dim.values),
+        lambda dim: Dimension(labels=[r"LO Frequency (GHz)"], values=[v * 1e-9 for v in dim.values]),
+    ]
+    """Override axis labels and convert y-axis from Hz to GHz."""

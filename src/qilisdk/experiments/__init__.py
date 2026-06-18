@@ -18,6 +18,7 @@ from .experiment_functional import (
     T2Experiment,
     TwoTonesAtFixedFluxBiasExperiment,
     TwoTonesVsFluxBiasExperiment,
+    TwoTonesFrequencyVsFluxQdacRampCWExperiment,
 )
 from .experiment_result import (
     Dimension,
@@ -27,6 +28,7 @@ from .experiment_result import (
     T2ExperimentResult,
     TwoTonesAtFixedFluxBiasExperimentResult,
     TwoTonesVsFluxBiasExperimentResult,
+    TwoTonesFrequencyVsFluxQdacRampCWExperimentResult,
 )
 
 __all__ = [
@@ -43,4 +45,6 @@ __all__ = [
     "TwoTonesAtFixedFluxBiasExperimentResult",
     "TwoTonesVsFluxBiasExperiment",
     "TwoTonesVsFluxBiasExperimentResult",
+    "TwoToneFrequencyVsFluxQdacRampCWExperiment",
+    "TwoToneFrequencyVsFluxQdacRampCWExperimentResult",
 ]
