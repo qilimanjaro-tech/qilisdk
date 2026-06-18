@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "matrix_free_operator.h"
+#include <algorithm>
 #include <limits>
 #include <sstream>
 #include <stdexcept>
@@ -47,17 +48,14 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
     int shift = num_qubits - 1 - target_qubits[0];
     constexpr int kMaskBitWidth = std::numeric_limits<unsigned long long>::digits;
     constexpr int kStrideBitWidth = std::numeric_limits<long>::digits;
-    constexpr int kSafeShiftBitWidth = kMaskBitWidth < kStrideBitWidth ? kMaskBitWidth : kStrideBitWidth;
+    constexpr int kSafeShiftBitWidth = std::min(kMaskBitWidth, kStrideBitWidth);
     if (shift < 0 || shift >= kSafeShiftBitWidth) {
         throw std::out_of_range("MatrixFreeOperator target qubit " + std::to_string(target_qubits[0]) +
                                 " is out of range for a " + std::to_string(num_qubits) + "-qubit state.");
     }
-    unsigned long long mask = 1ULL << shift;
-    if (mask > static_cast<unsigned long long>(std::numeric_limits<long>::max())) {
-        throw std::out_of_range("MatrixFreeOperator target mask exceeds index range.");
-    }
+    long mask = static_cast<long>(1ULL << shift);
     long N = output_state.rows();
-    long stride = static_cast<long>(mask);
+    long stride = mask;
     long half = N >> 1;
     long dim = 1LL << num_qubits;
 
