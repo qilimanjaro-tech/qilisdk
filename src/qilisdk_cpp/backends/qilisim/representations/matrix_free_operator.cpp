@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "matrix_free_operator.h"
+#include <limits>
 #include <sstream>
 #include <stdexcept>
 #include "../../../libs/pybind.h"
@@ -44,7 +45,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
         throw std::out_of_range("MatrixFreeOperator has no target qubit.");
     }
     int shift = num_qubits - 1 - target_qubits[0];
-    if (shift < 0 || shift >= 64) {
+    constexpr int kMaskBitWidth = std::numeric_limits<unsigned long long>::digits;
+    if (shift < 0 || shift >= kMaskBitWidth) {
         throw std::out_of_range("MatrixFreeOperator target qubit " + std::to_string(target_qubits[0]) +
                                 " is out of range for a " + std::to_string(num_qubits) + "-qubit state.");
     }
