@@ -335,7 +335,8 @@ class TwoTonesVsFluxBiasExperiment(ExperimentFunctional[TwoTonesVsFluxBiasExperi
             float: Increment between flux bias sweep points (in units of flux quantum).
         """
         return self._flux_step
-    
+
+
 @yaml.register_class
 class TwoTonesFrequencyVsFluxQdacRampCWExperiment(ExperimentFunctional[TwoTonesFrequencyVsFluxQdacRampCWExperimentResult]):
     """Two-tone spectroscopy functional for a single qubit, swept vs flux bias using ramping through the QDAC and
