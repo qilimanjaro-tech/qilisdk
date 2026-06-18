@@ -123,8 +123,8 @@ html_sidebars = {
 }
 
 theme_options = ThemeOptions(
-    logo_light="_static/QiliSDK_blk.png",
-    logo_dark="_static/QiliSDK_wht.png",
+    logo_light="_static/QiliSDK_blk.svg",
+    logo_dark="_static/QiliSDK_wht.svg",
     awesome_external_links=True,
 )
 

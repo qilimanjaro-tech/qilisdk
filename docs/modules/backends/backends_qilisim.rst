@@ -1,12 +1,12 @@
 QiliSim
 =======
 
-.. image:: ../../_static/QiliSim_wht.png
+.. image:: ../../_static/QiliSim_wht.svg
    :align: left
    :width: 200px
    :class: title-image only-dark
 
-.. image:: ../../_static/QiliSim_blk.png
+.. image:: ../../_static/QiliSim_blk.svg
    :align: left
    :width: 200px
    :class: title-image only-light
