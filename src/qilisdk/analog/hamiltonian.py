@@ -120,6 +120,10 @@ class PauliOperator(ABC):
         cls._MATRIX_CACHE = {}
 
     def __init__(self, qubit: int) -> None:
+        # QSDK-05: reject negative qubit indices at construction (the upper bound
+        # depends on the Hamiltonian / circuit and is enforced at execution).
+        if qubit < 0:
+            raise ValueError(f"Qubit index must be non-negative, got {qubit}.")
         self._qubit = qubit
 
     @property
