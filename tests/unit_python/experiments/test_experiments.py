@@ -24,8 +24,11 @@ from qilisdk.experiments import (
     ExperimentResult,
     RabiExperimentResult,
     T1ExperimentResult,
+    T1SoftSaturationHWLExperimentResult,
     T2ExperimentResult,
     TwoTonesAtFixedFluxBiasExperimentResult,
+    TwoTonesFrequencyVsFluxQdacRampCWExperimentResult,
+    TwoTonesPulsedSoftExperimentResult,
     TwoTonesVsFluxBiasExperimentResult,
 )
 
@@ -245,6 +248,103 @@ def test_t2_plotting(monkeypatch):
     fakeWarning = MagicMock()
     monkeypatch.setattr(logger, "warning", fakeWarning)
     result_t2.plot(save_to="./.tmp/test_t2_phase_fit.png", fit=True, plot_type="phase")
+    fakeWarning.assert_called_with(
+        "Fitting is only implemented for amplitude plots. Ignoring fit request for non-amplitude plot."
+    )
+
+
+def test_two_tones_frequency_vs_flux_qdac_ramp_cw_plotting(monkeypatch):
+    monkeypatch.setattr(plt, "show", lambda: None)
+    if not _DEBUG_PLOTS:
+        monkeypatch.setattr(plt.Figure, "savefig", lambda self, *args, **kwargs: None)
+
+    rng = np.random.default_rng(seed=42)
+    freqs = np.arange(4.0e9, 6.0e9, 10e6)
+    fluxes = np.arange(-0.5, 0.5, 0.02)
+    f_max = 5.5e9
+    f_q_vs_flux = f_max * np.sqrt(np.abs(np.cos(np.pi * fluxes)))
+    linewidth = 20e6
+    PHI, F = np.meshgrid(f_q_vs_flux, freqs, indexing="ij")
+    s21_mag = 1.0 - 0.7 / (1 + ((F - PHI) / (linewidth / 2)) ** 2)
+    s21_mag += rng.normal(0, 0.01, size=s21_mag.shape)
+    phase = np.full_like(F, np.pi / 6)
+    s21_complex = s21_mag * np.exp(1j * phase)
+    data = np.stack([s21_complex.real, s21_complex.imag], axis=-1)
+    dims = [
+        Dimension(labels=["Flux bias (Φ₀)"], values=[fluxes]),
+        Dimension(labels=["Drive frequency (Hz)"], values=[freqs]),
+    ]
+
+    result = TwoTonesFrequencyVsFluxQdacRampCWExperimentResult(qubit=0, averages=1000, data=data, dims=dims)
+
+    result.plot(save_to="./.tmp/test_two_tones_qdac_cw_default.png")
+    result.plot(save_to="./.tmp/test_two_tones_qdac_cw.png", fit=False)
+    result.plot(save_to="./.tmp/test_two_tones_qdac_cw_phase.png", fit=False, plot_type="phase")
+    result.plot(save_to="./.tmp/test_two_tones_qdac_cw_db.png", fit=False, plot_type="db")
+
+    fakeWarning = MagicMock()
+    monkeypatch.setattr(logger, "warning", fakeWarning)
+    result.plot(save_to="./.tmp/test_two_tones_qdac_cw_phase_fit.png", fit=True, plot_type="phase")
+    fakeWarning.assert_called_with(
+        "Fitting is only implemented for amplitude plots. Ignoring fit request for non-amplitude plot."
+    )
+
+
+def test_two_tones_pulsed_soft_plotting(monkeypatch):
+    monkeypatch.setattr(plt, "show", lambda: None)
+    if not _DEBUG_PLOTS:
+        monkeypatch.setattr(plt.Figure, "savefig", lambda self, *args, **kwargs: None)
+
+    rng = np.random.default_rng(seed=42)
+    freqs = np.arange(2.0e8, 4.5e8, 2.5e6)
+    f_qubit = 3.9e8
+    linewidth = 15e6
+    s21_mag = 0.65 + 0.55 / (1 + ((freqs - f_qubit) / (linewidth / 2)) ** 2)
+    s21_mag += rng.normal(0, 0.025, size=s21_mag.shape)
+    phase = np.full_like(freqs, np.pi / 6)
+    s21_complex = s21_mag * np.exp(1j * phase)
+    data = np.stack([s21_complex.real, s21_complex.imag], axis=-1)
+    dims = [Dimension(labels=["IF Frequency (Hz)"], values=[freqs])]
+
+    result = TwoTonesPulsedSoftExperimentResult(qubit=0, averages=1000, data=data, dims=dims)
+
+    result.plot(save_to="./.tmp/test_two_tones_pulsed_soft_default.png")
+    result.plot(save_to="./.tmp/test_two_tones_pulsed_soft.png", fit=False)
+    result.plot(save_to="./.tmp/test_two_tones_pulsed_soft_fit.png", fit=True)
+    result.plot(save_to="./.tmp/test_two_tones_pulsed_soft_phase.png", fit=False, plot_type="phase")
+    result.plot(save_to="./.tmp/test_two_tones_pulsed_soft_db.png", fit=False, plot_type="db")
+
+    fakeWarning = MagicMock()
+    monkeypatch.setattr(logger, "warning", fakeWarning)
+    result.plot(save_to="./.tmp/test_two_tones_pulsed_soft_phase_fit.png", fit=True, plot_type="phase")
+    fakeWarning.assert_called_with(
+        "Fitting is only implemented for amplitude plots. Ignoring fit request for non-amplitude plot."
+    )
+
+
+def test_t1_soft_saturation_hwl_plotting(monkeypatch):
+    monkeypatch.setattr(plt, "show", lambda: None)
+    if not _DEBUG_PLOTS:
+        monkeypatch.setattr(plt.Figure, "savefig", lambda self, *args, **kwargs: None)
+
+    rng = np.random.default_rng(seed=42)
+    tau = np.arange(0, 3200, 100)
+    decay = np.exp(-tau / 1000.0)
+    noise = rng.normal(0, 0.02, size=(len(tau), 2))
+    amplitudes = np.clip(decay[:, np.newaxis] + noise, 0, 1)
+    dims = [Dimension(labels=["Time"], values=[tau])]
+
+    result = T1SoftSaturationHWLExperimentResult(qubit=0, averages=1000, data=amplitudes, dims=dims)
+
+    result.plot(save_to="./.tmp/test_t1_soft_hwl_default.png")
+    result.plot(save_to="./.tmp/test_t1_soft_hwl.png", fit=False)
+    result.plot(save_to="./.tmp/test_t1_soft_hwl_fit.png", fit=True)
+    result.plot(save_to="./.tmp/test_t1_soft_hwl_phase.png", fit=False, plot_type="phase")
+    result.plot(save_to="./.tmp/test_t1_soft_hwl_db.png", fit=False, plot_type="db")
+
+    fakeWarning = MagicMock()
+    monkeypatch.setattr(logger, "warning", fakeWarning)
+    result.plot(save_to="./.tmp/test_t1_soft_hwl_phase_fit.png", fit=True, plot_type="phase")
     fakeWarning.assert_called_with(
         "Fitting is only implemented for amplitude plots. Ignoring fit request for non-amplitude plot."
     )
