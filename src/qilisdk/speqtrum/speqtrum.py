@@ -33,7 +33,7 @@ from qilisdk.experiments import (
     T2Experiment,
     T2ExperimentResult,
 )
-from qilisdk.experiments.experiment_functional import TwoTonesAtFixedFluxBiasExperiment, TwoTonesVsFluxBiasExperiment
+from qilisdk.experiments.experiment_functional import TwoToneAtFixedFluxBiasExperiment, TwoTonesVsFluxBiasExperiment
 from qilisdk.functionals import (
     AnalogEvolution,
     DigitalPropagation,
@@ -70,8 +70,8 @@ from .speqtrum_models import (
 
 if TYPE_CHECKING:
     from qilisdk.experiments.experiment_result import (
-        TwoTonesAtFixedFluxBiasExperimentResult,
-        TwoTonesVsFluxBiasExperimentResult,
+        TwoToneAtFixedFluxBiasExperimentResult,
+        TwoToneVsFluxBiasExperimentResult,
     )
     from qilisdk.functionals.functional import Functional, PrimitiveFunctional
     from qilisdk.readout import E, Readout, S, T
@@ -737,7 +737,7 @@ class SpeQtrum:
         if isinstance(functional, T2Experiment):
             return self._submit_t2(functional, device, job_name)
 
-        if isinstance(functional, TwoTonesAtFixedFluxBiasExperiment):
+        if isinstance(functional, TwoToneAtFixedFluxBiasExperiment):
             return self._submit_two_tones(functional, device, job_name)
 
         if isinstance(functional, TwoTonesVsFluxBiasExperiment):
@@ -907,8 +907,8 @@ class SpeQtrum:
         return JobHandle.t2_experiment(job.id)
 
     def _submit_two_tones(
-        self, two_tones_experiment: TwoTonesAtFixedFluxBiasExperiment, device: str, job_name: str | None = None
-    ) -> JobHandle[TwoTonesAtFixedFluxBiasExperimentResult]:
+        self, two_tones_experiment: TwoToneAtFixedFluxBiasExperiment, device: str, job_name: str | None = None
+    ) -> JobHandle[TwoToneAtFixedFluxBiasExperimentResult]:
         """Submit a Two-Tones at flux bias experiment to the SpeQtrum API.
 
         Args:
@@ -947,7 +947,7 @@ class SpeQtrum:
 
     def _submit_two_tones_vs_flux_bias(
         self, two_tones_vs_flux_bias_experiment: TwoTonesVsFluxBiasExperiment, device: str, job_name: str | None = None
-    ) -> JobHandle[TwoTonesVsFluxBiasExperimentResult]:
+    ) -> JobHandle[TwoToneVsFluxBiasExperimentResult]:
         """Submit a Two-Tones vs flux bias experiment to the SpeQtrum API.
 
         Args:

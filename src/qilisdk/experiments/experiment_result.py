@@ -479,10 +479,10 @@ class T2ExperimentResult(ExperimentResult):
 
 
 @yaml.register_class
-class TwoTonesAtFixedFluxBiasExperimentResult(ExperimentResult):
-    """Result container for Two Tones at Fixed Flux Bias experiments."""
+class TwoToneAtFixedFluxBiasExperimentResult(ExperimentResult):
+    """Result container for Two Tone at Fixed Flux Bias experiments."""
 
-    plot_title: ClassVar[str] = "Two Tones at Fixed Flux Bias"
+    plot_title: ClassVar[str] = "Two Tone at Fixed Flux Bias"
     """Default title for TwoTones at flux bias experiment plots."""
 
     dims_override: ClassVar[list[DimensionOverride | None]] = [
@@ -532,10 +532,10 @@ class TwoTonesAtFixedFluxBiasExperimentResult(ExperimentResult):
 
 
 @yaml.register_class
-class TwoTonesVsFluxBiasExperimentResult(ExperimentResult):
+class TwoToneVsFluxBiasExperimentResult(ExperimentResult):
     """Result container for TwoTones vs Flux Bias experiments swept vs flux bias."""
 
-    plot_title: ClassVar[str] = "Two Tones Vs Flux Bias"
+    plot_title: ClassVar[str] = "Two Tone Vs Flux Bias"
     """Default title for TwoTones vs flux bias experiment plots."""
 
     dims_override: ClassVar[list[DimensionOverride | None]] = [
@@ -546,10 +546,10 @@ class TwoTonesVsFluxBiasExperimentResult(ExperimentResult):
 
 
 @yaml.register_class
-class TwoTonesFrequencyVsFluxQdacRampCWExperimentResult(ExperimentResult):
+class TwoToneVsFluxBiasRampExperimentResult(ExperimentResult):
     """Result container for TwoTone vs Flux using Qdac ramping and continuous wave experiment."""
 
-    plot_title: ClassVar[str] = "Two Tones Vs Flux Bias CW"
+    plot_title: ClassVar[str] = "Two Tone Vs Flux Bias Ramp"
     """Default title for TwoTone vs flux Qdac ramping CW experiment plots."""
 
     dims_override: ClassVar[list[DimensionOverride | None]] = [
@@ -560,10 +560,10 @@ class TwoTonesFrequencyVsFluxQdacRampCWExperimentResult(ExperimentResult):
 
 
 @yaml.register_class
-class TwoTonesPulsedSoftExperimentResult(ExperimentResult):
+class TwoToneAtFixedFluxBiasSaturationExperimentResult(ExperimentResult):
     """Result container for Two Tones Pulsed Soft experiments."""
 
-    plot_title: ClassVar[str] = "Two Tones Pulsed Soft"
+    plot_title: ClassVar[str] = "Two Tone At Fixed Flux Bias"
     """Default title for TwoTones pulsed soft experiment plots."""
 
     dims_override: ClassVar[list[DimensionOverride | None]] = [
@@ -600,10 +600,10 @@ class TwoTonesPulsedSoftExperimentResult(ExperimentResult):
 
 
 @yaml.register_class
-class T1SoftSaturationHWLExperimentResult(ExperimentResult):
+class T1SaturationExperimentResult(ExperimentResult):
     """Result container for T1 Soft Saturation Hardware Loop experiments."""
 
-    plot_title: ClassVar[str] = "T1 Soft Saturation HWL"
+    plot_title: ClassVar[str] = "T1 Saturation"
     """Default title for T1 soft saturation HWL experiment plots."""
 
     dims_override: ClassVar[list[DimensionOverride | None]] = [

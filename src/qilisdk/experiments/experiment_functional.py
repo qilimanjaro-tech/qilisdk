@@ -20,12 +20,12 @@ from qilisdk.experiments.experiment_result import (
     ExperimentResult,
     RabiExperimentResult,
     T1ExperimentResult,
-    T1SoftSaturationHWLExperimentResult,
+    T1SaturationExperimentResult,
     T2ExperimentResult,
-    TwoTonesAtFixedFluxBiasExperimentResult,
-    TwoTonesFrequencyVsFluxQdacRampCWExperimentResult,
-    TwoTonesPulsedSoftExperimentResult,
-    TwoTonesVsFluxBiasExperimentResult,
+    TwoToneAtFixedFluxBiasExperimentResult,
+    TwoToneAtFixedFluxBiasSaturationExperimentResult,
+    TwoToneVsFluxBiasExperimentResult,
+    TwoToneVsFluxBiasRampExperimentResult,
 )
 from qilisdk.functionals.functional import Functional
 from qilisdk.yaml import yaml
@@ -180,14 +180,14 @@ class T2Experiment(ExperimentFunctional[T2ExperimentResult]):
 
 
 @yaml.register_class
-class TwoTonesAtFixedFluxBiasExperiment(ExperimentFunctional[TwoTonesAtFixedFluxBiasExperimentResult]):
+class TwoToneAtFixedFluxBiasExperiment(ExperimentFunctional[TwoToneAtFixedFluxBiasExperimentResult]):
     """Two-tone spectroscopy functional for a single qubit.
 
     Sweeps a drive tone frequency while monitoring the readout tone to
     identify the qubit transition frequency.
     """
 
-    result_type: ClassVar[type[TwoTonesAtFixedFluxBiasExperimentResult]] = TwoTonesAtFixedFluxBiasExperimentResult
+    result_type: ClassVar[type[TwoToneAtFixedFluxBiasExperimentResult]] = TwoToneAtFixedFluxBiasExperimentResult
     """Result type returned by this functional."""
 
     def __init__(
@@ -241,14 +241,14 @@ class TwoTonesAtFixedFluxBiasExperiment(ExperimentFunctional[TwoTonesAtFixedFlux
 
 
 @yaml.register_class
-class TwoTonesVsFluxBiasExperiment(ExperimentFunctional[TwoTonesVsFluxBiasExperimentResult]):
+class TwoTonesVsFluxBiasExperiment(ExperimentFunctional[TwoToneVsFluxBiasExperimentResult]):
     """Two-tone spectroscopy functional for a single qubit, swept vs flux bias.
 
     Sweeps a drive tone frequency while monitoring the readout tone to
     identify the qubit transition frequency as a function of flux bias.
     """
 
-    result_type: ClassVar[type[TwoTonesVsFluxBiasExperimentResult]] = TwoTonesVsFluxBiasExperimentResult
+    result_type: ClassVar[type[TwoToneVsFluxBiasExperimentResult]] = TwoToneVsFluxBiasExperimentResult
     """Result type returned by this functional."""
 
     def __init__(
@@ -338,9 +338,7 @@ class TwoTonesVsFluxBiasExperiment(ExperimentFunctional[TwoTonesVsFluxBiasExperi
 
 
 @yaml.register_class
-class TwoTonesFrequencyVsFluxQdacRampCWExperiment(
-    ExperimentFunctional[TwoTonesFrequencyVsFluxQdacRampCWExperimentResult]
-):
+class TwoToneVsFluxBiasRampExperiment(ExperimentFunctional[TwoToneVsFluxBiasRampExperimentResult]):
     """Two-tone spectroscopy functional for a single qubit, swept vs flux bias using ramping through the QDAC and
     continous wave.
 
@@ -348,9 +346,7 @@ class TwoTonesFrequencyVsFluxQdacRampCWExperiment(
     identify the qubit transition frequency as a function of flux bias.
     """
 
-    result_type: ClassVar[type[TwoTonesFrequencyVsFluxQdacRampCWExperimentResult]] = (
-        TwoTonesFrequencyVsFluxQdacRampCWExperimentResult
-    )
+    result_type: ClassVar[type[TwoToneVsFluxBiasRampExperimentResult]] = TwoToneVsFluxBiasRampExperimentResult
     """Result type returned by this functional."""
 
     def __init__(
@@ -440,14 +436,18 @@ class TwoTonesFrequencyVsFluxQdacRampCWExperiment(
 
 
 @yaml.register_class
-class TwoTonesPulsedSoftExperiment(ExperimentFunctional[TwoTonesPulsedSoftExperimentResult]):
+class TwoToneAtFixedFluxBiasSaturationExperiment(
+    ExperimentFunctional[TwoToneAtFixedFluxBiasSaturationExperimentResult]
+):
     """Two-tone pulsed spectroscopy functional using a soft Gaussian ring-up drive.
 
     Sweeps the drive tone IF frequency while applying a smooth saturation pulse
     to identify the qubit transition frequency at a fixed flux bias point.
     """
 
-    result_type: ClassVar[type[TwoTonesPulsedSoftExperimentResult]] = TwoTonesPulsedSoftExperimentResult
+    result_type: ClassVar[type[TwoToneAtFixedFluxBiasSaturationExperimentResult]] = (
+        TwoToneAtFixedFluxBiasSaturationExperimentResult
+    )
     """Result type returned by this functional."""
 
     def __init__(
@@ -501,7 +501,7 @@ class TwoTonesPulsedSoftExperiment(ExperimentFunctional[TwoTonesPulsedSoftExperi
 
 
 @yaml.register_class
-class T1SoftSaturationHWLExperiment(ExperimentFunctional[T1SoftSaturationHWLExperimentResult]):
+class T1SaturationExperiment(ExperimentFunctional[T1SaturationExperimentResult]):
     """T1 relaxation experiment using a soft Gaussian ring-up saturation drive with hardware loop.
 
     Applies a smooth saturation pulse to excite the qubit and sweeps the delay
@@ -509,7 +509,7 @@ class T1SoftSaturationHWLExperiment(ExperimentFunctional[T1SoftSaturationHWLExpe
     are unrolled into a single QProgram for efficient hardware execution.
     """
 
-    result_type: ClassVar[type[T1SoftSaturationHWLExperimentResult]] = T1SoftSaturationHWLExperimentResult
+    result_type: ClassVar[type[T1SaturationExperimentResult]] = T1SaturationExperimentResult
     """Result type returned by this functional."""
 
     def __init__(self, qubit: int, averages: int, wait_duration_values: np.ndarray) -> None:
