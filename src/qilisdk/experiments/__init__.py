@@ -15,8 +15,11 @@ from .experiment_functional import (
     ExperimentFunctional,
     RabiExperiment,
     T1Experiment,
+    T1SoftSaturationHWLExperiment,
     T2Experiment,
     TwoTonesAtFixedFluxBiasExperiment,
+    TwoTonesFrequencyVsFluxQdacRampCWExperiment,
+    TwoTonesPulsedSoftExperiment,
     TwoTonesVsFluxBiasExperiment,
 )
 from .experiment_result import (
@@ -24,8 +27,11 @@ from .experiment_result import (
     ExperimentResult,
     RabiExperimentResult,
     T1ExperimentResult,
+    T1SoftSaturationHWLExperimentResult,
     T2ExperimentResult,
     TwoTonesAtFixedFluxBiasExperimentResult,
+    TwoTonesFrequencyVsFluxQdacRampCWExperimentResult,
+    TwoTonesPulsedSoftExperimentResult,
     TwoTonesVsFluxBiasExperimentResult,
 )
 
@@ -37,10 +43,16 @@ __all__ = [
     "RabiExperimentResult",
     "T1Experiment",
     "T1ExperimentResult",
+    "T1SoftSaturationHWLExperiment",
+    "T1SoftSaturationHWLExperimentResult",
     "T2Experiment",
     "T2ExperimentResult",
     "TwoTonesAtFixedFluxBiasExperiment",
     "TwoTonesAtFixedFluxBiasExperimentResult",
+    "TwoTonesFrequencyVsFluxQdacRampCWExperiment",
+    "TwoTonesFrequencyVsFluxQdacRampCWExperimentResult",
+    "TwoTonesPulsedSoftExperiment",
+    "TwoTonesPulsedSoftExperimentResult",
     "TwoTonesVsFluxBiasExperiment",
     "TwoTonesVsFluxBiasExperimentResult",
 ]
