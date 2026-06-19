@@ -36,8 +36,7 @@ from qilisdk.experiments.experiment_functional import (
     RabiExperiment,
     T1Experiment,
     T2Experiment,
-    TwoTonesAtFixedFluxBiasExperiment,
-    TwoTonesVsFluxBiasExperiment,
+    TwoToneAtFixedFluxBiasExperiment,
 )
 from qilisdk.functionals.analog_evolution import AnalogEvolution
 from qilisdk.functionals.digital_propagation import DigitalPropagation
@@ -148,11 +147,7 @@ class FakeT2Experiment(T2Experiment):
     def __init__(self): ...
 
 
-class FakeTwoTonesAtFluxBiasExperiment(TwoTonesAtFixedFluxBiasExperiment):
-    def __init__(self): ...
-
-
-class FakeTwoTonesVsFluxBiasExperiment(TwoTonesVsFluxBiasExperiment):
+class FakeTwoTonesAtFluxBiasExperiment(TwoToneAtFixedFluxBiasExperiment):
     def __init__(self): ...
 
 
@@ -263,7 +258,7 @@ def test_submit_dispatches_to_t2_experiment_handler(monkeypatch):
 
 
 def test_submit_dispatches_to_two_tones_at_flux_bias_handler(monkeypatch):
-    monkeypatch.setattr(speqtrum, "TwoTonesAtFixedFluxBiasExperiment", FakeTwoTonesAtFluxBiasExperiment)
+    monkeypatch.setattr(speqtrum, "TwoToneAtFixedFluxBiasExperiment", FakeTwoTonesAtFluxBiasExperiment)
     monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
     monkeypatch.setattr(
         speqtrum.SpeQtrum,
@@ -274,20 +269,6 @@ def test_submit_dispatches_to_two_tones_at_flux_bias_handler(monkeypatch):
     q = speqtrum.SpeQtrum()
     handle = q.submit(FakeTwoTonesAtFluxBiasExperiment(), device="some_device", job_name="two_tone_job")
     assert handle.id == 33
-
-
-def test_submit_dispatches_to_two_tones_vs_flux_bias_handler(monkeypatch):
-    monkeypatch.setattr(speqtrum, "TwoTonesVsFluxBiasExperiment", FakeTwoTonesVsFluxBiasExperiment)
-    monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
-    monkeypatch.setattr(
-        speqtrum.SpeQtrum,
-        "_create_client",
-        lambda self: DummyClient(post_payload={"id": 34}),
-        raising=True,
-    )
-    q = speqtrum.SpeQtrum()
-    handle = q.submit(FakeTwoTonesVsFluxBiasExperiment(), device="some_device", job_name="two_tone_vs_flux_job")
-    assert handle.id == 34
 
 
 def test_submit_unknown_functional_raises(monkeypatch):

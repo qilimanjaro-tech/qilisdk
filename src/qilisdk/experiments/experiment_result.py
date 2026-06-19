@@ -532,20 +532,6 @@ class TwoToneAtFixedFluxBiasExperimentResult(ExperimentResult):
 
 
 @yaml.register_class
-class TwoToneVsFluxBiasExperimentResult(ExperimentResult):
-    """Result container for TwoTones vs Flux Bias experiments swept vs flux bias."""
-
-    plot_title: ClassVar[str] = "Two Tone Vs Flux Bias"
-    """Default title for TwoTones vs flux bias experiment plots."""
-
-    dims_override: ClassVar[list[DimensionOverride | None]] = [
-        lambda dim: Dimension(labels=[r"$\Phi_z~(\Phi_0)$"], values=dim.values),
-        lambda dim: Dimension(labels=[r"LO Frequency (GHz)"], values=[v * 1e-9 for v in dim.values]),
-    ]
-    """Override axis labels and convert y-axis from Hz to GHz."""
-
-
-@yaml.register_class
 class TwoToneVsFluxBiasRampExperimentResult(ExperimentResult):
     """Result container for TwoTone vs Flux using Qdac ramping and continuous wave experiment."""
 

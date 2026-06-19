@@ -29,10 +29,9 @@ from qilisdk.experiments import (
     T2Experiment,
     T2ExperimentResult,
 )
-from qilisdk.experiments.experiment_functional import TwoToneAtFixedFluxBiasExperiment, TwoTonesVsFluxBiasExperiment
+from qilisdk.experiments.experiment_functional import TwoToneAtFixedFluxBiasExperiment
 from qilisdk.experiments.experiment_result import (
     TwoToneAtFixedFluxBiasExperimentResult,
-    TwoToneVsFluxBiasExperimentResult,
 )
 from qilisdk.functionals import (
     AnalogEvolution,
@@ -292,22 +291,6 @@ class TwoTonesAtFixedFluxBiasExperimentPayload(SpeQtrumModel):
         return v
 
 
-class TwoTonesVsFluxBiasExperimentPayload(SpeQtrumModel):
-    """Payload model wrapping a ``TwoTonesVsFluxBiasExperiment`` for API submission."""
-
-    experiment: TwoTonesVsFluxBiasExperiment = Field(...)
-
-    @field_serializer("experiment")
-    def _serialize_experiment(self, experiment: TwoTonesVsFluxBiasExperiment, _info):
-        return serialize(experiment)
-
-    @field_validator("experiment", mode="before")
-    def _load_experiment(cls, v):
-        if isinstance(v, str):
-            return deserialize(v, TwoTonesVsFluxBiasExperiment)
-        return v
-
-
 class ExecutePayload(SpeQtrumModel):
     """Top-level execution payload sent to the SpeQtrum ``/execute`` endpoint.
 
@@ -324,7 +307,6 @@ class ExecutePayload(SpeQtrumModel):
     t1_experiment_payload: T1ExperimentPayload | None = None
     t2_experiment_payload: T2ExperimentPayload | None = None
     two_tones_at_flux_bias_experiment_payload: TwoTonesAtFixedFluxBiasExperimentPayload | None = None
-    two_tones_vs_flux_bias_experiment_payload: TwoTonesVsFluxBiasExperimentPayload | None = None
 
 
 class ExecuteResult(SpeQtrumModel):
@@ -342,7 +324,6 @@ class ExecuteResult(SpeQtrumModel):
     t1_experiment_result: T1ExperimentResult | None = None
     t2_experiment_result: T2ExperimentResult | None = None
     two_tones_at_fixed_flux_bias_experiment_result: TwoToneAtFixedFluxBiasExperimentResult | None = None
-    two_tones_vs_flux_bias_experiment_result: TwoToneVsFluxBiasExperimentResult | None = None
 
     @field_serializer("functional_result")
     def _serialize_sampling_result(self, functional_result: FunctionalResult, _info):
@@ -408,22 +389,6 @@ class ExecuteResult(SpeQtrumModel):
     def _load_ttwo_tones_at_fixed_flux_bias_experiment_result(cls, v):
         if isinstance(v, str) and v.startswith("!"):
             return deserialize(v, TwoToneAtFixedFluxBiasExperimentResult)
-        return v
-
-    @field_serializer("two_tones_vs_flux_bias_experiment_result")
-    def _serialize_two_tones_vs_flux_bias_experiment_result(
-        self, two_tones_vs_flux_bias_experiment_result: TwoToneVsFluxBiasExperimentResult, _info
-    ):
-        return (
-            serialize(two_tones_vs_flux_bias_experiment_result)
-            if two_tones_vs_flux_bias_experiment_result is not None
-            else None
-        )
-
-    @field_validator("two_tones_vs_flux_bias_experiment_result", mode="before")
-    def _load_two_tones_vs_flux_bias_experiment_result(cls, v):
-        if isinstance(v, str) and v.startswith("!"):
-            return deserialize(v, TwoToneVsFluxBiasExperimentResult)
         return v
 
 
@@ -538,25 +503,6 @@ def _require_two_tones_experiment_result(result: ExecuteResult) -> TwoToneAtFixe
             "SpeQtrum did not return a two_tones_at_fixed_flux_bias_experiment_result for a Two-Tones at flux bias experiment execution."
         )
     return result.two_tones_at_fixed_flux_bias_experiment_result
-
-
-def _require_two_tones_vs_flux_bias_experiment_result(result: ExecuteResult) -> TwoToneVsFluxBiasExperimentResult:
-    """Extract and return the ``TwoTonesVsFluxBiasExperimentResult`` from *result*.
-
-    Args:
-        result (ExecuteResult): The execution result to inspect.
-
-    Returns:
-        TwoTonesVsFluxBiasExperimentResult: The contained Two-Tones vs flux bias experiment result.
-
-    Raises:
-        RuntimeError: If the ``two_tones_vs_flux_bias_experiment_result`` field is ``None``.
-    """
-    if result.two_tones_vs_flux_bias_experiment_result is None:
-        raise RuntimeError(
-            "SpeQtrum did not return a two_tones_vs_flux_bias_experiment_result for a Two-Tones vs flux bias experiment execution."
-        )
-    return result.two_tones_vs_flux_bias_experiment_result
 
 
 def _require_variational_program_result_typed(
@@ -704,25 +650,6 @@ class JobHandle(SpeQtrumModel, Generic[TFunctionalResult_co]):
             id=job_id,
             execute_type=ExecuteType.TWO_TONES_AT_FIXED_FLUX_EXPERIMENT,
             extractor=_require_two_tones_experiment_result,
-        )
-
-    @classmethod
-    def two_tones_vs_flux_bias_experiment(
-        cls: type[JobHandle[TwoToneVsFluxBiasExperimentResult]], job_id: int
-    ) -> JobHandle[TwoToneVsFluxBiasExperimentResult]:
-        """Create a handle for a Two-Tones vs flux bias experiment job.
-
-        Args:
-            job_id (int): Numeric identifier returned by the SpeQtrum service.
-
-        Returns:
-            JobHandle[TwoTonesVsFluxBiasExperimentResult]: A handle whose result type is
-            ``TwoTonesVsFluxBiasExperimentResult``.
-        """
-        return cls(
-            id=job_id,
-            execute_type=ExecuteType.TWO_TONES_VS_FLUX_BIAS_EXPERIMENT,
-            extractor=_require_two_tones_vs_flux_bias_experiment_result,
         )
 
     def bind(self, detail: "JobDetail") -> "TypedJobDetail[TFunctionalResult_co]":

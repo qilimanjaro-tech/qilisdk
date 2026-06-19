@@ -18,12 +18,11 @@ from qilisdk.experiments import (
     ExperimentFunctional,
     RabiExperiment,
     T1Experiment,
-    T1SoftSaturationHWLExperiment,
+    T1SaturationExperiment,
     T2Experiment,
-    TwoTonesAtFixedFluxBiasExperiment,
-    TwoTonesFrequencyVsFluxQdacRampCWExperiment,
-    TwoTonesPulsedSoftExperiment,
-    TwoTonesVsFluxBiasExperiment,
+    TwoToneAtFixedFluxBiasExperiment,
+    TwoToneAtFixedFluxBiasSaturationExperiment,
+    TwoToneVsFluxBiasRampExperiment,
 )
 
 
@@ -80,7 +79,7 @@ def test_two_tones_experiment_initialization():
     freq_stop = 5.0
     freq_step = 5.0
 
-    two_tones_exp = TwoTonesAtFixedFluxBiasExperiment(
+    two_tones_exp = TwoToneAtFixedFluxBiasExperiment(
         qubit=qubit,
         averages=averages,
         frequency_start=freq_start,
@@ -95,37 +94,6 @@ def test_two_tones_experiment_initialization():
     assert np.isclose(two_tones_exp.frequency_step, freq_step)
 
 
-def test_two_tones_versus_flux_experiment_initialization():
-    qubit = 0
-    averages = 1000
-    freq_start = 4.0
-    freq_stop = 5.0
-    freq_step = 5.0
-    flux_start = -1.0
-    flux_stop = 1.0
-    flux_step = 0.5
-
-    two_tones_flux_exp = TwoTonesVsFluxBiasExperiment(
-        qubit=qubit,
-        averages=averages,
-        frequency_start=freq_start,
-        frequency_stop=freq_stop,
-        frequency_step=freq_step,
-        flux_start=flux_start,
-        flux_stop=flux_stop,
-        flux_step=flux_step,
-    )
-
-    assert two_tones_flux_exp.qubit == qubit
-    assert two_tones_flux_exp.averages == averages
-    assert np.isclose(two_tones_flux_exp.frequency_start, freq_start)
-    assert np.isclose(two_tones_flux_exp.frequency_stop, freq_stop)
-    assert np.isclose(two_tones_flux_exp.frequency_step, freq_step)
-    assert np.isclose(two_tones_flux_exp.flux_start, flux_start)
-    assert np.isclose(two_tones_flux_exp.flux_stop, flux_stop)
-    assert np.isclose(two_tones_flux_exp.flux_step, flux_step)
-
-
 def test_two_tones_frequency_vs_flux_qdac_ramp_cw_experiment_initialization():
     qubit = 0
     averages = 1000
@@ -136,7 +104,7 @@ def test_two_tones_frequency_vs_flux_qdac_ramp_cw_experiment_initialization():
     flux_stop = 0.5
     flux_step = 0.02
 
-    exp = TwoTonesFrequencyVsFluxQdacRampCWExperiment(
+    exp = TwoToneVsFluxBiasRampExperiment(
         qubit=qubit,
         averages=averages,
         frequency_start=freq_start,
@@ -164,7 +132,7 @@ def test_two_tones_pulsed_soft_experiment_initialization():
     freq_stop = 5.0e9
     freq_step = 5e6
 
-    exp = TwoTonesPulsedSoftExperiment(
+    exp = TwoToneAtFixedFluxBiasSaturationExperiment(
         qubit=qubit,
         averages=averages,
         frequency_start=freq_start,
@@ -184,7 +152,7 @@ def test_t1_soft_saturation_hwl_experiment_initialization():
     averages = 1000
     values = np.arange(0, 100000, 2000)
 
-    exp = T1SoftSaturationHWLExperiment(qubit=qubit, averages=averages, wait_duration_values=values)
+    exp = T1SaturationExperiment(qubit=qubit, averages=averages, wait_duration_values=values)
 
     assert exp.qubit == qubit
     assert exp.averages == averages

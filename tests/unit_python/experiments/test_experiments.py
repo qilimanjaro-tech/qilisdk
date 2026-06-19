@@ -24,12 +24,11 @@ from qilisdk.experiments import (
     ExperimentResult,
     RabiExperimentResult,
     T1ExperimentResult,
-    T1SoftSaturationHWLExperimentResult,
+    T1SaturationExperimentResult,
     T2ExperimentResult,
-    TwoTonesAtFixedFluxBiasExperimentResult,
-    TwoTonesFrequencyVsFluxQdacRampCWExperimentResult,
-    TwoTonesPulsedSoftExperimentResult,
-    TwoTonesVsFluxBiasExperimentResult,
+    TwoToneAtFixedFluxBiasExperimentResult,
+    TwoToneAtFixedFluxBiasSaturationExperimentResult,
+    TwoToneVsFluxBiasRampExperimentResult,
 )
 
 # Set this to True if you want to actually save the plots during testing
@@ -168,7 +167,7 @@ def test_two_tones_at_flux_bias_plotting(monkeypatch):
     data_at = np.stack([s21_complex.real, s21_complex.imag], axis=-1)
     dims_at = [Dimension(labels=["IF Frequency (Hz)"], values=[freqs])]
 
-    result_at = TwoTonesAtFixedFluxBiasExperimentResult(qubit=0, averages=1000, data=data_at, dims=dims_at)
+    result_at = TwoToneAtFixedFluxBiasExperimentResult(qubit=0, averages=1000, data=data_at, dims=dims_at)
 
     result_at.plot(save_to="./.tmp/test_two_tones_at_default.png")
     result_at.plot(save_to="./.tmp/test_two_tones_at.png", fit=False)
@@ -179,44 +178,6 @@ def test_two_tones_at_flux_bias_plotting(monkeypatch):
     fakeWarning = MagicMock()
     monkeypatch.setattr(logger, "warning", fakeWarning)
     result_at.plot(save_to="./.tmp/test_two_tones_at_phase_fit.png", fit=True, plot_type="phase")
-    fakeWarning.assert_called_with(
-        "Fitting is only implemented for amplitude plots. Ignoring fit request for non-amplitude plot."
-    )
-
-
-def test_two_tones_vs_flux_bias_plotting(monkeypatch):
-    monkeypatch.setattr(plt, "show", lambda: None)
-    if not _DEBUG_PLOTS:
-        monkeypatch.setattr(plt.Figure, "savefig", lambda self, *args, **kwargs: None)
-
-    rng = np.random.default_rng(seed=42)
-    freqs2d = np.arange(4.0e9, 6.0e9, 10e6)
-    fluxes = np.arange(-0.5, 0.5, 0.02)
-    f_max = 5.5e9
-    f_q_vs_flux = f_max * np.sqrt(np.abs(np.cos(np.pi * fluxes)))
-    linewidth = 20e6
-    PHI, F = np.meshgrid(f_q_vs_flux, freqs2d, indexing="ij")
-    s21_mag_2d = 1.0 - 0.7 / (1 + ((F - PHI) / (linewidth / 2)) ** 2)
-    s21_mag_2d += rng.normal(0, 0.01, size=s21_mag_2d.shape)
-    phase_2d = np.full_like(F, np.pi / 6) + 0.4 / (1 + ((F - PHI) / (linewidth / 2)) ** 2)
-    s21_complex_2d = s21_mag_2d * np.exp(1j * phase_2d)
-    data_vs = np.stack([s21_complex_2d.real, s21_complex_2d.imag], axis=-1)
-    dims_vs = [
-        Dimension(labels=["Flux bias (Φ₀)"], values=[fluxes]),
-        Dimension(labels=["Drive frequency (Hz)"], values=[freqs2d]),
-    ]
-
-    result_vs = TwoTonesVsFluxBiasExperimentResult(qubit=0, averages=1000, data=data_vs, dims=dims_vs)
-
-    result_vs.plot(save_to="./.tmp/test_two_tones_vs_default.png")
-    result_vs.plot(save_to="./.tmp/test_two_tones_vs.png", fit=False)
-    result_vs.plot(save_to="./.tmp/test_two_tones_vs_fit.png", fit=True)
-    result_vs.plot(save_to="./.tmp/test_two_tones_vs_phase.png", fit=False, plot_type="phase")
-    result_vs.plot(save_to="./.tmp/test_two_tones_vs_db.png", fit=False, plot_type="db")
-
-    fakeWarning = MagicMock()
-    monkeypatch.setattr(logger, "warning", fakeWarning)
-    result_vs.plot(save_to="./.tmp/test_two_tones_vs_phase_fit.png", fit=True, plot_type="phase")
     fakeWarning.assert_called_with(
         "Fitting is only implemented for amplitude plots. Ignoring fit request for non-amplitude plot."
     )
@@ -275,7 +236,7 @@ def test_two_tones_frequency_vs_flux_qdac_ramp_cw_plotting(monkeypatch):
         Dimension(labels=["Drive frequency (Hz)"], values=[freqs]),
     ]
 
-    result = TwoTonesFrequencyVsFluxQdacRampCWExperimentResult(qubit=0, averages=1000, data=data, dims=dims)
+    result = TwoToneVsFluxBiasRampExperimentResult(qubit=0, averages=1000, data=data, dims=dims)
 
     result.plot(save_to="./.tmp/test_two_tones_qdac_cw_default.png")
     result.plot(save_to="./.tmp/test_two_tones_qdac_cw.png", fit=False)
@@ -306,7 +267,7 @@ def test_two_tones_pulsed_soft_plotting(monkeypatch):
     data = np.stack([s21_complex.real, s21_complex.imag], axis=-1)
     dims = [Dimension(labels=["IF Frequency (Hz)"], values=[freqs])]
 
-    result = TwoTonesPulsedSoftExperimentResult(qubit=0, averages=1000, data=data, dims=dims)
+    result = TwoToneAtFixedFluxBiasSaturationExperimentResult(qubit=0, averages=1000, data=data, dims=dims)
 
     result.plot(save_to="./.tmp/test_two_tones_pulsed_soft_default.png")
     result.plot(save_to="./.tmp/test_two_tones_pulsed_soft.png", fit=False)
@@ -334,7 +295,7 @@ def test_t1_soft_saturation_hwl_plotting(monkeypatch):
     amplitudes = np.clip(decay[:, np.newaxis] + noise, 0, 1)
     dims = [Dimension(labels=["Time"], values=[tau])]
 
-    result = T1SoftSaturationHWLExperimentResult(qubit=0, averages=1000, data=amplitudes, dims=dims)
+    result = T1SaturationExperimentResult(qubit=0, averages=1000, data=amplitudes, dims=dims)
 
     result.plot(save_to="./.tmp/test_t1_soft_hwl_default.png")
     result.plot(save_to="./.tmp/test_t1_soft_hwl.png", fit=False)

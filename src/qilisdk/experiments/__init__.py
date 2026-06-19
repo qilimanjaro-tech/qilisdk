@@ -19,7 +19,6 @@ from .experiment_functional import (
     T2Experiment,
     TwoToneAtFixedFluxBiasExperiment,
     TwoToneAtFixedFluxBiasSaturationExperiment,
-    TwoTonesVsFluxBiasExperiment,
     TwoToneVsFluxBiasRampExperiment,
 )
 from .experiment_result import (
@@ -31,7 +30,6 @@ from .experiment_result import (
     T2ExperimentResult,
     TwoToneAtFixedFluxBiasExperimentResult,
     TwoToneAtFixedFluxBiasSaturationExperimentResult,
-    TwoToneVsFluxBiasExperimentResult,
     TwoToneVsFluxBiasRampExperimentResult,
 )
 
@@ -51,8 +49,6 @@ __all__ = [
     "TwoToneAtFixedFluxBiasExperimentResult",
     "TwoToneAtFixedFluxBiasSaturationExperiment",
     "TwoToneAtFixedFluxBiasSaturationExperimentResult",
-    "TwoToneVsFluxBiasExperimentResult",
     "TwoToneVsFluxBiasRampExperiment",
     "TwoToneVsFluxBiasRampExperimentResult",
-    "TwoTonesVsFluxBiasExperiment",
 ]
