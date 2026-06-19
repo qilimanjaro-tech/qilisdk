@@ -14,6 +14,11 @@
 
 #include "lindblad.h"
 
+#include <chrono>
+#include <iostream>
+
+#include "../gpu/cuda_solver.h"
+
 // GCOV_EXCL_BR_START
 
 const std::complex<double> imag(0.0, 1.0);
@@ -127,9 +132,109 @@ void lindblad_rhs(DenseMatrix& drho, const DenseMatrix& rho, const MatrixFreeHam
     }
 }
 
+namespace {
+
+using Clock = std::chrono::steady_clock;
+inline double secs(Clock::time_point a, Clock::time_point b) {
+    return std::chrono::duration<double>(b - a).count();
+}
+
+// Coarse per-section timer shared by the CPU and GPU variational paths.
+// Accumulates across calls and prints a breakdown every kReportEvery calls.
+// Remove or gate behind the `verbose` define once profiling is done.
+class PhaseTimer {
+   public:
+    explicit PhaseTimer(const char* tag) : tag_(tag) {}
+    void add(int section, double s) { acc_[section] += s; }  // 0=sample 1=energy 2=linalg 3=drho
+    void tick(int p, int N_s) {
+        if (++calls_ % kReportEvery != 0) {
+            return;
+        }
+        const double tot = acc_[0] + acc_[1] + acc_[2] + acc_[3];
+        if (tot <= 0.0) {
+            return;
+        }
+        auto pct = [tot](double t) { return 100.0 * t / tot; };
+        std::cout << "[QiliSim timing " << tag_ << "] calls=" << calls_ << " p=" << p << " N_s=" << N_s
+                  << " | total=" << tot << "s"
+                  << " sample=" << acc_[0] << "s (" << pct(acc_[0]) << "%)"
+                  << " energy=" << acc_[1] << "s (" << pct(acc_[1]) << "%)"
+                  << " linalg=" << acc_[2] << "s (" << pct(acc_[2]) << "%)"
+                  << " drho=" << acc_[3] << "s (" << pct(acc_[3]) << "%)" << std::endl;
+    }
+
+   private:
+    static constexpr long kReportEvery = 100;
+    const char* tag_;
+    long calls_ = 0;
+    double acc_[4] = {0.0, 0.0, 0.0, 0.0};
+};
+
+// Stochastic-reconfiguration linear algebra on the CPU: given the (N_s x p)
+// sample-operator matrix O and per-sample local energies El, return
+//   adot = M^{-1} V,  M = OᵀO/N_s - ōōᵀ + εI,  V = -(Oᵀ El/N_s - ō Ēl).
+// This is the single source of truth for the SR math; the GPU path
+// (qilisim::gpu::sr_solve) mirrors it and falls back here on any failure.
+Eigen::VectorXcd sr_adot_cpu(const Eigen::MatrixXd& O, const Eigen::VectorXcd& El, double epsilon) {
+    const int N_s = static_cast<int>(O.rows());
+    const int p = static_cast<int>(O.cols());
+    const Eigen::VectorXd O_mean = O.colwise().mean();
+    const std::complex<double> El_mean = El.mean();
+
+    Eigen::MatrixXd M = O.transpose() * O / static_cast<double>(N_s) - O_mean * O_mean.transpose();
+    M += epsilon * Eigen::MatrixXd::Identity(p, p);
+
+    const Eigen::VectorXcd V =
+        -((O.transpose().cast<std::complex<double>>() * El) / static_cast<double>(N_s) -
+          O_mean.cast<std::complex<double>>() * El_mean);
+
+    Eigen::LLT<Eigen::MatrixXd> llt(M);
+    Eigen::VectorXcd adot(p);
+    adot.real() = llt.solve(V.real());
+    adot.imag() = llt.solve(V.imag());
+    return adot;
+}
+
+// Shared front/back end of the variational RHS: draw samples + local energy
+// (CPU), then `compute_adot` turns (O, El) into adot, then write into drho.
+template <typename ComputeAdot>
+void variational_rhs(ExponentialAnsatz& drho, const ExponentialAnsatz& rho, const MatrixFreeHamiltonian& H,
+                     PhaseTimer& timer, ComputeAdot&& compute_adot) {
+    const auto& ops = rho.get_terms().get_operators();
+    const int p = static_cast<int>(ops.size());
+    std::vector<std::pair<PauliString, std::complex<double>>> terms_vec(ops.begin(), ops.end());
+
+    auto t0 = Clock::now();
+    SampleSet samples = rho.draw_samples();
+    auto t1 = Clock::now();
+    const int N_s = static_cast<int>(samples.configs.size());
+    Eigen::VectorXcd El = rho.local_energy(samples, H);
+    auto t2 = Clock::now();
+
+    // Cast int8 ±1 storage to doubles so we can use BLAS routines.
+    Eigen::MatrixXd O_mat_d = samples.O_mat.cast<double>();
+    const double epsilon = 0.1 / std::sqrt(static_cast<double>(N_s));
+    Eigen::VectorXcd adot = compute_adot(O_mat_d, El, epsilon);
+    auto t3 = Clock::now();
+
+    drho *= 0.0;
+    for (int k = 0; k < p; ++k) {
+        drho.get_terms().add(adot(k), terms_vec[k].first);
+    }
+    auto t4 = Clock::now();
+
+    timer.add(0, secs(t0, t1));
+    timer.add(1, secs(t1, t2));
+    timer.add(2, secs(t2, t3));
+    timer.add(3, secs(t3, t4));
+    timer.tick(p, N_s);
+}
+
+}  // namespace
+
 void lindblad_rhs(ExponentialAnsatz& drho, const ExponentialAnsatz& rho, const MatrixFreeHamiltonian& H) {
     /*
-    Evaluate the right-hand side of the variational equations for the ExponentialAnsatz.
+    Evaluate the right-hand side of the variational equations for the ExponentialAnsatz (CPU).
 
     The ansatz is |Ψ⟩ = exp(∑_k a_k P_k)|+⟩ where P_k are Z-type Pauli strings.
     Uses stochastic reconfiguration (VMC) to compute ȧ_k = (M⁻¹ V)_k where:
@@ -143,45 +248,31 @@ void lindblad_rhs(ExponentialAnsatz& drho, const ExponentialAnsatz& rho, const M
         rho (ExponentialAnsatz): Current ansatz with parameters a_k.
         H (MatrixFreeHamiltonian): The Hamiltonian.
     */
+    static PhaseTimer timer("cpu");
+    variational_rhs(drho, rho, H, timer,
+                    [](const Eigen::MatrixXd& O, const Eigen::VectorXcd& El, double eps) {
+                        return sr_adot_cpu(O, El, eps);
+                    });
+}
 
-    // Convert the operators to a vector for indexed access
-    const auto& ops = rho.get_terms().get_operators();
-    const int p = static_cast<int>(ops.size());
-    std::vector<std::pair<PauliString, std::complex<double>>> terms_vec(ops.begin(), ops.end());
-
-    // Get the samples from the ansatz
-    SampleSet samples = rho.draw_samples();
-    int N_s = static_cast<int>(samples.configs.size());
-    Eigen::VectorXcd El = rho.local_energy(samples, H);
-
-    // Cast int8 ±1 storage to doubles so that we can use BLAS routines
-    Eigen::MatrixXd O_mat_d = samples.O_mat.cast<double>();
-
-    // Compute the means
-    Eigen::VectorXd O_mean_real = O_mat_d.colwise().mean();
-    std::complex<double> El_mean = El.mean();
-
-    // M_{kk'} = <O_k* O_k'> - <O_k*><O_k'>
-    Eigen::MatrixXd O_T = O_mat_d.transpose();
-    Eigen::MatrixXd M_real = (O_T * O_mat_d) / static_cast<double>(N_s) - O_mean_real * O_mean_real.transpose();
-
-    // V_k = -(<O_k* E_loc> - <O_k*><E_loc>)
-    Eigen::VectorXcd V = -((O_T.cast<std::complex<double>>() * El) / static_cast<double>(N_s) - O_mean_real.cast<std::complex<double>>() * El_mean);
-
-    // Regularise M and solve via Cholesky
-    // const double epsilon = 1e-4;
-    const double epsilon = 0.1 / std::sqrt(static_cast<double>(N_s));
-    M_real += epsilon * Eigen::MatrixXd::Identity(p, p);
-    Eigen::LLT<Eigen::MatrixXd> llt(M_real);
-    Eigen::VectorXcd adot(p);
-    adot.real() = llt.solve(V.real());
-    adot.imag() = llt.solve(V.imag());
-
-    // Set the drho
-    drho *= 0.0;
-    for (int k = 0; k < p; ++k) {
-        drho.get_terms().add(adot(k), terms_vec[k].first);
-    }
+void lindblad_rhs_gpu(ExponentialAnsatz& drho, const ExponentialAnsatz& rho, const MatrixFreeHamiltonian& H) {
+    /*
+    GPU counterpart of lindblad_rhs. Sampling and local energy stay on the CPU;
+    the entire stochastic-reconfiguration linear algebra (means, Gram, M
+    assembly, V, Cholesky solve) runs device-resident via qilisim::gpu::sr_solve,
+    uploading only O and El and reading back only adot. On any GPU failure it
+    falls back to the identical CPU computation (sr_adot_cpu), so results match.
+    Dispatch (this vs lindblad_rhs) happens once per RK4 step in iter_rk4.
+    */
+    static PhaseTimer timer("gpu");
+    variational_rhs(drho, rho, H, timer,
+                    [](const Eigen::MatrixXd& O, const Eigen::VectorXcd& El, double eps) {
+                        Eigen::VectorXcd adot;
+                        if (!qilisim::gpu::sr_solve(O, El, eps, adot)) {
+                            adot = sr_adot_cpu(O, El, eps);  // resident path failed -> CPU
+                        }
+                        return adot;
+                    });
 }
 
 // GCOV_EXCL_BR_STOP

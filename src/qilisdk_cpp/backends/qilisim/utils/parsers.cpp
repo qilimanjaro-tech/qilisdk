@@ -832,6 +832,9 @@ QiliSimConfig parse_solver_params(const py::dict& solver_params) {
     if (solver_params.contains("variational_warmups")) {
         config.set_warmups(solver_params["variational_warmups"].cast<int>());
     }
+    if (solver_params.contains("gpu")) {
+        config.set_gpu(solver_params["gpu"].cast<bool>());
+    }
     if (config.get_num_threads() <= 0) {
         config.set_num_threads(1);
     }

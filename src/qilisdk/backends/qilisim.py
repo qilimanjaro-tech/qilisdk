@@ -121,6 +121,19 @@ class QiliSim(Backend):
         self._solver_config.update(digital_simulation_method.get_config())
         self._solver_config.update({"atol": get_settings().atol})
 
+        # If GPU acceleration is requested, preload the CUDA libraries from the
+        # nvidia pip wheels so the C++ shim can resolve them by soname. A system
+        # CUDA install (on the loader path) needs no preloading. The backend
+        # transparently falls back to CPU if no GPU is available at runtime.
+        if execution_config.gpu:
+            from ._gpu import preload_cuda_libraries
+
+            if not preload_cuda_libraries():
+                logger.debug(
+                    "GPU requested but no CUDA wheels were preloaded; relying on a system CUDA "
+                    "install if present, otherwise the simulator falls back to CPU."
+                )
+
     @property
     def solver_params(self) -> SolverConfigDict:
         """Backward-compatible alias for the backend configuration dictionary."""

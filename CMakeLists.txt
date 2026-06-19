@@ -89,6 +89,9 @@ file(GLOB QILISIM_SUBDIR_SOURCES src/qilisdk_cpp/backends/qilisim/*/*.cpp)
 list(APPEND QILISIM_SOURCES ${QILISIM_SUBDIR_SOURCES})
 target_sources(qilisim_module PRIVATE ${QILISIM_SOURCES})
 target_link_libraries(qilisim_module PRIVATE qilisdk_libs)
+# Needed for dlopen/dlsym in the optional GPU shim (gpu/cuda_solver.cpp).
+# No CUDA toolkit link dependency: cuBLAS/cuSOLVER are loaded lazily at runtime.
+target_link_libraries(qilisim_module PRIVATE ${CMAKE_DL_LIBS})
 set_target_properties(qilisim_module PROPERTIES
     BUILD_RPATH "${RPATH_ORIGIN}"
     INSTALL_RPATH "${RPATH_ORIGIN}"
