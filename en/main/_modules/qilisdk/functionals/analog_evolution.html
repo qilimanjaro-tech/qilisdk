@@ -430,7 +430,7 @@
 </span><span id="line-16"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.analog.schedule</span><span class="w"> </span><span class="kn">import</span> <span class="n">Schedule</span>
 </span><span id="line-17"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Parameter</span>
 </span><span id="line-18"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core.parameterizable</span><span class="w"> </span><span class="kn">import</span> <span class="n">Parameterizable</span>
-</span><span id="line-19"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core.qtensor</span><span class="w"> </span><span class="kn">import</span> <span class="n">QTensor</span>
+</span><span id="line-19"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core.qtensor</span><span class="w"> </span><span class="kn">import</span> <span class="n">InitialState</span><span class="p">,</span> <span class="n">QTensor</span>
 </span><span id="line-20"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.functionals.functional</span><span class="w"> </span><span class="kn">import</span> <span class="n">PrimitiveFunctional</span>
 </span><span id="line-21"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.functionals.functional_result</span><span class="w"> </span><span class="kn">import</span> <span class="n">FunctionalResult</span>
 </span><span id="line-22"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.yaml</span><span class="w"> </span><span class="kn">import</span> <span class="n">yaml</span>
@@ -466,23 +466,20 @@
 </span><span id="line-47">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
 </span><span id="line-48">        <span class="bp">self</span><span class="p">,</span>
 </span><span id="line-49">        <span class="n">schedule</span><span class="p">:</span> <span class="n">Schedule</span><span class="p">,</span>
-</span><span id="line-50">        <span class="n">initial_state</span><span class="p">:</span> <span class="n">QTensor</span><span class="p">,</span>
+</span><span id="line-50">        <span class="n">initial_state</span><span class="p">:</span> <span class="n">QTensor</span> <span class="o">|</span> <span class="n">InitialState</span><span class="p">,</span>
 </span><span id="line-51">        <span class="n">store_intermediate_results</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 </span><span id="line-52">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 </span><span id="line-53"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="line-54"><span class="sd">        Args:</span>
 </span><span id="line-55"><span class="sd">            schedule (Schedule): Annealing or control schedule describing the Hamiltonian evolution.</span>
-</span><span id="line-56"><span class="sd">            initial_state (QTensor): Quantum state used as the simulation starting point.</span>
+</span><span id="line-56"><span class="sd">            initial_state (QTensor | InitialState): Quantum state used as the simulation starting point. If a symbolic state is provided, it will be resolved during execution.</span>
 </span><span id="line-57"><span class="sd">            store_intermediate_results (bool, optional): Keep intermediate states if produced by the backend. Defaults to False.</span>
 </span><span id="line-58">
 </span><span id="line-59"><span class="sd">        Raises:</span>
 </span><span id="line-60"><span class="sd">            ValueError: if the number of qubits of the initial state doesn&#39;t match the number of qubits in the schedule.</span>
 </span><span id="line-61"><span class="sd">        &quot;&quot;&quot;</span>
 </span><span id="line-62">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-<div class="viewcode-block" id="AnalogEvolution.initial_state">
-<a class="viewcode-back" href="../../../code/api/qilisdk/functionals/analog_evolution/index.html#qilisdk.functionals.analog_evolution.AnalogEvolution.initial_state">[docs]</a>
-</span><span id="line-63">        <span class="bp">self</span><span class="o">.</span><span class="n">initial_state</span> <span class="o">=</span> <span class="n">initial_state</span></div>
-
+</span><span id="line-63">        <span class="bp">self</span><span class="o">.</span><span class="n">_initial_state</span> <span class="o">=</span> <span class="n">initial_state</span>
 <div class="viewcode-block" id="AnalogEvolution.schedule">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/analog_evolution/index.html#qilisdk.functionals.analog_evolution.AnalogEvolution.schedule">[docs]</a>
 </span><span id="line-64">        <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span> <span class="o">=</span> <span class="n">schedule</span></div>
@@ -492,69 +489,82 @@
 </span><span id="line-65">        <span class="bp">self</span><span class="o">.</span><span class="n">store_intermediate_results</span> <span class="o">=</span> <span class="n">store_intermediate_results</span></div>
 
 </span><span id="line-66">
-</span><span id="line-67">        <span class="k">if</span> <span class="n">initial_state</span><span class="o">.</span><span class="n">nqubits</span> <span class="o">!=</span> <span class="n">schedule</span><span class="o">.</span><span class="n">nqubits</span><span class="p">:</span>
+</span><span id="line-67">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">initial_state</span><span class="p">,</span> <span class="n">QTensor</span><span class="p">)</span> <span class="ow">and</span> <span class="n">initial_state</span><span class="o">.</span><span class="n">nqubits</span> <span class="o">!=</span> <span class="n">schedule</span><span class="o">.</span><span class="n">nqubits</span><span class="p">:</span>
 </span><span id="line-68">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
 </span><span id="line-69">                <span class="sa">f</span><span class="s2">&quot;The initial state provided acts on </span><span class="si">{</span><span class="n">initial_state</span><span class="o">.</span><span class="n">nqubits</span><span class="si">}</span><span class="s2"> qubits while the schedule acts on </span><span class="si">{</span><span class="n">schedule</span><span class="o">.</span><span class="n">nqubits</span><span class="si">}</span><span class="s2"> qubits&quot;</span>
 </span><span id="line-70">            <span class="p">)</span>
 </span><span id="line-71">
-</span><span id="line-72">    <span class="k">def</span><span class="w"> </span><span class="nf">_iter_parameter_children</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Parameterizable</span><span class="p">]:</span>
-</span><span id="line-73"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Yield the schedule as the sole parameterizable child.</span>
-</span><span id="line-74">
-</span><span id="line-75"><span class="sd">        Yields:</span>
-</span><span id="line-76"><span class="sd">            Iterator[Parameterizable]: The underlying ``Schedule``.</span>
-</span><span id="line-77"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-78">        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span>
-</span><span id="line-79">
+</span><span id="line-72">    <span class="nd">@property</span>
+<div class="viewcode-block" id="AnalogEvolution.initial_state">
+<a class="viewcode-back" href="../../../code/api/qilisdk/functionals/analog_evolution/index.html#qilisdk.functionals.analog_evolution.AnalogEvolution.initial_state">[docs]</a>
+</span><span id="line-73">    <span class="k">def</span><span class="w"> </span><span class="nf">initial_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QTensor</span> <span class="o">|</span> <span class="n">InitialState</span><span class="p">:</span>
+</span><span id="line-74"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-75"><span class="sd">        The initial state of the simulation.</span>
+</span><span id="line-76">
+</span><span id="line-77"><span class="sd">        Returns:</span>
+</span><span id="line-78"><span class="sd">            QTensor | InitialState: The initial state.</span>
+</span><span id="line-79"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-80">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initial_state</span></div>
+
+</span><span id="line-81">
+</span><span id="line-82">    <span class="k">def</span><span class="w"> </span><span class="nf">_iter_parameter_children</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Parameterizable</span><span class="p">]:</span>
+</span><span id="line-83"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Yield the schedule as the sole parameterizable child.</span>
+</span><span id="line-84">
+</span><span id="line-85"><span class="sd">        Yields:</span>
+</span><span id="line-86"><span class="sd">            Iterator[Parameterizable]: The underlying ``Schedule``.</span>
+</span><span id="line-87"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-88">        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span>
+</span><span id="line-89">
 <div class="viewcode-block" id="AnalogEvolution.set_parameter_values">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/analog_evolution/index.html#qilisdk.functionals.analog_evolution.AnalogEvolution.set_parameter_values">[docs]</a>
-</span><span id="line-80">    <span class="k">def</span><span class="w"> </span><span class="nf">set_parameter_values</span><span class="p">(</span>
-</span><span id="line-81">        <span class="bp">self</span><span class="p">,</span>
-</span><span id="line-82">        <span class="n">values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
-</span><span id="line-83">        <span class="n">where</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Parameter</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="line-84">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-85"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-86"><span class="sd">        Assign parameter values by position and clear caches.</span>
-</span><span id="line-87">
-</span><span id="line-88"><span class="sd">        Args:</span>
-</span><span id="line-89"><span class="sd">            values (list[float]): New values ordered consistently with ``get_parameter_names()``.</span>
-</span><span id="line-90"><span class="sd">            where (Callable[[Parameter], bool] | None): Optional predicate selecting parameters to update.</span>
-</span><span id="line-91"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-92">        <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">set_parameter_values</span><span class="p">(</span><span class="n">values</span><span class="o">=</span><span class="n">values</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="n">where</span><span class="p">)</span></div>
-
-</span><span id="line-93">
-<div class="viewcode-block" id="AnalogEvolution.set_parameters">
-<a class="viewcode-back" href="../../../code/api/qilisdk/functionals/analog_evolution/index.html#qilisdk.functionals.analog_evolution.AnalogEvolution.set_parameters">[docs]</a>
-</span><span id="line-94">    <span class="k">def</span><span class="w"> </span><span class="nf">set_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-90">    <span class="k">def</span><span class="w"> </span><span class="nf">set_parameter_values</span><span class="p">(</span>
+</span><span id="line-91">        <span class="bp">self</span><span class="p">,</span>
+</span><span id="line-92">        <span class="n">values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+</span><span id="line-93">        <span class="n">where</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Parameter</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-94">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 </span><span id="line-95"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-96"><span class="sd">        Assign parameter values by name and clear caches.</span>
+</span><span id="line-96"><span class="sd">        Assign parameter values by position and clear caches.</span>
 </span><span id="line-97">
 </span><span id="line-98"><span class="sd">        Args:</span>
-</span><span id="line-99"><span class="sd">            parameters (dict[str, int | float]): Mapping from parameter labels to numeric values.</span>
-</span><span id="line-100"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-101">        <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">set_parameters</span><span class="p">(</span><span class="n">parameters</span><span class="p">)</span></div>
+</span><span id="line-99"><span class="sd">            values (list[float]): New values ordered consistently with ``get_parameter_names()``.</span>
+</span><span id="line-100"><span class="sd">            where (Callable[[Parameter], bool] | None): Optional predicate selecting parameters to update.</span>
+</span><span id="line-101"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-102">        <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">set_parameter_values</span><span class="p">(</span><span class="n">values</span><span class="o">=</span><span class="n">values</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="n">where</span><span class="p">)</span></div>
 
-</span><span id="line-102">
+</span><span id="line-103">
+<div class="viewcode-block" id="AnalogEvolution.set_parameters">
+<a class="viewcode-back" href="../../../code/api/qilisdk/functionals/analog_evolution/index.html#qilisdk.functionals.analog_evolution.AnalogEvolution.set_parameters">[docs]</a>
+</span><span id="line-104">    <span class="k">def</span><span class="w"> </span><span class="nf">set_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-105"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-106"><span class="sd">        Assign parameter values by name and clear caches.</span>
+</span><span id="line-107">
+</span><span id="line-108"><span class="sd">        Args:</span>
+</span><span id="line-109"><span class="sd">            parameters (dict[str, int | float]): Mapping from parameter labels to numeric values.</span>
+</span><span id="line-110"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-111">        <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">set_parameters</span><span class="p">(</span><span class="n">parameters</span><span class="p">)</span></div>
+
+</span><span id="line-112">
 <div class="viewcode-block" id="AnalogEvolution.set_parameter_bounds">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/analog_evolution/index.html#qilisdk.functionals.analog_evolution.AnalogEvolution.set_parameter_bounds">[docs]</a>
-</span><span id="line-103">    <span class="k">def</span><span class="w"> </span><span class="nf">set_parameter_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ranges</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-104"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-105"><span class="sd">        Update parameter bounds and clear caches.</span>
-</span><span id="line-106">
-</span><span id="line-107"><span class="sd">        Args:</span>
-</span><span id="line-108"><span class="sd">            ranges (dict[str, tuple[float, float]]): Bounds keyed by parameter label.</span>
-</span><span id="line-109"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-110">        <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">set_parameter_bounds</span><span class="p">(</span><span class="n">ranges</span><span class="p">)</span></div>
+</span><span id="line-113">    <span class="k">def</span><span class="w"> </span><span class="nf">set_parameter_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ranges</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-114"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-115"><span class="sd">        Update parameter bounds and clear caches.</span>
+</span><span id="line-116">
+</span><span id="line-117"><span class="sd">        Args:</span>
+</span><span id="line-118"><span class="sd">            ranges (dict[str, tuple[float, float]]): Bounds keyed by parameter label.</span>
+</span><span id="line-119"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-120">        <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">set_parameter_bounds</span><span class="p">(</span><span class="n">ranges</span><span class="p">)</span></div>
 
-</span><span id="line-111">
-</span><span id="line-112">    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="line-113">        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span>
-</span><span id="line-114">            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__qualname__</span><span class="si">}</span><span class="s2">(&quot;</span><span class="p">,</span>
-</span><span id="line-115">            <span class="sa">f</span><span class="s2">&quot;  schedule=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="si">!r}</span><span class="s2">,&quot;</span><span class="p">,</span>
-</span><span id="line-116">            <span class="sa">f</span><span class="s2">&quot;  initial_state=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_state</span><span class="si">!r}</span><span class="s2">,&quot;</span><span class="p">,</span>
-</span><span id="line-117">            <span class="sa">f</span><span class="s2">&quot;  store_intermediate_results=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">store_intermediate_results</span><span class="si">!r}</span><span class="s2">,&quot;</span><span class="p">,</span>
-</span><span id="line-118">            <span class="s2">&quot;)&quot;</span><span class="p">,</span>
-</span><span id="line-119">        <span class="p">]</span>
-</span><span id="line-120">        <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span></div>
+</span><span id="line-121">
+</span><span id="line-122">    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="line-123">        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span>
+</span><span id="line-124">            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__qualname__</span><span class="si">}</span><span class="s2">(&quot;</span><span class="p">,</span>
+</span><span id="line-125">            <span class="sa">f</span><span class="s2">&quot;  schedule=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="si">!r}</span><span class="s2">,&quot;</span><span class="p">,</span>
+</span><span id="line-126">            <span class="sa">f</span><span class="s2">&quot;  initial_state=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_state</span><span class="si">!r}</span><span class="s2">,&quot;</span><span class="p">,</span>
+</span><span id="line-127">            <span class="sa">f</span><span class="s2">&quot;  store_intermediate_results=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">store_intermediate_results</span><span class="si">!r}</span><span class="s2">,&quot;</span><span class="p">,</span>
+</span><span id="line-128">            <span class="s2">&quot;)&quot;</span><span class="p">,</span>
+</span><span id="line-129">        <span class="p">]</span>
+</span><span id="line-130">        <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span></div>
 
 </span></code></pre></div>
     </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">

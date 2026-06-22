@@ -7,9 +7,9 @@
 <meta content="white" media="(prefers-color-scheme: light)" name="theme-color"/>
 <meta content="black" media="(prefers-color-scheme: dark)" name="theme-color"/>
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
-<title>QiliSim Backend | QiliSDK</title>
-<meta content="QiliSim Backend | QiliSDK" property="og:title"/>
-<meta content="QiliSim Backend | QiliSDK" name="twitter:title"/>
+<title>Backend QiliSim | QiliSDK</title>
+<meta content="Backend QiliSim | QiliSDK" property="og:title"/>
+<meta content="Backend QiliSim | QiliSDK" name="twitter:title"/>
 <link href="../../_static/pygments.css?v=508cba51" rel="stylesheet" type="text/css"/>
 <link href="../../_static/theme.css?v=42baaae4" rel="stylesheet" type="text/css"/>
 <link href="../../_static/graphviz.css?v=4ae1632d" rel="stylesheet" type="text/css"/>
@@ -92,15 +92,15 @@
 <p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
 <ul>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../tutorials/introductions/index_intros.html">Introduccions<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
-<li class="toctree-l2"><a class="reference internal" href="../../tutorials/introductions/intro_quantum.html">Fonaments Quàntics</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../tutorials/introductions/intro_circuits.html">Circuits Quàntics</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../tutorials/introductions/intro_annealing.html">Recuita Quàntica</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials/introductions/intro_quantum.html">Fonaments quàntics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials/introductions/intro_circuits.html">Circuits quàntics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials/introductions/intro_annealing.html">Recuita quàntica</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../tutorials/applications/index_applications.html">Aplicacions<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
-<li class="toctree-l2"><a class="reference internal" href="../../tutorials/applications/application_grovers.html">Cerca Quàntica amb l’Algorisme de Grover</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../tutorials/applications/application_shors.html">Factorització amb l’Algorisme de Shor</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../tutorials/applications/application_annealing.html">Optimització amb Recuita Quàntica</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials/applications/application_grovers.html">Cerca quàntica amb l’algorisme de Grover</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials/applications/application_shors.html">Factorització amb l’algorisme de Shor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials/applications/application_annealing.html">Optimització amb recuita quàntica</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../tutorials/applications/application_qaoa.html">Optimització amb QAOA</a></li>
 </ul>
 </li>
@@ -134,25 +134,25 @@
 <li class="toctree-l2"><a class="reference internal" href="../analog/analog_schedule.html">Esquema</a></li>
 </ul>
 </li>
-<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../functionals/functionals.html">Funcionals<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../functionals/functionals.html">Functionals<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_overview.html">Visió general</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_digital.html">Propagació Digital</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_analog.html">Evolució Analògica</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_variational.html">Programes Variacionals</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_reservoirs.html">Reservoris Quàntics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_digital.html">Propagació digital</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_analog.html">Evolució analògica</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_variational.html">Programes variacionals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_reservoirs.html">Reservoris quàntics</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../readout/readout.html">Readout<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
-<li class="toctree-l2"><a class="reference internal" href="../readout/readout_overview.html">Visió General</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../readout/readout_bitstring.html">Mesura de Cadena de Bits</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../readout/readout_expectation.html">Valors Esperats</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../readout/readout_state.html">Estat Quàntic Complet</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../readout/readout_intermediate.html">Resultats Intermedis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../readout/readout_overview.html">Visió general</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../readout/readout_bitstring.html">Mesura de cadena de bits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../readout/readout_expectation.html">Valors esperats</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../readout/readout_state.html">Estat quàntic complet</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../readout/readout_intermediate.html">Resultats intermedis</a></li>
 </ul>
 </li>
 <li class="toctree-l1 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="backends.html">Backends<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul class="current" x-show="expanded">
 <li class="toctree-l2"><a class="reference internal" href="backends_overview.html">Visió general</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">QiliSim Backend</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Backend QiliSim</a></li>
 <li class="toctree-l2"><a class="reference internal" href="backends_cuda.html">Backend CUDA</a></li>
 <li class="toctree-l2"><a class="reference internal" href="backends_qutip.html">Backend QuTiP</a></li>
 </ul>
@@ -163,10 +163,10 @@
 <li class="toctree-l2"><a class="reference internal" href="../cost_functions/cost_functions_model.html">ModelCostFunction</a></li>
 </ul>
 </li>
-<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../noise/noise.html">Noise<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
-<li class="toctree-l2"><a class="reference internal" href="../noise/noise_overview.html">Visió General</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../noise/noise_config.html">Configuració del Soroll</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../noise/noise_types.html">Tipus de Soroll</a></li>
+<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../noise/noise.html">Soroll<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../noise/noise_overview.html">Visió general</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../noise/noise_config.html">Configuració del soroll</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../noise/noise_types.html">Tipus de soroll</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../speqtrum/speqtrum.html">SpeQtrum</a></li>
@@ -336,17 +336,15 @@
 </svg>
 </a>
 <div class="mr-1">/</div><a class="hover:text-foreground overflow-hidden text-ellipsis whitespace-nowrap" href="backends.html">Backends</a>
-<div class="mr-1">/</div><span aria-current="page" class="font-medium text-foreground overflow-hidden text-ellipsis whitespace-nowrap">QiliSim Backend</span>
+<div class="mr-1">/</div><span aria-current="page" class="font-medium text-foreground overflow-hidden text-ellipsis whitespace-nowrap">Backend QiliSim</span>
 </nav>
 <div id="content" role="main">
 <section id="qilisim-backend">
-<h1>QiliSim Backend<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisim-backend"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h1>
-<p>The <strong>QiliSim</strong> backend is the default CPU simulator developed by Qilimanjaro and written in C++.
-It implements every primitive functional natively, supports a noise model on all execution paths,
-and is included with the core <code class="docutils literal notranslate"><span class="pre">qilisdk</span></code> installation — no extra dependency or hardware is required.</p>
+<h1>Backend QiliSim<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisim-backend"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h1>
+<p>El backend <strong>QiliSim</strong> és el simulador de CPU per defecte desenvolupat per Qilimanjaro i escrit en C++. Implementa tots els funcionals primitius de manera nativa, suporta un model de soroll en totes les rutes d’execució i s’inclou amb la instal·lació principal de <code class="docutils literal notranslate"><span class="pre">qilisdk</span></code> — no requereix cap dependència ni maquinari addicional.</p>
 <section id="installation">
 <h2>Instal·lació<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#installation" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#installation'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
-<p>QiliSim is bundled with the core <code class="docutils literal notranslate"><span class="pre">qilisdk</span></code> installation, so no extra package is required.</p>
+<p>QiliSim s’inclou amb la instal·lació principal de <code class="docutils literal notranslate"><span class="pre">qilisdk</span></code>, per la qual cosa no cal cap paquet addicional.</p>
 </section>
 <section id="quick-start">
 <h2>Inici ràpid<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#quick-start" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#quick-start'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
@@ -411,8 +409,7 @@ and is included with the core <code class="docutils literal notranslate"><span c
 <p>QiliSim es configura en el moment de la construcció mitjançant tres seccions ortogonals, totes definides a <a class="reference internal" href="../../code/api/qilisdk/backends/backend_config/index.html#module-qilisdk.backends.backend_config" title="qilisdk.backends.backend_config"><code class="xref py py-mod docutils literal notranslate"><span class="pre">qilisdk.backends.backend_config</span></code></a>:</p>
 <ul class="simple">
 <li><p><a class="reference internal" href="../../code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.AnalogMethod" title="qilisdk.backends.backend_config.AnalogMethod"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnalogMethod</span></code></a> — escull l’esquema d’evolució temporal analògica i els seus hiperparàmetres.</p></li>
-<li><p><a class="reference internal" href="../../code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.DigitalMethod" title="qilisdk.backends.backend_config.DigitalMethod"><code class="xref py py-class docutils literal notranslate"><span class="pre">DigitalMethod</span></code></a> — chooses the digital simulation strategy
-and its hyperparameters.</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.DigitalMethod" title="qilisdk.backends.backend_config.DigitalMethod"><code class="xref py py-class docutils literal notranslate"><span class="pre">DigitalMethod</span></code></a> — escull l’estratègia de simulació digital i els seus hiperparàmetres.</p></li>
 <li><p><a class="reference internal" href="../../code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.ExecutionConfig" title="qilisdk.backends.backend_config.ExecutionConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExecutionConfig</span></code></a> — controls globals d’execució (fils, llavor aleatòria, trajectòries de Monte Carlo, comportament del col·lapse de mesura).</p></li>
 </ul>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.backends</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -463,7 +460,7 @@ and its hyperparameters.</p></li>
 <tbody>
 <tr class="row-even"><td><p><a class="reference internal" href="../../code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.AnalogMethod.integrator" title="qilisdk.backends.backend_config.AnalogMethod.integrator"><code class="xref py py-meth docutils literal notranslate"><span class="pre">AnalogMethod.integrator(matrix_free=True)</span></code></a></p></td>
 <td><p>RK4</p></td>
-<td><p>Per defecte. Runge-Kutta 4 amb pas fix; sense matriu és més ràpid per a Hamiltonians dispersos.</p></td>
+<td><p>Default. Fixed-step Runge-Kutta 4; matrix-free is faster for sparse Hamiltonians.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="../../code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.AnalogMethod.adaptive_integrator" title="qilisdk.backends.backend_config.AnalogMethod.adaptive_integrator"><code class="xref py py-meth docutils literal notranslate"><span class="pre">AnalogMethod.adaptive_integrator(tol=1e-2)</span></code></a></p></td>
 <td><p>Dormand-Prince RK4/5</p></td>
@@ -471,7 +468,7 @@ and its hyperparameters.</p></li>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="../../code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.AnalogMethod.arnoldi" title="qilisdk.backends.backend_config.AnalogMethod.arnoldi"><code class="xref py py-meth docutils literal notranslate"><span class="pre">AnalogMethod.arnoldi(dim=10,</span> <span class="pre">num_substeps=1)</span></code></a></p></td>
 <td><p>Krylov / Arnoldi</p></td>
-<td><p>Can offer decent scaling for large sparse Hamiltonians; tune <code class="docutils literal notranslate"><span class="pre">dim</span></code> for the Krylov subspace size.</p></td>
+<td><p>Pot oferir un escalat decent per a Hamiltonians dispersos grans; ajusteu <code class="docutils literal notranslate"><span class="pre">dim</span></code> per a la mida del subespai de Krylov.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="../../code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.AnalogMethod.direct" title="qilisdk.backends.backend_config.AnalogMethod.direct"><code class="xref py py-meth docutils literal notranslate"><span class="pre">AnalogMethod.direct()</span></code></a></p></td>
 <td><p>Exponencial de matriu</p></td>
@@ -479,7 +476,7 @@ and its hyperparameters.</p></li>
 </tr>
 </tbody>
 </table>
-<p>Exemple, utilitzant l’integrador adaptatiu per a un schedule més rígid:</p>
+<p>Example, using the adaptive integrator for a stiffer schedule:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.backends</span><span class="w"> </span><span class="kn">import</span> <span class="n">AnalogMethod</span><span class="p">,</span> <span class="n">QiliSim</span>
 </span><span id="line-2">
 </span><span id="line-3"><span class="n">backend</span> <span class="o">=</span> <span class="n">QiliSim</span><span class="p">(</span><span class="n">analog_simulation_method</span><span class="o">=</span><span class="n">AnalogMethod</span><span class="o">.</span><span class="n">adaptive_integrator</span><span class="p">(</span><span class="n">tol</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">))</span>
@@ -507,7 +504,7 @@ and its hyperparameters.</p></li>
 <td><p>Nombre màxim de matrius de porta precomputades emmagatzemades en memòria cau entre execucions.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">combine_single_qubit_gates</span></code></p></td>
-<td><p>Merge adjacent single-qubit gates into a single operation before propagating. Disabled if gate-specific noise is used.</p></td>
+<td><p>Fusiona portes d’un sol qubit adjacents en una única operació abans de propagar. Desactivat si s’utilitza soroll específic de porta.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">normalize_after_each_gate</span></code></p></td>
 <td><p>Renormalitza el vector d’estat després de cada porta per mitigar la deriva numèrica, amb un cost de temps d’execució.</p></td>
@@ -549,7 +546,7 @@ and its hyperparameters.</p></li>
 </section>
 </section>
 <section id="noise-model-support">
-<h2>Noise model support<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#noise-model-support" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#noise-model-support'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
+<h2>Suport del model de soroll<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#noise-model-support" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#noise-model-support'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
 <p>Qualsevol <code class="xref py py-class docutils literal notranslate"><span class="pre">NoiseModel</span></code> acceptat pel SDK es pot passar directament al constructor; QiliSim l’aplica dins del solver de C++, de manera que les execucions digitals, analògiques i de reservori veuen totes els mateixos canals de soroll:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.backends</span><span class="w"> </span><span class="kn">import</span> <span class="n">QiliSim</span>
 </span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.noise</span><span class="w"> </span><span class="kn">import</span> <span class="n">NoiseModel</span><span class="p">,</span> <span class="n">Depolarizing</span>
@@ -591,7 +588,7 @@ and its hyperparameters.</p></li>
 <li><a :data-current="activeSection === '#execution-and-monte-carlo'" class="reference internal" href="#execution-and-monte-carlo">Execució i Monte Carlo</a></li>
 </ul>
 </li>
-<li><a :data-current="activeSection === '#noise-model-support'" class="reference internal" href="#noise-model-support">Noise model support</a></li>
+<li><a :data-current="activeSection === '#noise-model-support'" class="reference internal" href="#noise-model-support">Suport del model de soroll</a></li>
 </ul>
 </div>
 </aside>

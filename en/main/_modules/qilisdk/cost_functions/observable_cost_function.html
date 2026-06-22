@@ -432,7 +432,7 @@
 </span><span id="line-18"><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 </span><span id="line-19">
 </span><span id="line-20"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.analog.hamiltonian</span><span class="w"> </span><span class="kn">import</span> <span class="n">Hamiltonian</span><span class="p">,</span> <span class="n">PauliOperator</span>
-</span><span id="line-21"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core.qtensor</span><span class="w"> </span><span class="kn">import</span> <span class="n">QTensor</span><span class="p">,</span> <span class="n">expect_val</span><span class="p">,</span> <span class="n">ket</span><span class="p">,</span> <span class="n">tensor_prod</span>
+</span><span id="line-21"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core.qtensor</span><span class="w"> </span><span class="kn">import</span> <span class="n">QTensor</span><span class="p">,</span> <span class="n">expect_val</span><span class="p">,</span> <span class="n">ket</span>
 </span><span id="line-22"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.cost_functions.cost_function</span><span class="w"> </span><span class="kn">import</span> <span class="n">CostFunction</span>
 </span><span id="line-23"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.settings</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_settings</span>
 </span><span id="line-24">
@@ -561,27 +561,28 @@
 </span><span id="line-139"><span class="sd">        &quot;&quot;&quot;</span>
 </span><span id="line-140">        <span class="n">total_cost</span> <span class="o">=</span> <span class="nb">complex</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
 </span><span id="line-141">        <span class="n">nqubits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_observable</span><span class="o">.</span><span class="n">nqubits</span>
-</span><span id="line-142">        <span class="n">probabilities</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">get_probabilities</span><span class="p">()</span>
-</span><span id="line-143">        <span class="k">for</span> <span class="n">sample</span><span class="p">,</span> <span class="n">prob</span> <span class="ow">in</span> <span class="n">probabilities</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-</span><span id="line-144">            <span class="n">state</span> <span class="o">=</span> <span class="n">tensor_prod</span><span class="p">([</span><span class="n">ket</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">i</span><span class="p">))</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">sample</span><span class="p">])</span>
-</span><span id="line-145">            <span class="k">if</span> <span class="n">nqubits</span> <span class="o">!=</span> <span class="n">state</span><span class="o">.</span><span class="n">nqubits</span><span class="p">:</span>
-</span><span id="line-146">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-</span><span id="line-147">                    <span class="sa">f</span><span class="s2">&quot;The samples provided have </span><span class="si">{</span><span class="n">state</span><span class="o">.</span><span class="n">nqubits</span><span class="si">}</span><span class="s2"> qubits but the observable has </span><span class="si">{</span><span class="n">nqubits</span><span class="si">}</span><span class="s2"> qubits&quot;</span>
-</span><span id="line-148">                <span class="p">)</span>
-</span><span id="line-149">            <span class="n">evaluate_results</span> <span class="o">=</span> <span class="nb">complex</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real_if_close</span><span class="p">(</span><span class="n">expect_val</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_observable</span><span class="p">,</span> <span class="n">state</span><span class="p">),</span> <span class="n">tol</span><span class="o">=</span><span class="n">get_settings</span><span class="p">()</span><span class="o">.</span><span class="n">atol</span><span class="p">))</span>
-</span><span id="line-150">            <span class="n">total_cost</span> <span class="o">+=</span> <span class="n">evaluate_results</span> <span class="o">*</span> <span class="n">prob</span>
-</span><span id="line-151">
-</span><span id="line-152">        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">total_cost</span><span class="o">.</span><span class="n">imag</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">get_settings</span><span class="p">()</span><span class="o">.</span><span class="n">atol</span><span class="p">:</span>
-</span><span id="line-153">            <span class="k">return</span> <span class="n">total_cost</span><span class="o">.</span><span class="n">real</span>
-</span><span id="line-154">        <span class="k">return</span> <span class="n">total_cost</span>
-</span><span id="line-155">
-</span><span id="line-156">    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="line-157"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a string representation of this cost function.</span>
-</span><span id="line-158">
-</span><span id="line-159"><span class="sd">        Returns:</span>
-</span><span id="line-160"><span class="sd">            str: A string of the form ``ObservableCostFunction(observable=...)``.</span>
-</span><span id="line-161"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-162">        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;ObservableCostFunction(observable=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_observable</span><span class="si">}</span><span class="s2">)&quot;</span></div>
+</span><span id="line-142">        <span class="n">samples</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">get_samples</span><span class="p">()</span>
+</span><span id="line-143">        <span class="n">nshots</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">samples</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+</span><span id="line-144">        <span class="k">for</span> <span class="n">sample</span><span class="p">,</span> <span class="n">prob</span> <span class="ow">in</span> <span class="n">samples</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+</span><span id="line-145">            <span class="n">state</span> <span class="o">=</span> <span class="n">ket</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">bit</span><span class="p">)</span> <span class="k">for</span> <span class="n">bit</span> <span class="ow">in</span> <span class="n">sample</span><span class="p">])</span>
+</span><span id="line-146">            <span class="k">if</span> <span class="n">nqubits</span> <span class="o">!=</span> <span class="n">state</span><span class="o">.</span><span class="n">nqubits</span><span class="p">:</span>
+</span><span id="line-147">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="line-148">                    <span class="sa">f</span><span class="s2">&quot;The samples provided have </span><span class="si">{</span><span class="n">state</span><span class="o">.</span><span class="n">nqubits</span><span class="si">}</span><span class="s2"> qubits but the observable has </span><span class="si">{</span><span class="n">nqubits</span><span class="si">}</span><span class="s2"> qubits&quot;</span>
+</span><span id="line-149">                <span class="p">)</span>
+</span><span id="line-150">            <span class="n">evaluate_results</span> <span class="o">=</span> <span class="nb">complex</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real_if_close</span><span class="p">(</span><span class="n">expect_val</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_observable</span><span class="p">,</span> <span class="n">state</span><span class="p">),</span> <span class="n">tol</span><span class="o">=</span><span class="n">get_settings</span><span class="p">()</span><span class="o">.</span><span class="n">atol</span><span class="p">))</span>
+</span><span id="line-151">            <span class="n">total_cost</span> <span class="o">+=</span> <span class="n">evaluate_results</span> <span class="o">*</span> <span class="p">(</span><span class="n">prob</span> <span class="o">/</span> <span class="n">nshots</span><span class="p">)</span>
+</span><span id="line-152">
+</span><span id="line-153">        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">total_cost</span><span class="o">.</span><span class="n">imag</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">get_settings</span><span class="p">()</span><span class="o">.</span><span class="n">atol</span><span class="p">:</span>
+</span><span id="line-154">            <span class="k">return</span> <span class="n">total_cost</span><span class="o">.</span><span class="n">real</span>
+</span><span id="line-155">        <span class="k">return</span> <span class="n">total_cost</span>
+</span><span id="line-156">
+</span><span id="line-157">    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="line-158"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a string representation of this cost function.</span>
+</span><span id="line-159">
+</span><span id="line-160"><span class="sd">        Returns:</span>
+</span><span id="line-161"><span class="sd">            str: A string of the form ``ObservableCostFunction(observable=...)``.</span>
+</span><span id="line-162"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-163">        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;ObservableCostFunction(observable=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_observable</span><span class="si">}</span><span class="s2">)&quot;</span></div>
 
 </span></code></pre></div>
     </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">

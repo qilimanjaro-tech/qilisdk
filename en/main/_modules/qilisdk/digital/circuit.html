@@ -619,7 +619,7 @@
 </span><span id="line-185"><span class="sd">        Raises:</span>
 </span><span id="line-186"><span class="sd">            QubitOutOfRangeError: If any qubit index used by the gate is not within the circuit&#39;s qubit range.</span>
 </span><span id="line-187"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-188">        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">qubit</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span> <span class="k">for</span> <span class="n">qubit</span> <span class="ow">in</span> <span class="n">gate</span><span class="o">.</span><span class="n">qubits</span><span class="p">):</span>
+</span><span id="line-188">        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">qubit</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">qubit</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span> <span class="k">for</span> <span class="n">qubit</span> <span class="ow">in</span> <span class="n">gate</span><span class="o">.</span><span class="n">qubits</span><span class="p">):</span>
 </span><span id="line-189">            <span class="k">raise</span> <span class="n">QubitOutOfRangeError</span>
 </span><span id="line-190">
 </span><span id="line-191">        <span class="bp">self</span><span class="o">.</span><span class="n">_parse_params</span><span class="p">(</span><span class="n">gate</span><span class="p">)</span>
@@ -651,7 +651,7 @@
 </span><span id="line-214"><span class="sd">        Raises:</span>
 </span><span id="line-215"><span class="sd">            QubitOutOfRangeError: If any qubit index used by the gate is not within the circuit&#39;s qubit range.</span>
 </span><span id="line-216"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-217">        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">qubit</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span> <span class="k">for</span> <span class="n">qubit</span> <span class="ow">in</span> <span class="n">gate</span><span class="o">.</span><span class="n">qubits</span><span class="p">):</span>
+</span><span id="line-217">        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">qubit</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">qubit</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span> <span class="k">for</span> <span class="n">qubit</span> <span class="ow">in</span> <span class="n">gate</span><span class="o">.</span><span class="n">qubits</span><span class="p">):</span>
 </span><span id="line-218">            <span class="k">raise</span> <span class="n">QubitOutOfRangeError</span>
 </span><span id="line-219">
 </span><span id="line-220">        <span class="bp">self</span><span class="o">.</span><span class="n">_parse_params</span><span class="p">(</span><span class="n">gate</span><span class="p">)</span>

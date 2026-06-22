@@ -369,7 +369,7 @@ Linear equality constraints can be described as,</p>
     + \lambda_0 \left( \sum_{i=1}^{n} q_i x_i - C \right)^{2}
 \right),\]</div>
 <p>where <span class="math notranslate nohighlight">\(\lambda_0 &gt; 0\)</span> is a penalty strength parameter.</p>
-<p>Ineqaulity constraints can be defined as:</p>
+<p>Inequality constraints can be defined as:</p>
 <div class="math notranslate nohighlight">
 \[\sum_{i=1}^{n} \ell_i x_i \leq B, \quad \ell_i \in \mathbb{Z}.\]</div>
 <p>To translate these into penalties, two strategies are supported:</p>
@@ -381,13 +381,13 @@ Therefore, the penalty term becomes:</p>
 \[\lambda_1 \left( B - \sum_{i=1}^{n} \ell_i x_i - \sum_{k=0}^{N-1} 2^{k} s_k \right)^{2}\]</div>
 <p>where <span class="math notranslate nohighlight">\(s_k\)</span> are slack binary variables introduced to encode the inequality constraint (with the
 number of bits <span class="math notranslate nohighlight">\(N\)</span> chosen so that their binary expansion spans the admissible slack range) and
-<span class="math notranslate nohighlight">\(\lambda_{1}\)</span> control the penalty strength.</p>
+<span class="math notranslate nohighlight">\(\lambda_{1}\)</span> controls the penalty strength.</p>
 </dd>
 </dl>
 </li>
 <li><dl>
 <dt><strong>Unbalanced penalization</strong>:</dt><dd><p>Directly penalize violation without slack variables using two weights (a, b) to scale positive and negative deviations differently <a class="footnote-reference brackets" href="#id2" id="id1" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a>.
-we define <span class="math notranslate nohighlight">\(h(x) = B - \sum_{i=1}^{n} \ell_i x_i\)</span> as the signed residual of the constraint, and the penalty term becomes:</p>
+We define <span class="math notranslate nohighlight">\(h(x) = B - \sum_{i=1}^{n} \ell_i x_i\)</span> as the signed residual of the constraint, and the penalty term becomes:</p>
 <div class="math notranslate nohighlight">
 \[- a h(x) + b h(x)^2,\]</div>
 <p>where <span class="math notranslate nohighlight">\(a, b &gt; 0\)</span> are parameters that control the penalty strength for violations above and below the bound, respectively.</p>

@@ -433,7 +433,7 @@ which is in the form:</p>
 <div class="math notranslate nohighlight">
 \[H_{prob} = \sum_{i,j} c_{ij} Z(i) Z(j)\]</div>
 <p>Where <span class="math notranslate nohighlight">\(Z(i)\)</span> is the Pauli-Z operator acting on qubit <span class="math notranslate nohighlight">\(i\)</span>, and <span class="math notranslate nohighlight">\(c_{ij}\)</span> are the coefficients from our QUBO formulation.
-Note that these variables <span class="math notranslate nohighlight">\(Z(i)\)</span> are related to the binary variables in our original problem by the transformation <span class="math notranslate nohighlight">\(x_i = (1 - Z(i))/2\)</span>,</p>
+Note that these variables <span class="math notranslate nohighlight">\(Z(i)\)</span> are related to the binary variables in our original problem by the transformation <span class="math notranslate nohighlight">\(x_i = (1 - Z(i))/2\)</span>.</p>
 <p>Our mixing Hamiltonian is typically chosen to be the transverse field Hamiltonian, which is given by:</p>
 <div class="math notranslate nohighlight">
 \[H_{mix} = - \sum_i X(i)\]</div>
@@ -442,7 +442,7 @@ Note that these variables <span class="math notranslate nohighlight">\(Z(i)\)</s
 \[H(t) = A(t) H_{mix} + B(t) H_{prob}\]</div>
 <p>Where <span class="math notranslate nohighlight">\(A(t)\)</span> and <span class="math notranslate nohighlight">\(B(t)\)</span> are functions that determine how we interpolate
 between the mixing Hamiltonian and the problem Hamiltonian over time.
-For simplicity here will just assume that we do a linear interpolation,
+For simplicity here we will just assume that we do a linear interpolation,
 such that <span class="math notranslate nohighlight">\(A(t) = 1 - t/T\)</span> and <span class="math notranslate nohighlight">\(B(t) = t/T\)</span>, where <span class="math notranslate nohighlight">\(T\)</span> is the total annealing time.</p>
 </section>
 <section id="the-implementation">

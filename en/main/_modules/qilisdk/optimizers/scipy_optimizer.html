@@ -466,85 +466,110 @@
 </span><span id="line-50"><span class="sd">                    - &#39;trust-constr</span>
 </span><span id="line-51"><span class="sd">                    - &#39;dogleg&#39;</span>
 </span><span id="line-52"><span class="sd">                    - &#39;trust-ncg&#39;</span>
-</span><span id="line-53"><span class="sd">                    - &#39;trust-exact</span>
-</span><span id="line-54"><span class="sd">                    - &#39;trust-krylov</span>
-</span><span id="line-55"><span class="sd">                    - custom - a callable object, see `scipy.optimize.minimize &lt;https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html&gt;`__ for description.</span>
-</span><span id="line-56">
-</span><span id="line-57"><span class="sd">                    If not given, chosen to be one of ``BFGS``, ``L-BFGS-B``, ``SLSQP``,</span>
-</span><span id="line-58"><span class="sd">                    depending on whether or not the problem has constraints or bounds.</span>
-</span><span id="line-59"><span class="sd">            bounds (list[tuple[int, int]] | None, optional):</span>
-</span><span id="line-60"><span class="sd">                    Bounds on variables for Nelder-Mead, L-BFGS-B, TNC, SLSQP, Powell,</span>
-</span><span id="line-61"><span class="sd">                    trust-constr, COBYLA, and COBYQA methods. To specify it you can provide a sequence of ``(min, max)`` pairs</span>
-</span><span id="line-62"><span class="sd">                    for each element in parameter list.</span>
-</span><span id="line-63">
-</span><span id="line-64"><span class="sd">        Extra Args:</span>
-</span><span id="line-65"><span class="sd">            Any argument supported by `scipy.optimize.minimize &lt;https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html&gt;` can be passed.</span>
-</span><span id="line-66"><span class="sd">            Note: the parameters, cost function and the ``args`` that are passed to this function will be specified in the optimize method. Moreover, callbacks are not supported for the moment.</span>
-</span><span id="line-67"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-68">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+</span><span id="line-53"><span class="sd">                    - &#39;trust-exact&#39;</span>
+</span><span id="line-54"><span class="sd">                    - &#39;trust-krylov&#39;</span>
+</span><span id="line-55"><span class="sd">                    - &#39;basinhopping&#39; (global)</span>
+</span><span id="line-56"><span class="sd">                    - &#39;direct&#39; (global)</span>
+</span><span id="line-57"><span class="sd">                    - &#39;dual_annealing&#39; (global)</span>
+</span><span id="line-58"><span class="sd">                    - &#39;differential_evolution&#39; (global)</span>
+</span><span id="line-59"><span class="sd">                    - &#39;shgo&#39; (global)</span>
+</span><span id="line-60"><span class="sd">                    - custom - a callable object, see `scipy.optimize.minimize &lt;https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html&gt;`__ for description.</span>
+</span><span id="line-61">
+</span><span id="line-62"><span class="sd">                    If not given, chosen to be one of ``BFGS``, ``L-BFGS-B``, ``SLSQP``,</span>
+</span><span id="line-63"><span class="sd">                    depending on whether or not the problem has constraints or bounds.</span>
+</span><span id="line-64"><span class="sd">            bounds (list[tuple[int, int]] | None, optional):</span>
+</span><span id="line-65"><span class="sd">                    Bounds on variables for Nelder-Mead, L-BFGS-B, TNC, SLSQP, Powell,</span>
+</span><span id="line-66"><span class="sd">                    trust-constr, COBYLA, and COBYQA methods. To specify it you can provide a sequence of ``(min, max)`` pairs</span>
+</span><span id="line-67"><span class="sd">                    for each element in parameter list.</span>
+</span><span id="line-68">
+</span><span id="line-69"><span class="sd">        Extra Args:</span>
+</span><span id="line-70"><span class="sd">            Any argument supported by `scipy.optimize.minimize &lt;https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html&gt;` can be passed.</span>
+</span><span id="line-71"><span class="sd">            Note: the parameters, cost function and the ``args`` that are passed to this function will be specified in the optimize method. Moreover, callbacks are not supported for the moment.</span>
+</span><span id="line-72"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-73">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
 <div class="viewcode-block" id="SciPyOptimizer.method">
 <a class="viewcode-back" href="../../../code/api/qilisdk/optimizers/scipy_optimizer/index.html#qilisdk.optimizers.scipy_optimizer.SciPyOptimizer.method">[docs]</a>
-</span><span id="line-69">        <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="n">method</span></div>
+</span><span id="line-74">        <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="n">method</span></div>
 
 <div class="viewcode-block" id="SciPyOptimizer.extra_arguments">
 <a class="viewcode-back" href="../../../code/api/qilisdk/optimizers/scipy_optimizer/index.html#qilisdk.optimizers.scipy_optimizer.SciPyOptimizer.extra_arguments">[docs]</a>
-</span><span id="line-70">        <span class="bp">self</span><span class="o">.</span><span class="n">extra_arguments</span> <span class="o">=</span> <span class="n">kwargs</span></div>
+</span><span id="line-75">        <span class="bp">self</span><span class="o">.</span><span class="n">extra_arguments</span> <span class="o">=</span> <span class="n">kwargs</span></div>
 
-</span><span id="line-71">
+</span><span id="line-76">
 <div class="viewcode-block" id="SciPyOptimizer.optimize">
 <a class="viewcode-back" href="../../../code/api/qilisdk/optimizers/scipy_optimizer/index.html#qilisdk.optimizers.scipy_optimizer.SciPyOptimizer.optimize">[docs]</a>
-</span><span id="line-72">    <span class="k">def</span><span class="w"> </span><span class="nf">optimize</span><span class="p">(</span>
-</span><span id="line-73">        <span class="bp">self</span><span class="p">,</span>
-</span><span id="line-74">        <span class="n">cost_function</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]],</span> <span class="nb">float</span><span class="p">],</span>
-</span><span id="line-75">        <span class="n">init_parameters</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
-</span><span id="line-76">        <span class="n">bounds</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
-</span><span id="line-77">        <span class="n">store_intermediate_results</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-</span><span id="line-78">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OptimizerResult</span><span class="p">:</span>
-</span><span id="line-79"><span class="w">        </span><span class="sd">&quot;&quot;&quot;optimize the cost function and return the optimal parameters.</span>
-</span><span id="line-80">
-</span><span id="line-81"><span class="sd">        Args:</span>
-</span><span id="line-82"><span class="sd">            cost_function (Callable[[list[float]], float]): a function that takes in a list of parameters and returns the cost.</span>
-</span><span id="line-83"><span class="sd">            init_parameters (list[float]): the list of initial parameters. Note: the length of this list determines the number of parameters the optimizer will consider.</span>
-</span><span id="line-84"><span class="sd">            bounds (list[float, float]): a list of the variable value bounds.</span>
+</span><span id="line-77">    <span class="k">def</span><span class="w"> </span><span class="nf">optimize</span><span class="p">(</span>
+</span><span id="line-78">        <span class="bp">self</span><span class="p">,</span>
+</span><span id="line-79">        <span class="n">cost_function</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]],</span> <span class="nb">float</span><span class="p">],</span>
+</span><span id="line-80">        <span class="n">init_parameters</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+</span><span id="line-81">        <span class="n">bounds</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
+</span><span id="line-82">        <span class="n">store_intermediate_results</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+</span><span id="line-83">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OptimizerResult</span><span class="p">:</span>
+</span><span id="line-84"><span class="w">        </span><span class="sd">&quot;&quot;&quot;optimize the cost function and return the optimal parameters.</span>
 </span><span id="line-85">
-</span><span id="line-86"><span class="sd">        Returns:</span>
-</span><span id="line-87"><span class="sd">            list[float]: the optimal set of parameters that minimize the cost function.</span>
-</span><span id="line-88"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-89">        <span class="n">intermediate_results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">OptimizerIntermediateResult</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="line-86"><span class="sd">        Args:</span>
+</span><span id="line-87"><span class="sd">            cost_function (Callable[[list[float]], float]): a function that takes in a list of parameters and returns the cost.</span>
+</span><span id="line-88"><span class="sd">            init_parameters (list[float]): the list of initial parameters. Note: the length of this list determines the number of parameters the optimizer will consider.</span>
+</span><span id="line-89"><span class="sd">            bounds (list[float, float]): a list of the variable value bounds.</span>
 </span><span id="line-90">
-</span><span id="line-91">        <span class="k">def</span><span class="w"> </span><span class="nf">callback_fun</span><span class="p">(</span><span class="n">intermediate_result</span><span class="p">:</span> <span class="n">OptimizeResult</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-92">            <span class="c1"># Create an OptimizerResult for this intermediate iteration.</span>
-</span><span id="line-93">            <span class="n">intermediate_results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-</span><span id="line-94">                <span class="n">OptimizerIntermediateResult</span><span class="p">(</span><span class="n">cost</span><span class="o">=</span><span class="n">intermediate_result</span><span class="o">.</span><span class="n">fun</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="n">intermediate_result</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
-</span><span id="line-95">            <span class="p">)</span>
-</span><span id="line-96">
-</span><span id="line-97">        <span class="c1"># Only pass the callback if we want to store intermediate results.</span>
-</span><span id="line-98">        <span class="n">callback</span> <span class="o">=</span> <span class="n">callback_fun</span> <span class="k">if</span> <span class="n">store_intermediate_results</span> <span class="k">else</span> <span class="kc">None</span>
-</span><span id="line-99">
-</span><span id="line-100">        <span class="n">res</span> <span class="o">=</span> <span class="n">scipy_optimize</span><span class="o">.</span><span class="n">minimize</span><span class="p">(</span>
-</span><span id="line-101">            <span class="n">cost_function</span><span class="p">,</span>
-</span><span id="line-102">            <span class="n">x0</span><span class="o">=</span><span class="n">init_parameters</span><span class="p">,</span>
-</span><span id="line-103">            <span class="n">method</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="p">,</span>
-</span><span id="line-104">            <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
-</span><span id="line-105">            <span class="n">jac</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">extra_arguments</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;jac&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-</span><span id="line-106">            <span class="n">hess</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">extra_arguments</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;hess&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-</span><span id="line-107">            <span class="n">hessp</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">extra_arguments</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;hessp&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-</span><span id="line-108">            <span class="n">constraints</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">extra_arguments</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;constraints&quot;</span><span class="p">,</span> <span class="p">()),</span>
-</span><span id="line-109">            <span class="n">tol</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">extra_arguments</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tol&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-</span><span id="line-110">            <span class="n">options</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">extra_arguments</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;options&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-</span><span id="line-111">            <span class="n">callback</span><span class="o">=</span><span class="n">callback</span><span class="p">,</span>
-</span><span id="line-112">        <span class="p">)</span>
-</span><span id="line-113">
-</span><span id="line-114">        <span class="k">return</span> <span class="n">OptimizerResult</span><span class="p">(</span>
-</span><span id="line-115">            <span class="n">optimal_cost</span><span class="o">=</span><span class="n">res</span><span class="o">.</span><span class="n">fun</span><span class="p">,</span>
-</span><span id="line-116">            <span class="n">optimal_parameters</span><span class="o">=</span><span class="n">res</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
-</span><span id="line-117">            <span class="n">intermediate_results</span><span class="o">=</span><span class="n">intermediate_results</span><span class="p">,</span>
-</span><span id="line-118">        <span class="p">)</span></div>
+</span><span id="line-91"><span class="sd">        Returns:</span>
+</span><span id="line-92"><span class="sd">            list[float]: the optimal set of parameters that minimize the cost function.</span>
+</span><span id="line-93"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-94">        <span class="n">intermediate_results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">OptimizerIntermediateResult</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="line-95">
+</span><span id="line-96">        <span class="k">def</span><span class="w"> </span><span class="nf">callback_fun</span><span class="p">(</span><span class="n">intermediate_result</span><span class="p">:</span> <span class="n">OptimizeResult</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-97">            <span class="c1"># Create an OptimizerResult for this intermediate iteration.</span>
+</span><span id="line-98">            <span class="n">intermediate_results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+</span><span id="line-99">                <span class="n">OptimizerIntermediateResult</span><span class="p">(</span><span class="n">cost</span><span class="o">=</span><span class="n">intermediate_result</span><span class="o">.</span><span class="n">fun</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="n">intermediate_result</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+</span><span id="line-100">            <span class="p">)</span>
+</span><span id="line-101">
+</span><span id="line-102">        <span class="c1"># Only pass the callback if we want to store intermediate results.</span>
+</span><span id="line-103">        <span class="n">callback</span> <span class="o">=</span> <span class="n">callback_fun</span> <span class="k">if</span> <span class="n">store_intermediate_results</span> <span class="k">else</span> <span class="kc">None</span>
+</span><span id="line-104">
+</span><span id="line-105">        <span class="c1"># Global optimizer have a different interface, like `scipy.optimize.shgo` rather than `scipy.optimize.minimize`</span>
+</span><span id="line-106">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;direct&quot;</span><span class="p">,</span> <span class="s2">&quot;dual_annealing&quot;</span><span class="p">,</span> <span class="s2">&quot;differential_evolution&quot;</span><span class="p">,</span> <span class="s2">&quot;shgo&quot;</span><span class="p">}</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span>
+</span><span id="line-107">            <span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="p">,</span> <span class="nb">str</span>
+</span><span id="line-108">        <span class="p">):</span>
+</span><span id="line-109">            <span class="n">res</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">scipy_optimize</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="p">)(</span>
+</span><span id="line-110">                <span class="n">cost_function</span><span class="p">,</span>
+</span><span id="line-111">                <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
+</span><span id="line-112">                <span class="n">callback</span><span class="o">=</span><span class="n">callback</span><span class="p">,</span>
+</span><span id="line-113">                <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">extra_arguments</span><span class="p">,</span>
+</span><span id="line-114">            <span class="p">)</span>
+</span><span id="line-115">        <span class="c1"># basinhopping doesn&#39;t allow bounds</span>
+</span><span id="line-116">        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;basinhopping&quot;</span><span class="p">:</span>
+</span><span id="line-117">            <span class="n">res</span> <span class="o">=</span> <span class="n">scipy_optimize</span><span class="o">.</span><span class="n">basinhopping</span><span class="p">(</span>
+</span><span id="line-118">                <span class="n">cost_function</span><span class="p">,</span>
+</span><span id="line-119">                <span class="n">x0</span><span class="o">=</span><span class="n">init_parameters</span><span class="p">,</span>
+</span><span id="line-120">                <span class="n">callback</span><span class="o">=</span><span class="n">callback</span><span class="p">,</span>
+</span><span id="line-121">                <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">extra_arguments</span><span class="p">,</span>
+</span><span id="line-122">            <span class="p">)</span>
+</span><span id="line-123">        <span class="c1"># the more general local minimizer interface</span>
+</span><span id="line-124">        <span class="k">else</span><span class="p">:</span>
+</span><span id="line-125">            <span class="n">res</span> <span class="o">=</span> <span class="n">scipy_optimize</span><span class="o">.</span><span class="n">minimize</span><span class="p">(</span>
+</span><span id="line-126">                <span class="n">cost_function</span><span class="p">,</span>
+</span><span id="line-127">                <span class="n">x0</span><span class="o">=</span><span class="n">init_parameters</span><span class="p">,</span>
+</span><span id="line-128">                <span class="n">method</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="p">,</span>
+</span><span id="line-129">                <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
+</span><span id="line-130">                <span class="n">jac</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">extra_arguments</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;jac&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+</span><span id="line-131">                <span class="n">hess</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">extra_arguments</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;hess&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+</span><span id="line-132">                <span class="n">hessp</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">extra_arguments</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;hessp&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+</span><span id="line-133">                <span class="n">constraints</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">extra_arguments</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;constraints&quot;</span><span class="p">,</span> <span class="p">()),</span>
+</span><span id="line-134">                <span class="n">tol</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">extra_arguments</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tol&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+</span><span id="line-135">                <span class="n">options</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">extra_arguments</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;options&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+</span><span id="line-136">                <span class="n">callback</span><span class="o">=</span><span class="n">callback</span><span class="p">,</span>
+</span><span id="line-137">            <span class="p">)</span>
+</span><span id="line-138">
+</span><span id="line-139">        <span class="k">return</span> <span class="n">OptimizerResult</span><span class="p">(</span>
+</span><span id="line-140">            <span class="n">optimal_cost</span><span class="o">=</span><span class="n">res</span><span class="o">.</span><span class="n">fun</span><span class="p">,</span>
+</span><span id="line-141">            <span class="n">optimal_parameters</span><span class="o">=</span><span class="n">res</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+</span><span id="line-142">            <span class="n">intermediate_results</span><span class="o">=</span><span class="n">intermediate_results</span><span class="p">,</span>
+</span><span id="line-143">        <span class="p">)</span></div>
 
-</span><span id="line-119">
-</span><span id="line-120">    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="line-121">        <span class="n">extra_args_str</span> <span class="o">=</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">extra_arguments</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
-</span><span id="line-122">        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;SciPyOptimizer(method=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="si">!r}</span><span class="s2">, </span><span class="si">{</span><span class="n">extra_args_str</span><span class="si">}</span><span class="s2">)&quot;</span></div>
+</span><span id="line-144">
+</span><span id="line-145">    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="line-146">        <span class="n">extra_args_str</span> <span class="o">=</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">extra_arguments</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+</span><span id="line-147">        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;SciPyOptimizer(method=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="si">!r}</span><span class="s2">, </span><span class="si">{</span><span class="n">extra_args_str</span><span class="si">}</span><span class="s2">)&quot;</span></div>
 
 </span></code></pre></div>
     </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">

@@ -672,7 +672,7 @@
 </span><span id="line-253">                    <span class="k">else</span> <span class="n">final_state</span>
 </span><span id="line-254">                <span class="p">)</span>
 </span><span id="line-255">            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ro</span><span class="p">,</span> <span class="n">ExpectationReadout</span><span class="p">):</span>
-</span><span id="line-256">                <span class="n">ro</span><span class="o">.</span><span class="n">expand_observables</span><span class="p">(</span><span class="n">nqubits</span><span class="o">=</span><span class="n">final_state</span><span class="o">.</span><span class="n">nqubits</span><span class="p">)</span>
+</span><span id="line-256">                <span class="n">ro</span><span class="o">.</span><span class="n">expanded_observables</span><span class="p">(</span><span class="n">nqubits</span><span class="o">=</span><span class="n">final_state</span><span class="o">.</span><span class="n">nqubits</span><span class="p">)</span>
 </span><span id="line-257">                <span class="n">expectation_result</span><span class="p">:</span> <span class="n">ExpectationReadoutResult</span> <span class="o">=</span> <span class="n">ExpectationReadoutResult</span><span class="o">.</span><span class="n">from_state</span><span class="p">(</span>
 </span><span id="line-258">                    <span class="n">expectation_readout</span><span class="o">=</span><span class="n">ro</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="n">final_state</span>
 </span><span id="line-259">                <span class="p">)</span>

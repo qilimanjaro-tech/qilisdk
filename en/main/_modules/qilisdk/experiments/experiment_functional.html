@@ -434,245 +434,642 @@
 </span><span id="line-20">    <span class="n">ExperimentResult</span><span class="p">,</span>
 </span><span id="line-21">    <span class="n">RabiExperimentResult</span><span class="p">,</span>
 </span><span id="line-22">    <span class="n">T1ExperimentResult</span><span class="p">,</span>
-</span><span id="line-23">    <span class="n">T2ExperimentResult</span><span class="p">,</span>
-</span><span id="line-24">    <span class="n">TwoTonesExperimentResult</span><span class="p">,</span>
-</span><span id="line-25"><span class="p">)</span>
-</span><span id="line-26"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.functionals.functional</span><span class="w"> </span><span class="kn">import</span> <span class="n">Functional</span>
-</span><span id="line-27"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.yaml</span><span class="w"> </span><span class="kn">import</span> <span class="n">yaml</span>
-</span><span id="line-28">
-</span><span id="line-29"><span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
-</span><span id="line-30">    <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-</span><span id="line-31">
+</span><span id="line-23">    <span class="n">T1SoftSaturationHWLExperimentResult</span><span class="p">,</span>
+</span><span id="line-24">    <span class="n">T2ExperimentResult</span><span class="p">,</span>
+</span><span id="line-25">    <span class="n">TwoTonesAtFixedFluxBiasExperimentResult</span><span class="p">,</span>
+</span><span id="line-26">    <span class="n">TwoTonesFrequencyVsFluxQdacRampCWExperimentResult</span><span class="p">,</span>
+</span><span id="line-27">    <span class="n">TwoTonesPulsedSoftExperimentResult</span><span class="p">,</span>
+</span><span id="line-28">    <span class="n">TwoTonesVsFluxBiasExperimentResult</span><span class="p">,</span>
+</span><span id="line-29"><span class="p">)</span>
+</span><span id="line-30"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.functionals.functional</span><span class="w"> </span><span class="kn">import</span> <span class="n">Functional</span>
+</span><span id="line-31"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.yaml</span><span class="w"> </span><span class="kn">import</span> <span class="n">yaml</span>
+</span><span id="line-32">
+</span><span id="line-33"><span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+</span><span id="line-34">    <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+</span><span id="line-35">
 <div class="viewcode-block" id="TResult_co">
 <a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.TResult_co">[docs]</a>
-</span><span id="line-32"><span class="n">TResult_co</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;TResult_co&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">ExperimentResult</span><span class="p">,</span> <span class="n">covariant</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+</span><span id="line-36"><span class="n">TResult_co</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;TResult_co&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">ExperimentResult</span><span class="p">,</span> <span class="n">covariant</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
 
-</span><span id="line-33">
-</span><span id="line-34">
-</span><span id="line-35"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
+</span><span id="line-37">
+</span><span id="line-38">
+</span><span id="line-39"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
 <div class="viewcode-block" id="ExperimentFunctional">
 <a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.ExperimentFunctional">[docs]</a>
-</span><span id="line-36"><span class="k">class</span><span class="w"> </span><span class="nc">ExperimentFunctional</span><span class="p">(</span><span class="n">Functional</span><span class="p">,</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">Generic</span><span class="p">[</span><span class="n">TResult_co</span><span class="p">]):</span>
-</span><span id="line-37"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract base class for single-qubit experiment functionals.</span>
-</span><span id="line-38">
-</span><span id="line-39"><span class="sd">    This class serves as a generic interface for defining quantum</span>
-</span><span id="line-40"><span class="sd">    characterization experiments such as Rabi or T1. Each subclass</span>
-</span><span id="line-41"><span class="sd">    specifies a concrete `ExperimentResult` type and the corresponding</span>
-</span><span id="line-42"><span class="sd">    sweep parameters.</span>
-</span><span id="line-43"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-44">
-</span><span id="line-45">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-46"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the experiment functional.</span>
-</span><span id="line-47">
-</span><span id="line-48"><span class="sd">        Args:</span>
-</span><span id="line-49"><span class="sd">            qubit (int): The physical qubit index on which the experiment is performed.</span>
-</span><span id="line-50"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-51">        <span class="bp">self</span><span class="o">.</span><span class="n">_qubit</span> <span class="o">=</span> <span class="n">qubit</span>
-</span><span id="line-52">
-</span><span id="line-53">    <span class="nd">@property</span>
+</span><span id="line-40"><span class="k">class</span><span class="w"> </span><span class="nc">ExperimentFunctional</span><span class="p">(</span><span class="n">Functional</span><span class="p">,</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">Generic</span><span class="p">[</span><span class="n">TResult_co</span><span class="p">]):</span>
+</span><span id="line-41"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract base class for single-qubit experiment functionals.</span>
+</span><span id="line-42">
+</span><span id="line-43"><span class="sd">    This class serves as a generic interface for defining quantum</span>
+</span><span id="line-44"><span class="sd">    characterization experiments such as Rabi or T1. Each subclass</span>
+</span><span id="line-45"><span class="sd">    specifies a concrete `ExperimentResult` type and the corresponding</span>
+</span><span id="line-46"><span class="sd">    sweep parameters.</span>
+</span><span id="line-47"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-48">
+</span><span id="line-49">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">averages</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-50"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the experiment functional.</span>
+</span><span id="line-51">
+</span><span id="line-52"><span class="sd">        Args:</span>
+</span><span id="line-53"><span class="sd">            qubit (int): The physical qubit index on which the experiment is performed.</span>
+</span><span id="line-54"><span class="sd">            averages (int): Number of averages to acquire for the experiment.</span>
+</span><span id="line-55"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-56">        <span class="bp">self</span><span class="o">.</span><span class="n">_qubit</span> <span class="o">=</span> <span class="n">qubit</span>
+</span><span id="line-57">        <span class="bp">self</span><span class="o">.</span><span class="n">_averages</span> <span class="o">=</span> <span class="n">averages</span>
+</span><span id="line-58">
+</span><span id="line-59">    <span class="nd">@property</span>
 <div class="viewcode-block" id="ExperimentFunctional.qubit">
 <a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.ExperimentFunctional.qubit">[docs]</a>
-</span><span id="line-54">    <span class="k">def</span><span class="w"> </span><span class="nf">qubit</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-</span><span id="line-55"><span class="w">        </span><span class="sd">&quot;&quot;&quot;The physical qubit index on which the experiment is performed.</span>
-</span><span id="line-56">
-</span><span id="line-57"><span class="sd">        Returns:</span>
-</span><span id="line-58"><span class="sd">            int: Index of the qubit.</span>
-</span><span id="line-59"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-60">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_qubit</span></div>
+</span><span id="line-60">    <span class="k">def</span><span class="w"> </span><span class="nf">qubit</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+</span><span id="line-61"><span class="w">        </span><span class="sd">&quot;&quot;&quot;The physical qubit index on which the experiment is performed.</span>
+</span><span id="line-62">
+</span><span id="line-63"><span class="sd">        Returns:</span>
+</span><span id="line-64"><span class="sd">            int: Index of the qubit.</span>
+</span><span id="line-65"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-66">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_qubit</span></div>
+
+</span><span id="line-67">
+</span><span id="line-68">    <span class="nd">@property</span>
+<div class="viewcode-block" id="ExperimentFunctional.averages">
+<a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.ExperimentFunctional.averages">[docs]</a>
+</span><span id="line-69">    <span class="k">def</span><span class="w"> </span><span class="nf">averages</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+</span><span id="line-70"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-71"><span class="sd">        Number of averages to acquire for the experiment.</span>
+</span><span id="line-72">
+</span><span id="line-73"><span class="sd">        Returns:</span>
+</span><span id="line-74"><span class="sd">            int: Number of averages.</span>
+</span><span id="line-75"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-76">
+</span><span id="line-77">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_averages</span></div>
 </div>
 
-</span><span id="line-61">
-</span><span id="line-62">
-</span><span id="line-63"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
+</span><span id="line-78">
+</span><span id="line-79">
+</span><span id="line-80"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
 <div class="viewcode-block" id="RabiExperiment">
 <a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.RabiExperiment">[docs]</a>
-</span><span id="line-64"><span class="k">class</span><span class="w"> </span><span class="nc">RabiExperiment</span><span class="p">(</span><span class="n">ExperimentFunctional</span><span class="p">[</span><span class="n">RabiExperimentResult</span><span class="p">]):</span>
-</span><span id="line-65"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Rabi experiment functional for a single qubit.</span>
-</span><span id="line-66">
-</span><span id="line-67"><span class="sd">    This functional defines a standard Rabi oscillation experiment where</span>
-</span><span id="line-68"><span class="sd">    the drive pulse duration is swept to measure the oscillatory response</span>
-</span><span id="line-69"><span class="sd">    of the qubit under continuous driving.</span>
-</span><span id="line-70"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-71">
+</span><span id="line-81"><span class="k">class</span><span class="w"> </span><span class="nc">RabiExperiment</span><span class="p">(</span><span class="n">ExperimentFunctional</span><span class="p">[</span><span class="n">RabiExperimentResult</span><span class="p">]):</span>
+</span><span id="line-82"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Rabi experiment functional for a single qubit.</span>
+</span><span id="line-83">
+</span><span id="line-84"><span class="sd">    This functional defines a standard Rabi oscillation experiment where</span>
+</span><span id="line-85"><span class="sd">    the drive pulse duration is swept to measure the oscillatory response</span>
+</span><span id="line-86"><span class="sd">    of the qubit under continuous driving.</span>
+</span><span id="line-87"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-88">
 <div class="viewcode-block" id="RabiExperiment.result_type">
 <a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.RabiExperiment.result_type">[docs]</a>
-</span><span id="line-72">    <span class="n">result_type</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">RabiExperimentResult</span><span class="p">]]</span> <span class="o">=</span> <span class="n">RabiExperimentResult</span></div>
+</span><span id="line-89">    <span class="n">result_type</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">RabiExperimentResult</span><span class="p">]]</span> <span class="o">=</span> <span class="n">RabiExperimentResult</span></div>
 
-</span><span id="line-73"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Result type returned by this functional.&quot;&quot;&quot;</span>
-</span><span id="line-74">
-</span><span id="line-75">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">drive_duration_values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-76"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a Rabi experiment functional.</span>
-</span><span id="line-77">
-</span><span id="line-78"><span class="sd">        Args:</span>
-</span><span id="line-79"><span class="sd">            qubit (int): The physical qubit index on which the experiment is performed.</span>
-</span><span id="line-80"><span class="sd">            drive_duration_values (np.ndarray): Array of drive pulse durations (in nanoseconds)</span>
-</span><span id="line-81"><span class="sd">                used to sweep the experiment.</span>
-</span><span id="line-82"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-83">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">qubit</span><span class="o">=</span><span class="n">qubit</span><span class="p">)</span>
-</span><span id="line-84">        <span class="bp">self</span><span class="o">.</span><span class="n">_drive_duration_values</span> <span class="o">=</span> <span class="n">drive_duration_values</span>
-</span><span id="line-85">
-</span><span id="line-86">    <span class="nd">@property</span>
+</span><span id="line-90"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Result type returned by this functional.&quot;&quot;&quot;</span>
+</span><span id="line-91">
+</span><span id="line-92">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">averages</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">drive_duration_values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-93"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a Rabi experiment functional.</span>
+</span><span id="line-94">
+</span><span id="line-95"><span class="sd">        Args:</span>
+</span><span id="line-96"><span class="sd">            qubit (int): The physical qubit index on which the experiment is performed.</span>
+</span><span id="line-97"><span class="sd">            averages (int): Number of averages to acquire for the experiment.</span>
+</span><span id="line-98"><span class="sd">            drive_duration_values (np.ndarray): Array of drive pulse durations (in nanoseconds)</span>
+</span><span id="line-99"><span class="sd">                used to sweep the experiment.</span>
+</span><span id="line-100"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-101">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">qubit</span><span class="o">=</span><span class="n">qubit</span><span class="p">,</span> <span class="n">averages</span><span class="o">=</span><span class="n">averages</span><span class="p">)</span>
+</span><span id="line-102">        <span class="bp">self</span><span class="o">.</span><span class="n">_drive_duration_values</span> <span class="o">=</span> <span class="n">drive_duration_values</span>
+</span><span id="line-103">
+</span><span id="line-104">    <span class="nd">@property</span>
 <div class="viewcode-block" id="RabiExperiment.drive_duration_values">
 <a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.RabiExperiment.drive_duration_values">[docs]</a>
-</span><span id="line-87">    <span class="k">def</span><span class="w"> </span><span class="nf">drive_duration_values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-</span><span id="line-88"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Drive pulse duration sweep values.</span>
-</span><span id="line-89">
-</span><span id="line-90"><span class="sd">        Returns:</span>
-</span><span id="line-91"><span class="sd">            np.ndarray: The set of drive durations (in nanoseconds) used in the Rabi experiment.</span>
-</span><span id="line-92"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-93">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_drive_duration_values</span></div>
+</span><span id="line-105">    <span class="k">def</span><span class="w"> </span><span class="nf">drive_duration_values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+</span><span id="line-106"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Drive pulse duration sweep values.</span>
+</span><span id="line-107">
+</span><span id="line-108"><span class="sd">        Returns:</span>
+</span><span id="line-109"><span class="sd">            np.ndarray: The set of drive durations (in nanoseconds) used in the Rabi experiment.</span>
+</span><span id="line-110"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-111">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_drive_duration_values</span></div>
 </div>
 
-</span><span id="line-94">
-</span><span id="line-95">
-</span><span id="line-96"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
+</span><span id="line-112">
+</span><span id="line-113">
+</span><span id="line-114"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
 <div class="viewcode-block" id="T1Experiment">
 <a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.T1Experiment">[docs]</a>
-</span><span id="line-97"><span class="k">class</span><span class="w"> </span><span class="nc">T1Experiment</span><span class="p">(</span><span class="n">ExperimentFunctional</span><span class="p">[</span><span class="n">T1ExperimentResult</span><span class="p">]):</span>
-</span><span id="line-98"><span class="w">    </span><span class="sd">&quot;&quot;&quot;T1 relaxation experiment functional for a single qubit.</span>
-</span><span id="line-99">
-</span><span id="line-100"><span class="sd">    This functional defines a standard T1 (energy relaxation) experiment,</span>
-</span><span id="line-101"><span class="sd">    where the delay between excitation and measurement is varied to extract</span>
-</span><span id="line-102"><span class="sd">    the relaxation time constant of the qubit.</span>
-</span><span id="line-103"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-104">
+</span><span id="line-115"><span class="k">class</span><span class="w"> </span><span class="nc">T1Experiment</span><span class="p">(</span><span class="n">ExperimentFunctional</span><span class="p">[</span><span class="n">T1ExperimentResult</span><span class="p">]):</span>
+</span><span id="line-116"><span class="w">    </span><span class="sd">&quot;&quot;&quot;T1 relaxation experiment functional for a single qubit.</span>
+</span><span id="line-117">
+</span><span id="line-118"><span class="sd">    This functional defines a standard T1 (energy relaxation) experiment,</span>
+</span><span id="line-119"><span class="sd">    where the delay between excitation and measurement is varied to extract</span>
+</span><span id="line-120"><span class="sd">    the relaxation time constant of the qubit.</span>
+</span><span id="line-121"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-122">
 <div class="viewcode-block" id="T1Experiment.result_type">
 <a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.T1Experiment.result_type">[docs]</a>
-</span><span id="line-105">    <span class="n">result_type</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">T1ExperimentResult</span><span class="p">]]</span> <span class="o">=</span> <span class="n">T1ExperimentResult</span></div>
+</span><span id="line-123">    <span class="n">result_type</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">T1ExperimentResult</span><span class="p">]]</span> <span class="o">=</span> <span class="n">T1ExperimentResult</span></div>
 
-</span><span id="line-106"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Result type returned by this functional.&quot;&quot;&quot;</span>
-</span><span id="line-107">
-</span><span id="line-108">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">wait_duration_values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-109"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a T1 experiment functional.</span>
-</span><span id="line-110">
-</span><span id="line-111"><span class="sd">        Args:</span>
-</span><span id="line-112"><span class="sd">            qubit (int): The physical qubit index on which the experiment is performed.</span>
-</span><span id="line-113"><span class="sd">            wait_duration_values (np.ndarray): Array of waiting times (in nanoseconds)</span>
-</span><span id="line-114"><span class="sd">                between excitation and measurement.</span>
-</span><span id="line-115"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-116">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">qubit</span><span class="o">=</span><span class="n">qubit</span><span class="p">)</span>
-</span><span id="line-117">        <span class="bp">self</span><span class="o">.</span><span class="n">_wait_duration_values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">wait_duration_values</span>
-</span><span id="line-118">
-</span><span id="line-119">    <span class="nd">@property</span>
+</span><span id="line-124"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Result type returned by this functional.&quot;&quot;&quot;</span>
+</span><span id="line-125">
+</span><span id="line-126">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">averages</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">wait_duration_values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-127"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a T1 experiment functional.</span>
+</span><span id="line-128">
+</span><span id="line-129"><span class="sd">        Args:</span>
+</span><span id="line-130"><span class="sd">            qubit (int): The physical qubit index on which the experiment is performed.</span>
+</span><span id="line-131"><span class="sd">            averages (int): Number of averages to acquire for the experiment.</span>
+</span><span id="line-132"><span class="sd">            wait_duration_values (np.ndarray): Array of waiting times (in nanoseconds)</span>
+</span><span id="line-133"><span class="sd">                between excitation and measurement.</span>
+</span><span id="line-134"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-135">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">qubit</span><span class="o">=</span><span class="n">qubit</span><span class="p">,</span> <span class="n">averages</span><span class="o">=</span><span class="n">averages</span><span class="p">)</span>
+</span><span id="line-136">        <span class="bp">self</span><span class="o">.</span><span class="n">_wait_duration_values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">wait_duration_values</span>
+</span><span id="line-137">
+</span><span id="line-138">    <span class="nd">@property</span>
 <div class="viewcode-block" id="T1Experiment.wait_duration_values">
 <a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.T1Experiment.wait_duration_values">[docs]</a>
-</span><span id="line-120">    <span class="k">def</span><span class="w"> </span><span class="nf">wait_duration_values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-</span><span id="line-121"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Waiting time sweep values.</span>
-</span><span id="line-122">
-</span><span id="line-123"><span class="sd">        Returns:</span>
-</span><span id="line-124"><span class="sd">            np.ndarray: The set of delay durations (in nanoseconds) used in the T1 experiment.</span>
-</span><span id="line-125"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-126">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wait_duration_values</span></div>
+</span><span id="line-139">    <span class="k">def</span><span class="w"> </span><span class="nf">wait_duration_values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+</span><span id="line-140"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Waiting time sweep values.</span>
+</span><span id="line-141">
+</span><span id="line-142"><span class="sd">        Returns:</span>
+</span><span id="line-143"><span class="sd">            np.ndarray: The set of delay durations (in nanoseconds) used in the T1 experiment.</span>
+</span><span id="line-144"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-145">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wait_duration_values</span></div>
 </div>
 
-</span><span id="line-127">
-</span><span id="line-128">
-</span><span id="line-129"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
+</span><span id="line-146">
+</span><span id="line-147">
+</span><span id="line-148"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
 <div class="viewcode-block" id="T2Experiment">
 <a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.T2Experiment">[docs]</a>
-</span><span id="line-130"><span class="k">class</span><span class="w"> </span><span class="nc">T2Experiment</span><span class="p">(</span><span class="n">ExperimentFunctional</span><span class="p">[</span><span class="n">T2ExperimentResult</span><span class="p">]):</span>
-</span><span id="line-131"><span class="w">    </span><span class="sd">&quot;&quot;&quot;T2 dephasing experiment functional for a single qubit.</span>
-</span><span id="line-132">
-</span><span id="line-133"><span class="sd">    This functional defines a Ramsey/spin-echo style T2 experiment, where</span>
-</span><span id="line-134"><span class="sd">    the free-evolution delay between phase-sensitive pulses is swept to</span>
-</span><span id="line-135"><span class="sd">    extract the qubit coherence time.</span>
-</span><span id="line-136"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-137">
+</span><span id="line-149"><span class="k">class</span><span class="w"> </span><span class="nc">T2Experiment</span><span class="p">(</span><span class="n">ExperimentFunctional</span><span class="p">[</span><span class="n">T2ExperimentResult</span><span class="p">]):</span>
+</span><span id="line-150"><span class="w">    </span><span class="sd">&quot;&quot;&quot;T2 dephasing experiment functional for a single qubit.</span>
+</span><span id="line-151">
+</span><span id="line-152"><span class="sd">    This functional defines a Ramsey/spin-echo style T2 experiment, where</span>
+</span><span id="line-153"><span class="sd">    the free-evolution delay between phase-sensitive pulses is swept to</span>
+</span><span id="line-154"><span class="sd">    extract the qubit coherence time.</span>
+</span><span id="line-155"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-156">
 <div class="viewcode-block" id="T2Experiment.result_type">
 <a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.T2Experiment.result_type">[docs]</a>
-</span><span id="line-138">    <span class="n">result_type</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">T2ExperimentResult</span><span class="p">]]</span> <span class="o">=</span> <span class="n">T2ExperimentResult</span></div>
+</span><span id="line-157">    <span class="n">result_type</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">T2ExperimentResult</span><span class="p">]]</span> <span class="o">=</span> <span class="n">T2ExperimentResult</span></div>
 
-</span><span id="line-139"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Result type returned by this functional.&quot;&quot;&quot;</span>
-</span><span id="line-140">
-</span><span id="line-141">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">wait_duration_values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-142"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a T2 dephasing experiment functional.</span>
-</span><span id="line-143">
-</span><span id="line-144"><span class="sd">        Args:</span>
-</span><span id="line-145"><span class="sd">            qubit (int): The physical qubit index on which the experiment is performed.</span>
-</span><span id="line-146"><span class="sd">            wait_duration_values (np.ndarray): Array of free-evolution delays</span>
-</span><span id="line-147"><span class="sd">                (in nanoseconds) between the phase-sensitive pulses.</span>
-</span><span id="line-148"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-149">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">qubit</span><span class="o">=</span><span class="n">qubit</span><span class="p">)</span>
-</span><span id="line-150">        <span class="bp">self</span><span class="o">.</span><span class="n">_wait_duration_values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">wait_duration_values</span>
-</span><span id="line-151">
-</span><span id="line-152">    <span class="nd">@property</span>
+</span><span id="line-158"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Result type returned by this functional.&quot;&quot;&quot;</span>
+</span><span id="line-159">
+</span><span id="line-160">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">averages</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">wait_duration_values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-161"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a T2 dephasing experiment functional.</span>
+</span><span id="line-162">
+</span><span id="line-163"><span class="sd">        Args:</span>
+</span><span id="line-164"><span class="sd">            qubit (int): The physical qubit index on which the experiment is performed.</span>
+</span><span id="line-165"><span class="sd">            averages (int): Number of averages to acquire for the experiment.</span>
+</span><span id="line-166"><span class="sd">            wait_duration_values (np.ndarray): Array of free-evolution delays</span>
+</span><span id="line-167"><span class="sd">                (in nanoseconds) between the phase-sensitive pulses.</span>
+</span><span id="line-168"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-169">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">qubit</span><span class="o">=</span><span class="n">qubit</span><span class="p">,</span> <span class="n">averages</span><span class="o">=</span><span class="n">averages</span><span class="p">)</span>
+</span><span id="line-170">        <span class="bp">self</span><span class="o">.</span><span class="n">_wait_duration_values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">wait_duration_values</span>
+</span><span id="line-171">
+</span><span id="line-172">    <span class="nd">@property</span>
 <div class="viewcode-block" id="T2Experiment.wait_duration_values">
 <a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.T2Experiment.wait_duration_values">[docs]</a>
-</span><span id="line-153">    <span class="k">def</span><span class="w"> </span><span class="nf">wait_duration_values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-</span><span id="line-154"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Free-evolution delay sweep values.</span>
-</span><span id="line-155">
-</span><span id="line-156"><span class="sd">        Returns:</span>
-</span><span id="line-157"><span class="sd">            np.ndarray: The set of delay durations (in nanoseconds) used to estimate T2.</span>
-</span><span id="line-158"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-159">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wait_duration_values</span></div>
+</span><span id="line-173">    <span class="k">def</span><span class="w"> </span><span class="nf">wait_duration_values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+</span><span id="line-174"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Free-evolution delay sweep values.</span>
+</span><span id="line-175">
+</span><span id="line-176"><span class="sd">        Returns:</span>
+</span><span id="line-177"><span class="sd">            np.ndarray: The set of delay durations (in nanoseconds) used to estimate T2.</span>
+</span><span id="line-178"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-179">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wait_duration_values</span></div>
 </div>
 
-</span><span id="line-160">
-</span><span id="line-161">
-</span><span id="line-162"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
-<div class="viewcode-block" id="TwoTonesExperiment">
-<a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.TwoTonesExperiment">[docs]</a>
-</span><span id="line-163"><span class="k">class</span><span class="w"> </span><span class="nc">TwoTonesExperiment</span><span class="p">(</span><span class="n">ExperimentFunctional</span><span class="p">[</span><span class="n">TwoTonesExperimentResult</span><span class="p">]):</span>
-</span><span id="line-164"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Two-tone spectroscopy functional for a single qubit.</span>
-</span><span id="line-165">
-</span><span id="line-166"><span class="sd">    Sweeps a drive tone frequency while monitoring the readout tone to</span>
-</span><span id="line-167"><span class="sd">    identify the qubit transition frequency.</span>
-</span><span id="line-168"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-169">
-<div class="viewcode-block" id="TwoTonesExperiment.result_type">
-<a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.TwoTonesExperiment.result_type">[docs]</a>
-</span><span id="line-170">    <span class="n">result_type</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">TwoTonesExperimentResult</span><span class="p">]]</span> <span class="o">=</span> <span class="n">TwoTonesExperimentResult</span></div>
+</span><span id="line-180">
+</span><span id="line-181">
+</span><span id="line-182"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
+<div class="viewcode-block" id="TwoTonesAtFixedFluxBiasExperiment">
+<a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.TwoTonesAtFixedFluxBiasExperiment">[docs]</a>
+</span><span id="line-183"><span class="k">class</span><span class="w"> </span><span class="nc">TwoTonesAtFixedFluxBiasExperiment</span><span class="p">(</span><span class="n">ExperimentFunctional</span><span class="p">[</span><span class="n">TwoTonesAtFixedFluxBiasExperimentResult</span><span class="p">]):</span>
+</span><span id="line-184"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Two-tone spectroscopy functional for a single qubit.</span>
+</span><span id="line-185">
+</span><span id="line-186"><span class="sd">    Sweeps a drive tone frequency while monitoring the readout tone to</span>
+</span><span id="line-187"><span class="sd">    identify the qubit transition frequency.</span>
+</span><span id="line-188"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-189">
+<div class="viewcode-block" id="TwoTonesAtFixedFluxBiasExperiment.result_type">
+<a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.TwoTonesAtFixedFluxBiasExperiment.result_type">[docs]</a>
+</span><span id="line-190">    <span class="n">result_type</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">TwoTonesAtFixedFluxBiasExperimentResult</span><span class="p">]]</span> <span class="o">=</span> <span class="n">TwoTonesAtFixedFluxBiasExperimentResult</span></div>
 
-</span><span id="line-171"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Result type returned by this functional.&quot;&quot;&quot;</span>
-</span><span id="line-172">
-</span><span id="line-173">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">frequency_start</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">frequency_stop</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">frequency_step</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-174"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a two-tone spectroscopy functional.</span>
-</span><span id="line-175">
-</span><span id="line-176"><span class="sd">        Args:</span>
-</span><span id="line-177"><span class="sd">            qubit (int): The physical qubit index on which the experiment is performed.</span>
-</span><span id="line-178"><span class="sd">            frequency_start (float): Starting frequency of the swept drive tone (in Hz).</span>
-</span><span id="line-179"><span class="sd">            frequency_stop (float): Ending frequency of the swept drive tone (in Hz).</span>
-</span><span id="line-180"><span class="sd">            frequency_step (float): Frequency increment between sweep points (in Hz).</span>
-</span><span id="line-181"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-182">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">qubit</span><span class="o">=</span><span class="n">qubit</span><span class="p">)</span>
-</span><span id="line-183">        <span class="bp">self</span><span class="o">.</span><span class="n">_frequency_start</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">frequency_start</span>
-</span><span id="line-184">        <span class="bp">self</span><span class="o">.</span><span class="n">_frequency_stop</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">frequency_stop</span>
-</span><span id="line-185">        <span class="bp">self</span><span class="o">.</span><span class="n">_frequency_step</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">frequency_step</span>
-</span><span id="line-186">
-</span><span id="line-187">    <span class="nd">@property</span>
-<div class="viewcode-block" id="TwoTonesExperiment.frequency_start">
-<a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.TwoTonesExperiment.frequency_start">[docs]</a>
-</span><span id="line-188">    <span class="k">def</span><span class="w"> </span><span class="nf">frequency_start</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-</span><span id="line-189"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Start frequency for the drive tone sweep.</span>
-</span><span id="line-190">
-</span><span id="line-191"><span class="sd">        Returns:</span>
-</span><span id="line-192"><span class="sd">            float: Starting frequency of the drive tone (in Hz).</span>
-</span><span id="line-193"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-194">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_frequency_start</span></div>
+</span><span id="line-191"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Result type returned by this functional.&quot;&quot;&quot;</span>
+</span><span id="line-192">
+</span><span id="line-193">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+</span><span id="line-194">        <span class="bp">self</span><span class="p">,</span>
+</span><span id="line-195">        <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+</span><span id="line-196">        <span class="n">averages</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+</span><span id="line-197">        <span class="n">frequency_start</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+</span><span id="line-198">        <span class="n">frequency_stop</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+</span><span id="line-199">        <span class="n">frequency_step</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+</span><span id="line-200">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-201"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a two-tone spectroscopy functional.</span>
+</span><span id="line-202">
+</span><span id="line-203"><span class="sd">        Args:</span>
+</span><span id="line-204"><span class="sd">            qubit (int): The physical qubit index on which the experiment is performed.</span>
+</span><span id="line-205"><span class="sd">            averages (int): Number of averages to acquire for the experiment.</span>
+</span><span id="line-206"><span class="sd">            frequency_start (float): Starting frequency of the swept drive tone (in Hz).</span>
+</span><span id="line-207"><span class="sd">            frequency_stop (float): Ending frequency of the swept drive tone (in Hz).</span>
+</span><span id="line-208"><span class="sd">            frequency_step (float): Frequency increment between sweep points (in Hz).</span>
+</span><span id="line-209"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-210">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">qubit</span><span class="o">=</span><span class="n">qubit</span><span class="p">,</span> <span class="n">averages</span><span class="o">=</span><span class="n">averages</span><span class="p">)</span>
+</span><span id="line-211">        <span class="bp">self</span><span class="o">.</span><span class="n">_frequency_start</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">frequency_start</span>
+</span><span id="line-212">        <span class="bp">self</span><span class="o">.</span><span class="n">_frequency_stop</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">frequency_stop</span>
+</span><span id="line-213">        <span class="bp">self</span><span class="o">.</span><span class="n">_frequency_step</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">frequency_step</span>
+</span><span id="line-214">
+</span><span id="line-215">    <span class="nd">@property</span>
+<div class="viewcode-block" id="TwoTonesAtFixedFluxBiasExperiment.frequency_start">
+<a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.TwoTonesAtFixedFluxBiasExperiment.frequency_start">[docs]</a>
+</span><span id="line-216">    <span class="k">def</span><span class="w"> </span><span class="nf">frequency_start</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="line-217"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Start frequency for the drive tone sweep.</span>
+</span><span id="line-218">
+</span><span id="line-219"><span class="sd">        Returns:</span>
+</span><span id="line-220"><span class="sd">            float: Starting frequency of the drive tone (in Hz).</span>
+</span><span id="line-221"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-222">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_frequency_start</span></div>
 
-</span><span id="line-195">
-</span><span id="line-196">    <span class="nd">@property</span>
-<div class="viewcode-block" id="TwoTonesExperiment.frequency_stop">
-<a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.TwoTonesExperiment.frequency_stop">[docs]</a>
-</span><span id="line-197">    <span class="k">def</span><span class="w"> </span><span class="nf">frequency_stop</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-</span><span id="line-198"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Stop frequency for the drive tone sweep.</span>
-</span><span id="line-199">
-</span><span id="line-200"><span class="sd">        Returns:</span>
-</span><span id="line-201"><span class="sd">            float: Ending frequency of the drive tone (in Hz).</span>
-</span><span id="line-202"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-203">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_frequency_stop</span></div>
+</span><span id="line-223">
+</span><span id="line-224">    <span class="nd">@property</span>
+<div class="viewcode-block" id="TwoTonesAtFixedFluxBiasExperiment.frequency_stop">
+<a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.TwoTonesAtFixedFluxBiasExperiment.frequency_stop">[docs]</a>
+</span><span id="line-225">    <span class="k">def</span><span class="w"> </span><span class="nf">frequency_stop</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="line-226"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Stop frequency for the drive tone sweep.</span>
+</span><span id="line-227">
+</span><span id="line-228"><span class="sd">        Returns:</span>
+</span><span id="line-229"><span class="sd">            float: Ending frequency of the drive tone (in Hz).</span>
+</span><span id="line-230"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-231">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_frequency_stop</span></div>
 
-</span><span id="line-204">
-</span><span id="line-205">    <span class="nd">@property</span>
-<div class="viewcode-block" id="TwoTonesExperiment.frequency_step">
-<a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.TwoTonesExperiment.frequency_step">[docs]</a>
-</span><span id="line-206">    <span class="k">def</span><span class="w"> </span><span class="nf">frequency_step</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-</span><span id="line-207"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Step size for the drive tone sweep.</span>
-</span><span id="line-208">
-</span><span id="line-209"><span class="sd">        Returns:</span>
-</span><span id="line-210"><span class="sd">            float: Frequency increment between sweep points (in Hz).</span>
-</span><span id="line-211"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-212">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_frequency_step</span></div>
+</span><span id="line-232">
+</span><span id="line-233">    <span class="nd">@property</span>
+<div class="viewcode-block" id="TwoTonesAtFixedFluxBiasExperiment.frequency_step">
+<a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.TwoTonesAtFixedFluxBiasExperiment.frequency_step">[docs]</a>
+</span><span id="line-234">    <span class="k">def</span><span class="w"> </span><span class="nf">frequency_step</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="line-235"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Step size for the drive tone sweep.</span>
+</span><span id="line-236">
+</span><span id="line-237"><span class="sd">        Returns:</span>
+</span><span id="line-238"><span class="sd">            float: Frequency increment between sweep points (in Hz).</span>
+</span><span id="line-239"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-240">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_frequency_step</span></div>
+</div>
+
+</span><span id="line-241">
+</span><span id="line-242">
+</span><span id="line-243"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
+<div class="viewcode-block" id="TwoTonesVsFluxBiasExperiment">
+<a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.TwoTonesVsFluxBiasExperiment">[docs]</a>
+</span><span id="line-244"><span class="k">class</span><span class="w"> </span><span class="nc">TwoTonesVsFluxBiasExperiment</span><span class="p">(</span><span class="n">ExperimentFunctional</span><span class="p">[</span><span class="n">TwoTonesVsFluxBiasExperimentResult</span><span class="p">]):</span>
+</span><span id="line-245"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Two-tone spectroscopy functional for a single qubit, swept vs flux bias.</span>
+</span><span id="line-246">
+</span><span id="line-247"><span class="sd">    Sweeps a drive tone frequency while monitoring the readout tone to</span>
+</span><span id="line-248"><span class="sd">    identify the qubit transition frequency as a function of flux bias.</span>
+</span><span id="line-249"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-250">
+<div class="viewcode-block" id="TwoTonesVsFluxBiasExperiment.result_type">
+<a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.TwoTonesVsFluxBiasExperiment.result_type">[docs]</a>
+</span><span id="line-251">    <span class="n">result_type</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">TwoTonesVsFluxBiasExperimentResult</span><span class="p">]]</span> <span class="o">=</span> <span class="n">TwoTonesVsFluxBiasExperimentResult</span></div>
+
+</span><span id="line-252"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Result type returned by this functional.&quot;&quot;&quot;</span>
+</span><span id="line-253">
+</span><span id="line-254">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+</span><span id="line-255">        <span class="bp">self</span><span class="p">,</span>
+</span><span id="line-256">        <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+</span><span id="line-257">        <span class="n">averages</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+</span><span id="line-258">        <span class="n">frequency_start</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+</span><span id="line-259">        <span class="n">frequency_stop</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+</span><span id="line-260">        <span class="n">frequency_step</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+</span><span id="line-261">        <span class="n">flux_start</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+</span><span id="line-262">        <span class="n">flux_stop</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+</span><span id="line-263">        <span class="n">flux_step</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+</span><span id="line-264">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-265"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a two-tone spectroscopy functional, swept vs flux bias.</span>
+</span><span id="line-266">
+</span><span id="line-267"><span class="sd">        Args:</span>
+</span><span id="line-268"><span class="sd">            qubit (int): The physical qubit index on which the experiment is performed.</span>
+</span><span id="line-269"><span class="sd">            averages (int): Number of averages to acquire for the experiment.</span>
+</span><span id="line-270"><span class="sd">            frequency_start (float): Starting frequency of the swept drive tone (in Hz).</span>
+</span><span id="line-271"><span class="sd">            frequency_stop (float): Ending frequency of the swept drive tone (in Hz).</span>
+</span><span id="line-272"><span class="sd">            frequency_step (float): Frequency increment between sweep points (in Hz).</span>
+</span><span id="line-273"><span class="sd">            flux_start (float): Starting value of the flux bias sweep (in units of flux quantum).</span>
+</span><span id="line-274"><span class="sd">            flux_stop (float): Ending value of the flux bias sweep (in units of flux quantum).</span>
+</span><span id="line-275"><span class="sd">            flux_step (float): Increment between flux bias sweep points (in units of flux quantum).</span>
+</span><span id="line-276"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-277">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">qubit</span><span class="o">=</span><span class="n">qubit</span><span class="p">,</span> <span class="n">averages</span><span class="o">=</span><span class="n">averages</span><span class="p">)</span>
+</span><span id="line-278">        <span class="bp">self</span><span class="o">.</span><span class="n">_frequency_start</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">frequency_start</span>
+</span><span id="line-279">        <span class="bp">self</span><span class="o">.</span><span class="n">_frequency_stop</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">frequency_stop</span>
+</span><span id="line-280">        <span class="bp">self</span><span class="o">.</span><span class="n">_frequency_step</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">frequency_step</span>
+</span><span id="line-281">        <span class="bp">self</span><span class="o">.</span><span class="n">_flux_start</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">flux_start</span>
+</span><span id="line-282">        <span class="bp">self</span><span class="o">.</span><span class="n">_flux_stop</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">flux_stop</span>
+</span><span id="line-283">        <span class="bp">self</span><span class="o">.</span><span class="n">_flux_step</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">flux_step</span>
+</span><span id="line-284">
+</span><span id="line-285">    <span class="nd">@property</span>
+<div class="viewcode-block" id="TwoTonesVsFluxBiasExperiment.frequency_start">
+<a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.TwoTonesVsFluxBiasExperiment.frequency_start">[docs]</a>
+</span><span id="line-286">    <span class="k">def</span><span class="w"> </span><span class="nf">frequency_start</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="line-287"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Start frequency for the drive tone sweep.</span>
+</span><span id="line-288">
+</span><span id="line-289"><span class="sd">        Returns:</span>
+</span><span id="line-290"><span class="sd">            float: Starting frequency of the drive tone (in Hz).</span>
+</span><span id="line-291"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-292">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_frequency_start</span></div>
+
+</span><span id="line-293">
+</span><span id="line-294">    <span class="nd">@property</span>
+<div class="viewcode-block" id="TwoTonesVsFluxBiasExperiment.frequency_stop">
+<a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.TwoTonesVsFluxBiasExperiment.frequency_stop">[docs]</a>
+</span><span id="line-295">    <span class="k">def</span><span class="w"> </span><span class="nf">frequency_stop</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="line-296"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Stop frequency for the drive tone sweep.</span>
+</span><span id="line-297">
+</span><span id="line-298"><span class="sd">        Returns:</span>
+</span><span id="line-299"><span class="sd">            float: Ending frequency of the drive tone (in Hz).</span>
+</span><span id="line-300"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-301">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_frequency_stop</span></div>
+
+</span><span id="line-302">
+</span><span id="line-303">    <span class="nd">@property</span>
+<div class="viewcode-block" id="TwoTonesVsFluxBiasExperiment.frequency_step">
+<a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.TwoTonesVsFluxBiasExperiment.frequency_step">[docs]</a>
+</span><span id="line-304">    <span class="k">def</span><span class="w"> </span><span class="nf">frequency_step</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="line-305"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Step size for the drive tone sweep.</span>
+</span><span id="line-306">
+</span><span id="line-307"><span class="sd">        Returns:</span>
+</span><span id="line-308"><span class="sd">            float: Frequency increment between sweep points (in Hz).</span>
+</span><span id="line-309"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-310">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_frequency_step</span></div>
+
+</span><span id="line-311">
+</span><span id="line-312">    <span class="nd">@property</span>
+<div class="viewcode-block" id="TwoTonesVsFluxBiasExperiment.flux_start">
+<a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.TwoTonesVsFluxBiasExperiment.flux_start">[docs]</a>
+</span><span id="line-313">    <span class="k">def</span><span class="w"> </span><span class="nf">flux_start</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="line-314"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Start value for the flux bias sweep.</span>
+</span><span id="line-315">
+</span><span id="line-316"><span class="sd">        Returns:</span>
+</span><span id="line-317"><span class="sd">            float: Starting value of the flux bias (in units of flux quantum).</span>
+</span><span id="line-318"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-319">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_flux_start</span></div>
+
+</span><span id="line-320">
+</span><span id="line-321">    <span class="nd">@property</span>
+<div class="viewcode-block" id="TwoTonesVsFluxBiasExperiment.flux_stop">
+<a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.TwoTonesVsFluxBiasExperiment.flux_stop">[docs]</a>
+</span><span id="line-322">    <span class="k">def</span><span class="w"> </span><span class="nf">flux_stop</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="line-323"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Stop value for the flux bias sweep.</span>
+</span><span id="line-324">
+</span><span id="line-325"><span class="sd">        Returns:</span>
+</span><span id="line-326"><span class="sd">            float: Ending value of the flux bias (in units of flux quantum).</span>
+</span><span id="line-327"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-328">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_flux_stop</span></div>
+
+</span><span id="line-329">
+</span><span id="line-330">    <span class="nd">@property</span>
+<div class="viewcode-block" id="TwoTonesVsFluxBiasExperiment.flux_step">
+<a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.TwoTonesVsFluxBiasExperiment.flux_step">[docs]</a>
+</span><span id="line-331">    <span class="k">def</span><span class="w"> </span><span class="nf">flux_step</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="line-332"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Step size for the flux bias sweep.</span>
+</span><span id="line-333">
+</span><span id="line-334"><span class="sd">        Returns:</span>
+</span><span id="line-335"><span class="sd">            float: Increment between flux bias sweep points (in units of flux quantum).</span>
+</span><span id="line-336"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-337">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_flux_step</span></div>
+</div>
+
+</span><span id="line-338">
+</span><span id="line-339">
+</span><span id="line-340"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
+<div class="viewcode-block" id="TwoTonesFrequencyVsFluxQdacRampCWExperiment">
+<a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.TwoTonesFrequencyVsFluxQdacRampCWExperiment">[docs]</a>
+</span><span id="line-341"><span class="k">class</span><span class="w"> </span><span class="nc">TwoTonesFrequencyVsFluxQdacRampCWExperiment</span><span class="p">(</span>
+</span><span id="line-342">    <span class="n">ExperimentFunctional</span><span class="p">[</span><span class="n">TwoTonesFrequencyVsFluxQdacRampCWExperimentResult</span><span class="p">]</span>
+</span><span id="line-343"><span class="p">):</span>
+</span><span id="line-344"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Two-tone spectroscopy functional for a single qubit, swept vs flux bias using ramping through the QDAC and</span>
+</span><span id="line-345"><span class="sd">    continous wave.</span>
+</span><span id="line-346">
+</span><span id="line-347"><span class="sd">    Sweeps a drive tone frequency while monitoring the readout tone to</span>
+</span><span id="line-348"><span class="sd">    identify the qubit transition frequency as a function of flux bias.</span>
+</span><span id="line-349"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-350">
+<div class="viewcode-block" id="TwoTonesFrequencyVsFluxQdacRampCWExperiment.result_type">
+<a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.TwoTonesFrequencyVsFluxQdacRampCWExperiment.result_type">[docs]</a>
+</span><span id="line-351">    <span class="n">result_type</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">TwoTonesFrequencyVsFluxQdacRampCWExperimentResult</span><span class="p">]]</span> <span class="o">=</span> <span class="p">(</span>
+</span><span id="line-352">        <span class="n">TwoTonesFrequencyVsFluxQdacRampCWExperimentResult</span>
+</span><span id="line-353">    <span class="p">)</span></div>
+
+</span><span id="line-354"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Result type returned by this functional.&quot;&quot;&quot;</span>
+</span><span id="line-355">
+</span><span id="line-356">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+</span><span id="line-357">        <span class="bp">self</span><span class="p">,</span>
+</span><span id="line-358">        <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+</span><span id="line-359">        <span class="n">averages</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+</span><span id="line-360">        <span class="n">frequency_start</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+</span><span id="line-361">        <span class="n">frequency_stop</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+</span><span id="line-362">        <span class="n">frequency_step</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+</span><span id="line-363">        <span class="n">flux_start</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+</span><span id="line-364">        <span class="n">flux_stop</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+</span><span id="line-365">        <span class="n">flux_step</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+</span><span id="line-366">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-367"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a two-tone spectroscopy functional, swept vs flux bias, using the Qdac to ramp.</span>
+</span><span id="line-368">
+</span><span id="line-369"><span class="sd">        Args:</span>
+</span><span id="line-370"><span class="sd">            qubit (int): The physical qubit index on which the experiment is performed.</span>
+</span><span id="line-371"><span class="sd">            averages (int): Number of averages to acquire for the experiment.</span>
+</span><span id="line-372"><span class="sd">            frequency_start (float): Starting frequency of the swept drive tone (in Hz).</span>
+</span><span id="line-373"><span class="sd">            frequency_stop (float): Ending frequency of the swept drive tone (in Hz).</span>
+</span><span id="line-374"><span class="sd">            frequency_step (float): Frequency increment between sweep points (in Hz).</span>
+</span><span id="line-375"><span class="sd">            flux_start (float): Starting value of the flux bias sweep (in units of flux quantum).</span>
+</span><span id="line-376"><span class="sd">            flux_stop (float): Ending value of the flux bias sweep (in units of flux quantum).</span>
+</span><span id="line-377"><span class="sd">            flux_step (float): Increment between flux bias sweep points (in units of flux quantum).</span>
+</span><span id="line-378"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-379">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">qubit</span><span class="o">=</span><span class="n">qubit</span><span class="p">,</span> <span class="n">averages</span><span class="o">=</span><span class="n">averages</span><span class="p">)</span>
+</span><span id="line-380">        <span class="bp">self</span><span class="o">.</span><span class="n">_frequency_start</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">frequency_start</span>
+</span><span id="line-381">        <span class="bp">self</span><span class="o">.</span><span class="n">_frequency_stop</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">frequency_stop</span>
+</span><span id="line-382">        <span class="bp">self</span><span class="o">.</span><span class="n">_frequency_step</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">frequency_step</span>
+</span><span id="line-383">        <span class="bp">self</span><span class="o">.</span><span class="n">_flux_start</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">flux_start</span>
+</span><span id="line-384">        <span class="bp">self</span><span class="o">.</span><span class="n">_flux_stop</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">flux_stop</span>
+</span><span id="line-385">        <span class="bp">self</span><span class="o">.</span><span class="n">_flux_step</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">flux_step</span>
+</span><span id="line-386">
+</span><span id="line-387">    <span class="nd">@property</span>
+<div class="viewcode-block" id="TwoTonesFrequencyVsFluxQdacRampCWExperiment.frequency_start">
+<a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.TwoTonesFrequencyVsFluxQdacRampCWExperiment.frequency_start">[docs]</a>
+</span><span id="line-388">    <span class="k">def</span><span class="w"> </span><span class="nf">frequency_start</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="line-389"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Start frequency for the drive tone sweep.</span>
+</span><span id="line-390">
+</span><span id="line-391"><span class="sd">        Returns:</span>
+</span><span id="line-392"><span class="sd">            float: Starting frequency of the drive tone (in Hz).</span>
+</span><span id="line-393"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-394">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_frequency_start</span></div>
+
+</span><span id="line-395">
+</span><span id="line-396">    <span class="nd">@property</span>
+<div class="viewcode-block" id="TwoTonesFrequencyVsFluxQdacRampCWExperiment.frequency_stop">
+<a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.TwoTonesFrequencyVsFluxQdacRampCWExperiment.frequency_stop">[docs]</a>
+</span><span id="line-397">    <span class="k">def</span><span class="w"> </span><span class="nf">frequency_stop</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="line-398"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Stop frequency for the drive tone sweep.</span>
+</span><span id="line-399">
+</span><span id="line-400"><span class="sd">        Returns:</span>
+</span><span id="line-401"><span class="sd">            float: Ending frequency of the drive tone (in Hz).</span>
+</span><span id="line-402"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-403">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_frequency_stop</span></div>
+
+</span><span id="line-404">
+</span><span id="line-405">    <span class="nd">@property</span>
+<div class="viewcode-block" id="TwoTonesFrequencyVsFluxQdacRampCWExperiment.frequency_step">
+<a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.TwoTonesFrequencyVsFluxQdacRampCWExperiment.frequency_step">[docs]</a>
+</span><span id="line-406">    <span class="k">def</span><span class="w"> </span><span class="nf">frequency_step</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="line-407"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Step size for the drive tone sweep.</span>
+</span><span id="line-408">
+</span><span id="line-409"><span class="sd">        Returns:</span>
+</span><span id="line-410"><span class="sd">            float: Frequency increment between sweep points (in Hz).</span>
+</span><span id="line-411"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-412">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_frequency_step</span></div>
+
+</span><span id="line-413">
+</span><span id="line-414">    <span class="nd">@property</span>
+<div class="viewcode-block" id="TwoTonesFrequencyVsFluxQdacRampCWExperiment.flux_start">
+<a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.TwoTonesFrequencyVsFluxQdacRampCWExperiment.flux_start">[docs]</a>
+</span><span id="line-415">    <span class="k">def</span><span class="w"> </span><span class="nf">flux_start</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="line-416"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Start value for the flux bias sweep.</span>
+</span><span id="line-417">
+</span><span id="line-418"><span class="sd">        Returns:</span>
+</span><span id="line-419"><span class="sd">            float: Starting value of the flux bias (in units of flux quantum).</span>
+</span><span id="line-420"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-421">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_flux_start</span></div>
+
+</span><span id="line-422">
+</span><span id="line-423">    <span class="nd">@property</span>
+<div class="viewcode-block" id="TwoTonesFrequencyVsFluxQdacRampCWExperiment.flux_stop">
+<a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.TwoTonesFrequencyVsFluxQdacRampCWExperiment.flux_stop">[docs]</a>
+</span><span id="line-424">    <span class="k">def</span><span class="w"> </span><span class="nf">flux_stop</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="line-425"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Stop value for the flux bias sweep.</span>
+</span><span id="line-426">
+</span><span id="line-427"><span class="sd">        Returns:</span>
+</span><span id="line-428"><span class="sd">            float: Ending value of the flux bias (in units of flux quantum).</span>
+</span><span id="line-429"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-430">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_flux_stop</span></div>
+
+</span><span id="line-431">
+</span><span id="line-432">    <span class="nd">@property</span>
+<div class="viewcode-block" id="TwoTonesFrequencyVsFluxQdacRampCWExperiment.flux_step">
+<a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.TwoTonesFrequencyVsFluxQdacRampCWExperiment.flux_step">[docs]</a>
+</span><span id="line-433">    <span class="k">def</span><span class="w"> </span><span class="nf">flux_step</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="line-434"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Step size for the flux bias sweep.</span>
+</span><span id="line-435">
+</span><span id="line-436"><span class="sd">        Returns:</span>
+</span><span id="line-437"><span class="sd">            float: Increment between flux bias sweep points (in units of flux quantum).</span>
+</span><span id="line-438"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-439">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_flux_step</span></div>
+</div>
+
+</span><span id="line-440">
+</span><span id="line-441">
+</span><span id="line-442"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
+<div class="viewcode-block" id="TwoTonesPulsedSoftExperiment">
+<a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.TwoTonesPulsedSoftExperiment">[docs]</a>
+</span><span id="line-443"><span class="k">class</span><span class="w"> </span><span class="nc">TwoTonesPulsedSoftExperiment</span><span class="p">(</span><span class="n">ExperimentFunctional</span><span class="p">[</span><span class="n">TwoTonesPulsedSoftExperimentResult</span><span class="p">]):</span>
+</span><span id="line-444"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Two-tone pulsed spectroscopy functional using a soft Gaussian ring-up drive.</span>
+</span><span id="line-445">
+</span><span id="line-446"><span class="sd">    Sweeps the drive tone IF frequency while applying a smooth saturation pulse</span>
+</span><span id="line-447"><span class="sd">    to identify the qubit transition frequency at a fixed flux bias point.</span>
+</span><span id="line-448"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-449">
+<div class="viewcode-block" id="TwoTonesPulsedSoftExperiment.result_type">
+<a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.TwoTonesPulsedSoftExperiment.result_type">[docs]</a>
+</span><span id="line-450">    <span class="n">result_type</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">TwoTonesPulsedSoftExperimentResult</span><span class="p">]]</span> <span class="o">=</span> <span class="n">TwoTonesPulsedSoftExperimentResult</span></div>
+
+</span><span id="line-451"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Result type returned by this functional.&quot;&quot;&quot;</span>
+</span><span id="line-452">
+</span><span id="line-453">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+</span><span id="line-454">        <span class="bp">self</span><span class="p">,</span>
+</span><span id="line-455">        <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+</span><span id="line-456">        <span class="n">averages</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+</span><span id="line-457">        <span class="n">frequency_start</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+</span><span id="line-458">        <span class="n">frequency_stop</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+</span><span id="line-459">        <span class="n">frequency_step</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+</span><span id="line-460">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-461"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a two-tone pulsed soft spectroscopy functional.</span>
+</span><span id="line-462">
+</span><span id="line-463"><span class="sd">        Args:</span>
+</span><span id="line-464"><span class="sd">            qubit (int): The physical qubit index on which the experiment is performed.</span>
+</span><span id="line-465"><span class="sd">            averages (int): Number of averages to acquire for the experiment.</span>
+</span><span id="line-466"><span class="sd">            frequency_start (float): Starting IF frequency of the swept drive tone (in Hz).</span>
+</span><span id="line-467"><span class="sd">            frequency_stop (float): Ending IF frequency of the swept drive tone (in Hz).</span>
+</span><span id="line-468"><span class="sd">            frequency_step (float): Frequency increment between sweep points (in Hz).</span>
+</span><span id="line-469"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-470">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">qubit</span><span class="o">=</span><span class="n">qubit</span><span class="p">,</span> <span class="n">averages</span><span class="o">=</span><span class="n">averages</span><span class="p">)</span>
+</span><span id="line-471">        <span class="bp">self</span><span class="o">.</span><span class="n">_frequency_start</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">frequency_start</span>
+</span><span id="line-472">        <span class="bp">self</span><span class="o">.</span><span class="n">_frequency_stop</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">frequency_stop</span>
+</span><span id="line-473">        <span class="bp">self</span><span class="o">.</span><span class="n">_frequency_step</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">frequency_step</span>
+</span><span id="line-474">
+</span><span id="line-475">    <span class="nd">@property</span>
+<div class="viewcode-block" id="TwoTonesPulsedSoftExperiment.frequency_start">
+<a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.TwoTonesPulsedSoftExperiment.frequency_start">[docs]</a>
+</span><span id="line-476">    <span class="k">def</span><span class="w"> </span><span class="nf">frequency_start</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="line-477"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Start IF frequency for the drive tone sweep.</span>
+</span><span id="line-478">
+</span><span id="line-479"><span class="sd">        Returns:</span>
+</span><span id="line-480"><span class="sd">            float: Starting IF frequency of the drive tone (in Hz).</span>
+</span><span id="line-481"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-482">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_frequency_start</span></div>
+
+</span><span id="line-483">
+</span><span id="line-484">    <span class="nd">@property</span>
+<div class="viewcode-block" id="TwoTonesPulsedSoftExperiment.frequency_stop">
+<a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.TwoTonesPulsedSoftExperiment.frequency_stop">[docs]</a>
+</span><span id="line-485">    <span class="k">def</span><span class="w"> </span><span class="nf">frequency_stop</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="line-486"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Stop IF frequency for the drive tone sweep.</span>
+</span><span id="line-487">
+</span><span id="line-488"><span class="sd">        Returns:</span>
+</span><span id="line-489"><span class="sd">            float: Ending IF frequency of the drive tone (in Hz).</span>
+</span><span id="line-490"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-491">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_frequency_stop</span></div>
+
+</span><span id="line-492">
+</span><span id="line-493">    <span class="nd">@property</span>
+<div class="viewcode-block" id="TwoTonesPulsedSoftExperiment.frequency_step">
+<a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.TwoTonesPulsedSoftExperiment.frequency_step">[docs]</a>
+</span><span id="line-494">    <span class="k">def</span><span class="w"> </span><span class="nf">frequency_step</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="line-495"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Step size for the drive tone IF frequency sweep.</span>
+</span><span id="line-496">
+</span><span id="line-497"><span class="sd">        Returns:</span>
+</span><span id="line-498"><span class="sd">            float: Frequency increment between sweep points (in Hz).</span>
+</span><span id="line-499"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-500">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_frequency_step</span></div>
+</div>
+
+</span><span id="line-501">
+</span><span id="line-502">
+</span><span id="line-503"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
+<div class="viewcode-block" id="T1SoftSaturationHWLExperiment">
+<a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.T1SoftSaturationHWLExperiment">[docs]</a>
+</span><span id="line-504"><span class="k">class</span><span class="w"> </span><span class="nc">T1SoftSaturationHWLExperiment</span><span class="p">(</span><span class="n">ExperimentFunctional</span><span class="p">[</span><span class="n">T1SoftSaturationHWLExperimentResult</span><span class="p">]):</span>
+</span><span id="line-505"><span class="w">    </span><span class="sd">&quot;&quot;&quot;T1 relaxation experiment using a soft Gaussian ring-up saturation drive with hardware loop.</span>
+</span><span id="line-506">
+</span><span id="line-507"><span class="sd">    Applies a smooth saturation pulse to excite the qubit and sweeps the delay</span>
+</span><span id="line-508"><span class="sd">    before readout to extract the relaxation time constant. All idle durations</span>
+</span><span id="line-509"><span class="sd">    are unrolled into a single QProgram for efficient hardware execution.</span>
+</span><span id="line-510"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-511">
+<div class="viewcode-block" id="T1SoftSaturationHWLExperiment.result_type">
+<a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.T1SoftSaturationHWLExperiment.result_type">[docs]</a>
+</span><span id="line-512">    <span class="n">result_type</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">T1SoftSaturationHWLExperimentResult</span><span class="p">]]</span> <span class="o">=</span> <span class="n">T1SoftSaturationHWLExperimentResult</span></div>
+
+</span><span id="line-513"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Result type returned by this functional.&quot;&quot;&quot;</span>
+</span><span id="line-514">
+</span><span id="line-515">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">averages</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">wait_duration_values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-516"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a T1 soft saturation hardware-loop experiment functional.</span>
+</span><span id="line-517">
+</span><span id="line-518"><span class="sd">        Args:</span>
+</span><span id="line-519"><span class="sd">            qubit (int): The physical qubit index on which the experiment is performed.</span>
+</span><span id="line-520"><span class="sd">            averages (int): Number of averages to acquire for the experiment.</span>
+</span><span id="line-521"><span class="sd">            wait_duration_values (np.ndarray): Array of waiting times (in nanoseconds)</span>
+</span><span id="line-522"><span class="sd">                between excitation and measurement.</span>
+</span><span id="line-523"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-524">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">qubit</span><span class="o">=</span><span class="n">qubit</span><span class="p">,</span> <span class="n">averages</span><span class="o">=</span><span class="n">averages</span><span class="p">)</span>
+</span><span id="line-525">        <span class="bp">self</span><span class="o">.</span><span class="n">_wait_duration_values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">wait_duration_values</span>
+</span><span id="line-526">
+</span><span id="line-527">    <span class="nd">@property</span>
+<div class="viewcode-block" id="T1SoftSaturationHWLExperiment.wait_duration_values">
+<a class="viewcode-back" href="../../../code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.T1SoftSaturationHWLExperiment.wait_duration_values">[docs]</a>
+</span><span id="line-528">    <span class="k">def</span><span class="w"> </span><span class="nf">wait_duration_values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+</span><span id="line-529"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Waiting time sweep values.</span>
+</span><span id="line-530">
+</span><span id="line-531"><span class="sd">        Returns:</span>
+</span><span id="line-532"><span class="sd">            np.ndarray: The set of delay durations (in nanoseconds) used in the experiment.</span>
+</span><span id="line-533"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-534">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wait_duration_values</span></div>
 </div>
 
 </span></code></pre></div>

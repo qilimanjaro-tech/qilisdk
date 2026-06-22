@@ -620,7 +620,7 @@
 </span><span id="line-186"><span class="sd">        Returns:</span>
 </span><span id="line-187"><span class="sd">            list[PARAMETERIZED_NUMBER]: Sorted time indices based on their evaluated value.</span>
 </span><span id="line-188"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-189">        <span class="k">return</span> <span class="nb">sorted</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">_time_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span> <span class="n">key</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_value</span><span class="p">)</span>  <span class="c1"># ty:ignore[invalid-return-type]</span>
+</span><span id="line-189">        <span class="k">return</span> <span class="nb">sorted</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">_time_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span> <span class="n">key</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_value</span><span class="p">)</span>
 </span><span id="line-190">
 </span><span id="line-191">    <span class="nd">@property</span>
 </span><span id="line-192">    <span class="k">def</span><span class="w"> </span><span class="nf">_time_scale</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>

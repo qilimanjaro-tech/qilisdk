@@ -341,7 +341,7 @@
 <div id="content" role="main">
 <section id="schedule">
 <h1>Schedule<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#schedule"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h1>
-<p>The simplest way to construct a common schedule is to use of the helper functions:</p>
+<p>The simplest way to construct a common schedule is to use the helper functions:</p>
 <ul class="simple">
 <li><p><a class="reference internal" href="../../code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule.linear" title="qilisdk.analog.schedule.Schedule.linear"><code class="xref py py-func docutils literal notranslate"><span class="pre">linear</span></code></a>: Linear interpolation between two Hamiltonians.</p></li>
 <li><p><a class="reference internal" href="../../code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule.quadratic" title="qilisdk.analog.schedule.Schedule.quadratic"><code class="xref py py-func docutils literal notranslate"><span class="pre">quadratic</span></code></a>: Quadratic interpolation between two Hamiltonians.</p></li>
@@ -371,7 +371,7 @@ discrete points or over intervals that are sampled automatically.</p>
 <li><dl class="simple">
 <dt><strong>coefficients</strong> (dict[str, dict]): Mapping from Hamiltonian label to a time-definition dictionary. Each key is either a time point (float/parameter/term) or a 2-tuple defining an interval; each value can be:</dt><dd><ul>
 <li><p>the coefficient of the hamiltonian at that time</p></li>
-<li><p>or callable returning a coefficient. This callable can take a parameter <code class="docutils literal notranslate"><span class="pre">t</span></code> that will be replaced by time. Moreover, any other parameters passed to this callable need to have a default value or have their value specified in the <code class="docutils literal notranslate"><span class="pre">**kwargs</span></code>.</p></li>
+<li><p>or a callable returning a coefficient. This callable can take a parameter <code class="docutils literal notranslate"><span class="pre">t</span></code> that will be replaced by time. Moreover, any other parameters passed to this callable need to have a default value or have their value specified in the <code class="docutils literal notranslate"><span class="pre">**kwargs</span></code>.</p></li>
 </ul>
 </dd>
 </dl>

@@ -20,7 +20,7 @@
 <link href="../../search.html" rel="search" title="Cerca"/>
 <link href="../../genindex.html" rel="index" title="Índex"/>
 <link href="backends_qutip.html" rel="next" title="Backend QuTiP"/>
-<link href="backends_qilisim.html" rel="prev" title="QiliSim Backend"/>
+<link href="backends_qilisim.html" rel="prev" title="Backend QiliSim"/>
 <script>
     <!-- Prevent Flash of wrong theme -->
       const userPreference = localStorage.getItem('darkMode');
@@ -92,15 +92,15 @@
 <p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
 <ul>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../tutorials/introductions/index_intros.html">Introduccions<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
-<li class="toctree-l2"><a class="reference internal" href="../../tutorials/introductions/intro_quantum.html">Fonaments Quàntics</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../tutorials/introductions/intro_circuits.html">Circuits Quàntics</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../tutorials/introductions/intro_annealing.html">Recuita Quàntica</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials/introductions/intro_quantum.html">Fonaments quàntics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials/introductions/intro_circuits.html">Circuits quàntics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials/introductions/intro_annealing.html">Recuita quàntica</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../tutorials/applications/index_applications.html">Aplicacions<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
-<li class="toctree-l2"><a class="reference internal" href="../../tutorials/applications/application_grovers.html">Cerca Quàntica amb l’Algorisme de Grover</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../tutorials/applications/application_shors.html">Factorització amb l’Algorisme de Shor</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../tutorials/applications/application_annealing.html">Optimització amb Recuita Quàntica</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials/applications/application_grovers.html">Cerca quàntica amb l’algorisme de Grover</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials/applications/application_shors.html">Factorització amb l’algorisme de Shor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials/applications/application_annealing.html">Optimització amb recuita quàntica</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../tutorials/applications/application_qaoa.html">Optimització amb QAOA</a></li>
 </ul>
 </li>
@@ -134,25 +134,25 @@
 <li class="toctree-l2"><a class="reference internal" href="../analog/analog_schedule.html">Esquema</a></li>
 </ul>
 </li>
-<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../functionals/functionals.html">Funcionals<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../functionals/functionals.html">Functionals<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_overview.html">Visió general</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_digital.html">Propagació Digital</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_analog.html">Evolució Analògica</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_variational.html">Programes Variacionals</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_reservoirs.html">Reservoris Quàntics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_digital.html">Propagació digital</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_analog.html">Evolució analògica</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_variational.html">Programes variacionals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../functionals/functionals_reservoirs.html">Reservoris quàntics</a></li>
 </ul>
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../readout/readout.html">Readout<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
-<li class="toctree-l2"><a class="reference internal" href="../readout/readout_overview.html">Visió General</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../readout/readout_bitstring.html">Mesura de Cadena de Bits</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../readout/readout_expectation.html">Valors Esperats</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../readout/readout_state.html">Estat Quàntic Complet</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../readout/readout_intermediate.html">Resultats Intermedis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../readout/readout_overview.html">Visió general</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../readout/readout_bitstring.html">Mesura de cadena de bits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../readout/readout_expectation.html">Valors esperats</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../readout/readout_state.html">Estat quàntic complet</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../readout/readout_intermediate.html">Resultats intermedis</a></li>
 </ul>
 </li>
 <li class="toctree-l1 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="backends.html">Backends<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul class="current" x-show="expanded">
 <li class="toctree-l2"><a class="reference internal" href="backends_overview.html">Visió general</a></li>
-<li class="toctree-l2"><a class="reference internal" href="backends_qilisim.html">QiliSim Backend</a></li>
+<li class="toctree-l2"><a class="reference internal" href="backends_qilisim.html">Backend QiliSim</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Backend CUDA</a></li>
 <li class="toctree-l2"><a class="reference internal" href="backends_qutip.html">Backend QuTiP</a></li>
 </ul>
@@ -163,10 +163,10 @@
 <li class="toctree-l2"><a class="reference internal" href="../cost_functions/cost_functions_model.html">ModelCostFunction</a></li>
 </ul>
 </li>
-<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../noise/noise.html">Noise<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
-<li class="toctree-l2"><a class="reference internal" href="../noise/noise_overview.html">Visió General</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../noise/noise_config.html">Configuració del Soroll</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../noise/noise_types.html">Tipus de Soroll</a></li>
+<li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../noise/noise.html">Soroll<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l2"><a class="reference internal" href="../noise/noise_overview.html">Visió general</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../noise/noise_config.html">Configuració del soroll</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../noise/noise_types.html">Tipus de soroll</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../speqtrum/speqtrum.html">SpeQtrum</a></li>
@@ -392,7 +392,7 @@
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="../../code/api/qilisdk/functionals/quantum_reservoirs/index.html#qilisdk.functionals.quantum_reservoirs.QuantumReservoir" title="qilisdk.functionals.quantum_reservoirs.QuantumReservoir"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuantumReservoir</span></code></a></p></td>
 <td><p>🟡</p></td>
-<td><p>The CudaBackend does not natively implement <code class="xref py py-meth docutils literal notranslate"><span class="pre">Backend._execute_quantum_reservoir</span></code>. Circuit steps inside the reservoir layer fall back to dense <code class="docutils literal notranslate"><span class="pre">QTensor</span></code> unitary multiplication on CPU; <code class="docutils literal notranslate"><span class="pre">Schedule</span></code> steps still use CUDA-Q’s <code class="docutils literal notranslate"><span class="pre">evolve</span></code>. Any attached noise model is ignored.</p></td>
+<td><p>CudaBackend no implementa <code class="xref py py-meth docutils literal notranslate"><span class="pre">Backend._execute_quantum_reservoir</span></code>. Els passos <code class="docutils literal notranslate"><span class="pre">Circuit</span></code> dins de la capa del reservori recauen en una multiplicació unitària <code class="docutils literal notranslate"><span class="pre">QTensor</span></code> densa a CPU; els passos <code class="docutils literal notranslate"><span class="pre">Schedule</span></code> segueixen utilitzant <code class="docutils literal notranslate"><span class="pre">evolve</span></code> de CUDA-Q. Qualsevol model de soroll adjuntat s’ignora.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="../../code/api/qilisdk/functionals/variational_program/index.html#qilisdk.functionals.variational_program.VariationalProgram" title="qilisdk.functionals.variational_program.VariationalProgram"><code class="xref py py-class docutils literal notranslate"><span class="pre">VariationalProgram</span></code></a></p></td>
 <td><p>✅</p></td>
@@ -403,34 +403,53 @@
 </section>
 <section id="configuration">
 <h2>Configuració<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#configuration" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#configuration'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
-<p>The CUDA backend exposes a single configuration parameter —
-<a class="reference internal" href="../../code/api/qilisdk/backends/cuda_backend/index.html#qilisdk.backends.cuda_backend.CudaSamplingMethod" title="qilisdk.backends.cuda_backend.CudaSamplingMethod"><code class="xref py py-class docutils literal notranslate"><span class="pre">CudaSamplingMethod</span></code></a> — that selects the underlying CUDA-Q
-target used for <strong>digital</strong> circuits. Analog evolution always runs on the <code class="docutils literal notranslate"><span class="pre">dynamics</span></code> target and
-ignores this setting.</p>
+<p>El backend CUDA exposa un únic paràmetre de configuració — <a class="reference internal" href="../../code/api/qilisdk/backends/cuda_backend/index.html#qilisdk.backends.cuda_backend.CudaSamplingMethod" title="qilisdk.backends.cuda_backend.CudaSamplingMethod"><code class="xref py py-class docutils literal notranslate"><span class="pre">CudaSamplingMethod</span></code></a> — que selecciona el target subjacent de CUDA-Q utilitzat per als circuits <strong>digitals</strong>. Si no s’especifica cap mètode, s’utilitza <code class="docutils literal notranslate"><span class="pre">STATE_VECTOR</span></code>. L’evolució analògica sempre s’executa sobre el target <code class="docutils literal notranslate"><span class="pre">dynamics</span></code> i ignora aquesta opció.</p>
 <table class="docutils align-default">
 <colgroup>
-<col style="width: 25.0%"/>
-<col style="width: 60.0%"/>
-<col style="width: 15.0%"/>
+<col style="width: 19.2%"/>
+<col style="width: 46.2%"/>
+<col style="width: 11.5%"/>
+<col style="width: 11.5%"/>
+<col style="width: 11.5%"/>
 </colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>Mètode</p></th>
-<th class="head"><p>Target de CUDA-Q (i fallback)</p></th>
-<th class="head"><p>Per defecte</p></th>
+<th class="head"><p>Target de CUDA-Q</p></th>
+<th class="head"><p>Admet mostreig</p></th>
+<th class="head"><p>Admet valors esperats</p></th>
+<th class="head"><p>Admet tomografia d’estat</p></th>
 </tr>
 </thead>
 <tbody>
 <tr class="row-even"><td><p><a class="reference internal" href="../../code/api/qilisdk/backends/cuda_backend/index.html#qilisdk.backends.cuda_backend.CudaSamplingMethod.STATE_VECTOR" title="qilisdk.backends.cuda_backend.CudaSamplingMethod.STATE_VECTOR"><code class="xref py py-class docutils literal notranslate"><span class="pre">STATE_VECTOR</span></code></a></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">nvidia</span></code> (GPU) quan hi ha una GPU disponible; en cas contrari <code class="docutils literal notranslate"><span class="pre">qpp-cpu</span></code>. La precisió coincideix amb <a class="reference internal" href="../../code/api/qilisdk/settings/index.html#qilisdk.settings.Precision" title="qilisdk.settings.Precision"><code class="xref py py-class docutils literal notranslate"><span class="pre">Precision</span></code></a>.</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">nvidia</span></code> quan hi ha una GPU disponible, en cas contrari <code class="docutils literal notranslate"><span class="pre">qpp-cpu</span></code>. La precisió coincideix amb <a class="reference internal" href="../../code/api/qilisdk/settings/index.html#qilisdk.settings.Precision" title="qilisdk.settings.Precision"><code class="xref py py-class docutils literal notranslate"><span class="pre">Precision</span></code></a>.</p></td>
+<td><p>✅</p></td>
+<td><p>✅</p></td>
 <td><p>✅</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../../code/api/qilisdk/backends/cuda_backend/index.html#qilisdk.backends.cuda_backend.CudaSamplingMethod.TENSOR_NETWORK" title="qilisdk.backends.cuda_backend.CudaSamplingMethod.TENSOR_NETWORK"><code class="xref py py-class docutils literal notranslate"><span class="pre">TENSOR_NETWORK</span></code></a></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">tensornet</span></code>. Adequat per a circuits poc profunds però amples.</p></td>
-<td></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="../../code/api/qilisdk/backends/cuda_backend/index.html#qilisdk.backends.cuda_backend.CudaSamplingMethod.STATE_VECTOR_MGPU" title="qilisdk.backends.cuda_backend.CudaSamplingMethod.STATE_VECTOR_MGPU"><code class="xref py py-class docutils literal notranslate"><span class="pre">STATE_VECTOR_MGPU</span></code></a></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">nvidia-mgpu</span></code> quan hi ha diverses GPUs disponibles, en cas contrari recau a <code class="docutils literal notranslate"><span class="pre">nvidia</span></code>.</p></td>
+<td><p>✅</p></td>
+<td><p>✅</p></td>
+<td><p>✅</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../../code/api/qilisdk/backends/cuda_backend/index.html#qilisdk.backends.cuda_backend.CudaSamplingMethod.MATRIX_PRODUCT_STATE" title="qilisdk.backends.cuda_backend.CudaSamplingMethod.MATRIX_PRODUCT_STATE"><code class="xref py py-class docutils literal notranslate"><span class="pre">MATRIX_PRODUCT_STATE</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="../../code/api/qilisdk/backends/cuda_backend/index.html#qilisdk.backends.cuda_backend.CudaSamplingMethod.TENSOR_NETWORK" title="qilisdk.backends.cuda_backend.CudaSamplingMethod.TENSOR_NETWORK"><code class="xref py py-class docutils literal notranslate"><span class="pre">TENSOR_NETWORK</span></code></a></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">tensornet</span></code>. Adequat per a circuits poc profunds però amples.</p></td>
+<td><p>✅</p></td>
+<td><p>❌</p></td>
+<td><p>❌</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../../code/api/qilisdk/backends/cuda_backend/index.html#qilisdk.backends.cuda_backend.CudaSamplingMethod.MATRIX_PRODUCT_STATE" title="qilisdk.backends.cuda_backend.CudaSamplingMethod.MATRIX_PRODUCT_STATE"><code class="xref py py-class docutils literal notranslate"><span class="pre">MATRIX_PRODUCT_STATE</span></code></a></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">tensornet-mps</span></code>. Adequat per a circuits llargs amb baix entrelaçament.</p></td>
-<td></td>
+<td><p>✅</p></td>
+<td><p>❌</p></td>
+<td><p>❌</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../../code/api/qilisdk/backends/cuda_backend/index.html#qilisdk.backends.cuda_backend.CudaSamplingMethod.CPU" title="qilisdk.backends.cuda_backend.CudaSamplingMethod.CPU"><code class="xref py py-class docutils literal notranslate"><span class="pre">CPU</span></code></a></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">cpu</span></code>. Força l’execució a la CPU. Útil principalment per a benchmarking.</p></td>
+<td><p>✅</p></td>
+<td><p>✅</p></td>
+<td><p>✅</p></td>
 </tr>
 </tbody>
 </table>
@@ -470,7 +489,7 @@ ignores this setting.</p>
 <svg class="mr-2 h-4 w-4" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
 <polyline points="15 18 9 12 15 6"></polyline>
 </svg>
-        QiliSim Backend
+        Backend QiliSim
       </a>
 </div>
 <div class="ml-auto">

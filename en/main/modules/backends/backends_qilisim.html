@@ -469,23 +469,27 @@ schedule is integrated:</p>
 <tbody>
 <tr class="row-even"><td><p><a class="reference internal" href="../../code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.AnalogMethod.integrator" title="qilisdk.backends.backend_config.AnalogMethod.integrator"><code class="xref py py-meth docutils literal notranslate"><span class="pre">AnalogMethod.integrator(matrix_free=True)</span></code></a></p></td>
 <td><p>RK4</p></td>
-<td><p>Default. Fixed-step Runge-Kutta 4; matrix-free is faster for sparse Hamiltonians.</p></td>
+<td><p>Default. Fixed-step Runge-Kutta 4. matrix-free is faster for sparse Hamiltonians.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../../code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.AnalogMethod.adaptive_integrator" title="qilisdk.backends.backend_config.AnalogMethod.adaptive_integrator"><code class="xref py py-meth docutils literal notranslate"><span class="pre">AnalogMethod.adaptive_integrator(tol=1e-2)</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="../../code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.AnalogMethod.variational_annealing" title="qilisdk.backends.backend_config.AnalogMethod.variational_annealing"><code class="xref py py-meth docutils literal notranslate"><span class="pre">AnalogMethod.variational_annealing()</span></code></a></p></td>
+<td><p>Variational annealing</p></td>
+<td><p>Only available for X to Z annealing schedules. Can be used to simulate large (i.e. 60+ qubits) systems at the cost of accuracy. Set <cite>order=1</cite> for a quicker but less accurate simulation. Increasing warmups can also improve accuracy at the cost of time.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../../code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.AnalogMethod.adaptive_integrator" title="qilisdk.backends.backend_config.AnalogMethod.adaptive_integrator"><code class="xref py py-meth docutils literal notranslate"><span class="pre">AnalogMethod.adaptive_integrator(tol=1e-2)</span></code></a></p></td>
 <td><p>Dormand-Prince RK4/5</p></td>
 <td><p>Adaptive step size; <code class="docutils literal notranslate"><span class="pre">tol</span></code> bounds the fidelity error between the RK4 and RK5 estimates.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../../code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.AnalogMethod.arnoldi" title="qilisdk.backends.backend_config.AnalogMethod.arnoldi"><code class="xref py py-meth docutils literal notranslate"><span class="pre">AnalogMethod.arnoldi(dim=10,</span> <span class="pre">num_substeps=1)</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="../../code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.AnalogMethod.arnoldi" title="qilisdk.backends.backend_config.AnalogMethod.arnoldi"><code class="xref py py-meth docutils literal notranslate"><span class="pre">AnalogMethod.arnoldi(dim=10,</span> <span class="pre">num_substeps=1)</span></code></a></p></td>
 <td><p>Krylov / Arnoldi</p></td>
 <td><p>Can offer decent scaling for large sparse Hamiltonians; tune <code class="docutils literal notranslate"><span class="pre">dim</span></code> for the Krylov subspace size.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../../code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.AnalogMethod.direct" title="qilisdk.backends.backend_config.AnalogMethod.direct"><code class="xref py py-meth docutils literal notranslate"><span class="pre">AnalogMethod.direct()</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="../../code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.AnalogMethod.direct" title="qilisdk.backends.backend_config.AnalogMethod.direct"><code class="xref py py-meth docutils literal notranslate"><span class="pre">AnalogMethod.direct()</span></code></a></p></td>
 <td><p>Matrix exponential</p></td>
 <td><p>Reference scheme for small systems; cost grows quickly with qubit count.</p></td>
 </tr>
 </tbody>
 </table>
-<p>Example, using the adaptive integrator for a stiffer schedule:</p>
+<p>Example, using the adaptive integrator:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.backends</span><span class="w"> </span><span class="kn">import</span> <span class="n">AnalogMethod</span><span class="p">,</span> <span class="n">QiliSim</span>
 </span><span id="line-2">
 </span><span id="line-3"><span class="n">backend</span> <span class="o">=</span> <span class="n">QiliSim</span><span class="p">(</span><span class="n">analog_simulation_method</span><span class="o">=</span><span class="n">AnalogMethod</span><span class="o">.</span><span class="n">adaptive_integrator</span><span class="p">(</span><span class="n">tol</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">))</span>

@@ -397,7 +397,8 @@ operators in sparse form.</p>
 <li><p><a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.bra" title="qilisdk.core.qtensor.bra"><code class="xref py py-func docutils literal notranslate"><span class="pre">bra()</span></code></a> for computational basis bras</p></li>
 <li><p><a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.basis_state" title="qilisdk.core.qtensor.basis_state"><code class="xref py py-func docutils literal notranslate"><span class="pre">basis_state()</span></code></a> for N-dimensional basis states with a single 1 at the specified index</p></li>
 <li><p><a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.identity" title="qilisdk.core.qtensor.identity"><code class="xref py py-func docutils literal notranslate"><span class="pre">identity()</span></code></a> for identity operators of specified dimension</p></li>
-<li><p><a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.zero" title="qilisdk.core.qtensor.zero"><code class="xref py py-func docutils literal notranslate"><span class="pre">zero()</span></code></a> for generating zero tensors of specified dimension</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.zero" title="qilisdk.core.qtensor.zero"><code class="xref py py-func docutils literal notranslate"><span class="pre">zero()</span></code></a> for generating statevectors in the all-zero state.</p></li>
+<li><p><code class="xref py py-func docutils literal notranslate"><span class="pre">one()</span></code> for generating statevectors in the all-one state.</p></li>
 <li><p><a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.ghz" title="qilisdk.core.qtensor.ghz"><code class="xref py py-func docutils literal notranslate"><span class="pre">ghz()</span></code></a> for generating GHZ states of specified number of qubits</p></li>
 <li><p><a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.uniform" title="qilisdk.core.qtensor.QTensor.uniform"><code class="xref py py-meth docutils literal notranslate"><span class="pre">uniform()</span></code></a> for generating uniform superposition states of specified number of qubits</p></li>
 </ul>
@@ -414,9 +415,8 @@ operators in sparse form.</p>
 </span><span id="line-10"><span class="c1"># GHZ state for 2 qubits</span>
 </span><span id="line-11"><span class="nb">print</span><span class="p">(</span><span class="s2">"GHZ state for 2 qubits:</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="n">QTensor</span><span class="o">.</span><span class="n">ghz</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
 </span><span id="line-12">
-</span><span id="line-13"><span class="c1"># Identity and zero operators</span>
+</span><span id="line-13"><span class="c1"># Identity operators</span>
 </span><span id="line-14"><span class="nb">print</span><span class="p">(</span><span class="s2">"Identity (4x4):</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="n">QTensor</span><span class="o">.</span><span class="n">identity</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
-</span><span id="line-15"><span class="nb">print</span><span class="p">(</span><span class="s2">"Zero (2x2):</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="n">QTensor</span><span class="o">.</span><span class="n">zero</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
 </span></code></pre></div>
 </div>
 <p><strong>Output</strong></p>
