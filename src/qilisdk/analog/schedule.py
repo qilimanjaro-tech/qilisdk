@@ -85,11 +85,11 @@ class Schedule(Parameterizable):
             hamiltonians (dict[str, Hamiltonian] | None): Mapping of labels to Hamiltonian objects. If omitted, an empty schedule is created.
             coefficients (InterpDict | CoeffDict | None): Per-Hamiltonian time definitions. Keys are time points or intervals; values are coefficients or callables. If an :class:`Interpolator` is supplied, it is used directly.
             dt (float): Time resolution used for sampling callable/interval definitions and plotting. Must be positive.
-            total_time (float | Parameter | Term | None): Optional maximum time that rescales all defined time points proportionally.
+            total_time (float | Parameter | Term | None): The maximum time of the schedule.
             interpolation (Interpolation): How to interpolate between provided time points (``LINEAR`` or ``STEP``).
 
         Raises:
-            ValueError: if the coefficients reference an undefined hamiltonian.
+            ValueError: if the coefficients reference an undefined hamiltonian or if total_time is not provided.
         """
         # THIS is the only runtime implementation
         super().__init__()
@@ -121,8 +121,10 @@ class Schedule(Parameterizable):
             elif isinstance(coeff, dict):
                 self._coefficients[ham] = Interpolator(coeff, interpolation, nsamples=int(1 / dt))
 
-        if total_time is not None:
-            self.scale_max_time(total_time)
+        # Scale everything based on the max time given
+        if total_time is None:
+            raise ValueError("Total time must be provided at initialization.")
+        self.scale_max_time(total_time)
 
     @classmethod
     def polynomial(

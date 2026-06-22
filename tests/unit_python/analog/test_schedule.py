@@ -803,3 +803,10 @@ def test_calculate_eigenvalues_with_too_many_qubits_runs_but_warns(monkeypatch):
     assert any("qubits may be very slow" in w for w in warnings)
     assert len(eigenvalues) == len(sched.tlist)
     assert len(eigenstates) == len(sched.tlist)
+
+
+def test_schedule_without_max_time_throws():
+    H1 = PauliX(0).to_hamiltonian()
+    H2 = PauliZ(0).to_hamiltonian()
+    with pytest.raises(ValueError, match=r"Total time must be provided at initialization."):
+        Schedule.linear(H1, H2, dt=1)
