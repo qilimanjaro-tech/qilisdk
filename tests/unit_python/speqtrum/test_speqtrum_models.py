@@ -100,7 +100,7 @@ def test_digital_propagation_payload():
 def test_analog_evolution_payload():
     # note: these can't be mocked because then YAML throws errors
     hamiltonian = Hamiltonian({(PauliZ(0),): 1})
-    schedule = Schedule(hamiltonians={"h": hamiltonian}, dt=0.1)
+    schedule = Schedule(hamiltonians={"h": hamiltonian}, dt=0.1, total_time=1.0)
     initial_state = ket(0).unit()
     analog_evolution = AnalogEvolution(schedule=schedule, initial_state=initial_state)
     payload = AnalogEvolutionPayload(analog_evolution=analog_evolution, readout=Readout())
