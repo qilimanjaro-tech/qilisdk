@@ -50,7 +50,7 @@ class SciPyOptimizer(Optimizer):
                     - 'trust-constr
                     - 'dogleg'
                     - 'trust-ncg'
-                    - 'trust-exact
+                    - 'trust-exact'
                     - 'trust-krylov'
                     - 'basinhopping' (global)
                     - 'direct' (global)
