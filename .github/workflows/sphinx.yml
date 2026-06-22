@@ -46,6 +46,8 @@ jobs:
       - name: Redirect root to latest release tag
         run: |
           latest_tag="${{ github.event.release.tag_name }}"
+          # filter any postfixes from the tag name (e.g. 0.2.0.post1 -> 0.2.0)
+          latest_tag="${latest_tag%%.*}"
           if [ -z "$latest_tag" ]; then
             latest_tag="$(git tag --sort=-version:refname | head -n 1)"
           fi
