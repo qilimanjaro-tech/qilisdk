@@ -351,7 +351,7 @@ def test_time_evolution(monkeypatch, initial_state, ob):
     )
     backend = QutipBackend()
     hamiltonian = Hamiltonian({(PauliZ(0),): 1.0, (PauliZ(1),): 1.0})
-    schedule = Schedule(hamiltonians={"h": hamiltonian}, dt=0.1)
+    schedule = Schedule(hamiltonians={"h": hamiltonian}, dt=0.1, total_time=1.0)
     func = AnalogEvolution(schedule=schedule, initial_state=initial_state)
     result = backend.execute(func, Readout().with_expectation(observables=[ob]).with_state_tomography())
     assert np.allclose(result.get_expectation_values(), np.array([1]))
@@ -362,7 +362,7 @@ def test_time_evolution_initial_state_enum(monkeypatch):
     monkeypatch.setattr("qilisdk.backends.qutip_backend.mesolve", lambda *args, **kwargs: TimeEvolutionMockResults())
     backend = QutipBackend()
     hamiltonian = Hamiltonian({(PauliZ(0),): 1.0})
-    schedule = Schedule(hamiltonians={"h": hamiltonian}, dt=0.1)
+    schedule = Schedule(hamiltonians={"h": hamiltonian}, dt=0.1, total_time=1.0)
 
     func = AnalogEvolution(schedule=schedule, initial_state=InitialState.ZERO)
     result = backend.execute(func, Readout().with_state_tomography())
@@ -373,7 +373,7 @@ def test_time_evolution_bad_initial(monkeypatch):
     monkeypatch.setattr("qilisdk.backends.qutip_backend.mesolve", lambda *args, **kwargs: TimeEvolutionMockResults())
     backend = QutipBackend()
     hamiltonian = Hamiltonian({(PauliZ(0),): 1.0})
-    schedule = Schedule(hamiltonians={"h": hamiltonian}, dt=0.1)
+    schedule = Schedule(hamiltonians={"h": hamiltonian}, dt=0.1, total_time=1.0)
     bad_state = QTensor(-np.eye(2))
     func = AnalogEvolution(schedule=schedule, initial_state=bad_state)
     with pytest.raises(ValueError, match="initial state"):
@@ -383,7 +383,7 @@ def test_time_evolution_bad_initial(monkeypatch):
 def test_time_evolution_bad_observable():
     backend = QutipBackend()
     hamiltonian = Hamiltonian({(PauliZ(0),): 1.0})
-    schedule = Schedule(hamiltonians={"h": hamiltonian}, dt=0.1)
+    schedule = Schedule(hamiltonians={"h": hamiltonian}, dt=0.1, total_time=1.0)
     initial_state = ket(0)
     ob = "bad"
     func = AnalogEvolution(schedule=schedule, initial_state=initial_state)
@@ -417,7 +417,7 @@ def test_get_qutip_observable_qtensor(monkeypatch):
     backend = QutipBackend()
     z_matrix = QTensor(np.array([[1, 0], [0, -1]]))
     hamiltonian = Hamiltonian({(PauliZ(0),): 1.0})
-    schedule = Schedule(hamiltonians={"h": hamiltonian}, dt=0.1)
+    schedule = Schedule(hamiltonians={"h": hamiltonian}, dt=0.1, total_time=1.0)
     func = AnalogEvolution(schedule=schedule, initial_state=ket(0))
     result = backend.execute(func, Readout().with_expectation(observables=[z_matrix]).with_state_tomography())
     assert result.get_expectation_values() is not None
@@ -431,7 +431,7 @@ def test_get_qutip_observable_hamiltonian_smaller_than_system(monkeypatch):
     backend = QutipBackend()
     small_hamiltonian = Hamiltonian({(PauliZ(0),): 1.0})
     system_hamiltonian = Hamiltonian({(PauliZ(0),): 1.0, (PauliZ(1),): 1.0})
-    schedule = Schedule(hamiltonians={"h": system_hamiltonian}, dt=0.1)
+    schedule = Schedule(hamiltonians={"h": system_hamiltonian}, dt=0.1, total_time=1.0)
     func = AnalogEvolution(schedule=schedule, initial_state=ket(0, 0))
     result = backend.execute(func, Readout().with_expectation(observables=[small_hamiltonian]).with_state_tomography())
     assert result.get_expectation_values() is not None

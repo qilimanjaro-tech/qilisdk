@@ -163,6 +163,7 @@ def test_schedule_parameter_perturbations():
     schedule = Schedule(
         dt=dt,
         hamiltonians={"h1": param1 * pauli_x(0)},
+        total_time=10.0,
     )
     perturb = OffsetPerturbation(offset=0.1)
     noise_model = NoiseModel()
