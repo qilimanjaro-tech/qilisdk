@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../modules/readout/readout_overview.rst:2
 msgid "Overview"
-msgstr "Visió General"
+msgstr "Visió general"
 
 #: ../../modules/readout/readout_overview.rst:4
 msgid ""
@@ -87,7 +87,7 @@ msgstr ""
 
 #: ../../modules/readout/readout_overview.rst:66
 msgid "Accessing Results"
-msgstr "Accés als Resultats"
+msgstr "Accés als resultats"
 
 #: ../../modules/readout/readout_overview.rst:68
 msgid ""
@@ -101,7 +101,7 @@ msgstr ""
 
 #: ../../modules/readout/readout_overview.rst:72
 msgid "Convenient Shortcuts"
-msgstr "Dreceres Convenients"
+msgstr "Dreceres convenients"
 
 #: ../../modules/readout/readout_overview.rst:74
 msgid "The quickest way to access results:"
@@ -188,7 +188,7 @@ msgstr ""
 
 #: ../../modules/readout/readout_overview.rst:99
 msgid "Typed Forwarding Properties"
-msgstr "Propietats de Reenviament Tipificat"
+msgstr "Propietats de reenviament tipificat"
 
 #: ../../modules/readout/readout_overview.rst:101
 msgid ""
@@ -230,7 +230,7 @@ msgstr "``StateTomographyReadoutResult | None``"
 
 #: ../../modules/readout/readout_overview.rst:136
 msgid "Complete Example"
-msgstr "Exemple Complet"
+msgstr "Exemple complet"
 
 #: ../../modules/readout/readout_overview.rst:138
 msgid ""

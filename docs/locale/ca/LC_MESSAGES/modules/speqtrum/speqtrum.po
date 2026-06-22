@@ -67,7 +67,7 @@ msgstr ""
 
 #: ../../modules/speqtrum/speqtrum.rst:42
 msgid "Client Construction"
-msgstr "Construcció del Client"
+msgstr "Construcció del client"
 
 #: ../../modules/speqtrum/speqtrum.rst:44
 msgid ""
@@ -83,7 +83,7 @@ msgstr ""
 
 #: ../../modules/speqtrum/speqtrum.rst:55
 msgid "Device Catalogue"
-msgstr "Catàleg de Dispositius"
+msgstr "Catàleg de dispositius"
 
 #: ../../modules/speqtrum/speqtrum.rst:57
 msgid ""
@@ -103,7 +103,7 @@ msgstr ""
 
 #: ../../modules/speqtrum/speqtrum.rst:72
 msgid "Remote Jobs"
-msgstr "Treballs Remots"
+msgstr "Treballs remots"
 
 #: ../../modules/speqtrum/speqtrum.rst:74
 msgid ""
@@ -161,7 +161,7 @@ msgstr ""
 
 #: ../../modules/speqtrum/speqtrum.rst:107
 msgid "Waiting for Completion"
-msgstr "Espera de Finalització"
+msgstr "Espera de finalització"
 
 #: ../../modules/speqtrum/speqtrum.rst:109
 msgid ""
@@ -190,7 +190,7 @@ msgstr ""
 
 #: ../../modules/speqtrum/speqtrum.rst:117
 msgid "Functional Submission"
-msgstr "Enviament de Funcionals"
+msgstr "Enviament de funcionals"
 
 #: ../../modules/speqtrum/speqtrum.rst:119
 msgid ""
@@ -222,7 +222,7 @@ msgstr ""
 
 #: ../../modules/speqtrum/speqtrum.rst:152
 msgid "Variational Programs"
-msgstr "Programes Variacionals"
+msgstr "Programes variacionals"
 
 #: ../../modules/speqtrum/speqtrum.rst:154
 msgid ""
@@ -240,7 +240,7 @@ msgstr ""
 
 #: ../../modules/speqtrum/speqtrum.rst:194
 msgid "Pulse Experiments"
-msgstr "Experiments de Pols"
+msgstr "Experiments de pols"
 
 #: ../../modules/speqtrum/speqtrum.rst:196
 msgid ""

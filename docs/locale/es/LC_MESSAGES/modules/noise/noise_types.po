@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../modules/noise/noise_types.rst:2
 msgid "Noise Types"
-msgstr "Tipos de Ruido"
+msgstr "Tipos de ruido"
 
 #: ../../modules/noise/noise_types.rst:5
 msgid "KrausChannel"
