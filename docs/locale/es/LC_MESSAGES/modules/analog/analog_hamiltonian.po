@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-05 15:18+0200\n"
+"POT-Creation-Date: 2026-06-16 12:04+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -40,12 +40,13 @@ msgid "Constructing"
 msgstr "Construcción"
 
 #: ../../modules/analog/analog_hamiltonian.rst:9
+#, fuzzy
 msgid ""
-"To constuct a Hamiltonian with a single Pauli, you can use the "
+"To construct a Hamiltonian with a single Pauli, you can use the "
 "constructors ``X(i)``, ``Y(i)``, ``Z(i)``, ``I(i)``. From these single-"
 "qubit operators, you can build multi-qubit Hamiltonians using arithmetic "
 "operations. The operations follow Python syntax, for example: ``2 * Z(0) "
-"+ Z(1)`` and ``Z(0) * Z(1)`` build multi-qubit Hamiltonian."
+"+ Z(1)`` and ``Z(0) * Z(1)`` build multi-qubit Hamiltonians."
 msgstr ""
 "Para construir un Hamiltoniano con un único Pauli, se pueden usar los "
 "constructores ``X(i)``, ``Y(i)``, ``Z(i)``, ``I(i)``. A partir de estos "
@@ -56,7 +57,7 @@ msgstr ""
 
 #: ../../modules/analog/analog_hamiltonian.rst:14
 msgid "List of Operations"
-msgstr "Lista de Operaciones"
+msgstr "Lista de operaciones"
 
 #: ../../modules/analog/analog_hamiltonian.rst:16
 msgid "**Arithmetic operations**:"
@@ -192,3 +193,4 @@ msgstr "**Salida:**"
 
 #~ msgid "Go to a specific subheading of a page."
 #~ msgstr "Ir a un subtítulo específico de una página."
+
