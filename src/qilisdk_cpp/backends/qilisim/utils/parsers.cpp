@@ -32,8 +32,7 @@ namespace {
 // out-of-bounds state access) and the measurement vector (out-of-bounds write).
 inline void validate_qubit_index(int qubit, int nqubits, const char* context) {
     if (qubit < 0 || qubit >= nqubits) {
-        throw py::value_error("Qubit index " + std::to_string(qubit) + " is out of range [0, " +
-                              std::to_string(nqubits) + ") for " + context + ".");
+        throw py::value_error("Qubit index " + std::to_string(qubit) + " is out of range [0, " + std::to_string(nqubits) + ") for " + context + ".");
     }
 }
 }  // namespace

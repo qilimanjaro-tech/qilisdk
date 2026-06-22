@@ -36,8 +36,7 @@ SparseMatrix from_numpy(const py::buffer& matrix_buffer, double atol) {
     // 16 bytes per element over a smaller/mismatched allocation, reading out of
     // bounds. forcecast converts the dtype and c_style guarantees contiguity,
     // so ptr[r * cols + c] is always in-bounds.
-    auto array =
-        py::array_t<std::complex<double>, py::array::c_style | py::array::forcecast>::ensure(matrix_buffer);
+    auto array = py::array_t<std::complex<double>, py::array::c_style | py::array::forcecast>::ensure(matrix_buffer);
     if (!array) {
         throw py::value_error("Input array must be convertible to a 2D complex128 array.");
     }
