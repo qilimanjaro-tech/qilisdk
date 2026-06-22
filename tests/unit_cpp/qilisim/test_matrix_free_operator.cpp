@@ -314,12 +314,13 @@ TEST(MatrixFreeOperator, UnknownNameThrowsOnApply) {
     EXPECT_ANY_THROW(op.apply(state, MatrixFreeApplicationType::Left));
 }
 
-TEST(MatrixFreeOperator, OutOfRangeTargetQubitThrowsOnApply) {
-    // Target qubit 5 on a single-qubit state gives a negative shift; the kernel
-    // must reject it (defense-in-depth) rather than perform an undefined shift.
+TEST(MatrixFreeOperator, OutOfRangeTargetThrowsOnApply) {
+    // QSDK-05 defense-in-depth: a target qubit that is out of range for the
+    // state (here qubit 5 on a single-qubit state) must raise instead of
+    // producing an undefined shift / wild mask.
     MatrixFreeOperator op("X", 5);
     DenseMatrix state = ket0();
-    EXPECT_ANY_THROW(op.apply(state, MatrixFreeApplicationType::Left));
+    EXPECT_THROW(op.apply(state, MatrixFreeApplicationType::Left), std::out_of_range);
 }
 
 TEST(MatrixFreeOperator, X_StateVector_Ket0ToKet1) {
