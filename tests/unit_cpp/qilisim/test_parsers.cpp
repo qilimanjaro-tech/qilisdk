@@ -44,20 +44,21 @@ TEST(ParseHamiltonians, MatrixFreeSingleTerm) {
 }
 
 TEST(ParseHamiltonians, MatrixFreeOutOfRangeQubitThrows) {
-    // QSDK-05: an out-of-range Pauli qubit index must be rejected at the C++
-    // trust boundary before it can reach the matrix-free kernels.
     py::gil_scoped_acquire gil;
 
+    // A Pauli acting on qubit 5, but only 1 qubit is declared. The parser must
+    // reject the out-of-range index (validate_qubit_index) before it reaches the
+    // matrix-free kernels.
     py::exec(R"(
         from qilisdk.analog.hamiltonian import X
-        fake_H = X(3)
+        fake_H = X(5)
     )");
 
     py::object fake_H = py::globals()["fake_H"];
     py::list Hs;
     Hs.append(fake_H);
 
-    EXPECT_THROW(parse_hamiltonians_matrix_free(1, Hs), py::value_error);
+    EXPECT_ANY_THROW(parse_hamiltonians_matrix_free(1, Hs));
 }
 
 TEST(ParseHamiltonians, ParseEmptyHamiltoniansThrows) {

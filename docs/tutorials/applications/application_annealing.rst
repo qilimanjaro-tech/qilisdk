@@ -34,7 +34,7 @@ which is in the form:
     H_{prob} = \sum_{i,j} c_{ij} Z(i) Z(j)
 
 Where :math:`Z(i)` is the Pauli-Z operator acting on qubit :math:`i`, and :math:`c_{ij}` are the coefficients from our QUBO formulation.
-Note that these variables :math:`Z(i)` are related to the binary variables in our original problem by the transformation :math:`x_i = (1 - Z(i))/2`,
+Note that these variables :math:`Z(i)` are related to the binary variables in our original problem by the transformation :math:`x_i = (1 - Z(i))/2`.
 
 Our mixing Hamiltonian is typically chosen to be the transverse field Hamiltonian, which is given by:
 
@@ -50,7 +50,7 @@ The overall time-dependent Hamiltonian that we evolve is then given by:
 
 Where :math:`A(t)` and :math:`B(t)` are functions that determine how we interpolate 
 between the mixing Hamiltonian and the problem Hamiltonian over time.
-For simplicity here will just assume that we do a linear interpolation, 
+For simplicity here we will just assume that we do a linear interpolation, 
 such that :math:`A(t) = 1 - t/T` and :math:`B(t) = t/T`, where :math:`T` is the total annealing time.
 
 The Implementation
