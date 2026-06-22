@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-06 15:01+0200\n"
+"POT-Creation-Date: 2026-06-16 12:04+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -24,7 +24,6 @@ msgid "QUBO"
 msgstr "QUBO"
 
 #: ../../modules/core/core_qubo.rst:4
-#, fuzzy
 msgid ""
 "The :class:`~qilisdk.core.model.QUBO` subclass specializes in **Quadratic"
 " Unconstrained Binary Optimization** models, where every decision "
@@ -78,7 +77,7 @@ msgstr ""
 
 #: ../../modules/core/core_qubo.rst:26
 msgid "Adding Constraints as Penalties"
-msgstr "Añadir Restricciones como Penalizaciones"
+msgstr "Añadir restricciones como penalizaciones"
 
 #: ../../modules/core/core_qubo.rst:28
 msgid ""
@@ -131,7 +130,7 @@ msgstr ""
 "penalización."
 
 #: ../../modules/core/core_qubo.rst:49
-msgid "Ineqaulity constraints can be defined as:"
+msgid "Inequality constraints can be defined as:"
 msgstr "Las restricciones de desigualdad se pueden definir como:"
 
 #: ../../modules/core/core_qubo.rst:51
@@ -174,7 +173,7 @@ msgid ""
 "where :math:`s_k` are slack binary variables introduced to encode the "
 "inequality constraint (with the number of bits :math:`N` chosen so that "
 "their binary expansion spans the admissible slack range) and "
-":math:`\\lambda_{1}` control the penalty strength."
+":math:`\\lambda_{1}` controls the penalty strength."
 msgstr ""
 "donde :math:`s_k` son variables binarias de holgura introducidas para "
 "codificar la restricción de desigualdad (con el número de bits :math:`N` "
@@ -190,7 +189,7 @@ msgstr "**Penalización desequilibrada** (*Unbalanced penalization*):"
 #, python-brace-format
 msgid ""
 "Directly penalize violation without slack variables using two weights (a,"
-" b) to scale positive and negative deviations differently [1]_. we define"
+" b) to scale positive and negative deviations differently [1]_. We define"
 " :math:`h(x) = B - \\sum_{i=1}^{n} \\ell_i x_i` as the signed residual of"
 " the constraint, and the penalty term becomes:"
 msgstr ""
@@ -276,7 +275,7 @@ msgstr ""
 
 #: ../../modules/core/core_qubo.rst:118
 msgid "Example: Slack Penalization"
-msgstr "Ejemplo: Penalización con Variables de Holgura"
+msgstr "Ejemplo: penalización con variables de holgura"
 
 #: ../../modules/core/core_qubo.rst:134 ../../modules/core/core_qubo.rst:157
 msgid "**Output**::"
@@ -284,7 +283,7 @@ msgstr "**Salida**::"
 
 #: ../../modules/core/core_qubo.rst:141
 msgid "Example: Unbalanced Penalization"
-msgstr "Ejemplo: Penalización Desequilibrada"
+msgstr "Ejemplo: penalización desequilibrada"
 
 #: ../../modules/core/core_qubo.rst:162
 msgid ""
@@ -300,7 +299,7 @@ msgstr ""
 
 #: ../../modules/core/core_qubo.rst:165
 msgid "High-degree Term Linearization"
-msgstr "Linealización de Términos de Grado Alto"
+msgstr "Linealización de términos de grado alto"
 
 #: ../../modules/core/core_qubo.rst:167
 msgid ""
@@ -394,7 +393,7 @@ msgstr ""
 
 #: ../../modules/core/core_qubo.rst:198
 msgid "Example: Cubic Objective and Constraint"
-msgstr "Ejemplo: Objetivo y Restricción Cúbicos"
+msgstr "Ejemplo: objetivo y restricción cúbicos"
 
 #: ../../modules/core/core_qubo.rst:213
 msgid ""

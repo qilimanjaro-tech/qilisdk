@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../modules/core/core_comparison.rst:2
 msgid "Comparison Terms"
-msgstr "Términos de Comparación"
+msgstr "Términos de comparación"
 
 #: ../../modules/core/core_comparison.rst:8
 msgid "Go to a specific subheading of a page."
