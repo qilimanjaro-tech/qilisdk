@@ -38,7 +38,6 @@ CoeffDict = dict[str, TimeDict]
 InterpDict = dict[str, "Interpolator"]
 
 _DEFAULT_DT = 0.1
-_DEFAULT_T = 0.1
 
 
 @yaml.register_class
