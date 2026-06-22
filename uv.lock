@@ -29,6 +29,12 @@ conflicts = [[
 ]]
 
 [manifest]
+constraints = [
+    { name = "bleach", specifier = ">=6.4.0" },
+    { name = "cryptography", specifier = ">=48.0.1" },
+    { name = "pydantic-settings", specifier = ">=2.14.2" },
+    { name = "tornado", specifier = ">=6.5.7" },
+]
 overrides = [
     { name = "nbconvert", specifier = ">=7.17.0" },
     { name = "requests", specifier = ">=2.33.0" },
