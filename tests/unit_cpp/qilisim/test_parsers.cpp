@@ -1528,6 +1528,7 @@ TEST(ParseSolverParams, AllFieldsParsedCorrectly) {
     params["normalize_after_each_gate"] = py::bool_(true);
     params["combine_single_qubit_gates"] = py::bool_(false);
     params["measurement_collapse"] = py::bool_(true);
+    params["gpu"] = py::bool_(true);
 
     auto config = parse_solver_params(params);
 
@@ -1546,6 +1547,7 @@ TEST(ParseSolverParams, AllFieldsParsedCorrectly) {
     EXPECT_FALSE(config.get_combine_single_qubit_gates());
     EXPECT_TRUE(config.get_measurement_collapse());
     EXPECT_NEAR(config.get_adaptive_tol(), 1e-2, 1e-15);
+    EXPECT_TRUE(config.get_gpu());
 }
 
 TEST(ParseSolverParams, PartialFieldsParsed) {

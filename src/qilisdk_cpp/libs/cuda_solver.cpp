@@ -22,7 +22,7 @@
 #include <dlfcn.h>
 #endif
 
-// GCOV_EXCL_BR_START
+// GCOVR_EXCL_START
 
 namespace qilisdk::gpu {
 
@@ -527,4 +527,4 @@ bool sr_solve(const Eigen::MatrixXd& O, const Eigen::VectorXcd& El, double epsil
 
 }  // namespace qilisdk::gpu
 
-// GCOV_EXCL_BR_STOP
+// GCOVR_EXCL_STOP

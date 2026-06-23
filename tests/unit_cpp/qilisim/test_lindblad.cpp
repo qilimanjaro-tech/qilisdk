@@ -15,6 +15,7 @@
 // GCOV_EXCL_BR_START
 
 #include <gtest/gtest.h>
+#include <cmath>
 #include "../../../src/qilisdk_cpp/backends/qilisim/analog/lindblad.h"
 
 namespace {
@@ -325,6 +326,22 @@ TEST_F(LindbladRhsExponentialAnsatzTest, DrhoIsZeroForZHamiltonianOnPlusState) {
     lindblad_rhs(drho, rho, H_Z);
     // The result is stochastic; just check it completes without error
     EXPECT_EQ(drho.get_terms().size(), rho.get_terms().size());
+}
+
+TEST_F(LindbladRhsExponentialAnsatzTest, GpuVariantRunsAndHasSameTermStructure) {
+    // On a machine without a usable CUDA device qilisdk::gpu::sr_solve returns
+    // false and lindblad_rhs_gpu takes its identical Eigen assembly + LLT
+    // fallback, so it must complete and produce the same term structure as the
+    // CPU overload. (On a GPU machine the device path is exercised instead.)
+    ExponentialAnsatz rho(1, 1, 200, 10);
+    ExponentialAnsatz drho = rho.zeroed();
+    lindblad_rhs_gpu(drho, rho, H_X);
+    EXPECT_EQ(drho.get_terms().size(), rho.get_terms().size());
+    // Coefficients must be finite (the solve produced real numbers).
+    for (const auto& [ps, coeff] : drho.get_terms().get_operators()) {
+        (void)ps;
+        EXPECT_TRUE(std::isfinite(coeff.real()) && std::isfinite(coeff.imag()));
+    }
 }
 
 // GCOV_EXCL_BR_STOP

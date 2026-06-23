@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// GCOV_EXCL_BR_START
+// GCOVR_EXCL_START
 
 #include <gtest/gtest.h>
 #include <cmath>
@@ -80,4 +80,4 @@ TEST(GpuSrSolve, MatchesCpuReference) {
 
 }  // namespace
 
-// GCOV_EXCL_BR_STOP
+// GCOVR_EXCL_STOP
