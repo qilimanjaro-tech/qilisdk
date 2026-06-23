@@ -147,7 +147,6 @@ namespace qilisdk::gpu {
         const CudaApi& probe() {
             static CudaApi api = [] {
                 CudaApi a;
-                std::cout << "[QiliSim GPU] Probing for CUDA support..." << std::endl;
 
                 // If Windows, just return an empty CudaApi
                 #if !defined(_WIN32)
@@ -157,6 +156,7 @@ namespace qilisdk::gpu {
                     a.h_cublas = dlopen_first({"libcublas.so", "libcublas.so.13", "libcublas.so.12"});
                     a.h_cusolver = dlopen_first({"libcusolver.so", "libcusolver.so.12", "libcusolver.so.11"});
                     if (!a.h_cudart || !a.h_cublas || !a.h_cusolver) {
+                        // TODO(luke): this should be a logger warning, but for that I need the logger introduced in the stab state PR
                         std::cout << "[QiliSim GPU] CUDA libraries unavailable -> using CPU (Eigen)." << std::endl;
                         return a;
                     }
@@ -209,7 +209,6 @@ namespace qilisdk::gpu {
 
                     // All was good
                     a.loaded = true;
-                    std::cout << "[QiliSim GPU] GPU acceleration ACTIVE (cuBLAS + cuSOLVER ready)." << std::endl;
 
                 #endif
                 return a;

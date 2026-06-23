@@ -204,6 +204,8 @@ optional Monte Carlo trajectory sampling for open-system simulations.
   evolution.
 - ``measurement_collapse`` controls whether measurements collapse the statevector in place
   (relevant for mid-circuit measurement and reservoir computing); defaults to ``False``.
+- ``gpu=True`` enables GPU acceleration if a CUDA-capable device is available; defaults to ``False``. 
+  Right now only the Variational Annealing method supports GPU acceleration.
 
 .. code-block:: python
 
@@ -215,6 +217,7 @@ optional Monte Carlo trajectory sampling for open-system simulations.
             seed=1234,
             monte_carlo=MonteCarloConfig(trajectories=500),
             measurement_collapse=True,
+            gpu=True,
         ),
     )
 
