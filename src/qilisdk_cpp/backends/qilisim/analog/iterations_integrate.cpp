@@ -554,10 +554,7 @@ void iter_rk4(ExponentialAnsatz& rho_t, double t, double dt, const std::vector<d
     const double dt_over_3 = dt / 3.0;
     const double dt_over_6 = dt / 6.0;
 
-    // Choose the RHS implementation once: the device-resident GPU path when GPU
-    // is requested AND actually available at runtime, otherwise the CPU path.
-    // This is the single GPU dispatch point — the RHS functions themselves carry
-    // no use_gpu branches.
+    // This is where the GPU versus CPU branches
     using RhsFn = void (*)(ExponentialAnsatz&, const ExponentialAnsatz&, const MatrixFreeHamiltonian&);
     RhsFn rhs = (use_gpu && qilisdk::gpu::cuda_available()) ? static_cast<RhsFn>(&lindblad_rhs_gpu)
                                                             : static_cast<RhsFn>(&lindblad_rhs);
