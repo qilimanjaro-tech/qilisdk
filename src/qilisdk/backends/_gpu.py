@@ -29,9 +29,9 @@ preloading and is picked up by the shim directly.
 from __future__ import annotations
 
 import ctypes
-import glob
 import importlib.util
 import os
+import pathlib
 import sys
 
 from loguru import logger
@@ -60,9 +60,9 @@ def _nvidia_lib_dirs() -> list[str]:
         if spec is None or not spec.submodule_search_locations:
             continue
         for location in spec.submodule_search_locations:
-            lib_dir = os.path.join(location, "lib")
-            if os.path.isdir(lib_dir):
-                dirs.append(lib_dir)
+            lib_dir = pathlib.Path(location) / "lib"
+            if lib_dir.is_dir():
+                dirs.append(str(lib_dir))
     return dirs
 
 
@@ -78,7 +78,7 @@ def preload_cuda_libraries() -> bool:
         ``False`` does not preclude GPU use — a system CUDA install on the
         loader path is discovered by the C++ shim without preloading.
     """
-    global _preloaded
+    global _preloaded  # noqa: PLW0603 -- module-level cache so the preload runs at most once
     if _preloaded:
         return True
     # The shim only implements dlopen-based loading; Windows is not targeted.
@@ -93,7 +93,7 @@ def preload_cuda_libraries() -> bool:
     # retry loop sort out load ordering.
     pending: list[str] = []
     for lib_dir in lib_dirs:
-        pending.extend(sorted(glob.glob(os.path.join(lib_dir, "*.so*"))))
+        pending.extend(sorted(str(p) for p in pathlib.Path(lib_dir).glob("*.so*")))
 
     any_loaded = False
     # At most one pass per library is ever needed once a pass makes no progress.

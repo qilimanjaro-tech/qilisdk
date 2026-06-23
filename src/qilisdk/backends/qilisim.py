@@ -122,11 +122,9 @@ class QiliSim(Backend):
         self._solver_config.update({"atol": get_settings().atol})
 
         # If GPU acceleration is requested, preload the CUDA libraries from the
-        # nvidia pip wheels so the C++ shim can resolve them by soname. A system
-        # CUDA install (on the loader path) needs no preloading. The backend
-        # transparently falls back to CPU if no GPU is available at runtime.
+        # nvidia pip wheels so the C++ can resolve them
         if execution_config.gpu:
-            from ._gpu import preload_cuda_libraries
+            from ._gpu import preload_cuda_libraries  # noqa: PLC0415
 
             if not preload_cuda_libraries():
                 logger.debug(

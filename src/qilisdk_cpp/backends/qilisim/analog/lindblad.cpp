@@ -189,12 +189,14 @@ void lindblad_rhs_gpu(ExponentialAnsatz& drho, const ExponentialAnsatz& rho, con
     /*
     GPU counterpart of lindblad_rhs for the ExponentialAnsatz.
 
-    This is intentionally a near-verbatim duplicate of the CPU overload: sampling,
-    local energy and the M / V assembly are identical, and only the regularised
-    linear solve is delegated to the GPU module (qilisdk::gpu::cholesky_solve)
-    instead of Eigen's LLT. Keeping it as a standalone copy lets the GPU path be
-    optimised independently in later PRs. On any GPU failure it falls back to the
-    identical Eigen LLT solve, so results match the CPU function.
+    This is intentionally a near-verbatim duplicate of the CPU overload: sampling
+    and local energy are identical, but the entire stochastic-reconfiguration
+    linear algebra (means, the M = <O_k* O_k'> Gram, the V force and the
+    regularised Cholesky solve) is delegated to qilisdk::gpu::sr_solve, which keeps
+    everything device-resident and uploads only O and E_loc. Keeping it as a
+    standalone copy lets the GPU path be optimised independently in later PRs. On
+    any GPU failure it falls back to the identical Eigen assembly + LLT solve, so
+    results match the CPU function.
 
     The ansatz is |Ψ⟩ = exp(∑_k a_k P_k)|+⟩ where P_k are Z-type Pauli strings.
     Uses stochastic reconfiguration (VMC) to compute ȧ_k = (M⁻¹ V)_k where:
@@ -222,30 +224,26 @@ void lindblad_rhs_gpu(ExponentialAnsatz& drho, const ExponentialAnsatz& rho, con
     // Cast int8 ±1 storage to doubles so that we can use BLAS routines
     Eigen::MatrixXd O_mat_d = samples.O_mat.cast<double>();
 
-    // Compute the means
-    Eigen::VectorXd O_mean_real = O_mat_d.colwise().mean();
-    std::complex<double> El_mean = El.mean();
-
-    // M_{kk'} = <O_k* O_k'> - <O_k*><O_k'>
-    Eigen::MatrixXd O_T = O_mat_d.transpose();
-    Eigen::MatrixXd M_real = (O_T * O_mat_d) / static_cast<double>(N_s) - O_mean_real * O_mean_real.transpose();
-
-    // V_k = -(<O_k* E_loc> - <O_k*><E_loc>)
-    Eigen::VectorXcd V = -((O_T.cast<std::complex<double>>() * El) / static_cast<double>(N_s) - O_mean_real.cast<std::complex<double>>() * El_mean);
-
-    // Regularise M and solve the real and imaginary RHS together on the GPU
+    // Regularisation parameter for M
     const double epsilon = 0.1 / std::sqrt(static_cast<double>(N_s));
-    M_real += epsilon * Eigen::MatrixXd::Identity(p, p);
-    Eigen::MatrixXd V_ri(p, 2);
-    V_ri.col(0) = V.real();
-    V_ri.col(1) = V.imag();
-    Eigen::MatrixXd X_ri(p, 2);
+
+    // Solve the whole SR system on the GPU (M and V are assembled device-resident)
     Eigen::VectorXcd adot(p);
-    if (qilisdk::gpu::cholesky_solve(M_real, V_ri, X_ri)) {
-        adot.real() = X_ri.col(0);
-        adot.imag() = X_ri.col(1);
-    } else {
-        // GPU solve unavailable/failed -> identical Eigen LLT path
+    if (!qilisdk::gpu::sr_solve(O_mat_d, El, epsilon, adot)) {
+
+        // Compute the means
+        Eigen::VectorXd O_mean_real = O_mat_d.colwise().mean();
+        std::complex<double> El_mean = El.mean();
+
+        // M_{kk'} = <O_k* O_k'> - <O_k*><O_k'>
+        Eigen::MatrixXd O_T = O_mat_d.transpose();
+        Eigen::MatrixXd M_real = (O_T * O_mat_d) / static_cast<double>(N_s) - O_mean_real * O_mean_real.transpose();
+
+        // V_k = -(<O_k* E_loc> - <O_k*><E_loc>)
+        Eigen::VectorXcd V = -((O_T.cast<std::complex<double>>() * El) / static_cast<double>(N_s) - O_mean_real.cast<std::complex<double>>() * El_mean);
+
+        // Regularise M and solve via Cholesky
+        M_real += epsilon * Eigen::MatrixXd::Identity(p, p);
         Eigen::LLT<Eigen::MatrixXd> llt(M_real);
         adot.real() = llt.solve(V.real());
         adot.imag() = llt.solve(V.imag());
