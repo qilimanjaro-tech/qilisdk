@@ -128,6 +128,11 @@ foreach(module ${MODULES_TO_BUILD})
         target_compile_options(${module} PRIVATE -fvisibility=default)
     endif()
 
+    # Enable the hardware POPCNT instruction 
+    if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang" AND CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|amd64|AMD64|i[3-6]86|x86")
+        target_compile_options(${module} PRIVATE -mpopcnt)
+    endif()
+
     # Link libraries and include directories
     target_link_libraries(${module} PUBLIC Eigen3::Eigen)
     target_include_directories(${module} PRIVATE ${pybind11_INCLUDE_DIRS})

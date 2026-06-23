@@ -172,7 +172,7 @@ void lindblad_rhs(ExponentialAnsatz& drho, const ExponentialAnsatz& rho, const M
 
     // Regularise M and solve via Cholesky
     const double epsilon = 0.1 / std::sqrt(static_cast<double>(N_s));
-    M_real += epsilon * Eigen::MatrixXd::Identity(p, p);
+    M_real.diagonal().array() += epsilon;
     Eigen::LLT<Eigen::MatrixXd> llt(M_real);
     Eigen::VectorXcd adot(p);
     adot.real() = llt.solve(V.real());
@@ -230,6 +230,8 @@ void lindblad_rhs_gpu(ExponentialAnsatz& drho, const ExponentialAnsatz& rho, con
     // Solve the whole SR system on the GPU (M and V are assembled device-resident)
     Eigen::VectorXcd adot(p);
     if (!qilisdk::gpu::sr_solve(O_mat_d, El, epsilon, adot)) {
+        // If the above failed, we're using CPU instead
+
         // Compute the means
         Eigen::VectorXd O_mean_real = O_mat_d.colwise().mean();
         std::complex<double> El_mean = El.mean();
@@ -242,7 +244,7 @@ void lindblad_rhs_gpu(ExponentialAnsatz& drho, const ExponentialAnsatz& rho, con
         Eigen::VectorXcd V = -((O_T.cast<std::complex<double>>() * El) / static_cast<double>(N_s) - O_mean_real.cast<std::complex<double>>() * El_mean);
 
         // Regularise M and solve via Cholesky
-        M_real += epsilon * Eigen::MatrixXd::Identity(p, p);
+        M_real.diagonal().array() += epsilon;
         Eigen::LLT<Eigen::MatrixXd> llt(M_real);
         adot.real() = llt.solve(V.real());
         adot.imag() = llt.solve(V.imag());
