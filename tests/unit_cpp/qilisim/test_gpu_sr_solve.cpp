@@ -17,7 +17,7 @@
 #include <gtest/gtest.h>
 #include <cmath>
 #include <complex>
-#include "../../../src/qilisdk_cpp/backends/qilisim/gpu/cuda_solver.h"
+#include "../../../src/qilisdk_cpp/libs/cuda_solver.h"
 
 namespace {
 
@@ -57,7 +57,7 @@ Eigen::MatrixXd make_pm1(int N_s, int p) {
 // The GPU resident SR solve must match the CPU reference to ~machine precision.
 // Skips when no CUDA device/libraries are reachable at runtime (e.g. CPU-only CI).
 TEST(GpuSrSolve, MatchesCpuReference) {
-    if (!qilisim::gpu::cuda_available()) {
+    if (!qilisdk::gpu::cuda_available()) {
         GTEST_SKIP() << "No CUDA device/libraries available at runtime.";
     }
 
@@ -73,7 +73,7 @@ TEST(GpuSrSolve, MatchesCpuReference) {
 
         const Eigen::VectorXcd ref = sr_reference(O, El, eps);
         Eigen::VectorXcd adot;
-        ASSERT_TRUE(qilisim::gpu::sr_solve(O, El, eps, adot)) << "sr_solve failed for N_s=" << N_s << " p=" << p;
+        ASSERT_TRUE(qilisdk::gpu::sr_solve(O, El, eps, adot)) << "sr_solve failed for N_s=" << N_s << " p=" << p;
         ASSERT_EQ(adot.size(), p);
         EXPECT_LT((adot - ref).cwiseAbs().maxCoeff(), kTol) << "mismatch for N_s=" << N_s << " p=" << p;
     }

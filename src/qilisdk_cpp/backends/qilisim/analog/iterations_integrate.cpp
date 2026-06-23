@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include "../../../libs/pybind.h"
-#include "../gpu/cuda_solver.h"
+#include "../../../libs/cuda_solver.h"
 #include "iterations.h"
 #include "lindblad.h"
 
@@ -559,7 +559,7 @@ void iter_rk4(ExponentialAnsatz& rho_t, double t, double dt, const std::vector<d
     // This is the single GPU dispatch point — the RHS functions themselves carry
     // no use_gpu branches.
     using RhsFn = void (*)(ExponentialAnsatz&, const ExponentialAnsatz&, const MatrixFreeHamiltonian&);
-    RhsFn rhs = (use_gpu && qilisim::gpu::cuda_available()) ? static_cast<RhsFn>(&lindblad_rhs_gpu)
+    RhsFn rhs = (use_gpu && qilisdk::gpu::cuda_available()) ? static_cast<RhsFn>(&lindblad_rhs_gpu)
                                                             : static_cast<RhsFn>(&lindblad_rhs);
 
     // Standard RK4 loop

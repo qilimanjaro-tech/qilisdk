@@ -17,7 +17,7 @@
 #include <chrono>
 #include <iostream>
 
-#include "../gpu/cuda_solver.h"
+#include "../../../libs/cuda_solver.h"
 
 // GCOV_EXCL_BR_START
 
@@ -174,7 +174,7 @@ class PhaseTimer {
 // sample-operator matrix O and per-sample local energies El, return
 //   adot = M^{-1} V,  M = OᵀO/N_s - ōōᵀ + εI,  V = -(Oᵀ El/N_s - ō Ēl).
 // This is the single source of truth for the SR math; the GPU path
-// (qilisim::gpu::sr_solve) mirrors it and falls back here on any failure.
+// (qilisdk::gpu::sr_solve) mirrors it and falls back here on any failure.
 Eigen::VectorXcd sr_adot_cpu(const Eigen::MatrixXd& O, const Eigen::VectorXcd& El, double epsilon) {
     const int N_s = static_cast<int>(O.rows());
     const int p = static_cast<int>(O.cols());
@@ -259,7 +259,7 @@ void lindblad_rhs_gpu(ExponentialAnsatz& drho, const ExponentialAnsatz& rho, con
     /*
     GPU counterpart of lindblad_rhs. Sampling and local energy stay on the CPU;
     the entire stochastic-reconfiguration linear algebra (means, Gram, M
-    assembly, V, Cholesky solve) runs device-resident via qilisim::gpu::sr_solve,
+    assembly, V, Cholesky solve) runs device-resident via qilisdk::gpu::sr_solve,
     uploading only O and El and reading back only adot. On any GPU failure it
     falls back to the identical CPU computation (sr_adot_cpu), so results match.
     Dispatch (this vs lindblad_rhs) happens once per RK4 step in iter_rk4.
@@ -268,7 +268,7 @@ void lindblad_rhs_gpu(ExponentialAnsatz& drho, const ExponentialAnsatz& rho, con
     variational_rhs(drho, rho, H, timer,
                     [](const Eigen::MatrixXd& O, const Eigen::VectorXcd& El, double eps) {
                         Eigen::VectorXcd adot;
-                        if (!qilisim::gpu::sr_solve(O, El, eps, adot)) {
+                        if (!qilisdk::gpu::sr_solve(O, El, eps, adot)) {
                             adot = sr_adot_cpu(O, El, eps);  // resident path failed -> CPU
                         }
                         return adot;
