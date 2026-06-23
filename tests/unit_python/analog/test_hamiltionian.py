@@ -630,6 +630,107 @@ def test_commutator():
     assert H1.anticommutator(H2) == H1 * H2 + H2 * H1
 
 
+@pytest.mark.parametrize(
+    ("ops1", "ops2", "expected"),
+    [
+        # Identical single-qubit Paulis commute.
+        ((PauliZ(0),), (PauliZ(0),), True),
+        # Distinct non-identity Paulis on the same qubit anticommute.
+        ((PauliX(0),), (PauliZ(0),), False),
+        ((PauliX(0),), (PauliY(0),), False),
+        # Operators on disjoint qubits always commute.
+        ((PauliZ(0),), (PauliZ(1),), True),
+        ((PauliX(0),), (PauliZ(1),), True),
+        # Identity commutes with everything.
+        ((PauliI(0),), (PauliX(0),), True),
+        ((PauliX(0),), (PauliI(0),), True),
+        ((PauliI(0),), (PauliI(0),), True),
+        # Two disagreements (even parity) => commute, e.g. XX vs ZZ.
+        ((PauliX(0), PauliX(1)), (PauliZ(0), PauliZ(1)), True),
+        # One disagreement (odd parity) => anticommute, e.g. XX vs ZI.
+        ((PauliX(0), PauliX(1)), (PauliZ(0),), False),
+        # Agreement on one qubit, disagreement on another => odd => anticommute.
+        ((PauliX(0), PauliX(1)), (PauliX(0), PauliZ(1)), False),
+        # Three disagreements (odd parity) => anticommute.
+        ((PauliX(0), PauliX(1), PauliX(2)), (PauliZ(0), PauliZ(1), PauliZ(2)), False),
+        # Empty string (scalar) commutes with anything.
+        ((), (PauliX(0),), True),
+        # Identity-only strings commute with anything.
+        ((PauliI(0), PauliI(1)), (PauliX(0), PauliY(1)), True),
+    ],
+)
+def test_pauli_strings_commute(ops1, ops2, expected):
+    assert Hamiltonian._pauli_strings_commute(ops1, ops2) is expected
+    # The relation is symmetric.
+    assert Hamiltonian._pauli_strings_commute(ops2, ops1) is expected
+
+
+@pytest.mark.parametrize(
+    ("h1", "h2", "expected"),
+    [
+        # Single Pauli strings.
+        (Z(0), Z(1), True),
+        (X(0), Z(0), False),
+        (X(0) * X(1), Z(0) * Z(1), True),
+        (X(0) * X(1), Z(0), False),
+        # Identity / scalars commute with everything.
+        (X(0), I(0), True),
+        (X(0), 3 * I(0), True),
+        # Empty (zero) Hamiltonian commutes with everything.
+        (Hamiltonian(), Z(0), True),
+        # A Hamiltonian commutes with itself.
+        (Z(0) * Z(1) + X(0), Z(0) * Z(1) + X(0), True),
+        # Sums where individual anticommuting pairs cancel out => commute.
+        (X(0) * Y(1), Y(0) * X(1), True),
+        # Sums that genuinely do not commute.
+        (Z(0) + X(1), X(0) + Z(1), False),
+        (2 * X(0) * X(1) + Z(2), Z(0) * Z(1) + X(2), False),
+        # Complex coefficients should not affect commutation.
+        (1j * X(0), Z(0), False),
+        (1j * Z(0), Z(1), True),
+    ],
+)
+def test_commutes_with(h1, h2, expected):
+    assert h1.commutes_with(h2) is expected
+    # Commutation is symmetric.
+    assert h2.commutes_with(h1) is expected
+    # Must agree with the explicit commutator computation.
+    assert (h1.commutator(h2) == Hamiltonian.ZERO) is expected
+
+
+def test_commutes_with_matches_commutator_random():
+    """Fuzz check: commutes_with must agree with the full commutator on random Hamiltonians."""
+    rng = np.random.default_rng(0)
+    factories = {"X": X, "Y": Y, "Z": Z}
+    coeffs = [1, 2, -1, 1j]
+    for _ in range(500):
+        nqubits = int(rng.integers(1, 5))
+
+        def random_hamiltonian():
+            h = Hamiltonian()
+            for _ in range(int(rng.integers(1, 5))):
+                term = None
+                for qubit in range(nqubits):
+                    if rng.random() < 0.6:
+                        pauli = factories[rng.choice(["X", "Y", "Z"])](qubit)
+                        term = pauli if term is None else term * pauli
+                if term is not None:
+                    h = h + coeffs[int(rng.integers(0, len(coeffs)))] * term
+            return h
+
+        h1, h2 = random_hamiltonian(), random_hamiltonian()
+        assert h1.commutes_with(h2) == (h1.commutator(h2) == Hamiltonian.ZERO)
+
+
+def test_commutes_with_parametrized_coefficients():
+    """commutes_with should handle symbolic (Parameter) coefficients."""
+    x = Parameter("x", 1.5)
+    # Commuting terms remain commuting regardless of the symbolic coefficient.
+    assert (x * Z(0)).commutes_with(Z(1)) is True
+    # Anticommuting terms do not commute even with a symbolic coefficient.
+    assert (x * X(0)).commutes_with(Z(0)) is False
+
+
 def test_norms():
     H = Z(0) + 2 * X(1) + 3j * Y(2)
 

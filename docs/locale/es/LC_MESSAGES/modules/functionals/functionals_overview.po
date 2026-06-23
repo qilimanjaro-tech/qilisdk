@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-05 15:18+0200\n"
+"POT-Creation-Date: 2026-06-16 12:04+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -40,8 +40,8 @@ msgid ""
 ":doc:`functionals_digital`: Propagates a digital quantum circuit through "
 "the backend."
 msgstr ""
-":doc:`functionals_digital`: Propaga un circuito cuántico digital a través "
-"del backend."
+":doc:`functionals_digital`: Propaga un circuito cuántico digital a través"
+" del backend."
 
 #: ../../modules/functionals/functionals_overview.rst:8
 msgid ""
@@ -58,8 +58,8 @@ msgid ""
 "layers."
 msgstr ""
 ":doc:`functionals_reservoirs`: Ejecuta un pipeline de quantum reservoir "
-"(preprocesamiento, dinámica del reservoir, postprocesamiento) a través de "
-"múltiples capas de entrada."
+"(preprocesamiento, dinámica del reservoir, postprocesamiento) a través de"
+" múltiples capas de entrada."
 
 #: ../../modules/functionals/functionals_overview.rst:11
 msgid ""
@@ -70,8 +70,9 @@ msgstr ""
 "ejecutar algoritmos más complejos:"
 
 #: ../../modules/functionals/functionals_overview.rst:13
+#, fuzzy
 msgid ""
-":doc:`functionals_variational`: Builds parameterized program to be "
+":doc:`functionals_variational`: Builds a parameterized program to be "
 "optimized in a hybrid quantum-classical environment."
 msgstr ""
 ":doc:`functionals_variational`: Construye un programa parametrizado para "
@@ -79,7 +80,7 @@ msgstr ""
 
 #: ../../modules/functionals/functionals_overview.rst:16
 msgid "Architecture Overview"
-msgstr "Descripción General de la Arquitectura"
+msgstr "Descripción general de la arquitectura"
 
 #: ../../modules/functionals/functionals_overview.rst:18
 msgid ""
@@ -99,11 +100,11 @@ msgstr ""
 "primitivos como "
 ":class:`~qilisdk.functionals.digital_propagation.DigitalPropagation` y "
 ":class:`~qilisdk.functionals.analog_evolution.AnalogEvolution` también "
-"heredan de "
-":class:`~qilisdk.functionals.functional.PrimitiveFunctional`, que "
-"incorpora el contrato :class:`~qilisdk.core.parameterizable.Parameterizable`. "
-"Esto permite que los backends consulten y actualicen parámetros simbólicos "
-"de forma coherente antes de la ejecución."
+"heredan de :class:`~qilisdk.functionals.functional.PrimitiveFunctional`, "
+"que incorpora el contrato "
+":class:`~qilisdk.core.parameterizable.Parameterizable`. Esto permite que "
+"los backends consulten y actualicen parámetros simbólicos de forma "
+"coherente antes de la ejecución."
 
 #: ../../modules/functionals/functionals_overview.rst:25
 msgid ""
@@ -115,15 +116,16 @@ msgid ""
 ":class:`~qilisdk.functionals.functional_result.FunctionalResult`."
 msgstr ""
 "La lectura está desacoplada de los functionals: los detalles de medición "
-"(shots, observables, tomografía de estado) se especifican mediante objetos "
-":mod:`~qilisdk.readout` que se pasan al método "
+"(shots, observables, tomografía de estado) se especifican mediante "
+"objetos :mod:`~qilisdk.readout` que se pasan al método "
 ":meth:`~qilisdk.backends.backend.Backend.execute` del backend. Todos los "
 "functionals primitivos devuelven un "
-":class:`~qilisdk.functionals.functional_result.FunctionalResult` unificado."
+":class:`~qilisdk.functionals.functional_result.FunctionalResult` "
+"unificado."
 
 #: ../../modules/functionals/functionals_overview.rst:30
 msgid "Result Objects"
-msgstr "Objetos de Resultado"
+msgstr "Objetos de resultado"
 
 #: ../../modules/functionals/functionals_overview.rst:32
 msgid ":class:`~qilisdk.functionals.functional_result.FunctionalResult`"
@@ -163,7 +165,8 @@ msgid ""
 "steps) together with the functional result obtained at convergence."
 msgstr ""
 "agrupa la trayectoria del optimizador (costo óptimo, parámetros, pasos "
-"intermedios) junto con el resultado funcional obtenido en la convergencia."
+"intermedios) junto con el resultado funcional obtenido en la "
+"convergencia."
 
 #: ../../modules/functionals/functionals_overview.rst:44
 msgid ""
@@ -173,3 +176,4 @@ msgstr ""
 "Estos objetos hacen que los flujos de trabajo de postprocesamiento sean "
 "ergonómicos. Por ejemplo, tras una propagación digital se pueden extraer "
 "los bitstrings más probables:"
+

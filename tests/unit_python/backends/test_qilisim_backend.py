@@ -124,7 +124,7 @@ def test_qilisim_sampling_dummy(monkeypatch):
 def test_qilisim_time_evolution_dummy(monkeypatch):
     monkeypatch.setattr(qilisdk.backends.qilisim, "QiliSimCpp", QiliSimMock)
     hamiltonian = pauli_z(0)
-    schedule = Schedule(hamiltonians={"h": hamiltonian}, dt=0.1)
+    schedule = Schedule(hamiltonians={"h": hamiltonian}, dt=0.1, total_time=1.0)
     initial_state = ket(0)
     func = AnalogEvolution(schedule=schedule, initial_state=initial_state)
     backend = QiliSim()
@@ -231,7 +231,7 @@ def test_qilisim_repr():
 def test_qilisim_variational_annealing_runs(monkeypatch):
     backend = QiliSim(analog_simulation_method=AnalogMethod.variational_annealing(order=2, shots=1000, warmups=100))
     hamiltonian = pauli_z(0)
-    schedule = Schedule(hamiltonians={"h": hamiltonian}, dt=0.1)
+    schedule = Schedule(hamiltonians={"h": hamiltonian}, dt=0.1, total_time=1.0)
     initial_state = ket(0)
     func = AnalogEvolution(schedule=schedule, initial_state=initial_state)
 

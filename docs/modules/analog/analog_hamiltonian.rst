@@ -6,9 +6,9 @@ The :class:`~qilisdk.analog.hamiltonian.Hamiltonian` class represents a symbolic
 Constructing
 ======================
 
-To constuct a Hamiltonian with a single Pauli, you can use the constructors ``X(i)``, ``Y(i)``, ``Z(i)``, ``I(i)``. 
+To construct a Hamiltonian with a single Pauli, you can use the constructors ``X(i)``, ``Y(i)``, ``Z(i)``, ``I(i)``. 
 From these single-qubit operators, you can build multi-qubit Hamiltonians using arithmetic operations.
-The operations follow Python syntax, for example: ``2 * Z(0) + Z(1)`` and ``Z(0) * Z(1)`` build multi-qubit Hamiltonian.
+The operations follow Python syntax, for example: ``2 * Z(0) + Z(1)`` and ``Z(0) * Z(1)`` build multi-qubit Hamiltonians.
 
 List of Operations
 ======================
