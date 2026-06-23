@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-14 12:09+0200\n"
+"POT-Creation-Date: 2026-06-23 19:51+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -19,27 +19,27 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: ../../index.rst:10 ../../index.rst:32
+#: ../../index.rst:21 ../../index.rst:43
 msgid "Getting Started"
 msgstr "Primeros pasos"
 
-#: ../../index.rst:25 ../../index.rst:41
+#: ../../index.rst:36 ../../index.rst:52
 msgid "Tutorials"
 msgstr "Tutoriales"
 
-#: ../../index.rst:18 ../../index.rst:49
+#: ../../index.rst:29 ../../index.rst:60
 msgid "Modules"
 msgstr "Módulos"
 
-#: ../../index.rst:64
+#: ../../index.rst:75
 msgid "API Reference"
 msgstr "Referencia de la API"
 
-#: ../../index.rst:2
-msgid "QiliSDK"
-msgstr "QiliSDK"
+#: ../../index.rst:3 ../../index.rst:9
+msgid "QiliSDK logo"
+msgstr "Logotipo de QiliSDK"
 
-#: ../../index.rst:6
+#: ../../index.rst:17
 msgid ""
 "Welcome to **QiliSDK**, a unified Python framework for developing, "
 "simulating, and running both digital and analog quantum algorithms across"
@@ -56,16 +56,16 @@ msgstr ""
 "trabajo variacionales y su despliegue en simuladores y hardware cuántico "
 "locales o remotos."
 
-#: ../../index.rst:15
+#: ../../index.rst:26
 msgid ""
 "New to QiliSDK? Here you will find a description of its main concepts, "
 "together with some tutorials on how to install and start using QiliSDK!"
 msgstr ""
 "¿Nuevo en QiliSDK? Aquí encontrarás una descripción de sus conceptos "
-"principales, junto con algunos tutoriales sobre cómo instalar y empezar "
-"a usar QiliSDK."
+"principales, junto con algunos tutoriales sobre cómo instalar y empezar a"
+" usar QiliSDK."
 
-#: ../../index.rst:23
+#: ../../index.rst:34
 msgid ""
 "This section contains in-depth information about each key module of "
 "QiliSDK."
@@ -73,7 +73,7 @@ msgstr ""
 "Esta sección contiene información detallada sobre cada módulo clave de "
 "QiliSDK."
 
-#: ../../index.rst:30
+#: ../../index.rst:41
 msgid ""
 "This section contains a series of tutorials that cover the basics of "
 "quantum computing and how to use QiliSDK to implement various quantum "
