@@ -26,10 +26,10 @@
 
 namespace qilisdk::gpu {
 
-    bool cuda_available();
-    bool gemm(const Eigen::MatrixXd& A, const Eigen::MatrixXd& B, Eigen::MatrixXd& C);
-    bool gram_ata(const Eigen::MatrixXd& A, Eigen::MatrixXd& G);
-    bool cholesky_solve(const Eigen::MatrixXd& A, const Eigen::MatrixXd& B, Eigen::MatrixXd& X);
-    bool sr_solve(const Eigen::MatrixXd& O, const Eigen::VectorXcd& El, double epsilon, Eigen::VectorXcd& adot);
+bool cuda_available();
+bool gemm(const Eigen::MatrixXd& A, const Eigen::MatrixXd& B, Eigen::MatrixXd& C);
+bool gram_ata(const Eigen::MatrixXd& A, Eigen::MatrixXd& G);
+bool cholesky_solve(const Eigen::MatrixXd& A, const Eigen::MatrixXd& B, Eigen::MatrixXd& X);
+bool sr_solve(const Eigen::MatrixXd& O, const Eigen::VectorXcd& El, double epsilon, Eigen::VectorXcd& adot);
 
 }  // namespace qilisdk::gpu

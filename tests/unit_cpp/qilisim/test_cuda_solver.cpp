@@ -95,11 +95,7 @@ TEST(CudaSolver, GramAtaMatchesEigen) {
     ASSERT_EQ(G.cols(), 12);
     // Lower triangle is what cuBLAS fills; compare it against Aᵀ A.
     const Eigen::MatrixXd ref = A.transpose() * A;
-    EXPECT_LT((G.triangularView<Eigen::Lower>().toDenseMatrix() -
-               ref.triangularView<Eigen::Lower>().toDenseMatrix())
-                  .cwiseAbs()
-                  .maxCoeff(),
-              kTol);
+    EXPECT_LT((G.triangularView<Eigen::Lower>().toDenseMatrix() - ref.triangularView<Eigen::Lower>().toDenseMatrix()).cwiseAbs().maxCoeff(), kTol);
 }
 
 TEST(CudaSolver, CholeskySolveMatchesEigen) {

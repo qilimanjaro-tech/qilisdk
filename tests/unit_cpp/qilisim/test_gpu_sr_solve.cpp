@@ -34,8 +34,7 @@ Eigen::VectorXcd sr_reference(const Eigen::MatrixXd& O, const Eigen::VectorXcd& 
     const cx Elm = El.mean();
     Eigen::MatrixXd M = O.transpose() * O / static_cast<double>(N_s) - om * om.transpose();
     M += eps * Eigen::MatrixXd::Identity(p, p);
-    const Eigen::VectorXcd V =
-        -((O.transpose().cast<cx>() * El) / static_cast<double>(N_s) - om.cast<cx>() * Elm);
+    const Eigen::VectorXcd V = -((O.transpose().cast<cx>() * El) / static_cast<double>(N_s) - om.cast<cx>() * Elm);
     Eigen::LLT<Eigen::MatrixXd> llt(M);
     Eigen::VectorXcd adot(p);
     adot.real() = llt.solve(V.real());

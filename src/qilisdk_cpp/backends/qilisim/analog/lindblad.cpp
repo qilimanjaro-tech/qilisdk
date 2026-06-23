@@ -230,7 +230,6 @@ void lindblad_rhs_gpu(ExponentialAnsatz& drho, const ExponentialAnsatz& rho, con
     // Solve the whole SR system on the GPU (M and V are assembled device-resident)
     Eigen::VectorXcd adot(p);
     if (!qilisdk::gpu::sr_solve(O_mat_d, El, epsilon, adot)) {
-
         // Compute the means
         Eigen::VectorXd O_mean_real = O_mat_d.colwise().mean();
         std::complex<double> El_mean = El.mean();
