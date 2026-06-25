@@ -238,6 +238,20 @@ if (DEFINED tests AND tests STREQUAL "ON")
     target_include_directories(test_cpp PRIVATE src/qilisdk_cpp/backends/qilisim)
     target_include_directories(test_cpp PRIVATE ${pybind11_INCLUDE_DIRS})
     target_include_directories(test_cpp PRIVATE ${Python_INCLUDE_DIRS})
+
+    # The test executable MUST use the same architecture flags as the modules.
+    # Otherwise Eigen's EIGEN_MAX_ALIGN_BYTES differs between translation units
+    # (16 here vs 32 with AVX2), so matrices allocated in the tests are only
+    # 16-byte aligned while the module code issues 32-byte aligned AVX loads,
+    # causing segfaults. See the modules' march configuration above.
+    if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        if (QILISDK_HAS_X86_64_V3)
+            target_compile_options(test_cpp PRIVATE -march=x86-64-v3)
+        endif()
+        if (build_native)
+            target_compile_options(test_cpp PRIVATE -march=native)
+        endif()
+    endif()
     if (DEFINED coverage AND coverage STREQUAL "ON")
         message(STATUS "[QiliSDK C++] Enabling coverage flags for test suite")
         target_compile_options(test_cpp PRIVATE --coverage -fno-elide-constructors -fno-default-inline)
