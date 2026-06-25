@@ -943,32 +943,65 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
             free_mask &= ~(1L << sorted_target_pos[li]);
         }
 
-        // Build a compact CSR view of the gate matrix, skipping structural zeros
-        // (built once, not per anchor; (2^k)^2 work, negligible vs the state pass).
-        // The values are kept as split real/imag arrays so the per-nonzero multiply
-        // in the hot loop is plain scalar FMA. Using std::complex here instead would
-        // make libstdc++ emit its C99 Annex G NaN-correction branch (a compare + jp
-        // per element) inside the innermost loop, which dominates the profile and
-        // blocks vectorization.
-        std::vector<long> row_start(dim_k + 1, 0);
-        std::vector<int> col_idx;
-        std::vector<Real> val_re;
-        std::vector<Real> val_im;
-        col_idx.reserve(dim_k * dim_k);
-        val_re.reserve(dim_k * dim_k);
-        val_im.reserve(dim_k * dim_k);
-        for (long r = 0; r < dim_k; ++r) {
-            row_start[r] = static_cast<long>(col_idx.size());
+        // A diagonal block (a fused run of phase-type gates: Z/S/T/RZ/CZ/CCZ/...)
+        // is just a per-amplitude phase multiply. We detect it and apply it in
+        // place in a single streaming read-modify-write pass -- no gather, no
+        // scatter, no scratch buffers, and (in the contiguous case) unit-stride
+        // memory -- which is roughly half the memory traffic of the general path
+        // and sidesteps the scattered fallback entirely.
+        bool is_diagonal = true;
+        for (long r = 0; r < dim_k && is_diagonal; ++r) {
             for (long col = 0; col < dim_k; ++col) {
-                Complex v = base_matrix(r, col);
-                if (v != Complex(0.0, 0.0)) {
-                    col_idx.push_back(static_cast<int>(col));
-                    val_re.push_back(v.real());
-                    val_im.push_back(v.imag());
+                if (col != r && base_matrix(r, col) != Complex(0.0, 0.0)) {
+                    is_diagonal = false;
+                    break;
                 }
             }
         }
-        row_start[dim_k] = static_cast<long>(col_idx.size());
+
+        // Diagonal phases (used by the diagonal fast path). diag[m] multiplies the
+        // amplitude at anchor + offsets[m]; kept split real/imag so the multiply is
+        // plain FMA with no std::complex NaN-correction branch.
+        std::vector<Real> diag_re;
+        std::vector<Real> diag_im;
+
+        // Compact CSR view of the gate matrix (general path), skipping structural
+        // zeros (built once, not per anchor; (2^k)^2 work, negligible vs the state
+        // pass). Values are split real/imag so the per-nonzero multiply in the hot
+        // loop is plain FMA -- std::complex here would make libstdc++ emit its C99
+        // Annex G NaN-correction branch (a compare + jp per element) inside the
+        // innermost loop, dominating the profile and blocking vectorization.
+        std::vector<long> row_start;
+        std::vector<int> col_idx;
+        std::vector<Real> val_re;
+        std::vector<Real> val_im;
+
+        if (is_diagonal) {
+            diag_re.resize(dim_k);
+            diag_im.resize(dim_k);
+            for (long m = 0; m < dim_k; ++m) {
+                Complex v = base_matrix(m, m);
+                diag_re[m] = v.real();
+                diag_im[m] = v.imag();
+            }
+        } else {
+            row_start.assign(dim_k + 1, 0);
+            col_idx.reserve(dim_k * dim_k);
+            val_re.reserve(dim_k * dim_k);
+            val_im.reserve(dim_k * dim_k);
+            for (long r = 0; r < dim_k; ++r) {
+                row_start[r] = static_cast<long>(col_idx.size());
+                for (long col = 0; col < dim_k; ++col) {
+                    Complex v = base_matrix(r, col);
+                    if (v != Complex(0.0, 0.0)) {
+                        col_idx.push_back(static_cast<int>(col));
+                        val_re.push_back(v.real());
+                        val_im.push_back(v.imag());
+                    }
+                }
+            }
+            row_start[dim_k] = static_cast<long>(col_idx.size());
+        }
 
         if (output_state.cols() == 1) {
             // Process anchors in batches of B. The gate matrix is identical for
@@ -993,12 +1026,23 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
 #pragma omp parallel
 #endif
             {
-                // Layout: [m][b] with b contiguous, so the b-loop is unit-stride.
-                std::vector<Real> in_re(dim_k * B);
-                std::vector<Real> in_im(dim_k * B);
-                std::vector<Real> out_re(dim_k * B);
-                std::vector<Real> out_im(dim_k * B);
-                std::vector<long> anchors(B);
+                // Per-thread scratch, reused across gates instead of re-allocated
+                // (and zero-filled) on every call. resize() only reallocates when it
+                // has to grow, so after warmup these are alloc-free; the SoA buffers
+                // are only needed by the general (non-diagonal) path. Layout is
+                // [m][b] with b contiguous, so the b-loop is unit-stride.
+                static thread_local std::vector<Real> in_re;
+                static thread_local std::vector<Real> in_im;
+                static thread_local std::vector<Real> out_re;
+                static thread_local std::vector<Real> out_im;
+                static thread_local std::vector<long> anchors;
+                anchors.resize(B);
+                if (!is_diagonal) {
+                    in_re.resize(dim_k * B);
+                    in_im.resize(dim_k * B);
+                    out_re.resize(dim_k * B);
+                    out_im.resize(dim_k * B);
+                }
 #if defined(_OPENMP)
 #pragma omp for schedule(static)
 #endif
@@ -1022,6 +1066,39 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
                         }
                         anchors[b] = anchor;
 #endif
+                    }
+
+                    // Diagonal fast path: multiply each amplitude in place by its
+                    // phase. Single read-modify-write pass, no gather/scatter/SoA.
+                    // The complex multiply is done by hand (no std::complex NaN
+                    // branch); the contiguous case vectorizes via omp simd.
+                    if (is_diagonal) {
+                        for (long m = 0; m < dim_k; ++m) {
+                            const long off = offsets[m];
+                            const Real dr = diag_re[m];
+                            const Real di = diag_im[m];
+                            if (contiguous_batch) {
+                                Real* __restrict p =
+                                    reinterpret_cast<Real*>(&output_state(anchors[0] + off));
+#if defined(_OPENMP)
+#pragma omp simd
+#endif
+                                for (long b = 0; b < bw; ++b) {
+                                    const Real re = p[2 * b];
+                                    const Real im = p[2 * b + 1];
+                                    p[2 * b] = re * dr - im * di;
+                                    p[2 * b + 1] = re * di + im * dr;
+                                }
+                            } else {
+                                for (long b = 0; b < bw; ++b) {
+                                    Complex& a = output_state(anchors[b] + off);
+                                    const Real re = a.real();
+                                    const Real im = a.imag();
+                                    a = Complex(re * dr - im * di, re * di + im * dr);
+                                }
+                            }
+                        }
+                        continue;
                     }
 
                     // Gather the 2^k amplitudes for every anchor in the batch.
