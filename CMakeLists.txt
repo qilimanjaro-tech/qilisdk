@@ -1,15 +1,26 @@
+# All of the below commands can also be done with uv sync etc., 
+# it's only the -Ccmake.* flags that are important
+
 # To enable debug build:
 #   uv pip install -v -e ./ -Ccmake.build-type=Debug
+
+# To enable optimizations + debug build:
+#   uv pip install -v -e ./ -Ccmake.build-type=RelWithDebInfo
+
+# To use single precision (float) instead of double precision (double):
+#   uv pip install -v -e ./ -Ccmake.define.single_precision=ON
+
 # To run with clang-tidy:
 #   uv pip install -v -e ./ -Ccmake.define.tidy=ON
+
 # To enable (very) verbose simulator output:
 #   uv pip install -v -e ./ -Ccmake.define.verbose=ON
+
 # To enable the test suite:
 #   uv pip install -v -e ./ -Ccmake.define.tests=ON
+
 # To enable coverage flags:
 #   uv pip install -v -e ./ -Ccmake.define.coverage=ON
-# For a fully editable install:
-#   uv pip install --config-settings=editable.rebuild=true -Ccmake.build_type=Debug -Cbuild-dir=build -ve .
 
 cmake_minimum_required(VERSION 3.18)
 project(qilisdk LANGUAGES CXX)
@@ -111,6 +122,14 @@ set(MODULES_TO_BUILD qilisdk_libs qtensor_module qilisim_module)
 # For each module
 foreach(module ${MODULES_TO_BUILD})
     message(STATUS "[QiliSDK C++] Configuring module: ${module}")
+
+    # If we want floats not doubles
+    if (single_precision)
+        message(STATUS "[QiliSDK C++] Building with single precision (float)")
+        target_compile_definitions(${module} PRIVATE SINGLE_PRECISION)
+    else()
+        message(STATUS "[QiliSDK C++] Building with double precision (double)")
+    endif()
 
     # Set compile options
     set (CMAKE_CXX_STANDARD 17)

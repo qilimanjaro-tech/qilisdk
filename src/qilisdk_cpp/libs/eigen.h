@@ -20,10 +20,8 @@
 
 // GCOV_EXCL_BR_START
 
-// Compile with -Ccmake.define.QILISIM_SINGLE_PRECISION=ON to enable single precision
-
 // Our real and complex types
-#ifdef QILISIM_SINGLE_PRECISION
+#ifdef SINGLE_PRECISION
 typedef float Real;
 #else
 typedef double Real;
