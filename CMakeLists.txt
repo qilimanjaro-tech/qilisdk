@@ -4,11 +4,14 @@
 # To enable debug build:
 #   uv pip install -v -e ./ -Ccmake.build-type=Debug
 
-# To enable optimizations + debug build:
+# To enable an optimized debug build:
 #   uv pip install -v -e ./ -Ccmake.build-type=RelWithDebInfo
 
 # To use single precision (float) instead of double precision (double):
 #   uv pip install -v -e ./ -Ccmake.define.single_precision=ON
+
+# To build for the native architecture:
+#   uv pip install -v -e ./ -Ccmake.define.build_native=ON
 
 # To run with clang-tidy:
 #   uv pip install -v -e ./ -Ccmake.define.tidy=ON
@@ -137,22 +140,23 @@ foreach(module ${MODULES_TO_BUILD})
         message(STATUS "[QiliSDK C++] Using GCC/Clang specific compile options")
         target_compile_options(${module} PRIVATE -Wall -Wextra -Wpedantic)
 
-        # Portable AVX2 + FMA baseline (~2015+ CPUs). Safe to ship in wheels, unlike
-        # -march=native (which bakes in the build machine's ISA, e.g. AVX-512 on Zen 4,
-        # and SIGILL-crashes on any CPU lacking it). The bigger AVX-512 win is captured
-        # safely per-function via runtime dispatch (target_clones) on the hot kernels.
-        # Guarded so older compilers / non-x86 toolchains (e.g. aarch64) skip it.
+        # Enable AVX2 + FMA for 2015+ CPUs
         include(CheckCXXCompilerFlag)
         check_cxx_compiler_flag("-march=x86-64-v3" QILISDK_HAS_X86_64_V3)
         if (QILISDK_HAS_X86_64_V3)
             message(STATUS "[QiliSDK C++] Targeting x86-64-v3 (AVX2 + FMA)")
             target_compile_options(${module} PRIVATE -march=x86-64-v3)
         endif()
-    endif()
 
-    # Make everything visible on compilers that support this flag
-    if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        # If the user wants to build for the native architecture, enable that
+        if (build_native)
+            message(STATUS "[QiliSDK C++] Targeting native architecture")
+            target_compile_options(${module} PRIVATE -march=native)
+        endif()
+
+        # Make everything visible
         target_compile_options(${module} PRIVATE -fvisibility=default)
+
     endif()
 
     # Link libraries and include directories
