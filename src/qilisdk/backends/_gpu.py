@@ -11,19 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Runtime preloading of the optional CUDA shared libraries.
+"""
+Runtime preloading of the optional CUDA shared libraries.
 
-The C++ backend offloads selected linear algebra to cuBLAS/cuSOLVER through a
-``dlopen``-based shim (``qilisdk_cpp/backends/qilisim/gpu/cuda_solver.cpp``), so
-the wheel has no link-time CUDA dependency and runs unchanged without a GPU.
-
-The ``nvidia-*-cu12`` / ``nvidia-*-cu13`` wheels (pulled by the ``qilisdk[cuda12]``
-/ ``qilisdk[cuda13]`` extras) install their ``.so`` files under
-``<site-packages>/nvidia/<component>/lib``, which is not on the default loader
-search path. We preload them here with ``RTLD_GLOBAL`` so that the C++ shim can
-resolve them by soname (``dlopen`` returns already-loaded objects) regardless of
-``LD_LIBRARY_PATH``. A system-wide CUDA install on the loader path needs no
-preloading and is picked up by the shim directly.
+On the C++ side we try to load various libraries at runtime, better that
+they're found here on the Python side first, since it's more likely
+that the environment is set up correctly for Python.
 """
 
 from __future__ import annotations
@@ -36,18 +29,15 @@ import sys
 
 from loguru import logger
 
-# nvidia wheel components, ordered so dependencies precede dependents. Loading
-# is retried regardless, so the order is only a hint.
 _NVIDIA_COMPONENTS: tuple[str, ...] = (
-    "nvidia.cuda_runtime",  # libcudart
-    "nvidia.nvjitlink",  # libnvJitLink (cusolver dependency on CUDA >= 12.3)
-    "nvidia.cusparse",  # libcusparse (cusolver dependency)
-    "nvidia.cublas",  # libcublas, libcublasLt
-    "nvidia.cusolver",  # libcusolver
+    "nvidia.cuda_runtime",
+    "nvidia.nvjitlink",
+    "nvidia.cusparse",
+    "nvidia.cublas",
+    "nvidia.cusolver",
 )
 
 _preloaded = False
-
 
 def _nvidia_lib_dirs() -> list[str]:
     """Return existing ``nvidia/<component>/lib`` directories for installed CUDA wheels."""
@@ -69,10 +59,6 @@ def _nvidia_lib_dirs() -> list[str]:
 def preload_cuda_libraries() -> bool:
     """Best-effort preload of the NVIDIA CUDA shared libraries from the pip wheels.
 
-    Safe to call unconditionally and repeatedly: it is a no-op on non-Linux
-    platforms, when the CUDA wheels are not installed, or after a successful
-    first call. It never raises.
-
     Returns:
         bool: ``True`` if at least one CUDA library was loaded into the process.
         ``False`` does not preclude GPU use — a system CUDA install on the
@@ -81,7 +67,8 @@ def preload_cuda_libraries() -> bool:
     global _preloaded  # noqa: PLW0603 -- module-level cache so the preload runs at most once
     if _preloaded:
         return True
-    # The shim only implements dlopen-based loading; Windows is not targeted.
+
+    # Windows not supported
     if not sys.platform.startswith("linux"):
         return False
 
@@ -89,14 +76,13 @@ def preload_cuda_libraries() -> bool:
     if not lib_dirs:
         return False
 
-    # Sonames vary across CUDA 12/13, so glob every shared object and let the
-    # retry loop sort out load ordering.
+    # Get the list of all .so files in the lib directories
     pending: list[str] = []
     for lib_dir in lib_dirs:
         pending.extend(sorted(str(p) for p in pathlib.Path(lib_dir).glob("*.so*")))
 
+    # Keep trying to load the libraries until no progress is made
     any_loaded = False
-    # At most one pass per library is ever needed once a pass makes no progress.
     for _ in range(len(pending) + 1):
         if not pending:
             break
