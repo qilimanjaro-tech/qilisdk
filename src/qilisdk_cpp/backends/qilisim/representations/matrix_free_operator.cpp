@@ -1054,8 +1054,7 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
                     // bits of the counter land in the free positions in order.
                     for (long b = 0; b < bw; ++b) {
 #if defined(__BMI2__)
-                        anchors[b] = static_cast<long>(
-                            _pdep_u64(static_cast<unsigned long>(c0 + b), static_cast<unsigned long>(free_mask)));
+                        anchors[b] = static_cast<long>(_pdep_u64(static_cast<unsigned long>(c0 + b), static_cast<unsigned long>(free_mask)));
 #else
                         long anchor = c0 + b;
                         for (int s = 0; s < k; ++s) {
@@ -1078,8 +1077,7 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
                             const Real dr = diag_re[m];
                             const Real di = diag_im[m];
                             if (contiguous_batch) {
-                                Real* __restrict p =
-                                    reinterpret_cast<Real*>(&output_state(anchors[0] + off));
+                                Real* __restrict p = reinterpret_cast<Real*>(&output_state(anchors[0] + off));
 #if defined(_OPENMP)
 #pragma omp simd
 #endif
@@ -1112,8 +1110,7 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
                             // floats and split into the SoA buffers; the compiler
                             // vectorizes this AoS->SoA deinterleave, and the loads
                             // touch one cache line instead of bw scattered ones.
-                            const Real* __restrict src =
-                                reinterpret_cast<const Real*>(&output_state(anchors[0] + off));
+                            const Real* __restrict src = reinterpret_cast<const Real*>(&output_state(anchors[0] + off));
                             // Ask for a vectorized deinterleave (interleaved load +
                             // permute) instead of scalar element moves.
 #if defined(_OPENMP)
@@ -1188,8 +1185,7 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
                             // Mirror of the contiguous gather: write the B results as
                             // one contiguous interleaved run (SoA->AoS), touching one
                             // cache line instead of bw scattered stores.
-                            Real* __restrict dst =
-                                reinterpret_cast<Real*>(&output_state(anchors[0] + off));
+                            Real* __restrict dst = reinterpret_cast<Real*>(&output_state(anchors[0] + off));
                             // Ask for a vectorized interleave (permute + interleaved
                             // store) instead of scalar element moves.
 #if defined(_OPENMP)

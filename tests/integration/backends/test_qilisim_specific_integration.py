@@ -239,9 +239,15 @@ def test_fuse_gates_matches_unfused(max_fused_qubits):
         ),
     )
     readout = Readout().with_state_tomography()
-    state_unfused = np.asarray(backend_unfused.execute(DigitalPropagation(circuit=c), readout=readout).get_state().dense()).reshape(-1)
-    state_fused = np.asarray(backend_fused.execute(DigitalPropagation(circuit=c), readout=readout).get_state().dense()).reshape(-1)
-    fidelity = np.abs(np.vdot(state_unfused, state_fused)) / (np.linalg.norm(state_unfused) * np.linalg.norm(state_fused))
+    state_unfused = np.asarray(
+        backend_unfused.execute(DigitalPropagation(circuit=c), readout=readout).get_state().dense()
+    ).reshape(-1)
+    state_fused = np.asarray(
+        backend_fused.execute(DigitalPropagation(circuit=c), readout=readout).get_state().dense()
+    ).reshape(-1)
+    fidelity = np.abs(np.vdot(state_unfused, state_fused)) / (
+        np.linalg.norm(state_unfused) * np.linalg.norm(state_fused)
+    )
     assert fidelity == pytest.approx(1.0, abs=1e-4)
     assert np.max(np.abs(state_unfused - state_fused)) < 1e-3
 

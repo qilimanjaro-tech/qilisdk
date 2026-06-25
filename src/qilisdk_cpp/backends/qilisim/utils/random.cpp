@@ -124,8 +124,7 @@ std::map<std::string, int> sample_from_probabilities(const std::vector<double>& 
             double random_value = distribution(generator);
             // First state whose cumulative probability reaches the draw — identical
             // selection to the old "random_value <= cumulative_prob" linear scan.
-            size_t state_index =
-                static_cast<size_t>(std::lower_bound(cdf.begin(), cdf.end(), random_value) - cdf.begin());
+            size_t state_index = static_cast<size_t>(std::lower_bound(cdf.begin(), cdf.end(), random_value) - cdf.begin());
             if (state_index >= cdf.size()) {
                 state_index = cdf.size() - 1;
             }
