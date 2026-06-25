@@ -978,6 +978,17 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
             // real/imag reduction, so the innermost loop vectorizes (SIMD across
             // anchors) instead of running one scalar matrix element at a time.
             constexpr long B = 8;
+
+            // When the lowest log2(B) index bits are all free (not targets), a
+            // batch of B consecutive anchor counters maps to B *consecutive*
+            // full-state indices. The 2^k gathered amplitudes for one m then live
+            // in one contiguous run (B complex = one cache line for B=8), instead
+            // of B loads spread across B cache lines. We special-case this to
+            // read/write the run contiguously. Under the big-endian mapping
+            // (bit = num_qubits-1-qubit), low bit positions are the highest-numbered
+            // qubits, so this fires whenever the gate avoids the top log2(B) qubit
+            // indices -- the common case for gates on low/mid qubits.
+            const bool contiguous_batch = ((free_mask & (B - 1)) == (B - 1));
 #if defined(_OPENMP)
 #pragma omp parallel
 #endif
@@ -1018,10 +1029,29 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
                         const long off = offsets[m];
                         Real* ir = &in_re[m * B];
                         Real* ii = &in_im[m * B];
-                        for (long b = 0; b < bw; ++b) {
-                            const Complex amp = output_state(anchors[b] + off);
-                            ir[b] = amp.real();
-                            ii[b] = amp.imag();
+                        if (contiguous_batch) {
+                            // anchors[0..bw) are consecutive, so the amplitudes form
+                            // one contiguous interleaved [re,im,...] run. Read it as
+                            // floats and split into the SoA buffers; the compiler
+                            // vectorizes this AoS->SoA deinterleave, and the loads
+                            // touch one cache line instead of bw scattered ones.
+                            const Real* __restrict src =
+                                reinterpret_cast<const Real*>(&output_state(anchors[0] + off));
+                            // Ask for a vectorized deinterleave (interleaved load +
+                            // permute) instead of scalar element moves.
+#if defined(_OPENMP)
+#pragma omp simd
+#endif
+                            for (long b = 0; b < bw; ++b) {
+                                ir[b] = src[2 * b];
+                                ii[b] = src[2 * b + 1];
+                            }
+                        } else {
+                            for (long b = 0; b < bw; ++b) {
+                                const Complex amp = output_state(anchors[b] + off);
+                                ir[b] = amp.real();
+                                ii[b] = amp.imag();
+                            }
                         }
                     }
 
@@ -1072,8 +1102,25 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
                         const long off = offsets[m];
                         const Real* sr = &out_re[m * B];
                         const Real* si = &out_im[m * B];
-                        for (long b = 0; b < bw; ++b) {
-                            output_state(anchors[b] + off) = Complex(sr[b], si[b]);
+                        if (contiguous_batch) {
+                            // Mirror of the contiguous gather: write the B results as
+                            // one contiguous interleaved run (SoA->AoS), touching one
+                            // cache line instead of bw scattered stores.
+                            Real* __restrict dst =
+                                reinterpret_cast<Real*>(&output_state(anchors[0] + off));
+                            // Ask for a vectorized interleave (permute + interleaved
+                            // store) instead of scalar element moves.
+#if defined(_OPENMP)
+#pragma omp simd
+#endif
+                            for (long b = 0; b < bw; ++b) {
+                                dst[2 * b] = sr[b];
+                                dst[2 * b + 1] = si[b];
+                            }
+                        } else {
+                            for (long b = 0; b < bw; ++b) {
+                                output_state(anchors[b] + off) = Complex(sr[b], si[b]);
+                            }
                         }
                     }
                 }
