@@ -39,6 +39,7 @@ _NVIDIA_COMPONENTS: tuple[str, ...] = (
 
 _preloaded = False
 
+
 def _nvidia_lib_dirs() -> list[str]:
     """Return existing ``nvidia/<component>/lib`` directories for installed CUDA wheels."""
     dirs: list[str] = []
