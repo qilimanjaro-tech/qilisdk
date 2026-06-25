@@ -11,14 +11,19 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#include "cuda_solver.h"
+#include "gpu.h"
 
 #include <cstddef>
+#include <cstdlib>
+#include <cstring>
 #include <iostream>
 #include <mutex>
+#include <string>
+#include <vector>
 
 // For now no Windows GPU support because god knows that will cause problems
 #if !defined(_WIN32)
+#include <dirent.h>
 #include <dlfcn.h>
 #endif
 
@@ -99,20 +104,93 @@ struct CudaApi {
 // Again, no Windows GPU support for now
 #if !defined(_WIN32)
 
-void* dlopen_first(std::initializer_list<const char*> candidates) {
+void add_subdirs(std::vector<std::string>& out, const std::string& root, const char* prefix, const char* suffix) {
     /*
-    Try a list of candidate sonames in order, returning the first that loads
+    Append subdirectory paths to a vector, optionally filtering by prefix and suffix.
+
+    Args:
+        out: vector to append the results to
+        root: directory to scan
+        prefix: optional prefix filter for subdirectory names (nullptr = no filter)
+        suffix: optional suffix to append to each result (nullptr = no suffix)
+    */
+    DIR* d = ::opendir(root.c_str());
+    if (!d) {
+        return;
+    }
+    const std::size_t prefix_len = prefix ? std::strlen(prefix) : 0;
+    while (const dirent* e = ::readdir(d)) {
+        if (e->d_name[0] == '.') {  // skip ".", ".." and hidden entries
+            continue;
+        }
+        if (prefix && std::strncmp(e->d_name, prefix, prefix_len) != 0) {
+            continue;
+        }
+        out.push_back(root + "/" + e->d_name + suffix);
+    }
+    ::closedir(d);
+}
+
+std::vector<std::string> cuda_search_dirs() {
+    /*
+    Build the list of extra directories to probe for the CUDA shared libraries, in priority order
+
+    Returns:
+        std::vector<std::string>: list of directories to probe for CUDA shared libraries
+    */
+    std::vector<std::string> dirs;
+
+    // Just in case we want to manually set it
+    if (const char* p = std::getenv("QILISDK_CUDA_LIB_DIR")) {
+        dirs.emplace_back(p);
+    }
+
+    // Standard CUDA toolkit environment variables
+    for (const char* var : {"CUDA_HOME", "CUDA_PATH"}) {
+        if (const char* base = std::getenv(var)) {
+            dirs.emplace_back(std::string(base) + "/lib64");
+            dirs.emplace_back(std::string(base) + "/lib");
+        }
+    }
+
+    // Check the venv
+    if (const char* venv = std::getenv("VIRTUAL_ENV")) {
+        std::vector<std::string> py_dirs;
+        add_subdirs(py_dirs, std::string(venv) + "/lib", "python", "");
+        for (const std::string& py : py_dirs) {
+            add_subdirs(dirs, py + "/site-packages/nvidia", nullptr, "/lib");
+        }
+    }
+
+    // Other system locations
+    dirs.emplace_back("/usr/local/cuda/lib64");
+    dirs.emplace_back("/usr/lib/x86_64-linux-gnu");
+
+    return dirs;
+}
+
+void* dlopen_first(std::initializer_list<const char*> candidates, const std::vector<std::string>& dirs) {
+    /*
+    Try a list of candidate sonames, returning the first that loads
 
     Args:
         candidates: list of sonames to try
+        dirs: extra directories to search if the bare sonames don't resolve
 
     Returns:
         void*: handle to the first library that loaded successfully, or nullptr if none did
     */
     for (const char* name : candidates) {
-        void* h = ::dlopen(name, RTLD_NOW | RTLD_GLOBAL);
-        if (h) {
+        if (void* h = ::dlopen(name, RTLD_NOW | RTLD_GLOBAL)) {
             return h;
+        }
+    }
+    for (const std::string& dir : dirs) {
+        for (const char* name : candidates) {
+            const std::string full = dir + "/" + name;
+            if (void* h = ::dlopen(full.c_str(), RTLD_NOW | RTLD_GLOBAL)) {
+                return h;
+            }
         }
     }
     return nullptr;
@@ -144,10 +222,12 @@ const CudaApi& probe() {
 // If Windows, just return an empty CudaApi
 #if !defined(_WIN32)
 
-        // Load the libaries
-        a.h_cudart = dlopen_first({"libcudart.so", "libcudart.so.13", "libcudart.so.12"});
-        a.h_cublas = dlopen_first({"libcublas.so", "libcublas.so.13", "libcublas.so.12"});
-        a.h_cusolver = dlopen_first({"libcusolver.so", "libcusolver.so.12", "libcusolver.so.11"});
+        // Load the libaries, searching the loader's default path first and then the
+        // extra locations (pip nvidia wheels, CUDA_HOME, common system dirs).
+        const std::vector<std::string> dirs = cuda_search_dirs();
+        a.h_cudart = dlopen_first({"libcudart.so", "libcudart.so.13", "libcudart.so.12"}, dirs);
+        a.h_cublas = dlopen_first({"libcublas.so", "libcublas.so.13", "libcublas.so.12"}, dirs);
+        a.h_cusolver = dlopen_first({"libcusolver.so", "libcusolver.so.12", "libcusolver.so.11"}, dirs);
         if (!a.h_cudart || !a.h_cublas || !a.h_cusolver) {
             // TODO(luke): this should be a logger warning, but for that I need the logger introduced in the stab state PR
             std::cout << "[QiliSim GPU] CUDA libraries unavailable -> using CPU (Eigen)." << std::endl;
@@ -243,172 +323,19 @@ bool cuda_available() {
     /*
     Check if we have everything loaded already
 
+    Setting the QILISDK_DISABLE_GPU environment variable forces this to report
+    "unavailable" so callers fall back to the CPU path, regardless of the hardware.
+    This is re-checked on every call (it is not cached with the probe), so it can be
+    toggled at runtime, e.g. to exercise the CPU fallback on a machine that has a GPU.
+
     Returns:
         bool: true if a usable CUDA device + the cublas/cusolver shared libraries was found
     */
+    if (std::getenv("QILISDK_DISABLE_GPU")) {
+        return false;
+    }
     const CudaApi& api = probe();
     return api.loaded && api.has_device;
-}
-
-bool gemm(const Eigen::MatrixXd& A, const Eigen::MatrixXd& B, Eigen::MatrixXd& C) {
-    /*
-    Compute C = A * B for real double matrices on the GPU (cuBLAS dgemm).
-
-    Args:
-        A: Eigen::MatrixXd, left operand
-        B: Eigen::MatrixXd, right operand
-        C: Eigen::MatrixXd, output (will be resized)
-
-    Returns:
-        bool: true if the GPU path was taken and succeeded, false otherwise.
-    */
-
-    // Make sure we have a GPU and that the dimensions are compatible
-    if (!cuda_available() || A.cols() != B.rows()) {
-        return false;
-    }
-    const CudaApi& api = probe();
-    const int m = static_cast<int>(A.rows());
-    const int k = static_cast<int>(A.cols());
-    const int n = static_cast<int>(B.cols());
-    std::lock_guard<std::mutex> guard(gpu_mutex());
-
-    // Copy everything to GPU
-    DeviceBuffer dA(api), dB(api), dC(api);
-    const std::size_t bytesA = sizeof(double) * static_cast<std::size_t>(m) * k;
-    const std::size_t bytesB = sizeof(double) * static_cast<std::size_t>(k) * n;
-    const std::size_t bytesC = sizeof(double) * static_cast<std::size_t>(m) * n;
-    if (!dA.alloc(bytesA) || !dB.alloc(bytesB) || !dC.alloc(bytesC)) {
-        return false;
-    }
-    if (api.cudaMemcpy(dA.ptr, A.data(), bytesA, kMemcpyHostToDevice) != kCudaSuccess || api.cudaMemcpy(dB.ptr, B.data(), bytesB, kMemcpyHostToDevice) != kCudaSuccess) {
-        return false;
-    }
-
-    // Run the dgemm: C = alpha * A * B + beta * C, with alpha=1, beta=0. A is m x k, B is k x n, C is m x n.
-    const double alpha = 1.0;
-    const double beta = 0.0;
-    const int status = api.cublasDgemm(api.cublas_handle, kCublasOpN, kCublasOpN, m, n, k, &alpha, static_cast<const double*>(dA.ptr), m, static_cast<const double*>(dB.ptr), k, &beta, static_cast<double*>(dC.ptr), m);
-    if (status != kCublasStatusSuccess || api.cudaDeviceSynchronize() != kCudaSuccess) {
-        return false;
-    }
-
-    // Copy the result back and return
-    C.resize(m, n);
-    return api.cudaMemcpy(C.data(), dC.ptr, bytesC, kMemcpyDeviceToHost) == kCudaSuccess;
-}
-
-bool gram_ata(const Eigen::MatrixXd& A, Eigen::MatrixXd& G) {
-    /*
-    Compute G = Aᵀ * A for real double matrices on the GPU (cuBLAS dgemm)
-
-    Args:
-        A: Eigen::MatrixXd, input matrix
-        G: Eigen::MatrixXd, output Gram matrix (will be resized)
-
-    Returns:
-        bool: true if the GPU path was taken and succeeded, false otherwise
-    */
-
-    // Make sure we have a GPU
-    if (!cuda_available()) {
-        return false;
-    }
-    const CudaApi& api = probe();
-    const int m = static_cast<int>(A.rows());
-    const int n = static_cast<int>(A.cols());
-    std::lock_guard<std::mutex> guard(gpu_mutex());
-
-    // Copy stuff to the GPU
-    DeviceBuffer dA(api), dG(api);
-    const std::size_t bytesA = sizeof(double) * static_cast<std::size_t>(m) * n;
-    const std::size_t bytesG = sizeof(double) * static_cast<std::size_t>(n) * n;
-    if (!dA.alloc(bytesA) || !dG.alloc(bytesG)) {
-        return false;
-    }
-    if (api.cudaMemcpy(dA.ptr, A.data(), bytesA, kMemcpyHostToDevice) != kCudaSuccess) {
-        return false;
-    }
-
-    // Run the dgemm: G = alpha * Aᵀ * A + beta * G, with alpha=1, beta=0. A is m x n, so Aᵀ is n x m, and G is n x n.
-    const double alpha = 1.0;
-    const double beta = 0.0;
-    const int status = api.cublasDgemm(api.cublas_handle, kCublasOpT, kCublasOpN, n, n, m, &alpha, static_cast<const double*>(dA.ptr), m, static_cast<const double*>(dA.ptr), m, &beta, static_cast<double*>(dG.ptr), n);
-    if (status != kCublasStatusSuccess || api.cudaDeviceSynchronize() != kCudaSuccess) {
-        return false;
-    }
-
-    // Copy the result back and return
-    G.resize(n, n);
-    return api.cudaMemcpy(G.data(), dG.ptr, bytesG, kMemcpyDeviceToHost) == kCudaSuccess;
-}
-
-bool cholesky_solve(const Eigen::MatrixXd& A, const Eigen::MatrixXd& B, Eigen::MatrixXd& X) {
-    /*
-    Solve the linear system A * X = B for X, where A is symmetric positive definite (SPD), using Cholesky factorization on the GPU (cuSOLVER).
-
-    Args:
-        A: Eigen::MatrixXd, SPD matrix (n x n)
-        B: Eigen::MatrixXd, right-hand side matrix (n x nrhs)
-        X: Eigen::MatrixXd, solution matrix (will be resized to n x nrhs)
-
-    Returns:
-        bool: true if the GPU path was taken and succeeded, false otherwise
-    */
-
-    // Make sure we have a GPU and that the dimensions are compatible
-    if (!cuda_available() || A.rows() != A.cols() || A.rows() != B.rows()) {
-        return false;
-    }
-    const CudaApi& api = probe();
-    const int n = static_cast<int>(A.rows());
-    const int nrhs = static_cast<int>(B.cols());
-    std::lock_guard<std::mutex> guard(gpu_mutex());
-
-    // Copy everything to GPU
-    DeviceBuffer dA(api), dB(api), dInfo(api);
-    const std::size_t bytesA = sizeof(double) * static_cast<std::size_t>(n) * n;
-    const std::size_t bytesB = sizeof(double) * static_cast<std::size_t>(n) * nrhs;
-    if (!dA.alloc(bytesA) || !dB.alloc(bytesB) || !dInfo.alloc(sizeof(int))) {
-        return false;
-    }
-    if (api.cudaMemcpy(dA.ptr, A.data(), bytesA, kMemcpyHostToDevice) != kCudaSuccess || api.cudaMemcpy(dB.ptr, B.data(), bytesB, kMemcpyHostToDevice) != kCudaSuccess) {
-        return false;
-    }
-
-    // Workspace query, then factor (lower triangle).
-    int lwork = 0;
-    if (api.cusolverDnDpotrf_bufferSize(api.cusolver_handle, kFillModeLower, n, static_cast<double*>(dA.ptr), n, &lwork) != kCusolverStatusSuccess) {
-        return false;
-    }
-    DeviceBuffer dWork(api);
-    if (lwork > 0 && !dWork.alloc(sizeof(double) * static_cast<std::size_t>(lwork))) {
-        return false;
-    }
-
-    // Factor A in place: dA <- L * Lᵀ, where L is lower triangular. If A is not SPD, this will fail and we return false.
-    int host_info = 0;
-    if (api.cusolverDnDpotrf(api.cusolver_handle, kFillModeLower, n, static_cast<double*>(dA.ptr), n, static_cast<double*>(dWork.ptr), lwork, static_cast<int*>(dInfo.ptr)) != kCusolverStatusSuccess) {
-        return false;
-    }
-    if (api.cudaMemcpy(&host_info, dInfo.ptr, sizeof(int), kMemcpyDeviceToHost) != kCudaSuccess || host_info != 0) {
-        return false;  // not SPD / numerical failure -> let caller fall back to Eigen
-    }
-
-    // Solve in place: dB <- A^{-1} dB.
-    if (api.cusolverDnDpotrs(api.cusolver_handle, kFillModeLower, n, nrhs, static_cast<const double*>(dA.ptr), n, static_cast<double*>(dB.ptr), n, static_cast<int*>(dInfo.ptr)) != kCusolverStatusSuccess) {
-        return false;
-    }
-    if (api.cudaMemcpy(&host_info, dInfo.ptr, sizeof(int), kMemcpyDeviceToHost) != kCudaSuccess || host_info != 0) {
-        return false;
-    }
-    if (api.cudaDeviceSynchronize() != kCudaSuccess) {
-        return false;
-    }
-
-    // Copy the result back and return
-    X.resize(n, nrhs);
-    return api.cudaMemcpy(X.data(), dB.ptr, bytesB, kMemcpyDeviceToHost) == kCudaSuccess;
 }
 
 bool sr_solve(const Eigen::MatrixXd& O, const Eigen::VectorXcd& El, double epsilon, Eigen::VectorXcd& adot) {
@@ -470,9 +397,9 @@ bool sr_solve(const Eigen::MatrixXd& O, const Eigen::VectorXcd& El, double epsil
     auto* B_d = static_cast<double*>(dB.ptr);
     void* H = api.cublas_handle;
     bool ok = true;
-    // ō = (1/N_s) Oᵀ·1                                            (column means)
+    // ō = (1/N_s) Oᵀ·1
     ok &= api.cublasDgemv(H, kCublasOpT, N_s, p, &inv_Ns, O_d, N_s, ones_d, 1, &zero, omean_d, 1) == kCublasStatusSuccess;
-    // M = OᵀO ; M /= N_s ; M -= ōōᵀ (lower) ; M += εI (diagonal)
+    // M = OᵀO ; M /= N_s ; M -= ōōᵀ (lower) ; M += εI
     ok &= api.cublasDgemm(H, kCublasOpT, kCublasOpN, p, p, N_s, &one, O_d, N_s, O_d, N_s, &zero, M_d, p) == kCublasStatusSuccess;
     ok &= api.cublasDscal(H, p * p, &inv_Ns, M_d, 1) == kCublasStatusSuccess;
     ok &= api.cublasDsyr(H, kFillModeLower, p, &neg_one, omean_d, 1, M_d, p) == kCublasStatusSuccess;
@@ -481,7 +408,7 @@ bool sr_solve(const Eigen::MatrixXd& O, const Eigen::VectorXcd& El, double epsil
     ok &= api.cublasDgemv(H, kCublasOpT, N_s, p, &one, O_d, N_s, static_cast<double*>(dElr.ptr), 1, &zero, B_d, 1) == kCublasStatusSuccess;
     ok &= api.cublasDscal(H, p, &neg_inv_Ns, B_d, 1) == kCublasStatusSuccess;
     ok &= api.cublasDaxpy(H, p, &El_mean_re, omean_d, 1, B_d, 1) == kCublasStatusSuccess;
-    // V_im -> B column 1 (offset p, since B is p x 2 column-major)
+    // V_im -> B column 1
     ok &= api.cublasDgemv(H, kCublasOpT, N_s, p, &one, O_d, N_s, static_cast<double*>(dEli.ptr), 1, &zero, B_d + p, 1) == kCublasStatusSuccess;
     ok &= api.cublasDscal(H, p, &neg_inv_Ns, B_d + p, 1) == kCublasStatusSuccess;
     ok &= api.cublasDaxpy(H, p, &El_mean_im, omean_d, 1, B_d + p, 1) == kCublasStatusSuccess;

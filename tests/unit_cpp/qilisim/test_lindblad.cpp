@@ -16,6 +16,7 @@
 
 #include <gtest/gtest.h>
 #include <cmath>
+#include <cstdlib>
 #include "../../../src/qilisdk_cpp/backends/qilisim/analog/lindblad.h"
 
 namespace {
@@ -338,6 +339,25 @@ TEST_F(LindbladRhsExponentialAnsatzTest, GpuVariantRunsAndHasSameTermStructure) 
     lindblad_rhs_gpu(drho, rho, H_X);
     EXPECT_EQ(drho.get_terms().size(), rho.get_terms().size());
     // Coefficients must be finite (the solve produced real numbers).
+    for (const auto& [ps, coeff] : drho.get_terms().get_operators()) {
+        (void)ps;
+        EXPECT_TRUE(std::isfinite(coeff.real()) && std::isfinite(coeff.imag()));
+    }
+}
+
+TEST_F(LindbladRhsExponentialAnsatzTest, GpuVariantCpuFallbackRuns) {
+    // Force the CPU fallback inside lindblad_rhs_gpu regardless of the hardware:
+    // QILISDK_DISABLE_GPU makes qilisdk::gpu::cuda_available() (and hence sr_solve)
+    // report unavailable, so the in-function Eigen assembly + LLT branch runs. This
+    // keeps coverage of that branch deterministic on both GPU and CPU-only machines.
+    setenv("QILISDK_DISABLE_GPU", "1", 1);
+    ExponentialAnsatz rho(1, 1, 200, 10);
+    ExponentialAnsatz drho = rho.zeroed();
+    lindblad_rhs_gpu(drho, rho, H_X);
+    unsetenv("QILISDK_DISABLE_GPU");
+
+    // Same term structure as the input and finite coefficients from the LLT solve.
+    EXPECT_EQ(drho.get_terms().size(), rho.get_terms().size());
     for (const auto& [ps, coeff] : drho.get_terms().get_operators()) {
         (void)ps;
         EXPECT_TRUE(std::isfinite(coeff.real()) && std::isfinite(coeff.imag()));

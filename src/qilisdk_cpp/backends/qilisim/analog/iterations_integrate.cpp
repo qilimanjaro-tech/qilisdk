@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "../../../libs/cuda_solver.h"
+#include "../../../libs/gpu.h"
 #include "../../../libs/pybind.h"
 #include "iterations.h"
 #include "lindblad.h"

@@ -74,9 +74,6 @@ pybind11_add_module(qilisdk_libs SHARED)
 endif()
 file(GLOB LIBS_SOURCES src/qilisdk_cpp/libs/*.cpp)
 target_sources(qilisdk_libs PRIVATE ${LIBS_SOURCES})
-# Needed for dlopen/dlsym in the optional GPU shim (libs/cuda_solver.cpp).
-# No CUDA toolkit link dependency: cuBLAS/cuSOLVER are loaded lazily at runtime.
-# Empty on Windows (CMAKE_DL_LIBS), where the shim is compiled out.
 target_link_libraries(qilisdk_libs PRIVATE ${CMAKE_DL_LIBS})
 
 # Origin is Linux specific, but we can set it to @loader_path on macOS which has the same effect

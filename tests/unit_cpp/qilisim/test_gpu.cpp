@@ -17,12 +17,19 @@
 #include <gtest/gtest.h>
 #include <cmath>
 #include <complex>
-#include "../../../src/qilisdk_cpp/libs/cuda_solver.h"
+#include "../../../src/qilisdk_cpp/libs/gpu.h"
 
 namespace {
 
 using cx = std::complex<double>;
 constexpr double kTol = 1e-9;
+
+// cuda_available() lazily probes once and caches; repeated calls must agree and
+// must never throw, on GPU and CPU-only machines alike.
+TEST(CudaSolver, AvailabilityIsIdempotent) {
+    const bool first = qilisdk::gpu::cuda_available();
+    EXPECT_EQ(first, qilisdk::gpu::cuda_available());
+}
 
 // Reference stochastic-reconfiguration solve on the CPU, mirroring sr_adot_cpu
 // in lindblad.cpp: adot = M^{-1} V with M = OᵀO/N_s - ōōᵀ + εI and

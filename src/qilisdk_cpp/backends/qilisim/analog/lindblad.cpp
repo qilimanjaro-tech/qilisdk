@@ -14,7 +14,7 @@
 
 #include "lindblad.h"
 
-#include "../../../libs/cuda_solver.h"
+#include "../../../libs/gpu.h"
 
 // GCOV_EXCL_BR_START
 
@@ -227,7 +227,7 @@ void lindblad_rhs_gpu(ExponentialAnsatz& drho, const ExponentialAnsatz& rho, con
     // Regularisation parameter for M
     const double epsilon = 0.1 / std::sqrt(static_cast<double>(N_s));
 
-    // Solve the whole SR system on the GPU (M and V are assembled device-resident)
+    // Solve the whole SR system on the GPU
     Eigen::VectorXcd adot(p);
     if (!qilisdk::gpu::sr_solve(O_mat_d, El, epsilon, adot)) {
         // If the above failed, we're using CPU instead
