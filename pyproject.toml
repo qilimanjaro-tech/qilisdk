@@ -169,6 +169,12 @@ url = "https://api.pyx.dev/simple/qilimanjaro/euroqcs"
 publish-url = "https://api.pyx.dev/v1/upload/qilimanjaro/euroqcs"
 explicit = true
 
+[[tool.uv.index]]
+name = "dev-refactor-experiments"
+url = "https://api.pyx.dev/simple/qilimanjaro/dev-refactor-experiments"
+publish-url = "https://api.pyx.dev/v1/upload/qilimanjaro/dev-refactor-experiments"
+explicit = true
+
 [build-system]
 requires = ["scikit-build-core", "pybind11>=2.13,<3"]
 build-backend = "scikit_build_core.build"
