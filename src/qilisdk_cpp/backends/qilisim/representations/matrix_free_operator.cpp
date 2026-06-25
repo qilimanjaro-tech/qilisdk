@@ -15,6 +15,9 @@
 #include "matrix_free_operator.h"
 #include <sstream>
 #include "../../../libs/pybind.h"
+#if defined(__BMI2__)
+#include <immintrin.h>  // _pdep_u64: deposit anchor-counter bits into free positions
+#endif
 
 // GCOV_EXCL_BR_START
 
@@ -930,57 +933,148 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
         std::sort(sorted_target_pos.begin(), sorted_target_pos.end());
         long num_anchors = 1L << (num_qubits - k);
 
+        // Mask of "free" (non-target) bit positions within the num_qubits-bit
+        // index. Depositing an anchor counter's bits into these positions is
+        // exactly the zero-bit-insertion above, but as a single pdep instruction
+        // (BMI2) instead of a k-iteration loop. The loop remains as a fallback for
+        // targets without BMI2 (e.g. aarch64).
+        [[maybe_unused]] long free_mask = (num_qubits >= 64) ? ~0L : ((1L << num_qubits) - 1);
+        for (int li = 0; li < k; ++li) {
+            free_mask &= ~(1L << sorted_target_pos[li]);
+        }
+
         // Build a compact CSR view of the gate matrix, skipping structural zeros
         // (built once, not per anchor; (2^k)^2 work, negligible vs the state pass).
+        // The values are kept as split real/imag arrays so the per-nonzero multiply
+        // in the hot loop is plain scalar FMA. Using std::complex here instead would
+        // make libstdc++ emit its C99 Annex G NaN-correction branch (a compare + jp
+        // per element) inside the innermost loop, which dominates the profile and
+        // blocks vectorization.
         std::vector<long> row_start(dim_k + 1, 0);
         std::vector<int> col_idx;
-        std::vector<Complex> values;
+        std::vector<Real> val_re;
+        std::vector<Real> val_im;
         col_idx.reserve(dim_k * dim_k);
-        values.reserve(dim_k * dim_k);
+        val_re.reserve(dim_k * dim_k);
+        val_im.reserve(dim_k * dim_k);
         for (long r = 0; r < dim_k; ++r) {
             row_start[r] = static_cast<long>(col_idx.size());
             for (long col = 0; col < dim_k; ++col) {
                 Complex v = base_matrix(r, col);
                 if (v != Complex(0.0, 0.0)) {
                     col_idx.push_back(static_cast<int>(col));
-                    values.push_back(v);
+                    val_re.push_back(v.real());
+                    val_im.push_back(v.imag());
                 }
             }
         }
         row_start[dim_k] = static_cast<long>(col_idx.size());
 
         if (output_state.cols() == 1) {
+            // Process anchors in batches of B. The gate matrix is identical for
+            // every anchor, so the CSR coefficients (vr/vi) are broadcast scalars
+            // while the per-anchor amplitudes form contiguous B-wide arrays. The
+            // accumulators then become B independent lanes instead of one serial
+            // real/imag reduction, so the innermost loop vectorizes (SIMD across
+            // anchors) instead of running one scalar matrix element at a time.
+            constexpr long B = 8;
 #if defined(_OPENMP)
 #pragma omp parallel
 #endif
             {
-                std::vector<Complex> in_buf(dim_k);
-                std::vector<Complex> out_buf(dim_k);
+                // Layout: [m][b] with b contiguous, so the b-loop is unit-stride.
+                std::vector<Real> in_re(dim_k * B);
+                std::vector<Real> in_im(dim_k * B);
+                std::vector<Real> out_re(dim_k * B);
+                std::vector<Real> out_im(dim_k * B);
+                std::vector<long> anchors(B);
 #if defined(_OPENMP)
 #pragma omp for schedule(static)
 #endif
-                for (long c = 0; c < num_anchors; ++c) {
-                    // Insert a zero bit at each (ascending) target position so the
-                    // remaining bits of c land in the free positions in order.
-                    long anchor = c;
-                    for (int s = 0; s < k; ++s) {
-                        long p = sorted_target_pos[s];
-                        long lower = anchor & ((1L << p) - 1);
-                        long upper = anchor & ~((1L << p) - 1);
-                        anchor = lower | (upper << 1);
-                    }
-                    for (long m = 0; m < dim_k; ++m) {
-                        in_buf[m] = output_state(anchor + offsets[m]);
-                    }
-                    for (long r = 0; r < dim_k; ++r) {
-                        Complex s(0.0, 0.0);
-                        for (long j = row_start[r]; j < row_start[r + 1]; ++j) {
-                            s += values[j] * in_buf[col_idx[j]];
+                for (long c0 = 0; c0 < num_anchors; c0 += B) {
+                    const long bw = std::min<long>(B, num_anchors - c0);
+
+                    // Full-state base index for each anchor in the batch: insert a
+                    // zero bit at each (ascending) target position so the remaining
+                    // bits of the counter land in the free positions in order.
+                    for (long b = 0; b < bw; ++b) {
+#if defined(__BMI2__)
+                        anchors[b] = static_cast<long>(
+                            _pdep_u64(static_cast<unsigned long>(c0 + b), static_cast<unsigned long>(free_mask)));
+#else
+                        long anchor = c0 + b;
+                        for (int s = 0; s < k; ++s) {
+                            long p = sorted_target_pos[s];
+                            long lower = anchor & ((1L << p) - 1);
+                            long upper = anchor & ~((1L << p) - 1);
+                            anchor = lower | (upper << 1);
                         }
-                        out_buf[r] = s;
+                        anchors[b] = anchor;
+#endif
                     }
+
+                    // Gather the 2^k amplitudes for every anchor in the batch.
                     for (long m = 0; m < dim_k; ++m) {
-                        output_state(anchor + offsets[m]) = out_buf[m];
+                        const long off = offsets[m];
+                        Real* ir = &in_re[m * B];
+                        Real* ii = &in_im[m * B];
+                        for (long b = 0; b < bw; ++b) {
+                            const Complex amp = output_state(anchors[b] + off);
+                            ir[b] = amp.real();
+                            ii[b] = amp.imag();
+                        }
+                    }
+
+                    // Sparse matrix * (dim_k x B) block. Accumulators are local
+                    // fixed-size arrays (kept in registers, stored once at the end)
+                    // and the gathered inputs are marked __restrict, so the compiler
+                    // can prove no aliasing between the in/out buffers and emit a
+                    // packed b-loop. Without both, it falls back to a scalar
+                    // load+FMA+store per element (no SIMD). B is a power of two so
+                    // the b-loop maps cleanly onto whatever vector width the generic
+                    // target provides (SSE2 is guaranteed on all x86-64).
+                    for (long r = 0; r < dim_k; ++r) {
+                        Real sr[B];
+                        Real si[B];
+                        for (long b = 0; b < B; ++b) {
+                            sr[b] = 0.0;
+                            si[b] = 0.0;
+                        }
+                        for (long j = row_start[r]; j < row_start[r + 1]; ++j) {
+                            const int col = col_idx[j];
+                            const Real vr = val_re[j];
+                            const Real vi = val_im[j];
+                            const Real* __restrict ir = &in_re[col * B];
+                            const Real* __restrict ii = &in_im[col * B];
+                            // Request true SIMD over the B independent lanes: the
+                            // compiler packs ir[0..B)/ii[0..B) into vector loads and
+                            // emits one packed FMA-pair per nonzero, instead of B
+                            // scalar FMAs. A plain unroll pragma here forces a scalar
+                            // unroll that the vectorizer then fails to re-pack.
+#if defined(_OPENMP)
+#pragma omp simd
+#endif
+                            for (long b = 0; b < B; ++b) {
+                                sr[b] += vr * ir[b] - vi * ii[b];
+                                si[b] += vr * ii[b] + vi * ir[b];
+                            }
+                        }
+                        Real* __restrict sro = &out_re[r * B];
+                        Real* __restrict sio = &out_im[r * B];
+                        for (long b = 0; b < B; ++b) {
+                            sro[b] = sr[b];
+                            sio[b] = si[b];
+                        }
+                    }
+
+                    // Scatter the results back.
+                    for (long m = 0; m < dim_k; ++m) {
+                        const long off = offsets[m];
+                        const Real* sr = &out_re[m * B];
+                        const Real* si = &out_im[m * B];
+                        for (long b = 0; b < bw; ++b) {
+                            output_state(anchors[b] + off) = Complex(sr[b], si[b]);
+                        }
                     }
                 }
             }

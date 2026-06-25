@@ -20,19 +20,15 @@
 
 // GCOV_EXCL_BR_START
 
-// Precision toggle: uncomment the following line to build the simulator in
-// single precision (float). Leave it commented for the default double precision.
-// Everything below derives from `Real`, so this single switch controls the
-// precision of all scalars, dense/sparse matrices and vectors.
+// If this is defined, everything will use single precision (float) instead of double precision (double).
 #define QILISIM_SINGLE_PRECISION
 
+// Our real and complex types
 #ifdef QILISIM_SINGLE_PRECISION
 typedef float Real;
 #else
 typedef double Real;
 #endif
-
-// QiliSim specific type defs
 typedef std::complex<Real> Complex;
 
 // Eigen specfic type defs (all derived from Complex/Real so they follow the toggle)

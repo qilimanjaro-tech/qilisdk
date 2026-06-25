@@ -13,10 +13,14 @@
 // limitations under the License.
 
 #include "random.h"
+#include <algorithm>
 #include <chrono>
 #include <random>
 #include "../../../libs/pybind.h"
 #include "matrix_utils.h"
+#if defined(_OPENMP)
+#include <omp.h>
+#endif
 
 // GCOV_EXCL_BR_START
 
@@ -76,26 +80,64 @@ std::map<std::string, int> sample_from_probabilities(const std::vector<double>& 
         std::map<std::string, int>: A map of bitstring outcomes to their counts.
     */
     std::vector<int> counts(probabilities.size(), 0);
-    std::default_random_engine generator;
-    generator.seed(seed);
-    std::uniform_real_distribution<double> distribution(0.0, 1.0);
 
-// Sample
+    // Precompute the cumulative distribution once so each shot is an O(log N)
+    // binary search instead of an O(N) linear scan over all 2^n states (the old
+    // code also re-summed the prefix from scratch on every shot). The final bound
+    // is pinned to 1.0 so floating-point drift in the prefix sum can't leave a
+    // draw just below 1.0 unmatched.
+    std::vector<double> cdf(probabilities.size());
+    double running = 0.0;
+    for (size_t state_index = 0; state_index < probabilities.size(); ++state_index) {
+        running += probabilities[state_index];
+        cdf[state_index] = running;
+    }
+    if (!cdf.empty()) {
+        cdf.back() = 1.0;
+    }
+
+    // Sample. Each thread gets its own RNG and its own histogram, so there is no
+    // shared-generator data race (the previous shared engine was mutated from
+    // every thread) and no per-shot atomic. Per-thread seeds are mixed through a
+    // seed_seq rather than seed + thread_id, because default_random_engine is an
+    // LCG and adjacent raw seeds produce correlated streams. Results are therefore
+    // deterministic for a given (seed, thread count) but depend on the thread
+    // count, as is unavoidable for independent parallel streams.
 #if defined(_OPENMP)
-#pragma omp parallel for schedule(static)
+#pragma omp parallel
 #endif
-    for (int shot = 0; shot < n_shots; ++shot) {
-        double random_value = distribution(generator);
-        double cumulative_prob = 0.0;
-        for (size_t state_index = 0; state_index < probabilities.size(); ++state_index) {
-            cumulative_prob += probabilities[state_index];
-            if (random_value <= cumulative_prob) {
+    {
+        int thread_id = 0;
 #if defined(_OPENMP)
-#pragma omp atomic
+        thread_id = omp_get_thread_num();
 #endif
-                counts[state_index]++;
-                break;
+        std::seed_seq seq{static_cast<unsigned>(seed), static_cast<unsigned>(thread_id)};
+        std::default_random_engine generator(seq);
+        std::uniform_real_distribution<double> distribution(0.0, 1.0);
+
+        std::vector<int> local_counts(probabilities.size(), 0);
+
+#if defined(_OPENMP)
+#pragma omp for schedule(static)
+#endif
+        for (int shot = 0; shot < n_shots; ++shot) {
+            double random_value = distribution(generator);
+            // First state whose cumulative probability reaches the draw — identical
+            // selection to the old "random_value <= cumulative_prob" linear scan.
+            size_t state_index =
+                static_cast<size_t>(std::lower_bound(cdf.begin(), cdf.end(), random_value) - cdf.begin());
+            if (state_index >= cdf.size()) {
+                state_index = cdf.size() - 1;
             }
+            local_counts[state_index]++;
+        }
+
+        // Merge this thread's histogram into the shared result.
+#if defined(_OPENMP)
+#pragma omp critical
+#endif
+        for (size_t i = 0; i < counts.size(); ++i) {
+            counts[i] += local_counts[i];
         }
     }
 
