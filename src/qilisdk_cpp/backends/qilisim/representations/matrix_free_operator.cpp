@@ -1155,15 +1155,20 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
                             const Real* __restrict ii = &in_im[col * B];
                             // Request true SIMD over the B independent lanes: the
                             // compiler packs ir[0..B)/ii[0..B) into vector loads and
-                            // emits one packed FMA-pair per nonzero, instead of B
-                            // scalar FMAs. A plain unroll pragma here forces a scalar
-                            // unroll that the vectorizer then fails to re-pack.
+                            // emits packed FMAs per nonzero, instead of B scalar FMAs.
+                            // The complex multiply-accumulate is written as four
+                            // separate FMAs (rather than `sr += vr*ir - vi*ii`) so it
+                            // lowers to vfmadd/vfnmadd directly into the accumulators;
+                            // the combined form can't be re-associated without
+                            // -ffast-math and compiles to extra mul+add ops.
 #if defined(_OPENMP)
 #pragma omp simd
 #endif
                             for (long b = 0; b < B; ++b) {
-                                sr[b] += vr * ir[b] - vi * ii[b];
-                                si[b] += vr * ii[b] + vi * ir[b];
+                                sr[b] += vr * ir[b];
+                                sr[b] -= vi * ii[b];
+                                si[b] += vr * ii[b];
+                                si[b] += vi * ir[b];
                             }
                         }
                         Real* __restrict sro = &out_re[r * B];
