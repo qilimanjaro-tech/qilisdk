@@ -110,7 +110,10 @@ void lindblad_rhs(DenseMatrix& drho, const DenseMatrix& rho, const MatrixFreeHam
 #pragma omp parallel for schedule(static)
 #endif
         for (int i = 0; i < drho.size(); ++i) {
-            drho(i) *= -imag;
+            // Multiply by -i: (a + b i)(-i) = b - a i. Done by hand to avoid the
+            // std::complex operator*= C99 NaN-correction branch on every element.
+            const Complex v = drho(i);
+            drho(i) = Complex(v.imag(), -v.real());
         }
     } else {
         DenseMatrix Hrho(rho.rows(), rho.cols());

@@ -178,80 +178,78 @@ void iter_rk4(DenseMatrix& rho_t, double t, double dt, const std::vector<double>
     const Real dt_over_3 = dt / 3.0;
     const Real dt_over_6 = dt / 6.0;
 
-    // Standard RK4 loop
-    DenseMatrix k(rho_rows, rho_cols);
-    DenseMatrix rho_tmp(rho_rows, rho_cols);
-    DenseMatrix rho_old(rho_rows, rho_cols);
+    // Reuse the scratch matrices across calls (resize is a no-op once the size is
+    // stable) instead of allocating three 32 MB buffers on every step -- the
+    // per-step allocation + first-touch was generating millions of page faults
+    // (heavy system time) and capping parallel efficiency.
+    //
+    // These MUST be a single shared instance (NOT thread_local): they are written
+    // inside the OpenMP parallel-for loops below, so every worker must see the
+    // same matrix. iter_rk4 is only ever called from the serial time-step loop, so
+    // a function-static shared buffer is safe. Heap-allocated once and
+    // intentionally leaked to sidestep any static-destruction ordering issues at
+    // interpreter shutdown of the loaded extension module.
+    static DenseMatrix* const k_buf = new DenseMatrix();
+    static DenseMatrix* const rho_tmp_buf = new DenseMatrix();
+    static DenseMatrix* const rho_old_buf = new DenseMatrix();
+    DenseMatrix& k = *k_buf;
+    DenseMatrix& rho_tmp = *rho_tmp_buf;
+    DenseMatrix& rho_old = *rho_old_buf;
+    k.resize(rho_rows, rho_cols);
+    rho_tmp.resize(rho_rows, rho_cols);
+    rho_old.resize(rho_rows, rho_cols);
     double t_step = t;
 
-// Store the previous rho, we'll reuse it for the intermediate steps
-#if defined(_OPENMP)
-#pragma omp parallel for schedule(static)
-#endif
-    for (int i = 0; i < rho_old.rows(); ++i) {
-        for (int j = 0; j < rho_old.cols(); ++j) {
-            rho_old(i, j) = rho_t(i, j);
-        }
-    }
+    // RK4 stages. After each derivative evaluation k, its two consumers --
+    // accumulating into rho_t and preparing rho_tmp for the next stage -- are
+    // fused into one pass. That reads k once instead of twice (the combine loops
+    // are bandwidth-bound) and halves the number of OpenMP parallel regions
+    // (fewer fork/join barriers, better strong scaling). The result is the
+    // standard RK4 update rho += dt/6 k1 + dt/3 k2 + dt/3 k3 + dt/6 k4.
 
-    // First step: compute k1 at time t
+    // k1 at time t. The first combine also snapshots the original rho into
+    // rho_old (the base for every later stage), folding away the separate copy.
     lindblad_rhs(k, rho_t, construct_current_hamiltonian(t_step, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
 #endif
     for (int i = 0; i < rho_t.rows(); ++i) {
         for (int j = 0; j < rho_t.cols(); ++j) {
-            rho_t(i, j) += dt_over_6 * k(i, j);
+            const Complex orig = rho_t(i, j);
+            const Complex kv = k(i, j);
+            rho_old(i, j) = orig;
+            rho_t(i, j) = orig + dt_over_6 * kv;
+            rho_tmp(i, j) = orig + dt_over_2 * kv;
         }
     }
 
-// Second step: compute k2 at time t + dt/2
-#if defined(_OPENMP)
-#pragma omp parallel for schedule(static)
-#endif
-    for (int i = 0; i < rho_tmp.rows(); ++i) {
-        for (int j = 0; j < rho_tmp.cols(); ++j) {
-            rho_tmp(i, j) = rho_old(i, j) + dt_over_2 * k(i, j);
-        }
-    }
+    // k2 at time t + dt/2
     lindblad_rhs(k, rho_tmp, construct_current_hamiltonian(t_step + 0.5 * dt, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
 #endif
     for (int i = 0; i < rho_t.rows(); ++i) {
         for (int j = 0; j < rho_t.cols(); ++j) {
-            rho_t(i, j) += dt_over_3 * k(i, j);
+            const Complex kv = k(i, j);
+            rho_t(i, j) += dt_over_3 * kv;
+            rho_tmp(i, j) = rho_old(i, j) + dt_over_2 * kv;
         }
     }
 
-// Third step: compute k3 at time t + dt/2
-#if defined(_OPENMP)
-#pragma omp parallel for schedule(static)
-#endif
-    for (int i = 0; i < rho_tmp.rows(); ++i) {
-        for (int j = 0; j < rho_tmp.cols(); ++j) {
-            rho_tmp(i, j) = rho_old(i, j) + dt_over_2 * k(i, j);
-        }
-    }
+    // k3 at time t + dt/2
     lindblad_rhs(k, rho_tmp, construct_current_hamiltonian(t_step + 0.5 * dt, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
 #endif
     for (int i = 0; i < rho_t.rows(); ++i) {
         for (int j = 0; j < rho_t.cols(); ++j) {
-            rho_t(i, j) += dt_over_3 * k(i, j);
+            const Complex kv = k(i, j);
+            rho_t(i, j) += dt_over_3 * kv;
+            rho_tmp(i, j) = rho_old(i, j) + static_cast<Real>(dt) * kv;
         }
     }
 
-// Fourth step: compute k4 at time t + dt
-#if defined(_OPENMP)
-#pragma omp parallel for schedule(static)
-#endif
-    for (int i = 0; i < rho_tmp.rows(); ++i) {
-        for (int j = 0; j < rho_tmp.cols(); ++j) {
-            rho_tmp(i, j) = rho_old(i, j) + static_cast<Real>(dt) * k(i, j);
-        }
-    }
+    // k4 at time t + dt
     lindblad_rhs(k, rho_tmp, construct_current_hamiltonian(t_step + dt, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
@@ -263,18 +261,26 @@ void iter_rk4(DenseMatrix& rho_t, double t, double dt, const std::vector<double>
     }
 
     // Normalize the state
-    Complex norm = 0;
     if (is_unitary_on_statevector) {
-#ifndef _WIN32
+        // The norm of a statevector is real, so accumulate a real sum-of-squares
+        // and divide by a real scalar. Using a Complex norm here forces a complex
+        // division (__divdc3) on every element.
+        double norm_sq = 0.0;
 #if defined(_OPENMP)
-#pragma omp parallel for reduction(complex_double_reduction : norm) schedule(static)
-#endif
+#pragma omp parallel for reduction(+ : norm_sq) schedule(static)
 #endif
         for (int i = 0; i < rho_t.rows(); ++i) {
-            norm += std::norm(rho_t(i, 0));
+            norm_sq += std::norm(rho_t(i, 0));
         }
-        norm = std::sqrt(norm);
+        const Real norm = static_cast<Real>(std::sqrt(norm_sq));
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+        for (int i = 0; i < rho_t.rows(); ++i) {
+            rho_t(i, 0) /= norm;
+        }
     } else {
+        Complex norm = 0;
 #ifndef _WIN32
 #if defined(_OPENMP)
 #pragma omp parallel for reduction(complex_double_reduction : norm) schedule(static)
@@ -283,13 +289,13 @@ void iter_rk4(DenseMatrix& rho_t, double t, double dt, const std::vector<double>
         for (int i = 0; i < dim; ++i) {
             norm += rho_t(i, i);
         }
-    }
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
 #endif
-    for (int i = 0; i < rho_t.rows(); ++i) {
-        for (int j = 0; j < rho_t.cols(); ++j) {
-            rho_t(i, j) /= norm;
+        for (int i = 0; i < rho_t.rows(); ++i) {
+            for (int j = 0; j < rho_t.cols(); ++j) {
+                rho_t(i, j) /= norm;
+            }
         }
     }
 }
