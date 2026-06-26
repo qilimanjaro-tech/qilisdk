@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../modules/noise/noise_types.rst:2
 msgid "Noise Types"
-msgstr "Tipus de Soroll"
+msgstr "Tipus de soroll"
 
 #: ../../modules/noise/noise_types.rst:5
 msgid "KrausChannel"

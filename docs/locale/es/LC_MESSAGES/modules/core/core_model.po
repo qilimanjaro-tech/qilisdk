@@ -34,7 +34,7 @@ msgstr ""
 
 #: ../../modules/core/core_model.rst:27
 msgid "Objectives and Constraints"
-msgstr "Objetivos y Restricciones"
+msgstr "Objetivos y restricciones"
 
 #: ../../modules/core/core_model.rst:29
 msgid "Each :class:`~qilisdk.core.model.Model` consists of:"
@@ -171,7 +171,7 @@ msgstr "Por ejemplo, para crear un problema de la mochila:"
 
 #: ../../modules/core/core_model.rst:147
 msgid "Evaluating a Model"
-msgstr "Evaluar un Modelo"
+msgstr "Evaluar un modelo"
 
 #: ../../modules/core/core_model.rst:149
 msgid ""

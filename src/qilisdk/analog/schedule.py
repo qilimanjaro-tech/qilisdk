@@ -124,6 +124,10 @@ class Schedule(Parameterizable):
         if total_time is not None:
             self.scale_max_time(total_time)
 
+        # We should have either a total_time or a max time from the coefficients, otherwise we can't define the schedule
+        if self._max_time is None and len(self._hamiltonians) > 0 and self._get_coefficients_max_time() <= 0.0:
+            raise ValueError("Total time must be provided at initialization, either via total_time or coefficients.")
+
     @classmethod
     def polynomial(
         cls,
