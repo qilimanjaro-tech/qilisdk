@@ -105,7 +105,7 @@ Gate build_fused_gate(const FusionBlock& block, const std::vector<Gate>& gates) 
     Returns:
         Gate: The fused gate representing the block, or the original gate if the block has only one gate.
     */
-    
+
     // Make sure we have at least one gate
     if (block.gate_indices.size() == 1) {
         return gates[block.gate_indices[0]];

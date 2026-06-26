@@ -968,7 +968,7 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
                 diag_re[m] = v.real();
                 diag_im[m] = v.imag();
             }
-        // The more general sparse path for non-diagonal blocks
+            // The more general sparse path for non-diagonal blocks
         } else {
             row_start.assign(dim_k + 1, 0);
             col_idx.reserve(dim_k * dim_k);
