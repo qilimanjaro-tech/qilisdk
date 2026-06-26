@@ -393,7 +393,6 @@ void time_evolution_variational_exponential(ExponentialAnsatz& rho_t, const std:
     // Set up the ansatz
     int n_qubits = hamiltonians[0].get_nqubits();
     rho_t = ExponentialAnsatz(n_qubits, config.get_order(), config.get_shots(), config.get_warmups());
-    rho_t.set_shots(config.get_num_monte_carlo_trajectories());
 
     // Fixed-step RK4 loop
     for (size_t step_ind = 0; step_ind < step_list.size(); ++step_ind) {

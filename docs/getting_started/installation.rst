@@ -43,7 +43,7 @@ You can combine extras:
 
     QiliSDK requires a python version 3.11 or higher.
     
-    Minimum OS requiremnets:
+    Minimum OS requirements:
         - Linux: Ubuntu 22.04 or higher
         - Windows: Windows 11 or higher
         - MacOS: MacOS 14 or higher
@@ -57,7 +57,7 @@ but be aware that this is not recommended for most users, and we make no promise
 
 Support for Windows is limited, so we recommend using WSL, which can be installed as per 
 `this guide <https://learn.microsoft.com/en-us/windows/wsl/install>`__. 
-With this you should then following the Linux instructions below.
+With this you should then follow the Linux instructions below.
 If you must use pure Windows, the Windows instructions below should work, although they disable certain code features (notably some parallelized loops).
 
 First, make sure you have Python, pip, git, cmake and a C++ compiler installed:

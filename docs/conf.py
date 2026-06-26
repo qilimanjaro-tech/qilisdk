@@ -111,7 +111,7 @@ smv_prefer_remote_refs = False
 
 html_title = project
 html_permalinks_icon = Icons.permalinks_icon
-html_favicon = "_static/q_trans.png"
+html_favicon = "_static/QiliSDK_q.png"
 # html_baseurl = "https://docs.qilimanjaro.tech/"
 html_theme = "sphinxawesome_theme"
 html_static_path = ["_static"]
@@ -123,8 +123,8 @@ html_sidebars = {
 }
 
 theme_options = ThemeOptions(
-    logo_light="_static/q_trans.png",
-    logo_dark="_static/q_trans.png",
+    logo_light="_static/QiliSDK_blk.svg",
+    logo_dark="_static/QiliSDK_wht.svg",
     awesome_external_links=True,
 )
 

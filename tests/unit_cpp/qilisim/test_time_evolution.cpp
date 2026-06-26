@@ -915,4 +915,18 @@ TEST_F(TimeEvolutionMatrixFreeTest, TimeDependentRateAdaptiveThrows) {
     EXPECT_ANY_THROW(run_time_evolution_mf(pure_plus_sparse(), hamiltonians, params, steps, noise, {}, config));
 }
 
+TEST_F(TimeEvolutionVariationalTest, AnsatzParametersComeFromVariationalConfig) {
+    config.set_shots(37);
+    config.set_warmups(3);
+    config.set_order(1);
+    config.set_num_monte_carlo_trajectories(999);  // must NOT leak into the ansatz shots
+
+    ExponentialAnsatz rho_t(1, 1, 50, 0);
+    time_evolution_variational_exponential(rho_t, hamiltonians, params, step_list, config);
+
+    EXPECT_EQ(rho_t.get_shots(), 37);
+    EXPECT_EQ(rho_t.get_warmups(), 3);
+    EXPECT_EQ(rho_t.get_order(), 1);
+}
+
 // GCOV_EXCL_BR_STOP
