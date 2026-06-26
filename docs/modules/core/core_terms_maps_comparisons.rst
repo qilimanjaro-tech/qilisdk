@@ -58,7 +58,7 @@ Mathematical Maps
 Use :class:`~qilisdk.core.variables.MathematicalMap` helpers to apply common
 functions to a parameter or term while keeping expressions symbolic.
 Each wraps a :class:`~qilisdk.core.variables.Parameter`, :class:`~qilisdk.core.variables.Term`,
-or any other base variable and defer evaluation until values are provided.
+or any other base variable and defers evaluation until values are provided.
 
 .. code-block:: python
 

@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../modules/functionals/functionals_reservoirs.rst:2
 msgid "Quantum Reservoirs"
-msgstr "Reservorios Cuánticos"
+msgstr "Reservorios cuánticos"
 
 #: ../../modules/functionals/functionals_reservoirs.rst:4
 msgid ""
@@ -114,11 +114,11 @@ msgstr ""
 
 #: ../../modules/functionals/functionals_reservoirs.rst:28
 msgid "Usage Example"
-msgstr "Ejemplo de Uso"
+msgstr "Ejemplo de uso"
 
 #: ../../modules/functionals/functionals_reservoirs.rst:71
 msgid "Encoding Input Data"
-msgstr "Codificación de Datos de Entrada"
+msgstr "Codificación de datos de entrada"
 
 #: ../../modules/functionals/functionals_reservoirs.rst:73
 msgid ""

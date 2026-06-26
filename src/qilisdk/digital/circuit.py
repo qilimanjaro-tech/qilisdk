@@ -185,7 +185,7 @@ class Circuit(Parameterizable):
         Raises:
             QubitOutOfRangeError: If any qubit index used by the gate is not within the circuit's qubit range.
         """
-        if any(qubit >= self.nqubits for qubit in gate.qubits):
+        if any(qubit < 0 or qubit >= self.nqubits for qubit in gate.qubits):
             raise QubitOutOfRangeError
 
         self._parse_params(gate)
@@ -214,7 +214,7 @@ class Circuit(Parameterizable):
         Raises:
             QubitOutOfRangeError: If any qubit index used by the gate is not within the circuit's qubit range.
         """
-        if any(qubit >= self.nqubits for qubit in gate.qubits):
+        if any(qubit < 0 or qubit >= self.nqubits for qubit in gate.qubits):
             raise QubitOutOfRangeError
 
         self._parse_params(gate)

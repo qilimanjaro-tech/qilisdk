@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from .interpolator import Interpolation, Interpolator
-from .model import Constraint, Model, Objective, ObjectiveSense
+from .model import QUBO, Constraint, Model, Objective, ObjectiveSense
 from .qtensor import (
     InitialState,
     QTensor,
@@ -55,6 +55,7 @@ __all__ = [
     "LEQ",
     "LT",
     "NEQ",
+    "QUBO",
     "BinaryVariable",
     "Constraint",
     "Domain",

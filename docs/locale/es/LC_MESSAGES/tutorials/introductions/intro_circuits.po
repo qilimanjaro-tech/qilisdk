@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-05 15:18+0200\n"
+"POT-Creation-Date: 2026-06-16 12:04+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../tutorials/introductions/intro_circuits.rst:2
 msgid "Quantum Circuits"
-msgstr "Circuitos Cuánticos"
+msgstr "Circuitos cuánticos"
 
 #: ../../tutorials/introductions/intro_circuits.rst:4
 msgid ""
@@ -36,7 +36,7 @@ msgstr ""
 
 #: ../../tutorials/introductions/intro_circuits.rst:8
 msgid "What is a Quantum Circuit?"
-msgstr "¿Qué es un Circuito Cuántico?"
+msgstr "¿Qué es un circuito cuántico?"
 
 #: ../../tutorials/introductions/intro_circuits.rst:10
 msgid ""
@@ -84,7 +84,7 @@ msgstr ""
 
 #: ../../tutorials/introductions/intro_circuits.rst:36
 msgid "What Are Quantum Gates?"
-msgstr "¿Qué Son las Puertas Cuánticas?"
+msgstr "¿Qué son las puertas cuánticas?"
 
 #: ../../tutorials/introductions/intro_circuits.rst:38
 #, python-brace-format
@@ -235,7 +235,7 @@ msgstr ""
 
 #: ../../tutorials/introductions/intro_circuits.rst:94
 msgid "What Does Each Quantum Gate Do?"
-msgstr "¿Qué Hace Cada Puerta Cuántica?"
+msgstr "¿Qué hace cada puerta cuántica?"
 
 #: ../../tutorials/introductions/intro_circuits.rst:96
 msgid ""
@@ -258,7 +258,7 @@ msgstr ""
 
 #: ../../tutorials/introductions/intro_circuits.rst:105
 msgid "Gate Name/s"
-msgstr "Nombre/s de la Puerta"
+msgstr "Nombre/s de la puerta"
 
 #: ../../tutorials/introductions/intro_circuits.rst:106
 msgid "Description"
@@ -266,7 +266,7 @@ msgstr "Descripción"
 
 #: ../../tutorials/introductions/intro_circuits.rst:107
 msgid "Matrix Representation"
-msgstr "Representación Matricial"
+msgstr "Representación matricial"
 
 #: ../../tutorials/introductions/intro_circuits.rst:108
 msgid "X"
@@ -497,7 +497,7 @@ msgstr ""
 
 #: ../../tutorials/introductions/intro_circuits.rst:144
 msgid "Generic Controlled Gates"
-msgstr "Puertas Controladas Genéricas"
+msgstr "Puertas controladas genéricas"
 
 #: ../../tutorials/introductions/intro_circuits.rst:145
 msgid ""
@@ -545,7 +545,7 @@ msgstr ""
 
 #: ../../tutorials/introductions/intro_circuits.rst:152
 msgid "How Can We Simulate These Circuits?"
-msgstr "¿Cómo Podemos Simular Estos Circuitos?"
+msgstr "¿Cómo podemos simular estos circuitos?"
 
 #: ../../shared/install_note.rst:1
 msgid ""
@@ -597,7 +597,7 @@ msgstr ""
 msgid ""
 "If we want to simulate this circuit, we can use the :doc:`QiliSim "
 "</modules/backends/backends_qilisim>` backend. To tell the simulator that"
-" we want to simulate a circuit we use the the :doc:`DigitalPropagation "
+" we want to simulate a circuit we use the :doc:`DigitalPropagation "
 "</modules/functionals/functionals_digital>` class and then use the "
 ":doc:`Readout </modules/readout/readout>` class to specify how we want to"
 " read out our results:"
@@ -656,7 +656,7 @@ msgstr ""
 
 #: ../../tutorials/introductions/intro_circuits.rst:225
 msgid "Further Reading"
-msgstr "Lecturas Adicionales"
+msgstr "Lecturas adicionales"
 
 #: ../../tutorials/introductions/intro_circuits.rst:227
 msgid "`Quantum Circuit`_"
