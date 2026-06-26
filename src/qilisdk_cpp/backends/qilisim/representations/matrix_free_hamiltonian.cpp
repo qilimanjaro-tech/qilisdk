@@ -84,27 +84,15 @@ void MatrixFreeHamiltonian::apply(const DenseMatrix& input_state, MatrixFreeAppl
         terms.push_back({base_phase, base_phase_neg, flip_mask, sign_mask});
     }
 
-    // Partition into diagonal (flip_mask == 0) and off-diagonal terms. Diagonal
-    // terms all read in_ptr[i] (no flip), so their combined effect on out[i] is a
-    // single phase: (sum over diagonal terms of +/- base_phase) * in[i]. Collapsing
-    // them avoids redundantly re-loading in[i] and doing a complex FMA per diagonal
-    // term -- it becomes a cheap sign accumulation plus one multiply. For physical
-    // Hamiltonians (e.g. the ZZ part of a TFIM) the diagonal is a large fraction of
-    // the terms, so this removes a big chunk of the per-output instruction count.
+    // Move all diagonal terms to the front of the vector, preserving relative order
     auto diag_mid = std::stable_partition(terms.begin(), terms.end(), [](const Term& t) { return t.flip_mask == 0; });
     const long n_diag = static_cast<long>(diag_mid - terms.begin());
 
-    // Among the off-diagonal terms, separate "simple" ones: no sign flip
-    // (sign_mask == 0, so the popcount/sign-select is never needed) and a purely
-    // real phase (so the complex multiply is two FMAs instead of four). A single
-    // Pauli X with a real coefficient -- the bulk of a transverse-field term -- is
-    // exactly this case.
+    // Seperate simple (i.e. no sign flip, real phase) off-diagonal terms from general off-diagonal terms
     auto simple_mid = std::stable_partition(diag_mid, terms.end(), [](const Term& t) { return t.sign_mask == 0 && t.base_phase.imag() == 0.0; });
     const long n_simple_off = static_cast<long>(simple_mid - diag_mid);
 
-    // Make sure output_state has the right shape. The statevector path writes
-    // every entry directly (out_ptr[i] = ...), so it needs no pre-zeroing; only the
-    // density-matrix paths below accumulate with += and require a zeroed start.
+    // Make sure output_state has the right shape
     output_state.resizeLike(input_state);
     if (input_state.cols() != 1) {
         output_state.setZero();
@@ -119,17 +107,13 @@ void MatrixFreeHamiltonian::apply(const DenseMatrix& input_state, MatrixFreeAppl
     // If it's a statevector
     if (input_state.cols() == 1) {
         const long total = output_state.size();
-        // [t_begin, diag_end) diagonal | [diag_end, simple_end) simple off-diagonal
-        // (no sign, real phase) | [simple_end, t_end) general off-diagonal.
         const Term* diag_end = t_begin + n_diag;
         const Term* simple_end = diag_end + n_simple_off;
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
 #endif
         for (long i = 0; i < total; ++i) {
-            // Diagonal terms: collapse to a single phase that multiplies in_ptr[i].
-            // Just a sign-weighted accumulation of the (small, L1-resident) phases --
-            // no per-term gather, index math, or complex FMA.
+            // Handle diagonal terms first
             double dr = 0.0;
             double di = 0.0;
             for (const Term* t = t_begin; t != diag_end; ++t) {
@@ -144,8 +128,7 @@ void MatrixFreeHamiltonian::apply(const DenseMatrix& input_state, MatrixFreeAppl
             double coeff_re = dr * xr0 - di * xi0;
             double coeff_im = dr * xi0 + di * xr0;
 
-            // Simple off-diagonal terms (no sign, real phase): just a real scalar
-            // times the gathered amplitude -- no popcount/select, two FMAs.
+            // Now the simple off-diagonal terms, which are all real and have no sign flips
             for (const Term* t = diag_end; t != simple_end; ++t) {
                 long index = i ^ t->flip_mask;
                 const double pr = t->base_phase.real();
@@ -154,10 +137,7 @@ void MatrixFreeHamiltonian::apply(const DenseMatrix& input_state, MatrixFreeAppl
                 coeff_im += pr * x.imag();
             }
 
-            // General off-diagonal terms: each gathers in_ptr[i ^ flip] and
-            // contributes a full complex multiply. Accumulated by hand (split
-            // real/imag) so the multiply is four FMAs and never hits libstdc++'s
-            // std::complex NaN-correction branch (vucomisd + jp + __muldc3).
+            // General off-diagonal terms, which are more expensive since they beed a full complex multiply and may have sign flips
             for (const Term* t = simple_end; t != t_end; ++t) {
                 long index = i ^ t->flip_mask;
                 bool neg = popcount_u64(static_cast<unsigned long long>(i) & static_cast<unsigned long long>(t->sign_mask)) & 1;

@@ -17,6 +17,8 @@ import pytest
 
 pytest.importorskip("qilisim_module", reason="QiliSim integration tests require the 'qilisim_module' C++ extension")
 
+import random
+
 from qilisdk.analog.hamiltonian import X as pauli_x
 from qilisdk.analog.hamiltonian import Y as pauli_y
 from qilisdk.analog.hamiltonian import Z as pauli_z
@@ -28,6 +30,8 @@ from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, H, M, X, Y, Z
 from qilisdk.functionals import AnalogEvolution, DigitalPropagation, FunctionalResult
 from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
 from qilisdk.readout import Readout, SamplingReadout
+
+random.seed(42)
 
 analog_methods = [
     AnalogMethod.direct(),
@@ -250,6 +254,71 @@ def test_fuse_gates_matches_unfused(max_fused_qubits):
     )
     assert fidelity == pytest.approx(1.0, abs=1e-4)
     assert np.max(np.abs(state_unfused - state_fused)) < 1e-3
+
+
+def _statevectors_close_up_to_global_phase(a, b, tol=1e-3):
+    # Two statevectors describing the same physical state may differ by an overall
+    # phase, so compare via the (phase-insensitive) fidelity and then align the
+    # global phase before the element-wise check.
+    a = np.asarray(a).reshape(-1)
+    b = np.asarray(b).reshape(-1)
+    fidelity = np.abs(np.vdot(a, b)) / (np.linalg.norm(a) * np.linalg.norm(b))
+    if fidelity != pytest.approx(1.0, abs=1e-4):
+        return False
+    # Align b onto a using the phase of their largest overlapping component.
+    pivot = int(np.argmax(np.abs(a)))
+    if np.abs(b[pivot]) > 0:
+        phase = (a[pivot] / b[pivot]) / np.abs(a[pivot] / b[pivot])
+        b = b * phase
+    return bool(np.max(np.abs(a - b)) < tol)
+
+
+@pytest.mark.parametrize("nqubits_max_fused_qubits", [(4, 2), (6, 3), (7, 4), (8, 5)])
+def test_fused_matches_normal_statevector_large_random(nqubits_max_fused_qubits):
+    nqubits, max_fused_qubits = nqubits_max_fused_qubits
+    # The fused matrix-free path must produce the same statevector as the normal
+    # (non-matrix-free) dense path, which applies each gate via its full matrix.
+    # This is the path that builds scattered multi-qubit gate matrices, so the test
+    # guards the gate-expansion logic shared by fusion and the dense simulator.
+    # Fusion only activates with >= 4 threads.
+    c = Circuit.random(
+        nqubits=nqubits, ngates=500, single_qubit_gates=[H, X, Y, Z, RX, RY, RZ, U1, U2, U3], two_qubit_gates=[CNOT]
+    )
+    backend_normal = QiliSim(
+        execution_config=ExecutionConfig(seed=42, num_threads=4),
+        digital_simulation_method=DigitalMethod.statevector(matrix_free=False),
+    )
+    backend_fused = QiliSim(
+        execution_config=ExecutionConfig(seed=42, num_threads=4),
+        digital_simulation_method=DigitalMethod.statevector(
+            matrix_free=True, fuse_gates=True, max_fused_qubits=max_fused_qubits
+        ),
+    )
+    readout = Readout().with_state_tomography()
+    state_normal = backend_normal.execute(DigitalPropagation(circuit=c), readout=readout).get_state().dense()
+    state_fused = backend_fused.execute(DigitalPropagation(circuit=c), readout=readout).get_state().dense()
+    assert _statevectors_close_up_to_global_phase(state_normal, state_fused)
+
+
+def test_fused_matches_normal_sampling_large_random():
+    # Same comparison as above but for a larger register via sampling (phase
+    # insensitive and cheaper than full state tomography at high qubit counts).
+    nqubits = 10
+    c = Circuit.random(
+        nqubits=nqubits, ngates=800, single_qubit_gates=[H, X, Y, Z, RX, RY, RZ, U1, U2, U3], two_qubit_gates=[CNOT]
+    )
+    backend_normal = QiliSim(
+        execution_config=ExecutionConfig(seed=42, num_threads=4),
+        digital_simulation_method=DigitalMethod.statevector(matrix_free=False),
+    )
+    backend_fused = QiliSim(
+        execution_config=ExecutionConfig(seed=42, num_threads=4),
+        digital_simulation_method=DigitalMethod.statevector(matrix_free=True, fuse_gates=True, max_fused_qubits=4),
+    )
+    readout = Readout().with_sampling(nshots=2000)
+    res_normal = backend_normal.execute(DigitalPropagation(circuit=c), readout=readout)
+    res_fused = backend_fused.execute(DigitalPropagation(circuit=c), readout=readout)
+    assert _counts_similar(res_normal.get_samples(), res_fused.get_samples(), total_shots=2000, tol=0.1)
 
 
 def test_fuse_gates_with_mid_circuit_measurement():

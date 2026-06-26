@@ -88,23 +88,30 @@ std::vector<Gate> combine_single_qubit_gates(const std::vector<Gate>& gates) {
 
 namespace {
 
-// A block of gates being accumulated for fusion. `qubits` is the (sorted) set
-// of qubits the block acts on; `gate_indices` are indices into the original
-// gate list, kept in ascending (circuit) order.
+// A block of gates being accumulated for fusion
 struct FusionBlock {
     std::set<int> qubits;
     std::vector<int> gate_indices;
 };
 
-// Build the single fused Gate represented by a block, or return the original
-// gate unchanged if the block holds only one gate (so specialized fast paths
-// such as X/H/CNOT are preserved).
 Gate build_fused_gate(const FusionBlock& block, const std::vector<Gate>& gates) {
+    /*
+    Build a fused gate from a block of gates.
+
+    Args:
+        block (FusionBlock): The block of gates to fuse.
+        gates (std::vector<Gate>&): The list of gates in the circuit.
+
+    Returns:
+        Gate: The fused gate representing the block, or the original gate if the block has only one gate.
+    */
+    
+    // Make sure we have at least one gate
     if (block.gate_indices.size() == 1) {
         return gates[block.gate_indices[0]];
     }
 
-    // Map the block's qubits to a contiguous local index space [0, k).
+    // Map the block's qubits to a contiguous local space
     std::vector<int> block_qubits(block.qubits.begin(), block.qubits.end());
     int k = int(block_qubits.size());
     std::map<int, int> to_local;
@@ -112,8 +119,7 @@ Gate build_fused_gate(const FusionBlock& block, const std::vector<Gate>& gates) 
         to_local[block_qubits[li]] = li;
     }
 
-    // Compose the member gates' matrices on the local k-qubit register, in
-    // circuit order: M = G_{last} * ... * G_{first}.
+    // Multiply the matrices together to get the new gate
     SparseMatrix combined;
     bool first = true;
     for (int gi : block.gate_indices) {
@@ -164,7 +170,7 @@ std::vector<Gate> fuse_gates(const std::vector<Gate>& gates, int max_fused_qubit
     std::vector<Gate> result;
     std::vector<FusionBlock> open_blocks;
 
-    // Emit a set of blocks in circuit order (by their earliest gate index).
+    // Output the blocks in circuit order (by their earliest gate index)
     auto emit_blocks = [&](std::vector<FusionBlock>& blocks) {
         std::sort(blocks.begin(), blocks.end(), [](const FusionBlock& a, const FusionBlock& b) { return a.gate_indices.front() < b.gate_indices.front(); });
         for (const auto& block : blocks) {
@@ -172,26 +178,26 @@ std::vector<Gate> fuse_gates(const std::vector<Gate>& gates, int max_fused_qubit
         }
     };
 
+    // Output all open blocks and clear the list
     auto flush_all = [&]() {
         emit_blocks(open_blocks);
         open_blocks.clear();
     };
 
+    // Go through the circuit
     for (int i = 0; i < int(gates.size()); ++i) {
         const Gate& gate = gates[i];
         std::vector<int> gate_qubits = gate.get_qubits();
 
-        // Measurements act as a barrier: everything before them must be applied
-        // first, and they are passed through unchanged.
+        // Measurements act as a barrier
         if (gate.get_name() == "M") {
             flush_all();
             result.push_back(gate);
             continue;
         }
 
+        // Find all currently-open blocks that share a qubit with this gate
         std::set<int> gate_qubit_set(gate_qubits.begin(), gate_qubits.end());
-
-        // Find all currently-open blocks that share a qubit with this gate.
         std::vector<int> overlapping;
         std::set<int> candidate_qubits = gate_qubit_set;
         for (int b = 0; b < int(open_blocks.size()); ++b) {
@@ -208,11 +214,12 @@ std::vector<Gate> fuse_gates(const std::vector<Gate>& gates, int max_fused_qubit
             }
         }
 
+        // Check if the gate and the merged block fit within the max qubit limit
         bool gate_fits = int(gate_qubit_set.size()) <= max_fused_qubits;
         bool merged_fits = int(candidate_qubits.size()) <= max_fused_qubits;
 
+        // If so, merge it
         if (gate_fits && merged_fits) {
-            // Merge the gate with all overlapping blocks into a single block.
             FusionBlock merged;
             merged.qubits = candidate_qubits;
             for (int b : overlapping) {
@@ -237,18 +244,19 @@ std::vector<Gate> fuse_gates(const std::vector<Gate>& gates, int max_fused_qubit
             }
             emit_blocks(to_emit);
 
+            // Then start a new block with this gate if it fits, otherwise just emit it as-is
             if (gate_fits) {
                 FusionBlock block;
                 block.qubits = gate_qubit_set;
                 block.gate_indices.push_back(i);
                 open_blocks.push_back(std::move(block));
             } else {
-                // Gate is wider than max_fused_qubits; pass it through unchanged.
                 result.push_back(gate);
             }
         }
     }
 
+    // Flush any remaining open blocks
     flush_all();
     return result;
 }

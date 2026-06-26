@@ -18,12 +18,6 @@
 // GCOV_EXCL_BR_START
 
 std::vector<Gate> combine_single_qubit_gates(const std::vector<Gate>& gates);
-
-// Fuse runs of adjacent gates acting on a small set of qubits into a single
-// dense multi-qubit gate, reducing the number of passes over the statevector.
-// Blocks are limited to at most `max_fused_qubits` qubits. Measurements act as
-// barriers, and gates that already span more than `max_fused_qubits` qubits are
-// passed through unchanged.
 std::vector<Gate> fuse_gates(const std::vector<Gate>& gates, int max_fused_qubits);
 
 // GCOV_EXCL_BR_STOP

@@ -177,18 +177,6 @@ void iter_rk4(DenseMatrix& rho_t, double t, double dt, const std::vector<double>
     const Real dt_over_2 = 0.5 * dt;
     const Real dt_over_3 = dt / 3.0;
     const Real dt_over_6 = dt / 6.0;
-
-    // Reuse the scratch matrices across calls (resize is a no-op once the size is
-    // stable) instead of allocating three 32 MB buffers on every step -- the
-    // per-step allocation + first-touch was generating millions of page faults
-    // (heavy system time) and capping parallel efficiency.
-    //
-    // These MUST be a single shared instance (NOT thread_local): they are written
-    // inside the OpenMP parallel-for loops below, so every worker must see the
-    // same matrix. iter_rk4 is only ever called from the serial time-step loop, so
-    // a function-static shared buffer is safe. Heap-allocated once and
-    // intentionally leaked to sidestep any static-destruction ordering issues at
-    // interpreter shutdown of the loaded extension module.
     static DenseMatrix* const k_buf = new DenseMatrix();
     static DenseMatrix* const rho_tmp_buf = new DenseMatrix();
     static DenseMatrix* const rho_old_buf = new DenseMatrix();
@@ -200,15 +188,7 @@ void iter_rk4(DenseMatrix& rho_t, double t, double dt, const std::vector<double>
     rho_old.resize(rho_rows, rho_cols);
     double t_step = t;
 
-    // RK4 stages. After each derivative evaluation k, its two consumers --
-    // accumulating into rho_t and preparing rho_tmp for the next stage -- are
-    // fused into one pass. That reads k once instead of twice (the combine loops
-    // are bandwidth-bound) and halves the number of OpenMP parallel regions
-    // (fewer fork/join barriers, better strong scaling). The result is the
-    // standard RK4 update rho += dt/6 k1 + dt/3 k2 + dt/3 k3 + dt/6 k4.
-
-    // k1 at time t. The first combine also snapshots the original rho into
-    // rho_old (the base for every later stage), folding away the separate copy.
+    // k1 at time t
     lindblad_rhs(k, rho_t, construct_current_hamiltonian(t_step, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
@@ -262,9 +242,6 @@ void iter_rk4(DenseMatrix& rho_t, double t, double dt, const std::vector<double>
 
     // Normalize the state
     if (is_unitary_on_statevector) {
-        // The norm of a statevector is real, so accumulate a real sum-of-squares
-        // and divide by a real scalar. Using a Complex norm here forces a complex
-        // division (__divdc3) on every element.
         double norm_sq = 0.0;
 #if defined(_OPENMP)
 #pragma omp parallel for reduction(+ : norm_sq) schedule(static)

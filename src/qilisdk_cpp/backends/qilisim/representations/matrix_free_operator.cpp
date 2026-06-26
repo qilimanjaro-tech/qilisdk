@@ -42,9 +42,6 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
 
     // Precompute things that are used in all branches
     int num_qubits = static_cast<int>(std::log2(output_state.rows()));
-    // QSDK-05 defense-in-depth: indices are validated at parse time, but this
-    // kernel is also reachable via deserialized objects, so guard the shift so
-    // a bad target can never produce an undefined shift / wild mask.
     if (target_qubits.empty()) {
         throw std::out_of_range("MatrixFreeOperator has no target qubit.");
     }
@@ -58,10 +55,6 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
     long mask = static_cast<long>(1ULL << shift);
     long N = output_state.rows();
     long stride = mask;
-    // stride is always a single-bit power of two, so the per-iteration
-    // k / stride and k % stride below reduce to cheap bit-masking:
-    //   k % stride          == k & offset_mask
-    //   (k / stride) * 2*stride == (k & block_mask) << 1
     const long offset_mask = stride - 1;
     const long block_mask = ~offset_mask;
     long half = N >> 1;
@@ -912,25 +905,17 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
         // target bits zero); for each, gather the 2^k amplitudes that differ only
         // in the target bits, multiply by the gate matrix, and scatter back. This
         // touches the statevector once per fused block instead of once per gate.
-        //
-        // The matrix is applied in sparse (CSR) form so the per-anchor cost scales
-        // with the number of nonzero entries rather than (2^k)^2. Fused blocks made
-        // of permutations/diagonals (CNOT, Pauli, Z, S, T, CZ, ...) stay cheap,
-        // while genuinely dense blocks (e.g. stacked rotations) still work.
     } else if (control_qubits.empty() && base_matrix.rows() == base_matrix.cols() && base_matrix.rows() == (1LL << target_qubits.size())) {
         int k = static_cast<int>(target_qubits.size());
         long dim_k = 1L << k;
 
-        // Full-state bit position of each (sorted) target qubit. In the dense
-        // matrix, local qubit li corresponds to bit (k - 1 - li), matching the
-        // big-endian convention used when the fused matrix was built.
+        // Full-state bit position of each (sorted) target qubit
         std::vector<long> target_pos(k);
         for (int li = 0; li < k; ++li) {
             target_pos[li] = num_qubits - 1 - target_qubits[li];
         }
 
         // Precompute, for each matrix index m, the offset of its target bits
-        // within a full-state index.
         std::vector<long> offsets(dim_k, 0);
         for (long m = 0; m < dim_k; ++m) {
             long off = 0;
@@ -942,29 +927,18 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
             offsets[m] = off;
         }
 
-        // Sorted (ascending) target bit positions, used to turn an anchor
-        // counter into a full-state index by inserting a zero bit at each
-        // target position (k cheap steps instead of scanning every free bit).
+        // Sort the target positions so we can compute the free_mask below
         std::vector<long> sorted_target_pos = target_pos;
         std::sort(sorted_target_pos.begin(), sorted_target_pos.end());
         long num_anchors = 1L << (num_qubits - k);
 
-        // Mask of "free" (non-target) bit positions within the num_qubits-bit
-        // index. Depositing an anchor counter's bits into these positions is
-        // exactly the zero-bit-insertion above, but as a single pdep instruction
-        // (BMI2) instead of a k-iteration loop. The loop remains as a fallback for
-        // targets without BMI2 (e.g. aarch64).
+        // Mask of "free" (non-target) bit positions
         [[maybe_unused]] long free_mask = (num_qubits >= 64) ? ~0L : ((1L << num_qubits) - 1);
         for (int li = 0; li < k; ++li) {
             free_mask &= ~(1L << sorted_target_pos[li]);
         }
 
-        // A diagonal block (a fused run of phase-type gates: Z/S/T/RZ/CZ/CCZ/...)
-        // is just a per-amplitude phase multiply. We detect it and apply it in
-        // place in a single streaming read-modify-write pass -- no gather, no
-        // scatter, no scratch buffers, and (in the contiguous case) unit-stride
-        // memory -- which is roughly half the memory traffic of the general path
-        // and sidesteps the scattered fallback entirely.
+        // A diagonal block can be done more efficiently than a general block, so check for that
         bool is_diagonal = true;
         for (long r = 0; r < dim_k && is_diagonal; ++r) {
             for (long col = 0; col < dim_k; ++col) {
@@ -975,23 +949,17 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
             }
         }
 
-        // Diagonal phases (used by the diagonal fast path). diag[m] multiplies the
-        // amplitude at anchor + offsets[m]; kept split real/imag so the multiply is
-        // plain FMA with no std::complex NaN-correction branch.
+        // Diagonal phases (used by the diagonal fast path)
         std::vector<Real> diag_re;
         std::vector<Real> diag_im;
 
-        // Compact CSR view of the gate matrix (general path), skipping structural
-        // zeros (built once, not per anchor; (2^k)^2 work, negligible vs the state
-        // pass). Values are split real/imag so the per-nonzero multiply in the hot
-        // loop is plain FMA -- std::complex here would make libstdc++ emit its C99
-        // Annex G NaN-correction branch (a compare + jp per element) inside the
-        // innermost loop, dominating the profile and blocking vectorization.
+        // Compact CSR view of the gate matrix (general path)
         std::vector<long> row_start;
         std::vector<int> col_idx;
         std::vector<Real> val_re;
         std::vector<Real> val_im;
 
+        // The diagonal fast path
         if (is_diagonal) {
             diag_re.resize(dim_k);
             diag_im.resize(dim_k);
@@ -1000,6 +968,7 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
                 diag_re[m] = v.real();
                 diag_im[m] = v.imag();
             }
+        // The more general sparse path for non-diagonal blocks
         } else {
             row_start.assign(dim_k + 1, 0);
             col_idx.reserve(dim_k * dim_k);
@@ -1020,33 +989,16 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
         }
 
         if (output_state.cols() == 1) {
-            // Process anchors in batches of B. The gate matrix is identical for
-            // every anchor, so the CSR coefficients (vr/vi) are broadcast scalars
-            // while the per-anchor amplitudes form contiguous B-wide arrays. The
-            // accumulators then become B independent lanes instead of one serial
-            // real/imag reduction, so the innermost loop vectorizes (SIMD across
-            // anchors) instead of running one scalar matrix element at a time.
+            // Process anchors in batches
             constexpr long B = 8;
 
-            // When the lowest log2(B) index bits are all free (not targets), a
-            // batch of B consecutive anchor counters maps to B *consecutive*
-            // full-state indices. The 2^k gathered amplitudes for one m then live
-            // in one contiguous run (B complex = one cache line for B=8), instead
-            // of B loads spread across B cache lines. We special-case this to
-            // read/write the run contiguously. Under the big-endian mapping
-            // (bit = num_qubits-1-qubit), low bit positions are the highest-numbered
-            // qubits, so this fires whenever the gate avoids the top log2(B) qubit
-            // indices -- the common case for gates on low/mid qubits.
+            // When the lowest log2(B) index bits are all free (not targets), it's consecutive and can be done more efficiently
             const bool contiguous_batch = ((free_mask & (B - 1)) == (B - 1));
 #if defined(_OPENMP)
 #pragma omp parallel
 #endif
             {
                 // Per-thread scratch, reused across gates instead of re-allocated
-                // (and zero-filled) on every call. resize() only reallocates when it
-                // has to grow, so after warmup these are alloc-free; the SoA buffers
-                // are only needed by the general (non-diagonal) path. Layout is
-                // [m][b] with b contiguous, so the b-loop is unit-stride.
                 static thread_local std::vector<Real> in_re;
                 static thread_local std::vector<Real> in_im;
                 static thread_local std::vector<Real> out_re;
@@ -1065,9 +1017,7 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
                 for (long c0 = 0; c0 < num_anchors; c0 += B) {
                     const long bw = std::min<long>(B, num_anchors - c0);
 
-                    // Full-state base index for each anchor in the batch: insert a
-                    // zero bit at each (ascending) target position so the remaining
-                    // bits of the counter land in the free positions in order.
+                    // Full-state base index for each anchor in the batch
                     for (long b = 0; b < bw; ++b) {
 #if defined(__BMI2__)
                         anchors[b] = static_cast<long>(_pdep_u64(static_cast<unsigned long>(c0 + b), static_cast<unsigned long>(free_mask)));
@@ -1083,10 +1033,7 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
 #endif
                     }
 
-                    // Diagonal fast path: multiply each amplitude in place by its
-                    // phase. Single read-modify-write pass, no gather/scatter/SoA.
-                    // The complex multiply is done by hand (no std::complex NaN
-                    // branch); the contiguous case vectorizes via omp simd.
+                    // Diagonal fast path: multiply each amplitude in place by its phase
                     if (is_diagonal) {
                         for (long m = 0; m < dim_k; ++m) {
                             const long off = offsets[m];
@@ -1115,20 +1062,14 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
                         continue;
                     }
 
-                    // Gather the 2^k amplitudes for every anchor in the batch.
+                    // Gather the 2^k amplitudes for every anchor in the batch
                     for (long m = 0; m < dim_k; ++m) {
                         const long off = offsets[m];
                         Real* ir = &in_re[m * B];
                         Real* ii = &in_im[m * B];
                         if (contiguous_batch) {
-                            // anchors[0..bw) are consecutive, so the amplitudes form
-                            // one contiguous interleaved [re,im,...] run. Read it as
-                            // floats and split into the SoA buffers; the compiler
-                            // vectorizes this AoS->SoA deinterleave, and the loads
-                            // touch one cache line instead of bw scattered ones.
+                            // anchors[0..bw) are consecutive, so the amplitudes form one contiguous [re,im,...] run
                             const Real* __restrict src = reinterpret_cast<const Real*>(&output_state(anchors[0] + off));
-                            // Ask for a vectorized deinterleave (interleaved load +
-                            // permute) instead of scalar element moves.
 #if defined(_OPENMP)
 #pragma omp simd
 #endif
@@ -1145,14 +1086,7 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
                         }
                     }
 
-                    // Sparse matrix * (dim_k x B) block. Accumulators are local
-                    // fixed-size arrays (kept in registers, stored once at the end)
-                    // and the gathered inputs are marked __restrict, so the compiler
-                    // can prove no aliasing between the in/out buffers and emit a
-                    // packed b-loop. Without both, it falls back to a scalar
-                    // load+FMA+store per element (no SIMD). B is a power of two so
-                    // the b-loop maps cleanly onto whatever vector width the generic
-                    // target provides (SSE2 is guaranteed on all x86-64).
+                    // Apply the gate matrix to each anchor's gathered amplitudes
                     for (long r = 0; r < dim_k; ++r) {
                         Real sr[B];
                         Real si[B];
@@ -1166,14 +1100,6 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
                             const Real vi = val_im[j];
                             const Real* __restrict ir = &in_re[col * B];
                             const Real* __restrict ii = &in_im[col * B];
-                            // Request true SIMD over the B independent lanes: the
-                            // compiler packs ir[0..B)/ii[0..B) into vector loads and
-                            // emits packed FMAs per nonzero, instead of B scalar FMAs.
-                            // The complex multiply-accumulate is written as four
-                            // separate FMAs (rather than `sr += vr*ir - vi*ii`) so it
-                            // lowers to vfmadd/vfnmadd directly into the accumulators;
-                            // the combined form can't be re-associated without
-                            // -ffast-math and compiles to extra mul+add ops.
 #if defined(_OPENMP)
 #pragma omp simd
 #endif
@@ -1192,18 +1118,14 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
                         }
                     }
 
-                    // Scatter the results back.
+                    // Scatter the results back
                     for (long m = 0; m < dim_k; ++m) {
                         const long off = offsets[m];
                         const Real* sr = &out_re[m * B];
                         const Real* si = &out_im[m * B];
                         if (contiguous_batch) {
-                            // Mirror of the contiguous gather: write the B results as
-                            // one contiguous interleaved run (SoA->AoS), touching one
-                            // cache line instead of bw scattered stores.
+                            // Mirror of the contiguous gather: write the B results as one contiguous interleaved run
                             Real* __restrict dst = reinterpret_cast<Real*>(&output_state(anchors[0] + off));
-                            // Ask for a vectorized interleave (permute + interleaved
-                            // store) instead of scalar element moves.
 #if defined(_OPENMP)
 #pragma omp simd
 #endif
@@ -1220,8 +1142,7 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
                 }
             }
         } else {
-            // Fusion is only applied to statevectors, so a dense multi-qubit
-            // gate should never reach the density-matrix paths.
+            // Fusion is only applied to statevectors, so a dense multi-qubit gate should never reach here
             throw std::invalid_argument("Dense multi-qubit (fused) operators are only supported for statevectors, not density matrices.");
         }
 

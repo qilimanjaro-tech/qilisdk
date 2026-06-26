@@ -166,19 +166,7 @@ SparseMatrix Gate::base_to_full(const SparseMatrix& base_gate, int num_qubits, c
     all_qubits.insert(all_qubits.end(), control_qubits.begin(), control_qubits.end());
     all_qubits.insert(all_qubits.end(), target_qubits.begin(), target_qubits.end());
 
-    // Determine the permutation mapping each scratch qubit to its final qubit.
-    // After the tensor products above the gate occupies the contiguous block of
-    // qubits [needed_before, needed_before + all_qubits.size()) (its i-th qubit at
-    // position needed_before + i), and the remaining (spectator) qubits sit in the
-    // leftover positions in ascending order. permute_bits(index, perm) moves the
-    // bit of scratch qubit q to qubit perm[q], so we send the gate's i-th scratch
-    // qubit to its real qubit all_qubits[i] and the spectator scratch qubits to the
-    // remaining real qubits in ascending order.
-    //
-    // We build this destination map directly rather than via successive swaps: the
-    // swap-based construction is order dependent and corrupts already-placed gate
-    // qubits once a later target collides with an earlier scratch position (e.g. a
-    // fused gate on scattered targets {0, 2, 4}), producing a wrong permutation.
+    // Determine the permutation mapping each local qubit to its global qubit
     std::vector<bool> is_gate_qubit(num_qubits, false);
     for (int q : all_qubits) {
         is_gate_qubit[q] = true;
@@ -189,11 +177,9 @@ SparseMatrix Gate::base_to_full(const SparseMatrix& base_gate, int num_qubits, c
     }
     int next_spectator = 0;
     for (int pos = 0; pos < num_qubits; ++pos) {
-        // Skip the contiguous block the gate occupies; those entries are set above.
         if (pos >= needed_before && pos < needed_before + int(all_qubits.size())) {
             continue;
         }
-        // Advance to the next real qubit not used by the gate (ascending order).
         while (is_gate_qubit[next_spectator]) {
             ++next_spectator;
         }
