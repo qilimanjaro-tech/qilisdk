@@ -131,3 +131,14 @@ code, pre {
 .sphinx-tabs {
   margin-top: 1em;
 }
+
+.title-image {
+  margin: 1em 0;
+}
+
+/* On pages that use a logo image as their title, hide the (still-present
+   for the toctree/browser-title) document H1 so only the logo shows. */
+#content:has(.title-image) > section > h1,
+#content:has(.title-image) > h1 {
+  display: none;
+}

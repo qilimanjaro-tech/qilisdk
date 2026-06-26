@@ -2,6 +2,17 @@
 
 {{ super() }}
 
+{% block header_logo %}
+<a href="{{ pathto(master_doc) }}" class="flex items-center mr-6">
+  {%- if theme_logo_dark %}
+    <img style="height: 2rem; width: auto;" class="hidden dark:block" src="{{ pathto('_static/' + theme_logo_dark, 1) }}" alt="{{ docstitle }}" />
+  {%- endif -%}
+  {%- if theme_logo_light %}
+    <img style="height: 2rem; width: auto;" class="dark:hidden" src="{{ pathto('_static/' + theme_logo_light, 1) }}" alt="{{ docstitle }}" />
+  {%- endif -%}
+</a>
+{% endblock %}
+
 {% block header_main_nav %}
 {{ super() }}
 <div class="language-switcher">

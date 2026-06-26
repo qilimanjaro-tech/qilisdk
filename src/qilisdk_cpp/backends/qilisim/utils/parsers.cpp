@@ -23,6 +23,20 @@
 
 #pragma GCC visibility push(default)
 
+namespace {
+// QSDK-05 / QSDK-06 (CWE-125 / CWE-787): reject out-of-range qubit indices at
+// the C++ trust boundary. The Python layer only guards the upper bound and is
+// bypassed by deserialization (ruamel reconstructs Circuit / Gate / Pauli
+// objects without re-running __init__), so an unvalidated index (e.g. -1)
+// otherwise reaches the matrix-free kernels (undefined shift -> wild mask ->
+// out-of-bounds state access) and the measurement vector (out-of-bounds write).
+inline void validate_qubit_index(int qubit, int nqubits, const char* context) {
+    if (qubit < 0 || qubit >= nqubits) {
+        throw py::value_error("Qubit index " + std::to_string(qubit) + " is out of range [0, " + std::to_string(nqubits) + ") for " + context + ".");
+    }
+}
+}  // namespace
+
 py::object construct_result_object(const ExponentialAnsatz& state, const py::object& readout, int n_qubits) {
     py::list results;
     for (py::handle ro_handle : readout) {
@@ -155,6 +169,8 @@ std::vector<MatrixFreeHamiltonian> parse_hamiltonians_matrix_free(int nqubits, c
             for (auto& pauli_op : pauli_ops) {
                 std::string name = pauli_op.attr("name").cast<std::string>();
                 int target = pauli_op.attr("qubit").cast<int>();
+                // QSDK-05: validate before the index reaches the matrix-free kernels
+                validate_qubit_index(target, nqubits, "a Pauli operator qubit");
                 ops.push_back(MatrixFreeOperator(name, target));
             }
             H.add(coeff, ops);
@@ -580,6 +596,7 @@ std::vector<Gate> parse_gates(const py::object& circuit, double atol, const py::
         std::vector<Gate>: The list of Gate objects.
     */
     std::vector<Gate> gates;
+    int nqubits = circuit.attr("nqubits").cast<int>();
     py::list py_gates = circuit.attr("gates");
     for (auto py_gate : py_gates) {
         // Get the name
@@ -663,6 +680,14 @@ std::vector<Gate> parse_gates(const py::object& circuit, double atol, const py::
             targets.push_back(py_target.cast<int>());
         }
 
+        // QSDK-05: validate every control / target index against the circuit size
+        for (int control : controls) {
+            validate_qubit_index(control, nqubits, "a gate control qubit");
+        }
+        for (int target : targets) {
+            validate_qubit_index(target, nqubits, "a gate target qubit");
+        }
+
         // If we have controls, only get the bottom right part of the matrix
         if (!controls.empty() && !targets.empty() && base_matrix.rows() > 2) {
             int dim = 1 << targets.size();
@@ -724,6 +749,8 @@ std::vector<bool> parse_measurements(const py::object& circuit) {
             py::list py_targets = py_gate.attr("target_qubits");
             for (auto py_target : py_targets) {
                 int target = py_target.cast<int>();
+                // QSDK-06: bounds-check before the std::vector<bool> write
+                validate_qubit_index(target, n_qubits, "a measurement target qubit");
                 final_qubits_to_measure[target] = true;
             }
         } else {

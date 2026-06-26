@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-29 11:34+0200\n"
+"POT-Creation-Date: 2026-06-16 12:04+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../tutorials/applications/application_annealing.rst:2
 msgid "Optimization with Quantum Annealing"
-msgstr "Optimització amb Recuita Quàntica"
+msgstr "Optimització amb recuita quàntica"
 
 #: ../../tutorials/applications/application_annealing.rst:4
 msgid ""
@@ -45,7 +45,7 @@ msgstr ""
 
 #: ../../tutorials/applications/application_annealing.rst:13
 msgid "The Problem"
-msgstr "El Problema"
+msgstr "El problema"
 
 #: ../../shared/team_building.rst:1
 msgid ""
@@ -208,7 +208,7 @@ msgstr ""
 
 #: ../../tutorials/applications/application_annealing.rst:18
 msgid "The Solution"
-msgstr "La Solució"
+msgstr "La solució"
 
 #: ../../tutorials/applications/application_annealing.rst:20
 msgid ""
@@ -259,7 +259,7 @@ msgid ""
 "Where :math:`Z(i)` is the Pauli-Z operator acting on qubit :math:`i`, and"
 " :math:`c_{ij}` are the coefficients from our QUBO formulation. Note that"
 " these variables :math:`Z(i)` are related to the binary variables in our "
-"original problem by the transformation :math:`x_i = (1 - Z(i))/2`,"
+"original problem by the transformation :math:`x_i = (1 - Z(i))/2`."
 msgstr ""
 "On :math:`Z(i)` és l'operador de Pauli-Z que actua sobre el qubit "
 ":math:`i`, i :math:`c_{ij}` són els coeficients de la nostra formulació "
@@ -288,10 +288,11 @@ msgid "H(t) = A(t) H_{mix} + B(t) H_{prob}"
 msgstr "H(t) = A(t) H_{mix} + B(t) H_{prob}"
 
 #: ../../tutorials/applications/application_annealing.rst:51
+#, fuzzy
 msgid ""
 "Where :math:`A(t)` and :math:`B(t)` are functions that determine how we "
 "interpolate between the mixing Hamiltonian and the problem Hamiltonian "
-"over time. For simplicity here will just assume that we do a linear "
+"over time. For simplicity here we will just assume that we do a linear "
 "interpolation, such that :math:`A(t) = 1 - t/T` and :math:`B(t) = t/T`, "
 "where :math:`T` is the total annealing time."
 msgstr ""
@@ -303,7 +304,7 @@ msgstr ""
 
 #: ../../tutorials/applications/application_annealing.rst:57
 msgid "The Implementation"
-msgstr "La Implementació"
+msgstr "La implementació"
 
 #: ../../tutorials/applications/application_annealing.rst:59
 msgid ""
@@ -369,7 +370,7 @@ msgstr ""
 
 #: ../../tutorials/applications/application_annealing.rst:123
 msgid "Further Reading"
-msgstr "Lectura Addicional"
+msgstr "Lectura addicional"
 
 #: ../../tutorials/applications/application_annealing.rst:125
 msgid "`QUBO`_"

@@ -29,7 +29,18 @@ SparseMatrix from_numpy(const py::buffer& matrix_buffer, double atol) {
     Returns:
         SparseMatrix: The converted sparse matrix.
     */
-    py::buffer_info buf = matrix_buffer.request();
+    // QSDK-04 (CWE-843 / CWE-125): coerce to a C-contiguous complex128 array
+    // instead of reinterpreting the raw buffer. Without this, a non-complex128
+    // input (e.g. float64, or every gate matrix under
+    // QILISDK_COMPLEX_PRECISION=COMPLEX_64) or a non-contiguous view strides
+    // 16 bytes per element over a smaller/mismatched allocation, reading out of
+    // bounds. forcecast converts the dtype and c_style guarantees contiguity,
+    // so ptr[r * cols + c] is always in-bounds.
+    auto array = py::array_t<std::complex<double>, py::array::c_style | py::array::forcecast>::ensure(matrix_buffer);
+    if (!array) {
+        throw py::value_error("Input array must be convertible to a 2D complex128 array.");
+    }
+    py::buffer_info buf = array.request();
     if (buf.ndim != 2) {
         throw py::value_error("Input array must be 2D.");
     }

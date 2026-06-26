@@ -50,8 +50,13 @@ class SciPyOptimizer(Optimizer):
                     - 'trust-constr
                     - 'dogleg'
                     - 'trust-ncg'
-                    - 'trust-exact
-                    - 'trust-krylov
+                    - 'trust-exact'
+                    - 'trust-krylov'
+                    - 'basinhopping' (global)
+                    - 'direct' (global)
+                    - 'dual_annealing' (global)
+                    - 'differential_evolution' (global)
+                    - 'shgo' (global)
                     - custom - a callable object, see `scipy.optimize.minimize <https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html>`__ for description.
 
                     If not given, chosen to be one of ``BFGS``, ``L-BFGS-B``, ``SLSQP``,
@@ -97,19 +102,39 @@ class SciPyOptimizer(Optimizer):
         # Only pass the callback if we want to store intermediate results.
         callback = callback_fun if store_intermediate_results else None
 
-        res = scipy_optimize.minimize(
-            cost_function,
-            x0=init_parameters,
-            method=self.method,
-            bounds=bounds,
-            jac=self.extra_arguments.get("jac", None),
-            hess=self.extra_arguments.get("hess", None),
-            hessp=self.extra_arguments.get("hessp", None),
-            constraints=self.extra_arguments.get("constraints", ()),
-            tol=self.extra_arguments.get("tol", None),
-            options=self.extra_arguments.get("options", None),
-            callback=callback,
-        )
+        # Global optimizer have a different interface, like `scipy.optimize.shgo` rather than `scipy.optimize.minimize`
+        if self.method in {"direct", "dual_annealing", "differential_evolution", "shgo"} and isinstance(
+            self.method, str
+        ):
+            res = getattr(scipy_optimize, self.method)(
+                cost_function,
+                bounds=bounds,
+                callback=callback,
+                **self.extra_arguments,
+            )
+        # basinhopping doesn't allow bounds
+        elif self.method == "basinhopping":
+            res = scipy_optimize.basinhopping(
+                cost_function,
+                x0=init_parameters,
+                callback=callback,
+                **self.extra_arguments,
+            )
+        # the more general local minimizer interface
+        else:
+            res = scipy_optimize.minimize(
+                cost_function,
+                x0=init_parameters,
+                method=self.method,
+                bounds=bounds,
+                jac=self.extra_arguments.get("jac", None),
+                hess=self.extra_arguments.get("hess", None),
+                hessp=self.extra_arguments.get("hessp", None),
+                constraints=self.extra_arguments.get("constraints", ()),
+                tol=self.extra_arguments.get("tol", None),
+                options=self.extra_arguments.get("options", None),
+                callback=callback,
+            )
 
         return OptimizerResult(
             optimal_cost=res.fun,

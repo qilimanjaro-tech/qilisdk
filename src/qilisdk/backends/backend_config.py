@@ -123,12 +123,12 @@ class AnalogMethod(BaseSimulatorConfig):
         description="Tolerance for the adaptive integrator method when `evolution_method='integrate_rk45_matrix_free'`.",
     )
     variational_shots: int = Field(
-        default=1000,
+        default=100,
         gt=0,
         description="Number of shots to use when estimating expectation values for the variational optimization when `evolution_method='variational_exponential'`.",
     )
     variational_warmups: int = Field(
-        default=100,
+        default=10,
         ge=0,
         description="Number of warmup iterations to perform before collecting samples for the variational optimization when `evolution_method='variational_exponential'`.",
     )
@@ -168,7 +168,7 @@ class AnalogMethod(BaseSimulatorConfig):
         return cls(evolution_method=evolution_method)
 
     @classmethod
-    def variational_annealing(cls, *, order: int = 2, shots: int = 1000, warmups: int = 100) -> AnalogMethod:
+    def variational_annealing(cls, *, order: int = 2, shots: int = 100, warmups: int = 10) -> AnalogMethod:
         """
         Anneal a variational ansatz rather than the full state.
 

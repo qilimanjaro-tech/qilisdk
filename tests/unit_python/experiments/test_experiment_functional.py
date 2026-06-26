@@ -18,8 +18,11 @@ from qilisdk.experiments import (
     ExperimentFunctional,
     RabiExperiment,
     T1Experiment,
+    T1SoftSaturationHWLExperiment,
     T2Experiment,
     TwoTonesAtFixedFluxBiasExperiment,
+    TwoTonesFrequencyVsFluxQdacRampCWExperiment,
+    TwoTonesPulsedSoftExperiment,
     TwoTonesVsFluxBiasExperiment,
 )
 
@@ -121,3 +124,68 @@ def test_two_tones_versus_flux_experiment_initialization():
     assert np.isclose(two_tones_flux_exp.flux_start, flux_start)
     assert np.isclose(two_tones_flux_exp.flux_stop, flux_stop)
     assert np.isclose(two_tones_flux_exp.flux_step, flux_step)
+
+
+def test_two_tones_frequency_vs_flux_qdac_ramp_cw_experiment_initialization():
+    qubit = 0
+    averages = 1000
+    freq_start = 4.0e9
+    freq_stop = 6.0e9
+    freq_step = 10e6
+    flux_start = -0.5
+    flux_stop = 0.5
+    flux_step = 0.02
+
+    exp = TwoTonesFrequencyVsFluxQdacRampCWExperiment(
+        qubit=qubit,
+        averages=averages,
+        frequency_start=freq_start,
+        frequency_stop=freq_stop,
+        frequency_step=freq_step,
+        flux_start=flux_start,
+        flux_stop=flux_stop,
+        flux_step=flux_step,
+    )
+
+    assert exp.qubit == qubit
+    assert exp.averages == averages
+    assert np.isclose(exp.frequency_start, freq_start)
+    assert np.isclose(exp.frequency_stop, freq_stop)
+    assert np.isclose(exp.frequency_step, freq_step)
+    assert np.isclose(exp.flux_start, flux_start)
+    assert np.isclose(exp.flux_stop, flux_stop)
+    assert np.isclose(exp.flux_step, flux_step)
+
+
+def test_two_tones_pulsed_soft_experiment_initialization():
+    qubit = 0
+    averages = 1000
+    freq_start = 4.0e9
+    freq_stop = 5.0e9
+    freq_step = 5e6
+
+    exp = TwoTonesPulsedSoftExperiment(
+        qubit=qubit,
+        averages=averages,
+        frequency_start=freq_start,
+        frequency_stop=freq_stop,
+        frequency_step=freq_step,
+    )
+
+    assert exp.qubit == qubit
+    assert exp.averages == averages
+    assert np.isclose(exp.frequency_start, freq_start)
+    assert np.isclose(exp.frequency_stop, freq_stop)
+    assert np.isclose(exp.frequency_step, freq_step)
+
+
+def test_t1_soft_saturation_hwl_experiment_initialization():
+    qubit = 0
+    averages = 1000
+    values = np.arange(0, 100000, 2000)
+
+    exp = T1SoftSaturationHWLExperiment(qubit=qubit, averages=averages, wait_duration_values=values)
+
+    assert exp.qubit == qubit
+    assert exp.averages == averages
+    assert np.array_equal(exp.wait_duration_values, values)

@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../index.rst:10 ../../index.rst:32
 msgid "Getting Started"
-msgstr "Primeros Pasos"
+msgstr "Primeros pasos"
 
 #: ../../index.rst:25 ../../index.rst:41
 msgid "Tutorials"

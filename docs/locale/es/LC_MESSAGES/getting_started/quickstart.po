@@ -33,7 +33,7 @@ msgstr ""
 
 #: ../../getting_started/quickstart.rst:8
 msgid "Digital Circuit Example"
-msgstr "Ejemplo de Circuito Digital"
+msgstr "Ejemplo de circuito digital"
 
 #: ../../getting_started/quickstart.rst:10
 msgid "Build a 2-qubit circuit, sample it, and inspect measurement counts:"
@@ -43,7 +43,7 @@ msgstr ""
 
 #: ../../getting_started/quickstart.rst:36
 msgid "Analog Evolution Example"
-msgstr "Ejemplo de Evolución Analógica"
+msgstr "Ejemplo de evolución analógica"
 
 #: ../../getting_started/quickstart.rst:38
 msgid ""

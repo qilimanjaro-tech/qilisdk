@@ -47,7 +47,7 @@ msgstr ""
 
 #: ../../tutorials/applications/application_qaoa.rst:13
 msgid "The Problem"
-msgstr "El Problema"
+msgstr "El problema"
 
 #: ../../shared/team_building.rst:1
 msgid ""
@@ -210,7 +210,7 @@ msgstr ""
 
 #: ../../tutorials/applications/application_qaoa.rst:18
 msgid "The Solution"
-msgstr "La Solución"
+msgstr "La solución"
 
 #: ../../tutorials/applications/application_qaoa.rst:20
 msgid ""
@@ -339,7 +339,7 @@ msgstr ""
 
 #: ../../tutorials/applications/application_qaoa.rst:79
 msgid "The Implementation"
-msgstr "La Implementación"
+msgstr "La implementación"
 
 #: ../../tutorials/applications/application_qaoa.rst:81
 #, fuzzy
@@ -393,7 +393,7 @@ msgstr ""
 
 #: ../../tutorials/applications/application_qaoa.rst:147
 msgid "Further Reading"
-msgstr "Lectura Adicional"
+msgstr "Lectura adicional"
 
 #: ../../tutorials/applications/application_qaoa.rst:149
 msgid "`QUBO`_"
