@@ -18,8 +18,18 @@ from unittest.mock import MagicMock
 
 import pytest
 
+import qilisdk.core.model as model_module
 from qilisdk.analog.hamiltonian import Z
-from qilisdk.core.model import QUBO, Constraint, Model, Objective, ObjectiveSense, SlackCounter, _Linearizer
+from qilisdk.core.model import (
+    QUBO,
+    Constraint,
+    Model,
+    Objective,
+    ObjectiveSense,
+    SlackCounter,
+    _Linearizer,
+    _validate_undirected_edges,
+)
 from qilisdk.core.variables import (
     EQ,
     GT,
@@ -330,6 +340,53 @@ def test_model_max_cut_custom_label_and_weights():
 def test_model_max_cut_mismatched_weights():
     with pytest.raises(ValueError, match=r"number of weights must be equal"):
         Model.max_cut(edges=[(0, 1), (1, 2)], weights=[1.0])
+
+
+def test_validate_undirected_edges_accepts_simple_graph():
+    # A simple undirected graph with no self-loops or duplicates should not raise.
+    _validate_undirected_edges([(0, 1), (1, 2), (0, 2)])
+
+
+def test_validate_undirected_edges_rejects_self_loop():
+    with pytest.raises(ValueError, match=r"Self-loop"):
+        _validate_undirected_edges([(0, 1), (2, 2)])
+
+
+def test_validate_undirected_edges_rejects_exact_duplicate():
+    with pytest.raises(ValueError, match=r"Duplicate edge"):
+        _validate_undirected_edges([(0, 1), (0, 1)])
+
+
+def test_validate_undirected_edges_rejects_reversed_duplicate():
+    # (1, 0) is the same undirected edge as (0, 1).
+    with pytest.raises(ValueError, match=r"Duplicate edge"):
+        _validate_undirected_edges([(0, 1), (1, 0)])
+
+
+@pytest.mark.parametrize(
+    ("factory", "kwargs"),
+    [
+        (Model.max_cut, {}),
+        (Model.graph_coloring, {"num_colors": 2}),
+        (Model.travelling_salesman, {"distances": [1.0, 1.0]}),
+    ],
+)
+def test_graph_factories_reject_reversed_duplicate_edge(factory, kwargs):
+    with pytest.raises(ValueError, match=r"Duplicate edge"):
+        factory(edges=[(0, 1), (1, 0)], **kwargs)
+
+
+@pytest.mark.parametrize(
+    ("factory", "kwargs"),
+    [
+        (Model.max_cut, {}),
+        (Model.graph_coloring, {"num_colors": 2}),
+        (Model.travelling_salesman, {"distances": [1.0, 1.0]}),
+    ],
+)
+def test_graph_factories_reject_self_loop(factory, kwargs):
+    with pytest.raises(ValueError, match=r"Self-loop"):
+        factory(edges=[(0, 1), (1, 1)], **kwargs)
 
 
 def test_model_max_cut_brute_force_solution():
@@ -1042,6 +1099,34 @@ def test_model_str_with_encoding_constraints():
 def test_model_knapsack_zero_items():
     with pytest.raises(ValueError, match=r"number of items must be greater than zero"):
         Model.knapsack(values=[], weights=[], max_weight=5)
+
+
+def test_model_knapsack_empty_objective_guard(monkeypatch):
+    # The objective term is always a Term for non-empty inputs; force the
+    # defensive `not isinstance(obj, Term)` guard by making `Term` unrecognized.
+    class _FakeTerm:
+        def __init__(self, *args, **kwargs):
+            pass
+
+    monkeypatch.setattr(model_module, "Term", _FakeTerm)
+    with pytest.raises(ValueError, match=r"objective term is empty"):
+        Model.knapsack(values=[1, 2], weights=[1, 1], max_weight=1)
+
+
+def test_model_travelling_salesman_numeric_objective_guard(monkeypatch):
+    # The distance objective is always a Term; force the defensive numeric-objective
+    # guard by making the real Term type be treated as a Number.
+    monkeypatch.setattr(model_module, "Number", Term)
+    with pytest.raises(ValueError, match="at least one edge"):
+        Model.travelling_salesman(edges=[(0, 1)], distances=[1.0])
+
+
+def test_model_travelling_salesman_empty_dist_terms_guard(monkeypatch):
+    # `dist_terms` is always populated for valid edges; force the defensive
+    # empty-`dist_terms` guard by making the position loops iterate over nothing.
+    monkeypatch.setattr(model_module, "range", lambda *args: [], raising=False)
+    with pytest.raises(ValueError, match="at least one edge"):
+        Model.travelling_salesman(edges=[(0, 1)], distances=[1.0])
 
 
 def test_model_max_cut_empty_edges():

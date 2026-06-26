@@ -48,6 +48,33 @@ if TYPE_CHECKING:
 _EMPTY_GRAPH_MSG = "The graph must have at least one edge."
 
 
+def _validate_undirected_edges(edges: list[tuple[int, int]]) -> None:
+    """Validate that ``edges`` describes a simple undirected graph.
+
+    Each edge is treated as undirected, so ``(u, v)`` and ``(v, u)`` denote the same edge. This
+    rejects self-loops and any edge that is repeated (in either orientation), which would otherwise
+    silently double-count weights in the generated model.
+
+    Args:
+        edges (list[tuple[int, int]]): the edges of the graph as ``(u, v)`` pairs.
+
+    Raises:
+        ValueError: if an edge is a self-loop (``u == v``).
+        ValueError: if an edge appears more than once, in either orientation.
+    """
+    seen: set[tuple[int, int]] = set()
+    for u, v in edges:
+        if u == v:
+            raise ValueError(f"Self-loop ({u}, {v}) is not allowed; edges must connect two distinct nodes.")
+        key = (min(u, v), max(u, v))
+        if key in seen:
+            raise ValueError(
+                f"Duplicate edge ({u}, {v}) found; edges are undirected and must be unique "
+                "(so (u, v) and (v, u) count as the same edge)."
+            )
+        seen.add(key)
+
+
 class SlackCounter:
     """A singleton class to generate a slack counter id that increments continuously within the user's active session."""
 
@@ -656,9 +683,11 @@ class Model:
 
         Raises:
             ValueError: if weights are provided and their number is different from the number of edges.
+            ValueError: if the graph contains a self-loop or a duplicate (undirected) edge.
         """
         if weights is not None and len(weights) != len(edges):
             raise ValueError("the number of weights must be equal to the number of edges.")
+        _validate_undirected_edges(edges)
         nodes = sorted({n for u, v in edges for n in (u, v)})
         x = {n: BinaryVariable(f"x{n}") for n in nodes}
         model = cls(label)
@@ -702,7 +731,11 @@ class Model:
 
         Returns:
             Model: a model of the graph coloring problem for the given graph.
+
+        Raises:
+            ValueError: if the graph contains a self-loop or a duplicate (undirected) edge.
         """
+        _validate_undirected_edges(edges)
         nodes = sorted({n for u, v in edges for n in (u, v)})
         x = {(n, k): BinaryVariable(f"x{n}_{k}") for n in nodes for k in range(num_colors)}
         model = cls(label)
@@ -760,11 +793,13 @@ class Model:
         Raises:
             ValueError: if ``edges`` and ``distances`` have different lengths.
             ValueError: if the graph has no edges.
+            ValueError: if the graph contains a self-loop or a duplicate (undirected) edge.
         """
         if len(edges) != len(distances):
             raise ValueError("edges and distances must have the same length.")
         if not edges:
             raise ValueError(_EMPTY_GRAPH_MSG)
+        _validate_undirected_edges(edges)
 
         n = max(node for edge in edges for node in edge) + 1
         x = [[BinaryVariable(f"x{i}_{t}") for t in range(n)] for i in range(n)]
@@ -793,6 +828,10 @@ class Model:
             objective = sum(dist_terms)
             if not isinstance(objective, Number):
                 model.set_objective(objective, sense=ObjectiveSense.MINIMIZE)
+            else:
+                raise ValueError(_EMPTY_GRAPH_MSG)
+        else:
+            raise ValueError(_EMPTY_GRAPH_MSG)
 
         return model
 
