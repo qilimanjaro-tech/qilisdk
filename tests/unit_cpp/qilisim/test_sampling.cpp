@@ -716,13 +716,32 @@ TEST_F(SamplingMonteCarloTest, MatrixFreeMonteCarloEnabled_ProducesNonDeterminis
 }
 
 TEST_F(SamplingMatrixFreeTest, BadGate_ThrowsException) {
-    // MatrixFreeOperator rejects gates with != 1 target qubit (unless SWAP).
+    // MatrixFreeOperator rejects multi-target gates unless they are SWAP, M, or a
+    // dense 2^k x 2^k block (gate fusion). A 2-target gate carrying a 2x2 matrix is
+    // none of these (its matrix doesn't match the target count), so it is rejected.
     // sampling() has no gate-name validation, so this test only applies to matrix-free.
     int n = 2;
-    std::vector<Gate> gates = {Gate("BadGate", SparseMatrix(4, 4), {}, {0, 1}, {})};
+    std::vector<Gate> gates = {Gate("BadGate", SparseMatrix(2, 2), {}, {0, 1}, {})};
     DenseMatrix state;
     std::vector<py::object> intermediate_results;
     EXPECT_ANY_THROW(sampling_matrix_free(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfg, readout));
+}
+
+TEST_F(SamplingMatrixFreeTest, GateFusionEnabled_MatchesUnfusedResult) {
+    // With fusion enabled (statevector, no noise, >= 4 threads) the matrix-free
+    // path fuses runs of gates into dense blocks. The sampled distribution must
+    // match the unfused path. Two H gates on each of two qubits return to |00>.
+    int n = 2;
+    std::vector<Gate> gates = {makeH(0), makeH(1), makeH(0), makeH(1)};
+    std::vector<bool> measure = {true, true};
+    QiliSimConfig cfgFuse = cfg;
+    cfgFuse.set_fuse_gates(true);
+    cfgFuse.set_num_threads(4);
+    DenseMatrix state;
+    std::vector<py::object> intermediate_results;
+    sampling_matrix_free(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfgFuse, readout);
+    std::map<std::string, int> counts = construct_samples(state, n, 1000, noNoise, cfgFuse, measure);
+    EXPECT_NEAR(fractionOf(counts, "00"), 1.0, kLoose);
 }
 
 TEST_F(SamplingTest, PureDensityMatrixInitialState_OutputIsMatrixNotStatevector) {

@@ -69,6 +69,18 @@ TEST(QilisimConfig, BadValidateThrows) {
     config = default_config;
     config.set_warmups(-1);
     EXPECT_ANY_THROW(config.validate());
+
+    config = default_config;
+    config.set_max_fused_qubits(0);
+    EXPECT_ANY_THROW(config.validate());
+}
+
+TEST(QilisimConfig, FusionGettersSetters) {
+    QiliSimConfig config;
+    config.set_fuse_gates(true);
+    config.set_max_fused_qubits(3);
+    EXPECT_TRUE(config.get_fuse_gates());
+    EXPECT_EQ(config.get_max_fused_qubits(), 3);
 }
 
 TEST(QilisimConfig, VariationalFieldGettersSetters) {

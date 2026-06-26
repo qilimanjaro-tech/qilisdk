@@ -1240,6 +1240,22 @@ TEST(MatrixFreeOperator, DenseMultiQubit_ThreeQubitDense_ScatteredTargets) {
     ASSERT_TRUE(state.isApprox(expected, 1e-5)) << "Dense 3-qubit apply mismatch";
 }
 
+TEST(MatrixFreeOperator, DenseMultiQubit_DiagonalBlock_AppliesPhases) {
+    // A diagonal dense block (e.g. a fused run of phase gates) takes the operator's
+    // dedicated diagonal fast path: each amplitude is multiplied by its phase.
+    DenseMatrix diag(4, 4);
+    diag.setZero();
+    diag(0, 0) = Complex(1.0, 0.0);
+    diag(1, 1) = Complex(0.0, 1.0);
+    diag(2, 2) = Complex(-1.0, 0.0);
+    diag(3, 3) = Complex(0.0, -1.0);
+    DenseMatrix state = randomState(3, 5);
+    DenseMatrix expected = applyViaFullMatrix(diag, {0, 2}, 3, state);
+    MatrixFreeOperator op("FUSED", {}, {0, 2}, diag);
+    op.apply(state, MatrixFreeApplicationType::Left);
+    ASSERT_TRUE(state.isApprox(expected, 1e-5)) << "Dense diagonal apply mismatch, got:\n" << state << "\nexpected:\n" << expected;
+}
+
 TEST(MatrixFreeOperator, DenseMultiQubit_ThrowsOnDensityMatrix) {
     // Fused operators are statevector-only; applying to a density matrix throws.
     MatrixFreeOperator op("FUSED", {}, {0, 1}, swap4());
