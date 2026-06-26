@@ -22,6 +22,15 @@
 #include <immintrin.h>  // _pdep_u64: deposit anchor-counter bits into free positions
 #endif
 
+// `#pragma omp simd` is an OpenMP 4.0 feature. MSVC's /openmp defines _OPENMP as 200203
+// (OpenMP 2.0) and rejects the simd pragma (error C7660) unless -openmp:experimental is
+// passed, so only emit it when the compiler advertises OpenMP >= 4.0 (201307).
+#if defined(_OPENMP) && _OPENMP >= 201307
+#define QILISIM_OMP_SIMD _Pragma("omp simd")
+#else
+#define QILISIM_OMP_SIMD
+#endif
+
 // GCOV_EXCL_BR_START
 
 const Complex imag(0.0, 1.0);
@@ -1041,9 +1050,7 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
                             const Real di = diag_im[m];
                             if (contiguous_batch) {
                                 Real* __restrict p = reinterpret_cast<Real*>(&output_state(anchors[0] + off));
-#if defined(_OPENMP)
-#pragma omp simd
-#endif
+                                QILISIM_OMP_SIMD
                                 for (long b = 0; b < bw; ++b) {
                                     const Real re = p[2 * b];
                                     const Real im = p[2 * b + 1];
@@ -1070,9 +1077,7 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
                         if (contiguous_batch) {
                             // anchors[0..bw) are consecutive, so the amplitudes form one contiguous [re,im,...] run
                             const Real* __restrict src = reinterpret_cast<const Real*>(&output_state(anchors[0] + off));
-#if defined(_OPENMP)
-#pragma omp simd
-#endif
+                            QILISIM_OMP_SIMD
                             for (long b = 0; b < bw; ++b) {
                                 ir[b] = src[2 * b];
                                 ii[b] = src[2 * b + 1];
@@ -1100,9 +1105,7 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
                             const Real vi = val_im[j];
                             const Real* __restrict ir = &in_re[col * B];
                             const Real* __restrict ii = &in_im[col * B];
-#if defined(_OPENMP)
-#pragma omp simd
-#endif
+                            QILISIM_OMP_SIMD
                             for (long b = 0; b < B; ++b) {
                                 sr[b] += vr * ir[b];
                                 sr[b] -= vi * ii[b];
@@ -1126,9 +1129,7 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
                         if (contiguous_batch) {
                             // Mirror of the contiguous gather: write the B results as one contiguous interleaved run
                             Real* __restrict dst = reinterpret_cast<Real*>(&output_state(anchors[0] + off));
-#if defined(_OPENMP)
-#pragma omp simd
-#endif
+                            QILISIM_OMP_SIMD
                             for (long b = 0; b < bw; ++b) {
                                 dst[2 * b] = sr[b];
                                 dst[2 * b + 1] = si[b];
