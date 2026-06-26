@@ -19,7 +19,10 @@ from qilisdk.analog.schedule import Schedule
 from qilisdk.core.variables import Parameter
 from qilisdk.digital.circuit import Circuit
 from qilisdk.digital.gates import CNOT, CZ, U1, U2, U3, H
-from qilisdk.utils.trotterization.trotterization import _commuting_trotter_evolution, trotter_evolution
+
+# NOTE: ``trotter_evolution`` and ``_commuting_trotter_evolution`` are imported lazily inside the
+# methods that use them, to avoid a circular import between qilisdk.digital and
+# qilisdk.utils.trotterization (the latter imports qilisdk.digital.gates at module load).
 from qilisdk.yaml import yaml
 
 Connectivity = Literal["circular", "linear", "full"] | list[tuple[int, int]]
@@ -234,6 +237,9 @@ class TrotterizedSchedule(Ansatz):
         """
         super().__init__(schedule.nqubits)
 
+        # Local import to avoid a circular import (see module-level note).
+        from qilisdk.utils.trotterization.trotterization import trotter_evolution  # noqa: PLC0415
+
         for hamiltonian in schedule:
             self.add(list(trotter_evolution(hamiltonian, schedule.dt, trotter_steps=trotter_steps)))
 
@@ -365,6 +371,9 @@ class QAOA(Ansatz):
         # Start with all |+> states
         for qubit in range(self.nqubits):
             self.add(H(qubit))
+
+        # Local import to avoid a circular import (see module-level note).
+        from qilisdk.utils.trotterization.trotterization import _commuting_trotter_evolution  # noqa: PLC0415
 
         # Build the layers
         for i in range(self.layers):
