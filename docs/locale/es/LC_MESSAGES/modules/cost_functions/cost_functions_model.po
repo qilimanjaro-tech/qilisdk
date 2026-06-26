@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../modules/cost_functions/cost_functions_model.rst:2
 msgid "ModelCostFunction"
-msgstr "Función de Coste del Modelo"
+msgstr "Función de coste del modelo"
 
 #: ../../modules/cost_functions/cost_functions_model.rst:4
 msgid ""

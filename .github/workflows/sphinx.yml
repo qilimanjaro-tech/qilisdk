@@ -53,6 +53,8 @@ jobs:
             echo "No tag found to redirect to" >&2
             exit 1
           fi
+          # filter any post-release suffixes (e.g. 0.2.0.post1 -> 0.2.0)
+          latest_tag="${latest_tag%%.post*}"
           if [ ! -d "docs/_build/en/${latest_tag}" ]; then
             echo "Built docs for tag ${latest_tag} not found" >&2
             ls docs/_build/en

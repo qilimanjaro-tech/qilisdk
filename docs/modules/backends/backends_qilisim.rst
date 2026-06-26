@@ -1,18 +1,28 @@
-QiliSim Backend
----------------
+QiliSim
+=======
+
+.. image:: ../../_static/QiliSim_wht.svg
+   :align: left
+   :width: 200px
+   :class: title-image only-dark
+
+.. image:: ../../_static/QiliSim_blk.svg
+   :align: left
+   :width: 200px
+   :class: title-image only-light
 
 The **QiliSim** backend is the default CPU simulator developed by Qilimanjaro and written in C++.
 It implements every primitive functional natively, supports a noise model on all execution paths,
 and is included with the core ``qilisdk`` installation — no extra dependency or hardware is required.
 
 Installation
-============
+------------
 
 QiliSim is bundled with the core ``qilisdk`` installation, so no extra package is required.
 
 
 Quick start
-===========
+-----------
 
 .. code-block:: python
 
@@ -36,7 +46,7 @@ Quick start
     print(result.get_samples())
 
 Functional support
-==================
+-------------------
 
 QiliSim natively supports all primitive functionals through dedicated C++ routines:
 
@@ -65,7 +75,7 @@ QiliSim natively supports all primitive functionals through dedicated C++ routin
 .. |n| unicode:: U+274C
 
 Configuration
-=============
+-------------
 
 QiliSim is configured at construction time through three orthogonal sections, all defined in
 :mod:`qilisdk.backends.backend_config`:
@@ -111,7 +121,7 @@ If any argument is omitted, QiliSim falls back to:
   Monte Carlo disabled).
 
 Analog simulation methods
-^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Use the classmethods of :class:`~qilisdk.backends.backend_config.AnalogMethod` to choose how the
 schedule is integrated:
@@ -148,7 +158,7 @@ Example, using the adaptive integrator:
     backend = QiliSim(analog_simulation_method=AnalogMethod.adaptive_integrator(tol=1e-2))
 
 Digital simulation methods
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 There are currently two digital simulation methods available. The first is a statevector simulator, which can be configured through the options:
 
@@ -199,7 +209,7 @@ at the cost of being slower if the circuit contains many non-Clifford gates. It 
     )
 
 Execution and Monte Carlo
-^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 :class:`~qilisdk.backends.backend_config.ExecutionConfig` controls threading, randomness, and
 optional Monte Carlo trajectory sampling for open-system simulations.
@@ -227,7 +237,7 @@ optional Monte Carlo trajectory sampling for open-system simulations.
     )
 
 Noise model support
-===================
+-------------------
 
 Any :class:`~qilisdk.noise.NoiseModel` accepted by the SDK can be passed directly to the constructor;
 QiliSim applies it inside the C++ solver, so digital, analog, and reservoir runs all see the same
