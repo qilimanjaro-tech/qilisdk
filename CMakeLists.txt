@@ -239,11 +239,7 @@ if (DEFINED tests AND tests STREQUAL "ON")
     target_include_directories(test_cpp PRIVATE ${pybind11_INCLUDE_DIRS})
     target_include_directories(test_cpp PRIVATE ${Python_INCLUDE_DIRS})
 
-    # The test executable MUST use the same architecture flags as the modules.
-    # Otherwise Eigen's EIGEN_MAX_ALIGN_BYTES differs between translation units
-    # (16 here vs 32 with AVX2), so matrices allocated in the tests are only
-    # 16-byte aligned while the module code issues 32-byte aligned AVX loads,
-    # causing segfaults. See the modules' march configuration above.
+    # The test executable MUST use the same architecture flags as the modules
     if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         if (QILISDK_HAS_X86_64_V3)
             target_compile_options(test_cpp PRIVATE -march=x86-64-v3)
