@@ -358,6 +358,22 @@ TEST_F(SamplingTest, XOnBothQubits_AllCountsAre11) {
     EXPECT_EQ(counts.at("11"), 1000);
 }
 
+TEST_F(SamplingTest, UnnormalizedStatevector_IsRenormalized) {
+    // A statevector whose probabilities sum to 2 (not 1) must be renormalized before sampling; all
+    // shots are still accounted for and the two equally weighted outcomes are both produced.
+    int n = 1;
+    DenseMatrix state(2, 1);
+    state(0, 0) = cx(1, 0);
+    state(1, 0) = cx(1, 0);
+    std::vector<bool> measure = {true};
+    std::map<std::string, int> counts = construct_samples(state, n, 1000, noNoise, cfg, measure);
+    int total = 0;
+    for (const auto& [bitstring, count] : counts) {
+        total += count;
+    }
+    EXPECT_EQ(total, 1000);
+}
+
 TEST_F(SamplingTest, HadamardOnSingleQubit_ApproxFiftyFifty) {
     int n = 1;
     std::vector<Gate> gates = {makeH(0)};

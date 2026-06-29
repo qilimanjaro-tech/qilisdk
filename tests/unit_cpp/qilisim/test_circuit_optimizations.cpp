@@ -460,8 +460,10 @@ TEST(FuseGatesTest, PreservesCircuitUnitary_Width3) {
 }
 
 TEST(FuseGatesTest, PreservesCircuitUnitary_DisjointBlocks) {
-    // Two independent runs on disjoint qubits, interleaved in time.
-    std::vector<Gate> in = {H(0), H(2), X(0), Z(2), CNOT(0, 1), CNOT(2, 3)};
+    // Two independent runs on disjoint qubits, interleaved in time. A measurement is included so the
+    // unitary comparison skips it on both sides (it has no associated unitary) while fusion passes it
+    // through unchanged.
+    std::vector<Gate> in = {H(0), H(2), Mgate(1), X(0), Z(2), CNOT(0, 1), CNOT(2, 3)};
     auto out = fuse_gates(in, 4);
     EXPECT_TRUE(matricesApproxEqual(circuitUnitary(out, 4), circuitUnitary(in, 4)));
 }
