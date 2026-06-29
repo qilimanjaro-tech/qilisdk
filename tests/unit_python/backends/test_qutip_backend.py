@@ -22,11 +22,12 @@ from qilisdk.analog.hamiltonian import Hamiltonian, PauliZ
 from qilisdk.analog.schedule import Schedule
 from qilisdk.backends.qutip_backend import QutipBackend
 from qilisdk.core import ket
+from qilisdk.core.interpolator import Interpolation
 from qilisdk.core.qtensor import InitialState, QTensor, tensor_prod
 from qilisdk.functionals.analog_evolution import AnalogEvolution
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirLayer
-from qilisdk.noise import LindbladGenerator, NoiseModel
+from qilisdk.noise import AmplitudeDamping, LindbladGenerator, NoiseModel
 from qilisdk.readout import Readout, SamplingReadout
 
 pytest.importorskip("qutip", reason="QuTiP backend tests require the 'qutip' optional dependency", exc_type=ImportError)
@@ -445,8 +446,56 @@ def test_get_qutip_observable_unsupported_type_raises():
         backend._to_qubip_observables(42, nqubits=1)
 
 
-def test_qutip_backend_rejects_noise_model():
+def test_qutip_backend_accepts_noise_model():
     nm = NoiseModel()
     nm.add(LindbladGenerator([QTensor(np.array([[0, 1], [1, 0]]))], rates=[0.1]))
-    with pytest.raises(NotImplementedError, match="does not support noise"):
-        QutipBackend(noise_model=nm)
+    backend = QutipBackend(noise_model=nm)
+    assert backend.noise_model is nm
+
+
+def test_qutip_backend_analog_static_lindblad_relaxes():
+    """A strong amplitude-damping channel must relax ``|1>`` toward ``|0>`` (<Z> -> +1)."""
+    schedule = Schedule(
+        hamiltonians={"hz": PauliZ(0).to_hamiltonian()},
+        coefficients={"hz": {0.0: 1.0, 1.0: 1.0}},
+        dt=0.1,
+        interpolation=Interpolation.LINEAR,
+    )
+    analog_evolution = AnalogEvolution(schedule=schedule, initial_state=ket(1))
+
+    nm = NoiseModel()
+    nm.add(AmplitudeDamping(t1=0.1))
+
+    result = QutipBackend(noise_model=nm).execute(
+        analog_evolution, readout=Readout().with_expectation(observables=[PauliZ(0).to_hamiltonian()])
+    )
+    assert result.get_expectation_values()[0] > 0.9
+
+
+def test_qutip_backend_analog_time_dependent_lindblad():
+    """A callable rate ``rate(t)`` must be sampled over the schedule and drive dissipation."""
+    schedule = Schedule(
+        hamiltonians={"hz": PauliZ(0).to_hamiltonian()},
+        coefficients={"hz": {0.0: 1.0, 1.0: 1.0}},
+        dt=0.1,
+        interpolation=Interpolation.LINEAR,
+    )
+    sigma_minus = QTensor(np.array([[0, 1], [0, 0]], dtype=complex))
+
+    # rate(t) == 0 -> no dissipation, the |1> state is preserved (<Z> stays -1).
+    nm_off = NoiseModel()
+    nm_off.add(LindbladGenerator(jump_operators=[sigma_minus], rates=[lambda t: 0.0]), qubits=[0])
+    result_off = QutipBackend(noise_model=nm_off).execute(
+        AnalogEvolution(schedule=schedule, initial_state=ket(1)),
+        readout=Readout().with_expectation(observables=[PauliZ(0).to_hamiltonian()]),
+    )
+    assert result_off.get_expectation_values()[0] < -0.99
+
+    # A large rate(t) drives strong relaxation toward |0> (<Z> -> +1).
+    nm_on = NoiseModel()
+    nm_on.add(LindbladGenerator(jump_operators=[sigma_minus], rates=[lambda t: 10.0]), qubits=[0])
+    result_on = QutipBackend(noise_model=nm_on).execute(
+        AnalogEvolution(schedule=schedule, initial_state=ket(1)),
+        readout=Readout().with_expectation(observables=[PauliZ(0).to_hamiltonian()]),
+    )
+    assert result_on.get_expectation_values()[0] > 0.9

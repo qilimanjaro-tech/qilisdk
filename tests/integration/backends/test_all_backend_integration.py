@@ -45,6 +45,7 @@ from qilisdk.digital.ansatz import HardwareEfficientAnsatz, TrotterizedSchedule
 from qilisdk.digital.gates import CNOT, Controlled
 from qilisdk.functionals import AnalogEvolution, DigitalPropagation, FunctionalResult, QuantumReservoir, ReservoirLayer
 from qilisdk.functionals.variational_program import VariationalProgram
+from qilisdk.noise import LindbladGenerator, NoiseModel
 from qilisdk.optimizers.optimizer_result import OptimizerResult
 from qilisdk.optimizers.scipy_optimizer import SciPyOptimizer
 from qilisdk.readout import Readout, StateTomographyReadout
@@ -65,6 +66,20 @@ if pytest.importorskip(
 ):
     backends.append(CudaBackend())
 backends_no_cuda = [QutipBackend(), QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1))]
+
+# Backends that support time-dependent (callable) Lindblad rates ``rate(t)`` for analog evolution.
+# The CUDA backend deliberately rejects callable rates, so it is excluded here.
+time_dependent_noise_backend_classes = [QutipBackend, QiliSim]
+
+# Lowering operator |1> -> |0> (sigma_minus), used to build amplitude-damping-like jump operators.
+_SIGMA_MINUS = QTensor(np.array([[0.0, 1.0], [0.0, 0.0]], dtype=complex))
+
+
+def _make_noisy_backend(backend_class: type[Backend], noise_model: NoiseModel) -> Backend:
+    """Instantiate ``backend_class`` with ``noise_model``, seeding QiliSim for determinism."""
+    if backend_class is QiliSim:
+        return backend_class(noise_model=noise_model, execution_config=ExecutionConfig(seed=42, num_threads=1))
+    return backend_class(noise_model=noise_model)
 
 
 def _build_quantum_reservoir_functional() -> QuantumReservoir:
@@ -549,3 +564,137 @@ def test_partial_measurements_no_expansion(backend):
     samples = result.get_samples()
     assert "1" in samples
     assert samples["1"] == 50
+
+
+# ---------------------------------------------------------------------------
+# Time-dependent Lindblad noise (analog evolution)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("backend_class", time_dependent_noise_backend_classes)
+def test_time_dependent_amplitude_damping_matches_analytic(backend_class):
+    """A time-dependent amplitude-damping rate must reproduce the analytic population decay.
+
+    For a single qubit starting in ``|1>`` subject to a jump operator ``sigma_minus`` with a
+    time-dependent rate ``gamma(t)``, the excited-state population obeys
+    ``dp1/dt = -gamma(t) p1``, so ``p1(T) = exp(-int_0^T gamma(t) dt)`` and
+    ``<Z>(T) = 1 - 2 p1(T)``. The coherent Z Hamiltonian only adds phase and leaves the
+    populations (hence ``<Z>``) untouched, isolating the dissipative dynamics.
+    """
+    total_time = 1.0
+    dt = 0.005
+    slope = 2.0  # gamma(t) = slope * t  ->  int_0^T gamma = slope * T^2 / 2
+
+    integral = slope * total_time**2 / 2.0
+    expected_z = 1.0 - 2.0 * np.exp(-integral)
+
+    noise_model = NoiseModel()
+    noise_model.add(LindbladGenerator(jump_operators=[_SIGMA_MINUS], rates=[lambda t: slope * t]), qubits=[0])
+
+    schedule = Schedule(
+        dt=dt,
+        hamiltonians={"hz": pauli_z(0)},
+        coefficients={"hz": {(0, total_time): lambda t: 1.0}},
+    )
+
+    backend = _make_noisy_backend(backend_class, noise_model)
+    res = backend.execute(
+        AnalogEvolution(schedule=schedule, initial_state=ket(1)),
+        Readout().with_expectation(observables=[pauli_z(0)]),
+    )
+
+    assert isinstance(res, FunctionalResult)
+    assert np.isclose(np.real_if_close(res.get_expectation_values()[0]), expected_z, atol=1e-2)
+
+
+@pytest.mark.parametrize("backend_class", time_dependent_noise_backend_classes)
+def test_time_dependent_rate_constant_callable_equivalence(backend_class):
+    """A constant callable rate ``lambda t: c`` must match the equivalent constant rate ``c``."""
+    total_time = 0.5
+    dt = 0.01
+    rate_value = 3.0
+
+    schedule = Schedule(
+        dt=dt,
+        hamiltonians={"hz": pauli_z(0)},
+        coefficients={"hz": {(0, total_time): lambda t: 1.0}},
+    )
+
+    def run(rate):
+        noise_model = NoiseModel()
+        noise_model.add(LindbladGenerator(jump_operators=[_SIGMA_MINUS], rates=[rate]), qubits=[0])
+        backend = _make_noisy_backend(backend_class, noise_model)
+        res = backend.execute(
+            AnalogEvolution(schedule=schedule, initial_state=ket(1)),
+            Readout().with_expectation(observables=[pauli_z(0)]),
+        )
+        return np.real_if_close(res.get_expectation_values()[0])
+
+    callable_z = run(lambda t: rate_value)
+    constant_z = run(rate_value)
+
+    assert np.isclose(callable_z, constant_z, atol=1e-6)
+
+
+def test_time_dependent_noise_qutip_matches_qilisim():
+    """QuTiP and QiliSim must agree on the full Bloch vector under time-dependent dissipation.
+
+    Combines a non-trivial coherent drive (``X`` Hamiltonian, so coherences are non-zero) with a
+    ramping amplitude-damping rate, then compares ``<X>``, ``<Y>``, ``<Z>`` between the two
+    backends that support callable rates.
+    """
+    total_time = 2.0
+    dt = 0.01
+
+    def run(backend_class):
+        noise_model = NoiseModel()
+        noise_model.add(LindbladGenerator(jump_operators=[_SIGMA_MINUS], rates=[lambda t: 0.3 + 0.5 * t]), qubits=[0])
+        schedule = Schedule(
+            dt=dt,
+            hamiltonians={"hx": pauli_x(0)},
+            coefficients={"hx": {(0, total_time): lambda t: 1.0}},
+        )
+        backend = _make_noisy_backend(backend_class, noise_model)
+        res = backend.execute(
+            AnalogEvolution(schedule=schedule, initial_state=ket(0)),
+            Readout().with_expectation(observables=[pauli_x(0), pauli_y(0), pauli_z(0)]),
+        )
+        return np.real_if_close(np.array(res.get_expectation_values()))
+
+    qutip_bloch = run(QutipBackend)
+    qilisim_bloch = run(QiliSim)
+
+    assert np.allclose(qutip_bloch, qilisim_bloch, atol=2e-2)
+
+
+@pytest.mark.parametrize("backend_class", time_dependent_noise_backend_classes)
+def test_per_qubit_time_dependent_noise_is_isolated(backend_class):
+    """Per-qubit time-dependent noise must only affect its target qubit.
+
+    Two qubits both start in ``|1>``. A ramping amplitude-damping channel is attached to qubit 0
+    only, so qubit 0 partially relaxes toward ``|0>`` (``<Z_0>`` increases) while the noiseless
+    qubit 1 stays in ``|1>`` (``<Z_1> == -1``).
+    """
+    total_time = 1.0
+    dt = 0.01
+
+    noise_model = NoiseModel()
+    noise_model.add(LindbladGenerator(jump_operators=[_SIGMA_MINUS], rates=[lambda t: 8.0 * t]), qubits=[0])
+
+    schedule = Schedule(
+        dt=dt,
+        hamiltonians={"hz": pauli_z(0) + pauli_z(1)},
+        coefficients={"hz": {(0, total_time): lambda t: 1.0}},
+    )
+
+    backend = _make_noisy_backend(backend_class, noise_model)
+    res = backend.execute(
+        AnalogEvolution(schedule=schedule, initial_state=tensor_prod([ket(1), ket(1)])),
+        Readout().with_expectation(observables=[pauli_z(0), pauli_z(1)]),
+    )
+
+    expect_z0 = np.real_if_close(res.get_expectation_values()[0])
+    expect_z1 = np.real_if_close(res.get_expectation_values()[1])
+
+    assert expect_z0 > 0.5  # qubit 0 has relaxed substantially toward |0>
+    assert np.isclose(expect_z1, -1.0, atol=1e-6)  # qubit 1 is untouched by the per-qubit noise
