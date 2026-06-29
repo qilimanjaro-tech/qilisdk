@@ -342,7 +342,6 @@ msgid "The Implementation"
 msgstr "La implementación"
 
 #: ../../tutorials/applications/application_qaoa.rst:81
-#, fuzzy
 msgid ""
 "In QiliSDK, a variety of classes are available to help streamline the "
 "implementation. Starting with the problem Hamiltonian, we can use the "
@@ -352,9 +351,9 @@ msgid ""
 msgstr ""
 "En QiliSDK, hay disponible una variedad de clases para agilizar la "
 "implementación. Empezando con el Hamiltoniano del problema, podemos usar "
-"la clase :class:`~qilisdk.core.QUBO` para representar nuestro problema "
-"QUBO, y luego usar la clase :class:`~qilisdk.core.QAOA` para construir el"
-" circuito QAOA y realizar la optimización."
+"la clase :class:`~qilisdk.core.model.QUBO` para representar nuestro "
+"problema QUBO, y luego usar la clase :class:`~qilisdk.digital.ansatz.QAOA` "
+"para construir el circuito QAOA y realizar la optimización."
 
 #: ../../tutorials/applications/application_qaoa.rst:85
 msgid "To create our model:"
