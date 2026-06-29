@@ -377,7 +377,7 @@ def _require_experiment_result_typed(
                 f"SpeQtrum returned an experiment result of type {type(experiment_result).__qualname__} "
                 f"that does not match the expected {result_type.__qualname__}."
             )
-        return cast("TExperimentResult", experiment_result)
+        return experiment_result
 
     return _extractor
 
