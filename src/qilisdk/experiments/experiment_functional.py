@@ -14,7 +14,7 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import Generic, TypeVar
+from typing import ClassVar, Generic, TypeVar
 
 from qilisdk.experiments.experiment_result import ExperimentResult
 from qilisdk.functionals.functional import Functional
@@ -25,6 +25,9 @@ TResult_co = TypeVar("TResult_co", bound=ExperimentResult, covariant=True)
 
 @yaml.register_class
 class ExperimentFunctional(Functional, ABC, Generic[TResult_co]):
+    result_type: ClassVar[type[ExperimentResult]]
+    """Concrete :class:`~qilisdk.experiments.experiment_result.ExperimentResult` subclass returned."""
+
     """Abstract base class for single-qubit experiment functionals.
 
     This class serves as a generic interface for defining quantum

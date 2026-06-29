@@ -800,7 +800,7 @@ class SpeQtrum:
             )
         job = JobId(**response.json())
         logger.info("{} job submitted: {}", experiment_name, job.id)
-        return JobHandle.experiment(job.id, result_type=experiment.result_type)  # ty:ignore[invalid-argument-type]
+        return JobHandle.experiment(job.id, result_type=experiment.result_type)
 
     def _submit_analog_evolution(
         self, functional: AnalogEvolution, device: str, readout: Readout[S, E, T], job_name: str | None = None
