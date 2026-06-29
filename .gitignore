@@ -52,3 +52,5 @@ sphinx.log
 # Code Coverage
 junit.xml
 coverage.xml
+
+CLAUDE.local.md
