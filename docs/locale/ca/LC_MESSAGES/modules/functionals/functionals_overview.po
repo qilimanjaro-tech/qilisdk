@@ -70,7 +70,6 @@ msgstr ""
 "algorismes més complexos:"
 
 #: ../../modules/functionals/functionals_overview.rst:13
-#, fuzzy
 msgid ""
 ":doc:`functionals_variational`: Builds a parameterized program to be "
 "optimized in a hybrid quantum-classical environment."
