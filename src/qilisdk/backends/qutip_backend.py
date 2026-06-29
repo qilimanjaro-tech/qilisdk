@@ -378,8 +378,6 @@ class QutipBackend(Backend):
             if op_np.shape[1] != dim:
                 raise ValueError("Lindblad jump operators must be square matrices.")
             operator_nqubits = int(np.round(np.log2(dim)))
-            if 2**operator_nqubits != dim:
-                raise ValueError("Lindblad jump operator dimension must be a power of 2.")
 
             if dim == 2**nqubits:
                 embedded = [Qobj(op_np, dims=[[2 for _ in range(nqubits)] for _ in range(2)])]

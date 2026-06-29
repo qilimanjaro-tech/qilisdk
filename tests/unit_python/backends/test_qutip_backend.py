@@ -18,7 +18,7 @@ import numpy as np
 import pytest
 from qutip import Qobj
 
-from qilisdk.analog.hamiltonian import Hamiltonian, PauliZ
+from qilisdk.analog.hamiltonian import Hamiltonian, PauliX, PauliZ
 from qilisdk.analog.schedule import Schedule
 from qilisdk.backends.qutip_backend import QutipBackend
 from qilisdk.core import ket
@@ -27,7 +27,14 @@ from qilisdk.core.qtensor import InitialState, QTensor, tensor_prod
 from qilisdk.functionals.analog_evolution import AnalogEvolution
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirLayer
-from qilisdk.noise import AmplitudeDamping, LindbladGenerator, NoiseModel
+from qilisdk.noise import (
+    AmplitudeDamping,
+    Dephasing,
+    Depolarizing,
+    KrausChannel,
+    LindbladGenerator,
+    NoiseModel,
+)
 from qilisdk.readout import Readout, SamplingReadout
 
 pytest.importorskip("qutip", reason="QuTiP backend tests require the 'qutip' optional dependency", exc_type=ImportError)
@@ -446,6 +453,27 @@ def test_get_qutip_observable_unsupported_type_raises():
         backend._to_qubip_observables(42, nqubits=1)
 
 
+def test_to_qutip_observable_pauli_operator():
+    """A single-qubit PauliOperator must be embedded with identities on a multi-qubit system."""
+    obs = QutipBackend._to_qubip_observables(PauliZ(1), nqubits=2)
+    # Z on qubit 1 of a 2-qubit register: diag(1, -1, 1, -1).
+    expected = np.diag([1.0, -1.0, 1.0, -1.0])
+    assert np.allclose(obs.full(), expected)
+
+
+def test_to_qutip_observable_hamiltonian_padded():
+    """A Hamiltonian acting on fewer qubits than the system must be padded with identities."""
+    obs = QutipBackend._to_qubip_observables(PauliZ(0).to_hamiltonian(), nqubits=2)
+    assert obs.dims == [[2, 2], [2, 2]]
+    assert np.allclose(obs.full(), np.diag([1.0, 1.0, -1.0, -1.0]))
+
+
+def test_to_qutip_observable_qtensor():
+    """A QTensor observable must be passed through unchanged."""
+    obs = QutipBackend._to_qubip_observables(QTensor(np.diag([1.0, -1.0])), nqubits=1)
+    assert np.allclose(obs.full(), np.diag([1.0, -1.0]))
+
+
 def test_qutip_backend_accepts_noise_model():
     nm = NoiseModel()
     nm.add(LindbladGenerator([QTensor(np.array([[0, 1], [1, 0]]))], rates=[0.1]))
@@ -499,3 +527,121 @@ def test_qutip_backend_analog_time_dependent_lindblad():
         readout=Readout().with_expectation(observables=[PauliZ(0).to_hamiltonian()]),
     )
     assert result_on.get_expectation_values()[0] > 0.9
+
+
+def _single_qubit_z_schedule(nqubits: int = 1, coefficient: float = 1.0) -> Schedule:
+    """Build a simple Z-Hamiltonian schedule over ``[0, 1]`` for noise tests."""
+    hz = PauliZ(0).to_hamiltonian()
+    for q in range(1, nqubits):
+        hz = hz + PauliZ(q).to_hamiltonian()
+    return Schedule(
+        hamiltonians={"hz": hz},
+        coefficients={"hz": {0.0: coefficient, 1.0: coefficient}},
+        dt=0.05,
+        interpolation=Interpolation.LINEAR,
+    )
+
+
+def test_qutip_backend_digital_noise_ignored_with_warning():
+    """A noise model on a digital circuit must be ignored (with a warning) rather than fail."""
+    circuit = Circuit(nqubits=1)
+    circuit.add(X(0))
+
+    nm = NoiseModel()
+    nm.add(AmplitudeDamping(t1=0.1))
+
+    result = QutipBackend(noise_model=nm).execute(
+        DigitalPropagation(circuit=circuit), Readout().with_sampling(nshots=100)
+    )
+    # The circuit is simulated noiselessly: X|0> = |1> deterministically.
+    assert result.get_samples() == {"1": 100}
+
+
+def test_qutip_backend_analog_time_derived_lindblad():
+    """Noise exposing only ``as_lindblad_from_duration`` (e.g. Depolarizing) must be applied."""
+    nm = NoiseModel()
+    nm.add(Depolarizing(probability=0.9))
+
+    result = QutipBackend(noise_model=nm).execute(
+        AnalogEvolution(schedule=_single_qubit_z_schedule(), initial_state=ket(0)),
+        readout=Readout().with_expectation(observables=[PauliZ(0).to_hamiltonian()]),
+    )
+    # Strong depolarization pushes the state toward the maximally mixed state (<Z> -> 0).
+    assert abs(result.get_expectation_values()[0]) < 0.5
+
+
+def test_qutip_backend_analog_kraus_only_noise_is_skipped():
+    """A Kraus-only channel (no Lindblad representation) must be ignored by analog evolution."""
+    nm = NoiseModel()
+    nm.add(KrausChannel([QTensor(np.eye(2, dtype=complex))]))
+
+    result = QutipBackend(noise_model=nm).execute(
+        AnalogEvolution(schedule=_single_qubit_z_schedule(), initial_state=ket(1)),
+        readout=Readout().with_expectation(observables=[PauliZ(0).to_hamiltonian()]),
+    )
+    # No dissipation is applied, so |1> is preserved (<Z> stays -1).
+    assert result.get_expectation_values()[0] < -0.99
+
+
+def test_qutip_backend_lindblad_non_square_jump_operator_raises():
+    # A ket-shaped (2, 1) jump operator is non-square and must be rejected.
+    nm = NoiseModel()
+    nm.add(LindbladGenerator(jump_operators=[QTensor(np.zeros((2, 1), dtype=complex))]), qubits=[0])
+
+    with pytest.raises(ValueError, match="must be square matrices"):
+        QutipBackend(noise_model=nm).execute(
+            AnalogEvolution(schedule=_single_qubit_z_schedule(), initial_state=ket(0)),
+            readout=Readout().with_expectation(observables=[PauliZ(0).to_hamiltonian()]),
+        )
+
+
+def test_qutip_backend_lindblad_wrong_size_jump_operator_raises():
+    # A two-qubit (4, 4) operator is neither single-qubit nor full-system on a one-qubit schedule.
+    nm = NoiseModel()
+    nm.add(LindbladGenerator(jump_operators=[QTensor(np.zeros((4, 4), dtype=complex))]), qubits=[0])
+
+    with pytest.raises(ValueError, match="single-qubit or full-system"):
+        QutipBackend(noise_model=nm).execute(
+            AnalogEvolution(schedule=_single_qubit_z_schedule(), initial_state=ket(0)),
+            readout=Readout().with_expectation(observables=[PauliZ(0).to_hamiltonian()]),
+        )
+
+
+def test_qutip_backend_per_qubit_noise_embedding_two_qubits():
+    """Per-qubit single-qubit noise on a multi-qubit system must be embedded on its target only.
+
+    With no coherent evolution (zero Hamiltonian coefficient), constant-rate dephasing on qubit 0
+    destroys its coherence (<X_0> -> 0) while the noiseless qubit 1 is untouched (<X_1> == 1).
+    """
+    nm = NoiseModel()
+    nm.add(Dephasing(t_phi=0.05), qubits=[0])
+
+    plus = (ket(0) + ket(1)).unit()
+    initial_state = tensor_prod([plus, plus])
+
+    result = QutipBackend(noise_model=nm).execute(
+        AnalogEvolution(schedule=_single_qubit_z_schedule(nqubits=2, coefficient=0.0), initial_state=initial_state),
+        readout=Readout().with_expectation(observables=[PauliX(0).to_hamiltonian(), PauliX(1).to_hamiltonian()]),
+    )
+
+    assert abs(result.get_expectation_values()[0]) < 0.1
+    assert result.get_expectation_values()[1] > 0.99
+
+
+def test_qutip_backend_lindblad_with_hamiltonian_delta():
+    """A Lindblad generator's coherent Hamiltonian term must be added to the evolution.
+
+    With a zero base coefficient and a zero dissipation rate, the only dynamics comes from the
+    generator's ``X`` Hamiltonian, driving Rabi oscillations: ``<Z>(T) = cos(2T)`` for ``T = 1``.
+    """
+    sigma_minus = QTensor(np.array([[0, 1], [0, 0]], dtype=complex))
+    generator = LindbladGenerator(jump_operators=[sigma_minus], rates=[0.0], hamiltonian=PauliX(0).to_hamiltonian())
+    nm = NoiseModel()
+    nm.add(generator, qubits=[0])
+
+    result = QutipBackend(noise_model=nm).execute(
+        AnalogEvolution(schedule=_single_qubit_z_schedule(coefficient=0.0), initial_state=ket(0)),
+        readout=Readout().with_expectation(observables=[PauliZ(0).to_hamiltonian()]),
+    )
+
+    assert np.isclose(np.real_if_close(result.get_expectation_values()[0]), np.cos(2.0), atol=1e-2)
