@@ -101,7 +101,6 @@ msgid "|p|"
 msgstr "|p|"
 
 #: ../../modules/backends/backends_qutip.rst:72
-#, fuzzy
 msgid ""
 "The QutipBackend does not natively implement "
 ":meth:`Backend._execute_quantum_reservoir "
@@ -110,9 +109,10 @@ msgid ""
 "multiplication on CPU; ``Schedule`` steps still use QuTiP's "
 ":func:`mesolve`."
 msgstr ""
-"QutipBackend no implementa :meth:`Backend._execute_quantum_reservoir "
-"<qilisdk.backends.backend.Backend._execute_quantum_reservoir>`. Los pasos"
-" ``Circuit`` de la capa del reservorio recaen en una multiplicación "
+"QutipBackend no implementa de forma nativa "
+":meth:`Backend._execute_quantum_reservoir "
+"<qilisdk.backends.backend.Backend._execute_quantum_reservoir>`. Los pasos "
+"``Circuit`` de la capa del reservorio recaen en una multiplicación "
 "unitaria ``QTensor`` densa en CPU; los pasos ``Schedule`` siguen "
 "utilizando :func:`mesolve` de QuTiP."
 

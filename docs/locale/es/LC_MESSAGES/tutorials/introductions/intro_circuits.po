@@ -593,7 +593,6 @@ msgstr ""
 " el segundo qubit y luego mide ambos qubits."
 
 #: ../../tutorials/introductions/intro_circuits.rst:188
-#, fuzzy
 msgid ""
 "If we want to simulate this circuit, we can use the :doc:`QiliSim "
 "</modules/backends/backends_qilisim>` backend. To tell the simulator that"
@@ -605,7 +604,7 @@ msgstr ""
 "Si queremos simular este circuito, podemos usar el backend :doc:`QiliSim "
 "</modules/backends/backends_qilisim>`. Para indicar al simulador que "
 "queremos simular un circuito, usamos la clase :doc:`DigitalPropagation "
-"</modules/functionals/functionals_sampling>` y luego usamos la clase "
+"</modules/functionals/functionals_digital>` y luego usamos la clase "
 ":doc:`Readout </modules/readout/readout>` para especificar cómo queremos "
 "leer nuestros resultados:"
 

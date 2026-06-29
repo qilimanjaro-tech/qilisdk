@@ -16,14 +16,19 @@ ORIG_DIR=$(pwd)
 
 # Change to the root directory of the project
 cd "$(dirname "$(dirname "$(realpath "$0")")")"
+
+# Rebuild in release mode for performance
+echo "Rebuilding C++ in release mode..."
+uv sync --all-groups --extra all-cu13 -Ccmake.build-type=Release --reinstall 2>&1
+
+# Create a temporary directory for the docs test
 cd .tmp
 mkdir -p .docs_test
 cd .docs_test
-
 TMPFILE=$(mktemp /tmp/docs_test_XXXXXX.py)
 trap "rm -f $TMPFILE" EXIT
 
-for file in $( { find ../../docs/ -name "*.rst"; find . -maxdepth 2 -name "*.md" -not -path './.venv/*' -not -path './node_modules/*'; } | sort ); do
+for file in $( { find ../../docs/ -name "*.rst"; find ../../changes/ -name "*.md"; } | sort ); do
 
     # Use Python to extract and concatenate all Python code blocks, then run them.
     # RST: code-block:: python, skip with '.. SKIP' on the preceding line.
