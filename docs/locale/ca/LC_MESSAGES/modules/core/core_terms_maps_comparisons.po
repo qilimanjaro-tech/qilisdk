@@ -62,7 +62,6 @@ msgid "Mathematical Maps"
 msgstr "Mapes matemàtics"
 
 #: ../../modules/core/core_terms_maps_comparisons.rst:58
-#, fuzzy
 msgid ""
 "Use :class:`~qilisdk.core.variables.MathematicalMap` helpers to apply "
 "common functions to a parameter or term while keeping expressions "

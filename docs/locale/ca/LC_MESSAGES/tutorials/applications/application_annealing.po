@@ -239,7 +239,6 @@ msgstr ""
 "solució òptima del nostre problema."
 
 #: ../../tutorials/applications/application_annealing.rst:29
-#, fuzzy
 msgid ""
 "Assuming we have reformulated our problem into a QUBO, we can construct "
 "the problem Hamiltonian for quantum annealing, which is in the form:"
@@ -254,7 +253,7 @@ msgid "H_{prob} = \\sum_{i,j} c_{ij} Z(i) Z(j)"
 msgstr "H_{prob} = \\sum_{i,j} c_{ij} Z(i) Z(j)"
 
 #: ../../tutorials/applications/application_annealing.rst:36
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid ""
 "Where :math:`Z(i)` is the Pauli-Z operator acting on qubit :math:`i`, and"
 " :math:`c_{ij}` are the coefficients from our QUBO formulation. Note that"
@@ -263,7 +262,9 @@ msgid ""
 msgstr ""
 "On :math:`Z(i)` és l'operador de Pauli-Z que actua sobre el qubit "
 ":math:`i`, i :math:`c_{ij}` són els coeficients de la nostra formulació "
-"QUBO."
+"QUBO. Tingueu en compte que aquestes variables :math:`Z(i)` estan "
+"relacionades amb les variables binàries del nostre problema original "
+"mitjançant la transformació :math:`x_i = (1 - Z(i))/2`."
 
 #: ../../tutorials/applications/application_annealing.rst:39
 msgid ""
@@ -288,7 +289,6 @@ msgid "H(t) = A(t) H_{mix} + B(t) H_{prob}"
 msgstr "H(t) = A(t) H_{mix} + B(t) H_{prob}"
 
 #: ../../tutorials/applications/application_annealing.rst:51
-#, fuzzy
 msgid ""
 "Where :math:`A(t)` and :math:`B(t)` are functions that determine how we "
 "interpolate between the mixing Hamiltonian and the problem Hamiltonian "
@@ -324,14 +324,14 @@ msgstr ""
 "nostra evolució:"
 
 #: ../../tutorials/applications/application_annealing.rst:74
-#, fuzzy
 msgid ""
 "We also need to define the schedule - how the coefficients of the problem"
 " and mixing Hamiltonians change over time. In this case we'll just use a "
 "simple linear mixing:"
 msgstr ""
 "També necessitem definir l'esquema: com canvien els coeficients dels "
-"Hamiltonians del problema i de barreja al llarg del temps:"
+"Hamiltonians del problema i de barreja al llarg del temps. En aquest cas, "
+"simplement farem servir una barreja lineal senzilla:"
 
 #: ../../tutorials/applications/application_annealing.rst:81
 msgid ""
