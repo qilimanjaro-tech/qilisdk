@@ -24,7 +24,6 @@ msgid "Schedule"
 msgstr "Esquema"
 
 #: ../../modules/analog/analog_schedule.rst:4
-#, fuzzy
 msgid ""
 "The simplest way to construct a common schedule is to use the helper "
 "functions:"
@@ -65,22 +64,20 @@ msgstr ""
 "Interpolació sinusoïdal entre dos Hamiltonians."
 
 #: ../../modules/analog/analog_schedule.rst:10
-#, fuzzy
 msgid ""
 ":func:`constant <qilisdk.analog.schedule.Schedule.constant>`: Constant "
 "coefficient for a single Hamiltonian."
 msgstr ""
-":func:`quadratic <qilisdk.analog.schedule.Schedule.quadratic>`: "
-"Interpolació quadràtica entre dos Hamiltonians."
+":func:`constant <qilisdk.analog.schedule.Schedule.constant>`: Coeficient "
+"constant per a un sol Hamiltonià."
 
 #: ../../modules/analog/analog_schedule.rst:11
-#, fuzzy
 msgid ""
 ":func:`chained_linear <qilisdk.analog.schedule.Schedule.chained_linear>`:"
 " Linear chaining of multiple Hamiltonians."
 msgstr ""
-":func:`linear <qilisdk.analog.schedule.Schedule.linear>`: Interpolació "
-"lineal entre dos Hamiltonians."
+":func:`chained_linear <qilisdk.analog.schedule.Schedule.chained_linear>`: "
+"Encadenament lineal de múltiples Hamiltonians."
 
 #: ../../modules/analog/analog_schedule.rst:13
 msgid ""

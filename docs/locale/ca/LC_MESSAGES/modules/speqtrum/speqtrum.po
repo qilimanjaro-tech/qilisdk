@@ -208,17 +208,16 @@ msgstr ""
 ":meth:`~qilisdk.speqtrum.speqtrum.SpeQtrum.list_devices`."
 
 #: ../../modules/speqtrum/speqtrum.rst:147
-#, fuzzy
 msgid ""
 "Physical QPUs currently do not support analog functionals built on "
 ":class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`; for now, "
 "analog hardware can run only pulse experiments from "
 ":mod:`~qilisdk.experiments`."
 msgstr ""
-"Les QPU físiques no admetent actualment funcionals analògics construïts "
-"sobre :class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`; per"
-" ara, el maquinari analògic només pot executar experiments de pols de "
-":mod:`~qilisdk.speqtrum.experiments`."
+"Les QPU físiques actualment no admeten funcionals analògics construïts "
+"sobre :class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`; per "
+"ara, el maquinari analògic només pot executar experiments de pols de "
+":mod:`~qilisdk.experiments`."
 
 #: ../../modules/speqtrum/speqtrum.rst:152
 msgid "Variational Programs"

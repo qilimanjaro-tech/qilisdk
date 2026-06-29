@@ -292,7 +292,6 @@ msgstr ""
 "específicamente las clases de operadores de Pauli:"
 
 #: ../../tutorials/introductions/intro_annealing.rst:124
-#, fuzzy
 msgid ""
 "We then need to construct our schedule to determine how the mixing will "
 "happen over time, which we can do using the :doc:`Schedule "
@@ -300,9 +299,11 @@ msgid ""
 "flexibility in how you want to define your schedule, but it also provides"
 " some helper functions for common schedules:"
 msgstr ""
-"Luego necesitamos construir nuestro esquema de programación para "
-"determinar cómo ocurrirá la mezcla a lo largo del tiempo, lo que podemos "
-"hacer usando la clase :doc:`Schedule </modules/analog/analog_schedule>`:"
+"Luego necesitamos construir nuestro esquema para determinar cómo ocurrirá "
+"la mezcla a lo largo del tiempo, lo que podemos hacer usando la clase "
+":doc:`Schedule </modules/analog/analog_schedule>`. La clase permite una "
+"flexibilidad total a la hora de definir tu esquema, pero también "
+"proporciona algunas funciones auxiliares para esquemas comunes:"
 
 #: ../../tutorials/introductions/intro_annealing.rst:134
 msgid ""
