@@ -1,29 +1,5 @@
-# All of the below commands can also be done with uv sync etc., 
-# it's only the -Ccmake.* flags that are important
-
-# To enable debug build:
-#   uv pip install -v -e ./ -Ccmake.build-type=Debug
-
-# To enable an optimized debug build:
-#   uv pip install -v -e ./ -Ccmake.build-type=RelWithDebInfo
-
-# To use single precision (float) instead of double precision (double):
-#   uv pip install -v -e ./ -Ccmake.define.single_precision=ON
-
-# To build for the native architecture:
-#   uv pip install -v -e ./ -Ccmake.define.build_native=ON
-
-# To run with clang-tidy:
-#   uv pip install -v -e ./ -Ccmake.define.tidy=ON
-
-# To enable (very) verbose simulator output:
-#   uv pip install -v -e ./ -Ccmake.define.verbose=ON
-
-# To enable the test suite:
-#   uv pip install -v -e ./ -Ccmake.define.tests=ON
-
-# To enable coverage flags:
-#   uv pip install -v -e ./ -Ccmake.define.coverage=ON
+# The optional compile flags are documented in the installation guide:
+#   docs/getting_started/installation.rst
 
 cmake_minimum_required(VERSION 3.18)
 project(qilisdk LANGUAGES CXX)
