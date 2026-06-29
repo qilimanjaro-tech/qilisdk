@@ -438,7 +438,7 @@ struct AmplitudeReducer {
                 }
             }
             if (sel < 0) {
-                continue;
+                continue;  // GCOVR_EXCL_LINE
             }
             std::swap(X[sel], X[r + zrank]);
             std::swap(Z[sel], Z[r + zrank]);
@@ -457,8 +457,10 @@ struct AmplitudeReducer {
         ref.assign(n, 0);
         for (int row = r; row < n; ++row) {
             int d = zpivot_qubit[row - r];
+            // Unreachable for a valid tableau: every pure-Z row obtains a Z-pivot above, so no entry of
+            // zpivot_qubit is left at its -1 sentinel. Defensive only.
             if (d < 0) {
-                continue;
+                continue;  // GCOVR_EXCL_LINE
             }
             ref[d] = (p4[row] == 2) ? 1 : 0;
         }
@@ -827,9 +829,8 @@ static int pauli_phase(bool x1, bool z1, bool x2, bool z2) {
         return z2 - x2;  // Y case: z2 - x2 in {-1, 0, 1} -> mod 4
     if (x1 && !z1)
         return z2 * (2 * x2 - 1);  // X case
-    if (!x1 && z1)
-        return x2 * (1 - 2 * z2);  // Z case
-    return 0;
+    // Only the Z case (!x1 && z1) remains
+    return x2 * (1 - 2 * z2);
 }
 
 void StabilizerState::rowsum(int h, int i) {
@@ -1584,8 +1585,10 @@ std::complex<double> pauli_overlap(const StabilizerState& a, const StabilizerSta
             }
         }
         const std::complex<double> amp_a = a.amplitude(x);
+        // Unreachable: x is enumerated from a's own support (base XOR a's X-pivot directions), so a
+        // always assigns it a nonzero amplitude. Defensive only.
         if (std::abs(amp_a) < 1e-15) {
-            continue;
+            continue;  // GCOVR_EXCL_LINE
         }
         // y = x XOR px is the only basis state P connects x to with nonzero matrix element.
         std::string y = x;

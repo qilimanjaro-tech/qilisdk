@@ -69,7 +69,7 @@ gcovr \
     --cobertura-add-tracefile coverage/coverage_combined.xml
 echo "Combined HTML report generated at coverage/index.html"
 
-# Determine the base branch (default: origin/main)
+# Set the base branch
 BASE_BRANCH=${BASE_BRANCH:-origin/main}
 
 # Report diff coverage (changed lines only) to terminal

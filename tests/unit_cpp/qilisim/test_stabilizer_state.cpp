@@ -853,7 +853,7 @@ double amplitudeMismatch(int n, const std::vector<std::tuple<std::string, std::v
         bpiv[q] = bitval(piv, q, n) ? '1' : '0';
     cd apiv = st.amplitude(bpiv);
     if (std::abs(apiv) < 1e-9)
-        return 1e9;
+        return 1e9;  // GCOVR_EXCL_LINE
     cd gp = sv[piv] / apiv;
     double maxerr = 0;
     for (int i = 0; i < dim; ++i) {
@@ -953,7 +953,7 @@ double sumAmplitudeMismatch(int n, const std::vector<std::tuple<std::string, std
         bpiv[q] = bitval(piv, q, n) ? '1' : '0';
     cd apiv = sum.amplitude(bpiv);
     if (std::abs(apiv) < 1e-9)
-        return 1e9;
+        return 1e9;  // GCOVR_EXCL_LINE
     cd gp = sv[piv] / apiv;
     double maxerr = 0;
     for (int i = 0; i < dim; ++i) {
@@ -1409,6 +1409,101 @@ TEST(StabilizerStateSumExpectation, RandomCircuitsWithT_MatchDense) {
         worst = std::max(worst, sumExpectationError(n, ops, H));
     }
     EXPECT_LT(worst, 1e-6) << "worst stabilizer-sum <H> vs dense over random+T circuits = " << worst;
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Edge cases
+// ──────────────────────────────────────────────────────────────────────────────
+
+TEST(Sample, CleanupLoop_NegativePhaseBranch) {
+    // The multi-anticommuting cleanup loop in sample() updates a row's phase from the product of two
+    // generators that both carry X on the sampled qubit. Depending on the tableau that product can be
+    // +1 or -1; this deterministic sweep of random Clifford states (each sampled with a fixed seed)
+    // drives the loop through both, including the -1 (exp == 2) branch.
+    const char* singles[] = {"H", "X", "Y", "Z", "S"};
+    uint64_t rng = 0xDEADBEEFCAFEULL;
+    auto next = [&]() {
+        rng ^= rng << 13;
+        rng ^= rng >> 7;
+        rng ^= rng << 17;
+        return rng;
+    };
+    for (int trial = 0; trial < 300; ++trial) {
+        int n = 4;
+        StabilizerState s(n);
+        int ng = 8 + (next() % 8);
+        for (int g = 0; g < ng; ++g) {
+            if (next() % 4 == 0) {
+                int a = next() % n, b = next() % n;
+                if (a == b)
+                    b = (b + 1) % n;
+                s.apply_gate(makeGate((next() % 2) ? "X" : "Z", {a}, {b}));
+            } else {
+                s.apply_gate(makeGate(singles[next() % 5], {}, {(int)(next() % n)}));
+            }
+        }
+        s.set_seed(0x1234u + trial);
+        std::string result = s.sample();
+        ASSERT_EQ(result.size(), (size_t)n);
+    }
+}
+
+TEST(StabilizerStateSumExpectation, OffDiagonal_NonTrivialSupport) {
+    // H on both qubits then T on q0 yields the two-term sum |0>|+> + e^{i*}|1>|+>; each term has a
+    // one-dimensional support (the spectator qubit q1 is in |+>). The off-diagonal overlap therefore
+    // enumerates that support (direction XOR) and applies the Z-phase sign, matching the dense value.
+    const std::vector<std::tuple<std::string, std::vector<int>, std::vector<int>>> ops = {{"H", {}, {0}}, {"H", {}, {1}}, {"T", {}, {0}}};
+    MatrixFreeHamiltonian H(2);
+    H.add(cd(0.7, 0), MatrixFreeOperator("X", 0));
+    H.add(cd(0.5, 0), std::vector<MatrixFreeOperator>{MatrixFreeOperator("X", 0), MatrixFreeOperator("Z", 1)});
+    H.add(cd(0.3, 0), std::vector<MatrixFreeOperator>{MatrixFreeOperator("Y", 0), MatrixFreeOperator("Z", 1)});
+    H.add(cd(0.9, 0), MatrixFreeOperator("Z", 1));
+    EXPECT_LT(sumExpectationError(2, ops, H), 1e-9);
+}
+
+TEST(StabilizerStateSumExpectation, OffDiagonal_SupportTooLarge_Throws) {
+    // |+>^26 branched by a T gate gives two terms each with a 25-dimensional support, exceeding the
+    // MAX_SUPPORT_DIM (24) cap; the cross-term overlap enumeration must refuse to run.
+    const int n = 26;
+    StabilizerStateSum sum(n);
+    for (int q = 0; q < n; ++q) {
+        sum.apply_gate(Gate("H", make2x2Identity(), {}, {q}, {}));
+    }
+    sum.apply_gate(Gate("T", tMatrix(), {}, {0}, {}));
+    MatrixFreeHamiltonian H(n);
+    H.add(cd(1, 0), MatrixFreeOperator("Z", 1));
+    EXPECT_THROW(sum.expectation_value(H), std::runtime_error);
+}
+
+TEST(StabilizerStateSumExpectation, EmptySum_IsZero) {
+    // A sum with no terms has no expectation value to speak of; it must return 0 rather than divide.
+    StabilizerStateSum empty(2, std::vector<StabilizerState>{}, std::vector<cd>{});
+    MatrixFreeHamiltonian H(2);
+    H.add(cd(1, 0), MatrixFreeOperator("Z", 0));
+    EXPECT_EQ(empty.expectation_value(H), 0.0);
+}
+
+TEST(StabilizerStateSumExpectation, ZeroNormState_IsZero) {
+    // Two identical terms with opposite coefficients sum to the zero vector: <psi|psi> = 0, so the
+    // normalised expectation value is undefined and must fall back to 0.
+    StabilizerState s(2);
+    StabilizerStateSum cancel(2, std::vector<StabilizerState>{s, s}, std::vector<cd>{cd(1, 0), cd(-1, 0)});
+    MatrixFreeHamiltonian H(2);
+    H.add(cd(1, 0), MatrixFreeOperator("Z", 0));
+    EXPECT_EQ(cancel.expectation_value(H), 0.0);
+}
+
+TEST(StabilizerState, DroppedGlobalPhase_HighRankDefaultsToOne) {
+    // The normalisation factor 2^(-rank/2) underflows the 1e-12 guard for a high-rank support, so the
+    // dropped global phase cannot be reconstructed and defaults to 1.
+    const int n = 90;
+    StabilizerState pre(n);
+    StabilizerState after(n);
+    for (int q = 0; q < n; ++q) {
+        after.apply_gate(makeGate("H", {}, {q}));
+    }
+    cd ph = pre.dropped_global_phase(after, makeGate("X", {}, {0}));
+    EXPECT_EQ(ph, cd(1, 0));
 }
 
 // GCOV_EXCL_BR_STOP

@@ -89,17 +89,17 @@ py::object construct_result_object(const StabilizerStateSum& state, const py::ob
 }
 
 namespace {
-  // QSDK-05 / QSDK-06 (CWE-125 / CWE-787): reject out-of-range qubit indices at
-  // the C++ trust boundary. The Python layer only guards the upper bound and is
-  // bypassed by deserialization (ruamel reconstructs Circuit / Gate / Pauli
-  // objects without re-running __init__), so an unvalidated index (e.g. -1)
-  // otherwise reaches the matrix-free kernels (undefined shift -> wild mask ->
-  // out-of-bounds state access) and the measurement vector (out-of-bounds write).
-  inline void validate_qubit_index(int qubit, int nqubits, const char* context) {
-      if (qubit < 0 || qubit >= nqubits) {
-          throw py::value_error("Qubit index " + std::to_string(qubit) + " is out of range [0, " + std::to_string(nqubits) + ") for " + context + ".");
-      }
-  }
+// QSDK-05 / QSDK-06 (CWE-125 / CWE-787): reject out-of-range qubit indices at
+// the C++ trust boundary. The Python layer only guards the upper bound and is
+// bypassed by deserialization (ruamel reconstructs Circuit / Gate / Pauli
+// objects without re-running __init__), so an unvalidated index (e.g. -1)
+// otherwise reaches the matrix-free kernels (undefined shift -> wild mask ->
+// out-of-bounds state access) and the measurement vector (out-of-bounds write).
+inline void validate_qubit_index(int qubit, int nqubits, const char* context) {
+    if (qubit < 0 || qubit >= nqubits) {
+        throw py::value_error("Qubit index " + std::to_string(qubit) + " is out of range [0, " + std::to_string(nqubits) + ") for " + context + ".");
+    }
+}
 }  // namespace
 
 py::object construct_result_object(const ExponentialAnsatz& state, const py::object& readout, int n_qubits) {
