@@ -120,6 +120,10 @@ class PauliOperator(ABC):
         cls._MATRIX_CACHE = {}
 
     def __init__(self, qubit: int) -> None:
+        # QSDK-05: reject negative qubit indices at construction (the upper bound
+        # depends on the Hamiltonian / circuit and is enforced at execution).
+        if qubit < 0:
+            raise ValueError(f"Qubit index must be non-negative, got {qubit}.")
         self._qubit = qubit
 
     @property
@@ -568,10 +572,10 @@ class Hamiltonian(Parameterizable):
         for term, coeff in self.elements.items():
             placed = False
             for partition in partitions:
-                # Check if the term commutes with all terms in the current partition
-                if all(
-                    Hamiltonian({term: 1}).commutator(Hamiltonian({other_term: 1})) == 0 for other_term in partition
-                ):
+                # Check if the term commutes with all terms in the current partition.
+                # Both are single Pauli strings, so the parity check is exact and avoids
+                # building intermediate Hamiltonians.
+                if all(self._pauli_strings_commute(term, other_term) for other_term in partition):
                     # If so, add it to this partition
                     partition[term] = coeff
                     placed = True
@@ -779,6 +783,33 @@ class Hamiltonian(Parameterizable):
         """
         return self * h + h * self
 
+    def commutes_with(self, h: Hamiltonian) -> bool:
+        """Check whether this Hamiltonian commutes with another one (``[self, h] == 0``).
+
+        This is faster than materialising the full commutator ``self * h - h * self``:
+        every pair of Pauli strings either commutes or anticommutes, and which one
+        holds can be decided with a cheap qubit-overlap parity check instead of a
+        matrix/operator product. Commuting pairs contribute nothing to the commutator
+        and are skipped entirely, so only the anticommuting pairs (for which
+        ``[P, Q] = 2 P Q``) are ever multiplied out and accumulated.
+
+        Args:
+            h (Hamiltonian): the Hamiltonian to test commutation against.
+
+        Returns:
+            bool: ``True`` if the two Hamiltonians commute, ``False`` otherwise.
+        """
+        residual: dict[tuple[PauliOperator, ...], complex | Term | Parameter] = defaultdict(complex)
+        for ops1, c1 in self._elements.items():
+            for ops2, c2 in h._elements.items():
+                if Hamiltonian._pauli_strings_commute(ops1, ops2):
+                    continue
+                # Anticommuting strings: [P, Q] = P Q - Q P = 2 P Q.
+                phase, new_ops = self._multiply_sets(ops1, ops2)
+                residual[new_ops] += 2 * phase * c1 * c2
+
+        return Hamiltonian(residual) == Hamiltonian.ZERO
+
     def vector_norm(self) -> float:
         """
         Returns:
@@ -850,6 +881,26 @@ class Hamiltonian(Parameterizable):
         # Sort again by qubit (to keep canonical form)
         final_ops.sort(key=lambda op: op.qubit)
         return accumulated_phase, tuple(final_ops)
+
+    @staticmethod
+    def _pauli_strings_commute(ops1: tuple[PauliOperator, ...], ops2: tuple[PauliOperator, ...]) -> bool:
+        """Return whether two Pauli strings commute, using only a qubit-overlap parity check.
+
+        Two Pauli strings always either commute or anticommute. They anticommute iff they
+        disagree (both non-identity and a different Pauli) on an odd number of qubits, since
+        single-qubit Paulis anticommute exactly when they are distinct and non-identity.
+        """
+        names2 = {op.qubit: op.name for op in ops2 if op.name != "I"}
+        if not names2:
+            return True
+        anticommuting = 0
+        for op in ops1:
+            if op.name == "I":
+                continue
+            other = names2.get(op.qubit)
+            if other is not None and other != op.name:
+                anticommuting += 1
+        return anticommuting % 2 == 0
 
     @staticmethod
     def _multiply_pauli(op1: PauliOperator, op2: PauliOperator) -> tuple[complex, PauliOperator]:

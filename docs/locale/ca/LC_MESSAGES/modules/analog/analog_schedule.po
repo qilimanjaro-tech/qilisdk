@@ -24,8 +24,9 @@ msgid "Schedule"
 msgstr "Esquema"
 
 #: ../../modules/analog/analog_schedule.rst:4
+#, fuzzy
 msgid ""
-"The simplest way to construct a common schedule is to use of the helper "
+"The simplest way to construct a common schedule is to use the helper "
 "functions:"
 msgstr ""
 "La manera més senzilla de construir un esquema comú és fer servir les "
@@ -147,8 +148,8 @@ msgstr "el coeficient del Hamiltonià en aquell moment"
 
 #: ../../modules/analog/analog_schedule.rst:38
 msgid ""
-"or callable returning a coefficient. This callable can take a parameter "
-"``t`` that will be replaced by time. Moreover, any other parameters "
+"or a callable returning a coefficient. This callable can take a parameter"
+" ``t`` that will be replaced by time. Moreover, any other parameters "
 "passed to this callable need to have a default value or have their value "
 "specified in the ``**kwargs``."
 msgstr ""
@@ -204,7 +205,7 @@ msgstr ""
 
 #: ../../modules/analog/analog_schedule.rst:100
 msgid "Parameterized Schedules"
-msgstr "Esquemes Parametritzats"
+msgstr "Esquemes parametritzats"
 
 #: ../../modules/analog/analog_schedule.rst:101
 msgid ""

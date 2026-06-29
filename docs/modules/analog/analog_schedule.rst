@@ -1,7 +1,7 @@
 Schedule
 --------
 
-The simplest way to construct a common schedule is to use of the helper functions:
+The simplest way to construct a common schedule is to use the helper functions:
 
 - :func:`linear <qilisdk.analog.schedule.Schedule.linear>`: Linear interpolation between two Hamiltonians.
 - :func:`quadratic <qilisdk.analog.schedule.Schedule.quadratic>`: Quadratic interpolation between two Hamiltonians.
@@ -35,7 +35,7 @@ Key arguments
 - **hamiltonians** (dict[str, Hamiltonian]): Map of labels to :class:`~qilisdk.analog.hamiltonian.Hamiltonian` instances.
 - **coefficients** (dict[str, dict]): Mapping from Hamiltonian label to a time-definition dictionary. Each key is either a time point (float/parameter/term) or a 2-tuple defining an interval; each value can be:
     - the coefficient of the hamiltonian at that time
-    - or callable returning a coefficient. This callable can take a parameter ``t`` that will be replaced by time. Moreover, any other parameters passed to this callable need to have a default value or have their value specified in the ``**kwargs``.
+    - or a callable returning a coefficient. This callable can take a parameter ``t`` that will be replaced by time. Moreover, any other parameters passed to this callable need to have a default value or have their value specified in the ``**kwargs``.
 - **interpolation** (:class:`~qilisdk.core.interpolator.Interpolation`): ``LINEAR`` (default) or ``STEP`` behavior between provided points.
 - **total_time** (float | Parameter | Term | None): Optional max time that rescales all time points while preserving relative positions.
 
