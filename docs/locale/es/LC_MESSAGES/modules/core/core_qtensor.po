@@ -108,22 +108,20 @@ msgstr ""
 "dimensión especificada"
 
 #: ../../modules/core/core_qtensor.rst:65
-#, fuzzy
 msgid ""
 ":func:`~qilisdk.core.qtensor.zero` for generating statevectors in the "
 "all-zero state."
 msgstr ""
-":func:`~qilisdk.core.qtensor.zero` para generar tensores cero de "
-"dimensión especificada"
+":func:`~qilisdk.core.qtensor.zero` para generar vectores de estado en el "
+"estado de todo ceros."
 
 #: ../../modules/core/core_qtensor.rst:66
-#, fuzzy
 msgid ""
 ":func:`~qilisdk.core.qtensor.one` for generating statevectors in the all-"
 "one state."
 msgstr ""
-":func:`~qilisdk.core.qtensor.zero` para generar tensores cero de "
-"dimensión especificada"
+":func:`~qilisdk.core.qtensor.one` para generar vectores de estado en el "
+"estado de todo unos."
 
 #: ../../modules/core/core_qtensor.rst:67
 msgid ""

@@ -235,6 +235,80 @@ class Schedule(Parameterizable):
             interpolation=Interpolation.LINEAR,
         )
 
+    @classmethod
+    def constant(
+        cls,
+        hamiltonian: Hamiltonian,
+        total_time: float,
+        dt: float = _DEFAULT_DT,
+    ) -> Schedule:
+        """Convenience constructor for a schedule with a single Hamiltonian and constant coefficient.
+
+        Args:
+            hamiltonian (Hamiltonian): The Hamiltonian to be applied with constant coefficient.
+            total_time (float): Total time duration of the schedule.
+            dt (float): Time resolution used for sampling callable/interval definitions and plotting. Must be positive.
+
+        Returns:
+            Schedule: A schedule instance with the specified Hamiltonian and a constant coefficient of 1.
+        """
+        return cls(
+            hamiltonians={"constant": hamiltonian},
+            coefficients={"constant": {0.0: 1}},
+            dt=dt,
+            total_time=total_time,
+            interpolation=Interpolation.LINEAR,
+        )
+
+    @classmethod
+    def chained_linear(
+        cls,
+        hamiltonians: list[Hamiltonian],
+        total_time: float,
+        dt: float = _DEFAULT_DT,
+    ) -> Schedule:
+        """Convenience constructor for a schedule that linearly chains multiple Hamiltonians.
+
+        Each Hamiltonian in the list is turned on sequentially with a linear ramp, such that at any time step, at most two Hamiltonians have nonzero coefficients and the sum of coefficients is always 1.
+
+        Args:
+            hamiltonians (list[Hamiltonian]): A list of Hamiltonians to be applied sequentially.
+            total_time (float): Total time duration of the schedule.
+            dt (float): Time resolution used for sampling callable/interval definitions and plotting. Must be positive.
+
+        Returns:
+            Schedule: A schedule instance with the specified Hamiltonians stacked linearly over time.
+
+        Raises:
+            ValueError: If the list of Hamiltonians is empty.
+        """
+        num_hams = len(hamiltonians)
+        if num_hams == 0:
+            raise ValueError("At least one Hamiltonian must be provided.")
+        if num_hams == 1:
+            return cls.constant(hamiltonians[0], total_time, dt)
+        if num_hams == 2:  # noqa: PLR2004
+            return cls.linear(hamiltonians[0], hamiltonians[1], total_time, dt)
+        segment_time = total_time / (num_hams - 1)
+        hamiltonians_dict = {f"h{i}": ham for i, ham in enumerate(hamiltonians)}
+        coefficients_dict: dict = {}
+        for i in range(num_hams):
+            start = (i - 1) * segment_time
+            peak = i * segment_time
+            end = (i + 1) * segment_time
+            if i == 0:
+                coefficients_dict[f"h{i}"] = {0.0: 1.0, end: 0.0, total_time: 0.0}
+            elif i == num_hams - 1:
+                coefficients_dict[f"h{i}"] = {0.0: 0.0, start: 0.0, total_time: 1.0}
+            else:
+                coefficients_dict[f"h{i}"] = {0.0: 0.0, start: 0.0, peak: 1.0, end: 0.0, total_time: 0.0}
+        return cls(
+            hamiltonians=hamiltonians_dict,
+            coefficients=coefficients_dict,
+            dt=dt,
+            interpolation=Interpolation.LINEAR,
+        )
+
     @property
     def hamiltonians(self) -> dict[str, Hamiltonian]:
         """

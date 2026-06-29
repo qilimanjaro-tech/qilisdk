@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-16 12:04+0200\n"
+"POT-Creation-Date: 2026-06-29 12:16+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -24,7 +24,6 @@ msgid "Schedule"
 msgstr "Esquema"
 
 #: ../../modules/analog/analog_schedule.rst:4
-#, fuzzy
 msgid ""
 "The simplest way to construct a common schedule is to use the helper "
 "functions:"
@@ -64,7 +63,23 @@ msgstr ""
 ":func:`sinusoidal <qilisdk.analog.schedule.Schedule.sinusoidal>`: "
 "Interpolació sinusoïdal entre dos Hamiltonians."
 
+#: ../../modules/analog/analog_schedule.rst:10
+msgid ""
+":func:`constant <qilisdk.analog.schedule.Schedule.constant>`: Constant "
+"coefficient for a single Hamiltonian."
+msgstr ""
+":func:`constant <qilisdk.analog.schedule.Schedule.constant>`: Coeficient "
+"constant per a un sol Hamiltonià."
+
 #: ../../modules/analog/analog_schedule.rst:11
+msgid ""
+":func:`chained_linear <qilisdk.analog.schedule.Schedule.chained_linear>`:"
+" Linear chaining of multiple Hamiltonians."
+msgstr ""
+":func:`chained_linear <qilisdk.analog.schedule.Schedule.chained_linear>`: "
+"Encadenament lineal de múltiples Hamiltonians."
+
+#: ../../modules/analog/analog_schedule.rst:13
 msgid ""
 "For example, to create a linear schedule that interpolates between a "
 "driver Hamiltonian and a problem Hamiltonian over a time of 10 units:"
@@ -73,7 +88,7 @@ msgstr ""
 "Hamiltonià conductor i un Hamiltonià de problema en un temps de 10 "
 "unitats:"
 
-#: ../../modules/analog/analog_schedule.rst:23
+#: ../../modules/analog/analog_schedule.rst:25
 msgid ""
 "For more complex schedules, you can use the "
 ":class:`~qilisdk.analog.schedule.Schedule` class directly, which provides"
@@ -94,17 +109,17 @@ msgstr ""
 " es poden definir en punts discrets o en intervals que es mostren "
 "automàticament."
 
-#: ../../modules/analog/analog_schedule.rst:30
+#: ../../modules/analog/analog_schedule.rst:32
 msgid "Key arguments"
 msgstr "Arguments principals"
 
-#: ../../modules/analog/analog_schedule.rst:32
+#: ../../modules/analog/analog_schedule.rst:34
 msgid "**dt** (float): resolution of time samples. Default is 0.1."
 msgstr ""
 "**dt** (float): resolució de les mostres temporals. El valor per defecte "
 "és 0.1."
 
-#: ../../modules/analog/analog_schedule.rst:33
+#: ../../modules/analog/analog_schedule.rst:35
 msgid ""
 "**hamiltonians** (dict[str, Hamiltonian]): Map of labels to "
 ":class:`~qilisdk.analog.hamiltonian.Hamiltonian` instances."
@@ -112,7 +127,7 @@ msgstr ""
 "**hamiltonians** (dict[str, Hamiltonian]): Mapa d'etiquetes a instàncies "
 "de :class:`~qilisdk.analog.hamiltonian.Hamiltonian`."
 
-#: ../../modules/analog/analog_schedule.rst:34
+#: ../../modules/analog/analog_schedule.rst:36
 msgid ""
 "**coefficients** (dict[str, dict]): Mapping from Hamiltonian label to a "
 "time-definition dictionary. Each key is either a time point "
@@ -124,12 +139,11 @@ msgstr ""
 "(float/paràmetre/terme) o una 2-tupla que defineix un interval; cada "
 "valor pot ser:"
 
-#: ../../modules/analog/analog_schedule.rst:35
+#: ../../modules/analog/analog_schedule.rst:37
 msgid "the coefficient of the hamiltonian at that time"
 msgstr "el coeficient del Hamiltonià en aquell moment"
 
-#: ../../modules/analog/analog_schedule.rst:36
-#, fuzzy
+#: ../../modules/analog/analog_schedule.rst:38
 msgid ""
 "or a callable returning a coefficient. This callable can take a parameter"
 " ``t`` that will be replaced by time. Moreover, any other parameters "
@@ -141,7 +155,7 @@ msgstr ""
 "paràmetre passat a aquest callable ha de tenir un valor per defecte o "
 "tenir el seu valor especificat en ``**kwargs``."
 
-#: ../../modules/analog/analog_schedule.rst:37
+#: ../../modules/analog/analog_schedule.rst:39
 msgid ""
 "**interpolation** (:class:`~qilisdk.core.interpolator.Interpolation`): "
 "``LINEAR`` (default) or ``STEP`` behavior between provided points."
@@ -150,7 +164,7 @@ msgstr ""
 "comportament ``LINEAR`` (per defecte) o ``STEP`` entre els punts "
 "proporcionats."
 
-#: ../../modules/analog/analog_schedule.rst:38
+#: ../../modules/analog/analog_schedule.rst:40
 msgid ""
 "**total_time** (float | Parameter | Term | None): Optional max time that "
 "rescales all time points while preserving relative positions."
@@ -158,7 +172,7 @@ msgstr ""
 "**total_time** (float | Parameter | Term | None): Temps màxim opcional "
 "que reescala tots els punts temporals preservant les posicions relatives."
 
-#: ../../modules/analog/analog_schedule.rst:42
+#: ../../modules/analog/analog_schedule.rst:44
 msgid ""
 "When you place parameters on the time axis (e.g., as time points or "
 "interval endpoints), the schedule automatically constrains those "
@@ -170,15 +184,15 @@ msgstr ""
 "aquells paràmetres perquè es mantinguin entre els seus punts temporals "
 "veïns, de manera que l'ordre de la línia de temps continua sent vàlid."
 
-#: ../../modules/analog/analog_schedule.rst:47
+#: ../../modules/analog/analog_schedule.rst:49
 msgid "Example 1: Callable coefficients with interval sampling"
 msgstr "Exemple 1: Coeficients callables amb mostreig per intervals"
 
-#: ../../modules/analog/analog_schedule.rst:69
+#: ../../modules/analog/analog_schedule.rst:71
 msgid "Example 2: Step interpolation and max-time rescaling"
 msgstr "Exemple 2: Interpolació per passos i reescalat del temps màxim"
 
-#: ../../modules/analog/analog_schedule.rst:94
+#: ../../modules/analog/analog_schedule.rst:96
 msgid ""
 "The draw function samples 1/dt points from the schedule, therefore, for "
 "an increased resolution in the plot you can reduce dt."
@@ -186,11 +200,11 @@ msgstr ""
 "La funció draw mostra 1/dt punts de l'esquema; per tant, per augmentar la"
 " resolució del gràfic podeu reduir dt."
 
-#: ../../modules/analog/analog_schedule.rst:98
+#: ../../modules/analog/analog_schedule.rst:100
 msgid "Parameterized Schedules"
 msgstr "Esquemes parametritzats"
 
-#: ../../modules/analog/analog_schedule.rst:99
+#: ../../modules/analog/analog_schedule.rst:101
 msgid ""
 ":class:`~qilisdk.analog.schedule.Schedule` coefficients can be symbolic, "
 "enabling classical optimization loops or experiments that scan over a "
@@ -209,7 +223,7 @@ msgstr ""
 "paràmetres. L'esquema fa un seguiment de tots els paràmetres que troba, "
 "de manera que podeu consultar-los o establir-los més endavant."
 
-#: ../../modules/analog/analog_schedule.rst:129
+#: ../../modules/analog/analog_schedule.rst:131
 msgid ""
 "For schedules, Hamiltonians, and interpolators, use ``get_parameters`` "
 "and related accessor methods to inspect parameter state."

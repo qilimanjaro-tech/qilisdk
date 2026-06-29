@@ -108,13 +108,12 @@ msgstr ""
 "comparar los tiempos de ejecución de Qutip (CPU) y CUDA (CPU/GPU)."
 
 #: ../../getting_started/quickstart.rst:93
-#, fuzzy
 msgid ""
 "**Noise** (:doc:`/modules/noise/noise`) to simulate hardware effects in "
 "both digital and analog contexts."
 msgstr ""
-"**Modelos de ruido** (:doc:`/modules/noise/noise`) para simular efectos "
-"de hardware en contextos tanto digitales como analógicos."
+"**Ruido** (:doc:`/modules/noise/noise`) para simular efectos de hardware "
+"en contextos tanto digitales como analógicos."
 
 #: ../../getting_started/quickstart.rst:94
 msgid ""
