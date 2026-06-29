@@ -40,7 +40,6 @@ msgid "Constructing"
 msgstr "Construcció"
 
 #: ../../modules/analog/analog_hamiltonian.rst:9
-#, fuzzy
 msgid ""
 "To construct a Hamiltonian with a single Pauli, you can use the "
 "constructors ``X(i)``, ``Y(i)``, ``Z(i)``, ``I(i)``. From these single-"

@@ -108,13 +108,12 @@ msgstr ""
 " els temps d'execució de Qutip (CPU) i CUDA (CPU/GPU)."
 
 #: ../../getting_started/quickstart.rst:93
-#, fuzzy
 msgid ""
 "**Noise** (:doc:`/modules/noise/noise`) to simulate hardware effects in "
 "both digital and analog contexts."
 msgstr ""
-"**Models de soroll** (:doc:`/modules/noise_models/noise_models`) per "
-"simular efectes de maquinari en contextos tant digitals com analògics."
+"**Soroll** (:doc:`/modules/noise/noise`) per simular efectes de maquinari "
+"en contextos tant digitals com analògics."
 
 #: ../../getting_started/quickstart.rst:94
 msgid ""

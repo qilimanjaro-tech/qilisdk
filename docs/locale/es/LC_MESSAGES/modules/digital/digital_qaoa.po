@@ -91,7 +91,6 @@ msgstr ""
 "mezclador X."
 
 #: ../../modules/digital/digital_qaoa.rst:19
-#, fuzzy
 msgid ""
 "**trotter_steps**: Number of Trotter steps to use for Hamiltonian "
 "approximation. Only used if the Hamiltonians contain non-commuting terms."
