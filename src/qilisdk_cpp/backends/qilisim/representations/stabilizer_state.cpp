@@ -26,6 +26,8 @@
 #include <omp.h>
 #endif
 
+// GCOV_EXCL_BR_START
+
 StabilizerState::StabilizerState(int nqubits) : nqubits(nqubits) {
     /*
     Initialize a StabilizerState to the |0⟩^n state. This means that the Z stabilizers are Z_i for each qubit i, and there are no X stabilizers.
@@ -1681,3 +1683,5 @@ double StabilizerStateSum::expectation_value(const MatrixFreeHamiltonian& h) con
     }
     return numer / denom;
 }
+
+// GCOV_EXCL_BR_STOP
