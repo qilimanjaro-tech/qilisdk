@@ -6,10 +6,8 @@
 # Time estimate: basically instant
 # --------------------------------------------------------------------------
 
-# Get the name of the branch
-branch_name=$(git rev-parse --abbrev-ref HEAD)
-
 # Only enforce on feature branches named like "sdk-XXX-description"
+branch_name=$(git rev-parse --abbrev-ref HEAD)
 if [[ $branch_name =~ ^sdk-[0-9]+- ]]; then
     git fetch --quiet origin main
     base=$(git merge-base origin/main HEAD)
