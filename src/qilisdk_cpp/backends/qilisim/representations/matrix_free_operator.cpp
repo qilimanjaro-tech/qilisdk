@@ -18,8 +18,8 @@
 #include <sstream>
 #include <stdexcept>
 #include "../../../libs/pybind.h"
-#if defined(__BMI2__)
-#include <immintrin.h>  // _pdep_u64: deposit anchor-counter bits into free positions
+#if defined(__BMI2__) || (defined(__AVX2__) && defined(__FMA__))
+#include <immintrin.h>
 #endif
 
 // `#pragma omp simd` is an OpenMP 4.0 feature. MSVC's /openmp defines _OPENMP as 200203
@@ -1091,7 +1091,44 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
                         }
                     }
 
-                    // Apply the gate matrix to each anchor's gathered amplitudes
+                    // Apply the gate matrix to each anchor's gathered amplitudes.
+                    // The accumulators (sr/si) are kept in registers across the inner
+                    // sparse loop so they are written out once per row instead of being
+                    // stored and reloaded on every nonzero
+#if defined(__AVX2__) && defined(__FMA__) && !defined(SINGLE_PRECISION)
+                    static_assert(B == 8, "AVX2 SpMV kernel assumes B == 8 (two 4-wide __m256d lanes)");
+                    for (long r = 0; r < dim_k; ++r) {
+                        __m256d sr0 = _mm256_setzero_pd();
+                        __m256d sr1 = _mm256_setzero_pd();
+                        __m256d si0 = _mm256_setzero_pd();
+                        __m256d si1 = _mm256_setzero_pd();
+                        for (long j = row_start[r]; j < row_start[r + 1]; ++j) {
+                            const int col = col_idx[j];
+                            const __m256d vr = _mm256_set1_pd(val_re[j]);
+                            const __m256d vi = _mm256_set1_pd(val_im[j]);
+                            const Real* __restrict ir = &in_re[col * B];
+                            const Real* __restrict ii = &in_im[col * B];
+                            const __m256d ir0 = _mm256_loadu_pd(ir);
+                            const __m256d ir1 = _mm256_loadu_pd(ir + 4);
+                            const __m256d ii0 = _mm256_loadu_pd(ii);
+                            const __m256d ii1 = _mm256_loadu_pd(ii + 4);
+                            // sr += vr*ir - vi*ii
+                            sr0 = _mm256_fmadd_pd(vr, ir0, sr0);
+                            sr0 = _mm256_fnmadd_pd(vi, ii0, sr0);
+                            sr1 = _mm256_fmadd_pd(vr, ir1, sr1);
+                            sr1 = _mm256_fnmadd_pd(vi, ii1, sr1);
+                            // si += vr*ii + vi*ir
+                            si0 = _mm256_fmadd_pd(vr, ii0, si0);
+                            si0 = _mm256_fmadd_pd(vi, ir0, si0);
+                            si1 = _mm256_fmadd_pd(vr, ii1, si1);
+                            si1 = _mm256_fmadd_pd(vi, ir1, si1);
+                        }
+                        _mm256_storeu_pd(&out_re[r * B], sr0);
+                        _mm256_storeu_pd(&out_re[r * B + 4], sr1);
+                        _mm256_storeu_pd(&out_im[r * B], si0);
+                        _mm256_storeu_pd(&out_im[r * B + 4], si1);
+                    }
+#else
                     for (long r = 0; r < dim_k; ++r) {
                         Real sr[B];
                         Real si[B];
@@ -1120,6 +1157,7 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
                             sio[b] = si[b];
                         }
                     }
+#endif
 
                     // Scatter the results back
                     for (long m = 0; m < dim_k; ++m) {

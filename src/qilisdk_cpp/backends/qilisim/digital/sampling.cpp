@@ -354,7 +354,17 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const Sp
     bool use_fusion = !has_noise && config.get_fuse_gates() && (is_statevector || monte_carlo) && config.get_num_threads() >= min_threads_for_fusion;
     std::vector<Gate> optimized_gates = gates;
     if (use_fusion) {
-        optimized_gates = fuse_gates(gates, config.get_max_fused_qubits());
+        // A configured value of <= 0 means "auto": pick the fusion depth from the qubit count.
+        int max_fused = config.get_max_fused_qubits();
+        if (max_fused <= 0) {
+            max_fused = auto_max_fused_qubits(n_qubits);
+        }
+        // Pre-combine consecutive single-qubit gates on the same qubit first
+        if (config.get_combine_single_qubit_gates()) {
+            optimized_gates = fuse_gates(combine_single_qubit_gates(gates), max_fused);
+        } else {
+            optimized_gates = fuse_gates(gates, max_fused);
+        }
     } else if (!has_noise && config.get_combine_single_qubit_gates()) {
         optimized_gates = combine_single_qubit_gates(optimized_gates);
     }

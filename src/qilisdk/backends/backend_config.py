@@ -343,7 +343,9 @@ class DigitalMethod(BaseSimulatorConfig):
             ``True``.
         max_fused_qubits (int): Maximum number of qubits a single fused block may
             span. Larger values fuse more aggressively but build larger dense
-            matrices (``2**max_fused_qubits`` square). Defaults to ``4``.
+            matrices (``2**max_fused_qubits`` square). ``0`` (the default) selects
+            the depth automatically from the qubit count: shallow fusion while the
+            statevector fits in cache, deeper fusion once it is DRAM-resident.
         matrix_free (bool): Whether to use the matrix-free implementation
             for statevector simulation. Defaults to ``True``.
     """
@@ -366,9 +368,9 @@ class DigitalMethod(BaseSimulatorConfig):
         description="Whether to fuse runs of adjacent gates on a small set of qubits into a single dense multi-qubit operation to reduce passes over the statevector. Only applies to the matrix-free statevector path.",
     )
     max_fused_qubits: int = Field(
-        default=4,
-        ge=1,
-        description="Maximum number of qubits a single fused block may span.",
+        default=0,
+        ge=0,
+        description="Maximum number of qubits a single fused block may span. 0 (the default) selects the depth automatically from the qubit count.",
     )
     matrix_free: bool = Field(
         default=True,
@@ -395,7 +397,7 @@ class DigitalMethod(BaseSimulatorConfig):
         matrix_free: bool = True,
         combine_single_qubit_gates: bool = True,
         fuse_gates: bool = True,
-        max_fused_qubits: int = 4,
+        max_fused_qubits: int = 0,
     ) -> DigitalMethod:
         """Build the standard statevector simulation configuration.
 
@@ -410,7 +412,8 @@ class DigitalMethod(BaseSimulatorConfig):
                 Defaults to ``True``.
             fuse_gates (bool): Whether to fuse runs of adjacent gates on a small set of qubits into a single dense
                 multi-qubit operation (matrix-free statevector path only). Defaults to ``True``.
-            max_fused_qubits (int): Maximum number of qubits a single fused block may span. Defaults to ``4``.
+            max_fused_qubits (int): Maximum number of qubits a single fused block may span. ``0`` (the default)
+                selects the depth automatically from the qubit count.
 
         Returns:
             DigitalMethod: Configured statevector digital configuration.
