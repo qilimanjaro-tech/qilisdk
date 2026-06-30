@@ -372,7 +372,14 @@ class CudaBackend(Backend):
                 ``functional.store_intermediate_results`` is ``True``.
         """
         logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
-        cudaq.set_target("dynamics")
+        # The CUDA-Q "dynamics" target only ships an fp64 (complex128) simulator, so the
+        # complex_precision setting cannot be honoured here. Warn and force fp64.
+        if get_settings().complex_precision != Precision.COMPLEX_128:
+            logger.warning(
+                "CUDA-Q dynamics simulation only supports fp64; ignoring complex_precision={} and using fp64.",
+                get_settings().complex_precision.value,
+            )
+        cudaq.set_target("dynamics", option="fp64")
         og_params = None
         # Apply parameter perturbations
         if self._noise_model and self._noise_model.global_perturbations:
@@ -405,7 +412,8 @@ class CudaBackend(Backend):
             state_as_qtensor = functional.initial_state.as_qtensor(functional.schedule.nqubits)
         else:
             state_as_qtensor = functional.initial_state
-        state_as_cuda = self._qtensor_initial_state_to_cuda(state_as_qtensor)
+        # Dynamics is fp64-only, so the initial state must be complex128.
+        state_as_cuda = self._qtensor_initial_state_to_cuda(state_as_qtensor, dtype=np.complex128)
 
         evolution_result = evolve(
             hamiltonian=cuda_hamiltonian,
@@ -418,9 +426,10 @@ class CudaBackend(Backend):
         )
 
         logger.success("TimeEvolution finished")
+        # Dynamics computes in fp64; keep the results complex128 to match.
         final_state = np.array(
             evolution_result.final_state(),  # ty:ignore[unresolved-attribute]
-            dtype=_complex_dtype(),
+            dtype=np.complex128,
         )
         if len(final_state.shape) == 1:
             final_state = final_state.reshape(-1, 1)
@@ -435,7 +444,7 @@ class CudaBackend(Backend):
             and functional.store_intermediate_results
         ):
             for state in evolution_result.intermediate_states():  # ty:ignore[unresolved-attribute]
-                _state = np.array(state, dtype=_complex_dtype())
+                _state = np.array(state, dtype=np.complex128)
                 if len(_state.shape) == 1:
                     _state = _state.reshape(-1, 1)
                 intermediate_states.append(QTensor(_state))
@@ -497,7 +506,7 @@ class CudaBackend(Backend):
         """
         logger.info("Applying sampling simulation method {}", self.sampling_method.value)
         if self.sampling_method in {CudaSamplingMethod.STATE_VECTOR, CudaSamplingMethod.STATE_VECTOR_MGPU}:
-            float_precision = "fp64" if get_settings().complex_precision == Precision.COMPLEX_64 else "fp32"
+            float_precision = "fp64" if get_settings().complex_precision == Precision.COMPLEX_128 else "fp32"
             num_gpus = cudaq.num_available_gpus()
             if num_gpus == 0:
                 cudaq.set_target("qpp-cpu")
@@ -1052,7 +1061,7 @@ class CudaBackend(Backend):
             raise ValueError("QTensor observables in the CUDA backend must be Hermitian operators.") from exc
 
     @staticmethod
-    def _qtensor_initial_state_to_cuda(initial_state: QTensor) -> State:
+    def _qtensor_initial_state_to_cuda(initial_state: QTensor, dtype: np.dtype | None = None) -> State:
         """Convert a ``QTensor`` initial state to a CUDA-Q ``State``.
 
         The state is normalized and, if given as a bra, transposed to a
@@ -1060,6 +1069,10 @@ class CudaBackend(Backend):
 
         Args:
             initial_state (QTensor): The initial quantum state to convert.
+            dtype (np.dtype | None): Complex dtype to build the state data
+                with. Defaults to the dtype implied by the global
+                ``complex_precision`` setting. The dynamics target requires
+                ``np.complex128`` regardless of that setting.
 
         Returns:
             State: The equivalent CUDA-Q state object.
@@ -1068,7 +1081,7 @@ class CudaBackend(Backend):
         if normalized_state.is_bra():
             normalized_state = normalized_state.adjoint()
 
-        cuda_state_data = np.array(normalized_state.dense(), dtype=_complex_dtype())
+        cuda_state_data = np.array(normalized_state.dense(), dtype=dtype or _complex_dtype())
         if normalized_state.is_ket():
             cuda_state_data = cuda_state_data.reshape(-1)
 
