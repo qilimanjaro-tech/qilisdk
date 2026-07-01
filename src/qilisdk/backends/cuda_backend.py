@@ -372,8 +372,6 @@ class CudaBackend(Backend):
                 ``functional.store_intermediate_results`` is ``True``.
         """
         logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
-        # The CUDA-Q "dynamics" target only ships an fp64 (complex128) simulator, so the
-        # complex_precision setting cannot be honoured here. Warn and force fp64.
         if get_settings().complex_precision != Precision.COMPLEX_128:
             logger.warning(
                 "CUDA-Q dynamics simulation only supports fp64; ignoring complex_precision={} and using fp64.",
@@ -412,8 +410,7 @@ class CudaBackend(Backend):
             state_as_qtensor = functional.initial_state.as_qtensor(functional.schedule.nqubits)
         else:
             state_as_qtensor = functional.initial_state
-        # Dynamics is fp64-only, so the initial state must be complex128.
-        state_as_cuda = self._qtensor_initial_state_to_cuda(state_as_qtensor, dtype=np.complex128)
+        state_as_cuda = self._qtensor_initial_state_to_cuda(state_as_qtensor, dtype=np.dtype(np.complex128))
 
         evolution_result = evolve(
             hamiltonian=cuda_hamiltonian,

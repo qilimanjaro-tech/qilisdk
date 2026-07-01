@@ -211,7 +211,7 @@ def test_state_vector_with_gpu(mock_sample, mock_make_kernel, mock_set_target, m
     backend = CudaBackend(sampling_method=CudaSamplingMethod.STATE_VECTOR)
     circuit = Circuit(nqubits=1)
     result = backend.execute(DigitalPropagation(circuit), Readout().with_sampling(nshots=10))
-    float_precision = "fp64" if get_settings().complex_precision == Precision.COMPLEX_64 else "fp32"
+    float_precision = "fp32" if get_settings().complex_precision == Precision.COMPLEX_64 else "fp64"
     mock_set_target.assert_called_with("nvidia", option=float_precision)
     assert isinstance(result, FunctionalResult)
     assert result.get_samples() == {"0": 1000}
@@ -512,7 +512,7 @@ def test_time_dependent_hamiltonian_cuda(monkeypatch):
     dummy_return.final_state = MagicMock(return_value=np.array([1 / np.sqrt(2), -1 / np.sqrt(2)]))
     dummy_evolve = MagicMock(return_value=dummy_return)
     monkeypatch.setattr("qilisdk.backends.cuda_backend.evolve", dummy_evolve)
-    monkeypatch.setattr("qilisdk.backends.cuda_backend.cudaq.set_target", lambda target: None)
+    monkeypatch.setattr("qilisdk.backends.cuda_backend.cudaq.set_target", lambda target, option=None: None)
     dummy_state = MagicMock(return_value=None)
     monkeypatch.setattr("qilisdk.backends.cuda_backend.State.from_data", dummy_state)
 
@@ -547,7 +547,7 @@ def test_time_dependent_hamiltonian_cuda_qtensor_observable(monkeypatch):
     dummy_return.final_state = MagicMock(return_value=np.array([1 / np.sqrt(2), -1 / np.sqrt(2)]))
     dummy_evolve = MagicMock(return_value=dummy_return)
     monkeypatch.setattr("qilisdk.backends.cuda_backend.evolve", dummy_evolve)
-    monkeypatch.setattr("qilisdk.backends.cuda_backend.cudaq.set_target", lambda target: None)
+    monkeypatch.setattr("qilisdk.backends.cuda_backend.cudaq.set_target", lambda target, option=None: None)
     monkeypatch.setattr("qilisdk.backends.cuda_backend.State.from_data", MagicMock(return_value=None))
 
     schedule = Schedule(
@@ -566,6 +566,61 @@ def test_time_dependent_hamiltonian_cuda_qtensor_observable(monkeypatch):
 
     assert isinstance(res, FunctionalResult)
     assert dummy_evolve.called
+
+
+def test_analog_evolution_warns_when_precision_not_fp64(monkeypatch):
+    """The dynamics target is fp64-only, so a non-COMPLEX_128 precision must emit a warning."""
+    dummy_return = MagicMock()
+    dummy_return.final_state = MagicMock(return_value=np.array([1 / np.sqrt(2), -1 / np.sqrt(2)]))
+    dummy_evolve = MagicMock(return_value=dummy_return)
+    monkeypatch.setattr("qilisdk.backends.cuda_backend.evolve", dummy_evolve)
+    monkeypatch.setattr("qilisdk.backends.cuda_backend.cudaq.set_target", lambda target, option=None: None)
+    monkeypatch.setattr("qilisdk.backends.cuda_backend.State.from_data", MagicMock(return_value=None))
+
+    warnings: list[str] = []
+    monkeypatch.setattr("loguru.logger.warning", lambda msg, *a, **kw: warnings.append(msg.format(*a, **kw)))
+
+    monkeypatch.setattr(get_settings(), "complex_precision", Precision.COMPLEX_64)
+
+    schedule = Schedule(
+        dt=1,
+        hamiltonians={"h1": pauli_x(0), "h2": pauli_z(0)},
+        coefficients={"h1": {(0, 100): lambda t: 1 - t / 100}, "h2": {(0, 100): lambda t: t / 100}},
+    )
+    backend = CudaBackend()
+    backend.execute(
+        AnalogEvolution(schedule=schedule, initial_state=ket(0)),
+        Readout().with_expectation(observables=[pauli_z(0)]),
+    )
+
+    assert any("only supports fp64" in w and "COMPLEX_64" in w for w in warnings)
+
+
+def test_analog_evolution_no_precision_warning_for_fp64(monkeypatch):
+    """No warning should fire when the precision is already COMPLEX_128 (fp64)."""
+    dummy_return = MagicMock()
+    dummy_return.final_state = MagicMock(return_value=np.array([1 / np.sqrt(2), -1 / np.sqrt(2)]))
+    monkeypatch.setattr("qilisdk.backends.cuda_backend.evolve", MagicMock(return_value=dummy_return))
+    monkeypatch.setattr("qilisdk.backends.cuda_backend.cudaq.set_target", lambda target, option=None: None)
+    monkeypatch.setattr("qilisdk.backends.cuda_backend.State.from_data", MagicMock(return_value=None))
+
+    warnings: list[str] = []
+    monkeypatch.setattr("loguru.logger.warning", lambda msg, *a, **kw: warnings.append(msg.format(*a, **kw)))
+
+    monkeypatch.setattr(get_settings(), "complex_precision", Precision.COMPLEX_128)
+
+    schedule = Schedule(
+        dt=1,
+        hamiltonians={"h1": pauli_x(0), "h2": pauli_z(0)},
+        coefficients={"h1": {(0, 100): lambda t: 1 - t / 100}, "h2": {(0, 100): lambda t: t / 100}},
+    )
+    backend = CudaBackend()
+    backend.execute(
+        AnalogEvolution(schedule=schedule, initial_state=ket(0)),
+        Readout().with_expectation(observables=[pauli_z(0)]),
+    )
+
+    assert not any("only supports fp64" in w for w in warnings)
 
 
 def test_qtensor_observable_non_hermitian_raises():
@@ -587,7 +642,7 @@ def test_time_dependent_hamiltonian_cuda_with_noise(monkeypatch):
     dummy_return.final_state = MagicMock(return_value=np.array([1 / np.sqrt(2), -1 / np.sqrt(2)]))
     dummy_evolve = MagicMock(return_value=dummy_return)
     monkeypatch.setattr("qilisdk.backends.cuda_backend.evolve", dummy_evolve)
-    monkeypatch.setattr("qilisdk.backends.cuda_backend.cudaq.set_target", lambda target: None)
+    monkeypatch.setattr("qilisdk.backends.cuda_backend.cudaq.set_target", lambda target, option=None: None)
     dummy_state = MagicMock(return_value=None)
     monkeypatch.setattr("qilisdk.backends.cuda_backend.State.from_data", dummy_state)
 
@@ -638,7 +693,7 @@ def test_time_dependent_hamiltonian_cuda_noise(monkeypatch):
     dummy_return.final_state = MagicMock(return_value=np.array([1 / np.sqrt(2), -1 / np.sqrt(2)]))
     dummy_evolve = MagicMock(return_value=dummy_return)
     monkeypatch.setattr("qilisdk.backends.cuda_backend.evolve", dummy_evolve)
-    monkeypatch.setattr("qilisdk.backends.cuda_backend.cudaq.set_target", lambda target: None)
+    monkeypatch.setattr("qilisdk.backends.cuda_backend.cudaq.set_target", lambda target, option=None: None)
     dummy_state = MagicMock(return_value=None)
     monkeypatch.setattr("qilisdk.backends.cuda_backend.State.from_data", dummy_state)
 
@@ -687,7 +742,7 @@ def test_time_evolution_keeps_statevector_outputs_as_columns(monkeypatch):
     dummy_return.expectation_values = MagicMock(return_value=[])
 
     monkeypatch.setattr("qilisdk.backends.cuda_backend.evolve", MagicMock(return_value=dummy_return))
-    monkeypatch.setattr("qilisdk.backends.cuda_backend.cudaq.set_target", lambda target: None)
+    monkeypatch.setattr("qilisdk.backends.cuda_backend.cudaq.set_target", lambda target, option=None: None)
     monkeypatch.setattr("qilisdk.backends.cuda_backend.State.from_data", MagicMock(return_value=None))
 
     schedule = Schedule(
@@ -721,7 +776,7 @@ def test_time_evolution_preserves_density_matrix_shape(monkeypatch):
     dummy_return.expectation_values = MagicMock(return_value=[])
 
     monkeypatch.setattr("qilisdk.backends.cuda_backend.evolve", MagicMock(return_value=dummy_return))
-    monkeypatch.setattr("qilisdk.backends.cuda_backend.cudaq.set_target", lambda target: None)
+    monkeypatch.setattr("qilisdk.backends.cuda_backend.cudaq.set_target", lambda target, option=None: None)
     state_from_data = MagicMock(return_value=None)
     monkeypatch.setattr("qilisdk.backends.cuda_backend.State.from_data", state_from_data)
 
@@ -841,7 +896,7 @@ def test_time_dependent_hamiltonian_cuda_initial_state_enum(monkeypatch):
     dummy_return.final_state = MagicMock(return_value=np.array([1 / np.sqrt(2), 1 / np.sqrt(2)]))
     dummy_evolve = MagicMock(return_value=dummy_return)
     monkeypatch.setattr("qilisdk.backends.cuda_backend.evolve", dummy_evolve)
-    monkeypatch.setattr("qilisdk.backends.cuda_backend.cudaq.set_target", lambda target: None)
+    monkeypatch.setattr("qilisdk.backends.cuda_backend.cudaq.set_target", lambda target, option=None: None)
     monkeypatch.setattr("qilisdk.backends.cuda_backend.State.from_data", MagicMock(return_value=None))
 
     schedule = Schedule(
@@ -885,7 +940,7 @@ def test_apply_digital_simulation_method_state_vector_with_gpu(monkeypatch):
     monkeypatch.setattr("cudaq.set_target", mock_set_target)
     monkeypatch.setattr("cudaq.num_available_gpus", mock_num_gpus)
     backend._apply_digital_simulation_method()
-    float_precision = "fp64" if get_settings().complex_precision == Precision.COMPLEX_64 else "fp32"
+    float_precision = "fp32" if get_settings().complex_precision == Precision.COMPLEX_64 else "fp64"
     mock_set_target.assert_called_once_with("nvidia", option=float_precision)
 
 
@@ -912,7 +967,7 @@ def test_apply_digital_simulation_method_state_vector_mgpu_multiple_gpus(monkeyp
     monkeypatch.setattr("cudaq.set_target", mock_set_target)
     monkeypatch.setattr("cudaq.num_available_gpus", mock_num_gpus)
     backend._apply_digital_simulation_method()
-    float_precision = "fp64" if get_settings().complex_precision == Precision.COMPLEX_64 else "fp32"
+    float_precision = "fp32" if get_settings().complex_precision == Precision.COMPLEX_64 else "fp64"
     mock_set_target.assert_called_once_with("nvidia", option="mgpu," + float_precision)
 
 
@@ -923,7 +978,7 @@ def test_apply_digital_simulation_method_state_vector_mgpu_single_gpu(monkeypatc
     monkeypatch.setattr("cudaq.set_target", mock_set_target)
     monkeypatch.setattr("cudaq.num_available_gpus", mock_num_gpus)
     backend._apply_digital_simulation_method()
-    float_precision = "fp64" if get_settings().complex_precision == Precision.COMPLEX_64 else "fp32"
+    float_precision = "fp32" if get_settings().complex_precision == Precision.COMPLEX_64 else "fp64"
     mock_set_target.assert_called_once_with("nvidia", option=float_precision)
 
 
