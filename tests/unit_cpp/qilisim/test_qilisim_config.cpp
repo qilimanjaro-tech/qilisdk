@@ -71,7 +71,7 @@ TEST(QilisimConfig, BadValidateThrows) {
     EXPECT_ANY_THROW(config.validate());
 
     config = default_config;
-    config.set_max_fused_qubits(0);
+    config.set_max_fused_qubits(-1);
     EXPECT_ANY_THROW(config.validate());
 }
 

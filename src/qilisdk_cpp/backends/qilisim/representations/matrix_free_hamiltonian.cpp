@@ -18,6 +18,10 @@
 #if defined(_MSC_VER)
 #include <intrin.h>
 #endif
+#if defined(__SSE3__) && defined(__FMA__)
+#include <immintrin.h>
+#define QILI_PACKED_COMPLEX 1
+#endif
 #include "../../../libs/pybind.h"
 #include "../utils/matrix_utils.h"
 #if defined(_OPENMP)
@@ -34,6 +38,43 @@ int popcount_u64(unsigned long long value) {
     return __builtin_popcountll(value);
 #endif
 }
+
+// A single complex value held for arithmetic. GCC will not pack std::complex
+// accumulation into 128-bit SIMD on its own, so on x86 (SSE3 + FMA, i.e. the
+// -march=x86-64-v3 baseline) we operate on __m128d = [real, imag] explicitly.
+// Elsewhere it degrades to plain std::complex, which the compiler handles fine.
+#if defined(QILI_PACKED_COMPLEX)
+using cvec = __m128d;
+inline cvec cv_zero() { return _mm_setzero_pd(); }
+inline cvec cv_load(const Complex* p) { return _mm_loadu_pd(reinterpret_cast<const double*>(p)); }
+inline cvec cv_add(cvec a, cvec b) { return _mm_add_pd(a, b); }
+// (ar + i ai)(br + i bi) = (ar*br - ai*bi) + i (ar*bi + ai*br)
+inline cvec cv_cmul(cvec a, cvec b) {
+    cvec ar = _mm_movedup_pd(a);         // [ar, ar]
+    cvec ai = _mm_unpackhi_pd(a, a);     // [ai, ai]
+    cvec b_swap = _mm_shuffle_pd(b, b, 0x1);  // [bi, br]
+    cvec t = _mm_mul_pd(ai, b_swap);     // [ai*bi, ai*br]
+    return _mm_fmaddsub_pd(ar, b, t);    // [ar*br - ai*bi, ar*bi + ai*br]
+}
+// acc += r * x, with r a real scalar
+inline cvec cv_fma_real(cvec acc, double r, cvec x) { return _mm_fmadd_pd(_mm_set1_pd(r), x, acc); }
+// acc += phase * x, with phase complex
+inline cvec cv_fma_cplx(cvec acc, const Complex& phase, cvec x) { return cv_add(acc, cv_cmul(cv_load(&phase), x)); }
+inline Complex cv_store(cvec v) {
+    Complex out;
+    _mm_storeu_pd(reinterpret_cast<double*>(&out), v);
+    return out;
+}
+#else
+using cvec = Complex;
+inline cvec cv_zero() { return Complex(0.0, 0.0); }
+inline cvec cv_load(const Complex* p) { return *p; }
+inline cvec cv_add(cvec a, cvec b) { return a + b; }
+inline cvec cv_cmul(cvec a, cvec b) { return a * b; }
+inline cvec cv_fma_real(cvec acc, double r, cvec x) { return acc + r * x; }
+inline cvec cv_fma_cplx(cvec acc, const Complex& phase, cvec x) { return acc + phase * x; }
+inline Complex cv_store(cvec v) { return v; }
+#endif
 }  // namespace
 
 MatrixFreeHamiltonian::MatrixFreeHamiltonian(int nqubits, const MatrixFreeOperator& op, Complex coeff) : nqubits(nqubits) {
@@ -94,112 +135,130 @@ void MatrixFreeHamiltonian::apply(const DenseMatrix& input_state, MatrixFreeAppl
 
     // Make sure output_state has the right shape
     output_state.resizeLike(input_state);
-    if (input_state.cols() != 1) {
-        output_state.setZero();
-    }
 
     // Cache some pointers
     const Complex* in_ptr = input_state.data();
     Complex* out_ptr = output_state.data();
     const Term* t_begin = terms.data();
     const Term* t_end = t_begin + terms.size();
+    const Term* diag_end = t_begin + n_diag;
+    const Term* simple_end = diag_end + n_simple_off;
 
-    // If it's a statevector
+    // Per-index kernel shared by the statevector and (column-wise) density-matrix
+    // paths: returns amplitude i of (H * vec) for a single contiguous vector `vec`.
+    // Terms are pre-partitioned into diagonal / simple real off-diagonal / general,
+    // so most terms avoid a full complex multiply.
+    // The three loops below accumulate into complex (not split real/imag scalar)
+    // values so that, with -fcx-limited-range + AVX2, each term becomes a packed
+    // 128-bit load and FMA instead of pairs of scalar ops. Several independent
+    // accumulators per loop break the reduction dependency chain (reassociation
+    // is off without -ffast-math) and keep multiple gathers in flight.
+    auto apply_index = [&](long i, const Complex* vec) -> Complex {
+        const unsigned long long ii = static_cast<unsigned long long>(i);
+
+        // Diagonal terms only contribute a per-index phase to vec[i]
+        cvec d0 = cv_zero(), d1 = cv_zero();
+        const Term* t = t_begin;
+        for (; t + 2 <= diag_end; t += 2) {
+            bool n0 = popcount_u64(ii & static_cast<unsigned long long>(t[0].sign_mask)) & 1;
+            bool n1 = popcount_u64(ii & static_cast<unsigned long long>(t[1].sign_mask)) & 1;
+            d0 = cv_add(d0, cv_load(n0 ? &t[0].base_phase_neg : &t[0].base_phase));
+            d1 = cv_add(d1, cv_load(n1 ? &t[1].base_phase_neg : &t[1].base_phase));
+        }
+        for (; t != diag_end; ++t) {
+            bool n0 = popcount_u64(ii & static_cast<unsigned long long>(t->sign_mask)) & 1;
+            d0 = cv_add(d0, cv_load(n0 ? &t->base_phase_neg : &t->base_phase));
+        }
+        cvec acc = cv_cmul(cv_add(d0, d1), cv_load(&vec[i]));
+
+        // Simple off-diagonal terms: real phase, no sign flips
+        cvec s0 = cv_zero(), s1 = cv_zero(), s2 = cv_zero(), s3 = cv_zero();
+        t = diag_end;
+        for (; t + 4 <= simple_end; t += 4) {
+            s0 = cv_fma_real(s0, t[0].base_phase.real(), cv_load(&vec[i ^ t[0].flip_mask]));
+            s1 = cv_fma_real(s1, t[1].base_phase.real(), cv_load(&vec[i ^ t[1].flip_mask]));
+            s2 = cv_fma_real(s2, t[2].base_phase.real(), cv_load(&vec[i ^ t[2].flip_mask]));
+            s3 = cv_fma_real(s3, t[3].base_phase.real(), cv_load(&vec[i ^ t[3].flip_mask]));
+        }
+        for (; t != simple_end; ++t) {
+            s0 = cv_fma_real(s0, t->base_phase.real(), cv_load(&vec[i ^ t->flip_mask]));
+        }
+        acc = cv_add(acc, cv_add(cv_add(s0, s1), cv_add(s2, s3)));
+
+        // General off-diagonal terms: full complex multiply, possible sign flip
+        cvec g0 = cv_zero(), g1 = cv_zero();
+        t = simple_end;
+        for (; t + 2 <= t_end; t += 2) {
+            bool n0 = popcount_u64(ii & static_cast<unsigned long long>(t[0].sign_mask)) & 1;
+            bool n1 = popcount_u64(ii & static_cast<unsigned long long>(t[1].sign_mask)) & 1;
+            g0 = cv_fma_cplx(g0, n0 ? t[0].base_phase_neg : t[0].base_phase, cv_load(&vec[i ^ t[0].flip_mask]));
+            g1 = cv_fma_cplx(g1, n1 ? t[1].base_phase_neg : t[1].base_phase, cv_load(&vec[i ^ t[1].flip_mask]));
+        }
+        for (; t != t_end; ++t) {
+            bool n0 = popcount_u64(ii & static_cast<unsigned long long>(t->sign_mask)) & 1;
+            g0 = cv_fma_cplx(g0, n0 ? t->base_phase_neg : t->base_phase, cv_load(&vec[i ^ t->flip_mask]));
+        }
+        acc = cv_add(acc, cv_add(g0, g1));
+
+        return cv_store(acc);
+    };
+
+    // Statevector: a single column, out = H * psi
     if (input_state.cols() == 1) {
         const long total = output_state.size();
-        const Term* diag_end = t_begin + n_diag;
-        const Term* simple_end = diag_end + n_simple_off;
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
 #endif
         for (long i = 0; i < total; ++i) {
-            // Handle diagonal terms first
-            double dr = 0.0;
-            double di = 0.0;
-            for (const Term* t = t_begin; t != diag_end; ++t) {
-                bool neg = popcount_u64(static_cast<unsigned long long>(i) & static_cast<unsigned long long>(t->sign_mask)) & 1;
-                const Complex& ph = neg ? t->base_phase_neg : t->base_phase;
-                dr += ph.real();
-                di += ph.imag();
-            }
-            const Complex& x0 = in_ptr[i];
-            const double xr0 = x0.real();
-            const double xi0 = x0.imag();
-            double coeff_re = dr * xr0 - di * xi0;
-            double coeff_im = dr * xi0 + di * xr0;
-
-            // Now the simple off-diagonal terms, which are all real and have no sign flips
-            for (const Term* t = diag_end; t != simple_end; ++t) {
-                long index = i ^ t->flip_mask;
-                const double pr = t->base_phase.real();
-                const Complex& x = in_ptr[index];
-                coeff_re += pr * x.real();
-                coeff_im += pr * x.imag();
-            }
-
-            // General off-diagonal terms, which are more expensive since they beed a full complex multiply and may have sign flips
-            for (const Term* t = simple_end; t != t_end; ++t) {
-                long index = i ^ t->flip_mask;
-                bool neg = popcount_u64(static_cast<unsigned long long>(i) & static_cast<unsigned long long>(t->sign_mask)) & 1;
-                const Complex& ph = neg ? t->base_phase_neg : t->base_phase;
-                const double pr = ph.real();
-                const double pi = ph.imag();
-                const Complex& x = in_ptr[index];
-                const double xr = x.real();
-                const double xi = x.imag();
-                coeff_re += pr * xr;
-                coeff_re -= pi * xi;
-                coeff_im += pr * xi;
-                coeff_im += pi * xr;
-            }
-            out_ptr[i] = Complex(coeff_re, coeff_im);
+            out_ptr[i] = apply_index(i, in_ptr);
         }
-    } else {
-        long N = output_state.rows();
-        if (application_type == MatrixFreeApplicationType::Left) {
+        return;
+    }
+
+    // Density matrix. Left multiplication H * rho acts within each column: column c
+    // of the result is H applied to column c of the input, so we can reuse the
+    // contiguous per-column kernel above instead of striding across rows.
+    const long N = output_state.rows();
+    if (application_type == MatrixFreeApplicationType::Left || application_type == MatrixFreeApplicationType::LeftAndRight) {
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
 #endif
+        for (long c = 0; c < N; ++c) {
+            const Complex* in_col = in_ptr + c * N;
+            Complex* out_col = out_ptr + c * N;
             for (long i = 0; i < N; ++i) {
-                for (const Term* t = t_begin; t != t_end; ++t) {
-                    long index = i ^ t->flip_mask;
-                    bool neg = popcount_u64(static_cast<unsigned long long>(i) & static_cast<unsigned long long>(t->sign_mask)) & 1;
-                    output_state.row(i) += (neg ? t->base_phase_neg : t->base_phase) * input_state.row(index);
-                }
+                out_col[i] = apply_index(i, in_col);
             }
-        } else if (application_type == MatrixFreeApplicationType::Right) {
+        }
+    }
+
+    // Right multiplication rho * H^dagger permutes and scales whole columns, which
+    // is already contiguous in column-major storage.
+    if (application_type == MatrixFreeApplicationType::Right) {
+        output_state.setZero();
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
 #endif
-            for (long j = 0; j < N; ++j) {
-                for (const Term* t = t_begin; t != t_end; ++t) {
-                    long index = j ^ t->flip_mask;
-                    bool neg = popcount_u64(static_cast<unsigned long long>(j) & static_cast<unsigned long long>(t->sign_mask)) & 1;
-                    output_state.col(j) += std::conj(neg ? t->base_phase_neg : t->base_phase) * input_state.col(index);
-                }
+        for (long j = 0; j < N; ++j) {
+            for (const Term* t = t_begin; t != t_end; ++t) {
+                long index = j ^ t->flip_mask;
+                bool neg = popcount_u64(static_cast<unsigned long long>(j) & static_cast<unsigned long long>(t->sign_mask)) & 1;
+                output_state.col(j) += std::conj(neg ? t->base_phase_neg : t->base_phase) * input_state.col(index);
             }
-        } else if (application_type == MatrixFreeApplicationType::LeftAndRight) {
+        }
+    } else if (application_type == MatrixFreeApplicationType::LeftAndRight) {
+        // The Left pass above already wrote H * rho into output_state; now apply
+        // the right factor (H * rho) * H^dagger, again as contiguous column work.
+        DenseMatrix hr_temp = output_state;
+        output_state.setZero();
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
 #endif
-            for (long i = 0; i < N; ++i) {
-                for (const Term* t = t_begin; t != t_end; ++t) {
-                    long index = i ^ t->flip_mask;
-                    bool neg = popcount_u64(static_cast<unsigned long long>(i) & static_cast<unsigned long long>(t->sign_mask)) & 1;
-                    output_state.row(i) += (neg ? t->base_phase_neg : t->base_phase) * input_state.row(index);
-                }
-            }
-            DenseMatrix hr_temp = output_state;
-            output_state.setZero();
-#if defined(_OPENMP)
-#pragma omp parallel for schedule(static)
-#endif
-            for (long j = 0; j < N; ++j) {
-                for (const Term* t = t_begin; t != t_end; ++t) {
-                    long index = j ^ t->flip_mask;
-                    bool neg = popcount_u64(static_cast<unsigned long long>(j) & static_cast<unsigned long long>(t->sign_mask)) & 1;
-                    output_state.col(j) += std::conj(neg ? t->base_phase_neg : t->base_phase) * hr_temp.col(index);
-                }
+        for (long j = 0; j < N; ++j) {
+            for (const Term* t = t_begin; t != t_end; ++t) {
+                long index = j ^ t->flip_mask;
+                bool neg = popcount_u64(static_cast<unsigned long long>(j) & static_cast<unsigned long long>(t->sign_mask)) & 1;
+                output_state.col(j) += std::conj(neg ? t->base_phase_neg : t->base_phase) * hr_temp.col(index);
             }
         }
     }

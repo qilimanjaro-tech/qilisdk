@@ -190,53 +190,72 @@ void iter_rk4(DenseMatrix& rho_t, double t, double dt, const std::vector<double>
 
     // k1 at time t
     lindblad_rhs(k, rho_t, construct_current_hamiltonian(t_step, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
+    // rho_t/rho_old/rho_tmp/k are contiguous, same-shaped column-major matrices,
+    // so walk them as flat buffers: the earlier (i, j) nesting strided the inner
+    // loop by rho_rows on every access.
+    const long rho_size = rho_t.size();
+    {
+        Complex* rt_ptr = rho_t.data();
+        Complex* ro_ptr = rho_old.data();
+        Complex* rtmp_ptr = rho_tmp.data();
+        const Complex* k_ptr = k.data();
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
 #endif
-    for (int i = 0; i < rho_t.rows(); ++i) {
-        for (int j = 0; j < rho_t.cols(); ++j) {
-            const Complex orig = rho_t(i, j);
-            const Complex kv = k(i, j);
-            rho_old(i, j) = orig;
-            rho_t(i, j) = orig + dt_over_6 * kv;
-            rho_tmp(i, j) = orig + dt_over_2 * kv;
+        for (long idx = 0; idx < rho_size; ++idx) {
+            const Complex orig = rt_ptr[idx];
+            const Complex kv = k_ptr[idx];
+            ro_ptr[idx] = orig;
+            rt_ptr[idx] = orig + dt_over_6 * kv;
+            rtmp_ptr[idx] = orig + dt_over_2 * kv;
         }
     }
 
     // k2 at time t + dt/2
     lindblad_rhs(k, rho_tmp, construct_current_hamiltonian(t_step + 0.5 * dt, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
+    {
+        Complex* rt_ptr = rho_t.data();
+        const Complex* ro_ptr = rho_old.data();
+        Complex* rtmp_ptr = rho_tmp.data();
+        const Complex* k_ptr = k.data();
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
 #endif
-    for (int i = 0; i < rho_t.rows(); ++i) {
-        for (int j = 0; j < rho_t.cols(); ++j) {
-            const Complex kv = k(i, j);
-            rho_t(i, j) += dt_over_3 * kv;
-            rho_tmp(i, j) = rho_old(i, j) + dt_over_2 * kv;
+        for (long idx = 0; idx < rho_size; ++idx) {
+            const Complex kv = k_ptr[idx];
+            rt_ptr[idx] += dt_over_3 * kv;
+            rtmp_ptr[idx] = ro_ptr[idx] + dt_over_2 * kv;
         }
     }
 
     // k3 at time t + dt/2
     lindblad_rhs(k, rho_tmp, construct_current_hamiltonian(t_step + 0.5 * dt, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
+    {
+        Complex* rt_ptr = rho_t.data();
+        const Complex* ro_ptr = rho_old.data();
+        Complex* rtmp_ptr = rho_tmp.data();
+        const Complex* k_ptr = k.data();
+        const Real dt_real = static_cast<Real>(dt);
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
 #endif
-    for (int i = 0; i < rho_t.rows(); ++i) {
-        for (int j = 0; j < rho_t.cols(); ++j) {
-            const Complex kv = k(i, j);
-            rho_t(i, j) += dt_over_3 * kv;
-            rho_tmp(i, j) = rho_old(i, j) + static_cast<Real>(dt) * kv;
+        for (long idx = 0; idx < rho_size; ++idx) {
+            const Complex kv = k_ptr[idx];
+            rt_ptr[idx] += dt_over_3 * kv;
+            rtmp_ptr[idx] = ro_ptr[idx] + dt_real * kv;
         }
     }
 
     // k4 at time t + dt
     lindblad_rhs(k, rho_tmp, construct_current_hamiltonian(t_step + dt, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
+    {
+        Complex* rt_ptr = rho_t.data();
+        const Complex* k_ptr = k.data();
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
 #endif
-    for (int i = 0; i < rho_t.rows(); ++i) {
-        for (int j = 0; j < rho_t.cols(); ++j) {
-            rho_t(i, j) += dt_over_6 * k(i, j);
+        for (long idx = 0; idx < rho_size; ++idx) {
+            rt_ptr[idx] += dt_over_6 * k_ptr[idx];
         }
     }
 
@@ -266,13 +285,21 @@ void iter_rk4(DenseMatrix& rho_t, double t, double dt, const std::vector<double>
         for (int i = 0; i < dim; ++i) {
             norm += rho_t(i, i);
         }
+        // Divide the whole (contiguous) matrix by the scalar trace. Precompute the
+        // reciprocal and multiply by hand: this turns a per-element complex
+        // division into a multiply and sidesteps the std::complex NaN-correction
+        // branch that operator/=/operator*= emit on every element.
+        const Real denom = norm.real() * norm.real() + norm.imag() * norm.imag();
+        const Real inv_re = norm.real() / denom;
+        const Real inv_im = -norm.imag() / denom;
+        Complex* rt_ptr = rho_t.data();
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
 #endif
-        for (int i = 0; i < rho_t.rows(); ++i) {
-            for (int j = 0; j < rho_t.cols(); ++j) {
-                rho_t(i, j) /= norm;
-            }
+        for (long idx = 0; idx < rho_size; ++idx) {
+            const Real xr = rt_ptr[idx].real();
+            const Real xi = rt_ptr[idx].imag();
+            rt_ptr[idx] = Complex(xr * inv_re - xi * inv_im, xr * inv_im + xi * inv_re);
         }
     }
 }
