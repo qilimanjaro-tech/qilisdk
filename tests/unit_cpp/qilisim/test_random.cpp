@@ -77,6 +77,48 @@ TEST(SampleFromDensityMatrixTest, SampleFromDensityMatrixSparse) {
     }
 }
 
+TEST(SampleFromDensityMatrixTest, PureSuperpositionStateDense) {
+    // rho = |+><+| is pure (purity 1) and has off-diagonal coherences, so it
+    // exercises the pure-state fast path. Every trajectory must be |+>, and they
+    // must reconstruct rho exactly (a pure state carries no sampling noise).
+    DenseMatrix rho = DenseMatrix::Zero(2, 2);
+    rho(0, 0) = 0.5;
+    rho(0, 1) = 0.5;
+    rho(1, 0) = 0.5;
+    rho(1, 1) = 0.5;
+    int n_trajectories = 128;
+    DenseMatrix trajectories = sample_from_density_matrix(rho, n_trajectories, 7);
+    ASSERT_EQ(trajectories.cols(), n_trajectories);
+    const double inv_sqrt2 = 1.0 / std::sqrt(2.0);
+    for (int c = 0; c < n_trajectories; ++c) {
+        EXPECT_NEAR(std::abs(trajectories(0, c)), inv_sqrt2, 1e-9);
+        EXPECT_NEAR(std::abs(trajectories(1, c)), inv_sqrt2, 1e-9);
+    }
+    DenseMatrix reconstructed = trajectories_to_density_matrix(trajectories);
+    for (int i = 0; i < 2; ++i) {
+        for (int j = 0; j < 2; ++j) {
+            EXPECT_NEAR(std::abs(reconstructed(i, j)), 0.5, 1e-9);
+        }
+    }
+}
+
+TEST(SampleFromDensityMatrixTest, PureSuperpositionStateSparse) {
+    SparseMatrix rho(2, 2);
+    rho.insert(0, 0) = 0.5;
+    rho.insert(0, 1) = 0.5;
+    rho.insert(1, 0) = 0.5;
+    rho.insert(1, 1) = 0.5;
+    rho.makeCompressed();
+    int n_trajectories = 64;
+    SparseMatrix trajectories = sample_from_density_matrix(rho, n_trajectories, 7);
+    ASSERT_EQ(trajectories.cols(), n_trajectories);
+    const double inv_sqrt2 = 1.0 / std::sqrt(2.0);
+    for (int c = 0; c < n_trajectories; ++c) {
+        EXPECT_NEAR(std::abs(trajectories.coeff(0, c)), inv_sqrt2, 1e-9);
+        EXPECT_NEAR(std::abs(trajectories.coeff(1, c)), inv_sqrt2, 1e-9);
+    }
+}
+
 TEST(SampleFromDensityMatrixTest, SampleFromZeroDensityMatrixDense) {
     DenseMatrix rho = DenseMatrix::Zero(2, 2);
     int n_qubits = 1;

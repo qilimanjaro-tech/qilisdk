@@ -116,8 +116,14 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrix& 
     bool is_statevector = (state.cols() == 1 && state.rows() == dim);
     bool initially_was_statevector = is_statevector;
 
+    // A rectangular (dim x n) input, with n neither 1 nor dim, is a batch of Monte
+    // Carlo trajectory state vectors handed over from a previous stage. Treat it as
+    // already-sampled trajectories: skip the pure-state check and the resampling,
+    // and keep it as trajectories on the way out.
+    bool input_is_trajectories = (state.cols() > 1 && state.rows() != state.cols());
+
     // If it's a density matrix, check if it's pure
-    if (!is_statevector) {
+    if (!is_statevector && !input_is_trajectories) {
         DenseMatrix state_squared = state.adjoint().cwiseProduct(state);
         double trace_squared = state_squared.trace().real();
         if (std::abs(trace_squared - 1.0) < config.get_atol()) {
@@ -135,9 +141,10 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrix& 
         is_statevector = false;
     }
 
-    // Whether we should do monte-carlo sampling (only for density matrices)
-    bool monte_carlo = (!is_statevector && config.get_monte_carlo());
-    if (monte_carlo) {
+    // Whether we should do monte-carlo sampling. A trajectory batch is already
+    // sampled, so we mark it monte_carlo (per-column state vectors) without resampling.
+    bool monte_carlo = input_is_trajectories || (!is_statevector && config.get_monte_carlo());
+    if (monte_carlo && !input_is_trajectories) {
         state = sample_from_density_matrix(state, config.get_num_monte_carlo_trajectories(), config.get_seed());
     }
 
@@ -278,8 +285,9 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrix& 
         gate_count++;
     }
 
-    // If we have statevector/s but we should return a density matrix
-    if (monte_carlo) {
+    // If we have statevector/s but we should return a density matrix. A trajectory
+    // batch is kept as trajectories so the caller can carry the ensemble forward.
+    if (monte_carlo && !input_is_trajectories) {
         state = trajectories_to_density_matrix(state);
     }
 
@@ -327,8 +335,14 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const Sp
     // Check if we have noise
     bool has_noise = !noise_model_cpp.is_empty();
 
+    // A rectangular (dim x n) input, with n neither 1 nor dim, is a batch of Monte
+    // Carlo trajectory state vectors handed over from a previous stage. Treat it as
+    // already-sampled trajectories: skip the pure-state check and the resampling,
+    // and keep it as trajectories on the way out.
+    bool input_is_trajectories = (state.cols() > 1 && state.rows() != state.cols());
+
     // If it's a density matrix, check if it's pure
-    if (!is_statevector) {
+    if (!is_statevector && !input_is_trajectories) {
         DenseMatrix state_squared = state.adjoint().cwiseProduct(state);
         double trace_squared = state_squared.trace().real();
         if (std::abs(trace_squared - 1.0) < config.get_atol()) {
@@ -343,9 +357,10 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const Sp
         is_statevector = false;
     }
 
-    // Whether we should do monte-carlo sampling (only for density matrices)
-    bool monte_carlo = (!is_statevector && config.get_monte_carlo());
-    if (monte_carlo) {
+    // Whether we should do monte-carlo sampling. A trajectory batch is already
+    // sampled, so we mark it monte_carlo (per-column state vectors) without resampling.
+    bool monte_carlo = input_is_trajectories || (!is_statevector && config.get_monte_carlo());
+    if (monte_carlo && !input_is_trajectories) {
         state = sample_from_density_matrix(state, config.get_num_monte_carlo_trajectories(), config.get_seed());
     }
 
@@ -444,8 +459,9 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const Sp
         }
     }
 
-    // If we have statevector/s but we should return a density matrix
-    if (monte_carlo) {
+    // If we have statevector/s but we should return a density matrix. A trajectory
+    // batch is kept as trajectories so the caller can carry the ensemble forward.
+    if (monte_carlo && !input_is_trajectories) {
         state = trajectories_to_density_matrix(state);
     }
 

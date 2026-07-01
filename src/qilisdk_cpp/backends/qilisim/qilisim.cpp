@@ -323,7 +323,18 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
         state = DenseMatrix(rho_0);
     }
 
+    // In Monte Carlo mode we sample the initial density matrix into trajectories
+    // ONCE and then carry that ensemble (a rectangular dim x n_trajectories matrix)
+    // through every layer. The sampling/time-evolution steps detect the rectangular
+    // input and evolve it as a batch of state vectors without collapsing back to a
+    // density matrix, so we never re-run the O(dim^3) eigendecomposition per layer.
+    bool trajectory_mode = config.get_monte_carlo();
+    if (trajectory_mode) {
+        state = sample_from_density_matrix(state, config.get_num_monte_carlo_trajectories(), config.get_seed());
+    }
+
     py::list inter_results;
+    int layer_index = 0;
     for (py::handle input_handler : functional.attr("input_per_layer")) {
         py::object input_dict = py::reinterpret_borrow<py::object>(input_handler);
         functional.attr("reservoir_layer").attr("set_parameters")(input_dict);
@@ -410,12 +421,21 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
                 }
             }
         }
-        // Ensure state is a density matrix after each layer (matching Python's to_density_matrix())
-        if (state.cols() == 1) {
+        // Ensure state is a density matrix after each layer (matching Python's
+        // to_density_matrix()), except in trajectory mode where we keep the Monte
+        // Carlo ensemble as state-vector columns.
+        if (!trajectory_mode && state.cols() == 1) {
             state = state * state.adjoint();
         }
 
-        inter_results.append(construct_result_object(state, readout, noise_model_cpp, n_qubits, config, qubits_to_measure));
+        // Set the number of threads (to construct the density matrix faster, 
+        // this gets reset in the digital/analog sections)
+        Eigen::setNbThreads(config.get_num_threads());
+
+        // Build the layer result. In trajectory mode the ensemble is averaged into a
+        // density matrix only for the readout; the trajectories themselves carry on.
+        DenseMatrix readout_state = trajectory_mode ? trajectories_to_density_matrix(state) : state;
+        inter_results.append(construct_result_object(readout_state, readout, noise_model_cpp, n_qubits, config, qubits_to_measure));
         if (!functional.attr("reservoir_layer").attr("qubits_to_reset").is_none()) {
             std::set<int> qubits_set;
             for (const auto& item : functional.attr("reservoir_layer").attr("qubits_to_reset")) {
@@ -431,31 +451,38 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
                     reset_mask |= (1ULL << q);
                 }
 
-                DenseMatrix reset_rho = DenseMatrix::Zero(state.rows(), state.cols());
+                if (trajectory_mode) {
+                    // Stochastic per-trajectory reset keeps the ensemble as trajectories
+                    // (see reset_trajectories); vary the seed per layer to decorrelate draws.
+                    state = reset_trajectories(state, reset_mask, config.get_seed() + 104729 * (layer_index + 1));
+                } else {
+                    DenseMatrix reset_rho = DenseMatrix::Zero(state.rows(), state.cols());
 
-                for (Eigen::Index row = 0; row < state.rows(); ++row) {
-                    for (Eigen::Index col = 0; col < state.cols(); ++col) {
-                        if (state(row, col) == Complex(0.0, 0.0)) {
-                            continue;
+                    for (Eigen::Index row = 0; row < state.rows(); ++row) {
+                        for (Eigen::Index col = 0; col < state.cols(); ++col) {
+                            if (state(row, col) == Complex(0.0, 0.0)) {
+                                continue;
+                            }
+
+                            const uint64_t urow = static_cast<uint64_t>(row);
+                            const uint64_t ucol = static_cast<uint64_t>(col);
+
+                            if (((urow ^ ucol) & reset_mask) != 0ULL) {
+                                continue;
+                            }
+
+                            const Eigen::Index out_row = static_cast<Eigen::Index>(urow & ~reset_mask);
+                            const Eigen::Index out_col = static_cast<Eigen::Index>(ucol & ~reset_mask);
+
+                            reset_rho(out_row, out_col) += state(row, col);
                         }
-
-                        const uint64_t urow = static_cast<uint64_t>(row);
-                        const uint64_t ucol = static_cast<uint64_t>(col);
-
-                        if (((urow ^ ucol) & reset_mask) != 0ULL) {
-                            continue;
-                        }
-
-                        const Eigen::Index out_row = static_cast<Eigen::Index>(urow & ~reset_mask);
-                        const Eigen::Index out_col = static_cast<Eigen::Index>(ucol & ~reset_mask);
-
-                        reset_rho(out_row, out_col) += state(row, col);
                     }
-                }
 
-                state = std::move(reset_rho);
+                    state = std::move(reset_rho);
+                }
             }
         }
+        layer_index++;
     }
 
     py::slice slice(0, -1, 1);

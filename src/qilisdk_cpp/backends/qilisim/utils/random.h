@@ -29,5 +29,6 @@ SparseMatrix trajectories_to_density_matrix(const SparseMatrix& trajectories);
 DenseMatrix trajectories_to_density_matrix(const DenseMatrix& trajectories);
 SparseMatrix get_vector_from_density_matrix(const SparseMatrix& rho_t, double atol = 1e-12);
 DenseMatrix get_vector_from_density_matrix(const DenseMatrix& rho_t, double atol = 1e-12);
+DenseMatrix reset_trajectories(const DenseMatrix& trajectories, unsigned long long reset_mask, int seed);
 
 // GCOV_EXCL_BR_STOP
