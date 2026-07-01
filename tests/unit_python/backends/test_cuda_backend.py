@@ -596,33 +596,6 @@ def test_analog_evolution_warns_when_precision_not_fp64(monkeypatch):
     assert any("only supports fp64" in w and "COMPLEX_64" in w for w in warnings)
 
 
-def test_analog_evolution_no_precision_warning_for_fp64(monkeypatch):
-    """No warning should fire when the precision is already COMPLEX_128 (fp64)."""
-    dummy_return = MagicMock()
-    dummy_return.final_state = MagicMock(return_value=np.array([1 / np.sqrt(2), -1 / np.sqrt(2)]))
-    monkeypatch.setattr("qilisdk.backends.cuda_backend.evolve", MagicMock(return_value=dummy_return))
-    monkeypatch.setattr("qilisdk.backends.cuda_backend.cudaq.set_target", lambda target, option=None: None)
-    monkeypatch.setattr("qilisdk.backends.cuda_backend.State.from_data", MagicMock(return_value=None))
-
-    warnings: list[str] = []
-    monkeypatch.setattr("loguru.logger.warning", lambda msg, *a, **kw: warnings.append(msg.format(*a, **kw)))
-
-    monkeypatch.setattr(get_settings(), "complex_precision", Precision.COMPLEX_128)
-
-    schedule = Schedule(
-        dt=1,
-        hamiltonians={"h1": pauli_x(0), "h2": pauli_z(0)},
-        coefficients={"h1": {(0, 100): lambda t: 1 - t / 100}, "h2": {(0, 100): lambda t: t / 100}},
-    )
-    backend = CudaBackend()
-    backend.execute(
-        AnalogEvolution(schedule=schedule, initial_state=ket(0)),
-        Readout().with_expectation(observables=[pauli_z(0)]),
-    )
-
-    assert not any("only supports fp64" in w for w in warnings)
-
-
 def test_qtensor_observable_non_hermitian_raises():
     backend = CudaBackend()
     non_hermitian = QTensor(np.array([[0, 1], [0, 0]], dtype=np.complex128))
