@@ -729,4 +729,40 @@ TEST(MatrixFreeHamiltonian, ExpectationValueIdentityOnPlusState) {
     EXPECT_NEAR(state.expectation_value(H_I), 1.0, 1e-10);
 }
 
+TEST(MatrixFreeHamiltonian, ApplyLeftOnNonSquareBatchMatchesPerColumn) {
+    // Monte Carlo passes a (dim x n_trajectories) buffer that is NOT square. Left
+    // application must act column-by-column and stay in bounds even when
+    // n_trajectories != dim. Regression test for a heap-corrupting loop that ran
+    // over rows() instead of cols().
+    const int nq = 3;
+    const int dim = 1 << nq;  // 8
+    const int ncols = 3;      // deliberately != dim
+
+    MatrixFreeHamiltonian h(nq);
+    h.add({0.7, 0.0}, MatrixFreeOperator("Z", 0));  // diagonal term
+    h.add({1.3, 0.0}, MatrixFreeOperator("X", 1));  // simple off-diagonal term
+    h.add({0.0, 0.5}, MatrixFreeOperator("Y", 2));  // general term (sign flip + imaginary phase)
+
+    DenseMatrix batch = DenseMatrix::Zero(dim, ncols);
+    for (int r = 0; r < dim; ++r) {
+        for (int c = 0; c < ncols; ++c) {
+            batch(r, c) = Complex(0.1 * (r + 1) + c, 0.2 * r - 0.3 * c);
+        }
+    }
+
+    DenseMatrix out;
+    h.apply(batch, MatrixFreeApplicationType::Left, out);
+    ASSERT_EQ(out.rows(), dim);
+    ASSERT_EQ(out.cols(), ncols);
+
+    // Each output column must equal H applied to that column on its own.
+    for (int c = 0; c < ncols; ++c) {
+        DenseMatrix col = batch.col(c);
+        DenseMatrix expected_col;
+        h.apply(col, MatrixFreeApplicationType::Left, expected_col);
+        DenseMatrix out_col = out.col(c);
+        expectMatrixNear(out_col, expected_col);
+    }
+}
+
 // GCOV_EXCL_BR_STOP

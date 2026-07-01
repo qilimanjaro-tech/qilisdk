@@ -215,15 +215,19 @@ void MatrixFreeHamiltonian::apply(const DenseMatrix& input_state, MatrixFreeAppl
         return;
     }
 
-    // Density matrix. Left multiplication H * rho acts within each column: column c
-    // of the result is H applied to column c of the input, so we can reuse the
-    // contiguous per-column kernel above instead of striding across rows.
+    // Density matrix (or a batch of trajectory state vectors). Left multiplication
+    // H * rho acts within each column: column c of the result is H applied to
+    // column c of the input, so we reuse the contiguous per-column kernel above
+    // instead of striding across rows. N is the column length (state-space
+    // dimension); the matrix need not be square - Monte Carlo passes an
+    // (dim x n_trajectories) buffer - so iterate over the real column count.
     const long N = output_state.rows();
+    const long ncols = output_state.cols();
     if (application_type == MatrixFreeApplicationType::Left || application_type == MatrixFreeApplicationType::LeftAndRight) {
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
 #endif
-        for (long c = 0; c < N; ++c) {
+        for (long c = 0; c < ncols; ++c) {
             const Complex* in_col = in_ptr + c * N;
             Complex* out_col = out_ptr + c * N;
             for (long i = 0; i < N; ++i) {
