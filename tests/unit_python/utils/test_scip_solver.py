@@ -55,15 +55,16 @@ def test_decode_scip_value_real_is_passthrough():
 
 
 def test_term_to_scip_expr_empty_term_is_zero():
-    assert _term_to_scip_expr(Term([], Operation.ADD), {}) == 0.0
+    assert np.isclose(_term_to_scip_expr(Term([], Operation.ADD), {}), 0.0)
 
 
 def test_term_to_scip_expr_unsupported_operation_raises():
     x = BinaryVariable("x")
     term = Term([x], Operation.SUB)
     scip_model = ScipModel("t")
+    var_exprs = {x: scip_model.addVar(name="x", vtype="B")}
     with pytest.raises(ValueError, match="not supported"):
-        _term_to_scip_expr(term, {x: scip_model.addVar(name="x", vtype="B")})
+        _term_to_scip_expr(term, var_exprs)
 
 
 def test_term_to_scip_expr_handles_nested_mul_term():
@@ -151,8 +152,9 @@ def test_scip_solver_unsupported_variable_raises():
     p = Parameter("p", 1.0)
     m = Model("param_model")
     m.set_objective(Term([p], Operation.ADD))
+    solver = ScipSolver()
     with pytest.raises(ValueError, match="not supported for variable"):
-        ScipSolver().solve(m)
+        solver.solve(m)
 
 
 def test_scip_solver_unsupported_constraint_raises():
@@ -160,8 +162,9 @@ def test_scip_solver_unsupported_constraint_raises():
     m = Model("neq")
     m.set_objective(1 * x)
     m.add_constraint("c", NEQ(x, 1))
+    solver = ScipSolver()
     with pytest.raises(ValueError, match="Constraint operation"):
-        ScipSolver().solve(m)
+        solver.solve(m)
 
 
 def test_scip_solver_forwards_params():
@@ -178,8 +181,9 @@ def test_scip_solver_infeasible_raises():
     m.set_objective(1 * x)
     m.add_constraint("c1", EQ(x, 1))
     m.add_constraint("c2", EQ(x, 0))
+    solver = ScipSolver()
     with pytest.raises(ValueError, match="no feasible solution"):
-        ScipSolver().solve(m)
+        solver.solve(m)
 
 
 def test_scip_solver_returns_evaluate_of_best():

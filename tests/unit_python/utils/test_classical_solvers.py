@@ -46,8 +46,9 @@ def test_classical_solver_solve_raises():
     m = Model("m")
     x = BinaryVariable("x")
     m.set_objective(1 * x)
+    solver = ClassicalSolver()
     with pytest.raises(NotImplementedError):
-        ClassicalSolver().solve(m)
+        solver.solve(m)
 
 
 def test_brute_force_binary_variable_domain():
@@ -79,8 +80,9 @@ def test_brute_force_unsupported_variable_raises():
     s = SpinVariable("s")
     m = Model("spin_model")
     m.set_objective(Term([s], Operation.ADD))
+    solver = BruteForceSolver()
     with pytest.raises(ValueError, match="not supported"):
-        BruteForceSolver().solve(m)
+        solver.solve(m)
 
 
 def test_brute_force_warns_on_large_model():
@@ -125,18 +127,18 @@ def test_brute_force_returns_evaluate_of_best():
 
 def test_variable_bounds_explicit_bounds():
     v = Variable("v", Domain.REAL, bounds=(-2.5, 4.0))
-    assert _variable_bounds(v) == (-2.5, 4.0)
+    assert np.allclose(_variable_bounds(v), (-2.5, 4.0))
 
 
 def test_variable_bounds_binary_defaults_to_domain_limits():
-    assert _variable_bounds(BinaryVariable("b")) == (0.0, 1.0)
+    assert np.allclose(_variable_bounds(BinaryVariable("b")), (0.0, 1.0))
 
 
 def test_variable_bounds_missing_lower_falls_back_to_domain_min():
     v = Variable("v", Domain.POSITIVE_INTEGER, bounds=(None, 5))
     lower, upper = _variable_bounds(v)
-    assert lower == 0.0
-    assert upper == 5.0
+    assert np.isclose(lower, 0.0)
+    assert np.isclose(upper, 5.0)
 
 
 def test_decode_value_binary_rounds():
@@ -206,8 +208,9 @@ def test_scipy_solver_unsupported_variable_raises():
     s = SpinVariable("s")
     m = Model("spin_model")
     m.set_objective(Term([s], Operation.ADD))
+    solver = ScipySolver()
     with pytest.raises(ValueError, match="not supported"):
-        ScipySolver().solve(m)
+        solver.solve(m)
 
 
 def test_scipy_solver_returns_evaluate_of_best():
