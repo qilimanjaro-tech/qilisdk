@@ -21,9 +21,12 @@ pytest discovery.
 
 from __future__ import annotations
 
+import base64
+import os
 from datetime import datetime, timezone
 
 import pytest
+from dill import dumps
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliZ
 from qilisdk.analog.schedule import Schedule
@@ -86,6 +89,7 @@ from qilisdk.speqtrum.speqtrum_models import (
     TwoTonesVsFluxBiasExperimentPayload,
     VariationalProgramPayload,
 )
+from qilisdk.utils.serialization import DeserializationError
 
 
 def test_digital_propagation_payload():
@@ -407,6 +411,29 @@ def test_requires():
     )
     with pytest.raises(RuntimeError, match="did not return a two_tones_vs_flux_bias_experiment_result"):
         _require_two_tones_vs_flux_bias_experiment_result(bad_result)
+
+
+def test_execute_result_rejects_code_bearing_tag(tmp_path):
+    """A `!function` tag in a server-supplied job result must be rejected, not executed (QSDK-02)."""
+    sentinel = tmp_path / "speqtrum_pwned"
+
+    class _Payload:
+        def __reduce__(self):
+            return (os.system, (f"touch {sentinel}",))
+
+    encoded = base64.b64encode(dumps(_Payload(), recurse=True)).decode("utf-8")
+    malicious = f"!function {encoded}\n"
+
+    # Result validator family (the QSDK-02 server path: get_job/wait_for_job).
+    with pytest.raises(DeserializationError):
+        ExecuteResult._load_sampling_result(malicious)
+
+    # Payload validator family (bare `isinstance(v, str)`, no `!` guard).
+    with pytest.raises(DeserializationError):
+        DigitalPropagationPayload._load_sampling(malicious)
+
+    # Proof of non-execution: the dill payload never ran on either path.
+    assert not sentinel.exists()
 
 
 def test_typed_job_detail():
