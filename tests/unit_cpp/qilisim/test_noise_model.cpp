@@ -41,4 +41,22 @@ TEST(NoiseModel, GetRelevantKrausOperators) {
     EXPECT_EQ(result.size(), 1);
 }
 
+TEST(NoiseModel, TimeDependentJumpRateSeries) {
+    NoiseModelCpp model;
+
+    // A constant jump operator stores an empty series and is not time-dependent.
+    model.add_jump_operator(SparseMatrix(2, 2));
+    EXPECT_FALSE(model.has_time_dependent_rates());
+
+    // A time-dependent jump operator stores its per-step sqrt(rate) series and flips the flag.
+    std::vector<double> series = {0.5, 1.0, 1.5};
+    model.add_jump_operator(SparseMatrix(2, 2), series);
+    EXPECT_TRUE(model.has_time_dependent_rates());
+
+    ASSERT_EQ(model.get_jump_operators().size(), 2u);
+    ASSERT_EQ(model.get_jump_rate_series().size(), 2u);
+    EXPECT_TRUE(model.get_jump_rate_series()[0].empty());
+    EXPECT_EQ(model.get_jump_rate_series()[1], series);
+}
+
 // GCOV_EXCL_BR_STOP
