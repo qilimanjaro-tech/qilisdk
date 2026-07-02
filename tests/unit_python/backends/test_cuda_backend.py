@@ -360,8 +360,10 @@ def test_execute_measurement_partial_with_bad_samples_raises(mock_set_target, mo
     circuit = Circuit(nqubits=3)
     measurement_gate = M(1, 2)
     circuit._gates.append(measurement_gate)
+    func = DigitalPropagation(circuit)
+    read = Readout().with_sampling(nshots=10)
     with pytest.raises(ValueError, match="filter samples for more qubits"):
-        backend.execute(DigitalPropagation(circuit), Readout().with_sampling(nshots=10))
+        backend.execute(func, read)
 
 
 # --- Tests for unsupported gate errors ---
@@ -374,8 +376,10 @@ def test_execute_unsupported_gate(mock_set_target, mock_sample, mock_make_kernel
     backend = CudaBackend()
     circuit = Circuit(nqubits=1)
     circuit._gates.append(DummyGate(0))
+    func = DigitalPropagation(circuit)
+    read = Readout().with_sampling(nshots=10)
     with pytest.raises(UnsupportedGateError):
-        backend.execute(DigitalPropagation(circuit), Readout().with_sampling(nshots=10))
+        backend.execute(func, read)
 
 
 def test_controlled_with_unsupported_basic_gate_raises(monkeypatch):
@@ -427,8 +431,10 @@ def test_adjoint_unsupported_gate_error(mock_set_target, mock_sample, mock_make_
     circuit = Circuit(nqubits=1)
     adjoint_gate = Adjoint(DummyGate(0))
     circuit._gates.append(adjoint_gate)
+    func = DigitalPropagation(circuit)
+    read = Readout().with_sampling(nshots=10)
     with pytest.raises(UnsupportedGateError):
-        backend.execute(DigitalPropagation(circuit), Readout().with_sampling(nshots=10))
+        backend.execute(func, read)
 
 
 def test_hamiltonian_to_cuda_computes_expected_sum(monkeypatch):
@@ -527,8 +533,10 @@ def test_multi_qubit_controls_no_decompose(monkeypatch):
     gate = Controlled(0, 1, basic_gate=X(2))
     assert gate.control_qubits == (0, 1)
     circuit.add(gate)
+    func = DigitalPropagation(circuit)
+    read = Readout().with_sampling(nshots=1000)
     with pytest.raises(UnsupportedGateError):
-        backend.execute(DigitalPropagation(circuit), Readout().with_sampling(nshots=1000))
+        backend.execute(func, read)
 
 
 def test_time_dependent_hamiltonian_cuda(mock_cuda_dynamics):
@@ -766,8 +774,9 @@ def test_execute_quantum_reservoir_raises_if_time_evolution_returns_no_state(mon
         _mock_execute_analog_evolution,
     )
 
+    read = SamplingReadout(nshots=10)
     with pytest.raises(ValueError, match="Reservoir Runtime Error"):
-        backend._execute_quantum_reservoir(functional, [SamplingReadout(nshots=10)])
+        backend._execute_quantum_reservoir(functional, [read])
 
 
 def test_cudaq_to_standard_reorders_statevector():
@@ -781,14 +790,16 @@ def test_cudaq_to_standard_reorders_statevector():
 
 def test_cudaq_to_standard_invalid_ndim_raises():
 
+    arr = np.array([[1, 0], [0, 0]], dtype=complex)
     with pytest.raises(ValueError, match="1D array"):
-        cudaq_to_standard(np.array([[1, 0], [0, 0]], dtype=complex))
+        cudaq_to_standard(arr)
 
 
 def test_cudaq_to_standard_non_power_of_two_raises():
 
+    arr = np.array([1, 0, 0], dtype=complex)
     with pytest.raises(ValueError, match="power of 2"):
-        cudaq_to_standard(np.array([1, 0, 0], dtype=complex))
+        cudaq_to_standard(arr)
 
 
 def test_reverse_bits():
@@ -801,14 +812,17 @@ def test_reverse_bits():
 
 def test_validate_digital_readout_with_noise_non_sampling_raises():
     backend = CudaBackend(noise_model=NoiseModel())
+    read = StateTomographyReadout()
     with pytest.raises(ValueError, match="only the sample readout"):
-        backend._validate_digital_readout_with_noise([StateTomographyReadout()])
+        backend._validate_digital_readout_with_noise([read])
 
 
 def test_validate_digital_readout_with_noise_multiple_readouts_raises():
     backend = CudaBackend(noise_model=NoiseModel())
+    read_10 = SamplingReadout(nshots=10)
+    read_20 = SamplingReadout(nshots=20)
     with pytest.raises(ValueError, match="single sampling operation"):
-        backend._validate_digital_readout_with_noise([SamplingReadout(nshots=10), SamplingReadout(nshots=20)])
+        backend._validate_digital_readout_with_noise([read_10, read_20])
 
 
 def test_validate_digital_readout_with_noise_ok():
@@ -824,8 +838,9 @@ def test_sampling_method_property():
 def test_qtensor_observable_to_hamiltonian_not_operator_raises():
     backend = CudaBackend()
     # A ket is not an operator
+    k = ket(0)
     with pytest.raises(ValueError, match="must be an operator"):
-        backend._qtensor_observable_to_hamiltonian(ket(0), nqubits=1)
+        backend._qtensor_observable_to_hamiltonian(k, nqubits=1)
 
 
 def test_qtensor_observable_to_hamiltonian_wrong_nqubits_raises():
