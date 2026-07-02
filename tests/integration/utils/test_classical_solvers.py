@@ -45,7 +45,7 @@ def _cost(model: Model, sample: dict[BaseVariable, Number]) -> float:
 def _solve(solver_name: str, model: Model) -> dict[BaseVariable, Number]:
     """Solve ``model`` with the named solver and return the sample assignment."""
     if solver_name == "scipy":
-        _, sample = ScipySolver().solve(model, method="differential_evolution", seed=1)
+        _, sample = ScipySolver(method="differential_evolution", seed=1).solve(model)
         return sample
     _, sample = ScipSolver().solve(model)
     return sample

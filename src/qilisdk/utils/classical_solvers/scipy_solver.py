@@ -54,19 +54,17 @@ class ScipySolver(ClassicalSolver):
             from qilisdk.utils.classical_solvers import ScipySolver
 
             model = Model.knapsack(values=[5, 4], weights=[3, 2], max_weight=3)
-            results, sample = ScipySolver().solve(model, method="l-bfgs-b")
+            results, sample = ScipySolver(method="l-bfgs-b").solve(model)
     """
 
-    def solve(  # noqa: PLR6301
+    def __init__(
         self,
-        model: Model,
         method: str | Callable | None = None,
         **kwargs: dict[str, Any],
-    ) -> tuple[dict[str, Number], dict[BaseVariable, RealNumber]]:
-        """Solve the given model by minimizing its objective with SciPy.
+    ) -> None:
+        """Create a new SciPy based classical solver instance.
 
         Args:
-            model: The ``Model`` instance to solve.
             method (str | Callable | None, optional): The SciPy optimizer to use. See
                 :class:`SciPyOptimizer` for the full list of supported methods. If not given, SciPy
                 chooses a default local minimizer.
@@ -74,6 +72,15 @@ class ScipySolver(ClassicalSolver):
         Extra Args:
             Any argument supported by ``scipy.optimize.minimize`` (or the corresponding global
             optimizer) can be passed and is forwarded to the underlying :class:`SciPyOptimizer`.
+        """
+        self.method = method
+        self.extra_arguments = kwargs
+
+    def solve(self, model: Model) -> tuple[dict[str, Number], dict[BaseVariable, RealNumber]]:
+        """Solve the given model by minimizing its objective with SciPy.
+
+        Args:
+            model: The ``Model`` instance to solve.
 
         Returns:
             tuple[dict[str, Number], dict[BaseVariable, RealNumber]]: a tuple of
@@ -108,7 +115,7 @@ class ScipySolver(ClassicalSolver):
             return objective_value + penalty
 
         # Run the optimizer
-        optimizer = SciPyOptimizer(method=method, **kwargs)
+        optimizer = SciPyOptimizer(method=self.method, **self.extra_arguments)
         result = optimizer.optimize(
             cost_function=cost_function,
             init_parameters=[(lower + upper) / 2 for lower, upper in bounds],

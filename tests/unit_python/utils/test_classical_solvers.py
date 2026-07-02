@@ -184,7 +184,7 @@ def test_scipy_solver_maximize():
     x = BinaryVariable("x")
     m = Model("max_bin")
     m.set_objective(1 * x, sense=ObjectiveSense.MAXIMIZE)
-    _, sample = ScipySolver().solve(m, method="differential_evolution", seed=1)
+    _, sample = ScipySolver(method="differential_evolution", seed=1).solve(m)
     assert sample[x] == 1
 
 
@@ -192,7 +192,7 @@ def test_scipy_solver_integer_variable():
     x = Variable("x", Domain.INTEGER, bounds=(0, 7))
     m = Model("int_model")
     m.set_objective((x - 5) * (x - 5))
-    _, sample = ScipySolver().solve(m, method="differential_evolution", seed=1)
+    _, sample = ScipySolver(method="differential_evolution", seed=1).solve(m)
     assert sample[x] == 5
 
 
@@ -200,7 +200,7 @@ def test_scipy_solver_real_variable():
     y = Variable("y", Domain.REAL, bounds=(0, 10))
     m = Model("real_model")
     m.set_objective((y - 3.7) * (y - 3.7))
-    _, sample = ScipySolver().solve(m, method="differential_evolution", seed=1)
+    _, sample = ScipySolver(method="differential_evolution", seed=1).solve(m)
     assert np.isclose(sample[y], 3.7, atol=1e-1)
 
 
