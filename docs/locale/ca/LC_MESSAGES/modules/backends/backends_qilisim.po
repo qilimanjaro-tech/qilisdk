@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-29 15:23+0200\n"
+"POT-Creation-Date: 2026-06-23 19:51+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -451,11 +451,18 @@ msgstr ""
 "d'estat in situ (rellevant per a mesures a mig circuit i computació de "
 "reservoris); per defecte ``False``."
 
-#: ../../modules/backends/backends_qilisim.rst:222
+#: ../../modules/backends/backends_qilisim.rst:207
+msgid ""
+"``gpu=True`` enables GPU acceleration if a CUDA-capable device is "
+"available; defaults to ``False``. Right now only the Variational "
+"Annealing method supports GPU acceleration."
+msgstr ""
+
+#: ../../modules/backends/backends_qilisim.rst:225
 msgid "Noise model support"
 msgstr "Suport del model de soroll"
 
-#: ../../modules/backends/backends_qilisim.rst:224
+#: ../../modules/backends/backends_qilisim.rst:227
 msgid ""
 "Any :class:`~qilisdk.noise.NoiseModel` accepted by the SDK can be passed "
 "directly to the constructor; QiliSim applies it inside the C++ solver, so"

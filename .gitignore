@@ -22,6 +22,7 @@ qili*.lib
 # Profiling stuff
 *.prof
 callgrind*
+perf.data
 
 # Virtual environments
 .venv

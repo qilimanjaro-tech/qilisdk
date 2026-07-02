@@ -350,7 +350,7 @@ void time_evolution_variational_exponential(ExponentialAnsatz& rho_t, const std:
     for (size_t step_ind = 0; step_ind < step_list.size(); ++step_ind) {
         double t_start = (step_ind > 0) ? step_list[step_ind - 1] : 0.0;
         double dt = step_list[step_ind] - t_start;
-        iter_rk4(rho_t, t_start, dt, step_list, hamiltonians, parameters_list);
+        iter_rk4(rho_t, t_start, dt, step_list, hamiltonians, parameters_list, config.get_gpu());
     }
 }
 
