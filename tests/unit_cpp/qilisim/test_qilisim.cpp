@@ -118,6 +118,42 @@ _samp_mf = DigitalPropagation(circuit=_c_mf)
     EXPECT_NO_THROW(sim.execute_digital_propagation(py::globals()["_samp_mf"], py::list(), py::none(), py::none(), p));
 }
 
+TEST_F(ExecuteSamplingTest, StatevectorMethod_XGate_Succeeds) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.functionals.digital_propagation import DigitalPropagation
+from qilisdk.digital.circuit import Circuit
+from qilisdk.digital.gates import X
+
+_c_sv = Circuit(nqubits=1)
+_c_sv.add(X(0))
+_samp_sv = DigitalPropagation(circuit=_c_sv)
+    )");
+    py::dict p;
+    p["sampling_method"] = py::str("statevector");
+    EXPECT_NO_THROW(sim.execute_digital_propagation(py::globals()["_samp_sv"], py::list(), py::none(), py::none(), p));
+}
+
+TEST_F(ExecuteSamplingTest, StabilizerMethod_XGate_Succeeds) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.functionals.digital_propagation import DigitalPropagation
+from qilisdk.readout import SamplingReadout
+from qilisdk.digital.circuit import Circuit
+from qilisdk.digital.gates import X
+
+_c_stab = Circuit(nqubits=1)
+_c_stab.add(X(0))
+_samp_stab = DigitalPropagation(circuit=_c_stab)
+_readout_stab = [SamplingReadout(nshots=10)]
+    )");
+    py::dict p;
+    p["sampling_method"] = py::str("stabilizer");
+    py::object result;
+    ASSERT_NO_THROW(result = sim.execute_digital_propagation(py::globals()["_samp_stab"], py::globals()["_readout_stab"], py::none(), py::none(), p));
+    EXPECT_TRUE(py::hasattr(result, "sampling"));
+}
+
 TEST_F(ExecuteSamplingTest, NonNormalizedGate_NormalizationBranchExecuted) {
     py::gil_scoped_acquire gil;
     py::exec(R"(
@@ -464,6 +500,42 @@ _te_mm_mf = _TE_MM_MF()
     py::dict p;
     p["evolution_method"] = py::str("integrate_matrix_free");
     EXPECT_THROW(sim.execute_analog_evolution(py::globals()["_te_mm_mf"], py::list(), py::none(), p), py::value_error);
+}
+
+TEST_F(ExecuteTimeEvolutionTest, HamiltonianCountMismatch_RK4MatrixFree_ThrowsValueError) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.functionals.analog_evolution import AnalogEvolution
+from qilisdk.analog.hamiltonian import Z
+from qilisdk.core.qtensor import QTensor
+import scipy.sparse as sp, numpy as np
+
+_rho_mm_rk4 = QTensor(sp.csr_matrix(np.array([[1.+0j,0],[0,0]], dtype=complex)))
+
+class _WeirdHams_RK4:
+    def keys(self): return ["h0"]       # 1 key  -> parameters_list.size() == 1
+    def values(self): return [Z(0), Z(0)]  # 2 vals -> hamiltonians.size()  == 2
+
+class _FakeSched_MM_RK4:
+    nqubits = 1
+    tlist = [0.1, 0.2, 0.3]
+    coefficients = {"h0": {0.1: 1.0, 0.2: 1.0, 0.3: 1.0}}
+    hamiltonians = _WeirdHams_RK4()
+    def get_parameters(self): return {}
+    def set_parameters(self, _): pass
+
+class _TE_MM_RK4(AnalogEvolution):
+    def __init__(self):
+        object.__init__(self)
+        self.schedule = _FakeSched_MM_RK4()
+        self._initial_state = _rho_mm_rk4
+        self.store_intermediate_results = False
+
+_te_mm_rk4 = _TE_MM_RK4()
+    )");
+    py::dict p;
+    p["evolution_method"] = py::str("integrate_rk4_matrix_free");
+    EXPECT_THROW(sim.execute_analog_evolution(py::globals()["_te_mm_rk4"], py::list(), py::none(), p), py::value_error);
 }
 
 TEST_F(ExecuteTimeEvolutionTest, HamiltonianCountMismatch_Standard_ThrowsValueError) {

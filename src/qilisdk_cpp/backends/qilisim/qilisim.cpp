@@ -34,6 +34,8 @@
 
 #pragma GCC visibility push(default)
 
+#include <iostream>
+
 // The public execute_sampling
 py::object QiliSimCpp::execute_digital_propagation(const py::object& functional, const py::object& readout, const py::object& noise_model, const py::object& initial_state, const py::dict& solver_params) {
     /*
@@ -88,25 +90,35 @@ py::object QiliSimCpp::execute_digital_propagation(const py::object& functional,
 
     // Pass everything to the internal implementation
     std::map<std::string, int> counts;
-    DenseMatrix state_dense;
     std::vector<py::object> intermediate_results;
-    SparseMatrix initial_state_cpp;
-    if (initial_state.is_none()) {
-        long dim = 1L << n_qubits;
-        initial_state_cpp = SparseMatrix(dim, 1);
-        initial_state_cpp.coeffRef(0, 0) = 1.0;
-        initial_state_cpp.makeCompressed();
-    } else {
-        initial_state_cpp = parse_initial_state(initial_state, config.get_atol(), n_qubits);
-    }
-    if (config.get_sampling_method() == "statevector_matrix_free") {
-        sampling_matrix_free(gates, n_qubits, initial_state_cpp, noise_model_cpp, state_dense, intermediate_results, config, readout);
-    } else {
-        sampling(gates, n_qubits, initial_state_cpp, noise_model_cpp, state_dense, intermediate_results, config, readout);
-    }
+    py::object result;
+    if (config.get_sampling_method() == "stabilizer") {
+        // Parse the initial state as a stabilizer state
+        StabilizerStateSum initial_state_stabilizer = parse_initial_state_stabilizer(initial_state, n_qubits);
+        StabilizerStateSum state_stabilizer = initial_state_stabilizer;
 
-    // Construct the final result object
-    py::object result = construct_result_object(state_dense, readout, noise_model_cpp, n_qubits, config, final_qubits_to_measure);
+        // Run the simulation
+        sampling_stabilizer(gates, n_qubits, initial_state_stabilizer, noise_model_cpp, state_stabilizer, config, readout);
+
+        // Construct the final result object
+        result = construct_result_object(state_stabilizer, readout, noise_model_cpp, n_qubits, config, final_qubits_to_measure);
+
+    } else {
+        // Get the initial state
+        DenseMatrix state_dense;
+        SparseMatrix initial_state_cpp;
+        initial_state_cpp = parse_initial_state(initial_state, config.get_atol(), n_qubits);
+
+        // Run the simulation
+        if (config.get_sampling_method() == "statevector_matrix_free") {
+            sampling_matrix_free(gates, n_qubits, initial_state_cpp, noise_model_cpp, state_dense, intermediate_results, config, readout);
+        } else {
+            sampling(gates, n_qubits, initial_state_cpp, noise_model_cpp, state_dense, intermediate_results, config, readout);
+        }
+
+        // Construct the final result object
+        result = construct_result_object(state_dense, readout, noise_model_cpp, n_qubits, config, final_qubits_to_measure);
+    }
 
     // If we have intermediate results, return them as well
     if (intermediate_results.size() > 0) {

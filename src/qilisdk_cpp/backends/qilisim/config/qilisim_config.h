@@ -38,9 +38,11 @@ class QiliSimConfig {
     int order = 2;
     int shots = 1000;
     int warmups = 100;
+    int stabilizer_max_states = 100;
 
    public:
     // Getters
+    int get_stabilizer_max_states() const { return stabilizer_max_states; }
     bool get_monte_carlo() const { return monte_carlo; }
     int get_num_monte_carlo_trajectories() const { return num_monte_carlo_trajectories; }
     int get_arnoldi_dim() const { return arnoldi_dim; }
@@ -79,6 +81,7 @@ class QiliSimConfig {
     void set_order(int value) { order = value; }
     void set_shots(int value) { shots = value; }
     void set_warmups(int value) { warmups = value; }
+    void set_stabilizer_max_states(int value) { stabilizer_max_states = value; }
 
     // Initialize with default values
     QiliSimConfig() = default;
