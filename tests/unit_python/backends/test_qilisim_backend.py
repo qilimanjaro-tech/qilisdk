@@ -25,6 +25,7 @@ from qilisdk.analog.hamiltonian import Z as pauli_z
 from qilisdk.backends.backend_config import AnalogMethod, DigitalMethod, ExecutionConfig, MonteCarloConfig
 from qilisdk.backends.qilisim import QiliSim
 from qilisdk.core import ket
+from qilisdk.digital import Circuit, H, X
 from qilisdk.functionals import AnalogEvolution, DigitalPropagation, QuantumReservoir, ReservoirLayer
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.noise import Dephasing, NoiseModel
@@ -245,3 +246,27 @@ def test_qilisim_variational_annealing_runs(monkeypatch):
     result = backend.execute(func, Readout().with_expectation(observables=[pauli_z(0)]))
     assert result is not None
     mock_execute_analog_evolution.assert_called_once()
+
+
+def test_simulator_rejects_out_of_range_qubit_from_unvalidated_gate():
+    """QSDK-05 (keystone): even when the Python guard is bypassed, as happens on
+    deserialization (ruamel reconstructs gates without re-running ``__init__``),
+    the C++ parser must reject an out-of-range target before it reaches the
+    matrix-free kernels, raising instead of reading out of bounds."""
+    circuit = Circuit(2)
+    circuit.add(H(0))
+    circuit.add(X(1))
+    backend = QiliSim()
+    readout = Readout().with_sampling(nshots=100)
+
+    # Sanity: the valid circuit runs.
+    backend.execute(DigitalPropagation(circuit), readout)
+
+    # Bypass validation the way deserialization does: an out-of-range target on
+    # an already-added gate, with no __init__ re-check.
+    gate = circuit.gates[1]
+    inner = getattr(gate, "_basic_gate", gate)
+    inner._target_qubits = (5,)
+
+    with pytest.raises(ValueError, match="out of range"):
+        backend.execute(DigitalPropagation(circuit), readout)
