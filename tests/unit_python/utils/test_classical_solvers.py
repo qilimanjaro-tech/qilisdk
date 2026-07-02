@@ -23,6 +23,7 @@ from qilisdk.utils.classical_solvers import BruteForceSolver, ClassicalSolver, S
 from qilisdk.utils.classical_solvers.base_solver import _assert_real, _variable_bounds
 from qilisdk.utils.classical_solvers.scipy_solver import _decode_value
 
+
 def test_assert_real_complex_with_negligible_imag():
     result = _assert_real(3.0 + 1e-20j)
     assert np.isclose(result, 3.0)
