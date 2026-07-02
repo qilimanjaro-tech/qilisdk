@@ -396,8 +396,10 @@ def test_controlled_with_unsupported_basic_gate_raises(monkeypatch):
     circuit = Circuit(2)  # small helper from Backend superclass
     circuit._gates.append(Controlled(1, basic_gate=BadGate(0)))
 
+    func = DigitalPropagation(circuit)
+    read = Readout().with_sampling(nshots=10)
     with pytest.raises(UnsupportedGateError):
-        be.execute(DigitalPropagation(circuit=circuit), Readout().with_sampling(nshots=10))
+        be.execute(func, read)
 
 
 @patch("cudaq.make_kernel", side_effect=dummy_make_kernel)
