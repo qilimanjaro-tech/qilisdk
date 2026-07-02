@@ -71,6 +71,9 @@ qir = [
 openqasm = [
     "openqasm3[parser]>=1.0.1",
 ]
+scip = [
+    "pyscipopt>=5.0.0",
+]
 all = [
     "qilisdk[cuda12]",
     "qilisdk[speqtrum]",
@@ -78,6 +81,7 @@ all = [
     "qilisdk[openfermion]",
     "qilisdk[qir]",
     "qilisdk[openqasm]",
+    "qilisdk[scip]",
 ]
 all-cu12 = [
     "qilisdk[cuda12]",
@@ -86,6 +90,7 @@ all-cu12 = [
     "qilisdk[openfermion]",
     "qilisdk[qir]",
     "qilisdk[openqasm]",
+    "qilisdk[scip]",
 ]
 all-cu13 = [
     "qilisdk[cuda13]",
@@ -94,6 +99,7 @@ all-cu13 = [
     "qilisdk[openfermion]",
     "qilisdk[qir]",
     "qilisdk[openqasm]",
+    "qilisdk[scip]",
 ]
 
 [dependency-groups]
