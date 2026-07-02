@@ -13,12 +13,10 @@
 # limitations under the License.
 from __future__ import annotations
 
-# import numpy as np
 import copy
 import itertools
 from typing import TYPE_CHECKING, Literal, Mapping, Type
 
-# import cupy as np
 import numpy as np
 from loguru import logger
 
@@ -45,6 +43,36 @@ from .variables import (
 
 if TYPE_CHECKING:
     from qilisdk.analog.hamiltonian import Hamiltonian
+
+
+_EMPTY_GRAPH_MSG = "The graph must have at least one edge."
+
+
+def _validate_undirected_edges(edges: list[tuple[int, int]]) -> None:
+    """Validate that ``edges`` describes a simple undirected graph.
+
+    Each edge is treated as undirected, so ``(u, v)`` and ``(v, u)`` denote the same edge. This
+    rejects self-loops and any edge that is repeated (in either orientation), which would otherwise
+    silently double-count weights in the generated model.
+
+    Args:
+        edges (list[tuple[int, int]]): the edges of the graph as ``(u, v)`` pairs.
+
+    Raises:
+        ValueError: if an edge is a self-loop (``u == v``).
+        ValueError: if an edge appears more than once, in either orientation.
+    """
+    seen: set[tuple[int, int]] = set()
+    for u, v in edges:
+        if u == v:
+            raise ValueError(f"Self-loop ({u}, {v}) is not allowed; edges must connect two distinct nodes.")
+        key = (min(u, v), max(u, v))
+        if key in seen:
+            raise ValueError(
+                f"Duplicate edge ({u}, {v}) found; edges are undirected and must be unique "
+                "(so (u, v) and (v, u) count as the same edge)."
+            )
+        seen.add(key)
 
 
 class SlackCounter:
@@ -509,6 +537,303 @@ class Model:
             linearize=linearize,
             linearization_lagrange_multiplier=linearization_lagrange_multiplier,
         )
+
+    @classmethod
+    def knapsack(
+        cls,
+        values: list[float],
+        weights: list[float],
+        max_weight: float,
+        label: str = "Knapsack",
+        lagrange_multiplier: float = 100,
+    ) -> Model:
+        """Factory method to generate a knapsack model.
+
+        Binary variable ``b_i = 1`` if item *i* is selected. The objective
+        maximises total value subject to a single weight inequality:
+
+        .. math::
+
+            \\text{maximise} \\quad \\sum_i v_i b_i
+
+            \\text{subject to} \\quad \\sum_i w_i b_i \\leq W
+
+        Args:
+            values (list[float]): the value of each item.
+            weights (list[float]): the non-negative weight of each item.
+            max_weight (float): the maximum weight the knapsack can carry.
+            label (str, optional): the model label. Defaults to "Knapsack".
+            lagrange_multiplier (float, optional): penalty scale for the weight
+                constraint when converting to QUBO. Defaults to 100.
+
+        Returns:
+            Model: a model of the knapsack problem with the given parameters.
+
+        Raises:
+            ValueError: if the number of values and weights differ.
+            ValueError: if the number of items is zero.
+        """
+        num_items = len(values)
+        if len(weights) != num_items:
+            raise ValueError("The number of weights must be equal to the number of values.")
+        if num_items == 0:
+            raise ValueError("The number of items must be greater than zero.")
+
+        x = [BinaryVariable(f"b{i}") for i in range(num_items)]
+        model = cls(label)
+        obj = sum(values[i] * x[i] for i in range(num_items))
+        if not isinstance(obj, Term):
+            raise ValueError("The objective term is empty. Please provide a non-empty list of values.")
+        model.set_objective(
+            obj,
+            sense=ObjectiveSense.MAXIMIZE,
+        )
+        model.add_constraint(
+            "weight",
+            LEQ(sum(weights[i] * x[i] for i in range(num_items)), max_weight),
+            lagrange_multiplier=lagrange_multiplier,
+        )
+        return model
+
+    @classmethod
+    def random_ising(
+        cls,
+        num_variables: int,
+        coefficient_range: tuple[float, float] = (-1, 1),
+        label: str = "Random Ising",
+        seed: int = 1,
+    ) -> Model:
+        """Factory method to generate a random Ising model.
+
+        Args:
+            num_variables (int): the number of variables in the Ising model.
+            coefficient_range (tuple[float, float], optional): the range from which the coefficients of the Ising model are drawn uniformly at random. Defaults to (-1, 1).
+            label (str, optional): the model label. Defaults to "Random Ising".
+            seed (int, optional): the seed for the random number generator. Defaults to 1.
+
+        Returns:
+            Model: a model of a random Ising problem with the given parameters.
+        """
+        model = cls(label)
+        variables = [BinaryVariable(f"x{i}") for i in range(num_variables)]
+        generator = np.random.default_rng(seed)
+        term = Term([0], Operation.ADD)
+        for i in range(num_variables):
+            term += generator.uniform(low=coefficient_range[0], high=coefficient_range[1]) * variables[i]
+            for j in range(i + 1, num_variables):
+                term += (
+                    generator.uniform(low=coefficient_range[0], high=coefficient_range[1]) * variables[i] * variables[j]
+                )
+        model.set_objective(term)
+        return model
+
+    @classmethod
+    def factoring(
+        cls,
+        number: int,
+        label: str = "Factoring",
+        lagrange_multiplier: float = 100,
+    ) -> Model:
+        """Factory method to generate a factoring model.
+
+        Binary variables ``x_i`` and ``y_j`` encode two factors whose product
+        must equal *number*. The problem is a constraint satisfaction instance
+        with no objective:
+
+        .. math::
+
+            \\text{subject to} \\quad \\sum_{i,j} 2^{i+j}\\, x_i y_j = N
+
+        Args:
+            number (int): the number to factor.
+            label (str, optional): the model label. Defaults to "Factoring".
+            lagrange_multiplier (float, optional): penalty scale for the
+                factoring constraint when converting to QUBO. Defaults to 100.
+
+        Returns:
+            Model: a model of the factoring problem for the given number.
+        """
+        model = cls(label)
+        num_bits = (number // 2).bit_length()
+        x = [BinaryVariable(f"x{i}") for i in range(num_bits)]
+        y = [BinaryVariable(f"y{i}") for i in range(num_bits)]
+        product = Term([0], Operation.ADD)
+        for i in range(num_bits):
+            for j in range(num_bits):
+                product += (2 ** (i + j)) * x[i] * y[j]
+        model.add_constraint("factoring", EQ(product, number), lagrange_multiplier=lagrange_multiplier)
+        return model
+
+    @classmethod
+    def max_cut(
+        cls,
+        edges: list[tuple[int, int]],
+        weights: list[float] | None = None,
+        label: str = "Max-Cut",
+    ) -> Model:
+        """Factory method to generate a max-cut model.
+
+        Args:
+            edges (list[tuple[int, int]]): the edges of the graph as ``(u, v)`` pairs.
+            weights (list[float] | None, optional): a weight for each edge. Defaults to 1 for all edges.
+            label (str, optional): the model label. Defaults to "Max-Cut".
+
+        Returns:
+            Model: a model of the max-cut problem for the given graph.
+
+        Raises:
+            ValueError: if weights are provided and their number is different from the number of edges.
+            ValueError: if the graph contains a self-loop or a duplicate (undirected) edge.
+        """
+        if weights is not None and len(weights) != len(edges):
+            raise ValueError("the number of weights must be equal to the number of edges.")
+        _validate_undirected_edges(edges)
+        nodes = sorted({n for u, v in edges for n in (u, v)})
+        x = {n: BinaryVariable(f"x{n}") for n in nodes}
+        model = cls(label)
+        objective = sum(
+            (1 if weights is None else weights[i]) * (x[u] + x[v] - 2 * x[u] * x[v]) for i, (u, v) in enumerate(edges)
+        )
+        if isinstance(objective, Number):
+            raise ValueError(_EMPTY_GRAPH_MSG)
+        model.set_objective(objective, sense=ObjectiveSense.MAXIMIZE)
+        return model
+
+    @classmethod
+    def graph_coloring(
+        cls,
+        edges: list[tuple[int, int]],
+        num_colors: int,
+        label: str = "Graph Coloring",
+        lagrange_multiplier: float = 100,
+    ) -> Model:
+        """Factory method to generate a graph coloring model.
+
+        Binary variable ``x_{v,k} = 1`` if vertex *v* has color *k*. Each vertex
+        must have exactly one color (an equality constraint), while the objective
+        minimises the number of edges whose endpoints share a color:
+
+        .. math::
+
+            \\text{minimise} \\quad \\sum_{(u,v)\\in E} \\sum_k x_{u,k}\\, x_{v,k}
+
+            \\text{subject to} \\quad \\sum_k x_{v,k} = 1 \\quad \\forall v
+
+        A valid ``num_colors``-coloring exists if and only if the optimal
+        objective value is zero.
+
+        Args:
+            edges (list[tuple[int, int]]): the edges of the graph as ``(u, v)`` pairs.
+            num_colors (int): the number of colors available.
+            label (str, optional): the model label. Defaults to "Graph Coloring".
+            lagrange_multiplier (float, optional): penalty scale for the one-color
+                constraints when converting to QUBO. Defaults to 100.
+
+        Returns:
+            Model: a model of the graph coloring problem for the given graph.
+
+        Raises:
+            ValueError: if the graph contains a self-loop or a duplicate (undirected) edge.
+        """
+        _validate_undirected_edges(edges)
+        nodes = sorted({n for u, v in edges for n in (u, v)})
+        x = {(n, k): BinaryVariable(f"x{n}_{k}") for n in nodes for k in range(num_colors)}
+        model = cls(label)
+
+        for v in nodes:
+            model.add_constraint(
+                f"vertex_{v}_one_color",
+                EQ(sum(x[v, k] for k in range(num_colors)), 1),
+                lagrange_multiplier=lagrange_multiplier,
+            )
+
+        conflict_terms = [x[u, k] * x[v, k] for u, v in edges for k in range(num_colors)]
+        if conflict_terms:
+            objective = sum(conflict_terms)
+            if not isinstance(objective, Number):
+                model.set_objective(objective, sense=ObjectiveSense.MINIMIZE)
+
+        return model
+
+    @classmethod
+    def travelling_salesman(
+        cls,
+        edges: list[tuple[int, int]],
+        distances: list[float],
+        label: str = "Travelling Salesman",
+        lagrange_multiplier: float = 100,
+    ) -> Model:
+        """Factory method to generate a travelling salesman model.
+
+        Binary variable ``x_{i,t} = 1`` if city *i* is at tour position *t*.
+        The objective minimises total travel distance; two sets of equality
+        constraints enforce a valid tour:
+
+        .. math::
+
+            \\text{minimise} \\quad
+            \\sum_{(u,v)\\in E} W_{uv} \\sum_t \\bigl(x_{u,t}\\,x_{v,t+1} + x_{v,t}\\,x_{u,t+1}\\bigr)
+
+            \\text{subject to} \\quad \\sum_t x_{i,t} = 1 \\quad \\forall i
+
+            \\sum_i x_{i,t} = 1 \\quad \\forall t
+
+        where index arithmetic on positions is modulo *n*.
+
+        Args:
+            edges (list[tuple[int, int]]): list of undirected edges as ``(city_i, city_j)`` pairs.
+            distances (list[float]): travel cost for each edge, parallel to ``edges``.
+            label (str, optional): the model label. Defaults to "Travelling Salesman".
+            lagrange_multiplier (float, optional): penalty scale for the tour
+                validity constraints when converting to QUBO. Defaults to 100.
+
+        Returns:
+            Model: a model of the travelling salesman problem for the given graph.
+
+        Raises:
+            ValueError: if ``edges`` and ``distances`` have different lengths.
+            ValueError: if the graph has no edges.
+            ValueError: if the graph contains a self-loop or a duplicate (undirected) edge.
+        """
+        if len(edges) != len(distances):
+            raise ValueError("edges and distances must have the same length.")
+        if not edges:
+            raise ValueError(_EMPTY_GRAPH_MSG)
+        _validate_undirected_edges(edges)
+
+        n = max(node for edge in edges for node in edge) + 1
+        x = [[BinaryVariable(f"x{i}_{t}") for t in range(n)] for i in range(n)]
+        model = cls(label)
+
+        for i in range(n):
+            model.add_constraint(
+                f"city_{i}_once",
+                EQ(sum(x[i][t] for t in range(n)), 1),
+                lagrange_multiplier=lagrange_multiplier,
+            )
+        for t in range(n):
+            model.add_constraint(
+                f"position_{t}_once",
+                EQ(sum(x[i][t] for i in range(n)), 1),
+                lagrange_multiplier=lagrange_multiplier,
+            )
+
+        dist_terms = []
+        for k, (u, v) in enumerate(edges):
+            w = distances[k]
+            for t in range(n):
+                dist_terms.extend({w * x[u][t] * x[v][(t + 1) % n], w * x[v][t] * x[u][(t + 1) % n]})
+
+        if dist_terms:
+            objective = sum(dist_terms)
+            if not isinstance(objective, Number):
+                model.set_objective(objective, sense=ObjectiveSense.MINIMIZE)
+            else:
+                raise ValueError(_EMPTY_GRAPH_MSG)
+        else:
+            raise ValueError(_EMPTY_GRAPH_MSG)
+
+        return model
 
 
 class _Linearizer:
