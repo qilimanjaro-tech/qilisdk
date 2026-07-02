@@ -349,9 +349,13 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const Sp
         state = sample_from_density_matrix(state, config.get_num_monte_carlo_trajectories(), config.get_seed());
     }
 
-    // Combine single-qubit gates for speed if not using noise models
+    // Fuse gates for speed if not using noise models, either in groups of single-qubit gates or multi-qubit gates (up to a limit)
+    const int min_threads_for_fusion = 4;
+    bool use_fusion = !has_noise && config.get_fuse_gates() && (is_statevector || monte_carlo) && config.get_num_threads() >= min_threads_for_fusion;
     std::vector<Gate> optimized_gates = gates;
-    if (!has_noise && config.get_combine_single_qubit_gates()) {
+    if (use_fusion) {
+        optimized_gates = fuse_gates(gates, config.get_max_fused_qubits());
+    } else if (!has_noise && config.get_combine_single_qubit_gates()) {
         optimized_gates = combine_single_qubit_gates(optimized_gates);
     }
 

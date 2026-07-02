@@ -50,6 +50,9 @@ void QiliSimConfig::validate() const {
     if (max_cache_size <= 0) {
         throw py::value_error("Max cache size must be positive.");
     }
+    if (max_fused_qubits < 1) {
+        throw py::value_error("Max fused qubits must be at least 1.");
+    }
     if (adaptive_tol <= 0) {
         throw py::value_error("Adaptive tolerance must be positive.");
     }

@@ -120,7 +120,7 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
         // Get the current Hamiltonian
         SparseMatrix currentH = combinedH;
         for (size_t h = 0; h < hamiltonians.size(); ++h) {
-            double c = parameters_list[h][step_ind];
+            Real c = parameters_list[h][step_ind];
             for (int k = 0; k < hamiltonians[h].outerSize(); ++k) {
                 for (SparseMatrix::InnerIterator it(hamiltonians[h], k); it; ++it) {
                     currentH.coeffRef(it.row(), it.col()) += c * it.value();
