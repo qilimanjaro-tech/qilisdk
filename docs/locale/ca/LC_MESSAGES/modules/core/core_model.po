@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-16 10:30+0200\n"
+"POT-Creation-Date: 2026-07-02 18:14+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -101,8 +101,8 @@ msgid ""
 "Rather than building a model from scratch, you can also construct it for "
 "certain predefined problems:"
 msgstr ""
-"En lloc de construir un model des de zero, també podeu construir-lo per a "
-"certs problemes predefinits:"
+"En lloc de construir un model des de zero, també podeu construir-lo per a"
+" certs problemes predefinits:"
 
 #: ../../modules/core/core_model.rst:127
 msgid ""
@@ -131,8 +131,8 @@ msgid ""
 "for a given graph."
 msgstr ""
 ":func:`Model.max_cut(edges, weights, "
-"label)<qilisdk.core.model.Model.max_cut>` - Construeix un problema de tall"
-" màxim per a un graf donat."
+"label)<qilisdk.core.model.Model.max_cut>` - Construeix un problema de "
+"tall màxim per a un graf donat."
 
 #: ../../modules/core/core_model.rst:130
 msgid ""
@@ -143,8 +143,8 @@ msgid ""
 msgstr ""
 ":func:`Model.graph_coloring(graph, num_colors, label, "
 "lagrange_multiplier)<qilisdk.core.model.Model.graph_coloring>` - "
-"Construeix un problema de coloració de grafs per a un graf i un nombre de "
-"colors donats."
+"Construeix un problema de coloració de grafs per a un graf i un nombre de"
+" colors donats."
 
 #: ../../modules/core/core_model.rst:131
 msgid ""
@@ -194,6 +194,49 @@ msgstr ""
 #: ../../modules/core/core_model.rst:166
 msgid "For example:"
 msgstr "Per exemple:"
+
+#: ../../modules/core/core_model.rst:182
+msgid "Solving a Model Classically"
+msgstr "Resoldre un model de manera clàssica"
+
+#: ../../modules/core/core_model.rst:184
+msgid ""
+"To help demonstrate the limits of classical solvers, a variety of "
+"wrappers to different solvers are provided:"
+msgstr ""
+"Per ajudar a demostrar els límits dels resolutors clàssics, es "
+"proporcionen diversos embolcalls per a diferents resolutors:"
+
+#: ../../modules/core/core_model.rst:186
+msgid ""
+":class:`~qilisdk.utils.classical_solvers.brute_force_solver.BruteForceSolver`"
+" - A brute-force solver that evaluates all possible solutions."
+msgstr ""
+":class:`~qilisdk.utils.classical_solvers.brute_force_solver.BruteForceSolver`"
+" - Un resolutor de força bruta que avalua totes les solucions possibles."
+
+#: ../../modules/core/core_model.rst:187
+msgid ""
+":class:`~qilisdk.utils.classical_solvers.scipy_solver.ScipySolver` - A "
+"solver that uses one of SciPy's `optimize` routines to find a solution."
+msgstr ""
+":class:`~qilisdk.utils.classical_solvers.scipy_solver.ScipySolver` - Un "
+"resolutor que utilitza una de les rutines `optimize` de SciPy per trobar "
+"una solució."
+
+#: ../../modules/core/core_model.rst:188
+msgid ""
+":class:`~qilisdk.utils.classical_solvers.scip_solver.ScipSolver` - A "
+"wrapper to SCIP, a mixed-integer programming solver. This requires the "
+"SCIP extra (i.e. `pip install qilisdk[scip]`)."
+msgstr ""
+":class:`~qilisdk.utils.classical_solvers.scip_solver.ScipSolver` - Un "
+"embolcall per a SCIP, un resolutor de programació entera mixta. Això "
+"requereix l'extra de SCIP (és a dir, `pip install qilisdk[scip]`)."
+
+#: ../../modules/core/core_model.rst:190
+msgid "These can be used as follows:"
+msgstr "Es poden utilitzar de la manera següent:"
 
 #~ msgid "Go to a specific subheading of a page."
 #~ msgstr "Aneu a un subapartat específic d'una pàgina."
