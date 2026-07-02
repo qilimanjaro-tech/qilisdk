@@ -18,23 +18,8 @@ from loguru import logger
 
 from qilisdk.core import Model
 from qilisdk.core.variables import BaseVariable, BinaryVariable, Number, RealNumber, Variable
-from qilisdk.settings import get_settings
 
-
-def _assert_real(number: complex) -> float:
-    if isinstance(number, complex):
-        if abs(number.imag) < get_settings().atol:
-            return number.real
-        raise ValueError("Complex Number encountered when expecting only real values to be present.")
-    return number
-
-
-class ClassicalSolver:
-    """Base class for classical solvers."""
-
-    def solve(self, model: Model) -> tuple[dict[str, Number], dict[BaseVariable, RealNumber]]:
-        """Solve the given model."""
-        raise NotImplementedError("ClassicalSolver is an abstract base class.")
+from .base_solver import ClassicalSolver, _assert_real
 
 
 class BruteForceSolver(ClassicalSolver):
@@ -54,7 +39,7 @@ class BruteForceSolver(ClassicalSolver):
         """Solve the given model by brute-force enumeration of all variable assignments.
 
         Binary variables are assigned values from {0, 1}. Any other ``Variable`` is decomposed
-        via its encoding: all bit patterns are enumerated and decoded to their representable
+        via its encoding, all bit patterns are enumerated and decoded to their representable
         values, so the search covers every value the encoding can express regardless of domain.
 
         Args:
@@ -92,7 +77,8 @@ class BruteForceSolver(ClassicalSolver):
         total_combinations = 1
         for d in domains:
             total_combinations *= len(d)
-        if total_combinations > 1024:  # noqa: PLR2004
+        MAX_COMBINATIONS = 8192
+        if total_combinations > MAX_COMBINATIONS:
             logger.warning(
                 f"Model has {total_combinations} combinations, brute-force enumeration may take a long time."
             )
