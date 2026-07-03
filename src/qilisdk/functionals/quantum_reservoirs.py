@@ -20,6 +20,7 @@ import numpy as np
 
 from qilisdk.core import Domain, Parameter, QTensor, tensor_prod
 from qilisdk.core.parameterizable import Parameterizable
+from qilisdk.core.qtensor import InitialState
 from qilisdk.digital import Circuit, M
 from qilisdk.functionals.functional import PrimitiveFunctional
 from qilisdk.yaml import yaml
@@ -286,14 +287,14 @@ class QuantumReservoir(PrimitiveFunctional):
 
     def __init__(
         self,
-        initial_state: QTensor,
+        initial_state: QTensor | InitialState,
         reservoir_layer: ReservoirLayer | None = None,
         input_per_layer: list[dict[str, float]] | None = None,
     ) -> None:
         """Construct a quantum reservoir functional.
 
         Args:
-            initial_state (QTensor): Initial quantum state before the first
+            initial_state (QTensor | InitialState): Initial quantum state before the first
                 layer.
             reservoir_layer (ReservoirLayer | None): Reservoir layer
                 definition repeated at each step. Defaults to None.
@@ -316,7 +317,7 @@ class QuantumReservoir(PrimitiveFunctional):
         self._initial_state = initial_state
         self._reservoir_layer = reservoir_layer
         self._input_per_layer = input_per_layer
-        if self._reservoir_layer.nqubits != self._initial_state.nqubits:
+        if isinstance(self._initial_state, QTensor) and self._reservoir_layer.nqubits != self._initial_state.nqubits:
             raise ValueError(
                 f"invalid initial state: the initial state acts on {self._initial_state.nqubits} qubits while the reservoir is defined with {self._reservoir_layer.nqubits} qubits."
             )
@@ -327,7 +328,7 @@ class QuantumReservoir(PrimitiveFunctional):
         return self._reservoir_layer.nqubits
 
     @property
-    def initial_state(self) -> QTensor:
+    def initial_state(self) -> QTensor | InitialState:
         """Initial quantum state used before the first layer."""
         return self._initial_state
 
