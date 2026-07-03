@@ -99,13 +99,14 @@ class AnalogMethod(BaseSimulatorConfig):
     evolution_method: Literal[
         "direct",
         "arnoldi",
+        "arnoldi_matrix_free",
         "integrate_rk4",
         "integrate_rk45_matrix_free",
         "integrate_rk4_matrix_free",
         "variational_exponential",
     ] = Field(
         default="integrate_rk4_matrix_free",
-        description="Analog time-evolution method to use: 'direct', 'arnoldi', 'integrate_rk4', 'integrate_rk45_matrix_free', 'integrate_rk4_matrix_free', or 'variational_exponential'.",
+        description="Analog time-evolution method to use: 'direct', 'arnoldi', 'arnoldi_matrix_free', 'integrate_rk4', 'integrate_rk45_matrix_free', 'integrate_rk4_matrix_free', or 'variational_exponential'.",
     )
     arnoldi_dim: int = Field(
         default=10,
@@ -211,6 +212,7 @@ class AnalogMethod(BaseSimulatorConfig):
         *,
         num_substeps: int = 1,
         dim: int = 10,
+        matrix_free: bool = True,
     ) -> AnalogMethod:
         """Build an ``arnoldi`` analog method configuration.
 
@@ -219,12 +221,17 @@ class AnalogMethod(BaseSimulatorConfig):
                 step when using the Arnoldi method. Defaults to ``1``.
             dim (int): Dimension of the Arnoldi Krylov subspace. Defaults
                 to ``10``.
+            matrix_free (bool): Whether to use the matrix-free implementation,
+                which applies the Liouvillian via the Pauli representation of the
+                Hamiltonian instead of forming the explicit superoperator. This
+                greatly reduces memory traffic and is typically faster for larger
+                systems. Defaults to ``False``.
 
         Returns:
             AnalogMethod: Configured arnoldi-method analog configuration.
         """
         return cls(
-            evolution_method="arnoldi",
+            evolution_method="arnoldi_matrix_free" if matrix_free else "arnoldi",
             arnoldi_dim=dim,
             num_arnoldi_substeps=num_substeps,
         )

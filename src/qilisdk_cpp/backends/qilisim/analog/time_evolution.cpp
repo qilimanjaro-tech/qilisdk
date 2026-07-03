@@ -321,6 +321,37 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
                 }
             }
         }
+
+        // Fixed step size Krylov/Arnoldi evolution
+    } else if (config.get_time_evolution_method() == "arnoldi_matrix_free") {
+        int nqubits = hamiltonians[0].get_nqubits();
+        // For each time step
+        for (size_t step_ind = 0; step_ind < step_list.size(); ++step_ind) {
+            // Build the (piecewise-constant) Hamiltonian for this step, matching
+            // the semantics of the explicit-matrix arnoldi method.
+            MatrixFreeHamiltonian currentH(nqubits);
+            for (size_t h = 0; h < hamiltonians.size(); ++h) {
+                currentH += hamiltonians[h] * parameters_list[h][step_ind];
+            }
+
+            // Determine the time step
+            double dt = step_list[step_ind];
+            if (step_ind > 0) {
+                dt = step_list[step_ind] - step_list[step_ind - 1];
+            }
+
+            // Perform the iteration
+            rho_t = iter_arnoldi_matrix_free(rho_t, dt, currentH, jump_operators, config.get_arnoldi_dim(), config.get_num_arnoldi_substeps(), is_unitary_on_statevector, config.get_atol());
+
+            // If we should store intermediates, do it here
+            if (config.get_store_intermediate_results()) {
+                if (use_monte_carlo || input_is_trajectories || (!input_was_vector && rho_t.cols() == 1)) {
+                    intermediate_rhos.push_back(trajectories_to_density_matrix(rho_t));
+                } else {
+                    intermediate_rhos.push_back(rho_t);
+                }
+            }
+        }
     } else {
         throw std::invalid_argument("Invalid matrix-free time evolution method: " + config.get_time_evolution_method());
     }
