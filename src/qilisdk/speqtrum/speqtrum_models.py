@@ -777,6 +777,7 @@ class JobId(SpeQtrumModel):
     """Handle/reference you normally get back immediately after `POST /execute`."""
 
     id: int = Field(...)
+    message: str | None = None
 
 
 class JobInfo(JobId):
