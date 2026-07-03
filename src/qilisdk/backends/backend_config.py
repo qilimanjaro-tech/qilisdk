@@ -221,11 +221,7 @@ class AnalogMethod(BaseSimulatorConfig):
                 step when using the Arnoldi method. Defaults to ``1``.
             dim (int): Dimension of the Arnoldi Krylov subspace. Defaults
                 to ``10``.
-            matrix_free (bool): Whether to use the matrix-free implementation,
-                which applies the Liouvillian via the Pauli representation of the
-                Hamiltonian instead of forming the explicit superoperator. This
-                greatly reduces memory traffic and is typically faster for larger
-                systems. Defaults to ``False``.
+            matrix_free (bool): Whether to use the matrix-free implementation.
 
         Returns:
             AnalogMethod: Configured arnoldi-method analog configuration.

@@ -67,15 +67,10 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
         rho_0 = rho_0.adjoint();
     }
 
-    // A rectangular (dim x n) input, with n neither 1 nor dim, is a batch of Monte
-    // Carlo trajectory state vectors carried over from a previous stage. We evolve
-    // it as a batch of state vectors and return it as trajectories, without
-    // re-sampling (no eigendecomposition) or collapsing back to a density matrix.
+    // Check if the input is a bunch of monte carlo trajectories
     bool input_is_trajectories = (rho_0.cols() > 1 && rho_0.rows() != rho_0.cols());
 
     // Determine if should treat it as unitary evolution on a statevector
-    // Note that this can change if the input was a density matrix but is actually pure
-    // Or similarly if we use monte-carlo, we treat it as statevector evolution
     bool is_unitary_on_statevector = input_is_trajectories || (is_unitary_dynamics && input_was_vector);
 
     // If we have unitary dynamics and the input was a pure state, convert to state vector
@@ -102,8 +97,7 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
         rho_0 = rho_0 * rho_0.adjoint();
     }
 
-    // If monte carlo, sample from rho_0 to get initial states (skipped when the
-    // input already is a batch of trajectories). Then rho is state vector columns.
+    // If monte carlo, sample from rho_0 to get initial states
     bool use_monte_carlo = config.get_monte_carlo() && !input_is_trajectories;
     if (use_monte_carlo) {
         rho_0 = sample_from_density_matrix(rho_0, config.get_num_monte_carlo_trajectories(), config.get_seed());
@@ -161,9 +155,7 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
         }
     }
 
-    // If we have statevector/s but we should return a density matrix. When the
-    // input was a batch of trajectories we deliberately keep rho_t as trajectories
-    // (rectangular) so the caller can carry the ensemble forward without resampling.
+    // If we have statevector/s but we should return a density matrix
     if (!input_is_trajectories && (use_monte_carlo || (!input_was_vector && rho_t.cols() == 1))) {
         rho_t = trajectories_to_density_matrix(rho_t);
     }
@@ -215,15 +207,10 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
         rho_0 = rho_0.adjoint();
     }
 
-    // A rectangular (dim x n) input, with n neither 1 nor dim, is a batch of Monte
-    // Carlo trajectory state vectors carried over from a previous stage. We evolve
-    // it as a batch of state vectors and return it as trajectories, without
-    // re-sampling (no eigendecomposition) or collapsing back to a density matrix.
+    // Check if the input is a bunch of monte carlo trajectories
     bool input_is_trajectories = (rho_0.cols() > 1 && rho_0.rows() != rho_0.cols());
 
     // Determine if should treat it as unitary evolution on a statevector
-    // Note that this can change if the input was a density matrix but is actually pure
-    // Or similarly if we use monte-carlo, we treat it as statevector evolution
     bool is_unitary_on_statevector = input_is_trajectories || (is_unitary_dynamics && input_was_vector);
 
     // If we have unitary dynamics and the input was a pure state, convert to state vector
@@ -327,8 +314,7 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
         int nqubits = hamiltonians[0].get_nqubits();
         // For each time step
         for (size_t step_ind = 0; step_ind < step_list.size(); ++step_ind) {
-            // Build the (piecewise-constant) Hamiltonian for this step, matching
-            // the semantics of the explicit-matrix arnoldi method.
+            // Build the Hamiltonian for this step
             MatrixFreeHamiltonian currentH(nqubits);
             for (size_t h = 0; h < hamiltonians.size(); ++h) {
                 currentH += hamiltonians[h] * parameters_list[h][step_ind];
@@ -356,9 +342,7 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
         throw std::invalid_argument("Invalid matrix-free time evolution method: " + config.get_time_evolution_method());
     }
 
-    // If we have statevector/s but we should return a density matrix. A batch of
-    // trajectories is deliberately kept as trajectories (rectangular) so the caller
-    // can carry the ensemble forward without resampling.
+    // If we have statevector/s but we should return a density matrix
     if (!input_is_trajectories && (use_monte_carlo || (!input_was_vector && rho_t.cols() == 1))) {
         rho_t = trajectories_to_density_matrix(rho_t);
     }

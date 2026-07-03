@@ -176,6 +176,13 @@ TEST_F(TimeEvolutionMatrixFreeTest, DefaultConfigDoesNotThrow) {
     SUCCEED();
 }
 
+TEST_F(TimeEvolutionMatrixFreeTest, NonMatrixFreeMethodThrows) {
+    // A method that passes validation but is not one of the matrix-free branches
+    // must fall through to the invalid-method error.
+    config.set_time_evolution_method("direct");
+    EXPECT_ANY_THROW(run_time_evolution_mf(pure_zero_sparse(), hamiltonians, params, steps, empty_noise, {}, config));
+}
+
 class TimeEvolutionArnoldiMatrixFreeTest : public ::testing::Test {
    protected:
     MatrixFreeHamiltonian H_mf = make_matrix_free_H(0.5, 0, "Z");

@@ -776,6 +776,24 @@ TEST_F(SamplingMatrixFreeTest, GateFusionEnabled_MatchesUnfusedResult) {
     EXPECT_NEAR(fractionOf(counts, "00"), 1.0, kLoose);
 }
 
+TEST_F(SamplingMatrixFreeTest, GateFusionWithSingleQubitCombiningEnabled) {
+    // Fusion with single-qubit-gate combining on the matrix-free path: the two X
+    // gates on qubit 0 combine to the identity, leaving qubit 0 in |0> and qubit 1
+    // in |1>.
+    int n = 2;
+    std::vector<Gate> gates = {makeX(0), makeX(0), makeX(1)};
+    std::vector<bool> measure = {true, true};
+    QiliSimConfig cfgFuse = cfg;
+    cfgFuse.set_fuse_gates(true);
+    cfgFuse.set_combine_single_qubit_gates(true);
+    cfgFuse.set_num_threads(4);
+    DenseMatrix state;
+    std::vector<py::object> intermediate_results;
+    sampling_matrix_free(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfgFuse, readout);
+    std::map<std::string, int> counts = construct_samples(state, n, 1000, noNoise, cfgFuse, measure);
+    EXPECT_NEAR(fractionOf(counts, "01"), 1.0, kLoose);
+}
+
 TEST_F(SamplingTest, PureDensityMatrixInitialState_OutputIsMatrixNotStatevector) {
     int n = 1;
     std::vector<Gate> gates;

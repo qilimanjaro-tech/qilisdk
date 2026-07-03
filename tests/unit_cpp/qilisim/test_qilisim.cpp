@@ -579,6 +579,196 @@ _reservoir_reset = QuantumReservoir(
     EXPECT_TRUE(py::hasattr(result, "intermediate_results"));
 }
 
+TEST_F(ExecuteReservoirTest, ReservoirMonteCarloWithReset) {
+    // Monte Carlo mode samples the initial density matrix into trajectories once and
+    // resets qubits per-trajectory, exercising the trajectory sampling/reset paths.
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirLayer
+from qilisdk.analog.schedule import Schedule
+from qilisdk.analog.hamiltonian import Z
+from qilisdk.core.qtensor import QTensor
+import scipy.sparse as sp, numpy as np
+
+_sched_mc = Schedule(hamiltonians={"h0": Z(0)}, dt=0.1, total_time=0.3)
+_layer_mc = ReservoirLayer(evolution_dynamics=_sched_mc, qubits_to_reset=[0])
+_rho_mc = QTensor(sp.csr_matrix(np.array([[0.5, 0.0], [0.0, 0.5]], dtype=complex)))
+_reservoir_mc = QuantumReservoir(initial_state=_rho_mc, reservoir_layer=_layer_mc, input_per_layer=[{}])
+    )");
+    py::dict p;
+    p["monte_carlo"] = py::bool_(true);
+    p["num_monte_carlo_trajectories"] = py::int_(16);
+    py::object result;
+    ASSERT_NO_THROW(result = sim.execute_quantum_reservoir(py::globals()["_reservoir_mc"], py::list(), py::none(), p));
+    EXPECT_TRUE(py::hasattr(result, "readout_results"));
+}
+
+TEST_F(ExecuteReservoirTest, ReservoirResetWithCoherentState) {
+    // A |+><+| state carries off-diagonal coherences, so the density-matrix reset
+    // loop exercises the branch that skips entries mixing the reset qubit.
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirLayer
+from qilisdk.analog.schedule import Schedule
+from qilisdk.analog.hamiltonian import Z
+from qilisdk.core.qtensor import QTensor
+import scipy.sparse as sp, numpy as np
+
+_sched_coh = Schedule(hamiltonians={"h0": Z(0)}, dt=0.1, total_time=0.3)
+_layer_coh = ReservoirLayer(evolution_dynamics=_sched_coh, qubits_to_reset=[0])
+_rho_coh = QTensor(sp.csr_matrix(np.array([[0.5, 0.5], [0.5, 0.5]], dtype=complex)))
+_reservoir_coh = QuantumReservoir(initial_state=_rho_coh, reservoir_layer=_layer_coh, input_per_layer=[{}])
+    )");
+    py::object result;
+    ASSERT_NO_THROW(result = sim.execute_quantum_reservoir(py::globals()["_reservoir_coh"], py::list(), py::none(), empty_solver_params()));
+    EXPECT_TRUE(py::hasattr(result, "readout_results"));
+}
+
+TEST_F(ExecuteReservoirTest, ReservoirDigitalLayerStatevectorSampling) {
+    // A reservoir with a digital (Circuit) step drives the statevector sampling path.
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirLayer
+from qilisdk.analog.schedule import Schedule
+from qilisdk.analog.hamiltonian import Z
+from qilisdk.digital import Circuit, X
+from qilisdk.core.qtensor import QTensor
+import scipy.sparse as sp, numpy as np
+
+_sched_dig = Schedule(hamiltonians={"h0": Z(0)}, dt=0.1, total_time=0.3)
+_pre_dig = Circuit(1)
+_pre_dig.add(X(0))
+_layer_dig = ReservoirLayer(evolution_dynamics=_sched_dig, input_encoding=_pre_dig)
+_rho_dig = QTensor(sp.csr_matrix(np.array([[1.0, 0.0], [0.0, 0.0]], dtype=complex)))
+_reservoir_dig = QuantumReservoir(initial_state=_rho_dig, reservoir_layer=_layer_dig, input_per_layer=[{}])
+    )");
+    py::dict p;
+    p["sampling_method"] = py::str("statevector");
+    py::object result;
+    ASSERT_NO_THROW(result = sim.execute_quantum_reservoir(py::globals()["_reservoir_dig"], py::list(), py::none(), p));
+    EXPECT_TRUE(py::hasattr(result, "readout_results"));
+}
+
+TEST_F(ExecuteReservoirTest, ReservoirDigitalLayerMatrixFreeSampling) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirLayer
+from qilisdk.analog.schedule import Schedule
+from qilisdk.analog.hamiltonian import Z
+from qilisdk.digital import Circuit, X
+from qilisdk.core.qtensor import QTensor
+import scipy.sparse as sp, numpy as np
+
+_sched_mf = Schedule(hamiltonians={"h0": Z(0)}, dt=0.1, total_time=0.3)
+_pre_mf = Circuit(1)
+_pre_mf.add(X(0))
+_layer_mf = ReservoirLayer(evolution_dynamics=_sched_mf, input_encoding=_pre_mf)
+_rho_mf = QTensor(sp.csr_matrix(np.array([[1.0, 0.0], [0.0, 0.0]], dtype=complex)))
+_reservoir_mf = QuantumReservoir(initial_state=_rho_mf, reservoir_layer=_layer_mf, input_per_layer=[{}])
+    )");
+    py::dict p;
+    p["sampling_method"] = py::str("statevector_matrix_free");
+    py::object result;
+    ASSERT_NO_THROW(result = sim.execute_quantum_reservoir(py::globals()["_reservoir_mf"], py::list(), py::none(), p));
+    EXPECT_TRUE(py::hasattr(result, "readout_results"));
+}
+
+TEST_F(ExecuteReservoirTest, ReservoirDigitalLayerUnsupportedSamplingThrows) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirLayer
+from qilisdk.analog.schedule import Schedule
+from qilisdk.analog.hamiltonian import Z
+from qilisdk.digital import Circuit, X
+from qilisdk.core.qtensor import QTensor
+import scipy.sparse as sp, numpy as np
+
+_sched_bad = Schedule(hamiltonians={"h0": Z(0)}, dt=0.1, total_time=0.3)
+_pre_bad = Circuit(1)
+_pre_bad.add(X(0))
+_layer_bad = ReservoirLayer(evolution_dynamics=_sched_bad, input_encoding=_pre_bad)
+_rho_bad = QTensor(sp.csr_matrix(np.array([[1.0, 0.0], [0.0, 0.0]], dtype=complex)))
+_reservoir_bad_samp = QuantumReservoir(initial_state=_rho_bad, reservoir_layer=_layer_bad, input_per_layer=[{}])
+    )");
+    py::dict p;
+    p["sampling_method"] = py::str("unsupported_sampling_method");
+    EXPECT_THROW(sim.execute_quantum_reservoir(py::globals()["_reservoir_bad_samp"], py::list(), py::none(), p), py::value_error);
+}
+
+TEST_F(ExecuteReservoirTest, ReservoirExplicitMatrixAnalogMethod) {
+    // The "direct" method routes the reservoir's schedule through the explicit-matrix
+    // time_evolution path rather than the matrix-free one.
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirLayer
+from qilisdk.analog.schedule import Schedule
+from qilisdk.analog.hamiltonian import Z
+from qilisdk.core.qtensor import QTensor
+import scipy.sparse as sp, numpy as np
+
+_sched_direct = Schedule(hamiltonians={"h0": Z(0)}, dt=0.1, total_time=0.3)
+_layer_direct = ReservoirLayer(evolution_dynamics=_sched_direct)
+_rho_direct = QTensor(sp.csr_matrix(np.array([[1.0, 0.0], [0.0, 0.0]], dtype=complex)))
+_reservoir_direct = QuantumReservoir(initial_state=_rho_direct, reservoir_layer=_layer_direct, input_per_layer=[{}])
+    )");
+    py::dict p;
+    p["evolution_method"] = py::str("direct");
+    py::object result;
+    ASSERT_NO_THROW(result = sim.execute_quantum_reservoir(py::globals()["_reservoir_direct"], py::list(), py::none(), p));
+    EXPECT_TRUE(py::hasattr(result, "readout_results"));
+}
+
+TEST_F(ExecuteReservoirTest, ReservoirUnsupportedAnalogMethodThrows) {
+    // "variational_exponential" is a valid evolution method, so it passes config
+    // validation, but the reservoir path does not implement it -- it must raise the
+    // "Unknown time evolution method" error rather than silently doing nothing.
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirLayer
+from qilisdk.analog.schedule import Schedule
+from qilisdk.analog.hamiltonian import Z
+from qilisdk.core.qtensor import QTensor
+import scipy.sparse as sp, numpy as np
+
+_sched_unk = Schedule(hamiltonians={"h0": Z(0)}, dt=0.1, total_time=0.3)
+_layer_unk = ReservoirLayer(evolution_dynamics=_sched_unk)
+_rho_unk = QTensor(sp.csr_matrix(np.array([[1.0, 0.0], [0.0, 0.0]], dtype=complex)))
+_reservoir_unk = QuantumReservoir(initial_state=_rho_unk, reservoir_layer=_layer_unk, input_per_layer=[{}])
+    )");
+    py::dict p;
+    p["evolution_method"] = py::str("variational_exponential");
+    EXPECT_THROW(sim.execute_quantum_reservoir(py::globals()["_reservoir_unk"], py::list(), py::none(), p), py::value_error);
+}
+
+TEST_F(ExecuteReservoirTest, ReservoirAppliesScheduleParameterPerturbations) {
+    // When a noise model is supplied, the reservoir walks its global perturbations
+    // for each schedule step. A non-matching key exercises the perturbation loop
+    // without changing the parameters.
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirLayer
+from qilisdk.analog.schedule import Schedule
+from qilisdk.analog.hamiltonian import Z
+from qilisdk.core.qtensor import QTensor
+from qilisdk.noise.noise_model import NoiseModel
+import scipy.sparse as sp, numpy as np
+
+class _NoOpPerturbation:
+    def perturb(self, value):
+        return value
+
+_sched_pert = Schedule(hamiltonians={"h0": Z(0)}, dt=0.1, total_time=0.3)
+_layer_pert = ReservoirLayer(evolution_dynamics=_sched_pert)
+_rho_pert = QTensor(sp.csr_matrix(np.array([[1.0, 0.0], [0.0, 0.0]], dtype=complex)))
+_reservoir_pert = QuantumReservoir(initial_state=_rho_pert, reservoir_layer=_layer_pert, input_per_layer=[{}])
+_nm_pert = NoiseModel()
+_nm_pert.global_perturbations["nonmatching_param"].append(_NoOpPerturbation())
+    )");
+    py::object result;
+    ASSERT_NO_THROW(result = sim.execute_quantum_reservoir(py::globals()["_reservoir_pert"], py::list(), py::globals()["_nm_pert"], empty_solver_params()));
+    EXPECT_TRUE(py::hasattr(result, "readout_results"));
+}
+
 TEST_F(ExecuteTimeEvolutionTest, VariationalExponential_NonUniformInitialState_Throws) {
     py::gil_scoped_acquire gil;
     py::exec(R"(

@@ -190,9 +190,6 @@ void iter_rk4(DenseMatrix& rho_t, double t, double dt, const std::vector<double>
 
     // k1 at time t
     lindblad_rhs(k, rho_t, construct_current_hamiltonian(t_step, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
-    // rho_t/rho_old/rho_tmp/k are contiguous, same-shaped column-major matrices,
-    // so walk them as flat buffers: the earlier (i, j) nesting strided the inner
-    // loop by rho_rows on every access.
     const long rho_size = rho_t.size();
     {
         Complex* rt_ptr = rho_t.data();
@@ -285,10 +282,7 @@ void iter_rk4(DenseMatrix& rho_t, double t, double dt, const std::vector<double>
         for (int i = 0; i < dim; ++i) {
             norm += rho_t(i, i);
         }
-        // Divide the whole (contiguous) matrix by the scalar trace. Precompute the
-        // reciprocal and multiply by hand: this turns a per-element complex
-        // division into a multiply and sidesteps the std::complex NaN-correction
-        // branch that operator/=/operator*= emit on every element.
+        // Divide the whole (contiguous) matrix by the scalar trace
         const Real denom = norm.real() * norm.real() + norm.imag() * norm.imag();
         const Real inv_re = norm.real() / denom;
         const Real inv_im = -norm.imag() / denom;

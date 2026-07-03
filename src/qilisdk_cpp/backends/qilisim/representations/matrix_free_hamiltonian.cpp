@@ -39,10 +39,9 @@ int popcount_u64(unsigned long long value) {
 #endif
 }
 
-// A single complex value held for arithmetic. GCC will not pack std::complex
-// accumulation into 128-bit SIMD on its own, so on x86 (SSE3 + FMA, i.e. the
-// -march=x86-64-v3 baseline) we operate on __m128d = [real, imag] explicitly.
-// Elsewhere it degrades to plain std::complex, which the compiler handles fine.
+// Define a bunch of assembly-optimized operations on complex numbers
+// These help hint to the compiler that we want to do SIMD operations on complex numbers,
+// and allow us to use FMA instructions when available
 #if defined(QILI_PACKED_COMPLEX)
 using cvec = __m128d;
 inline cvec cv_zero() {
@@ -168,15 +167,8 @@ void MatrixFreeHamiltonian::apply(const DenseMatrix& input_state, MatrixFreeAppl
     const Term* diag_end = t_begin + n_diag;
     const Term* simple_end = diag_end + n_simple_off;
 
-    // Per-index kernel shared by the statevector and (column-wise) density-matrix
-    // paths: returns amplitude i of (H * vec) for a single contiguous vector `vec`.
-    // Terms are pre-partitioned into diagonal / simple real off-diagonal / general,
-    // so most terms avoid a full complex multiply.
-    // The three loops below accumulate into complex (not split real/imag scalar)
-    // values so that, with -fcx-limited-range + AVX2, each term becomes a packed
-    // 128-bit load and FMA instead of pairs of scalar ops. Several independent
-    // accumulators per loop break the reduction dependency chain (reassociation
-    // is off without -ffast-math) and keep multiple gathers in flight.
+    // Define a lambda to apply the Hamiltonian to a single index of the input state
+    // This is used for both statevector and density matrix applications, and is parallelized over the index
     auto apply_index = [&](long i, const Complex* vec) -> Complex {
         const unsigned long long ii = static_cast<unsigned long long>(i);
 
@@ -239,12 +231,7 @@ void MatrixFreeHamiltonian::apply(const DenseMatrix& input_state, MatrixFreeAppl
         return;
     }
 
-    // Density matrix (or a batch of trajectory state vectors). Left multiplication
-    // H * rho acts within each column: column c of the result is H applied to
-    // column c of the input, so we reuse the contiguous per-column kernel above
-    // instead of striding across rows. N is the column length (state-space
-    // dimension); the matrix need not be square - Monte Carlo passes an
-    // (dim x n_trajectories) buffer - so iterate over the real column count.
+    // Left multiplication H * rho
     const long N = output_state.rows();
     const long ncols = output_state.cols();
     if (application_type == MatrixFreeApplicationType::Left || application_type == MatrixFreeApplicationType::LeftAndRight) {
@@ -260,8 +247,7 @@ void MatrixFreeHamiltonian::apply(const DenseMatrix& input_state, MatrixFreeAppl
         }
     }
 
-    // Right multiplication rho * H^dagger permutes and scales whole columns, which
-    // is already contiguous in column-major storage.
+    // Right multiplication rho * H^dagger
     if (application_type == MatrixFreeApplicationType::Right) {
         output_state.setZero();
 #if defined(_OPENMP)
@@ -275,8 +261,8 @@ void MatrixFreeHamiltonian::apply(const DenseMatrix& input_state, MatrixFreeAppl
             }
         }
     } else if (application_type == MatrixFreeApplicationType::LeftAndRight) {
-        // The Left pass above already wrote H * rho into output_state; now apply
-        // the right factor (H * rho) * H^dagger, again as contiguous column work.
+        // The Left pass above already wrote H * rho into output_state,
+        // so we just need to do the Right pass on that result
         DenseMatrix hr_temp = output_state;
         output_state.setZero();
 #if defined(_OPENMP)

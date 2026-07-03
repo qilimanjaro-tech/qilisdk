@@ -22,9 +22,7 @@
 #include <immintrin.h>
 #endif
 
-// `#pragma omp simd` is an OpenMP 4.0 feature. MSVC's /openmp defines _OPENMP as 200203
-// (OpenMP 2.0) and rejects the simd pragma (error C7660) unless -openmp:experimental is
-// passed, so only emit it when the compiler advertises OpenMP >= 4.0 (201307).
+// Make sure SIMD pragma is supported
 #if defined(_OPENMP) && _OPENMP >= 201307
 #define QILISIM_OMP_SIMD _Pragma("omp simd")
 #else
@@ -1226,8 +1224,7 @@ MatrixFreeOperator::MatrixFreeOperator(const std::string& name, const std::vecto
         this->name = "Z";
     }
 
-    // A dense multi-qubit gate (e.g. produced by gate fusion): a full 2^k x 2^k
-    // unitary acting on k target qubits with no separate control structure.
+    // Check if it's a dense multi-qubit gate (i.e. a fused block)
     bool is_dense_multi_qubit = this->control_qubits.empty() && this->base_matrix.rows() == this->base_matrix.cols() && this->base_matrix.rows() == (1LL << this->target_qubits.size());
 
     // Checks

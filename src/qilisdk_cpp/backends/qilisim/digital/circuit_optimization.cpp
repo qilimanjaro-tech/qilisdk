@@ -48,7 +48,7 @@ int auto_max_fused_qubits(int n_qubits) {
 #if defined(_SC_LEVEL3_CACHE_SIZE)
     long detected = sysconf(_SC_LEVEL3_CACHE_SIZE);
     if (detected > 0) {
-        llc_bytes = static_cast<long long>(detected);
+        llc_bytes = static_cast<long long>(detected);  // GCOV_EXCL_LINE (depends on host L3 cache reporting)
     }
 #endif
     const long long llc_amplitudes = llc_bytes / bytes_per_amplitude;
