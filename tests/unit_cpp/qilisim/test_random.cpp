@@ -16,6 +16,8 @@
 
 #include <gtest/gtest.h>
 
+#include <cmath>
+#include <complex>
 #include "../../../src/qilisdk_cpp/backends/qilisim/utils/random.h"
 
 TEST(SampleFromProbabilitiesTest, SampleFromProbabilitiesReturnsValidSamples) {
@@ -197,6 +199,25 @@ TEST(GetVectorFromDensityMatrixTest, GetVectorFromZeroMatrixDense) {
 TEST(GetVectorFromDensityMatrixTest, GetVectorFromZeroMatrixSparse) {
     SparseMatrix rho(2, 2);
     EXPECT_ANY_THROW(get_vector_from_density_matrix(rho, 1e-10));
+}
+
+TEST(ResetTrajectoriesTest, ResetsMaskedQubitToZeroAcrossTrajectories) {
+    const long dim = 2;
+    const long n_traj = 3;
+    DenseMatrix traj = DenseMatrix::Zero(dim, n_traj);
+    traj(1, 0) = 1.0;
+    traj(0, 1) = 1.0 / std::sqrt(2.0);
+    traj(1, 1) = 1.0 / std::sqrt(2.0);
+
+    DenseMatrix out = reset_trajectories(traj, 1ULL, 42);
+    ASSERT_EQ(out.rows(), dim);
+    ASSERT_EQ(out.cols(), n_traj);
+
+    EXPECT_NEAR(std::abs(out(1, 0)), 0.0, 1e-12);
+    EXPECT_NEAR(std::abs(out(0, 0)), 1.0, 1e-12);
+    EXPECT_NEAR(std::abs(out(1, 1)), 0.0, 1e-12);
+    EXPECT_NEAR(std::abs(out(0, 1)), 1.0, 1e-12);
+    EXPECT_TRUE(out.col(2).isZero(1e-12));
 }
 
 // GCOV_EXCL_BR_STOP

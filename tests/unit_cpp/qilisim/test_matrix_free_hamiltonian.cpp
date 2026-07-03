@@ -765,4 +765,29 @@ TEST(MatrixFreeHamiltonian, ApplyLeftOnNonSquareBatchMatchesPerColumn) {
     }
 }
 
+TEST(MatrixFreeHamiltonian, ApplyExercisesUnrolledTermLoops) {
+    const int nq = 4;
+    const int dim = 1 << nq;
+    MatrixFreeHamiltonian h(nq);
+    h.add({0.7, 0.0}, MatrixFreeOperator("Z", 0));
+    h.add({0.5, 0.0}, MatrixFreeOperator("Z", 1));  // >= 2 diagonal terms
+    h.add({1.1, 0.0}, MatrixFreeOperator("X", 0));
+    h.add({1.2, 0.0}, MatrixFreeOperator("X", 1));
+    h.add({1.3, 0.0}, MatrixFreeOperator("X", 2));
+    h.add({1.4, 0.0}, MatrixFreeOperator("X", 3));  // >= 4 simple off-diagonal terms
+    h.add({0.0, 0.5}, MatrixFreeOperator("Y", 0));
+    h.add({0.0, 0.6}, MatrixFreeOperator("Y", 1));  // >= 2 general terms
+
+    DenseMatrix psi = DenseMatrix::Zero(dim, 1);
+    for (int r = 0; r < dim; ++r) {
+        psi(r, 0) = Complex(0.1 * (r + 1), -0.05 * r);
+    }
+
+    DenseMatrix out;
+    h.apply(psi, MatrixFreeApplicationType::Left, out);
+    ASSERT_EQ(out.rows(), dim);
+    ASSERT_EQ(out.cols(), 1);
+    EXPECT_GT(out.norm(), 0.0);
+}
+
 // GCOV_EXCL_BR_STOP

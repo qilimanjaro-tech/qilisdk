@@ -318,6 +318,22 @@ TEST_F(SamplingTest, XGateOnQubit0_AllCountsAre10) {
     EXPECT_EQ(counts.at("10"), 1000);
 }
 
+TEST_F(SamplingTest, FusionWithSingleQubitGateCombiningEnabled) {
+    int n = 2;
+    QiliSimConfig cfg_fuse = defaultConfig();
+    cfg_fuse.set_fuse_gates(true);
+    cfg_fuse.set_combine_single_qubit_gates(true);
+    cfg_fuse.set_num_threads(4);
+    std::vector<Gate> gates = {makeX(0), makeX(0), makeX(1)};
+    std::vector<bool> measure = {true, true};
+    DenseMatrix state;
+    std::vector<py::object> intermediate_results;
+    sampling(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfg_fuse, readout);
+    std::map<std::string, int> counts = construct_samples(state, n, 1000, noNoise, cfg_fuse, measure);
+    ASSERT_EQ(counts.size(), 1u);
+    EXPECT_EQ(counts.at("01"), 1000);
+}
+
 TEST_F(SamplingTest, DoubleXGateOnQubit0_AllCountsAre00_NoCache) {
     int n = 2;
     std::vector<Gate> gates = {makeX(0), makeX(0)};
