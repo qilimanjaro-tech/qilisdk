@@ -27,8 +27,8 @@ int auto_max_fused_qubits(int n_qubits) {
     /*
     Choose a fusion depth automatically from the qubit count.
 
-    If the number of qubits is small enough that the entire state vector fits in the last-level cache, 
-    we can afford to fuse fewer qubits (4) because the state vector is already cache-resident. 
+    If the number of qubits is small enough that the entire state vector fits in the last-level cache,
+    we can afford to fuse fewer qubits (4) because the state vector is already cache-resident.
     If the number of qubits is larger, we fuse more qubits (7) to reduce the number of matrix-vector multiplications and memory accesses.
 
     Args:

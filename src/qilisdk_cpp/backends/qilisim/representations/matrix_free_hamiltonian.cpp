@@ -45,21 +45,31 @@ int popcount_u64(unsigned long long value) {
 // Elsewhere it degrades to plain std::complex, which the compiler handles fine.
 #if defined(QILI_PACKED_COMPLEX)
 using cvec = __m128d;
-inline cvec cv_zero() { return _mm_setzero_pd(); }
-inline cvec cv_load(const Complex* p) { return _mm_loadu_pd(reinterpret_cast<const double*>(p)); }
-inline cvec cv_add(cvec a, cvec b) { return _mm_add_pd(a, b); }
+inline cvec cv_zero() {
+    return _mm_setzero_pd();
+}
+inline cvec cv_load(const Complex* p) {
+    return _mm_loadu_pd(reinterpret_cast<const double*>(p));
+}
+inline cvec cv_add(cvec a, cvec b) {
+    return _mm_add_pd(a, b);
+}
 // (ar + i ai)(br + i bi) = (ar*br - ai*bi) + i (ar*bi + ai*br)
 inline cvec cv_cmul(cvec a, cvec b) {
-    cvec ar = _mm_movedup_pd(a);         // [ar, ar]
-    cvec ai = _mm_unpackhi_pd(a, a);     // [ai, ai]
+    cvec ar = _mm_movedup_pd(a);              // [ar, ar]
+    cvec ai = _mm_unpackhi_pd(a, a);          // [ai, ai]
     cvec b_swap = _mm_shuffle_pd(b, b, 0x1);  // [bi, br]
-    cvec t = _mm_mul_pd(ai, b_swap);     // [ai*bi, ai*br]
-    return _mm_fmaddsub_pd(ar, b, t);    // [ar*br - ai*bi, ar*bi + ai*br]
+    cvec t = _mm_mul_pd(ai, b_swap);          // [ai*bi, ai*br]
+    return _mm_fmaddsub_pd(ar, b, t);         // [ar*br - ai*bi, ar*bi + ai*br]
 }
 // acc += r * x, with r a real scalar
-inline cvec cv_fma_real(cvec acc, double r, cvec x) { return _mm_fmadd_pd(_mm_set1_pd(r), x, acc); }
+inline cvec cv_fma_real(cvec acc, double r, cvec x) {
+    return _mm_fmadd_pd(_mm_set1_pd(r), x, acc);
+}
 // acc += phase * x, with phase complex
-inline cvec cv_fma_cplx(cvec acc, const Complex& phase, cvec x) { return cv_add(acc, cv_cmul(cv_load(&phase), x)); }
+inline cvec cv_fma_cplx(cvec acc, const Complex& phase, cvec x) {
+    return cv_add(acc, cv_cmul(cv_load(&phase), x));
+}
 inline Complex cv_store(cvec v) {
     Complex out;
     _mm_storeu_pd(reinterpret_cast<double*>(&out), v);
@@ -67,13 +77,27 @@ inline Complex cv_store(cvec v) {
 }
 #else
 using cvec = Complex;
-inline cvec cv_zero() { return Complex(0.0, 0.0); }
-inline cvec cv_load(const Complex* p) { return *p; }
-inline cvec cv_add(cvec a, cvec b) { return a + b; }
-inline cvec cv_cmul(cvec a, cvec b) { return a * b; }
-inline cvec cv_fma_real(cvec acc, double r, cvec x) { return acc + r * x; }
-inline cvec cv_fma_cplx(cvec acc, const Complex& phase, cvec x) { return acc + phase * x; }
-inline Complex cv_store(cvec v) { return v; }
+inline cvec cv_zero() {
+    return Complex(0.0, 0.0);
+}
+inline cvec cv_load(const Complex* p) {
+    return *p;
+}
+inline cvec cv_add(cvec a, cvec b) {
+    return a + b;
+}
+inline cvec cv_cmul(cvec a, cvec b) {
+    return a * b;
+}
+inline cvec cv_fma_real(cvec acc, double r, cvec x) {
+    return acc + r * x;
+}
+inline cvec cv_fma_cplx(cvec acc, const Complex& phase, cvec x) {
+    return acc + phase * x;
+}
+inline Complex cv_store(cvec v) {
+    return v;
+}
 #endif
 }  // namespace
 

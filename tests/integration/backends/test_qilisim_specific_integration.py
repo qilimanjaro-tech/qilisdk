@@ -166,7 +166,7 @@ def test_monte_carlo_time_evolution(method):
 
 
 @pytest.mark.parametrize(
-    "initial_state, noise",
+    ("initial_state", "noise"),
     [
         (ket(0), None),  # unitary evolution on a state vector
         (ket(0).to_density_matrix(), None),  # unitary evolution on a (pure) density matrix

@@ -98,7 +98,7 @@ QiliSim is configured at construction time through three orthogonal sections, al
     )
 
     backend = QiliSim(
-        analog_simulation_method=AnalogMethod.arnoldi(dim=16, num_substeps=2),
+        analog_simulation_method=AnalogMethod.arnoldi(dim=16, num_substeps=2, matrix_free=True),
         digital_simulation_method=DigitalMethod.statevector(
             matrix_free=True,
             max_cache_size=2_000,
@@ -142,7 +142,7 @@ schedule is integrated:
    * - :meth:`AnalogMethod.adaptive_integrator(tol=1e-2) <qilisdk.backends.backend_config.AnalogMethod.adaptive_integrator>`
      - Dormand-Prince RK4/5
      - Adaptive step size; ``tol`` bounds the fidelity error between the RK4 and RK5 estimates.
-   * - :meth:`AnalogMethod.arnoldi(dim=10, num_substeps=1) <qilisdk.backends.backend_config.AnalogMethod.arnoldi>`
+   * - :meth:`AnalogMethod.arnoldi(dim=10, num_substeps=1, matrix_free=True) <qilisdk.backends.backend_config.AnalogMethod.arnoldi>`
      - Krylov / Arnoldi
      - Can offer decent scaling for large sparse Hamiltonians; tune ``dim`` for the Krylov subspace size.
    * - :meth:`AnalogMethod.direct() <qilisdk.backends.backend_config.AnalogMethod.direct>`
@@ -212,9 +212,9 @@ optional Monte Carlo trajectory sampling for open-system simulations.
     backend = QiliSim(
         execution_config=ExecutionConfig(
             num_threads=8,
-            seed=1234,
+            seed=42,
             monte_carlo=MonteCarloConfig(trajectories=500),
-            measurement_collapse=True,
+            measurement_collapse=False,
         ),
     )
 

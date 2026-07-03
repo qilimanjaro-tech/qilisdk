@@ -20,13 +20,13 @@ import numpy as np
 
 from qilisdk.core import Domain, Parameter, QTensor, tensor_prod
 from qilisdk.core.parameterizable import Parameterizable
-from qilisdk.core.qtensor import InitialState
 from qilisdk.digital import Circuit, M
 from qilisdk.functionals.functional import PrimitiveFunctional
 from qilisdk.yaml import yaml
 
 if TYPE_CHECKING:
     from qilisdk.analog import Schedule
+    from qilisdk.core.qtensor import InitialState
     from qilisdk.core.types import RealNumber
 
 

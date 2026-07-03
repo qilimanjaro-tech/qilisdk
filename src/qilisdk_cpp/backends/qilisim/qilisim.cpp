@@ -340,7 +340,6 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
 
             // If it's a digital layer
             if (py::isinstance(step, Circuit)) {
-                
                 // Get the gate list
                 std::vector<Gate> gates = parse_gates(step, config.get_atol(), noise_model);
 
@@ -362,10 +361,9 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
                 } else {
                     throw py::value_error("Unsupported sampling method for reservoirs: " + config.get_sampling_method());
                 }
-            
-            // If we have a time evolution layer
-            } else if (py::isinstance(step, Schedule)) {
 
+                // If we have a time evolution layer
+            } else if (py::isinstance(step, Schedule)) {
                 // Check if we need to perturb the parameters
                 if (!noise_model.is_none()) {
                     py::dict schedule_parameters = step.attr("get_parameters")();
@@ -395,7 +393,6 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
                 // Depending on the method, call the internal implementation
                 std::vector<DenseMatrix> intermediate_rhos;
                 if (config.get_time_evolution_method() == "integrate_rk4_matrix_free" || config.get_time_evolution_method() == "arnoldi_matrix_free") {
-
                     // Parse the Hamiltonians
                     int n_qubits = functional.attr("nqubits").cast<int>();
                     std::vector<MatrixFreeHamiltonian> hamiltonians = parse_hamiltonians_matrix_free(n_qubits, hamiltonians_values);
@@ -412,7 +409,6 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
                     time_evolution_matrix_free(state.sparseView(), hamiltonians, parameters_list, step_list, noise_model_cpp, config, state, intermediate_rhos);
 
                 } else if (config.get_time_evolution_method() == "integrate_rk4" || config.get_time_evolution_method() == "arnoldi" || config.get_time_evolution_method() == "direct") {
-
                     // Parse the Hamiltonians
                     std::vector<SparseMatrix> hamiltonians = parse_hamiltonians(hamiltonians_values, config.get_atol(), n_qubits);
                     if (hamiltonians.size() != parameters_list.size()) {
@@ -426,7 +422,7 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
 
                     // Call the implementation
                     time_evolution(state.sparseView(), hamiltonians, parameters_list, step_list, noise_model_cpp, config, state, intermediate_rhos);
-                
+
                 } else {
                     throw py::value_error("Unknown time evolution method: " + config.get_time_evolution_method());
                 }
@@ -444,7 +440,7 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
         // Build the layer result
         DenseMatrix readout_state = trajectory_mode ? trajectories_to_density_matrix(state) : state;
         inter_results.append(construct_result_object(readout_state, readout, noise_model_cpp, n_qubits, config, qubits_to_measure));
-        
+
         // Reset qubits
         if (!functional.attr("reservoir_layer").attr("qubits_to_reset").is_none()) {
             std::set<int> qubits_set;
@@ -488,7 +484,6 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
     // Construct the final result object
     py::slice slice(0, -1, 1);
     return FunctionalResult(py::arg("readout_results") = inter_results[py::int_(-1)], py::arg("intermediate_results") = inter_results[slice]);
-
 }
 
 #pragma GCC visibility pop
