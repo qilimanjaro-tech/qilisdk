@@ -183,13 +183,14 @@ std::vector<MatrixFreeHamiltonian> parse_hamiltonians_matrix_free(int nqubits, c
     return H_list;
 }
 
-std::vector<SparseMatrix> parse_hamiltonians(const py::object& Hs, double atol) {
+std::vector<SparseMatrix> parse_hamiltonians(const py::object& Hs, double atol, int nqubits) {
     /*
-    Extract Hamiltonian matrices from a list of QTensor objects.
+    Extract Hamiltonian matrices from a list of Hamiltonian objects.
 
     Args:
-        Hs (py::object): A list of QTensor Hamiltonians.
+        Hs (py::object): A list of Hamiltonian objects.
         atol (double): Absolute tolerance for numerical operations.
+        nqubits (int): The total number of qubits in the system.
 
     Returns:
         std::vector<SparseMatrix>: The list of Hamiltonian sparse matrices.
@@ -199,7 +200,7 @@ std::vector<SparseMatrix> parse_hamiltonians(const py::object& Hs, double atol) 
     */
     std::vector<SparseMatrix> hamiltonians;
     for (auto& hamiltonian : Hs) {
-        py::object spm = hamiltonian.attr("to_matrix")();
+        py::object spm = hamiltonian.attr("to_qtensor")("total_nqubits"_a = nqubits).attr("data");
         SparseMatrix H = from_spmatrix(spm, atol);
         hamiltonians.push_back(H);
     }

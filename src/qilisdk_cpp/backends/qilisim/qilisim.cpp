@@ -239,7 +239,7 @@ py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, co
 
         } else if (config.get_time_evolution_method() == "integrate_rk4" || config.get_time_evolution_method() == "arnoldi" || config.get_time_evolution_method() == "direct") {
             // Parse the Hamiltonians
-            std::vector<SparseMatrix> hamiltonians = parse_hamiltonians(hamiltonians_values, config.get_atol());
+            std::vector<SparseMatrix> hamiltonians = parse_hamiltonians(hamiltonians_values, config.get_atol(), nqubits);
             if (hamiltonians.size() != parameters_list.size()) {
                 throw py::value_error("Number of Hamiltonians does not match number of parameter lists");
             }
@@ -414,7 +414,7 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
                 } else if (config.get_time_evolution_method() == "integrate_rk4" || config.get_time_evolution_method() == "arnoldi" || config.get_time_evolution_method() == "direct") {
 
                     // Parse the Hamiltonians
-                    std::vector<SparseMatrix> hamiltonians = parse_hamiltonians(hamiltonians_values, config.get_atol());
+                    std::vector<SparseMatrix> hamiltonians = parse_hamiltonians(hamiltonians_values, config.get_atol(), n_qubits);
                     if (hamiltonians.size() != parameters_list.size()) {
                         throw py::value_error("Number of Hamiltonians does not match number of parameter lists");
                     }
@@ -432,6 +432,7 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
                 }
             }
         }
+
         // Ensure state is a density matrix after each layer
         if (!trajectory_mode && state.cols() == 1) {
             state = state * state.adjoint();

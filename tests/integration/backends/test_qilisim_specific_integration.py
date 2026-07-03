@@ -613,3 +613,45 @@ def test_matrix_free_complex_gate_on_mixed_state_stays_hermitian():
 
     # And it must match the explicit-matrix path's state.
     np.testing.assert_allclose(mf_state, _dense(explicit.get_state()), atol=1e-9)
+
+
+@pytest.mark.parametrize("method", [AnalogMethod.direct(), AnalogMethod.arnoldi(), AnalogMethod.integrator()])
+def test_reservoir_schedule_hamiltonians_of_differing_qubit_support(method):
+    """Regression: a schedule whose Hamiltonian terms touch different qubits produces
+    ``to_matrix()`` matrices of *different* dimensions (e.g. ``Z0*Z1`` -> 4x4 while
+    ``Z0*Z5`` -> 64x64). The explicit-matrix analog path took its dimension from only the
+    first Hamiltonian and then summed the terms, reading out of bounds and segfaulting.
+
+    Each term must be expanded to the full ``nqubits`` space (identity on untouched qubits),
+    so the run must succeed and agree with the matrix-free ground truth.
+    """
+    nqubits = 6
+
+    def _build() -> QuantumReservoir:
+        pre = Circuit(nqubits)
+        pre.add(RX(0, theta=ReservoirInput("phi", 0.1)))
+        layer = ReservoirLayer(
+            evolution_dynamics=Schedule(
+                hamiltonians={"h1": pauli_z(0) * pauli_z(1), "h2": pauli_z(0) * pauli_z(5) + pauli_x(3)},
+                coefficients={"h1": {(0.0, 1.0): 1.0}, "h2": {(0.0, 1.0): 0.5}},
+                total_time=2.0,
+                dt=0.1,
+            ),
+            input_encoding=pre,
+            qubits_to_reset=[0],
+        )
+        return QuantumReservoir(
+            initial_state=QTensor.uniform(nqubits).to_density_matrix(),
+            reservoir_layer=layer,
+            input_per_layer=[{"phi": 0.2}, {"phi": 0.3}],
+        )
+
+    readout = Readout().with_expectation(observables=[pauli_z(0), pauli_z(3), pauli_z(5)])
+    explicit = QiliSim(analog_simulation_method=method).execute(_build(), readout)
+    reference = QiliSim(analog_simulation_method=AnalogMethod.integrator(matrix_free=True)).execute(_build(), readout)
+
+    np.testing.assert_allclose(
+        np.asarray(explicit.get_expectation_values()),
+        np.asarray(reference.get_expectation_values()),
+        atol=1e-6,
+    )
