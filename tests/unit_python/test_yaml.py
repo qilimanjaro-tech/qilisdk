@@ -385,23 +385,26 @@ def test_safe_yaml_rejects_function_tag():
 
     serialized = base64.b64encode(dumps(f, recurse=True)).decode("utf-8")
     document = f"!function {serialized}\n"
+    stream = StringIO(document)
 
     with pytest.raises(ConstructorError):
-        safe_yaml.load(StringIO(document))
+        safe_yaml.load(stream)
 
 
 def test_safe_yaml_rejects_lambda_tag():
     g = lambda x: x * 2  # noqa: E731
     serialized = base64.b64encode(dumps(g, recurse=True)).decode("utf-8")
     document = f"!lambda {serialized}\n"
+    stream = StringIO(document)
 
     with pytest.raises(ConstructorError):
-        safe_yaml.load(StringIO(document))
+        safe_yaml.load(stream)
 
 
 def test_safe_yaml_rejects_non_allowlisted_python_object_apply():
+    stream = StringIO("!!python/object/apply:os.system ['echo pwned']\n")
     with pytest.raises(ConstructorError):
-        safe_yaml.load(StringIO("!!python/object/apply:os.system ['echo pwned']\n"))
+        safe_yaml.load(stream)
 
 
 def test_safe_yaml_has_isolated_registry_from_trusted_loader():

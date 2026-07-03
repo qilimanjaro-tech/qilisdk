@@ -153,9 +153,10 @@ def test_deserialize_from_rejects_code_bearing_tags_by_default(tag, tmp_path):
     document = _malicious_code_document(tag, sentinel)
     yaml_file = tmp_path / "payload.yml"
     yaml_file.write_text(document, encoding="utf-8")
+    path = str(yaml_file)
 
     with pytest.raises(DeserializationError):
-        _ = deserialize_from(str(yaml_file))
+        _ = deserialize_from(path)
 
     assert not sentinel.exists()
 
