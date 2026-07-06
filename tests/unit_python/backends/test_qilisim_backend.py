@@ -268,5 +268,6 @@ def test_simulator_rejects_out_of_range_qubit_from_unvalidated_gate():
     inner = getattr(gate, "_basic_gate", gate)
     inner._target_qubits = (5,)
 
+    func = DigitalPropagation(circuit)
     with pytest.raises(ValueError, match="out of range"):
-        backend.execute(DigitalPropagation(circuit), readout)
+        backend.execute(func, readout)

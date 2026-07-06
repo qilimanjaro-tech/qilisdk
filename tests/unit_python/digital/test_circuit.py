@@ -711,5 +711,6 @@ def test_circuit_rejects_out_of_range_qubit(bad_qubit):
     """QSDK-05: the Python layer must reject both negative and too-large qubit
     indices (the negative case was previously unguarded)."""
     circuit = Circuit(2)
+    gate = X(bad_qubit)
     with pytest.raises(QubitOutOfRangeError):
-        circuit.add(X(bad_qubit))
+        circuit.add(gate)
