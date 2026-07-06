@@ -44,4 +44,8 @@ bash scripts/missing_translations.sh 2>&1 | tee -a $LOG_FILE
 echo "Running copyright header checks..." | tee -a $LOG_FILE
 bash scripts/copyrights.sh 2>&1 | tee -a $LOG_FILE
 
+# Check for changelog entry
+echo "Running changelog check..." | tee -a $LOG_FILE
+bash scripts/has_changelog.sh 2>&1 | tee -a $LOG_FILE
+
 echo "All checks passed successfully!" | tee -a $LOG_FILE

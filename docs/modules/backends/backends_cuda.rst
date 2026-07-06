@@ -111,6 +111,18 @@ Set the method at construction time:
 
     backend = CudaBackend(sampling_method=CudaSamplingMethod.MATRIX_PRODUCT_STATE)
 
+Some CUDA simulation methods support parameters being set via environment variables, notably the `MATRIX_PRODUCT_STATE` and `TENSOR_NETWORK` methods. 
+See the `CUDA-Q documentation <https://nvidia.github.io/cuda-quantum/latest/using/backends/sims/tnsims.html>`_ for details.
+
+To set the precision of the simulation, use the :class:`~qilisdk.settings.Settings` object:
+
+.. code-block:: python
+
+    from qilisdk.settings import get_settings, Precision
+
+    settings = get_settings()
+    settings.complex_precision = Precision.COMPLEX_64  # or COMPLEX_32
+
 Noise model support
 ===================
 
