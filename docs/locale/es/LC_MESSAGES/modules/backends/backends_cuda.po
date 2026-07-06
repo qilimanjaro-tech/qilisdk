@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-03 17:26+0200\n"
+"POT-Creation-Date: 2026-07-01 10:44+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -186,8 +186,8 @@ msgid ""
 "``nvidia`` when a GPU is available, otherwise ``qpp-cpu``. Precision "
 "matches :class:`~qilisdk.settings.Precision`."
 msgstr ""
-"``nvidia`` cuando hay una GPU disponible, en caso contrario ``qpp-cpu``."
-" La precisión coincide con :class:`~qilisdk.settings.Precision`."
+"``nvidia`` cuando hay una GPU disponible, en caso contrario ``qpp-cpu``. "
+"La precisión coincide con :class:`~qilisdk.settings.Precision`."
 
 #: ../../modules/backends/backends_cuda.rst:85
 msgid ":class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.STATE_VECTOR_MGPU`"
@@ -240,11 +240,32 @@ msgstr ""
 msgid "Set the method at construction time:"
 msgstr "Defina el método en el momento de la construcción:"
 
-#: ../../modules/backends/backends_cuda.rst:115
+#: ../../modules/backends/backends_cuda.rst:114
+msgid ""
+"Some CUDA simulation methods support parameters being set via environment"
+" variables, notably the `MATRIX_PRODUCT_STATE` and `TENSOR_NETWORK` "
+"methods. See the `CUDA-Q documentation <https://nvidia.github.io/cuda-"
+"quantum/latest/using/backends/sims/tnsims.html>`_ for details."
+msgstr ""
+"Algunos métodos de simulación de CUDA admiten configurar parámetros "
+"mediante variables de entorno, en particular los métodos "
+"`MATRIX_PRODUCT_STATE` y `TENSOR_NETWORK`. Consulte la `documentación de "
+"CUDA-Q <https://nvidia.github.io/cuda-"
+"quantum/latest/using/backends/sims/tnsims.html>`_ para más detalles."
+
+#: ../../modules/backends/backends_cuda.rst:117
+msgid ""
+"To set the precision of the simulation, use the "
+":class:`~qilisdk.settings.Settings` object:"
+msgstr ""
+"Para establecer la precisión de la simulación, utilice el objeto "
+":class:`~qilisdk.settings.Settings`:"
+
+#: ../../modules/backends/backends_cuda.rst:127
 msgid "Noise model support"
 msgstr "Soporte de modelos de ruido"
 
-#: ../../modules/backends/backends_cuda.rst:117
+#: ../../modules/backends/backends_cuda.rst:129
 msgid ""
 "A :class:`~qilisdk.noise.NoiseModel` can be passed to "
 "``CudaBackend(noise_model=…)``:"
@@ -252,7 +273,7 @@ msgstr ""
 "Puede pasarse un :class:`~qilisdk.noise.NoiseModel` a "
 "``CudaBackend(noise_model=…)``:"
 
-#: ../../modules/backends/backends_cuda.rst:119
+#: ../../modules/backends/backends_cuda.rst:131
 msgid ""
 "For :class:`~qilisdk.functionals.digital_propagation.DigitalPropagation`,"
 " qilisdk noise channels are translated into a ``cudaq.NoiseModel`` (Kraus"
@@ -267,7 +288,7 @@ msgstr ""
 "perturbaciones de parámetros aplicadas al circuito). Con ruido activado, "
 "solo se admite una única :class:`~qilisdk.readout.SamplingReadout`."
 
-#: ../../modules/backends/backends_cuda.rst:123
+#: ../../modules/backends/backends_cuda.rst:135
 msgid ""
 "For :class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`, "
 "Lindblad-compatible noise channels become CUDA-Q jump operators and "
@@ -278,7 +299,7 @@ msgstr ""
 "salto de CUDA-Q y en deltas del Hamiltoniano que se pasan a "
 "``cudaq.evolve``."
 
-#: ../../modules/backends/backends_cuda.rst:125
+#: ../../modules/backends/backends_cuda.rst:137
 msgid ""
 "For :class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir`, "
 "the fallback implementation drops the noise model (a warning is logged)."
@@ -287,7 +308,7 @@ msgstr ""
 "la implementación de fallback descarta el modelo de ruido (se emite un "
 "aviso en el log)."
 
-#: ../../modules/backends/backends_cuda.rst:128
+#: ../../modules/backends/backends_cuda.rst:140
 msgid ""
 "Example: a depolarising channel applied to every gate of a digital "
 "circuit:"
