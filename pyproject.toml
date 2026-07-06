@@ -1,6 +1,6 @@
 [project]
 name = "qilisdk"
-version = "0.2.0"
+version = "0.2.0+internal1"
 description = "QiliSDK is a Python framework for writing digital and analog quantum algorithms and executing them across multiple quantum backends. Its modular design streamlines the development process and enables easy integration with a variety of quantum platforms."
 readme = "README.md"
 authors = [{name = "Qilimanjaro Quantum Tech", email = "info@qilimanjaro.tech"}]
@@ -157,23 +157,10 @@ name = "numpy-mkl"
 url = "https://urob.github.io/numpy-mkl"
 explicit = true
 
-[[tool.uv.index]]
-name = "speqtrum"
-url = "https://api.pyx.dev/simple/qilimanjaro/speqtrum"
-publish-url = "https://api.pyx.dev/v1/upload/qilimanjaro/speqtrum"
-explicit = true
-
-[[tool.uv.index]]
-name = "euroqcs"
-url = "https://api.pyx.dev/simple/qilimanjaro/euroqcs"
-publish-url = "https://api.pyx.dev/v1/upload/qilimanjaro/euroqcs"
-explicit = true
-
-[[tool.uv.index]]
-name = "dev-refactor-experiments"
-url = "https://api.pyx.dev/simple/qilimanjaro/dev-refactor-experiments"
-publish-url = "https://api.pyx.dev/v1/upload/qilimanjaro/dev-refactor-experiments"
-explicit = true
+# [[tool.uv.index]]
+# name = "private-registry"
+# url = "https://qilimanjaro-721195454194.d.codeartifact.eu-west-1.amazonaws.com/pypi/internal-qili-experiments/simple/"
+# publish-url = "https://qilimanjaro-721195454194.d.codeartifact.eu-west-1.amazonaws.com/pypi/internal-qili-experiments/"
 
 [build-system]
 requires = ["scikit-build-core", "pybind11>=2.13,<3"]
