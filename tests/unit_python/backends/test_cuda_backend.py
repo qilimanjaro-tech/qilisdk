@@ -978,8 +978,9 @@ def test_cuda_backend_rejects_time_dependent_lindblad_rate(monkeypatch):
     functional = AnalogEvolution(schedule=schedule, initial_state=InitialState.ZERO)
 
     backend = CudaBackend(noise_model=noise_model)
+    readout = Readout().with_expectation([pauli_z(0)])
     with pytest.raises(NotImplementedError, match="time-dependent Lindblad rates"):
-        backend.execute(functional, Readout().with_expectation([pauli_z(0)]))
+        backend.execute(functional, readout)
 
 
 def test_cuda_backend_rejects_per_qubit_time_dependent_lindblad_rate(monkeypatch):
@@ -995,5 +996,6 @@ def test_cuda_backend_rejects_per_qubit_time_dependent_lindblad_rate(monkeypatch
     functional = AnalogEvolution(schedule=schedule, initial_state=InitialState.ZERO)
 
     backend = CudaBackend(noise_model=noise_model)
+    readout = Readout().with_expectation([pauli_z(0)])
     with pytest.raises(NotImplementedError, match="time-dependent Lindblad rates"):
-        backend.execute(functional, Readout().with_expectation([pauli_z(0)]))
+        backend.execute(functional, readout)

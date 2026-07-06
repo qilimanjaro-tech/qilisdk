@@ -145,11 +145,7 @@ class LindbladGenerator(Noise):
         if len(self._rates) != len(self._jump_operators):
             raise ValueError("Length of rates must match length of jump_operators.")
         if self.is_time_dependent:
-            raise ValueError(
-                "Cannot statically scale jump operators by time-dependent (callable) rates. "
-                "Time-dependent Lindblad rates are only supported by QiliSim's analog evolution, "
-                "which evaluates rate(t) at each time step; this backend does not support them."
-            )
+            raise ValueError("Cannot statically scale jump operators by time-dependent (callable) rates. ")
         # All rates are constant here (time-dependent rates are rejected above).
         return [
             self._jump_operators[i] * np.sqrt(cast("float", self._rates[i])) for i in range(len(self._jump_operators))

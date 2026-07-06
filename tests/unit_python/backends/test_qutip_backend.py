@@ -588,11 +588,11 @@ def test_qutip_backend_lindblad_non_square_jump_operator_raises():
     nm = NoiseModel()
     nm.add(LindbladGenerator(jump_operators=[QTensor(np.zeros((2, 1), dtype=complex))]), qubits=[0])
 
+    backend = QutipBackend(noise_model=nm)
+    func = AnalogEvolution(schedule=_single_qubit_z_schedule(), initial_state=ket(0))
+    readout = Readout().with_expectation(observables=[PauliZ(0).to_hamiltonian()])
     with pytest.raises(ValueError, match="must be square matrices"):
-        QutipBackend(noise_model=nm).execute(
-            AnalogEvolution(schedule=_single_qubit_z_schedule(), initial_state=ket(0)),
-            readout=Readout().with_expectation(observables=[PauliZ(0).to_hamiltonian()]),
-        )
+        backend.execute(func, readout)
 
 
 def test_qutip_backend_lindblad_wrong_size_jump_operator_raises():
@@ -600,11 +600,11 @@ def test_qutip_backend_lindblad_wrong_size_jump_operator_raises():
     nm = NoiseModel()
     nm.add(LindbladGenerator(jump_operators=[QTensor(np.zeros((4, 4), dtype=complex))]), qubits=[0])
 
+    backend = QutipBackend(noise_model=nm)
+    func = AnalogEvolution(schedule=_single_qubit_z_schedule(), initial_state=ket(0))
+    readout = Readout().with_expectation(observables=[PauliZ(0).to_hamiltonian()])
     with pytest.raises(ValueError, match="single-qubit or full-system"):
-        QutipBackend(noise_model=nm).execute(
-            AnalogEvolution(schedule=_single_qubit_z_schedule(), initial_state=ket(0)),
-            readout=Readout().with_expectation(observables=[PauliZ(0).to_hamiltonian()]),
-        )
+        backend.execute(func, readout)
 
 
 def test_qutip_backend_per_qubit_noise_embedding_two_qubits():

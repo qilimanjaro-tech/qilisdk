@@ -240,21 +240,22 @@ def test_qilisim_time_dependent_lindblad_rate_errors():
     # The adaptive matrix-free method cannot apply a per-step rate series.
     adaptive = NoiseModel()
     adaptive.add(LindbladGenerator(jump_operators=[x_op], rates=[lambda t: 0.1 * t]))
+    backend = QiliSim(noise_model=adaptive, analog_simulation_method=AnalogMethod.adaptive_integrator())
     with pytest.raises(ValueError, match=r"adaptive"):
-        QiliSim(noise_model=adaptive, analog_simulation_method=AnalogMethod.adaptive_integrator()).execute(
-            functional, readout
-        )
+        backend.execute(functional, readout)
 
     # Negative and non-finite rates are rejected.
     negative = NoiseModel()
     negative.add(LindbladGenerator(jump_operators=[x_op], rates=[lambda t: -1.0]))
+    backend = QiliSim(noise_model=negative)
     with pytest.raises(ValueError, match=r"negative"):
-        QiliSim(noise_model=negative).execute(functional, readout)
+        backend.execute(functional, readout)
 
     nan_rate = NoiseModel()
     nan_rate.add(LindbladGenerator(jump_operators=[x_op], rates=[lambda t: float("nan")]))
+    backend = QiliSim(noise_model=nan_rate)
     with pytest.raises(ValueError, match=r"non-finite"):
-        QiliSim(noise_model=nan_rate).execute(functional, readout)
+        backend.execute(functional, readout)
 
 
 def _build_quantum_reservoir_functional() -> QuantumReservoir:
