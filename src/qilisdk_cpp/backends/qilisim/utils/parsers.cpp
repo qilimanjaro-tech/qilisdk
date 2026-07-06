@@ -231,26 +231,52 @@ std::string normalize_gate_name(std::string name) {
     return name;
 }
 
+int gate_num_controls(const std::string& name) {
+    /*
+    Number of control qubits implied by a QiliSDK controlled-gate name.
+
+    Controlled gates are represented internally by their base gate plus control qubits
+    (see normalize_gate_name), so the control count is what distinguishes, for example, a
+    CZ from a plain Z when matching noise by gate type.
+
+    Args:
+        name (std::string): The gate name from QiliSDK.
+
+    Returns:
+        int: The number of control qubits (0 for a non-controlled gate).
+    */
+    if (name == "CNOT" || name == "CX" || name == "CY" || name == "CZ") {
+        return 1;
+    }
+    if (name == "Toffoli" || name == "CCX" || name == "CCY" || name == "CCZ") {
+        return 2;
+    }
+    return 0;
+}
+
 std::map<std::string, float> resolve_gate_durations(const py::object& circuit, const py::object& noise_config) {
     /*
-    Build a map from internal gate name to its configured execution time for every
-    distinct gate type present in the circuit.
+    Build a map from per-gate noise key to its configured execution time for every distinct
+    gate present in the circuit. Gates are keyed by base name and control count (see
+    NoiseModelCpp::make_gate_key), so a controlled gate and its base gate are kept separate.
 
     Args:
         circuit (py::object): The circuit object, or None.
         noise_config (py::object): The NoiseConfig used to resolve per-gate execution times.
 
     Returns:
-        std::map<std::string, float>: Internal gate name -> execution time.
+        std::map<std::string, float>: Per-gate noise key -> execution time.
     */
     std::map<std::string, float> durations;
     if (circuit.is_none()) {
         return durations;
     }
     for (auto py_gate : circuit.attr("gates")) {
-        std::string name = normalize_gate_name(py_gate.attr("name").cast<std::string>());
+        std::string base_name = normalize_gate_name(py_gate.attr("name").cast<std::string>());
+        int num_controls = static_cast<int>(py::len(py_gate.attr("control_qubits")));
+        std::string key = NoiseModelCpp::make_gate_key(base_name, num_controls);
         py::object gate_type = py_gate.attr("__class__");
-        durations[name] = noise_config.attr("get_gate_time")(gate_type).cast<float>();
+        durations[key] = noise_config.attr("get_gate_time")(gate_type).cast<float>();
     }
     return durations;
 }
@@ -430,7 +456,8 @@ NoiseModelCpp parse_noise_model(const py::object& noise_model, int nqubits, doub
     // Parse per-gate noise passes
     py::dict gate_noise_map = noise_model.attr("per_gate_noise");
     for (auto& item : gate_noise_map) {
-        std::string gate_name = item.first.attr("__name__").cast<std::string>();
+        std::string raw_name = item.first.attr("__name__").cast<std::string>();
+        std::string gate_name = NoiseModelCpp::make_gate_key(normalize_gate_name(raw_name), gate_num_controls(raw_name));
         float gate_dt = noise_config.attr("get_gate_time")(item.first).cast<float>();
         py::list py_noise_passes = item.second.cast<py::list>();
         for (auto& py_noise_pass : py_noise_passes) {
@@ -462,7 +489,8 @@ NoiseModelCpp parse_noise_model(const py::object& noise_model, int nqubits, doub
     for (auto& item : gate_qubit_noise_map) {
         py::handle ind_gate_tuple = item.first;
         py::object gate_type = ind_gate_tuple.attr("__getitem__")(0);
-        std::string gate_name = gate_type.attr("__name__").cast<std::string>();
+        std::string raw_name = gate_type.attr("__name__").cast<std::string>();
+        std::string gate_name = NoiseModelCpp::make_gate_key(normalize_gate_name(raw_name), gate_num_controls(raw_name));
         int qubit = ind_gate_tuple.attr("__getitem__")(1).cast<int>();
         float gate_dt = noise_config.attr("get_gate_time")(gate_type).cast<float>();
         py::list py_noise_passes = item.second.cast<py::list>();
