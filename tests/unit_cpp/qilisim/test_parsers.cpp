@@ -542,6 +542,7 @@ TEST(ParseNoiseModel, PerGateStaticKraus) {
 
         class FakeNoiseConfig:
             default_gate_time = 1.0
+            def get_gate_time(self, gate_type): return self.default_gate_time
 
         class FakeNoiseModel:
             noise_config = FakeNoiseConfig()
@@ -583,6 +584,7 @@ TEST(ParseNoiseModel, PerGateTimeDerivedKraus) {
 
         class FakeNoiseConfig:
             default_gate_time = 0.25
+            def get_gate_time(self, gate_type): return self.default_gate_time
 
         class FakeNoiseModel:
             noise_config = FakeNoiseConfig()
@@ -623,6 +625,7 @@ TEST(ParseNoiseModel, PerGatePerQubitStaticKraus) {
 
         class FakeNoiseConfig:
             default_gate_time = 1.0
+            def get_gate_time(self, gate_type): return self.default_gate_time
 
         class FakeNoiseModel:
             noise_config = FakeNoiseConfig()
@@ -665,6 +668,7 @@ TEST(ParseNoiseModel, PerGatePerQubitTimeDerivedKraus) {
 
         class FakeNoiseConfig:
             default_gate_time = 1.0
+            def get_gate_time(self, gate_type): return self.default_gate_time
 
         class FakeNoiseModel:
             noise_config = FakeNoiseConfig()
@@ -681,6 +685,107 @@ TEST(ParseNoiseModel, PerGatePerQubitTimeDerivedKraus) {
 
     const auto& map = result.get_kraus_operators_per_gate_qubit();
     auto key = std::make_pair(std::string("CZ"), 1);
+    ASSERT_TRUE(map.count(key));
+    EXPECT_EQ(map.at(key).size(), 1u);
+}
+
+TEST(ParseNoiseModel, GlobalTimeDerivedKrausExpandsPerGateWithCircuit) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        import scipy.sparse as sp, numpy as np
+        from qilisdk.noise.protocols import SupportsTimeDerivedKraus as _STDK
+
+        class FakeKrausOp:
+            def __init__(self, data): self.data = data
+
+        class FakeKrausChannel:
+            def __init__(self, ops): self.operators = ops
+
+        class TimeDerivedKrausPass(_STDK):
+            def as_kraus_from_duration(self, duration):
+                data = sp.csr_matrix(np.eye(2, dtype=complex))
+                return FakeKrausChannel([FakeKrausOp(data)])
+
+        class FakeNoiseConfig:
+            default_gate_time = 1.0
+            def get_gate_time(self, gate_type):
+                return 5e-6
+
+        class FakeNoiseModel:
+            noise_config = FakeNoiseConfig()
+            global_noise = [TimeDerivedKrausPass()]
+            per_qubit_noise = {}
+            per_gate_noise = {}
+            per_gate_per_qubit_noise = {}
+
+        class FakeCircuitGate:
+            def __init__(self, name): self.name = name
+
+        class FakeCircuit:
+            # 'CNOT' should be normalized to 'X', collapsing with the plain X gate.
+            gates = [FakeCircuitGate('X'), FakeCircuitGate('I'), FakeCircuitGate('CNOT')]
+
+        fake_nm_global_td_kraus_circuit = FakeNoiseModel()
+        fake_circuit_global = FakeCircuit()
+    )");
+
+    py::object fake_nm = py::globals()["fake_nm_global_td_kraus_circuit"];
+    py::object circuit = py::globals()["fake_circuit_global"];
+    auto result = parse_noise_model(fake_nm, 1, 1e-10, circuit);
+    EXPECT_TRUE(result.get_kraus_operators_global().empty());
+    const auto& per_gate_map = result.get_kraus_operators_per_gate();
+    EXPECT_EQ(per_gate_map.size(), 2u);  // 'X' (CNOT normalized to X) and 'I'
+    ASSERT_TRUE(per_gate_map.count("X"));
+    ASSERT_TRUE(per_gate_map.count("I"));
+    EXPECT_EQ(per_gate_map.at("X").size(), 1u);
+    EXPECT_EQ(per_gate_map.at("I").size(), 1u);
+}
+
+TEST(ParseNoiseModel, PerQubitTimeDerivedKrausExpandsPerGateQubitWithCircuit) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        import scipy.sparse as sp, numpy as np
+        from qilisdk.noise.protocols import SupportsTimeDerivedKraus as _STDK
+
+        class FakeKrausOp:
+            def __init__(self, data): self.data = data
+
+        class FakeKrausChannel:
+            def __init__(self, ops): self.operators = ops
+
+        class TimeDerivedKrausPass(_STDK):
+            def as_kraus_from_duration(self, duration):
+                data = sp.csr_matrix(np.eye(2, dtype=complex))
+                return FakeKrausChannel([FakeKrausOp(data)])
+
+        class FakeNoiseConfig:
+            default_gate_time = 1.0
+            def get_gate_time(self, gate_type):
+                return 5e-6
+
+        class FakeNoiseModel:
+            noise_config = FakeNoiseConfig()
+            global_noise = []
+            per_qubit_noise = {0: [TimeDerivedKrausPass()]}
+            per_gate_noise = {}
+            per_gate_per_qubit_noise = {}
+
+        class FakeCircuitGate:
+            def __init__(self, name): self.name = name
+
+        class FakeCircuit:
+            gates = [FakeCircuitGate('I')]
+
+        fake_nm_per_qubit_td_kraus_circuit = FakeNoiseModel()
+        fake_circuit_per_qubit = FakeCircuit()
+    )");
+
+    py::object fake_nm = py::globals()["fake_nm_per_qubit_td_kraus_circuit"];
+    py::object circuit = py::globals()["fake_circuit_per_qubit"];
+    auto result = parse_noise_model(fake_nm, 1, 1e-10, circuit);
+    EXPECT_TRUE(result.get_kraus_operators_per_qubit().empty());
+    const auto& map = result.get_kraus_operators_per_gate_qubit();
+    auto key = std::make_pair(std::string("I"), 0);
     ASSERT_TRUE(map.count(key));
     EXPECT_EQ(map.at(key).size(), 1u);
 }

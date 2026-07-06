@@ -282,7 +282,6 @@ NoiseModelCpp parse_noise_model(const py::object& noise_model, int nqubits, doub
 
     // Parse global noise passes
     for (auto& py_noise_pass : noise_model.attr("global_noise")) {
-
         // Parse the Kraus operators
         if (py::isinstance(py_noise_pass, SupportsStaticKraus)) {
             std::vector<SparseMatrix> kraus_operators;
@@ -364,7 +363,6 @@ NoiseModelCpp parse_noise_model(const py::object& noise_model, int nqubits, doub
         int q = item.first.cast<int>();
         py::list py_noise_passes = item.second.cast<py::list>();
         for (auto& py_noise_pass : py_noise_passes) {
-
             // Parse the Kraus operators
             if (py::isinstance(py_noise_pass, SupportsStaticKraus)) {
                 std::vector<SparseMatrix> kraus_operators;
@@ -436,7 +434,6 @@ NoiseModelCpp parse_noise_model(const py::object& noise_model, int nqubits, doub
         float gate_dt = noise_config.attr("get_gate_time")(item.first).cast<float>();
         py::list py_noise_passes = item.second.cast<py::list>();
         for (auto& py_noise_pass : py_noise_passes) {
-
             // Parse the Kraus operators
             std::vector<SparseMatrix> kraus_operators;
             if (py::isinstance(py_noise_pass, SupportsStaticKraus)) {
@@ -457,7 +454,6 @@ NoiseModelCpp parse_noise_model(const py::object& noise_model, int nqubits, doub
             if (!kraus_operators.empty()) {
                 noise_model_cpp.add_kraus_operators_per_gate(gate_name, kraus_operators);
             }
-
         }
     }
 
