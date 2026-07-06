@@ -980,7 +980,7 @@ def test_tomography_for_methods_raises(monkeypatch, method):
 
 
 def test_cuda_backend_rejects_time_dependent_lindblad_rate(monkeypatch):
-    monkeypatch.setattr("qilisdk.backends.cuda_backend.cudaq.set_target", lambda target: None)
+    monkeypatch.setattr("qilisdk.backends.cuda_backend.cudaq.set_target", lambda target, option=None: None)
     monkeypatch.setattr("qilisdk.backends.cuda_backend.evolve", MagicMock())
 
     noise_model = NoiseModel()
@@ -995,7 +995,7 @@ def test_cuda_backend_rejects_time_dependent_lindblad_rate(monkeypatch):
 
 
 def test_cuda_backend_rejects_per_qubit_time_dependent_lindblad_rate(monkeypatch):
-    monkeypatch.setattr("qilisdk.backends.cuda_backend.cudaq.set_target", lambda target: None)
+    monkeypatch.setattr("qilisdk.backends.cuda_backend.cudaq.set_target", lambda target, option=None: None)
     monkeypatch.setattr("qilisdk.backends.cuda_backend.evolve", MagicMock())
 
     noise_model = NoiseModel()
