@@ -1012,8 +1012,8 @@ def test_cuda_digital_propagation_initial_state_uniform():
 
 
 def test_cuda_digital_propagation_initial_state_qtensor(monkeypatch):
-    DummyLogger = MagicMock()
-    monkeypatch.setattr(logger, "warning", DummyLogger)
+    dummy_loogger = MagicMock()
+    monkeypatch.setattr(logger, "warning", dummy_loogger)
     c = Circuit(1)
     initial_state_qtensor = QTensor.one(1)
     digital = DigitalPropagation(circuit=c, initial_state=initial_state_qtensor)
@@ -1021,4 +1021,4 @@ def test_cuda_digital_propagation_initial_state_qtensor(monkeypatch):
     readout = Readout().with_sampling(10)
     results = backend.execute(digital, readout)
     assert isinstance(results, FunctionalResult)
-    assert DummyLogger.called
+    assert dummy_loogger.called

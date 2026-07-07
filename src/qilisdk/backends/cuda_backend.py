@@ -221,6 +221,31 @@ class CudaBackend(Backend):
         self._sampling_method = sampling_method
         logger.success("CudaBackend initialised (sampling_method={})", sampling_method.value)
 
+    def _circuit_from_initial_state(self, initial_state: InitialState, nqubits: int) -> Circuit:
+        """Convert an initial state to a circuit representation.
+
+        Args:
+            initial_state (InitialState | QTensor): The initial state to convert.
+            nqubits (int): The number of qubits in the circuit.
+
+        Returns:
+            Circuit: A circuit that prepares the specified initial state.
+
+        Raises:
+            ValueError: If the initial state is not supported for conversion.
+        """
+        circuit = Circuit(nqubits)
+        if isinstance(initial_state, InitialState):
+        if initial_state == InitialState.UNIFORM:
+                for i in range(nqubits):
+                    circuit.add(H(i))
+            elif initial_state == InitialState.ONE:
+                for i in range(nqubits):
+                    circuit.add(X(i))
+        elif isinstance(initial_state, QTensor):
+            logger.warning("QTensor initial states are not natively supported by the CUDA backend, ignoring.")
+        return circuit
+
     def _execute_digital_propagation(
         self, functional: DigitalPropagation, readout: list[ReadoutMethod]
     ) -> FunctionalResult:
@@ -264,16 +289,7 @@ class CudaBackend(Backend):
             )
 
         # If an initial state is given, convert it to a circuit, since CUDA doesn't support any other initial state format
-        circuit = functional.circuit
-        if isinstance(functional.initial_state, InitialState):
-            if functional.initial_state == InitialState.UNIFORM:
-                for i in range(circuit.nqubits):
-                    circuit.add(H(i))
-            elif functional.initial_state == InitialState.ONE:
-                for i in range(circuit.nqubits):
-                    circuit.add(X(i))
-        elif isinstance(functional.initial_state, QTensor):
-            logger.warning("QTensor initial states are not natively supported by the CUDA backend, ignoring.")
+        circuit = self._circuit_from_initial_state(functional.initial_state, functional.circuit.nqubits)
 
         # Apply parameter perturbations
         if self._noise_model:
