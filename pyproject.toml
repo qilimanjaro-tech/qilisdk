@@ -157,10 +157,10 @@ name = "numpy-mkl"
 url = "https://urob.github.io/numpy-mkl"
 explicit = true
 
-# [[tool.uv.index]]
-# name = "private-registry"
-# url = "https://qilimanjaro-721195454194.d.codeartifact.eu-west-1.amazonaws.com/pypi/internal-qili-experiments/simple/"
-# publish-url = "https://qilimanjaro-721195454194.d.codeartifact.eu-west-1.amazonaws.com/pypi/internal-qili-experiments/"
+[[tool.uv.index]]
+name = "dev-refactor-experiments"
+url = "https://api.pyx.dev/simple/qilimanjaro/dev-refactor-experiments"
+publish-url = "https://api.pyx.dev/v1/upload/qilimanjaro/dev-refactor-experiments"
 
 [build-system]
 requires = ["scikit-build-core", "pybind11>=2.13,<3"]
