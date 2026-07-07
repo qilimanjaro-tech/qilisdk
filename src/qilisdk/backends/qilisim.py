@@ -131,7 +131,7 @@ class QiliSim(Backend):
         return dict(self._solver_config)
 
     def _execute_digital_propagation(
-        self, functional: DigitalPropagation, readout: list[ReadoutMethod], initial_state: QTensor | None = None
+        self, functional: DigitalPropagation, readout: list[ReadoutMethod]
     ) -> FunctionalResult:
         """Execute a digital-circuit propagation functional and return measurement results.
 
@@ -140,9 +140,6 @@ class QiliSim(Backend):
                 functional to execute.
             readout (list[ReadoutMethod]): Readout specifications for
                 result extraction.
-            initial_state (QTensor | None): Optional initial state to start
-                the simulation from. Defaults to ``None`` (computational
-                basis zero state).
 
         Returns:
             FunctionalResult: The execution result containing the requested
@@ -150,7 +147,7 @@ class QiliSim(Backend):
         """
         logger.info("Executing Sampling")
         result = self.qili_sim.execute_digital_propagation(
-            functional, readout, self._noise_model, initial_state, self._solver_config
+            functional, readout, self._noise_model, functional.initial_state, self._solver_config
         )
         logger.success("Sampling finished")
         return result
