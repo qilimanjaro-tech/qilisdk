@@ -24,7 +24,7 @@
 
 #ifndef _WIN32
 #if defined(_OPENMP)
-#pragma omp declare reduction(complex_double_reduction : std::complex <double> : omp_out += omp_in) initializer(omp_priv = std::complex <double>(0.0, 0.0))
+#pragma omp declare reduction(complex_double_reduction : std::complex<double> : omp_out += omp_in) initializer(omp_priv = std::complex<double>(0.0, 0.0))
 #endif
 #endif
 
@@ -159,8 +159,8 @@ void QTensorCpp::_set_from_row_sparse(const SparseMatrix& data, StorageFormat re
 }
 
 Eigen::Index QTensorCpp::rows() const {
-    /* 
-    Return the number of rows, regardless of the active storage backend. 
+    /*
+    Return the number of rows, regardless of the active storage backend.
 
     Returns:
         Eigen::Index: The number of rows in the tensor.
@@ -169,8 +169,8 @@ Eigen::Index QTensorCpp::rows() const {
 }
 
 Eigen::Index QTensorCpp::cols() const {
-    /* 
-    Return the number of columns, regardless of the active storage backend. 
+    /*
+    Return the number of columns, regardless of the active storage backend.
 
     Returns:
         Eigen::Index: The number of columns in the tensor.
@@ -179,7 +179,7 @@ Eigen::Index QTensorCpp::cols() const {
 }
 
 Eigen::Index QTensorCpp::nnz() const {
-    /* 
+    /*
     Return the number of stored non-zero entries, regardless of the active storage backend.
 
     Returns:
@@ -206,7 +206,7 @@ Eigen::Index QTensorCpp::nnz() const {
 }
 
 std::complex<double> QTensorCpp::coeff(int row, int col) const {
-    /* 
+    /*
     Return the entry at (row, col), regardless of the active storage backend.
 
     Args:
@@ -252,7 +252,7 @@ SparseMatrix QTensorCpp::to_row_sparse() const {
 }
 
 DenseMatrix QTensorCpp::to_dense() const {
-    /* 
+    /*
     Return the data as a dense matrix, converting from the active backend if necessary.
 
     Returns:
@@ -1748,16 +1748,12 @@ std::complex<double> QTensorCpp::expectation_value(const QTensorCpp& other, int 
         if (is_ket()) {
             // return (adjoint() * other * (*this)).trace();
             std::complex<double> expectation = 0.0;
-            other.for_each_nonzero([&](int row, int col, std::complex<double> val) {
-                expectation += val * coeff(row, 0) * std::conj(coeff(col, 0));
-            });
+            other.for_each_nonzero([&](int row, int col, std::complex<double> val) { expectation += val * coeff(row, 0) * std::conj(coeff(col, 0)); });
             return expectation;
 
         } else if (is_bra()) {
             std::complex<double> expectation = 0.0;
-            other.for_each_nonzero([&](int row, int col, std::complex<double> val) {
-                expectation += val * coeff(0, col) * std::conj(coeff(0, row));
-            });
+            other.for_each_nonzero([&](int row, int col, std::complex<double> val) { expectation += val * coeff(0, col) * std::conj(coeff(0, row)); });
             return expectation;
         } else {
             // return (other * (*this)).trace();

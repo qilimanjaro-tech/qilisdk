@@ -5,7 +5,8 @@ The :mod:`~qilisdk.core.qtensor` module defines the :class:`~qilisdk.core.qtenso
 class and related helpers for representing and manipulating quantum states and
 operators in sparse form.
 
-The :class:`~qilisdk.core.qtensor.QTensor` wraps a dense NumPy array or SciPy sparse matrix into a CSR-format sparse matrix, and can represent:
+The :class:`~qilisdk.core.qtensor.QTensor` wraps a dense NumPy array or SciPy sparse matrix, storing it in the
+backend chosen automatically from its shape and sparsity (row-major sparse, column-major sparse, or dense), and can represent:
 
 - **Kets** (column vectors of shape ``(2**N, 1)``)  
 - **Bras** (row vectors of shape ``(1, 2**N)``)  
@@ -105,9 +106,9 @@ There are also several constructors for common quantum objects:
 Quantum Object Properties & Operations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-All data are stored sparsely, but you can retrieve dense or sparse views:
+Whatever backend is used internally, you can retrieve dense or sparse views:
 
-- :attr:`.data<qilisdk.core.qtensor.QTensor.data>`: get the underlying sparse matrix (SciPy CSR format)
+- :attr:`.data<qilisdk.core.qtensor.QTensor.data>`: get the contents as a SciPy sparse matrix (always CSR format)
 - :meth:`.dense()<qilisdk.core.qtensor.QTensor.dense>`: convert to a dense NumPy array (use with caution for large tensors)
 - or directly accessing elements by value with ``qtensor[i, j]``
 
@@ -187,7 +188,7 @@ Examples:
     ||ket0|| = 1.0
     trace norm(dm) = 1.0
     rho_bell:
-    QTensor(shape=4x4, nnz=4, format='csr')
+    QTensor(shape=4x4, nnz=4):
     [[0.5 0.  0.  0.5]
     [0.  0.  0.  0. ]
     [0.  0.  0.  0. ]

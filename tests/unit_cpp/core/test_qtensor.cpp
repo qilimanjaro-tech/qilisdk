@@ -1834,6 +1834,7 @@ TEST(StorageFormatTest, BraIsRowSparse) {
     m.makeCompressed();
     QTensorCpp bra(m);
     EXPECT_EQ(bra.get_format(), StorageFormat::RowSparse);
+    EXPECT_EQ(bra.get_format_string(), "row_sparse");
     EXPECT_TRUE(bra.is_bra());
 }
 
@@ -1856,6 +1857,7 @@ TEST(StorageFormatTest, DenseOperatorIsDense) {
     m.makeCompressed();
     QTensorCpp op(m);
     EXPECT_EQ(op.get_format(), StorageFormat::Dense);
+    EXPECT_EQ(op.get_format_string(), "dense");
 }
 
 TEST(StorageFormatTest, ForcedFormatOverridesDefault) {

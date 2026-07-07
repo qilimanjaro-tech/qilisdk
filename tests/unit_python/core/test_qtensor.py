@@ -75,7 +75,7 @@ def test_constructor_valid_sparse():
     """QTensor should accept a valid SciPy sparse matrix."""
     sparse_mat = csc_array([[1, 0], [0, 1]])
     qobj = QTensor(sparse_mat)
-    # Should be stored as a CSR matrix.
+    # .data always exposes the contents as CSR, regardless of the internal storage backend.
     assert qobj.data.format == "csr"
 
 
@@ -1144,7 +1144,7 @@ def test_large_zero_ket_is_representable():
     k = zero(20)
     assert k.shape == (2**20, 1)
     assert k._qtensor_cpp.storage_format() == "col_sparse"
-    assert k[(0, 0)] == 1.0
+    assert k[0, 0] == 1.0
 
 
 def test_storage_format_roundtrips_through_operations():

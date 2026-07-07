@@ -77,8 +77,10 @@ class QTensor:
     or operators. It provides utility methods for common quantum operations such as
     taking the adjoint (dagger), computing tensor products, partial traces, and norms.
 
-    The internal data is stored as an Eigen (CSR, CSC or dense) matrix for
-    efficient arithmetic and manipulation. The expected shapes for the data are:
+    The internal data is stored as an Eigen matrix whose backend is chosen automatically from the
+    shape and sparsity: row-major sparse (CSR) for bras and square operators, column-major sparse
+    (CSC) for kets, or dense when the data is dense enough that sparse storage would waste memory.
+    The expected shapes for the data are:
 
     - (2**N, 2**N) for operators or density matrices (or scalars),
     - (2**N, 1) for ket states,
@@ -113,10 +115,13 @@ class QTensor:
     @property
     def data(self) -> csr_matrix:
         """
-        Get the internal sparse matrix representation of the QTensor.
+        Get the contents of the QTensor as a SciPy sparse matrix.
+
+        The result is always a CSR matrix, regardless of the backend used internally (row-major
+        sparse, column-major sparse, or dense).
 
         Returns:
-            csc_matrix: The internal representation as a CSR matrix.
+            csr_matrix: The tensor's contents as a SciPy CSR matrix.
         """
         return self._qtensor_cpp.as_scipy()
 
