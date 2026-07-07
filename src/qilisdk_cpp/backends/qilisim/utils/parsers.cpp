@@ -209,7 +209,79 @@ std::vector<SparseMatrix> parse_hamiltonians(const py::object& Hs, double atol) 
     return hamiltonians;
 }
 
-NoiseModelCpp parse_noise_model(const py::object& noise_model, int nqubits, double atol) {
+std::string normalize_gate_name(const std::string& name) {
+    /*
+    Map a gate's QiliSDK name to the name used internally during simulation.
+
+    Args:
+        name (std::string): The gate name from QiliSDK.
+
+    Returns:
+        std::string: The internal gate name.
+    */
+    if (name == "CNOT" || name == "CX" || name == "Toffoli" || name == "CCX") {
+        return "X";
+    }
+    if (name == "CY" || name == "CCY") {
+        return "Y";
+    }
+    if (name == "CZ" || name == "CCZ") {
+        return "Z";
+    }
+    return name;
+}
+
+int gate_num_controls(const std::string& name) {
+    /*
+    Number of control qubits implied by a QiliSDK controlled-gate name.
+
+    Controlled gates are represented internally by their base gate plus control qubits
+    (see normalize_gate_name), so the control count is what distinguishes, for example, a
+    CZ from a plain Z when matching noise by gate type.
+
+    Args:
+        name (std::string): The gate name from QiliSDK.
+
+    Returns:
+        int: The number of control qubits (0 for a non-controlled gate).
+    */
+    if (name == "CNOT" || name == "CX" || name == "CY" || name == "CZ") {
+        return 1;
+    }
+    if (name == "Toffoli" || name == "CCX" || name == "CCY" || name == "CCZ") {
+        return 2;
+    }
+    return 0;
+}
+
+std::map<std::string, float> resolve_gate_durations(const py::object& circuit, const py::object& noise_config) {
+    /*
+    Build a map from per-gate noise key to its configured execution time for every distinct
+    gate present in the circuit. Gates are keyed by base name and control count (see
+    NoiseModelCpp::make_gate_key), so a controlled gate and its base gate are kept separate.
+
+    Args:
+        circuit (py::object): The circuit object, or None.
+        noise_config (py::object): The NoiseConfig used to resolve per-gate execution times.
+
+    Returns:
+        std::map<std::string, float>: Per-gate noise key -> execution time.
+    */
+    std::map<std::string, float> durations;
+    if (circuit.is_none()) {
+        return durations;
+    }
+    for (auto py_gate : circuit.attr("gates")) {
+        std::string base_name = normalize_gate_name(py_gate.attr("name").cast<std::string>());
+        int num_controls = static_cast<int>(py::len(py_gate.attr("control_qubits")));
+        std::string key = NoiseModelCpp::make_gate_key(base_name, num_controls);
+        py::object gate_type = py_gate.attr("__class__");
+        durations[key] = noise_config.attr("get_gate_time")(gate_type).cast<float>();
+    }
+    return durations;
+}
+
+NoiseModelCpp parse_noise_model(const py::object& noise_model, int nqubits, double atol, const py::object& circuit) {
     /*
     Extract a NoiseModelCpp from a NoiseModel object.
 
@@ -217,6 +289,7 @@ NoiseModelCpp parse_noise_model(const py::object& noise_model, int nqubits, doub
         noise_model (py::object): A NoiseModel object containing kraus operators.
         nqubits (int): The total number of qubits.
         atol (double): Absolute tolerance for numerical operations.
+        circuit (py::object): The circuit being simulated, or None
 
     Returns:
         NoiseModelCpp: The parsed noise model.
@@ -230,27 +303,43 @@ NoiseModelCpp parse_noise_model(const py::object& noise_model, int nqubits, doub
     py::object noise_config = noise_model.attr("noise_config");
     float dt = noise_config.attr("default_gate_time").cast<float>();
 
+    // Per-gate execution times for the gates in the circuit
+    std::map<std::string, float> gate_durations = resolve_gate_durations(circuit, noise_config);
+
     // Parse global noise passes
     for (auto& py_noise_pass : noise_model.attr("global_noise")) {
         // Parse the Kraus operators
-        std::vector<SparseMatrix> kraus_operators;
         if (py::isinstance(py_noise_pass, SupportsStaticKraus)) {
+            std::vector<SparseMatrix> kraus_operators;
             py::object as_kraus = py_noise_pass.attr("as_kraus")();
             for (auto& kraus_op : as_kraus.attr("operators")) {
-                py::object spm = kraus_op.attr("data");
-                SparseMatrix K = from_spmatrix(spm, atol);
-                kraus_operators.push_back(K);
+                kraus_operators.push_back(from_spmatrix(kraus_op.attr("data"), atol));
+            }
+            if (!kraus_operators.empty()) {
+                noise_model_cpp.add_kraus_operators_global(kraus_operators);
             }
         } else if (py::isinstance(py_noise_pass, SupportsTimeDerivedKraus)) {
-            py::object as_kraus_from_duration = py_noise_pass.attr("as_kraus_from_duration")("duration"_a = dt);
-            for (auto& kraus_op : as_kraus_from_duration.attr("operators")) {
-                py::object spm = kraus_op.attr("data");
-                SparseMatrix K = from_spmatrix(spm, atol);
-                kraus_operators.push_back(K);
+            if (gate_durations.empty()) {
+                std::vector<SparseMatrix> kraus_operators;
+                py::object as_kraus = py_noise_pass.attr("as_kraus_from_duration")("duration"_a = dt);
+                for (auto& kraus_op : as_kraus.attr("operators")) {
+                    kraus_operators.push_back(from_spmatrix(kraus_op.attr("data"), atol));
+                }
+                if (!kraus_operators.empty()) {
+                    noise_model_cpp.add_kraus_operators_global(kraus_operators);
+                }
+            } else {
+                for (const auto& [gate_name, gate_dt] : gate_durations) {
+                    std::vector<SparseMatrix> kraus_operators;
+                    py::object as_kraus = py_noise_pass.attr("as_kraus_from_duration")("duration"_a = gate_dt);
+                    for (auto& kraus_op : as_kraus.attr("operators")) {
+                        kraus_operators.push_back(from_spmatrix(kraus_op.attr("data"), atol));
+                    }
+                    if (!kraus_operators.empty()) {
+                        noise_model_cpp.add_kraus_operators_per_gate(gate_name, kraus_operators);
+                    }
+                }
             }
-        }
-        if (!kraus_operators.empty()) {
-            noise_model_cpp.add_kraus_operators_global(kraus_operators);
         }
 
         // Parse jump operators
@@ -301,24 +390,37 @@ NoiseModelCpp parse_noise_model(const py::object& noise_model, int nqubits, doub
         py::list py_noise_passes = item.second.cast<py::list>();
         for (auto& py_noise_pass : py_noise_passes) {
             // Parse the Kraus operators
-            std::vector<SparseMatrix> kraus_operators;
             if (py::isinstance(py_noise_pass, SupportsStaticKraus)) {
+                std::vector<SparseMatrix> kraus_operators;
                 py::object as_kraus = py_noise_pass.attr("as_kraus")();
                 for (auto& kraus_op : as_kraus.attr("operators")) {
-                    py::object spm = kraus_op.attr("data");
-                    SparseMatrix K = from_spmatrix(spm, atol);
-                    kraus_operators.push_back(K);
+                    kraus_operators.push_back(from_spmatrix(kraus_op.attr("data"), atol));
+                }
+                if (!kraus_operators.empty()) {
+                    noise_model_cpp.add_kraus_operators_per_qubit(q, kraus_operators);
                 }
             } else if (py::isinstance(py_noise_pass, SupportsTimeDerivedKraus)) {
-                py::object as_kraus_from_duration = py_noise_pass.attr("as_kraus_from_duration")("duration"_a = dt);
-                for (auto& kraus_op : as_kraus_from_duration.attr("operators")) {
-                    py::object spm = kraus_op.attr("data");
-                    SparseMatrix K = from_spmatrix(spm, atol);
-                    kraus_operators.push_back(K);
+                if (gate_durations.empty()) {
+                    std::vector<SparseMatrix> kraus_operators;
+                    py::object as_kraus = py_noise_pass.attr("as_kraus_from_duration")("duration"_a = dt);
+                    for (auto& kraus_op : as_kraus.attr("operators")) {
+                        kraus_operators.push_back(from_spmatrix(kraus_op.attr("data"), atol));
+                    }
+                    if (!kraus_operators.empty()) {
+                        noise_model_cpp.add_kraus_operators_per_qubit(q, kraus_operators);
+                    }
+                } else {
+                    for (const auto& [gate_name, gate_dt] : gate_durations) {
+                        std::vector<SparseMatrix> kraus_operators;
+                        py::object as_kraus = py_noise_pass.attr("as_kraus_from_duration")("duration"_a = gate_dt);
+                        for (auto& kraus_op : as_kraus.attr("operators")) {
+                            kraus_operators.push_back(from_spmatrix(kraus_op.attr("data"), atol));
+                        }
+                        if (!kraus_operators.empty()) {
+                            noise_model_cpp.add_kraus_operators_per_gate_qubit(gate_name, q, kraus_operators);
+                        }
+                    }
                 }
-            }
-            if (!kraus_operators.empty()) {
-                noise_model_cpp.add_kraus_operators_per_qubit(q, kraus_operators);
             }
 
             // Parse jump operators
@@ -354,7 +456,9 @@ NoiseModelCpp parse_noise_model(const py::object& noise_model, int nqubits, doub
     // Parse per-gate noise passes
     py::dict gate_noise_map = noise_model.attr("per_gate_noise");
     for (auto& item : gate_noise_map) {
-        std::string gate_name = item.first.attr("__name__").cast<std::string>();
+        std::string raw_name = item.first.attr("__name__").cast<std::string>();
+        std::string gate_name = NoiseModelCpp::make_gate_key(normalize_gate_name(raw_name), gate_num_controls(raw_name));
+        float gate_dt = noise_config.attr("get_gate_time")(item.first).cast<float>();
         py::list py_noise_passes = item.second.cast<py::list>();
         for (auto& py_noise_pass : py_noise_passes) {
             // Parse the Kraus operators
@@ -367,7 +471,7 @@ NoiseModelCpp parse_noise_model(const py::object& noise_model, int nqubits, doub
                     kraus_operators.push_back(K);
                 }
             } else if (py::isinstance(py_noise_pass, SupportsTimeDerivedKraus)) {
-                py::object as_kraus_from_duration = py_noise_pass.attr("as_kraus_from_duration")("duration"_a = dt);
+                py::object as_kraus_from_duration = py_noise_pass.attr("as_kraus_from_duration")("duration"_a = gate_dt);
                 for (auto& kraus_op : as_kraus_from_duration.attr("operators")) {
                     py::object spm = kraus_op.attr("data");
                     SparseMatrix K = from_spmatrix(spm, atol);
@@ -384,8 +488,11 @@ NoiseModelCpp parse_noise_model(const py::object& noise_model, int nqubits, doub
     py::dict gate_qubit_noise_map = noise_model.attr("per_gate_per_qubit_noise");
     for (auto& item : gate_qubit_noise_map) {
         py::handle ind_gate_tuple = item.first;
-        std::string gate_name = ind_gate_tuple.attr("__getitem__")(0).attr("__name__").cast<std::string>();
+        py::object gate_type = ind_gate_tuple.attr("__getitem__")(0);
+        std::string raw_name = gate_type.attr("__name__").cast<std::string>();
+        std::string gate_name = NoiseModelCpp::make_gate_key(normalize_gate_name(raw_name), gate_num_controls(raw_name));
         int qubit = ind_gate_tuple.attr("__getitem__")(1).cast<int>();
+        float gate_dt = noise_config.attr("get_gate_time")(gate_type).cast<float>();
         py::list py_noise_passes = item.second.cast<py::list>();
         for (auto& py_noise_pass : py_noise_passes) {
             // Parse the Kraus operators
@@ -398,7 +505,7 @@ NoiseModelCpp parse_noise_model(const py::object& noise_model, int nqubits, doub
                     kraus_operators.push_back(K);
                 }
             } else if (py::isinstance(py_noise_pass, SupportsTimeDerivedKraus)) {
-                py::object as_kraus_from_duration = py_noise_pass.attr("as_kraus_from_duration")("duration"_a = dt);
+                py::object as_kraus_from_duration = py_noise_pass.attr("as_kraus_from_duration")("duration"_a = gate_dt);
                 for (auto& kraus_op : as_kraus_from_duration.attr("operators")) {
                     py::object spm = kraus_op.attr("data");
                     SparseMatrix K = from_spmatrix(spm, atol);
@@ -695,16 +802,9 @@ std::vector<Gate> parse_gates(const py::object& circuit, double atol, const py::
             base_matrix = controlled_matrix;
         }
 
-        // Turn CNOTs into X gates with controls, since that's how we represent them internally
-        if (gate_type_str == "CNOT" || gate_type_str == "CX" || gate_type_str == "Toffoli" || gate_type_str == "CCX") {
-            gate_type_str = "X";
-        }
-        if (gate_type_str == "CY" || gate_type_str == "CCY") {
-            gate_type_str = "Y";
-        }
-        if (gate_type_str == "CZ" || gate_type_str == "CCZ") {
-            gate_type_str = "Z";
-        }
+        // Turn controlled gates into their base gate with controls, since that's how we
+        // represent them internally (kept in sync with normalize_gate_name).
+        gate_type_str = normalize_gate_name(gate_type_str);
 
         // Get the parameter names
         std::vector<std::pair<std::string, double>> parameters;
