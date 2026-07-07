@@ -77,7 +77,7 @@ class QTensor:
     or operators. It provides utility methods for common quantum operations such as
     taking the adjoint (dagger), computing tensor products, partial traces, and norms.
 
-    The internal data is stored as an Eigen CSR (Compressed Sparse Row) matrix for
+    The internal data is stored as an Eigen (CSR, CSC or dense) matrix for
     efficient arithmetic and manipulation. The expected shapes for the data are:
 
     - (2**N, 2**N) for operators or density matrices (or scalars),
@@ -103,7 +103,9 @@ class QTensor:
         Raises:
             ValueError: If ``data`` is not 2-D or does not correspond to valid qubit dimensions.
         """
-        if isinstance(other, np.ndarray):
+        if isinstance(other, QTensorCpp):
+            self._qtensor_cpp = other
+        elif isinstance(other, np.ndarray):
             self._qtensor_cpp = QTensorCpp(np.array(other, dtype=np.complex128))
         else:
             self._qtensor_cpp = QTensorCpp(other)
