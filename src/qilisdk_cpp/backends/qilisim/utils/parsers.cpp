@@ -209,7 +209,7 @@ std::vector<SparseMatrix> parse_hamiltonians(const py::object& Hs, double atol) 
     return hamiltonians;
 }
 
-std::string normalize_gate_name(std::string name) {
+std::string normalize_gate_name(const std::string& name) {
     /*
     Map a gate's QiliSDK name to the name used internally during simulation.
 

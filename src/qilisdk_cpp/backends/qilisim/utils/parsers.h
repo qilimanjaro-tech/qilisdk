@@ -34,6 +34,8 @@ std::vector<std::vector<double>> parse_coefficients(const py::object& schedule, 
 std::vector<double> parse_time_steps(const py::object& steps);
 SparseMatrix parse_initial_state(const py::object& initial_state, double atol, int nqubits);
 std::vector<Gate> parse_gates(const py::object& circuit, double atol, const py::object& noise_model);
+int gate_num_controls(const std::string& name);
+std::string normalize_gate_name(const std::string& name);
 std::vector<bool> parse_measurements(const py::object& circuit);
 QiliSimConfig parse_solver_params(const py::dict& solver_params);
 

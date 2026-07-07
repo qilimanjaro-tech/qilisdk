@@ -1793,4 +1793,34 @@ TEST(ParseSolverParams, OrderShotsWarmupsAreApplied) {
     EXPECT_EQ(config.get_warmups(), 50);
 }
 
+TEST(GateNameParser, GatesControlCounts) {
+    EXPECT_EQ(gate_num_controls("H"), 0);
+    EXPECT_EQ(gate_num_controls("X"), 0);
+    EXPECT_EQ(gate_num_controls("Y"), 0);
+    EXPECT_EQ(gate_num_controls("Z"), 0);
+    EXPECT_EQ(gate_num_controls("CNOT"), 1);
+    EXPECT_EQ(gate_num_controls("CX"), 1);
+    EXPECT_EQ(gate_num_controls("CY"), 1);
+    EXPECT_EQ(gate_num_controls("CZ"), 1);
+    EXPECT_EQ(gate_num_controls("CCX"), 2);
+    EXPECT_EQ(gate_num_controls("CCY"), 2);
+    EXPECT_EQ(gate_num_controls("CCZ"), 2);
+    EXPECT_EQ(gate_num_controls("Toffoli"), 2);
+}
+
+TEST(GateNameParser, GateNamesNormalized) {
+    EXPECT_EQ(normalize_gate_name("H"), "H");
+    EXPECT_EQ(normalize_gate_name("X"), "X");
+    EXPECT_EQ(normalize_gate_name("Y"), "Y");
+    EXPECT_EQ(normalize_gate_name("Z"), "Z");
+    EXPECT_EQ(normalize_gate_name("CNOT"), "X");
+    EXPECT_EQ(normalize_gate_name("CX"), "X");
+    EXPECT_EQ(normalize_gate_name("CY"), "Y");
+    EXPECT_EQ(normalize_gate_name("CZ"), "Z");
+    EXPECT_EQ(normalize_gate_name("CCX"), "X");
+    EXPECT_EQ(normalize_gate_name("CCY"), "Y");
+    EXPECT_EQ(normalize_gate_name("CCZ"), "Z");
+    EXPECT_EQ(normalize_gate_name("Toffoli"), "X");
+}
+
 // GCOV_EXCL_BR_STOP
