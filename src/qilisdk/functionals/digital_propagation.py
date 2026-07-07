@@ -46,10 +46,11 @@ class DigitalPropagation(PrimitiveFunctional):
 
     result_type: ClassVar[type[FunctionalResult]] = FunctionalResult
 
-    def __init__(self, 
-                 circuit: Circuit, 
-                 initial_state: QTensor | InitialState | Circuit = InitialState.ZERO,
-                ) -> None:
+    def __init__(
+        self,
+        circuit: Circuit,
+        initial_state: QTensor | InitialState | Circuit = InitialState.ZERO,
+    ) -> None:
         """
         Args:
             circuit (Circuit): Circuit to propagate.
@@ -59,7 +60,8 @@ class DigitalPropagation(PrimitiveFunctional):
         # Circuit init just prepends it, that way if it's parameterized it will be handled correctly
         if isinstance(initial_state, Circuit):
             self.initial_state = InitialState.ZERO
-            self.circuit = initial_state + circuit
+            self.circuit = initial_state
+            self.circuit.append(circuit)
         # Otherwise we leave it as is and let the backend handle it
         else:
             self.initial_state = initial_state

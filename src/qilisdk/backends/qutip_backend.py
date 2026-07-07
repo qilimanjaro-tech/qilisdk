@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING, Callable, Type, TypeVar
 import numpy as np
 import qutip_qip.operations as QutipGates
 from loguru import logger
-from qutip import Qobj, basis, mesolve, qeye, tensor
+from qutip import Qobj, mesolve, qeye
 from qutip_qip.circuit import CircuitSimulator, QubitCircuit
 from qutip_qip.operations.gateclass import SingleQubitGate, is_qutip5
 
@@ -131,7 +131,14 @@ class QutipBackend(Backend):
         """
         logger.info("Executing Sampling")
 
-        init_state = tensor(*[basis(2, 0) for _ in range(functional.circuit.nqubits)])
+        # Get the initial state as a QTensor, by converting if needed
+        if isinstance(functional.initial_state, InitialState):
+            init_state_qtensor = functional.initial_state.as_qtensor(functional.circuit.nqubits)
+        else:
+            init_state_qtensor = functional.initial_state
+
+        # Convert to the qutip format
+        init_state = Qobj(init_state_qtensor.dense(), dims=[[2 for _ in range(init_state_qtensor.nqubits)], [1]])
 
         measurements_set = {q for g in functional.circuit.gates if isinstance(g, M) for q in g.qubits}
         measurements = sorted(measurements_set)

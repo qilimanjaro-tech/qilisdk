@@ -14,7 +14,7 @@
 
 import numpy as np
 
-from qilisdk.core import Parameter, QTensor, InitialState
+from qilisdk.core import InitialState, Parameter, QTensor
 from qilisdk.digital import RX, RZ, Circuit
 from qilisdk.functionals.digital_propagation import DigitalPropagation
 from qilisdk.settings import get_settings
@@ -129,17 +129,19 @@ def test_digital_propagation_qtensor_initial_state():
     functional = DigitalPropagation(circuit=circuit, initial_state=initial_state)
     assert functional.initial_state == initial_state
 
+
 def test_digital_propagation_initial_state_initial_state():
     circuit = Circuit(1)
     initial_state = InitialState.ONE
     functional = DigitalPropagation(circuit=circuit, initial_state=initial_state)
     assert functional.initial_state == initial_state
 
+
 def test_digital_propagation_circuit_initial_state():
     circuit = Circuit(1)
-    circuit.add(RX(0, theta=np.pi/2))
+    circuit.add(RX(0, theta=np.pi / 2))
     initial_state = Circuit(1)
-    initial_state.add(RZ(0, phi=np.pi/4))
+    initial_state.add(RZ(0, phi=np.pi / 4))
     functional = DigitalPropagation(circuit=circuit, initial_state=initial_state)
     assert functional.initial_state == InitialState.ZERO
     assert functional.circuit == initial_state + circuit

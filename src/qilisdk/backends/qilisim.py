@@ -24,7 +24,6 @@ from .backend import Backend
 from .backend_config import AnalogMethod, DigitalMethod, ExecutionConfig, SolverConfigDict
 
 if TYPE_CHECKING:
-    from qilisdk.core import QTensor
     from qilisdk.functionals import AnalogEvolution, DigitalPropagation, QuantumReservoir
     from qilisdk.functionals.functional_result import FunctionalResult
     from qilisdk.noise.noise_model import NoiseModel
