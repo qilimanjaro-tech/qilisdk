@@ -18,6 +18,7 @@ from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
+from loguru import logger
 
 from qilisdk.analog.hamiltonian import Hamiltonian
 from qilisdk.backends.cuda_backend import cudaq_to_standard, reverse_bits
@@ -977,3 +978,47 @@ def test_tomography_for_methods_raises(monkeypatch, method):
     backend = CudaBackend(sampling_method=method)
     with pytest.raises(ValueError, match="Only Sampling"):
         backend.execute(f, r)
+
+
+def test_cuda_digital_propagation_initial_state_one():
+    c = Circuit(1)
+    digital = DigitalPropagation(circuit=c, initial_state=InitialState.ONE)
+    backend = CudaBackend()
+    readout = Readout().with_sampling(10)
+    results = backend.execute(digital, readout)
+    assert isinstance(results, FunctionalResult)
+    assert "1" in results.get_samples()
+
+
+def test_cuda_digital_propagation_initial_state_zero():
+    c = Circuit(1)
+    digital = DigitalPropagation(circuit=c, initial_state=InitialState.ZERO)
+    backend = CudaBackend()
+    readout = Readout().with_sampling(10)
+    results = backend.execute(digital, readout)
+    assert isinstance(results, FunctionalResult)
+    assert "0" in results.get_samples()
+
+
+def test_cuda_digital_propagation_initial_state_uniform():
+    c = Circuit(1)
+    digital = DigitalPropagation(circuit=c, initial_state=InitialState.UNIFORM)
+    backend = CudaBackend()
+    readout = Readout().with_sampling(100)
+    results = backend.execute(digital, readout)
+    assert isinstance(results, FunctionalResult)
+    assert "0" in results.get_samples()
+    assert "1" in results.get_samples()
+
+
+def test_cuda_digital_propagation_initial_state_qtensor(monkeypatch):
+    DummyLogger = MagicMock()
+    monkeypatch.setattr(logger, "warning", DummyLogger)
+    c = Circuit(1)
+    initial_state_qtensor = QTensor.one(1)
+    digital = DigitalPropagation(circuit=c, initial_state=initial_state_qtensor)
+    backend = CudaBackend()
+    readout = Readout().with_sampling(10)
+    results = backend.execute(digital, readout)
+    assert isinstance(results, FunctionalResult)
+    assert DummyLogger.called
