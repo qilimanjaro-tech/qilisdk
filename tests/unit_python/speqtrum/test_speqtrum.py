@@ -32,12 +32,6 @@ from typing import Any
 
 import pytest
 
-from qilisdk.experiments.experiment_functional import (
-    RabiExperiment,
-    T1Experiment,
-    T2Experiment,
-    TwoToneAtFixedFluxBiasExperiment,
-)
 from qilisdk.functionals.analog_evolution import AnalogEvolution
 from qilisdk.functionals.digital_propagation import DigitalPropagation
 from qilisdk.functionals.variational_program import VariationalProgram
@@ -135,22 +129,6 @@ class FakeAnalogEvolution(AnalogEvolution):
     def __init__(self): ...
 
 
-class FakeRabiExperiment(RabiExperiment):
-    def __init__(self): ...
-
-
-class FakeT1Experiment(T1Experiment):
-    def __init__(self): ...
-
-
-class FakeT2Experiment(T2Experiment):
-    def __init__(self): ...
-
-
-class FakeTwoTonesAtFluxBiasExperiment(TwoToneAtFixedFluxBiasExperiment):
-    def __init__(self): ...
-
-
 class FakeVariationalProgram(VariationalProgram):
     def __init__(self, functional):
         self._functional = functional
@@ -173,7 +151,6 @@ def test_submit_dispatches_to_digital_propagation_handler(monkeypatch):
 def test_submit_dispatches_to_variational_program_handler(monkeypatch):
     monkeypatch.setattr(speqtrum, "DigitalPropagation", FakeDigitalPropagation)
     monkeypatch.setattr(speqtrum, "AnalogEvolution", FakeAnalogEvolution)
-    monkeypatch.setattr(speqtrum, "RabiExperiment", FakeRabiExperiment)
     monkeypatch.setattr(speqtrum, "VariationalProgram", FakeVariationalProgram)
     monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
     monkeypatch.setattr(
@@ -192,9 +169,6 @@ def test_submit_dispatches_to_variational_program_handler(monkeypatch):
     q.submit(
         FakeVariationalProgram(FakeAnalogEvolution()), device="some_device", job_name="my_vp_job", readout=Readout()
     )
-    q.submit(
-        FakeVariationalProgram(FakeRabiExperiment()), device="some_device", job_name="my_vp_job", readout=Readout()
-    )
     assert handle.id == 88
 
 
@@ -210,65 +184,6 @@ def test_submit_dispatches_to_analog_evolution_handler(monkeypatch):
     q = speqtrum.SpeQtrum()
     handle = q.submit(FakeAnalogEvolution(), device="some_device", job_name="te_job", readout=Readout())
     assert handle.id == 77
-
-
-def test_submit_dispatches_to_rabi_handler(monkeypatch):
-    monkeypatch.setattr(speqtrum, "RabiExperiment", FakeRabiExperiment)
-    monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
-    monkeypatch.setattr(
-        speqtrum.SpeQtrum,
-        "_create_client",
-        lambda self: DummyClient(post_payload={"id": 66}),
-        raising=True,
-    )
-    q = speqtrum.SpeQtrum()
-    handle = q.submit(FakeRabiExperiment(), device="some_device", job_name="rabi_job")
-    assert handle.id == 66
-
-
-def test_submit_dispatches_to_t1_experiment_handler(monkeypatch):
-    monkeypatch.setattr(speqtrum, "T1Experiment", FakeT1Experiment)
-    monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
-    monkeypatch.setattr(
-        speqtrum.SpeQtrum,
-        "_create_client",
-        lambda self: DummyClient(post_payload={"id": 55}),
-        raising=True,
-    )
-    q = speqtrum.SpeQtrum()
-    handle = q.submit(FakeT1Experiment(), device="some_device", job_name="t1_job")
-    assert handle.id == 55
-
-
-def test_submit_dispatches_to_t2_experiment_handler(monkeypatch):
-    monkeypatch.setattr(speqtrum, "T2Experiment", FakeT2Experiment)
-    monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
-    monkeypatch.setattr(
-        speqtrum.SpeQtrum,
-        "_create_client",
-        lambda self: DummyClient(post_payload={"id": 44}),
-        raising=True,
-    )
-    q = speqtrum.SpeQtrum()
-    handle = q.submit(FakeT2Experiment(), device="some_device", job_name="t2_job")
-    assert handle.id == 44
-
-
-# for two tones
-
-
-def test_submit_dispatches_to_two_tones_at_flux_bias_handler(monkeypatch):
-    monkeypatch.setattr(speqtrum, "TwoToneAtFixedFluxBiasExperiment", FakeTwoTonesAtFluxBiasExperiment)
-    monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
-    monkeypatch.setattr(
-        speqtrum.SpeQtrum,
-        "_create_client",
-        lambda self: DummyClient(post_payload={"id": 33}),
-        raising=True,
-    )
-    q = speqtrum.SpeQtrum()
-    handle = q.submit(FakeTwoTonesAtFluxBiasExperiment(), device="some_device", job_name="two_tone_job")
-    assert handle.id == 33
 
 
 def test_submit_unknown_functional_raises(monkeypatch):
