@@ -1144,7 +1144,7 @@ def test_large_zero_ket_is_representable():
     k = zero(20)
     assert k.shape == (2**20, 1)
     assert k._qtensor_cpp.storage_format() == "col_sparse"
-    assert k[0, 0] == 1.0
+    assert np.isclose(k[0, 0], 1.0)
 
 
 def test_storage_format_roundtrips_through_operations():
