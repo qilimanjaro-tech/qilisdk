@@ -26,6 +26,7 @@ from loguru import logger
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator, PauliX, PauliY, PauliZ
 from qilisdk.backends.backend import Backend
 from qilisdk.core.qtensor import InitialState, QTensor
+from qilisdk.digital.circuit import Circuit
 from qilisdk.digital.circuit_transpiler_passes import DecomposeMultiControlledGatesPass
 from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import (
@@ -69,7 +70,6 @@ from qilisdk.settings import Precision, get_settings
 
 if TYPE_CHECKING:
     from qilisdk.analog.schedule import Schedule
-    from qilisdk.digital.circuit import Circuit
     from qilisdk.functionals.analog_evolution import AnalogEvolution
     from qilisdk.functionals.digital_propagation import DigitalPropagation
     from qilisdk.noise import NoiseModel
@@ -221,7 +221,8 @@ class CudaBackend(Backend):
         self._sampling_method = sampling_method
         logger.success("CudaBackend initialised (sampling_method={})", sampling_method.value)
 
-    def _circuit_from_initial_state(self, initial_state: InitialState, nqubits: int) -> Circuit:
+    @staticmethod
+    def _circuit_from_initial_state(initial_state: InitialState | QTensor, nqubits: int) -> Circuit:
         """Convert an initial state to a circuit representation.
 
         Args:
@@ -236,7 +237,7 @@ class CudaBackend(Backend):
         """
         circuit = Circuit(nqubits)
         if isinstance(initial_state, InitialState):
-        if initial_state == InitialState.UNIFORM:
+            if initial_state == InitialState.UNIFORM:
                 for i in range(nqubits):
                     circuit.add(H(i))
             elif initial_state == InitialState.ONE:
@@ -290,6 +291,7 @@ class CudaBackend(Backend):
 
         # If an initial state is given, convert it to a circuit, since CUDA doesn't support any other initial state format
         circuit = self._circuit_from_initial_state(functional.initial_state, functional.circuit.nqubits)
+        circuit.append(functional.circuit)
 
         # Apply parameter perturbations
         if self._noise_model:
