@@ -211,6 +211,9 @@ cmake.args = ["-A", "x64"]
 [tool.scikit-build.wheel]
 packages = ["src/qilisdk"]
 
+[tool.cibuildwheel.windows]
+repair-wheel-command = "delvewheel repair -w {dest_dir} --no-dll qilisim_module*.pyd {wheel}"
+
 [tool.ty.src]
 include = ["src"]
 exclude = ["tests"]
