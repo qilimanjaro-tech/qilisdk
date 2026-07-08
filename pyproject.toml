@@ -212,10 +212,6 @@ cmake.args = ["-A", "x64"]
 packages = ["src/qilisdk"]
 
 [tool.cibuildwheel.windows]
-# qtensor_module.pyd links against qilisim_module.pyd (they are both in the same wheel).
-# delvewheel would otherwise raise FileNotFoundError when it cannot find qilisim_module*.pyd
-# as an external DLL. --no-dll tells it to skip bundling that file since it is already
-# present inside the wheel as a top-level extension module.
 repair-wheel-command = "delvewheel repair -w {dest_dir} --no-dll qilisim_module*.pyd {wheel}"
 
 [tool.ty.src]
