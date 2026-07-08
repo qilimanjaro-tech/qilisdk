@@ -19,9 +19,9 @@
       <link rel="stylesheet" type="text/css" href="_static/theme.css?v=42baaae4" />
       <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
       <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
-      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=7f555f8f" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=e4e41e26" />
       <link rel="stylesheet" type="text/css" href="_static/awesome-sphinx-design.css?v=15e0fffa" />
-      <link rel="icon" href="_static/q_trans.png" />
+      <link rel="icon" href="_static/QiliSDK_q.png" />
         <link rel="search" title="Search" href="search.html" />
         <link rel="index" title="Index" href="#" />
 
@@ -44,10 +44,10 @@
     </a><header
   class="sticky top-0 z-40 w-full border-b shadow-sm border-border supports-backdrop-blur:bg-background/60 bg-background/95 backdrop-blur"><div class="container flex items-center h-14">
     <div class="hidden mr-4 md:flex">
-      <a href="index.html" class="flex items-center mr-6">
-          <img width="24" height="24" class="mr-2 hidden dark:block" src="_static/q_trans.png" alt="Logo" />
-        <img width="24" height="24" class="mr-2 dark:hidden" src="_static/q_trans.png" alt="Logo" /><span class="hidden font-bold sm:inline-block text-clip whitespace-nowrap">QiliSDK</span>
-      </a>
+<a href="index.html" class="flex items-center mr-6">
+    <img style="height: 2rem; width: auto;" class="hidden dark:block" src="_static/QiliSDK_wht.svg" alt="QiliSDK" />
+    <img style="height: 2rem; width: auto;" class="dark:hidden" src="_static/QiliSDK_blk.svg" alt="QiliSDK" /></a>
+
 
 <div class="language-switcher">
   
@@ -122,8 +122,8 @@
   :aria-hidden="!showSidebar" :class="{ 'translate-x-0': showSidebar }">
 
     <a href="index.html" class="!justify-start text-sm md:!hidden bg-background">
-        <img width="16" height="16" class="mr-2 hidden dark:block" src="_static/q_trans.png" alt="Logo" />
-        <img width="16" height="16" class="mr-2 dark:hidden" src="_static/q_trans.png" alt="Logo" /><span class="font-bold text-clip whitespace-nowrap">QiliSDK</span>
+        <img width="16" height="16" class="mr-2 hidden dark:block" src="_static/QiliSDK_wht.svg" alt="Logo" />
+        <img width="16" height="16" class="mr-2 dark:hidden" src="_static/QiliSDK_blk.svg" alt="Logo" /><span class="font-bold text-clip whitespace-nowrap">QiliSDK</span>
     </a>
 
     <div class="relative overflow-hidden md:overflow-auto my-4 md:my-0 h-[calc(100vh-8rem)] md:h-auto">
@@ -197,7 +197,7 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="modules/backends/backends.html">Backends</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="modules/backends/backends_overview.html">Overview</a></li>
-<li class="toctree-l2"><a class="reference internal" href="modules/backends/backends_qilisim.html">QiliSim Backend</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/backends/backends_qilisim.html">QiliSim</a></li>
 <li class="toctree-l2"><a class="reference internal" href="modules/backends/backends_cuda.html">CUDA Backend</a></li>
 <li class="toctree-l2"><a class="reference internal" href="modules/backends/backends_qutip.html">Qutip Backend</a></li>
 </ul>
@@ -317,6 +317,7 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="code/api/qilisdk/utils/index.html">qilisdk.utils</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/utils/classical_solvers/index.html">qilisdk.utils.classical_solvers</a></li>
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/utils/hashing/index.html">qilisdk.utils.hashing</a></li>
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/utils/openfermion/index.html">qilisdk.utils.openfermion</a></li>
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/utils/openqasm/index.html">qilisdk.utils.openqasm</a></li>
@@ -343,6 +344,9 @@
       <span class="caption_text">Releases</span>
     </p>
     <ul>
+      <li class="toctree-l1">
+        <a class="reference internal" href="../0.2.1/index.html">0.2.1</a>
+      </li>
       <li class="toctree-l1">
         <a class="reference internal" href="../0.2.0/index.html">0.2.0</a>
       </li>
@@ -673,10 +677,10 @@
         <li><a href="code/api/qilisdk/digital/circuit_transpiler_passes/sabre_swap_pass/index.html#qilisdk.digital.circuit_transpiler_passes.sabre_swap_pass.SabreSwapPass.beta">(SabreSwapPass attribute)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Variable.bin_vars">bin_vars (Variable property)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Domain.BINARY">BINARY (Domain attribute)</a>
 </li>
       <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.BinaryVariable">BinaryVariable (class in qilisdk.core.variables)</a>
@@ -699,6 +703,8 @@
         <li><a href="code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.bra">(QTensor class method)</a>
 </li>
       </ul></li>
+      <li><a href="code/api/qilisdk/utils/classical_solvers/index.html#qilisdk.utils.classical_solvers.BruteForceSolver">BruteForceSolver (class in qilisdk.utils.classical_solvers)</a>
+</li>
       <li><a href="code/api/qilisdk/digital/topology/index.html#qilisdk.digital.topology.build_topology_graph">build_topology_graph() (in module qilisdk.digital.topology)</a>
 </li>
       <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.CircuitStyle.bulge">bulge (CircuitStyle attribute)</a>
@@ -717,6 +723,8 @@
       <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobStatus.CANCELLED">CANCELLED (JobStatus attribute)</a>
 </li>
       <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.QTensorStyle.centre_circle_color">centre_circle_color (QTensorStyle attribute)</a>
+</li>
+      <li><a href="code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule.chained_linear">chained_linear() (Schedule class method)</a>
 </li>
       <li><a href="code/api/qilisdk/core/parameterizable/index.html#qilisdk.core.parameterizable.Parameterizable.check_constraints">check_constraints() (Parameterizable method)</a>
 </li>
@@ -762,6 +770,8 @@
 </li>
       <li><a href="code/api/qilisdk/digital/circuit_transpiler/index.html#qilisdk.digital.circuit_transpiler.CircuitTranspilerResult">CircuitTranspilerResult (class in qilisdk.digital.circuit_transpiler)</a>
 </li>
+      <li><a href="code/api/qilisdk/utils/classical_solvers/index.html#qilisdk.utils.classical_solvers.ClassicalSolver">ClassicalSolver (class in qilisdk.utils.classical_solvers)</a>
+</li>
       <li><a href="code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.CNOT">CNOT (class in qilisdk.digital.gates)</a>
 
       <ul style="list-style-type:none">
@@ -792,6 +802,8 @@
         <li><a href="code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.commutator">(QTensor method)</a>
 </li>
       </ul></li>
+      <li><a href="code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian.commutes_with">commutes_with() (Hamiltonian method)</a>
+</li>
       <li><a href="code/api/qilisdk/utils/trotterization/trotterization/index.html#qilisdk.utils.trotterization.trotterization.CommutingParts">CommutingParts (in module qilisdk.utils.trotterization.trotterization)</a>
 </li>
       <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.ComparisonOperation">ComparisonOperation (class in qilisdk.core.variables)</a>
@@ -800,10 +812,10 @@
 </li>
       <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobStatus.COMPLETED">COMPLETED (JobStatus attribute)</a>
 </li>
-      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobInfo.completed_at">completed_at (JobInfo attribute)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobInfo.completed_at">completed_at (JobInfo attribute)</a>
+</li>
       <li><a href="code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.Complex">Complex (in module qilisdk.core.qtensor)</a>
 </li>
       <li><a href="code/api/qilisdk/settings/index.html#qilisdk.settings.Precision.COMPLEX_128">COMPLEX_128 (Precision attribute)</a>
@@ -837,6 +849,8 @@
       <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Term.CONST">CONST (Term attribute)</a>
 </li>
       <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.CONST_KEY">CONST_KEY (in module qilisdk.core.variables)</a>
+</li>
+      <li><a href="code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule.constant">constant() (Schedule class method)</a>
 </li>
       <li><a href="code/api/qilisdk/core/model/index.html#qilisdk.core.model.Constraint">Constraint (class in qilisdk.core.model)</a>
 </li>
@@ -1237,6 +1251,8 @@
   <h2 id="F">F</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
+      <li><a href="code/api/qilisdk/core/model/index.html#qilisdk.core.model.Model.factoring">factoring() (Model class method)</a>
+</li>
       <li><a href="code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.fidelity">fidelity() (QTensor method)</a>
 </li>
       <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.figsize">figsize (ScheduleStyle attribute)</a>
@@ -1550,6 +1566,8 @@
 </li>
       <li><a href="code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer.gradient_colors">gradient_colors() (MatplotlibScheduleRenderer method)</a>
 </li>
+      <li><a href="code/api/qilisdk/core/model/index.html#qilisdk.core.model.Model.graph_coloring">graph_coloring() (Model class method)</a>
+</li>
       <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.GreaterThan">GreaterThan (in module qilisdk.core.variables)</a>
 </li>
       <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.GreaterThanOrEqual">GreaterThanOrEqual (in module qilisdk.core.variables)</a>
@@ -1778,6 +1796,8 @@
   <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="code/api/qilisdk/speqtrum/keyring/index.html#qilisdk.speqtrum.keyring.KEYRING_IDENTIFIER">KEYRING_IDENTIFIER (in module qilisdk.speqtrum.keyring)</a>
 </li>
+      <li><a href="code/api/qilisdk/core/model/index.html#qilisdk.core.model.Model.knapsack">knapsack() (Model class method)</a>
+</li>
       <li><a href="code/api/qilisdk/noise/representations/index.html#qilisdk.noise.representations.KrausChannel">KrausChannel (class in qilisdk.noise.representations)</a>
 </li>
   </ul></td>
@@ -1979,6 +1999,8 @@
       <li><a href="code/api/qilisdk/digital/circuit_transpiler_passes/sabre_swap_pass/index.html#qilisdk.digital.circuit_transpiler_passes.sabre_swap_pass.SabreSwapPass.max_attempts">max_attempts (SabreSwapPass attribute)</a>
 </li>
       <li><a href="code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.DigitalMethod.max_cache_size">max_cache_size (DigitalMethod attribute)</a>
+</li>
+      <li><a href="code/api/qilisdk/core/model/index.html#qilisdk.core.model.Model.max_cut">max_cut() (Model class method)</a>
 </li>
       <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.MAX_INT">MAX_INT (in module qilisdk.core.variables)</a>
 </li>
@@ -2207,6 +2229,8 @@
         <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#module-qilisdk.speqtrum.speqtrum_models">qilisdk.speqtrum.speqtrum_models</a>
 </li>
         <li><a href="code/api/qilisdk/utils/index.html#module-qilisdk.utils">qilisdk.utils</a>
+</li>
+        <li><a href="code/api/qilisdk/utils/classical_solvers/index.html#module-qilisdk.utils.classical_solvers">qilisdk.utils.classical_solvers</a>
 </li>
         <li><a href="code/api/qilisdk/utils/hashing/index.html#module-qilisdk.utils.hashing">qilisdk.utils.hashing</a>
 </li>
@@ -3141,8 +3165,6 @@
         <li><a href="code/api/qilisdk/noise/dephasing/index.html#module-qilisdk.noise.dephasing">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li>
     qilisdk.noise.depolarizing
 
@@ -3150,6 +3172,8 @@
         <li><a href="code/api/qilisdk/noise/depolarizing/index.html#module-qilisdk.noise.depolarizing">module</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li>
     qilisdk.noise.gaussian_perturbation
 
@@ -3337,6 +3361,13 @@
 
       <ul style="list-style-type:none">
         <li><a href="code/api/qilisdk/utils/index.html#module-qilisdk.utils">module</a>
+</li>
+      </ul></li>
+      <li>
+    qilisdk.utils.classical_solvers
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/utils/classical_solvers/index.html#module-qilisdk.utils.classical_solvers">module</a>
 </li>
       </ul></li>
       <li>
@@ -3545,6 +3576,8 @@
       <li><a href="code/api/qilisdk/experiments/experiment_result/index.html#qilisdk.experiments.experiment_result.RabiExperimentResult">RabiExperimentResult (class in qilisdk.experiments.experiment_result)</a>
 </li>
       <li><a href="code/api/qilisdk/digital/circuit/index.html#qilisdk.digital.circuit.Circuit.random">random() (Circuit class method)</a>
+</li>
+      <li><a href="code/api/qilisdk/core/model/index.html#qilisdk.core.model.Model.random_ising">random_ising() (Model class method)</a>
 </li>
       <li><a href="code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.rank">rank() (QTensor method)</a>
 </li>
@@ -3883,6 +3916,12 @@
 </li>
       <li><a href="code/api/qilisdk/core/model/index.html#qilisdk.core.model.SlackCounter">SlackCounter (class in qilisdk.core.model)</a>
 </li>
+      <li><a href="code/api/qilisdk/utils/classical_solvers/index.html#qilisdk.utils.classical_solvers.BruteForceSolver.solve">solve() (BruteForceSolver method)</a>
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/utils/classical_solvers/index.html#qilisdk.utils.classical_solvers.ClassicalSolver.solve">(ClassicalSolver method)</a>
+</li>
+      </ul></li>
       <li><a href="code/api/qilisdk/backends/qilisim/index.html#qilisdk.backends.qilisim.QiliSim.solver_params">solver_params (QiliSim property)</a>
 </li>
       <li><a href="code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.SolverConfigDict">SolverConfigDict (in module qilisdk.backends.backend_config)</a>
@@ -4233,6 +4272,8 @@
       <li><a href="code/api/qilisdk/digital/circuit_transpiler/index.html#qilisdk.digital.circuit_transpiler.TranspilerPassResult">TranspilerPassResult (class in qilisdk.digital.circuit_transpiler)</a>
 </li>
       <li><a href="code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.transpose">transpose() (QTensor method)</a>
+</li>
+      <li><a href="code/api/qilisdk/core/model/index.html#qilisdk.core.model.Model.travelling_salesman">travelling_salesman() (Model class method)</a>
 </li>
       <li><a href="code/api/qilisdk/experiments/experiment_functional/index.html#qilisdk.experiments.experiment_functional.TResult_co">TResult_co (in module qilisdk.experiments.experiment_functional)</a>
 

@@ -14,9 +14,9 @@
 <link href="../../_static/theme.css?v=42baaae4" rel="stylesheet" type="text/css"/>
 <link href="../../_static/graphviz.css?v=4ae1632d" rel="stylesheet" type="text/css"/>
 <link href="../../_static/sphinx-design.min.css?v=95c83b7e" rel="stylesheet" type="text/css"/>
-<link href="../../_static/custom.css?v=7f555f8f" rel="stylesheet" type="text/css"/>
+<link href="../../_static/custom.css?v=e4e41e26" rel="stylesheet" type="text/css"/>
 <link href="../../_static/awesome-sphinx-design.css?v=15e0fffa" rel="stylesheet" type="text/css"/>
-<link href="../../_static/q_trans.png" rel="icon"/>
+<link href="../../_static/QiliSDK_q.png" rel="icon"/>
 <link href="../../search.html" rel="search" title="Búsqueda"/>
 <link href="../../genindex.html" rel="index" title="Índice"/>
 <link href="application_qaoa.html" rel="next" title="Optimización con QAOA"/>
@@ -40,9 +40,8 @@
     </a><header class="sticky top-0 z-40 w-full border-b shadow-sm border-border supports-backdrop-blur:bg-background/60 bg-background/95 backdrop-blur"><div class="container flex items-center h-14">
 <div class="hidden mr-4 md:flex">
 <a class="flex items-center mr-6" href="../../index.html">
-<img alt="Logo" class="mr-2 hidden dark:block" height="24" src="../../_static/q_trans.png" width="24"/>
-<img alt="Logo" class="mr-2 dark:hidden" height="24" src="../../_static/q_trans.png" width="24"/><span class="hidden font-bold sm:inline-block text-clip whitespace-nowrap">QiliSDK</span>
-</a>
+<img alt="QiliSDK" class="hidden dark:block" src="../../_static/QiliSDK_wht.svg" style="height: 2rem; width: auto;"/>
+<img alt="QiliSDK" class="dark:hidden" src="../../_static/QiliSDK_blk.svg" style="height: 2rem; width: auto;"/></a>
 <div class="language-switcher">
 <a class="lang-link" href="../../../../en/main/tutorials/applications/application_annealing.html">EN</a>
 <span class="lang-active">ES</span>
@@ -78,8 +77,8 @@
 </header>
 <div class="flex-1"><div class="container flex-1 items-start md:grid md:grid-cols-[220px_minmax(0,1fr)] md:gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10"><aside :aria-hidden="!showSidebar" :class="{ 'translate-x-0': showSidebar }" class="fixed inset-y-0 left-0 md:top-14 z-50 md:z-30 bg-background md:bg-transparent transition-all duration-100 -translate-x-full md:translate-x-0 ml-0 p-6 md:p-0 md:-ml-2 md:h-[calc(100vh-3.5rem)] w-5/6 md:w-full shrink-0 overflow-y-auto border-r border-border md:sticky" id="left-sidebar">
 <a class="!justify-start text-sm md:!hidden bg-background" href="../../index.html">
-<img alt="Logo" class="mr-2 hidden dark:block" height="16" src="../../_static/q_trans.png" width="16"/>
-<img alt="Logo" class="mr-2 dark:hidden" height="16" src="../../_static/q_trans.png" width="16"/><span class="font-bold text-clip whitespace-nowrap">QiliSDK</span>
+<img alt="Logo" class="mr-2 hidden dark:block" height="16" src="../../_static/QiliSDK_wht.svg" width="16"/>
+<img alt="Logo" class="mr-2 dark:hidden" height="16" src="../../_static/QiliSDK_blk.svg" width="16"/><span class="font-bold text-clip whitespace-nowrap">QiliSDK</span>
 </a>
 <div class="relative overflow-hidden md:overflow-auto my-4 md:my-0 h-[calc(100vh-8rem)] md:h-auto">
 <div class="overflow-y-auto h-full w-full relative pr-6"><nav class="table w-full min-w-full my-6 lg:my-8">
@@ -152,7 +151,7 @@
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../modules/backends/backends.html">Backends<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l2"><a class="reference internal" href="../../modules/backends/backends_overview.html">Descripción general</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../modules/backends/backends_qilisim.html">Backend QiliSim</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules/backends/backends_qilisim.html">QiliSim</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../modules/backends/backends_cuda.html">Backend CUDA</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../modules/backends/backends_qutip.html">Backend QuTiP</a></li>
 </ul>
@@ -272,6 +271,7 @@
 </ul>
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../code/api/qilisdk/utils/index.html">qilisdk.utils<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/utils/classical_solvers/index.html">qilisdk.utils.classical_solvers</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/utils/hashing/index.html">qilisdk.utils.hashing</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/utils/openfermion/index.html">qilisdk.utils.openfermion</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/utils/openqasm/index.html">qilisdk.utils.openqasm</a></li>
@@ -293,6 +293,9 @@
 <span class="caption_text">Versiones</span>
 </p>
 <ul>
+<li class="toctree-l1">
+<a class="reference internal" href="../../../0.2.1/tutorials/applications/application_annealing.html">0.2.1</a>
+</li>
 <li class="toctree-l1">
 <a class="reference internal" href="../../../0.2.0/tutorials/applications/application_annealing.html">0.2.0</a>
 </li>
@@ -405,22 +408,17 @@
 <section id="the-solution">
 <h2>La solución<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#the-solution" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#the-solution'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
 <p>Ahora que tenemos nuestro problema formulado como un QUBO, podemos usar el recocido cuántico para encontrar una solución aproximada. El recocido cuántico es un algoritmo de optimización metaheurístico inspirado en el proceso de recocido en metalurgia, donde un material se calienta y luego se enfría lentamente para eliminar defectos y encontrar un estado de baja energía. En el recocido cuántico, comenzamos con un Hamiltoniano simple cuyo estado fundamental es fácil de preparar y luego lo evolucionamos lentamente hacia un Hamiltoniano más complejo que codifica el problema de optimización que queremos resolver. La esperanza es que si hacemos esto con suficiente lentitud, el sistema permanecerá en su estado fundamental durante toda la evolución y así terminará en el estado fundamental del Hamiltoniano final, que corresponde a la solución óptima de nuestro problema.</p>
-<p>Assuming we have reformulated our problem into a QUBO, we can construct the problem Hamiltonian for quantum annealing,
-which is in the form:</p>
+<p>Asumiendo que hemos reformulado nuestro problema en un QUBO, podemos construir el Hamiltoniano del problema para el recocido cuántico, que viene dado por:</p>
 <div class="math notranslate nohighlight">
 \[H_{prob} = \sum_{i,j} c_{ij} Z(i) Z(j)\]</div>
-<p>Where <span class="math notranslate nohighlight">\(Z(i)\)</span> is the Pauli-Z operator acting on qubit <span class="math notranslate nohighlight">\(i\)</span>, and <span class="math notranslate nohighlight">\(c_{ij}\)</span> are the coefficients from our QUBO formulation.
-Note that these variables <span class="math notranslate nohighlight">\(Z(i)\)</span> are related to the binary variables in our original problem by the transformation <span class="math notranslate nohighlight">\(x_i = (1 - Z(i))/2\)</span>.</p>
+<p>Donde <span class="math notranslate nohighlight">\(Z(i)\)</span> es el operador de Pauli-Z que actúa sobre el cúbit <span class="math notranslate nohighlight">\(i\)</span>, y <span class="math notranslate nohighlight">\(c_{ij}\)</span> son los coeficientes de nuestra formulación QUBO. Tenga en cuenta que estas variables <span class="math notranslate nohighlight">\(Z(i)\)</span> están relacionadas con las variables binarias de nuestro problema original mediante la transformación <span class="math notranslate nohighlight">\(x_i = (1 - Z(i))/2\)</span>.</p>
 <p>Nuestro Hamiltoniano de mezcla se elige típicamente como el Hamiltoniano de campo transverso, que viene dado por:</p>
 <div class="math notranslate nohighlight">
 \[H_{mix} = - \sum_i X(i)\]</div>
 <p>El Hamiltoniano dependiente del tiempo que evolucionamos está dado entonces por:</p>
 <div class="math notranslate nohighlight">
 \[H(t) = A(t) H_{mix} + B(t) H_{prob}\]</div>
-<p>Where <span class="math notranslate nohighlight">\(A(t)\)</span> and <span class="math notranslate nohighlight">\(B(t)\)</span> are functions that determine how we interpolate
-between the mixing Hamiltonian and the problem Hamiltonian over time.
-For simplicity here we will just assume that we do a linear interpolation,
-such that <span class="math notranslate nohighlight">\(A(t) = 1 - t/T\)</span> and <span class="math notranslate nohighlight">\(B(t) = t/T\)</span>, where <span class="math notranslate nohighlight">\(T\)</span> is the total annealing time.</p>
+<p>Donde <span class="math notranslate nohighlight">\(A(t)\)</span> y <span class="math notranslate nohighlight">\(B(t)\)</span> son funciones que determinan cómo interpolamos entre el Hamiltoniano de mezcla y el Hamiltoniano del problema a lo largo del tiempo. Por simplicidad, aquí asumiremos que realizamos una interpolación lineal, de modo que <span class="math notranslate nohighlight">\(A(t) = 1 - t/T\)</span> y <span class="math notranslate nohighlight">\(B(t) = t/T\)</span>, donde <span class="math notranslate nohighlight">\(T\)</span> es el tiempo total de recocido.</p>
 </section>
 <section id="the-implementation">
 <h2>La implementación<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#the-implementation" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#the-implementation'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
@@ -471,8 +469,7 @@ such that <span class="math notranslate nohighlight">\(A(t) = 1 - t/T\)</span> a
 </span><span id="line-6"><span class="n">mixer_hamiltonian</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span> <span class="o">*</span> <span class="n">X</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_people</span><span class="p">))</span>
 </span></code></pre></div>
 </div>
-<p>We also need to define the schedule - how the coefficients of the problem and mixing Hamiltonians change over time. In this
-case we’ll just use a simple linear mixing:</p>
+<p>También necesitamos definir el esquema: cómo cambian los coeficientes de los Hamiltonianos del problema y de mezcla a lo largo del tiempo. En este caso, simplemente usaremos una mezcla lineal sencilla:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">schedule</span> <span class="o">=</span> <span class="n">Schedule</span><span class="o">.</span><span class="n">linear</span><span class="p">(</span><span class="n">mixer_hamiltonian</span><span class="p">,</span> <span class="n">problem_hamiltonian</span><span class="p">,</span> <span class="n">total_time</span><span class="o">=</span><span class="mf">100.0</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
 </span></code></pre></div>
 </div>
@@ -508,6 +505,32 @@ case we’ll just use a simple linear mixing:</p>
 </span></code></pre></div>
 </div>
 <p>Como puede verse en estos resultados, las muestras satisfacen la restricción (es decir, tienen exactamente dos 1’s). Más concretamente, las dos muestras «0110» y «1001» (correspondientes a Alice/Dave en un equipo y Bob/Carol en el otro) son las soluciones óptimas a nuestro problema, siendo 9 la puntuación de compatibilidad máxima obtenible.</p>
+<p>To help to visualize the evolution we just performed, we can re-run our simulation,
+this time recording the full state at each timestep and then using
+the <a class="reference internal" href="../../code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule.draw_eigenvalues" title="qilisdk.analog.schedule.Schedule.draw_eigenvalues"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Schedule.draw_eigenvalues()</span></code></a> method
+to plot how our state evolved versus the eigenvalues of the Hamiltonian over time:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">evolution</span> <span class="o">=</span> <span class="n">AnalogEvolution</span><span class="p">(</span>
+</span><span id="line-2">    <span class="n">schedule</span><span class="o">=</span><span class="n">schedule</span><span class="p">,</span>
+</span><span id="line-3">    <span class="n">initial_state</span><span class="o">=</span><span class="n">initial_state</span><span class="p">,</span>
+</span><span id="line-4">    <span class="n">store_intermediate_results</span><span class="o">=</span><span class="kc">True</span>
+</span><span id="line-5"><span class="p">)</span>
+</span><span id="line-6"><span class="n">readout</span> <span class="o">=</span> <span class="n">Readout</span><span class="p">()</span><span class="o">.</span><span class="n">with_state_tomography</span><span class="p">()</span>
+</span><span id="line-7"><span class="n">results</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">evolution</span><span class="p">,</span> <span class="n">readout</span><span class="p">)</span>
+</span><span id="line-8">
+</span><span id="line-9"><span class="n">schedule</span><span class="o">.</span><span class="n">draw_eigenvalues</span><span class="p">(</span>
+</span><span id="line-10">    <span class="n">intermediate_states</span><span class="o">=</span><span class="n">results</span><span class="o">.</span><span class="n">get_intermediate_states</span><span class="p">(),</span>
+</span><span id="line-11">    <span class="n">show_overlaps</span><span class="o">=</span><span class="kc">True</span>
+</span><span id="line-12"><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<a class="only-light reference internal image-reference" href="../../_images/annealing_example_schedule_eigenvalues.svg"><img alt="../../_images/annealing_example_schedule_eigenvalues.svg" class="only-light align-center" src="../../_images/annealing_example_schedule_eigenvalues.svg" style="width: 690.3000000000001px; height: 431.1px;"/>
+</a>
+<a class="only-dark reference internal image-reference" href="../../_images/annealing_example_schedule_eigenvalues_dark.svg"><img alt="../../_images/annealing_example_schedule_eigenvalues_dark.svg" class="only-dark align-center" src="../../_images/annealing_example_schedule_eigenvalues_dark.svg" style="width: 690.3000000000001px; height: 431.1px;"/>
+</a>
+<p>As we can see from this plot, the state started in the ground state of the mixing Hamiltonian (the bottom line, at the very left)
+and then evolved to the ground state of the problem Hamiltonian (at the very right). By moving slow enough we stayed in the ground state,
+with only a small percentage of our state leaking out to some of the excited states. A larger total time (and thus a slower evolution)
+would result in less state leaking out, at the cost of taking longer to run.</p>
 </section>
 <section id="further-reading">
 <h2>Lectura adicional<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#further-reading" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#further-reading'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>

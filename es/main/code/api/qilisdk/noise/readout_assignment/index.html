@@ -14,9 +14,9 @@
 <link href="../../../../../_static/theme.css?v=42baaae4" rel="stylesheet" type="text/css"/>
 <link href="../../../../../_static/graphviz.css?v=4ae1632d" rel="stylesheet" type="text/css"/>
 <link href="../../../../../_static/sphinx-design.min.css?v=95c83b7e" rel="stylesheet" type="text/css"/>
-<link href="../../../../../_static/custom.css?v=7f555f8f" rel="stylesheet" type="text/css"/>
+<link href="../../../../../_static/custom.css?v=e4e41e26" rel="stylesheet" type="text/css"/>
 <link href="../../../../../_static/awesome-sphinx-design.css?v=15e0fffa" rel="stylesheet" type="text/css"/>
-<link href="../../../../../_static/q_trans.png" rel="icon"/>
+<link href="../../../../../_static/QiliSDK_q.png" rel="icon"/>
 <link href="../../../../../search.html" rel="search" title="Búsqueda"/>
 <link href="../../../../../genindex.html" rel="index" title="Índice"/>
 <link href="../representations/index.html" rel="next" title="qilisdk.noise.representations"/>
@@ -40,9 +40,8 @@
     </a><header class="sticky top-0 z-40 w-full border-b shadow-sm border-border supports-backdrop-blur:bg-background/60 bg-background/95 backdrop-blur"><div class="container flex items-center h-14">
 <div class="hidden mr-4 md:flex">
 <a class="flex items-center mr-6" href="../../../../../index.html">
-<img alt="Logo" class="mr-2 hidden dark:block" height="24" src="../../../../../_static/q_trans.png" width="24"/>
-<img alt="Logo" class="mr-2 dark:hidden" height="24" src="../../../../../_static/q_trans.png" width="24"/><span class="hidden font-bold sm:inline-block text-clip whitespace-nowrap">QiliSDK</span>
-</a>
+<img alt="QiliSDK" class="hidden dark:block" src="../../../../../_static/QiliSDK_wht.svg" style="height: 2rem; width: auto;"/>
+<img alt="QiliSDK" class="dark:hidden" src="../../../../../_static/QiliSDK_blk.svg" style="height: 2rem; width: auto;"/></a>
 <div class="language-switcher">
 <a class="lang-link" href="../../../../../../../en/main/code/api/qilisdk/noise/readout_assignment/index.html">EN</a>
 <span class="lang-active">ES</span>
@@ -78,8 +77,8 @@
 </header>
 <div class="flex-1"><div class="container flex-1 items-start md:grid md:grid-cols-[220px_minmax(0,1fr)] md:gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10"><aside :aria-hidden="!showSidebar" :class="{ 'translate-x-0': showSidebar }" class="fixed inset-y-0 left-0 md:top-14 z-50 md:z-30 bg-background md:bg-transparent transition-all duration-100 -translate-x-full md:translate-x-0 ml-0 p-6 md:p-0 md:-ml-2 md:h-[calc(100vh-3.5rem)] w-5/6 md:w-full shrink-0 overflow-y-auto border-r border-border md:sticky" id="left-sidebar">
 <a class="!justify-start text-sm md:!hidden bg-background" href="../../../../../index.html">
-<img alt="Logo" class="mr-2 hidden dark:block" height="16" src="../../../../../_static/q_trans.png" width="16"/>
-<img alt="Logo" class="mr-2 dark:hidden" height="16" src="../../../../../_static/q_trans.png" width="16"/><span class="font-bold text-clip whitespace-nowrap">QiliSDK</span>
+<img alt="Logo" class="mr-2 hidden dark:block" height="16" src="../../../../../_static/QiliSDK_wht.svg" width="16"/>
+<img alt="Logo" class="mr-2 dark:hidden" height="16" src="../../../../../_static/QiliSDK_blk.svg" width="16"/><span class="font-bold text-clip whitespace-nowrap">QiliSDK</span>
 </a>
 <div class="relative overflow-hidden md:overflow-auto my-4 md:my-0 h-[calc(100vh-8rem)] md:h-auto">
 <div class="overflow-y-auto h-full w-full relative pr-6"><nav class="table w-full min-w-full my-6 lg:my-8">
@@ -152,7 +151,7 @@
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../../../../modules/backends/backends.html">Backends<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l2"><a class="reference internal" href="../../../../../modules/backends/backends_overview.html">Descripción general</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../../../modules/backends/backends_qilisim.html">Backend QiliSim</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../../modules/backends/backends_qilisim.html">QiliSim</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../../../modules/backends/backends_cuda.html">Backend CUDA</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../../../modules/backends/backends_qutip.html">Backend QuTiP</a></li>
 </ul>
@@ -272,6 +271,7 @@
 </ul>
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../utils/index.html">qilisdk.utils<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../../utils/classical_solvers/index.html">qilisdk.utils.classical_solvers</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../utils/hashing/index.html">qilisdk.utils.hashing</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../utils/openfermion/index.html">qilisdk.utils.openfermion</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../utils/openqasm/index.html">qilisdk.utils.openqasm</a></li>
@@ -293,6 +293,9 @@
 <span class="caption_text">Versiones</span>
 </p>
 <ul>
+<li class="toctree-l1">
+<a class="reference internal" href="../../../../../../0.2.1/index.html">0.2.1</a>
+</li>
 <li class="toctree-l1">
 <a class="reference internal" href="../../../../../../0.2.0/index.html">0.2.0</a>
 </li>

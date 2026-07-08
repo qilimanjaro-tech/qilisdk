@@ -19,9 +19,9 @@
       <link rel="stylesheet" type="text/css" href="../../../_static/theme.css?v=42baaae4" />
       <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
       <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
-      <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=7f555f8f" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=e4e41e26" />
       <link rel="stylesheet" type="text/css" href="../../../_static/awesome-sphinx-design.css?v=15e0fffa" />
-      <link rel="icon" href="../../../_static/q_trans.png" />
+      <link rel="icon" href="../../../_static/QiliSDK_q.png" />
         <link rel="search" title="Cerca" href="../../../search.html" />
         <link rel="index" title="Índex" href="../../../genindex.html" />
 
@@ -44,10 +44,10 @@
     </a><header
   class="sticky top-0 z-40 w-full border-b shadow-sm border-border supports-backdrop-blur:bg-background/60 bg-background/95 backdrop-blur"><div class="container flex items-center h-14">
     <div class="hidden mr-4 md:flex">
-      <a href="../../../index.html" class="flex items-center mr-6">
-          <img width="24" height="24" class="mr-2 hidden dark:block" src="../../../_static/q_trans.png" alt="Logo" />
-        <img width="24" height="24" class="mr-2 dark:hidden" src="../../../_static/q_trans.png" alt="Logo" /><span class="hidden font-bold sm:inline-block text-clip whitespace-nowrap">QiliSDK</span>
-      </a>
+<a href="../../../index.html" class="flex items-center mr-6">
+    <img style="height: 2rem; width: auto;" class="hidden dark:block" src="../../../_static/QiliSDK_wht.svg" alt="QiliSDK" />
+    <img style="height: 2rem; width: auto;" class="dark:hidden" src="../../../_static/QiliSDK_blk.svg" alt="QiliSDK" /></a>
+
 
 <div class="language-switcher">
   
@@ -122,8 +122,8 @@
   :aria-hidden="!showSidebar" :class="{ 'translate-x-0': showSidebar }">
 
     <a href="../../../index.html" class="!justify-start text-sm md:!hidden bg-background">
-        <img width="16" height="16" class="mr-2 hidden dark:block" src="../../../_static/q_trans.png" alt="Logo" />
-        <img width="16" height="16" class="mr-2 dark:hidden" src="../../../_static/q_trans.png" alt="Logo" /><span class="font-bold text-clip whitespace-nowrap">QiliSDK</span>
+        <img width="16" height="16" class="mr-2 hidden dark:block" src="../../../_static/QiliSDK_wht.svg" alt="Logo" />
+        <img width="16" height="16" class="mr-2 dark:hidden" src="../../../_static/QiliSDK_blk.svg" alt="Logo" /><span class="font-bold text-clip whitespace-nowrap">QiliSDK</span>
     </a>
 
     <div class="relative overflow-hidden md:overflow-auto my-4 md:my-0 h-[calc(100vh-8rem)] md:h-auto">
@@ -197,7 +197,7 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/backends/backends.html">Backends</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/backends/backends_overview.html">Visió general</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../modules/backends/backends_qilisim.html">Backend QiliSim</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/backends/backends_qilisim.html">QiliSim</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/backends/backends_cuda.html">Backend CUDA</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/backends/backends_qutip.html">Backend QuTiP</a></li>
 </ul>
@@ -317,6 +317,7 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/utils/index.html">qilisdk.utils</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/classical_solvers/index.html">qilisdk.utils.classical_solvers</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/hashing/index.html">qilisdk.utils.hashing</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/openfermion/index.html">qilisdk.utils.openfermion</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/openqasm/index.html">qilisdk.utils.openqasm</a></li>
@@ -343,6 +344,9 @@
       <span class="caption_text">Llançaments</span>
     </p>
     <ul>
+      <li class="toctree-l1">
+        <a class="reference internal" href="../../../../0.2.1/index.html">0.2.1</a>
+      </li>
       <li class="toctree-l1">
         <a class="reference internal" href="../../../../0.2.0/index.html">0.2.0</a>
       </li>
@@ -672,186 +676,193 @@
 <div class="viewcode-block" id="ReservoirLayer.set_parameters">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/quantum_reservoirs/index.html#qilisdk.functionals.quantum_reservoirs.ReservoirLayer.set_parameters">[documents]</a>
 </span><span id="line-229">    <span class="k">def</span><span class="w"> </span><span class="nf">set_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">RealNumber</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-230">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_encoding</span><span class="p">:</span>
-</span><span id="line-231">            <span class="n">param_labels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_encoding</span><span class="o">.</span><span class="n">get_parameter_names</span><span class="p">()</span>
-</span><span id="line-232">            <span class="bp">self</span><span class="o">.</span><span class="n">_input_encoding</span><span class="o">.</span><span class="n">set_parameters</span><span class="p">({</span><span class="n">p</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">parameters</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">param_labels</span><span class="p">})</span>
-</span><span id="line-233">        <span class="n">param_labels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_evolution_dynamics</span><span class="o">.</span><span class="n">get_parameter_names</span><span class="p">()</span>
-</span><span id="line-234">        <span class="bp">self</span><span class="o">.</span><span class="n">_evolution_dynamics</span><span class="o">.</span><span class="n">set_parameters</span><span class="p">({</span><span class="n">p</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">parameters</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">param_labels</span><span class="p">})</span>
-</span><span id="line-235">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output_encoding</span><span class="p">:</span>
-</span><span id="line-236">            <span class="n">param_labels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output_encoding</span><span class="o">.</span><span class="n">get_parameter_names</span><span class="p">()</span>
-</span><span id="line-237">            <span class="bp">self</span><span class="o">.</span><span class="n">_output_encoding</span><span class="o">.</span><span class="n">set_parameters</span><span class="p">({</span><span class="n">p</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">parameters</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">param_labels</span><span class="p">})</span></div>
+</span><span id="line-230">        <span class="n">known_labels</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_parameter_names</span><span class="p">())</span>
+</span><span id="line-231">        <span class="n">unknown_labels</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">parameters</span> <span class="k">if</span> <span class="n">p</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">known_labels</span><span class="p">]</span>
+</span><span id="line-232">        <span class="k">if</span> <span class="n">unknown_labels</span><span class="p">:</span>
+</span><span id="line-233">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="line-234">                <span class="sa">f</span><span class="s2">&quot;Cannot set unknown parameter(s) </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">unknown_labels</span><span class="p">)</span><span class="si">}</span><span class="s2"> on this reservoir layer. &quot;</span>
+</span><span id="line-235">                <span class="sa">f</span><span class="s2">&quot;Valid parameter names are </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">known_labels</span><span class="p">)</span><span class="si">}</span><span class="s2">.&quot;</span>
+</span><span id="line-236">            <span class="p">)</span>
+</span><span id="line-237">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_encoding</span><span class="p">:</span>
+</span><span id="line-238">            <span class="n">param_labels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_encoding</span><span class="o">.</span><span class="n">get_parameter_names</span><span class="p">()</span>
+</span><span id="line-239">            <span class="bp">self</span><span class="o">.</span><span class="n">_input_encoding</span><span class="o">.</span><span class="n">set_parameters</span><span class="p">({</span><span class="n">p</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">parameters</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">param_labels</span><span class="p">})</span>
+</span><span id="line-240">        <span class="n">param_labels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_evolution_dynamics</span><span class="o">.</span><span class="n">get_parameter_names</span><span class="p">()</span>
+</span><span id="line-241">        <span class="bp">self</span><span class="o">.</span><span class="n">_evolution_dynamics</span><span class="o">.</span><span class="n">set_parameters</span><span class="p">({</span><span class="n">p</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">parameters</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">param_labels</span><span class="p">})</span>
+</span><span id="line-242">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output_encoding</span><span class="p">:</span>
+</span><span id="line-243">            <span class="n">param_labels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output_encoding</span><span class="o">.</span><span class="n">get_parameter_names</span><span class="p">()</span>
+</span><span id="line-244">            <span class="bp">self</span><span class="o">.</span><span class="n">_output_encoding</span><span class="o">.</span><span class="n">set_parameters</span><span class="p">({</span><span class="n">p</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">parameters</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">param_labels</span><span class="p">})</span></div>
 
-</span><span id="line-238">
+</span><span id="line-245">
 <div class="viewcode-block" id="ReservoirLayer.set_parameter_bounds">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/quantum_reservoirs/index.html#qilisdk.functionals.quantum_reservoirs.ReservoirLayer.set_parameter_bounds">[documents]</a>
-</span><span id="line-239">    <span class="k">def</span><span class="w"> </span><span class="nf">set_parameter_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ranges</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-240">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_encoding</span><span class="p">:</span>
-</span><span id="line-241">            <span class="n">param_labels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_encoding</span><span class="o">.</span><span class="n">get_parameter_names</span><span class="p">()</span>
-</span><span id="line-242">            <span class="bp">self</span><span class="o">.</span><span class="n">_input_encoding</span><span class="o">.</span><span class="n">set_parameter_bounds</span><span class="p">({</span><span class="n">p</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">ranges</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">param_labels</span><span class="p">})</span>
-</span><span id="line-243">        <span class="n">param_labels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_evolution_dynamics</span><span class="o">.</span><span class="n">get_parameter_names</span><span class="p">()</span>
-</span><span id="line-244">        <span class="bp">self</span><span class="o">.</span><span class="n">_evolution_dynamics</span><span class="o">.</span><span class="n">set_parameter_bounds</span><span class="p">({</span><span class="n">p</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">ranges</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">param_labels</span><span class="p">})</span>
-</span><span id="line-245">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output_encoding</span><span class="p">:</span>
-</span><span id="line-246">            <span class="n">param_labels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output_encoding</span><span class="o">.</span><span class="n">get_parameter_names</span><span class="p">()</span>
-</span><span id="line-247">            <span class="bp">self</span><span class="o">.</span><span class="n">_output_encoding</span><span class="o">.</span><span class="n">set_parameter_bounds</span><span class="p">({</span><span class="n">p</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">ranges</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">param_labels</span><span class="p">})</span></div>
+</span><span id="line-246">    <span class="k">def</span><span class="w"> </span><span class="nf">set_parameter_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ranges</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-247">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_encoding</span><span class="p">:</span>
+</span><span id="line-248">            <span class="n">param_labels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_encoding</span><span class="o">.</span><span class="n">get_parameter_names</span><span class="p">()</span>
+</span><span id="line-249">            <span class="bp">self</span><span class="o">.</span><span class="n">_input_encoding</span><span class="o">.</span><span class="n">set_parameter_bounds</span><span class="p">({</span><span class="n">p</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">ranges</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">param_labels</span><span class="p">})</span>
+</span><span id="line-250">        <span class="n">param_labels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_evolution_dynamics</span><span class="o">.</span><span class="n">get_parameter_names</span><span class="p">()</span>
+</span><span id="line-251">        <span class="bp">self</span><span class="o">.</span><span class="n">_evolution_dynamics</span><span class="o">.</span><span class="n">set_parameter_bounds</span><span class="p">({</span><span class="n">p</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">ranges</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">param_labels</span><span class="p">})</span>
+</span><span id="line-252">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output_encoding</span><span class="p">:</span>
+</span><span id="line-253">            <span class="n">param_labels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output_encoding</span><span class="o">.</span><span class="n">get_parameter_names</span><span class="p">()</span>
+</span><span id="line-254">            <span class="bp">self</span><span class="o">.</span><span class="n">_output_encoding</span><span class="o">.</span><span class="n">set_parameter_bounds</span><span class="p">({</span><span class="n">p</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">ranges</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">param_labels</span><span class="p">})</span></div>
 
-</span><span id="line-248">
-</span><span id="line-249">    <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-</span><span id="line-250"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-251"><span class="sd">        Get the total number of steps in the reservoir pass (maximum of 3)</span>
-</span><span id="line-252">
-</span><span id="line-253"><span class="sd">        Returns:</span>
-</span><span id="line-254"><span class="sd">            int: The number of steps in the reservoir pass.</span>
-</span><span id="line-255"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-256">        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_input_encoding</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_output_encoding</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
-</span><span id="line-257">
-</span><span id="line-258">    <span class="k">def</span><span class="w"> </span><span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Circuit</span> <span class="o">|</span> <span class="n">Schedule</span><span class="p">]:</span>
-</span><span id="line-259"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-260"><span class="sd">        Return an iterator over the steps in the reservoir pass.</span>
-</span><span id="line-261">
-</span><span id="line-262"><span class="sd">        Yields:</span>
-</span><span id="line-263"><span class="sd">            Iterator[Circuit | Schedule]: The steps in the pass</span>
-</span><span id="line-264"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-265">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_encoding</span><span class="p">:</span>
-</span><span id="line-266">            <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_encoding</span>
-</span><span id="line-267">        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_evolution_dynamics</span>
-</span><span id="line-268">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output_encoding</span><span class="p">:</span>
-</span><span id="line-269">            <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output_encoding</span>
-</span><span id="line-270">
-</span><span id="line-271">    <span class="k">def</span><span class="w"> </span><span class="nf">__copy__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ReservoirLayer</span><span class="p">:</span>
-</span><span id="line-272">        <span class="k">return</span> <span class="n">ReservoirLayer</span><span class="p">(</span>
-</span><span id="line-273">            <span class="n">evolution_dynamics</span><span class="o">=</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">evolution_dynamics</span><span class="p">),</span>
-</span><span id="line-274">            <span class="n">input_encoding</span><span class="o">=</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_encoding</span><span class="p">),</span>
-</span><span id="line-275">            <span class="n">output_encoding</span><span class="o">=</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_encoding</span><span class="p">),</span>
-</span><span id="line-276">            <span class="n">qubits_to_reset</span><span class="o">=</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qubits_to_reset</span><span class="p">),</span>
-</span><span id="line-277">        <span class="p">)</span></div>
+</span><span id="line-255">
+</span><span id="line-256">    <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+</span><span id="line-257"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-258"><span class="sd">        Get the total number of steps in the reservoir pass (maximum of 3)</span>
+</span><span id="line-259">
+</span><span id="line-260"><span class="sd">        Returns:</span>
+</span><span id="line-261"><span class="sd">            int: The number of steps in the reservoir pass.</span>
+</span><span id="line-262"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-263">        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_input_encoding</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_output_encoding</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+</span><span id="line-264">
+</span><span id="line-265">    <span class="k">def</span><span class="w"> </span><span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Circuit</span> <span class="o">|</span> <span class="n">Schedule</span><span class="p">]:</span>
+</span><span id="line-266"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-267"><span class="sd">        Return an iterator over the steps in the reservoir pass.</span>
+</span><span id="line-268">
+</span><span id="line-269"><span class="sd">        Yields:</span>
+</span><span id="line-270"><span class="sd">            Iterator[Circuit | Schedule]: The steps in the pass</span>
+</span><span id="line-271"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-272">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_encoding</span><span class="p">:</span>
+</span><span id="line-273">            <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_encoding</span>
+</span><span id="line-274">        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_evolution_dynamics</span>
+</span><span id="line-275">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output_encoding</span><span class="p">:</span>
+</span><span id="line-276">            <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output_encoding</span>
+</span><span id="line-277">
+</span><span id="line-278">    <span class="k">def</span><span class="w"> </span><span class="nf">__copy__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ReservoirLayer</span><span class="p">:</span>
+</span><span id="line-279">        <span class="k">return</span> <span class="n">ReservoirLayer</span><span class="p">(</span>
+</span><span id="line-280">            <span class="n">evolution_dynamics</span><span class="o">=</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">evolution_dynamics</span><span class="p">),</span>
+</span><span id="line-281">            <span class="n">input_encoding</span><span class="o">=</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_encoding</span><span class="p">),</span>
+</span><span id="line-282">            <span class="n">output_encoding</span><span class="o">=</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_encoding</span><span class="p">),</span>
+</span><span id="line-283">            <span class="n">qubits_to_reset</span><span class="o">=</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qubits_to_reset</span><span class="p">),</span>
+</span><span id="line-284">        <span class="p">)</span></div>
 
-</span><span id="line-278">
-</span><span id="line-279">
+</span><span id="line-285">
+</span><span id="line-286">
 <div class="viewcode-block" id="QuantumReservoir">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/quantum_reservoirs/index.html#qilisdk.functionals.quantum_reservoirs.QuantumReservoir">[documents]</a>
-</span><span id="line-280"><span class="k">class</span><span class="w"> </span><span class="nc">QuantumReservoir</span><span class="p">(</span><span class="n">PrimitiveFunctional</span><span class="p">):</span>
-</span><span id="line-281"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Reservoir functional executed over a sequence of input layers.</span>
-</span><span id="line-282">
-</span><span id="line-283"><span class="sd">    Each element in ``input_per_layer`` is applied to the underlying</span>
-</span><span id="line-284"><span class="sd">    :class:`ReservoirLayer` before executing one pass of dynamics and measurement.</span>
-</span><span id="line-285"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-286">
-</span><span id="line-287">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
-</span><span id="line-288">        <span class="bp">self</span><span class="p">,</span>
-</span><span id="line-289">        <span class="n">initial_state</span><span class="p">:</span> <span class="n">QTensor</span><span class="p">,</span>
-</span><span id="line-290">        <span class="n">reservoir_layer</span><span class="p">:</span> <span class="n">ReservoirLayer</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="line-291">        <span class="n">input_per_layer</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="line-292">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-293"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Construct a quantum reservoir functional.</span>
-</span><span id="line-294">
-</span><span id="line-295"><span class="sd">        Args:</span>
-</span><span id="line-296"><span class="sd">            initial_state (QTensor): Initial quantum state before the first</span>
-</span><span id="line-297"><span class="sd">                layer.</span>
-</span><span id="line-298"><span class="sd">            reservoir_layer (ReservoirLayer | None): Reservoir layer</span>
-</span><span id="line-299"><span class="sd">                definition repeated at each step. Defaults to None.</span>
-</span><span id="line-300"><span class="sd">            input_per_layer (list[dict[str, float]] | None): Input parameter</span>
-</span><span id="line-301"><span class="sd">                assignments for each layer. Defaults to None.</span>
-</span><span id="line-302">
-</span><span id="line-303"><span class="sd">        Raises:</span>
-</span><span id="line-304"><span class="sd">            ValueError: If ``reservoir_layer`` or ``input_per_layer`` is</span>
-</span><span id="line-305"><span class="sd">                ``None``, if ``input_per_layer`` is empty, or if the initial</span>
-</span><span id="line-306"><span class="sd">                state qubit count does not match the reservoir layer.</span>
-</span><span id="line-307"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-308">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-</span><span id="line-309">        <span class="k">if</span> <span class="n">reservoir_layer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-310">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;`reservoir_layer` must be provided.&quot;</span><span class="p">)</span>
-</span><span id="line-311">        <span class="k">if</span> <span class="n">input_per_layer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-312">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;`input_per_layer` must be provided.&quot;</span><span class="p">)</span>
-</span><span id="line-313">        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_per_layer</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-</span><span id="line-314">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;`input_per_layer` must contain at least one layer.&quot;</span><span class="p">)</span>
-</span><span id="line-315">
-</span><span id="line-316">        <span class="bp">self</span><span class="o">.</span><span class="n">_initial_state</span> <span class="o">=</span> <span class="n">initial_state</span>
-</span><span id="line-317">        <span class="bp">self</span><span class="o">.</span><span class="n">_reservoir_layer</span> <span class="o">=</span> <span class="n">reservoir_layer</span>
-</span><span id="line-318">        <span class="bp">self</span><span class="o">.</span><span class="n">_input_per_layer</span> <span class="o">=</span> <span class="n">input_per_layer</span>
-</span><span id="line-319">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reservoir_layer</span><span class="o">.</span><span class="n">nqubits</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initial_state</span><span class="o">.</span><span class="n">nqubits</span><span class="p">:</span>
-</span><span id="line-320">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-</span><span id="line-321">                <span class="sa">f</span><span class="s2">&quot;invalid initial state: the initial state acts on </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_initial_state</span><span class="o">.</span><span class="n">nqubits</span><span class="si">}</span><span class="s2"> qubits while the reservoir is defined with </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_reservoir_layer</span><span class="o">.</span><span class="n">nqubits</span><span class="si">}</span><span class="s2"> qubits.&quot;</span>
-</span><span id="line-322">            <span class="p">)</span>
-</span><span id="line-323">
-</span><span id="line-324">    <span class="nd">@property</span>
+</span><span id="line-287"><span class="k">class</span><span class="w"> </span><span class="nc">QuantumReservoir</span><span class="p">(</span><span class="n">PrimitiveFunctional</span><span class="p">):</span>
+</span><span id="line-288"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Reservoir functional executed over a sequence of input layers.</span>
+</span><span id="line-289">
+</span><span id="line-290"><span class="sd">    Each element in ``input_per_layer`` is applied to the underlying</span>
+</span><span id="line-291"><span class="sd">    :class:`ReservoirLayer` before executing one pass of dynamics and measurement.</span>
+</span><span id="line-292"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-293">
+</span><span id="line-294">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+</span><span id="line-295">        <span class="bp">self</span><span class="p">,</span>
+</span><span id="line-296">        <span class="n">initial_state</span><span class="p">:</span> <span class="n">QTensor</span><span class="p">,</span>
+</span><span id="line-297">        <span class="n">reservoir_layer</span><span class="p">:</span> <span class="n">ReservoirLayer</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-298">        <span class="n">input_per_layer</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-299">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-300"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Construct a quantum reservoir functional.</span>
+</span><span id="line-301">
+</span><span id="line-302"><span class="sd">        Args:</span>
+</span><span id="line-303"><span class="sd">            initial_state (QTensor): Initial quantum state before the first</span>
+</span><span id="line-304"><span class="sd">                layer.</span>
+</span><span id="line-305"><span class="sd">            reservoir_layer (ReservoirLayer | None): Reservoir layer</span>
+</span><span id="line-306"><span class="sd">                definition repeated at each step. Defaults to None.</span>
+</span><span id="line-307"><span class="sd">            input_per_layer (list[dict[str, float]] | None): Input parameter</span>
+</span><span id="line-308"><span class="sd">                assignments for each layer. Defaults to None.</span>
+</span><span id="line-309">
+</span><span id="line-310"><span class="sd">        Raises:</span>
+</span><span id="line-311"><span class="sd">            ValueError: If ``reservoir_layer`` or ``input_per_layer`` is</span>
+</span><span id="line-312"><span class="sd">                ``None``, if ``input_per_layer`` is empty, or if the initial</span>
+</span><span id="line-313"><span class="sd">                state qubit count does not match the reservoir layer.</span>
+</span><span id="line-314"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-315">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+</span><span id="line-316">        <span class="k">if</span> <span class="n">reservoir_layer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-317">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;`reservoir_layer` must be provided.&quot;</span><span class="p">)</span>
+</span><span id="line-318">        <span class="k">if</span> <span class="n">input_per_layer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-319">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;`input_per_layer` must be provided.&quot;</span><span class="p">)</span>
+</span><span id="line-320">        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_per_layer</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+</span><span id="line-321">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;`input_per_layer` must contain at least one layer.&quot;</span><span class="p">)</span>
+</span><span id="line-322">
+</span><span id="line-323">        <span class="bp">self</span><span class="o">.</span><span class="n">_initial_state</span> <span class="o">=</span> <span class="n">initial_state</span>
+</span><span id="line-324">        <span class="bp">self</span><span class="o">.</span><span class="n">_reservoir_layer</span> <span class="o">=</span> <span class="n">reservoir_layer</span>
+</span><span id="line-325">        <span class="bp">self</span><span class="o">.</span><span class="n">_input_per_layer</span> <span class="o">=</span> <span class="n">input_per_layer</span>
+</span><span id="line-326">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reservoir_layer</span><span class="o">.</span><span class="n">nqubits</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initial_state</span><span class="o">.</span><span class="n">nqubits</span><span class="p">:</span>
+</span><span id="line-327">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="line-328">                <span class="sa">f</span><span class="s2">&quot;invalid initial state: the initial state acts on </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_initial_state</span><span class="o">.</span><span class="n">nqubits</span><span class="si">}</span><span class="s2"> qubits while the reservoir is defined with </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_reservoir_layer</span><span class="o">.</span><span class="n">nqubits</span><span class="si">}</span><span class="s2"> qubits.&quot;</span>
+</span><span id="line-329">            <span class="p">)</span>
+</span><span id="line-330">
+</span><span id="line-331">    <span class="nd">@property</span>
 <div class="viewcode-block" id="QuantumReservoir.nqubits">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/quantum_reservoirs/index.html#qilisdk.functionals.quantum_reservoirs.QuantumReservoir.nqubits">[documents]</a>
-</span><span id="line-325">    <span class="k">def</span><span class="w"> </span><span class="nf">nqubits</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-</span><span id="line-326"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Number of qubits in the reservoir.&quot;&quot;&quot;</span>
-</span><span id="line-327">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reservoir_layer</span><span class="o">.</span><span class="n">nqubits</span></div>
+</span><span id="line-332">    <span class="k">def</span><span class="w"> </span><span class="nf">nqubits</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+</span><span id="line-333"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Number of qubits in the reservoir.&quot;&quot;&quot;</span>
+</span><span id="line-334">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reservoir_layer</span><span class="o">.</span><span class="n">nqubits</span></div>
 
-</span><span id="line-328">
-</span><span id="line-329">    <span class="nd">@property</span>
+</span><span id="line-335">
+</span><span id="line-336">    <span class="nd">@property</span>
 <div class="viewcode-block" id="QuantumReservoir.initial_state">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/quantum_reservoirs/index.html#qilisdk.functionals.quantum_reservoirs.QuantumReservoir.initial_state">[documents]</a>
-</span><span id="line-330">    <span class="k">def</span><span class="w"> </span><span class="nf">initial_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QTensor</span><span class="p">:</span>
-</span><span id="line-331"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Initial quantum state used before the first layer.&quot;&quot;&quot;</span>
-</span><span id="line-332">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initial_state</span></div>
+</span><span id="line-337">    <span class="k">def</span><span class="w"> </span><span class="nf">initial_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QTensor</span><span class="p">:</span>
+</span><span id="line-338"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Initial quantum state used before the first layer.&quot;&quot;&quot;</span>
+</span><span id="line-339">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initial_state</span></div>
 
-</span><span id="line-333">
-</span><span id="line-334">    <span class="nd">@property</span>
+</span><span id="line-340">
+</span><span id="line-341">    <span class="nd">@property</span>
 <div class="viewcode-block" id="QuantumReservoir.reservoir_layer">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/quantum_reservoirs/index.html#qilisdk.functionals.quantum_reservoirs.QuantumReservoir.reservoir_layer">[documents]</a>
-</span><span id="line-335">    <span class="k">def</span><span class="w"> </span><span class="nf">reservoir_layer</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ReservoirLayer</span><span class="p">:</span>
-</span><span id="line-336"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Reservoir pass definition applied at each layer.&quot;&quot;&quot;</span>
-</span><span id="line-337">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reservoir_layer</span></div>
+</span><span id="line-342">    <span class="k">def</span><span class="w"> </span><span class="nf">reservoir_layer</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ReservoirLayer</span><span class="p">:</span>
+</span><span id="line-343"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Reservoir pass definition applied at each layer.&quot;&quot;&quot;</span>
+</span><span id="line-344">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reservoir_layer</span></div>
 
-</span><span id="line-338">
-</span><span id="line-339">    <span class="nd">@property</span>
+</span><span id="line-345">
+</span><span id="line-346">    <span class="nd">@property</span>
 <div class="viewcode-block" id="QuantumReservoir.input_per_layer">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/quantum_reservoirs/index.html#qilisdk.functionals.quantum_reservoirs.QuantumReservoir.input_per_layer">[documents]</a>
-</span><span id="line-340">    <span class="k">def</span><span class="w"> </span><span class="nf">input_per_layer</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
-</span><span id="line-341"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Layer-ordered input parameter assignments.&quot;&quot;&quot;</span>
-</span><span id="line-342">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_per_layer</span></div>
+</span><span id="line-347">    <span class="k">def</span><span class="w"> </span><span class="nf">input_per_layer</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
+</span><span id="line-348"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Layer-ordered input parameter assignments.&quot;&quot;&quot;</span>
+</span><span id="line-349">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_per_layer</span></div>
 
-</span><span id="line-343">
-</span><span id="line-344">    <span class="nd">@property</span>
+</span><span id="line-350">
+</span><span id="line-351">    <span class="nd">@property</span>
 <div class="viewcode-block" id="QuantumReservoir.input_parameter_names">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/quantum_reservoirs/index.html#qilisdk.functionals.quantum_reservoirs.QuantumReservoir.input_parameter_names">[documents]</a>
-</span><span id="line-345">    <span class="k">def</span><span class="w"> </span><span class="nf">input_parameter_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-</span><span id="line-346"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Input-driven (non-trainable) parameter names expected per layer.&quot;&quot;&quot;</span>
-</span><span id="line-347">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reservoir_layer</span><span class="o">.</span><span class="n">input_parameter_names</span></div>
+</span><span id="line-352">    <span class="k">def</span><span class="w"> </span><span class="nf">input_parameter_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+</span><span id="line-353"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Input-driven (non-trainable) parameter names expected per layer.&quot;&quot;&quot;</span>
+</span><span id="line-354">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reservoir_layer</span><span class="o">.</span><span class="n">input_parameter_names</span></div>
 
-</span><span id="line-348">
-</span><span id="line-349">    <span class="k">def</span><span class="w"> </span><span class="nf">_iter_parameter_children</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Parameterizable</span><span class="p">]:</span>
-</span><span id="line-350"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Yield the reservoir layer as the sole parameterizable child.</span>
-</span><span id="line-351">
-</span><span id="line-352"><span class="sd">        Yields:</span>
-</span><span id="line-353"><span class="sd">            Iterator[Parameterizable]: The underlying ``ReservoirLayer``.</span>
-</span><span id="line-354"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-355">        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reservoir_layer</span>
-</span><span id="line-356">
+</span><span id="line-355">
+</span><span id="line-356">    <span class="k">def</span><span class="w"> </span><span class="nf">_iter_parameter_children</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Parameterizable</span><span class="p">]:</span>
+</span><span id="line-357"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Yield the reservoir layer as the sole parameterizable child.</span>
+</span><span id="line-358">
+</span><span id="line-359"><span class="sd">        Yields:</span>
+</span><span id="line-360"><span class="sd">            Iterator[Parameterizable]: The underlying ``ReservoirLayer``.</span>
+</span><span id="line-361"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-362">        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reservoir_layer</span>
+</span><span id="line-363">
 <div class="viewcode-block" id="QuantumReservoir.set_inputs_per_layer">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/quantum_reservoirs/index.html#qilisdk.functionals.quantum_reservoirs.QuantumReservoir.set_inputs_per_layer">[documents]</a>
-</span><span id="line-357">    <span class="k">def</span><span class="w"> </span><span class="nf">set_inputs_per_layer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_per_layer</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-358"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets the reservoir&#39;s input per layer.</span>
-</span><span id="line-359">
-</span><span id="line-360"><span class="sd">        Args:</span>
-</span><span id="line-361"><span class="sd">            input_per_layer (list[dict[str, float]]): the new list of inputs per-layers.</span>
-</span><span id="line-362"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-363">        <span class="bp">self</span><span class="o">.</span><span class="n">_input_per_layer</span> <span class="o">=</span> <span class="n">input_per_layer</span></div>
+</span><span id="line-364">    <span class="k">def</span><span class="w"> </span><span class="nf">set_inputs_per_layer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_per_layer</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-365"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets the reservoir&#39;s input per layer.</span>
+</span><span id="line-366">
+</span><span id="line-367"><span class="sd">        Args:</span>
+</span><span id="line-368"><span class="sd">            input_per_layer (list[dict[str, float]]): the new list of inputs per-layers.</span>
+</span><span id="line-369"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-370">        <span class="bp">self</span><span class="o">.</span><span class="n">_input_per_layer</span> <span class="o">=</span> <span class="n">input_per_layer</span></div>
 
-</span><span id="line-364">
+</span><span id="line-371">
 <div class="viewcode-block" id="QuantumReservoir.add_inputs_per_layer">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/quantum_reservoirs/index.html#qilisdk.functionals.quantum_reservoirs.QuantumReservoir.add_inputs_per_layer">[documents]</a>
-</span><span id="line-365">    <span class="k">def</span><span class="w"> </span><span class="nf">add_inputs_per_layer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_per_layer</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">|</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-366"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a list of per-layer inputs to the current list of inputs.</span>
-</span><span id="line-367">
-</span><span id="line-368"><span class="sd">        Args:</span>
-</span><span id="line-369"><span class="sd">            input_per_layer (list[dict[str, float]] | dict[str,float]): the new list of inputs to be added.</span>
-</span><span id="line-370"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-371">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">input_per_layer</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-</span><span id="line-372">            <span class="bp">self</span><span class="o">.</span><span class="n">_input_per_layer</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">input_per_layer</span><span class="p">)</span>
-</span><span id="line-373">        <span class="k">else</span><span class="p">:</span>
-</span><span id="line-374">            <span class="bp">self</span><span class="o">.</span><span class="n">_input_per_layer</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">input_per_layer</span><span class="p">)</span></div>
+</span><span id="line-372">    <span class="k">def</span><span class="w"> </span><span class="nf">add_inputs_per_layer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_per_layer</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">|</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-373"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a list of per-layer inputs to the current list of inputs.</span>
+</span><span id="line-374">
+</span><span id="line-375"><span class="sd">        Args:</span>
+</span><span id="line-376"><span class="sd">            input_per_layer (list[dict[str, float]] | dict[str,float]): the new list of inputs to be added.</span>
+</span><span id="line-377"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-378">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">input_per_layer</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+</span><span id="line-379">            <span class="bp">self</span><span class="o">.</span><span class="n">_input_per_layer</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">input_per_layer</span><span class="p">)</span>
+</span><span id="line-380">        <span class="k">else</span><span class="p">:</span>
+</span><span id="line-381">            <span class="bp">self</span><span class="o">.</span><span class="n">_input_per_layer</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">input_per_layer</span><span class="p">)</span></div>
 
-</span><span id="line-375">
-</span><span id="line-376">    <span class="k">def</span><span class="w"> </span><span class="nf">__copy__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuantumReservoir</span><span class="p">:</span>
-</span><span id="line-377">        <span class="k">return</span> <span class="n">QuantumReservoir</span><span class="p">(</span>
-</span><span id="line-378">            <span class="n">initial_state</span><span class="o">=</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_state</span><span class="p">),</span>
-</span><span id="line-379">            <span class="n">reservoir_layer</span><span class="o">=</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">reservoir_layer</span><span class="p">),</span>
-</span><span id="line-380">            <span class="n">input_per_layer</span><span class="o">=</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_per_layer</span><span class="p">),</span>
-</span><span id="line-381">        <span class="p">)</span></div>
+</span><span id="line-382">
+</span><span id="line-383">    <span class="k">def</span><span class="w"> </span><span class="nf">__copy__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuantumReservoir</span><span class="p">:</span>
+</span><span id="line-384">        <span class="k">return</span> <span class="n">QuantumReservoir</span><span class="p">(</span>
+</span><span id="line-385">            <span class="n">initial_state</span><span class="o">=</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_state</span><span class="p">),</span>
+</span><span id="line-386">            <span class="n">reservoir_layer</span><span class="o">=</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">reservoir_layer</span><span class="p">),</span>
+</span><span id="line-387">            <span class="n">input_per_layer</span><span class="o">=</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_per_layer</span><span class="p">),</span>
+</span><span id="line-388">        <span class="p">)</span></div>
 
 </span></code></pre></div>
     </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">

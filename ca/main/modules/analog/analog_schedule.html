@@ -14,9 +14,9 @@
 <link href="../../_static/theme.css?v=42baaae4" rel="stylesheet" type="text/css"/>
 <link href="../../_static/graphviz.css?v=4ae1632d" rel="stylesheet" type="text/css"/>
 <link href="../../_static/sphinx-design.min.css?v=95c83b7e" rel="stylesheet" type="text/css"/>
-<link href="../../_static/custom.css?v=7f555f8f" rel="stylesheet" type="text/css"/>
+<link href="../../_static/custom.css?v=e4e41e26" rel="stylesheet" type="text/css"/>
 <link href="../../_static/awesome-sphinx-design.css?v=15e0fffa" rel="stylesheet" type="text/css"/>
-<link href="../../_static/q_trans.png" rel="icon"/>
+<link href="../../_static/QiliSDK_q.png" rel="icon"/>
 <link href="../../search.html" rel="search" title="Cerca"/>
 <link href="../../genindex.html" rel="index" title="Índex"/>
 <link href="../functionals/functionals.html" rel="next" title="Functionals"/>
@@ -40,9 +40,8 @@
     </a><header class="sticky top-0 z-40 w-full border-b shadow-sm border-border supports-backdrop-blur:bg-background/60 bg-background/95 backdrop-blur"><div class="container flex items-center h-14">
 <div class="hidden mr-4 md:flex">
 <a class="flex items-center mr-6" href="../../index.html">
-<img alt="Logo" class="mr-2 hidden dark:block" height="24" src="../../_static/q_trans.png" width="24"/>
-<img alt="Logo" class="mr-2 dark:hidden" height="24" src="../../_static/q_trans.png" width="24"/><span class="hidden font-bold sm:inline-block text-clip whitespace-nowrap">QiliSDK</span>
-</a>
+<img alt="QiliSDK" class="hidden dark:block" src="../../_static/QiliSDK_wht.svg" style="height: 2rem; width: auto;"/>
+<img alt="QiliSDK" class="dark:hidden" src="../../_static/QiliSDK_blk.svg" style="height: 2rem; width: auto;"/></a>
 <div class="language-switcher">
 <a class="lang-link" href="../../../../en/main/modules/analog/analog_schedule.html">EN</a>
 <a class="lang-link" href="../../../../es/main/modules/analog/analog_schedule.html">ES</a>
@@ -78,8 +77,8 @@
 </header>
 <div class="flex-1"><div class="container flex-1 items-start md:grid md:grid-cols-[220px_minmax(0,1fr)] md:gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10"><aside :aria-hidden="!showSidebar" :class="{ 'translate-x-0': showSidebar }" class="fixed inset-y-0 left-0 md:top-14 z-50 md:z-30 bg-background md:bg-transparent transition-all duration-100 -translate-x-full md:translate-x-0 ml-0 p-6 md:p-0 md:-ml-2 md:h-[calc(100vh-3.5rem)] w-5/6 md:w-full shrink-0 overflow-y-auto border-r border-border md:sticky" id="left-sidebar">
 <a class="!justify-start text-sm md:!hidden bg-background" href="../../index.html">
-<img alt="Logo" class="mr-2 hidden dark:block" height="16" src="../../_static/q_trans.png" width="16"/>
-<img alt="Logo" class="mr-2 dark:hidden" height="16" src="../../_static/q_trans.png" width="16"/><span class="font-bold text-clip whitespace-nowrap">QiliSDK</span>
+<img alt="Logo" class="mr-2 hidden dark:block" height="16" src="../../_static/QiliSDK_wht.svg" width="16"/>
+<img alt="Logo" class="mr-2 dark:hidden" height="16" src="../../_static/QiliSDK_blk.svg" width="16"/><span class="font-bold text-clip whitespace-nowrap">QiliSDK</span>
 </a>
 <div class="relative overflow-hidden md:overflow-auto my-4 md:my-0 h-[calc(100vh-8rem)] md:h-auto">
 <div class="overflow-y-auto h-full w-full relative pr-6"><nav class="table w-full min-w-full my-6 lg:my-8">
@@ -152,7 +151,7 @@
 </li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../backends/backends.html">Backends<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l2"><a class="reference internal" href="../backends/backends_overview.html">Visió general</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../backends/backends_qilisim.html">Backend QiliSim</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../backends/backends_qilisim.html">QiliSim</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../backends/backends_cuda.html">Backend CUDA</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../backends/backends_qutip.html">Backend QuTiP</a></li>
 </ul>
@@ -272,6 +271,7 @@
 </ul>
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../code/api/qilisdk/utils/index.html">qilisdk.utils<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/utils/classical_solvers/index.html">qilisdk.utils.classical_solvers</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/utils/hashing/index.html">qilisdk.utils.hashing</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/utils/openfermion/index.html">qilisdk.utils.openfermion</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/utils/openqasm/index.html">qilisdk.utils.openqasm</a></li>
@@ -293,6 +293,9 @@
 <span class="caption_text">Llançaments</span>
 </p>
 <ul>
+<li class="toctree-l1">
+<a class="reference internal" href="../../../0.2.1/modules/analog/analog_schedule.html">0.2.1</a>
+</li>
 <li class="toctree-l1">
 <a class="reference internal" href="../../../0.2.0/modules/analog/analog_schedule.html">0.2.0</a>
 </li>
@@ -341,12 +344,14 @@
 <div id="content" role="main">
 <section id="schedule">
 <h1>Esquema<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#schedule"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h1>
-<p>The simplest way to construct a common schedule is to use the helper functions:</p>
+<p>La manera més senzilla de construir un esquema comú és fer servir les funcions d’ajuda:</p>
 <ul class="simple">
 <li><p><a class="reference internal" href="../../code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule.linear" title="qilisdk.analog.schedule.Schedule.linear"><code class="xref py py-func docutils literal notranslate"><span class="pre">linear</span></code></a>: Interpolació lineal entre dos Hamiltonians.</p></li>
 <li><p><a class="reference internal" href="../../code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule.quadratic" title="qilisdk.analog.schedule.Schedule.quadratic"><code class="xref py py-func docutils literal notranslate"><span class="pre">quadratic</span></code></a>: Interpolació quadràtica entre dos Hamiltonians.</p></li>
 <li><p><a class="reference internal" href="../../code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule.polynomial" title="qilisdk.analog.schedule.Schedule.polynomial"><code class="xref py py-func docutils literal notranslate"><span class="pre">polynomial</span></code></a>: Interpolació polinomial de grau arbitrari entre dos Hamiltonians.</p></li>
 <li><p><a class="reference internal" href="../../code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule.sinusoidal" title="qilisdk.analog.schedule.Schedule.sinusoidal"><code class="xref py py-func docutils literal notranslate"><span class="pre">sinusoidal</span></code></a>: Interpolació sinusoïdal entre dos Hamiltonians.</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule.constant" title="qilisdk.analog.schedule.Schedule.constant"><code class="xref py py-func docutils literal notranslate"><span class="pre">constant</span></code></a>: Coeficient constant per a un sol Hamiltonià.</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule.chained_linear" title="qilisdk.analog.schedule.Schedule.chained_linear"><code class="xref py py-func docutils literal notranslate"><span class="pre">chained_linear</span></code></a>: Encadenament lineal de múltiples Hamiltonians.</p></li>
 </ul>
 <p>Per exemple, per crear un esquema lineal que interpola entre un Hamiltonià conductor i un Hamiltonià de problema en un temps de 10 unitats:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.analog</span><span class="w"> </span><span class="kn">import</span> <span class="n">Schedule</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Z</span>
@@ -358,6 +363,10 @@
 </span><span id="line-7"><span class="n">schedule</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
 </span></code></pre></div>
 </div>
+<a class="only-light reference internal image-reference" href="../../_images/schedule_light.svg"><img alt="../../_images/schedule_light.svg" class="only-light align-center" src="../../_images/schedule_light.svg" style="width: 536.9px; height: 335.29999999999995px;"/>
+</a>
+<a class="only-dark reference internal image-reference" href="../../_images/schedule_dark.svg"><img alt="../../_images/schedule_dark.svg" class="only-dark align-center" src="../../_images/schedule_dark.svg" style="width: 536.9px; height: 335.29999999999995px;"/>
+</a>
 <p>Per a esquemes més complexos, podeu fer servir directament la classe <a class="reference internal" href="../../code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule" title="qilisdk.analog.schedule.Schedule"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schedule</span></code></a>, que proporciona una interfície flexible per definir completament els coeficients del Hamiltonià dependents del temps. La classe <a class="reference internal" href="../../code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule" title="qilisdk.analog.schedule.Schedule"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schedule</span></code></a> associa punts temporals amb coeficients de <a class="reference internal" href="../../code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian" title="qilisdk.analog.hamiltonian.Hamiltonian"><code class="xref py py-class docutils literal notranslate"><span class="pre">Hamiltonian</span></code></a>. Els coeficients poden ser nombres, paràmetres/termes o callables del temps, i es poden definir en punts discrets o en intervals que es mostren automàticament.</p>
 <section id="key-arguments">
 <h2>Arguments principals<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#key-arguments" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#key-arguments'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
@@ -367,7 +376,7 @@
 <li><dl class="simple">
 <dt><strong>coefficients</strong> (dict[str, dict]): Mapatge de l’etiqueta del Hamiltonià a un diccionari de definició temporal. Cada clau és un punt temporal (float/paràmetre/terme) o una 2-tupla que defineix un interval; cada valor pot ser:</dt><dd><ul>
 <li><p>el coeficient del Hamiltonià en aquell moment</p></li>
-<li><p>or a callable returning a coefficient. This callable can take a parameter <code class="docutils literal notranslate"><span class="pre">t</span></code> that will be replaced by time. Moreover, any other parameters passed to this callable need to have a default value or have their value specified in the <code class="docutils literal notranslate"><span class="pre">**kwargs</span></code>.</p></li>
+<li><p>o un callable que retorna un coeficient. Aquest callable pot acceptar un paràmetre <code class="docutils literal notranslate"><span class="pre">t</span></code> que serà substituït pel temps. A més, qualsevol altre paràmetre passat a aquest callable ha de tenir un valor per defecte o tenir el seu valor especificat en <code class="docutils literal notranslate"><span class="pre">**kwargs</span></code>.</p></li>
 </ul>
 </dd>
 </dl>
@@ -456,6 +465,49 @@
 <p>Per a esquemes, Hamiltonians i interpoladors, feu servir <code class="docutils literal notranslate"><span class="pre">get_parameters</span></code> i els mètodes d’accés relacionats per inspeccionar l’estat dels paràmetres.</p>
 </div>
 </section>
+<section id="visualizing-schedules">
+<h2>Visualització d’esquemes<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#visualizing-schedules" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#visualizing-schedules'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
+<p>Tot i que <a class="reference internal" href="../../code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule.draw" title="qilisdk.analog.schedule.Schedule.draw"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Schedule.draw()</span></code></a> és útil per visualitzar els coeficients dels Hamiltonians al llarg del temps, també podeu fer servir <a class="reference internal" href="../../code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule.draw_eigenvalues" title="qilisdk.analog.schedule.Schedule.draw_eigenvalues"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Schedule.draw_eigenvalues()</span></code></a> per visualitzar com canvien els valors propis del Hamiltonià global al llarg del temps. Això només es pot fer per a sistemes petits (posem per cas, 8 qubits o menys), ja que requereix diagonalitzar el Hamiltonià a cada pas de temps, però pot ser molt útil per veure com evoluciona la separació entre l’estat fonamental i el primer estat excitat. Per exemple:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.analog</span><span class="w"> </span><span class="kn">import</span> <span class="n">Schedule</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Z</span>
+</span><span id="line-2">
+</span><span id="line-3"><span class="n">h_driver</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span><span class="n">X</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">X</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+</span><span id="line-4"><span class="n">h_problem</span> <span class="o">=</span> <span class="n">Z</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">*</span> <span class="n">Z</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+</span><span id="line-5">
+</span><span id="line-6"><span class="n">schedule</span> <span class="o">=</span> <span class="n">Schedule</span><span class="o">.</span><span class="n">linear</span><span class="p">(</span><span class="n">h_driver</span><span class="p">,</span> <span class="n">h_problem</span><span class="p">,</span> <span class="n">total_time</span><span class="o">=</span><span class="mf">10.0</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+</span><span id="line-7"><span class="n">schedule</span><span class="o">.</span><span class="n">draw_eigenvalues</span><span class="p">()</span>
+</span></code></pre></div>
+</div>
+<a class="only-light reference internal image-reference" href="../../_images/schedule_eigenvalues.svg"><img alt="../../_images/schedule_eigenvalues.svg" class="only-light align-center" src="../../_images/schedule_eigenvalues.svg" style="width: 690.3000000000001px; height: 431.1px;"/>
+</a>
+<a class="only-dark reference internal image-reference" href="../../_images/schedule_eigenvalues_dark.svg"><img alt="../../_images/schedule_eigenvalues_dark.svg" class="only-dark align-center" src="../../_images/schedule_eigenvalues_dark.svg" style="width: 690.3000000000001px; height: 431.1px;"/>
+</a>
+<p>Si comencem en l’estat fonamental del Hamiltonià conductor (la línia inferior, a l’extrem esquerre) i després evolucionem lentament, hauríem d’acabar en l’estat fonamental del Hamiltonià de problema (a l’extrem dret). Per comprovar-ho, podem simular l’evolució i després incloure els estats intermedis en el gràfic:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.functionals</span><span class="w"> </span><span class="kn">import</span> <span class="n">AnalogEvolution</span>
+</span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.backends</span><span class="w"> </span><span class="kn">import</span> <span class="n">QiliSim</span>
+</span><span id="line-3"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.readout</span><span class="w"> </span><span class="kn">import</span> <span class="n">Readout</span>
+</span><span id="line-4"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">InitialState</span>
+</span><span id="line-5">
+</span><span id="line-6"><span class="n">backend</span> <span class="o">=</span> <span class="n">QiliSim</span><span class="p">()</span>
+</span><span id="line-7"><span class="n">evolution</span> <span class="o">=</span> <span class="n">AnalogEvolution</span><span class="p">(</span>
+</span><span id="line-8">    <span class="n">schedule</span><span class="o">=</span><span class="n">schedule</span><span class="p">,</span>
+</span><span id="line-9">    <span class="n">initial_state</span><span class="o">=</span><span class="n">InitialState</span><span class="o">.</span><span class="n">UNIFORM</span><span class="p">,</span>
+</span><span id="line-10">    <span class="n">store_intermediate_results</span><span class="o">=</span><span class="kc">True</span>
+</span><span id="line-11"><span class="p">)</span>
+</span><span id="line-12"><span class="n">readout</span> <span class="o">=</span> <span class="n">Readout</span><span class="p">()</span><span class="o">.</span><span class="n">with_state_tomography</span><span class="p">()</span>
+</span><span id="line-13"><span class="n">results</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">evolution</span><span class="p">,</span> <span class="n">readout</span><span class="p">)</span>
+</span><span id="line-14">
+</span><span id="line-15"><span class="n">schedule</span><span class="o">.</span><span class="n">draw_eigenvalues</span><span class="p">(</span>
+</span><span id="line-16">    <span class="n">intermediate_states</span><span class="o">=</span><span class="n">results</span><span class="o">.</span><span class="n">get_intermediate_states</span><span class="p">(),</span>
+</span><span id="line-17">    <span class="n">show_overlaps</span><span class="o">=</span><span class="kc">True</span>
+</span><span id="line-18"><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<a class="only-light reference internal image-reference" href="../../_images/schedule_eigenvalues_state.svg"><img alt="../../_images/schedule_eigenvalues_state.svg" class="only-light align-center" src="../../_images/schedule_eigenvalues_state.svg" style="width: 690.3000000000001px; height: 431.1px;"/>
+</a>
+<a class="only-dark reference internal image-reference" href="../../_images/schedule_eigenvalues_state_dark.svg"><img alt="../../_images/schedule_eigenvalues_state_dark.svg" class="only-dark align-center" src="../../_images/schedule_eigenvalues_state_dark.svg" style="width: 690.3000000000001px; height: 431.1px;"/>
+</a>
+<p>Aquí podem veure que l’estat va començar correctament en l’estat fonamental del Hamiltonià inicial i després va evolucionar cap a l’estat fonamental del Hamiltonià final. El percentatge de solapament mostra que una petita part de l’estat es va filtrar cap a un estat d’ordre superior, però això és només una conseqüència del temps d’evolució; una evolució més llarga/lenta ho reduiria.</p>
+</section>
 </section>
 </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">
 <div class="mr-auto">
@@ -481,6 +533,7 @@
 <li><a :data-current="activeSection === '#example-1-callable-coefficients-with-interval-sampling'" class="reference internal" href="#example-1-callable-coefficients-with-interval-sampling">Exemple 1: Coeficients callables amb mostreig per intervals</a></li>
 <li><a :data-current="activeSection === '#example-2-step-interpolation-and-max-time-rescaling'" class="reference internal" href="#example-2-step-interpolation-and-max-time-rescaling">Exemple 2: Interpolació per passos i reescalat del temps màxim</a></li>
 <li><a :data-current="activeSection === '#parameterized-schedules'" class="reference internal" href="#parameterized-schedules">Esquemes parametritzats</a></li>
+<li><a :data-current="activeSection === '#visualizing-schedules'" class="reference internal" href="#visualizing-schedules">Visualització d’esquemes</a></li>
 </ul>
 </div>
 </aside>

@@ -19,9 +19,9 @@
       <link rel="stylesheet" type="text/css" href="../../../_static/theme.css?v=42baaae4" />
       <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
       <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
-      <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=7f555f8f" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=e4e41e26" />
       <link rel="stylesheet" type="text/css" href="../../../_static/awesome-sphinx-design.css?v=15e0fffa" />
-      <link rel="icon" href="../../../_static/q_trans.png" />
+      <link rel="icon" href="../../../_static/QiliSDK_q.png" />
         <link rel="search" title="Búsqueda" href="../../../search.html" />
         <link rel="index" title="Índice" href="../../../genindex.html" />
 
@@ -44,10 +44,10 @@
     </a><header
   class="sticky top-0 z-40 w-full border-b shadow-sm border-border supports-backdrop-blur:bg-background/60 bg-background/95 backdrop-blur"><div class="container flex items-center h-14">
     <div class="hidden mr-4 md:flex">
-      <a href="../../../index.html" class="flex items-center mr-6">
-          <img width="24" height="24" class="mr-2 hidden dark:block" src="../../../_static/q_trans.png" alt="Logo" />
-        <img width="24" height="24" class="mr-2 dark:hidden" src="../../../_static/q_trans.png" alt="Logo" /><span class="hidden font-bold sm:inline-block text-clip whitespace-nowrap">QiliSDK</span>
-      </a>
+<a href="../../../index.html" class="flex items-center mr-6">
+    <img style="height: 2rem; width: auto;" class="hidden dark:block" src="../../../_static/QiliSDK_wht.svg" alt="QiliSDK" />
+    <img style="height: 2rem; width: auto;" class="dark:hidden" src="../../../_static/QiliSDK_blk.svg" alt="QiliSDK" /></a>
+
 
 <div class="language-switcher">
   
@@ -122,8 +122,8 @@
   :aria-hidden="!showSidebar" :class="{ 'translate-x-0': showSidebar }">
 
     <a href="../../../index.html" class="!justify-start text-sm md:!hidden bg-background">
-        <img width="16" height="16" class="mr-2 hidden dark:block" src="../../../_static/q_trans.png" alt="Logo" />
-        <img width="16" height="16" class="mr-2 dark:hidden" src="../../../_static/q_trans.png" alt="Logo" /><span class="font-bold text-clip whitespace-nowrap">QiliSDK</span>
+        <img width="16" height="16" class="mr-2 hidden dark:block" src="../../../_static/QiliSDK_wht.svg" alt="Logo" />
+        <img width="16" height="16" class="mr-2 dark:hidden" src="../../../_static/QiliSDK_blk.svg" alt="Logo" /><span class="font-bold text-clip whitespace-nowrap">QiliSDK</span>
     </a>
 
     <div class="relative overflow-hidden md:overflow-auto my-4 md:my-0 h-[calc(100vh-8rem)] md:h-auto">
@@ -197,7 +197,7 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/backends/backends.html">Backends</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/backends/backends_overview.html">Descripción general</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../modules/backends/backends_qilisim.html">Backend QiliSim</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/backends/backends_qilisim.html">QiliSim</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/backends/backends_cuda.html">Backend CUDA</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/backends/backends_qutip.html">Backend QuTiP</a></li>
 </ul>
@@ -317,6 +317,7 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/utils/index.html">qilisdk.utils</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/classical_solvers/index.html">qilisdk.utils.classical_solvers</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/hashing/index.html">qilisdk.utils.hashing</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/openfermion/index.html">qilisdk.utils.openfermion</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/utils/openqasm/index.html">qilisdk.utils.openqasm</a></li>
@@ -343,6 +344,9 @@
       <span class="caption_text">Versiones</span>
     </p>
     <ul>
+      <li class="toctree-l1">
+        <a class="reference internal" href="../../../../0.2.1/index.html">0.2.1</a>
+      </li>
       <li class="toctree-l1">
         <a class="reference internal" href="../../../../0.2.0/index.html">0.2.0</a>
       </li>
@@ -1053,10 +1057,10 @@
 </span><span id="line-572">        <span class="k">for</span> <span class="n">term</span><span class="p">,</span> <span class="n">coeff</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">elements</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
 </span><span id="line-573">            <span class="n">placed</span> <span class="o">=</span> <span class="kc">False</span>
 </span><span id="line-574">            <span class="k">for</span> <span class="n">partition</span> <span class="ow">in</span> <span class="n">partitions</span><span class="p">:</span>
-</span><span id="line-575">                <span class="c1"># Check if the term commutes with all terms in the current partition</span>
-</span><span id="line-576">                <span class="k">if</span> <span class="nb">all</span><span class="p">(</span>
-</span><span id="line-577">                    <span class="n">Hamiltonian</span><span class="p">({</span><span class="n">term</span><span class="p">:</span> <span class="mi">1</span><span class="p">})</span><span class="o">.</span><span class="n">commutator</span><span class="p">(</span><span class="n">Hamiltonian</span><span class="p">({</span><span class="n">other_term</span><span class="p">:</span> <span class="mi">1</span><span class="p">}))</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">other_term</span> <span class="ow">in</span> <span class="n">partition</span>
-</span><span id="line-578">                <span class="p">):</span>
+</span><span id="line-575">                <span class="c1"># Check if the term commutes with all terms in the current partition.</span>
+</span><span id="line-576">                <span class="c1"># Both are single Pauli strings, so the parity check is exact and avoids</span>
+</span><span id="line-577">                <span class="c1"># building intermediate Hamiltonians.</span>
+</span><span id="line-578">                <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pauli_strings_commute</span><span class="p">(</span><span class="n">term</span><span class="p">,</span> <span class="n">other_term</span><span class="p">)</span> <span class="k">for</span> <span class="n">other_term</span> <span class="ow">in</span> <span class="n">partition</span><span class="p">):</span>
 </span><span id="line-579">                    <span class="c1"># If so, add it to this partition</span>
 </span><span id="line-580">                    <span class="n">partition</span><span class="p">[</span><span class="n">term</span><span class="p">]</span> <span class="o">=</span> <span class="n">coeff</span>
 </span><span id="line-581">                    <span class="n">placed</span> <span class="o">=</span> <span class="kc">True</span>
@@ -1277,294 +1281,344 @@
 </span><span id="line-784">        <span class="k">return</span> <span class="bp">self</span> <span class="o">*</span> <span class="n">h</span> <span class="o">+</span> <span class="n">h</span> <span class="o">*</span> <span class="bp">self</span></div>
 
 </span><span id="line-785">
+<div class="viewcode-block" id="Hamiltonian.commutes_with">
+<a class="viewcode-back" href="../../../code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian.commutes_with">[documentos]</a>
+</span><span id="line-786">    <span class="k">def</span><span class="w"> </span><span class="nf">commutes_with</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">h</span><span class="p">:</span> <span class="n">Hamiltonian</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+</span><span id="line-787"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Check whether this Hamiltonian commutes with another one (``[self, h] == 0``).</span>
+</span><span id="line-788">
+</span><span id="line-789"><span class="sd">        This is faster than materialising the full commutator ``self * h - h * self``:</span>
+</span><span id="line-790"><span class="sd">        every pair of Pauli strings either commutes or anticommutes, and which one</span>
+</span><span id="line-791"><span class="sd">        holds can be decided with a cheap qubit-overlap parity check instead of a</span>
+</span><span id="line-792"><span class="sd">        matrix/operator product. Commuting pairs contribute nothing to the commutator</span>
+</span><span id="line-793"><span class="sd">        and are skipped entirely, so only the anticommuting pairs (for which</span>
+</span><span id="line-794"><span class="sd">        ``[P, Q] = 2 P Q``) are ever multiplied out and accumulated.</span>
+</span><span id="line-795">
+</span><span id="line-796"><span class="sd">        Args:</span>
+</span><span id="line-797"><span class="sd">            h (Hamiltonian): the Hamiltonian to test commutation against.</span>
+</span><span id="line-798">
+</span><span id="line-799"><span class="sd">        Returns:</span>
+</span><span id="line-800"><span class="sd">            bool: ``True`` if the two Hamiltonians commute, ``False`` otherwise.</span>
+</span><span id="line-801"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-802">        <span class="n">residual</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">PauliOperator</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="nb">complex</span> <span class="o">|</span> <span class="n">Term</span> <span class="o">|</span> <span class="n">Parameter</span><span class="p">]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">complex</span><span class="p">)</span>
+</span><span id="line-803">        <span class="k">for</span> <span class="n">ops1</span><span class="p">,</span> <span class="n">c1</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_elements</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+</span><span id="line-804">            <span class="k">for</span> <span class="n">ops2</span><span class="p">,</span> <span class="n">c2</span> <span class="ow">in</span> <span class="n">h</span><span class="o">.</span><span class="n">_elements</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+</span><span id="line-805">                <span class="k">if</span> <span class="n">Hamiltonian</span><span class="o">.</span><span class="n">_pauli_strings_commute</span><span class="p">(</span><span class="n">ops1</span><span class="p">,</span> <span class="n">ops2</span><span class="p">):</span>
+</span><span id="line-806">                    <span class="k">continue</span>
+</span><span id="line-807">                <span class="c1"># Anticommuting strings: [P, Q] = P Q - Q P = 2 P Q.</span>
+</span><span id="line-808">                <span class="n">phase</span><span class="p">,</span> <span class="n">new_ops</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_multiply_sets</span><span class="p">(</span><span class="n">ops1</span><span class="p">,</span> <span class="n">ops2</span><span class="p">)</span>
+</span><span id="line-809">                <span class="n">residual</span><span class="p">[</span><span class="n">new_ops</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">phase</span> <span class="o">*</span> <span class="n">c1</span> <span class="o">*</span> <span class="n">c2</span>
+</span><span id="line-810">
+</span><span id="line-811">        <span class="k">return</span> <span class="n">Hamiltonian</span><span class="p">(</span><span class="n">residual</span><span class="p">)</span> <span class="o">==</span> <span class="n">Hamiltonian</span><span class="o">.</span><span class="n">ZERO</span></div>
+
+</span><span id="line-812">
 <div class="viewcode-block" id="Hamiltonian.vector_norm">
 <a class="viewcode-back" href="../../../code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian.vector_norm">[documentos]</a>
-</span><span id="line-786">    <span class="k">def</span><span class="w"> </span><span class="nf">vector_norm</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-</span><span id="line-787"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-788"><span class="sd">        Returns:</span>
-</span><span id="line-789"><span class="sd">            float: the vector norm of the hamiltonian.</span>
-</span><span id="line-790"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-791">        <span class="n">s</span> <span class="o">=</span> <span class="mi">0</span>
-</span><span id="line-792">        <span class="k">for</span> <span class="n">coeff</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
-</span><span id="line-793">            <span class="n">s</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">coeff</span><span class="p">)</span> <span class="o">*</span> <span class="n">coeff</span>
-</span><span id="line-794">        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">s</span><span class="p">))</span></div>
+</span><span id="line-813">    <span class="k">def</span><span class="w"> </span><span class="nf">vector_norm</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="line-814"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-815"><span class="sd">        Returns:</span>
+</span><span id="line-816"><span class="sd">            float: the vector norm of the hamiltonian.</span>
+</span><span id="line-817"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-818">        <span class="n">s</span> <span class="o">=</span> <span class="mi">0</span>
+</span><span id="line-819">        <span class="k">for</span> <span class="n">coeff</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+</span><span id="line-820">            <span class="n">s</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">coeff</span><span class="p">)</span> <span class="o">*</span> <span class="n">coeff</span>
+</span><span id="line-821">        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">s</span><span class="p">))</span></div>
 
-</span><span id="line-795">
+</span><span id="line-822">
 <div class="viewcode-block" id="Hamiltonian.frobenius_norm">
 <a class="viewcode-back" href="../../../code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian.frobenius_norm">[documentos]</a>
-</span><span id="line-796">    <span class="k">def</span><span class="w"> </span><span class="nf">frobenius_norm</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-</span><span id="line-797"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-798"><span class="sd">        Returns:</span>
-</span><span id="line-799"><span class="sd">            float: the forbenius norm of the hamiltonian.</span>
-</span><span id="line-800"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-801">        <span class="n">n</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span>
-</span><span id="line-802">        <span class="n">s</span> <span class="o">=</span> <span class="mi">0</span>
-</span><span id="line-803">        <span class="k">for</span> <span class="n">coeff</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
-</span><span id="line-804">            <span class="n">s</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">coeff</span><span class="p">)</span> <span class="o">*</span> <span class="n">coeff</span>
-</span><span id="line-805">        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="n">n</span><span class="p">))</span></div>
+</span><span id="line-823">    <span class="k">def</span><span class="w"> </span><span class="nf">frobenius_norm</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="line-824"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-825"><span class="sd">        Returns:</span>
+</span><span id="line-826"><span class="sd">            float: the forbenius norm of the hamiltonian.</span>
+</span><span id="line-827"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-828">        <span class="n">n</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span>
+</span><span id="line-829">        <span class="n">s</span> <span class="o">=</span> <span class="mi">0</span>
+</span><span id="line-830">        <span class="k">for</span> <span class="n">coeff</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+</span><span id="line-831">            <span class="n">s</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">coeff</span><span class="p">)</span> <span class="o">*</span> <span class="n">coeff</span>
+</span><span id="line-832">        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="n">n</span><span class="p">))</span></div>
 
-</span><span id="line-806">
+</span><span id="line-833">
 <div class="viewcode-block" id="Hamiltonian.trace">
 <a class="viewcode-back" href="../../../code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian.trace">[documentos]</a>
-</span><span id="line-807">    <span class="k">def</span><span class="w"> </span><span class="nf">trace</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Number</span><span class="p">:</span>
-</span><span id="line-808"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-809"><span class="sd">        Returns:</span>
-</span><span id="line-810"><span class="sd">            float: the trace of the hamiltonian.</span>
-</span><span id="line-811"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-812">        <span class="n">n</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span>
-</span><span id="line-813">        <span class="n">d</span> <span class="o">=</span> <span class="mi">2</span><span class="o">**</span><span class="n">n</span>
-</span><span id="line-814">        <span class="n">t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_elements</span><span class="o">.</span><span class="n">get</span><span class="p">((</span><span class="n">PauliI</span><span class="p">(</span><span class="mi">0</span><span class="p">),),</span> <span class="mi">0</span><span class="p">)</span>
-</span><span id="line-815">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">):</span>
-</span><span id="line-816">            <span class="k">return</span> <span class="n">t</span><span class="o">.</span><span class="n">evaluate</span><span class="p">()</span> <span class="o">*</span> <span class="n">d</span>
-</span><span id="line-817">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">Term</span><span class="p">):</span>
-</span><span id="line-818">            <span class="k">return</span> <span class="n">t</span><span class="o">.</span><span class="n">evaluate</span><span class="p">({})</span> <span class="o">*</span> <span class="n">d</span>
-</span><span id="line-819">        <span class="k">return</span> <span class="n">t</span> <span class="o">*</span> <span class="n">d</span></div>
+</span><span id="line-834">    <span class="k">def</span><span class="w"> </span><span class="nf">trace</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Number</span><span class="p">:</span>
+</span><span id="line-835"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-836"><span class="sd">        Returns:</span>
+</span><span id="line-837"><span class="sd">            float: the trace of the hamiltonian.</span>
+</span><span id="line-838"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-839">        <span class="n">n</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span>
+</span><span id="line-840">        <span class="n">d</span> <span class="o">=</span> <span class="mi">2</span><span class="o">**</span><span class="n">n</span>
+</span><span id="line-841">        <span class="n">t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_elements</span><span class="o">.</span><span class="n">get</span><span class="p">((</span><span class="n">PauliI</span><span class="p">(</span><span class="mi">0</span><span class="p">),),</span> <span class="mi">0</span><span class="p">)</span>
+</span><span id="line-842">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">):</span>
+</span><span id="line-843">            <span class="k">return</span> <span class="n">t</span><span class="o">.</span><span class="n">evaluate</span><span class="p">()</span> <span class="o">*</span> <span class="n">d</span>
+</span><span id="line-844">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">Term</span><span class="p">):</span>
+</span><span id="line-845">            <span class="k">return</span> <span class="n">t</span><span class="o">.</span><span class="n">evaluate</span><span class="p">({})</span> <span class="o">*</span> <span class="n">d</span>
+</span><span id="line-846">        <span class="k">return</span> <span class="n">t</span> <span class="o">*</span> <span class="n">d</span></div>
 
-</span><span id="line-820">
-</span><span id="line-821">    <span class="c1"># ------- Internal multiplication helpers --------</span>
-</span><span id="line-822">
-</span><span id="line-823">    <span class="nd">@staticmethod</span>
-</span><span id="line-824">    <span class="k">def</span><span class="w"> </span><span class="nf">_multiply_sets</span><span class="p">(</span>
-</span><span id="line-825">        <span class="n">set1</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">PauliOperator</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">set2</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">PauliOperator</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
-</span><span id="line-826">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">complex</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">PauliOperator</span><span class="p">,</span> <span class="o">...</span><span class="p">]]:</span>
-</span><span id="line-827">        <span class="c1"># Combine all operators into a single list</span>
-</span><span id="line-828">        <span class="n">combined</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">set1</span><span class="p">)</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">set2</span><span class="p">)</span>
-</span><span id="line-829">
-</span><span id="line-830">        <span class="c1"># Group by qubit</span>
-</span><span id="line-831">        <span class="n">combined</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">op</span><span class="p">:</span> <span class="n">op</span><span class="o">.</span><span class="n">qubit</span><span class="p">)</span>
-</span><span id="line-832">        <span class="n">sum_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">PauliOperator</span><span class="p">]]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
-</span><span id="line-833">        <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">combined</span><span class="p">:</span>
-</span><span id="line-834">            <span class="n">sum_dict</span><span class="p">[</span><span class="n">op</span><span class="o">.</span><span class="n">qubit</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">op</span><span class="p">)</span>
-</span><span id="line-835">
-</span><span id="line-836">        <span class="n">accumulated_phase</span> <span class="o">=</span> <span class="nb">complex</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-</span><span id="line-837">        <span class="n">final_ops</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">PauliOperator</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span id="line-838">
-</span><span id="line-839">        <span class="k">for</span> <span class="n">qubit_ops</span> <span class="ow">in</span> <span class="n">sum_dict</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
-</span><span id="line-840">            <span class="n">op1</span> <span class="o">=</span> <span class="n">qubit_ops</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-</span><span id="line-841">            <span class="n">phase</span> <span class="o">=</span> <span class="nb">complex</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-</span><span id="line-842">            <span class="c1"># Multiply together all operators on the same qubit</span>
-</span><span id="line-843">            <span class="k">for</span> <span class="n">op2</span> <span class="ow">in</span> <span class="n">qubit_ops</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
-</span><span id="line-844">                <span class="n">aux_phase</span><span class="p">,</span> <span class="n">op1</span> <span class="o">=</span> <span class="n">Hamiltonian</span><span class="o">.</span><span class="n">_multiply_pauli</span><span class="p">(</span><span class="n">op1</span><span class="p">,</span> <span class="n">op2</span><span class="p">)</span>
-</span><span id="line-845">                <span class="n">phase</span> <span class="o">*=</span> <span class="n">aux_phase</span>
-</span><span id="line-846">            <span class="k">if</span> <span class="n">op1</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="s2">&quot;I&quot;</span><span class="p">:</span>
-</span><span id="line-847">                <span class="n">final_ops</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">op1</span><span class="p">)</span>
-</span><span id="line-848">            <span class="n">accumulated_phase</span> <span class="o">*=</span> <span class="n">phase</span>
+</span><span id="line-847">
+</span><span id="line-848">    <span class="c1"># ------- Internal multiplication helpers --------</span>
 </span><span id="line-849">
-</span><span id="line-850">        <span class="c1"># If everything simplified to identity, we store I(0)</span>
-</span><span id="line-851">        <span class="k">if</span> <span class="ow">not</span> <span class="n">final_ops</span><span class="p">:</span>
-</span><span id="line-852">            <span class="n">final_ops</span> <span class="o">=</span> <span class="p">[</span><span class="n">PauliI</span><span class="p">(</span><span class="mi">0</span><span class="p">)]</span>
-</span><span id="line-853">
-</span><span id="line-854">        <span class="c1"># Sort again by qubit (to keep canonical form)</span>
-</span><span id="line-855">        <span class="n">final_ops</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">op</span><span class="p">:</span> <span class="n">op</span><span class="o">.</span><span class="n">qubit</span><span class="p">)</span>
-</span><span id="line-856">        <span class="k">return</span> <span class="n">accumulated_phase</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">final_ops</span><span class="p">)</span>
-</span><span id="line-857">
-</span><span id="line-858">    <span class="nd">@staticmethod</span>
-</span><span id="line-859">    <span class="k">def</span><span class="w"> </span><span class="nf">_multiply_pauli</span><span class="p">(</span><span class="n">op1</span><span class="p">:</span> <span class="n">PauliOperator</span><span class="p">,</span> <span class="n">op2</span><span class="p">:</span> <span class="n">PauliOperator</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">complex</span><span class="p">,</span> <span class="n">PauliOperator</span><span class="p">]:</span>
-</span><span id="line-860">        <span class="k">if</span> <span class="n">op1</span><span class="o">.</span><span class="n">qubit</span> <span class="o">!=</span> <span class="n">op2</span><span class="o">.</span><span class="n">qubit</span><span class="p">:</span>
-</span><span id="line-861">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Operators must act on the same qubit for multiplication.&quot;</span><span class="p">)</span>
+</span><span id="line-850">    <span class="nd">@staticmethod</span>
+</span><span id="line-851">    <span class="k">def</span><span class="w"> </span><span class="nf">_multiply_sets</span><span class="p">(</span>
+</span><span id="line-852">        <span class="n">set1</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">PauliOperator</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">set2</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">PauliOperator</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+</span><span id="line-853">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">complex</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">PauliOperator</span><span class="p">,</span> <span class="o">...</span><span class="p">]]:</span>
+</span><span id="line-854">        <span class="c1"># Combine all operators into a single list</span>
+</span><span id="line-855">        <span class="n">combined</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">set1</span><span class="p">)</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">set2</span><span class="p">)</span>
+</span><span id="line-856">
+</span><span id="line-857">        <span class="c1"># Group by qubit</span>
+</span><span id="line-858">        <span class="n">combined</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">op</span><span class="p">:</span> <span class="n">op</span><span class="o">.</span><span class="n">qubit</span><span class="p">)</span>
+</span><span id="line-859">        <span class="n">sum_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">PauliOperator</span><span class="p">]]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+</span><span id="line-860">        <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">combined</span><span class="p">:</span>
+</span><span id="line-861">            <span class="n">sum_dict</span><span class="p">[</span><span class="n">op</span><span class="o">.</span><span class="n">qubit</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">op</span><span class="p">)</span>
 </span><span id="line-862">
-</span><span id="line-863">        <span class="c1"># If either is identity, no phase</span>
-</span><span id="line-864">        <span class="k">if</span> <span class="n">op1</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;I&quot;</span><span class="p">:</span>
-</span><span id="line-865">            <span class="k">return</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">op2</span><span class="p">)</span>
-</span><span id="line-866">        <span class="k">if</span> <span class="n">op2</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;I&quot;</span><span class="p">:</span>
-</span><span id="line-867">            <span class="k">return</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">op1</span><span class="p">)</span>
-</span><span id="line-868">
-</span><span id="line-869">        <span class="c1"># Look up the product in the table</span>
-</span><span id="line-870">        <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">op1</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">op2</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-</span><span id="line-871">        <span class="n">result</span> <span class="o">=</span> <span class="n">Hamiltonian</span><span class="o">.</span><span class="n">_PAULI_PRODUCT_TABLE</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-</span><span id="line-872">        <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-873">            <span class="k">raise</span> <span class="n">InvalidHamiltonianOperation</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Multiplying </span><span class="si">{</span><span class="n">op1</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">op2</span><span class="si">}</span><span class="s2"> not supported.&quot;</span><span class="p">)</span>
-</span><span id="line-874">        <span class="n">phase</span><span class="p">,</span> <span class="n">op_cls</span> <span class="o">=</span> <span class="n">result</span>
-</span><span id="line-875">
-</span><span id="line-876">        <span class="c1"># By convention, an I operator is always I(0) in this code</span>
-</span><span id="line-877">        <span class="k">if</span> <span class="n">op_cls</span> <span class="ow">is</span> <span class="n">PauliI</span><span class="p">:</span>
-</span><span id="line-878">            <span class="k">return</span> <span class="n">phase</span><span class="p">,</span> <span class="n">PauliI</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-</span><span id="line-879">        <span class="c1"># Otherwise, keep the same qubit</span>
-</span><span id="line-880">        <span class="k">return</span> <span class="n">phase</span><span class="p">,</span> <span class="n">op_cls</span><span class="p">(</span><span class="n">op1</span><span class="o">.</span><span class="n">qubit</span><span class="p">)</span>
-</span><span id="line-881">
-</span><span id="line-882">    <span class="c1"># ------- Public arithmetic operators --------</span>
-</span><span id="line-883">
-</span><span id="line-884">    <span class="k">def</span><span class="w"> </span><span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Number</span> <span class="o">|</span> <span class="n">PauliOperator</span> <span class="o">|</span> <span class="n">Hamiltonian</span> <span class="o">|</span> <span class="n">Term</span> <span class="o">|</span> <span class="n">Parameter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Hamiltonian</span><span class="p">:</span>
-</span><span id="line-885">        <span class="n">out</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-</span><span id="line-886">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Term</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">other</span><span class="o">.</span><span class="n">is_parameterized_term</span><span class="p">():</span>
-</span><span id="line-887">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">_GENERIC_VARIABLE_IN_TERM_MESSAGE</span><span class="p">)</span>
-</span><span id="line-888">        <span class="n">out</span><span class="o">.</span><span class="n">_add_inplace</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
-</span><span id="line-889">        <span class="k">return</span> <span class="n">out</span><span class="o">.</span><span class="n">simplify</span><span class="p">()</span>
-</span><span id="line-890">
-</span><span id="line-891">    <span class="k">def</span><span class="w"> </span><span class="fm">__radd__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Number</span> <span class="o">|</span> <span class="n">PauliOperator</span> <span class="o">|</span> <span class="n">Hamiltonian</span> <span class="o">|</span> <span class="n">Term</span> <span class="o">|</span> <span class="n">Parameter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Hamiltonian</span><span class="p">:</span>
-</span><span id="line-892">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Term</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">other</span><span class="o">.</span><span class="n">is_parameterized_term</span><span class="p">():</span>
-</span><span id="line-893">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">_GENERIC_VARIABLE_IN_TERM_MESSAGE</span><span class="p">)</span>
-</span><span id="line-894">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="fm">__add__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
-</span><span id="line-895">
-</span><span id="line-896">    <span class="k">def</span><span class="w"> </span><span class="fm">__sub__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Number</span> <span class="o">|</span> <span class="n">PauliOperator</span> <span class="o">|</span> <span class="n">Hamiltonian</span> <span class="o">|</span> <span class="n">Term</span> <span class="o">|</span> <span class="n">Parameter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Hamiltonian</span><span class="p">:</span>
-</span><span id="line-897">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Term</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">other</span><span class="o">.</span><span class="n">is_parameterized_term</span><span class="p">():</span>
-</span><span id="line-898">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">_GENERIC_VARIABLE_IN_TERM_MESSAGE</span><span class="p">)</span>
-</span><span id="line-899">        <span class="n">out</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-</span><span id="line-900">        <span class="n">out</span><span class="o">.</span><span class="n">_sub_inplace</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
-</span><span id="line-901">        <span class="k">return</span> <span class="n">out</span><span class="o">.</span><span class="n">simplify</span><span class="p">()</span>
-</span><span id="line-902">
-</span><span id="line-903">    <span class="k">def</span><span class="w"> </span><span class="fm">__rsub__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Number</span> <span class="o">|</span> <span class="n">PauliOperator</span> <span class="o">|</span> <span class="n">Hamiltonian</span> <span class="o">|</span> <span class="n">Term</span> <span class="o">|</span> <span class="n">Parameter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Hamiltonian</span><span class="p">:</span>
-</span><span id="line-904">        <span class="c1"># (other - self)</span>
-</span><span id="line-905">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Term</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">other</span><span class="o">.</span><span class="n">is_parameterized_term</span><span class="p">():</span>
-</span><span id="line-906">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">_GENERIC_VARIABLE_IN_TERM_MESSAGE</span><span class="p">)</span>
-</span><span id="line-907">        <span class="n">out</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">other</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Hamiltonian</span><span class="p">)</span> <span class="k">else</span> <span class="n">Hamiltonian</span><span class="p">()</span> <span class="o">+</span> <span class="n">other</span><span class="p">)</span>
-</span><span id="line-908">        <span class="n">out</span><span class="o">.</span><span class="n">_sub_inplace</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-</span><span id="line-909">        <span class="k">return</span> <span class="n">out</span><span class="o">.</span><span class="n">simplify</span><span class="p">()</span>
-</span><span id="line-910">
-</span><span id="line-911">    <span class="k">def</span><span class="w"> </span><span class="fm">__neg__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Hamiltonian</span><span class="p">:</span>
-</span><span id="line-912">        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="bp">self</span>
-</span><span id="line-913">
-</span><span id="line-914">    <span class="k">def</span><span class="w"> </span><span class="fm">__mul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Number</span> <span class="o">|</span> <span class="n">PauliOperator</span> <span class="o">|</span> <span class="n">Hamiltonian</span> <span class="o">|</span> <span class="n">Term</span> <span class="o">|</span> <span class="n">Parameter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Hamiltonian</span><span class="p">:</span>
-</span><span id="line-915">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Term</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">other</span><span class="o">.</span><span class="n">is_parameterized_term</span><span class="p">():</span>
-</span><span id="line-916">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">_GENERIC_VARIABLE_IN_TERM_MESSAGE</span><span class="p">)</span>
-</span><span id="line-917">        <span class="n">out</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-</span><span id="line-918">        <span class="n">out</span><span class="o">.</span><span class="n">_mul_inplace</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
-</span><span id="line-919">        <span class="k">return</span> <span class="n">out</span><span class="o">.</span><span class="n">simplify</span><span class="p">()</span>
-</span><span id="line-920">
-</span><span id="line-921">    <span class="k">def</span><span class="w"> </span><span class="fm">__rmul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Number</span> <span class="o">|</span> <span class="n">PauliOperator</span> <span class="o">|</span> <span class="n">Hamiltonian</span> <span class="o">|</span> <span class="n">Term</span> <span class="o">|</span> <span class="n">Parameter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Hamiltonian</span><span class="p">:</span>
-</span><span id="line-922">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Term</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">other</span><span class="o">.</span><span class="n">is_parameterized_term</span><span class="p">():</span>
-</span><span id="line-923">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">_GENERIC_VARIABLE_IN_TERM_MESSAGE</span><span class="p">)</span>
-</span><span id="line-924">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Hamiltonian</span><span class="p">):</span>
-</span><span id="line-925">            <span class="n">out</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
-</span><span id="line-926">            <span class="n">out</span><span class="o">.</span><span class="n">_mul_inplace</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-</span><span id="line-927">            <span class="k">return</span> <span class="n">out</span><span class="o">.</span><span class="n">simplify</span><span class="p">()</span>
-</span><span id="line-928">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="fm">__mul__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
-</span><span id="line-929">
-</span><span id="line-930">    <span class="k">def</span><span class="w"> </span><span class="fm">__truediv__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Number</span> <span class="o">|</span> <span class="n">PauliOperator</span> <span class="o">|</span> <span class="n">Hamiltonian</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Hamiltonian</span><span class="p">:</span>
-</span><span id="line-931">        <span class="n">out</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-</span><span id="line-932">        <span class="n">out</span><span class="o">.</span><span class="n">_div_inplace</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
-</span><span id="line-933">        <span class="k">return</span> <span class="n">out</span><span class="o">.</span><span class="n">simplify</span><span class="p">()</span>
-</span><span id="line-934">
-</span><span id="line-935">    <span class="k">def</span><span class="w"> </span><span class="fm">__rtruediv__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Number</span> <span class="o">|</span> <span class="n">PauliOperator</span> <span class="o">|</span> <span class="n">Hamiltonian</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Hamiltonian</span><span class="p">:</span>
-</span><span id="line-936">        <span class="c1"># (other / self)</span>
-</span><span id="line-937">        <span class="k">raise</span> <span class="n">InvalidHamiltonianOperation</span><span class="p">(</span><span class="n">_DIVISION_BY_OPERATORS_MESSAGE</span><span class="p">)</span>
-</span><span id="line-938">
-</span><span id="line-939">    <span class="fm">__iadd__</span> <span class="o">=</span> <span class="fm">__add__</span>
-</span><span id="line-940">    <span class="fm">__isub__</span> <span class="o">=</span> <span class="fm">__sub__</span>
-</span><span id="line-941">    <span class="fm">__imul__</span> <span class="o">=</span> <span class="fm">__mul__</span>
-</span><span id="line-942">    <span class="fm">__itruediv__</span> <span class="o">=</span> <span class="fm">__truediv__</span>
-</span><span id="line-943">
-</span><span id="line-944">    <span class="k">def</span><span class="w"> </span><span class="nf">_add_inplace</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Number</span> <span class="o">|</span> <span class="n">PauliOperator</span> <span class="o">|</span> <span class="n">Hamiltonian</span> <span class="o">|</span> <span class="n">Term</span> <span class="o">|</span> <span class="n">Parameter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-945">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Hamiltonian</span><span class="p">):</span>
-</span><span id="line-946">            <span class="c1"># If it&#39;s empty, do nothing</span>
-</span><span id="line-947">            <span class="k">if</span> <span class="ow">not</span> <span class="n">other</span><span class="o">.</span><span class="n">elements</span><span class="p">:</span>
-</span><span id="line-948">                <span class="k">return</span>
-</span><span id="line-949">            <span class="c1"># Otherwise, add each term</span>
-</span><span id="line-950">            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">other</span><span class="o">.</span><span class="n">_elements</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>  <span class="c1"># noqa: SLF001</span>
-</span><span id="line-951">                <span class="bp">self</span><span class="o">.</span><span class="n">_elements</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">+=</span> <span class="n">val</span>
-</span><span id="line-952">
-</span><span id="line-953">            <span class="bp">self</span><span class="o">.</span><span class="n">_update_parameters</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">_parameters</span><span class="p">)</span>  <span class="c1"># noqa: SLF001</span>
-</span><span id="line-954">        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">PauliOperator</span><span class="p">):</span>
-</span><span id="line-955">            <span class="c1"># Just add 1 to that single operator key</span>
-</span><span id="line-956">            <span class="bp">self</span><span class="o">.</span><span class="n">_elements</span><span class="p">[</span><span class="n">other</span><span class="p">,]</span> <span class="o">+=</span> <span class="mi">1</span>
-</span><span id="line-957">        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">complex</span><span class="p">)):</span>
-</span><span id="line-958">            <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">other</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">get_settings</span><span class="p">()</span><span class="o">.</span><span class="n">atol</span><span class="p">:</span>
-</span><span id="line-959">                <span class="k">return</span>
-</span><span id="line-960">            <span class="c1"># Add the scalar to (I(0),)</span>
-</span><span id="line-961">            <span class="bp">self</span><span class="o">.</span><span class="n">_elements</span><span class="p">[</span><span class="n">PauliI</span><span class="p">(</span><span class="mi">0</span><span class="p">),]</span> <span class="o">+=</span> <span class="n">other</span>
-</span><span id="line-962">        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="n">Term</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">)):</span>
-</span><span id="line-963">            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Term</span><span class="p">):</span>
-</span><span id="line-964">                <span class="k">if</span> <span class="ow">not</span> <span class="n">other</span><span class="o">.</span><span class="n">is_parameterized_term</span><span class="p">():</span>
-</span><span id="line-965">                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">_GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE</span><span class="p">)</span>
-</span><span id="line-966">                <span class="bp">self</span><span class="o">.</span><span class="n">_update_parameters</span><span class="p">({</span><span class="n">v</span><span class="o">.</span><span class="n">label</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">other</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">)})</span>
-</span><span id="line-967">            <span class="k">else</span><span class="p">:</span>
-</span><span id="line-968">                <span class="bp">self</span><span class="o">.</span><span class="n">_add_parameter</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span>
-</span><span id="line-969">            <span class="bp">self</span><span class="o">.</span><span class="n">_elements</span><span class="p">[</span><span class="n">PauliI</span><span class="p">(</span><span class="mi">0</span><span class="p">),]</span> <span class="o">+=</span> <span class="n">other</span>
-</span><span id="line-970">        <span class="k">else</span><span class="p">:</span>
-</span><span id="line-971">            <span class="k">raise</span> <span class="n">InvalidHamiltonianOperation</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid addition between Hamiltonian and </span><span class="si">{</span><span class="n">other</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
-</span><span id="line-972">
-</span><span id="line-973">    <span class="k">def</span><span class="w"> </span><span class="nf">_sub_inplace</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Number</span> <span class="o">|</span> <span class="n">PauliOperator</span> <span class="o">|</span> <span class="n">Hamiltonian</span> <span class="o">|</span> <span class="n">Term</span> <span class="o">|</span> <span class="n">Parameter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-974">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Hamiltonian</span><span class="p">):</span>
-</span><span id="line-975">            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">other</span><span class="o">.</span><span class="n">_elements</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>  <span class="c1"># noqa: SLF001</span>
-</span><span id="line-976">                <span class="bp">self</span><span class="o">.</span><span class="n">_elements</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">-=</span> <span class="n">val</span>
-</span><span id="line-977">            <span class="bp">self</span><span class="o">.</span><span class="n">_update_parameters</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">_parameters</span><span class="p">)</span>  <span class="c1"># noqa: SLF001</span>
-</span><span id="line-978">        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">PauliOperator</span><span class="p">):</span>
-</span><span id="line-979">            <span class="bp">self</span><span class="o">.</span><span class="n">_elements</span><span class="p">[</span><span class="n">other</span><span class="p">,]</span> <span class="o">-=</span> <span class="mi">1</span>
-</span><span id="line-980">        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">complex</span><span class="p">)):</span>
-</span><span id="line-981">            <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">other</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">get_settings</span><span class="p">()</span><span class="o">.</span><span class="n">atol</span><span class="p">:</span>
-</span><span id="line-982">                <span class="k">return</span>
-</span><span id="line-983">            <span class="bp">self</span><span class="o">.</span><span class="n">_elements</span><span class="p">[</span><span class="n">PauliI</span><span class="p">(</span><span class="mi">0</span><span class="p">),]</span> <span class="o">-=</span> <span class="n">other</span>
-</span><span id="line-984">        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="n">Term</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">)):</span>
-</span><span id="line-985">            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Term</span><span class="p">):</span>
-</span><span id="line-986">                <span class="k">if</span> <span class="ow">not</span> <span class="n">other</span><span class="o">.</span><span class="n">is_parameterized_term</span><span class="p">():</span>
-</span><span id="line-987">                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">_GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE</span><span class="p">)</span>
-</span><span id="line-988">                <span class="bp">self</span><span class="o">.</span><span class="n">_update_parameters</span><span class="p">({</span><span class="n">v</span><span class="o">.</span><span class="n">label</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">other</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">)})</span>
-</span><span id="line-989">            <span class="k">else</span><span class="p">:</span>
-</span><span id="line-990">                <span class="bp">self</span><span class="o">.</span><span class="n">_add_parameter</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span>
-</span><span id="line-991">            <span class="bp">self</span><span class="o">.</span><span class="n">_elements</span><span class="p">[</span><span class="n">PauliI</span><span class="p">(</span><span class="mi">0</span><span class="p">),]</span> <span class="o">-=</span> <span class="n">other</span>
-</span><span id="line-992">        <span class="k">else</span><span class="p">:</span>
-</span><span id="line-993">            <span class="k">raise</span> <span class="n">InvalidHamiltonianOperation</span><span class="p">(</span>
-</span><span id="line-994">                <span class="sa">f</span><span class="s2">&quot;Invalid subtraction between Hamiltonian and </span><span class="si">{</span><span class="n">other</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.&quot;</span>
-</span><span id="line-995">            <span class="p">)</span>
-</span><span id="line-996">
-</span><span id="line-997">    <span class="k">def</span><span class="w"> </span><span class="nf">_mul_inplace</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Number</span> <span class="o">|</span> <span class="n">PauliOperator</span> <span class="o">|</span> <span class="n">Hamiltonian</span> <span class="o">|</span> <span class="n">Term</span> <span class="o">|</span> <span class="n">Parameter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-998">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">complex</span><span class="p">)):</span>
-</span><span id="line-999">            <span class="c1"># 0 short-circuit</span>
-</span><span id="line-1000">            <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">other</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">get_settings</span><span class="p">()</span><span class="o">.</span><span class="n">atol</span><span class="p">:</span>
-</span><span id="line-1001">                <span class="c1"># everything becomes 0</span>
-</span><span id="line-1002">                <span class="bp">self</span><span class="o">.</span><span class="n">_elements</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-</span><span id="line-1003">                <span class="k">return</span> <span class="kc">None</span>
-</span><span id="line-1004">            <span class="c1"># 1 short-circuit</span>
-</span><span id="line-1005">            <span class="k">if</span> <span class="n">other</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-</span><span id="line-1006">                <span class="k">return</span> <span class="kc">None</span>
-</span><span id="line-1007">            <span class="c1"># scale all coefficients</span>
-</span><span id="line-1008">            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_elements</span><span class="p">:</span>
-</span><span id="line-1009">                <span class="bp">self</span><span class="o">.</span><span class="n">_elements</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">*=</span> <span class="n">other</span>
-</span><span id="line-1010">            <span class="k">return</span> <span class="kc">None</span>
-</span><span id="line-1011">
-</span><span id="line-1012">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="n">Term</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">)):</span>
-</span><span id="line-1013">            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Term</span><span class="p">):</span>
-</span><span id="line-1014">                <span class="k">if</span> <span class="ow">not</span> <span class="n">other</span><span class="o">.</span><span class="n">is_parameterized_term</span><span class="p">():</span>
-</span><span id="line-1015">                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">_GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE</span><span class="p">)</span>
-</span><span id="line-1016">                <span class="bp">self</span><span class="o">.</span><span class="n">_update_parameters</span><span class="p">({</span><span class="n">v</span><span class="o">.</span><span class="n">label</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">other</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">)})</span>
-</span><span id="line-1017">            <span class="k">else</span><span class="p">:</span>
-</span><span id="line-1018">                <span class="bp">self</span><span class="o">.</span><span class="n">_add_parameter</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span>
-</span><span id="line-1019">            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_elements</span><span class="p">:</span>
-</span><span id="line-1020">                <span class="bp">self</span><span class="o">.</span><span class="n">_elements</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">*=</span> <span class="n">other</span>
-</span><span id="line-1021">            <span class="k">return</span> <span class="kc">None</span>
-</span><span id="line-1022">
-</span><span id="line-1023">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">PauliOperator</span><span class="p">):</span>
-</span><span id="line-1024">            <span class="c1"># Convert single PauliOperator -&gt; Hamiltonian with 1 key</span>
-</span><span id="line-1025">            <span class="c1"># Then do the single-key Hamiltonian path below</span>
-</span><span id="line-1026">            <span class="n">other</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">to_hamiltonian</span><span class="p">()</span>
-</span><span id="line-1027">
-</span><span id="line-1028">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Hamiltonian</span><span class="p">):</span>
-</span><span id="line-1029">            <span class="k">if</span> <span class="ow">not</span> <span class="n">other</span><span class="o">.</span><span class="n">elements</span><span class="p">:</span>
-</span><span id="line-1030">                <span class="c1"># Multiply by &quot;0&quot; Hamiltonian =&gt; 0</span>
-</span><span id="line-1031">                <span class="bp">self</span><span class="o">.</span><span class="n">_elements</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-</span><span id="line-1032">                <span class="k">return</span> <span class="kc">None</span>
-</span><span id="line-1033">
-</span><span id="line-1034">            <span class="c1"># Check if &#39;other&#39; is purely scalar identity =&gt; short-circuit</span>
-</span><span id="line-1035">            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">elements</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-</span><span id="line-1036">                <span class="p">((</span><span class="n">ops2</span><span class="p">,</span> <span class="n">c2</span><span class="p">),)</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">_elements</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>  <span class="c1"># single item  # noqa: SLF001</span>
-</span><span id="line-1037">                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ops2</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-</span><span id="line-1038">                    <span class="n">op2</span> <span class="o">=</span> <span class="n">ops2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-</span><span id="line-1039">                    <span class="k">if</span> <span class="n">op2</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;I&quot;</span> <span class="ow">and</span> <span class="n">op2</span><span class="o">.</span><span class="n">qubit</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-</span><span id="line-1040">                        <span class="c1"># effectively scalar c2</span>
-</span><span id="line-1041">                        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mul_inplace</span><span class="p">(</span><span class="n">c2</span><span class="p">)</span>
-</span><span id="line-1042">
-</span><span id="line-1043">            <span class="c1"># Otherwise, we do the general multiply</span>
-</span><span id="line-1044">            <span class="n">new_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">PauliOperator</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="nb">complex</span> <span class="o">|</span> <span class="n">Term</span> <span class="o">|</span> <span class="n">Parameter</span><span class="p">]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">complex</span><span class="p">)</span>
-</span><span id="line-1045">            <span class="k">for</span> <span class="n">ops1</span><span class="p">,</span> <span class="n">c1</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_elements</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-</span><span id="line-1046">                <span class="k">for</span> <span class="n">ops2</span><span class="p">,</span> <span class="n">c2</span> <span class="ow">in</span> <span class="n">other</span><span class="o">.</span><span class="n">_elements</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>  <span class="c1"># noqa: SLF001</span>
-</span><span id="line-1047">                    <span class="n">phase</span><span class="p">,</span> <span class="n">new_ops</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_multiply_sets</span><span class="p">(</span><span class="n">ops1</span><span class="p">,</span> <span class="n">ops2</span><span class="p">)</span>
-</span><span id="line-1048">                    <span class="n">new_dict</span><span class="p">[</span><span class="n">new_ops</span><span class="p">]</span> <span class="o">+=</span> <span class="n">phase</span> <span class="o">*</span> <span class="n">c1</span> <span class="o">*</span> <span class="n">c2</span>
-</span><span id="line-1049">            <span class="bp">self</span><span class="o">.</span><span class="n">_elements</span> <span class="o">=</span> <span class="n">new_dict</span>
-</span><span id="line-1050">            <span class="bp">self</span><span class="o">.</span><span class="n">_update_parameters</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">_parameters</span><span class="p">)</span>  <span class="c1"># noqa: SLF001</span>
-</span><span id="line-1051">
-</span><span id="line-1052">        <span class="k">else</span><span class="p">:</span>
-</span><span id="line-1053">            <span class="k">raise</span> <span class="n">InvalidHamiltonianOperation</span><span class="p">(</span>
-</span><span id="line-1054">                <span class="sa">f</span><span class="s2">&quot;Invalid multiplication between Hamiltonian and </span><span class="si">{</span><span class="n">other</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.&quot;</span>
-</span><span id="line-1055">            <span class="p">)</span>
-</span><span id="line-1056">        <span class="k">return</span> <span class="kc">None</span>
-</span><span id="line-1057">
-</span><span id="line-1058">    <span class="k">def</span><span class="w"> </span><span class="nf">_div_inplace</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Number</span> <span class="o">|</span> <span class="n">PauliOperator</span> <span class="o">|</span> <span class="n">Hamiltonian</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-1059">        <span class="c1"># Only valid for scalars</span>
-</span><span id="line-1060">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">complex</span><span class="p">)):</span>
-</span><span id="line-1061">            <span class="k">raise</span> <span class="n">InvalidHamiltonianOperation</span><span class="p">(</span><span class="n">_DIVISION_BY_OPERATORS_MESSAGE</span><span class="p">)</span>
-</span><span id="line-1062">        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">other</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">get_settings</span><span class="p">()</span><span class="o">.</span><span class="n">atol</span><span class="p">:</span>
-</span><span id="line-1063">            <span class="k">raise</span> <span class="ne">ZeroDivisionError</span><span class="p">(</span><span class="s2">&quot;Cannot divide by zero.&quot;</span><span class="p">)</span>
-</span><span id="line-1064">        <span class="bp">self</span><span class="o">.</span><span class="n">_mul_inplace</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">other</span><span class="p">)</span></div>
+</span><span id="line-863">        <span class="n">accumulated_phase</span> <span class="o">=</span> <span class="nb">complex</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+</span><span id="line-864">        <span class="n">final_ops</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">PauliOperator</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="line-865">
+</span><span id="line-866">        <span class="k">for</span> <span class="n">qubit_ops</span> <span class="ow">in</span> <span class="n">sum_dict</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+</span><span id="line-867">            <span class="n">op1</span> <span class="o">=</span> <span class="n">qubit_ops</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</span><span id="line-868">            <span class="n">phase</span> <span class="o">=</span> <span class="nb">complex</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+</span><span id="line-869">            <span class="c1"># Multiply together all operators on the same qubit</span>
+</span><span id="line-870">            <span class="k">for</span> <span class="n">op2</span> <span class="ow">in</span> <span class="n">qubit_ops</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+</span><span id="line-871">                <span class="n">aux_phase</span><span class="p">,</span> <span class="n">op1</span> <span class="o">=</span> <span class="n">Hamiltonian</span><span class="o">.</span><span class="n">_multiply_pauli</span><span class="p">(</span><span class="n">op1</span><span class="p">,</span> <span class="n">op2</span><span class="p">)</span>
+</span><span id="line-872">                <span class="n">phase</span> <span class="o">*=</span> <span class="n">aux_phase</span>
+</span><span id="line-873">            <span class="k">if</span> <span class="n">op1</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="s2">&quot;I&quot;</span><span class="p">:</span>
+</span><span id="line-874">                <span class="n">final_ops</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">op1</span><span class="p">)</span>
+</span><span id="line-875">            <span class="n">accumulated_phase</span> <span class="o">*=</span> <span class="n">phase</span>
+</span><span id="line-876">
+</span><span id="line-877">        <span class="c1"># If everything simplified to identity, we store I(0)</span>
+</span><span id="line-878">        <span class="k">if</span> <span class="ow">not</span> <span class="n">final_ops</span><span class="p">:</span>
+</span><span id="line-879">            <span class="n">final_ops</span> <span class="o">=</span> <span class="p">[</span><span class="n">PauliI</span><span class="p">(</span><span class="mi">0</span><span class="p">)]</span>
+</span><span id="line-880">
+</span><span id="line-881">        <span class="c1"># Sort again by qubit (to keep canonical form)</span>
+</span><span id="line-882">        <span class="n">final_ops</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">op</span><span class="p">:</span> <span class="n">op</span><span class="o">.</span><span class="n">qubit</span><span class="p">)</span>
+</span><span id="line-883">        <span class="k">return</span> <span class="n">accumulated_phase</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">final_ops</span><span class="p">)</span>
+</span><span id="line-884">
+</span><span id="line-885">    <span class="nd">@staticmethod</span>
+</span><span id="line-886">    <span class="k">def</span><span class="w"> </span><span class="nf">_pauli_strings_commute</span><span class="p">(</span><span class="n">ops1</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">PauliOperator</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">ops2</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">PauliOperator</span><span class="p">,</span> <span class="o">...</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+</span><span id="line-887"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return whether two Pauli strings commute, using only a qubit-overlap parity check.</span>
+</span><span id="line-888">
+</span><span id="line-889"><span class="sd">        Two Pauli strings always either commute or anticommute. They anticommute iff they</span>
+</span><span id="line-890"><span class="sd">        disagree (both non-identity and a different Pauli) on an odd number of qubits, since</span>
+</span><span id="line-891"><span class="sd">        single-qubit Paulis anticommute exactly when they are distinct and non-identity.</span>
+</span><span id="line-892"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-893">        <span class="n">names2</span> <span class="o">=</span> <span class="p">{</span><span class="n">op</span><span class="o">.</span><span class="n">qubit</span><span class="p">:</span> <span class="n">op</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">ops2</span> <span class="k">if</span> <span class="n">op</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="s2">&quot;I&quot;</span><span class="p">}</span>
+</span><span id="line-894">        <span class="k">if</span> <span class="ow">not</span> <span class="n">names2</span><span class="p">:</span>
+</span><span id="line-895">            <span class="k">return</span> <span class="kc">True</span>
+</span><span id="line-896">        <span class="n">anticommuting</span> <span class="o">=</span> <span class="mi">0</span>
+</span><span id="line-897">        <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">ops1</span><span class="p">:</span>
+</span><span id="line-898">            <span class="k">if</span> <span class="n">op</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;I&quot;</span><span class="p">:</span>
+</span><span id="line-899">                <span class="k">continue</span>
+</span><span id="line-900">            <span class="n">other</span> <span class="o">=</span> <span class="n">names2</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">qubit</span><span class="p">)</span>
+</span><span id="line-901">            <span class="k">if</span> <span class="n">other</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">other</span> <span class="o">!=</span> <span class="n">op</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
+</span><span id="line-902">                <span class="n">anticommuting</span> <span class="o">+=</span> <span class="mi">1</span>
+</span><span id="line-903">        <span class="k">return</span> <span class="n">anticommuting</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span>
+</span><span id="line-904">
+</span><span id="line-905">    <span class="nd">@staticmethod</span>
+</span><span id="line-906">    <span class="k">def</span><span class="w"> </span><span class="nf">_multiply_pauli</span><span class="p">(</span><span class="n">op1</span><span class="p">:</span> <span class="n">PauliOperator</span><span class="p">,</span> <span class="n">op2</span><span class="p">:</span> <span class="n">PauliOperator</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">complex</span><span class="p">,</span> <span class="n">PauliOperator</span><span class="p">]:</span>
+</span><span id="line-907">        <span class="k">if</span> <span class="n">op1</span><span class="o">.</span><span class="n">qubit</span> <span class="o">!=</span> <span class="n">op2</span><span class="o">.</span><span class="n">qubit</span><span class="p">:</span>
+</span><span id="line-908">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Operators must act on the same qubit for multiplication.&quot;</span><span class="p">)</span>
+</span><span id="line-909">
+</span><span id="line-910">        <span class="c1"># If either is identity, no phase</span>
+</span><span id="line-911">        <span class="k">if</span> <span class="n">op1</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;I&quot;</span><span class="p">:</span>
+</span><span id="line-912">            <span class="k">return</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">op2</span><span class="p">)</span>
+</span><span id="line-913">        <span class="k">if</span> <span class="n">op2</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;I&quot;</span><span class="p">:</span>
+</span><span id="line-914">            <span class="k">return</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">op1</span><span class="p">)</span>
+</span><span id="line-915">
+</span><span id="line-916">        <span class="c1"># Look up the product in the table</span>
+</span><span id="line-917">        <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">op1</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">op2</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+</span><span id="line-918">        <span class="n">result</span> <span class="o">=</span> <span class="n">Hamiltonian</span><span class="o">.</span><span class="n">_PAULI_PRODUCT_TABLE</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+</span><span id="line-919">        <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-920">            <span class="k">raise</span> <span class="n">InvalidHamiltonianOperation</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Multiplying </span><span class="si">{</span><span class="n">op1</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">op2</span><span class="si">}</span><span class="s2"> not supported.&quot;</span><span class="p">)</span>
+</span><span id="line-921">        <span class="n">phase</span><span class="p">,</span> <span class="n">op_cls</span> <span class="o">=</span> <span class="n">result</span>
+</span><span id="line-922">
+</span><span id="line-923">        <span class="c1"># By convention, an I operator is always I(0) in this code</span>
+</span><span id="line-924">        <span class="k">if</span> <span class="n">op_cls</span> <span class="ow">is</span> <span class="n">PauliI</span><span class="p">:</span>
+</span><span id="line-925">            <span class="k">return</span> <span class="n">phase</span><span class="p">,</span> <span class="n">PauliI</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</span><span id="line-926">        <span class="c1"># Otherwise, keep the same qubit</span>
+</span><span id="line-927">        <span class="k">return</span> <span class="n">phase</span><span class="p">,</span> <span class="n">op_cls</span><span class="p">(</span><span class="n">op1</span><span class="o">.</span><span class="n">qubit</span><span class="p">)</span>
+</span><span id="line-928">
+</span><span id="line-929">    <span class="c1"># ------- Public arithmetic operators --------</span>
+</span><span id="line-930">
+</span><span id="line-931">    <span class="k">def</span><span class="w"> </span><span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Number</span> <span class="o">|</span> <span class="n">PauliOperator</span> <span class="o">|</span> <span class="n">Hamiltonian</span> <span class="o">|</span> <span class="n">Term</span> <span class="o">|</span> <span class="n">Parameter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Hamiltonian</span><span class="p">:</span>
+</span><span id="line-932">        <span class="n">out</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+</span><span id="line-933">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Term</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">other</span><span class="o">.</span><span class="n">is_parameterized_term</span><span class="p">():</span>
+</span><span id="line-934">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">_GENERIC_VARIABLE_IN_TERM_MESSAGE</span><span class="p">)</span>
+</span><span id="line-935">        <span class="n">out</span><span class="o">.</span><span class="n">_add_inplace</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+</span><span id="line-936">        <span class="k">return</span> <span class="n">out</span><span class="o">.</span><span class="n">simplify</span><span class="p">()</span>
+</span><span id="line-937">
+</span><span id="line-938">    <span class="k">def</span><span class="w"> </span><span class="fm">__radd__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Number</span> <span class="o">|</span> <span class="n">PauliOperator</span> <span class="o">|</span> <span class="n">Hamiltonian</span> <span class="o">|</span> <span class="n">Term</span> <span class="o">|</span> <span class="n">Parameter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Hamiltonian</span><span class="p">:</span>
+</span><span id="line-939">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Term</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">other</span><span class="o">.</span><span class="n">is_parameterized_term</span><span class="p">():</span>
+</span><span id="line-940">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">_GENERIC_VARIABLE_IN_TERM_MESSAGE</span><span class="p">)</span>
+</span><span id="line-941">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="fm">__add__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+</span><span id="line-942">
+</span><span id="line-943">    <span class="k">def</span><span class="w"> </span><span class="fm">__sub__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Number</span> <span class="o">|</span> <span class="n">PauliOperator</span> <span class="o">|</span> <span class="n">Hamiltonian</span> <span class="o">|</span> <span class="n">Term</span> <span class="o">|</span> <span class="n">Parameter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Hamiltonian</span><span class="p">:</span>
+</span><span id="line-944">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Term</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">other</span><span class="o">.</span><span class="n">is_parameterized_term</span><span class="p">():</span>
+</span><span id="line-945">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">_GENERIC_VARIABLE_IN_TERM_MESSAGE</span><span class="p">)</span>
+</span><span id="line-946">        <span class="n">out</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+</span><span id="line-947">        <span class="n">out</span><span class="o">.</span><span class="n">_sub_inplace</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+</span><span id="line-948">        <span class="k">return</span> <span class="n">out</span><span class="o">.</span><span class="n">simplify</span><span class="p">()</span>
+</span><span id="line-949">
+</span><span id="line-950">    <span class="k">def</span><span class="w"> </span><span class="fm">__rsub__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Number</span> <span class="o">|</span> <span class="n">PauliOperator</span> <span class="o">|</span> <span class="n">Hamiltonian</span> <span class="o">|</span> <span class="n">Term</span> <span class="o">|</span> <span class="n">Parameter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Hamiltonian</span><span class="p">:</span>
+</span><span id="line-951">        <span class="c1"># (other - self)</span>
+</span><span id="line-952">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Term</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">other</span><span class="o">.</span><span class="n">is_parameterized_term</span><span class="p">():</span>
+</span><span id="line-953">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">_GENERIC_VARIABLE_IN_TERM_MESSAGE</span><span class="p">)</span>
+</span><span id="line-954">        <span class="n">out</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">other</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Hamiltonian</span><span class="p">)</span> <span class="k">else</span> <span class="n">Hamiltonian</span><span class="p">()</span> <span class="o">+</span> <span class="n">other</span><span class="p">)</span>
+</span><span id="line-955">        <span class="n">out</span><span class="o">.</span><span class="n">_sub_inplace</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+</span><span id="line-956">        <span class="k">return</span> <span class="n">out</span><span class="o">.</span><span class="n">simplify</span><span class="p">()</span>
+</span><span id="line-957">
+</span><span id="line-958">    <span class="k">def</span><span class="w"> </span><span class="fm">__neg__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Hamiltonian</span><span class="p">:</span>
+</span><span id="line-959">        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="bp">self</span>
+</span><span id="line-960">
+</span><span id="line-961">    <span class="k">def</span><span class="w"> </span><span class="fm">__mul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Number</span> <span class="o">|</span> <span class="n">PauliOperator</span> <span class="o">|</span> <span class="n">Hamiltonian</span> <span class="o">|</span> <span class="n">Term</span> <span class="o">|</span> <span class="n">Parameter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Hamiltonian</span><span class="p">:</span>
+</span><span id="line-962">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Term</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">other</span><span class="o">.</span><span class="n">is_parameterized_term</span><span class="p">():</span>
+</span><span id="line-963">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">_GENERIC_VARIABLE_IN_TERM_MESSAGE</span><span class="p">)</span>
+</span><span id="line-964">        <span class="n">out</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+</span><span id="line-965">        <span class="n">out</span><span class="o">.</span><span class="n">_mul_inplace</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+</span><span id="line-966">        <span class="k">return</span> <span class="n">out</span><span class="o">.</span><span class="n">simplify</span><span class="p">()</span>
+</span><span id="line-967">
+</span><span id="line-968">    <span class="k">def</span><span class="w"> </span><span class="fm">__rmul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Number</span> <span class="o">|</span> <span class="n">PauliOperator</span> <span class="o">|</span> <span class="n">Hamiltonian</span> <span class="o">|</span> <span class="n">Term</span> <span class="o">|</span> <span class="n">Parameter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Hamiltonian</span><span class="p">:</span>
+</span><span id="line-969">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Term</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">other</span><span class="o">.</span><span class="n">is_parameterized_term</span><span class="p">():</span>
+</span><span id="line-970">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">_GENERIC_VARIABLE_IN_TERM_MESSAGE</span><span class="p">)</span>
+</span><span id="line-971">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Hamiltonian</span><span class="p">):</span>
+</span><span id="line-972">            <span class="n">out</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+</span><span id="line-973">            <span class="n">out</span><span class="o">.</span><span class="n">_mul_inplace</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+</span><span id="line-974">            <span class="k">return</span> <span class="n">out</span><span class="o">.</span><span class="n">simplify</span><span class="p">()</span>
+</span><span id="line-975">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="fm">__mul__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+</span><span id="line-976">
+</span><span id="line-977">    <span class="k">def</span><span class="w"> </span><span class="fm">__truediv__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Number</span> <span class="o">|</span> <span class="n">PauliOperator</span> <span class="o">|</span> <span class="n">Hamiltonian</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Hamiltonian</span><span class="p">:</span>
+</span><span id="line-978">        <span class="n">out</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+</span><span id="line-979">        <span class="n">out</span><span class="o">.</span><span class="n">_div_inplace</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+</span><span id="line-980">        <span class="k">return</span> <span class="n">out</span><span class="o">.</span><span class="n">simplify</span><span class="p">()</span>
+</span><span id="line-981">
+</span><span id="line-982">    <span class="k">def</span><span class="w"> </span><span class="fm">__rtruediv__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Number</span> <span class="o">|</span> <span class="n">PauliOperator</span> <span class="o">|</span> <span class="n">Hamiltonian</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Hamiltonian</span><span class="p">:</span>
+</span><span id="line-983">        <span class="c1"># (other / self)</span>
+</span><span id="line-984">        <span class="k">raise</span> <span class="n">InvalidHamiltonianOperation</span><span class="p">(</span><span class="n">_DIVISION_BY_OPERATORS_MESSAGE</span><span class="p">)</span>
+</span><span id="line-985">
+</span><span id="line-986">    <span class="fm">__iadd__</span> <span class="o">=</span> <span class="fm">__add__</span>
+</span><span id="line-987">    <span class="fm">__isub__</span> <span class="o">=</span> <span class="fm">__sub__</span>
+</span><span id="line-988">    <span class="fm">__imul__</span> <span class="o">=</span> <span class="fm">__mul__</span>
+</span><span id="line-989">    <span class="fm">__itruediv__</span> <span class="o">=</span> <span class="fm">__truediv__</span>
+</span><span id="line-990">
+</span><span id="line-991">    <span class="k">def</span><span class="w"> </span><span class="nf">_add_inplace</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Number</span> <span class="o">|</span> <span class="n">PauliOperator</span> <span class="o">|</span> <span class="n">Hamiltonian</span> <span class="o">|</span> <span class="n">Term</span> <span class="o">|</span> <span class="n">Parameter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-992">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Hamiltonian</span><span class="p">):</span>
+</span><span id="line-993">            <span class="c1"># If it&#39;s empty, do nothing</span>
+</span><span id="line-994">            <span class="k">if</span> <span class="ow">not</span> <span class="n">other</span><span class="o">.</span><span class="n">elements</span><span class="p">:</span>
+</span><span id="line-995">                <span class="k">return</span>
+</span><span id="line-996">            <span class="c1"># Otherwise, add each term</span>
+</span><span id="line-997">            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">other</span><span class="o">.</span><span class="n">_elements</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>  <span class="c1"># noqa: SLF001</span>
+</span><span id="line-998">                <span class="bp">self</span><span class="o">.</span><span class="n">_elements</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">+=</span> <span class="n">val</span>
+</span><span id="line-999">
+</span><span id="line-1000">            <span class="bp">self</span><span class="o">.</span><span class="n">_update_parameters</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">_parameters</span><span class="p">)</span>  <span class="c1"># noqa: SLF001</span>
+</span><span id="line-1001">        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">PauliOperator</span><span class="p">):</span>
+</span><span id="line-1002">            <span class="c1"># Just add 1 to that single operator key</span>
+</span><span id="line-1003">            <span class="bp">self</span><span class="o">.</span><span class="n">_elements</span><span class="p">[</span><span class="n">other</span><span class="p">,]</span> <span class="o">+=</span> <span class="mi">1</span>
+</span><span id="line-1004">        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">complex</span><span class="p">)):</span>
+</span><span id="line-1005">            <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">other</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">get_settings</span><span class="p">()</span><span class="o">.</span><span class="n">atol</span><span class="p">:</span>
+</span><span id="line-1006">                <span class="k">return</span>
+</span><span id="line-1007">            <span class="c1"># Add the scalar to (I(0),)</span>
+</span><span id="line-1008">            <span class="bp">self</span><span class="o">.</span><span class="n">_elements</span><span class="p">[</span><span class="n">PauliI</span><span class="p">(</span><span class="mi">0</span><span class="p">),]</span> <span class="o">+=</span> <span class="n">other</span>
+</span><span id="line-1009">        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="n">Term</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">)):</span>
+</span><span id="line-1010">            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Term</span><span class="p">):</span>
+</span><span id="line-1011">                <span class="k">if</span> <span class="ow">not</span> <span class="n">other</span><span class="o">.</span><span class="n">is_parameterized_term</span><span class="p">():</span>
+</span><span id="line-1012">                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">_GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE</span><span class="p">)</span>
+</span><span id="line-1013">                <span class="bp">self</span><span class="o">.</span><span class="n">_update_parameters</span><span class="p">({</span><span class="n">v</span><span class="o">.</span><span class="n">label</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">other</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">)})</span>
+</span><span id="line-1014">            <span class="k">else</span><span class="p">:</span>
+</span><span id="line-1015">                <span class="bp">self</span><span class="o">.</span><span class="n">_add_parameter</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span>
+</span><span id="line-1016">            <span class="bp">self</span><span class="o">.</span><span class="n">_elements</span><span class="p">[</span><span class="n">PauliI</span><span class="p">(</span><span class="mi">0</span><span class="p">),]</span> <span class="o">+=</span> <span class="n">other</span>
+</span><span id="line-1017">        <span class="k">else</span><span class="p">:</span>
+</span><span id="line-1018">            <span class="k">raise</span> <span class="n">InvalidHamiltonianOperation</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid addition between Hamiltonian and </span><span class="si">{</span><span class="n">other</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+</span><span id="line-1019">
+</span><span id="line-1020">    <span class="k">def</span><span class="w"> </span><span class="nf">_sub_inplace</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Number</span> <span class="o">|</span> <span class="n">PauliOperator</span> <span class="o">|</span> <span class="n">Hamiltonian</span> <span class="o">|</span> <span class="n">Term</span> <span class="o">|</span> <span class="n">Parameter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-1021">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Hamiltonian</span><span class="p">):</span>
+</span><span id="line-1022">            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">other</span><span class="o">.</span><span class="n">_elements</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>  <span class="c1"># noqa: SLF001</span>
+</span><span id="line-1023">                <span class="bp">self</span><span class="o">.</span><span class="n">_elements</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">-=</span> <span class="n">val</span>
+</span><span id="line-1024">            <span class="bp">self</span><span class="o">.</span><span class="n">_update_parameters</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">_parameters</span><span class="p">)</span>  <span class="c1"># noqa: SLF001</span>
+</span><span id="line-1025">        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">PauliOperator</span><span class="p">):</span>
+</span><span id="line-1026">            <span class="bp">self</span><span class="o">.</span><span class="n">_elements</span><span class="p">[</span><span class="n">other</span><span class="p">,]</span> <span class="o">-=</span> <span class="mi">1</span>
+</span><span id="line-1027">        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">complex</span><span class="p">)):</span>
+</span><span id="line-1028">            <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">other</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">get_settings</span><span class="p">()</span><span class="o">.</span><span class="n">atol</span><span class="p">:</span>
+</span><span id="line-1029">                <span class="k">return</span>
+</span><span id="line-1030">            <span class="bp">self</span><span class="o">.</span><span class="n">_elements</span><span class="p">[</span><span class="n">PauliI</span><span class="p">(</span><span class="mi">0</span><span class="p">),]</span> <span class="o">-=</span> <span class="n">other</span>
+</span><span id="line-1031">        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="n">Term</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">)):</span>
+</span><span id="line-1032">            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Term</span><span class="p">):</span>
+</span><span id="line-1033">                <span class="k">if</span> <span class="ow">not</span> <span class="n">other</span><span class="o">.</span><span class="n">is_parameterized_term</span><span class="p">():</span>
+</span><span id="line-1034">                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">_GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE</span><span class="p">)</span>
+</span><span id="line-1035">                <span class="bp">self</span><span class="o">.</span><span class="n">_update_parameters</span><span class="p">({</span><span class="n">v</span><span class="o">.</span><span class="n">label</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">other</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">)})</span>
+</span><span id="line-1036">            <span class="k">else</span><span class="p">:</span>
+</span><span id="line-1037">                <span class="bp">self</span><span class="o">.</span><span class="n">_add_parameter</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span>
+</span><span id="line-1038">            <span class="bp">self</span><span class="o">.</span><span class="n">_elements</span><span class="p">[</span><span class="n">PauliI</span><span class="p">(</span><span class="mi">0</span><span class="p">),]</span> <span class="o">-=</span> <span class="n">other</span>
+</span><span id="line-1039">        <span class="k">else</span><span class="p">:</span>
+</span><span id="line-1040">            <span class="k">raise</span> <span class="n">InvalidHamiltonianOperation</span><span class="p">(</span>
+</span><span id="line-1041">                <span class="sa">f</span><span class="s2">&quot;Invalid subtraction between Hamiltonian and </span><span class="si">{</span><span class="n">other</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.&quot;</span>
+</span><span id="line-1042">            <span class="p">)</span>
+</span><span id="line-1043">
+</span><span id="line-1044">    <span class="k">def</span><span class="w"> </span><span class="nf">_mul_inplace</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Number</span> <span class="o">|</span> <span class="n">PauliOperator</span> <span class="o">|</span> <span class="n">Hamiltonian</span> <span class="o">|</span> <span class="n">Term</span> <span class="o">|</span> <span class="n">Parameter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-1045">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">complex</span><span class="p">)):</span>
+</span><span id="line-1046">            <span class="c1"># 0 short-circuit</span>
+</span><span id="line-1047">            <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">other</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">get_settings</span><span class="p">()</span><span class="o">.</span><span class="n">atol</span><span class="p">:</span>
+</span><span id="line-1048">                <span class="c1"># everything becomes 0</span>
+</span><span id="line-1049">                <span class="bp">self</span><span class="o">.</span><span class="n">_elements</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+</span><span id="line-1050">                <span class="k">return</span> <span class="kc">None</span>
+</span><span id="line-1051">            <span class="c1"># 1 short-circuit</span>
+</span><span id="line-1052">            <span class="k">if</span> <span class="n">other</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+</span><span id="line-1053">                <span class="k">return</span> <span class="kc">None</span>
+</span><span id="line-1054">            <span class="c1"># scale all coefficients</span>
+</span><span id="line-1055">            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_elements</span><span class="p">:</span>
+</span><span id="line-1056">                <span class="bp">self</span><span class="o">.</span><span class="n">_elements</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">*=</span> <span class="n">other</span>
+</span><span id="line-1057">            <span class="k">return</span> <span class="kc">None</span>
+</span><span id="line-1058">
+</span><span id="line-1059">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="n">Term</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">)):</span>
+</span><span id="line-1060">            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Term</span><span class="p">):</span>
+</span><span id="line-1061">                <span class="k">if</span> <span class="ow">not</span> <span class="n">other</span><span class="o">.</span><span class="n">is_parameterized_term</span><span class="p">():</span>
+</span><span id="line-1062">                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">_GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE</span><span class="p">)</span>
+</span><span id="line-1063">                <span class="bp">self</span><span class="o">.</span><span class="n">_update_parameters</span><span class="p">({</span><span class="n">v</span><span class="o">.</span><span class="n">label</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">other</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">)})</span>
+</span><span id="line-1064">            <span class="k">else</span><span class="p">:</span>
+</span><span id="line-1065">                <span class="bp">self</span><span class="o">.</span><span class="n">_add_parameter</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span>
+</span><span id="line-1066">            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_elements</span><span class="p">:</span>
+</span><span id="line-1067">                <span class="bp">self</span><span class="o">.</span><span class="n">_elements</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">*=</span> <span class="n">other</span>
+</span><span id="line-1068">            <span class="k">return</span> <span class="kc">None</span>
+</span><span id="line-1069">
+</span><span id="line-1070">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">PauliOperator</span><span class="p">):</span>
+</span><span id="line-1071">            <span class="c1"># Convert single PauliOperator -&gt; Hamiltonian with 1 key</span>
+</span><span id="line-1072">            <span class="c1"># Then do the single-key Hamiltonian path below</span>
+</span><span id="line-1073">            <span class="n">other</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">to_hamiltonian</span><span class="p">()</span>
+</span><span id="line-1074">
+</span><span id="line-1075">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Hamiltonian</span><span class="p">):</span>
+</span><span id="line-1076">            <span class="k">if</span> <span class="ow">not</span> <span class="n">other</span><span class="o">.</span><span class="n">elements</span><span class="p">:</span>
+</span><span id="line-1077">                <span class="c1"># Multiply by &quot;0&quot; Hamiltonian =&gt; 0</span>
+</span><span id="line-1078">                <span class="bp">self</span><span class="o">.</span><span class="n">_elements</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+</span><span id="line-1079">                <span class="k">return</span> <span class="kc">None</span>
+</span><span id="line-1080">
+</span><span id="line-1081">            <span class="c1"># Check if &#39;other&#39; is purely scalar identity =&gt; short-circuit</span>
+</span><span id="line-1082">            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">elements</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+</span><span id="line-1083">                <span class="p">((</span><span class="n">ops2</span><span class="p">,</span> <span class="n">c2</span><span class="p">),)</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">_elements</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>  <span class="c1"># single item  # noqa: SLF001</span>
+</span><span id="line-1084">                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ops2</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+</span><span id="line-1085">                    <span class="n">op2</span> <span class="o">=</span> <span class="n">ops2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</span><span id="line-1086">                    <span class="k">if</span> <span class="n">op2</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;I&quot;</span> <span class="ow">and</span> <span class="n">op2</span><span class="o">.</span><span class="n">qubit</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+</span><span id="line-1087">                        <span class="c1"># effectively scalar c2</span>
+</span><span id="line-1088">                        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mul_inplace</span><span class="p">(</span><span class="n">c2</span><span class="p">)</span>
+</span><span id="line-1089">
+</span><span id="line-1090">            <span class="c1"># Otherwise, we do the general multiply</span>
+</span><span id="line-1091">            <span class="n">new_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">PauliOperator</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="nb">complex</span> <span class="o">|</span> <span class="n">Term</span> <span class="o">|</span> <span class="n">Parameter</span><span class="p">]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">complex</span><span class="p">)</span>
+</span><span id="line-1092">            <span class="k">for</span> <span class="n">ops1</span><span class="p">,</span> <span class="n">c1</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_elements</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+</span><span id="line-1093">                <span class="k">for</span> <span class="n">ops2</span><span class="p">,</span> <span class="n">c2</span> <span class="ow">in</span> <span class="n">other</span><span class="o">.</span><span class="n">_elements</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>  <span class="c1"># noqa: SLF001</span>
+</span><span id="line-1094">                    <span class="n">phase</span><span class="p">,</span> <span class="n">new_ops</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_multiply_sets</span><span class="p">(</span><span class="n">ops1</span><span class="p">,</span> <span class="n">ops2</span><span class="p">)</span>
+</span><span id="line-1095">                    <span class="n">new_dict</span><span class="p">[</span><span class="n">new_ops</span><span class="p">]</span> <span class="o">+=</span> <span class="n">phase</span> <span class="o">*</span> <span class="n">c1</span> <span class="o">*</span> <span class="n">c2</span>
+</span><span id="line-1096">            <span class="bp">self</span><span class="o">.</span><span class="n">_elements</span> <span class="o">=</span> <span class="n">new_dict</span>
+</span><span id="line-1097">            <span class="bp">self</span><span class="o">.</span><span class="n">_update_parameters</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">_parameters</span><span class="p">)</span>  <span class="c1"># noqa: SLF001</span>
+</span><span id="line-1098">
+</span><span id="line-1099">        <span class="k">else</span><span class="p">:</span>
+</span><span id="line-1100">            <span class="k">raise</span> <span class="n">InvalidHamiltonianOperation</span><span class="p">(</span>
+</span><span id="line-1101">                <span class="sa">f</span><span class="s2">&quot;Invalid multiplication between Hamiltonian and </span><span class="si">{</span><span class="n">other</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.&quot;</span>
+</span><span id="line-1102">            <span class="p">)</span>
+</span><span id="line-1103">        <span class="k">return</span> <span class="kc">None</span>
+</span><span id="line-1104">
+</span><span id="line-1105">    <span class="k">def</span><span class="w"> </span><span class="nf">_div_inplace</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Number</span> <span class="o">|</span> <span class="n">PauliOperator</span> <span class="o">|</span> <span class="n">Hamiltonian</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-1106">        <span class="c1"># Only valid for scalars</span>
+</span><span id="line-1107">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">complex</span><span class="p">)):</span>
+</span><span id="line-1108">            <span class="k">raise</span> <span class="n">InvalidHamiltonianOperation</span><span class="p">(</span><span class="n">_DIVISION_BY_OPERATORS_MESSAGE</span><span class="p">)</span>
+</span><span id="line-1109">        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">other</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">get_settings</span><span class="p">()</span><span class="o">.</span><span class="n">atol</span><span class="p">:</span>
+</span><span id="line-1110">            <span class="k">raise</span> <span class="ne">ZeroDivisionError</span><span class="p">(</span><span class="s2">&quot;Cannot divide by zero.&quot;</span><span class="p">)</span>
+</span><span id="line-1111">        <span class="bp">self</span><span class="o">.</span><span class="n">_mul_inplace</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">other</span><span class="p">)</span></div>
 
 </span></code></pre></div>
     </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">

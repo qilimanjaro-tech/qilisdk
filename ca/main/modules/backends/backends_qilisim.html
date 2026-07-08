@@ -7,16 +7,16 @@
 <meta content="white" media="(prefers-color-scheme: light)" name="theme-color"/>
 <meta content="black" media="(prefers-color-scheme: dark)" name="theme-color"/>
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
-<title>Backend QiliSim | QiliSDK</title>
-<meta content="Backend QiliSim | QiliSDK" property="og:title"/>
-<meta content="Backend QiliSim | QiliSDK" name="twitter:title"/>
+<title>QiliSim | QiliSDK</title>
+<meta content="QiliSim | QiliSDK" property="og:title"/>
+<meta content="QiliSim | QiliSDK" name="twitter:title"/>
 <link href="../../_static/pygments.css?v=508cba51" rel="stylesheet" type="text/css"/>
 <link href="../../_static/theme.css?v=42baaae4" rel="stylesheet" type="text/css"/>
 <link href="../../_static/graphviz.css?v=4ae1632d" rel="stylesheet" type="text/css"/>
 <link href="../../_static/sphinx-design.min.css?v=95c83b7e" rel="stylesheet" type="text/css"/>
-<link href="../../_static/custom.css?v=7f555f8f" rel="stylesheet" type="text/css"/>
+<link href="../../_static/custom.css?v=e4e41e26" rel="stylesheet" type="text/css"/>
 <link href="../../_static/awesome-sphinx-design.css?v=15e0fffa" rel="stylesheet" type="text/css"/>
-<link href="../../_static/q_trans.png" rel="icon"/>
+<link href="../../_static/QiliSDK_q.png" rel="icon"/>
 <link href="../../search.html" rel="search" title="Cerca"/>
 <link href="../../genindex.html" rel="index" title="Índex"/>
 <link href="backends_cuda.html" rel="next" title="Backend CUDA"/>
@@ -40,9 +40,8 @@
     </a><header class="sticky top-0 z-40 w-full border-b shadow-sm border-border supports-backdrop-blur:bg-background/60 bg-background/95 backdrop-blur"><div class="container flex items-center h-14">
 <div class="hidden mr-4 md:flex">
 <a class="flex items-center mr-6" href="../../index.html">
-<img alt="Logo" class="mr-2 hidden dark:block" height="24" src="../../_static/q_trans.png" width="24"/>
-<img alt="Logo" class="mr-2 dark:hidden" height="24" src="../../_static/q_trans.png" width="24"/><span class="hidden font-bold sm:inline-block text-clip whitespace-nowrap">QiliSDK</span>
-</a>
+<img alt="QiliSDK" class="hidden dark:block" src="../../_static/QiliSDK_wht.svg" style="height: 2rem; width: auto;"/>
+<img alt="QiliSDK" class="dark:hidden" src="../../_static/QiliSDK_blk.svg" style="height: 2rem; width: auto;"/></a>
 <div class="language-switcher">
 <a class="lang-link" href="../../../../en/main/modules/backends/backends_qilisim.html">EN</a>
 <a class="lang-link" href="../../../../es/main/modules/backends/backends_qilisim.html">ES</a>
@@ -78,8 +77,8 @@
 </header>
 <div class="flex-1"><div class="container flex-1 items-start md:grid md:grid-cols-[220px_minmax(0,1fr)] md:gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10"><aside :aria-hidden="!showSidebar" :class="{ 'translate-x-0': showSidebar }" class="fixed inset-y-0 left-0 md:top-14 z-50 md:z-30 bg-background md:bg-transparent transition-all duration-100 -translate-x-full md:translate-x-0 ml-0 p-6 md:p-0 md:-ml-2 md:h-[calc(100vh-3.5rem)] w-5/6 md:w-full shrink-0 overflow-y-auto border-r border-border md:sticky" id="left-sidebar">
 <a class="!justify-start text-sm md:!hidden bg-background" href="../../index.html">
-<img alt="Logo" class="mr-2 hidden dark:block" height="16" src="../../_static/q_trans.png" width="16"/>
-<img alt="Logo" class="mr-2 dark:hidden" height="16" src="../../_static/q_trans.png" width="16"/><span class="font-bold text-clip whitespace-nowrap">QiliSDK</span>
+<img alt="Logo" class="mr-2 hidden dark:block" height="16" src="../../_static/QiliSDK_wht.svg" width="16"/>
+<img alt="Logo" class="mr-2 dark:hidden" height="16" src="../../_static/QiliSDK_blk.svg" width="16"/><span class="font-bold text-clip whitespace-nowrap">QiliSDK</span>
 </a>
 <div class="relative overflow-hidden md:overflow-auto my-4 md:my-0 h-[calc(100vh-8rem)] md:h-auto">
 <div class="overflow-y-auto h-full w-full relative pr-6"><nav class="table w-full min-w-full my-6 lg:my-8">
@@ -152,7 +151,7 @@
 </li>
 <li class="toctree-l1 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="backends.html">Backends<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul class="current" x-show="expanded">
 <li class="toctree-l2"><a class="reference internal" href="backends_overview.html">Visió general</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">Backend QiliSim</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">QiliSim</a></li>
 <li class="toctree-l2"><a class="reference internal" href="backends_cuda.html">Backend CUDA</a></li>
 <li class="toctree-l2"><a class="reference internal" href="backends_qutip.html">Backend QuTiP</a></li>
 </ul>
@@ -272,6 +271,7 @@
 </ul>
 </li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../code/api/qilisdk/utils/index.html">qilisdk.utils<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
+<li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/utils/classical_solvers/index.html">qilisdk.utils.classical_solvers</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/utils/hashing/index.html">qilisdk.utils.hashing</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/utils/openfermion/index.html">qilisdk.utils.openfermion</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/utils/openqasm/index.html">qilisdk.utils.openqasm</a></li>
@@ -293,6 +293,9 @@
 <span class="caption_text">Llançaments</span>
 </p>
 <ul>
+<li class="toctree-l1">
+<a class="reference internal" href="../../../0.2.1/modules/backends/backends_qilisim.html">0.2.1</a>
+</li>
 <li class="toctree-l1">
 <a class="reference internal" href="../../../0.2.0/modules/backends/backends_qilisim.html">0.2.0</a>
 </li>
@@ -336,11 +339,15 @@
 </svg>
 </a>
 <div class="mr-1">/</div><a class="hover:text-foreground overflow-hidden text-ellipsis whitespace-nowrap" href="backends.html">Backends</a>
-<div class="mr-1">/</div><span aria-current="page" class="font-medium text-foreground overflow-hidden text-ellipsis whitespace-nowrap">Backend QiliSim</span>
+<div class="mr-1">/</div><span aria-current="page" class="font-medium text-foreground overflow-hidden text-ellipsis whitespace-nowrap">QiliSim</span>
 </nav>
 <div id="content" role="main">
-<section id="qilisim-backend">
-<h1>Backend QiliSim<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisim-backend"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h1>
+<section id="qilisim">
+<h1>QiliSim<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisim"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h1>
+<a class="title-image only-dark reference internal image-reference" href="../../_images/QiliSim_wht.svg"><img alt="../../_images/QiliSim_wht.svg" class="title-image only-dark align-left" src="../../_images/QiliSim_wht.svg" style="width: 200px;"/>
+</a>
+<a class="title-image only-light reference internal image-reference" href="../../_images/QiliSim_blk.svg"><img alt="../../_images/QiliSim_blk.svg" class="title-image only-light align-left" src="../../_images/QiliSim_blk.svg" style="width: 200px;"/>
+</a>
 <p>El backend <strong>QiliSim</strong> és el simulador de CPU per defecte desenvolupat per Qilimanjaro i escrit en C++. Implementa tots els funcionals primitius de manera nativa, suporta un model de soroll en totes les rutes d’execució i s’inclou amb la instal·lació principal de <code class="docutils literal notranslate"><span class="pre">qilisdk</span></code> — no requereix cap dependència ni maquinari addicional.</p>
 <section id="installation">
 <h2>Instal·lació<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#installation" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#installation'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
@@ -464,7 +471,7 @@
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="../../code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.AnalogMethod.variational_annealing" title="qilisdk.backends.backend_config.AnalogMethod.variational_annealing"><code class="xref py py-meth docutils literal notranslate"><span class="pre">AnalogMethod.variational_annealing()</span></code></a></p></td>
 <td><p>Recuit variacional</p></td>
-<td><p>Only available for X to Z annealing schedules. Can be used to simulate large (i.e. 60+ qubits) systems at the cost of accuracy. Set <cite>order=1</cite> for a quicker but less accurate simulation. Increasing warmups can also improve accuracy at the cost of time.</p></td>
+<td><p>Només disponible per a schedules de recuit de X a Z. Es pot utilitzar per simular sistemes grans (és a dir, 60+ qubits) a costa de la precisió. Establiu <cite>order=1</cite> per a una simulació més ràpida però menys precisa. Augmentar els escalfaments també pot millorar la precisió a costa del temps.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="../../code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.AnalogMethod.adaptive_integrator" title="qilisdk.backends.backend_config.AnalogMethod.adaptive_integrator"><code class="xref py py-meth docutils literal notranslate"><span class="pre">AnalogMethod.adaptive_integrator(tol=1e-2)</span></code></a></p></td>
 <td><p>Dormand-Prince RK4/5</p></td>
