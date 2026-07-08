@@ -184,7 +184,7 @@ class SamplingReadoutResult(ReadoutResult[SamplingReadout]):
             nqubits_samples = len(next(iter(samples_to_filter.keys())))
             nqubits_total = nqubits if nqubits is not None else nqubits_samples
             # Assuming 3 qubits, if asked for 0 and 1 and we have xxx, return xx_
-            if nqubits_samples >= nqubits_total:
+            if nqubits_samples > nqubits_total:
                 return cls._filter_samples(samples_to_filter, qubits_to_measure, expand_samples=expand_samples)
             # Assuming 3 qubits, if asked for 0 and 1 and we have xx, return xx_
             if nqubits_samples < nqubits_total and expand_samples:

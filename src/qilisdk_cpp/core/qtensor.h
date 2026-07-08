@@ -29,6 +29,10 @@ class QTensorCpp {
     // The main data of the class, an Eigen::SparseMatrix<Complex, Eigen::RowMajor>
     SparseMatrix _data;
 
+    // Only convert to dense once since it's expensive
+    mutable DenseMatrix _dense_cache;
+    mutable bool _dense_cache_valid = false;
+
     // Cache various things to faster reaccess
     std::vector<Complex> _eigenvalues;
     std::vector<SparseMatrix> _eigenvectors;
@@ -64,6 +68,15 @@ class QTensorCpp {
     std::string as_string() const;
     DenseMatrix as_dense() const;
     Complex coeff(int row, int col) const { return _data.coeff(row, col); }
+
+    // Dense view of _data, materialised once and cached (see _dense_cache).
+    const DenseMatrix& dense_data() const {
+        if (!_dense_cache_valid) {
+            _dense_cache = _data;
+            _dense_cache_valid = true;
+        }
+        return _dense_cache;
+    }
 
     // Matrix arithmetic
     double norm(const std::string& norm_type);

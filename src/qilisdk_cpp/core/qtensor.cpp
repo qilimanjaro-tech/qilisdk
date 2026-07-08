@@ -1425,6 +1425,8 @@ void QTensorCpp::clear_cache() {
     _rank_computed = false;
     _eigenvalues.clear();
     _eigenvectors.clear();
+    _dense_cache_valid = false;
+    _dense_cache.resize(0, 0);
 }
 
 Complex QTensorCpp::expectation_value_python(const py::object& other, int nshots) const {
@@ -1471,7 +1473,7 @@ Complex QTensorCpp::expectation_value(const MatrixFreeHamiltonian& other) const 
 
     // For kets we need to do <psi|H|psi> by applying H to the left and then taking the inner product with |psi>
     if (_data.cols() == 1) {
-        DenseMatrix psi_dense = _data;
+        const DenseMatrix& psi_dense = dense_data();
         DenseMatrix H_psi_dense;
         other.apply(psi_dense, MatrixFreeApplicationType::Left, H_psi_dense);
 #ifndef _WIN32
@@ -1484,7 +1486,7 @@ Complex QTensorCpp::expectation_value(const MatrixFreeHamiltonian& other) const 
         }
         // for bras we need to do <psi|H by applying H to the right and then taking the inner product with |psi>
     } else if (_data.rows() == 1) {
-        DenseMatrix psi_dense = _data.adjoint();
+        DenseMatrix psi_dense = dense_data().adjoint();
         DenseMatrix H_psi_dense;
         other.apply(psi_dense, MatrixFreeApplicationType::Right, H_psi_dense);
 #ifndef _WIN32
@@ -1497,7 +1499,7 @@ Complex QTensorCpp::expectation_value(const MatrixFreeHamiltonian& other) const 
         }
     } else {
         // need to do trace(H * rho) for a general operator and density matrix
-        DenseMatrix rho_dense = _data;
+        const DenseMatrix& rho_dense = dense_data();
         DenseMatrix H_rho_dense;
         other.apply(rho_dense, MatrixFreeApplicationType::Left, H_rho_dense);
 #ifndef _WIN32

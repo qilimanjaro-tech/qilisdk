@@ -39,7 +39,7 @@ TEST(SampleFromProbabilitiesTest, SampleFromProbabilitiesWithExplicitProbabiliti
     int n_qubits = 1;
     int n_shots = 1000;
     int seed = 42;
-    std::map<std::string, int> samples = sample_from_probabilities(probabilities, n_qubits, n_shots, seed);
+    std::map<std::string, int> samples = sample_from_probabilities(probabilities.data(), probabilities.size(), n_qubits, n_shots, seed);
     int total_samples = 0;
     for (const auto& entry : samples) {
         total_samples += entry.second;

@@ -13,6 +13,7 @@
 // limitations under the License.
 #pragma once
 
+#include <cstddef>
 #include <map>
 #include <string>
 #include <tuple>
@@ -22,7 +23,7 @@
 // GCOV_EXCL_BR_START
 
 std::map<std::string, int> sample_from_probabilities(const std::vector<std::tuple<int, double>>& prob_entries, int n_qubits, int n_shots, int seed);
-std::map<std::string, int> sample_from_probabilities(const std::vector<double>& probabilities, int n_qubits, int n_shots, int seed);
+std::map<std::string, int> sample_from_probabilities(double* probabilities, std::size_t size, int n_qubits, int n_shots, int seed);
 SparseMatrix sample_from_density_matrix(const SparseMatrix& rho, int n_trajectories, int seed, double atol = 1e-12);
 DenseMatrix sample_from_density_matrix(const DenseMatrix& rho, int n_trajectories, int seed, double atol = 1e-12);
 SparseMatrix trajectories_to_density_matrix(const SparseMatrix& trajectories);

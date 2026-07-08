@@ -54,17 +54,17 @@ SparseMatrix hadamard2() {
     return m;
 }
 
-SparseMatrix zeroStateSparse(int n_qubits) {
+SparseMatrixCol zeroStateSparse(int n_qubits) {
     long dim = 1L << n_qubits;
-    SparseMatrix m(dim, 1);
+    SparseMatrixCol m(dim, 1);
     m.insert(0, 0) = cx(1, 0);
     m.makeCompressed();
     return m;
 }
 
-SparseMatrix zeroStateDenseSparse(int n_qubits) {
+SparseMatrixCol zeroStateDenseSparse(int n_qubits) {
     long dim = 1L << n_qubits;
-    SparseMatrix m(dim, dim);
+    SparseMatrixCol m(dim, dim);
     m.insert(0, 0) = cx(1, 0);
     m.makeCompressed();
     return m;
@@ -717,7 +717,7 @@ TEST_F(SamplingMonteCarloTest, MonteCarloEnabled_ProducesNonDeterministicCounts)
     const int shots = 1000;
     QiliSimConfig cfgMC = cfg;
     cfgMC.set_monte_carlo(true);
-    SparseMatrix rho_mixed(2, 2);
+    SparseMatrixCol rho_mixed(2, 2);
     rho_mixed.insert(0, 0) = cx(0.5, 0);
     rho_mixed.insert(1, 1) = cx(0.5, 0);
     rho_mixed.makeCompressed();
@@ -736,7 +736,7 @@ TEST_F(SamplingMonteCarloTest, MatrixFreeMonteCarloEnabled_ProducesNonDeterminis
     const int shots = 1000;
     QiliSimConfig cfgMC = cfg;
     cfgMC.set_monte_carlo(true);
-    SparseMatrix rho_mixed(2, 2);
+    SparseMatrixCol rho_mixed(2, 2);
     rho_mixed.insert(0, 0) = cx(0.5, 0);
     rho_mixed.insert(1, 1) = cx(0.5, 0);
     rho_mixed.makeCompressed();

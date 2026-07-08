@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <chrono>
 #include <random>
+#include <unordered_map>
 #include "../../../libs/pybind.h"
 #include "matrix_utils.h"
 #if defined(_OPENMP)
@@ -66,12 +67,13 @@ std::map<std::string, int> sample_from_probabilities(const std::vector<std::tupl
     return counts;
 }
 
-std::map<std::string, int> sample_from_probabilities(const std::vector<double>& probabilities, int n_qubits, int n_shots, int seed) {
+std::map<std::string, int> sample_from_probabilities(double* probabilities, std::size_t size, int n_qubits, int n_shots, int seed) {
     /*
     Sample measurement outcomes from a probability distribution.
 
     Args:
-        probabilities (std::vector<double>): List of probabilities for each state index.
+        probabilities (double*): Pointer to the probability of each state index (changed in-place)
+        size (std::size_t): Number of entries in probabilities.
         n_qubits (int): Number of qubits.
         n_shots (int): Number of measurement shots.
         seed (int): Random seed for sampling.
@@ -79,20 +81,20 @@ std::map<std::string, int> sample_from_probabilities(const std::vector<double>& 
     Returns:
         std::map<std::string, int>: A map of bitstring outcomes to their counts.
     */
-    std::vector<int> counts(probabilities.size(), 0);
-
-    // Precompute the cumulative distribution
-    std::vector<double> cdf(probabilities.size());
+    // Turn the probabilities into a cumulative distribution in-place
+    const size_t dim = size;
+    double* cdf = probabilities;
     double running = 0.0;
-    for (size_t state_index = 0; state_index < probabilities.size(); ++state_index) {
+    for (size_t state_index = 0; state_index < dim; ++state_index) {
         running += probabilities[state_index];
         cdf[state_index] = running;
     }
-    if (!cdf.empty()) {
-        cdf.back() = 1.0;
+    if (dim > 0) {
+        cdf[dim - 1] = 1.0;
     }
 
-    // Each thread gets its own RNG and its own histogram
+    // Accumulate a sparse list of counts
+    std::map<size_t, int> index_counts;
 #if defined(_OPENMP)
 #pragma omp parallel
 #endif
@@ -104,39 +106,40 @@ std::map<std::string, int> sample_from_probabilities(const std::vector<double>& 
         std::seed_seq seq{static_cast<unsigned>(seed), static_cast<unsigned>(thread_id)};
         std::default_random_engine generator(seq);
         std::uniform_real_distribution<double> distribution(0.0, 1.0);
-        std::vector<int> local_counts(probabilities.size(), 0);
+        std::unordered_map<size_t, int> local_counts;
 #if defined(_OPENMP)
 #pragma omp for schedule(static)
 #endif
         for (int shot = 0; shot < n_shots; ++shot) {
             double random_value = distribution(generator);
             // First state whose cumulative probability reaches the draw
-            size_t state_index = static_cast<size_t>(std::lower_bound(cdf.begin(), cdf.end(), random_value) - cdf.begin());
-            if (state_index >= cdf.size()) {
-                state_index = cdf.size() - 1;
+            size_t state_index = static_cast<size_t>(std::lower_bound(cdf, cdf + dim, random_value) - cdf);
+            if (state_index >= dim) {
+                state_index = dim - 1;
             }
             local_counts[state_index]++;
         }
 
-        // Merge this thread's histogram into the shared result.
+        // Merge this thread's sparse histogram into the shared result
 #if defined(_OPENMP)
 #pragma omp critical
 #endif
-        for (size_t i = 0; i < counts.size(); ++i) {
-            counts[i] += local_counts[i];
+        for (const auto& entry : local_counts) {
+            index_counts[entry.first] += entry.second;
         }
     }
 
     // Go from counts by index to counts by bitstring
     std::map<std::string, int> result;
-    for (size_t state_index = 0; state_index < counts.size(); ++state_index) {
-        if (counts[state_index] > 0) {
-            std::string bitstring = "";
-            for (int b = n_qubits - 1; b >= 0; --b) {
-                bitstring += ((state_index >> b) & 1) ? '1' : '0';
+    for (const auto& entry : index_counts) {
+        size_t state_index = entry.first;
+        std::string bitstring(n_qubits, '0');
+        for (int b = n_qubits - 1; b >= 0; --b) {
+            if ((state_index >> b) & 1) {
+                bitstring[n_qubits - 1 - b] = '1';
             }
-            result[bitstring] = counts[state_index];
         }
+        result[bitstring] = entry.second;
     }
     return result;
 }

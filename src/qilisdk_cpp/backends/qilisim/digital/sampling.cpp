@@ -77,7 +77,31 @@ DenseMatrix collapse_state(const DenseMatrix& state, const std::vector<bool>& qu
     return density_matrix;
 }
 
-void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrix& initial_state, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, std::vector<py::object>& intermediate_results, const QiliSimConfig& config, const py::object& readout) {
+static void densify_initial_state(const SparseMatrixCol& initial_state, DenseMatrix& state) {
+    /*
+    Densify a sparse initial state into `state`, zeroing in parallel.
+
+    Args:
+        initial_state (SparseMatrixCol&): The sparse initial state.
+        state (DenseMatrix&): The dense state to be filled.
+    */
+    state.resize(initial_state.rows(), initial_state.cols());
+    const long n = state.size();
+    Complex* __restrict data = state.data();
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+    for (long i = 0; i < n; ++i) {
+        data[i] = Complex(0.0, 0.0);
+    }
+    for (int k = 0; k < initial_state.outerSize(); ++k) {
+        for (SparseMatrixCol::InnerIterator it(initial_state, k); it; ++it) {
+            state(it.row(), it.col()) = it.value();
+        }
+    }
+}
+
+void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrixCol& initial_state, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, std::vector<py::object>& intermediate_results, const QiliSimConfig& config, const py::object& readout) {
     /*
     Execute a sampling functional using a simple statevector simulator.
 
@@ -109,7 +133,7 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrix& 
 
     // Start with the zero state
     long dim = 1L << n_qubits;
-    state = initial_state;
+    densify_initial_state(initial_state, state);
     bool is_statevector = (state.cols() == 1 && state.rows() == dim);
     bool initially_was_statevector = is_statevector;
 
@@ -290,7 +314,7 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrix& 
     }
 }
 
-void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const SparseMatrix& initial_state, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, std::vector<py::object>& intermediate_results, const QiliSimConfig& config, const py::object& readout) {
+void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const SparseMatrixCol& initial_state, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, std::vector<py::object>& intermediate_results, const QiliSimConfig& config, const py::object& readout) {
     /*
     Execute a sampling functional using a matrix-free simulator.
 
@@ -320,8 +344,8 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const Sp
     Eigen::setNbThreads(config.get_num_threads());
 #endif
 
-    // Start with the zero state
-    state = initial_state;
+    // Start in the initial state
+    densify_initial_state(initial_state, state);
     bool is_statevector = (state.cols() == 1 && state.rows() == (1L << n_qubits));
     bool initially_was_statevector = is_statevector;
 

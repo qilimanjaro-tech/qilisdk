@@ -90,11 +90,11 @@ py::object QiliSimCpp::execute_digital_propagation(const py::object& functional,
     std::map<std::string, int> counts;
     DenseMatrix state_dense;
     std::vector<py::object> intermediate_results;
-    SparseMatrix initial_state_cpp;
+    SparseMatrixCol initial_state_cpp;
     if (initial_state.is_none()) {
         long dim = 1L << n_qubits;
-        initial_state_cpp = SparseMatrix(dim, 1);
-        initial_state_cpp.coeffRef(0, 0) = 1.0;
+        initial_state_cpp = SparseMatrixCol(dim, 1);
+        initial_state_cpp.insert(0, 0) = 1.0;
         initial_state_cpp.makeCompressed();
     } else {
         initial_state_cpp = parse_initial_state(initial_state, config.get_atol(), n_qubits);
