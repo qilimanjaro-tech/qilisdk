@@ -75,7 +75,7 @@ py::object QiliSimCpp::execute_digital_propagation(const py::object& functional,
 
     // Parse the Python objects into C++ objects
     std::vector<bool> final_qubits_to_measure = parse_measurements(functional.attr("circuit"));
-    NoiseModelCpp noise_model_cpp = parse_noise_model(noise_model, n_qubits, config.get_atol());
+    NoiseModelCpp noise_model_cpp = parse_noise_model(noise_model, n_qubits, config.get_atol(), functional.attr("circuit"));
     std::vector<Gate> gates = parse_gates(functional.attr("circuit"), config.get_atol(), noise_model);
 
     // If we have any exponential gates, we need to force renormalization

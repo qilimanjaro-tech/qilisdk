@@ -136,12 +136,31 @@ const std::map<std::pair<std::string, int>, std::vector<std::vector<SparseMatrix
     return cached_kraus_operators_per_gate_qubit;
 }
 
-std::vector<std::vector<SparseMatrix>> NoiseModelCpp::get_relevant_kraus_operators(const std::string& gate_name, const std::vector<int>& target_qubits, int nqubits) const {
+std::string NoiseModelCpp::make_gate_key(const std::string& base_name, int num_controls) {
+    /*
+    Build the per-gate noise key from a base gate name and its number of control qubits.
+
+    Args:
+        base_name (std::string): The base (internal) gate name, e.g. "Z".
+        num_controls (int): The number of control qubits.
+
+    Returns:
+        std::string: The key, e.g. "Z" for a plain gate or "Z_c1" for a controlled gate.
+    */
+    if (num_controls <= 0) {
+        return base_name;
+    }
+    return base_name + "_c" + std::to_string(num_controls);
+}
+
+std::vector<std::vector<SparseMatrix>> NoiseModelCpp::get_relevant_kraus_operators(const std::string& gate_name, int num_controls, const std::vector<int>& target_qubits, int nqubits) const {
     /*
     Get all relevant Kraus operators for a given gate and its target qubits.
 
     Args:
-        gate_name (std::string): The name of the gate.
+        gate_name (std::string): The base name of the gate.
+        num_controls (int): The number of control qubits on the gate, used to distinguish
+            a controlled gate (e.g. CZ) from its base gate (e.g. Z).
         target_qubits (std::vector<int>): The list of target qubit indices.
 
     Returns:
@@ -149,6 +168,8 @@ std::vector<std::vector<SparseMatrix>> NoiseModelCpp::get_relevant_kraus_operato
     */
     std::vector<std::vector<SparseMatrix>> relevant_operators;
     relevant_operators.clear();
+
+    const std::string gate_key = make_gate_key(gate_name, num_controls);
 
     // Add global Kraus operators
     if (!cached_kraus_operators_global.empty()) {
@@ -158,8 +179,8 @@ std::vector<std::vector<SparseMatrix>> NoiseModelCpp::get_relevant_kraus_operato
     }
 
     // Add per-gate Kraus operators
-    if (cached_kraus_operators_per_gate.find(gate_name) != cached_kraus_operators_per_gate.end()) {
-        for (const auto& operator_set : cached_kraus_operators_per_gate.at(gate_name)) {
+    if (cached_kraus_operators_per_gate.find(gate_key) != cached_kraus_operators_per_gate.end()) {
+        for (const auto& operator_set : cached_kraus_operators_per_gate.at(gate_key)) {
             relevant_operators.push_back(operator_set);
         }
     }
@@ -175,7 +196,7 @@ std::vector<std::vector<SparseMatrix>> NoiseModelCpp::get_relevant_kraus_operato
 
     // Add per-gate-per-qubit Kraus operators
     for (int qubit : target_qubits) {
-        auto key = std::make_pair(gate_name, qubit);
+        auto key = std::make_pair(gate_key, qubit);
         if (cached_kraus_operators_per_gate_qubit.find(key) != cached_kraus_operators_per_gate_qubit.end()) {
             for (const auto& operator_set : cached_kraus_operators_per_gate_qubit.at(key)) {
                 relevant_operators.push_back(operator_set);
