@@ -49,7 +49,8 @@ class NoiseModelCpp {
     const std::map<std::string, std::vector<std::vector<SparseMatrix>>>& get_kraus_operators_per_gate() const;
     const std::map<std::pair<std::string, int>, std::vector<std::vector<SparseMatrix>>>& get_kraus_operators_per_gate_qubit() const;
     std::pair<double, double> get_relevant_readout_error(int qubit) const;
-    std::vector<std::vector<SparseMatrix>> get_relevant_kraus_operators(const std::string& gate_name, const std::vector<int>& target_qubits, int nqubits) const;
+    std::vector<std::vector<SparseMatrix>> get_relevant_kraus_operators(const std::string& gate_name, int num_controls, const std::vector<int>& target_qubits, int nqubits) const;
+    static std::string make_gate_key(const std::string& base_name, int num_controls);
 };
 
 // GCOV_EXCL_BR_STOP
