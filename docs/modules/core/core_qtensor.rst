@@ -5,8 +5,8 @@ The :mod:`~qilisdk.core.qtensor` module defines the :class:`~qilisdk.core.qtenso
 class and related helpers for representing and manipulating quantum states and
 operators in sparse form.
 
-The :class:`~qilisdk.core.qtensor.QTensor` wraps a dense NumPy array or SciPy sparse matrix, storing it in the
-backend chosen automatically from its shape and sparsity (row-major sparse, column-major sparse, or dense), and can represent:
+The :class:`~qilisdk.core.qtensor.QTensor` wraps an array, storing it in the optimal storage format
+based on its shape and sparsity. It supports a variety of quantum objects, including:
 
 - **Kets** (column vectors of shape ``(2**N, 1)``)  
 - **Bras** (row vectors of shape ``(1, 2**N)``)  
@@ -106,7 +106,7 @@ There are also several constructors for common quantum objects:
 Quantum Object Properties & Operations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Whatever backend is used internally, you can retrieve dense or sparse views:
+Regardless of the internal storage method, you can retrieve dense or sparse views:
 
 - :attr:`.data<qilisdk.core.qtensor.QTensor.data>`: get the contents as a SciPy sparse matrix (always CSR format)
 - :meth:`.dense()<qilisdk.core.qtensor.QTensor.dense>`: convert to a dense NumPy array (use with caution for large tensors)
