@@ -125,17 +125,38 @@ MatrixFreeHamiltonian construct_current_hamiltonian(double t, const std::vector<
         ind++;
     }
     ind = std::min(ind, step_list.size() - 1);
+
+    // Precompute the fraction once
+    double c = 0.0;
+    if (ind != 0) {
+        double t1 = step_list[ind - 1];
+        double t2 = step_list[ind];
+        c = (t - t1) / (t2 - t1);
+    }
+
+    // Reserve for the worst case (no Pauli strings shared)
     MatrixFreeHamiltonian currentH(hamiltonians[0].get_nqubits());
+    auto& out = currentH.get_operators();
+    size_t total_terms = 0;
+    for (const auto& H : hamiltonians) {
+        total_terms += H.get_operators().size();
+    }
+    out.reserve(total_terms);
+
+    // For each Hamiltonian, compute its contribution to the current Hamiltonian
     for (size_t h = 0; h < hamiltonians.size(); ++h) {
+
+        // Linearly interpolate this Hamiltonian's weight at time t.
+        double weight;
         if (ind == 0) {
-            currentH += hamiltonians[h] * parameters_list[h][0];
+            weight = parameters_list[h][0];
         } else {
-            double t1 = step_list[ind - 1];
-            double t2 = step_list[ind];
-            double p1 = parameters_list[h][ind - 1];
-            double p2 = parameters_list[h][ind];
-            double c = (t - t1) / (t2 - t1);
-            currentH += hamiltonians[h] * ((1.0 - c) * p1 + c * p2);
+            weight = (1.0 - c) * parameters_list[h][ind - 1] + c * parameters_list[h][ind];
+        }
+
+        // Merge the scaled terms
+        for (const auto& [pauli, coeff] : hamiltonians[h].get_operators()) {
+            out[pauli] += coeff * weight;
         }
     }
     return currentH;
