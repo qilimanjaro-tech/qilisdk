@@ -105,7 +105,7 @@ class QutipBackend(Backend):
             U3: QutipBackend._handle_U3,
             SWAP: QutipBackend._handle_SWAP,
         }  # ty:ignore[invalid-assignment]
-        logger.success("QutipBackend initialised")
+        logger.info("QutipBackend initialised")
 
     def _execute_digital_propagation(
         self, functional: DigitalPropagation, readout: list[ReadoutMethod]
@@ -157,7 +157,7 @@ class QutipBackend(Backend):
 
         final_state = QTensor(sim.run(init_state).get_final_states()[0].full())
 
-        logger.success("Sampling finished; ")
+        logger.info("Sampling finished; ")
         if len(measurements) > 0 and len(measurements) != functional.circuit.nqubits:
             return FunctionalResult(
                 readout_results=QutipBackend._construct_results_list(
@@ -243,7 +243,7 @@ class QutipBackend(Backend):
             },
         )
 
-        logger.success("TimeEvolution finished")
+        logger.info("TimeEvolution finished")
         return FunctionalResult(
             readout_results=QutipBackend._construct_results_list(
                 final_state=QTensor(results.final_state.full()), readout=readout

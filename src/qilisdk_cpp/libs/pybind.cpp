@@ -25,6 +25,7 @@ py::object coomatrix;
 py::object sparray;
 py::dtype dtype;
 py::object py_complex;
+py::object logger;
 py::object QTensor;
 py::object InitialState;
 py::object Hamiltonian;
@@ -91,6 +92,7 @@ void initialize_external_pybind_types() {
     sparray = py::module_::import("scipy.sparse").attr("sparray");
     dtype = py::dtype("complex128");
     py_complex = py::module_::import("builtins").attr("complex");
+    logger = py::module_::import("loguru").attr("logger");
 }
 
 // GCOVR_EXCL_START
@@ -129,6 +131,7 @@ void finalize_all_pybind_types() {
     sparray = py::object();
     dtype = py::object();
     py_complex = py::object();
+    logger = py::object();
 }
 // GCOVR_EXCL_STOP
 

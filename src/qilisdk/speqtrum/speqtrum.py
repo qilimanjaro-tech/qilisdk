@@ -404,7 +404,7 @@ class SpeQtrum:
             logger.error("No credentials found. Call `SpeQtrum.login()` before instantiation.")
             raise RuntimeError("Missing credentials - invoke SpeQtrum.login() first.")
         self.username, self.token = credentials
-        logger.success("SpeQtrum client initialised for user '{}'", self.username)
+        logger.info("SpeQtrum client initialised for user '{}'", self.username)
 
     @classmethod
     def _get_headers(cls) -> dict:
@@ -490,7 +490,7 @@ class SpeQtrum:
             return False
 
         store_credentials(username=username, token=token)
-        logger.success("Login successful for user '{}'", username)
+        logger.info("Login successful for user '{}'", username)
         return True
 
     @classmethod
@@ -513,7 +513,7 @@ class SpeQtrum:
         with self._create_client() as client:
             response = client.get("/devices", extensions=_request_extensions(context="Fetching device list"))
         devices = TypeAdapter(list[Device]).validate_python(response.json()["items"])
-        logger.success("{} devices retrieved", len(devices))
+        logger.info("{} devices retrieved", len(devices))
         return [d for d in devices if where(d)] if where else devices
 
     def list_jobs(self, where: Callable[[JobInfo], bool] | None = None) -> list[JobInfo]:
@@ -531,7 +531,7 @@ class SpeQtrum:
         with self._create_client() as client:
             response = client.get("/jobs", extensions=_request_extensions(context="Fetching job list"))
         jobs = TypeAdapter(list[JobInfo]).validate_python(response.json()["items"])
-        logger.success("{} jobs retrieved", len(jobs))
+        logger.info("{} jobs retrieved", len(jobs))
         return [j for j in jobs if where(j)] if where else jobs
 
     @overload
@@ -643,7 +643,7 @@ class SpeQtrum:
             current = self.get_job(job_id)
 
             if current.status in terminal_states:
-                logger.success("Job {} reached terminal state {}", job_id, current.status.value)
+                logger.info("Job {} reached terminal state {}", job_id, current.status.value)
                 if isinstance(job, JobHandle):
                     return job.bind(current)
                 return current

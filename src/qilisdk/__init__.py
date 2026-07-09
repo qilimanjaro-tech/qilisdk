@@ -15,7 +15,7 @@
 from importlib.metadata import PackageNotFoundError, version
 
 from ._info import about
-from .logging import configure_logging, set_logging_level
+from .logging import configure_logging
 
 configure_logging()
 
@@ -24,4 +24,4 @@ try:
 except PackageNotFoundError:
     __version__ = "0.0.0"
 
-__all__ = ["about", "configure_logging", "set_logging_level"]
+__all__ = ["about", "configure_logging"]

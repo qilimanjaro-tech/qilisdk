@@ -18,6 +18,7 @@ from enum import Enum
 from typing import TYPE_CHECKING, Literal
 
 import numpy as np
+from loguru import logger
 from qtensor_module import QTensorCpp  # ty:ignore
 from scipy.sparse import csr_matrix, sparray, spmatrix
 
@@ -256,6 +257,7 @@ class QTensor:
         Returns:
             QTensor: A new QTensor that is the adjoint of this object.
         """
+        logger.trace("QTensor.adjoint on {} qubits", self.nqubits)
         return QTensor(self._qtensor_cpp.adjoint())
 
     def conjugate(self) -> QTensor:
@@ -342,6 +344,7 @@ class QTensor:
         Returns:
             QTensor: A new QTensor representing the reduced density matrix.
         """
+        logger.trace("QTensor.partial_trace keeping qubits {}", keep)
         return QTensor(self._qtensor_cpp.partial_trace_python(list(set(keep))))
 
     def norm(self, order: NormTypes = "auto") -> float:
@@ -485,6 +488,7 @@ class QTensor:
         Returns:
             QTensor: A new QTensor representing the density matrix.
         """
+        logger.trace("QTensor.as_density_matrix on {} qubits", self.nqubits)
         return QTensor(self._qtensor_cpp.as_density_matrix(get_settings().atol, max_relative_correction))
 
     def __add__(self, other: QTensor | Number) -> QTensor:
@@ -656,6 +660,7 @@ class QTensor:
             return copy(self)
         if self.nqubits > nqubits:
             raise ValueError("Can't scale QTensor down, only can scale it up.")
+        logger.trace("QTensor.expand from {} to {} qubits", self.nqubits, nqubits)
         added_qubits = nqubits - self.nqubits
         identity = self.identity(added_qubits)
         return tensor_prod([self, identity])

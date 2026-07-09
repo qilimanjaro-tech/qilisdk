@@ -112,14 +112,29 @@ class InterceptHandler(logging.Handler):
         logger.opt(depth=depth, exception=record.exc_info).log(level, record.getMessage())
 
 
-def configure_logging(level: str | None = None) -> None:
+def configure_logging(level: str | None = None, filename: str | Path | None = None) -> None:
     """
-    Load settings (path overridden by environment variable) and configure Loguru + stdlib logging intercept.
+    Configure QiliSDK logging. This is the main entry point for controlling log output.
+
+    By default the sinks defined in the logging configuration file are used (typically colored
+    output to stderr). Pass ``level`` to change the verbosity, and/or ``filename`` to additionally
+    write logs to a file.
 
     Args:
-        level (str | None): If provided, override the level of every configured sink with this
-            value (e.g., "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"). All other sink options
-            (format, filter, colorize, ...) are preserved. If None, each sink uses its configured level.
+        level (str | None): If provided, override the level of every sink with this value
+            (e.g., "TRACE", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"). All other sink options
+            (format, filter, colorize, ...) are preserved. If ``None``, each sink uses its configured level.
+        filename (str | Path | None): If provided, additionally write logs to this file (in plain,
+            non-colored text using the configured format). The console sinks from the configuration
+            are kept. If ``None``, only the sinks defined in the logging configuration are used.
+
+    Example:
+        .. code-block:: python
+
+            from qilisdk import configure_logging
+
+            configure_logging(level="DEBUG")                      # more verbose console output
+            configure_logging(level="TRACE", filename="run.log")  # also capture everything to a file
     """
     # Determine config path
     config_path = Path(get_settings().logging_config_path).expanduser()
@@ -135,7 +150,11 @@ def configure_logging(level: str | None = None) -> None:
     # 1) Remove all pre-configured Loguru handlers
     logger.remove()
 
-    # 2) Add configured sinks
+    # 2) Add configured sinks, remembering the first sink's presentation so a file sink can mirror it.
+    base_format: str | None = None
+    base_filter: str | dict[str, str] | None = None
+    base_level: str = "INFO"
+    seen_first_sink = False
     for sink_conf in settings.sinks:
         params = sink_conf.model_dump()
         sink_target = params.pop("sink")
@@ -146,6 +165,13 @@ def configure_logging(level: str | None = None) -> None:
         elif isinstance(sink_target, str) and sink_target.lower() == "stdout":
             sink_target = sys.stdout
 
+        # Remember the first sink's presentation (read from the dumped params, before any override).
+        if not seen_first_sink:
+            base_format = params.get("format")
+            base_filter = params.get("filter")
+            base_level = params.get("level", base_level)
+            seen_first_sink = True
+
         # Apply a global level override, keeping every other sink option intact.
         if level is not None:
             params["level"] = level
@@ -153,6 +179,18 @@ def configure_logging(level: str | None = None) -> None:
         clean_params = {k: v for k, v in params.items() if v is not None}
 
         logger.add(sink_target, **clean_params)
+
+    # 2b) Optionally add a plain-text file sink mirroring the configured format/filter.
+    if filename is not None:
+        file_params: dict[str, object] = {
+            "level": level if level is not None else base_level,
+            "colorize": False,
+        }
+        if base_format is not None:
+            file_params["format"] = base_format
+        if base_filter is not None:
+            file_params["filter"] = base_filter
+        logger.add(str(Path(filename).expanduser()), **file_params)
 
     # 3) Quiet down noisy libraries before intercepting
     for intercept_library in settings.intercept_libraries:
@@ -166,14 +204,3 @@ def configure_logging(level: str | None = None) -> None:
     for logger_name in list(logging.root.manager.loggerDict.keys()):
         logging.getLogger(logger_name).handlers = []
         logging.getLogger(logger_name).propagate = True
-
-
-def set_logging_level(level: str) -> None:
-    """
-    Change the logging level while preserving the format, filter and colorization
-    defined in the logging configuration file.
-
-    Args:
-        level (str): The logging level to set (e.g., "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL").
-    """
-    configure_logging(level=level)

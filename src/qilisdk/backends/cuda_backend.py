@@ -219,7 +219,7 @@ class CudaBackend(Backend):
             PauliI: CudaBackend._handle_PauliI,
         }
         self._sampling_method = sampling_method
-        logger.success("CudaBackend initialised (sampling_method={})", sampling_method.value)
+        logger.info("CudaBackend initialised (sampling_method={})", sampling_method.value)
 
     def _execute_digital_propagation(
         self, functional: DigitalPropagation, readout: list[ReadoutMethod]
@@ -299,7 +299,7 @@ class CudaBackend(Backend):
             cudaq_result = self._handle_readout_errors(cudaq_result, self._noise_model, functional.circuit.nqubits)
             if og_param:
                 functional.set_parameters(og_param)
-            logger.success("Sampling finished; {} distinct bitstrings", len(cudaq_result))
+            logger.info("Sampling finished; {} distinct bitstrings", len(cudaq_result))
             sampling_readout = next((ro for ro in readout if isinstance(ro, SamplingReadout)), None)
             expand_samples = sampling_readout.expand_samples if sampling_readout else True
             return FunctionalResult(
@@ -320,7 +320,7 @@ class CudaBackend(Backend):
             cudaq_result = cudaq.sample(kernel, shots_count=sampling_readout.nshots)
             if og_param:
                 functional.set_parameters(og_param)
-            logger.success("Sampling finished; {} distinct bitstrings", len(cudaq_result))
+            logger.info("Sampling finished; {} distinct bitstrings", len(cudaq_result))
             return FunctionalResult(
                 ReadoutCompositeResults(
                     sampling=SamplingReadoutResult.from_samples(
@@ -422,7 +422,7 @@ class CudaBackend(Backend):
             store_intermediate_results=functional.store_intermediate_results,
         )
 
-        logger.success("TimeEvolution finished")
+        logger.info("TimeEvolution finished")
         # Dynamics computes in fp64; keep the results complex128 to match.
         final_state = np.array(
             evolution_result.final_state(),  # ty:ignore[unresolved-attribute]

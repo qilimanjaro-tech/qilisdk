@@ -1,7 +1,7 @@
 sinks:
   - sink: stderr
     level: WARNING
-    format: "<fg #7f1cdb>QiliSDK</> | <green>{time:YYYY-MM-DD at HH:mm:ss}</green> | <lvl>{level: <8}</> | <lvl>{level.icon} {message}</>"
+    format: "<fg #c5093f>Q</><fg #ae0e5c>i</><fg #96147a>l</><fg #7f1997>i</><fg #6420b9>S</><fg #4a27dc>D</><fg #2f2efe>K</> | <green>{time:YYYY-MM-DD at HH:mm:ss}</green> | <lvl>{level: <8}</> | <lvl>{level.icon} {message}</>"
     filter: qilisdk
     colorize: true
 

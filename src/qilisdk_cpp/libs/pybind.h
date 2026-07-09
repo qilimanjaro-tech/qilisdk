@@ -38,6 +38,9 @@ extern py::object sparray;
 extern py::dtype dtype;
 extern py::object py_complex;
 
+// Globally-available Python loguru logger (see logging.h for the C++ wrappers).
+extern py::object logger;
+
 // Internal types
 extern py::object Circuit;
 extern py::object Schedule;
