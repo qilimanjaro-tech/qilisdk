@@ -92,9 +92,14 @@ class InterceptHandler(logging.Handler):
         logger.opt(depth=depth, exception=record.exc_info).log(level, record.getMessage())
 
 
-def configure_logging() -> None:
+def configure_logging(level: str | None = None) -> None:
     """
     Load settings (path overridden by environment variable) and configure Loguru + stdlib logging intercept.
+
+    Args:
+        level (str | None): If provided, override the level of every configured sink with this
+            value (e.g., "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"). All other sink options
+            (format, filter, colorize, ...) are preserved. If None, each sink uses its configured level.
     """
     # Determine config path
     config_path = Path(get_settings().logging_config_path).expanduser()
@@ -117,6 +122,10 @@ def configure_logging() -> None:
         elif isinstance(sink_target, str) and sink_target.lower() == "stdout":
             sink_target = sys.stdout
 
+        # Apply a global level override, keeping every other sink option intact.
+        if level is not None:
+            params["level"] = level
+
         clean_params = {k: v for k, v in params.items() if v is not None}
 
         logger.add(sink_target, **clean_params)
@@ -133,3 +142,14 @@ def configure_logging() -> None:
     for logger_name in list(logging.root.manager.loggerDict.keys()):
         logging.getLogger(logger_name).handlers = []
         logging.getLogger(logger_name).propagate = True
+
+
+def set_logging_level(level: str) -> None:
+    """
+    Change the logging level while preserving the format, filter and colorization
+    defined in the logging configuration file.
+
+    Args:
+        level (str): The logging level to set (e.g., "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL").
+    """
+    configure_logging(level=level)
