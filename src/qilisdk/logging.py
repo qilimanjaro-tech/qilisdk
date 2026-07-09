@@ -33,12 +33,12 @@ if TYPE_CHECKING:
 
 # Different logging levels:
 # - TRACE: Very detailed information, probably should be printed to a file and parsed through
-# - DEBUG: Detailed information meant for developers
-# - INFO: Detailed information meant for users
-# - SUCCESS: Indicate successful operations, such as execution
-# - WARNING: Indicate potential issues
-# - ERROR: Indicate errors
-# - CRITICAL: Indicate critical errors
+# - DEBUG: Information meant for developers, things generally printed only once
+# - INFO: Information meant for users, things generally printed only once
+# - SUCCESS: Same as info, but for successful operations
+# - WARNING: Indicate things of note for the average user, such as some parameter being ignored
+# - ERROR: Indicate errors, unused since we throw errors instead
+# - CRITICAL: Indicate critical errors, unused since we throw errors instead
 
 # Consistent-width icons for every level
 LEVEL_ICONS: dict[str, str] = {

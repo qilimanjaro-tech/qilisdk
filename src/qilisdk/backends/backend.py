@@ -119,7 +119,7 @@ class Backend(ABC):
         readout_list = readout.to_list()
         if not readout_list:
             raise ValueError("At least one readout method must be provided in the Readout.")
-        logger.trace("[Backend] Readout methods: {}", [type(ro).__name__ for ro in readout_list])
+        logger.debug("[Backend] Readout methods: {}", [type(ro).__name__ for ro in readout_list])
         return handler(functional, readout_list)
 
     def _execute_digital_propagation(

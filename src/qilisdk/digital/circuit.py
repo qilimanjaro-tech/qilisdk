@@ -351,7 +351,7 @@ class Circuit(Parameterizable):
             filepath (str | None): Destination file path for the rendered figure.
                 If ``None``, the figure is not saved.
         """
-        logger.trace("[Circuit] Drawing circuit with style: {} and filepath: {}", style, filepath)
+        logger.debug("[Circuit] Drawing circuit with style: {} and filepath: {}", style, filepath)
         from qilisdk.utils.visualization.circuit_renderers import MatplotlibCircuitRenderer  # noqa: PLC0415
 
         renderer = MatplotlibCircuitRenderer(self, style=style)
@@ -405,7 +405,7 @@ class Circuit(Parameterizable):
             gate_class = random.choice(gate_list)
             gate_nqubits = 1 if gate_class in single_qubit_gates else 2
             qubits = tuple(random.sample(range(nqubits), gate_nqubits))
-            logger.trace("[Circuit] Selected gate {} on qubits {}", gate_class.__name__, qubits)
+            logger.trace("[Circuit] Randomly selected gate {} on qubits {}", gate_class.__name__, qubits)
 
             # Avoid adding the same gate on the same qubits consecutively
             if gate_class == prev_gate_type and qubits == prev_qubits:

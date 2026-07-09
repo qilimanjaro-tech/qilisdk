@@ -127,7 +127,7 @@ class QiliSim(Backend):
             type(digital_simulation_method).__name__,
             type(noise_model).__name__ if noise_model is not None else None,
         )
-        logger.trace("[QiliSim] QiliSim solver config: {}", self._solver_config)
+        logger.debug("[QiliSim] QiliSim solver config: {}", self._solver_config)
 
     @property
     def solver_params(self) -> SolverConfigDict:
@@ -158,7 +158,7 @@ class QiliSim(Backend):
         """
         logger.info("[QiliSim] Executing Digital Propagation")
         logger.debug(
-            "[QiliSim] DigitalPropagation over circuit with {} qubits and {} gates; {} readout method(s)",
+            "[QiliSim] DigitalPropagation, {} qubits, {} gates, {} readout methods",
             functional.circuit.nqubits,
             len(functional.circuit.gates),
             len(readout),

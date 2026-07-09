@@ -390,7 +390,7 @@ class CudaBackend(Backend):
 
         cuda_hamiltonian = self._get_cuda_hamiltonian(functional.schedule)
 
-        logger.trace("[CudaBackend] Hamiltonian compiled for evolution")
+        logger.debug("[CudaBackend] Hamiltonian compiled for evolution")
 
         cuda_observables = []
 

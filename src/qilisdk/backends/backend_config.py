@@ -77,7 +77,6 @@ class MonteCarloConfig(BaseSimulatorConfig):
 
     def get_config(self) -> SolverConfigDict:
         """Return Monte Carlo settings in backend-compatible key names."""
-        logger.trace("[BackendConfig] Serializing MonteCarloConfig (trajectories={})", self.trajectories)
         return {"num_monte_carlo_trajectories": self.trajectories}
 
 
@@ -151,8 +150,6 @@ class AnalogMethod(BaseSimulatorConfig):
             "variational_warmups": self.variational_warmups,
             "variational_order": self.variational_order,
         }
-
-        logger.trace("[BackendConfig] Serializing AnalogMethod config: {}", d)
         return d
 
     @classmethod
@@ -305,7 +302,6 @@ class ExecutionConfig(BaseSimulatorConfig):
             d.update(self.monte_carlo.get_config())
         else:
             d.update({"num_monte_carlo_trajectories": 100})
-        logger.trace("[BackendConfig] Serializing ExecutionConfig: {}", d)
         return d
 
     @field_validator("num_threads", mode="after")
@@ -378,7 +374,6 @@ class DigitalMethod(BaseSimulatorConfig):
             "normalize_after_each_gate": self.normalize_after_each_gate,
             "combine_single_qubit_gates": self.combine_single_qubit_gates,
         }
-        logger.trace("[BackendConfig] Serializing DigitalMethod config: {}", d)
         return d
 
     @classmethod

@@ -107,7 +107,7 @@ class Readout(Generic[S, E, T]):
         """
         if self._sampling is not None:
             raise ValueError("Sampling readout already set in this specification.")
-        logger.trace("[Readout] Adding sampling readout (nshots={})", nshots)
+        logger.debug("[Readout] Adding sampling readout (nshots={})", nshots)
         self._sampling = SamplingReadout(nshots=nshots, expand_samples=expand_samples)
         return self  # ty:ignore[invalid-return-type]
 
@@ -130,7 +130,7 @@ class Readout(Generic[S, E, T]):
         """
         if self._expectation is not None:
             raise ValueError("Expectation readout already set in this specification.")
-        logger.trace("[Readout] Adding expectation readout ({} observable(s), nshots={})", len(observables), nshots)
+        logger.debug("[Readout] Adding expectation readout ({} observable(s), nshots={})", len(observables), nshots)
         self._expectation = ExpectationReadout(observables=observables, nshots=nshots)
         return self  # ty:ignore[invalid-return-type]
 
@@ -148,7 +148,7 @@ class Readout(Generic[S, E, T]):
         """
         if self._state_tomography is not None:
             raise ValueError("State-tomography readout already set in this specification.")
-        logger.trace("[Readout] Adding state-tomography readout (method={})", method)
+        logger.debug("[Readout] Adding state-tomography readout (method={})", method)
         self._state_tomography = StateTomographyReadout(method=method)
         return self  # ty:ignore[invalid-return-type]
 

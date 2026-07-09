@@ -108,7 +108,7 @@ py::object QiliSimCpp::execute_digital_propagation(const py::object& functional,
     } else {
         sampling(gates, n_qubits, initial_state_cpp, noise_model_cpp, state_dense, intermediate_results, config, readout);
     }
-    qilisdk::log_trace("[QiliSim, C++] Statevector simulation complete; constructing result");
+    qilisdk::log_debug("[QiliSim, C++] Statevector simulation complete, constructing result");
 
     // Construct the final result object
     py::object result = construct_result_object(state_dense, readout, noise_model_cpp, n_qubits, config, final_qubits_to_measure);
