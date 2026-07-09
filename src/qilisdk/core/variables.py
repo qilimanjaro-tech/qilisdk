@@ -1051,8 +1051,9 @@ class Variable(BaseVariable):
         if self._term is None:
             if self.bounds[1] > LARGE_BOUND or self.bounds[0] < -LARGE_BOUND:
                 logger.warning(
-                    f"[Variables] Encoding variable {self.label} which has the bounds {self.bounds}"
-                    + "is very expensive and may take a very long time."
+                    "[Variables] Encoding variable {} which has the bounds {} is very expensive and may take a very long time.",
+                    self.label,
+                    self.bounds,
                 )
             self._term = self.to_binary()
         return self._term

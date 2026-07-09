@@ -672,7 +672,9 @@ class Schedule(Parameterizable):
         _MAX_QUBITS_FOR_EIGENVALUE_PLOTTING = 7
         if self.nqubits > _MAX_QUBITS_FOR_EIGENVALUE_PLOTTING:
             logger.warning(
-                f"[Schedule] Calculating eigenvalues with more than {_MAX_QUBITS_FOR_EIGENVALUE_PLOTTING} qubits may be very slow and is not supported. This schedule has {self.nqubits} qubits."
+                "[Schedule] Calculating eigenvalues with more than {} qubits may be very slow and is not supported. This schedule has {} qubits.",
+                _MAX_QUBITS_FOR_EIGENVALUE_PLOTTING,
+                self.nqubits,
             )
         full_eigenvalues: list[list[float]] = []
         full_eigenstates: list[list[QTensor]] = []

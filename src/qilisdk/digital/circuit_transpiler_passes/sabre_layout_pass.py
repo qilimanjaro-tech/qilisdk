@@ -20,6 +20,8 @@ from collections import deque
 from copy import deepcopy
 from typing import TYPE_CHECKING, Iterable, TypeGuard
 
+from loguru import logger
+
 from qilisdk.digital import (
     Adjoint,
     Circuit,
@@ -169,6 +171,11 @@ class SabreLayoutPass(CircuitTranspilerPass):
         random_generator = random.Random(self.seed)
 
         num_logical_qubits = circuit.nqubits
+        logger.debug(
+            "[SabreLayoutPass] Running on {} logical qubits over {} trials",
+            num_logical_qubits,
+            self.num_trials,
+        )
         physical_nodes = sorted(int(x) for x in self.topology.node_indices())
         if not physical_nodes:
             raise ValueError("Coupling graph has no nodes.")
@@ -191,6 +198,7 @@ class SabreLayoutPass(CircuitTranspilerPass):
 
         # edge case: circuits with no 2Q gates -> trivial identity layout
         if not two_qubit_gate_indices:
+            logger.debug("[SabreLayoutPass] No two-qubit gates, using trivial identity layout")
             layout = physical_nodes[:num_logical_qubits]
             self.last_layout = layout
             self.last_score = 0.0
@@ -202,7 +210,7 @@ class SabreLayoutPass(CircuitTranspilerPass):
         best_layout: list[int] | None = None
         best_score: float = math.inf
 
-        for _ in range(self.num_trials):
+        for trial in range(self.num_trials):
             initial_layout = self._random_initial_layout(random_generator, num_logical_qubits, physical_nodes)
             layout, score = self._sabre_simulate_layout(
                 initial_layout,
@@ -213,12 +221,14 @@ class SabreLayoutPass(CircuitTranspilerPass):
                 physical_nodes,
                 physical_to_dense_index,
             )
+            logger.trace("[SabreLayoutPass] Trial {} scored {}", trial, score)
             if score < best_score:
                 best_layout = layout
                 best_score = score
 
         self.last_layout = best_layout
         self.last_score = best_score
+        logger.debug("[SabreLayoutPass] Selected layout {} with score {}", best_layout, best_score)
 
         if self.context is not None:
             self.context.initial_layout = self.last_layout or []

@@ -18,6 +18,8 @@ from io import StringIO
 from pathlib import Path
 from typing import Any, TypeVar, overload
 
+from loguru import logger
+
 from qilisdk.yaml import yaml
 
 T = TypeVar("T")
@@ -43,6 +45,7 @@ def serialize(obj: Any) -> str:
     Returns:
         str: The serialized YAML string.
     """
+    logger.debug("[Serialization] Serializing object of type {} to YAML string", type(obj).__name__)
     try:
         with StringIO() as stream:
             yaml.dump(obj, stream)
@@ -61,6 +64,7 @@ def serialize_to(obj: Any, file: str) -> None:
     Raises:
         SerializationError: If serialization to file fails.
     """
+    logger.debug("[Serialization] Serializing object of type {} to file {}", type(obj).__name__, file)
     try:
         yaml.dump(obj, Path(file))
     except Exception as e:
@@ -88,6 +92,7 @@ def deserialize(string: str, cls: type[T] | None = None) -> Any | T:
     Returns:
         Any | T: The deserialized object, optionally cast to the specified class type.
     """
+    logger.debug("[Serialization] Deserializing object from YAML string")
     try:
         with StringIO(string) as stream:
             result = yaml.load(stream)
@@ -119,6 +124,7 @@ def deserialize_from(file: str, cls: type[T] | None = None) -> Any | T:
     Returns:
         Any | T: The deserialized object, optionally cast to the specified class type.
     """
+    logger.debug("[Serialization] Deserializing object from file {}", file)
     try:
         result = yaml.load(Path(file))
     except Exception as e:

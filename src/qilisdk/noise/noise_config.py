@@ -15,6 +15,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from loguru import logger
+
 if TYPE_CHECKING:
     from qilisdk.digital import Gate
 
@@ -62,6 +64,7 @@ class NoiseConfig:
         if time <= 0:
             raise ValueError("Execution time must be positive.")
         self._gate_times[gate_type] = time
+        logger.debug("[NoiseConfig] Set gate time for {} to {}", gate_type.__name__, time)
 
     def set_default_gate_time(self, time: float) -> None:
         """Set the default execution time for gates not explicitly specified.
@@ -75,6 +78,7 @@ class NoiseConfig:
         if time <= 0:
             raise ValueError("Default execution time must be positive.")
         self._default_gate_time = time
+        logger.debug("[NoiseConfig] Set default gate time to {}", time)
 
     def __repr__(self) -> str:
         return f"{type(self).__qualname__}(default_gate_time={self._default_gate_time}, gate_times={self._gate_times})"

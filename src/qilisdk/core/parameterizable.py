@@ -16,6 +16,8 @@ from __future__ import annotations
 from abc import ABC
 from typing import TYPE_CHECKING
 
+from loguru import logger
+
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
 
@@ -169,6 +171,7 @@ class Parameterizable(ABC):
             The ``where`` predicate is applied to local parameters only. Child parameterizable
             objects always receive the same prefix operation recursively.
         """
+        logger.trace("[Parameterizable] Setting parameter prefix to {}", prefix)
         old_keys: list[str] = [label for label, param in self._parameters.items() if where is None or where(param)]
         for name in old_keys:
             if not name.startswith(prefix):
@@ -196,6 +199,7 @@ class Parameterizable(ABC):
                 "The constraint should only contain parameters and having generic variables is not allowed."
             )
 
+        logger.debug("[Parameterizable] Adding parameter constraint {}", constraint)
         self._parameter_constraints.append(constraint)
 
     def get_parameter_values(
@@ -246,6 +250,7 @@ class Parameterizable(ABC):
         Raises:
             ValueError: If ``values`` does not match the number of parameters selected by ``where``.
         """
+        logger.trace("[Parameterizable] Setting {} parameter values", len(values))
         param_names = self.get_parameter_names(where=where)
         if len(values) != len(param_names):
             raise ValueError(f"Provided {len(values)} but this object has {len(param_names)} parameters.")
@@ -262,6 +267,7 @@ class Parameterizable(ABC):
         Raises:
             ValueError: If an unknown parameter label is provided or constraints are violated.
         """
+        logger.trace("[Parameterizable] Setting {} parameters by label", len(parameters))
         available_parameters = self._filtered_parameter_map()
         if not self.check_constraints(parameters):
             raise ValueError(
@@ -293,6 +299,7 @@ class Parameterizable(ABC):
         Raises:
             ValueError: If an unknown parameter label is provided.
         """
+        logger.trace("[Parameterizable] Setting bounds for {} parameters", len(ranges))
         available_parameters = self._filtered_parameter_map()
         for label, bound in ranges.items():
             if label not in available_parameters:

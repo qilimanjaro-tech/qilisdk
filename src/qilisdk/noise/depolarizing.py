@@ -13,6 +13,8 @@
 # limitations under the License.
 from __future__ import annotations
 
+from loguru import logger
+
 from .pauli_channel import PauliChannel
 from .utils import _check_probability
 
@@ -32,6 +34,7 @@ class Depolarizing(PauliChannel):
             ValueError: If probability is outside [0, 1].
         """
         self._probability = _check_probability(probability, "probability")
+        logger.debug("[Depolarizing] Built depolarizing channel with probability {}", self._probability)
         super().__init__(pX=self._probability / 3.0, pY=self._probability / 3.0, pZ=self._probability / 3.0)
 
     @property

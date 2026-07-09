@@ -15,6 +15,7 @@ from __future__ import annotations
 
 from typing import Iterator, TypeAlias
 
+from loguru import logger
 from numpy import pi
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliOperator
@@ -43,6 +44,7 @@ def _pauli_evolution(
         Iterator[BasicGate]: Gates implementing the evolution under the Pauli string.
     """
 
+    logger.trace("[Trotterization] Evolving Pauli string {}", term)
     qubit_indices = [pauli.qubit for pauli in term if pauli.name != "I"]
     if len(qubit_indices) == 0:
         return
@@ -100,6 +102,7 @@ def trotter_evolution(
     Yields:
         Iterator[BasicGate]: Gates implementing the Trotterized evolution.
     """
+    logger.info("[Trotterization] Trotterizing Hamiltonian evolution over {} steps", trotter_steps)
     commuting_parts = hamiltonian.get_commuting_partitions()
     yield from _commuting_trotter_evolution(commuting_parts=commuting_parts, time=time, trotter_steps=trotter_steps)
 
@@ -120,6 +123,9 @@ def _commuting_trotter_evolution(
     Yields:
         Iterator[BasicGate]: Gates implementing the Trotterized evolution.
     """
+    logger.debug(
+        "[Trotterization] Evolving {} commuting partitions over {} steps", len(commuting_parts), trotter_steps
+    )
     for _ in range(trotter_steps):
         for part in commuting_parts:
             for term, coeff in part.items():

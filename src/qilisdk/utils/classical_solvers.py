@@ -94,7 +94,8 @@ class BruteForceSolver(ClassicalSolver):
             total_combinations *= len(d)
         if total_combinations > 1024:  # noqa: PLR2004
             logger.warning(
-                f"[ClassicalSolvers] Model has {total_combinations} combinations, brute-force enumeration may take a long time."
+                "[ClassicalSolvers] Model has {} combinations, brute-force enumeration may take a long time.",
+                total_combinations,
             )
 
         best_sample = {}

@@ -21,6 +21,7 @@ from enum import Enum
 from typing import TYPE_CHECKING, Any, Mapping
 
 import numpy as np
+from loguru import logger
 from typing_extensions import TypeAlias
 
 from qilisdk.core.parameterizable import Parameterizable
@@ -115,6 +116,11 @@ class Interpolator(Parameterizable):
             ValueError: If the time intervals contain a number of points different than 2.
         """
         super(Interpolator, self).__init__()
+        logger.debug(
+            "[Interpolator] Creating Interpolator with {} time points, interpolation={}",
+            len(time_dict),
+            interpolation,
+        )
         self._interpolation = interpolation
         self._time_dict: dict[PARAMETERIZED_NUMBER, PARAMETERIZED_NUMBER] = {}
         self._current_time = Parameter("t", 0)
@@ -322,6 +328,7 @@ class Interpolator(Parameterizable):
         """
         if abs(self._get_value(max_time)) < get_settings().atol:
             raise ValueError("Cannot set the max time to zero.")
+        logger.debug("[Interpolator] Setting max time to {}", max_time)
         self.delete_cache()
         self._max_time = max_time
 
@@ -401,6 +408,7 @@ class Interpolator(Parameterizable):
         Raises:
             ValueError: If the coefficient type is unsupported or the callable uses invalid variables.
         """
+        logger.trace("[Interpolator] Adding time point at t={}", time)
         self._extract_parameters(time)
         coeff = coefficient
         if callable(coeff):
@@ -430,6 +438,7 @@ class Interpolator(Parameterizable):
             values (list[float]): New values ordered consistently with ``get_parameter_names()``.
             where (Callable[[Parameter], bool] | None): Optional predicate selecting parameters to update.
         """
+        logger.trace("[Interpolator] Setting {} parameter values", len(values))
         self.delete_cache()
         super().set_parameter_values(values=values, where=where)
 
@@ -440,6 +449,7 @@ class Interpolator(Parameterizable):
         Args:
             parameters (dict[str, int | float]): Mapping from parameter labels to numeric values.
         """
+        logger.trace("[Interpolator] Setting {} parameters by label", len(parameters))
         self.delete_cache()
         super().set_parameters(parameters)
 
@@ -450,6 +460,7 @@ class Interpolator(Parameterizable):
         Args:
             ranges (dict[str, tuple[float, float]]): Bounds keyed by parameter label.
         """
+        logger.trace("[Interpolator] Setting bounds for {} parameters", len(ranges))
         self.delete_cache()
         super().set_parameter_bounds(ranges)
 
@@ -463,6 +474,7 @@ class Interpolator(Parameterizable):
         Returns:
             float: Evaluated coefficient.
         """
+        logger.trace("[Interpolator] Evaluating coefficient at t={}", time_step)
         time_step = time_step.item() if isinstance(time_step, np.generic) else self._get_value(time_step)  # ty:ignore[invalid-assignment]
         val = self.get_coefficient_expression(time_step=time_step)
 

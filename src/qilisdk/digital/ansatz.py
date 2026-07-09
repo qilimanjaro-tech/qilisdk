@@ -14,6 +14,8 @@
 from abc import ABC
 from typing import Iterator, Literal, Type
 
+from loguru import logger
+
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliX
 from qilisdk.analog.schedule import Schedule
 from qilisdk.core.variables import Parameter
@@ -187,11 +189,18 @@ class HardwareEfficientAnsatz(Ansatz):
 
     def _apply_entanglers(self) -> None:
         """Append the entangling block across all connectivity edges."""
+        logger.trace("[Ansatz] Applying entangler block over {} edges", len(self.connectivity))
         for i, j in self.connectivity:
             self.add(self.two_qubit_gate(i, j))
 
     def _build_circuit(self) -> None:
         """Populate the circuit according to the current structure and connectivity settings."""
+        logger.debug(
+            "[Ansatz] Building hardware-efficient ansatz with {} qubits, {} layers, {} structure",
+            self.nqubits,
+            self.layers,
+            self.structure,
+        )
         # Parameter iterator covering all single-qubit blocks, in order
         parameter_iterator = iter(self._parameter_blocks())
 
@@ -240,6 +249,11 @@ class TrotterizedSchedule(Ansatz):
         # Local import to avoid a circular import (see module-level note).
         from qilisdk.utils.trotterization.trotterization import trotter_evolution  # noqa: PLC0415
 
+        logger.debug(
+            "[Ansatz] Building trotterized schedule with {} qubits, {} trotter steps",
+            schedule.nqubits,
+            trotter_steps,
+        )
         for hamiltonian in schedule:
             self.add(list(trotter_evolution(hamiltonian, schedule.dt, trotter_steps=trotter_steps)))
 
@@ -359,6 +373,7 @@ class QAOA(Ansatz):
 
     def _build_circuit(self) -> None:
         """Populate the circuit according to the Hamiltonian and mixer settings."""
+        logger.debug("[Ansatz] Building QAOA ansatz with {} qubits, {} layers", self.nqubits, self.layers)
 
         # Split the hamiltonians into commuting parts
         commuting_parts_problem = self.problem_hamiltonian.get_commuting_partitions()
@@ -377,6 +392,7 @@ class QAOA(Ansatz):
 
         # Build the layers
         for i in range(self.layers):
+            logger.trace("[Ansatz] Building QAOA layer {}", i)
             # Initial parameter values
             initial_val_problem = self._problem_params[i]
             initial_val_mixer = self._mixer_params[i]

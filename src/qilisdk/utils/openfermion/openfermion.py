@@ -12,12 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from loguru import logger
 from openfermion import QubitOperator
 
 from qilisdk.analog import Hamiltonian, PauliI, PauliX, PauliY, PauliZ
 
 
 def openfermion_to_qilisdk(qubit_operator: QubitOperator) -> Hamiltonian:
+    logger.info("[OpenFermion] Converting OpenFermion QubitOperator to qilisdk Hamiltonian")
+    logger.debug("[OpenFermion] Converting {} terms", len(qubit_operator.terms))
     pauli_map = {"X": PauliX, "Y": PauliY, "Z": PauliZ}
 
     return Hamiltonian(
@@ -29,9 +32,11 @@ def openfermion_to_qilisdk(qubit_operator: QubitOperator) -> Hamiltonian:
 
 
 def qilisdk_to_openfermion(hamiltonian: Hamiltonian) -> QubitOperator:
+    logger.info("[OpenFermion] Converting qilisdk Hamiltonian to OpenFermion QubitOperator")
     of_ham = QubitOperator()
 
     for coeff, terms in hamiltonian:
+        logger.trace("[OpenFermion] Converting term with coefficient {}", coeff)
         of_term = ""
         for t in terms:
             if isinstance(t, PauliI):

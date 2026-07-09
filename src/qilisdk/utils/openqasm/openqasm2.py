@@ -16,6 +16,8 @@ import math
 import re
 from pathlib import Path
 
+from loguru import logger
+
 from qilisdk.digital.circuit import Circuit
 from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import CNOT, CZ, RX, RY, RZ, U1, U2, U3, Gate, H, M, S, T, X, Y, Z
@@ -175,6 +177,8 @@ def to_qasm2(circuit: Circuit) -> str:
     Returns:
         str: The OpenQASM 2.0 representation of the circuit.
     """
+    logger.info("[OpenQASM2] Exporting circuit to OpenQASM 2.0")
+    logger.debug("[OpenQASM2] Exporting {} gates on {} qubits", len(circuit.gates), circuit.nqubits)
     qasm_lines: list[str] = []
     # QASM header, standard library and quantum register.
     qasm_lines.extend(("OPENQASM 2.0;", 'include "qelib1.inc";', f"qreg q[{circuit.nqubits}];"))
@@ -185,6 +189,7 @@ def to_qasm2(circuit: Circuit) -> str:
 
     # Process each gate.
     for gate in circuit.gates:
+        logger.trace("[OpenQASM2] Exporting gate {} on qubits {}", gate.name, gate.qubits)
         # Special conversion for measurement.
         if isinstance(gate, M):
             if len(gate.target_qubits) == circuit.nqubits:
@@ -217,6 +222,7 @@ def to_qasm2_file(circuit: Circuit, filename: str) -> None:
         filename (str): The path to the file where the QASM code will be saved.
     """
     qasm_code = to_qasm2(circuit)
+    logger.debug("[OpenQASM2] Writing OpenQASM 2.0 to file {}", filename)
     Path(filename).write_text(qasm_code, encoding="utf-8")
 
 
@@ -237,13 +243,16 @@ def from_qasm2(qasm_str: str) -> Circuit:
     Returns:
         Circuit: The constructed Circuit object.
     """  # noqa: DOC501
+    logger.info("[OpenQASM2] Importing circuit from OpenQASM 2.0")
     # Mapping from QASM gate names (lowercase) to internal gate names.
     reverse_qasm2_map = {v: k for k, v in OPENQASM2_MAP.items()}
 
     circuit = None
     lines = qasm_str.splitlines()
+    logger.debug("[OpenQASM2] Parsing {} lines of OpenQASM 2.0", len(lines))
     for raw_line in lines:
         line = raw_line.strip()
+        logger.trace("[OpenQASM2] Parsing line: {}", line)
         if "//" in line:
             line = line.split("//", 1)[0].strip()
         if not line or line.startswith("//"):
@@ -323,6 +332,7 @@ def from_qasm2(qasm_str: str) -> Circuit:
             circuit.add(gate_instance)
     if circuit is None:
         raise ValueError("No quantum register declaration found in QASM.")
+    logger.debug("[OpenQASM2] Imported circuit with {} qubits and {} gates", circuit.nqubits, len(circuit.gates))
     return circuit
 
 
@@ -336,5 +346,6 @@ def from_qasm2_file(filename: str) -> Circuit:
     Returns:
         Circuit: The reconstructed Circuit object.
     """
+    logger.debug("[OpenQASM2] Reading OpenQASM 2.0 from file {}", filename)
     qasm_str = Path(filename).read_text(encoding="utf-8")
     return from_qasm2(qasm_str)

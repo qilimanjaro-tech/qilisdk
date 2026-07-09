@@ -191,7 +191,7 @@ class CircuitTranspiler:
         """
         self._reset_context()
 
-        logger.info("[CircuitTranspiler] Transpiling circuit through {} pass(es)", len(self._pipeline))
+        logger.info("[CircuitTranspiler] Transpiling circuit through {} passes", len(self._pipeline))
         pass_results: list[TranspilerPassResult] = []
         transpiled_circuit = circuit
 

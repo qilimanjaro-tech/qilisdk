@@ -1146,7 +1146,9 @@ class QUBO(Model):
 
         if term_upper_limit <= upper_cut and term_lower_limit >= lower_cut:
             logger.warning(
-                f'[Model] constraint "{label}" was not added to model "{self.label}" because it is always feasible.',
+                '[Model] constraint "{}" was not added to model "{}" because it is always feasible.',
+                label,
+                self.label,
             )
             return None
 
@@ -1599,7 +1601,8 @@ class QUBO(Model):
         emitted noting that no conversion was performed.
         """
         logger.warning(
-            f"[Model] Running `to_qubo()` on the model {self.label} that is already in QUBO format.",
+            "[Model] Running `to_qubo()` on the model {} that is already in QUBO format.",
+            self.label,
         )
         return copy.copy(self)
 
