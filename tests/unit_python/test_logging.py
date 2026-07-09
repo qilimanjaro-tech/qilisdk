@@ -234,6 +234,53 @@ def test_configure_logging_no_filename_uses_only_config_sinks(monkeypatch):
     assert added[0]["target"] == sys.stderr
 
 
+def _capture_added(monkeypatch, sinks):
+    settings = SimpleNamespace(sinks=sinks, intercept_libraries=[])
+    monkeypatch.setattr(qilisdk_logging.LoggingSettings, "load", staticmethod(lambda _: settings))
+    added = []
+    monkeypatch.setattr(
+        qilisdk_logging.logger, "add", lambda target, **kwargs: added.append({"target": target, "kwargs": kwargs})
+    )
+    return added
+
+
+def test_configure_logging_file_only(monkeypatch, tmp_path):
+    # stderr=False with a filename should produce only the file sink (no console).
+    sink_err = FakeSink(sink="stderr", level="INFO", format="custom-format", filter="qilisdk", colorize=True)
+    added = _capture_added(monkeypatch, [sink_err])
+
+    qilisdk_logging.configure_logging(filename=tmp_path / "run.log", stderr=False)
+
+    assert len(added) == 1
+    assert added[0]["target"] == str(tmp_path / "run.log")
+    # The file sink still mirrors the configured format/filter even though the console sink was skipped.
+    assert added[0]["kwargs"]["format"] == "custom-format"
+    assert added[0]["kwargs"]["filter"] == "qilisdk"
+    assert added[0]["kwargs"]["colorize"] is False
+
+
+def test_configure_logging_console_and_file(monkeypatch, tmp_path):
+    # stderr=True (default) with a filename produces both console and file sinks.
+    sink_err = FakeSink(sink="stderr", level="INFO", format="custom-format", filter="qilisdk", colorize=True)
+    added = _capture_added(monkeypatch, [sink_err])
+
+    qilisdk_logging.configure_logging(filename=tmp_path / "run.log")
+
+    assert len(added) == 2
+    assert added[0]["target"] == sys.stderr
+    assert added[1]["target"] == str(tmp_path / "run.log")
+
+
+def test_configure_logging_disabled(monkeypatch):
+    # stderr=False and no filename disables all output.
+    sink_err = FakeSink(sink="stderr", level="INFO", format=None)
+    added = _capture_added(monkeypatch, [sink_err])
+
+    qilisdk_logging.configure_logging(stderr=False)
+
+    assert len(added) == 0
+
+
 def test_emit_falls_back_to_levelno(monkeypatch):
     handler = InterceptHandler()
 

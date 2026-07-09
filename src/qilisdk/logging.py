@@ -112,29 +112,28 @@ class InterceptHandler(logging.Handler):
         logger.opt(depth=depth, exception=record.exc_info).log(level, record.getMessage())
 
 
-def configure_logging(level: str | None = None, filename: str | Path | None = None) -> None:
+def configure_logging(level: str | None = None, filename: str | Path | None = None, stderr: bool = True) -> None:
     """
     Configure QiliSDK logging. This is the main entry point for controlling log output.
-
-    By default the sinks defined in the logging configuration file are used (typically colored
-    output to stderr). Pass ``level`` to change the verbosity, and/or ``filename`` to additionally
-    write logs to a file.
+    Output can be sent to the console, to a file, or both.
 
     Args:
         level (str | None): If provided, override the level of every sink with this value
             (e.g., "TRACE", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"). All other sink options
             (format, filter, colorize, ...) are preserved. If ``None``, each sink uses its configured level.
-        filename (str | Path | None): If provided, additionally write logs to this file (in plain,
-            non-colored text using the configured format). The console sinks from the configuration
-            are kept. If ``None``, only the sinks defined in the logging configuration are used.
+        filename (str | Path | None): If provided, write logs to this file (in plain, non-colored text
+            using the configured format). If ``None``, no file output is produced.
+        stderr (bool): If ``True`` (the default), log to the console sinks defined in the configuration.
+            Set to ``False`` to disable console output (for example, to log only to ``filename``).
 
     Example:
         .. code-block:: python
 
             from qilisdk import configure_logging
 
-            configure_logging(level="DEBUG")  # more verbose console output
-            configure_logging(level="TRACE", filename="run.log")  # also capture everything to a file
+            configure_logging(level="DEBUG")                                   # console only, more verbose
+            configure_logging(level="TRACE", filename="run.log")               # console and file
+            configure_logging(filename="run.log", stderr=False)               # file only
     """
     # Determine config path
     config_path = Path(get_settings().logging_config_path).expanduser()
@@ -150,7 +149,7 @@ def configure_logging(level: str | None = None, filename: str | Path | None = No
     # 1) Remove all pre-configured Loguru handlers
     logger.remove()
 
-    # 2) Add configured sinks, remembering the first sink's presentation so a file sink can mirror it.
+    # 2) Add configured sinks, remembering the first sink's presentation so a file sink can mirror it
     base_format: str | None = None
     base_filter: str | dict[str, str] | None = None
     base_level: str = "INFO"
@@ -159,18 +158,23 @@ def configure_logging(level: str | None = None, filename: str | Path | None = No
         params = sink_conf.model_dump()
         sink_target = params.pop("sink")
 
-        # Resolve stderr/stdout
+        # Resolve stderr/stdout and remember whether this is a console sink.
+        is_console = isinstance(sink_target, str) and sink_target.lower() in ("stderr", "stdout")
         if isinstance(sink_target, str) and sink_target.lower() == "stderr":
             sink_target = sys.stderr
         elif isinstance(sink_target, str) and sink_target.lower() == "stdout":
             sink_target = sys.stdout
 
-        # Remember the first sink's presentation (read from the dumped params, before any override).
+        # Remember the first sink's presentation (read from the dumped params, before any override)
         if not seen_first_sink:
             base_format = params.get("format")
             base_filter = params.get("filter")
             base_level = params.get("level", base_level)
             seen_first_sink = True
+
+        # Skip console sinks when console output is disabled.
+        if is_console and not stderr:
+            continue
 
         # Apply a global level override, keeping every other sink option intact.
         if level is not None:
