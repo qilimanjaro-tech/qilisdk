@@ -184,7 +184,10 @@ class AnalogMethod(BaseSimulatorConfig):
             AnalogMethod: Configured variational-method analog configuration.
         """
         logger.debug(
-            "[BackendConfig] Configuring variational_annealing analog method (order={}, shots={}, warmups={})", order, shots, warmups
+            "[BackendConfig] Configuring variational_annealing analog method (order={}, shots={}, warmups={})",
+            order,
+            shots,
+            warmups,
         )
         return cls(
             evolution_method="variational_exponential",

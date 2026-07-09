@@ -134,7 +134,9 @@ class ExpectationReadout(ReadoutMethod):
             raise ValueError("The number of shots has to be a positive integer")
         if any(not isinstance(o, (Hamiltonian, QTensor)) for o in observables):
             raise ValueError("Invalid Observable: All observables need to be QTensors or a Hamiltonian.")
-        logger.trace("[Readout] Constructing expectation readout with {} observables, {} shots", len(observables), nshots)
+        logger.trace(
+            "[Readout] Constructing expectation readout with {} observables, {} shots", len(observables), nshots
+        )
         self._nshots: int = nshots
         self._observables: list[Hamiltonian | QTensor] = observables
         self._scaled_nqubits: int | None = None

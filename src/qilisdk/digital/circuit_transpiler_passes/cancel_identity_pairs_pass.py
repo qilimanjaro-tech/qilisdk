@@ -206,7 +206,9 @@ class CancelIdentityPairsPass(CircuitTranspilerPass):
             logger.debug("[CancelIdentityPairsPass] Sweep {} removed {} gates", sweep, len(to_delete))
             gates = [gate for i, gate in enumerate(gates) if i not in to_delete]
 
-        logger.debug("[CancelIdentityPairsPass] Reached fixed point after {} sweeps, {} gates remain", sweep, len(gates))
+        logger.debug(
+            "[CancelIdentityPairsPass] Reached fixed point after {} sweeps, {} gates remain", sweep, len(gates)
+        )
 
         # Build new circuit (deepcopy to avoid Parameter sharing)
         out = Circuit(circuit.nqubits)

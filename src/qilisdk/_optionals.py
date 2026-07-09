@@ -189,7 +189,9 @@ def import_optional_dependencies(feature: OptionalFeature) -> ImportedFeature:
             all_dists.extend(g.dists)
         ok, missing = _group_installed(all_dists)
         if not ok:
-            logger.warning("[Optionals] Optional feature {} unavailable, missing distributions {}", feature.name, missing)
+            logger.warning(
+                "[Optionals] Optional feature {} unavailable, missing distributions {}", feature.name, missing
+            )
             # stubs
             stubs: dict[str, Any] = {s.name: make_stub(s.name) for s in feature.symbols}
             return ImportedFeature(name=feature.name, symbols=stubs)
@@ -216,6 +218,8 @@ def import_optional_dependencies(feature: OptionalFeature) -> ImportedFeature:
             module = importlib.import_module(symbol.path)
             symbols[symbol.name] = getattr(module, symbol.name)
         except Exception as exc:  # noqa: BLE001
-            logger.warning("[Optionals] Failed to import symbol {} for feature {}, using stub", symbol.name, feature.name)
+            logger.warning(
+                "[Optionals] Failed to import symbol {} for feature {}, using stub", symbol.name, feature.name
+            )
             symbols[symbol.name] = make_stub(symbol.name, import_error=exc)
     return ImportedFeature(name=feature.name, symbols=symbols)

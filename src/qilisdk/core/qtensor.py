@@ -748,7 +748,9 @@ class QTensor:
         Returns:
             float: The Rényi entropy of the QTensor for the specified order alpha.
         """
-        logger.trace("[QTensor] QTensor.entropy_renyi computing Renyi entropy of order {} on {} qubits", alpha, self.nqubits)
+        logger.trace(
+            "[QTensor] QTensor.entropy_renyi computing Renyi entropy of order {} on {} qubits", alpha, self.nqubits
+        )
         return self._qtensor_cpp.entropy_renyi(alpha)
 
     def commutator(self, other: QTensor) -> QTensor:
@@ -864,7 +866,11 @@ class QTensor:
         Returns:
             complex: The computed expectation value, which may be a complex number.
         """
-        logger.trace("[QTensor] QTensor.expectation_value computing expectation value with {} shots on {} qubits", nshots, self.nqubits)
+        logger.trace(
+            "[QTensor] QTensor.expectation_value computing expectation value with {} shots on {} qubits",
+            nshots,
+            self.nqubits,
+        )
         return self._qtensor_cpp.expectation_value_python(other, nshots)
 
     def __getstate__(self) -> dict[str, csr_matrix]:

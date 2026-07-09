@@ -123,9 +123,7 @@ def _commuting_trotter_evolution(
     Yields:
         Iterator[BasicGate]: Gates implementing the Trotterized evolution.
     """
-    logger.debug(
-        "[Trotterization] Evolving {} commuting partitions over {} steps", len(commuting_parts), trotter_steps
-    )
+    logger.debug("[Trotterization] Evolving {} commuting partitions over {} steps", len(commuting_parts), trotter_steps)
     for _ in range(trotter_steps):
         for part in commuting_parts:
             for term, coeff in part.items():

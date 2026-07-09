@@ -19,7 +19,7 @@ from __future__ import annotations
 import logging
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from loguru import logger
 from pydantic import BaseModel
@@ -133,7 +133,7 @@ def configure_logging(level: str | None = None, filename: str | Path | None = No
 
             from qilisdk import configure_logging
 
-            configure_logging(level="DEBUG")                      # more verbose console output
+            configure_logging(level="DEBUG")  # more verbose console output
             configure_logging(level="TRACE", filename="run.log")  # also capture everything to a file
     """
     # Determine config path
@@ -182,7 +182,7 @@ def configure_logging(level: str | None = None, filename: str | Path | None = No
 
     # 2b) Optionally add a plain-text file sink mirroring the configured format/filter.
     if filename is not None:
-        file_params: dict[str, object] = {
+        file_params: dict[str, Any] = {
             "level": level if level is not None else base_level,
             "colorize": False,
         }

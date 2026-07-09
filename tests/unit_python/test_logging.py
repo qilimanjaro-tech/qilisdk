@@ -20,9 +20,9 @@ import pytest
 from loguru_caplog import loguru_caplog as caplog  # noqa: F401
 
 from qilisdk import logging as qilisdk_logging
-from qilisdk.logging import InterceptHandler
 from qilisdk.core.model import Model, ObjectiveSense
 from qilisdk.core.variables import LT, BinaryVariable, Domain, OneHot, Variable
+from qilisdk.logging import InterceptHandler
 
 
 def test_log_output(caplog):  # noqa: F811

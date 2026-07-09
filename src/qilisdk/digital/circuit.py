@@ -15,9 +15,9 @@ from __future__ import annotations
 
 import random
 from typing import TYPE_CHECKING, Callable, Iterable
-from loguru import logger
 
 import numpy as np
+from loguru import logger
 from typing_extensions import Self
 
 from qilisdk.core import Domain, Parameter, QTensor
@@ -443,5 +443,9 @@ class Circuit(Parameterizable):
         return new_circuit
 
     def __repr__(self) -> str:
-        logger.trace("[Circuit] Generating string representation of circuit with {} qubits and {} gates", self.nqubits, len(self.gates))
+        logger.trace(
+            "[Circuit] Generating string representation of circuit with {} qubits and {} gates",
+            self.nqubits,
+            len(self.gates),
+        )
         return f"Circuit(nqubits={self.nqubits}, gates={self.gates})"

@@ -200,7 +200,10 @@ class CircuitTranspiler:
             gates_before = len(transpiled_circuit.gates)
             transpiled_circuit = transpiler_pass.run(transpiled_circuit)
             logger.debug(
-                "[CircuitTranspiler] Pass {} done: {} -> {} gates", pass_name, gates_before, len(transpiled_circuit.gates)
+                "[CircuitTranspiler] Pass {} done: {} -> {} gates",
+                pass_name,
+                gates_before,
+                len(transpiled_circuit.gates),
             )
             pass_results.append(
                 TranspilerPassResult(
@@ -209,7 +212,9 @@ class CircuitTranspiler:
                 )
             )
 
-        logger.info("[CircuitTranspiler] Transpilation finished: {} gates in final circuit", len(transpiled_circuit.gates))
+        logger.info(
+            "[CircuitTranspiler] Transpilation finished: {} gates in final circuit", len(transpiled_circuit.gates)
+        )
         return CircuitTranspilerResult(
             circuit=transpiled_circuit,
             intermediate_results=pass_results,

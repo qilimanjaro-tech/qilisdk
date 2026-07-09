@@ -371,7 +371,9 @@ class CudaBackend(Backend):
                 intermediate-state readouts when
                 ``functional.store_intermediate_results`` is ``True``.
         """
-        logger.info("[CudaBackend] Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
+        logger.info(
+            "[CudaBackend] Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt
+        )
         if get_settings().complex_precision != Precision.COMPLEX_128:
             logger.warning(
                 "[CudaBackend] CUDA-Q dynamics simulation only supports fp64, ignoring complex_precision={} and using fp64.",

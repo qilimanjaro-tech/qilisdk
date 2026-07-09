@@ -345,7 +345,9 @@ class BasicGate(Gate):
         Returns:
             Controlled: A new Controlled gate instance that wraps this unitary gate with the specified control qubits.
         """
-        logger.trace("[Gates] Creating controlled version of {} with control qubits {}", type(self).__name__, control_qubits)
+        logger.trace(
+            "[Gates] Creating controlled version of {} with control qubits {}", type(self).__name__, control_qubits
+        )
         return Controlled(*control_qubits, basic_gate=self)
 
     def adjoint(self: Self) -> Adjoint[Self]:

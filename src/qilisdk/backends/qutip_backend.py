@@ -190,7 +190,9 @@ class QutipBackend(Backend):
                 (must be a ket, bra, or density matrix).
         """
 
-        logger.info("[QutipBackend] Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
+        logger.info(
+            "[QutipBackend] Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt
+        )
         steps = functional.schedule.tlist
 
         qutip_hamiltonians = []

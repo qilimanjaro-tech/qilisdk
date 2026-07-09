@@ -53,9 +53,7 @@ class DecomposeMultiControlledGatesPass(CircuitTranspilerPass):
             for rewritten_gate in self._rewrite_gate(gate):
                 output_circuit.add(rewritten_gate)
 
-        logger.debug(
-            "[DecomposeMultiControlledGatesPass] Produced circuit with {} gates", len(output_circuit.gates)
-        )
+        logger.debug("[DecomposeMultiControlledGatesPass] Produced circuit with {} gates", len(output_circuit.gates))
         self.append_circuit_to_context(output_circuit)
 
         return output_circuit

@@ -642,7 +642,9 @@ class Schedule(Parameterizable):
 
         # If we try to show overlaps but haven't given intermediate states, raise an error
         if show_overlaps and not intermediate_states:
-            logger.warning("[Schedule] Overlaps can't be shown without intermediate states. Setting show_overlaps to False.")
+            logger.warning(
+                "[Schedule] Overlaps can't be shown without intermediate states. Setting show_overlaps to False."
+            )
             show_overlaps = False
 
         renderer = MatplotlibEigenvalueRenderer(
