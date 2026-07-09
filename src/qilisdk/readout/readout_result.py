@@ -673,7 +673,7 @@ def _samples_from_probabilities(
     states = np.array(list(probabilities.keys()))
     probs = np.array(list(probabilities.values()), dtype=np.float64)
     if not np.isclose(probs.sum(), 1):
-        logger.warning("Renormalizing probabilities obtained as they don't sum up to 1.")
+        logger.warning("[ReadoutResult] Renormalizing probabilities obtained as they don't sum up to 1.")
         probs /= probs.sum()
 
     rng = np.random.default_rng(seed)

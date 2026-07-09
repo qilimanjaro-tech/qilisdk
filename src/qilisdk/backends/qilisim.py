@@ -122,12 +122,12 @@ class QiliSim(Backend):
         self._solver_config.update({"atol": get_settings().atol})
 
         logger.debug(
-            "Initialized QiliSim backend (analog={}, digital={}, noise_model={})",
+            "[QiliSim] Initialized QiliSim backend (analog={}, digital={}, noise_model={})",
             type(analog_simulation_method).__name__,
             type(digital_simulation_method).__name__,
             type(noise_model).__name__ if noise_model is not None else None,
         )
-        logger.trace("QiliSim solver config: {}", self._solver_config)
+        logger.trace("[QiliSim] QiliSim solver config: {}", self._solver_config)
 
     @property
     def solver_params(self) -> SolverConfigDict:
@@ -156,9 +156,9 @@ class QiliSim(Backend):
             FunctionalResult: The execution result containing the requested
                 readout data.
         """
-        logger.info("Executing Digital Propagation")
+        logger.info("[QiliSim] Executing Digital Propagation")
         logger.debug(
-            "DigitalPropagation over circuit with {} qubits and {} gates; {} readout method(s)",
+            "[QiliSim] DigitalPropagation over circuit with {} qubits and {} gates; {} readout method(s)",
             functional.circuit.nqubits,
             len(functional.circuit.gates),
             len(readout),
@@ -166,7 +166,7 @@ class QiliSim(Backend):
         result = self.qili_sim.execute_digital_propagation(
             functional, readout, self._noise_model, initial_state, self._solver_config
         )
-        logger.success("Digital Propagation finished")
+        logger.info("[QiliSim] Digital Propagation finished")
         return result
 
     def _execute_analog_evolution(self, functional: AnalogEvolution, readout: list[ReadoutMethod]) -> FunctionalResult:
@@ -184,12 +184,12 @@ class QiliSim(Backend):
         """
 
         # Get the time steps
-        logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
+        logger.info("[QiliSim] Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
 
         # Execute the time evolution
         result = self.qili_sim.execute_analog_evolution(functional, readout, self._noise_model, self._solver_config)
 
-        logger.success("TimeEvolution finished")
+        logger.info("[QiliSim] TimeEvolution finished")
         return result
 
     def _execute_quantum_reservoir(
@@ -208,12 +208,12 @@ class QiliSim(Backend):
                 readout data.
         """
         # Get the time steps
-        logger.info("Executing Quantum Reservoir")
+        logger.info("[QiliSim] Executing Quantum Reservoir")
 
         # Execute the time evolution
         result = self.qili_sim.execute_quantum_reservoir(functional, readout, self._noise_model, self._solver_config)
 
-        logger.success("Quantum Reservoir finished")
+        logger.info("[QiliSim] Quantum Reservoir finished")
         return result
 
     def __repr__(self) -> str:

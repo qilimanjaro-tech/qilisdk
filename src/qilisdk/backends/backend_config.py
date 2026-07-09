@@ -77,7 +77,7 @@ class MonteCarloConfig(BaseSimulatorConfig):
 
     def get_config(self) -> SolverConfigDict:
         """Return Monte Carlo settings in backend-compatible key names."""
-        logger.trace("Serializing MonteCarloConfig (trajectories={})", self.trajectories)
+        logger.trace("[BackendConfig] Serializing MonteCarloConfig (trajectories={})", self.trajectories)
         return {"num_monte_carlo_trajectories": self.trajectories}
 
 
@@ -152,7 +152,7 @@ class AnalogMethod(BaseSimulatorConfig):
             "variational_order": self.variational_order,
         }
 
-        logger.trace("Serializing AnalogMethod config: {}", d)
+        logger.trace("[BackendConfig] Serializing AnalogMethod config: {}", d)
         return d
 
     @classmethod
@@ -168,7 +168,7 @@ class AnalogMethod(BaseSimulatorConfig):
             AnalogMethod: Configured integrate-method analog configuration.
         """
         evolution_method = "integrate_rk4_matrix_free" if matrix_free else "integrate_rk4"
-        logger.debug("Configuring integrator analog method (matrix_free={})", matrix_free)
+        logger.debug("[BackendConfig] Configuring integrator analog method (matrix_free={})", matrix_free)
         return cls(evolution_method=evolution_method)
 
     @classmethod
@@ -187,7 +187,7 @@ class AnalogMethod(BaseSimulatorConfig):
             AnalogMethod: Configured variational-method analog configuration.
         """
         logger.debug(
-            "Configuring variational_annealing analog method (order={}, shots={}, warmups={})", order, shots, warmups
+            "[BackendConfig] Configuring variational_annealing analog method (order={}, shots={}, warmups={})", order, shots, warmups
         )
         return cls(
             evolution_method="variational_exponential",
@@ -210,7 +210,7 @@ class AnalogMethod(BaseSimulatorConfig):
         Returns:
             AnalogMethod: Configured integrate-method analog configuration.
         """
-        logger.debug("Configuring adaptive_integrator analog method (tol={})", tol)
+        logger.debug("[BackendConfig] Configuring adaptive_integrator analog method (tol={})", tol)
         return cls(evolution_method="integrate_rk45_matrix_free", adaptive_tol=tol)
 
     @classmethod
@@ -231,7 +231,7 @@ class AnalogMethod(BaseSimulatorConfig):
         Returns:
             AnalogMethod: Configured arnoldi-method analog configuration.
         """
-        logger.debug("Configuring arnoldi analog method (dim={}, num_substeps={})", dim, num_substeps)
+        logger.debug("[BackendConfig] Configuring arnoldi analog method (dim={}, num_substeps={})", dim, num_substeps)
         return cls(
             evolution_method="arnoldi",
             arnoldi_dim=dim,
@@ -245,7 +245,7 @@ class AnalogMethod(BaseSimulatorConfig):
         Returns:
             AnalogMethod: Configured direct-method analog configuration.
         """
-        logger.debug("Configuring direct analog method")
+        logger.debug("[BackendConfig] Configuring direct analog method")
         return cls(evolution_method="direct")
 
 
@@ -305,7 +305,7 @@ class ExecutionConfig(BaseSimulatorConfig):
             d.update(self.monte_carlo.get_config())
         else:
             d.update({"num_monte_carlo_trajectories": 100})
-        logger.trace("Serializing ExecutionConfig: {}", d)
+        logger.trace("[BackendConfig] Serializing ExecutionConfig: {}", d)
         return d
 
     @field_validator("num_threads", mode="after")
@@ -313,7 +313,7 @@ class ExecutionConfig(BaseSimulatorConfig):
     def _validate_num_threads(cls, num_threads: int) -> int:
         if num_threads <= 0:
             resolved = psutil.cpu_count(logical=False) or 1
-            logger.debug("num_threads=0 requested; resolved to {} physical core(s)", resolved)
+            logger.debug("[BackendConfig] num_threads=0 requested; resolved to {} physical core(s)", resolved)
             return resolved
         return num_threads
 
@@ -322,7 +322,7 @@ class ExecutionConfig(BaseSimulatorConfig):
     def _validate_seed(cls, seed: int | None) -> int:
         if seed is None:
             generated = secrets.randbelow(2**15)
-            logger.debug("No seed provided; generated random seed {}", generated)
+            logger.debug("[BackendConfig] No seed provided; generated random seed {}", generated)
             return generated
         return seed
 
@@ -378,7 +378,7 @@ class DigitalMethod(BaseSimulatorConfig):
             "normalize_after_each_gate": self.normalize_after_each_gate,
             "combine_single_qubit_gates": self.combine_single_qubit_gates,
         }
-        logger.trace("Serializing DigitalMethod config: {}", d)
+        logger.trace("[BackendConfig] Serializing DigitalMethod config: {}", d)
         return d
 
     @classmethod
@@ -406,7 +406,7 @@ class DigitalMethod(BaseSimulatorConfig):
             DigitalMethod: Configured statevector digital configuration.
         """
         logger.debug(
-            "Configuring statevector digital method (max_cache_size={}, matrix_free={}, "
+            "[BackendConfig] Configuring statevector digital method (max_cache_size={}, matrix_free={}, "
             "normalize_after_each_gate={}, combine_single_qubit_gates={})",
             max_cache_size,
             matrix_free,

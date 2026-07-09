@@ -642,7 +642,7 @@ class Schedule(Parameterizable):
 
         # If we try to show overlaps but haven't given intermediate states, raise an error
         if show_overlaps and not intermediate_states:
-            logger.warning("Overlaps can't be shown without intermediate states. Setting show_overlaps to False.")
+            logger.warning("[Schedule] Overlaps can't be shown without intermediate states. Setting show_overlaps to False.")
             show_overlaps = False
 
         renderer = MatplotlibEigenvalueRenderer(
@@ -672,7 +672,7 @@ class Schedule(Parameterizable):
         _MAX_QUBITS_FOR_EIGENVALUE_PLOTTING = 7
         if self.nqubits > _MAX_QUBITS_FOR_EIGENVALUE_PLOTTING:
             logger.warning(
-                f"Calculating eigenvalues with more than {_MAX_QUBITS_FOR_EIGENVALUE_PLOTTING} qubits may be very slow and is not supported. This schedule has {self.nqubits} qubits."
+                f"[Schedule] Calculating eigenvalues with more than {_MAX_QUBITS_FOR_EIGENVALUE_PLOTTING} qubits may be very slow and is not supported. This schedule has {self.nqubits} qubits."
             )
         full_eigenvalues: list[list[float]] = []
         full_eigenstates: list[list[QTensor]] = []

@@ -1146,7 +1146,7 @@ class QUBO(Model):
 
         if term_upper_limit <= upper_cut and term_lower_limit >= lower_cut:
             logger.warning(
-                f'constraint "{label}" was not added to model "{self.label}" because it is always feasible.',
+                f'[Model] constraint "{label}" was not added to model "{self.label}" because it is always feasible.',
             )
             return None
 
@@ -1332,7 +1332,7 @@ class QUBO(Model):
             if lower_penalization == "unbalanced" and lagrange_multiplier != 1:
                 self.lagrange_multipliers[label] = 1
                 logger.warning(
-                    "add_constraint() in QUBO model:"
+                    "[Model] add_constraint() in QUBO model:"
                     + f' The Lagrange Multiplier for the constraint "{label}" in the QUBO model ({self.label})'
                     + " has been set to 1 because the constraint uses unbalanced"
                     + " penalization method."
@@ -1599,7 +1599,7 @@ class QUBO(Model):
         emitted noting that no conversion was performed.
         """
         logger.warning(
-            f"Running `to_qubo()` on the model {self.label} that is already in QUBO format.",
+            f"[Model] Running `to_qubo()` on the model {self.label} that is already in QUBO format.",
         )
         return copy.copy(self)
 

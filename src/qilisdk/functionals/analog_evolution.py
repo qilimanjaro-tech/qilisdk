@@ -72,7 +72,7 @@ class AnalogEvolution(PrimitiveFunctional):
             )
 
         logger.debug(
-            "Created AnalogEvolution over schedule with {} qubits (T={}, store_intermediate_results={})",
+            "[AnalogEvolution] Created AnalogEvolution over schedule with {} qubits (T={}, store_intermediate_results={})",
             schedule.nqubits,
             schedule.T,
             store_intermediate_results,
@@ -108,7 +108,7 @@ class AnalogEvolution(PrimitiveFunctional):
             values (list[float]): New values ordered consistently with ``get_parameter_names()``.
             where (Callable[[Parameter], bool] | None): Optional predicate selecting parameters to update.
         """
-        logger.trace("Setting {} parameter value(s) on AnalogEvolution", len(values))
+        logger.trace("[AnalogEvolution] Setting {} parameter value(s) on AnalogEvolution", len(values))
         self.schedule.set_parameter_values(values=values, where=where)
 
     def set_parameters(self, parameters: dict[str, int | float]) -> None:

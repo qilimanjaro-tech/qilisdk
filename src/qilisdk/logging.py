@@ -174,7 +174,7 @@ def configure_logging(level: str | None = None, filename: str | Path | None = No
 
         # Apply a global level override, keeping every other sink option intact.
         if level is not None:
-            params["level"] = level
+            params["level"] = level.upper()
 
         clean_params = {k: v for k, v in params.items() if v is not None}
 

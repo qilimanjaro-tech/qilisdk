@@ -306,7 +306,7 @@ class ExperimentResult(FunctionalResult):
         should_fit = fit if fit is not None else self.fit_by_default
         if fit is not None and fit and not is_amplitude:
             logger.warning(
-                "Fitting is only implemented for amplitude plots. Ignoring fit request for non-amplitude plot."
+                "[ExperimentResult] Fitting is only implemented for amplitude plots. Ignoring fit request for non-amplitude plot."
             )
             should_fit = False
         if n_dimensions == 1:

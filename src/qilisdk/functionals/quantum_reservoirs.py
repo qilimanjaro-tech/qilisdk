@@ -330,7 +330,7 @@ class QuantumReservoir(PrimitiveFunctional):
             )
 
         logger.debug(
-            "Created QuantumReservoir with {} qubits and {} layer(s)",
+            "[QuantumReservoir] Created QuantumReservoir with {} qubits and {} layer(s)",
             self._reservoir_layer.nqubits,
             len(input_per_layer),
         )
