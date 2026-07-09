@@ -267,6 +267,7 @@ class QTensor:
         Returns:
             QTensor: A new QTensor that is the complex conjugate of this object.
         """
+        logger.trace("[QTensor] QTensor.conjugate computing complex conjugate on {} qubits", self.nqubits)
         return QTensor(self._qtensor_cpp.conjugate())
 
     def transpose(self) -> QTensor:
@@ -276,6 +277,7 @@ class QTensor:
         Returns:
             QTensor: A new QTensor that is the transpose of this object.
         """
+        logger.trace("[QTensor] QTensor.transpose computing transpose on {} qubits", self.nqubits)
         return QTensor(self._qtensor_cpp.transpose())
 
     def dagger(self) -> QTensor:
@@ -285,6 +287,7 @@ class QTensor:
         Returns:
             QTensor: A new QTensor that is the adjoint of this object.
         """
+        logger.trace("[QTensor] QTensor.dagger computing adjoint on {} qubits", self.nqubits)
         return self.adjoint()
 
     def trace(self) -> complex:
@@ -294,6 +297,7 @@ class QTensor:
         Returns:
             complex: The trace of the QTensor.
         """
+        logger.trace("[QTensor] QTensor.trace computing trace on {} qubits", self.nqubits)
         return self._qtensor_cpp.trace()
 
     def dot(self, other: QTensor) -> Number:
@@ -308,6 +312,7 @@ class QTensor:
         Returns:
             Number: The computed dot product, which may be a complex number.
         """
+        logger.trace("[QTensor] QTensor.dot computing inner product on {} qubits", self.nqubits)
         return self._qtensor_cpp.dot_python(other)
 
     def ptrace(self, keep: list[int]) -> QTensor:
@@ -323,6 +328,7 @@ class QTensor:
         Raises:
             ValueError: If there are duplicate indices in the 'keep' list.
         """
+        logger.trace("[QTensor] QTensor.ptrace keeping qubits {}", keep)
         as_set = set(keep)
         if len(as_set) != len(keep):
             raise ValueError("Duplicate indices in keep list")
@@ -365,6 +371,7 @@ class QTensor:
         Raises:
             ValueError: If an unsupported norm order is specified.
         """
+        logger.trace("[QTensor] QTensor.norm computing norm of order {} on {} qubits", order, self.nqubits)
         if isinstance(order, int):
             if order <= 0:
                 raise ValueError("Norm order must be a positive integer")
@@ -384,6 +391,7 @@ class QTensor:
         Raises:
             ValueError: If the QTensor is not a square matrix (i.e., not an operator).
         """
+        logger.trace("[QTensor] QTensor.eig computing eigendecomposition on {} qubits", self.nqubits)
         self._qtensor_cpp.compute_eigendecomposition()
         return self.eigenvalues, self.eigenvectors
 
@@ -397,6 +405,7 @@ class QTensor:
         Returns:
             QTensor: A new QTensor that is the normalized version of this object.
         """
+        logger.trace("[QTensor] QTensor.unit normalizing with norm order {} on {} qubits", order, self.nqubits)
         return self.normalized(order)
 
     def normalized(self, order: NormTypes = "auto") -> QTensor:
@@ -415,6 +424,7 @@ class QTensor:
         Returns:
             QTensor: A new QTensor that is the normalized version of this object.
         """
+        logger.trace("[QTensor] QTensor.normalized normalizing with norm order {} on {} qubits", order, self.nqubits)
         return QTensor(self._qtensor_cpp.normalized(order))
 
     def expm(self) -> QTensor:
@@ -424,6 +434,7 @@ class QTensor:
         Returns:
             QTensor: A new QTensor representing the matrix exponential.
         """
+        logger.trace("[QTensor] QTensor.expm computing matrix exponential on {} qubits", self.nqubits)
         return self.exp()
 
     def exp(self) -> QTensor:
@@ -433,6 +444,7 @@ class QTensor:
         Returns:
             QTensor: A new QTensor representing the matrix exponential.
         """
+        logger.trace("[QTensor] QTensor.exp computing matrix exponential on {} qubits", self.nqubits)
         return QTensor(self._qtensor_cpp.exp())
 
     def inverse(self) -> QTensor:
@@ -445,6 +457,7 @@ class QTensor:
         Raises:
             ValueError: If the QTensor is not invertible.
         """
+        logger.trace("[QTensor] QTensor.inverse computing matrix inverse on {} qubits", self.nqubits)
         return QTensor(self._qtensor_cpp.inverse())
 
     def fidelity(self, other: QTensor) -> float:
@@ -461,6 +474,7 @@ class QTensor:
         Returns:
             float: The fidelity between this QTensor and the other QTensor, ranging from 0 to 1.
         """
+        logger.trace("[QTensor] QTensor.fidelity computing fidelity on {} qubits", self.nqubits)
         return self._qtensor_cpp.fidelity_python(other)
 
     def to_density_matrix(self, max_relative_correction: float = 0.1) -> QTensor:
@@ -470,6 +484,7 @@ class QTensor:
         Returns:
             QTensor: A new QTensor representing the density matrix.
         """
+        logger.trace("[QTensor] QTensor.to_density_matrix converting to density matrix on {} qubits", self.nqubits)
         return self.as_density_matrix(max_relative_correction=max_relative_correction)
 
     def as_density_matrix(self, max_relative_correction: float = 0.1) -> QTensor:
@@ -492,21 +507,27 @@ class QTensor:
         return QTensor(self._qtensor_cpp.as_density_matrix(get_settings().atol, max_relative_correction))
 
     def __add__(self, other: QTensor | Number) -> QTensor:
+        logger.trace("[QTensor] QTensor.__add__ adding on {} qubits", self.nqubits)
         return QTensor(self._qtensor_cpp.add_python(other))
 
     def __radd__(self, other: QTensor | Number) -> QTensor:
+        logger.trace("[QTensor] QTensor.__radd__ adding on {} qubits", self.nqubits)
         return self.__add__(other)
 
     def __sub__(self, other: QTensor) -> QTensor:
+        logger.trace("[QTensor] QTensor.__sub__ subtracting on {} qubits", self.nqubits)
         return QTensor(self._qtensor_cpp.sub_python(other))
 
     def __mul__(self, other: QTensor | Number) -> QTensor:
+        logger.trace("[QTensor] QTensor.__mul__ multiplying on {} qubits", self.nqubits)
         return QTensor(self._qtensor_cpp.mul_python(other))
 
     def __matmul__(self, other: QTensor) -> QTensor:
+        logger.trace("[QTensor] QTensor.__matmul__ matrix multiplying on {} qubits", self.nqubits)
         return QTensor(self._qtensor_cpp.matmul_python(other))
 
     def __rmul__(self, other: QTensor | Number) -> QTensor:
+        logger.trace("[QTensor] QTensor.__rmul__ multiplying on {} qubits", self.nqubits)
         return self.__mul__(other)
 
     def __repr__(self) -> str:
@@ -518,6 +539,7 @@ class QTensor:
         return self._qtensor_cpp.equals_python(other)
 
     def __truediv__(self, other: Number) -> QTensor:
+        logger.trace("[QTensor] QTensor.__truediv__ dividing on {} qubits", self.nqubits)
         if isinstance(other, (int, float, complex)):
             return QTensor(self._qtensor_cpp.div(other))
         return NotImplemented
@@ -539,6 +561,7 @@ class QTensor:
         Returns:
             QTensor: A new QTensor representing the tensor product.
         """
+        logger.trace("[QTensor] QTensor.tensor_product computing tensor product of {} tensors", len(others))
         return QTensor(QTensorCpp.tensor_product_python(others))
 
     @classmethod
@@ -552,6 +575,7 @@ class QTensor:
         Returns:
             QTensor: A new QTensor representing the ket state.
         """
+        logger.trace("[QTensor] QTensor.ket creating ket for state {}", state)
         return QTensor(QTensorCpp.ket_python(state))
 
     @classmethod
@@ -565,6 +589,7 @@ class QTensor:
         Returns:
             QTensor: A new QTensor representing the bra state.
         """
+        logger.trace("[QTensor] QTensor.bra creating bra for state {}", state)
         return QTensor(QTensorCpp.bra_python(state))
 
     @classmethod
@@ -578,6 +603,7 @@ class QTensor:
         Returns:
             QTensor: A new QTensor representing the zero statevector.
         """
+        logger.trace("[QTensor] QTensor.zero creating zero statevector on {} qubits", nqubits)
         return QTensor(QTensorCpp.zero(nqubits))
 
     @classmethod
@@ -591,6 +617,7 @@ class QTensor:
         Returns:
             QTensor: A new QTensor representing the one statevector.
         """
+        logger.trace("[QTensor] QTensor.one creating one statevector on {} qubits", nqubits)
         return QTensor(QTensorCpp.one(nqubits))
 
     @classmethod
@@ -604,6 +631,7 @@ class QTensor:
         Returns:
             QTensor: A new QTensor representing the identity.
         """
+        logger.trace("[QTensor] QTensor.identity creating identity on {} qubits", nqubits)
         return QTensor(QTensorCpp.identity(nqubits))
 
     @classmethod
@@ -617,6 +645,7 @@ class QTensor:
         Returns:
             QTensor: A new QTensor representing the GHZ state.
         """
+        logger.trace("[QTensor] QTensor.ghz creating GHZ state on {} qubits", nqubits)
         return QTensor(QTensorCpp.ghz(nqubits))
 
     @classmethod
@@ -630,6 +659,7 @@ class QTensor:
         Returns:
             QTensor: A new QTensor representing the uniform superposition state.
         """
+        logger.trace("[QTensor] QTensor.uniform creating uniform superposition state on {} qubits", nqubits)
         return QTensor(QTensorCpp.uniform(nqubits))
 
     @classmethod
@@ -649,6 +679,7 @@ class QTensor:
         Returns:
             QTensor: A QTensor representing the n'th basis state on a N-size Hilbert space (N=2**num_qubits).
         """
+        logger.trace("[QTensor] QTensor.basis_state creating basis state {} on Hilbert space of dimension {}", n, N)
         if not (0 <= n < N):
             raise ValueError(f"n must be in [0, {N - 1}]")
         # one nonzero at (row=n, col=0), value=1.0
@@ -677,6 +708,7 @@ class QTensor:
         Returns:
             QTensor: A new QTensor representing the state after resetting the specified qubits.
         """
+        logger.trace("[QTensor] QTensor.reset_qubits resetting qubits {}", qubits)
         return QTensor(self._qtensor_cpp.reset_qubits_python(qubits))
 
     def probabilities(self) -> list[float]:
@@ -688,6 +720,7 @@ class QTensor:
         Returns:
             np.ndarray: A 1D array containing the probabilities of measuring each basis state.
         """
+        logger.trace("[QTensor] QTensor.probabilities computing measurement probabilities on {} qubits", self.nqubits)
         return self._qtensor_cpp.probabilities_python()
 
     def entropy_von_neumann(self) -> float:
@@ -699,6 +732,7 @@ class QTensor:
         Returns:
             float: The von Neumann entropy of the QTensor.
         """
+        logger.trace("[QTensor] QTensor.entropy_von_neumann computing von Neumann entropy on {} qubits", self.nqubits)
         return self._qtensor_cpp.entropy_von_neumann()
 
     def entropy_renyi(self, alpha: float) -> float:
@@ -714,6 +748,7 @@ class QTensor:
         Returns:
             float: The Rényi entropy of the QTensor for the specified order alpha.
         """
+        logger.trace("[QTensor] QTensor.entropy_renyi computing Renyi entropy of order {} on {} qubits", alpha, self.nqubits)
         return self._qtensor_cpp.entropy_renyi(alpha)
 
     def commutator(self, other: QTensor) -> QTensor:
@@ -726,6 +761,7 @@ class QTensor:
         Returns:
             QTensor: A new QTensor representing the commutator.
         """
+        logger.trace("[QTensor] QTensor.commutator computing commutator on {} qubits", self.nqubits)
         return QTensor(self._qtensor_cpp.commutator_python(other))
 
     def anticommutator(self, other: QTensor) -> QTensor:
@@ -738,6 +774,7 @@ class QTensor:
         Returns:
             QTensor: A new QTensor representing the anticommutator.
         """
+        logger.trace("[QTensor] QTensor.anticommutator computing anticommutator on {} qubits", self.nqubits)
         return QTensor(self._qtensor_cpp.anticommutator_python(other))
 
     def pow(self, exponent: float) -> QTensor:
@@ -753,6 +790,7 @@ class QTensor:
         Raises:
             ValueError: If the exponent is not a real number.
         """
+        logger.trace("[QTensor] QTensor.pow raising to power {} on {} qubits", exponent, self.nqubits)
         if not isinstance(exponent, (int, float)):
             raise ValueError("Exponent must be a real number")
         return QTensor(self._qtensor_cpp.pow(exponent))
@@ -764,6 +802,7 @@ class QTensor:
         Returns:
             QTensor: A new QTensor representing the matrix square root.
         """
+        logger.trace("[QTensor] QTensor.sqrt computing matrix square root on {} qubits", self.nqubits)
         return QTensor(self._qtensor_cpp.sqrt())
 
     def rank(self) -> int:
@@ -773,6 +812,7 @@ class QTensor:
         Returns:
             int: The rank of the QTensor.
         """
+        logger.trace("[QTensor] QTensor.rank computing rank on {} qubits", self.nqubits)
         return self._qtensor_cpp.rank()
 
     def log(self) -> QTensor:
@@ -782,6 +822,7 @@ class QTensor:
         Returns:
             QTensor: A new QTensor representing the matrix logarithm.
         """
+        logger.trace("[QTensor] QTensor.log computing matrix logarithm on {} qubits", self.nqubits)
         return QTensor(self._qtensor_cpp.log())
 
     @property
@@ -793,6 +834,7 @@ class QTensor:
         Returns:
             list[Number]: A list of eigenvalues of the QTensor.
         """
+        logger.trace("[QTensor] QTensor.eigenvalues computing eigenvalues on {} qubits", self.nqubits)
         self._qtensor_cpp.compute_eigendecomposition()
         return self._qtensor_cpp.get_eigenvalues_python()
 
@@ -805,6 +847,7 @@ class QTensor:
         Returns:
             list[QTensor]: A list of QTensor objects representing the eigenvectors of the QTensor.
         """
+        logger.trace("[QTensor] QTensor.eigenvectors computing eigenvectors on {} qubits", self.nqubits)
         self._qtensor_cpp.compute_eigendecomposition()
         return [QTensor(vec) for vec in self._qtensor_cpp.get_eigenvectors_python()]
 
@@ -821,6 +864,7 @@ class QTensor:
         Returns:
             complex: The computed expectation value, which may be a complex number.
         """
+        logger.trace("[QTensor] QTensor.expectation_value computing expectation value with {} shots on {} qubits", nshots, self.nqubits)
         return self._qtensor_cpp.expectation_value_python(other, nshots)
 
     def __getstate__(self) -> dict[str, csr_matrix]:
