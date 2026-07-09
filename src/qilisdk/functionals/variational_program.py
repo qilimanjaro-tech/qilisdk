@@ -17,6 +17,8 @@ import functools
 import operator
 from typing import TYPE_CHECKING
 
+from loguru import logger
+
 from qilisdk.core.variables import BaseVariable, Parameter
 from qilisdk.functionals.functional import Functional, PrimitiveFunctional
 from qilisdk.yaml import yaml
@@ -77,6 +79,13 @@ class VariationalProgram(Functional):
                         f"Writing a constraint on the parameter ({v}) that is not present in the variational program "
                     )
         self._parameter_constraints = parameter_constraints
+        logger.debug(
+            "Created VariationalProgram (functional={}, optimizer={}, cost_function={}, {} constraint(s))",
+            type(functional).__name__,
+            type(optimizer).__name__,
+            type(cost_function).__name__,
+            len(parameter_constraints),
+        )
 
     @property
     def functional(self) -> PrimitiveFunctional:

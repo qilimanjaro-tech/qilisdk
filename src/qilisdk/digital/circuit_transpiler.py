@@ -15,6 +15,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Self
 
+from loguru import logger
+
 from .circuit_transpiler_passes import (
     CancelIdentityPairsPass,
     CircuitTranspilerPass,
@@ -189,18 +191,25 @@ class CircuitTranspiler:
         """
         self._reset_context()
 
+        logger.info("Transpiling circuit through {} pass(es)", len(self._pipeline))
         pass_results: list[TranspilerPassResult] = []
         transpiled_circuit = circuit
 
         for transpiler_pass in self._pipeline:
+            pass_name = transpiler_pass.__class__.__name__
+            gates_before = len(transpiled_circuit.gates)
             transpiled_circuit = transpiler_pass.run(transpiled_circuit)
+            logger.debug(
+                "Pass {} done: {} -> {} gates", pass_name, gates_before, len(transpiled_circuit.gates)
+            )
             pass_results.append(
                 TranspilerPassResult(
-                    name=transpiler_pass.__class__.__name__,
+                    name=pass_name,
                     circuit=transpiled_circuit,
                 )
             )
 
+        logger.success("Transpilation finished: {} gates in final circuit", len(transpiled_circuit.gates))
         return CircuitTranspilerResult(
             circuit=transpiled_circuit,
             intermediate_results=pass_results,

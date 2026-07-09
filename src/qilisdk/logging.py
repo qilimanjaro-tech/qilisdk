@@ -31,6 +31,26 @@ from qilisdk.settings import get_settings
 if TYPE_CHECKING:
     from types import FrameType
 
+# Different logging levels:
+# - TRACE: Very detailed information, probably should be printed to a file and parsed through
+# - DEBUG: Detailed information meant for developers
+# - INFO: Detailed information meant for users
+# - SUCCESS: Indicate successful operations, such as execution
+# - WARNING: Indicate potential issues
+# - ERROR: Indicate errors
+# - CRITICAL: Indicate critical errors
+
+# Consistent-width icons for every level
+LEVEL_ICONS: dict[str, str] = {
+    "TRACE": "🔬",
+    "DEBUG": "🐞",
+    "INFO": "💡",
+    "SUCCESS": "✅",
+    "WARNING": "🚧",
+    "ERROR": "❌",
+    "CRITICAL": "💀",
+}
+
 
 class SinkConfig(BaseModel):
     """
@@ -107,6 +127,10 @@ def configure_logging(level: str | None = None) -> None:
         config_path = (Path.cwd() / config_path).resolve()
 
     settings = LoggingSettings.load(config_path)
+
+    # 0) Normalize level icons to consistent-width emoji so message columns align.
+    for level_name, icon in LEVEL_ICONS.items():
+        logger.level(level_name, icon=icon)
 
     # 1) Remove all pre-configured Loguru handlers
     logger.remove()

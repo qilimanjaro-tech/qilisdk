@@ -13,6 +13,8 @@
 # limitations under the License.
 from typing import Callable, ClassVar, Iterator
 
+from loguru import logger
+
 from qilisdk.core import Parameter
 from qilisdk.core.parameterizable import Parameterizable
 from qilisdk.digital.circuit import Circuit
@@ -52,6 +54,7 @@ class DigitalPropagation(PrimitiveFunctional):
         """
         super().__init__()
         self.circuit = circuit
+        logger.debug("Created DigitalPropagation over circuit with {} qubits", circuit.nqubits)
 
     def _iter_parameter_children(self) -> Iterator[Parameterizable]:
         """Yield the circuit as the sole parameterizable child.
@@ -76,6 +79,7 @@ class DigitalPropagation(PrimitiveFunctional):
             values (list[float]): New values ordered consistently with ``get_parameter_names()``.
             where (Callable[[Parameter], bool] | None): Optional predicate selecting parameters to update.
         """
+        logger.trace("Setting {} parameter value(s) on DigitalPropagation", len(values))
         self.circuit.set_parameter_values(values=values, where=where)
 
     def set_parameters(self, parameters: dict[str, int | float]) -> None:
