@@ -75,7 +75,7 @@ class Circuit(Parameterizable):
         self._gates: list[Gate] = []
         self._init_state: np.ndarray = np.zeros(nqubits)
         self._parameters_link: dict[str, list[tuple[str, Gate]]] = {}
-        logger.debug("[Circuit] Initialized Circuit with {} qubits.", nqubits)
+        logger.debug("[Circuit] Initialized Circuit with {} qubits", nqubits)
 
     @property
     def nqubits(self) -> int:

@@ -80,7 +80,7 @@ class VariationalProgram(Functional):
                     )
         self._parameter_constraints = parameter_constraints
         logger.debug(
-            "[VariationalProgram] Created VariationalProgram (functional={}, optimizer={}, cost_function={}, {} constraint(s))",
+            "[VariationalProgram] Created VariationalProgram (functional={}, optimizer={}, cost_function={}, {} constraints)",
             type(functional).__name__,
             type(optimizer).__name__,
             type(cost_function).__name__,

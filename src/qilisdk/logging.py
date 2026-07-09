@@ -32,9 +32,9 @@ if TYPE_CHECKING:
     from types import FrameType
 
 # Different logging levels:
-# - TRACE: Very detailed information, probably should be printed to a file and parsed through
-# - DEBUG: Information meant for developers, things generally printed only once
-# - INFO: Information meant for users, things generally printed only once
+# - TRACE: Very detailed information, probably should be printed to a file
+# - DEBUG: Information meant for developers, should only be printed once in a normal workflow
+# - INFO: Information meant for users, should only be printed once in a normal workflow
 # - SUCCESS: Same as info, but for successful operations
 # - WARNING: Indicate things of note for the average user, such as some parameter being ignored
 # - ERROR: Indicate errors, unused since we throw errors instead

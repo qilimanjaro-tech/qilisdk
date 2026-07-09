@@ -157,7 +157,7 @@ class QutipBackend(Backend):
 
         final_state = QTensor(sim.run(init_state).get_final_states()[0].full())
 
-        logger.info("[QutipBackend] Sampling finished; ")
+        logger.info("[QutipBackend] Sampling finished")
         if len(measurements) > 0 and len(measurements) != functional.circuit.nqubits:
             return FunctionalResult(
                 readout_results=QutipBackend._construct_results_list(

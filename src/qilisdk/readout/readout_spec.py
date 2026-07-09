@@ -130,7 +130,7 @@ class Readout(Generic[S, E, T]):
         """
         if self._expectation is not None:
             raise ValueError("Expectation readout already set in this specification.")
-        logger.debug("[Readout] Adding expectation readout ({} observable(s), nshots={})", len(observables), nshots)
+        logger.debug("[Readout] Adding expectation readout ({} observables, nshots={})", len(observables), nshots)
         self._expectation = ExpectationReadout(observables=observables, nshots=nshots)
         return self  # ty:ignore[invalid-return-type]
 

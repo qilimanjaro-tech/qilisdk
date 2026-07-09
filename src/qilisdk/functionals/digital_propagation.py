@@ -79,7 +79,7 @@ class DigitalPropagation(PrimitiveFunctional):
             values (list[float]): New values ordered consistently with ``get_parameter_names()``.
             where (Callable[[Parameter], bool] | None): Optional predicate selecting parameters to update.
         """
-        logger.trace("[DigitalPropagation] Setting {} parameter value(s) on DigitalPropagation", len(values))
+        logger.trace("[DigitalPropagation] Setting {} parameter values on DigitalPropagation", len(values))
         self.circuit.set_parameter_values(values=values, where=where)
 
     def set_parameters(self, parameters: dict[str, int | float]) -> None:

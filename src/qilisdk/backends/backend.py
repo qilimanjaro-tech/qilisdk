@@ -155,7 +155,7 @@ class Backend(ABC):
                     param_signature = tuple(step.get_parameter_values())
                     cached = cache.get(step)
                     if cached is None or cached[0] != param_signature:
-                        logger.trace("[Backend] Reservoir circuit cache miss; computing unitary")
+                        logger.trace("[Backend] Reservoir circuit cache miss, computing unitary")
                         U = step.to_qtensor()
                         cache[step] = (param_signature, U)
                     else:
@@ -194,7 +194,7 @@ class Backend(ABC):
         spec = _readout_list_to_spec(readout)
 
         def evaluate_sample(parameters: list[float]) -> float:
-            logger.trace("[Backend] Evaluating cost sample at {} parameter(s)", len(parameters))
+            logger.trace("[Backend] Evaluating cost sample at {} parameters", len(parameters))
             param_names = functional.functional.get_parameter_names(where=lambda param: param.is_trainable)
             param_bounds = functional.functional.get_parameter_bounds()
             new_param_dict = {}

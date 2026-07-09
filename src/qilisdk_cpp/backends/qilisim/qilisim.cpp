@@ -85,7 +85,7 @@ py::object QiliSimCpp::execute_digital_propagation(const py::object& functional,
     for (const auto& gate : gates) {
         if (!gate.is_normalized()) {
             config.set_normalize_after_gate(true);
-            qilisdk::log_trace("[QiliSim, C++] Non-unitary gate detected; forcing renormalization after each gate");
+            qilisdk::log_trace("[QiliSim, C++] Non-unitary gate detected, forcing renormalization after each gate");
             break;
         }
     }
@@ -317,7 +317,7 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
         throw py::value_error("nqubits must be positive.");
     }
 
-    qilisdk::log_debug("[QiliSim, C++] Quantum reservoir: " + std::to_string(n_qubits) + " qubits, " + std::to_string(py::len(functional.attr("input_per_layer"))) + " layer(s)");
+    qilisdk::log_debug("[QiliSim, C++] Quantum reservoir: " + std::to_string(n_qubits) + " qubits, " + std::to_string(py::len(functional.attr("input_per_layer"))) + " layers");
 
     // Parse the Python objects into C++ objects
     std::vector<bool> qubits_to_measure(n_qubits, true);

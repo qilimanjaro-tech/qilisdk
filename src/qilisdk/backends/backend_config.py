@@ -309,7 +309,7 @@ class ExecutionConfig(BaseSimulatorConfig):
     def _validate_num_threads(cls, num_threads: int) -> int:
         if num_threads <= 0:
             resolved = psutil.cpu_count(logical=False) or 1
-            logger.debug("[BackendConfig] num_threads=0 requested; resolved to {} physical core(s)", resolved)
+            logger.debug("[BackendConfig] num_threads=0 requested, resolved to {} physical cores", resolved)
             return resolved
         return num_threads
 
@@ -318,7 +318,7 @@ class ExecutionConfig(BaseSimulatorConfig):
     def _validate_seed(cls, seed: int | None) -> int:
         if seed is None:
             generated = secrets.randbelow(2**15)
-            logger.debug("[BackendConfig] No seed provided; generated random seed {}", generated)
+            logger.debug("[BackendConfig] No seed provided, generated random seed {}", generated)
             return generated
         return seed
 

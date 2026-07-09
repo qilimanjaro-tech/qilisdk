@@ -299,7 +299,7 @@ class CudaBackend(Backend):
             cudaq_result = self._handle_readout_errors(cudaq_result, self._noise_model, functional.circuit.nqubits)
             if og_param:
                 functional.set_parameters(og_param)
-            logger.info("[CudaBackend] Sampling finished; {} distinct bitstrings", len(cudaq_result))
+            logger.info("[CudaBackend] Sampling finished, {} distinct bitstrings", len(cudaq_result))
             sampling_readout = next((ro for ro in readout if isinstance(ro, SamplingReadout)), None)
             expand_samples = sampling_readout.expand_samples if sampling_readout else True
             return FunctionalResult(
@@ -320,7 +320,7 @@ class CudaBackend(Backend):
             cudaq_result = cudaq.sample(kernel, shots_count=sampling_readout.nshots)
             if og_param:
                 functional.set_parameters(og_param)
-            logger.info("[CudaBackend] Sampling finished; {} distinct bitstrings", len(cudaq_result))
+            logger.info("[CudaBackend] Sampling finished, {} distinct bitstrings", len(cudaq_result))
             return FunctionalResult(
                 ReadoutCompositeResults(
                     sampling=SamplingReadoutResult.from_samples(
