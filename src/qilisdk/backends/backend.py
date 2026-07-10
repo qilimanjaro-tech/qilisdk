@@ -21,6 +21,7 @@ from loguru import logger
 
 from qilisdk.analog import Schedule
 from qilisdk.core import reset_qubits
+from qilisdk.core.result import Result
 from qilisdk.digital import Circuit
 from qilisdk.functionals import QuantumReservoir
 from qilisdk.functionals.analog_evolution import AnalogEvolution
@@ -46,7 +47,6 @@ from qilisdk.settings import get_settings
 
 if TYPE_CHECKING:
     from qilisdk.core import QTensor
-    from qilisdk.core.result import Result
     from qilisdk.functionals.functional import Functional, PrimitiveFunctional
     from qilisdk.noise import NoiseModel
 
@@ -124,7 +124,8 @@ class Backend(ABC):
 
         start = perf_counter()
         result = handler(functional, readout_list)
-        result.execution_time = perf_counter() - start
+        if isinstance(result, Result):
+            result.execution_time = perf_counter() - start
         return result
 
     def _execute_digital_propagation(
