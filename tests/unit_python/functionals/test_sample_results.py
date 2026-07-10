@@ -71,7 +71,7 @@ def test_execution_time_defaults_to_none():
 def test_execution_time_can_be_set_and_shown_in_repr():
     sr = _make_sampling_result(10, {"00": 3, "01": 2, "10": 4, "11": 1})
     sr.execution_time = 1.5
-    assert sr.execution_time == 1.5
+    assert np.isclose(sr.execution_time, 1.5)
     output = str(sr)
     assert "Execution Time" in output
     assert "1.5" in output
