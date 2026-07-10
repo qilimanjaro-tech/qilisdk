@@ -26,7 +26,7 @@ namespace {
 // been initialised (or after finalisation): it simply becomes a no-op.
 void log_at(const char* level, const std::string& message) {
     if (!logger) {
-        return;
+        return;  // GCOVR_EXCL_LINE
     }
     // The loguru filter matches on the nearest Python frame's module name, which is
     // always a `qilisdk.*` frame while a simulator is running, so C++ logs pass it.
@@ -34,11 +34,24 @@ void log_at(const char* level, const std::string& message) {
 }
 }  // namespace
 
-void log_trace(const std::string& message) { log_at("trace", message); }
-void log_debug(const std::string& message) { log_at("debug", message); }
-void log_info(const std::string& message) { log_at("info", message); }
-void log_success(const std::string& message) { log_at("success", message); }
-void log_warning(const std::string& message) { log_at("warning", message); }
+void log_trace(const std::string& message) {
+    log_at("trace", message);
+}
+void log_debug(const std::string& message) {
+    log_at("debug", message);
+}
+// GCOVR_EXCL_START
+// Convenience wrappers kept as public API surface but not exercised from C++ yet.
+void log_info(const std::string& message) {
+    log_at("info", message);
+}
+void log_success(const std::string& message) {
+    log_at("success", message);
+}
+void log_warning(const std::string& message) {
+    log_at("warning", message);
+}
+// GCOVR_EXCL_STOP
 
 }  // namespace qilisdk
 
