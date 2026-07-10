@@ -14,6 +14,7 @@
 from __future__ import annotations
 
 from abc import ABC
+from time import perf_counter
 from typing import TYPE_CHECKING, Any, Callable, cast, overload
 
 from loguru import logger
@@ -101,7 +102,9 @@ class Backend(ABC):
 
         Returns:
             The execution result whose concrete type depends on the
-            functional and readout specification.
+            functional and readout specification. Its ``execution_time``
+            attribute holds the wall-clock time, in seconds, taken by the
+            backend to run the simulation.
 
         Raises:
             NotImplementedError: If the backend does not support the given
@@ -118,7 +121,11 @@ class Backend(ABC):
         readout_list = readout.to_list()
         if not readout_list:
             raise ValueError("At least one readout method must be provided in the Readout.")
-        return handler(functional, readout_list)
+
+        start = perf_counter()
+        result = handler(functional, readout_list)
+        result.execution_time = perf_counter() - start
+        return result
 
     def _execute_digital_propagation(
         self, functional: DigitalPropagation, readout: list[ReadoutMethod]
