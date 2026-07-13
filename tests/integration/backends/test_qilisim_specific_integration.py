@@ -462,7 +462,10 @@ def test_matrix_free_complex_gate_on_mixed_state_stays_hermitian():
         return QuantumReservoir(
             initial_state=QTensor.uniform(2).to_density_matrix(),
             reservoir_layer=layer,
-            input_per_layer=[{"phi": 0.2, "gamma": 0.1}, {"phi": 0.3, "gamma": 0.2}],
+            input_per_layer=[
+                {"U2(1)_phi_0": 0.2, "U2(1)_gamma_1": 0.1},
+                {"U2(1)_phi_0": 0.3, "U2(1)_gamma_1": 0.2},
+            ],
         )
 
     readout = (
