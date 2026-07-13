@@ -205,6 +205,6 @@ def configure_logging(level: str | None = None, filename: str | Path | None = No
     logging.root.handlers = [handler]
     logging.root.setLevel(logging.NOTSET)
 
-    for logger_name in list(logging.root.manager.loggerDict.keys()):
+    for logger_name in logging.root.manager.loggerDict:
         logging.getLogger(logger_name).handlers = []
         logging.getLogger(logger_name).propagate = True
