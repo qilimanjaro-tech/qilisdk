@@ -407,9 +407,8 @@ msgid ""
 msgstr ""
 
 #: ../../modules/backends/backends_qilisim.rst:200
-#, fuzzy
 msgid "``max_states``"
-msgstr "``max_cache_size``"
+msgstr "``max_states``"
 
 #: ../../modules/backends/backends_qilisim.rst:201
 msgid ""
