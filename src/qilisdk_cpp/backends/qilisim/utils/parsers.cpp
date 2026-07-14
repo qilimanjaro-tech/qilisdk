@@ -1025,8 +1025,8 @@ QiliSimConfig parse_solver_params(const py::dict& solver_params) {
     if (solver_params.contains("evolution_method")) {
         config.set_time_evolution_method(solver_params["evolution_method"].cast<std::string>());
     }
-    if (solver_params.contains("sampling_method")) {
-        config.set_sampling_method(solver_params["sampling_method"].cast<std::string>());
+    if (solver_params.contains("digital_method")) {
+        config.set_digital_method(solver_params["digital_method"].cast<std::string>());
     }
     if (solver_params.contains("monte_carlo")) {
         config.set_monte_carlo(solver_params["monte_carlo"].cast<bool>());

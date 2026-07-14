@@ -337,7 +337,7 @@ class DigitalMethod(BaseSimulatorConfig):
             for statevector simulation. Defaults to ``True``.
     """
 
-    sampling_method: str = Field(
+    digital_method: str = Field(
         default="statevector_matrix_free",
         description=(
             "Digital simulation method to use. This is set automatically by the preferred constructors like `statevector`."
@@ -369,7 +369,7 @@ class DigitalMethod(BaseSimulatorConfig):
         """Return digital simulation settings in backend-compatible key names."""
         return {
             "max_cache_size": self.max_cache_size,
-            "sampling_method": self.sampling_method,
+            "digital_method": self.digital_method,
             "normalize_after_each_gate": self.normalize_after_each_gate,
             "combine_single_qubit_gates": self.combine_single_qubit_gates,
             "stabilizer_max_states": self.stabilizer_max_states,
@@ -400,7 +400,7 @@ class DigitalMethod(BaseSimulatorConfig):
             DigitalMethod: Configured statevector digital configuration.
         """
         return cls(
-            sampling_method="statevector_matrix_free" if matrix_free else "statevector",
+            digital_method="statevector_matrix_free" if matrix_free else "statevector",
             max_cache_size=max_cache_size,
             normalize_after_each_gate=normalize_after_each_gate,
             combine_single_qubit_gates=combine_single_qubit_gates,
@@ -415,6 +415,6 @@ class DigitalMethod(BaseSimulatorConfig):
             max_states (int): Maximum number of stabilizer states to track. Set to zero or less for unlimited.
         """
         return DigitalMethod(
-            sampling_method="stabilizer",
+            digital_method="stabilizer",
             stabilizer_max_states=max_states,
         )

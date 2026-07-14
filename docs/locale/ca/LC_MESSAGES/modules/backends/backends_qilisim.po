@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-29 15:23+0200\n"
+"POT-Creation-Date: 2026-07-14 15:20+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -342,19 +342,21 @@ msgid ""
 "is a statevector simulator, which can be configured through the options:"
 msgstr ""
 
-#: ../../modules/backends/backends_qilisim.rst:171
+#: ../../modules/backends/backends_qilisim.rst:169
+#: ../../modules/backends/backends_qilisim.rst:198
 msgid "Option"
 msgstr "Opció"
 
-#: ../../modules/backends/backends_qilisim.rst:172
+#: ../../modules/backends/backends_qilisim.rst:170
+#: ../../modules/backends/backends_qilisim.rst:199
 msgid "Meaning"
 msgstr "Significat"
 
-#: ../../modules/backends/backends_qilisim.rst:173
+#: ../../modules/backends/backends_qilisim.rst:171
 msgid "``matrix_free``"
 msgstr "``matrix_free``"
 
-#: ../../modules/backends/backends_qilisim.rst:174
+#: ../../modules/backends/backends_qilisim.rst:172
 msgid ""
 "Apply gates directly to the statevector instead of building dense "
 "matrices. Default ``True``."
@@ -362,21 +364,21 @@ msgstr ""
 "Aplica les portes directament al vector d'estat en lloc de construir "
 "matrius denses. Per defecte ``True``."
 
-#: ../../modules/backends/backends_qilisim.rst:175
+#: ../../modules/backends/backends_qilisim.rst:173
 msgid "``max_cache_size``"
 msgstr "``max_cache_size``"
 
-#: ../../modules/backends/backends_qilisim.rst:176
+#: ../../modules/backends/backends_qilisim.rst:174
 msgid "Maximum number of precomputed gate matrices cached between executions."
 msgstr ""
 "Nombre màxim de matrius de porta precomputades emmagatzemades en memòria "
 "cau entre execucions."
 
-#: ../../modules/backends/backends_qilisim.rst:177
+#: ../../modules/backends/backends_qilisim.rst:175
 msgid "``combine_single_qubit_gates``"
 msgstr "``combine_single_qubit_gates``"
 
-#: ../../modules/backends/backends_qilisim.rst:178
+#: ../../modules/backends/backends_qilisim.rst:176
 msgid ""
 "Merge adjacent single-qubit gates into a single operation before "
 "propagating. Disabled if gate-specific noise is used."
@@ -384,11 +386,11 @@ msgstr ""
 "Fusiona portes d'un sol qubit adjacents en una única operació abans de "
 "propagar. Desactivat si s'utilitza soroll específic de porta."
 
-#: ../../modules/backends/backends_qilisim.rst:179
+#: ../../modules/backends/backends_qilisim.rst:177
 msgid "``normalize_after_each_gate``"
 msgstr "``normalize_after_each_gate``"
 
-#: ../../modules/backends/backends_qilisim.rst:180
+#: ../../modules/backends/backends_qilisim.rst:178
 msgid ""
 "Renormalize the statevector after each gate to mitigate numerical drift, "
 "at a runtime cost."
@@ -396,11 +398,30 @@ msgstr ""
 "Renormalitza el vector d'estat després de cada porta per mitigar la "
 "deriva numèrica, amb un cost de temps d'execució."
 
-#: ../../modules/backends/backends_qilisim.rst:194
+#: ../../modules/backends/backends_qilisim.rst:191
+msgid ""
+"The second is a stabilizer simulator, which can efficiently simulate "
+"circuits composed of Clifford gates and Pauli measurements, at the cost "
+"of being slower if the circuit contains many non-Clifford gates. It has "
+"the following options:"
+msgstr ""
+
+#: ../../modules/backends/backends_qilisim.rst:200
+#, fuzzy
+msgid "``max_states``"
+msgstr "``max_cache_size``"
+
+#: ../../modules/backends/backends_qilisim.rst:201
+msgid ""
+"Maximum number of terms in the stabilizer sum. Increasing this can "
+"improve accuracy at the cost of memory and runtime."
+msgstr ""
+
+#: ../../modules/backends/backends_qilisim.rst:212
 msgid "Execution and Monte Carlo"
 msgstr "Execució i Monte Carlo"
 
-#: ../../modules/backends/backends_qilisim.rst:196
+#: ../../modules/backends/backends_qilisim.rst:214
 msgid ""
 ":class:`~qilisdk.backends.backend_config.ExecutionConfig` controls "
 "threading, randomness, and optional Monte Carlo trajectory sampling for "
@@ -410,13 +431,13 @@ msgstr ""
 "fils, l'aleatorietat i el mostreig opcional de trajectòries de Monte "
 "Carlo per a simulacions de sistemes oberts."
 
-#: ../../modules/backends/backends_qilisim.rst:199
+#: ../../modules/backends/backends_qilisim.rst:217
 msgid "``num_threads=0`` (default) lets the simulator use every physical core."
 msgstr ""
 "``num_threads=0`` (per defecte) permet al simulador utilitzar tots els "
 "nuclis físics."
 
-#: ../../modules/backends/backends_qilisim.rst:200
+#: ../../modules/backends/backends_qilisim.rst:218
 msgid ""
 "``seed=None`` (default) draws a fresh random seed at construction time; "
 "pass an integer for reproducibility."
@@ -424,7 +445,7 @@ msgstr ""
 "``seed=None`` (per defecte) genera una nova llavor aleatòria en el moment"
 " de la construcció; passeu un enter per a reproducibilitat."
 
-#: ../../modules/backends/backends_qilisim.rst:202
+#: ../../modules/backends/backends_qilisim.rst:220
 msgid ""
 "``monte_carlo=MonteCarloConfig(trajectories=N)`` enables stochastic "
 "trajectory sampling for noise models that admit a Monte Carlo unraveling;"
@@ -435,7 +456,7 @@ msgstr ""
 "unraveling de Monte Carlo; deixeu-ho a ``None`` per a una evolució "
 "determinista de l'equació mestra."
 
-#: ../../modules/backends/backends_qilisim.rst:205
+#: ../../modules/backends/backends_qilisim.rst:223
 msgid ""
 "``measurement_collapse`` controls whether measurements collapse the "
 "statevector in place (relevant for mid-circuit measurement and reservoir "
@@ -445,11 +466,11 @@ msgstr ""
 "d'estat in situ (rellevant per a mesures a mig circuit i computació de "
 "reservoris); per defecte ``False``."
 
-#: ../../modules/backends/backends_qilisim.rst:222
+#: ../../modules/backends/backends_qilisim.rst:240
 msgid "Noise model support"
 msgstr "Suport del model de soroll"
 
-#: ../../modules/backends/backends_qilisim.rst:224
+#: ../../modules/backends/backends_qilisim.rst:242
 msgid ""
 "Any :class:`~qilisdk.noise.NoiseModel` accepted by the SDK can be passed "
 "directly to the constructor; QiliSim applies it inside the C++ solver, so"

@@ -1630,7 +1630,7 @@ TEST(ParseSolverParams, AllFieldsParsedCorrectly) {
     params["arnoldi_dim"] = py::int_(20);
     params["num_arnoldi_substeps"] = py::int_(4);
     params["evolution_method"] = py::str("arnoldi");
-    params["sampling_method"] = py::str("statevector");
+    params["digital_method"] = py::str("statevector");
     params["monte_carlo"] = py::bool_(true);
     params["adaptive_tol"] = py::float_(1e-2);
     params["num_monte_carlo_trajectories"] = py::int_(500);
@@ -1648,7 +1648,7 @@ TEST(ParseSolverParams, AllFieldsParsedCorrectly) {
     EXPECT_EQ(config.get_arnoldi_dim(), 20);
     EXPECT_EQ(config.get_num_arnoldi_substeps(), 4);
     EXPECT_EQ(config.get_time_evolution_method(), "arnoldi");
-    EXPECT_EQ(config.get_sampling_method(), "statevector");
+    EXPECT_EQ(config.get_digital_method(), "statevector");
     EXPECT_TRUE(config.get_monte_carlo());
     EXPECT_EQ(config.get_num_monte_carlo_trajectories(), 500);
     EXPECT_EQ(config.get_num_threads(), 4);

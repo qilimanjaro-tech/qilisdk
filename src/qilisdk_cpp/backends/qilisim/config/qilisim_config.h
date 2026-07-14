@@ -25,7 +25,7 @@ class QiliSimConfig {
     int arnoldi_dim = 10;
     int num_arnoldi_substeps = 10;
     std::string time_evolution_method = "integrate_rk4_matrix_free";
-    std::string sampling_method = "statevector_matrix_free";
+    std::string digital_method = "statevector_matrix_free";
     bool store_intermediate_results = false;
     int num_threads = 1;
     int seed = 42;
@@ -49,7 +49,7 @@ class QiliSimConfig {
     double get_adaptive_tol() const { return adaptive_tol; }
     int get_num_arnoldi_substeps() const { return num_arnoldi_substeps; }
     std::string get_time_evolution_method() const { return time_evolution_method; }
-    std::string get_sampling_method() const { return sampling_method; }
+    std::string get_digital_method() const { return digital_method; }
     bool get_store_intermediate_results() const { return store_intermediate_results; }
     int get_num_threads() const { return num_threads; }
     int get_seed() const { return seed; }
@@ -69,7 +69,7 @@ class QiliSimConfig {
     void set_adaptive_tol(double value) { adaptive_tol = value; }
     void set_num_arnoldi_substeps(int value) { num_arnoldi_substeps = value; }
     void set_time_evolution_method(const std::string& value) { time_evolution_method = value; }
-    void set_sampling_method(const std::string& value) { sampling_method = value; }
+    void set_digital_method(const std::string& value) { digital_method = value; }
     void set_store_intermediate_results(bool value) { store_intermediate_results = value; }
     void set_num_threads(int value) { num_threads = value; }
     void set_seed(int value) { seed = value; }

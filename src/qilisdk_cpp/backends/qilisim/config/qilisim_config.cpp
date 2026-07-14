@@ -35,9 +35,9 @@ void QiliSimConfig::validate() const {
     if (valid_evolution_methods.find(time_evolution_method) == std::string::npos) {
         throw py::value_error("Time evolution method must be one of " + valid_evolution_methods);
     }
-    const std::string valid_sampling_methods = "'statevector', 'statevector_matrix_free', 'stabilizer'";
-    if (valid_sampling_methods.find(sampling_method) == std::string::npos) {
-        throw py::value_error("Sampling method must be one of " + valid_sampling_methods);
+    const std::string valid_digital_methods = "'statevector', 'statevector_matrix_free', 'stabilizer'";
+    if (valid_digital_methods.find(digital_method) == std::string::npos) {
+        throw py::value_error("Digital method must be one of " + valid_digital_methods);
     }
     if (monte_carlo && num_monte_carlo_trajectories <= 0) {
         throw py::value_error("Number of Monte Carlo trajectories must be positive.");

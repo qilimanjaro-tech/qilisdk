@@ -34,7 +34,7 @@ TEST(QilisimConfig, BadValidateThrows) {
     EXPECT_ANY_THROW(config.validate());
 
     config = default_config;
-    config.set_sampling_method("invalid_sampling");
+    config.set_digital_method("invalid_digital");
     EXPECT_ANY_THROW(config.validate());
 
     config = default_config;

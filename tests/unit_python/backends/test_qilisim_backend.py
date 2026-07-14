@@ -91,7 +91,7 @@ def test_qilisim_config_builders_and_validation():
 
 def test_stabilizer_method_creates_okay():
     method = DigitalMethod.stabilizer(max_states=50)
-    assert method.sampling_method == "stabilizer"
+    assert method.digital_method == "stabilizer"
     assert method.stabilizer_max_states == 50
 
 

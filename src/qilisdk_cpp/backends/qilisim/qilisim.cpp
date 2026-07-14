@@ -92,7 +92,7 @@ py::object QiliSimCpp::execute_digital_propagation(const py::object& functional,
     std::map<std::string, int> counts;
     std::vector<py::object> intermediate_results;
     py::object result;
-    if (config.get_sampling_method() == "stabilizer") {
+    if (config.get_digital_method() == "stabilizer") {
         // Parse the initial state as a stabilizer state
         StabilizerStateSum initial_state_stabilizer = parse_initial_state_stabilizer(initial_state, n_qubits);
         StabilizerStateSum state_stabilizer = initial_state_stabilizer;
@@ -110,7 +110,7 @@ py::object QiliSimCpp::execute_digital_propagation(const py::object& functional,
         initial_state_cpp = parse_initial_state(initial_state, config.get_atol(), n_qubits);
 
         // Run the simulation
-        if (config.get_sampling_method() == "statevector_matrix_free") {
+        if (config.get_digital_method() == "statevector_matrix_free") {
             sampling_matrix_free(gates, n_qubits, initial_state_cpp, noise_model_cpp, state_dense, intermediate_results, config, readout);
         } else {
             sampling(gates, n_qubits, initial_state_cpp, noise_model_cpp, state_dense, intermediate_results, config, readout);
@@ -355,7 +355,7 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
                 // Pass everything to the internal implementation
                 std::map<std::string, int> counts;
                 std::vector<py::object> intermediate_results;
-                if (config.get_sampling_method() == "statevector_matrix_free") {
+                if (config.get_digital_method() == "statevector_matrix_free") {
                     sampling_matrix_free(gates, n_qubits, state.sparseView(), noise_model_cpp, state, intermediate_results, config, readout);
                 } else {
                     sampling(gates, n_qubits, state.sparseView(), noise_model_cpp, state, intermediate_results, config, readout);

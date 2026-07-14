@@ -114,7 +114,7 @@ _c_mf.add(X(0))
 _samp_mf = DigitalPropagation(circuit=_c_mf)
     )");
     py::dict p;
-    p["sampling_method"] = py::str("statevector_matrix_free");
+    p["digital_method"] = py::str("statevector_matrix_free");
     EXPECT_NO_THROW(sim.execute_digital_propagation(py::globals()["_samp_mf"], py::list(), py::none(), py::none(), p));
 }
 
@@ -130,7 +130,7 @@ _c_sv.add(X(0))
 _samp_sv = DigitalPropagation(circuit=_c_sv)
     )");
     py::dict p;
-    p["sampling_method"] = py::str("statevector");
+    p["digital_method"] = py::str("statevector");
     EXPECT_NO_THROW(sim.execute_digital_propagation(py::globals()["_samp_sv"], py::list(), py::none(), py::none(), p));
 }
 
@@ -148,7 +148,7 @@ _samp_stab = DigitalPropagation(circuit=_c_stab)
 _readout_stab = [SamplingReadout(nshots=10)]
     )");
     py::dict p;
-    p["sampling_method"] = py::str("stabilizer");
+    p["digital_method"] = py::str("stabilizer");
     py::object result;
     ASSERT_NO_THROW(result = sim.execute_digital_propagation(py::globals()["_samp_stab"], py::globals()["_readout_stab"], py::none(), py::none(), p));
     EXPECT_TRUE(py::hasattr(result, "sampling"));

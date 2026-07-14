@@ -130,9 +130,9 @@ def test_nshots(backend):
 
 @pytest.mark.parametrize("backend", backends)
 def test_multi_controlled_execution(backend):
-    if type(backend) is QiliSim and backend.get_config()["sampling_method"] == "statevector_matrix_free":
+    if type(backend) is QiliSim and backend.get_config()["digital_method"] == "statevector_matrix_free":
         pytest.skip(
-            "Multi-controlled gates are not currently supported in statevector_matrix_free sampling method of QiliSim."
+            "Multi-controlled gates are not currently supported in statevector_matrix_free digital method of QiliSim."
         )
     circuit = Circuit(nqubits=3)
     circuit.add(X(0))
