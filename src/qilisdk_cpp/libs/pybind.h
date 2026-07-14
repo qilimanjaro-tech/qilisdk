@@ -37,6 +37,7 @@ extern py::object coomatrix;
 extern py::object sparray;
 extern py::dtype dtype;
 extern py::object py_complex;
+extern py::object logger;
 
 // Internal types
 extern py::object Circuit;
@@ -69,6 +70,10 @@ extern py::object ReadoutCompositeResults;
 void initialize_all_pybind_types();
 void initialize_external_pybind_types();
 void finalize_all_pybind_types();
+
+void info(std::string message);
+void warning(std::string message);
+void error(std::string message);
 
 #pragma GCC visibility pop
 
