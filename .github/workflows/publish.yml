@@ -165,6 +165,7 @@ jobs:
     environment:
       name: pypi
       url: https://pypi.org/p/qilisdk
+    env:
       AWS_REGION: eu-west-1
       CA_DOMAIN: qilimanjaro
       CA_DOMAIN_OWNER: "721195454194"
