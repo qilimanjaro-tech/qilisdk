@@ -177,14 +177,6 @@ jobs:
           role-to-assume: arn:aws:iam::723412851021:role/GitHub_actions_role
           aws-region: eu-west-1
           role-session-name: GitHubActions-DevOps
-      - name: Assume deploy role in target account
-        uses: aws-actions/configure-aws-credentials@v6
-        with:
-          role-to-assume: arn:aws:iam::721195454194:role/terraform
-          aws-region: eu-west-1
-          role-session-name: GitHubActions-Deploy
-          role-chaining: true
-          role-skip-session-tagging: true
       - name: Download wheels
         uses: actions/download-artifact@v8
         with:
