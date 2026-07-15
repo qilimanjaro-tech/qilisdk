@@ -26,7 +26,7 @@
 
 // GCOV_EXCL_BR_START
 
-DenseMatrix iter_rk4_matrix(const DenseMatrix& rho_0, double dt, const SparseMatrix& currentH, const std::vector<SparseMatrix>& jump_operators, bool is_unitary_on_statevector) {
+DenseMatrix iter_rk4_matrix(const DenseMatrix& rho_0, double dt, const SparseMatrix& currentH, const std::vector<SparseMatrix>& jump_operators, bool is_unitary_on_statevector, bool normalize) {
     /*
     4th-order Runge–Kutta integration of the Lindblad master equation
 
@@ -95,14 +95,16 @@ DenseMatrix iter_rk4_matrix(const DenseMatrix& rho_0, double dt, const SparseMat
     rho += (dt / 6.0) * k;
 
     // Normalize the density matrix
-    if (is_unitary_on_statevector) {
-        rho /= rho.norm();
-    } else {
-        std::complex<double> tr = 0;
-        for (int i = 0; i < dim; ++i) {
-            tr += rho(i, i);
+    if (normalize) {
+        if (is_unitary_on_statevector) {
+            rho /= rho.norm();
+        } else {
+            std::complex<double> tr = 0;
+            for (int i = 0; i < dim; ++i) {
+                tr += rho(i, i);
+            }
+            rho /= tr;
         }
-        rho /= tr;
     }
 
     return rho;
@@ -143,7 +145,7 @@ MatrixFreeHamiltonian construct_current_hamiltonian(double t, const std::vector<
     return currentH;
 }
 
-void iter_rk4(DenseMatrix& rho_t, double t, double dt, const std::vector<double>& step_list, const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<SparseMatrix>& jump_operators, bool is_unitary_on_statevector) {
+void iter_rk4(DenseMatrix& rho_t, double t, double dt, const std::vector<double>& step_list, const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<SparseMatrix>& jump_operators, bool is_unitary_on_statevector, bool normalize) {
     /*
     4th-order Runge–Kutta integration of the Lindblad master equation using matrix-free methods.
 
@@ -265,6 +267,9 @@ void iter_rk4(DenseMatrix& rho_t, double t, double dt, const std::vector<double>
     }
 
     // Normalize the state
+    if (!normalize) {
+        return;
+    }
     std::complex<double> norm = 0;
     if (is_unitary_on_statevector) {
 #ifndef _WIN32
@@ -296,7 +301,7 @@ void iter_rk4(DenseMatrix& rho_t, double t, double dt, const std::vector<double>
     }
 }
 
-double iter_rk45(DenseMatrix& rho_t, double t, double& dt, const std::vector<double>& step_list, const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<SparseMatrix>& jump_operators, bool is_unitary_on_statevector, double tol, DenseMatrix& k_saved) {
+double iter_rk45(DenseMatrix& rho_t, double t, double& dt, const std::vector<double>& step_list, const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<SparseMatrix>& jump_operators, bool is_unitary_on_statevector, double tol, DenseMatrix& k_saved, bool normalize) {
     /*
     Adaptive 4th/5th-order Runge–Kutta integration of the Lindblad master equation using matrix-free methods.
 
@@ -502,12 +507,13 @@ double iter_rk45(DenseMatrix& rho_t, double t, double& dt, const std::vector<dou
     }
 
     // Normalize the 5th order solution
+    const std::complex<double> norm_divisor = normalize ? rho_5_norm : std::complex<double>(1.0, 0.0);
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
 #endif
     for (long i = 0; i < rho_rows; ++i) {
         for (long j = 0; j < rho_cols; ++j) {
-            rho_5(i, j) /= rho_5_norm;
+            rho_5(i, j) /= norm_divisor;
         }
     }
 
@@ -521,7 +527,7 @@ double iter_rk45(DenseMatrix& rho_t, double t, double& dt, const std::vector<dou
 #endif
         for (long i = 0; i < rho_rows; ++i) {
             for (long j = 0; j < rho_cols; ++j) {
-                k_saved(i, j) = k7(i, j) / rho_5_norm;
+                k_saved(i, j) = k7(i, j) / norm_divisor;
             }
         }
         dt_taken = dt;

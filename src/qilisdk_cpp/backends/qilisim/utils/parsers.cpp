@@ -1043,6 +1043,9 @@ QiliSimConfig parse_solver_params(const py::dict& solver_params) {
     if (solver_params.contains("normalize_after_each_gate")) {
         config.set_normalize_after_gate(solver_params["normalize_after_each_gate"].cast<bool>());
     }
+    if (solver_params.contains("normalize_state")) {
+        config.set_normalize_state(solver_params["normalize_state"].cast<bool>());
+    }
     if (solver_params.contains("combine_single_qubit_gates")) {
         config.set_combine_single_qubit_gates(solver_params["combine_single_qubit_gates"].cast<bool>());
     }

@@ -498,6 +498,46 @@ def test_matrix_free_complex_gate_on_mixed_state_stays_hermitian():
     np.testing.assert_allclose(mf_state, _dense(explicit.get_state()), atol=1e-9)
 
 
+def test_reservoir_normalize_state_flag():
+    """`normalize_state` controls whether the reservoir state is renormalized.
+
+    With the default (`True`) the state is normalized to trace 1 through the digital input
+    encoding, the analog evolution, and between passes. With `normalize_state=False` no
+    normalization happens anywhere, so a deliberately non-normalized initial state keeps its
+    (unitary-preserved) trace throughout.
+    """
+
+    def _build() -> QuantumReservoir:
+        pre = Circuit(1)
+        pre.add(RX(0, theta=ReservoirInput("u", 0.1)))
+        layer = ReservoirLayer(
+            evolution_dynamics=Schedule(
+                hamiltonians={"h": pauli_z(0)},
+                total_time=1.0,
+                dt=0.1,
+            ),
+            input_encoding=pre,
+        )
+        # Raw, deliberately NON-normalized initial density matrix: 3 * |0><0| (trace = 3).
+        rho = np.zeros((2, 2), dtype=complex)
+        rho[0, 0] = 3.0
+        return QuantumReservoir(
+            initial_state=QTensor(rho),
+            reservoir_layer=layer,
+            input_per_layer=[{"u": 0.2}, {"u": 0.3}],
+        )
+
+    readout = Readout().with_state_tomography()
+
+    normalized = QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1)).execute(_build(), readout)
+    raw = QiliSim(
+        execution_config=ExecutionConfig(seed=42, num_threads=1, normalize_state=False)
+    ).execute(_build(), readout)
+
+    assert np.isclose(np.trace(normalized.get_state().dense()), 1.0, atol=1e-6)
+    assert np.isclose(np.trace(raw.get_state().dense()), 3.0, atol=1e-6)
+
+
 # ──────────────────────────────────────────────────────────────────────────────
 # Stabilizer backend integration tests
 # ──────────────────────────────────────────────────────────────────────────────

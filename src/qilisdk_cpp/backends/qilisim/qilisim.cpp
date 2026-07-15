@@ -81,10 +81,13 @@ py::object QiliSimCpp::execute_digital_propagation(const py::object& functional,
     std::vector<Gate> gates = parse_gates(functional.attr("circuit"), config.get_atol(), noise_model);
 
     // If we have any exponential gates, we need to force renormalization
-    for (const auto& gate : gates) {
-        if (!gate.is_normalized()) {
-            config.set_normalize_after_gate(true);
-            break;
+    // (unless the user has explicitly disabled state normalization altogether)
+    if (config.get_normalize_state()) {
+        for (const auto& gate : gates) {
+            if (!gate.is_normalized()) {
+                config.set_normalize_after_gate(true);
+                break;
+            }
         }
     }
 
@@ -345,10 +348,13 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
             if (py::isinstance(step, Circuit)) {
                 std::vector<Gate> gates = parse_gates(step, config.get_atol(), noise_model);
                 // If we have any exponential gates, we need to force renormalization
-                for (const auto& gate : gates) {
-                    if (!gate.is_normalized()) {
-                        config.set_normalize_after_gate(true);
-                        break;
+                // (unless the user has explicitly disabled state normalization altogether)
+                if (config.get_normalize_state()) {
+                    for (const auto& gate : gates) {
+                        if (!gate.is_normalized()) {
+                            config.set_normalize_after_gate(true);
+                            break;
+                        }
                     }
                 }
 

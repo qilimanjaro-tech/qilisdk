@@ -282,6 +282,12 @@ class ExecutionConfig(BaseSimulatorConfig):
             "Whether to apply state collapse immediately after measurements. If `False`, measurements are recorded but the state is not collapsed."
         ),
     )
+    normalize_state: bool = Field(
+        default=True,
+        description=(
+            "Whether to normalize the quantum state during simulation.",
+        ),
+    )
 
     def get_config(self) -> SolverConfigDict:
         """Return execution settings with resolved defaults."""
@@ -290,6 +296,7 @@ class ExecutionConfig(BaseSimulatorConfig):
             "seed": int(self.seed) if self.seed is not None else 0,  # defensive
             "monte_carlo": self.monte_carlo is not None,
             "measurement_collapse": self.measurement_collapse,
+            "normalize_state": self.normalize_state,
         }
         if self.monte_carlo is not None:
             d.update(self.monte_carlo.get_config())
