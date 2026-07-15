@@ -1637,6 +1637,7 @@ TEST(ParseSolverParams, AllFieldsParsedCorrectly) {
     params["num_threads"] = py::int_(4);
     params["store_intermediate_results"] = py::bool_(true);
     params["normalize_after_each_gate"] = py::bool_(true);
+    params["normalize_state"] = py::bool_(false);
     params["combine_single_qubit_gates"] = py::bool_(false);
     params["measurement_collapse"] = py::bool_(true);
 
@@ -1654,6 +1655,7 @@ TEST(ParseSolverParams, AllFieldsParsedCorrectly) {
     EXPECT_EQ(config.get_num_threads(), 4);
     EXPECT_TRUE(config.get_store_intermediate_results());
     EXPECT_TRUE(config.get_normalize_after_gate());
+    EXPECT_FALSE(config.get_normalize_state());
     EXPECT_FALSE(config.get_combine_single_qubit_gates());
     EXPECT_TRUE(config.get_measurement_collapse());
     EXPECT_NEAR(config.get_adaptive_tol(), 1e-2, 1e-15);

@@ -284,9 +284,7 @@ class ExecutionConfig(BaseSimulatorConfig):
     )
     normalize_state: bool = Field(
         default=True,
-        description=(
-            "Whether to normalize the quantum state during simulation.",
-        ),
+        description=("Whether to normalize the quantum state during simulation"),
     )
 
     def get_config(self) -> SolverConfigDict:

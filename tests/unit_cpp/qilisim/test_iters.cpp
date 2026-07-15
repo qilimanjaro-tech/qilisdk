@@ -889,6 +889,14 @@ TEST_F(IterIntegrateMatrixFreeUnitaryDensityMatrixTest, MatchesSparseOverloadFor
     EXPECT_TRUE(rho_mf.isApprox(result_sp, kTolLoose));
 }
 
+TEST_F(IterIntegrateMatrixFreeUnitaryDensityMatrixTest, NormalizeFalseKeepsUnnormalizedState) {
+    // With normalization disabled the state is not renormalized; unitary dynamics preserve the
+    // (deliberately non-unit) trace of the initial density matrix.
+    DenseMatrix rho = 3.0 * pure_plus();
+    iter_rk4(rho, 0.0, dt, {}, {H_mf}, {{1.0}}, {}, /*is_unitary_on_statevector=*/false, /*normalize=*/false);
+    EXPECT_NEAR(std::real(rho.trace()), 3.0, kTol);
+}
+
 class IterIntegrateMatrixFreeLindbladTest : public ::testing::Test {
    protected:
     MatrixFreeHamiltonian H_mf = make_matrix_free_H(0.5, 0, "Z");

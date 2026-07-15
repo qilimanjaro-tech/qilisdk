@@ -624,6 +624,36 @@ _reservoir = QuantumReservoir(
     EXPECT_TRUE(py::hasattr(result, "intermediate_results"));
 }
 
+TEST_F(ExecuteReservoirTest, NonNormalizedDigitalStep_ForcesRenormalization) {
+    // A reservoir whose digital input-encoding contains a non-normalized (exponential) gate
+    // exercises the forced-renormalization branch in the reservoir's Circuit step (which is only
+    // taken when state normalization is enabled).
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirLayer
+from qilisdk.analog.schedule import Schedule
+from qilisdk.analog.hamiltonian import Z
+from qilisdk.core.qtensor import QTensor
+from qilisdk.digital.circuit import Circuit
+from qilisdk.digital import X
+import scipy.sparse as sp, numpy as np
+
+_sched_exp = Schedule(hamiltonians={"h0": Z(0)}, dt=0.1, total_time=0.3)
+_pre_exp = Circuit(1)
+_pre_exp.add(X(0).exponential())
+_layer_exp = ReservoirLayer(evolution_dynamics=_sched_exp, input_encoding=_pre_exp)
+_rho_exp = QTensor(sp.csr_matrix(np.array([[1.+0j, 0], [0, 0]], dtype=complex)))
+_reservoir_exp = QuantumReservoir(
+    initial_state=_rho_exp,
+    reservoir_layer=_layer_exp,
+    input_per_layer=[{}]
+)
+    )");
+    py::object result;
+    ASSERT_NO_THROW(result = sim.execute_quantum_reservoir(py::globals()["_reservoir_exp"], py::list(), py::none(), empty_solver_params()));
+    EXPECT_TRUE(py::hasattr(result, "readout_results"));
+}
+
 TEST_F(ExecuteTimeEvolutionTest, VariationalExponential_NonUniformInitialState_Throws) {
     py::gil_scoped_acquire gil;
     py::exec(R"(

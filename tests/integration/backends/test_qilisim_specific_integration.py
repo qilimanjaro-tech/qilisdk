@@ -530,9 +530,9 @@ def test_reservoir_normalize_state_flag():
     readout = Readout().with_state_tomography()
 
     normalized = QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1)).execute(_build(), readout)
-    raw = QiliSim(
-        execution_config=ExecutionConfig(seed=42, num_threads=1, normalize_state=False)
-    ).execute(_build(), readout)
+    raw = QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1, normalize_state=False)).execute(
+        _build(), readout
+    )
 
     assert np.isclose(np.trace(normalized.get_state().dense()), 1.0, atol=1e-6)
     assert np.isclose(np.trace(raw.get_state().dense()), 3.0, atol=1e-6)
