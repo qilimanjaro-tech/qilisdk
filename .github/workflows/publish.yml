@@ -165,8 +165,8 @@ jobs:
     env:
       AWS_REGION: eu-west-1
       CA_DOMAIN: qilimanjaro
-      CA_DOMAIN_OWNER: "721195454194"
-      CA_REPOSITORY: test-qilisdk
+      CA_DOMAIN_OWNER: "723412851021"
+      CA_REPOSITORY: qilimanjaro
     permissions:
       contents: read
       id-token: write
