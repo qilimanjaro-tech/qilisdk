@@ -78,24 +78,45 @@ jobs:
         with:
           name: sdist
           path: dist/*.tar.gz
-          
+
   deploy-pypi:
     name: Publish to PyPI
-    runs-on: ${{ fromJSON(vars.RUNS_ON) }}
+    runs-on: ubuntu-latest
     needs: [build-wheels, build-sdist]
     if: ${{ (inputs.index || 'pypi') == 'pypi' }}
     environment:
       name: pypi
-      url: https://pypi.org/p/qilisdk # CUSTOMIZE: your package URL
+      url: https://pypi.org/p/qilisdk
     permissions:
       contents: read
-      id-token: write # required to request the OIDC token for trusted publishing
+      id-token: write
     steps:
-      - name: Publish to PyPI
-        uses: qilimanjaro-tech/devops/.github/actions/pypi-publish@main
+      - name: Download wheels
+        uses: actions/download-artifact@v8
         with:
-          package-name: qilisdk # CUSTOMIZE: your package name on PyPI
-          dry-run: ${{ inputs.dry_run }}
+          pattern: wheels-*
+          path: dist
+          merge-multiple: true
+      - name: Download sdist
+        uses: actions/download-artifact@v8
+        with:
+          name: sdist
+          path: dist
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.2.0
+        with:
+          enable-cache: false
+          python-version: "3.13"
+      - name: List & validate distributions
+        run: |
+          ls -lh dist
+          uvx twine check dist/*
+      - name: Publish to PyPI
+        run: >-
+          uv publish
+          --trusted-publishing always
+          --check-url https://pypi.org/simple/qilisdk/
+          ${{ inputs.dry_run && '--dry-run' || '' }}
 
   deploy-index:
     name: Publish to ${{ inputs.index }}
@@ -135,18 +156,68 @@ jobs:
           uv publish
           --index ${{ inputs.index }}
           ${{ inputs.dry_run && '--dry-run' || '' }}
-          
+
   deploy-codeartifacts:
     name: Publish to AWS Code Artifacts
-    runs-on: ${{ fromJSON(vars.RUNS_ON) }}
+    runs-on: ubuntu-latest
     needs: [build-wheels, build-sdist]
     if: ${{ (inputs.index || 'pypi') == 'codeartifacts' }}
+    env:
+      AWS_REGION: eu-west-1
+      CA_DOMAIN: qilimanjaro
+      CA_DOMAIN_OWNER: "721195454194"
+      CA_REPOSITORY: test-qilisdk
     permissions:
       contents: read
-      id-token: write # required to request the OIDC token for AWS
+      id-token: write
     steps:
-      - name: Publish to CodeArtifact
-        uses: qilimanjaro-tech/devops/.github/actions/code-artifact-publish@main
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v6
         with:
-          repository: test-qilisdk # CUSTOMIZE: your CodeArtifact repository
-          dry-run: ${{ inputs.dry_run }}
+          role-to-assume: arn:aws:iam::723412851021:role/GitHub_actions_role
+          aws-region: eu-west-1
+          role-session-name: GitHubActions-DevOps
+      - name: Assume deploy role in target account
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: arn:aws:iam::721195454194:role/terraform
+          aws-region: eu-west-1
+          role-session-name: GitHubActions-Deploy
+          role-chaining: true
+          role-skip-session-tagging: true
+      - name: Download wheels
+        uses: actions/download-artifact@v8
+        with:
+          pattern: wheels-*
+          path: dist
+          merge-multiple: true
+      - name: Download sdist
+        uses: actions/download-artifact@v8
+        with:
+          name: sdist
+          path: dist
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.2.0
+        with:
+          enable-cache: false
+          python-version: "3.13"
+      - name: List & validate distributions
+        run: |
+          ls -lh dist
+          uvx twine check dist/*
+      - name: Publish to CodeArtifact
+        run: |
+          export TWINE_USERNAME=aws
+          export TWINE_PASSWORD=$(aws codeartifact get-authorization-token \
+            --domain "$CA_DOMAIN" \
+            --domain-owner "$CA_DOMAIN_OWNER" \
+            --query authorizationToken \
+            --output text)
+          export TWINE_REPOSITORY_URL=$(aws codeartifact get-repository-endpoint \
+            --domain "$CA_DOMAIN" \
+            --domain-owner "$CA_DOMAIN_OWNER" \
+            --repository "$CA_REPOSITORY" \
+            --format pypi \
+            --query repositoryEndpoint \
+            --output text)
+          uvx twine upload dist/*
