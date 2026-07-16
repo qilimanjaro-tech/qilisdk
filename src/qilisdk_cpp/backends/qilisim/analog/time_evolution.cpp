@@ -158,11 +158,11 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
 
         // Perform the iteration depending on the method
         if (config.get_time_evolution_method() == "integrate_rk4") {
-            rho_t = iter_rk4_matrix(rho_t, dt, currentH, current_jumps, is_unitary_on_statevector);
+            rho_t = iter_rk4_matrix(rho_t, dt, currentH, current_jumps, is_unitary_on_statevector, config.get_normalize_state());
         } else if (config.get_time_evolution_method() == "direct") {
             rho_t = iter_direct(rho_t, dt, currentH, current_jumps, is_unitary_on_statevector);
         } else if (config.get_time_evolution_method() == "arnoldi") {
-            rho_t = iter_arnoldi(rho_t, dt, currentH, current_jumps, config.get_arnoldi_dim(), config.get_num_arnoldi_substeps(), is_unitary_on_statevector, config.get_atol());
+            rho_t = iter_arnoldi(rho_t, dt, currentH, current_jumps, config.get_arnoldi_dim(), config.get_num_arnoldi_substeps(), is_unitary_on_statevector, config.get_atol(), config.get_normalize_state());
         } else {
             throw std::invalid_argument("Invalid time evolution method: " + config.get_time_evolution_method());
         }
@@ -300,7 +300,7 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
             dt = std::min(dt, step_list.back() - current_time);
 
             // dt is updated to the suggested next step; dt_taken is what was actually stepped0
-            double dt_taken = iter_rk45(rho_t, current_time, dt, step_list, hamiltonians, parameters_list, jump_operators, is_unitary_on_statevector, config.get_adaptive_tol(), k_saved);
+            double dt_taken = iter_rk45(rho_t, current_time, dt, step_list, hamiltonians, parameters_list, jump_operators, is_unitary_on_statevector, config.get_adaptive_tol(), k_saved, config.get_normalize_state());
 
             // If we should store intermediates, do it here
             if (config.get_store_intermediate_results() && dt_taken > 0) {
@@ -344,7 +344,7 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
             const std::vector<SparseMatrix>& current_jumps = has_time_dependent_jumps ? step_jumps : jump_operators;
 
             // Perform the iteration
-            iter_rk4(rho_t, t_start, dt, step_list, hamiltonians, parameters_list, current_jumps, is_unitary_on_statevector);
+            iter_rk4(rho_t, t_start, dt, step_list, hamiltonians, parameters_list, current_jumps, is_unitary_on_statevector, config.get_normalize_state());
 
             // If we should store intermediates, do it here
             if (config.get_store_intermediate_results()) {

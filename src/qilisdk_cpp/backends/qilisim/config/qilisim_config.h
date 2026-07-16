@@ -35,6 +35,7 @@ class QiliSimConfig {
     bool fuse_gates = true;
     int max_fused_qubits = 4;
     bool normalize_after_each_gate = false;
+    bool normalize_state = true;
     double adaptive_tol = 1e-2;
     bool measurement_collapse = false;
     int order = 2;
@@ -58,6 +59,7 @@ class QiliSimConfig {
     double get_atol() const { return atol; }
     int get_max_cache_size() const { return max_cache_size; }
     bool get_normalize_after_gate() const { return normalize_after_each_gate; }
+    bool get_normalize_state() const { return normalize_state; }
     bool get_combine_single_qubit_gates() const { return combine_single_qubit_gates; }
     bool get_fuse_gates() const { return fuse_gates; }
     int get_max_fused_qubits() const { return max_fused_qubits; }
@@ -80,6 +82,7 @@ class QiliSimConfig {
     void set_atol(double value) { atol = value; }
     void set_max_cache_size(int value) { max_cache_size = value; }
     void set_normalize_after_gate(bool value) { normalize_after_each_gate = value; }
+    void set_normalize_state(bool value) { normalize_state = value; }
     void set_combine_single_qubit_gates(bool value) { combine_single_qubit_gates = value; }
     void set_fuse_gates(bool value) { fuse_gates = value; }
     void set_max_fused_qubits(int value) { max_fused_qubits = value; }

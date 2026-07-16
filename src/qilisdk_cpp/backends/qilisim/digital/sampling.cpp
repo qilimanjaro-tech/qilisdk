@@ -264,7 +264,7 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrix& 
         }
 
         // Renormalize the state
-        if (config.get_normalize_after_gate()) {
+        if (config.get_normalize_state() && config.get_normalize_after_gate()) {
             normalize_state(state, is_statevector, monte_carlo);
         }
 
@@ -423,7 +423,7 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const Sp
         }
 
         // Renormalize the state
-        if (config.get_normalize_after_gate()) {
+        if (config.get_normalize_state() && config.get_normalize_after_gate()) {
             normalize_state(state, is_statevector, monte_carlo);
         }
     }
