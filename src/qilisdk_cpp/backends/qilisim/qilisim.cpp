@@ -81,7 +81,7 @@ py::object QiliSimCpp::execute_digital_propagation(const py::object& functional,
     NoiseModelCpp noise_model_cpp = parse_noise_model(noise_model, n_qubits, config.get_atol(), functional.attr("circuit"));
     std::vector<Gate> gates = parse_gates(functional.attr("circuit"), config.get_atol(), noise_model);
 
-    qilisdk::log_debug("[QiliSim, C++] Digital propagation: " + std::to_string(n_qubits) + " qubits, " + std::to_string(gates.size()) + " gates, method=" + config.get_sampling_method());
+    qilisdk::log_debug("[QiliSim, C++] Digital propagation: " + std::to_string(n_qubits) + " qubits, " + std::to_string(gates.size()) + " gates, method=" + config.get_digital_method());
 
     // If we have any exponential gates, we need to force renormalization
     for (const auto& gate : gates) {
