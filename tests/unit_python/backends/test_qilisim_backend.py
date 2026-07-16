@@ -89,6 +89,12 @@ def test_qilisim_config_builders_and_validation():
         ExecutionConfig(1)
 
 
+def test_stabilizer_method_creates_okay():
+    method = DigitalMethod.stabilizer(max_states=50)
+    assert method.digital_method == "stabilizer"
+    assert method.stabilizer_max_states == 50
+
+
 def test_adaptive_creates_okay():
     method = AnalogMethod.adaptive_integrator(tol=1e-2)
     assert method.evolution_method == "integrate_rk45_matrix_free"
