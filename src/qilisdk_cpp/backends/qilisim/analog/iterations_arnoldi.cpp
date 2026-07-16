@@ -54,7 +54,7 @@ void arnoldi(const SparseMatrix& L, const DenseMatrix& v0, int m, std::vector<De
 
         // Orthogonalize against previous vectors
         for (int i = 0; i <= j; ++i) {
-            std::complex<double> prod = dot(V[i], w);
+            Complex prod = dot(V[i], w);
             H.coeffRef(i, j) = prod;
             w -= V[i] * prod;
         }
@@ -101,11 +101,11 @@ void arnoldi_mat(const SparseMatrix& Hsys, const DenseMatrix& rho0, int m, std::
 
     for (int j = 0; j < m; ++j) {
         // Apply reduced Liouvillian: w = -i (H v - v H)
-        DenseMatrix w = -std::complex<double>(0.0, 1.0) * (Hsys * V[j] - V[j] * Hsys);
+        DenseMatrix w = -Complex(0.0, 1.0) * (Hsys * V[j] - V[j] * Hsys);
 
         // Modified Gram–Schmidt
         for (int i = 0; i <= j; ++i) {
-            std::complex<double> hij = dot(V[i], w);  // Tr(V[i]† w)
+            Complex hij = dot(V[i], w);  // Tr(V[i]† w)
             Hk.coeffRef(i, j) = hij;
             w -= V[i] * hij;
         }
@@ -201,7 +201,7 @@ DenseMatrix iter_arnoldi(const DenseMatrix& rho_0, double dt, const SparseMatrix
         // After this, we have our operator approximated in the basis as A
         // and the basis vectors in V
         if (is_unitary_on_statevector) {
-            arnoldi(std::complex<double>(0, 1) * currentH, rho_t, arnoldi_dim, V, A, atol);
+            arnoldi(Complex(0, 1) * currentH, rho_t, arnoldi_dim, V, A, atol);
             subspace_dim = int(V.size());
         } else if (!is_unitary) {
             arnoldi(L, rho_t, arnoldi_dim, V, A, atol);
@@ -237,7 +237,7 @@ DenseMatrix iter_arnoldi(const DenseMatrix& rho_0, double dt, const SparseMatrix
             rho_t /= trace(rho_t);
             continue;
         } else if (!is_unitary_on_statevector) {
-            std::complex<double> tr = 0;
+            Complex tr = 0;
             for (long i = 0; i < dim; ++i) {
                 long vec_index = i * dim + i;
                 tr += rho_t.coeff(vec_index, 0);

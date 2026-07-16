@@ -95,9 +95,6 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrix& 
         config (QiliSimConfig): The simulation configuration.
         readout (py::object): A list with readout information to determine when and what to measure.
 
-    Returns:
-        SamplingResult: A result object containing the measurement samples and computed probabilities.
-
     Raises:
         py::value_error: If functional is not a Sampling instance.
         py::value_error: If n_qubits is non-positive.
@@ -304,9 +301,6 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const Sp
         config (QiliSimConfig): The simulation configuration.
         readout (py::object): A list with readout information to determine when and what to measure.
 
-    Returns:
-        SamplingResult: A result object containing the measurement samples and computed probabilities.
-
     Raises:
         py::value_error: If functional is not a Sampling instance.
         py::value_error: If n_qubits is non-positive.
@@ -349,9 +343,13 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const Sp
         state = sample_from_density_matrix(state, config.get_num_monte_carlo_trajectories(), config.get_seed());
     }
 
-    // Combine single-qubit gates for speed if not using noise models
+    // Fuse gates for speed if not using noise models, either in groups of single-qubit gates or multi-qubit gates (up to a limit)
+    const int min_threads_for_fusion = 4;
+    bool use_fusion = !has_noise && config.get_fuse_gates() && (is_statevector || monte_carlo) && config.get_num_threads() >= min_threads_for_fusion;
     std::vector<Gate> optimized_gates = gates;
-    if (!has_noise && config.get_combine_single_qubit_gates()) {
+    if (use_fusion) {
+        optimized_gates = fuse_gates(gates, config.get_max_fused_qubits());
+    } else if (!has_noise && config.get_combine_single_qubit_gates()) {
         optimized_gates = combine_single_qubit_gates(optimized_gates);
     }
 
@@ -440,4 +438,50 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const Sp
         state = state * state.adjoint();
     }
 }
+
+#include <iostream>
+
+void sampling_stabilizer(const std::vector<Gate>& gates, int n_qubits, const StabilizerStateSum& initial_state, NoiseModelCpp& noise_model_cpp, StabilizerStateSum& state, const QiliSimConfig& config, const py::object& readout) {
+    /*
+    Execute a sampling functional using a stabilizer simulator.
+
+    Args:
+        gates (std::vector<Gate>&): The list of gates in the circuit.
+        n_qubits (int): The number of qubits in the circuit.
+        initial_state (StabilizerStateSum&): The initial state of the system as a sum of stabilizer states.
+        noise_model_cpp (NoiseModelCpp&): The noise model to apply during simulation.
+        state (StabilizerStateSum&): The final state after applying all gates as a sum of stabilizer states.
+        intermediate_results (std::vector<py::object>&): A vector to store intermediate results after each set of measurements.
+        config (QiliSimConfig): The simulation configuration.
+        readout (py::object): A list with readout information to determine when and what to measure.
+    */
+
+    // Set the number of threads
+#if defined(_OPENMP)
+    omp_set_num_threads(config.get_num_threads());
+    Eigen::setNbThreads(config.get_num_threads());
+#endif
+
+    // Throw a warning if we have noise, since the stabilizer simulator does not support noise models
+    if (!noise_model_cpp.is_empty()) {
+        warning("Noise models are not supported in the stabilizer simulator. Noise will be ignored.");
+    }
+
+    // Throw a warning if we are using monte-carlo sampling, since the stabilizer simulator does not support it
+    if (config.get_monte_carlo()) {
+        warning("Monte Carlo sampling is not supported in the stabilizer simulator. Monte Carlo will be ignored.");
+    }
+
+    // We start with the initial state
+    state = initial_state;
+    state.set_max_terms(config.get_stabilizer_max_states());
+
+    // Then we apply each gate
+    std::vector<bool> qubits_measured(n_qubits, false);
+    for (int i = 0; i < int(gates.size()); ++i) {
+        const auto& gate = gates[i];
+        state.apply_gate(gate);
+    }
+}
+
 // GCOV_EXCL_BR_STOP

@@ -51,6 +51,7 @@ py::object ExpectationReadoutResult;
 py::object StateTomographyReadoutResult;
 py::object ReadoutResult;
 py::object ReadoutCompositeResults;
+py::object logger;
 
 void initialize_all_pybind_types() {
     Circuit = py::module_::import("qilisdk.digital.circuit").attr("Circuit");
@@ -91,6 +92,24 @@ void initialize_external_pybind_types() {
     sparray = py::module_::import("scipy.sparse").attr("sparray");
     dtype = py::dtype("complex128");
     py_complex = py::module_::import("builtins").attr("complex");
+    logger = py::module_::import("loguru").attr("logger");
+}
+
+// Logging functions
+void warning(std::string message) {
+    if (logger) {
+        logger.attr("warning")(message);
+    }
+}
+void info(std::string message) {
+    if (logger) {
+        logger.attr("info")(message);
+    }
+}
+void error(std::string message) {
+    if (logger) {
+        logger.attr("error")(message);
+    }
 }
 
 // GCOVR_EXCL_START
@@ -129,6 +148,7 @@ void finalize_all_pybind_types() {
     sparray = py::object();
     dtype = py::object();
     py_complex = py::object();
+    logger = py::object();
 }
 // GCOVR_EXCL_STOP
 

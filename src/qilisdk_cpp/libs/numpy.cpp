@@ -50,7 +50,7 @@ SparseMatrix from_numpy(const py::buffer& matrix_buffer, double atol) {
     Triplets entries;
     for (int r = 0; r < rows; ++r) {
         for (int c = 0; c < cols; ++c) {
-            std::complex<double> val = ptr[r * cols + c];
+            Complex val(ptr[r * cols + c]);
             if (std::abs(val) > atol) {
                 entries.emplace_back(Triplet(r, c, val));
             }
@@ -177,7 +177,7 @@ SparseMatrix from_spmatrix(const py::object& matrix, double atol) {
     auto col_ptr = static_cast<int*>(col_buf.ptr);
     auto data_ptr = static_cast<std::complex<double>*>(data_buf.ptr);
     for (int i = 0; i < nnz; ++i) {
-        std::complex<double> val = data_ptr[i];
+        Complex val(data_ptr[i]);
         if (std::abs(val) > atol) {
             entries.emplace_back(Triplet(row_ptr[i], col_ptr[i], val));
         }

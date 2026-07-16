@@ -197,6 +197,97 @@ def test_qilisim_backend_time_evolution_dephasing(backend_class):
     assert abs(result.get_expectation_values()[0]) < 0.1
 
 
+def _two_qubit_damping_evolution():
+    total_time = 1.0
+    schedule = Schedule(
+        hamiltonians={"hz": PauliZ(0) + PauliZ(1)},
+        coefficients={"hz": {0.0: 1.0, total_time: 1.0}},
+        dt=0.1,
+        interpolation=Interpolation.LINEAR,
+    )
+    # Both qubits excited: amplitude damping must relax the system toward |00>.
+    initial_state = tensor_prod([ket(1), ket(1)])
+    return AnalogEvolution(schedule=schedule, initial_state=initial_state)
+
+
+@pytest.mark.parametrize("backend_class", backends)
+def test_qilisim_backend_global_amplitude_damping_matches_per_qubit(backend_class):
+    # Regression test (SDK-354): global single-qubit noise must be applied independently to
+    # every qubit, NOT collapsed into a single collective jump operator (the buggy L^{otimes N}
+    # expansion). On a multi-qubit system the global model must therefore be physically
+    # identical to explicitly attaching the same noise to each qubit.
+    global_nm = NoiseModel()
+    global_nm.add(AmplitudeDamping(t1=0.5))
+
+    per_qubit_nm = NoiseModel()
+    for q in range(2):
+        per_qubit_nm.add(AmplitudeDamping(t1=0.5), qubits=[q])
+
+    readout = Readout().with_state_tomography()
+    global_state = (
+        backend_class(noise_model=global_nm, **args_per_backend[backend_class])
+        .execute(_two_qubit_damping_evolution(), readout=readout)
+        .get_state()
+        .dense()
+    )
+    per_qubit_state = (
+        backend_class(noise_model=per_qubit_nm, **args_per_backend[backend_class])
+        .execute(_two_qubit_damping_evolution(), readout=readout)
+        .get_state()
+        .dense()
+    )
+
+    # Global and per-qubit noise produce identical dynamics after the fix.
+    np.testing.assert_allclose(global_state, per_qubit_state, atol=1e-8)
+    # And the state actually relaxes toward |00> (the buggy collective jump barely acted, so
+    # the |00> population stayed near zero). |00> is index 0 of the density matrix.
+    assert global_state[0, 0].real > 0.5
+
+
+@pytest.mark.parametrize("backend_class", backends)
+def test_qilisim_backend_global_dephasing_matches_per_qubit(backend_class):
+    # Regression test (SDK-354): as above, but for dephasing. The buggy Z(x)Z collective jump
+    # left the coherences of a |++> state largely intact; per-qubit dephasing decays them.
+    total_time = 1.0
+
+    def make_evolution():
+        schedule = Schedule(
+            hamiltonians={"hz": PauliZ(0) + PauliZ(1)},
+            coefficients={"hz": {0.0: 1.0, total_time: 1.0}},
+            dt=0.1,
+            interpolation=Interpolation.LINEAR,
+        )
+        initial_state = tensor_prod([(ket(0) + ket(1)).unit(), (ket(0) + ket(1)).unit()])
+        return AnalogEvolution(schedule=schedule, initial_state=initial_state)
+
+    global_nm = NoiseModel()
+    global_nm.add(Dephasing(t_phi=0.2))
+
+    per_qubit_nm = NoiseModel()
+    for q in range(2):
+        per_qubit_nm.add(Dephasing(t_phi=0.2), qubits=[q])
+
+    readout = Readout().with_state_tomography()
+    global_state = (
+        backend_class(noise_model=global_nm, **args_per_backend[backend_class])
+        .execute(make_evolution(), readout=readout)
+        .get_state()
+        .dense()
+    )
+    per_qubit_state = (
+        backend_class(noise_model=per_qubit_nm, **args_per_backend[backend_class])
+        .execute(make_evolution(), readout=readout)
+        .get_state()
+        .dense()
+    )
+
+    np.testing.assert_allclose(global_state, per_qubit_state, atol=1e-8)
+    # Purity must drop well below 1 as coherences decay (a single collective Z(x)Z jump left
+    # the state far more coherent than independent per-qubit dephasing).
+    purity = np.trace(global_state @ global_state).real
+    assert purity < 0.9
+
+
 @pytest.mark.parametrize("backend_class", backends)
 def test_qilisim_backend_schedule_parameter_perturbation(backend_class):
     total_time = np.pi / 2
