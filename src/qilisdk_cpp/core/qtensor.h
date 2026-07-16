@@ -40,15 +40,15 @@ class QTensorCpp {
     StorageFormat _format = StorageFormat::RowSparse;
     static StorageFormat _choose_format(Eigen::Index rows, Eigen::Index cols, Eigen::Index nnz, StorageFormat requested);
     void _set_from_row_sparse(const SparseMatrix& data, StorageFormat requested = StorageFormat::Auto);
-    static QTensorCpp _col_ket_from_entries(Eigen::Index dim, const std::vector<std::pair<Eigen::Index, std::complex<double>>>& entries);
+    static QTensorCpp _col_ket_from_entries(Eigen::Index dim, const std::vector<std::pair<Eigen::Index, Complex>>& entries);
 
     // Cache various things to faster reaccess
-    std::vector<std::complex<double>> _eigenvalues;
+    std::vector<Complex> _eigenvalues;
     std::vector<SparseMatrix> _eigenvectors;
     bool _is_positive_computed = false;
     bool _is_positive = false;
     double _atol_used_for_positive = 0.0;
-    std::complex<double> _trace = 0.0;
+    Complex _trace = 0.0;
     bool _trace_computed = false;
     bool _trace_squared_computed = false;
     double _trace_squared = 0.0;
@@ -88,8 +88,8 @@ class QTensorCpp {
                 if constexpr (std::is_same_v<M, DenseMatrix>) {
                     for (Eigen::Index c = 0; c < mat.cols(); ++c) {
                         for (Eigen::Index r = 0; r < mat.rows(); ++r) {
-                            const std::complex<double> value = mat(r, c);
-                            if (value != std::complex<double>(0.0, 0.0)) {
+                            const Complex value = mat(r, c);
+                            if (value != Complex(0.0, 0.0)) {
                                 f(int(r), int(c), value);
                             }
                         }
@@ -112,15 +112,15 @@ class QTensorCpp {
     void clear_cache();
     std::string as_string() const;
     DenseMatrix as_dense() const;
-    std::complex<double> coeff(int row, int col) const;
+    Complex coeff(int row, int col) const;
 
     // Matrix arithmetic
     double norm(const std::string& norm_type);
     void compute_eigendecomposition();
     bool equals_python(const py::object& other) const;
     bool equals(const QTensorCpp& other) const;
-    std::complex<double> dot(const QTensorCpp& other) const;
-    std::complex<double> dot_python(const py::object& other) const;
+    Complex dot(const QTensorCpp& other) const;
+    Complex dot_python(const py::object& other) const;
     QTensorCpp normalized(const std::string& norm_type);
     QTensorCpp inverse();
     QTensorCpp pow(double n);
@@ -128,14 +128,14 @@ class QTensorCpp {
     QTensorCpp log();
     QTensorCpp exp();
     int rank();
-    std::vector<std::complex<double>> get_eigenvalues() const;
+    std::vector<Complex> get_eigenvalues() const;
     py::object get_eigenvalues_python() const;
     std::vector<SparseMatrix> get_eigenvectors() const;
     py::object get_eigenvectors_python() const;
     QTensorCpp conjugate() const;
     QTensorCpp transpose() const;
     QTensorCpp adjoint() const;
-    std::complex<double> trace();
+    Complex trace();
     QTensorCpp add_python(const py::object& other) const;
     QTensorCpp add(const QTensorCpp& other) const;
     QTensorCpp sub_python(const py::object& other) const;
@@ -144,8 +144,8 @@ class QTensorCpp {
     QTensorCpp mul(const QTensorCpp& other) const;
     QTensorCpp matmul_python(const py::object& other) const;
     QTensorCpp matmul(const QTensorCpp& other) const;
-    QTensorCpp div(std::complex<double> scalar) const;
-    QTensorCpp mul(std::complex<double> scalar) const;
+    QTensorCpp div(Complex scalar) const;
+    QTensorCpp mul(Complex scalar) const;
 
     // Cached checks
     bool is_ket() const;
@@ -169,9 +169,9 @@ class QTensorCpp {
     double purity();
     std::vector<double> probabilities() const;
     py::list probabilities_python() const;
-    std::complex<double> expectation_value(const QTensorCpp& other, int nshots = 0) const;
-    std::complex<double> expectation_value(const MatrixFreeHamiltonian& other) const;
-    std::complex<double> expectation_value_python(const py::object& other, int nshots = 0) const;
+    Complex expectation_value(const QTensorCpp& other, int nshots = 0) const;
+    Complex expectation_value(const MatrixFreeHamiltonian& other) const;
+    Complex expectation_value_python(const py::object& other, int nshots = 0) const;
     QTensorCpp partial_trace_python(const py::object& keep) const;
     QTensorCpp partial_trace(const std::set<int>& keep) const;
     QTensorCpp commutator(const QTensorCpp& other) const;
@@ -204,11 +204,11 @@ class QTensorCpp {
     }
     bool operator==(const QTensorCpp& other) const { return equals(other); }
     bool operator!=(const QTensorCpp& other) const { return !equals(other); }
-    QTensorCpp operator/(std::complex<double> scalar) const { return div(scalar); }
-    QTensorCpp operator/(double scalar) const { return div(std::complex<double>(scalar, 0.0)); }
-    std::complex<double> operator[](const std::pair<int, int>& index) const { return coeff(index.first, index.second); }
-    QTensorCpp operator*(std::complex<double> scalar) const { return mul(scalar); }
-    QTensorCpp operator*(double scalar) const { return mul(std::complex<double>(scalar, 0.0)); }
+    QTensorCpp operator/(Complex scalar) const { return div(scalar); }
+    QTensorCpp operator/(double scalar) const { return div(Complex(scalar, 0.0)); }
+    Complex operator[](const std::pair<int, int>& index) const { return coeff(index.first, index.second); }
+    QTensorCpp operator*(Complex scalar) const { return mul(scalar); }
+    QTensorCpp operator*(double scalar) const { return mul(Complex(scalar, 0.0)); }
 };
 #pragma GCC visibility pop
 

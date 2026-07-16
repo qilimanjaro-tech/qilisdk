@@ -449,7 +449,7 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
 
                 for (Eigen::Index row = 0; row < state.rows(); ++row) {
                     for (Eigen::Index col = 0; col < state.cols(); ++col) {
-                        if (state(row, col) == std::complex<double>(0.0, 0.0)) {
+                        if (state(row, col) == Complex(0.0, 0.0)) {
                             continue;
                         }
 

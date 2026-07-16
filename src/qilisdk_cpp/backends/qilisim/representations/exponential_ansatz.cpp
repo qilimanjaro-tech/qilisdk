@@ -110,7 +110,7 @@ ExponentialAnsatz ExponentialAnsatz::zeroed() const {
 std::vector<Bitset> ExponentialAnsatz::build_z_bits() const {
     const auto& ops = terms.get_operators();
     const int p = static_cast<int>(ops.size());
-    std::vector<std::pair<PauliString, std::complex<double>>> terms_vec(ops.begin(), ops.end());
+    std::vector<std::pair<PauliString, Complex>> terms_vec(ops.begin(), ops.end());
     std::vector<Bitset> z_bits(p, Bitset());
     for (int k = 0; k < p; ++k) {
         const auto& ps = terms_vec[k].first;
@@ -150,7 +150,7 @@ SampleSet ExponentialAnsatz::draw_samples(int N_s, int n_warmup) const {
     */
     const auto& ops = terms.get_operators();
     const int p = static_cast<int>(ops.size());
-    std::vector<std::pair<PauliString, std::complex<double>>> terms_vec(ops.begin(), ops.end());
+    std::vector<std::pair<PauliString, Complex>> terms_vec(ops.begin(), ops.end());
     std::vector<Bitset> z_bits = build_z_bits();
 
     // For each qubit i, the indices of terms k whose z-support includes qubit i.
@@ -263,7 +263,7 @@ SampleSet ExponentialAnsatz::draw_samples(int N_s, int n_warmup) const {
     return result;
 }
 
-Eigen::VectorXcd ExponentialAnsatz::local_energy(const SampleSet& samples, const MatrixFreeHamiltonian& H) const {
+DenseVector ExponentialAnsatz::local_energy(const SampleSet& samples, const MatrixFreeHamiltonian& H) const {
     /*
     Compute the local energy E_loc(x) = ∑_{x'} H_{x,x'} Ψ(x')/Ψ(x) for each sample x.
 
@@ -272,20 +272,20 @@ Eigen::VectorXcd ExponentialAnsatz::local_energy(const SampleSet& samples, const
         H (const MatrixFreeHamiltonian&): The Hamiltonian to compute the local energy with respect to.
 
     Returns:
-        Eigen::VectorXcd: A vector containing the local energy for each sample.
+        DenseVector: A vector containing the local energy for each sample.
     */
 
     // Get the operators and coefficients from the ansatz
     const auto& ops = terms.get_operators();
     const int p = static_cast<int>(ops.size());
-    std::vector<std::pair<PauliString, std::complex<double>>> terms_vec(ops.begin(), ops.end());
+    std::vector<std::pair<PauliString, Complex>> terms_vec(ops.begin(), ops.end());
     std::vector<Bitset> z_bits = build_z_bits();
     const int N_s = static_cast<int>(samples.configs.size());
 
     // Precompute the effect of each Hamiltonian term on the samples
-    static const std::complex<double> i_powers[4] = {{1, 0}, {0, 1}, {-1, 0}, {0, -1}};
+    static const Complex i_powers[4] = {{1, 0}, {0, 1}, {-1, 0}, {0, -1}};
     struct HTerm {
-        std::complex<double> base_phase;
+        Complex base_phase;
         Bitset flip_mask;
         Bitset sign_mask;
         std::vector<bool> flips_Pk;
@@ -307,7 +307,7 @@ Eigen::VectorXcd ExponentialAnsatz::local_energy(const SampleSet& samples, const
                 ++n_y;
             }
         }
-        std::complex<double> base_phase = coeff * i_powers[n_y & 3];
+        Complex base_phase = coeff * i_powers[n_y & 3];
         std::vector<bool> flips(p);
         for (int k = 0; k < p; ++k) {
             flips[k] = ((flip_mask & z_bits[k]).count() & 1) != 0;
@@ -316,21 +316,21 @@ Eigen::VectorXcd ExponentialAnsatz::local_energy(const SampleSet& samples, const
     }
 
     // Compute the local energy for each sample using the precomputed Hamiltonian term effects
-    Eigen::VectorXcd El(N_s);
+    DenseVector El(N_s);
 #if defined(_OPENMP)
 #pragma omp parallel for
 #endif
     for (int s = 0; s < N_s; ++s) {
         const Bitset& x = samples.configs[s];
-        std::complex<double> el = 0.0;
+        Complex el = 0.0;
         for (const auto& ht : h_terms) {
             bool neg_sign = ((x & ht.sign_mask).count()) & 1;
-            std::complex<double> h_elem = neg_sign ? -ht.base_phase : ht.base_phase;
-            std::complex<double> log_ratio = 0.0;
+            Complex h_elem = neg_sign ? -ht.base_phase : ht.base_phase;
+            Complex log_ratio = 0.0;
             for (int k = 0; k < p; ++k) {
                 if (ht.flips_Pk[k]) {
                     bool neg = ((x & z_bits[k]).count()) & 1;
-                    log_ratio -= 2.0 * terms_vec[k].second * std::complex<double>(neg ? -1.0 : 1.0, 0.0);
+                    log_ratio -= static_cast<Real>(2.0) * terms_vec[k].second * Complex(neg ? -1.0 : 1.0, 0.0);
                 }
             }
             el += h_elem * std::exp(log_ratio);
@@ -445,9 +445,9 @@ DenseMatrix ExponentialAnsatz::to_dense() const {
 
     // Build Pauli ops
     DenseMatrix pauli_x(2, 2), pauli_y(2, 2), pauli_z(2, 2);
-    pauli_x << std::complex<double>(0), std::complex<double>(1), std::complex<double>(1), std::complex<double>(0);
-    pauli_y << std::complex<double>(0), std::complex<double>(0, -1), std::complex<double>(0, 1), std::complex<double>(0);
-    pauli_z << std::complex<double>(1), std::complex<double>(0), std::complex<double>(0), std::complex<double>(-1);
+    pauli_x << Complex(0), Complex(1), Complex(1), Complex(0);
+    pauli_y << Complex(0), Complex(0, -1), Complex(0, 1), Complex(0);
+    pauli_z << Complex(1), Complex(0), Complex(0), Complex(-1);
 
     for (const auto& [ps, coeff] : terms.get_operators()) {
         DenseMatrix op(1, 1);

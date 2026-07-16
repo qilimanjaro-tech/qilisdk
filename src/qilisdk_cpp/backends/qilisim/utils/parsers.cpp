@@ -193,7 +193,7 @@ py::object construct_result_object(const ExponentialAnsatz& state, const py::obj
     for (py::handle ro_handle : readout) {
         py::object ro = py::reinterpret_borrow<py::object>(ro_handle);
         if (py::isinstance(ro, ExpectationReadout)) {
-            std::vector<std::complex<double>> expectations;
+            std::vector<Complex> expectations;
             // parse the observables for which we need to compute the expectation values
             std::vector<MatrixFreeHamiltonian> observables = parse_observables_matrix_free(n_qubits, ro.attr("observables"));
             for (const auto& obs : observables) {
@@ -315,7 +315,7 @@ std::vector<MatrixFreeHamiltonian> parse_hamiltonians_matrix_free(int nqubits, c
         for (auto& element : elements) {
             py::tuple term = element.cast<py::tuple>();
             py::list pauli_ops = term[0].cast<py::list>();
-            std::complex<double> coeff = term[1].cast<std::complex<double>>();
+            Complex coeff = term[1].cast<Complex>();
 
             // Parse each Pauli operator, which has a name and a target qubit
             std::vector<MatrixFreeOperator> ops;
@@ -1114,6 +1114,12 @@ QiliSimConfig parse_solver_params(const py::dict& solver_params) {
     }
     if (solver_params.contains("combine_single_qubit_gates")) {
         config.set_combine_single_qubit_gates(solver_params["combine_single_qubit_gates"].cast<bool>());
+    }
+    if (solver_params.contains("fuse_gates")) {
+        config.set_fuse_gates(solver_params["fuse_gates"].cast<bool>());
+    }
+    if (solver_params.contains("max_fused_qubits")) {
+        config.set_max_fused_qubits(solver_params["max_fused_qubits"].cast<int>());
     }
     if (solver_params.contains("measurement_collapse")) {
         config.set_measurement_collapse(solver_params["measurement_collapse"].cast<bool>());
