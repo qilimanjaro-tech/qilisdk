@@ -11,8 +11,24 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import annotations
+
 from abc import ABC
 
 
 class Result(ABC):
     """Marker base class for results produced by QiliSDK workflows."""
+
+    @property
+    def execution_time(self) -> float | None:
+        """Wall-clock time, in seconds, spent executing the workflow that produced this result.
+
+        Populated by :meth:`~qilisdk.backends.Backend.execute` with the time taken by the
+        backend to run the simulation. ``None`` when the result was not produced through
+        ``execute`` (e.g. constructed manually or deserialised from an older result).
+        """
+        return getattr(self, "_execution_time", None)
+
+    @execution_time.setter
+    def execution_time(self, value: float | None) -> None:
+        self._execution_time = value
