@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-29 12:16+0200\n"
+"POT-Creation-Date: 2026-07-06 12:26+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -68,16 +68,16 @@ msgid ""
 ":func:`constant <qilisdk.analog.schedule.Schedule.constant>`: Constant "
 "coefficient for a single Hamiltonian."
 msgstr ""
-":func:`constant <qilisdk.analog.schedule.Schedule.constant>`: Coeficiente "
-"constante para un solo Hamiltoniano."
+":func:`constant <qilisdk.analog.schedule.Schedule.constant>`: Coeficiente"
+" constante para un solo Hamiltoniano."
 
 #: ../../modules/analog/analog_schedule.rst:11
 msgid ""
 ":func:`chained_linear <qilisdk.analog.schedule.Schedule.chained_linear>`:"
 " Linear chaining of multiple Hamiltonians."
 msgstr ""
-":func:`chained_linear <qilisdk.analog.schedule.Schedule.chained_linear>`: "
-"Encadenamiento lineal de múltiples Hamiltonianos."
+":func:`chained_linear <qilisdk.analog.schedule.Schedule.chained_linear>`:"
+" Encadenamiento lineal de múltiples Hamiltonianos."
 
 #: ../../modules/analog/analog_schedule.rst:13
 msgid ""
@@ -88,7 +88,7 @@ msgstr ""
 "Hamiltoniano conductor y un Hamiltoniano de problema durante un tiempo de"
 " 10 unidades:"
 
-#: ../../modules/analog/analog_schedule.rst:25
+#: ../../modules/analog/analog_schedule.rst:35
 msgid ""
 "For more complex schedules, you can use the "
 ":class:`~qilisdk.analog.schedule.Schedule` class directly, which provides"
@@ -109,17 +109,17 @@ msgstr ""
 "invocables del tiempo, y pueden definirse en puntos discretos o sobre "
 "intervalos que se muestrean automáticamente."
 
-#: ../../modules/analog/analog_schedule.rst:32
+#: ../../modules/analog/analog_schedule.rst:42
 msgid "Key arguments"
 msgstr "Argumentos clave"
 
-#: ../../modules/analog/analog_schedule.rst:34
+#: ../../modules/analog/analog_schedule.rst:44
 msgid "**dt** (float): resolution of time samples. Default is 0.1."
 msgstr ""
 "**dt** (float): resolución de las muestras temporales. El valor "
 "predeterminado es 0.1."
 
-#: ../../modules/analog/analog_schedule.rst:35
+#: ../../modules/analog/analog_schedule.rst:45
 msgid ""
 "**hamiltonians** (dict[str, Hamiltonian]): Map of labels to "
 ":class:`~qilisdk.analog.hamiltonian.Hamiltonian` instances."
@@ -127,7 +127,7 @@ msgstr ""
 "**hamiltonians** (dict[str, Hamiltonian]): Mapa de etiquetas a instancias"
 " de :class:`~qilisdk.analog.hamiltonian.Hamiltonian`."
 
-#: ../../modules/analog/analog_schedule.rst:36
+#: ../../modules/analog/analog_schedule.rst:46
 msgid ""
 "**coefficients** (dict[str, dict]): Mapping from Hamiltonian label to a "
 "time-definition dictionary. Each key is either a time point "
@@ -139,11 +139,11 @@ msgstr ""
 " (float/parámetro/término) o una tupla de 2 elementos que define un "
 "intervalo; cada valor puede ser:"
 
-#: ../../modules/analog/analog_schedule.rst:37
+#: ../../modules/analog/analog_schedule.rst:47
 msgid "the coefficient of the hamiltonian at that time"
 msgstr "el coeficiente del Hamiltoniano en ese instante"
 
-#: ../../modules/analog/analog_schedule.rst:38
+#: ../../modules/analog/analog_schedule.rst:48
 msgid ""
 "or a callable returning a coefficient. This callable can take a parameter"
 " ``t`` that will be replaced by time. Moreover, any other parameters "
@@ -155,7 +155,7 @@ msgstr ""
 "cualquier otro parámetro pasado a esta función debe tener un valor "
 "predeterminado o tener su valor especificado en los ``**kwargs``."
 
-#: ../../modules/analog/analog_schedule.rst:39
+#: ../../modules/analog/analog_schedule.rst:49
 msgid ""
 "**interpolation** (:class:`~qilisdk.core.interpolator.Interpolation`): "
 "``LINEAR`` (default) or ``STEP`` behavior between provided points."
@@ -164,7 +164,7 @@ msgstr ""
 "comportamiento ``LINEAR`` (predeterminado) o ``STEP`` entre los puntos "
 "proporcionados."
 
-#: ../../modules/analog/analog_schedule.rst:40
+#: ../../modules/analog/analog_schedule.rst:50
 msgid ""
 "**total_time** (float | Parameter | Term | None): Optional max time that "
 "rescales all time points while preserving relative positions."
@@ -173,7 +173,7 @@ msgstr ""
 "que reescala todos los puntos temporales preservando sus posiciones "
 "relativas."
 
-#: ../../modules/analog/analog_schedule.rst:44
+#: ../../modules/analog/analog_schedule.rst:54
 msgid ""
 "When you place parameters on the time axis (e.g., as time points or "
 "interval endpoints), the schedule automatically constrains those "
@@ -186,15 +186,15 @@ msgstr ""
 "temporales vecinos, de modo que el orden de la línea temporal siga siendo"
 " válido."
 
-#: ../../modules/analog/analog_schedule.rst:49
+#: ../../modules/analog/analog_schedule.rst:59
 msgid "Example 1: Callable coefficients with interval sampling"
 msgstr "Ejemplo 1: Coeficientes invocables con muestreo por intervalos"
 
-#: ../../modules/analog/analog_schedule.rst:71
+#: ../../modules/analog/analog_schedule.rst:81
 msgid "Example 2: Step interpolation and max-time rescaling"
 msgstr "Ejemplo 2: Interpolación por pasos y reescalado del tiempo máximo"
 
-#: ../../modules/analog/analog_schedule.rst:96
+#: ../../modules/analog/analog_schedule.rst:106
 msgid ""
 "The draw function samples 1/dt points from the schedule, therefore, for "
 "an increased resolution in the plot you can reduce dt."
@@ -202,11 +202,11 @@ msgstr ""
 "La función draw muestrea 1/dt puntos del schedule; por lo tanto, para "
 "obtener mayor resolución en el gráfico se puede reducir dt."
 
-#: ../../modules/analog/analog_schedule.rst:100
+#: ../../modules/analog/analog_schedule.rst:110
 msgid "Parameterized Schedules"
 msgstr "Schedules parametrizados"
 
-#: ../../modules/analog/analog_schedule.rst:101
+#: ../../modules/analog/analog_schedule.rst:112
 msgid ""
 ":class:`~qilisdk.analog.schedule.Schedule` coefficients can be symbolic, "
 "enabling classical optimization loops or experiments that scan over a "
@@ -224,7 +224,7 @@ msgstr ""
 "construidas a partir de parámetros. El schedule registra cada parámetro "
 "que encuentra para que pueda consultarlos o modificarlos posteriormente."
 
-#: ../../modules/analog/analog_schedule.rst:131
+#: ../../modules/analog/analog_schedule.rst:142
 msgid ""
 "For schedules, Hamiltonians, and interpolators, use ``get_parameters`` "
 "and related accessor methods to inspect parameter state."
@@ -232,6 +232,62 @@ msgstr ""
 "Para schedules, Hamiltonianos e interpoladores, use ``get_parameters`` y "
 "los métodos de acceso relacionados para inspeccionar el estado de los "
 "parámetros."
+
+#: ../../modules/analog/analog_schedule.rst:147
+msgid "Visualizing Schedules"
+msgstr "Visualización de schedules"
+
+#: ../../modules/analog/analog_schedule.rst:149
+msgid ""
+"Whilst :meth:`Schedule.draw()<qilisdk.analog.schedule.Schedule.draw>` is "
+"useful for visualizing the coefficients of the Hamiltonians over time, "
+"you can also use "
+":meth:`Schedule.draw_eigenvalues()<qilisdk.analog.schedule.Schedule.draw_eigenvalues>`"
+" to visualize how the eigenvalues of the overall Hamiltonian change over "
+"time. This can only be done for smaller systems (say, 8 qubits or less) "
+"since it requires diagonalizing the Hamiltonian at every timestep, but it"
+" can be really useful to see how the gap between the ground state and "
+"first excited state evolves. For example:"
+msgstr ""
+"Aunque :meth:`Schedule.draw()<qilisdk.analog.schedule.Schedule.draw>` "
+"resulta útil para visualizar los coeficientes de los Hamiltonianos a lo "
+"largo del tiempo, también puede utilizar "
+":meth:`Schedule.draw_eigenvalues()<qilisdk.analog.schedule.Schedule.draw_eigenvalues>`"
+" para visualizar cómo cambian los valores propios del Hamiltoniano global"
+" a lo largo del tiempo. Esto solo puede hacerse para sistemas pequeños "
+"(digamos, 8 qubits o menos), ya que requiere diagonalizar el Hamiltoniano"
+" en cada paso de tiempo, pero puede ser muy útil para ver cómo evoluciona"
+" la separación entre el estado fundamental y el primer estado excitado. "
+"Por ejemplo:"
+
+#: ../../modules/analog/analog_schedule.rst:175
+msgid ""
+"If we start in the ground state of the driver Hamiltonian (the bottom "
+"line, at the very left) and then evolve slowly, we should end up in the "
+"ground state of the problem Hamiltonian (at the very right). To test "
+"this, we can simulate the evolution and then include the intermediate "
+"states in the plot:"
+msgstr ""
+"Si comenzamos en el estado fundamental del Hamiltoniano conductor (la "
+"línea inferior, en el extremo izquierdo) y luego evolucionamos lentamente,"
+" deberíamos terminar en el estado fundamental del Hamiltoniano de problema"
+" (en el extremo derecho). Para comprobarlo, podemos simular la evolución y"
+" luego incluir los estados intermedios en el gráfico:"
+
+#: ../../modules/analog/analog_schedule.rst:210
+msgid ""
+"Here we can see that the state correctly started in the ground state of "
+"the initial Hamiltonian, and then evolved to the ground state of the "
+"final Hamiltonian. The percentage overlap shows that some small amount of"
+" state leaked out into a higher order state, but this is just a result of"
+" the evolution time, a longer/slower evolution would reduce this."
+msgstr ""
+"Aquí podemos ver que el estado comenzó correctamente en el estado "
+"fundamental del Hamiltoniano inicial y luego evolucionó hacia el estado "
+"fundamental del Hamiltoniano final. El porcentaje de solapamiento muestra"
+" que una pequeña parte del estado se filtró hacia un estado de orden "
+"superior, pero esto es solo consecuencia del tiempo de evolución; una "
+"evolución más larga/lenta lo reduciría."
 
 #~ msgid "Go to a specific subheading of a page."
 #~ msgstr "Ir a un subtítulo específico de una página."

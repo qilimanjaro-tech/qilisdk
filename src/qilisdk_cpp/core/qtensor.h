@@ -14,6 +14,10 @@
 #pragma once
 
 #include <set>
+#include <type_traits>
+#include <utility>
+#include <variant>
+#include <vector>
 #include "../backends/qilisim/representations/matrix_free_hamiltonian.h"
 #include "../libs/eigen.h"
 #include "../libs/pybind.h"
@@ -22,12 +26,21 @@
 
 const double default_atol = 1e-12;
 
+// A dense storage backend is chosen when the density (nnz / (rows * cols)) exceeds this fraction.
+const double dense_storage_threshold = 1.0 / 3.0;
+
+// The storage backend used internally by a QTensor
+enum class StorageFormat { Auto, RowSparse, ColSparse, Dense };
+
 // The main QiliSim C++ class
 #pragma GCC visibility push(default)
 class QTensorCpp {
    private:
-    // The main data of the class, an Eigen::SparseMatrix<std::complex<double>, Eigen::RowMajor>
-    SparseMatrix _data;
+    std::variant<SparseMatrix, SparseMatrixCol, DenseMatrix> _data;
+    StorageFormat _format = StorageFormat::RowSparse;
+    static StorageFormat _choose_format(Eigen::Index rows, Eigen::Index cols, Eigen::Index nnz, StorageFormat requested);
+    void _set_from_row_sparse(const SparseMatrix& data, StorageFormat requested = StorageFormat::Auto);
+    static QTensorCpp _col_ket_from_entries(Eigen::Index dim, const std::vector<std::pair<Eigen::Index, std::complex<double>>>& entries);
 
     // Cache various things to faster reaccess
     std::vector<std::complex<double>> _eigenvalues;
@@ -52,10 +65,46 @@ class QTensorCpp {
     // Constructors and basic accessors
     QTensorCpp() {}
     QTensorCpp(const SparseMatrix& data);
+    QTensorCpp(const SparseMatrix& data, StorageFormat format);
     QTensorCpp(const SparseMatrix& data, bool no_checks);
     QTensorCpp(const py::object& data);
     QTensorCpp(int rows, int cols);
-    const SparseMatrix& get_data() const { return _data; }
+    SparseMatrix get_data() const { return to_row_sparse(); }
+
+    // Backend-agnostic accessors
+    StorageFormat get_format() const { return _format; }
+    std::string get_format_string() const;
+    Eigen::Index rows() const;
+    Eigen::Index cols() const;
+    Eigen::Index nnz() const;
+    SparseMatrix to_row_sparse() const;
+    DenseMatrix to_dense() const;
+
+    template <typename F>
+    void for_each_nonzero(F&& f) const {
+        std::visit(
+            [&](const auto& mat) {
+                using M = std::decay_t<decltype(mat)>;
+                if constexpr (std::is_same_v<M, DenseMatrix>) {
+                    for (Eigen::Index c = 0; c < mat.cols(); ++c) {
+                        for (Eigen::Index r = 0; r < mat.rows(); ++r) {
+                            const std::complex<double> value = mat(r, c);
+                            if (value != std::complex<double>(0.0, 0.0)) {
+                                f(int(r), int(c), value);
+                            }
+                        }
+                    }
+                } else {
+                    for (Eigen::Index k = 0; k < mat.outerSize(); ++k) {
+                        for (typename M::InnerIterator it(mat, k); it; ++it) {
+                            f(int(it.row()), int(it.col()), it.value());
+                        }
+                    }
+                }
+            },
+            _data);
+    }
+
     py::object as_scipy() const;
     py::object as_numpy() const;
     int get_nqubits() const;
@@ -63,7 +112,7 @@ class QTensorCpp {
     void clear_cache();
     std::string as_string() const;
     DenseMatrix as_dense() const;
-    std::complex<double> coeff(int row, int col) const { return _data.coeff(row, col); }
+    std::complex<double> coeff(int row, int col) const;
 
     // Matrix arithmetic
     double norm(const std::string& norm_type);

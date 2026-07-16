@@ -24,6 +24,7 @@ PYBIND11_MODULE(qtensor_module, m) {
         .def("as_numpy", &QTensorCpp::as_numpy)
         .def("get_nqubits", &QTensorCpp::get_nqubits)
         .def("get_shape", &QTensorCpp::get_shape)
+        .def("storage_format", &QTensorCpp::get_format_string)
         .def("is_ket", &QTensorCpp::is_ket)
         .def("is_bra", &QTensorCpp::is_bra)
         .def("is_operator", &QTensorCpp::is_operator)

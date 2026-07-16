@@ -35,8 +35,9 @@ void QiliSimConfig::validate() const {
     if (valid_evolution_methods.find(time_evolution_method) == std::string::npos) {
         throw py::value_error("Time evolution method must be one of " + valid_evolution_methods);
     }
-    if (sampling_method != "statevector" && sampling_method != "statevector_matrix_free") {
-        throw py::value_error("Sampling method must be one of 'statevector' or 'statevector_matrix_free'.");
+    const std::string valid_digital_methods = "'statevector', 'statevector_matrix_free', 'stabilizer'";
+    if (valid_digital_methods.find(digital_method) == std::string::npos) {
+        throw py::value_error("Digital method must be one of " + valid_digital_methods);
     }
     if (monte_carlo && num_monte_carlo_trajectories <= 0) {
         throw py::value_error("Number of Monte Carlo trajectories must be positive.");
@@ -61,6 +62,9 @@ void QiliSimConfig::validate() const {
     }
     if (warmups < 0) {
         throw py::value_error("Warmups cannot be negative.");
+    }
+    if (order > 4) {
+        throw py::value_error("Order greater than 4 not supported yet.");
     }
 }
 
