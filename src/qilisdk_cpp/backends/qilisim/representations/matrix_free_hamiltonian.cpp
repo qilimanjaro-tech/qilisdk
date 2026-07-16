@@ -158,6 +158,9 @@ void MatrixFreeHamiltonian::apply(const DenseMatrix& input_state, MatrixFreeAppl
 
     // Make sure output_state has the right shape
     output_state.resizeLike(input_state);
+    if (input_state.cols() != 1) {
+        output_state.setZero();
+    }
 
     // Cache some pointers
     const Complex* in_ptr = input_state.data();

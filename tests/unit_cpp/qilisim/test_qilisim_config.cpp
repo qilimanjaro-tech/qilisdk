@@ -34,7 +34,7 @@ TEST(QilisimConfig, BadValidateThrows) {
     EXPECT_ANY_THROW(config.validate());
 
     config = default_config;
-    config.set_sampling_method("invalid_sampling");
+    config.set_digital_method("invalid_digital");
     EXPECT_ANY_THROW(config.validate());
 
     config = default_config;
@@ -91,6 +91,18 @@ TEST(QilisimConfig, VariationalFieldGettersSetters) {
     EXPECT_EQ(config.get_order(), 3);
     EXPECT_EQ(config.get_shots(), 200);
     EXPECT_EQ(config.get_warmups(), 50);
+}
+
+TEST(QilisimConfig, OrderGreaterThan4_ThrowsOnValidate) {
+    QiliSimConfig config;
+    config.set_order(5);
+    EXPECT_ANY_THROW(config.validate());
+}
+
+TEST(QilisimConfig, StabilizerMaxStates_GetterSetter) {
+    QiliSimConfig config;
+    config.set_stabilizer_max_states(200);
+    EXPECT_EQ(config.get_stabilizer_max_states(), 200);
 }
 
 // GCOV_EXCL_BR_STOP

@@ -346,13 +346,17 @@ class DigitalMethod(BaseSimulatorConfig):
             ``True``.
         max_fused_qubits (int): Maximum number of qubits a single fused block may
             span. Larger values fuse more aggressively but build larger dense
-            matrices (``2**max_fused_qubits`` square). ``0`` (the default) selects
-            the depth automatically from the qubit count: shallow fusion while the
-            statevector fits in cache, deeper fusion once it is DRAM-resident.
+            matrices (``2**max_fused_qubits`` square). Defaults to ``4``.
         matrix_free (bool): Whether to use the matrix-free implementation
             for statevector simulation. Defaults to ``True``.
     """
 
+    digital_method: str = Field(
+        default="statevector_matrix_free",
+        description=(
+            "Digital simulation method to use. This is set automatically by the preferred constructors like `statevector`."
+        ),
+    )
     max_cache_size: int = Field(
         default=1000,
         ge=0,
@@ -379,16 +383,21 @@ class DigitalMethod(BaseSimulatorConfig):
         default=True,
         description="Whether to use the matrix-free implementation for statevector simulation.",
     )
+    stabilizer_max_states: int = Field(
+        default=100,
+        description="Maximum number of stabilizer states to track when using the stabilizer digital simulation method. Set to zero or less for unlimited.",
+    )
 
     def get_config(self) -> SolverConfigDict:
         """Return digital simulation settings in backend-compatible key names."""
         return {
             "max_cache_size": self.max_cache_size,
-            "sampling_method": "statevector_matrix_free" if self.matrix_free else "statevector",
+            "digital_method": self.digital_method,
             "normalize_after_each_gate": self.normalize_after_each_gate,
             "combine_single_qubit_gates": self.combine_single_qubit_gates,
             "fuse_gates": self.fuse_gates,
             "max_fused_qubits": self.max_fused_qubits,
+            "stabilizer_max_states": self.stabilizer_max_states,
         }
 
     @classmethod
@@ -422,10 +431,23 @@ class DigitalMethod(BaseSimulatorConfig):
             DigitalMethod: Configured statevector digital configuration.
         """
         return cls(
+            digital_method="statevector_matrix_free" if matrix_free else "statevector",
             max_cache_size=max_cache_size,
             normalize_after_each_gate=normalize_after_each_gate,
             combine_single_qubit_gates=combine_single_qubit_gates,
             fuse_gates=fuse_gates,
             max_fused_qubits=max_fused_qubits,
             matrix_free=matrix_free,
+        )
+
+    @classmethod
+    def stabilizer(cls, max_states: int = 100) -> DigitalMethod:
+        """Return a stabilizer-based simulation configuration.
+
+        Args:
+            max_states (int): Maximum number of stabilizer states to track. Set to zero or less for unlimited.
+        """
+        return DigitalMethod(
+            digital_method="stabilizer",
+            stabilizer_max_states=max_states,
         )

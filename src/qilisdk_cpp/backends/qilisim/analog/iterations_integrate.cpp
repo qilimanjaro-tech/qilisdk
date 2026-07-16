@@ -18,7 +18,9 @@
 
 #ifndef _WIN32
 #if defined(_OPENMP)
-#pragma omp declare reduction(complex_double_reduction:Complex : omp_out += omp_in) initializer(omp_priv = Complex(0.0, 0.0))
+// clang-format off
+#pragma omp declare reduction(complex_double_reduction : std::complex<double> : omp_out += omp_in) initializer(omp_priv = std::complex<double>(0.0, 0.0))
+// clang-format on
 #endif
 #endif
 
@@ -145,7 +147,6 @@ MatrixFreeHamiltonian construct_current_hamiltonian(double t, const std::vector<
 
     // For each Hamiltonian, compute its contribution to the current Hamiltonian
     for (size_t h = 0; h < hamiltonians.size(); ++h) {
-
         // Linearly interpolate this Hamiltonian's weight at time t.
         double weight;
         if (ind == 0) {

@@ -601,6 +601,19 @@ TEST(PauliString, StreamOutputIdentityPrintsI) {
     EXPECT_EQ(oss.str(), "I");
 }
 
+TEST(PauliString, TooManyQubits_DefaultConstructor_Throws) {
+    EXPECT_THROW({ PauliString ps(MAX_QUBITS_PAULI + 1); }, std::invalid_argument);
+}
+
+TEST(PauliString, TooManyQubits_CharConstructor_Throws) {
+    EXPECT_THROW({ PauliString ps(MAX_QUBITS_PAULI + 1, 'X', 0); }, std::invalid_argument);
+}
+
+TEST(PauliString, TooManyQubits_VectorConstructor_Throws) {
+    std::vector<MatrixFreeOperator> ops;
+    EXPECT_THROW({ PauliString ps(MAX_QUBITS_PAULI + 1, ops); }, std::invalid_argument);
+}
+
 // --- MatrixFreeHamiltonian missing methods ---
 
 TEST(MatrixFreeHamiltonian, AddWithPauliString) {

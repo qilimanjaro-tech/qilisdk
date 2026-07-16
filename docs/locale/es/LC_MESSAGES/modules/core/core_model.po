@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-05 15:18+0200\n"
+"POT-Creation-Date: 2026-07-02 18:14+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -57,12 +57,12 @@ msgid ""
 "The :class:`~qilisdk.core.model.Objective` defines the function the model"
 " aims to minimize or maximize. Example:"
 msgstr ""
-"El :class:`~qilisdk.core.model.Objective` define la función que el modelo "
-"trata de minimizar o maximizar. Ejemplo:"
+"El :class:`~qilisdk.core.model.Objective` define la función que el modelo"
+" trata de minimizar o maximizar. Ejemplo:"
 
 #: ../../modules/core/core_model.rst:47 ../../modules/core/core_model.rst:73
-#: ../../modules/core/core_model.rst:101 ../../modules/core/core_model.rst:134
-#: ../../modules/core/core_model.rst:151
+#: ../../modules/core/core_model.rst:101 ../../modules/core/core_model.rst:157
+#: ../../modules/core/core_model.rst:174
 msgid "**Output**:"
 msgstr "**Salida**:"
 
@@ -72,9 +72,9 @@ msgid ""
 "variables. Each constraint has an associated Lagrange multiplier, which "
 "determines the penalty for violating it."
 msgstr ""
-"Las restricciones de codificación se añaden automáticamente para variables "
-"continuas acotadas. Cada restricción tiene un multiplicador de Lagrange "
-"asociado que determina la penalización por violarla."
+"Las restricciones de codificación se añaden automáticamente para "
+"variables continuas acotadas. Cada restricción tiene un multiplicador de "
+"Lagrange asociado que determina la penalización por violarla."
 
 #: ../../modules/core/core_model.rst:66
 msgid "You can update the multiplier like so:"
@@ -92,11 +92,88 @@ msgstr ""
 "Se pueden añadir :class:`Restricciones<qilisdk.core.model.Constraint>` "
 "adicionales para acotar el espacio de soluciones:"
 
-#: ../../modules/core/core_model.rst:124
+#: ../../modules/core/core_model.rst:123
+msgid "Constructors"
+msgstr "Constructores"
+
+#: ../../modules/core/core_model.rst:125
+msgid ""
+"Rather than building a model from scratch, you can also construct it for "
+"certain predefined problems:"
+msgstr ""
+"En lugar de construir un modelo desde cero, también puede construirlo "
+"para ciertos problemas predefinidos:"
+
+#: ../../modules/core/core_model.rst:127
+msgid ""
+":func:`Model.random_ising(num_variables, coefficient_range, label, "
+"seed)<qilisdk.core.model.Model.random_ising>` - Constructs a random Ising"
+" model with specified parameters."
+msgstr ""
+":func:`Model.random_ising(num_variables, coefficient_range, label, "
+"seed)<qilisdk.core.model.Model.random_ising>` - Construye un modelo de "
+"Ising aleatorio con los parámetros especificados."
+
+#: ../../modules/core/core_model.rst:128
+msgid ""
+":func:`Model.knapsack(values, weights, max_weight, label, "
+"lagrange_multiplier)<qilisdk.core.model.Model.knapsack>` - Constructs a "
+"knapsack problem with given weights, values, and capacity."
+msgstr ""
+":func:`Model.knapsack(values, weights, max_weight, label, "
+"lagrange_multiplier)<qilisdk.core.model.Model.knapsack>` - Construye un "
+"problema de la mochila con los pesos, valores y capacidad dados."
+
+#: ../../modules/core/core_model.rst:129
+msgid ""
+":func:`Model.max_cut(edges, weights, "
+"label)<qilisdk.core.model.Model.max_cut>` - Constructs a max cut problem "
+"for a given graph."
+msgstr ""
+":func:`Model.max_cut(edges, weights, "
+"label)<qilisdk.core.model.Model.max_cut>` - Construye un problema de "
+"corte máximo para un grafo dado."
+
+#: ../../modules/core/core_model.rst:130
+msgid ""
+":func:`Model.graph_coloring(graph, num_colors, label, "
+"lagrange_multiplier)<qilisdk.core.model.Model.graph_coloring>` - "
+"Constructs a graph coloring problem for a given graph and number of "
+"colors."
+msgstr ""
+":func:`Model.graph_coloring(graph, num_colors, label, "
+"lagrange_multiplier)<qilisdk.core.model.Model.graph_coloring>` - "
+"Construye un problema de coloreado de grafos para un grafo y un número de"
+" colores dados."
+
+#: ../../modules/core/core_model.rst:131
+msgid ""
+":func:`Model.travelling_salesman(edges, distances, label, "
+"lagrange_multiplier)<qilisdk.core.model.Model.travelling_salesman>` - "
+"Constructs a travelling salesman problem for a given distance matrix."
+msgstr ""
+":func:`Model.travelling_salesman(edges, distances, label, "
+"lagrange_multiplier)<qilisdk.core.model.Model.travelling_salesman>` - "
+"Construye un problema del viajante de comercio para una matriz de "
+"distancias dada."
+
+#: ../../modules/core/core_model.rst:132
+msgid ""
+":func:`Model.factoring(n, label)<qilisdk.core.model.Model.factoring>` - "
+"Constructs a factoring problem for a given integer."
+msgstr ""
+":func:`Model.factoring(n, label)<qilisdk.core.model.Model.factoring>` - "
+"Construye un problema de factorización para un entero dado."
+
+#: ../../modules/core/core_model.rst:134
+msgid "For instance, to create a knapsack problem:"
+msgstr "Por ejemplo, para crear un problema de la mochila:"
+
+#: ../../modules/core/core_model.rst:147
 msgid "Evaluating a Model"
 msgstr "Evaluar un modelo"
 
-#: ../../modules/core/core_model.rst:126
+#: ../../modules/core/core_model.rst:149
 msgid ""
 "To evaluate a :class:`~qilisdk.core.model.Model`, provide values for all "
 "involved variables:"
@@ -104,7 +181,7 @@ msgstr ""
 "Para evaluar un :class:`~qilisdk.core.model.Model`, proporcione valores "
 "para todas las variables implicadas:"
 
-#: ../../modules/core/core_model.rst:140
+#: ../../modules/core/core_model.rst:163
 msgid ""
 "The evaluation returns a dictionary with values for the objective and "
 "constraints. A constraint returns `0.0` if satisfied, or its Lagrange "
@@ -114,9 +191,54 @@ msgstr ""
 "restricciones. Una restricción devuelve `0.0` si se satisface, o su "
 "multiplicador de Lagrange si se viola."
 
-#: ../../modules/core/core_model.rst:143
+#: ../../modules/core/core_model.rst:166
 msgid "For example:"
 msgstr "Por ejemplo:"
 
+#: ../../modules/core/core_model.rst:182
+msgid "Solving a Model Classically"
+msgstr "Resolver un modelo de forma clásica"
+
+#: ../../modules/core/core_model.rst:184
+msgid ""
+"To help demonstrate the limits of classical solvers, a variety of "
+"wrappers to different solvers are provided:"
+msgstr ""
+"Para ayudar a demostrar los límites de los solucionadores clásicos, se "
+"proporcionan varios envoltorios para diferentes solucionadores:"
+
+#: ../../modules/core/core_model.rst:186
+msgid ""
+":class:`~qilisdk.utils.classical_solvers.brute_force_solver.BruteForceSolver`"
+" - A brute-force solver that evaluates all possible solutions."
+msgstr ""
+":class:`~qilisdk.utils.classical_solvers.brute_force_solver.BruteForceSolver`"
+" - Un solucionador de fuerza bruta que evalúa todas las soluciones "
+"posibles."
+
+#: ../../modules/core/core_model.rst:187
+msgid ""
+":class:`~qilisdk.utils.classical_solvers.scipy_solver.ScipySolver` - A "
+"solver that uses one of SciPy's `optimize` routines to find a solution."
+msgstr ""
+":class:`~qilisdk.utils.classical_solvers.scipy_solver.ScipySolver` - Un "
+"solucionador que utiliza una de las rutinas `optimize` de SciPy para "
+"encontrar una solución."
+
+#: ../../modules/core/core_model.rst:188
+msgid ""
+":class:`~qilisdk.utils.classical_solvers.scip_solver.ScipSolver` - A "
+"wrapper to SCIP, a mixed-integer programming solver. This requires the "
+"SCIP extra (i.e. `pip install qilisdk[scip]`)."
+msgstr ""
+":class:`~qilisdk.utils.classical_solvers.scip_solver.ScipSolver` - Un "
+"envoltorio para SCIP, un solucionador de programación entera mixta. Esto "
+"requiere el extra de SCIP (es decir, `pip install qilisdk[scip]`)."
+
+#: ../../modules/core/core_model.rst:190
+msgid "These can be used as follows:"
+msgstr "Se pueden utilizar de la siguiente manera:"
+
 #~ msgid "Go to a specific subheading of a page."
 #~ msgstr "Ir a un subtítulo específico de una página."
+

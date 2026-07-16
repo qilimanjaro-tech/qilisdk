@@ -119,6 +119,29 @@ Additional :class:`Constraints<qilisdk.core.model.Constraint>` can be added to r
         x_lower_bound_constraint : 100 
         test_constraint : 10 
 
+Constructors
+^^^^^^^^^^^^^^^^^^
+
+Rather than building a model from scratch, you can also construct it for certain predefined problems:
+
+ - :func:`Model.random_ising(num_variables, coefficient_range, label, seed)<qilisdk.core.model.Model.random_ising>` - Constructs a random Ising model with specified parameters.
+ - :func:`Model.knapsack(values, weights, max_weight, label, lagrange_multiplier)<qilisdk.core.model.Model.knapsack>` - Constructs a knapsack problem with given weights, values, and capacity.
+ - :func:`Model.max_cut(edges, weights, label)<qilisdk.core.model.Model.max_cut>` - Constructs a max cut problem for a given graph.
+ - :func:`Model.graph_coloring(graph, num_colors, label, lagrange_multiplier)<qilisdk.core.model.Model.graph_coloring>` - Constructs a graph coloring problem for a given graph and number of colors.
+ - :func:`Model.travelling_salesman(edges, distances, label, lagrange_multiplier)<qilisdk.core.model.Model.travelling_salesman>` - Constructs a travelling salesman problem for a given distance matrix.
+ - :func:`Model.factoring(n, label)<qilisdk.core.model.Model.factoring>` - Constructs a factoring problem for a given integer.
+
+For instance, to create a knapsack problem:
+
+.. code-block:: python
+
+    from qilisdk.core import Model
+
+    values = [10, 15, 40]
+    weights = [1, 2, 3]
+    max_weight = 6
+    knapsack_model = Model.knapsack(values, weights, max_weight)
+    print(knapsack_model)
 
 Evaluating a Model
 ^^^^^^^^^^^^^^^^^^
@@ -154,3 +177,23 @@ For example:
 
     {'obj': 7.0, 'test_constraint': 10.0}
 
+
+Solving a Model Classically
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To help demonstrate the limits of classical solvers, a variety of wrappers to different solvers are provided:
+
+- :class:`~qilisdk.utils.classical_solvers.brute_force_solver.BruteForceSolver` - A brute-force solver that evaluates all possible solutions.
+- :class:`~qilisdk.utils.classical_solvers.scipy_solver.ScipySolver` - A solver that uses one of SciPy's `optimize` routines to find a solution.
+- :class:`~qilisdk.utils.classical_solvers.scip_solver.ScipSolver` - A wrapper to SCIP, a mixed-integer programming solver. This requires the SCIP extra (i.e. `pip install qilisdk[scip]`).
+
+These can be used as follows:
+
+.. code-block:: python
+
+    from qilisdk.core import Model
+    from qilisdk.utils.classical_solvers import BruteForceSolver
+    model = Model.random_ising(4)
+    solver = BruteForceSolver()
+    results = solver.solve(model)
+    print(results)

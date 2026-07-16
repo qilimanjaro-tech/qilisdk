@@ -75,7 +75,7 @@ def test_constructor_valid_sparse():
     """QTensor should accept a valid SciPy sparse matrix."""
     sparse_mat = csc_array([[1, 0], [0, 1]])
     qobj = QTensor(sparse_mat)
-    # Should be stored as a CSR matrix.
+    # .data always exposes the contents as CSR, regardless of the internal storage backend.
     assert qobj.data.format == "csr"
 
 
@@ -1107,3 +1107,51 @@ def test_initial_state_unknown_raises():
 
     with pytest.raises(ValueError, match="Unknown symbolic QTensor"):
         InitialState.as_qtensor(FakeState(), 2)
+
+
+# --- Storage backend selection tests ---
+
+
+def test_ket_is_stored_column_sparse():
+    k = zero(3)
+    assert k._qtensor_cpp.storage_format() == "col_sparse"
+    assert k.is_ket()
+
+
+def test_bra_is_stored_row_sparse():
+    b = bra(0, 1)
+    assert b._qtensor_cpp.storage_format() == "row_sparse"
+    assert b.is_bra()
+
+
+def test_sparse_operator_is_row_sparse():
+    op = QTensor(np.diag([1, -1, 1, -1]).astype(complex))  # 4 non-zeros out of 16
+    assert op._qtensor_cpp.storage_format() == "row_sparse"
+
+
+def test_dense_operator_is_dense():
+    op = QTensor(np.array([[1, 2], [3, 4]], dtype=complex))
+    assert op._qtensor_cpp.storage_format() == "dense"
+
+
+def test_uniform_is_dense_ket():
+    u = QTensor.uniform(3)
+    assert u._qtensor_cpp.storage_format() == "dense"
+    assert u.is_ket()
+
+
+def test_large_zero_ket_is_representable():
+    k = zero(20)
+    assert k.shape == (2**20, 1)
+    assert k._qtensor_cpp.storage_format() == "col_sparse"
+    assert np.isclose(k[0, 0], 1.0)
+
+
+def test_storage_format_roundtrips_through_operations():
+    k0 = ket(0)
+    rho = k0 @ k0.adjoint()
+    assert rho.shape == (2, 2)
+    assert rho.trace() == pytest.approx(1.0)
+    assert np.allclose(rho.dense(), np.array([[1, 0], [0, 0]], dtype=complex))
+    assert k0.adjoint().is_bra()
+    assert k0.adjoint()._qtensor_cpp.storage_format() != "col_sparse"

@@ -29,13 +29,30 @@ bool NoiseModelCpp::is_empty() const {
 
 void NoiseModelCpp::add_jump_operator(const SparseMatrix& L) {
     /*
-    Add a jump operator to the cached list.
+    Add a jump operator with a constant (already folded) rate to the cached list.
 
     Args:
-        L (SparseMatrix): The jump operator matrix to add.
+        L (SparseMatrix): The jump operator matrix to add (rate already folded as sqrt(rate)*L).
     */
     has_something = true;
     cached_jump_operators.push_back(L);
+    // Empty series signals "constant rate already folded in; do not re-scale per step".
+    cached_jump_rate_series.emplace_back();
+}
+
+void NoiseModelCpp::add_jump_operator(const SparseMatrix& base, const std::vector<double>& sqrt_rate_series) {
+    /*
+    Add a jump operator with a time-dependent rate to the cached list.
+
+    Args:
+        base (SparseMatrix): The base jump operator matrix (without any rate folded in).
+        sqrt_rate_series (std::vector<double>): The per-step sqrt(rate(t)) multiplier, one entry per
+            time step. The base operator must be scaled by this multiplier at the corresponding step.
+    */
+    has_something = true;
+    has_time_dependent_jumps = true;
+    cached_jump_operators.push_back(base);
+    cached_jump_rate_series.push_back(sqrt_rate_series);
 }
 
 void NoiseModelCpp::add_kraus_operators_global(const std::vector<SparseMatrix>& Ks) {
@@ -96,6 +113,27 @@ const std::vector<SparseMatrix>& NoiseModelCpp::get_jump_operators() const {
     return cached_jump_operators;
 }
 
+const std::vector<std::vector<double>>& NoiseModelCpp::get_jump_rate_series() const {
+    /*
+    Get the per-step sqrt(rate(t)) multiplier series for each jump operator.
+
+    Returns:
+        const std::vector<std::vector<double>>&: Series aligned by index with the jump operators;
+            an empty inner vector means the operator's constant rate is already folded in.
+    */
+    return cached_jump_rate_series;
+}
+
+bool NoiseModelCpp::has_time_dependent_rates() const {
+    /*
+    Check whether any jump operator has a time-dependent rate.
+
+    Returns:
+        bool: True if at least one jump operator carries a per-step rate series.
+    */
+    return has_time_dependent_jumps;
+}
+
 const std::vector<std::vector<SparseMatrix>>& NoiseModelCpp::get_kraus_operators_global() const {
     /*
     Get the cached global Kraus operators.
@@ -136,12 +174,31 @@ const std::map<std::pair<std::string, int>, std::vector<std::vector<SparseMatrix
     return cached_kraus_operators_per_gate_qubit;
 }
 
-std::vector<std::vector<SparseMatrix>> NoiseModelCpp::get_relevant_kraus_operators(const std::string& gate_name, const std::vector<int>& target_qubits, int nqubits) const {
+std::string NoiseModelCpp::make_gate_key(const std::string& base_name, int num_controls) {
+    /*
+    Build the per-gate noise key from a base gate name and its number of control qubits.
+
+    Args:
+        base_name (std::string): The base (internal) gate name, e.g. "Z".
+        num_controls (int): The number of control qubits.
+
+    Returns:
+        std::string: The key, e.g. "Z" for a plain gate or "Z_c1" for a controlled gate.
+    */
+    if (num_controls <= 0) {
+        return base_name;
+    }
+    return base_name + "_c" + std::to_string(num_controls);
+}
+
+std::vector<std::vector<SparseMatrix>> NoiseModelCpp::get_relevant_kraus_operators(const std::string& gate_name, int num_controls, const std::vector<int>& target_qubits, int nqubits) const {
     /*
     Get all relevant Kraus operators for a given gate and its target qubits.
 
     Args:
-        gate_name (std::string): The name of the gate.
+        gate_name (std::string): The base name of the gate.
+        num_controls (int): The number of control qubits on the gate, used to distinguish
+            a controlled gate (e.g. CZ) from its base gate (e.g. Z).
         target_qubits (std::vector<int>): The list of target qubit indices.
 
     Returns:
@@ -149,6 +206,8 @@ std::vector<std::vector<SparseMatrix>> NoiseModelCpp::get_relevant_kraus_operato
     */
     std::vector<std::vector<SparseMatrix>> relevant_operators;
     relevant_operators.clear();
+
+    const std::string gate_key = make_gate_key(gate_name, num_controls);
 
     // Add global Kraus operators
     if (!cached_kraus_operators_global.empty()) {
@@ -158,8 +217,8 @@ std::vector<std::vector<SparseMatrix>> NoiseModelCpp::get_relevant_kraus_operato
     }
 
     // Add per-gate Kraus operators
-    if (cached_kraus_operators_per_gate.find(gate_name) != cached_kraus_operators_per_gate.end()) {
-        for (const auto& operator_set : cached_kraus_operators_per_gate.at(gate_name)) {
+    if (cached_kraus_operators_per_gate.find(gate_key) != cached_kraus_operators_per_gate.end()) {
+        for (const auto& operator_set : cached_kraus_operators_per_gate.at(gate_key)) {
             relevant_operators.push_back(operator_set);
         }
     }
@@ -175,7 +234,7 @@ std::vector<std::vector<SparseMatrix>> NoiseModelCpp::get_relevant_kraus_operato
 
     // Add per-gate-per-qubit Kraus operators
     for (int qubit : target_qubits) {
-        auto key = std::make_pair(gate_name, qubit);
+        auto key = std::make_pair(gate_key, qubit);
         if (cached_kraus_operators_per_gate_qubit.find(key) != cached_kraus_operators_per_gate_qubit.end()) {
             for (const auto& operator_set : cached_kraus_operators_per_gate_qubit.at(key)) {
                 relevant_operators.push_back(operator_set);

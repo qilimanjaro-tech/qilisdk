@@ -228,6 +228,13 @@ class ReservoirLayer(Parameterizable):
             yield self._output_encoding
 
     def set_parameters(self, parameters: dict[str, RealNumber]) -> None:
+        known_labels = set(self.get_parameter_names())
+        unknown_labels = [p for p in parameters if p not in known_labels]
+        if unknown_labels:
+            raise ValueError(
+                f"Cannot set unknown parameter(s) {sorted(unknown_labels)} on this reservoir layer. "
+                f"Valid parameter names are {sorted(known_labels)}."
+            )
         if self._input_encoding:
             param_labels = self._input_encoding.get_parameter_names()
             self._input_encoding.set_parameters({p: v for p, v in parameters.items() if p in param_labels})
