@@ -893,4 +893,27 @@ TEST_F(SamplingTest, MidCircuitMeasurements) {
     EXPECT_EQ(intermediate_results.size(), 1u);
 }
 
+// The stabilizer simulator ignores noise models, warning the user. The circuit still runs.
+TEST_F(SamplingTest, Stabilizer_NoiseModel_IgnoredWithWarning) {
+    int n = 1;
+    std::vector<Gate> gates = {makeX(0)};
+    StabilizerStateSum initial(n);
+    StabilizerStateSum final_state(n);
+    NoiseModelCpp nm = symmetricReadoutNoise(n, 0.1);  // non-empty -> triggers the warning
+    EXPECT_NO_THROW(sampling_stabilizer(gates, n, initial, nm, final_state, cfg, readout));
+    EXPECT_EQ(final_state.sample(1).begin()->first, "1");  // X|0> = |1>
+}
+
+// The stabilizer simulator ignores Monte Carlo sampling, warning the user. The circuit still runs.
+TEST_F(SamplingTest, Stabilizer_MonteCarlo_IgnoredWithWarning) {
+    int n = 1;
+    std::vector<Gate> gates = {makeX(0)};
+    StabilizerStateSum initial(n);
+    StabilizerStateSum final_state(n);
+    QiliSimConfig cfgMC = cfg;
+    cfgMC.set_monte_carlo(true);  // triggers the warning
+    EXPECT_NO_THROW(sampling_stabilizer(gates, n, initial, noNoise, final_state, cfgMC, readout));
+    EXPECT_EQ(final_state.sample(1).begin()->first, "1");  // X|0> = |1>
+}
+
 // GCOV_EXCL_BR_STOP

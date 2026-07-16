@@ -24,7 +24,9 @@
 
 #ifndef _WIN32
 #if defined(_OPENMP)
-#pragma omp declare reduction(complex_double_reduction:Complex : omp_out += omp_in) initializer(omp_priv = Complex(0.0, 0.0))
+// clang-format off
+#pragma omp declare reduction(complex_double_reduction : std::complex<double> : omp_out += omp_in) initializer(omp_priv = std::complex<double>(0.0, 0.0))
+// clang-format on
 #endif
 #endif
 

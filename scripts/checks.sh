@@ -10,8 +10,14 @@
 # Stop if any command fails
 set -euo pipefail
 
+# Make sure we're in the project root directory
+cd "$(dirname "$(dirname "$(realpath "$0")")")"
+
+# Make sure we're in the venv
+source .venv/bin/activate
+
 # Keep a log file in same directory as this script
-LOG_FILE=$(dirname "$0")/checks.log
+LOG_FILE="scripts/checks.log"
 > $LOG_FILE
 
 # Run the linting and formatting checks
@@ -37,5 +43,9 @@ bash scripts/missing_translations.sh 2>&1 | tee -a $LOG_FILE
 # Check copyrights
 echo "Running copyright header checks..." | tee -a $LOG_FILE
 bash scripts/copyrights.sh 2>&1 | tee -a $LOG_FILE
+
+# Check for changelog entry
+echo "Running changelog check..." | tee -a $LOG_FILE
+bash scripts/has_changelog.sh 2>&1 | tee -a $LOG_FILE
 
 echo "All checks passed successfully!" | tee -a $LOG_FILE
