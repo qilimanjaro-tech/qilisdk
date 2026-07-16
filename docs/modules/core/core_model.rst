@@ -177,3 +177,23 @@ For example:
 
     {'obj': 7.0, 'test_constraint': 10.0}
 
+
+Solving a Model Classically
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To help demonstrate the limits of classical solvers, a variety of wrappers to different solvers are provided:
+
+- :class:`~qilisdk.utils.classical_solvers.brute_force_solver.BruteForceSolver` - A brute-force solver that evaluates all possible solutions.
+- :class:`~qilisdk.utils.classical_solvers.scipy_solver.ScipySolver` - A solver that uses one of SciPy's `optimize` routines to find a solution.
+- :class:`~qilisdk.utils.classical_solvers.scip_solver.ScipSolver` - A wrapper to SCIP, a mixed-integer programming solver. This requires the SCIP extra (i.e. `pip install qilisdk[scip]`).
+
+These can be used as follows:
+
+.. code-block:: python
+
+    from qilisdk.core import Model
+    from qilisdk.utils.classical_solvers import BruteForceSolver
+    model = Model.random_ising(4)
+    solver = BruteForceSolver()
+    results = solver.solve(model)
+    print(results)
