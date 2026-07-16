@@ -25,20 +25,38 @@ TEST(NoiseModel, GetRelevantKrausOperators) {
     model.add_kraus_operators_per_gate("H", {SparseMatrix(2, 2)});
     model.add_kraus_operators_per_gate_qubit("H", 0, {SparseMatrix(2, 2)});
 
-    // Test retrieval for a gate with all types of Kraus operators
-    auto result = model.get_relevant_kraus_operators("H", {0, 1}, 2);
+    // Test retrieval for a gate with all types of Kraus operators (0 controls)
+    auto result = model.get_relevant_kraus_operators("H", 0, {0, 1}, 2);
     // We expect to get 1 (global) + 1 (qubit 0) + 1 (qubit 1) + 1 (gate "H") + 1 (gate "H" on qubit 0) = 5 Kraus operators
     EXPECT_EQ(result.size(), 5);
 
     // Test retrieval for a gate with only global and per-qubit operators
-    result = model.get_relevant_kraus_operators("X", {0, 1}, 2);
+    result = model.get_relevant_kraus_operators("X", 0, {0, 1}, 2);
     // We expect to get 1 (global) + 1 (qubit 0) + 1 (qubit 1) = 3 Kraus operators
     EXPECT_EQ(result.size(), 3);
 
     // Test retrieval for a gate with only global operators
-    result = model.get_relevant_kraus_operators("Y", {2}, 3);
+    result = model.get_relevant_kraus_operators("Y", 0, {2}, 3);
     // We expect to get 1 (global) = 1 Kraus operator
     EXPECT_EQ(result.size(), 1);
+}
+
+TEST(NoiseModel, PerGateNoiseDistinguishesControlCount) {
+    // A controlled gate (e.g. CZ, base "Z" with 1 control) must not share per-gate noise
+    // with its base gate (plain "Z", 0 controls).
+    NoiseModelCpp model;
+    model.add_kraus_operators_per_gate(NoiseModelCpp::make_gate_key("Z", 1), {SparseMatrix(2, 2)});
+    model.add_kraus_operators_per_gate_qubit(NoiseModelCpp::make_gate_key("Z", 1), 0, {SparseMatrix(2, 2)});
+
+    // The controlled gate (1 control) sees its per-gate and per-gate-per-qubit noise.
+    EXPECT_EQ(model.get_relevant_kraus_operators("Z", 1, {0}, 1).size(), 2u);
+    // The plain gate (0 controls) sees none of it.
+    EXPECT_EQ(model.get_relevant_kraus_operators("Z", 0, {0}, 1).size(), 0u);
+
+    // Keys are distinct and control-count-aware.
+    EXPECT_EQ(NoiseModelCpp::make_gate_key("Z", 0), "Z");
+    EXPECT_EQ(NoiseModelCpp::make_gate_key("Z", 1), "Z_c1");
+    EXPECT_EQ(NoiseModelCpp::make_gate_key("X", 2), "X_c2");
 }
 
 // GCOV_EXCL_BR_STOP

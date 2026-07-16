@@ -542,6 +542,7 @@ TEST(ParseNoiseModel, PerGateStaticKraus) {
 
         class FakeNoiseConfig:
             default_gate_time = 1.0
+            def get_gate_time(self, gate_type): return self.default_gate_time
 
         class FakeNoiseModel:
             noise_config = FakeNoiseConfig()
@@ -583,6 +584,7 @@ TEST(ParseNoiseModel, PerGateTimeDerivedKraus) {
 
         class FakeNoiseConfig:
             default_gate_time = 0.25
+            def get_gate_time(self, gate_type): return self.default_gate_time
 
         class FakeNoiseModel:
             noise_config = FakeNoiseConfig()
@@ -623,6 +625,7 @@ TEST(ParseNoiseModel, PerGatePerQubitStaticKraus) {
 
         class FakeNoiseConfig:
             default_gate_time = 1.0
+            def get_gate_time(self, gate_type): return self.default_gate_time
 
         class FakeNoiseModel:
             noise_config = FakeNoiseConfig()
@@ -638,7 +641,7 @@ TEST(ParseNoiseModel, PerGatePerQubitStaticKraus) {
     auto result = parse_noise_model(fake_nm, 2, 1e-10);
 
     const auto& map = result.get_kraus_operators_per_gate_qubit();
-    auto key = std::make_pair(std::string("CNOT"), 0);
+    auto key = std::make_pair(NoiseModelCpp::make_gate_key("X", 1), 0);
     ASSERT_TRUE(map.count(key));
     EXPECT_EQ(map.at(key).size(), 1u);
 }
@@ -665,6 +668,7 @@ TEST(ParseNoiseModel, PerGatePerQubitTimeDerivedKraus) {
 
         class FakeNoiseConfig:
             default_gate_time = 1.0
+            def get_gate_time(self, gate_type): return self.default_gate_time
 
         class FakeNoiseModel:
             noise_config = FakeNoiseConfig()
@@ -680,7 +684,114 @@ TEST(ParseNoiseModel, PerGatePerQubitTimeDerivedKraus) {
     auto result = parse_noise_model(fake_nm, 2, 1e-10);
 
     const auto& map = result.get_kraus_operators_per_gate_qubit();
-    auto key = std::make_pair(std::string("CZ"), 1);
+    auto key = std::make_pair(NoiseModelCpp::make_gate_key("Z", 1), 1);
+    ASSERT_TRUE(map.count(key));
+    EXPECT_EQ(map.at(key).size(), 1u);
+}
+
+TEST(ParseNoiseModel, GlobalTimeDerivedKrausExpandsPerGateWithCircuit) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        import scipy.sparse as sp, numpy as np
+        from qilisdk.noise.protocols import SupportsTimeDerivedKraus as _STDK
+
+        class FakeKrausOp:
+            def __init__(self, data): self.data = data
+
+        class FakeKrausChannel:
+            def __init__(self, ops): self.operators = ops
+
+        class TimeDerivedKrausPass(_STDK):
+            def as_kraus_from_duration(self, duration):
+                data = sp.csr_matrix(np.eye(2, dtype=complex))
+                return FakeKrausChannel([FakeKrausOp(data)])
+
+        class FakeNoiseConfig:
+            default_gate_time = 1.0
+            def get_gate_time(self, gate_type):
+                return 5e-6
+
+        class FakeNoiseModel:
+            noise_config = FakeNoiseConfig()
+            global_noise = [TimeDerivedKrausPass()]
+            per_qubit_noise = {}
+            per_gate_noise = {}
+            per_gate_per_qubit_noise = {}
+
+        class FakeCircuitGate:
+            def __init__(self, name, control_qubits=()):
+                self.name = name
+                self.control_qubits = list(control_qubits)
+
+        class FakeCircuit:
+            # A plain X, an I, and a CNOT (base 'X' with 1 control). The CNOT must be kept
+            # distinct from the plain X gate.
+            gates = [FakeCircuitGate('X'), FakeCircuitGate('I'), FakeCircuitGate('CNOT', control_qubits=[0])]
+
+        fake_nm_global_td_kraus_circuit = FakeNoiseModel()
+        fake_circuit_global = FakeCircuit()
+    )");
+
+    py::object fake_nm = py::globals()["fake_nm_global_td_kraus_circuit"];
+    py::object circuit = py::globals()["fake_circuit_global"];
+    auto result = parse_noise_model(fake_nm, 1, 1e-10, circuit);
+    EXPECT_TRUE(result.get_kraus_operators_global().empty());
+    const auto& per_gate_map = result.get_kraus_operators_per_gate();
+    EXPECT_EQ(per_gate_map.size(), 3u);  // 'X', 'I', and 'X#c1' (the CNOT) kept distinct
+    ASSERT_TRUE(per_gate_map.count("X"));
+    ASSERT_TRUE(per_gate_map.count("I"));
+    ASSERT_TRUE(per_gate_map.count(NoiseModelCpp::make_gate_key("X", 1)));
+    EXPECT_EQ(per_gate_map.at("X").size(), 1u);
+    EXPECT_EQ(per_gate_map.at("I").size(), 1u);
+}
+
+TEST(ParseNoiseModel, PerQubitTimeDerivedKrausExpandsPerGateQubitWithCircuit) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        import scipy.sparse as sp, numpy as np
+        from qilisdk.noise.protocols import SupportsTimeDerivedKraus as _STDK
+
+        class FakeKrausOp:
+            def __init__(self, data): self.data = data
+
+        class FakeKrausChannel:
+            def __init__(self, ops): self.operators = ops
+
+        class TimeDerivedKrausPass(_STDK):
+            def as_kraus_from_duration(self, duration):
+                data = sp.csr_matrix(np.eye(2, dtype=complex))
+                return FakeKrausChannel([FakeKrausOp(data)])
+
+        class FakeNoiseConfig:
+            default_gate_time = 1.0
+            def get_gate_time(self, gate_type):
+                return 5e-6
+
+        class FakeNoiseModel:
+            noise_config = FakeNoiseConfig()
+            global_noise = []
+            per_qubit_noise = {0: [TimeDerivedKrausPass()]}
+            per_gate_noise = {}
+            per_gate_per_qubit_noise = {}
+
+        class FakeCircuitGate:
+            def __init__(self, name, control_qubits=()):
+                self.name = name
+                self.control_qubits = list(control_qubits)
+
+        class FakeCircuit:
+            gates = [FakeCircuitGate('I')]
+
+        fake_nm_per_qubit_td_kraus_circuit = FakeNoiseModel()
+        fake_circuit_per_qubit = FakeCircuit()
+    )");
+
+    py::object fake_nm = py::globals()["fake_nm_per_qubit_td_kraus_circuit"];
+    py::object circuit = py::globals()["fake_circuit_per_qubit"];
+    auto result = parse_noise_model(fake_nm, 1, 1e-10, circuit);
+    EXPECT_TRUE(result.get_kraus_operators_per_qubit().empty());
+    const auto& map = result.get_kraus_operators_per_gate_qubit();
+    auto key = std::make_pair(std::string("I"), 0);
     ASSERT_TRUE(map.count(key));
     EXPECT_EQ(map.at(key).size(), 1u);
 }
@@ -1519,7 +1630,7 @@ TEST(ParseSolverParams, AllFieldsParsedCorrectly) {
     params["arnoldi_dim"] = py::int_(20);
     params["num_arnoldi_substeps"] = py::int_(4);
     params["evolution_method"] = py::str("arnoldi");
-    params["sampling_method"] = py::str("statevector");
+    params["digital_method"] = py::str("statevector");
     params["monte_carlo"] = py::bool_(true);
     params["adaptive_tol"] = py::float_(1e-2);
     params["num_monte_carlo_trajectories"] = py::int_(500);
@@ -1537,7 +1648,7 @@ TEST(ParseSolverParams, AllFieldsParsedCorrectly) {
     EXPECT_EQ(config.get_arnoldi_dim(), 20);
     EXPECT_EQ(config.get_num_arnoldi_substeps(), 4);
     EXPECT_EQ(config.get_time_evolution_method(), "arnoldi");
-    EXPECT_EQ(config.get_sampling_method(), "statevector");
+    EXPECT_EQ(config.get_digital_method(), "statevector");
     EXPECT_TRUE(config.get_monte_carlo());
     EXPECT_EQ(config.get_num_monte_carlo_trajectories(), 500);
     EXPECT_EQ(config.get_num_threads(), 4);
@@ -1680,6 +1791,175 @@ TEST(ParseSolverParams, OrderShotsWarmupsAreApplied) {
     EXPECT_EQ(config.get_order(), 3);
     EXPECT_EQ(config.get_shots(), 200);
     EXPECT_EQ(config.get_warmups(), 50);
+}
+
+TEST(ParseSolverParams, StabilizerMaxStatesApplied) {
+    py::gil_scoped_acquire gil;
+    py::dict params;
+    params["stabilizer_max_states"] = py::int_(16);
+    QiliSimConfig config;
+    EXPECT_NO_THROW(config = parse_solver_params(params));
+    EXPECT_EQ(config.get_stabilizer_max_states(), 16);
+}
+
+TEST(ParseInitialStateStabilizer, NoneReturnsZeroState) {
+    py::gil_scoped_acquire gil;
+    auto state = parse_initial_state_stabilizer(py::none(), 2);
+    EXPECT_EQ(state.get_nqubits(), 2);
+    EXPECT_EQ(state.get_states().size(), 1u);
+}
+
+TEST(ParseInitialStateStabilizer, UniformAppliesHadamards) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.core.qtensor import InitialState
+        _stab_is_uniform = InitialState.UNIFORM
+    )");
+    py::object is_obj = py::globals()["_stab_is_uniform"];
+    auto state = parse_initial_state_stabilizer(is_obj, 2);
+    EXPECT_EQ(state.get_nqubits(), 2);
+    // After H on every qubit each qubit is in a superposition (random Z outcome).
+    EXPECT_NE(state.get_states()[0].find_x_pivot(0), -1);
+    EXPECT_NE(state.get_states()[0].find_x_pivot(1), -1);
+}
+
+TEST(ParseInitialStateStabilizer, OneAppliesXGates) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.core.qtensor import InitialState
+        _stab_is_one = InitialState.ONE
+    )");
+    py::object is_obj = py::globals()["_stab_is_one"];
+    auto state = parse_initial_state_stabilizer(is_obj, 2);
+    EXPECT_EQ(state.get_nqubits(), 2);
+    // |11>: every qubit has Z eigenvalue -1.
+    EXPECT_TRUE(state.get_states()[0].z_eigenvalue(0));
+    EXPECT_TRUE(state.get_states()[0].z_eigenvalue(1));
+}
+
+TEST(ParseInitialStateStabilizer, OtherNamedStateFallsBackToZero) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.core.qtensor import InitialState
+        _stab_is_zero = InitialState.ZERO
+    )");
+    py::object is_obj = py::globals()["_stab_is_zero"];
+    auto state = parse_initial_state_stabilizer(is_obj, 3);
+    EXPECT_EQ(state.get_nqubits(), 3);
+    // The unhandled named state falls back to the |00...0> stabilizer state.
+    EXPECT_FALSE(state.get_states()[0].z_eigenvalue(0));
+    EXPECT_FALSE(state.get_states()[0].z_eigenvalue(2));
+}
+
+TEST(ParseInitialStateStabilizer, UnrecognizedTypeThrows) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        _stab_is_bad = 123
+    )");
+    py::object obj = py::globals()["_stab_is_bad"];
+    EXPECT_THROW(parse_initial_state_stabilizer(obj, 1), py::value_error);
+}
+
+TEST(ConstructResultsStabilizer, SamplingReadout_Succeeds) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.readout import SamplingReadout
+        _stab_ro_samp = [SamplingReadout(nshots=10)]
+    )");
+    StabilizerStateSum state(1);
+    py::list readout = py::globals()["_stab_ro_samp"].cast<py::list>();
+    NoiseModelCpp noise_model_cpp;
+    QiliSimConfig config;
+    std::vector<bool> qubits_to_measure = {true};
+    EXPECT_NO_THROW({ auto result = construct_result_object(state, readout, noise_model_cpp, 1, config, qubits_to_measure); });
+}
+
+TEST(ConstructResultsStabilizer, ExpectationReadout_Succeeds) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.readout import ExpectationReadout
+        from qilisdk.analog.hamiltonian import X
+        _stab_ro_exp = [ExpectationReadout(observables=[X(0)])]
+    )");
+    // |0> has <X(0)> = 0; this exercises the stabilizer ExpectationReadout branch.
+    StabilizerStateSum state(1);
+    py::list readout = py::globals()["_stab_ro_exp"].cast<py::list>();
+    NoiseModelCpp noise_model_cpp;
+    QiliSimConfig config;
+    std::vector<bool> qubits_to_measure = {true};
+    EXPECT_NO_THROW({ auto result = construct_result_object(state, readout, noise_model_cpp, 1, config, qubits_to_measure); });
+}
+
+TEST(ConstructResultsStabilizer, StateTomographyReadoutExact_Succeeds) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.readout import StateTomographyReadout
+        _stab_ro_tomo = [StateTomographyReadout()]
+    )");
+    StabilizerStateSum state(1);
+    py::list readout = py::globals()["_stab_ro_tomo"].cast<py::list>();
+    NoiseModelCpp noise_model_cpp;
+    QiliSimConfig config;
+    std::vector<bool> qubits_to_measure = {true};
+    EXPECT_NO_THROW({ auto result = construct_result_object(state, readout, noise_model_cpp, 1, config, qubits_to_measure); });
+}
+
+TEST(ConstructResultsStabilizer, StateTomographyReadoutNonExact_Throws) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.readout import StateTomographyReadout
+        _stab_ro_tomo_bad = [StateTomographyReadout(method="mle")]
+    )");
+    StabilizerStateSum state(1);
+    py::list readout = py::globals()["_stab_ro_tomo_bad"].cast<py::list>();
+    NoiseModelCpp noise_model_cpp;
+    QiliSimConfig config;
+    std::vector<bool> qubits_to_measure = {true};
+    EXPECT_THROW({ auto result = construct_result_object(state, readout, noise_model_cpp, 1, config, qubits_to_measure); }, py::value_error);
+}
+
+TEST(ConstructResultsStabilizer, UnsupportedReadoutThrows) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.readout import ReadoutMethod
+        _stab_ro_bad = [ReadoutMethod()]
+    )");
+    StabilizerStateSum state(1);
+    py::list readout = py::globals()["_stab_ro_bad"].cast<py::list>();
+    NoiseModelCpp noise_model_cpp;
+    QiliSimConfig config;
+    std::vector<bool> qubits_to_measure = {true};
+    EXPECT_THROW({ auto result = construct_result_object(state, readout, noise_model_cpp, 1, config, qubits_to_measure); }, py::value_error);
+}
+
+TEST(GateNameParser, GatesControlCounts) {
+    EXPECT_EQ(gate_num_controls("H"), 0);
+    EXPECT_EQ(gate_num_controls("X"), 0);
+    EXPECT_EQ(gate_num_controls("Y"), 0);
+    EXPECT_EQ(gate_num_controls("Z"), 0);
+    EXPECT_EQ(gate_num_controls("CNOT"), 1);
+    EXPECT_EQ(gate_num_controls("CX"), 1);
+    EXPECT_EQ(gate_num_controls("CY"), 1);
+    EXPECT_EQ(gate_num_controls("CZ"), 1);
+    EXPECT_EQ(gate_num_controls("CCX"), 2);
+    EXPECT_EQ(gate_num_controls("CCY"), 2);
+    EXPECT_EQ(gate_num_controls("CCZ"), 2);
+    EXPECT_EQ(gate_num_controls("Toffoli"), 2);
+}
+
+TEST(GateNameParser, GateNamesNormalized) {
+    EXPECT_EQ(normalize_gate_name("H"), "H");
+    EXPECT_EQ(normalize_gate_name("X"), "X");
+    EXPECT_EQ(normalize_gate_name("Y"), "Y");
+    EXPECT_EQ(normalize_gate_name("Z"), "Z");
+    EXPECT_EQ(normalize_gate_name("CNOT"), "X");
+    EXPECT_EQ(normalize_gate_name("CX"), "X");
+    EXPECT_EQ(normalize_gate_name("CY"), "Y");
+    EXPECT_EQ(normalize_gate_name("CZ"), "Z");
+    EXPECT_EQ(normalize_gate_name("CCX"), "X");
+    EXPECT_EQ(normalize_gate_name("CCY"), "Y");
+    EXPECT_EQ(normalize_gate_name("CCZ"), "Z");
+    EXPECT_EQ(normalize_gate_name("Toffoli"), "X");
 }
 
 // GCOV_EXCL_BR_STOP
