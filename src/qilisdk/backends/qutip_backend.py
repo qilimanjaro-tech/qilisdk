@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING, Callable, Type, TypeVar, cast
 import numpy as np
 import qutip_qip.operations as QutipGates
 from loguru import logger
-from qutip import Qobj, mesolve, qeye
+from qutip import Qobj, mesolve, qeye, tensor
 from qutip_qip.circuit import CircuitSimulator, QubitCircuit
 from qutip_qip.operations.gateclass import SingleQubitGate, is_qutip5
 
@@ -147,7 +147,7 @@ class QutipBackend(Backend):
 
         # Convert to the qutip format
         init_state = Qobj(init_state_qtensor.dense(), dims=[[2 for _ in range(init_state_qtensor.nqubits)], [1]])
-        
+
         # Warn if noise model is provided, since we don't support digital noise here for now
         if self.noise_model is not None:
             logger.warning(

@@ -1022,6 +1022,8 @@ def test_cuda_digital_propagation_initial_state_qtensor(monkeypatch):
     results = backend.execute(digital, readout)
     assert isinstance(results, FunctionalResult)
     assert dummy_loogger.called
+
+
 def test_cuda_backend_rejects_time_dependent_lindblad_rate(monkeypatch):
     monkeypatch.setattr("qilisdk.backends.cuda_backend.cudaq.set_target", lambda target, option=None: None)
     monkeypatch.setattr("qilisdk.backends.cuda_backend.evolve", MagicMock())

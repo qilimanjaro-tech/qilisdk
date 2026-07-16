@@ -472,6 +472,8 @@ def test_qutip_digital_propagation_initial_state_qtensor():
     results = backend.execute(digital, readout)
     assert isinstance(results, FunctionalResult)
     assert "1" in results.get_samples()
+
+
 def test_to_qutip_observable_pauli_operator():
     """A single-qubit PauliOperator must be embedded with identities on a multi-qubit system."""
     obs = QutipBackend._to_qubip_observables(PauliZ(1), nqubits=2)

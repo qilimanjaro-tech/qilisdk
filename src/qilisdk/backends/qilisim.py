@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING
 from loguru import logger
 from qilisim_module import QiliSimCpp  # ty:ignore[unresolved-import]
 
-from qilisdk.core.qtensor import InitialState
+from qilisdk.core.qtensor import InitialState, QTensor
 from qilisdk.settings import get_settings
 
 from .backend import Backend

@@ -576,10 +576,12 @@ def test_circuit_initial_state(backend):
     samples = result.get_samples()
     assert "0" in samples
     assert samples["0"] == 100
-    
+
+
 # ---------------------------------------------------------------------------
 # Time-dependent Lindblad noise (analog evolution)
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.parametrize("backend_class", time_dependent_noise_backend_classes)
 def test_time_dependent_amplitude_damping_matches_analytic(backend_class):
