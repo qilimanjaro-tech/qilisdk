@@ -24,11 +24,11 @@ from qilisdk.analog.hamiltonian import X as pauli_x
 from qilisdk.analog.hamiltonian import Z as pauli_z
 from qilisdk.backends.backend_config import AnalogMethod, DigitalMethod, ExecutionConfig, MonteCarloConfig
 from qilisdk.backends.qilisim import QiliSim
-from qilisdk.core import ket
+from qilisdk.core import QTensor, ket
 from qilisdk.digital import Circuit, H, X
 from qilisdk.functionals import AnalogEvolution, DigitalPropagation, QuantumReservoir, ReservoirLayer
 from qilisdk.functionals.functional_result import FunctionalResult
-from qilisdk.noise import Dephasing, NoiseModel
+from qilisdk.noise import Dephasing, LindbladGenerator, NoiseModel
 from qilisdk.readout import Readout
 from qilisdk.readout.readout_result import ReadoutCompositeResults, StateTomographyReadoutResult
 
@@ -188,6 +188,81 @@ def test_qilisim_dephasing_strength_changes_dynamics():
     weak_exp = float(np.real(weak_result.get_expectation_values()[0]))
     strong_exp = float(np.real(strong_result.get_expectation_values()[0]))
     assert strong_exp < weak_exp
+
+
+def test_qilisim_time_dependent_lindblad_rate_matches_analytic():
+    # H = Z commutes with the observable <Z>, so <Z> is driven purely by the bit-flip (X) jump
+    # operator. With a constant rate g, <Z>(T) = exp(-2 g T); with a ramp g(t) = c*t,
+    # <Z>(T) = exp(-2 * integral_0^T c*t dt) = exp(-c T^2). This checks rate(t) is evaluated per step.
+    T, steps, c = 1.0, 400, 1.3
+    x_op = QTensor(np.array([[0.0, 1.0], [1.0, 0.0]], dtype=complex))
+    # Interpolating Z -> Z keeps H = Z constant for all t.
+    schedule = Schedule.linear(pauli_z(0), pauli_z(0), T, T / steps)
+    functional = AnalogEvolution(schedule=schedule, initial_state=ket(0))
+    readout = Readout().with_expectation(observables=[pauli_z(0)])
+
+    # A constant rate expressed as a (trivial) callable must match the plain-float behaviour.
+    const_value = 0.7
+    const_float = NoiseModel()
+    const_float.add(LindbladGenerator(jump_operators=[x_op], rates=[const_value]))
+    const_lambda = NoiseModel()
+    const_lambda.add(LindbladGenerator(jump_operators=[x_op], rates=[lambda t: const_value]))
+    method = AnalogMethod.integrator()  # default matrix-free RK4
+    float_exp = float(
+        np.real(
+            QiliSim(noise_model=const_float, analog_simulation_method=method)
+            .execute(functional, readout)
+            .get_expectation_values()[0]
+        )
+    )
+    lambda_exp = float(
+        np.real(
+            QiliSim(noise_model=const_lambda, analog_simulation_method=method)
+            .execute(functional, readout)
+            .get_expectation_values()[0]
+        )
+    )
+    assert np.isclose(float_exp, lambda_exp, atol=1e-9)
+    assert np.isclose(float_exp, np.exp(-2 * const_value * T), atol=1e-3)
+
+    # A genuinely time-dependent ramp rate matches its analytic integral.
+    ramp = NoiseModel()
+    ramp.add(LindbladGenerator(jump_operators=[x_op], rates=[lambda t: c * t]))
+    ramp_exp = float(
+        np.real(
+            QiliSim(noise_model=ramp, analog_simulation_method=method)
+            .execute(functional, readout)
+            .get_expectation_values()[0]
+        )
+    )
+    assert np.isclose(ramp_exp, np.exp(-c * T**2), atol=2e-3)
+
+
+def test_qilisim_time_dependent_lindblad_rate_errors():
+    x_op = QTensor(np.array([[0.0, 1.0], [1.0, 0.0]], dtype=complex))
+    schedule = Schedule.linear(pauli_z(0), pauli_z(0), 1.0, 0.01)
+    functional = AnalogEvolution(schedule=schedule, initial_state=ket(0))
+    readout = Readout().with_expectation(observables=[pauli_z(0)])
+
+    # The adaptive matrix-free method cannot apply a per-step rate series.
+    adaptive = NoiseModel()
+    adaptive.add(LindbladGenerator(jump_operators=[x_op], rates=[lambda t: 0.1 * t]))
+    backend = QiliSim(noise_model=adaptive, analog_simulation_method=AnalogMethod.adaptive_integrator())
+    with pytest.raises(ValueError, match=r"adaptive"):
+        backend.execute(functional, readout)
+
+    # Negative and non-finite rates are rejected.
+    negative = NoiseModel()
+    negative.add(LindbladGenerator(jump_operators=[x_op], rates=[lambda t: -1.0]))
+    backend = QiliSim(noise_model=negative)
+    with pytest.raises(ValueError, match=r"negative"):
+        backend.execute(functional, readout)
+
+    nan_rate = NoiseModel()
+    nan_rate.add(LindbladGenerator(jump_operators=[x_op], rates=[lambda t: float("nan")]))
+    backend = QiliSim(noise_model=nan_rate)
+    with pytest.raises(ValueError, match=r"non-finite"):
+        backend.execute(functional, readout)
 
 
 def _build_quantum_reservoir_functional() -> QuantumReservoir:

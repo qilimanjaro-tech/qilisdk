@@ -836,7 +836,14 @@ class CudaBackend(Backend):
             ValueError: If a jump operator is not a square matrix, its
                 dimension is not a power of 2, or a global operator is
                 neither single-qubit nor full-system.
+            NotImplementedError: If the Lindblad generator has a
+                time-dependent (callable) rate.
         """
+        if lindblad_generator.is_time_dependent:
+            raise NotImplementedError(
+                "The CUDA-Q backend does not support time-dependent Lindblad rates (callable rate(t)). "
+                "Use QiliSim's analog evolution for time-dependent rates, or provide constant rates."
+            )
         for i, operator in enumerate(lindblad_generator.jump_operators_with_rates):
             op_id = f"jump_op_{i}"
             ops_numpy.append(np.array(operator.dense(), dtype=np.complex128))
@@ -897,7 +904,14 @@ class CudaBackend(Backend):
             ValueError: If a jump operator is not a square matrix, its
                 dimension is not a power of 2, or it is not a
                 single-qubit operator.
+            NotImplementedError: If the Lindblad generator has a
+                time-dependent (callable) rate.
         """
+        if lindblad_generator.is_time_dependent:
+            raise NotImplementedError(
+                "The CUDA-Q backend does not support time-dependent Lindblad rates (callable rate(t)). "
+                "Use QiliSim's analog evolution for time-dependent rates, or provide constant rates."
+            )
         for i, operator in enumerate(lindblad_generator.jump_operators_with_rates):
             op_id = f"jump_op_q{qubit}_{i}"
             ops_numpy.append(np.array(operator.dense(), dtype=np.complex128))
