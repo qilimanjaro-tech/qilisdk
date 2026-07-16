@@ -34,6 +34,8 @@
 
 #pragma GCC visibility push(default)
 
+#include <iostream>
+
 // The public execute_sampling
 py::object QiliSimCpp::execute_digital_propagation(const py::object& functional, const py::object& readout, const py::object& noise_model, const py::object& initial_state, const py::dict& solver_params) {
     /*
@@ -75,7 +77,7 @@ py::object QiliSimCpp::execute_digital_propagation(const py::object& functional,
 
     // Parse the Python objects into C++ objects
     std::vector<bool> final_qubits_to_measure = parse_measurements(functional.attr("circuit"));
-    NoiseModelCpp noise_model_cpp = parse_noise_model(noise_model, n_qubits, config.get_atol());
+    NoiseModelCpp noise_model_cpp = parse_noise_model(noise_model, n_qubits, config.get_atol(), functional.attr("circuit"));
     std::vector<Gate> gates = parse_gates(functional.attr("circuit"), config.get_atol(), noise_model);
 
     // If we have any exponential gates, we need to force renormalization
@@ -88,25 +90,35 @@ py::object QiliSimCpp::execute_digital_propagation(const py::object& functional,
 
     // Pass everything to the internal implementation
     std::map<std::string, int> counts;
-    DenseMatrix state_dense;
     std::vector<py::object> intermediate_results;
-    SparseMatrix initial_state_cpp;
-    if (initial_state.is_none()) {
-        long dim = 1L << n_qubits;
-        initial_state_cpp = SparseMatrix(dim, 1);
-        initial_state_cpp.coeffRef(0, 0) = 1.0;
-        initial_state_cpp.makeCompressed();
-    } else {
-        initial_state_cpp = parse_initial_state(initial_state, config.get_atol(), n_qubits);
-    }
-    if (config.get_sampling_method() == "statevector_matrix_free") {
-        sampling_matrix_free(gates, n_qubits, initial_state_cpp, noise_model_cpp, state_dense, intermediate_results, config, readout);
-    } else {
-        sampling(gates, n_qubits, initial_state_cpp, noise_model_cpp, state_dense, intermediate_results, config, readout);
-    }
+    py::object result;
+    if (config.get_digital_method() == "stabilizer") {
+        // Parse the initial state as a stabilizer state
+        StabilizerStateSum initial_state_stabilizer = parse_initial_state_stabilizer(initial_state, n_qubits);
+        StabilizerStateSum state_stabilizer = initial_state_stabilizer;
 
-    // Construct the final result object
-    py::object result = construct_result_object(state_dense, readout, noise_model_cpp, n_qubits, config, final_qubits_to_measure);
+        // Run the simulation
+        sampling_stabilizer(gates, n_qubits, initial_state_stabilizer, noise_model_cpp, state_stabilizer, config, readout);
+
+        // Construct the final result object
+        result = construct_result_object(state_stabilizer, readout, noise_model_cpp, n_qubits, config, final_qubits_to_measure);
+
+    } else {
+        // Get the initial state
+        DenseMatrix state_dense;
+        SparseMatrix initial_state_cpp;
+        initial_state_cpp = parse_initial_state(initial_state, config.get_atol(), n_qubits);
+
+        // Run the simulation
+        if (config.get_digital_method() == "statevector_matrix_free") {
+            sampling_matrix_free(gates, n_qubits, initial_state_cpp, noise_model_cpp, state_dense, intermediate_results, config, readout);
+        } else {
+            sampling(gates, n_qubits, initial_state_cpp, noise_model_cpp, state_dense, intermediate_results, config, readout);
+        }
+
+        // Construct the final result object
+        result = construct_result_object(state_dense, readout, noise_model_cpp, n_qubits, config, final_qubits_to_measure);
+    }
 
     // If we have intermediate results, return them as well
     if (intermediate_results.size() > 0) {
@@ -219,9 +231,11 @@ py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, co
         // Common between methods
         SparseMatrix rho_0 = parse_initial_state(initial_state, config.get_atol(), n_qubits);
         int nqubits = static_cast<int>(std::log2(rho_0.rows()));
-        NoiseModelCpp noise_model_cpp = parse_noise_model(noise_model, nqubits, config.get_atol());
-        std::vector<std::vector<double>> parameters_list = parse_coefficients(schedule, hamiltonians_keys, steps);
+        // Parse the time steps before the noise model so time-dependent Lindblad rates can be
+        // evaluated at the schedule time points.
         std::vector<double> step_list = parse_time_steps(steps);
+        NoiseModelCpp noise_model_cpp = parse_noise_model(noise_model, nqubits, config.get_atol(), py::none(), &step_list);
+        std::vector<std::vector<double>> parameters_list = parse_coefficients(schedule, hamiltonians_keys, steps);
 
         // Depending on the method, call the internal implementation
         std::vector<DenseMatrix> intermediate_rhos;
@@ -343,7 +357,7 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
                 // Pass everything to the internal implementation
                 std::map<std::string, int> counts;
                 std::vector<py::object> intermediate_results;
-                if (config.get_sampling_method() == "statevector_matrix_free") {
+                if (config.get_digital_method() == "statevector_matrix_free") {
                     sampling_matrix_free(gates, n_qubits, state.sparseView(), noise_model_cpp, state, intermediate_results, config, readout);
                 } else {
                     sampling(gates, n_qubits, state.sparseView(), noise_model_cpp, state, intermediate_results, config, readout);
@@ -435,7 +449,7 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
 
                 for (Eigen::Index row = 0; row < state.rows(); ++row) {
                     for (Eigen::Index col = 0; col < state.cols(); ++col) {
-                        if (state(row, col) == std::complex<double>(0.0, 0.0)) {
+                        if (state(row, col) == Complex(0.0, 0.0)) {
                             continue;
                         }
 

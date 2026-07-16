@@ -13,10 +13,14 @@
 // limitations under the License.
 
 #include "random.h"
+#include <algorithm>
 #include <chrono>
 #include <random>
 #include "../../../libs/pybind.h"
 #include "matrix_utils.h"
+#if defined(_OPENMP)
+#include <omp.h>
+#endif
 
 // GCOV_EXCL_BR_START
 
@@ -76,26 +80,50 @@ std::map<std::string, int> sample_from_probabilities(const std::vector<double>& 
         std::map<std::string, int>: A map of bitstring outcomes to their counts.
     */
     std::vector<int> counts(probabilities.size(), 0);
-    std::default_random_engine generator;
-    generator.seed(seed);
-    std::uniform_real_distribution<double> distribution(0.0, 1.0);
 
-// Sample
+    // Precompute the cumulative distribution
+    std::vector<double> cdf(probabilities.size());
+    double running = 0.0;
+    for (size_t state_index = 0; state_index < probabilities.size(); ++state_index) {
+        running += probabilities[state_index];
+        cdf[state_index] = running;
+    }
+    if (!cdf.empty()) {
+        cdf.back() = 1.0;
+    }
+
+    // Each thread gets its own RNG and its own histogram
 #if defined(_OPENMP)
-#pragma omp parallel for schedule(static)
+#pragma omp parallel
 #endif
-    for (int shot = 0; shot < n_shots; ++shot) {
-        double random_value = distribution(generator);
-        double cumulative_prob = 0.0;
-        for (size_t state_index = 0; state_index < probabilities.size(); ++state_index) {
-            cumulative_prob += probabilities[state_index];
-            if (random_value <= cumulative_prob) {
+    {
+        int thread_id = 0;
 #if defined(_OPENMP)
-#pragma omp atomic
+        thread_id = omp_get_thread_num();
 #endif
-                counts[state_index]++;
-                break;
+        std::seed_seq seq{static_cast<unsigned>(seed), static_cast<unsigned>(thread_id)};
+        std::default_random_engine generator(seq);
+        std::uniform_real_distribution<double> distribution(0.0, 1.0);
+        std::vector<int> local_counts(probabilities.size(), 0);
+#if defined(_OPENMP)
+#pragma omp for schedule(static)
+#endif
+        for (int shot = 0; shot < n_shots; ++shot) {
+            double random_value = distribution(generator);
+            // First state whose cumulative probability reaches the draw
+            size_t state_index = static_cast<size_t>(std::lower_bound(cdf.begin(), cdf.end(), random_value) - cdf.begin());
+            if (state_index >= cdf.size()) {
+                state_index = cdf.size() - 1;
             }
+            local_counts[state_index]++;
+        }
+
+        // Merge this thread's histogram into the shared result.
+#if defined(_OPENMP)
+#pragma omp critical
+#endif
+        for (size_t i = 0; i < counts.size(); ++i) {
+            counts[i] += local_counts[i];
         }
     }
 
@@ -131,7 +159,7 @@ DenseMatrix get_vector_from_density_matrix(const DenseMatrix& rho_t, double atol
     // Find a non-zero diagonal element
     int non_zero_col = -1;
     for (int r = 0; r < rho_t.rows(); ++r) {
-        std::complex<double> val = rho_t(r, r);
+        Complex val = rho_t(r, r);
         if (std::abs(val) > atol) {
             non_zero_col = r;
             break;
@@ -169,7 +197,7 @@ SparseMatrix get_vector_from_density_matrix(const SparseMatrix& rho_t, double at
     // Find a non-zero diagonal element
     int non_zero_col = -1;
     for (int r = 0; r < rho_t.rows(); ++r) {
-        std::complex<double> val = rho_t.coeff(r, r);
+        Complex val = rho_t.coeff(r, r);
         if (std::abs(val) > atol) {
             non_zero_col = r;
             break;
@@ -182,7 +210,7 @@ SparseMatrix get_vector_from_density_matrix(const SparseMatrix& rho_t, double at
     // Extract the corresponding state vector
     Triplets state_vec_entries;
     for (int r = 0; r < rho_t.rows(); ++r) {
-        std::complex<double> val = rho_t.coeff(r, non_zero_col);
+        Complex val = rho_t.coeff(r, non_zero_col);
         if (std::abs(val) > atol) {
             state_vec_entries.emplace_back(Triplet(r, 0, val));
         }
@@ -339,7 +367,7 @@ SparseMatrix sample_from_density_matrix(const SparseMatrix& rho, int n_trajector
             for (int k = 0; k < state_vec.outerSize(); ++k) {
                 for (SparseMatrix::InnerIterator it(state_vec, k); it; ++it) {
                     int row = int(it.row());
-                    std::complex<double> val = it.value();
+                    Complex val = it.value();
                     new_mat_entries.emplace_back(Triplet(row, traj_index, val));
                 }
             }

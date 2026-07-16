@@ -25,13 +25,15 @@ class QiliSimConfig {
     int arnoldi_dim = 10;
     int num_arnoldi_substeps = 10;
     std::string time_evolution_method = "integrate_rk4_matrix_free";
-    std::string sampling_method = "statevector_matrix_free";
+    std::string digital_method = "statevector_matrix_free";
     bool store_intermediate_results = false;
     int num_threads = 1;
     int seed = 42;
     double atol = 1e-12;
     int max_cache_size = 1000;
     bool combine_single_qubit_gates = true;
+    bool fuse_gates = true;
+    int max_fused_qubits = 4;
     bool normalize_after_each_gate = false;
     double adaptive_tol = 1e-2;
     bool measurement_collapse = false;
@@ -39,16 +41,18 @@ class QiliSimConfig {
     int shots = 1000;
     int warmups = 100;
     bool gpu = false;
+    int stabilizer_max_states = 100;
 
    public:
     // Getters
+    int get_stabilizer_max_states() const { return stabilizer_max_states; }
     bool get_monte_carlo() const { return monte_carlo; }
     int get_num_monte_carlo_trajectories() const { return num_monte_carlo_trajectories; }
     int get_arnoldi_dim() const { return arnoldi_dim; }
     double get_adaptive_tol() const { return adaptive_tol; }
     int get_num_arnoldi_substeps() const { return num_arnoldi_substeps; }
     std::string get_time_evolution_method() const { return time_evolution_method; }
-    std::string get_sampling_method() const { return sampling_method; }
+    std::string get_digital_method() const { return digital_method; }
     bool get_store_intermediate_results() const { return store_intermediate_results; }
     int get_num_threads() const { return num_threads; }
     int get_seed() const { return seed; }
@@ -56,6 +60,8 @@ class QiliSimConfig {
     int get_max_cache_size() const { return max_cache_size; }
     bool get_normalize_after_gate() const { return normalize_after_each_gate; }
     bool get_combine_single_qubit_gates() const { return combine_single_qubit_gates; }
+    bool get_fuse_gates() const { return fuse_gates; }
+    int get_max_fused_qubits() const { return max_fused_qubits; }
     bool get_measurement_collapse() const { return measurement_collapse; }
     int get_order() const { return order; }
     int get_shots() const { return shots; }
@@ -69,7 +75,7 @@ class QiliSimConfig {
     void set_adaptive_tol(double value) { adaptive_tol = value; }
     void set_num_arnoldi_substeps(int value) { num_arnoldi_substeps = value; }
     void set_time_evolution_method(const std::string& value) { time_evolution_method = value; }
-    void set_sampling_method(const std::string& value) { sampling_method = value; }
+    void set_digital_method(const std::string& value) { digital_method = value; }
     void set_store_intermediate_results(bool value) { store_intermediate_results = value; }
     void set_num_threads(int value) { num_threads = value; }
     void set_seed(int value) { seed = value; }
@@ -77,11 +83,14 @@ class QiliSimConfig {
     void set_max_cache_size(int value) { max_cache_size = value; }
     void set_normalize_after_gate(bool value) { normalize_after_each_gate = value; }
     void set_combine_single_qubit_gates(bool value) { combine_single_qubit_gates = value; }
+    void set_fuse_gates(bool value) { fuse_gates = value; }
+    void set_max_fused_qubits(int value) { max_fused_qubits = value; }
     void set_measurement_collapse(bool value) { measurement_collapse = value; }
     void set_order(int value) { order = value; }
     void set_shots(int value) { shots = value; }
     void set_warmups(int value) { warmups = value; }
     void set_gpu(bool value) { gpu = value; }
+    void set_stabilizer_max_states(int value) { stabilizer_max_states = value; }
 
     // Initialize with default values
     QiliSimConfig() = default;
