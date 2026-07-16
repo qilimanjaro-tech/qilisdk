@@ -20,20 +20,25 @@
 #include "../noise/noise_model.h"
 #include "../representations/exponential_ansatz.h"
 #include "../representations/matrix_free_hamiltonian.h"
+#include "../representations/stabilizer_state.h"
 
 // GCOV_EXCL_BR_START
 
 py::object construct_result_object(const DenseMatrix& state_dense, const py::object& readout, NoiseModelCpp& noise_model_cpp, int n_qubits, const QiliSimConfig& config, const std::vector<bool>& qubits_to_measure);
 py::object construct_result_object(const ExponentialAnsatz& state, const py::object& readout, int n_qubits);
+py::object construct_result_object(const StabilizerStateSum& state, const py::object& readout, NoiseModelCpp& noise_model_cpp, int n_qubits, const QiliSimConfig& config, const std::vector<bool>& qubits_to_measure);
 QILISIM_EXPORT std::vector<MatrixFreeHamiltonian> parse_hamiltonians_matrix_free(int nqubits, const py::object& Hs);
 std::vector<SparseMatrix> parse_hamiltonians(const py::object& Hs, double atol);
-NoiseModelCpp parse_noise_model(const py::object& noise_model, int nqubits, double atol);
+NoiseModelCpp parse_noise_model(const py::object& noise_model, int nqubits, double atol, const py::object& circuit = py::none(), const std::vector<double>* step_list = nullptr);
 std::vector<SparseMatrix> parse_observables(const py::object& observables, long nqubits, double atol);
 std::vector<MatrixFreeHamiltonian> parse_observables_matrix_free(int nqubits, const py::object& observables);
 std::vector<std::vector<double>> parse_coefficients(const py::object& schedule, const py::list& hamiltonians_keys, const py::object& steps);
 std::vector<double> parse_time_steps(const py::object& steps);
 SparseMatrix parse_initial_state(const py::object& initial_state, double atol, int nqubits);
+StabilizerStateSum parse_initial_state_stabilizer(const py::object& initial_state, int nqubits);
 std::vector<Gate> parse_gates(const py::object& circuit, double atol, const py::object& noise_model);
+int gate_num_controls(const std::string& name);
+std::string normalize_gate_name(const std::string& name);
 std::vector<bool> parse_measurements(const py::object& circuit);
 QiliSimConfig parse_solver_params(const py::dict& solver_params);
 

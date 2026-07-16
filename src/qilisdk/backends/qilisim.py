@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING
 from loguru import logger
 from qilisim_module import QiliSimCpp  # ty:ignore[unresolved-import]
 
+from qilisdk.core.qtensor import InitialState
 from qilisdk.settings import get_settings
 
 from .backend import Backend
@@ -130,7 +131,10 @@ class QiliSim(Backend):
         return dict(self._solver_config)
 
     def _execute_digital_propagation(
-        self, functional: DigitalPropagation, readout: list[ReadoutMethod]
+        self,
+        functional: DigitalPropagation,
+        readout: list[ReadoutMethod],
+        initial_state: QTensor | InitialState = InitialState.ZERO,
     ) -> FunctionalResult:
         """Execute a digital-circuit propagation functional and return measurement results.
 
@@ -139,6 +143,9 @@ class QiliSim(Backend):
                 functional to execute.
             readout (list[ReadoutMethod]): Readout specifications for
                 result extraction.
+            initial_state (QTensor | InitialState): Optional initial state to start
+                the simulation from. Defaults to ``InitialState.ZERO`` (computational
+                basis zero state).
 
         Returns:
             FunctionalResult: The execution result containing the requested
