@@ -28,7 +28,9 @@
 
 // GCOV_EXCL_BR_START
 
-typedef std::bitset<256> Bitset;
+const int MAX_QUBITS_PAULI = 256;
+
+typedef std::bitset<MAX_QUBITS_PAULI> Bitset;
 
 // moving now to use a bitmask for x and z rather than storing operators and strings
 class PauliString {
@@ -50,8 +52,15 @@ class PauliString {
     };
 
     PauliString() { throw std::runtime_error("Default constructor for PauliString is not allowed. Please specify the number of qubits."); }
-    PauliString(int num_qubits) : x_mask(), z_mask(), nqubits(num_qubits) {}
+    PauliString(int num_qubits) : x_mask(), z_mask(), nqubits(num_qubits) {
+        if (num_qubits > MAX_QUBITS_PAULI) {
+            throw std::invalid_argument("Number of qubits should be at most " + std::to_string(MAX_QUBITS_PAULI));
+        }
+    }
     PauliString(int num_qubits, char pauli, int target_qubit) : x_mask(), z_mask(), nqubits(num_qubits) {
+        if (num_qubits > MAX_QUBITS_PAULI) {
+            throw std::invalid_argument("Number of qubits should be at most " + std::to_string(MAX_QUBITS_PAULI));
+        }
         if (pauli == 'X') {
             x_mask.set(target_qubit);
         } else if (pauli == 'Z') {
@@ -62,6 +71,9 @@ class PauliString {
         }
     }
     PauliString(int num_qubits, const std::vector<MatrixFreeOperator>& ops) : x_mask(), z_mask(), nqubits(num_qubits) {
+        if (num_qubits > MAX_QUBITS_PAULI) {
+            throw std::invalid_argument("Number of qubits should be at most " + std::to_string(MAX_QUBITS_PAULI));
+        }
         for (const auto& op : ops) {
             for (int target : op.get_target_qubits()) {
                 if (op.get_name() == "X") {

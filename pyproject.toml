@@ -128,6 +128,13 @@ docs = [
 [tool.uv]
 # openfermion 1.7.1 caps requests~=2.32.2; override until upstream loosens.
 override-dependencies = ["nbconvert >= 7.17.0", "requests>=2.33.0"]
+# Floor recurring transitive CVE offenders so a generic re-resolve cannot regress them.
+constraint-dependencies = [
+    "bleach>=6.4.0",              # W-26
+    "cryptography>=48.0.1",       # high (W-26)
+    "pydantic-settings>=2.14.2",  # W-26
+    "tornado>=6.5.7",             # W-26
+]
 required-environments = [
     "sys_platform == 'linux' and platform_machine == 'aarch64'",
 ]
@@ -203,6 +210,9 @@ cmake.args = ["-A", "x64"]
 
 [tool.scikit-build.wheel]
 packages = ["src/qilisdk"]
+
+[tool.cibuildwheel.windows]
+repair-wheel-command = "delvewheel repair -w {dest_dir} --no-dll qilisim_module*.pyd {wheel}"
 
 [tool.ty.src]
 include = ["src"]
