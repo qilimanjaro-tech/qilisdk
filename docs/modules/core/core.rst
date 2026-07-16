@@ -10,3 +10,4 @@ Core
    core_model
    core_qubo
    core_qtensor
+   core_serialization
