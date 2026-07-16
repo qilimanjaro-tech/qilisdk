@@ -58,8 +58,10 @@ class VariationalProgramResult(Result):
 
     def __repr__(self) -> str:
         class_name = self.__class__.__name__
+        execution_time = f"  Execution Time={self.execution_time:.6g} s,\n" if self.execution_time is not None else ""
         return (
             f"{class_name}(\n"
+            f"{execution_time}"
             f"  Optimal Cost={self.optimal_cost},\n"
             f"  Optimal Parameters={pformat(self.optimal_parameters)},\n"
             f"  Intermediate Results={pformat(self.intermediate_results)},\n"
