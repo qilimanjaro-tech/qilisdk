@@ -456,8 +456,7 @@ NoiseModelCpp parse_noise_model(const py::object& noise_model, int nqubits, doub
                     noise_model_cpp.add_jump_operator(expand_operator(q, nqubits, L));
                 }
             } else {
-                throw py::value_error(
-                    "Global multi-qubit Lindblad operator is ambiguous"
+                throw py::value_error("Global multi-qubit Lindblad operators are ambiguous");
             }
         }
 
