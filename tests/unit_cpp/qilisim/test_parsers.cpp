@@ -177,6 +177,10 @@ TEST(ParseNoiseModel, GlobalTimeDerivedKraus) {
 }
 
 TEST(ParseNoiseModel, GlobalStaticLindblad_SingleQubit_ExpandsToAll) {
+    // Regression test for the global single-qubit Lindblad bug: a global single-qubit jump
+    // operator must expand into one independent jump per qubit (L on qubit q, identity
+    // elsewhere), NOT collapse into a single collective jump L^{⊗N}. The buggy code produced
+    // one operator; the correct code produces nqubits operators.
     py::gil_scoped_acquire gil;
     py::exec(R"(
         import scipy.sparse as sp, numpy as np
@@ -206,7 +210,96 @@ TEST(ParseNoiseModel, GlobalStaticLindblad_SingleQubit_ExpandsToAll) {
     )");
     py::object fake_nm = py::globals()["fake_nm_global_lindblad_1q"];
     auto result = parse_noise_model(fake_nm, 3, 1e-10);
-    EXPECT_EQ(result.get_jump_operators().size(), 1u);
+    EXPECT_EQ(result.get_jump_operators().size(), 3u);
+}
+
+// A global single-qubit Lindblad pass must produce exactly the same set of jump operators as
+// attaching that same single-qubit Lindblad pass to every qubit individually. This is the
+// global-vs-per-qubit equivalence that the buggy L^{⊗N} expansion violated.
+TEST(ParseNoiseModel, GlobalStaticLindblad_SingleQubit_MatchesPerQubit) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        import scipy.sparse as sp, numpy as np
+
+        class FakeJumpOp:
+            def __init__(self, data): self.data = data
+
+        class FakeLindblad:
+            def __init__(self, ops): self.jump_operators_with_rates = ops
+
+        class StaticLindbladPass:
+            def as_lindblad(self):
+                data = sp.csr_matrix(np.array([[0,1],[0,0]], dtype=complex))
+                return FakeLindblad([FakeJumpOp(data)])
+
+        class FakeNoiseConfig:
+            default_gate_time = 1.0
+
+        class FakeNoiseModelGlobal:
+            noise_config = FakeNoiseConfig()
+            global_noise = [StaticLindbladPass()]
+            per_qubit_noise = {}
+            per_gate_noise = {}
+            per_gate_per_qubit_noise = {}
+
+        class FakeNoiseModelPerQubit:
+            noise_config = FakeNoiseConfig()
+            global_noise = []
+            per_qubit_noise = {0: [StaticLindbladPass()], 1: [StaticLindbladPass()], 2: [StaticLindbladPass()]}
+            per_gate_noise = {}
+            per_gate_per_qubit_noise = {}
+
+        fake_nm_equiv_global = FakeNoiseModelGlobal()
+        fake_nm_equiv_per_qubit = FakeNoiseModelPerQubit()
+    )");
+
+    auto global_result = parse_noise_model(py::globals()["fake_nm_equiv_global"], 3, 1e-10);
+    auto per_qubit_result = parse_noise_model(py::globals()["fake_nm_equiv_per_qubit"], 3, 1e-10);
+
+    const auto& global_ops = global_result.get_jump_operators();
+    const auto& per_qubit_ops = per_qubit_result.get_jump_operators();
+
+    ASSERT_EQ(global_ops.size(), 3u);
+    ASSERT_EQ(per_qubit_ops.size(), 3u);
+    for (size_t i = 0; i < global_ops.size(); ++i) {
+        EXPECT_TRUE(DenseMatrix(global_ops[i]).isApprox(DenseMatrix(per_qubit_ops[i]))) << "Global and per-qubit jump operator " << i << " differ";
+    }
+}
+
+// A global Lindblad operator that is multi-qubit but does not span the whole system is
+// ambiguous (which qubits does it act on?) and must be rejected rather than silently expanded.
+TEST(ParseNoiseModel, GlobalLindblad_MultiQubitNonFullSystemThrows) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        import scipy.sparse as sp, numpy as np
+
+        class FakeJumpOp:
+            def __init__(self, data): self.data = data
+
+        class FakeLindblad:
+            def __init__(self, ops): self.jump_operators_with_rates = ops
+
+        class StaticLindbladPass:
+            def as_lindblad(self):
+                # 4x4 (2-qubit) operator on a 3-qubit system: neither single-qubit nor full-system.
+                data = sp.csr_matrix(np.eye(4, dtype=complex))
+                return FakeLindblad([FakeJumpOp(data)])
+
+        class FakeNoiseConfig:
+            default_gate_time = 1.0
+
+        class FakeNoiseModel:
+            noise_config = FakeNoiseConfig()
+            global_noise = [StaticLindbladPass()]
+            per_qubit_noise = {}
+            per_gate_noise = {}
+            per_gate_per_qubit_noise = {}
+
+        fake_nm_global_lindblad_ambiguous = FakeNoiseModel()
+    )");
+
+    py::object fake_nm = py::globals()["fake_nm_global_lindblad_ambiguous"];
+    EXPECT_THROW(parse_noise_model(fake_nm, 3, 1e-10), py::value_error);
 }
 
 TEST(ParseNoiseModel, GlobalLindblad_FullSystemOperator) {
@@ -277,7 +370,9 @@ TEST(ParseNoiseModel, GlobalTimeDerivedLindblad) {
 
     py::object fake_nm = py::globals()["fake_nm_global_td_lindblad"];
     auto result = parse_noise_model(fake_nm, 2, 1e-10);
-    EXPECT_EQ(result.get_jump_operators().size(), 1u);
+    // Single-qubit global Lindblad expands to one independent jump per qubit (see the fix in
+    // GlobalStaticLindblad_SingleQubit_ExpandsToAll), so a 2-qubit system yields 2 operators.
+    EXPECT_EQ(result.get_jump_operators().size(), 2u);
 }
 
 TEST(ParseNoiseModel, GlobalReadoutAssignment) {
@@ -1639,6 +1734,8 @@ TEST(ParseSolverParams, AllFieldsParsedCorrectly) {
     params["normalize_after_each_gate"] = py::bool_(true);
     params["normalize_state"] = py::bool_(false);
     params["combine_single_qubit_gates"] = py::bool_(false);
+    params["fuse_gates"] = py::bool_(true);
+    params["max_fused_qubits"] = py::int_(3);
     params["measurement_collapse"] = py::bool_(true);
 
     auto config = parse_solver_params(params);
@@ -1657,6 +1754,8 @@ TEST(ParseSolverParams, AllFieldsParsedCorrectly) {
     EXPECT_TRUE(config.get_normalize_after_gate());
     EXPECT_FALSE(config.get_normalize_state());
     EXPECT_FALSE(config.get_combine_single_qubit_gates());
+    EXPECT_TRUE(config.get_fuse_gates());
+    EXPECT_EQ(config.get_max_fused_qubits(), 3);
     EXPECT_TRUE(config.get_measurement_collapse());
     EXPECT_NEAR(config.get_adaptive_tol(), 1e-2, 1e-15);
 }
@@ -1793,6 +1892,121 @@ TEST(ParseSolverParams, OrderShotsWarmupsAreApplied) {
     EXPECT_EQ(config.get_order(), 3);
     EXPECT_EQ(config.get_shots(), 200);
     EXPECT_EQ(config.get_warmups(), 50);
+}
+
+// Build a noise model whose only global pass is a real LindbladGenerator. ``rates`` is a Python
+// snippet for the rate list (mixing constants and callables exercises both make_sqrt_rate_series
+// branches). The generator's real ``is_time_dependent`` / ``jump_operators`` / ``rates`` are used.
+static py::object make_global_lindblad_noise_model(const std::string& rates_py, const std::string& global_name) {
+    py::exec(R"(
+        import numpy as np
+        from qilisdk.core import QTensor
+        from qilisdk.noise import LindbladGenerator
+
+        _sigma_minus = QTensor(np.array([[0, 1], [0, 0]], dtype=complex))
+
+        class FakeNoiseConfig:
+            default_gate_time = 1.0
+    )");
+    py::exec("_n_ops = len(" + rates_py + ")");
+    int n_ops = py::globals()["_n_ops"].cast<int>();
+    std::string ops = "[";
+    for (int i = 0; i < n_ops; ++i) {
+        ops += "_sigma_minus, ";
+    }
+    ops += "]";
+    py::exec(global_name +
+             " = type('FakeNoiseModel', (), {"
+             "'noise_config': FakeNoiseConfig(), "
+             "'global_noise': [LindbladGenerator(" +
+             ops + ", rates=" + rates_py +
+             ")], "
+             "'per_qubit_noise': {}, 'per_gate_noise': {}, 'per_gate_per_qubit_noise': {}})()");
+    return py::globals()[global_name.c_str()];
+}
+
+TEST(ParseNoiseModel, GlobalTimeDependentLindbladRate) {
+    py::gil_scoped_acquire gil;
+    // Mixed list: a constant rate (folded as a constant series) and a callable rate(t).
+    py::object fake_nm = make_global_lindblad_noise_model("[0.16, lambda t: 0.25]", "fake_nm_td_global");
+    std::vector<double> step_list = {0.0, 1.0, 2.0};
+    auto result = parse_noise_model(fake_nm, 1, 1e-10, py::none(), &step_list);
+
+    EXPECT_TRUE(result.has_time_dependent_rates());
+    ASSERT_EQ(result.get_jump_operators().size(), 2u);
+    ASSERT_EQ(result.get_jump_rate_series().size(), 2u);
+    // Each series holds sqrt(rate) sampled at every step: sqrt(0.16)=0.4 and sqrt(0.25)=0.5.
+    ASSERT_EQ(result.get_jump_rate_series()[0].size(), 3u);
+    EXPECT_NEAR(result.get_jump_rate_series()[0][0], 0.4, 1e-9);
+    EXPECT_NEAR(result.get_jump_rate_series()[1][2], 0.5, 1e-9);
+}
+
+TEST(ParseNoiseModel, PerQubitTimeDependentLindbladRate) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        import numpy as np
+        from qilisdk.core import QTensor
+        from qilisdk.noise import LindbladGenerator
+
+        class FakeNoiseConfig:
+            default_gate_time = 1.0
+
+        class FakeNoiseModel:
+            noise_config = FakeNoiseConfig()
+            global_noise = []
+            per_qubit_noise = {0: [LindbladGenerator([QTensor(np.array([[0,1],[0,0]], dtype=complex))], rates=[lambda t: 0.25])]}
+            per_gate_noise = {}
+            per_gate_per_qubit_noise = {}
+
+        fake_nm_td_per_qubit = FakeNoiseModel()
+    )");
+    py::object fake_nm = py::globals()["fake_nm_td_per_qubit"];
+    std::vector<double> step_list = {0.0, 1.0};
+    auto result = parse_noise_model(fake_nm, 2, 1e-10, py::none(), &step_list);
+
+    EXPECT_TRUE(result.has_time_dependent_rates());
+    ASSERT_EQ(result.get_jump_operators().size(), 1u);
+    // Single-qubit operator on qubit 0 of a 2-qubit system is expanded to 4x4.
+    EXPECT_EQ(result.get_jump_operators()[0].rows(), 4);
+    ASSERT_EQ(result.get_jump_rate_series()[0].size(), 2u);
+    EXPECT_NEAR(result.get_jump_rate_series()[0][0], 0.5, 1e-9);
+}
+
+TEST(ParseNoiseModel, TimeDependentLindbladNegativeRateThrows) {
+    py::gil_scoped_acquire gil;
+    py::object fake_nm = make_global_lindblad_noise_model("[lambda t: -1.0]", "fake_nm_td_negative");
+    std::vector<double> step_list = {0.0, 1.0};
+    EXPECT_ANY_THROW(parse_noise_model(fake_nm, 1, 1e-10, py::none(), &step_list));
+}
+
+TEST(ParseNoiseModel, TimeDependentLindbladNonFiniteRateThrows) {
+    py::gil_scoped_acquire gil;
+    py::object fake_nm = make_global_lindblad_noise_model("[lambda t: float('nan')]", "fake_nm_td_nan");
+    std::vector<double> step_list = {0.0, 1.0};
+    EXPECT_ANY_THROW(parse_noise_model(fake_nm, 1, 1e-10, py::none(), &step_list));
+}
+
+TEST(ParseNoiseModel, TimeDependentLindbladWithoutStepListThrows) {
+    py::gil_scoped_acquire gil;
+    // No step_list (e.g. digital propagation) must reject a time-dependent rate.
+    py::object fake_nm = make_global_lindblad_noise_model("[lambda t: 0.25]", "fake_nm_td_no_steps");
+    EXPECT_ANY_THROW(parse_noise_model(fake_nm, 1, 1e-10));
+}
+
+TEST(ParseNoiseModel, TimeDependentLindbladCallableNonNumericThrows) {
+    py::gil_scoped_acquire gil;
+    // A callable rate(t) that returns a non-numeric value is rejected.
+    py::object fake_nm = make_global_lindblad_noise_model("[lambda t: 'not a number']", "fake_nm_td_nonnum");
+    std::vector<double> step_list = {0.0, 1.0};
+    EXPECT_ANY_THROW(parse_noise_model(fake_nm, 1, 1e-10, py::none(), &step_list));
+}
+
+TEST(ParseNoiseModel, TimeDependentLindbladConstantInvalidRateThrows) {
+    py::gil_scoped_acquire gil;
+    // A non-finite constant rate alongside a callable rate is rejected by the constant-rate branch.
+    py::object fake_nm = make_global_lindblad_noise_model("[lambda t: 0.1, float('nan')]", "fake_nm_td_const_invalid");
+    std::vector<double> step_list = {0.0, 1.0};
+    EXPECT_ANY_THROW(parse_noise_model(fake_nm, 1, 1e-10, py::none(), &step_list));
 }
 
 TEST(ParseSolverParams, StabilizerMaxStatesApplied) {

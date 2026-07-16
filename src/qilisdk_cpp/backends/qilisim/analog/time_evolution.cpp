@@ -52,6 +52,14 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
     // Get the jump operators from the noise model
     const std::vector<SparseMatrix>& jump_operators = noise_model_cpp.get_jump_operators();
 
+    // For time-dependent rates, each base jump operator is re-scaled per step by sqrt(rate(t)).
+    bool has_time_dependent_jumps = noise_model_cpp.has_time_dependent_rates();
+    const std::vector<std::vector<double>>& jump_rate_series = noise_model_cpp.get_jump_rate_series();
+    std::vector<SparseMatrix> step_jumps;
+    if (has_time_dependent_jumps) {
+        step_jumps = jump_operators;  // working copy, re-scaled each step
+    }
+
     // Dimensions of everything
     long dim = long(hamiltonians[0].rows());
 
@@ -120,7 +128,7 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
         // Get the current Hamiltonian
         SparseMatrix currentH = combinedH;
         for (size_t h = 0; h < hamiltonians.size(); ++h) {
-            double c = parameters_list[h][step_ind];
+            Real c = parameters_list[h][step_ind];
             for (int k = 0; k < hamiltonians[h].outerSize(); ++k) {
                 for (SparseMatrix::InnerIterator it(hamiltonians[h], k); it; ++it) {
                     currentH.coeffRef(it.row(), it.col()) += c * it.value();
@@ -134,11 +142,25 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
             dt = (step_list[step_ind] - step_list[step_ind - 1]);
         }
 
+        // For time-dependent rates, re-scale each base jump operator by sqrt(rate(t)) at this step
+        // (piecewise-constant within the step, consistent with how currentH is treated). The rate is
+        // sampled at t = step_list[step_ind], matching the schedule coefficient sampling above.
+        if (has_time_dependent_jumps) {
+            for (size_t j = 0; j < jump_operators.size(); ++j) {
+                if (jump_rate_series[j].empty()) {
+                    step_jumps[j] = jump_operators[j];
+                } else {
+                    step_jumps[j] = jump_operators[j] * jump_rate_series[j][step_ind];
+                }
+            }
+        }
+        const std::vector<SparseMatrix>& current_jumps = has_time_dependent_jumps ? step_jumps : jump_operators;
+
         // Perform the iteration depending on the method
         if (config.get_time_evolution_method() == "integrate_rk4") {
             rho_t = iter_rk4_matrix(rho_t, dt, currentH, jump_operators, is_unitary_on_statevector, config.get_normalize_state());
         } else if (config.get_time_evolution_method() == "direct") {
-            rho_t = iter_direct(rho_t, dt, currentH, jump_operators, is_unitary_on_statevector);
+            rho_t = iter_direct(rho_t, dt, currentH, current_jumps, is_unitary_on_statevector);
         } else if (config.get_time_evolution_method() == "arnoldi") {
             rho_t = iter_arnoldi(rho_t, dt, currentH, jump_operators, config.get_arnoldi_dim(), config.get_num_arnoldi_substeps(), is_unitary_on_statevector, config.get_atol(), config.get_normalize_state());
         } else {
@@ -194,6 +216,19 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
 
     // Get the jump operators from the noise model
     const std::vector<SparseMatrix>& jump_operators = noise_model_cpp.get_jump_operators();
+
+    // For time-dependent rates, each base jump operator is re-scaled per step by sqrt(rate(t)).
+    // The adaptive RK45 method steps at arbitrary times not aligned to the schedule points, so it
+    // cannot apply a per-step rate series; reject it. The fixed-step RK4 method is handled below.
+    bool has_time_dependent_jumps = noise_model_cpp.has_time_dependent_rates();
+    const std::vector<std::vector<double>>& jump_rate_series = noise_model_cpp.get_jump_rate_series();
+    if (has_time_dependent_jumps && config.get_time_evolution_method() == "integrate_rk45_matrix_free") {
+        throw std::invalid_argument("Time-dependent Lindblad rates are not supported by the adaptive 'integrate_rk45_matrix_free' method; use 'integrate_rk4_matrix_free' or a dense method (arnoldi, direct, integrate_rk4).");
+    }
+    std::vector<SparseMatrix> step_jumps;
+    if (has_time_dependent_jumps) {
+        step_jumps = jump_operators;  // working copy, re-scaled each step
+    }
 
     // Check if we have unitary dynamics
     bool is_unitary_dynamics = (jump_operators.size() == 0);
@@ -294,6 +329,19 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
             // Determine the time step and starting time
             double t_start = (step_ind > 0) ? step_list[step_ind - 1] : 0.0;
             double dt = step_list[step_ind] - t_start;
+
+            // For time-dependent rates, re-scale each base jump operator by sqrt(rate(t)) at this
+            // step (piecewise-constant within the step, sampled at t = step_list[step_ind]).
+            if (has_time_dependent_jumps) {
+                for (size_t j = 0; j < jump_operators.size(); ++j) {
+                    if (jump_rate_series[j].empty()) {
+                        step_jumps[j] = jump_operators[j];
+                    } else {
+                        step_jumps[j] = jump_operators[j] * jump_rate_series[j][step_ind];
+                    }
+                }
+            }
+            const std::vector<SparseMatrix>& current_jumps = has_time_dependent_jumps ? step_jumps : jump_operators;
 
             // Perform the iteration
             iter_rk4(rho_t, t_start, dt, step_list, hamiltonians, parameters_list, jump_operators, is_unitary_on_statevector, config.get_normalize_state());

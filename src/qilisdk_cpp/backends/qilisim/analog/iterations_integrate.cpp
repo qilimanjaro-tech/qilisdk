@@ -77,20 +77,20 @@ DenseMatrix iter_rk4_matrix(const DenseMatrix& rho_0, double dt, const SparseMat
     rho_old = rho;
 
     lindblad_rhs(k, rho, currentH, jump_operators, is_unitary_on_statevector);
-    rho += (dt / 6.0) * k;
+    rho += static_cast<Real>(dt / 6.0) * k;
 
     rho_tmp = rho_old;
-    rho_tmp += 0.5 * dt * k;
+    rho_tmp += static_cast<Real>(0.5 * dt) * k;
     lindblad_rhs(k, rho_tmp, currentH, jump_operators, is_unitary_on_statevector);
-    rho += (dt / 3.0) * k;
+    rho += static_cast<Real>(dt / 3.0) * k;
 
     rho_tmp = rho_old;
-    rho_tmp += 0.5 * dt * k;
+    rho_tmp += static_cast<Real>(0.5 * dt) * k;
     lindblad_rhs(k, rho_tmp, currentH, jump_operators, is_unitary_on_statevector);
-    rho += (dt / 3.0) * k;
+    rho += static_cast<Real>(dt / 3.0) * k;
 
     rho_tmp = rho_old;
-    rho_tmp += dt * k;
+    rho_tmp += static_cast<Real>(dt) * k;
     lindblad_rhs(k, rho_tmp, currentH, jump_operators, is_unitary_on_statevector);
     rho += (dt / 6.0) * k;
 
@@ -178,84 +178,62 @@ void iter_rk4(DenseMatrix& rho_t, double t, double dt, const std::vector<double>
     // Cache some things
     long rho_rows = long(rho_t.rows());
     long rho_cols = long(rho_t.cols());
-    const double dt_over_2 = 0.5 * dt;
-    const double dt_over_3 = dt / 3.0;
-    const double dt_over_6 = dt / 6.0;
-
-    // Standard RK4 loop
-    DenseMatrix k(rho_rows, rho_cols);
-    DenseMatrix rho_tmp(rho_rows, rho_cols);
-    DenseMatrix rho_old(rho_rows, rho_cols);
+    const Real dt_over_2 = 0.5 * dt;
+    const Real dt_over_3 = dt / 3.0;
+    const Real dt_over_6 = dt / 6.0;
+    static DenseMatrix* const k_buf = new DenseMatrix();
+    static DenseMatrix* const rho_tmp_buf = new DenseMatrix();
+    static DenseMatrix* const rho_old_buf = new DenseMatrix();
+    DenseMatrix& k = *k_buf;
+    DenseMatrix& rho_tmp = *rho_tmp_buf;
+    DenseMatrix& rho_old = *rho_old_buf;
+    k.resize(rho_rows, rho_cols);
+    rho_tmp.resize(rho_rows, rho_cols);
+    rho_old.resize(rho_rows, rho_cols);
     double t_step = t;
 
-// Store the previous rho, we'll reuse it for the intermediate steps
-#if defined(_OPENMP)
-#pragma omp parallel for schedule(static)
-#endif
-    for (int i = 0; i < rho_old.rows(); ++i) {
-        for (int j = 0; j < rho_old.cols(); ++j) {
-            rho_old(i, j) = rho_t(i, j);
-        }
-    }
-
-    // First step: compute k1 at time t
+    // k1 at time t
     lindblad_rhs(k, rho_t, construct_current_hamiltonian(t_step, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
 #endif
     for (int i = 0; i < rho_t.rows(); ++i) {
         for (int j = 0; j < rho_t.cols(); ++j) {
-            rho_t(i, j) += dt_over_6 * k(i, j);
+            const Complex orig = rho_t(i, j);
+            const Complex kv = k(i, j);
+            rho_old(i, j) = orig;
+            rho_t(i, j) = orig + dt_over_6 * kv;
+            rho_tmp(i, j) = orig + dt_over_2 * kv;
         }
     }
 
-// Second step: compute k2 at time t + dt/2
-#if defined(_OPENMP)
-#pragma omp parallel for schedule(static)
-#endif
-    for (int i = 0; i < rho_tmp.rows(); ++i) {
-        for (int j = 0; j < rho_tmp.cols(); ++j) {
-            rho_tmp(i, j) = rho_old(i, j) + dt_over_2 * k(i, j);
-        }
-    }
+    // k2 at time t + dt/2
     lindblad_rhs(k, rho_tmp, construct_current_hamiltonian(t_step + 0.5 * dt, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
 #endif
     for (int i = 0; i < rho_t.rows(); ++i) {
         for (int j = 0; j < rho_t.cols(); ++j) {
-            rho_t(i, j) += dt_over_3 * k(i, j);
+            const Complex kv = k(i, j);
+            rho_t(i, j) += dt_over_3 * kv;
+            rho_tmp(i, j) = rho_old(i, j) + dt_over_2 * kv;
         }
     }
 
-// Third step: compute k3 at time t + dt/2
-#if defined(_OPENMP)
-#pragma omp parallel for schedule(static)
-#endif
-    for (int i = 0; i < rho_tmp.rows(); ++i) {
-        for (int j = 0; j < rho_tmp.cols(); ++j) {
-            rho_tmp(i, j) = rho_old(i, j) + dt_over_2 * k(i, j);
-        }
-    }
+    // k3 at time t + dt/2
     lindblad_rhs(k, rho_tmp, construct_current_hamiltonian(t_step + 0.5 * dt, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
 #endif
     for (int i = 0; i < rho_t.rows(); ++i) {
         for (int j = 0; j < rho_t.cols(); ++j) {
-            rho_t(i, j) += dt_over_3 * k(i, j);
+            const Complex kv = k(i, j);
+            rho_t(i, j) += dt_over_3 * kv;
+            rho_tmp(i, j) = rho_old(i, j) + static_cast<Real>(dt) * kv;
         }
     }
 
-// Fourth step: compute k4 at time t + dt
-#if defined(_OPENMP)
-#pragma omp parallel for schedule(static)
-#endif
-    for (int i = 0; i < rho_tmp.rows(); ++i) {
-        for (int j = 0; j < rho_tmp.cols(); ++j) {
-            rho_tmp(i, j) = rho_old(i, j) + dt * k(i, j);
-        }
-    }
+    // k4 at time t + dt
     lindblad_rhs(k, rho_tmp, construct_current_hamiltonian(t_step + dt, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
@@ -272,16 +250,22 @@ void iter_rk4(DenseMatrix& rho_t, double t, double dt, const std::vector<double>
     }
     std::complex<double> norm = 0;
     if (is_unitary_on_statevector) {
-#ifndef _WIN32
+        double norm_sq = 0.0;
 #if defined(_OPENMP)
-#pragma omp parallel for reduction(complex_double_reduction : norm) schedule(static)
-#endif
+#pragma omp parallel for reduction(+ : norm_sq) schedule(static)
 #endif
         for (int i = 0; i < rho_t.rows(); ++i) {
-            norm += std::norm(rho_t(i, 0));
+            norm_sq += std::norm(rho_t(i, 0));
         }
-        norm = std::sqrt(norm);
+        const Real norm = static_cast<Real>(std::sqrt(norm_sq));
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+        for (int i = 0; i < rho_t.rows(); ++i) {
+            rho_t(i, 0) /= norm;
+        }
     } else {
+        Complex norm = 0;
 #ifndef _WIN32
 #if defined(_OPENMP)
 #pragma omp parallel for reduction(complex_double_reduction : norm) schedule(static)
@@ -290,13 +274,13 @@ void iter_rk4(DenseMatrix& rho_t, double t, double dt, const std::vector<double>
         for (int i = 0; i < dim; ++i) {
             norm += rho_t(i, i);
         }
-    }
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
 #endif
-    for (int i = 0; i < rho_t.rows(); ++i) {
-        for (int j = 0; j < rho_t.cols(); ++j) {
-            rho_t(i, j) /= norm;
+        for (int i = 0; i < rho_t.rows(); ++i) {
+            for (int j = 0; j < rho_t.cols(); ++j) {
+                rho_t(i, j) /= norm;
+            }
         }
     }
 }
@@ -389,7 +373,7 @@ double iter_rk45(DenseMatrix& rho_t, double t, double& dt, const std::vector<dou
 #endif
     for (long i = 0; i < rho_rows; ++i) {
         for (long j = 0; j < rho_cols; ++j) {
-            rho_tmp(i, j) = rho_t(i, j) + dt * b21 * k1(i, j);
+            rho_tmp(i, j) = rho_t(i, j) + static_cast<Real>(dt * b21) * k1(i, j);
         }
     }
     double t_2 = t + a2 * dt;
@@ -400,7 +384,7 @@ double iter_rk45(DenseMatrix& rho_t, double t, double& dt, const std::vector<dou
 #endif
     for (long i = 0; i < rho_rows; ++i) {
         for (long j = 0; j < rho_cols; ++j) {
-            rho_tmp(i, j) = rho_t(i, j) + dt * (b31 * k1(i, j) + b32 * k2(i, j));
+            rho_tmp(i, j) = rho_t(i, j) + static_cast<Real>(dt * b31) * k1(i, j) + static_cast<Real>(dt * b32) * k2(i, j);
         }
     }
     double t_3 = t + a3 * dt;
@@ -411,7 +395,7 @@ double iter_rk45(DenseMatrix& rho_t, double t, double& dt, const std::vector<dou
 #endif
     for (long i = 0; i < rho_rows; ++i) {
         for (long j = 0; j < rho_cols; ++j) {
-            rho_tmp(i, j) = rho_t(i, j) + dt * (b41 * k1(i, j) + b42 * k2(i, j) + b43 * k3(i, j));
+            rho_tmp(i, j) = rho_t(i, j) + static_cast<Real>(dt * b41) * k1(i, j) + static_cast<Real>(dt * b42) * k2(i, j) + static_cast<Real>(dt * b43) * k3(i, j);
         }
     }
     double t_4 = t + a4 * dt;
@@ -422,7 +406,7 @@ double iter_rk45(DenseMatrix& rho_t, double t, double& dt, const std::vector<dou
 #endif
     for (long i = 0; i < rho_rows; ++i) {
         for (long j = 0; j < rho_cols; ++j) {
-            rho_tmp(i, j) = rho_t(i, j) + dt * (b51 * k1(i, j) + b52 * k2(i, j) + b53 * k3(i, j) + b54 * k4(i, j));
+            rho_tmp(i, j) = rho_t(i, j) + static_cast<Real>(dt * b51) * k1(i, j) + static_cast<Real>(dt * b52) * k2(i, j) + static_cast<Real>(dt * b53) * k3(i, j) + static_cast<Real>(dt * b54) * k4(i, j);
         }
     }
     double t_5 = t + a5 * dt;
@@ -433,7 +417,7 @@ double iter_rk45(DenseMatrix& rho_t, double t, double& dt, const std::vector<dou
 #endif
     for (long i = 0; i < rho_rows; ++i) {
         for (long j = 0; j < rho_cols; ++j) {
-            rho_tmp(i, j) = rho_t(i, j) + dt * (b61 * k1(i, j) + b62 * k2(i, j) + b63 * k3(i, j) + b64 * k4(i, j) + b65 * k5(i, j));
+            rho_tmp(i, j) = rho_t(i, j) + static_cast<Real>(dt * b61) * k1(i, j) + static_cast<Real>(dt * b62) * k2(i, j) + static_cast<Real>(dt * b63) * k3(i, j) + static_cast<Real>(dt * b64) * k4(i, j) + static_cast<Real>(dt * b65) * k5(i, j);
         }
     }
     double t_6 = t + a6 * dt;
@@ -444,16 +428,16 @@ double iter_rk45(DenseMatrix& rho_t, double t, double& dt, const std::vector<dou
 #endif
     for (long i = 0; i < rho_rows; ++i) {
         for (long j = 0; j < rho_cols; ++j) {
-            rho_tmp(i, j) = rho_t(i, j) + dt * (b71 * k1(i, j) + b73 * k3(i, j) + b74 * k4(i, j) + b75 * k5(i, j) + b76 * k6(i, j));
+            rho_tmp(i, j) = rho_t(i, j) + static_cast<Real>(dt * b71) * k1(i, j) + static_cast<Real>(dt * b73) * k3(i, j) + static_cast<Real>(dt * b74) * k4(i, j) + static_cast<Real>(dt * b75) * k5(i, j) + static_cast<Real>(dt * b76) * k6(i, j);
         }
     }
     double t_7 = t + a7 * dt;
     lindblad_rhs(k7, rho_tmp, construct_current_hamiltonian(t_7, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
 
     // All these loops combined into one
-    std::complex<double> rho_4_norm = 0.0;
-    std::complex<double> rho_5_norm = 0.0;
-    std::complex<double> overlap = 0.0;
+    Complex rho_4_norm = 0.0;
+    Complex rho_5_norm = 0.0;
+    Complex overlap = 0.0;
     double rho_5_frob_sq = 0.0;
     double err_norm = 0.0;
 
@@ -466,7 +450,7 @@ double iter_rk45(DenseMatrix& rho_t, double t, double& dt, const std::vector<dou
 #endif
         for (long i = 0; i < rho_rows; ++i) {
             for (long j = 0; j < rho_cols; ++j) {
-                rho_4(i, j) = rho_t(i, j) + dt * (c41 * k1(i, j) + c43 * k3(i, j) + c44 * k4(i, j) + c45 * k5(i, j) + c46 * k6(i, j) + c47 * k7(i, j));
+                rho_4(i, j) = rho_t(i, j) + static_cast<Real>(dt * c41) * k1(i, j) + static_cast<Real>(dt * c43) * k3(i, j) + static_cast<Real>(dt * c44) * k4(i, j) + static_cast<Real>(dt * c45) * k5(i, j) + static_cast<Real>(dt * c46) * k6(i, j) + static_cast<Real>(dt * c47) * k7(i, j);
                 rho_5(i, j) = rho_tmp(i, j);
                 rho_4_norm += std::norm(rho_4(i, j));
                 rho_5_norm += std::norm(rho_5(i, j));
@@ -487,7 +471,7 @@ double iter_rk45(DenseMatrix& rho_t, double t, double& dt, const std::vector<dou
 #endif
         for (long i = 0; i < rho_rows; ++i) {
             for (long j = 0; j < rho_cols; ++j) {
-                rho_4(i, j) = rho_t(i, j) + dt * (c41 * k1(i, j) + c43 * k3(i, j) + c44 * k4(i, j) + c45 * k5(i, j) + c46 * k6(i, j) + c47 * k7(i, j));
+                rho_4(i, j) = rho_t(i, j) + static_cast<Real>(dt * c41) * k1(i, j) + static_cast<Real>(dt * c43) * k3(i, j) + static_cast<Real>(dt * c44) * k4(i, j) + static_cast<Real>(dt * c45) * k5(i, j) + static_cast<Real>(dt * c46) * k6(i, j) + static_cast<Real>(dt * c47) * k7(i, j);
                 rho_5(i, j) = rho_tmp(i, j);
                 overlap += std::pow(std::abs(rho_4(i, j) - rho_5(i, j)), 2);
                 rho_5_frob_sq += std::norm(rho_5(i, j));
@@ -557,9 +541,9 @@ void iter_rk4(ExponentialAnsatz& rho_t, double t, double dt, const std::vector<d
 
     // Cache some things
     int nqubits = hamiltonians[0].get_nqubits();
-    const double dt_over_2 = 0.5 * dt;
-    const double dt_over_3 = dt / 3.0;
-    const double dt_over_6 = dt / 6.0;
+    const Real dt_over_2 = 0.5 * dt;
+    const Real dt_over_3 = dt / 3.0;
+    const Real dt_over_6 = dt / 6.0;
 
     // Standard RK4 loop
     ExponentialAnsatz k = rho_t.zeroed();

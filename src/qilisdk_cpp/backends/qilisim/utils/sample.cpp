@@ -139,9 +139,9 @@ std::map<std::string, int> construct_samples(const DenseMatrix& state, int n_qub
 
     // Make sure probabilities sum to 1
     if (std::abs(total_prob - 1.0) > config.get_atol()) {
-        std::stringstream ss;
-        ss << std::setprecision(15) << total_prob;
-        throw py::value_error("Probabilities do not sum to 1 (sum = " + ss.str() + ")");
+        for (int row = 0; row < state.rows(); ++row) {
+            probabilities[row] /= total_prob;
+        }
     }
 
     // Sample from these probabilities

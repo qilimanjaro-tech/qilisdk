@@ -32,6 +32,8 @@ class QiliSimConfig {
     double atol = 1e-12;
     int max_cache_size = 1000;
     bool combine_single_qubit_gates = true;
+    bool fuse_gates = true;
+    int max_fused_qubits = 4;
     bool normalize_after_each_gate = false;
     bool normalize_state = true;
     double adaptive_tol = 1e-2;
@@ -59,6 +61,8 @@ class QiliSimConfig {
     bool get_normalize_after_gate() const { return normalize_after_each_gate; }
     bool get_normalize_state() const { return normalize_state; }
     bool get_combine_single_qubit_gates() const { return combine_single_qubit_gates; }
+    bool get_fuse_gates() const { return fuse_gates; }
+    int get_max_fused_qubits() const { return max_fused_qubits; }
     bool get_measurement_collapse() const { return measurement_collapse; }
     int get_order() const { return order; }
     int get_shots() const { return shots; }
@@ -80,6 +84,8 @@ class QiliSimConfig {
     void set_normalize_after_gate(bool value) { normalize_after_each_gate = value; }
     void set_normalize_state(bool value) { normalize_state = value; }
     void set_combine_single_qubit_gates(bool value) { combine_single_qubit_gates = value; }
+    void set_fuse_gates(bool value) { fuse_gates = value; }
+    void set_max_fused_qubits(int value) { max_fused_qubits = value; }
     void set_measurement_collapse(bool value) { measurement_collapse = value; }
     void set_order(int value) { order = value; }
     void set_shots(int value) { shots = value; }

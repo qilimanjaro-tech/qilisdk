@@ -75,7 +75,7 @@ Triplets Gate::tensor_product(Triplets& A, Triplets& B, int B_width) const {
     Triplets result;
     int row = 0;
     int col = 0;
-    std::complex<double> val = 0.0;
+    Complex val = 0.0;
     for (const auto& a : A) {
         for (const auto& b : B) {
             row = a.row() * B_width + b.row();
@@ -123,7 +123,7 @@ SparseMatrix Gate::base_to_full(const SparseMatrix& base_gate, int num_qubits, c
         for (SparseMatrix::InnerIterator it(base_gate, k); it; ++it) {
             int row = int(it.row());
             int col = int(it.col());
-            std::complex<double> val = it.value();
+            Complex val = it.value();
             out_entries.emplace_back(Triplet(row, col, val));
         }
     }
@@ -140,7 +140,7 @@ SparseMatrix Gate::base_to_full(const SparseMatrix& base_gate, int num_qubits, c
         for (const auto& entry : out_entries) {
             int row = int(entry.row());
             int col = int(entry.col());
-            std::complex<double> val = entry.value();
+            Complex val = entry.value();
             new_entries.emplace_back(Triplet(row + delta, col + delta, val));
         }
         for (int i = 0; i < delta; ++i) {
@@ -166,26 +166,25 @@ SparseMatrix Gate::base_to_full(const SparseMatrix& base_gate, int num_qubits, c
     all_qubits.insert(all_qubits.end(), control_qubits.begin(), control_qubits.end());
     all_qubits.insert(all_qubits.end(), target_qubits.begin(), target_qubits.end());
 
-    // Determine the permutation to map qubits to their correct positions
-    // perm is initially 0 1 2
-    // if we have a CNOT on qubits 0 and 2, we actually did it on 0 and 1 internally
-    // so we have 0 2 1 and we need to map back
-    std::vector<int> perm(num_qubits);
-    for (int q = 0; q < num_qubits; ++q) {
-        perm[q] = q;
+    // Determine the permutation mapping each local qubit to its global qubit
+    std::vector<bool> is_gate_qubit(num_qubits, false);
+    for (int q : all_qubits) {
+        is_gate_qubit[q] = true;
     }
+    std::vector<int> perm(num_qubits, -1);
     for (int i = 0; i < int(all_qubits.size()); ++i) {
-        if (perm[needed_before + i] != all_qubits[i]) {
-            std::swap(perm[needed_before + i], perm[all_qubits[i]]);
+        perm[needed_before + i] = all_qubits[i];
+    }
+    int next_spectator = 0;
+    for (int pos = 0; pos < num_qubits; ++pos) {
+        if (pos >= needed_before && pos < needed_before + int(all_qubits.size())) {
+            continue;
         }
+        while (is_gate_qubit[next_spectator]) {
+            ++next_spectator;
+        }
+        perm[pos] = next_spectator++;
     }
-
-    // Invert the perm
-    std::vector<int> inv_perm(num_qubits);
-    for (int q = 0; q < num_qubits; ++q) {
-        inv_perm[perm[q]] = q;
-    }
-    perm = inv_perm;
 
     // Apply the permutation
     for (size_t i = 0; i < out_entries.size(); ++i) {

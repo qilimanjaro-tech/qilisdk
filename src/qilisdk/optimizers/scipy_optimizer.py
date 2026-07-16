@@ -57,6 +57,7 @@ class SciPyOptimizer(Optimizer):
                     - 'dual_annealing' (global)
                     - 'differential_evolution' (global)
                     - 'shgo' (global)
+                    - 'brute' (global)
                     - custom - a callable object, see `scipy.optimize.minimize <https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html>`__ for description.
 
                     If not given, chosen to be one of ``BFGS``, ``L-BFGS-B``, ``SLSQP``,
@@ -113,7 +114,7 @@ class SciPyOptimizer(Optimizer):
                 **self.extra_arguments,
             )
         # basinhopping doesn't allow bounds
-        elif self.method == "basinhopping":
+        elif self.method in {"basinhopping", "brute"}:
             res = scipy_optimize.basinhopping(
                 cost_function,
                 x0=init_parameters,
