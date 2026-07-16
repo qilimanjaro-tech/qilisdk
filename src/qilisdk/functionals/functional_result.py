@@ -346,7 +346,10 @@ class FunctionalResult(Result, Generic[S, E, T]):
 
     def __repr__(self) -> str:
         LIMIT = 10
-        out = "- Functional Results: [\n\n"
+        out = ""
+        if self.execution_time is not None:
+            out += f"- Execution Time: {self.execution_time:.6g} s\n\n"
+        out += "- Functional Results: [\n\n"
         out += str(self._readout_results)
         out += "]"
         if self._intermediate_results:
