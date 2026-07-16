@@ -20,12 +20,24 @@
 
 // GCOV_EXCL_BR_START
 
-// Eigen specfic type defs
-typedef Eigen::SparseMatrix<std::complex<double>, Eigen::RowMajor> SparseMatrix;
-typedef Eigen::SparseMatrix<std::complex<double>, Eigen::ColMajor> SparseMatrixCol;
-typedef Eigen::MatrixXcd DenseMatrix;
-typedef Eigen::Triplet<std::complex<double>> Triplet;
-typedef std::vector<Eigen::Triplet<std::complex<double>>> Triplets;
+// Our real and complex types
+#ifdef SINGLE_PRECISION
+typedef float Real;
+#else
+typedef double Real;
+#endif
+typedef std::complex<Real> Complex;
+
+// Eigen specfic type defs (all derived from Complex/Real so they follow the toggle)
+typedef Eigen::SparseMatrix<Complex, Eigen::RowMajor> SparseMatrix;
+typedef Eigen::SparseMatrix<Complex, Eigen::ColMajor> SparseMatrixCol;
+typedef Eigen::Matrix<Complex, Eigen::Dynamic, Eigen::Dynamic> DenseMatrix;
+typedef Eigen::Matrix<Complex, Eigen::Dynamic, 1> DenseVector;
+typedef Eigen::Matrix<Complex, 1, Eigen::Dynamic> DenseRowVector;
+typedef Eigen::Matrix<Real, Eigen::Dynamic, Eigen::Dynamic> RealMatrix;
+typedef Eigen::Matrix<Real, Eigen::Dynamic, 1> RealVector;
+typedef Eigen::Triplet<Complex> Triplet;
+typedef std::vector<Triplet> Triplets;
 
 // Identity matrix constant
 const SparseMatrix I = []() {

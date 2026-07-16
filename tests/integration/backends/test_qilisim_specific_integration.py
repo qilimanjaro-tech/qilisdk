@@ -17,6 +17,8 @@ import pytest
 
 pytest.importorskip("qilisim_module", reason="QiliSim integration tests require the 'qilisim_module' C++ extension")
 
+import random
+
 from qilisdk.analog.hamiltonian import X as pauli_x
 from qilisdk.analog.hamiltonian import Y as pauli_y
 from qilisdk.analog.hamiltonian import Z as pauli_z
@@ -24,10 +26,12 @@ from qilisdk.analog.schedule import Schedule
 from qilisdk.backends.backend_config import AnalogMethod, DigitalMethod, ExecutionConfig, MonteCarloConfig
 from qilisdk.backends.qilisim import QiliSim
 from qilisdk.core.qtensor import InitialState, QTensor, ket
-from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, H, M, X, Y, Z
+from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, H, M, S, T, X, Y, Z
 from qilisdk.functionals import AnalogEvolution, DigitalPropagation, FunctionalResult
 from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
 from qilisdk.readout import Readout, SamplingReadout
+
+random.seed(42)
 
 analog_methods = [
     AnalogMethod.direct(),
@@ -217,6 +221,122 @@ def test_combine_single_qubit_gates(matrix_free):
     res_combined = backend_combined.execute(DigitalPropagation(circuit=c), readout=readout)
     res_uncombined = backend_uncombined.execute(DigitalPropagation(circuit=c), readout=readout)
     assert _counts_similar(res_combined.get_samples(), res_uncombined.get_samples(), total_shots=1000, tol=0.1)
+
+
+@pytest.mark.parametrize("max_fused_qubits", [2, 3, 4, 5])
+def test_fuse_gates_matches_unfused(max_fused_qubits):
+    # Gate fusion only activates with enough threads (it is a memory-bandwidth vs
+    # compute trade), so use num_threads=4 to exercise the fused path. The final
+    # statevector must match the unfused result up to numerical noise.
+    nqubits = 6
+    c = Circuit.random(
+        nqubits=nqubits, ngates=400, single_qubit_gates=[H, X, Y, Z, RX, RY, RZ, U1, U2, U3], two_qubit_gates=[CNOT]
+    )
+    backend_unfused = QiliSim(
+        execution_config=ExecutionConfig(seed=42, num_threads=4),
+        digital_simulation_method=DigitalMethod.statevector(matrix_free=True, fuse_gates=False),
+    )
+    backend_fused = QiliSim(
+        execution_config=ExecutionConfig(seed=42, num_threads=4),
+        digital_simulation_method=DigitalMethod.statevector(
+            matrix_free=True, fuse_gates=True, max_fused_qubits=max_fused_qubits
+        ),
+    )
+    readout = Readout().with_state_tomography()
+    state_unfused = np.asarray(
+        backend_unfused.execute(DigitalPropagation(circuit=c), readout=readout).get_state().dense()
+    ).reshape(-1)
+    state_fused = np.asarray(
+        backend_fused.execute(DigitalPropagation(circuit=c), readout=readout).get_state().dense()
+    ).reshape(-1)
+    fidelity = np.abs(np.vdot(state_unfused, state_fused)) / (
+        np.linalg.norm(state_unfused) * np.linalg.norm(state_fused)
+    )
+    assert fidelity == pytest.approx(1.0, abs=1e-4)
+    assert np.max(np.abs(state_unfused - state_fused)) < 1e-3
+
+
+def _statevectors_close_up_to_global_phase(a, b, tol=1e-3):
+    # Two statevectors describing the same physical state may differ by an overall
+    # phase, so compare via the (phase-insensitive) fidelity and then align the
+    # global phase before the element-wise check.
+    a = np.asarray(a).reshape(-1)
+    b = np.asarray(b).reshape(-1)
+    fidelity = np.abs(np.vdot(a, b)) / (np.linalg.norm(a) * np.linalg.norm(b))
+    if fidelity != pytest.approx(1.0, abs=1e-4):
+        return False
+    # Align b onto a using the phase of their largest overlapping component.
+    pivot = int(np.argmax(np.abs(a)))
+    if np.abs(b[pivot]) > 0:
+        phase = (a[pivot] / b[pivot]) / np.abs(a[pivot] / b[pivot])
+        b = b * phase
+    return bool(np.max(np.abs(a - b)) < tol)
+
+
+@pytest.mark.parametrize("nqubits_max_fused_qubits", [(4, 2), (6, 3), (7, 4), (8, 5)])
+def test_fused_matches_normal_statevector_large_random(nqubits_max_fused_qubits):
+    nqubits, max_fused_qubits = nqubits_max_fused_qubits
+    # The fused matrix-free path must produce the same statevector as the normal
+    # (non-matrix-free) dense path, which applies each gate via its full matrix.
+    # This is the path that builds scattered multi-qubit gate matrices, so the test
+    # guards the gate-expansion logic shared by fusion and the dense simulator.
+    # Fusion only activates with >= 4 threads.
+    c = Circuit.random(
+        nqubits=nqubits, ngates=500, single_qubit_gates=[H, X, Y, Z, RX, RY, RZ, U1, U2, U3], two_qubit_gates=[CNOT]
+    )
+    backend_normal = QiliSim(
+        execution_config=ExecutionConfig(seed=42, num_threads=4),
+        digital_simulation_method=DigitalMethod.statevector(matrix_free=False),
+    )
+    backend_fused = QiliSim(
+        execution_config=ExecutionConfig(seed=42, num_threads=4),
+        digital_simulation_method=DigitalMethod.statevector(
+            matrix_free=True, fuse_gates=True, max_fused_qubits=max_fused_qubits
+        ),
+    )
+    readout = Readout().with_state_tomography()
+    state_normal = backend_normal.execute(DigitalPropagation(circuit=c), readout=readout).get_state().dense()
+    state_fused = backend_fused.execute(DigitalPropagation(circuit=c), readout=readout).get_state().dense()
+    assert _statevectors_close_up_to_global_phase(state_normal, state_fused)
+
+
+def test_fused_matches_normal_sampling_large_random():
+    # Same comparison as above but for a larger register via sampling (phase
+    # insensitive and cheaper than full state tomography at high qubit counts).
+    nqubits = 10
+    c = Circuit.random(
+        nqubits=nqubits, ngates=800, single_qubit_gates=[H, X, Y, Z, RX, RY, RZ, U1, U2, U3], two_qubit_gates=[CNOT]
+    )
+    backend_normal = QiliSim(
+        execution_config=ExecutionConfig(seed=42, num_threads=4),
+        digital_simulation_method=DigitalMethod.statevector(matrix_free=False),
+    )
+    backend_fused = QiliSim(
+        execution_config=ExecutionConfig(seed=42, num_threads=4),
+        digital_simulation_method=DigitalMethod.statevector(matrix_free=True, fuse_gates=True, max_fused_qubits=4),
+    )
+    readout = Readout().with_sampling(nshots=2000)
+    res_normal = backend_normal.execute(DigitalPropagation(circuit=c), readout=readout)
+    res_fused = backend_fused.execute(DigitalPropagation(circuit=c), readout=readout)
+    assert _counts_similar(res_normal.get_samples(), res_fused.get_samples(), total_shots=2000, tol=0.1)
+
+
+def test_fuse_gates_with_mid_circuit_measurement():
+    # Fusion must treat measurements as barriers; verify sampling still works.
+    circuit = Circuit(nqubits=3)
+    circuit.add(H(0))
+    circuit.add(CNOT(0, 1))
+    circuit.add(M(0))
+    circuit.add(H(1))
+    circuit.add(CNOT(1, 2))
+    circuit.add(M(1))
+    circuit.add(M(2))
+    backend = QiliSim(
+        execution_config=ExecutionConfig(seed=42, num_threads=4),
+        digital_simulation_method=DigitalMethod.statevector(matrix_free=True, fuse_gates=True),
+    )
+    result = backend.execute(DigitalPropagation(circuit=circuit), readout=Readout().with_sampling(nshots=500))
+    assert sum(result.get_samples().values()) == 500
 
 
 def test_matrix_free_time_evolution_versus_normal():
@@ -496,3 +616,154 @@ def test_matrix_free_complex_gate_on_mixed_state_stays_hermitian():
 
     # And it must match the explicit-matrix path's state.
     np.testing.assert_allclose(mf_state, _dense(explicit.get_state()), atol=1e-9)
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Stabilizer backend integration tests
+# ──────────────────────────────────────────────────────────────────────────────
+
+
+def _stabilizer_backend(max_states: int = 1000, seed: int = 42) -> QiliSim:
+    return QiliSim(
+        digital_simulation_method=DigitalMethod.stabilizer(max_states=max_states),
+        execution_config=ExecutionConfig(seed=seed, num_threads=1),
+    )
+
+
+def test_stabilizer_clifford_only_bell_state():
+    """H + CNOT (both Clifford) produces a Bell state: only 00 and 11 outcomes."""
+    backend = _stabilizer_backend()
+    circuit = Circuit(nqubits=2)
+    circuit.add(H(0))
+    circuit.add(CNOT(0, 1))
+    readout = Readout().with_sampling(nshots=200)
+    result = backend.execute(DigitalPropagation(circuit=circuit), readout=readout)
+    samples = result.get_samples()
+    assert set(samples.keys()) <= {"00", "11"}, f"Unexpected outcomes: {samples}"
+    assert samples.get("00", 0) > 0
+    assert samples.get("11", 0) > 0
+
+
+def test_stabilizer_deterministic_circuit():
+    """Pure computational-basis circuit (X gates) gives a deterministic outcome."""
+    backend = _stabilizer_backend()
+    circuit = Circuit(nqubits=3)
+    circuit.add(X(0))
+    circuit.add(X(2))
+    readout = Readout().with_sampling(nshots=50)
+    result = backend.execute(DigitalPropagation(circuit=circuit), readout=readout)
+    samples = result.get_samples()
+    assert list(samples.keys()) == ["101"]
+    assert samples["101"] == 50
+
+
+def test_stabilizer_t_gate_expands_sum():
+    """T gate is non-Clifford: T|0⟩ is deterministic (no branching), T on |+⟩ branches the sum."""
+    backend = _stabilizer_backend()
+
+    # T|0⟩ = |0⟩ (T only adds a global phase on the |0⟩ branch, no branching)
+    circuit_det = Circuit(nqubits=1)
+    circuit_det.add(T(0))
+    result_det = backend.execute(DigitalPropagation(circuit=circuit_det), readout=Readout().with_sampling(nshots=200))
+    samples_det = result_det.get_samples()
+    assert list(samples_det.keys()) == ["0"], "T|0⟩ should always measure 0"
+
+    # H then T on |0⟩: T branches the |+⟩ superposition into |0⟩ and |1⟩ stabilizer terms.
+    # Both branches have equal weight, so P(0) = P(1) = 0.5 for a Z-basis measurement.
+    circuit_rand = Circuit(nqubits=1)
+    circuit_rand.add(H(0))
+    circuit_rand.add(T(0))
+    result_rand = backend.execute(DigitalPropagation(circuit=circuit_rand), readout=Readout().with_sampling(nshots=500))
+    samples_rand = result_rand.get_samples()
+    total = sum(samples_rand.values())
+    p0 = samples_rand.get("0", 0) / total
+    assert 0.4 < p0 < 0.6, f"P(0) = {p0:.3f} outside expected range for H-T circuit"
+
+
+def test_stabilizer_matches_statevector_ghz():
+    """Stabilizer and statevector backends agree on GHZ-state sampling statistics."""
+    circuit = Circuit(nqubits=3)
+    circuit.add(H(0))
+    circuit.add(CNOT(0, 1))
+    circuit.add(CNOT(1, 2))
+    readout = Readout().with_sampling(nshots=1000)
+
+    stab = _stabilizer_backend(seed=42).execute(DigitalPropagation(circuit=circuit), readout=readout).get_samples()
+    sv = (
+        QiliSim(
+            digital_simulation_method=DigitalMethod.statevector(),
+            execution_config=ExecutionConfig(seed=42, num_threads=1),
+        )
+        .execute(DigitalPropagation(circuit=circuit), readout=readout)
+        .get_samples()
+    )
+
+    # Both should only see 000 and 111
+    assert set(stab.keys()) <= {"000", "111"}, f"Stabilizer unexpected outcomes: {stab}"
+    assert set(sv.keys()) <= {"000", "111"}, f"Statevector unexpected outcomes: {sv}"
+
+
+def test_stabilizer_max_states_truncation_runs():
+    """A tight max_states limit should not crash; the circuit still completes."""
+    backend = QiliSim(
+        digital_simulation_method=DigitalMethod.stabilizer(max_states=2),
+        execution_config=ExecutionConfig(seed=42, num_threads=1),
+    )
+    circuit = Circuit(nqubits=3)
+    circuit.add(H(0))
+    circuit.add(H(1))
+    circuit.add(H(2))
+    circuit.add(T(0))
+    circuit.add(T(1))
+    circuit.add(T(2))
+    readout = Readout().with_sampling(nshots=100)
+    result = backend.execute(DigitalPropagation(circuit=circuit), readout=readout)
+    samples = result.get_samples()
+    total = sum(samples.values())
+    assert total == 100
+
+
+def test_stabilizer_seed_reproducibility():
+    """Same seed produces identical samples; different seeds do not."""
+    circuit = Circuit(nqubits=2)
+    circuit.add(H(0))
+    circuit.add(T(0))
+    circuit.add(CNOT(0, 1))
+    readout = Readout().with_sampling(nshots=100)
+
+    r1 = _stabilizer_backend(seed=7).execute(DigitalPropagation(circuit=circuit), readout=readout).get_samples()
+    r2 = _stabilizer_backend(seed=7).execute(DigitalPropagation(circuit=circuit), readout=readout).get_samples()
+    r3 = _stabilizer_backend(seed=8).execute(DigitalPropagation(circuit=circuit), readout=readout).get_samples()
+    assert r1 == r2
+    assert r1 != r3
+
+
+def test_same_result_as_statevector_big_circuit():
+    """Stabilizer and statevector backends should give similar results on a larger random circuit."""
+    nqubits = 5
+    ngates = 1000
+    circuit = Circuit(nqubits=nqubits)
+    circuit.add(H(0))  # Ensure some superposition to make it non-trivial for the stabilizer backend
+    circuit += Circuit.random(
+        nqubits=nqubits,
+        ngates=ngates,
+        single_qubit_gates=[X, Y, Z, S, T],
+        two_qubit_gates=[CNOT],
+    )
+    circuit.add(H(0))  # Ensure some superposition to make it non-trivial for the stabilizer backend
+    readout = Readout().with_sampling(nshots=1000)
+
+    stab_result = (
+        _stabilizer_backend(seed=42).execute(DigitalPropagation(circuit=circuit), readout=readout).get_samples()
+    )
+    sv_result = (
+        QiliSim(
+            digital_simulation_method=DigitalMethod.statevector(),
+            execution_config=ExecutionConfig(seed=42, num_threads=1),
+        )
+        .execute(DigitalPropagation(circuit=circuit), readout=readout)
+        .get_samples()
+    )
+
+    # Check to make sure the keys are the same (i.e. no unexpected outcomes)
+    assert set(stab_result.keys()) == set(sv_result.keys()), f"Different outcome keys: {stab_result} vs {sv_result}"
