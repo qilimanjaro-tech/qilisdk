@@ -64,15 +64,16 @@ class DatasetSample:
     inputs: FloatArray
     targets: FloatArray
 
-    def __iter__(self) -> Iterator[tuple[FloatArray, FloatArray]]:
+    def __iter__(self) -> Iterator[FloatArray]:
         """
-        Handy iterator over the inputs and targets
+        Handy iterator over the inputs and targets, so the sample unpacks as
+        ``inputs, targets = sample``.
 
         Yields:
-            tuple[FloatArray, FloatArray]: Yield each input target tuple, in order
+            FloatArray: The inputs array, then the targets array.
         """
-        for i in range(len(self.inputs)):
-            yield self.inputs[i], self.targets[i]
+        yield self.inputs
+        yield self.targets
 
     def __len__(self) -> int:
         """Return the number of time steps in the sample.

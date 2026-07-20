@@ -25,6 +25,7 @@ from qilisdk.ml.datasets import (
     MackeyGlass,
     SantaFeLaser,
 )
+from qilisdk.ml.datasets.dataset import build_prediction_sample
 
 # (dataset factory, expected feature dimension)
 DATASETS = [
@@ -127,3 +128,29 @@ def test_invalid_configuration_raises():
         MackeyGlass(tau=-1.0)
     with pytest.raises(ValueError, match="x0"):
         LogisticMap(x0=2.0)
+
+
+@pytest.mark.parametrize("factory", [Lorenz, MackeyGlass, SantaFeLaser])
+def test_invalid_dt_raises(factory):
+    with pytest.raises(ValueError, match="dt"):
+        factory(dt=0.0)
+
+
+@pytest.mark.parametrize("factory", [Lorenz, MackeyGlass, SantaFeLaser])
+def test_invalid_sample_every_raises(factory):
+    with pytest.raises(ValueError, match="sample_every"):
+        factory(sample_every=0)
+
+
+def test_seed_property():
+    assert NARMA(seed=7).seed == 7
+    assert NARMA().seed is None
+
+
+def test_narma_order_property():
+    assert NARMA(order=12).order == 12
+
+
+def test_build_prediction_sample_invalid_horizon_raises():
+    with pytest.raises(ValueError, match="horizon"):
+        build_prediction_sample(np.arange(10, dtype=np.float64), horizon=0)
