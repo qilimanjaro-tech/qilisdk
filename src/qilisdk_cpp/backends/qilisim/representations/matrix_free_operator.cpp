@@ -18,15 +18,27 @@
 #include <sstream>
 #include <stdexcept>
 #include "../../../libs/pybind.h"
+#if defined(__BMI2__)
+#include <immintrin.h>  // _pdep_u64: deposit anchor-counter bits into free positions
+#endif
+
+// `#pragma omp simd` is an OpenMP 4.0 feature. MSVC's /openmp defines _OPENMP as 200203
+// (OpenMP 2.0) and rejects the simd pragma (error C7660) unless -openmp:experimental is
+// passed, so only emit it when the compiler advertises OpenMP >= 4.0 (201307).
+#if defined(_OPENMP) && _OPENMP >= 201307
+#define QILISIM_OMP_SIMD _Pragma("omp simd")
+#else
+#define QILISIM_OMP_SIMD
+#endif
 
 // GCOV_EXCL_BR_START
 
-const std::complex<double> imag(0.0, 1.0);
-const std::complex<double> imag_conj(0.0, -1.0);
-const double inv_sqrt_2 = 1.0 / std::sqrt(2.0);
+const Complex imag(0.0, 1.0);
+const Complex imag_conj(0.0, -1.0);
+const Real inv_sqrt_2 = 1.0 / std::sqrt(2.0);
 constexpr double pi = 3.14159265358979323846;
-const std::complex<double> t_phase = std::exp(std::complex<double>(0.0, pi / 4.0));
-const std::complex<double> t_phase_conj = std::conj(t_phase);
+const Complex t_phase = std::exp(Complex(0.0, pi / 4.0));
+const Complex t_phase_conj = std::conj(t_phase);
 
 void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationType application_type) const {
     /*
@@ -39,9 +51,6 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
 
     // Precompute things that are used in all branches
     int num_qubits = static_cast<int>(std::log2(output_state.rows()));
-    // QSDK-05 defense-in-depth: indices are validated at parse time, but this
-    // kernel is also reachable via deserialized objects, so guard the shift so
-    // a bad target can never produce an undefined shift / wild mask.
     if (target_qubits.empty()) {
         throw std::out_of_range("MatrixFreeOperator has no target qubit.");
     }
@@ -55,6 +64,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
     long mask = static_cast<long>(1ULL << shift);
     long N = output_state.rows();
     long stride = mask;
+    const long offset_mask = stride - 1;
+    const long block_mask = ~offset_mask;
     long half = N >> 1;
     long dim = 1LL << num_qubits;
 
@@ -65,9 +76,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
 #pragma omp parallel for schedule(static)
 #endif
             for (long k = 0; k < half; ++k) {
-                long block = k / stride;
-                long offset = k % stride;
-                long base = block * (stride << 1);
+                long offset = k & offset_mask;
+                long base = (k & block_mask) << 1;
                 long i = base + offset;
                 long j = i + stride;
                 std::swap(output_state(i), output_state(j));
@@ -77,9 +87,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
 #pragma omp for schedule(static)
 #endif
             for (long k = 0; k < half; ++k) {
-                long block = k / stride;
-                long offset = k % stride;
-                long base = block * (stride << 1);
+                long offset = k & offset_mask;
+                long base = (k & block_mask) << 1;
                 long r0 = base + offset;
                 long r1 = r0 + stride;
                 output_state.row(r0).swap(output_state.row(r1));
@@ -89,9 +98,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
 #pragma omp for schedule(static)
 #endif
             for (long k = 0; k < half; ++k) {
-                long block = k / stride;
-                long offset = k % stride;
-                long base = block * (stride << 1);
+                long offset = k & offset_mask;
+                long base = (k & block_mask) << 1;
                 long c0 = base + offset;
                 long c1 = c0 + stride;
                 output_state.col(c0).swap(output_state.col(c1));
@@ -105,9 +113,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
 #pragma omp for schedule(static)
 #endif
                 for (long k = 0; k < half; ++k) {
-                    long block = k / stride;
-                    long offset = k % stride;
-                    long base = block * (stride << 1);
+                    long offset = k & offset_mask;
+                    long base = (k & block_mask) << 1;
                     long r0 = base + offset;
                     long r1 = r0 + stride;
                     output_state.row(r0).swap(output_state.row(r1));
@@ -116,9 +123,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
 #pragma omp for schedule(static)
 #endif
                 for (long k = 0; k < half; ++k) {
-                    long block = k / stride;
-                    long offset = k % stride;
-                    long base = block * (stride << 1);
+                    long offset = k & offset_mask;
+                    long base = (k & block_mask) << 1;
                     long c0 = base + offset;
                     long c1 = c0 + stride;
                     output_state.col(c0).swap(output_state.col(c1));
@@ -133,12 +139,11 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
 #pragma omp parallel for schedule(static)
 #endif
             for (long k = 0; k < half; ++k) {
-                long block = k / stride;
-                long offset = k % stride;
-                long base = block * (stride << 1);
+                long offset = k & offset_mask;
+                long base = (k & block_mask) << 1;
                 long i = base + offset;
                 long j = i + stride;
-                std::complex<double> temp = output_state(i);
+                Complex temp = output_state(i);
                 output_state(i) = output_state(j) * imag_conj;
                 output_state(j) = temp * imag;
             }
@@ -147,9 +152,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
 #pragma omp for schedule(static)
 #endif
             for (long k = 0; k < half; ++k) {
-                long block = k / stride;
-                long offset = k % stride;
-                long base = block * (stride << 1);
+                long offset = k & offset_mask;
+                long base = (k & block_mask) << 1;
                 long r0 = base + offset;
                 long r1 = r0 + stride;
                 output_state.row(r0).swap(output_state.row(r1));
@@ -161,9 +165,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
 #pragma omp for schedule(static)
 #endif
             for (long k = 0; k < half; ++k) {
-                long block = k / stride;
-                long offset = k % stride;
-                long base = block * (stride << 1);
+                long offset = k & offset_mask;
+                long base = (k & block_mask) << 1;
                 long c0 = base + offset;
                 long c1 = c0 + stride;
                 output_state.col(c0).swap(output_state.col(c1));
@@ -179,9 +182,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
 #pragma omp for schedule(static)
 #endif
                 for (long k = 0; k < half; ++k) {
-                    long block = k / stride;
-                    long offset = k % stride;
-                    long base = block * (stride << 1);
+                    long offset = k & offset_mask;
+                    long base = (k & block_mask) << 1;
                     long r0 = base + offset;
                     long r1 = r0 + stride;
                     output_state.row(r0).swap(output_state.row(r1));
@@ -192,9 +194,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
 #pragma omp for schedule(static)
 #endif
                 for (long k = 0; k < half; ++k) {
-                    long block = k / stride;
-                    long offset = k % stride;
-                    long base = block * (stride << 1);
+                    long offset = k & offset_mask;
+                    long base = (k & block_mask) << 1;
                     long c0 = base + offset;
                     long c1 = c0 + stride;
                     output_state.col(c0).swap(output_state.col(c1));
@@ -211,9 +212,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
 #pragma omp parallel for schedule(static)
 #endif
             for (long k = 0; k < half; ++k) {
-                long block = k / stride;
-                long offset = k % stride;
-                long base = block * (stride << 1);
+                long offset = k & offset_mask;
+                long base = (k & block_mask) << 1;
                 long i = base + offset;
                 output_state(i + stride) *= -1.0;
             }
@@ -222,9 +222,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
 #pragma omp for schedule(static)
 #endif
             for (long r = 0; r < half; ++r) {
-                long block = r / stride;
-                long offset = r % stride;
-                long base = block * (stride << 1);
+                long offset = r & offset_mask;
+                long base = (r & block_mask) << 1;
                 long i = base + offset;
                 output_state.row(i + stride) *= -1.0;
             }
@@ -233,9 +232,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
 #pragma omp for schedule(static)
 #endif
             for (long c = 0; c < half; ++c) {
-                long block = c / stride;
-                long offset = c % stride;
-                long base = block * (stride << 1);
+                long offset = c & offset_mask;
+                long base = (c & block_mask) << 1;
                 long i = base + offset;
                 output_state.col(i + stride) *= -1.0;
             }
@@ -248,9 +246,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
 #pragma omp for schedule(static)
 #endif
                 for (long r = 0; r < half; ++r) {
-                    long block = r / stride;
-                    long offset = r % stride;
-                    long base = block * (stride << 1);
+                    long offset = r & offset_mask;
+                    long base = (r & block_mask) << 1;
                     long i = base + offset;
                     output_state.row(i + stride) *= -1.0;
                 }
@@ -258,9 +255,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
 #pragma omp for schedule(static)
 #endif
                 for (long c = 0; c < half; ++c) {
-                    long block = c / stride;
-                    long offset = c % stride;
-                    long base = block * (stride << 1);
+                    long offset = c & offset_mask;
+                    long base = (c & block_mask) << 1;
                     long i = base + offset;
                     output_state.col(i + stride) *= -1.0;
                 }
@@ -274,13 +270,12 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
 #pragma omp parallel for schedule(static)
 #endif
             for (long k = 0; k < half; ++k) {
-                long block = k / stride;
-                long offset = k % stride;
-                long base = block * (stride << 1);
+                long offset = k & offset_mask;
+                long base = (k & block_mask) << 1;
                 long i = base + offset;
                 long j = i + stride;
-                std::complex<double> temp_i = output_state(i);
-                std::complex<double> temp_j = output_state(j);
+                Complex temp_i = output_state(i);
+                Complex temp_j = output_state(j);
                 output_state(i) = (temp_i + temp_j) * inv_sqrt_2;
                 output_state(j) = (temp_i - temp_j) * inv_sqrt_2;
             }
@@ -289,13 +284,12 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
 #pragma omp for schedule(static)
 #endif
             for (long k = 0; k < half; ++k) {
-                long block = k / stride;
-                long offset = k % stride;
-                long base = block * (stride << 1);
+                long offset = k & offset_mask;
+                long base = (k & block_mask) << 1;
                 long r0 = base + offset;
                 long r1 = r0 + stride;
-                Eigen::RowVectorXcd temp0 = output_state.row(r0);
-                Eigen::RowVectorXcd temp1 = output_state.row(r1);
+                DenseRowVector temp0 = output_state.row(r0);
+                DenseRowVector temp1 = output_state.row(r1);
                 output_state.row(r0) = (temp0 + temp1) * inv_sqrt_2;
                 output_state.row(r1) = (temp0 - temp1) * inv_sqrt_2;
             }
@@ -304,13 +298,12 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
 #pragma omp for schedule(static)
 #endif
             for (long k = 0; k < half; ++k) {
-                long block = k / stride;
-                long offset = k % stride;
-                long base = block * (stride << 1);
+                long offset = k & offset_mask;
+                long base = (k & block_mask) << 1;
                 long c0 = base + offset;
                 long c1 = c0 + stride;
-                Eigen::VectorXcd temp0 = output_state.col(c0);
-                Eigen::VectorXcd temp1 = output_state.col(c1);
+                DenseVector temp0 = output_state.col(c0);
+                DenseVector temp1 = output_state.col(c1);
                 output_state.col(c0) = (temp0 + temp1) * inv_sqrt_2;
                 output_state.col(c1) = (temp0 - temp1) * inv_sqrt_2;
             }
@@ -323,13 +316,12 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
 #pragma omp for schedule(static)
 #endif
                 for (long k = 0; k < half; ++k) {
-                    long block = k / stride;
-                    long offset = k % stride;
-                    long base = block * (stride << 1);
+                    long offset = k & offset_mask;
+                    long base = (k & block_mask) << 1;
                     long r0 = base + offset;
                     long r1 = r0 + stride;
-                    Eigen::RowVectorXcd temp0 = output_state.row(r0);
-                    Eigen::RowVectorXcd temp1 = output_state.row(r1);
+                    DenseRowVector temp0 = output_state.row(r0);
+                    DenseRowVector temp1 = output_state.row(r1);
                     output_state.row(r0) = (temp0 + temp1) * inv_sqrt_2;
                     output_state.row(r1) = (temp0 - temp1) * inv_sqrt_2;
                 }
@@ -337,13 +329,12 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
 #pragma omp for schedule(static)
 #endif
                 for (long k = 0; k < half; ++k) {
-                    long block = k / stride;
-                    long offset = k % stride;
-                    long base = block * (stride << 1);
+                    long offset = k & offset_mask;
+                    long base = (k & block_mask) << 1;
                     long c0 = base + offset;
                     long c1 = c0 + stride;
-                    Eigen::VectorXcd temp0 = output_state.col(c0);
-                    Eigen::VectorXcd temp1 = output_state.col(c1);
+                    DenseVector temp0 = output_state.col(c0);
+                    DenseVector temp1 = output_state.col(c1);
                     output_state.col(c0) = (temp0 + temp1) * inv_sqrt_2;
                     output_state.col(c1) = (temp0 - temp1) * inv_sqrt_2;
                 }
@@ -357,9 +348,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
 #pragma omp parallel for schedule(static)
 #endif
             for (long k = 0; k < half; ++k) {
-                long block = k / stride;
-                long offset = k % stride;
-                long base = block * (stride << 1);
+                long offset = k & offset_mask;
+                long base = (k & block_mask) << 1;
                 long i = base + offset;
                 output_state(i + stride) *= imag;
             }
@@ -368,9 +358,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
 #pragma omp for schedule(static)
 #endif
             for (long r = 0; r < half; ++r) {
-                long block = r / stride;
-                long offset = r % stride;
-                long base = block * (stride << 1);
+                long offset = r & offset_mask;
+                long base = (r & block_mask) << 1;
                 long i = base + offset;
                 output_state.row(i + stride) *= imag;
             }
@@ -379,9 +368,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
 #pragma omp for schedule(static)
 #endif
             for (long c = 0; c < half; ++c) {
-                long block = c / stride;
-                long offset = c % stride;
-                long base = block * (stride << 1);
+                long offset = c & offset_mask;
+                long base = (c & block_mask) << 1;
                 long i = base + offset;
                 output_state.col(i + stride) *= imag_conj;
             }
@@ -394,9 +382,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
 #pragma omp for schedule(static)
 #endif
                 for (long r = 0; r < half; ++r) {
-                    long block = r / stride;
-                    long offset = r % stride;
-                    long base = block * (stride << 1);
+                    long offset = r & offset_mask;
+                    long base = (r & block_mask) << 1;
                     long i = base + offset;
                     output_state.row(i + stride) *= imag;
                 }
@@ -404,9 +391,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
 #pragma omp for schedule(static)
 #endif
                 for (long c = 0; c < half; ++c) {
-                    long block = c / stride;
-                    long offset = c % stride;
-                    long base = block * (stride << 1);
+                    long offset = c & offset_mask;
+                    long base = (c & block_mask) << 1;
                     long i = base + offset;
                     output_state.col(i + stride) *= imag_conj;
                 }
@@ -420,9 +406,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
 #pragma omp parallel for schedule(static)
 #endif
             for (long k = 0; k < half; ++k) {
-                long block = k / stride;
-                long offset = k % stride;
-                long base = block * (stride << 1);
+                long offset = k & offset_mask;
+                long base = (k & block_mask) << 1;
                 long i = base + offset;
                 output_state(i + stride) *= t_phase;
             }
@@ -431,9 +416,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
 #pragma omp for schedule(static)
 #endif
             for (long r = 0; r < half; ++r) {
-                long block = r / stride;
-                long offset = r % stride;
-                long base = block * (stride << 1);
+                long offset = r & offset_mask;
+                long base = (r & block_mask) << 1;
                 long i = base + offset;
                 output_state.row(i + stride) *= t_phase;
             }
@@ -442,9 +426,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
 #pragma omp for schedule(static)
 #endif
             for (long c = 0; c < half; ++c) {
-                long block = c / stride;
-                long offset = c % stride;
-                long base = block * (stride << 1);
+                long offset = c & offset_mask;
+                long base = (c & block_mask) << 1;
                 long i = base + offset;
                 output_state.col(i + stride) *= t_phase_conj;
             }
@@ -457,9 +440,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
 #pragma omp for schedule(static)
 #endif
                 for (long r = 0; r < half; ++r) {
-                    long block = r / stride;
-                    long offset = r % stride;
-                    long base = block * (stride << 1);
+                    long offset = r & offset_mask;
+                    long base = (r & block_mask) << 1;
                     long i = base + offset;
                     output_state.row(i + stride) *= t_phase;
                 }
@@ -467,9 +449,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
 #pragma omp for schedule(static)
 #endif
                 for (long c = 0; c < half; ++c) {
-                    long block = c / stride;
-                    long offset = c % stride;
-                    long base = block * (stride << 1);
+                    long offset = c & offset_mask;
+                    long base = (c & block_mask) << 1;
                     long i = base + offset;
                     output_state.col(i + stride) *= t_phase_conj;
                 }
@@ -548,9 +529,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
 #pragma omp parallel for schedule(static)
 #endif
             for (long k = 0; k < half; ++k) {
-                long block = k / stride;
-                long offset = k % stride;
-                long i = block * (stride << 1) + offset;
+                long offset = k & offset_mask;
+                long i = ((k & block_mask) << 1) + offset;
                 if (i & control_mask) {
                     long j = i ^ mask;
                     if (i < j) {
@@ -623,9 +603,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
 #pragma omp parallel for schedule(static)
 #endif
             for (long k = 0; k < half; ++k) {
-                long block = k / stride;
-                long offset = k % stride;
-                long i = block * (stride << 1) + offset;
+                long offset = k & offset_mask;
+                long i = ((k & block_mask) << 1) + offset;
                 if ((i & control_mask) == control_mask) {
                     long j = i ^ mask;
                     if (i < j) {
@@ -695,9 +674,8 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
 #pragma omp parallel for schedule(static)
 #endif
             for (long k = 0; k < long(half); ++k) {
-                long block = k / stride;
-                long offset = k % stride;
-                long i = block * (stride << 1) + offset;
+                long offset = k & offset_mask;
+                long i = ((k & block_mask) << 1) + offset;
                 if (i & control_mask) {
                     long j = i ^ mask;
                     if (i < j) {
@@ -767,14 +745,13 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
 #pragma omp parallel for schedule(static)
 #endif
             for (long k = 0; k < long(half); ++k) {
-                long block = k / stride;
-                long offset = k % stride;
-                long base = block * (stride << 1);
+                long offset = k & offset_mask;
+                long base = (k & block_mask) << 1;
                 long i = base + offset;
                 if (i & control_mask) {
                     long j = i ^ mask;
-                    std::complex<double> temp_i = output_state(i);
-                    std::complex<double> temp_j = output_state(j);
+                    Complex temp_i = output_state(i);
+                    Complex temp_j = output_state(j);
                     output_state(i) = base_matrix(0, 0) * temp_i + base_matrix(0, 1) * temp_j;
                     output_state(j) = base_matrix(1, 0) * temp_i + base_matrix(1, 1) * temp_j;
                 }
@@ -784,14 +761,13 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
 #pragma omp for schedule(static)
 #endif
             for (long k = 0; k < long(half); ++k) {
-                long block = k / stride;
-                long offset = k % stride;
-                long base = block * (stride << 1);
+                long offset = k & offset_mask;
+                long base = (k & block_mask) << 1;
                 long r0 = base + offset;
                 long r1 = r0 + stride;
                 if (r0 & control_mask) {
-                    Eigen::RowVectorXcd temp0 = output_state.row(r0);
-                    Eigen::RowVectorXcd temp1 = output_state.row(r1);
+                    DenseRowVector temp0 = output_state.row(r0);
+                    DenseRowVector temp1 = output_state.row(r1);
                     output_state.row(r0) = base_matrix(0, 0) * temp0 + base_matrix(0, 1) * temp1;
                     output_state.row(r1) = base_matrix(1, 0) * temp0 + base_matrix(1, 1) * temp1;
                 }
@@ -802,14 +778,13 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
 #pragma omp for schedule(static)
 #endif
             for (long k = 0; k < long(half); ++k) {
-                long block = k / stride;
-                long offset = k % stride;
-                long base = block * (stride << 1);
+                long offset = k & offset_mask;
+                long base = (k & block_mask) << 1;
                 long c0 = base + offset;
                 long c1 = c0 + stride;
                 if (c0 & control_mask) {
-                    Eigen::VectorXcd temp0 = output_state.col(c0);
-                    Eigen::VectorXcd temp1 = output_state.col(c1);
+                    DenseVector temp0 = output_state.col(c0);
+                    DenseVector temp1 = output_state.col(c1);
                     output_state.col(c0) = base_matrix_conj(0, 0) * temp0 + base_matrix_conj(1, 0) * temp1;
                     output_state.col(c1) = base_matrix_conj(0, 1) * temp0 + base_matrix_conj(1, 1) * temp1;
                 }
@@ -824,14 +799,13 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
 #pragma omp for schedule(static)
 #endif
                 for (long k = 0; k < long(half); ++k) {
-                    long block = k / stride;
-                    long offset = k % stride;
-                    long base = block * (stride << 1);
+                    long offset = k & offset_mask;
+                    long base = (k & block_mask) << 1;
                     long r0 = base + offset;
                     long r1 = r0 + stride;
                     if (r0 & control_mask) {
-                        Eigen::RowVectorXcd temp0 = output_state.row(r0);
-                        Eigen::RowVectorXcd temp1 = output_state.row(r1);
+                        DenseRowVector temp0 = output_state.row(r0);
+                        DenseRowVector temp1 = output_state.row(r1);
                         output_state.row(r0) = base_matrix(0, 0) * temp0 + base_matrix(0, 1) * temp1;
                         output_state.row(r1) = base_matrix(1, 0) * temp0 + base_matrix(1, 1) * temp1;
                     }
@@ -841,14 +815,13 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
 #pragma omp for schedule(static)
 #endif
                 for (long k = 0; k < long(half); ++k) {
-                    long block = k / stride;
-                    long offset = k % stride;
-                    long base = block * (stride << 1);
+                    long offset = k & offset_mask;
+                    long base = (k & block_mask) << 1;
                     long c0 = base + offset;
                     long c1 = c0 + stride;
                     if (c0 & control_mask) {
-                        Eigen::VectorXcd temp0 = output_state.col(c0);
-                        Eigen::VectorXcd temp1 = output_state.col(c1);
+                        DenseVector temp0 = output_state.col(c0);
+                        DenseVector temp1 = output_state.col(c1);
                         output_state.col(c0) = base_matrix_conj(0, 0) * temp0 + base_matrix_conj(1, 0) * temp1;
                         output_state.col(c1) = base_matrix_conj(0, 1) * temp0 + base_matrix_conj(1, 1) * temp1;
                     }
@@ -863,13 +836,12 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
 #pragma omp parallel for schedule(static)
 #endif
             for (long k = 0; k < long(half); ++k) {
-                long block = k / stride;
-                long offset = k % stride;
-                long base = block * (stride << 1);
+                long offset = k & offset_mask;
+                long base = (k & block_mask) << 1;
                 long i = base + offset;
                 long j = i + stride;
-                std::complex<double> temp_i = output_state(i);
-                std::complex<double> temp_j = output_state(j);
+                Complex temp_i = output_state(i);
+                Complex temp_j = output_state(j);
                 output_state(i) = base_matrix(0, 0) * temp_i + base_matrix(0, 1) * temp_j;
                 output_state(j) = base_matrix(1, 0) * temp_i + base_matrix(1, 1) * temp_j;
             }
@@ -878,13 +850,12 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
 #pragma omp for schedule(static)
 #endif
             for (long k = 0; k < long(half); ++k) {
-                long block = k / stride;
-                long offset = k % stride;
-                long base = block * (stride << 1);
+                long offset = k & offset_mask;
+                long base = (k & block_mask) << 1;
                 long r0 = base + offset;
                 long r1 = r0 + stride;
-                Eigen::RowVectorXcd temp0 = output_state.row(r0);
-                Eigen::RowVectorXcd temp1 = output_state.row(r1);
+                DenseRowVector temp0 = output_state.row(r0);
+                DenseRowVector temp1 = output_state.row(r1);
                 output_state.row(r0) = base_matrix(0, 0) * temp0 + base_matrix(0, 1) * temp1;
                 output_state.row(r1) = base_matrix(1, 0) * temp0 + base_matrix(1, 1) * temp1;
             }
@@ -894,13 +865,12 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
 #pragma omp for schedule(static)
 #endif
             for (long k = 0; k < long(half); ++k) {
-                long block = k / stride;
-                long offset = k % stride;
-                long base = block * (stride << 1);
+                long offset = k & offset_mask;
+                long base = (k & block_mask) << 1;
                 long c0 = base + offset;
                 long c1 = c0 + stride;
-                Eigen::VectorXcd temp0 = output_state.col(c0);
-                Eigen::VectorXcd temp1 = output_state.col(c1);
+                DenseVector temp0 = output_state.col(c0);
+                DenseVector temp1 = output_state.col(c1);
                 output_state.col(c0) = base_matrix_conj(0, 0) * temp0 + base_matrix_conj(1, 0) * temp1;
                 output_state.col(c1) = base_matrix_conj(0, 1) * temp0 + base_matrix_conj(1, 1) * temp1;
             }
@@ -914,13 +884,12 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
 #pragma omp for schedule(static)
 #endif
                 for (long k = 0; k < long(half); ++k) {
-                    long block = k / stride;
-                    long offset = k % stride;
-                    long base = block * (stride << 1);
+                    long offset = k & offset_mask;
+                    long base = (k & block_mask) << 1;
                     long r0 = base + offset;
                     long r1 = r0 + stride;
-                    Eigen::RowVectorXcd temp0 = output_state.row(r0);
-                    Eigen::RowVectorXcd temp1 = output_state.row(r1);
+                    DenseRowVector temp0 = output_state.row(r0);
+                    DenseRowVector temp1 = output_state.row(r1);
                     output_state.row(r0) = base_matrix(0, 0) * temp0 + base_matrix(0, 1) * temp1;
                     output_state.row(r1) = base_matrix(1, 0) * temp0 + base_matrix(1, 1) * temp1;
                 }
@@ -928,17 +897,254 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
 #pragma omp for schedule(static)
 #endif
                 for (long k = 0; k < long(half); ++k) {
-                    long block = k / stride;
-                    long offset = k % stride;
-                    long base = block * (stride << 1);
+                    long offset = k & offset_mask;
+                    long base = (k & block_mask) << 1;
                     long c0 = base + offset;
                     long c1 = c0 + stride;
-                    Eigen::VectorXcd temp0 = output_state.col(c0);
-                    Eigen::VectorXcd temp1 = output_state.col(c1);
+                    DenseVector temp0 = output_state.col(c0);
+                    DenseVector temp1 = output_state.col(c1);
                     output_state.col(c0) = base_matrix_conj(0, 0) * temp0 + base_matrix_conj(1, 0) * temp1;
                     output_state.col(c1) = base_matrix_conj(0, 1) * temp0 + base_matrix_conj(1, 1) * temp1;
                 }
             }
+        }
+
+        // A general gate acting on k target qubits (e.g. a fused block). We
+        // iterate over the 2^(num_qubits - k) "anchors" (basis states with all
+        // target bits zero); for each, gather the 2^k amplitudes that differ only
+        // in the target bits, multiply by the gate matrix, and scatter back. This
+        // touches the statevector once per fused block instead of once per gate.
+    } else if (control_qubits.empty() && base_matrix.rows() == base_matrix.cols() && base_matrix.rows() == (1LL << target_qubits.size())) {
+        int k = static_cast<int>(target_qubits.size());
+        long dim_k = 1L << k;
+
+        // Full-state bit position of each (sorted) target qubit
+        std::vector<long> target_pos(k);
+        for (int li = 0; li < k; ++li) {
+            target_pos[li] = num_qubits - 1 - target_qubits[li];
+        }
+
+        // Precompute, for each matrix index m, the offset of its target bits
+        std::vector<long> offsets(dim_k, 0);
+        for (long m = 0; m < dim_k; ++m) {
+            long off = 0;
+            for (int li = 0; li < k; ++li) {
+                if ((m >> (k - 1 - li)) & 1L) {
+                    off |= 1L << target_pos[li];
+                }
+            }
+            offsets[m] = off;
+        }
+
+        // Sort the target positions so we can compute the free_mask below
+        std::vector<long> sorted_target_pos = target_pos;
+        std::sort(sorted_target_pos.begin(), sorted_target_pos.end());
+        long num_anchors = 1L << (num_qubits - k);
+
+        // Mask of "free" (non-target) bit positions
+        [[maybe_unused]] long free_mask = (num_qubits >= 64) ? ~0L : ((1L << num_qubits) - 1);
+        for (int li = 0; li < k; ++li) {
+            free_mask &= ~(1L << sorted_target_pos[li]);
+        }
+
+        // A diagonal block can be done more efficiently than a general block, so check for that
+        bool is_diagonal = true;
+        for (long r = 0; r < dim_k && is_diagonal; ++r) {
+            for (long col = 0; col < dim_k; ++col) {
+                if (col != r && base_matrix(r, col) != Complex(0.0, 0.0)) {
+                    is_diagonal = false;
+                    break;
+                }
+            }
+        }
+
+        // Diagonal phases (used by the diagonal fast path)
+        std::vector<Real> diag_re;
+        std::vector<Real> diag_im;
+
+        // Compact CSR view of the gate matrix (general path)
+        std::vector<long> row_start;
+        std::vector<int> col_idx;
+        std::vector<Real> val_re;
+        std::vector<Real> val_im;
+
+        // The diagonal fast path
+        if (is_diagonal) {
+            diag_re.resize(dim_k);
+            diag_im.resize(dim_k);
+            for (long m = 0; m < dim_k; ++m) {
+                Complex v = base_matrix(m, m);
+                diag_re[m] = v.real();
+                diag_im[m] = v.imag();
+            }
+            // The more general sparse path for non-diagonal blocks
+        } else {
+            row_start.assign(dim_k + 1, 0);
+            col_idx.reserve(dim_k * dim_k);
+            val_re.reserve(dim_k * dim_k);
+            val_im.reserve(dim_k * dim_k);
+            for (long r = 0; r < dim_k; ++r) {
+                row_start[r] = static_cast<long>(col_idx.size());
+                for (long col = 0; col < dim_k; ++col) {
+                    Complex v = base_matrix(r, col);
+                    if (v != Complex(0.0, 0.0)) {
+                        col_idx.push_back(static_cast<int>(col));
+                        val_re.push_back(v.real());
+                        val_im.push_back(v.imag());
+                    }
+                }
+            }
+            row_start[dim_k] = static_cast<long>(col_idx.size());
+        }
+
+        if (output_state.cols() == 1) {
+            // Process anchors in batches
+            constexpr long B = 8;
+
+            // When the lowest log2(B) index bits are all free (not targets), it's consecutive and can be done more efficiently
+            const bool contiguous_batch = ((free_mask & (B - 1)) == (B - 1));
+#if defined(_OPENMP)
+#pragma omp parallel
+#endif
+            {
+                // Per-thread scratch, reused across gates instead of re-allocated
+                static thread_local std::vector<Real> in_re;
+                static thread_local std::vector<Real> in_im;
+                static thread_local std::vector<Real> out_re;
+                static thread_local std::vector<Real> out_im;
+                static thread_local std::vector<long> anchors;
+                anchors.resize(B);
+                if (!is_diagonal) {
+                    in_re.resize(dim_k * B);
+                    in_im.resize(dim_k * B);
+                    out_re.resize(dim_k * B);
+                    out_im.resize(dim_k * B);
+                }
+#if defined(_OPENMP)
+#pragma omp for schedule(static)
+#endif
+                for (long c0 = 0; c0 < num_anchors; c0 += B) {
+                    const long bw = std::min<long>(B, num_anchors - c0);
+
+                    // Full-state base index for each anchor in the batch
+                    for (long b = 0; b < bw; ++b) {
+#if defined(__BMI2__)
+                        anchors[b] = static_cast<long>(_pdep_u64(static_cast<unsigned long>(c0 + b), static_cast<unsigned long>(free_mask)));
+#else
+                        long anchor = c0 + b;
+                        for (int s = 0; s < k; ++s) {
+                            long p = sorted_target_pos[s];
+                            long lower = anchor & ((1L << p) - 1);
+                            long upper = anchor & ~((1L << p) - 1);
+                            anchor = lower | (upper << 1);
+                        }
+                        anchors[b] = anchor;
+#endif
+                    }
+
+                    // Diagonal fast path: multiply each amplitude in place by its phase
+                    if (is_diagonal) {
+                        for (long m = 0; m < dim_k; ++m) {
+                            const long off = offsets[m];
+                            const Real dr = diag_re[m];
+                            const Real di = diag_im[m];
+                            if (contiguous_batch) {
+                                Real* __restrict p = reinterpret_cast<Real*>(&output_state(anchors[0] + off));
+                                QILISIM_OMP_SIMD
+                                for (long b = 0; b < bw; ++b) {
+                                    const Real re = p[2 * b];
+                                    const Real im = p[2 * b + 1];
+                                    p[2 * b] = re * dr - im * di;
+                                    p[2 * b + 1] = re * di + im * dr;
+                                }
+                            } else {
+                                for (long b = 0; b < bw; ++b) {
+                                    Complex& a = output_state(anchors[b] + off);
+                                    const Real re = a.real();
+                                    const Real im = a.imag();
+                                    a = Complex(re * dr - im * di, re * di + im * dr);
+                                }
+                            }
+                        }
+                        continue;
+                    }
+
+                    // Gather the 2^k amplitudes for every anchor in the batch
+                    for (long m = 0; m < dim_k; ++m) {
+                        const long off = offsets[m];
+                        Real* ir = &in_re[m * B];
+                        Real* ii = &in_im[m * B];
+                        if (contiguous_batch) {
+                            // anchors[0..bw) are consecutive, so the amplitudes form one contiguous [re,im,...] run
+                            const Real* __restrict src = reinterpret_cast<const Real*>(&output_state(anchors[0] + off));
+                            QILISIM_OMP_SIMD
+                            for (long b = 0; b < bw; ++b) {
+                                ir[b] = src[2 * b];
+                                ii[b] = src[2 * b + 1];
+                            }
+                        } else {
+                            for (long b = 0; b < bw; ++b) {
+                                const Complex amp = output_state(anchors[b] + off);
+                                ir[b] = amp.real();
+                                ii[b] = amp.imag();
+                            }
+                        }
+                    }
+
+                    // Apply the gate matrix to each anchor's gathered amplitudes
+                    for (long r = 0; r < dim_k; ++r) {
+                        Real sr[B];
+                        Real si[B];
+                        for (long b = 0; b < B; ++b) {
+                            sr[b] = 0.0;
+                            si[b] = 0.0;
+                        }
+                        for (long j = row_start[r]; j < row_start[r + 1]; ++j) {
+                            const int col = col_idx[j];
+                            const Real vr = val_re[j];
+                            const Real vi = val_im[j];
+                            const Real* __restrict ir = &in_re[col * B];
+                            const Real* __restrict ii = &in_im[col * B];
+                            QILISIM_OMP_SIMD
+                            for (long b = 0; b < B; ++b) {
+                                sr[b] += vr * ir[b];
+                                sr[b] -= vi * ii[b];
+                                si[b] += vr * ii[b];
+                                si[b] += vi * ir[b];
+                            }
+                        }
+                        Real* __restrict sro = &out_re[r * B];
+                        Real* __restrict sio = &out_im[r * B];
+                        for (long b = 0; b < B; ++b) {
+                            sro[b] = sr[b];
+                            sio[b] = si[b];
+                        }
+                    }
+
+                    // Scatter the results back
+                    for (long m = 0; m < dim_k; ++m) {
+                        const long off = offsets[m];
+                        const Real* sr = &out_re[m * B];
+                        const Real* si = &out_im[m * B];
+                        if (contiguous_batch) {
+                            // Mirror of the contiguous gather: write the B results as one contiguous interleaved run
+                            Real* __restrict dst = reinterpret_cast<Real*>(&output_state(anchors[0] + off));
+                            QILISIM_OMP_SIMD
+                            for (long b = 0; b < bw; ++b) {
+                                dst[2 * b] = sr[b];
+                                dst[2 * b + 1] = si[b];
+                            }
+                        } else {
+                            for (long b = 0; b < bw; ++b) {
+                                output_state(anchors[b] + off) = Complex(sr[b], si[b]);
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            // Fusion is only applied to statevectors, so a dense multi-qubit gate should never reach here
+            throw std::invalid_argument("Dense multi-qubit (fused) operators are only supported for statevectors, not density matrices.");
         }
 
     } else {
@@ -982,12 +1188,16 @@ MatrixFreeOperator::MatrixFreeOperator(const std::string& name, const std::vecto
         this->name = "Z";
     }
 
+    // A dense multi-qubit gate (e.g. produced by gate fusion): a full 2^k x 2^k
+    // unitary acting on k target qubits with no separate control structure.
+    bool is_dense_multi_qubit = this->control_qubits.empty() && this->base_matrix.rows() == this->base_matrix.cols() && this->base_matrix.rows() == (1LL << this->target_qubits.size());
+
     // Checks
     if (this->control_qubits.size() > 1 && !(this->name == "X" && this->control_qubits.size() == 2)) {
         throw py::value_error("MatrixFreeOperator only supports gates with 1 or fewer total control qubits (other than CCX).");
     }
-    if (this->target_qubits.size() != 1 && this->name != "SWAP" && this->name != "M") {
-        throw py::value_error("MatrixFreeOperator requires a gate with exactly 1 target qubit (other than SWAP or M).");
+    if (this->target_qubits.size() != 1 && this->name != "SWAP" && this->name != "M" && !is_dense_multi_qubit) {
+        throw py::value_error("MatrixFreeOperator requires a gate with exactly 1 target qubit (other than SWAP, M, or a dense multi-qubit gate).");
     }
 }
 

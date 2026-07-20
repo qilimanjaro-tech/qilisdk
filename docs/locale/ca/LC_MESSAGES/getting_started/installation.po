@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-16 12:04+0200\n"
+"POT-Creation-Date: 2026-06-29 19:17+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -204,6 +204,123 @@ msgstr ""
 
 #: ../../getting_started/installation.rst:160
 msgid ""
+"There are also a number of extra compile flags that can be set to "
+"enable/disable certain features:"
+msgstr ""
+"També hi ha una sèrie d'indicadors de compilació addicionals que es poden"
+" establir per habilitar/deshabilitar certes funcions:"
+
+#: ../../getting_started/installation.rst:166
+msgid "Flag"
+msgstr "Indicador"
+
+#: ../../getting_started/installation.rst:167
+msgid "What it does"
+msgstr "Què fa"
+
+#: ../../getting_started/installation.rst:168
+msgid "``-Ccmake.define.build_native=ON``"
+msgstr "``-Ccmake.define.build_native=ON``"
+
+#: ../../getting_started/installation.rst:169
+msgid ""
+"Build for the architecture of the current machine for increased "
+"performance. Only recommended if you are building for your own machine."
+msgstr ""
+"Compila per a l'arquitectura de la màquina actual per obtenir un major "
+"rendiment. Només es recomana si esteu compilant per a la vostra pròpia "
+"màquina."
+
+#: ../../getting_started/installation.rst:170
+msgid "``-Ccmake.define.single_precision=ON``"
+msgstr "``-Ccmake.define.single_precision=ON``"
+
+#: ../../getting_started/installation.rst:171
+msgid ""
+"Use single precision (``float``) instead of double precision "
+"(``double``). Slightly faster, but less accurate."
+msgstr ""
+"Utilitza precisió simple (``float``) en lloc de precisió doble "
+"(``double``). Lleugerament més ràpid, però menys precís."
+
+#: ../../getting_started/installation.rst:172
+msgid "``-Ccmake.build-type=Debug``"
+msgstr "``-Ccmake.build-type=Debug``"
+
+#: ../../getting_started/installation.rst:173
+msgid "Enable a debug build (no optimizations, debug symbols)."
+msgstr ""
+"Habilita una compilació de depuració (sense optimitzacions, amb símbols "
+"de depuració)."
+
+#: ../../getting_started/installation.rst:174
+msgid "``-Ccmake.build-type=RelWithDebInfo``"
+msgstr "``-Ccmake.build-type=RelWithDebInfo``"
+
+#: ../../getting_started/installation.rst:175
+msgid "Enable an optimized debug build (optimizations plus debug symbols)."
+msgstr ""
+"Habilita una compilació de depuració optimitzada (optimitzacions més "
+"símbols de depuració)."
+
+#: ../../getting_started/installation.rst:176
+msgid "``-Ccmake.build-type=Release``"
+msgstr "``-Ccmake.build-type=Release``"
+
+#: ../../getting_started/installation.rst:177
+msgid ""
+"Enable a release build (optimizations, no debug symbols). This is the "
+"default."
+msgstr ""
+"Habilita una compilació de llançament (optimitzacions, sense símbols de "
+"depuració). Aquesta és l'opció predeterminada."
+
+#: ../../getting_started/installation.rst:178
+msgid "``-Ccmake.define.tidy=ON``"
+msgstr "``-Ccmake.define.tidy=ON``"
+
+#: ../../getting_started/installation.rst:179
+msgid "Run ``clang-tidy`` on the code during compilation."
+msgstr "Executa ``clang-tidy`` sobre el codi durant la compilació."
+
+#: ../../getting_started/installation.rst:180
+msgid "``-Ccmake.define.verbose=ON``"
+msgstr "``-Ccmake.define.verbose=ON``"
+
+#: ../../getting_started/installation.rst:181
+msgid "Enable (very) verbose output from the C++ code."
+msgstr "Habilita una sortida (molt) detallada del codi C++."
+
+#: ../../getting_started/installation.rst:182
+msgid "``-Ccmake.define.tests=ON``"
+msgstr "``-Ccmake.define.tests=ON``"
+
+#: ../../getting_started/installation.rst:183
+msgid ""
+"Build the C++ test suite, which will then be available as a ``test_cpp`` "
+"executable in the tests directory."
+msgstr ""
+"Compila el conjunt de proves de C++, que després estarà disponible com a "
+"executable ``test_cpp`` al directori de proves."
+
+#: ../../getting_started/installation.rst:184
+msgid "``-Ccmake.define.coverage=ON``"
+msgstr "``-Ccmake.define.coverage=ON``"
+
+#: ../../getting_started/installation.rst:185
+msgid "Enable coverage instrumentation flags."
+msgstr "Habilita els indicadors d'instrumentació de cobertura."
+
+#: ../../getting_started/installation.rst:187
+msgid ""
+"These can be passed to ``uv sync`` by simply appending to the build "
+"command, for example:"
+msgstr ""
+"Aquests es poden passar a ``uv sync`` simplement afegint-los a l'ordre de"
+" compilació, per exemple:"
+
+#: ../../getting_started/installation.rst:193
+msgid ""
 "You then have an environment with the latest version of QiliSDK "
 "installed. If you want to install other things to the environment you'll "
 "need to use pip with uv:"
@@ -211,7 +328,7 @@ msgstr ""
 "Llavors tindreu un entorn amb la darrera versió de QiliSDK instal·lada. "
 "Si voleu instal·lar altres coses a l'entorn, haureu d'usar pip amb uv:"
 
-#: ../../getting_started/installation.rst:167
+#: ../../getting_started/installation.rst:200
 msgid "And then to run a Python script within the environment, you can use:"
 msgstr "I per executar un script de Python dins de l'entorn, podeu usar:"
 
@@ -244,4 +361,7 @@ msgstr "I per executar un script de Python dins de l'entorn, podeu usar:"
 
 #~ msgid "or on MacOS with:"
 #~ msgstr "o a MacOS amb:"
+
+#~ msgid "The available flags are:"
+#~ msgstr "Els indicadors disponibles són:"
 

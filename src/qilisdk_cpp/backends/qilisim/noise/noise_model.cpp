@@ -29,13 +29,30 @@ bool NoiseModelCpp::is_empty() const {
 
 void NoiseModelCpp::add_jump_operator(const SparseMatrix& L) {
     /*
-    Add a jump operator to the cached list.
+    Add a jump operator with a constant (already folded) rate to the cached list.
 
     Args:
-        L (SparseMatrix): The jump operator matrix to add.
+        L (SparseMatrix): The jump operator matrix to add (rate already folded as sqrt(rate)*L).
     */
     has_something = true;
     cached_jump_operators.push_back(L);
+    // Empty series signals "constant rate already folded in; do not re-scale per step".
+    cached_jump_rate_series.emplace_back();
+}
+
+void NoiseModelCpp::add_jump_operator(const SparseMatrix& base, const std::vector<double>& sqrt_rate_series) {
+    /*
+    Add a jump operator with a time-dependent rate to the cached list.
+
+    Args:
+        base (SparseMatrix): The base jump operator matrix (without any rate folded in).
+        sqrt_rate_series (std::vector<double>): The per-step sqrt(rate(t)) multiplier, one entry per
+            time step. The base operator must be scaled by this multiplier at the corresponding step.
+    */
+    has_something = true;
+    has_time_dependent_jumps = true;
+    cached_jump_operators.push_back(base);
+    cached_jump_rate_series.push_back(sqrt_rate_series);
 }
 
 void NoiseModelCpp::add_kraus_operators_global(const std::vector<SparseMatrix>& Ks) {
@@ -94,6 +111,27 @@ const std::vector<SparseMatrix>& NoiseModelCpp::get_jump_operators() const {
         const std::vector<SparseMatrix>&: The cached jump operators.
     */
     return cached_jump_operators;
+}
+
+const std::vector<std::vector<double>>& NoiseModelCpp::get_jump_rate_series() const {
+    /*
+    Get the per-step sqrt(rate(t)) multiplier series for each jump operator.
+
+    Returns:
+        const std::vector<std::vector<double>>&: Series aligned by index with the jump operators;
+            an empty inner vector means the operator's constant rate is already folded in.
+    */
+    return cached_jump_rate_series;
+}
+
+bool NoiseModelCpp::has_time_dependent_rates() const {
+    /*
+    Check whether any jump operator has a time-dependent rate.
+
+    Returns:
+        bool: True if at least one jump operator carries a per-step rate series.
+    */
+    return has_time_dependent_jumps;
 }
 
 const std::vector<std::vector<SparseMatrix>>& NoiseModelCpp::get_kraus_operators_global() const {

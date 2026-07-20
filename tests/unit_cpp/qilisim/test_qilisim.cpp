@@ -624,6 +624,33 @@ _reservoir = QuantumReservoir(
     EXPECT_TRUE(py::hasattr(result, "intermediate_results"));
 }
 
+TEST_F(ExecuteReservoirTest, ReservoirRunsWithQubitReset) {
+    // With qubits_to_reset set, the post-layer density matrix is partial-traced over those qubits.
+    // |0><0| evolved under Z stays diagonal with exact-zero off-diagonal entries, so the reset loop
+    // exercises the fast path that skips zero entries.
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirLayer
+from qilisdk.analog.schedule import Schedule
+from qilisdk.analog.hamiltonian import Z
+from qilisdk.core.qtensor import QTensor
+import scipy.sparse as sp, numpy as np
+
+_sched_reset = Schedule(hamiltonians={"h0": Z(0)}, dt=0.1, total_time=0.3)
+_layer_reset = ReservoirLayer(evolution_dynamics=_sched_reset, qubits_to_reset=[0])
+_rho_reset = QTensor(sp.csr_matrix(np.array([[1.+0j, 0], [0, 0]], dtype=complex)))
+_reservoir_reset = QuantumReservoir(
+    initial_state=_rho_reset,
+    reservoir_layer=_layer_reset,
+    input_per_layer=[{}]
+)
+    )");
+    py::object result;
+    ASSERT_NO_THROW(result = sim.execute_quantum_reservoir(py::globals()["_reservoir_reset"], py::list(), py::none(), empty_solver_params()));
+    EXPECT_TRUE(py::hasattr(result, "readout_results"));
+    EXPECT_TRUE(py::hasattr(result, "intermediate_results"));
+}
+
 TEST_F(ExecuteTimeEvolutionTest, VariationalExponential_NonUniformInitialState_Throws) {
     py::gil_scoped_acquire gil;
     py::exec(R"(

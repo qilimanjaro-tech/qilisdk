@@ -231,9 +231,11 @@ py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, co
         // Common between methods
         SparseMatrix rho_0 = parse_initial_state(initial_state, config.get_atol(), n_qubits);
         int nqubits = static_cast<int>(std::log2(rho_0.rows()));
-        NoiseModelCpp noise_model_cpp = parse_noise_model(noise_model, nqubits, config.get_atol());
-        std::vector<std::vector<double>> parameters_list = parse_coefficients(schedule, hamiltonians_keys, steps);
+        // Parse the time steps before the noise model so time-dependent Lindblad rates can be
+        // evaluated at the schedule time points.
         std::vector<double> step_list = parse_time_steps(steps);
+        NoiseModelCpp noise_model_cpp = parse_noise_model(noise_model, nqubits, config.get_atol(), py::none(), &step_list);
+        std::vector<std::vector<double>> parameters_list = parse_coefficients(schedule, hamiltonians_keys, steps);
 
         // Depending on the method, call the internal implementation
         std::vector<DenseMatrix> intermediate_rhos;
@@ -447,7 +449,7 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
 
                 for (Eigen::Index row = 0; row < state.rows(); ++row) {
                     for (Eigen::Index col = 0; col < state.cols(); ++col) {
-                        if (state(row, col) == std::complex<double>(0.0, 0.0)) {
+                        if (state(row, col) == Complex(0.0, 0.0)) {
                             continue;
                         }
 
