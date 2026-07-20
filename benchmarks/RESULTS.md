@@ -1,0 +1,75 @@
+# sr_solve GPU optimization — benchmark results
+
+Microbenchmark of `qilisdk::gpu::sr_solve` (the device-resident stochastic
+reconfiguration solve called once per ODE RHS evaluation in `lindblad_rhs_gpu`).
+
+## Setup
+
+- **GPU:** NVIDIA GeForce RTX 3050 Laptop (GA107, consumer — FP64 at ~1/64 of FP32).
+- **CPU baseline:** Eigen `LLT`, `-O3 -march=x86-64-v3` (AVX2+FMA), double precision.
+- **Harness:** `benchmarks/bench_sr_solve.cpp`, 100 timed GPU iters + 10 warmup per size,
+  each size validated against the Eigen CPU reference (all **PASS**, max err < 1e-9).
+- **Method:** identical harness built against `gpu.cpp` at `HEAD~1` (before, per-call
+  `DeviceBuffer`) vs `HEAD` (after, persistent `DevicePool`).
+
+## Result 1 — wall-clock latency (median µs per solve)
+
+| N_s | p | before (µs) | after (µs) | Δ | GPU vs CPU (after) |
+|----:|--:|----:|----:|--:|--:|
+| 1000 | 32  | 975.9  | 958.4  | −1.8% | 0.07× (CPU wins) |
+| 1000 | 64  | 546.5  | 652.1  | noise | 0.29× |
+| 1000 | 128 | 1403.0 | 1123.9 | −20% (mostly noise) | 0.67× |
+| 1000 | 256 | 3164.6 | 3072.0 | −2.9% | 0.84× |
+| 1000 | 512 | 9271.4 | 9013.3 | −2.8% | 1.36× |
+| 4000 | 256 | 8602.8 | 8370.4 | −2.7% | 1.64× |
+| 4000 | 512 | 28266  | 28113  | −0.5% | 2.09× |
+
+**Opt #1 gives a consistent but small (~1–3%) latency improvement** — and the best-case
+(min) times at 1000:128 are near-identical (1109 → 1101 µs), i.e. <1%. The GPU only beats
+the CPU at large sizes; for small/medium problems the FP64 consumer GPU loses to AVX2.
+
+## Result 2 — the point of opt #1: CUDA API call counts (nsys, N_s=1000 p=128, 111 solves)
+
+| API | before (calls) | after (calls) | per-solve |
+|-----|---:|---:|----|
+| `cudaMalloc` | **1,006** | **16** | ~9 → ~0 |
+| `cudaFree`   | **1,002** | **3**  | ~9 → ~0 |
+
+Opt #1 does exactly what it set out to: the per-call allocation churn is gone
+(steady-state solves allocate nothing). **But it barely moves wall-clock**, because on
+this driver the CUDA caching allocator already served repeated same-size `cudaMalloc`
+in ~1 µs (before: median `cudaMalloc` 1.0 µs, `cudaFree` 0.9 µs → ~17 µs/solve of
+alloc/free, small next to a ~1 ms+ solve). Opt #1 is still worth keeping: it removes
+~2,000 driver round-trips, is robust to allocators *without* caching / under
+fragmentation, avoids mid-evolution allocation stalls, and is a prerequisite for pinned
+host buffers (opt #4).
+
+## Result 3 — where the time actually goes (nsys, after, per solve)
+
+GPU kernel time is dominated by the two big FP64 kernels:
+
+| Kernel | % GPU time | µs/solve |
+|--------|---:|---:|
+| Cholesky factor (`getrf_wo_pivot` / potrf) | **48.0%** | 684 |
+| GEMM `OᵀO` (`cutlass d884gemm`, FP64) | **40.2%** | 573 |
+| triangular solves (potrs `trsm`) | 7.5% | 108 |
+| gemv / scal / axpy / syr (level-1/2) | ~4% | ~45 |
+
+On the CPU-side API timeline, **`cudaMemcpy` is 62% of API time** (777 calls; blocking
+H2D of `O` up to 1.3 ms from pageable memory + blocking readbacks).
+
+## Conclusion & reprioritization
+
+The measurement reorders the optimization plan from the original review:
+
+1. **FP64 compute is the bottleneck** (Cholesky 48% + GEMM 40% = ~88% of GPU time),
+   because this is a consumer GPU with 1/64 FP64. This is why the GPU only wins at large
+   sizes.
+2. **Opt #2 (`cublasDsyrk` instead of `Dgemm`)** — halves the GEMM flops (~40% → ~20% of
+   GPU time) and matches the "lower-triangle only" usage. Best low-risk compute win. **Do next.**
+3. **Opt #4 (pinned host memory + async, upload int8 not double)** — attacks the 62% API
+   memcpy cost. Now cheap to add since buffers are persistent.
+4. **Opt #5 (size-gating)** — for small p the GPU loses to CPU; gate the GPU path on a
+   size threshold to avoid regressions.
+5. **Opt #1 (this change)** — architecturally correct and kept, but not the perf lever on
+   this hardware. Its win would be larger on allocators without caching or under memory pressure.
