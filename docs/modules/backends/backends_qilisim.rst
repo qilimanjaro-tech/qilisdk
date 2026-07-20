@@ -223,7 +223,6 @@ optional Monte Carlo trajectory sampling for open-system simulations.
 - ``measurement_collapse`` controls whether measurements collapse the statevector in place
   (relevant for mid-circuit measurement and reservoir computing); defaults to ``False``.
 - ``gpu=True`` enables GPU acceleration if a CUDA-capable device is available; defaults to ``False``. 
-  Right now only the Variational Annealing method supports GPU acceleration.
 
 .. code-block:: python
 
@@ -255,3 +254,34 @@ noise channels:
     nm.add(Depolarizing(probability=1e-3))
 
     backend = QiliSim(noise_model=nm)
+
+GPU acceleration
+-------------------
+
+Some simulation methods in QiliSim support GPU acceleration if a CUDA-capable device is available.
+These require the ``cuda`` extra to be installed:
+
+.. code-block:: console
+
+    pip install qilisdk[cuda13]
+
+.. list-table::
+    :header-rows: 1
+    :widths: 35 65
+  
+    * - Method
+      - GPU support
+    * - :meth:`AnalogMethod.direct() <qilisdk.backends.backend_config.AnalogMethod.direct>`
+      - |n|
+    * - :meth:`AnalogMethod.integrator() <qilisdk.backends.backend_config.AnalogMethod.integrator>`
+      - |n|
+    * - :meth:`AnalogMethod.adaptive_integrator() <qilisdk.backends.backend_config.AnalogMethod.adaptive_integrator>`
+      - |n|
+    * - :meth:`AnalogMethod.arnoldi() <qilisdk.backends.backend_config.AnalogMethod.arnoldi>`
+      - |n|
+    * - :meth:`AnalogMethod.variational_annealing() <qilisdk.backends.backend_config.AnalogMethod.variational_annealing>`
+      - |y|
+    * - :meth:`DigitalMethod.statevector() <qilisdk.backends.backend_config.DigitalMethod.statevector>`
+      - |n|
+    * - :meth:`DigitalMethod.stabilizer() <qilisdk.backends.backend_config.DigitalMethod.stabilizer>`
+      - |n|
