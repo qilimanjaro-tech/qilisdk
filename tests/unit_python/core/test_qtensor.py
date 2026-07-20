@@ -1242,12 +1242,14 @@ def test_magic_is_normalization_invariant():
 
 def test_magic_rejects_operators():
     """magic() is only defined for pure states."""
+    operator = QTensor.identity(2)
     with pytest.raises(ValueError, match="pure states"):
-        QTensor.identity(2).magic(2)
+        operator.magic(2)
 
 
 @pytest.mark.parametrize("alpha", [0.0, -1.0])
 def test_magic_rejects_non_positive_alpha(alpha):
     """The Rényi index must be positive."""
+    state = QTensor.zero(2)
     with pytest.raises(ValueError, match="alpha must be positive"):
-        QTensor.zero(2).magic(alpha)
+        state.magic(alpha)
