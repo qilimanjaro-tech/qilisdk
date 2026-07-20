@@ -252,21 +252,35 @@ py::object construct_result_object(const DenseMatrix& state_dense, const py::obj
         py::value_error: If an unsupported readout method is provided.
     */
     py::list results;
-    py::array final_state_numpy = to_numpy(state_dense);
 
+    // Only compute this once and only if we actually use it
+    py::array final_state_numpy;
+    bool final_state_numpy_ready = false;
+    auto state_numpy = [&]() -> py::array& {
+        if (!final_state_numpy_ready) {
+            final_state_numpy = to_numpy(state_dense);
+            final_state_numpy_ready = true;
+        }
+        return final_state_numpy;
+    };
+
+    // For each reachout method
     for (py::handle ro_handle : readout) {
         py::object ro = py::reinterpret_borrow<py::object>(ro_handle);
 
+        // If it's a state tomography readout, convert the state to a QTensor and return it
         if (py::isinstance(ro, StateTomographyReadout)) {
             std::string method = ro.attr("method").cast<std::string>();
             if (method != "exact") {
                 throw py::value_error("State Tomography methods that are not exact are not supported yet.");
             }
-            results.append(StateTomographyReadoutResult("state"_a = QTensor(final_state_numpy)));
+            results.append(StateTomographyReadoutResult("state"_a = QTensor(state_numpy())));
 
+            // If we have an expectation readout, use the code on the Python side
         } else if (py::isinstance(ro, ExpectationReadout)) {
-            results.append(ExpectationReadoutResult.attr("from_state")("expectation_readout"_a = py::module_::import("copy").attr("copy")(ro), "state"_a = QTensor(final_state_numpy)));
+            results.append(ExpectationReadoutResult.attr("from_state")("expectation_readout"_a = py::module_::import("copy").attr("copy")(ro), "state"_a = QTensor(state_numpy())));
 
+            // If we have a sampling readout, sample from the state and return the counts directly
         } else if (py::isinstance(ro, SamplingReadout)) {
             int n_shots = ro.attr("nshots").cast<int>();
             bool expand_samples = ro.attr("expand_samples").cast<bool>();
@@ -336,13 +350,14 @@ std::vector<MatrixFreeHamiltonian> parse_hamiltonians_matrix_free(int nqubits, c
     return H_list;
 }
 
-std::vector<SparseMatrix> parse_hamiltonians(const py::object& Hs, double atol) {
+std::vector<SparseMatrix> parse_hamiltonians(const py::object& Hs, double atol, int nqubits) {
     /*
-    Extract Hamiltonian matrices from a list of QTensor objects.
+    Extract Hamiltonian matrices from a list of Hamiltonian objects.
 
     Args:
-        Hs (py::object): A list of QTensor Hamiltonians.
+        Hs (py::object): A list of Hamiltonian objects.
         atol (double): Absolute tolerance for numerical operations.
+        nqubits (int): The total number of qubits in the system.
 
     Returns:
         std::vector<SparseMatrix>: The list of Hamiltonian sparse matrices.
@@ -352,7 +367,7 @@ std::vector<SparseMatrix> parse_hamiltonians(const py::object& Hs, double atol) 
     */
     std::vector<SparseMatrix> hamiltonians;
     for (auto& hamiltonian : Hs) {
-        py::object spm = hamiltonian.attr("to_matrix")();
+        py::object spm = hamiltonian.attr("to_qtensor")("total_nqubits"_a = nqubits).attr("data");
         SparseMatrix H = from_spmatrix(spm, atol);
         hamiltonians.push_back(H);
     }

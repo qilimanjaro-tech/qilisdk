@@ -19,5 +19,6 @@
 
 std::vector<Gate> combine_single_qubit_gates(const std::vector<Gate>& gates);
 std::vector<Gate> fuse_gates(const std::vector<Gate>& gates, int max_fused_qubits);
+int auto_max_fused_qubits(int n_qubits);
 
 // GCOV_EXCL_BR_STOP

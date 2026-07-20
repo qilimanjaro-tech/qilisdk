@@ -17,8 +17,54 @@
 #include <algorithm>
 #include <map>
 #include <set>
+#if defined(__linux__)
+#include <unistd.h>
+#endif
 
 // GCOV_EXCL_BR_START
+
+int auto_max_fused_qubits(int n_qubits) {
+    /*
+    Choose a fusion depth automatically from the qubit count.
+
+    If the number of qubits is small enough that the entire state vector fits in the last-level cache,
+    we can afford to fuse fewer qubits (4) because the state vector is already cache-resident.
+    If the number of qubits is larger, we fuse more qubits (7) to reduce the number of matrix-vector multiplications and memory accesses.
+
+    Args:
+        n_qubits (int): The number of qubits in the circuit.
+
+    Returns:
+        int: The chosen maximum number of qubits a fused block may span.
+    */
+
+    // A statevector amplitude is one complex number. We only need an order-of-magnitude
+    // size estimate to decide cache- vs DRAM-resident; assuming 16 bytes (complex<double>)
+    // is fine, single precision merely shifts the crossover by one qubit.
+    constexpr long long bytes_per_amplitude = 16;
+
+    // Estimate the last-level cache size, falling back to 16 MiB where it can't be queried.
+    long long llc_bytes = 16LL * 1024 * 1024;
+#if defined(_SC_LEVEL3_CACHE_SIZE)
+    long detected = sysconf(_SC_LEVEL3_CACHE_SIZE);
+    if (detected > 0) {
+        llc_bytes = static_cast<long long>(detected);  // GCOV_EXCL_LINE (depends on host L3 cache reporting)
+    }
+#endif
+    const long long llc_amplitudes = llc_bytes / bytes_per_amplitude;
+
+    // Check if the state vector fits in the last-level cache
+    const bool cache_resident = (n_qubits < 62) && ((1LL << n_qubits) <= llc_amplitudes);
+    int k = cache_resident ? 4 : 7;
+
+    // Never fuse more qubits than exist, and cap the dense block size
+    k = std::min(k, n_qubits);
+    k = std::min(k, 8);
+    if (k < 1) {
+        k = 1;
+    }
+    return k;
+}
 
 std::vector<Gate> combine_single_qubit_gates(const std::vector<Gate>& gates) {
     /*
