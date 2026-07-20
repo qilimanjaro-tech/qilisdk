@@ -117,8 +117,9 @@ def test_chaotic_series_have_nontrivial_variation():
 
 @pytest.mark.parametrize(("factory", "_features"), DATASETS)
 def test_invalid_npoints_raises(factory, _features):
+    dataset = factory()
     with pytest.raises(ValueError, match="npoints"):
-        factory().generate(0)
+        dataset.generate(0)
 
 
 def test_invalid_configuration_raises():
@@ -152,5 +153,6 @@ def test_narma_order_property():
 
 
 def test_build_prediction_sample_invalid_horizon_raises():
+    series = np.arange(10, dtype=np.float64)
     with pytest.raises(ValueError, match="horizon"):
-        build_prediction_sample(np.arange(10, dtype=np.float64), horizon=0)
+        build_prediction_sample(series, horizon=0)
