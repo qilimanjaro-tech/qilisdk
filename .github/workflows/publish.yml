@@ -158,7 +158,7 @@ jobs:
           ${{ inputs.dry_run && '--dry-run' || '' }}
 
   deploy-codeartifacts:
-    name: Publish to AWS Code Artifacts
+    name: Publish to AWS CodeArtifact
     runs-on: ubuntu-latest
     needs: [build-wheels, build-sdist]
     if: ${{ (inputs.index || 'pypi') == 'codeartifacts' }}
@@ -206,6 +206,7 @@ jobs:
           ls -lh dist
           uvx twine check dist/*
       - name: Publish to CodeArtifact
+        if: ${{ !inputs.dry_run }}
         run: |
           export TWINE_USERNAME=aws
           export TWINE_PASSWORD=$(aws codeartifact get-authorization-token \
