@@ -127,6 +127,14 @@ docs = [
 [tool.uv]
 # openfermion 1.7.1 caps requests~=2.32.2; override until upstream loosens.
 override-dependencies = ["nbconvert >= 7.17.0", "requests>=2.33.0"]
+# Floor recurring transitive CVE offenders so a generic re-resolve cannot regress them.
+constraint-dependencies = [
+    "mistune>=3.3.0",             # high
+    "bleach>=6.4.0",
+    "cryptography>=48.0.1",       # high
+    "pydantic-settings>=2.14.2",
+    "tornado>=6.5.7",
+]
 conflicts = [
     [
       { extra = "cuda12" },
