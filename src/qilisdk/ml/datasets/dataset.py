@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Callable, Iterator, TypeAlias, TypeVar
+from typing import TYPE_CHECKING, Callable, Iterator, TypeAlias, TypeVar, cast
 
 import numpy as np
 
@@ -48,27 +48,28 @@ def rk4_step(state: State, dt: float, deriv: Callable[[State], State]) -> State:
         State: The state advanced by one step, ``y_{i+1}``.
     """
     k1 = deriv(state)
-    k2 = deriv(state + 0.5 * dt * k1)
-    k3 = deriv(state + 0.5 * dt * k2)
-    k4 = deriv(state + dt * k3)
-    return state + (dt / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4)
+    k2 = deriv(cast("State", state + 0.5 * dt * k1))
+    k3 = deriv(cast("State", state + 0.5 * dt * k2))
+    k4 = deriv(cast("State", state + dt * k3))
+    return cast("State", state + (dt / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4))
 
 
 @dataclass(frozen=True)
 class DatasetSample:
-    """A generated batch of samples produced by a :class:`Dataset`.
+    """
+    A generated batch of samples produced by a :class:`Dataset`.
     A sample is an ``(inputs, targets)`` pair.
     """
 
     inputs: FloatArray
     targets: FloatArray
 
-    def __iter__(self) -> Iterator[FloatArray]:
+    def __iter__(self) -> Iterator[tuple[FloatArray, FloatArray]]:
         """
         Handy iterator over the inputs and targets
 
         Yields:
-            FloatArray: Yield each input target tuple, in order
+            tuple[FloatArray, FloatArray]: Yield each input target tuple, in order
         """
         for i in range(len(self.inputs)):
             yield self.inputs[i], self.targets[i]

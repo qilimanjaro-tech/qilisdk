@@ -13,6 +13,8 @@
 # limitations under the License.
 from __future__ import annotations
 
+from typing import cast
+
 import numpy as np
 
 from qilisdk.ml.datasets.dataset import Dataset, DatasetSample, FloatArray, build_prediction_sample, rk4_step
@@ -57,7 +59,7 @@ def integrate_lorenz(
     traj = np.empty((n_steps + 1, 3), dtype=np.float64)
     traj[0] = np.asarray(initial_state, dtype=np.float64)
     for i in range(n_steps):
-        traj[i + 1] = rk4_step(traj[i], dt, deriv)
+        traj[i + 1] = rk4_step(cast("FloatArray", traj[i]), dt, deriv)
     return traj
 
 
