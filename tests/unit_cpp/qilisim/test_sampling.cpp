@@ -54,17 +54,17 @@ SparseMatrix hadamard2() {
     return m;
 }
 
-SparseMatrix zeroStateSparse(int n_qubits) {
+SparseMatrixCol zeroStateSparse(int n_qubits) {
     long dim = 1L << n_qubits;
-    SparseMatrix m(dim, 1);
+    SparseMatrixCol m(dim, 1);
     m.insert(0, 0) = cx(1, 0);
     m.makeCompressed();
     return m;
 }
 
-SparseMatrix zeroStateDenseSparse(int n_qubits) {
+SparseMatrixCol zeroStateDenseSparse(int n_qubits) {
     long dim = 1L << n_qubits;
-    SparseMatrix m(dim, dim);
+    SparseMatrixCol m(dim, dim);
     m.insert(0, 0) = cx(1, 0);
     m.makeCompressed();
     return m;
@@ -318,6 +318,22 @@ TEST_F(SamplingTest, XGateOnQubit0_AllCountsAre10) {
     EXPECT_EQ(counts.at("10"), 1000);
 }
 
+TEST_F(SamplingTest, FusionWithSingleQubitGateCombiningEnabled) {
+    int n = 2;
+    QiliSimConfig cfg_fuse = defaultConfig();
+    cfg_fuse.set_fuse_gates(true);
+    cfg_fuse.set_combine_single_qubit_gates(true);
+    cfg_fuse.set_num_threads(4);
+    std::vector<Gate> gates = {makeX(0), makeX(0), makeX(1)};
+    std::vector<bool> measure = {true, true};
+    DenseMatrix state;
+    std::vector<py::object> intermediate_results;
+    sampling(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfg_fuse, readout);
+    std::map<std::string, int> counts = construct_samples(state, n, 1000, noNoise, cfg_fuse, measure);
+    ASSERT_EQ(counts.size(), 1u);
+    EXPECT_EQ(counts.at("01"), 1000);
+}
+
 TEST_F(SamplingTest, DoubleXGateOnQubit0_AllCountsAre00_NoCache) {
     int n = 2;
     std::vector<Gate> gates = {makeX(0), makeX(0)};
@@ -356,6 +372,22 @@ TEST_F(SamplingTest, XOnBothQubits_AllCountsAre11) {
     std::map<std::string, int> counts = construct_samples(state, n, 1000, noNoise, cfg, measure);
     ASSERT_EQ(counts.size(), 1u);
     EXPECT_EQ(counts.at("11"), 1000);
+}
+
+TEST_F(SamplingTest, UnnormalizedStatevector_IsRenormalized) {
+    // A statevector whose probabilities sum to 2 (not 1) must be renormalized before sampling; all
+    // shots are still accounted for and the two equally weighted outcomes are both produced.
+    int n = 1;
+    DenseMatrix state(2, 1);
+    state(0, 0) = cx(1, 0);
+    state(1, 0) = cx(1, 0);
+    std::vector<bool> measure = {true};
+    std::map<std::string, int> counts = construct_samples(state, n, 1000, noNoise, cfg, measure);
+    int total = 0;
+    for (const auto& [bitstring, count] : counts) {
+        total += count;
+    }
+    EXPECT_EQ(total, 1000);
 }
 
 TEST_F(SamplingTest, HadamardOnSingleQubit_ApproxFiftyFifty) {
@@ -685,7 +717,7 @@ TEST_F(SamplingMonteCarloTest, MonteCarloEnabled_ProducesNonDeterministicCounts)
     const int shots = 1000;
     QiliSimConfig cfgMC = cfg;
     cfgMC.set_monte_carlo(true);
-    SparseMatrix rho_mixed(2, 2);
+    SparseMatrixCol rho_mixed(2, 2);
     rho_mixed.insert(0, 0) = cx(0.5, 0);
     rho_mixed.insert(1, 1) = cx(0.5, 0);
     rho_mixed.makeCompressed();
@@ -704,7 +736,7 @@ TEST_F(SamplingMonteCarloTest, MatrixFreeMonteCarloEnabled_ProducesNonDeterminis
     const int shots = 1000;
     QiliSimConfig cfgMC = cfg;
     cfgMC.set_monte_carlo(true);
-    SparseMatrix rho_mixed(2, 2);
+    SparseMatrixCol rho_mixed(2, 2);
     rho_mixed.insert(0, 0) = cx(0.5, 0);
     rho_mixed.insert(1, 1) = cx(0.5, 0);
     rho_mixed.makeCompressed();
@@ -716,13 +748,50 @@ TEST_F(SamplingMonteCarloTest, MatrixFreeMonteCarloEnabled_ProducesNonDeterminis
 }
 
 TEST_F(SamplingMatrixFreeTest, BadGate_ThrowsException) {
-    // MatrixFreeOperator rejects gates with != 1 target qubit (unless SWAP).
+    // MatrixFreeOperator rejects multi-target gates unless they are SWAP, M, or a
+    // dense 2^k x 2^k block (gate fusion). A 2-target gate carrying a 2x2 matrix is
+    // none of these (its matrix doesn't match the target count), so it is rejected.
     // sampling() has no gate-name validation, so this test only applies to matrix-free.
     int n = 2;
-    std::vector<Gate> gates = {Gate("BadGate", SparseMatrix(4, 4), {}, {0, 1}, {})};
+    std::vector<Gate> gates = {Gate("BadGate", SparseMatrix(2, 2), {}, {0, 1}, {})};
     DenseMatrix state;
     std::vector<py::object> intermediate_results;
     EXPECT_ANY_THROW(sampling_matrix_free(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfg, readout));
+}
+
+TEST_F(SamplingMatrixFreeTest, GateFusionEnabled_MatchesUnfusedResult) {
+    // With fusion enabled (statevector, no noise, >= 4 threads) the matrix-free
+    // path fuses runs of gates into dense blocks. The sampled distribution must
+    // match the unfused path. Two H gates on each of two qubits return to |00>.
+    int n = 2;
+    std::vector<Gate> gates = {makeH(0), makeH(1), makeH(0), makeH(1)};
+    std::vector<bool> measure = {true, true};
+    QiliSimConfig cfgFuse = cfg;
+    cfgFuse.set_fuse_gates(true);
+    cfgFuse.set_num_threads(4);
+    DenseMatrix state;
+    std::vector<py::object> intermediate_results;
+    sampling_matrix_free(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfgFuse, readout);
+    std::map<std::string, int> counts = construct_samples(state, n, 1000, noNoise, cfgFuse, measure);
+    EXPECT_NEAR(fractionOf(counts, "00"), 1.0, kLoose);
+}
+
+TEST_F(SamplingMatrixFreeTest, GateFusionWithSingleQubitCombiningEnabled) {
+    // Fusion with single-qubit-gate combining on the matrix-free path: the two X
+    // gates on qubit 0 combine to the identity, leaving qubit 0 in |0> and qubit 1
+    // in |1>.
+    int n = 2;
+    std::vector<Gate> gates = {makeX(0), makeX(0), makeX(1)};
+    std::vector<bool> measure = {true, true};
+    QiliSimConfig cfgFuse = cfg;
+    cfgFuse.set_fuse_gates(true);
+    cfgFuse.set_combine_single_qubit_gates(true);
+    cfgFuse.set_num_threads(4);
+    DenseMatrix state;
+    std::vector<py::object> intermediate_results;
+    sampling_matrix_free(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfgFuse, readout);
+    std::map<std::string, int> counts = construct_samples(state, n, 1000, noNoise, cfgFuse, measure);
+    EXPECT_NEAR(fractionOf(counts, "01"), 1.0, kLoose);
 }
 
 TEST_F(SamplingTest, PureDensityMatrixInitialState_OutputIsMatrixNotStatevector) {

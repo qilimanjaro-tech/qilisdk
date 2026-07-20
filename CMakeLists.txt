@@ -1,15 +1,5 @@
-# To enable debug build:
-#   uv pip install -v -e ./ -Ccmake.build-type=Debug
-# To run with clang-tidy:
-#   uv pip install -v -e ./ -Ccmake.define.tidy=ON
-# To enable (very) verbose simulator output:
-#   uv pip install -v -e ./ -Ccmake.define.verbose=ON
-# To enable the test suite:
-#   uv pip install -v -e ./ -Ccmake.define.tests=ON
-# To enable coverage flags:
-#   uv pip install -v -e ./ -Ccmake.define.coverage=ON
-# For a fully editable install:
-#   uv pip install --config-settings=editable.rebuild=true -Ccmake.build_type=Debug -Cbuild-dir=build -ve .
+# The optional compile flags are documented in the installation guide:
+#   docs/getting_started/installation.rst
 
 cmake_minimum_required(VERSION 3.18)
 project(qilisdk LANGUAGES CXX)
@@ -112,16 +102,41 @@ set(MODULES_TO_BUILD qilisdk_libs qtensor_module qilisim_module)
 foreach(module ${MODULES_TO_BUILD})
     message(STATUS "[QiliSDK C++] Configuring module: ${module}")
 
+    # If we want floats not doubles
+    if (single_precision)
+        message(STATUS "[QiliSDK C++] Building with single precision (float)")
+        target_compile_definitions(${module} PRIVATE SINGLE_PRECISION)
+    else()
+        message(STATUS "[QiliSDK C++] Building with double precision (double)")
+    endif()
+
     # Set compile options
     set (CMAKE_CXX_STANDARD 17)
     if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         message(STATUS "[QiliSDK C++] Using GCC/Clang specific compile options")
         target_compile_options(${module} PRIVATE -Wall -Wextra -Wpedantic)
-    endif()
 
-    # Make everything visible on compilers that support this flag
-    if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        # Enable AVX2 + FMA for 2015+ CPUs
+        include(CheckCXXCompilerFlag)
+        check_cxx_compiler_flag("-march=x86-64-v3" QILISDK_HAS_X86_64_V3)
+        if (QILISDK_HAS_X86_64_V3)
+            message(STATUS "[QiliSDK C++] Targeting x86-64-v3 (AVX2 + FMA)")
+            target_compile_options(${module} PRIVATE -march=x86-64-v3)
+        endif()
+
+        # If the user wants to build for the native architecture, enable that
+        if (build_native)
+            message(STATUS "[QiliSDK C++] Targeting native architecture")
+            target_compile_options(${module} PRIVATE -march=native)
+        endif()
+
+        # Make everything visible
         target_compile_options(${module} PRIVATE -fvisibility=default)
+        
+        # For performance
+        target_compile_options(${module} PRIVATE -fopenmp-simd)
+        target_compile_options(${module} PRIVATE -fcx-limited-range)
+
     endif()
 
     # Link libraries and include directories
@@ -203,6 +218,16 @@ if (DEFINED tests AND tests STREQUAL "ON")
     target_include_directories(test_cpp PRIVATE src/qilisdk_cpp/backends/qilisim)
     target_include_directories(test_cpp PRIVATE ${pybind11_INCLUDE_DIRS})
     target_include_directories(test_cpp PRIVATE ${Python_INCLUDE_DIRS})
+
+    # The test executable MUST use the same architecture flags as the modules
+    if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        if (QILISDK_HAS_X86_64_V3)
+            target_compile_options(test_cpp PRIVATE -march=x86-64-v3)
+        endif()
+        if (build_native)
+            target_compile_options(test_cpp PRIVATE -march=native)
+        endif()
+    endif()
     if (DEFINED coverage AND coverage STREQUAL "ON")
         message(STATUS "[QiliSDK C++] Enabling coverage flags for test suite")
         target_compile_options(test_cpp PRIVATE --coverage -fno-elide-constructors -fno-default-inline)

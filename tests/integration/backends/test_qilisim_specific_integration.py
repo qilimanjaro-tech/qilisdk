@@ -17,6 +17,8 @@ import pytest
 
 pytest.importorskip("qilisim_module", reason="QiliSim integration tests require the 'qilisim_module' C++ extension")
 
+import random
+
 from qilisdk.analog.hamiltonian import X as pauli_x
 from qilisdk.analog.hamiltonian import Y as pauli_y
 from qilisdk.analog.hamiltonian import Z as pauli_z
@@ -27,11 +29,15 @@ from qilisdk.core.qtensor import InitialState, QTensor, ket
 from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, H, M, S, T, X, Y, Z
 from qilisdk.functionals import AnalogEvolution, DigitalPropagation, FunctionalResult
 from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
+from qilisdk.noise import AmplitudeDamping, Dephasing, NoiseModel
 from qilisdk.readout import Readout, SamplingReadout
+
+random.seed(42)
 
 analog_methods = [
     AnalogMethod.direct(),
     AnalogMethod.arnoldi(),
+    AnalogMethod.arnoldi(matrix_free=True),
     AnalogMethod.integrator(),
     AnalogMethod.integrator(matrix_free=True),
 ]
@@ -159,6 +165,58 @@ def test_monte_carlo_time_evolution(method):
     assert np.isclose(expect_z, -0.8, rtol=1e-1)
 
 
+@pytest.mark.parametrize(
+    ("initial_state", "noise"),
+    [
+        (ket(0), None),  # unitary evolution on a state vector
+        (ket(0).to_density_matrix(), None),  # unitary evolution on a (pure) density matrix
+        ((ket(0, 0)).to_density_matrix(), None),  # unitary two-qubit density matrix
+        (ket(1), "amplitude_damping"),  # non-unitary (superoperator) path
+        ((ket(0) + ket(1)).unit(), "dephasing"),  # non-unitary (superoperator) path
+    ],
+)
+def test_arnoldi_matrix_free_matches_explicit_matrix(initial_state, noise):
+    """The matrix-free Arnoldi evolution must reproduce the explicit-matrix Arnoldi
+    evolution to numerical precision across the unitary state-vector, unitary
+    density-matrix and non-unitary (Lindblad superoperator) code paths."""
+    nqubits = 2 if initial_state.data.shape[0] == 4 else 1
+    hamiltonians = {"hx": sum(pauli_x(q) for q in range(nqubits))}
+    hamiltonians["hz"] = sum(pauli_z(q) for q in range(nqubits))
+    schedule = Schedule(
+        dt=0.1,
+        hamiltonians=hamiltonians,
+        coefficients={"hx": {(0, 3): lambda t: 1 - t / 3}, "hz": {(0, 3): lambda t: t / 3}},
+    )
+
+    noise_model = None
+    if noise == "amplitude_damping":
+        noise_model = NoiseModel()
+        noise_model.add(AmplitudeDamping(t1=0.5))
+    elif noise == "dephasing":
+        noise_model = NoiseModel()
+        noise_model.add(Dephasing(t_phi=0.4))
+
+    observables = [pauli_z(q) for q in range(nqubits)] + [pauli_x(q) for q in range(nqubits)]
+
+    def _run(matrix_free: bool):
+        backend = QiliSim(
+            analog_simulation_method=AnalogMethod.arnoldi(dim=12, num_substeps=2, matrix_free=matrix_free),
+            noise_model=noise_model,
+            execution_config=ExecutionConfig(seed=42, num_threads=2),
+        )
+        res = backend.execute(
+            AnalogEvolution(schedule=schedule, initial_state=initial_state),
+            readout=Readout().with_state_tomography().with_expectation(observables=observables),
+        )
+        return res.get_state().dense(), np.asarray(res.get_expectation_values())
+
+    explicit_state, explicit_ev = _run(matrix_free=False)
+    mf_state, mf_ev = _run(matrix_free=True)
+
+    np.testing.assert_allclose(mf_state, explicit_state, atol=1e-9)
+    np.testing.assert_allclose(mf_ev, explicit_ev, atol=1e-9)
+
+
 @pytest.mark.parametrize("method", digital_methods)
 def test_exponential_gates(method):
     backend = QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1), digital_simulation_method=method)
@@ -217,6 +275,122 @@ def test_combine_single_qubit_gates(matrix_free):
     res_combined = backend_combined.execute(DigitalPropagation(circuit=c), readout=readout)
     res_uncombined = backend_uncombined.execute(DigitalPropagation(circuit=c), readout=readout)
     assert _counts_similar(res_combined.get_samples(), res_uncombined.get_samples(), total_shots=1000, tol=0.1)
+
+
+@pytest.mark.parametrize("max_fused_qubits", [2, 3, 4, 5])
+def test_fuse_gates_matches_unfused(max_fused_qubits):
+    # Gate fusion only activates with enough threads (it is a memory-bandwidth vs
+    # compute trade), so use num_threads=4 to exercise the fused path. The final
+    # statevector must match the unfused result up to numerical noise.
+    nqubits = 6
+    c = Circuit.random(
+        nqubits=nqubits, ngates=400, single_qubit_gates=[H, X, Y, Z, RX, RY, RZ, U1, U2, U3], two_qubit_gates=[CNOT]
+    )
+    backend_unfused = QiliSim(
+        execution_config=ExecutionConfig(seed=42, num_threads=4),
+        digital_simulation_method=DigitalMethod.statevector(matrix_free=True, fuse_gates=False),
+    )
+    backend_fused = QiliSim(
+        execution_config=ExecutionConfig(seed=42, num_threads=4),
+        digital_simulation_method=DigitalMethod.statevector(
+            matrix_free=True, fuse_gates=True, max_fused_qubits=max_fused_qubits
+        ),
+    )
+    readout = Readout().with_state_tomography()
+    state_unfused = np.asarray(
+        backend_unfused.execute(DigitalPropagation(circuit=c), readout=readout).get_state().dense()
+    ).reshape(-1)
+    state_fused = np.asarray(
+        backend_fused.execute(DigitalPropagation(circuit=c), readout=readout).get_state().dense()
+    ).reshape(-1)
+    fidelity = np.abs(np.vdot(state_unfused, state_fused)) / (
+        np.linalg.norm(state_unfused) * np.linalg.norm(state_fused)
+    )
+    assert fidelity == pytest.approx(1.0, abs=1e-4)
+    assert np.max(np.abs(state_unfused - state_fused)) < 1e-3
+
+
+def _statevectors_close_up_to_global_phase(a, b, tol=1e-3):
+    # Two statevectors describing the same physical state may differ by an overall
+    # phase, so compare via the (phase-insensitive) fidelity and then align the
+    # global phase before the element-wise check.
+    a = np.asarray(a).reshape(-1)
+    b = np.asarray(b).reshape(-1)
+    fidelity = np.abs(np.vdot(a, b)) / (np.linalg.norm(a) * np.linalg.norm(b))
+    if fidelity != pytest.approx(1.0, abs=1e-4):
+        return False
+    # Align b onto a using the phase of their largest overlapping component.
+    pivot = int(np.argmax(np.abs(a)))
+    if np.abs(b[pivot]) > 0:
+        phase = (a[pivot] / b[pivot]) / np.abs(a[pivot] / b[pivot])
+        b = b * phase
+    return bool(np.max(np.abs(a - b)) < tol)
+
+
+@pytest.mark.parametrize("nqubits_max_fused_qubits", [(4, 2), (6, 3), (7, 4), (8, 5)])
+def test_fused_matches_normal_statevector_large_random(nqubits_max_fused_qubits):
+    nqubits, max_fused_qubits = nqubits_max_fused_qubits
+    # The fused matrix-free path must produce the same statevector as the normal
+    # (non-matrix-free) dense path, which applies each gate via its full matrix.
+    # This is the path that builds scattered multi-qubit gate matrices, so the test
+    # guards the gate-expansion logic shared by fusion and the dense simulator.
+    # Fusion only activates with >= 4 threads.
+    c = Circuit.random(
+        nqubits=nqubits, ngates=500, single_qubit_gates=[H, X, Y, Z, RX, RY, RZ, U1, U2, U3], two_qubit_gates=[CNOT]
+    )
+    backend_normal = QiliSim(
+        execution_config=ExecutionConfig(seed=42, num_threads=4),
+        digital_simulation_method=DigitalMethod.statevector(matrix_free=False),
+    )
+    backend_fused = QiliSim(
+        execution_config=ExecutionConfig(seed=42, num_threads=4),
+        digital_simulation_method=DigitalMethod.statevector(
+            matrix_free=True, fuse_gates=True, max_fused_qubits=max_fused_qubits
+        ),
+    )
+    readout = Readout().with_state_tomography()
+    state_normal = backend_normal.execute(DigitalPropagation(circuit=c), readout=readout).get_state().dense()
+    state_fused = backend_fused.execute(DigitalPropagation(circuit=c), readout=readout).get_state().dense()
+    assert _statevectors_close_up_to_global_phase(state_normal, state_fused)
+
+
+def test_fused_matches_normal_sampling_large_random():
+    # Same comparison as above but for a larger register via sampling (phase
+    # insensitive and cheaper than full state tomography at high qubit counts).
+    nqubits = 10
+    c = Circuit.random(
+        nqubits=nqubits, ngates=800, single_qubit_gates=[H, X, Y, Z, RX, RY, RZ, U1, U2, U3], two_qubit_gates=[CNOT]
+    )
+    backend_normal = QiliSim(
+        execution_config=ExecutionConfig(seed=42, num_threads=4),
+        digital_simulation_method=DigitalMethod.statevector(matrix_free=False),
+    )
+    backend_fused = QiliSim(
+        execution_config=ExecutionConfig(seed=42, num_threads=4),
+        digital_simulation_method=DigitalMethod.statevector(matrix_free=True, fuse_gates=True, max_fused_qubits=4),
+    )
+    readout = Readout().with_sampling(nshots=2000)
+    res_normal = backend_normal.execute(DigitalPropagation(circuit=c), readout=readout)
+    res_fused = backend_fused.execute(DigitalPropagation(circuit=c), readout=readout)
+    assert _counts_similar(res_normal.get_samples(), res_fused.get_samples(), total_shots=2000, tol=0.1)
+
+
+def test_fuse_gates_with_mid_circuit_measurement():
+    # Fusion must treat measurements as barriers; verify sampling still works.
+    circuit = Circuit(nqubits=3)
+    circuit.add(H(0))
+    circuit.add(CNOT(0, 1))
+    circuit.add(M(0))
+    circuit.add(H(1))
+    circuit.add(CNOT(1, 2))
+    circuit.add(M(1))
+    circuit.add(M(2))
+    backend = QiliSim(
+        execution_config=ExecutionConfig(seed=42, num_threads=4),
+        digital_simulation_method=DigitalMethod.statevector(matrix_free=True, fuse_gates=True),
+    )
+    result = backend.execute(DigitalPropagation(circuit=circuit), readout=Readout().with_sampling(nshots=500))
+    assert sum(result.get_samples().values()) == 500
 
 
 def test_matrix_free_time_evolution_versus_normal():
@@ -496,6 +670,48 @@ def test_matrix_free_complex_gate_on_mixed_state_stays_hermitian():
 
     # And it must match the explicit-matrix path's state.
     np.testing.assert_allclose(mf_state, _dense(explicit.get_state()), atol=1e-9)
+
+
+@pytest.mark.parametrize("method", [AnalogMethod.direct(), AnalogMethod.arnoldi(), AnalogMethod.integrator()])
+def test_reservoir_schedule_hamiltonians_of_differing_qubit_support(method):
+    """Regression: a schedule whose Hamiltonian terms touch different qubits produces
+    ``to_matrix()`` matrices of *different* dimensions (e.g. ``Z0*Z1`` -> 4x4 while
+    ``Z0*Z5`` -> 64x64). The explicit-matrix analog path took its dimension from only the
+    first Hamiltonian and then summed the terms, reading out of bounds and segfaulting.
+
+    Each term must be expanded to the full ``nqubits`` space (identity on untouched qubits),
+    so the run must succeed and agree with the matrix-free ground truth.
+    """
+    nqubits = 6
+
+    def _build() -> QuantumReservoir:
+        pre = Circuit(nqubits)
+        pre.add(RX(0, theta=ReservoirInput("phi", 0.1)))
+        layer = ReservoirLayer(
+            evolution_dynamics=Schedule(
+                hamiltonians={"h1": pauli_z(0) * pauli_z(1), "h2": pauli_z(0) * pauli_z(5) + pauli_x(3)},
+                coefficients={"h1": {(0.0, 1.0): 1.0}, "h2": {(0.0, 1.0): 0.5}},
+                total_time=2.0,
+                dt=0.1,
+            ),
+            input_encoding=pre,
+            qubits_to_reset=[0],
+        )
+        return QuantumReservoir(
+            initial_state=QTensor.uniform(nqubits).to_density_matrix(),
+            reservoir_layer=layer,
+            input_per_layer=[{"phi": 0.2}, {"phi": 0.3}],
+        )
+
+    readout = Readout().with_expectation(observables=[pauli_z(0), pauli_z(3), pauli_z(5)])
+    explicit = QiliSim(analog_simulation_method=method).execute(_build(), readout)
+    reference = QiliSim(analog_simulation_method=AnalogMethod.integrator(matrix_free=True)).execute(_build(), readout)
+
+    np.testing.assert_allclose(
+        np.asarray(explicit.get_expectation_values()),
+        np.asarray(reference.get_expectation_values()),
+        atol=1e-6,
+    )
 
 
 # ──────────────────────────────────────────────────────────────────────────────

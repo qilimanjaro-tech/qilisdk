@@ -22,6 +22,9 @@ qili*.lib
 # Profiling stuff
 *.prof
 callgrind*
+perf.*
+*.annotation
+python3*.json
 
 # Virtual environments
 .venv

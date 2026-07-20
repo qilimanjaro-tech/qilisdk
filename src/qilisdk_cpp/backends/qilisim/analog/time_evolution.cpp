@@ -52,6 +52,14 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
     // Get the jump operators from the noise model
     const std::vector<SparseMatrix>& jump_operators = noise_model_cpp.get_jump_operators();
 
+    // For time-dependent rates, each base jump operator is re-scaled per step by sqrt(rate(t)).
+    bool has_time_dependent_jumps = noise_model_cpp.has_time_dependent_rates();
+    const std::vector<std::vector<double>>& jump_rate_series = noise_model_cpp.get_jump_rate_series();
+    std::vector<SparseMatrix> step_jumps;
+    if (has_time_dependent_jumps) {
+        step_jumps = jump_operators;  // working copy, re-scaled each step
+    }
+
     // Dimensions of everything
     long dim = long(hamiltonians[0].rows());
 
@@ -67,13 +75,14 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
         rho_0 = rho_0.adjoint();
     }
 
+    // Check if the input is a bunch of monte carlo trajectories
+    bool input_is_trajectories = (rho_0.cols() > 1 && rho_0.rows() != rho_0.cols());
+
     // Determine if should treat it as unitary evolution on a statevector
-    // Note that this can change if the input was a density matrix but is actually pure
-    // Or similarly if we use monte-carlo, we treat it as statevector evolution
-    bool is_unitary_on_statevector = is_unitary_dynamics && input_was_vector;
+    bool is_unitary_on_statevector = input_is_trajectories || (is_unitary_dynamics && input_was_vector);
 
     // If we have unitary dynamics and the input was a pure state, convert to state vector
-    if (is_unitary_dynamics && !input_was_vector) {
+    if (is_unitary_dynamics && !input_was_vector && !input_is_trajectories) {
         double trace_rho2 = 0.0;
         for (int k = 0; k < rho_0.outerSize(); ++k) {
             for (SparseMatrix::InnerIterator it1(rho_0, k); it1; ++it1) {
@@ -97,8 +106,7 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
     }
 
     // If monte carlo, sample from rho_0 to get initial states
-    // Then rho should be a collection of state vectors as columns
-    bool use_monte_carlo = config.get_monte_carlo();
+    bool use_monte_carlo = config.get_monte_carlo() && !input_is_trajectories;
     if (use_monte_carlo) {
         rho_0 = sample_from_density_matrix(rho_0, config.get_num_monte_carlo_trajectories(), config.get_seed());
         is_unitary_on_statevector = true;
@@ -120,7 +128,7 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
         // Get the current Hamiltonian
         SparseMatrix currentH = combinedH;
         for (size_t h = 0; h < hamiltonians.size(); ++h) {
-            double c = parameters_list[h][step_ind];
+            Real c = parameters_list[h][step_ind];
             for (int k = 0; k < hamiltonians[h].outerSize(); ++k) {
                 for (SparseMatrix::InnerIterator it(hamiltonians[h], k); it; ++it) {
                     currentH.coeffRef(it.row(), it.col()) += c * it.value();
@@ -134,20 +142,34 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
             dt = (step_list[step_ind] - step_list[step_ind - 1]);
         }
 
+        // For time-dependent rates, re-scale each base jump operator by sqrt(rate(t)) at this step
+        // (piecewise-constant within the step, consistent with how currentH is treated). The rate is
+        // sampled at t = step_list[step_ind], matching the schedule coefficient sampling above.
+        if (has_time_dependent_jumps) {
+            for (size_t j = 0; j < jump_operators.size(); ++j) {
+                if (jump_rate_series[j].empty()) {
+                    step_jumps[j] = jump_operators[j];
+                } else {
+                    step_jumps[j] = jump_operators[j] * jump_rate_series[j][step_ind];
+                }
+            }
+        }
+        const std::vector<SparseMatrix>& current_jumps = has_time_dependent_jumps ? step_jumps : jump_operators;
+
         // Perform the iteration depending on the method
         if (config.get_time_evolution_method() == "integrate_rk4") {
-            rho_t = iter_rk4_matrix(rho_t, dt, currentH, jump_operators, is_unitary_on_statevector);
+            rho_t = iter_rk4_matrix(rho_t, dt, currentH, current_jumps, is_unitary_on_statevector);
         } else if (config.get_time_evolution_method() == "direct") {
-            rho_t = iter_direct(rho_t, dt, currentH, jump_operators, is_unitary_on_statevector);
+            rho_t = iter_direct(rho_t, dt, currentH, current_jumps, is_unitary_on_statevector);
         } else if (config.get_time_evolution_method() == "arnoldi") {
-            rho_t = iter_arnoldi(rho_t, dt, currentH, jump_operators, config.get_arnoldi_dim(), config.get_num_arnoldi_substeps(), is_unitary_on_statevector, config.get_atol());
+            rho_t = iter_arnoldi(rho_t, dt, currentH, current_jumps, config.get_arnoldi_dim(), config.get_num_arnoldi_substeps(), is_unitary_on_statevector, config.get_atol());
         } else {
             throw std::invalid_argument("Invalid time evolution method: " + config.get_time_evolution_method());
         }
 
         // If we should store intermediates, do it here
         if (config.get_store_intermediate_results()) {
-            if (use_monte_carlo || (!input_was_vector && rho_t.cols() == 1)) {
+            if (use_monte_carlo || input_is_trajectories || (!input_was_vector && rho_t.cols() == 1)) {
                 intermediate_rhos.push_back(trajectories_to_density_matrix(rho_t));
             } else {
                 intermediate_rhos.push_back(rho_t);
@@ -156,7 +178,7 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
     }
 
     // If we have statevector/s but we should return a density matrix
-    if (use_monte_carlo || (!input_was_vector && rho_t.cols() == 1)) {
+    if (!input_is_trajectories && (use_monte_carlo || (!input_was_vector && rho_t.cols() == 1))) {
         rho_t = trajectories_to_density_matrix(rho_t);
     }
 }
@@ -195,6 +217,19 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
     // Get the jump operators from the noise model
     const std::vector<SparseMatrix>& jump_operators = noise_model_cpp.get_jump_operators();
 
+    // For time-dependent rates, each base jump operator is re-scaled per step by sqrt(rate(t)).
+    // The adaptive RK45 method steps at arbitrary times not aligned to the schedule points, so it
+    // cannot apply a per-step rate series; reject it. The fixed-step RK4 method is handled below.
+    bool has_time_dependent_jumps = noise_model_cpp.has_time_dependent_rates();
+    const std::vector<std::vector<double>>& jump_rate_series = noise_model_cpp.get_jump_rate_series();
+    if (has_time_dependent_jumps && config.get_time_evolution_method() == "integrate_rk45_matrix_free") {
+        throw std::invalid_argument("Time-dependent Lindblad rates are not supported by the adaptive 'integrate_rk45_matrix_free' method; use 'integrate_rk4_matrix_free' or a dense method (arnoldi, direct, integrate_rk4).");
+    }
+    std::vector<SparseMatrix> step_jumps;
+    if (has_time_dependent_jumps) {
+        step_jumps = jump_operators;  // working copy, re-scaled each step
+    }
+
     // Check if we have unitary dynamics
     bool is_unitary_dynamics = (jump_operators.size() == 0);
 
@@ -207,13 +242,14 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
         rho_0 = rho_0.adjoint();
     }
 
+    // Check if the input is a bunch of monte carlo trajectories
+    bool input_is_trajectories = (rho_0.cols() > 1 && rho_0.rows() != rho_0.cols());
+
     // Determine if should treat it as unitary evolution on a statevector
-    // Note that this can change if the input was a density matrix but is actually pure
-    // Or similarly if we use monte-carlo, we treat it as statevector evolution
-    bool is_unitary_on_statevector = is_unitary_dynamics && input_was_vector;
+    bool is_unitary_on_statevector = input_is_trajectories || (is_unitary_dynamics && input_was_vector);
 
     // If we have unitary dynamics and the input was a pure state, convert to state vector
-    if (is_unitary_dynamics && !input_was_vector) {
+    if (is_unitary_dynamics && !input_was_vector && !input_is_trajectories) {
         double trace_rho2 = 0.0;
         for (int k = 0; k < rho_0.outerSize(); ++k) {
             for (SparseMatrix::InnerIterator it1(rho_0, k); it1; ++it1) {
@@ -227,7 +263,7 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
     }
 
     // If we were told to do monte carlo, but we already have unitary dynamics, don't bother
-    bool use_monte_carlo = config.get_monte_carlo();
+    bool use_monte_carlo = config.get_monte_carlo() && !input_is_trajectories;
     if (is_unitary_on_statevector) {
         use_monte_carlo = false;
     }
@@ -237,8 +273,8 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
         rho_0 = rho_0 * rho_0.adjoint();
     }
 
-    // If monte carlo, sample from rho_0 to get initial states
-    // Then rho should be a collection of state vectors as columns
+    // If monte carlo, sample from rho_0 to get initial states (skipped when the
+    // input already is a batch of trajectories). Then rho is state vector columns.
     if (use_monte_carlo) {
         rho_0 = sample_from_density_matrix(rho_0, config.get_num_monte_carlo_trajectories(), config.get_seed());
         is_unitary_on_statevector = true;
@@ -269,7 +305,7 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
 
             // If we should store intermediates, do it here
             if (config.get_store_intermediate_results() && dt_taken > 0) {
-                if (use_monte_carlo || (!input_was_vector && rho_t.cols() == 1)) {
+                if (use_monte_carlo || input_is_trajectories || (!input_was_vector && rho_t.cols() == 1)) {
                     intermediate_rhos.push_back(trajectories_to_density_matrix(rho_t));
                 } else {
                     intermediate_rhos.push_back(rho_t);
@@ -295,12 +331,55 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
             double t_start = (step_ind > 0) ? step_list[step_ind - 1] : 0.0;
             double dt = step_list[step_ind] - t_start;
 
+            // For time-dependent rates, re-scale each base jump operator by sqrt(rate(t)) at this
+            // step (piecewise-constant within the step, sampled at t = step_list[step_ind]).
+            if (has_time_dependent_jumps) {
+                for (size_t j = 0; j < jump_operators.size(); ++j) {
+                    if (jump_rate_series[j].empty()) {
+                        step_jumps[j] = jump_operators[j];
+                    } else {
+                        step_jumps[j] = jump_operators[j] * jump_rate_series[j][step_ind];
+                    }
+                }
+            }
+            const std::vector<SparseMatrix>& current_jumps = has_time_dependent_jumps ? step_jumps : jump_operators;
+
             // Perform the iteration
-            iter_rk4(rho_t, t_start, dt, step_list, hamiltonians, parameters_list, jump_operators, is_unitary_on_statevector);
+            iter_rk4(rho_t, t_start, dt, step_list, hamiltonians, parameters_list, current_jumps, is_unitary_on_statevector);
 
             // If we should store intermediates, do it here
             if (config.get_store_intermediate_results()) {
-                if (use_monte_carlo || (!input_was_vector && rho_t.cols() == 1)) {
+                if (use_monte_carlo || input_is_trajectories || (!input_was_vector && rho_t.cols() == 1)) {
+                    intermediate_rhos.push_back(trajectories_to_density_matrix(rho_t));
+                } else {
+                    intermediate_rhos.push_back(rho_t);
+                }
+            }
+        }
+
+        // Fixed step size Krylov/Arnoldi evolution
+    } else if (config.get_time_evolution_method() == "arnoldi_matrix_free") {
+        int nqubits = hamiltonians[0].get_nqubits();
+        // For each time step
+        for (size_t step_ind = 0; step_ind < step_list.size(); ++step_ind) {
+            // Build the Hamiltonian for this step
+            MatrixFreeHamiltonian currentH(nqubits);
+            for (size_t h = 0; h < hamiltonians.size(); ++h) {
+                currentH += hamiltonians[h] * parameters_list[h][step_ind];
+            }
+
+            // Determine the time step
+            double dt = step_list[step_ind];
+            if (step_ind > 0) {
+                dt = step_list[step_ind] - step_list[step_ind - 1];
+            }
+
+            // Perform the iteration
+            rho_t = iter_arnoldi_matrix_free(rho_t, dt, currentH, jump_operators, config.get_arnoldi_dim(), config.get_num_arnoldi_substeps(), is_unitary_on_statevector, config.get_atol());
+
+            // If we should store intermediates, do it here
+            if (config.get_store_intermediate_results()) {
+                if (use_monte_carlo || input_is_trajectories || (!input_was_vector && rho_t.cols() == 1)) {
                     intermediate_rhos.push_back(trajectories_to_density_matrix(rho_t));
                 } else {
                     intermediate_rhos.push_back(rho_t);
@@ -312,7 +391,7 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
     }
 
     // If we have statevector/s but we should return a density matrix
-    if (use_monte_carlo || (!input_was_vector && rho_t.cols() == 1)) {
+    if (!input_is_trajectories && (use_monte_carlo || (!input_was_vector && rho_t.cols() == 1))) {
         rho_t = trajectories_to_density_matrix(rho_t);
     }
 }

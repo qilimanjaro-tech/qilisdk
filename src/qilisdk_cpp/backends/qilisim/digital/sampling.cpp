@@ -55,10 +55,7 @@ DenseMatrix collapse_state(const DenseMatrix& state, const std::vector<bool>& qu
         density_matrix = state;
     }
 
-    // For each measured qubit, apply the non-selective measurement:
-    // rho -> P0 * rho * P0 + P1 * rho * P1
-    // Since P0 and P1 are diagonal projectors, this is equivalent to zeroing all entries
-    // where the row and column indices differ in that qubit's bit position.
+    // For each measured qubit, apply the non-selective measurement: rho -> P0 * rho * P0 + P1 * rho * P1
     long dim = density_matrix.rows();
     int nqubits = static_cast<int>(std::ceil(std::log2(dim)));
     for (int qubit = 0; qubit < int(qubits_measured.size()); ++qubit) {
@@ -80,7 +77,31 @@ DenseMatrix collapse_state(const DenseMatrix& state, const std::vector<bool>& qu
     return density_matrix;
 }
 
-void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrix& initial_state, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, std::vector<py::object>& intermediate_results, const QiliSimConfig& config, const py::object& readout) {
+static void densify_initial_state(const SparseMatrixCol& initial_state, DenseMatrix& state) {
+    /*
+    Densify a sparse initial state into `state`, zeroing in parallel.
+
+    Args:
+        initial_state (SparseMatrixCol&): The sparse initial state.
+        state (DenseMatrix&): The dense state to be filled.
+    */
+    state.resize(initial_state.rows(), initial_state.cols());
+    const long n = state.size();
+    Complex* __restrict data = state.data();
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+    for (long i = 0; i < n; ++i) {
+        data[i] = Complex(0.0, 0.0);
+    }
+    for (int k = 0; k < initial_state.outerSize(); ++k) {
+        for (SparseMatrixCol::InnerIterator it(initial_state, k); it; ++it) {
+            state(it.row(), it.col()) = it.value();
+        }
+    }
+}
+
+void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrixCol& initial_state, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, std::vector<py::object>& intermediate_results, const QiliSimConfig& config, const py::object& readout) {
     /*
     Execute a sampling functional using a simple statevector simulator.
 
@@ -109,12 +130,15 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrix& 
 
     // Start with the zero state
     long dim = 1L << n_qubits;
-    state = initial_state;
+    densify_initial_state(initial_state, state);
     bool is_statevector = (state.cols() == 1 && state.rows() == dim);
     bool initially_was_statevector = is_statevector;
 
+    // Check if the input is a bunch of monte carlo trajectories
+    bool input_is_trajectories = (state.cols() > 1 && state.rows() != state.cols());
+
     // If it's a density matrix, check if it's pure
-    if (!is_statevector) {
+    if (!is_statevector && !input_is_trajectories) {
         DenseMatrix state_squared = state.adjoint().cwiseProduct(state);
         double trace_squared = state_squared.trace().real();
         if (std::abs(trace_squared - 1.0) < config.get_atol()) {
@@ -132,9 +156,9 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrix& 
         is_statevector = false;
     }
 
-    // Whether we should do monte-carlo sampling (only for density matrices)
-    bool monte_carlo = (!is_statevector && config.get_monte_carlo());
-    if (monte_carlo) {
+    // Whether we should do monte-carlo sampling
+    bool monte_carlo = input_is_trajectories || (!is_statevector && config.get_monte_carlo());
+    if (monte_carlo && !input_is_trajectories) {
         state = sample_from_density_matrix(state, config.get_num_monte_carlo_trajectories(), config.get_seed());
     }
 
@@ -275,8 +299,9 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrix& 
         gate_count++;
     }
 
-    // If we have statevector/s but we should return a density matrix
-    if (monte_carlo) {
+    // If we have statevector/s but we should return a density matrix. A trajectory
+    // batch is kept as trajectories so the caller can carry the ensemble forward.
+    if (monte_carlo && !input_is_trajectories) {
         state = trajectories_to_density_matrix(state);
     }
 
@@ -286,7 +311,7 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrix& 
     }
 }
 
-void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const SparseMatrix& initial_state, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, std::vector<py::object>& intermediate_results, const QiliSimConfig& config, const py::object& readout) {
+void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const SparseMatrixCol& initial_state, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, std::vector<py::object>& intermediate_results, const QiliSimConfig& config, const py::object& readout) {
     /*
     Execute a sampling functional using a matrix-free simulator.
 
@@ -313,16 +338,19 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const Sp
     Eigen::setNbThreads(config.get_num_threads());
 #endif
 
-    // Start with the zero state
-    state = initial_state;
+    // Start in the initial state
+    densify_initial_state(initial_state, state);
     bool is_statevector = (state.cols() == 1 && state.rows() == (1L << n_qubits));
     bool initially_was_statevector = is_statevector;
 
     // Check if we have noise
     bool has_noise = !noise_model_cpp.is_empty();
 
+    // Check if the input is a bunch of monte carlo trajectories
+    bool input_is_trajectories = (state.cols() > 1 && state.rows() != state.cols());
+
     // If it's a density matrix, check if it's pure
-    if (!is_statevector) {
+    if (!is_statevector && !input_is_trajectories) {
         DenseMatrix state_squared = state.adjoint().cwiseProduct(state);
         double trace_squared = state_squared.trace().real();
         if (std::abs(trace_squared - 1.0) < config.get_atol()) {
@@ -337,15 +365,29 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const Sp
         is_statevector = false;
     }
 
-    // Whether we should do monte-carlo sampling (only for density matrices)
-    bool monte_carlo = (!is_statevector && config.get_monte_carlo());
-    if (monte_carlo) {
+    // Whether we should do monte-carlo sampling
+    bool monte_carlo = input_is_trajectories || (!is_statevector && config.get_monte_carlo());
+    if (monte_carlo && !input_is_trajectories) {
         state = sample_from_density_matrix(state, config.get_num_monte_carlo_trajectories(), config.get_seed());
     }
 
-    // Combine single-qubit gates for speed if not using noise models
+    // Fuse gates for speed if not using noise models, either in groups of single-qubit gates or multi-qubit gates (up to a limit)
+    const int min_threads_for_fusion = 4;
+    bool use_fusion = !has_noise && config.get_fuse_gates() && (is_statevector || monte_carlo) && config.get_num_threads() >= min_threads_for_fusion;
     std::vector<Gate> optimized_gates = gates;
-    if (!has_noise && config.get_combine_single_qubit_gates()) {
+    if (use_fusion) {
+        // A configured value of <= 0 means auto pick the depth from the qubit count
+        int max_fused = config.get_max_fused_qubits();
+        if (max_fused <= 0) {
+            max_fused = auto_max_fused_qubits(n_qubits);
+        }
+        // Pre-combine consecutive single-qubit gates on the same qubit first
+        if (config.get_combine_single_qubit_gates()) {
+            optimized_gates = fuse_gates(combine_single_qubit_gates(gates), max_fused);
+        } else {
+            optimized_gates = fuse_gates(gates, max_fused);
+        }
+    } else if (!has_noise && config.get_combine_single_qubit_gates()) {
         optimized_gates = combine_single_qubit_gates(optimized_gates);
     }
 
@@ -425,7 +467,7 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const Sp
     }
 
     // If we have statevector/s but we should return a density matrix
-    if (monte_carlo) {
+    if (monte_carlo && !input_is_trajectories) {
         state = trajectories_to_density_matrix(state);
     }
 

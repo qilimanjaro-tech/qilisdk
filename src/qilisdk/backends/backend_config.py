@@ -99,13 +99,14 @@ class AnalogMethod(BaseSimulatorConfig):
     evolution_method: Literal[
         "direct",
         "arnoldi",
+        "arnoldi_matrix_free",
         "integrate_rk4",
         "integrate_rk45_matrix_free",
         "integrate_rk4_matrix_free",
         "variational_exponential",
     ] = Field(
         default="integrate_rk4_matrix_free",
-        description="Analog time-evolution method to use: 'direct', 'arnoldi', 'integrate_rk4', 'integrate_rk45_matrix_free', 'integrate_rk4_matrix_free', or 'variational_exponential'.",
+        description="Analog time-evolution method to use: 'direct', 'arnoldi', 'arnoldi_matrix_free', 'integrate_rk4', 'integrate_rk45_matrix_free', 'integrate_rk4_matrix_free', or 'variational_exponential'.",
     )
     arnoldi_dim: int = Field(
         default=10,
@@ -211,6 +212,7 @@ class AnalogMethod(BaseSimulatorConfig):
         *,
         num_substeps: int = 1,
         dim: int = 10,
+        matrix_free: bool = True,
     ) -> AnalogMethod:
         """Build an ``arnoldi`` analog method configuration.
 
@@ -219,12 +221,13 @@ class AnalogMethod(BaseSimulatorConfig):
                 step when using the Arnoldi method. Defaults to ``1``.
             dim (int): Dimension of the Arnoldi Krylov subspace. Defaults
                 to ``10``.
+            matrix_free (bool): Whether to use the matrix-free implementation.
 
         Returns:
             AnalogMethod: Configured arnoldi-method analog configuration.
         """
         return cls(
-            evolution_method="arnoldi",
+            evolution_method="arnoldi_matrix_free" if matrix_free else "arnoldi",
             arnoldi_dim=dim,
             num_arnoldi_substeps=num_substeps,
         )
@@ -333,6 +336,17 @@ class DigitalMethod(BaseSimulatorConfig):
         combine_single_qubit_gates (bool): Whether to combine consecutive
             single-qubit gates into a single operation to reduce overhead
             at the cost of increased memory usage. Defaults to ``True``.
+        fuse_gates (bool): Whether to fuse runs of adjacent gates acting on a
+            small set of qubits into a single dense multi-qubit operation. This
+            reduces the number of passes over the statevector (the memory
+            bandwidth bottleneck for large qubit counts) at the cost of extra
+            arithmetic per fused block. Supersedes ``combine_single_qubit_gates``
+            when enabled, and only applies to the matrix-free statevector path
+            (disabled automatically when a noise model is present). Defaults to
+            ``True``.
+        max_fused_qubits (int): Maximum number of qubits a single fused block may
+            span. Larger values fuse more aggressively but build larger dense
+            matrices (``2**max_fused_qubits`` square). Defaults to ``4``.
         matrix_free (bool): Whether to use the matrix-free implementation
             for statevector simulation. Defaults to ``True``.
     """
@@ -356,6 +370,15 @@ class DigitalMethod(BaseSimulatorConfig):
         default=True,
         description="Whether to combine consecutive single-qubit gates into a single operation to reduce overhead at the cost of increased memory usage.",
     )
+    fuse_gates: bool = Field(
+        default=True,
+        description="Whether to fuse runs of adjacent gates on a small set of qubits into a single dense multi-qubit operation to reduce passes over the statevector. Only applies to the matrix-free statevector path.",
+    )
+    max_fused_qubits: int = Field(
+        default=0,
+        ge=0,
+        description="Maximum number of qubits a single fused block may span. 0 (the default) selects the depth automatically from the qubit count.",
+    )
     matrix_free: bool = Field(
         default=True,
         description="Whether to use the matrix-free implementation for statevector simulation.",
@@ -372,6 +395,8 @@ class DigitalMethod(BaseSimulatorConfig):
             "digital_method": self.digital_method,
             "normalize_after_each_gate": self.normalize_after_each_gate,
             "combine_single_qubit_gates": self.combine_single_qubit_gates,
+            "fuse_gates": self.fuse_gates,
+            "max_fused_qubits": self.max_fused_qubits,
             "stabilizer_max_states": self.stabilizer_max_states,
         }
 
@@ -383,6 +408,8 @@ class DigitalMethod(BaseSimulatorConfig):
         normalize_after_each_gate: bool = False,
         matrix_free: bool = True,
         combine_single_qubit_gates: bool = True,
+        fuse_gates: bool = True,
+        max_fused_qubits: int = 0,
     ) -> DigitalMethod:
         """Build the standard statevector simulation configuration.
 
@@ -395,6 +422,10 @@ class DigitalMethod(BaseSimulatorConfig):
                 Defaults to ``True``.
             combine_single_qubit_gates (bool): Whether to combine consecutive single-qubit gates into a single operation.
                 Defaults to ``True``.
+            fuse_gates (bool): Whether to fuse runs of adjacent gates on a small set of qubits into a single dense
+                multi-qubit operation (matrix-free statevector path only). Defaults to ``True``.
+            max_fused_qubits (int): Maximum number of qubits a single fused block may span. ``0`` (the default)
+                selects the depth automatically from the qubit count.
 
         Returns:
             DigitalMethod: Configured statevector digital configuration.
@@ -404,6 +435,8 @@ class DigitalMethod(BaseSimulatorConfig):
             max_cache_size=max_cache_size,
             normalize_after_each_gate=normalize_after_each_gate,
             combine_single_qubit_gates=combine_single_qubit_gates,
+            fuse_gates=fuse_gates,
+            max_fused_qubits=max_fused_qubits,
             matrix_free=matrix_free,
         )
 
