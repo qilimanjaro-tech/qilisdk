@@ -56,6 +56,7 @@ using cudaDeviceSynchronize_t = int (*)();
 using cublasCreate_t = int (*)(void**);
 using cublasDestroy_t = int (*)(void*);
 using cublasDgemm_t = int (*)(void* handle, int transa, int transb, int m, int n, int k, const double* alpha, const double* A, int lda, const double* B, int ldb, const double* beta, double* C, int ldc);
+using cublasDsyrk_t = int (*)(void* handle, int uplo, int trans, int n, int k, const double* alpha, const double* A, int lda, const double* beta, double* C, int ldc);
 using cublasDgemv_t = int (*)(void* handle, int trans, int m, int n, const double* alpha, const double* A, int lda, const double* x, int incx, const double* beta, double* y, int incy);
 using cublasDscal_t = int (*)(void* handle, int n, const double* alpha, double* x, int incx);
 using cublasDaxpy_t = int (*)(void* handle, int n, const double* alpha, const double* x, int incx, double* y, int incy);
@@ -89,6 +90,7 @@ struct CudaApi {
     cublasCreate_t cublasCreate = nullptr;
     cublasDestroy_t cublasDestroy = nullptr;
     cublasDgemm_t cublasDgemm = nullptr;
+    cublasDsyrk_t cublasDsyrk = nullptr;
     cublasDgemv_t cublasDgemv = nullptr;
     cublasDscal_t cublasDscal = nullptr;
     cublasDaxpy_t cublasDaxpy = nullptr;
@@ -244,6 +246,7 @@ const CudaApi& probe() {
         ok &= resolve(a.h_cublas, "cublasCreate_v2", a.cublasCreate);
         ok &= resolve(a.h_cublas, "cublasDestroy_v2", a.cublasDestroy);
         ok &= resolve(a.h_cublas, "cublasDgemm_v2", a.cublasDgemm);
+        ok &= resolve(a.h_cublas, "cublasDsyrk_v2", a.cublasDsyrk);
         ok &= resolve(a.h_cublas, "cublasDgemv_v2", a.cublasDgemv);
         ok &= resolve(a.h_cublas, "cublasDscal_v2", a.cublasDscal);
         ok &= resolve(a.h_cublas, "cublasDaxpy_v2", a.cublasDaxpy);
@@ -398,8 +401,8 @@ bool sr_solve(const Eigen::MatrixXd& O, const Eigen::VectorXcd& El, double epsil
     if (N_s <= 0 || p <= 0 || static_cast<int>(El.size()) != N_s) {
         return false;
     }
-    if (!api.cublasDgemv || !api.cublasDscal || !api.cublasDaxpy || !api.cublasDsyr) {
-        return false;  // resident path needs the level-1/2 BLAS symbols
+    if (!api.cublasDsyrk || !api.cublasDgemv || !api.cublasDscal || !api.cublasDaxpy || !api.cublasDsyr) {
+        return false;  // resident path needs the level-1/2/3 BLAS symbols
     }
     std::lock_guard<std::mutex> guard(gpu_mutex());
 
@@ -437,9 +440,13 @@ bool sr_solve(const Eigen::MatrixXd& O, const Eigen::VectorXcd& El, double epsil
     bool ok = true;
     // ō = (1/N_s) Oᵀ·1
     ok &= api.cublasDgemv(H, kCublasOpT, N_s, p, &inv_Ns, O_d, N_s, ones_d, 1, &zero, omean_d, 1) == kCublasStatusSuccess;
-    // M = OᵀO ; M /= N_s ; M -= ōōᵀ (lower) ; M += εI
-    ok &= api.cublasDgemm(H, kCublasOpT, kCublasOpN, p, p, N_s, &one, O_d, N_s, O_d, N_s, &zero, M_d, p) == kCublasStatusSuccess;
-    ok &= api.cublasDscal(H, p * p, &inv_Ns, M_d, 1) == kCublasStatusSuccess;
+    // M = (1/N_s) OᵀO (lower triangle only) ; M -= ōōᵀ (lower) ; M += εI
+    // dsyrk computes the symmetric rank-k product directly into the lower
+    // triangle at half the flops of a full gemm, and folds the 1/N_s scale into
+    // alpha (so no separate dscal). Only the lower triangle is ever read below
+    // (dsyr lower, potrf/potrs lower), so leaving the upper triangle untouched
+    // is correct.
+    ok &= api.cublasDsyrk(H, kFillModeLower, kCublasOpT, p, N_s, &inv_Ns, O_d, N_s, &zero, M_d, p) == kCublasStatusSuccess;
     ok &= api.cublasDsyr(H, kFillModeLower, p, &neg_one, omean_d, 1, M_d, p) == kCublasStatusSuccess;
     ok &= api.cublasDaxpy(H, p, &epsilon, ones_d, 1, M_d, p + 1) == kCublasStatusSuccess;  // diagonal stride p+1
     // V_re = -(Oᵀ El_re / N_s - El_mean_re·ō)  -> B column 0
