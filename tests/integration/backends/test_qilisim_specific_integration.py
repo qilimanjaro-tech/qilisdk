@@ -312,7 +312,6 @@ def _make_many_qubit_annealing_schedule(nqubits):
     ],
 )
 def test_variational_annealing_runs(readout):
-
     backend = QiliSim(
         analog_simulation_method=AnalogMethod.variational_annealing(order=1, shots=100, warmups=5),
         execution_config=ExecutionConfig(seed=42, num_threads=1),
@@ -351,7 +350,6 @@ def test_variational_annealing_wrong_initial_state_raises():
 
 
 def test_variational_annealing_non_x_first_hamiltonian_raises():
-
     bad_schedule = Schedule(
         dt=1,
         hamiltonians={"h_z1": pauli_z(0), "h_z2": pauli_z(0)},
@@ -369,7 +367,6 @@ def test_variational_annealing_non_x_first_hamiltonian_raises():
 
 
 def test_variational_annealing_non_z_final_hamiltonian_raises():
-
     bad_schedule = Schedule(
         dt=1,
         hamiltonians={"h_x": pauli_x(0), "h_y": pauli_y(0)},

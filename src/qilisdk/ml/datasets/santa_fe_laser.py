@@ -18,14 +18,14 @@ from qilisdk.ml.datasets.lorenz import integrate_lorenz
 
 
 class SantaFeLaser(Dataset):
-    r"""Santa Fe laser time series (equation-based surrogate).
+    r"""
+    Santa Fe laser time series (equation-based version).
 
     The original *Santa Fe Time Series Competition* Data Set A is a recording
     of the chaotic intensity pulsations of a far-infrared :math:`\mathrm{NH_3}`
-    laser. Because QiliSDK generates data on the fly rather than shipping
-    recorded points, this class reproduces the same qualitative dynamics from
-    first principles using the single-mode **Lorenz--Haken** laser equations,
-    which are mathematically isomorphic to the Lorenz system:
+    laser. To instead generate this data on the fly rather than just using points
+    points, this class reproduces the same qualitative dynamics from
+    first principles using the single-mode **Lorenz--Haken** laser equations:
 
     .. math::
 
@@ -35,16 +35,8 @@ class SantaFeLaser(Dataset):
 
     where :math:`E` is the field amplitude, :math:`P` the polarization and
     :math:`N` the population inversion. The measured quantity is the laser
-    **intensity** :math:`I \propto E^2`, whose build-up-and-collapse envelope
-    reproduces the hallmark behaviour of the Santa Fe recording.
-
-    :meth:`generate` returns a ``horizon``-step-ahead prediction task over the
-    scalar intensity, so ``inputs`` and ``targets`` are shaped ``(npoints, 1)``.
-
-    Note:
-        This is a physics-based *model* of the same laser dynamics, not the
-        original experimental recording. It is intended for benchmarking
-        predictors (e.g. quantum reservoirs) on realistic chaotic laser data.
+    **intensity** :math:`I \propto E^2`, which reproduces the behaviour
+    of the Santa Fe recording.
     """
 
     def __init__(
@@ -53,7 +45,7 @@ class SantaFeLaser(Dataset):
         sigma: float = 10.0,
         rho: float = 28.0,
         beta: float = 8.0 / 3.0,
-        state0: tuple[float, float, float] = (1.0, 1.0, 1.0),
+        initial_state: tuple[float, float, float] = (1.0, 1.0, 1.0),
         dt: float = 0.01,
         sample_every: int = 5,
         washout: int = 1000,
@@ -63,20 +55,15 @@ class SantaFeLaser(Dataset):
         """Configure a Santa Fe laser generator.
 
         Args:
-            sigma (float): Field relaxation rate :math:`\\sigma`. Defaults to
-                ``10.0``.
+            sigma (float): Field relaxation rate :math:`\\sigma`. Defaults to ``10.0``.
             rho (float): Pump parameter :math:`\\rho`. Defaults to ``28.0``.
-            beta (float): Inversion relaxation rate :math:`\\beta`. Defaults to
-                ``8/3``.
-            state0 (tuple[float, float, float]): Initial ``(E, P, N)`` state.
-                Defaults to ``(1.0, 1.0, 1.0)``.
+            beta (float): Inversion relaxation rate :math:`\\beta`. Defaults to ``8/3``.
+            initial_state (tuple[float, float, float]): Initial ``(E, P, N)`` state. Defaults to ``(1.0, 1.0, 1.0)``.
             dt (float): Internal integration step. Defaults to ``0.01``.
             sample_every (int): Sub-sampling stride. Defaults to ``5``.
-            washout (int): Integration steps discarded as transient. Defaults to
-                ``1000``.
+            washout (int): Integration steps discarded as transient. Defaults to ``1000``.
             horizon (int): Prediction horizon in sampled steps. Defaults to ``1``.
-            seed (int | None): Unused; the system is deterministic. Defaults to
-                ``None``.
+            seed (int | None): Unused; the system is deterministic. Defaults to ``None``.
 
         Raises:
             ValueError: If ``dt`` or ``sample_every`` is not positive.
@@ -89,21 +76,21 @@ class SantaFeLaser(Dataset):
         self._sigma = sigma
         self._rho = rho
         self._beta = beta
-        self._state0 = state0
+        self._initial_state = initial_state
         self._dt = dt
         self._sample_every = sample_every
         self._washout = washout
         self._horizon = horizon
 
     def generate(self, npoints: int) -> DatasetSample:
-        """Integrate the laser equations and build an intensity prediction sample.
+        """
+        Integrate the laser equations and build an intensity prediction sample.
 
         Args:
             npoints (int): Number of time steps to produce.
 
         Returns:
-            DatasetSample: A ``horizon``-step-ahead prediction pair over the
-            laser intensity, both arrays shaped ``(npoints, 1)``.
+            DatasetSample: The DataSetSample containing the inputs and targets.
 
         Raises:
             ValueError: If ``npoints`` is not positive.
@@ -117,7 +104,7 @@ class SantaFeLaser(Dataset):
             sigma=self._sigma,
             rho=self._rho,
             beta=self._beta,
-            state0=self._state0,
+            initial_state=self._initial_state,
             dt=self._dt,
             n_steps=n_steps,
         )

@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Iterator, TypeAlias
+from typing import TYPE_CHECKING, Callable, Iterator, TypeAlias, TypeVar
 
 import numpy as np
 
@@ -25,36 +25,53 @@ if TYPE_CHECKING:
 FloatArray: TypeAlias = "NDArray[np.float64]"
 """Alias for a NumPy array of 64-bit floats, used throughout the datasets module."""
 
+# A single integration state: either a scalar (1-D system) or a vector of states.
+State = TypeVar("State", float, "FloatArray")
+
+
+def rk4_step(state: State, dt: float, deriv: Callable[[State], State]) -> State:
+    """Advance a state by one fixed-step classic Runge--Kutta (RK4) step.
+
+    Works for both scalar (``float``) and vector (:data:`FloatArray`) states,
+    since only NumPy-broadcastable arithmetic is used. For systems whose
+    derivative depends on more than the current state (e.g. a delayed value),
+    close the extra arguments into ``deriv`` so they stay fixed across the four
+    stages.
+
+    Args:
+        state (State): Current state ``y_i``.
+        dt (float): Integration step.
+        deriv (Callable[[State], State]): Function returning ``dy/dt`` for a
+            given state.
+
+    Returns:
+        State: The state advanced by one step, ``y_{i+1}``.
+    """
+    k1 = deriv(state)
+    k2 = deriv(state + 0.5 * dt * k1)
+    k3 = deriv(state + 0.5 * dt * k2)
+    k4 = deriv(state + dt * k3)
+    return state + (dt / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4)
+
 
 @dataclass(frozen=True)
 class DatasetSample:
     """A generated batch of samples produced by a :class:`Dataset`.
-
-    A sample is an ``(inputs, targets)`` pair laid out for supervised
-    time-series learning. Both arrays share their leading axis (one entry per
-    time step); trailing axes hold the feature dimensions of the system (for
-    example, three columns for the Lorenz attractor).
-
-    The container supports tuple unpacking, so both of the following work::
-
-        sample = dataset.generate(1000)
-        inputs, targets = dataset.generate(1000)
+    A sample is an ``(inputs, targets)`` pair.
     """
 
     inputs: FloatArray
-    """Model inputs, shaped ``(npoints, ...)``."""
-
     targets: FloatArray
-    """Prediction targets aligned with :attr:`inputs`, shaped ``(npoints, ...)``."""
 
     def __iter__(self) -> Iterator[FloatArray]:
-        """Iterate over ``(inputs, targets)`` to support tuple unpacking.
+        """
+        Handy iterator over the inputs and targets
 
         Yields:
-            FloatArray: First :attr:`inputs`, then :attr:`targets`.
+            FloatArray: Yield each input target tuple, in order
         """
-        yield self.inputs
-        yield self.targets
+        for i in range(len(self.inputs)):
+            yield self.inputs[i], self.targets[i]
 
     def __len__(self) -> int:
         """Return the number of time steps in the sample.
@@ -66,19 +83,18 @@ class DatasetSample:
 
 
 def build_prediction_sample(series: FloatArray, horizon: int) -> DatasetSample:
-    """Turn a time series into a one-to-``horizon``-step-ahead prediction sample.
+    """
+    Turn a time series into a prediction sample.
 
     Given a series of length ``npoints + horizon``, the inputs are the first
-    ``npoints`` steps and the targets are the same steps shifted forward by
-    ``horizon``, so that ``targets[t] == series[t + horizon]``.
+    ``npoints`` steps and the targets are the latter ``horizon`` steps.
 
     Args:
-        series (FloatArray): The raw series, shaped ``(npoints + horizon, ...)``.
+        series (FloatArray): The raw series
         horizon (int): Number of steps ahead to predict. Must be positive.
 
     Returns:
-        DatasetSample: The aligned ``(inputs, targets)`` pair, each shaped
-        ``(npoints, ...)``.
+        DatasetSample: The aligned ``(inputs, targets)`` pair
 
     Raises:
         ValueError: If ``horizon`` is not positive.
@@ -89,25 +105,15 @@ def build_prediction_sample(series: FloatArray, horizon: int) -> DatasetSample:
 
 
 class Dataset(ABC):
-    """Abstract base class for equation-based dataset generators.
-
-    Concrete datasets synthesise their data on the fly from a governing
-    equation (a map, an ordinary/delay differential equation, or a driven
-    recurrence) rather than loading pre-recorded points. Every dataset is
-    reproducible: fixing ``seed`` makes repeated :meth:`generate` calls return
-    identical output.
-
-    Subclasses implement :meth:`generate`, which returns a
-    :class:`DatasetSample`.
+    """
+    Abstract base class for ML datasets
     """
 
     def __init__(self, *, seed: int | None = None) -> None:
         """Initialise the dataset.
 
         Args:
-            seed (int | None): Seed for the random number generator used by
-                stochastic datasets. Deterministic datasets ignore it. Defaults
-                to ``None``, which draws fresh entropy from the operating system.
+            seed (int | None): Seed for the random number generator
         """
         self._seed = seed
 
@@ -122,9 +128,6 @@ class Dataset(ABC):
 
     def _rng(self) -> np.random.Generator:
         """Build a fresh random generator from the configured seed.
-
-        A new generator is created on every call so that, for a fixed seed,
-        successive :meth:`generate` calls reproduce the same sequence.
 
         Returns:
             numpy.random.Generator: A seeded (or OS-seeded) generator.

@@ -15,15 +15,15 @@ from __future__ import annotations
 
 import numpy as np
 
-from qilisdk.ml.datasets.dataset import Dataset, DatasetSample, build_prediction_sample
+from qilisdk.ml.datasets.dataset import Dataset, DatasetSample, build_prediction_sample, rk4_step
 
 
 class MackeyGlass(Dataset):
-    r"""Mackey--Glass chaotic time series.
+    r"""
+    Mackey--Glass chaotic time series.
 
-    The Mackey--Glass system is a nonlinear delay differential equation that,
-    for suitable delays, produces a well-known chaotic attractor widely used as
-    a reservoir-computing prediction benchmark:
+    The Mackey--Glass system is a nonlinear delay differential equation that
+    produces a well-known chaotic attractor:
 
     .. math::
 
@@ -65,13 +65,10 @@ class MackeyGlass(Dataset):
             n (float): Nonlinearity exponent :math:`n`. Defaults to ``10.0``.
             x0 (float): Constant initial-history value. Defaults to ``1.2``.
             dt (float): Internal integration step. Defaults to ``0.1``.
-            sample_every (int): Sub-sampling stride applied to the integrated
-                trajectory. Defaults to ``10`` (i.e. an effective step of 1.0).
-            washout (int): Number of integration steps discarded as transient
-                before sampling begins. Defaults to ``1000``.
+            sample_every (int): Sub-sampling stride. Defaults to ``10``.
+            washout (int): Number of integration steps discarded before sampling begins. Defaults to ``1000``.
             horizon (int): Prediction horizon in sampled steps. Defaults to ``1``.
-            seed (int | None): Unused; the system is deterministic. Kept for a
-                uniform interface. Defaults to ``None``.
+            seed (int | None): Seed for the random number generator. Defaults to ``None``.
 
         Raises:
             ValueError: If ``tau``, ``dt`` or ``sample_every`` is not positive.
@@ -123,12 +120,7 @@ class MackeyGlass(Dataset):
 
         for i in range(tau_steps, tau_steps + n_steps):
             xd = traj[i - tau_steps]
-            xi = traj[i]
-            k1 = deriv(xi, xd)
-            k2 = deriv(xi + 0.5 * dt * k1, xd)
-            k3 = deriv(xi + 0.5 * dt * k2, xd)
-            k4 = deriv(xi + dt * k3, xd)
-            traj[i + 1] = xi + (dt / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4)
+            traj[i + 1] = rk4_step(traj[i], dt, lambda x, xd=xd: deriv(x, xd))
 
         start = tau_steps + self._washout
         sampled = traj[start :: self._sample_every][:needed]

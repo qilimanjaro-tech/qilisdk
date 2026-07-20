@@ -782,7 +782,6 @@ def test_execute_quantum_reservoir_raises_if_time_evolution_returns_no_state(mon
 
 
 def test_cudaq_to_standard_reorders_statevector():
-
     # 2 qubits: |01> in CUDA-Q ordering → should map to standard ordering
     psi = np.array([0, 1, 0, 0], dtype=complex)
     reordered = cudaq_to_standard(psi)
@@ -791,21 +790,18 @@ def test_cudaq_to_standard_reorders_statevector():
 
 
 def test_cudaq_to_standard_invalid_ndim_raises():
-
     arr = np.array([[1, 0], [0, 0]], dtype=complex)
     with pytest.raises(ValueError, match="1D array"):
         cudaq_to_standard(arr)
 
 
 def test_cudaq_to_standard_non_power_of_two_raises():
-
     arr = np.array([1, 0, 0], dtype=complex)
     with pytest.raises(ValueError, match="power of 2"):
         cudaq_to_standard(arr)
 
 
 def test_reverse_bits():
-
     assert reverse_bits(0b110, 3) == 0b011
     assert reverse_bits(0b001, 3) == 0b100
     assert reverse_bits(0b00, 2) == 0b00

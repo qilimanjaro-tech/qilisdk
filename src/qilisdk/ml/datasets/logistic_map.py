@@ -19,9 +19,8 @@ from qilisdk.ml.datasets.dataset import Dataset, DatasetSample, build_prediction
 
 
 class LogisticMap(Dataset):
-    r"""Logistic map, the simplest one-dimensional route to chaos.
-
-    The logistic map is the recurrence
+    r"""
+    Logistic map, a simple one-dimensional chaotic system:
 
     .. math::
 
@@ -42,16 +41,15 @@ class LogisticMap(Dataset):
         horizon: int = 1,
         seed: int | None = None,
     ) -> None:
-        """Configure a logistic map generator.
+        """
+        Configure a logistic map generator.
 
         Args:
             r (float): Growth-rate parameter :math:`r`. Defaults to ``3.9``.
             x0 (float): Initial value in ``[0, 1]``. Defaults to ``0.5``.
-            washout (int): Number of initial iterations discarded as transient.
-                Defaults to ``100``.
+            washout (int): Number of initial iterations discarded. Defaults to ``100``.
             horizon (int): Prediction horizon in steps. Defaults to ``1``.
-            seed (int | None): Unused; the system is deterministic. Defaults to
-                ``None``.
+            seed (int | None): Unused; the system is deterministic. Defaults to ``None``.
 
         Raises:
             ValueError: If ``x0`` is not in the closed interval ``[0, 1]``.
@@ -71,8 +69,7 @@ class LogisticMap(Dataset):
             npoints (int): Number of time steps to produce.
 
         Returns:
-            DatasetSample: A ``horizon``-step-ahead prediction pair, both arrays
-            shaped ``(npoints, 1)``.
+            DatasetSample: The DataSetSample containing the inputs and targets.
 
         Raises:
             ValueError: If ``npoints`` is not positive.

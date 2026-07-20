@@ -21,17 +21,17 @@ from qilisdk.ml.datasets.dataset import Dataset, DatasetSample, build_prediction
 class HenonMap(Dataset):
     r"""Hénon map, a two-dimensional discrete chaotic system.
 
-    The Hénon map is the recurrence
+    The Hénon map uses:
 
     .. math::
 
         x_{n+1} = 1 - a\, x_n^2 + y_n, \qquad
         y_{n+1} = b\, x_n,
 
-    which is chaotic for the canonical parameters :math:`a = 1.4`,
+    which is chaotic for the parameters :math:`a = 1.4`,
     :math:`b = 0.3`. :meth:`generate` returns a ``horizon``-step-ahead
     prediction task over the two-dimensional state, so ``inputs`` and
-    ``targets`` are shaped ``(npoints, 2)``.
+    ``targets`` are both shaped ``(npoints, 2)``.
     """
 
     def __init__(
@@ -39,7 +39,7 @@ class HenonMap(Dataset):
         *,
         a: float = 1.4,
         b: float = 0.3,
-        state0: tuple[float, float] = (0.0, 0.0),
+        initial_state: tuple[float, float] = (0.0, 0.0),
         washout: int = 100,
         horizon: int = 1,
         seed: int | None = None,
@@ -49,30 +49,27 @@ class HenonMap(Dataset):
         Args:
             a (float): Nonlinearity parameter :math:`a`. Defaults to ``1.4``.
             b (float): Contraction parameter :math:`b`. Defaults to ``0.3``.
-            state0 (tuple[float, float]): Initial ``(x, y)`` state. Defaults to
-                ``(0.0, 0.0)``.
-            washout (int): Number of initial iterations discarded as transient.
-                Defaults to ``100``.
+            initial_state (tuple[float, float]): Initial ``(x, y)`` state. Defaults to ``(0.0, 0.0)``.
+            washout (int): Number of initial iterations discarded as transient. Defaults to ``100``.
             horizon (int): Prediction horizon in steps. Defaults to ``1``.
-            seed (int | None): Unused; the system is deterministic. Defaults to
-                ``None``.
+            seed (int | None): Unused; the system is deterministic. Defaults to ``None``.
         """
         super().__init__(seed=seed)
         self._a = a
         self._b = b
-        self._state0 = state0
+        self._initial_state = initial_state
         self._washout = washout
         self._horizon = horizon
 
     def generate(self, npoints: int) -> DatasetSample:
-        """Iterate the Hénon map and build a prediction sample.
+        """
+        Iterate the Hénon map and build a prediction sample.
 
         Args:
             npoints (int): Number of time steps to produce.
 
         Returns:
-            DatasetSample: A ``horizon``-step-ahead prediction pair, both arrays
-            shaped ``(npoints, 2)``.
+            DatasetSample: The DataSetSample containing the inputs and targets.
 
         Raises:
             ValueError: If ``npoints`` is not positive.
@@ -83,7 +80,7 @@ class HenonMap(Dataset):
         needed = npoints + self._horizon
         total = self._washout + needed
         traj = np.empty((total, 2), dtype=np.float64)
-        traj[0] = np.asarray(self._state0, dtype=np.float64)
+        traj[0] = np.asarray(self._initial_state, dtype=np.float64)
         for i in range(total - 1):
             x, y = traj[i]
             traj[i + 1] = (1.0 - self._a * x * x + y, self._b * x)

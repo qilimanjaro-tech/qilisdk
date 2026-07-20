@@ -23,9 +23,10 @@ _SQUASH_ORDER_THRESHOLD = 10
 
 
 class NARMA(Dataset):
-    r"""Nonlinear Auto-Regressive Moving Average (NARMA) benchmark.
+    r"""
+    Nonlinear Auto-Regressive Moving Average (NARMA) benchmark.
 
-    NARMA is a classic system-identification task for reservoir computing. A
+    NARMA is a classic system-identification task. A
     random input stream :math:`u(t) \sim \mathcal{U}(0, 0.5)` drives an
     order-:math:`n` nonlinear recurrence whose output :math:`y(t)` must be
     predicted from :math:`u`:
@@ -39,13 +40,7 @@ class NARMA(Dataset):
 
     The default coefficients :math:`(\alpha, \beta, \gamma, \delta) =
     (0.3, 0.05, 1.5, 0.1)` correspond to the ubiquitous ``NARMA10`` task
-    (``order=10``). For larger orders the recurrence can diverge, so a
-    ``tanh`` squashing of the update is applied when ``order > 10`` (matching
-    common practice in the literature) to keep the series bounded.
-
-    :meth:`generate` returns ``inputs`` equal to the driving signal :math:`u`
-    and ``targets`` equal to the system output :math:`y`, both shaped
-    ``(npoints, 1)``.
+    (``order=10``).
     """
 
     def __init__(
@@ -62,14 +57,12 @@ class NARMA(Dataset):
         """Configure a NARMA generator.
 
         Args:
-            order (int): Memory order :math:`n` of the recurrence. Defaults to
-                ``10``.
+            order (int): Memory order :math:`n` of the recurrence. Defaults to ``10``.
             alpha (float): Linear self-feedback coefficient. Defaults to ``0.3``.
             beta (float): Nonlinear memory coefficient. Defaults to ``0.05``.
             gamma (float): Input-coupling coefficient. Defaults to ``1.5``.
             delta (float): Constant bias term. Defaults to ``0.1``.
-            input_range (tuple[float, float]): ``(low, high)`` bounds of the
-                uniform driving signal. Defaults to ``(0.0, 0.5)``.
+            input_range (tuple[float, float]): Bounds of the driving signal. Defaults to ``(0.0, 0.5)``.
             seed (int | None): Seed for the driving signal. Defaults to ``None``.
 
         Raises:
@@ -101,8 +94,7 @@ class NARMA(Dataset):
             npoints (int): Number of time steps to produce.
 
         Returns:
-            DatasetSample: ``inputs`` is the driving signal and ``targets`` is
-            the NARMA output, both shaped ``(npoints, 1)``.
+            DatasetSample: The DataSetSample containing the inputs and targets.
 
         Raises:
             ValueError: If ``npoints`` is not positive.

@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from qilisdk.ml.datasets.dataset import Dataset, DatasetSample, FloatArray, build_prediction_sample
+from qilisdk.ml.datasets.dataset import Dataset, DatasetSample, FloatArray, build_prediction_sample, rk4_step
 
 
 def integrate_lorenz(
@@ -23,11 +23,12 @@ def integrate_lorenz(
     sigma: float,
     rho: float,
     beta: float,
-    state0: tuple[float, float, float],
+    initial_state: tuple[float, float, float],
     dt: float,
     n_steps: int,
 ) -> FloatArray:
-    r"""Integrate the Lorenz system with a fixed-step RK4 scheme.
+    r"""
+    Integrate the Lorenz system with a fixed-step RK4 scheme.
 
     The Lorenz equations are
 
@@ -41,7 +42,7 @@ def integrate_lorenz(
         sigma (float): Prandtl number :math:`\sigma`.
         rho (float): Rayleigh number :math:`\rho`.
         beta (float): Geometric factor :math:`\beta`.
-        state0 (tuple[float, float, float]): Initial ``(x, y, z)`` state.
+        initial_state (tuple[float, float, float]): Initial ``(x, y, z)`` state.
         dt (float): Integration step.
         n_steps (int): Number of RK4 steps to take.
 
@@ -54,28 +55,15 @@ def integrate_lorenz(
         return np.array([sigma * (y - x), x * (rho - z) - y, x * y - beta * z], dtype=np.float64)
 
     traj = np.empty((n_steps + 1, 3), dtype=np.float64)
-    traj[0] = np.asarray(state0, dtype=np.float64)
+    traj[0] = np.asarray(initial_state, dtype=np.float64)
     for i in range(n_steps):
-        s = traj[i]
-        k1 = deriv(s)
-        k2 = deriv(s + 0.5 * dt * k1)
-        k3 = deriv(s + 0.5 * dt * k2)
-        k4 = deriv(s + dt * k3)
-        traj[i + 1] = s + (dt / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4)
+        traj[i + 1] = rk4_step(traj[i], dt, deriv)
     return traj
 
 
 class Lorenz(Dataset):
-    r"""Lorenz attractor, the archetypal chaotic dynamical system.
-
-    The three-variable Lorenz system exhibits deterministic chaos in its
-    classic parameter regime :math:`(\sigma, \rho, \beta) = (10, 28, 8/3)` and
-    is a standard multivariate benchmark for reservoir computing.
-
-    The system is integrated with fixed-step RK4 at resolution ``dt`` and
-    sub-sampled every ``sample_every`` steps. :meth:`generate` returns a
-    ``horizon``-step-ahead prediction task over the full three-dimensional
-    state, so ``inputs`` and ``targets`` are shaped ``(npoints, 3)``.
+    r"""
+    Lorenz attractor, a chaotic dynamical system.
     """
 
     def __init__(
@@ -84,7 +72,7 @@ class Lorenz(Dataset):
         sigma: float = 10.0,
         rho: float = 28.0,
         beta: float = 8.0 / 3.0,
-        state0: tuple[float, float, float] = (1.0, 1.0, 1.0),
+        initial_state: tuple[float, float, float] = (1.0, 1.0, 1.0),
         dt: float = 0.01,
         sample_every: int = 5,
         washout: int = 1000,
@@ -97,15 +85,12 @@ class Lorenz(Dataset):
             sigma (float): Prandtl number :math:`\\sigma`. Defaults to ``10.0``.
             rho (float): Rayleigh number :math:`\\rho`. Defaults to ``28.0``.
             beta (float): Geometric factor :math:`\\beta`. Defaults to ``8/3``.
-            state0 (tuple[float, float, float]): Initial ``(x, y, z)`` state.
-                Defaults to ``(1.0, 1.0, 1.0)``.
+            initial_state (tuple[float, float, float]): Initial ``(x, y, z)`` state. Defaults to ``(1.0, 1.0, 1.0)``.
             dt (float): Internal integration step. Defaults to ``0.01``.
             sample_every (int): Sub-sampling stride. Defaults to ``5``.
-            washout (int): Integration steps discarded as transient. Defaults to
-                ``1000``.
+            washout (int): Integration steps discarded as transient. Defaults to ``1000``.
             horizon (int): Prediction horizon in sampled steps. Defaults to ``1``.
-            seed (int | None): Unused; the system is deterministic. Defaults to
-                ``None``.
+            seed (int | None): Unused; the system is deterministic. Defaults to ``None``.
 
         Raises:
             ValueError: If ``dt`` or ``sample_every`` is not positive.
@@ -118,21 +103,20 @@ class Lorenz(Dataset):
         self._sigma = sigma
         self._rho = rho
         self._beta = beta
-        self._state0 = state0
+        self._initial_state = initial_state
         self._dt = dt
         self._sample_every = sample_every
         self._washout = washout
         self._horizon = horizon
 
     def generate(self, npoints: int) -> DatasetSample:
-        """Integrate the Lorenz system and build a prediction sample.
+        """
+        Integrate the Lorenz system and build a prediction sample.
 
         Args:
             npoints (int): Number of time steps to produce.
 
         Returns:
-            DatasetSample: A ``horizon``-step-ahead prediction pair, both arrays
-            shaped ``(npoints, 3)``.
 
         Raises:
             ValueError: If ``npoints`` is not positive.
@@ -146,7 +130,7 @@ class Lorenz(Dataset):
             sigma=self._sigma,
             rho=self._rho,
             beta=self._beta,
-            state0=self._state0,
+            initial_state=self._initial_state,
             dt=self._dt,
             n_steps=n_steps,
         )
