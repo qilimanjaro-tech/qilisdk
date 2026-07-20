@@ -33,7 +33,7 @@ class QiliSimConfig {
     int max_cache_size = 1000;
     bool combine_single_qubit_gates = true;
     bool fuse_gates = true;
-    int max_fused_qubits = 4;
+    int max_fused_qubits = 0;
     bool normalize_after_each_gate = false;
     double adaptive_tol = 1e-2;
     bool measurement_collapse = false;

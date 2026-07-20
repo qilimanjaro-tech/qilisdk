@@ -128,17 +128,37 @@ MatrixFreeHamiltonian construct_current_hamiltonian(double t, const std::vector<
         ind++;
     }
     ind = std::min(ind, step_list.size() - 1);
+
+    // Precompute the fraction once
+    double c = 0.0;
+    if (ind != 0) {
+        double t1 = step_list[ind - 1];
+        double t2 = step_list[ind];
+        c = (t - t1) / (t2 - t1);
+    }
+
+    // Reserve for the worst case (no Pauli strings shared)
     MatrixFreeHamiltonian currentH(hamiltonians[0].get_nqubits());
+    auto& out = currentH.get_operators();
+    size_t total_terms = 0;
+    for (const auto& H : hamiltonians) {
+        total_terms += H.get_operators().size();
+    }
+    out.reserve(total_terms);
+
+    // For each Hamiltonian, compute its contribution to the current Hamiltonian
     for (size_t h = 0; h < hamiltonians.size(); ++h) {
+        // Linearly interpolate this Hamiltonian's weight at time t.
+        double weight;
         if (ind == 0) {
-            currentH += hamiltonians[h] * parameters_list[h][0];
+            weight = parameters_list[h][0];
         } else {
-            double t1 = step_list[ind - 1];
-            double t2 = step_list[ind];
-            double p1 = parameters_list[h][ind - 1];
-            double p2 = parameters_list[h][ind];
-            double c = (t - t1) / (t2 - t1);
-            currentH += hamiltonians[h] * ((1.0 - c) * p1 + c * p2);
+            weight = (1.0 - c) * parameters_list[h][ind - 1] + c * parameters_list[h][ind];
+        }
+
+        // Merge the scaled terms
+        for (const auto& [pauli, coeff] : hamiltonians[h].get_operators()) {
+            out[pauli] += coeff * weight;
         }
     }
     return currentH;
@@ -193,53 +213,69 @@ void iter_rk4(DenseMatrix& rho_t, double t, double dt, const std::vector<double>
 
     // k1 at time t
     lindblad_rhs(k, rho_t, construct_current_hamiltonian(t_step, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
+    const long rho_size = rho_t.size();
+    {
+        Complex* rt_ptr = rho_t.data();
+        Complex* ro_ptr = rho_old.data();
+        Complex* rtmp_ptr = rho_tmp.data();
+        const Complex* k_ptr = k.data();
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
 #endif
-    for (int i = 0; i < rho_t.rows(); ++i) {
-        for (int j = 0; j < rho_t.cols(); ++j) {
-            const Complex orig = rho_t(i, j);
-            const Complex kv = k(i, j);
-            rho_old(i, j) = orig;
-            rho_t(i, j) = orig + dt_over_6 * kv;
-            rho_tmp(i, j) = orig + dt_over_2 * kv;
+        for (long idx = 0; idx < rho_size; ++idx) {
+            const Complex orig = rt_ptr[idx];
+            const Complex kv = k_ptr[idx];
+            ro_ptr[idx] = orig;
+            rt_ptr[idx] = orig + dt_over_6 * kv;
+            rtmp_ptr[idx] = orig + dt_over_2 * kv;
         }
     }
 
     // k2 at time t + dt/2
     lindblad_rhs(k, rho_tmp, construct_current_hamiltonian(t_step + 0.5 * dt, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
+    {
+        Complex* rt_ptr = rho_t.data();
+        const Complex* ro_ptr = rho_old.data();
+        Complex* rtmp_ptr = rho_tmp.data();
+        const Complex* k_ptr = k.data();
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
 #endif
-    for (int i = 0; i < rho_t.rows(); ++i) {
-        for (int j = 0; j < rho_t.cols(); ++j) {
-            const Complex kv = k(i, j);
-            rho_t(i, j) += dt_over_3 * kv;
-            rho_tmp(i, j) = rho_old(i, j) + dt_over_2 * kv;
+        for (long idx = 0; idx < rho_size; ++idx) {
+            const Complex kv = k_ptr[idx];
+            rt_ptr[idx] += dt_over_3 * kv;
+            rtmp_ptr[idx] = ro_ptr[idx] + dt_over_2 * kv;
         }
     }
 
     // k3 at time t + dt/2
     lindblad_rhs(k, rho_tmp, construct_current_hamiltonian(t_step + 0.5 * dt, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
+    {
+        Complex* rt_ptr = rho_t.data();
+        const Complex* ro_ptr = rho_old.data();
+        Complex* rtmp_ptr = rho_tmp.data();
+        const Complex* k_ptr = k.data();
+        const Real dt_real = static_cast<Real>(dt);
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
 #endif
-    for (int i = 0; i < rho_t.rows(); ++i) {
-        for (int j = 0; j < rho_t.cols(); ++j) {
-            const Complex kv = k(i, j);
-            rho_t(i, j) += dt_over_3 * kv;
-            rho_tmp(i, j) = rho_old(i, j) + static_cast<Real>(dt) * kv;
+        for (long idx = 0; idx < rho_size; ++idx) {
+            const Complex kv = k_ptr[idx];
+            rt_ptr[idx] += dt_over_3 * kv;
+            rtmp_ptr[idx] = ro_ptr[idx] + dt_real * kv;
         }
     }
 
     // k4 at time t + dt
     lindblad_rhs(k, rho_tmp, construct_current_hamiltonian(t_step + dt, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
+    {
+        Complex* rt_ptr = rho_t.data();
+        const Complex* k_ptr = k.data();
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
 #endif
-    for (int i = 0; i < rho_t.rows(); ++i) {
-        for (int j = 0; j < rho_t.cols(); ++j) {
-            rho_t(i, j) += dt_over_6 * k(i, j);
+        for (long idx = 0; idx < rho_size; ++idx) {
+            rt_ptr[idx] += dt_over_6 * k_ptr[idx];
         }
     }
 
@@ -269,13 +305,18 @@ void iter_rk4(DenseMatrix& rho_t, double t, double dt, const std::vector<double>
         for (int i = 0; i < dim; ++i) {
             norm += rho_t(i, i);
         }
+        // Divide the whole (contiguous) matrix by the scalar trace
+        const Real denom = norm.real() * norm.real() + norm.imag() * norm.imag();
+        const Real inv_re = norm.real() / denom;
+        const Real inv_im = -norm.imag() / denom;
+        Complex* rt_ptr = rho_t.data();
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
 #endif
-        for (int i = 0; i < rho_t.rows(); ++i) {
-            for (int j = 0; j < rho_t.cols(); ++j) {
-                rho_t(i, j) /= norm;
-            }
+        for (long idx = 0; idx < rho_size; ++idx) {
+            const Real xr = rt_ptr[idx].real();
+            const Real xi = rt_ptr[idx].imag();
+            rt_ptr[idx] = Complex(xr * inv_re - xi * inv_im, xr * inv_im + xi * inv_re);
         }
     }
 }

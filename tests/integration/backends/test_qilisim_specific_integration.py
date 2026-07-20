@@ -29,6 +29,7 @@ from qilisdk.core.qtensor import InitialState, QTensor, ket
 from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, H, M, S, T, X, Y, Z
 from qilisdk.functionals import AnalogEvolution, DigitalPropagation, FunctionalResult
 from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
+from qilisdk.noise import AmplitudeDamping, Dephasing, NoiseModel
 from qilisdk.readout import Readout, SamplingReadout
 
 random.seed(42)
@@ -36,6 +37,7 @@ random.seed(42)
 analog_methods = [
     AnalogMethod.direct(),
     AnalogMethod.arnoldi(),
+    AnalogMethod.arnoldi(matrix_free=True),
     AnalogMethod.integrator(),
     AnalogMethod.integrator(matrix_free=True),
 ]
@@ -161,6 +163,58 @@ def test_monte_carlo_time_evolution(method):
     expect_z = res.get_expectation_values()[0]
     assert res.get_state().shape == (2, 2)
     assert np.isclose(expect_z, -0.8, rtol=1e-1)
+
+
+@pytest.mark.parametrize(
+    ("initial_state", "noise"),
+    [
+        (ket(0), None),  # unitary evolution on a state vector
+        (ket(0).to_density_matrix(), None),  # unitary evolution on a (pure) density matrix
+        ((ket(0, 0)).to_density_matrix(), None),  # unitary two-qubit density matrix
+        (ket(1), "amplitude_damping"),  # non-unitary (superoperator) path
+        ((ket(0) + ket(1)).unit(), "dephasing"),  # non-unitary (superoperator) path
+    ],
+)
+def test_arnoldi_matrix_free_matches_explicit_matrix(initial_state, noise):
+    """The matrix-free Arnoldi evolution must reproduce the explicit-matrix Arnoldi
+    evolution to numerical precision across the unitary state-vector, unitary
+    density-matrix and non-unitary (Lindblad superoperator) code paths."""
+    nqubits = 2 if initial_state.data.shape[0] == 4 else 1
+    hamiltonians = {"hx": sum(pauli_x(q) for q in range(nqubits))}
+    hamiltonians["hz"] = sum(pauli_z(q) for q in range(nqubits))
+    schedule = Schedule(
+        dt=0.1,
+        hamiltonians=hamiltonians,
+        coefficients={"hx": {(0, 3): lambda t: 1 - t / 3}, "hz": {(0, 3): lambda t: t / 3}},
+    )
+
+    noise_model = None
+    if noise == "amplitude_damping":
+        noise_model = NoiseModel()
+        noise_model.add(AmplitudeDamping(t1=0.5))
+    elif noise == "dephasing":
+        noise_model = NoiseModel()
+        noise_model.add(Dephasing(t_phi=0.4))
+
+    observables = [pauli_z(q) for q in range(nqubits)] + [pauli_x(q) for q in range(nqubits)]
+
+    def _run(matrix_free: bool):
+        backend = QiliSim(
+            analog_simulation_method=AnalogMethod.arnoldi(dim=12, num_substeps=2, matrix_free=matrix_free),
+            noise_model=noise_model,
+            execution_config=ExecutionConfig(seed=42, num_threads=2),
+        )
+        res = backend.execute(
+            AnalogEvolution(schedule=schedule, initial_state=initial_state),
+            readout=Readout().with_state_tomography().with_expectation(observables=observables),
+        )
+        return res.get_state().dense(), np.asarray(res.get_expectation_values())
+
+    explicit_state, explicit_ev = _run(matrix_free=False)
+    mf_state, mf_ev = _run(matrix_free=True)
+
+    np.testing.assert_allclose(mf_state, explicit_state, atol=1e-9)
+    np.testing.assert_allclose(mf_ev, explicit_ev, atol=1e-9)
 
 
 @pytest.mark.parametrize("method", digital_methods)
@@ -616,6 +670,48 @@ def test_matrix_free_complex_gate_on_mixed_state_stays_hermitian():
 
     # And it must match the explicit-matrix path's state.
     np.testing.assert_allclose(mf_state, _dense(explicit.get_state()), atol=1e-9)
+
+
+@pytest.mark.parametrize("method", [AnalogMethod.direct(), AnalogMethod.arnoldi(), AnalogMethod.integrator()])
+def test_reservoir_schedule_hamiltonians_of_differing_qubit_support(method):
+    """Regression: a schedule whose Hamiltonian terms touch different qubits produces
+    ``to_matrix()`` matrices of *different* dimensions (e.g. ``Z0*Z1`` -> 4x4 while
+    ``Z0*Z5`` -> 64x64). The explicit-matrix analog path took its dimension from only the
+    first Hamiltonian and then summed the terms, reading out of bounds and segfaulting.
+
+    Each term must be expanded to the full ``nqubits`` space (identity on untouched qubits),
+    so the run must succeed and agree with the matrix-free ground truth.
+    """
+    nqubits = 6
+
+    def _build() -> QuantumReservoir:
+        pre = Circuit(nqubits)
+        pre.add(RX(0, theta=ReservoirInput("phi", 0.1)))
+        layer = ReservoirLayer(
+            evolution_dynamics=Schedule(
+                hamiltonians={"h1": pauli_z(0) * pauli_z(1), "h2": pauli_z(0) * pauli_z(5) + pauli_x(3)},
+                coefficients={"h1": {(0.0, 1.0): 1.0}, "h2": {(0.0, 1.0): 0.5}},
+                total_time=2.0,
+                dt=0.1,
+            ),
+            input_encoding=pre,
+            qubits_to_reset=[0],
+        )
+        return QuantumReservoir(
+            initial_state=QTensor.uniform(nqubits).to_density_matrix(),
+            reservoir_layer=layer,
+            input_per_layer=[{"phi": 0.2}, {"phi": 0.3}],
+        )
+
+    readout = Readout().with_expectation(observables=[pauli_z(0), pauli_z(3), pauli_z(5)])
+    explicit = QiliSim(analog_simulation_method=method).execute(_build(), readout)
+    reference = QiliSim(analog_simulation_method=AnalogMethod.integrator(matrix_free=True)).execute(_build(), readout)
+
+    np.testing.assert_allclose(
+        np.asarray(explicit.get_expectation_values()),
+        np.asarray(reference.get_expectation_values()),
+        atol=1e-6,
+    )
 
 
 # ──────────────────────────────────────────────────────────────────────────────

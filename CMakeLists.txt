@@ -133,6 +133,10 @@ foreach(module ${MODULES_TO_BUILD})
 
         # Make everything visible
         target_compile_options(${module} PRIVATE -fvisibility=default)
+        
+        # For performance
+        target_compile_options(${module} PRIVATE -fopenmp-simd)
+        target_compile_options(${module} PRIVATE -fcx-limited-range)
 
     endif()
 
