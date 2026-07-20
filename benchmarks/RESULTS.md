@@ -73,3 +73,33 @@ The measurement reorders the optimization plan from the original review:
    size threshold to avoid regressions.
 5. **Opt #1 (this change)** — architecturally correct and kept, but not the perf lever on
    this hardware. Its win would be larger on allocators without caching or under memory pressure.
+
+---
+
+# Optimization #2 — `cublasDsyrk` for the Gram matrix
+
+Replaced `cublasDgemm`(full `OᵀO`) + `Dscal` with a single `cublasDsyrk` (lower triangle,
+`alpha=1/N_s`). Min-of-median GPU latency, 3 interleaved rounds (to cancel laptop-GPU
+clock drift), µs/solve:
+
+| N_s | p | before (dgemm) | after (dsyrk) | change |
+|----:|--:|---:|---:|---:|
+| 1000 | 64  | 440.5 | 698.3 | **+58.5%** ⚠ |
+| 1000 | 128 | 1104.9 | 1105.2 | +0.0% |
+| 1000 | 256 | 3060.4 | 3042.4 | −0.6% |
+| 1000 | 512 | 8961.1 | 8947.5 | −0.2% |
+| 4000 | 256 | 8330.7 | 8301.4 | −0.4% |
+| 4000 | 512 | 27612.5 | 19470.0 | **−29.5%** ✅ |
+
+nsys (both use FP64 **tensor-core** cutlass kernels, so this is a kernel-tuning effect):
+
+| size | `d884gemm` | `d884syrk_lower` |
+|---|---:|---:|
+| 4000:512 | 21.66 ms | **13.51 ms** (−38%) |
+| 1000:64  | 149 µs   | **574 µs** (3.85× slower) |
+
+**Verdict:** cuBLAS FP64 `syrk` is well-tuned for large matrices (halved flops → −29.5% at
+4000:512) but poorly tuned for small/thin shapes (+58% at 1000:64). The regression is
+confined to small p — a regime where the GPU is already ~3.5× slower than the CPU and will
+be routed to the CPU by opt #5 (size-gating). Kept, because it is neutral-to-large-win in
+the regime where the GPU path is actually worthwhile.
