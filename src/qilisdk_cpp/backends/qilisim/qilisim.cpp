@@ -429,7 +429,7 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
 
                 // Depending on the method, call the internal implementation
                 std::vector<DenseMatrix> intermediate_rhos;
-                if (config.get_time_evolution_method() == "integrate_rk4_matrix_free" || config.get_time_evolution_method() == "arnoldi_matrix_free") {
+                if (config.get_time_evolution_method() == "integrate_rk4_matrix_free" || config.get_time_evolution_method() == "integrate_rk45_matrix_free" || config.get_time_evolution_method() == "arnoldi_matrix_free") {
                     // Parse the Hamiltonians
                     int n_qubits = functional.attr("nqubits").cast<int>();
                     std::vector<MatrixFreeHamiltonian> hamiltonians = parse_hamiltonians_matrix_free(n_qubits, hamiltonians_values);
