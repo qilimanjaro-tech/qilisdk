@@ -65,6 +65,25 @@ SparseMatrix amp_damp_jump() {
     return to_sparse(j);
 }
 
+// A statevector whose first amplitude is NaN, used to feed an already-diverged state into an
+// integrator. Built with insert() rather than sparseView(), which would prune the NaN entry.
+SparseMatrix nan_statevector_sparse() {
+    SparseMatrix v(2, 1);
+    v.insert(0, 0) = std::numeric_limits<double>::quiet_NaN();
+    v.makeCompressed();
+    return v;
+}
+
+// An amplitude-damping jump operator with an enormous rate. Its dissipator (L rho L^dagger) pumps
+// the diagonal to +inf, overflowing the trace within a single step. A huge Hamiltonian would not
+// do this on its own: the trace of a commutator is zero, so unitary dynamics leaves the trace
+// finite even as individual entries diverge.
+SparseMatrix huge_amp_damp_jump() {
+    DenseMatrix j = DenseMatrix::Zero(2, 2);
+    j(0, 1) = 1e300;
+    return to_sparse(j);
+}
+
 MatrixFreeHamiltonian make_matrix_free_H(std::complex<double> coeff, int target_qubit, std::string name) {
     MatrixFreeOperator op(name, {}, {target_qubit}, DenseMatrix());
     return MatrixFreeHamiltonian(1, op, coeff);
@@ -974,6 +993,55 @@ TEST_F(TimeEvolutionVariationalTest, AnsatzParametersComeFromVariationalConfig) 
     EXPECT_EQ(rho_t.get_shots(), 37);
     EXPECT_EQ(rho_t.get_warmups(), 3);
     EXPECT_EQ(rho_t.get_order(), 1);
+}
+
+// Divergence handling: when ||H||*dt exceeds an integrator's stability limit the state overflows
+// to a non-finite value. The integrators must detect this, mark the state as NaN (rather than
+// silently collapsing it to zeros), and stop stepping early. A huge Hamiltonian coefficient forces
+// the overflow within a single step for the fixed-step and Krylov methods.
+
+// A Hamiltonian coefficient large enough that a single RK step overflows to +/-inf.
+static const std::vector<std::vector<double>> kHugeParams = {{1e300, 1e300, 1e300}};
+
+TEST_F(TimeEvolutionTest, DenseRK4StatevectorDivergesToNaN) {
+    // Unitary-on-statevector path: overflow is caught by the norm guard in iter_rk4_matrix.
+    auto out = run_time_evolution(statevector_zero_sparse(), hamiltonians, kHugeParams, steps, empty_noise, {}, config);
+    EXPECT_FALSE(out.rho_t.allFinite());
+}
+
+TEST_F(TimeEvolutionTest, DenseRK4DensityMatrixDivergesToNaN) {
+    // Density-matrix path (jump operator forces non-unitary dynamics): a huge jump rate overflows
+    // the trace, which is caught by the trace guard in iter_rk4_matrix.
+    NoiseModelCpp noise;
+    noise.add_jump_operator(huge_amp_damp_jump());
+    auto out = run_time_evolution(pure_plus_sparse(), hamiltonians, params, steps, noise, {}, config);
+    EXPECT_FALSE(out.rho_t.allFinite());
+}
+
+TEST_F(TimeEvolutionMatrixFreeTest, MatrixFreeRK4StatevectorDivergesToNaN) {
+    auto out = run_time_evolution_mf(statevector_zero_sparse(), hamiltonians, kHugeParams, steps, empty_noise, {}, config);
+    EXPECT_FALSE(out.rho_t.allFinite());
+}
+
+TEST_F(TimeEvolutionMatrixFreeTest, MatrixFreeRK4DensityMatrixDivergesToNaN) {
+    // A huge jump rate overflows the trace, caught by the trace guard in the matrix-free iter_rk4.
+    NoiseModelCpp noise;
+    noise.add_jump_operator(huge_amp_damp_jump());
+    auto out = run_time_evolution_mf(pure_plus_sparse(), hamiltonians, params, steps, noise, {}, config);
+    EXPECT_FALSE(out.rho_t.allFinite());
+}
+
+TEST_F(TimeEvolutionArnoldiMatrixFreeTest, ArnoldiMatrixFreeDivergesToNaN) {
+    auto out = run_time_evolution_mf(pure_plus_sparse(), hamiltonians, kHugeParams, steps, empty_noise, {}, config);
+    EXPECT_FALSE(out.rho_t.allFinite());
+}
+
+TEST_F(TimeEvolutionAdaptiveTest, AdaptiveRK45StopsOnNonFiniteState) {
+    // The adaptive stepper shrinks dt in response to a huge Hamiltonian rather than overflowing, so
+    // feed it an already-non-finite state: the divergence guard must catch it and stop the loop
+    // (returning the NaN state) instead of iterating.
+    auto out = run_time_evolution_mf(nan_statevector_sparse(), hamiltonians, params, steps, empty_noise, {}, config);
+    EXPECT_FALSE(out.rho_t.allFinite());
 }
 
 // GCOV_EXCL_BR_STOP
