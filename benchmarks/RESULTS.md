@@ -152,12 +152,44 @@ available within this PR's constraints.
 
 ---
 
-# Summary across opt #1–#4
+# Optimization #5 — size-gating — **KEPT (biggest practical win)**
 
-On this **FP64-compute-bound consumer GPU**, the only lever that moved was reducing FP64
-compute (opt #2 `dsyrk`, −29.5% at 4000:512). The peripheral optimizations — allocations
-(#1), launches (#3), transfer staging (#4) — are neutral-to-negative because compute
-(Cholesky 48% + GEMM 40%) dwarfs them. Kept: **#1** (correct, ~neutral, enables future work)
-and **#2** (big win at large sizes). Reverted: **#3**, **#4**. Next: **#5 size-gating** to
-stop using the GPU where it loses to the CPU (small p) — which also neutralizes #2's
-small-p regression.
+`sr_solve` now declines problems below a work threshold (`~ N_s·p²`, the Gram-matrix flop
+count; default `1.5e8`, calibrated on the RTX 3050, override via `QILISDK_GPU_MIN_WORK`) so
+the caller falls back to Eigen where the CPU is faster. Effective solve time (µs), gate OFF
+(GPU forced for all sizes) vs gate ON (default):
+
+| N_s | p | N_s·p² | gate OFF (GPU) | gate ON (effective) | result |
+|----:|--:|---:|---:|---:|---|
+| 1000 | 64  | 4.1e6  | 1071 (0.19×) | **215 (→CPU)** | **5.0× faster** |
+| 1000 | 128 | 1.6e7  | 1492 (0.48×) | **712 (→CPU)** | **2.1× faster** |
+| 1000 | 256 | 6.5e7  | 4111 (0.62×) | **2441 (→CPU)** | **1.7× faster** |
+| 1000 | 512 | 2.6e8  | 9028 (1.33×) | 9043 (GPU) | unchanged (GPU wins) |
+| 4000 | 256 | 2.6e8  | 8393 (1.09×) | 8418 (GPU) | unchanged (GPU wins) |
+| 4000 | 512 | 1.05e9 | 19608 (1.80×) | 19676 (GPU) | unchanged (GPU wins) |
+
+**Verdict: kept.** The gate makes the GPU backend a *strict* improvement — it is used only
+where it beats the CPU, so small problems (which were 2–5× slower on the GPU) now run on the
+CPU at full speed, and large problems keep the GPU win. It also neutralizes opt #2's small-p
+`syrk` regression (those sizes are now on the CPU). The `test_gpu.cpp` correctness test sets
+`QILISDK_GPU_MIN_WORK=0` to keep exercising the GPU compute path at small sizes.
+
+---
+
+# Overall summary (opt #1–#5)
+
+| # | Optimization | Result | Kept? |
+|---|--------------|--------|-------|
+| 1 | Persistent device workspace (no per-call malloc/free) | Eliminates ~2000 API calls; ~1–3% latency (driver already cached allocs) | ✅ kept |
+| 2 | `cublasDsyrk` for `OᵀO` | −29.5% at 4000:512; +58% at 1000:64 (cuBLAS syrk poorly tuned for thin shapes) | ✅ kept |
+| 3 | Fuse RHS into one `gemm`+`ger` | No gain; +5.9% at 4000:512 (thin n=2 gemm underfills tensor core) | ❌ reverted |
+| 4 | Pinned host staging for `O` | +4–8% regression (serial staging vs driver's overlapped bounce) | ❌ reverted |
+| 5 | Size-gating (small p → CPU) | 1.7–5× faster on small problems; large unchanged | ✅ kept (biggest practical win) |
+
+**Key lesson from the data:** on this consumer laptop GPU the SR solve is *FP64-compute-bound*
+(Cholesky 48% + GEMM 40% of GPU time; consumer FP64 runs at 1/64 rate). Only two things
+helped: reducing FP64 flops for large matrices (**#2**) and *not using the GPU* where it
+loses (**#5**). The peripheral overheads (allocations, launches, transfer staging) that the
+initial review flagged turned out to be negligible-to-counterproductive here — a reminder to
+profile before optimizing. On a datacenter GPU (full-rate FP64) the crossover would move down
+substantially; lower `QILISDK_GPU_MIN_WORK` there.
