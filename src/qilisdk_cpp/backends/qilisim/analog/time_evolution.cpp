@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "../../../libs/logging.h"
 #include "time_evolution.h"
+#include "../../../libs/logging.h"
 #include "../noise/noise_model.h"
 #include "../utils/matrix_utils.h"
 #include "../utils/random.h"
@@ -31,12 +31,11 @@ bool state_diverged(DenseMatrix& rho_t, const std::string& method) {
     if (!mark_nan_if_diverged(rho_t)) {
         return false;
     }
-    qilisdk::log_warning(
-        "[QiliSim, C++] Analog integrator '" + method +
-        "' diverged: the state became non-finite, most likely because ||H||*dt exceeds the "
-        "integrator's stability limit. Returning a NaN state. Reduce the schedule dt, use "
-        "smaller Hamiltonian coefficients, or switch to a stable method such as "
-        "AnalogMethod.arnoldi() or AnalogMethod.adaptive_integrator().");
+    qilisdk::log_warning("[QiliSim, C++] Analog integrator '" + method +
+                         "' diverged: the state became non-finite, most likely because ||H||*dt exceeds the "
+                         "integrator's stability limit. Returning a NaN state. Reduce the schedule dt, use "
+                         "smaller Hamiltonian coefficients, or switch to a stable method such as "
+                         "AnalogMethod.arnoldi() or AnalogMethod.adaptive_integrator().");
     return true;
 }
 
