@@ -355,6 +355,24 @@ DevicePool& gpu_pool() {
     return pool;
 }
 
+// Minimum problem "work" (~ N_s·p², the Gram-matrix flop count) below which the
+// GPU path is declined in favour of the CPU. Small problems can't amortise the
+// GPU's fixed overhead (kernel launches, H2D/D2H, synchronisation) and, on a
+// consumer GPU, the 1/64-rate FP64 units, so Eigen on the CPU is faster there.
+// Default calibrated on a consumer GPU (RTX 3050 Laptop); override (e.g. lower
+// it on a datacenter GPU, or set 0 to disable gating) via QILISDK_GPU_MIN_WORK.
+// Re-read on every call (like QILISDK_DISABLE_GPU) so it can be toggled at
+// runtime, e.g. by tests that want to exercise the GPU path at small sizes.
+double gpu_min_work() {
+    if (const char* env = std::getenv("QILISDK_GPU_MIN_WORK")) {
+        const double v = std::atof(env);
+        if (v >= 0.0) {
+            return v;
+        }
+    }
+    return 1.5e8;
+}
+
 }  // namespace
 
 bool cuda_available() {
@@ -399,6 +417,11 @@ bool sr_solve(const Eigen::MatrixXd& O, const Eigen::VectorXcd& El, double epsil
     const int N_s = static_cast<int>(O.rows());
     const int p = static_cast<int>(O.cols());
     if (N_s <= 0 || p <= 0 || static_cast<int>(El.size()) != N_s) {
+        return false;
+    }
+    // Size gate: decline problems too small to beat the CPU, so the caller falls
+    // back to Eigen (see gpu_min_work). Work ~ N_s·p² is the Gram-matrix flops.
+    if (static_cast<double>(N_s) * p * p < gpu_min_work()) {
         return false;
     }
     if (!api.cublasDsyrk || !api.cublasDgemv || !api.cublasDscal || !api.cublasDaxpy || !api.cublasDsyr) {

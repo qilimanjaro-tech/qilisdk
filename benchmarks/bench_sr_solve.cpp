@@ -213,12 +213,15 @@ int main() {
         // Correctness: compare a single GPU solve against the CPU reference.
         const Eigen::VectorXcd ref = sr_reference(O, El, eps);
         bool correct = false;
+        bool declined = false;  // GPU available but sr_solve fell back (e.g. size gate)
         double max_err = 0.0;
         Eigen::VectorXcd adot;
         if (gpu) {
             if (qilisdk::gpu::sr_solve(O, El, eps, adot) && adot.size() == p) {
                 max_err = (adot - ref).cwiseAbs().maxCoeff();
                 correct = max_err < 1e-9;
+            } else {
+                declined = true;
             }
         }
 
@@ -262,7 +265,7 @@ int main() {
         const Stats cs = summarize(cpu_samples);
 
         const double speedup = (gpu && gs.median > 0.0) ? cs.median / gs.median : 0.0;
-        const char* correct_str = !gpu ? "n/a" : (correct ? "PASS" : "FAIL");
+        const char* correct_str = !gpu ? "n/a" : (declined ? "->cpu" : (correct ? "PASS" : "FAIL"));
 
         if (gpu && gs.median > 0.0) {
             std::printf("%7d %6d | %10.2f %10.2f %10.2f %10.2f | %10.2f | %7.2fx | %-9s\n", N_s, p,
