@@ -103,3 +103,26 @@ nsys (both use FP64 **tensor-core** cutlass kernels, so this is a kernel-tuning 
 confined to small p — a regime where the GPU is already ~3.5× slower than the CPU and will
 be routed to the CPU by opt #5 (size-gating). Kept, because it is neutral-to-large-win in
 the regime where the GPU path is actually worthwhile.
+
+---
+
+# Optimization #3 — fuse RHS into one gemm + ger — **TRIED, REVERTED**
+
+Replaced the force-vector assembly's 2 `gemv` + 2 `scal` + 2 `axpy` (6 launches) with one
+`gemm` (`B = -(1/N_s) Oᵀ[El_re|El_im]`, both columns) + one `ger` (mean correction).
+Min-of-median µs/solve (3 interleaved rounds):
+
+| N_s | p | opt#2 | opt#3 | change |
+|----:|--:|---:|---:|---:|
+| 1000 | 64  | 696.0 | 710.7 | +2.1% |
+| 1000 | 128 | 1101.2 | 1118.9 | +1.6% |
+| 1000 | 256 | 3044.8 | 3049.4 | +0.2% |
+| 1000 | 512 | 8938.9 | 8922.3 | −0.2% |
+| 4000 | 256 | 8317.9 | 8325.7 | +0.1% |
+| 4000 | 512 | 19468.1 | 20571.6 | **+5.9%** (confirmed, 5 rounds, non-overlapping ranges) |
+
+**Verdict: reverted.** No benefit at any size and a stable +5.9% regression at 4000:512.
+Two reasons, both matching the profile: (1) kernel launches are only ~3% of API time here,
+so cutting them can't help; (2) the fused `gemm` has `n=2` — far too thin to fill the FP64
+tensor-core tile — so it is *slower* than the two purpose-built `gemv` kernels it replaced.
+Reducing launch count is not a useful lever on this compute-bound workload.
