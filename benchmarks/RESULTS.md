@@ -126,3 +126,38 @@ Two reasons, both matching the profile: (1) kernel launches are only ~3% of API 
 so cutting them can't help; (2) the fused `gemm` has `n=2` — far too thin to fill the FP64
 tensor-core tile — so it is *slower* than the two purpose-built `gemv` kernels it replaced.
 Reducing launch count is not a useful lever on this compute-bound workload.
+
+---
+
+# Optimization #4 — pinned host staging for the O upload — **TRIED, REVERTED**
+
+Staged `O` through a pinned (page-locked) host buffer (`cudaMallocHost`) so the dominant H2D
+DMA runs at full PCIe bandwidth. Min-of-median µs/solve (4 interleaved rounds):
+
+| N_s | p | opt#2 (pageable) | opt#4 (pinned) | change |
+|----:|--:|---:|---:|---:|
+| 1000 | 128 | 1103.1 | 1170.5 | +6.1% |
+| 1000 | 512 | 8932.0 | 9285.4 | +4.0% |
+| 4000 | 256 | 8345.0 | 8975.7 | +7.6% |
+| 4000 | 512 | 19462.0 | 20203.8 | +3.8% |
+
+**Verdict: reverted.** A consistent regression. The staging approach does `memcpy`
+(Eigen→pinned) then `cudaMemcpy` (pinned→device) *serially*, whereas the driver's pageable
+path already overlaps its internal staging copy with the DMA in chunks — so explicit staging
+just adds a serial CPU copy the driver was hiding. A genuine transfer win needs one of:
+(a) uploading `O` as `int8` (8× less data — but needs a device-side conversion kernel, which
+breaks the dlopen-only / no-nvcc design), (b) the caller handing `O` already in pinned
+memory, or (c) cross-`sr_solve` async pipelining (needs integrator restructuring). None are
+available within this PR's constraints.
+
+---
+
+# Summary across opt #1–#4
+
+On this **FP64-compute-bound consumer GPU**, the only lever that moved was reducing FP64
+compute (opt #2 `dsyrk`, −29.5% at 4000:512). The peripheral optimizations — allocations
+(#1), launches (#3), transfer staging (#4) — are neutral-to-negative because compute
+(Cholesky 48% + GEMM 40%) dwarfs them. Kept: **#1** (correct, ~neutral, enables future work)
+and **#2** (big win at large sizes). Reverted: **#3**, **#4**. Next: **#5 size-gating** to
+stop using the GPU where it loses to the CPU (small p) — which also neutralizes #2's
+small-p regression.
