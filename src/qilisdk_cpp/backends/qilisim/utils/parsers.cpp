@@ -1148,6 +1148,9 @@ QiliSimConfig parse_solver_params(const py::dict& solver_params) {
     if (solver_params.contains("variational_warmups")) {
         config.set_warmups(solver_params["variational_warmups"].cast<int>());
     }
+    if (solver_params.contains("gpu")) {
+        config.set_gpu(solver_params["gpu"].cast<bool>());
+    }
     if (solver_params.contains("stabilizer_max_states")) {
         config.set_stabilizer_max_states(solver_params["stabilizer_max_states"].cast<int>());
     }

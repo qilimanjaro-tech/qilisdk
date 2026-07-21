@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "../../../libs/gpu.h"
 #include "../../../libs/pybind.h"
 #include "iterations.h"
 #include "lindblad.h"
@@ -559,7 +560,7 @@ double iter_rk45(DenseMatrix& rho_t, double t, double& dt, const std::vector<dou
     return dt_taken;
 }
 
-void iter_rk4(ExponentialAnsatz& rho_t, double t, double dt, const std::vector<double>& step_list, const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list) {
+void iter_rk4(ExponentialAnsatz& rho_t, double t, double dt, const std::vector<double>& step_list, const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, bool use_gpu) {
     /*
     4th-order Runge–Kutta integration of the Lindblad master equation using a variational method,
     where the density matrix is represented as an exponential of a weighted list of Pauli strings (i.e. an ExponentialAnsatz).
@@ -579,6 +580,10 @@ void iter_rk4(ExponentialAnsatz& rho_t, double t, double dt, const std::vector<d
     const Real dt_over_3 = dt / 3.0;
     const Real dt_over_6 = dt / 6.0;
 
+    // This is where the GPU versus CPU branches
+    using RhsFn = void (*)(ExponentialAnsatz&, const ExponentialAnsatz&, const MatrixFreeHamiltonian&);
+    RhsFn rhs = (use_gpu && qilisdk::gpu::cuda_available()) ? static_cast<RhsFn>(&lindblad_rhs_gpu) : static_cast<RhsFn>(&lindblad_rhs);
+
     // Standard RK4 loop
     ExponentialAnsatz k = rho_t.zeroed();
     ExponentialAnsatz rho_tmp = rho_t.zeroed();
@@ -591,28 +596,28 @@ void iter_rk4(ExponentialAnsatz& rho_t, double t, double dt, const std::vector<d
 
     // First step: compute k1 at time t
     current_hamiltonian = construct_current_hamiltonian(t_step, step_list, hamiltonians, parameters_list);
-    lindblad_rhs(k, rho_t, current_hamiltonian);
+    rhs(k, rho_t, current_hamiltonian);
     rho_t += k * dt_over_6;
 
     // Second step: compute k2 at time t + dt/2
     rho_tmp = rho_old;
     rho_tmp += k * dt_over_2;
     current_hamiltonian = construct_current_hamiltonian(t_step + 0.5 * dt, step_list, hamiltonians, parameters_list);
-    lindblad_rhs(k, rho_tmp, current_hamiltonian);
+    rhs(k, rho_tmp, current_hamiltonian);
     rho_t += k * dt_over_3;
 
     // Third step: compute k3 at time t + dt/2
     rho_tmp = rho_old;
     rho_tmp += k * dt_over_2;
     current_hamiltonian = construct_current_hamiltonian(t_step + 0.5 * dt, step_list, hamiltonians, parameters_list);
-    lindblad_rhs(k, rho_tmp, current_hamiltonian);
+    rhs(k, rho_tmp, current_hamiltonian);
     rho_t += k * dt_over_3;
 
     // Fourth step: compute k4 at time t + dt
     rho_tmp = rho_old;
     rho_tmp += k * dt;
     current_hamiltonian = construct_current_hamiltonian(t_step + dt, step_list, hamiltonians, parameters_list);
-    lindblad_rhs(k, rho_tmp, current_hamiltonian);
+    rhs(k, rho_tmp, current_hamiltonian);
     rho_t += k * dt_over_6;
 }
 

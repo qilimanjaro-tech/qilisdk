@@ -40,6 +40,7 @@ class QiliSimConfig {
     int order = 2;
     int shots = 1000;
     int warmups = 100;
+    bool gpu = false;
     int stabilizer_max_states = 100;
 
    public:
@@ -65,6 +66,7 @@ class QiliSimConfig {
     int get_order() const { return order; }
     int get_shots() const { return shots; }
     int get_warmups() const { return warmups; }
+    bool get_gpu() const { return gpu; }
 
     // Setters
     void set_monte_carlo(bool value) { monte_carlo = value; }
@@ -87,6 +89,7 @@ class QiliSimConfig {
     void set_order(int value) { order = value; }
     void set_shots(int value) { shots = value; }
     void set_warmups(int value) { warmups = value; }
+    void set_gpu(bool value) { gpu = value; }
     void set_stabilizer_max_states(int value) { stabilizer_max_states = value; }
 
     // Initialize with default values

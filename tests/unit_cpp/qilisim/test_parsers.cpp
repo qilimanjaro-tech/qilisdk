@@ -1730,6 +1730,7 @@ TEST(ParseSolverParams, AllFieldsParsedCorrectly) {
     params["fuse_gates"] = py::bool_(true);
     params["max_fused_qubits"] = py::int_(3);
     params["measurement_collapse"] = py::bool_(true);
+    params["gpu"] = py::bool_(true);
 
     auto config = parse_solver_params(params);
 
@@ -1750,6 +1751,7 @@ TEST(ParseSolverParams, AllFieldsParsedCorrectly) {
     EXPECT_EQ(config.get_max_fused_qubits(), 3);
     EXPECT_TRUE(config.get_measurement_collapse());
     EXPECT_NEAR(config.get_adaptive_tol(), 1e-2, 1e-15);
+    EXPECT_TRUE(config.get_gpu());
 }
 
 TEST(ParseSolverParams, PartialFieldsParsed) {

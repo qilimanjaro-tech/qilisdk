@@ -285,6 +285,12 @@ class ExecutionConfig(BaseSimulatorConfig):
             "Whether to apply state collapse immediately after measurements. If `False`, measurements are recorded but the state is not collapsed."
         ),
     )
+    gpu: bool = Field(
+        default=False,
+        description=(
+            "Whether to use GPU acceleration for simulation. If `True`, the simulator will attempt to use available GPU resources for the methods that support it."
+        ),
+    )
 
     def get_config(self) -> SolverConfigDict:
         """Return execution settings with resolved defaults."""
@@ -293,6 +299,7 @@ class ExecutionConfig(BaseSimulatorConfig):
             "seed": int(self.seed) if self.seed is not None else 0,  # defensive
             "monte_carlo": self.monte_carlo is not None,
             "measurement_collapse": self.measurement_collapse,
+            "gpu": self.gpu,
         }
         if self.monte_carlo is not None:
             d.update(self.monte_carlo.get_config())

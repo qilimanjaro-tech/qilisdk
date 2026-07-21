@@ -49,9 +49,23 @@ cuda = [
 ]
 cuda12 = [
     "cuda-quantum-cu12==0.14.2",
+    # CUDA math libraries used by the QiliSim C++ GPU shim (cuBLAS/cuSOLVER),
+    # loaded at runtime via dlopen. cusolver pulls in cusparse + nvjitlink.
+    "nvidia-cuda-runtime-cu12",
+    "nvidia-cublas-cu12",
+    "nvidia-cusolver-cu12",
+    "nvidia-cusparse-cu12",
+    "nvidia-nvjitlink-cu12",
 ]
 cuda13 = [
-    "cuda-quantum-cu13==0.14.2"
+    "cuda-quantum-cu13==0.14.2",
+    # CUDA math libraries used by the QiliSim C++ GPU shim (cuBLAS/cuSOLVER),
+    # loaded at runtime via dlopen. cusolver pulls in cusparse + nvjitlink.
+    "nvidia-cuda-runtime",
+    "nvidia-cublas",
+    "nvidia-cusolver",
+    "nvidia-cusparse",
+    "nvidia-nvjitlink",
 ]
 speqtrum = [
     "httpx==0.28.1",
