@@ -45,7 +45,6 @@ def test_about(monkeypatch):
 
 
 def test_about_fake_gpu(monkeypatch):
-
     _monkeypatch_all(monkeypatch)
 
     fake_gpu = MagicMock()
@@ -59,7 +58,6 @@ def test_about_fake_gpu(monkeypatch):
 
 
 def test_about_bad_gpu(monkeypatch):
-
     _monkeypatch_all(monkeypatch)
 
     fake_gpu = MagicMock()
@@ -74,7 +72,6 @@ def test_about_bad_gpu(monkeypatch):
 
 
 def test_about_subprocess_fails(monkeypatch):
-
     _monkeypatch_all(monkeypatch)
 
     fake_check_output = MagicMock(side_effect=subprocess.CalledProcessError(1, "cmd"))
@@ -116,7 +113,6 @@ def test_about_bad_imports(monkeypatch):
 
 
 def test_about_qilisim_bad_init(monkeypatch):
-
     _monkeypatch_all(monkeypatch)
 
     fake_qilisim = MagicMock()
@@ -142,7 +138,6 @@ def test_about_qilisim_bad_init(monkeypatch):
 
 
 def test_about_gpp_but_no_openmp(monkeypatch):
-
     _monkeypatch_all(monkeypatch)
 
     # Simulate g++ present but no OpenMP support
@@ -158,7 +153,6 @@ def test_about_gpp_but_no_openmp(monkeypatch):
 
 
 def test_gpu_but_no_nvidia_smi(monkeypatch):
-
     _monkeypatch_all(monkeypatch)
 
     fake_gpu = MagicMock()

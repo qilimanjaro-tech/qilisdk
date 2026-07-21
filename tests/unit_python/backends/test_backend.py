@@ -361,6 +361,5 @@ def test_variational_program_unsupported_result_type(monkeypatch):
 
 
 def test_backend_config_analog_method_direct():
-
     method = AnalogMethod.direct()
     assert method.evolution_method == "direct"
