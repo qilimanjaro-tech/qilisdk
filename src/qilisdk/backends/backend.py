@@ -20,7 +20,7 @@ from typing import TYPE_CHECKING, Any, Callable, cast, overload
 from loguru import logger
 
 from qilisdk.analog import Schedule
-from qilisdk.core import reset_qubits
+from qilisdk.core import InitialState, reset_qubits
 from qilisdk.core.result import Result
 from qilisdk.digital import Circuit
 from qilisdk.functionals import QuantumReservoir
@@ -152,7 +152,11 @@ class Backend(ABC):
         logger.info("[Backend] Executing Quantum Reservoir")
         if self._noise_model:
             logger.warning("[Backend] Noise Models are not supported with Quantum Reservoirs, so they will be ignored.")
-        state = functional.initial_state.to_density_matrix()
+        state = functional.initial_state
+        if isinstance(state, InitialState):
+            state = state.as_qtensor(functional.reservoir_layer.nqubits).to_density_matrix()
+        else:
+            state = state.to_density_matrix()
         inter_results: list[ReadoutCompositeResults] = []
         cache: dict[Circuit, tuple[tuple[float, ...], QTensor]] = {}
         for layer_index, input_dict in enumerate(functional.input_per_layer):

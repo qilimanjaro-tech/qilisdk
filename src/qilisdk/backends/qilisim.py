@@ -129,6 +129,16 @@ class QiliSim(Backend):
             type(noise_model).__name__ if noise_model is not None else None,
         )
         logger.debug("[QiliSim] QiliSim solver config: {}", self._solver_config)
+        
+        # If GPU acceleration is requested, preload the CUDA libraries
+        if execution_config.gpu:
+            from ._gpu import preload_cuda_libraries  # noqa: PLC0415
+
+            if not preload_cuda_libraries():
+                logger.debug(
+                    "GPU requested but no CUDA wheels were preloaded; relying on a system CUDA "
+                    "install if present, otherwise the simulator falls back to CPU."
+                )
 
     @property
     def solver_params(self) -> SolverConfigDict:

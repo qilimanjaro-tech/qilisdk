@@ -176,6 +176,53 @@ TEST_F(TimeEvolutionMatrixFreeTest, DefaultConfigDoesNotThrow) {
     SUCCEED();
 }
 
+TEST_F(TimeEvolutionMatrixFreeTest, NonMatrixFreeMethodThrows) {
+    // A method that passes validation but is not one of the matrix-free branches
+    // must fall through to the invalid-method error.
+    config.set_time_evolution_method("direct");
+    EXPECT_ANY_THROW(run_time_evolution_mf(pure_zero_sparse(), hamiltonians, params, steps, empty_noise, {}, config));
+}
+
+class TimeEvolutionArnoldiMatrixFreeTest : public ::testing::Test {
+   protected:
+    MatrixFreeHamiltonian H_mf = make_matrix_free_H(0.5, 0, "Z");
+    std::vector<MatrixFreeHamiltonian> hamiltonians = {H_mf};
+    std::vector<std::vector<double>> params = {{1.0, 1.0, 1.0}};
+    std::vector<double> steps = {0.1, 0.2, 0.3};
+    NoiseModelCpp empty_noise;
+    QiliSimConfig config;
+    virtual void SetUp() override { config.set_time_evolution_method("arnoldi_matrix_free"); }
+};
+
+TEST_F(TimeEvolutionArnoldiMatrixFreeTest, DensityMatrixTracePreserved) {
+    auto out = run_time_evolution_mf(pure_plus_sparse(), hamiltonians, params, steps, empty_noise, {}, config);
+    EXPECT_NEAR(std::real(out.rho_t.trace()), 1.0, kTol);
+}
+
+TEST_F(TimeEvolutionArnoldiMatrixFreeTest, StatevectorInputEvolves) {
+    auto out = run_time_evolution_mf(statevector_zero_sparse(), hamiltonians, params, steps, empty_noise, {}, config);
+    EXPECT_EQ(out.rho_t.rows(), 2);
+}
+
+TEST_F(TimeEvolutionArnoldiMatrixFreeTest, WithJumpOperatorsTracePreserved) {
+    NoiseModelCpp noise;
+    noise.add_jump_operator(amp_damp_jump());
+    auto out = run_time_evolution_mf(pure_plus_sparse(), hamiltonians, params, steps, noise, {}, config);
+    EXPECT_NEAR(std::real(out.rho_t.trace()), 1.0, kTol);
+}
+
+TEST_F(TimeEvolutionArnoldiMatrixFreeTest, StoreIntermediateFromPureDensityMatrix) {
+    config.set_store_intermediate_results(true);
+    auto out = run_time_evolution_mf(pure_plus_sparse(), hamiltonians, params, steps, empty_noise, {}, config);
+    EXPECT_EQ(int(out.intermediate_rhos.size()), int(steps.size()));
+}
+
+TEST_F(TimeEvolutionArnoldiMatrixFreeTest, StoreIntermediateFromStatevector) {
+    config.set_store_intermediate_results(true);
+    auto out = run_time_evolution_mf(statevector_zero_sparse(), hamiltonians, params, steps, empty_noise, {}, config);
+    EXPECT_EQ(int(out.intermediate_rhos.size()), int(steps.size()));
+}
+
 TEST_F(TimeEvolutionTest, FinalStateDimensionMatchesDensityMatrixInput) {
     auto out = run_time_evolution(pure_zero_sparse(), hamiltonians, params, steps, empty_noise, {}, config);
     EXPECT_EQ(out.rho_t.rows(), 2);

@@ -15,7 +15,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
 
 import matplotlib.pyplot as plt
 from loguru import logger
@@ -66,7 +66,7 @@ class MatplotlibScheduleRenderer:
                 grid_style["color"] = theme.surface_muted
             self.ax.grid(**grid_style)
         leg = self.ax.legend(
-            loc=style.legend_loc,
+            loc=cast("Any", style.legend_loc),
             fontsize=style.legend_fontsize,
             frameon=style.legend_frame,
             facecolor=legend_facecolor,

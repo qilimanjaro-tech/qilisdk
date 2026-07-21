@@ -2194,7 +2194,7 @@ QTensorCpp QTensorCpp::inverse() {
         inv_evals.setZero();
         for (size_t i = 0; i < _eigenvalues.size(); ++i) {
             if (std::abs(_eigenvalues[i]) > 0) {
-                inv_evals(i) = 1.0 / _eigenvalues[i];
+                inv_evals(i) = static_cast<Real>(1.0) / _eigenvalues[i];
             }
         }
         return _reconstruct_from_diag(inv_evals, _eigenvectors);

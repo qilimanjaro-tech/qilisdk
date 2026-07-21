@@ -468,4 +468,15 @@ TEST(FuseGatesTest, PreservesCircuitUnitary_DisjointBlocks) {
     EXPECT_TRUE(matricesApproxEqual(circuitUnitary(out, 4), circuitUnitary(in, 4)));
 }
 
+TEST(AutoMaxFusedQubitsTest, ZeroQubitsClampsToOne) {
+    EXPECT_EQ(auto_max_fused_qubits(0), 1);
+}
+
+TEST(AutoMaxFusedQubitsTest, TypicalSizesReturnPositiveCappedDepth) {
+    EXPECT_GE(auto_max_fused_qubits(4), 1);
+    EXPECT_LE(auto_max_fused_qubits(4), 8);
+    EXPECT_GE(auto_max_fused_qubits(30), 1);
+    EXPECT_LE(auto_max_fused_qubits(30), 8);
+}
+
 // GCOV_EXCL_BR_STOP

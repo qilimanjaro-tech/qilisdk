@@ -13,6 +13,7 @@ on:
           - pypi
           - speqtrum
           - euroqcs
+          - codeartifacts
       dry_run:
         description: "Build and validate the distributions, but do not upload them"
         type: boolean
@@ -34,7 +35,7 @@ jobs:
         # PyPI gets the full platform set; the pyx indexes (speqtrum / euroqcs) are Linux x86_64 only.
         os: ${{ fromJSON((inputs.index || 'pypi') == 'pypi' && '["ubuntu-latest", "ubuntu-24.04-arm", "macos-latest", "windows-latest"]' || '["ubuntu-latest"]') }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 1
       - name: Build wheels
@@ -50,7 +51,7 @@ jobs:
         with:
           output-dir: dist
       - name: Upload wheels
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: wheels-${{ matrix.os }}
           path: dist/*.whl
@@ -59,7 +60,7 @@ jobs:
     name: Build sdist
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 1
       - name: Install uv
@@ -73,7 +74,7 @@ jobs:
       - name: Build sdist
         run: uv build --sdist
       - name: Upload sdist
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: sdist
           path: dist/*.tar.gz
@@ -91,13 +92,13 @@ jobs:
       id-token: write
     steps:
       - name: Download wheels
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: wheels-*
           path: dist
           merge-multiple: true
       - name: Download sdist
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: sdist
           path: dist
@@ -121,21 +122,21 @@ jobs:
     name: Publish to ${{ inputs.index }}
     runs-on: ubuntu-latest
     needs: [build-wheels, build-sdist]
-    if: ${{ (inputs.index || 'pypi') != 'pypi' }}
+    if: ${{ ((inputs.index || 'pypi') == 'speqtrum') || ((inputs.index || 'pypi') == 'euroqcs') }}
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 1
       - name: Download wheels
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: wheels-*
           path: dist
           merge-multiple: true
       - name: Download sdist
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: sdist
           path: dist
@@ -155,3 +156,69 @@ jobs:
           uv publish
           --index ${{ inputs.index }}
           ${{ inputs.dry_run && '--dry-run' || '' }}
+
+  deploy-codeartifacts:
+    name: Publish to AWS CodeArtifact
+    runs-on: ubuntu-latest
+    needs: [build-wheels, build-sdist]
+    if: ${{ (inputs.index || 'pypi') == 'codeartifacts' }}
+    env:
+      AWS_REGION: eu-west-1
+      CA_DOMAIN: qilimanjaro
+      CA_DOMAIN_OWNER: "723412851021"
+      CA_REPOSITORY: qilimanjaro
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: arn:aws:iam::723412851021:role/GitHub_actions_role
+          aws-region: eu-west-1
+          role-session-name: GitHubActions-DevOps
+      - name: Assume deploy role in target account
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: arn:aws:iam::723412851021:role/Code-Artifact-Publish
+          aws-region: eu-west-1
+          role-session-name: GitHubActions-Deploy
+          role-chaining: true
+          role-skip-session-tagging: true
+      - name: Download wheels
+        uses: actions/download-artifact@v8
+        with:
+          pattern: wheels-*
+          path: dist
+          merge-multiple: true
+      - name: Download sdist
+        uses: actions/download-artifact@v8
+        with:
+          name: sdist
+          path: dist
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.2.0
+        with:
+          enable-cache: false
+          python-version: "3.13"
+      - name: List & validate distributions
+        run: |
+          ls -lh dist
+          uvx twine check dist/*
+      - name: Publish to CodeArtifact
+        if: ${{ !inputs.dry_run }}
+        run: |
+          export TWINE_USERNAME=aws
+          export TWINE_PASSWORD=$(aws codeartifact get-authorization-token \
+            --domain "$CA_DOMAIN" \
+            --domain-owner "$CA_DOMAIN_OWNER" \
+            --query authorizationToken \
+            --output text)
+          export TWINE_REPOSITORY_URL=$(aws codeartifact get-repository-endpoint \
+            --domain "$CA_DOMAIN" \
+            --domain-owner "$CA_DOMAIN_OWNER" \
+            --repository "$CA_REPOSITORY" \
+            --format pypi \
+            --query repositoryEndpoint \
+            --output text)
+          uvx twine upload dist/*
