@@ -54,17 +54,17 @@ SparseMatrix hadamard2() {
     return m;
 }
 
-SparseMatrix zeroStateSparse(int n_qubits) {
+SparseMatrixCol zeroStateSparse(int n_qubits) {
     long dim = 1L << n_qubits;
-    SparseMatrix m(dim, 1);
+    SparseMatrixCol m(dim, 1);
     m.insert(0, 0) = cx(1, 0);
     m.makeCompressed();
     return m;
 }
 
-SparseMatrix zeroStateDenseSparse(int n_qubits) {
+SparseMatrixCol zeroStateDenseSparse(int n_qubits) {
     long dim = 1L << n_qubits;
-    SparseMatrix m(dim, dim);
+    SparseMatrixCol m(dim, dim);
     m.insert(0, 0) = cx(1, 0);
     m.makeCompressed();
     return m;
@@ -316,6 +316,22 @@ TEST_F(SamplingTest, XGateOnQubit0_AllCountsAre10) {
     std::map<std::string, int> counts = construct_samples(state, n, 1000, noNoise, cfg, measure);
     ASSERT_EQ(counts.size(), 1u);
     EXPECT_EQ(counts.at("10"), 1000);
+}
+
+TEST_F(SamplingTest, FusionWithSingleQubitGateCombiningEnabled) {
+    int n = 2;
+    QiliSimConfig cfg_fuse = defaultConfig();
+    cfg_fuse.set_fuse_gates(true);
+    cfg_fuse.set_combine_single_qubit_gates(true);
+    cfg_fuse.set_num_threads(4);
+    std::vector<Gate> gates = {makeX(0), makeX(0), makeX(1)};
+    std::vector<bool> measure = {true, true};
+    DenseMatrix state;
+    std::vector<py::object> intermediate_results;
+    sampling(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfg_fuse, readout);
+    std::map<std::string, int> counts = construct_samples(state, n, 1000, noNoise, cfg_fuse, measure);
+    ASSERT_EQ(counts.size(), 1u);
+    EXPECT_EQ(counts.at("01"), 1000);
 }
 
 TEST_F(SamplingTest, DoubleXGateOnQubit0_AllCountsAre00_NoCache) {
@@ -701,7 +717,7 @@ TEST_F(SamplingMonteCarloTest, MonteCarloEnabled_ProducesNonDeterministicCounts)
     const int shots = 1000;
     QiliSimConfig cfgMC = cfg;
     cfgMC.set_monte_carlo(true);
-    SparseMatrix rho_mixed(2, 2);
+    SparseMatrixCol rho_mixed(2, 2);
     rho_mixed.insert(0, 0) = cx(0.5, 0);
     rho_mixed.insert(1, 1) = cx(0.5, 0);
     rho_mixed.makeCompressed();
@@ -720,7 +736,7 @@ TEST_F(SamplingMonteCarloTest, MatrixFreeMonteCarloEnabled_ProducesNonDeterminis
     const int shots = 1000;
     QiliSimConfig cfgMC = cfg;
     cfgMC.set_monte_carlo(true);
-    SparseMatrix rho_mixed(2, 2);
+    SparseMatrixCol rho_mixed(2, 2);
     rho_mixed.insert(0, 0) = cx(0.5, 0);
     rho_mixed.insert(1, 1) = cx(0.5, 0);
     rho_mixed.makeCompressed();
@@ -758,6 +774,24 @@ TEST_F(SamplingMatrixFreeTest, GateFusionEnabled_MatchesUnfusedResult) {
     sampling_matrix_free(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfgFuse, readout);
     std::map<std::string, int> counts = construct_samples(state, n, 1000, noNoise, cfgFuse, measure);
     EXPECT_NEAR(fractionOf(counts, "00"), 1.0, kLoose);
+}
+
+TEST_F(SamplingMatrixFreeTest, GateFusionWithSingleQubitCombiningEnabled) {
+    // Fusion with single-qubit-gate combining on the matrix-free path: the two X
+    // gates on qubit 0 combine to the identity, leaving qubit 0 in |0> and qubit 1
+    // in |1>.
+    int n = 2;
+    std::vector<Gate> gates = {makeX(0), makeX(0), makeX(1)};
+    std::vector<bool> measure = {true, true};
+    QiliSimConfig cfgFuse = cfg;
+    cfgFuse.set_fuse_gates(true);
+    cfgFuse.set_combine_single_qubit_gates(true);
+    cfgFuse.set_num_threads(4);
+    DenseMatrix state;
+    std::vector<py::object> intermediate_results;
+    sampling_matrix_free(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfgFuse, readout);
+    std::map<std::string, int> counts = construct_samples(state, n, 1000, noNoise, cfgFuse, measure);
+    EXPECT_NEAR(fractionOf(counts, "01"), 1.0, kLoose);
 }
 
 TEST_F(SamplingTest, PureDensityMatrixInitialState_OutputIsMatrixNotStatevector) {

@@ -64,6 +64,7 @@ pybind11_add_module(qilisdk_libs SHARED)
 endif()
 file(GLOB LIBS_SOURCES src/qilisdk_cpp/libs/*.cpp)
 target_sources(qilisdk_libs PRIVATE ${LIBS_SOURCES})
+target_link_libraries(qilisdk_libs PRIVATE ${CMAKE_DL_LIBS})
 
 # Origin is Linux specific, but we can set it to @loader_path on macOS which has the same effect
 if(APPLE)
@@ -132,7 +133,16 @@ foreach(module ${MODULES_TO_BUILD})
 
         # Make everything visible
         target_compile_options(${module} PRIVATE -fvisibility=default)
+        
+        # For performance
+        target_compile_options(${module} PRIVATE -fopenmp-simd)
+        target_compile_options(${module} PRIVATE -fcx-limited-range)
 
+    endif()
+
+    # Enable the hardware POPCNT instruction 
+    if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang" AND CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|amd64|AMD64|i[3-6]86|x86")
+        target_compile_options(${module} PRIVATE -mpopcnt)
     endif()
 
     # Link libraries and include directories

@@ -99,13 +99,14 @@ class AnalogMethod(BaseSimulatorConfig):
     evolution_method: Literal[
         "direct",
         "arnoldi",
+        "arnoldi_matrix_free",
         "integrate_rk4",
         "integrate_rk45_matrix_free",
         "integrate_rk4_matrix_free",
         "variational_exponential",
     ] = Field(
         default="integrate_rk4_matrix_free",
-        description="Analog time-evolution method to use: 'direct', 'arnoldi', 'integrate_rk4', 'integrate_rk45_matrix_free', 'integrate_rk4_matrix_free', or 'variational_exponential'.",
+        description="Analog time-evolution method to use: 'direct', 'arnoldi', 'arnoldi_matrix_free', 'integrate_rk4', 'integrate_rk45_matrix_free', 'integrate_rk4_matrix_free', or 'variational_exponential'.",
     )
     arnoldi_dim: int = Field(
         default=10,
@@ -211,6 +212,7 @@ class AnalogMethod(BaseSimulatorConfig):
         *,
         num_substeps: int = 1,
         dim: int = 10,
+        matrix_free: bool = True,
     ) -> AnalogMethod:
         """Build an ``arnoldi`` analog method configuration.
 
@@ -219,12 +221,13 @@ class AnalogMethod(BaseSimulatorConfig):
                 step when using the Arnoldi method. Defaults to ``1``.
             dim (int): Dimension of the Arnoldi Krylov subspace. Defaults
                 to ``10``.
+            matrix_free (bool): Whether to use the matrix-free implementation.
 
         Returns:
             AnalogMethod: Configured arnoldi-method analog configuration.
         """
         return cls(
-            evolution_method="arnoldi",
+            evolution_method="arnoldi_matrix_free" if matrix_free else "arnoldi",
             arnoldi_dim=dim,
             num_arnoldi_substeps=num_substeps,
         )
@@ -282,6 +285,12 @@ class ExecutionConfig(BaseSimulatorConfig):
             "Whether to apply state collapse immediately after measurements. If `False`, measurements are recorded but the state is not collapsed."
         ),
     )
+    gpu: bool = Field(
+        default=False,
+        description=(
+            "Whether to use GPU acceleration for simulation. If `True`, the simulator will attempt to use available GPU resources for the methods that support it."
+        ),
+    )
 
     def get_config(self) -> SolverConfigDict:
         """Return execution settings with resolved defaults."""
@@ -290,6 +299,7 @@ class ExecutionConfig(BaseSimulatorConfig):
             "seed": int(self.seed) if self.seed is not None else 0,  # defensive
             "monte_carlo": self.monte_carlo is not None,
             "measurement_collapse": self.measurement_collapse,
+            "gpu": self.gpu,
         }
         if self.monte_carlo is not None:
             d.update(self.monte_carlo.get_config())
@@ -372,9 +382,9 @@ class DigitalMethod(BaseSimulatorConfig):
         description="Whether to fuse runs of adjacent gates on a small set of qubits into a single dense multi-qubit operation to reduce passes over the statevector. Only applies to the matrix-free statevector path.",
     )
     max_fused_qubits: int = Field(
-        default=4,
-        ge=1,
-        description="Maximum number of qubits a single fused block may span.",
+        default=0,
+        ge=0,
+        description="Maximum number of qubits a single fused block may span. 0 (the default) selects the depth automatically from the qubit count.",
     )
     matrix_free: bool = Field(
         default=True,
@@ -406,7 +416,7 @@ class DigitalMethod(BaseSimulatorConfig):
         matrix_free: bool = True,
         combine_single_qubit_gates: bool = True,
         fuse_gates: bool = True,
-        max_fused_qubits: int = 4,
+        max_fused_qubits: int = 0,
     ) -> DigitalMethod:
         """Build the standard statevector simulation configuration.
 
@@ -421,7 +431,8 @@ class DigitalMethod(BaseSimulatorConfig):
                 Defaults to ``True``.
             fuse_gates (bool): Whether to fuse runs of adjacent gates on a small set of qubits into a single dense
                 multi-qubit operation (matrix-free statevector path only). Defaults to ``True``.
-            max_fused_qubits (int): Maximum number of qubits a single fused block may span. Defaults to ``4``.
+            max_fused_qubits (int): Maximum number of qubits a single fused block may span. ``0`` (the default)
+                selects the depth automatically from the qubit count.
 
         Returns:
             DigitalMethod: Configured statevector digital configuration.

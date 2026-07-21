@@ -66,7 +66,7 @@ def test_qilisim_config_builders_and_validation():
     )
     config = backend.get_config()
 
-    assert config["evolution_method"] == "arnoldi"
+    assert config["evolution_method"] == "arnoldi_matrix_free"
     assert config["arnoldi_dim"] == 16
     assert config["num_arnoldi_substeps"] == 3
     assert config["monte_carlo"] is True

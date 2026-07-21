@@ -212,7 +212,7 @@ class CudaBackend(Backend):
             U3: CudaBackend._handle_U3,
             SWAP: CudaBackend._handle_SWAP,
         }  # ty:ignore[invalid-assignment]
-        self._pauli_operator_handlers: PauliOperatorHandlersMapping = {  # ty:ignore[invalid-assignment]
+        self._pauli_operator_handlers: PauliOperatorHandlersMapping = {
             PauliX: CudaBackend._handle_PauliX,
             PauliY: CudaBackend._handle_PauliY,
             PauliZ: CudaBackend._handle_PauliZ,
