@@ -718,6 +718,41 @@ class QTensor:
         """
         return self._qtensor_cpp.entropy_renyi(alpha)
 
+    def magic(self, alpha: float = 2.0) -> float:
+        r"""
+        Compute the magic (non-stabilizerness) of a pure state via the stabilizer Rényi entropy (SRE).
+
+        The SRE quantifies how far a pure state :math:`|\psi⟩` of :math:`N` qubits departs from the set of
+        stabilizer states. For a Rényi index :math:`\alpha > 0`, :math:`\alpha \neq 1`, it is defined as
+
+        .. math::
+
+            M_\alpha(|\psi⟩) = \frac{1}{1 - \alpha}
+                \log_2\!\left[\frac{1}{2^N} \sum_{P \in \mathcal{P}_N} ⟨\psi|P|\psi⟩^{2\alpha}\right],
+
+        where the sum runs over all :math:`4^N` Pauli strings :math:`P`. The value :math:`\alpha = 1` is
+        obtained via the limit :math:`\alpha \to 1`, giving the Shannon entropy of the Pauli distribution.
+        The SRE is non-negative, vanishing if and only if :math:`|\psi⟩` is a stabilizer state, is invariant
+        under Clifford unitaries, and is additive under tensor products.
+
+        This is a numerically exact implementation of Algorithm 2 of
+        `Sierant, Valles-Muns and Garcia-Saez, "Computing quantum magic of state vectors"
+        <https://arxiv.org/abs/2601.07824>`_, which exploits the fast Walsh-Hadamard transform to evaluate
+        the SRE in :math:`O(N\,4^N)` time and :math:`O(2^N)` memory, an exponential speedup over the naive
+        :math:`O(8^N)` sweep over all Pauli strings.
+
+        Args:
+            alpha (float, optional): The Rényi index :math:`\alpha > 0`. Defaults to 2, the value for which
+                the SRE is a stabilizer monotone and the most commonly used measure of magic.
+
+        Returns:
+            float: The stabilizer Rényi entropy :math:`M_\alpha(|\psi⟩)`.
+
+        Raises:
+            ValueError: If the QTensor is not a pure state (ket or bra), or if ``alpha`` is not positive.
+        """
+        return self._qtensor_cpp.magic(alpha)
+
     def commutator(self, other: QTensor) -> QTensor:
         """
         Compute the commutator [A, B] = AB - BA with another QTensor.

@@ -13,6 +13,8 @@
 # limitations under the License.
 
 
+import itertools
+
 import numpy as np
 import pytest
 from scipy.linalg import expm, logm, sqrtm
@@ -1155,3 +1157,99 @@ def test_storage_format_roundtrips_through_operations():
     assert np.allclose(rho.dense(), np.array([[1, 0], [0, 0]], dtype=complex))
     assert k0.adjoint().is_bra()
     assert k0.adjoint()._qtensor_cpp.storage_format() != "col_sparse"
+
+
+# --- Magic / Stabilizer Rényi Entropy Tests ---
+
+_PAULIS = {
+    "I": np.eye(2, dtype=complex),
+    "X": np.array([[0, 1], [1, 0]], dtype=complex),
+    "Y": np.array([[0, -1j], [1j, 0]], dtype=complex),
+    "Z": np.array([[1, 0], [0, -1]], dtype=complex),
+}
+
+
+def _brute_force_sre(psi: np.ndarray, nqubits: int, alpha: float) -> float:
+    """Reference SRE via an explicit sum over all 4**N Pauli strings."""
+    if np.isclose(alpha, 1.0):
+        xis = []
+        for combo in itertools.product("IXYZ", repeat=nqubits):
+            pauli = np.array([[1]], dtype=complex)
+            for label in combo:
+                pauli = np.kron(pauli, _PAULIS[label])
+            xis.append((psi.conj() @ pauli @ psi).real ** 2 / 2**nqubits)
+        xis = np.array(xis)
+        nonzero = xis[xis > 0]
+        return -nqubits - float(np.sum(nonzero * np.log2(nonzero)))
+
+    total = 0.0
+    for combo in itertools.product("IXYZ", repeat=nqubits):
+        pauli = np.array([[1]], dtype=complex)
+        for label in combo:
+            pauli = np.kron(pauli, _PAULIS[label])
+        total += abs(psi.conj() @ pauli @ psi) ** (2 * alpha)
+    return (1.0 / (1.0 - alpha)) * np.log2(total / 2**nqubits)
+
+
+@pytest.mark.parametrize("nqubits", [1, 2, 3, 4])
+@pytest.mark.parametrize("alpha", [0.5, 1.0, 2.0, 3.0])
+def test_magic_matches_brute_force(nqubits, alpha):
+    """magic() must agree with the naive Pauli-string sum for random states."""
+    rng = np.random.default_rng(nqubits * 10 + int(alpha * 2))
+    psi = rng.standard_normal(2**nqubits) + 1j * rng.standard_normal(2**nqubits)
+    psi /= np.linalg.norm(psi)
+    got = QTensor(psi.reshape(-1, 1)).magic(alpha)
+    assert got == pytest.approx(_brute_force_sre(psi, nqubits, alpha), abs=1e-9)
+
+
+@pytest.mark.parametrize("nqubits", [1, 2, 3])
+def test_magic_of_stabilizer_states_is_zero(nqubits):
+    """Stabilizer states (|0..0>, GHZ) have vanishing magic (faithfulness)."""
+    assert QTensor.zero(nqubits).magic(2) == pytest.approx(0.0, abs=1e-10)
+    assert QTensor.ghz(nqubits).magic(2) == pytest.approx(0.0, abs=1e-10)
+
+
+def test_magic_of_t_state():
+    """The single-qubit magic state T|+> has the known SRE M_2 = log2(4/3)."""
+    t_plus = np.array([1.0, np.exp(1j * np.pi / 4)]) / np.sqrt(2)
+    assert QTensor(t_plus.reshape(-1, 1)).magic(2) == pytest.approx(np.log2(4 / 3))
+
+
+def test_magic_is_additive_under_tensor_product():
+    """M(|a> ⊗ |b>) = M(|a>) + M(|b>)."""
+    t_plus = np.array([1.0, np.exp(1j * np.pi / 4)]) / np.sqrt(2)
+    a = QTensor(t_plus.reshape(-1, 1))
+    b = QTensor(t_plus.reshape(-1, 1))
+    combined = QTensor.tensor_product([a, b])
+    assert combined.magic(2) == pytest.approx(a.magic(2) + b.magic(2), abs=1e-10)
+
+
+def test_magic_matches_for_bra_and_ket():
+    """The magic of a state is invariant under taking the adjoint (bra vs ket)."""
+    t_plus = np.array([1.0, np.exp(1j * np.pi / 4)]) / np.sqrt(2)
+    ket_state = QTensor(t_plus.reshape(-1, 1))
+    assert ket_state.magic(2) == pytest.approx(ket_state.adjoint().magic(2))
+
+
+def test_magic_is_normalization_invariant():
+    """Unnormalized input is normalized internally, so scaling does not change magic."""
+    rng = np.random.default_rng(42)
+    psi = rng.standard_normal(8) + 1j * rng.standard_normal(8)
+    unscaled = QTensor(psi.reshape(-1, 1))
+    scaled = QTensor((psi * 7.0).reshape(-1, 1))
+    assert unscaled.magic(2) == pytest.approx(scaled.magic(2), abs=1e-10)
+
+
+def test_magic_rejects_operators():
+    """magic() is only defined for pure states."""
+    operator = QTensor.identity(2)
+    with pytest.raises(ValueError, match="pure states"):
+        operator.magic(2)
+
+
+@pytest.mark.parametrize("alpha", [0.0, -1.0])
+def test_magic_rejects_non_positive_alpha(alpha):
+    """The Rényi index must be positive."""
+    state = QTensor.zero(2)
+    with pytest.raises(ValueError, match="alpha must be positive"):
+        state.magic(alpha)
