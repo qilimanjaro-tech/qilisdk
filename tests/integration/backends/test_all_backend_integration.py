@@ -37,7 +37,7 @@ from qilisdk.backends import QutipBackend
 from qilisdk.backends.backend_config import ExecutionConfig
 from qilisdk.backends.qilisim import QiliSim
 from qilisdk.core.model import Constraint, Model, Objective
-from qilisdk.core.qtensor import QTensor, ket, tensor_prod
+from qilisdk.core.qtensor import InitialState, QTensor, ket, tensor_prod
 from qilisdk.core.variables import BinaryVariable
 from qilisdk.cost_functions.model_cost_function import ModelCostFunction
 from qilisdk.digital import RX, RY, RZ, SWAP, U1, U2, U3, Circuit, H, I, M, S, T, X, Y, Z
@@ -564,6 +564,18 @@ def test_partial_measurements_no_expansion(backend):
     samples = result.get_samples()
     assert "1" in samples
     assert samples["1"] == 50
+
+
+@pytest.mark.parametrize("backend", backends)
+def test_circuit_initial_state(backend):
+    circuit = Circuit(nqubits=1)
+    circuit.add(X(0))
+    functional = DigitalPropagation(circuit=circuit, initial_state=InitialState.ONE)
+    result = backend.execute(functional, Readout().with_sampling(nshots=100))
+    assert isinstance(result, FunctionalResult)
+    samples = result.get_samples()
+    assert "0" in samples
+    assert samples["0"] == 100
 
 
 # ---------------------------------------------------------------------------

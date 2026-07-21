@@ -79,7 +79,7 @@ def test_monte_carlo_circuit(method):
     circuit.add(H(0))
     readout = [SamplingReadout(nshots=100)]
     result = backend._execute_digital_propagation(
-        DigitalPropagation(circuit=circuit), readout=readout, initial_state=initial_state
+        DigitalPropagation(circuit=circuit, initial_state=initial_state), readout=readout
     )
     assert isinstance(result, FunctionalResult)
     samples = result.get_samples()

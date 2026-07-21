@@ -26,6 +26,7 @@ from loguru import logger
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator, PauliX, PauliY, PauliZ
 from qilisdk.backends.backend import Backend
 from qilisdk.core.qtensor import InitialState, QTensor
+from qilisdk.digital.circuit import Circuit
 from qilisdk.digital.circuit_transpiler_passes import DecomposeMultiControlledGatesPass
 from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import (
@@ -69,7 +70,6 @@ from qilisdk.settings import Precision, get_settings
 
 if TYPE_CHECKING:
     from qilisdk.analog.schedule import Schedule
-    from qilisdk.digital.circuit import Circuit
     from qilisdk.functionals.analog_evolution import AnalogEvolution
     from qilisdk.functionals.digital_propagation import DigitalPropagation
     from qilisdk.noise import NoiseModel
@@ -221,6 +221,32 @@ class CudaBackend(Backend):
         self._sampling_method = sampling_method
         logger.success("CudaBackend initialised (sampling_method={})", sampling_method.value)
 
+    @staticmethod
+    def _circuit_from_initial_state(initial_state: InitialState | QTensor, nqubits: int) -> Circuit:
+        """Convert an initial state to a circuit representation.
+
+        Args:
+            initial_state (InitialState | QTensor): The initial state to convert.
+            nqubits (int): The number of qubits in the circuit.
+
+        Returns:
+            Circuit: A circuit that prepares the specified initial state.
+
+        Raises:
+            ValueError: If the initial state is not supported for conversion.
+        """
+        circuit = Circuit(nqubits)
+        if isinstance(initial_state, InitialState):
+            if initial_state == InitialState.UNIFORM:
+                for i in range(nqubits):
+                    circuit.add(H(i))
+            elif initial_state == InitialState.ONE:
+                for i in range(nqubits):
+                    circuit.add(X(i))
+        elif isinstance(initial_state, QTensor):
+            logger.warning("QTensor initial states are not natively supported by the CUDA backend, ignoring.")
+        return circuit
+
     def _execute_digital_propagation(
         self, functional: DigitalPropagation, readout: list[ReadoutMethod]
     ) -> FunctionalResult:
@@ -263,13 +289,17 @@ class CudaBackend(Backend):
                 f"Only Sampling Readouts are supported for {self.sampling_method.value.upper()} simulation."
             )
 
+        # If an initial state is given, convert it to a circuit, since CUDA doesn't support any other initial state format
+        circuit = self._circuit_from_initial_state(functional.initial_state, functional.circuit.nqubits)
+        circuit.append(functional.circuit)
+
         # Apply parameter perturbations
         if self._noise_model:
             og_param = copy(functional.get_parameters())
-            self._handle_gate_parameter_perturbations(functional.circuit, self._noise_model)
+            self._handle_gate_parameter_perturbations(circuit, self._noise_model)
 
         # Transpile the circuit into CUDAQ format
-        transpiled_circuit = DecomposeMultiControlledGatesPass().run(functional.circuit)
+        transpiled_circuit = DecomposeMultiControlledGatesPass().run(circuit)
         measured_qubits = set()
         for i, gate in enumerate(transpiled_circuit.gates):
             if isinstance(gate, Controlled):
@@ -290,13 +320,13 @@ class CudaBackend(Backend):
         qubits_to_measure = list(measured_qubits) if len(measured_qubits) > 0 else None
 
         if self._noise_model:
-            cuda_noise_model = self._noise_model_to_cudaq(self._noise_model, functional.circuit.nqubits)
+            cuda_noise_model = self._noise_model_to_cudaq(self._noise_model, circuit.nqubits)
             cudaq_result = cudaq.sample(
                 kernel,
                 shots_count=readout[0].nshots,  # ty:ignore[unresolved-attribute]
                 noise_model=cuda_noise_model,
             )
-            cudaq_result = self._handle_readout_errors(cudaq_result, self._noise_model, functional.circuit.nqubits)
+            cudaq_result = self._handle_readout_errors(cudaq_result, self._noise_model, circuit.nqubits)
             if og_param:
                 functional.set_parameters(og_param)
             logger.success("Sampling finished; {} distinct bitstrings", len(cudaq_result))
@@ -307,7 +337,7 @@ class CudaBackend(Backend):
                     sampling=SamplingReadoutResult.from_samples(
                         samples=dict(cudaq_result.items()),
                         qubits_to_measure=qubits_to_measure,
-                        nqubits=functional.circuit.nqubits,
+                        nqubits=circuit.nqubits,
                         expand_samples=expand_samples,
                     ),
                     expectation_values=None,
@@ -326,7 +356,7 @@ class CudaBackend(Backend):
                     sampling=SamplingReadoutResult.from_samples(
                         samples=dict(cudaq_result.items()),
                         qubits_to_measure=qubits_to_measure,
-                        nqubits=functional.circuit.nqubits,
+                        nqubits=circuit.nqubits,
                         expand_samples=sampling_readout.expand_samples,
                     ),
                     expectation_values=None,

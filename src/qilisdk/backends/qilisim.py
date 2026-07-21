@@ -18,14 +18,13 @@ from typing import TYPE_CHECKING
 from loguru import logger
 from qilisim_module import QiliSimCpp  # ty:ignore[unresolved-import]
 
-from qilisdk.core.qtensor import InitialState
+from qilisdk.core.qtensor import InitialState, QTensor
 from qilisdk.settings import get_settings
 
 from .backend import Backend
 from .backend_config import AnalogMethod, DigitalMethod, ExecutionConfig, SolverConfigDict
 
 if TYPE_CHECKING:
-    from qilisdk.core import QTensor
     from qilisdk.functionals import AnalogEvolution, DigitalPropagation, QuantumReservoir
     from qilisdk.functionals.functional_result import FunctionalResult
     from qilisdk.noise.noise_model import NoiseModel
@@ -154,7 +153,7 @@ class QiliSim(Backend):
         """
         logger.info("Executing Sampling")
         result = self.qili_sim.execute_digital_propagation(
-            functional, readout, self._noise_model, initial_state, self._solver_config
+            functional, readout, self._noise_model, functional.initial_state, self._solver_config
         )
         logger.success("Sampling finished")
         return result

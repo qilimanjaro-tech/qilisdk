@@ -453,6 +453,27 @@ def test_get_qutip_observable_unsupported_type_raises():
         backend._to_qubip_observables(42, nqubits=1)
 
 
+def test_qutip_digital_propagation_initial_state():
+    c = Circuit(1)
+    digital = DigitalPropagation(circuit=c, initial_state=InitialState.ONE)
+    backend = QutipBackend()
+    readout = Readout().with_sampling(10)
+    results = backend.execute(digital, readout)
+    assert isinstance(results, FunctionalResult)
+    assert "1" in results.get_samples()
+
+
+def test_qutip_digital_propagation_initial_state_qtensor():
+    c = Circuit(1)
+    initial_state_qtensor = QTensor.one(1)
+    digital = DigitalPropagation(circuit=c, initial_state=initial_state_qtensor)
+    backend = QutipBackend()
+    readout = Readout().with_sampling(10)
+    results = backend.execute(digital, readout)
+    assert isinstance(results, FunctionalResult)
+    assert "1" in results.get_samples()
+
+
 def test_to_qutip_observable_pauli_operator():
     """A single-qubit PauliOperator must be embedded with identities on a multi-qubit system."""
     obs = QutipBackend._to_qubip_observables(PauliZ(1), nqubits=2)
