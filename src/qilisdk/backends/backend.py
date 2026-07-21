@@ -122,7 +122,7 @@ class Backend(ABC):
         readout_list = readout.to_list()
         if not readout_list:
             raise ValueError("At least one readout method must be provided in the Readout.")
-        logger.debug("[Backend] Readout methods: {}", [type(ro).__name__ for ro in readout_list])
+        logger.opt(lazy=True).debug("[Backend] Readout methods: {}", lambda: [type(ro).__name__ for ro in readout_list])
 
         start = perf_counter()
         result = handler(functional, readout_list)

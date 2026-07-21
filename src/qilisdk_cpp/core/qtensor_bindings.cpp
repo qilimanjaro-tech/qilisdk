@@ -12,12 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "../libs/logging.h"
 #include "../libs/pybind.h"
 #include "qtensor.h"
 
 // GCOVR_EXCL_START
 PYBIND11_MODULE(qtensor_module, m) {
     initialize_external_pybind_types();
+    m.def("_refresh_log_level", &qilisdk::refresh_log_level);
     // Make the QTensor class available in Python as well as the various methods
     py::class_<QTensorCpp>(m, "QTensorCpp")
         .def("as_scipy", &QTensorCpp::as_scipy)

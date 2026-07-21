@@ -25,6 +25,9 @@
 // level, so keep these calls coarse (per-execution / per-phase) and out of hot loops.
 namespace qilisdk {
 
+// Refresh the cached minimum log level from loguru after the logger is (re)configured.
+void refresh_log_level();
+
 void log_trace(const std::string& message);
 void log_debug(const std::string& message);
 void log_info(const std::string& message);

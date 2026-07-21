@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "../../libs/logging.h"
 #include "../../libs/pybind.h"
 #include "qilisim.h"
 
@@ -20,6 +21,7 @@
 
 PYBIND11_MODULE(qilisim_module, m) {
     initialize_all_pybind_types();
+    m.def("_refresh_log_level", &qilisdk::refresh_log_level);
     py::class_<QiliSimCpp>(m, "QiliSimCpp").def(py::init<>()).def("execute_analog_evolution", &QiliSimCpp::execute_analog_evolution).def("execute_digital_propagation", &QiliSimCpp::execute_digital_propagation).def("execute_quantum_reservoir", &QiliSimCpp::execute_quantum_reservoir);
 }
 
