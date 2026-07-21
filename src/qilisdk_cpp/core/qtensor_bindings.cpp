@@ -18,6 +18,11 @@
 // GCOVR_EXCL_START
 PYBIND11_MODULE(qtensor_module, m) {
     initialize_external_pybind_types();
+    // Release the module-global py::object handles (see pybind.cpp) before the
+    // interpreter finalizes. The capsule destructor runs at module teardown with
+    // the GIL held and the interpreter still alive; without it the globals'
+    // static destructors run Py_DECREF after Py_Finalize and abort the process.
+    m.add_object("_qilisdk_cleanup", py::capsule(&finalize_all_pybind_types));
     // Make the QTensor class available in Python as well as the various methods
     py::class_<QTensorCpp>(m, "QTensorCpp")
         .def("as_scipy", &QTensorCpp::as_scipy)
