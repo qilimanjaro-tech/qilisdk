@@ -63,8 +63,7 @@ void refresh_log_level() {
         return;
     }
     const double level = logger_core.attr("min_level").cast<double>();
-    min_enabled_level =
-        level >= static_cast<double>(std::numeric_limits<int>::max()) ? std::numeric_limits<int>::max() : static_cast<int>(level);
+    min_enabled_level = level >= static_cast<double>(std::numeric_limits<int>::max()) ? std::numeric_limits<int>::max() : static_cast<int>(level);
 }
 
 void log_trace(const std::string& message) {

@@ -158,7 +158,7 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrixCo
         state = state * state.adjoint();
         is_statevector = false;
     }
-  
+
     // Whether we should do monte-carlo sampling
     bool monte_carlo = input_is_trajectories || (!is_statevector && config.get_monte_carlo());
     if (monte_carlo && !input_is_trajectories) {
