@@ -796,6 +796,8 @@ class SpeQtrum:
             )
         job = JobId(**response.json())
         logger.info("DigitalPropagation job submitted: {}", job.id)
+        if job.message is not None:
+            logger.warning("{}", job.message)
         return JobHandle.functional(job.id)
 
     def _submit_rabi(
@@ -832,6 +834,8 @@ class SpeQtrum:
             )
         job = JobId(**response.json())
         logger.info("Rabi experiment job submitted: {}", job.id)
+        if job.message is not None:
+            logger.warning("{}", job.message)
         return JobHandle.rabi_experiment(job.id)
 
     def _submit_t1(
@@ -868,6 +872,8 @@ class SpeQtrum:
             )
         job = JobId(**response.json())
         logger.info("T1 experiment job submitted: {}", job.id)
+        if job.message is not None:
+            logger.warning("{}", job.message)
         return JobHandle.t1_experiment(job.id)
 
     def _submit_t2(
@@ -904,6 +910,8 @@ class SpeQtrum:
             )
         job = JobId(**response.json())
         logger.info("T2 experiment job submitted: {}", job.id)
+        if job.message is not None:
+            logger.warning("{}", job.message)
         return JobHandle.t2_experiment(job.id)
 
     def _submit_two_tones(
@@ -943,6 +951,8 @@ class SpeQtrum:
             )
         job = JobId(**response.json())
         logger.info("Two-Tones experiment job submitted: {}", job.id)
+        if job.message is not None:
+            logger.warning("{}", job.message)
         return JobHandle.two_tones_experiment(job.id)
 
     def _submit_two_tones_vs_flux_bias(
@@ -982,6 +992,8 @@ class SpeQtrum:
             )
         job = JobId(**response.json())
         logger.info("Two-Tones vs flux bias experiment job submitted: {}", job.id)
+        if job.message is not None:
+            logger.warning("{}", job.message)
         return JobHandle.two_tones_vs_flux_bias_experiment(job.id)
 
     def _submit_analog_evolution(
@@ -1019,6 +1031,8 @@ class SpeQtrum:
             )
         job = JobId(**response.json())
         logger.info("AnalogEvolution job submitted: {}", job.id)
+        if job.message is not None:
+            logger.warning("{}", job.message)
         return JobHandle.functional(job.id)
 
     def _submit_quantum_reservoir_functional(
@@ -1047,15 +1061,17 @@ class SpeQtrum:
         }
         if job_name:
             json["name"] = job_name
-        logger.debug("Executing AnalogEvolution on device {}", device)
+        logger.debug("Executing QuantumReservoir on device {}", device)
         with self._create_client() as client:
             response = client.post(
                 _EXECUTE_URL,
                 json=json,
-                extensions=_request_extensions(context="Executing AnalogEvolution"),
+                extensions=_request_extensions(context="Executing QuantumReservoir"),
             )
         job = JobId(**response.json())
-        logger.info("AnalogEvolution job submitted: {}", job.id)
+        logger.info("QuantumReservoir job submitted: {}", job.id)
+        if job.message is not None:
+            logger.warning("{}", job.message)
         return JobHandle.functional(job.id)
 
     def _submit_variational_program(
@@ -1101,6 +1117,8 @@ class SpeQtrum:
             )
         job = JobId(**response.json())
         logger.info("Variational program job submitted: {}", job.id)
+        if job.message is not None:
+            logger.warning("{}", job.message)
         return JobHandle.variational_program(job.id)
 
     def __repr__(self) -> str:
