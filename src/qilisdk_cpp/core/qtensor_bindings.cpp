@@ -20,6 +20,7 @@
 PYBIND11_MODULE(qtensor_module, m) {
     initialize_external_pybind_types();
     m.def("_refresh_log_level", &qilisdk::refresh_log_level);
+    m.add_object("_qilisdk_cleanup", py::capsule(&finalize_all_pybind_types));
     // Make the QTensor class available in Python as well as the various methods
     py::class_<QTensorCpp>(m, "QTensorCpp")
         .def("as_scipy", &QTensorCpp::as_scipy)

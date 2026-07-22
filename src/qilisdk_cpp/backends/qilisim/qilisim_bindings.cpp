@@ -22,6 +22,7 @@
 PYBIND11_MODULE(qilisim_module, m) {
     initialize_all_pybind_types();
     m.def("_refresh_log_level", &qilisdk::refresh_log_level);
+    m.add_object("_qilisdk_cleanup", py::capsule(&finalize_all_pybind_types));
     py::class_<QiliSimCpp>(m, "QiliSimCpp").def(py::init<>()).def("execute_analog_evolution", &QiliSimCpp::execute_analog_evolution).def("execute_digital_propagation", &QiliSimCpp::execute_digital_propagation).def("execute_quantum_reservoir", &QiliSimCpp::execute_quantum_reservoir);
 }
 
