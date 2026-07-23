@@ -50,8 +50,8 @@ updates:
   # uv reads [[tool.uv.index]] and [tool.uv.sources] straight from
   # pyproject.toml, so the public "numpy-mkl" index and the git source are
   # picked up automatically -- no top-level `registries:` block is needed for
-  # them (a commented template for the FUTURE private pyx.dev indexes is at the
-  # bottom of this file).
+  # them (a commented template for the FUTURE private AWS CodeArtifact index is
+  # at the bottom of this file).
   #
   # `versioning-strategy` is intentionally omitted (not supported for uv yet);
   # Dependabot uses its default uv behavior: refresh uv.lock, adjusting the
@@ -129,35 +129,49 @@ updates:
         update-types: ["version-update:semver-major", "version-update:semver-minor", "version-update:semver-patch"]
 
 # =============================================================================
-# FUTURE (do not enable yet): private pyx.dev indexes.
+# FUTURE (do not enable yet): private AWS CodeArtifact index.
 #
-# The speqtrum/euroqcs indexes in pyproject.toml are `explicit = true` and are
-# NOT present in uv.lock, so default resolution never queries them and no
-# credentials are needed today. Enable this block ONLY once speqtrum/euroqcs
-# packages actually enter resolution (i.e. appear in uv.lock):
+# Private packages will be served from AWS CodeArtifact (replacing pyx.dev).
+# Nothing here is needed until CodeArtifact-hosted packages actually enter
+# resolution -- i.e. a [[tool.uv.index]] pointing at CodeArtifact is added to
+# pyproject.toml and those packages appear in uv.lock.
 #
-#   1. Uncomment the top-level `registries:` block below. Each `url` MUST match
-#      the [[tool.uv.index]] url in pyproject.toml VERBATIM -- Dependabot maps
-#      registry -> uv index by URL.
-#   2. Add PYX_USERNAME / PYX_PASSWORD under
+# CodeArtifact PyPI endpoint format (use this same URL in [[tool.uv.index]]):
+#   https://<DOMAIN>-<ACCOUNT_ID>.d.codeartifact.<REGION>.amazonaws.com/pypi/<REPOSITORY>/simple/
+#
+# AUTH -- the catch: CodeArtifact auth tokens are SHORT-LIVED (<= 12h), so a
+# token pasted into a Dependabot secret goes stale. Two options:
+#
+#   A) Static token + a refresh workflow (works today, fully documented path):
+#      username is literally "aws"; password is a CodeArtifact token. Because
+#      the token expires, add a scheduled GitHub Actions workflow (cadence
+#      < 12h) that runs `aws codeartifact get-authorization-token ...` and
+#      writes it to the Dependabot secret via
+#      `gh api -X PUT .../dependabot/secrets/CODEARTIFACT_TOKEN` (see
+#      dependabot-core#5686). Store secrets under
 #      Settings > Secrets and variables > Dependabot (NOT Actions secrets).
-#      Use `token:` instead if pyx.dev issues bearer tokens.
-#   3. Reference them from the uv update entry above by adding:
-#          registries:
-#            - pyx-speqtrum
-#            - pyx-euroqcs
+#      Then uncomment and reference the block below.
+#
+#   B) AWS OIDC (cleaner -- Dependabot assumes an IAM role and mints a token per
+#      run, so nothing to rotate). NOT yet in the official Dependabot options
+#      reference; see community discussion
+#      https://github.com/orgs/community/discussions/186757 and confirm the
+#      supported fields before relying on it. Requires an IAM role whose trust
+#      policy allows GitHub's Dependabot OIDC provider.
+#
+# Static-approach template (option A). The `url` MUST match the
+# [[tool.uv.index]] url in pyproject.toml VERBATIM -- Dependabot maps registry
+# -> uv index by URL, then injects UV_INDEX_<NAME>_USERNAME / _PASSWORD:
 #
 # registries:
-#   pyx-speqtrum:
+#   codeartifact:
 #     type: python-index
-#     url: "https://api.pyx.dev/simple/qilimanjaro/speqtrum"
-#     username: "${{secrets.PYX_USERNAME}}"
-#     password: "${{secrets.PYX_PASSWORD}}"
-#     replaces-base: false
-#   pyx-euroqcs:
-#     type: python-index
-#     url: "https://api.pyx.dev/simple/qilimanjaro/euroqcs"
-#     username: "${{secrets.PYX_USERNAME}}"
-#     password: "${{secrets.PYX_PASSWORD}}"
-#     replaces-base: false
+#     url: "https://<DOMAIN>-<ACCOUNT_ID>.d.codeartifact.<REGION>.amazonaws.com/pypi/<REPOSITORY>/simple/"
+#     username: "aws"
+#     password: "${{secrets.CODEARTIFACT_TOKEN}}"   # kept fresh (< 12h) by a scheduled refresh workflow
+#     replaces-base: false                          # explicit, package-scoped index -- keep PyPI as default
+#
+# Then reference it from the uv update entry above by adding:
+#     registries:
+#       - codeartifact
 # =============================================================================
