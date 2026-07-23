@@ -15,6 +15,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Callable
 
+from loguru import logger
 from scipy import optimize as scipy_optimize
 
 from qilisdk.yaml import yaml
@@ -74,6 +75,7 @@ class SciPyOptimizer(Optimizer):
         super().__init__()
         self.method = method
         self.extra_arguments = kwargs
+        logger.debug("[SciPyOptimizer] Created optimizer with method {}", method)
 
     def optimize(
         self,
@@ -92,10 +94,16 @@ class SciPyOptimizer(Optimizer):
         Returns:
             list[float]: the optimal set of parameters that minimize the cost function.
         """
+        logger.debug(
+            "[SciPyOptimizer] Starting optimization with method {} and {} parameters",
+            self.method,
+            len(init_parameters),
+        )
         intermediate_results: list[OptimizerIntermediateResult] = []
 
         def callback_fun(intermediate_result: OptimizeResult) -> None:
             # Create an OptimizerResult for this intermediate iteration.
+            logger.trace("[SciPyOptimizer] Intermediate iteration with cost {}", intermediate_result.fun)
             intermediate_results.append(
                 OptimizerIntermediateResult(cost=intermediate_result.fun, parameters=intermediate_result.x.tolist())
             )
@@ -107,6 +115,7 @@ class SciPyOptimizer(Optimizer):
         if self.method in {"direct", "dual_annealing", "differential_evolution", "shgo"} and isinstance(
             self.method, str
         ):
+            logger.debug("[SciPyOptimizer] Using global optimizer interface {}", self.method)
             res = getattr(scipy_optimize, self.method)(
                 cost_function,
                 bounds=bounds,
@@ -115,6 +124,7 @@ class SciPyOptimizer(Optimizer):
             )
         # basinhopping doesn't allow bounds
         elif self.method in {"basinhopping", "brute"}:
+            logger.debug("[SciPyOptimizer] Using global optimizer interface {}", self.method)
             res = scipy_optimize.basinhopping(
                 cost_function,
                 x0=init_parameters,
@@ -123,6 +133,7 @@ class SciPyOptimizer(Optimizer):
             )
         # the more general local minimizer interface
         else:
+            logger.debug("[SciPyOptimizer] Using local minimizer interface with method {}", self.method)
             res = scipy_optimize.minimize(
                 cost_function,
                 x0=init_parameters,
@@ -137,6 +148,11 @@ class SciPyOptimizer(Optimizer):
                 callback=callback,
             )
 
+        logger.debug(
+            "[SciPyOptimizer] Optimization finished with optimal cost {} and {} intermediate results",
+            res.fun,
+            len(intermediate_results),
+        )
         return OptimizerResult(
             optimal_cost=res.fun,
             optimal_parameters=res.x.tolist(),

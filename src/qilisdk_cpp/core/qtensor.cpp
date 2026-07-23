@@ -2132,6 +2132,120 @@ double QTensorCpp::entropy_renyi(double alpha) {
     return (1.0 / (1.0 - alpha)) * std::log(sum);
 }
 
+static void _fast_walsh_hadamard_transform(std::vector<Complex>& a) {
+    /*
+    Apply the unnormalized fast Walsh-Hadamard transform (H_2)^{tensor N} to a vector in place.
+
+    The length of the vector must be a power of two. The transform is computed in O(N * 2^N) time using
+    the standard butterfly iteration, where H_2 = [[1, 1], [1, -1]].
+    */
+    const size_t n = a.size();
+    for (size_t h = 1; h < n; h <<= 1) {
+        for (size_t i = 0; i < n; i += (h << 1)) {
+            for (size_t j = i; j < i + h; ++j) {
+                const Complex top = a[j];
+                const Complex bottom = a[j + h];
+                a[j] = top + bottom;
+                a[j + h] = top - bottom;
+            }
+        }
+    }
+}
+
+double QTensorCpp::magic(double alpha) {
+    /*
+    Compute the magic (non-stabilizerness) of a pure state via the stabilizer Renyi entropy (SRE).
+
+    This is a numerically exact implementation of Algorithm 2 of Sierant, Valles-Muns and Garcia-Saez,
+    "Computing quantum magic of state vectors" (https://arxiv.org/abs/2601.07824)
+
+    Args:
+        alpha (double): The Renyi index alpha > 0.
+
+    Returns:
+        double: The stabilizer Renyi entropy M_alpha(|psi>).
+
+    Raises:
+        py::value_error: If this QTensor is not a pure state (ket or bra), or if alpha is not positive.
+    */
+    if (alpha <= 0) {
+        throw py::value_error("The Renyi index alpha must be positive");
+    }
+    if (!is_ket() && !is_bra()) {
+        throw py::value_error("Magic (SRE) is only defined for pure states; provide a ket or bra QTensor");
+    }
+
+    const int n = get_nqubits();
+    const Eigen::Index dim = Eigen::Index(1) << n;
+
+    // Extract the amplitude vector
+    const DenseMatrix dense = to_dense();
+    std::vector<Complex> psi(static_cast<size_t>(dim));
+    if (is_ket()) {
+        for (Eigen::Index i = 0; i < dim; ++i) {
+            psi[i] = dense(i, 0);
+        }
+    } else {
+        for (Eigen::Index i = 0; i < dim; ++i) {
+            psi[i] = std::conj(dense(0, i));
+        }
+    }
+
+    // Normalize the state so the SRE is well defined.
+    double norm_sq = 0.0;
+    for (Eigen::Index i = 0; i < dim; ++i) {
+        norm_sq += std::norm(psi[i]);
+    }
+    if (norm_sq == 0.0) {
+        throw py::value_error("Cannot compute magic of a zero state");
+    }
+    const double inv_norm = 1.0 / std::sqrt(norm_sq);
+    for (Eigen::Index i = 0; i < dim; ++i) {
+        psi[i] *= inv_norm;
+    }
+
+    const bool shannon = (alpha == 1.0);
+    double accum = 0.0;
+
+#ifndef _WIN32
+#if defined(_OPENMP)
+#pragma omp parallel
+#endif
+#endif
+    {
+        std::vector<Complex> v(static_cast<size_t>(dim));
+#ifndef _WIN32
+#if defined(_OPENMP)
+#pragma omp for reduction(+ : accum) schedule(static)
+#endif
+#endif
+        for (Eigen::Index a = 0; a < dim; ++a) {
+            for (Eigen::Index x = 0; x < dim; ++x) {
+                v[x] = std::conj(psi[x ^ a]) * psi[x];
+            }
+            _fast_walsh_hadamard_transform(v);
+            double local = 0.0;
+            for (Eigen::Index b = 0; b < dim; ++b) {
+                const double weight = std::norm(v[b]);
+                if (shannon) {
+                    const double xi = weight / static_cast<double>(dim);
+                    if (xi > 0.0) {
+                        local += xi * std::log2(xi);
+                    }
+                } else {
+                    local += std::pow(weight, alpha);
+                }
+            }
+            accum += local;
+        }
+    }
+
+    if (shannon) {
+        return -accum - static_cast<double>(n);
+    }
+    return (1.0 / (1.0 - alpha)) * std::log2(accum / static_cast<double>(dim));
+}
+
 DenseMatrix QTensorCpp::as_dense() const {
     /*
     Convert this QTensor to a dense matrix representation, returning a new DenseMatrix as the result.

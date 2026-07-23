@@ -15,6 +15,7 @@ import math
 from copy import copy
 from pathlib import Path
 
+from loguru import logger
 from numpy import e, pi
 from openqasm3.ast import (
     AliasStatement,
@@ -1095,6 +1096,7 @@ class OpenQasmParser:
         return ""
 
     def from_qasm3(self, qasm3: str, directory: str = "") -> Circuit:
+        logger.info("[OpenQASM3] Importing circuit from OpenQASM 3.0")
 
         # Check for includes, if so, add their text to the qasm3 text and re-parse to get a full AST with all statements
         qasm3_with_includes = qasm3
@@ -1153,7 +1155,9 @@ class OpenQasmParser:
         self.gates_to_add = []
 
         # Go through the tree and determine what to do
+        logger.debug("[OpenQASM3] Processing {} top-level statements", len(ast.statements))
         for statement in ast.statements:
+            logger.trace("[OpenQASM3] Processing statement of type {}", type(statement).__name__)
             self._process_statement(statement)
 
         # Create a Circuit with the determined number of qubits
@@ -1161,15 +1165,19 @@ class OpenQasmParser:
         for gate in self.gates_to_add:
             c.add(gate)
 
+        logger.debug("[OpenQASM3] Imported circuit with {} qubits and {} gates", c.nqubits, len(c.gates))
         return c
 
     @staticmethod
     def to_qasm3(circuit: Circuit) -> str:
+        logger.info("[OpenQASM3] Exporting circuit to OpenQASM 3.0")
+        logger.debug("[OpenQASM3] Exporting {} gates on {} qubits", len(circuit.gates), circuit.nqubits)
         qasm3 = "OPENQASM 3.0;\n"
         qasm3 += 'include "stdgates.inc";\n'
         if circuit.nqubits > 0:
             qasm3 += f"qubit[{circuit.nqubits}] q;\n"
         for gate in circuit.gates:
+            logger.trace("[OpenQASM3] Exporting gate {} on qubits {}", gate.name, gate.qubits)
             qasm_gate_name = gate.name.lower()
             if gate.name == "CNOT":
                 qasm_gate_name = "x"
@@ -1227,6 +1235,7 @@ def from_qasm3_file(filename: str) -> Circuit:
     Returns:
         Circuit: The reconstructed Circuit object.
     """
+    logger.debug("[OpenQASM3] Reading OpenQASM 3.0 from file {}", filename)
     qasm_str = Path(filename).read_text(encoding="utf-8")
     directory = str(Path(filename).parent)
     return from_qasm3(qasm_str, directory)
@@ -1241,4 +1250,5 @@ def to_qasm3_file(circuit: Circuit, filename: str) -> None:
         filename (str): The path to the file where the QASM code will be saved.
     """
     qasm_code = to_qasm3(circuit)
+    logger.debug("[OpenQASM3] Writing OpenQASM 3.0 to file {}", filename)
     Path(filename).write_text(qasm_code, encoding="utf-8")

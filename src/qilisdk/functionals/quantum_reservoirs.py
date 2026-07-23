@@ -17,6 +17,7 @@ from copy import copy
 from typing import TYPE_CHECKING, Iterator
 
 import numpy as np
+from loguru import logger
 
 from qilisdk.core import Domain, Parameter, QTensor, tensor_prod
 from qilisdk.core.parameterizable import Parameterizable
@@ -328,6 +329,12 @@ class QuantumReservoir(PrimitiveFunctional):
             raise ValueError(
                 f"invalid initial state: the initial state acts on {self._initial_state.nqubits} qubits while the reservoir is defined with {self._reservoir_layer.nqubits} qubits."
             )
+
+        logger.debug(
+            "[QuantumReservoir] Created QuantumReservoir with {} qubits and {} layers",
+            self._reservoir_layer.nqubits,
+            len(input_per_layer),
+        )
 
     @property
     def nqubits(self) -> int:

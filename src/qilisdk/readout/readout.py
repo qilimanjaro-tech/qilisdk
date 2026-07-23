@@ -26,6 +26,8 @@ from __future__ import annotations
 
 from typing import Literal
 
+from loguru import logger
+
 from qilisdk.analog import Hamiltonian
 from qilisdk.core import QTensor
 from qilisdk.yaml import yaml
@@ -95,6 +97,7 @@ class SamplingReadout(ReadoutMethod):
         """
         if nshots <= 0 or not isinstance(nshots, int):
             raise ValueError("The number of shots has to be a positive integer")
+        logger.trace("[Readout] Constructing sampling readout with {} shots", nshots)
         self._nshots: int = nshots
         self._expand_samples: bool = expand_samples
 
@@ -131,6 +134,9 @@ class ExpectationReadout(ReadoutMethod):
             raise ValueError("The number of shots has to be a positive integer")
         if any(not isinstance(o, (Hamiltonian, QTensor)) for o in observables):
             raise ValueError("Invalid Observable: All observables need to be QTensors or a Hamiltonian.")
+        logger.trace(
+            "[Readout] Constructing expectation readout with {} observables, {} shots", len(observables), nshots
+        )
         self._nshots: int = nshots
         self._observables: list[Hamiltonian | QTensor] = observables
         self._scaled_nqubits: int | None = None
@@ -188,6 +194,7 @@ class StateTomographyReadout(ReadoutMethod):
     """
 
     def __init__(self, method: Literal["exact"] = "exact") -> None:
+        logger.trace("[Readout] Constructing state-tomography readout with method {}", method)
         self._method: Literal["exact"] = method
 
     @property

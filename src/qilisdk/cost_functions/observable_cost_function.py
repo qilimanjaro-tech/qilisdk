@@ -16,6 +16,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import numpy as np
+from loguru import logger
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliOperator
 from qilisdk.core.qtensor import QTensor, expect_val, ket
@@ -97,8 +98,10 @@ class ObservableCostFunction(CostFunction):
                 nor a ``Sampling`` readout.
         """
         if results.has_state():
+            logger.trace("[ObservableCostFunction] Computing expectation value from final state")
             return self._compute_from_state(results)
         if results.has_samples():
+            logger.trace("[ObservableCostFunction] Computing expectation value from samples")
             return self._compute_from_samples(results)
         raise ValueError("ObservableCostFunction requires either a StateTomography or Sampling readout in the results.")
 
@@ -141,6 +144,7 @@ class ObservableCostFunction(CostFunction):
         nqubits = self._observable.nqubits
         samples = results.get_samples()
         nshots = sum(samples.values())
+        logger.trace("[ObservableCostFunction] Estimating expectation value from {} distinct samples", len(samples))
         for sample, prob in samples.items():
             state = ket(*[int(bit) for bit in sample])
             if nqubits != state.nqubits:

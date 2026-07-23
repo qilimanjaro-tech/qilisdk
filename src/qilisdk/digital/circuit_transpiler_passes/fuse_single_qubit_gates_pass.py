@@ -17,6 +17,7 @@ from __future__ import annotations
 import math
 
 import numpy as np
+from loguru import logger
 
 from qilisdk.digital import Circuit
 from qilisdk.digital.circuit_transpiler_passes.decompose_to_canonical_basis_pass import SingleQubitGateBasis
@@ -98,6 +99,11 @@ class FuseSingleQubitGatesPass(CircuitTranspilerPass):
         Returns:
             Circuit: New circuit with fused one-qubit runs and unchanged behavior.
         """
+        logger.debug(
+            "[FuseSingleQubitGatesPass] Running on {} gates with single-qubit basis {}",
+            len(circuit.gates),
+            self._single_qubit_basis.value,
+        )
         output_gates: list[Gate] = []
         pending: dict[int, np.ndarray] = {}
 
@@ -112,6 +118,7 @@ class FuseSingleQubitGatesPass(CircuitTranspilerPass):
             if qubit not in pending:
                 return
             U = pending.pop(qubit)
+            logger.trace("[FuseSingleQubitGatesPass] Flushing fused single-qubit run on qubit {}", qubit)
             output_gates.extend(self._emit_fused_basis_gates(qubit, U))
 
         for gate in circuit.gates:
@@ -134,6 +141,11 @@ class FuseSingleQubitGatesPass(CircuitTranspilerPass):
         for gate in output_gates:
             output_circuit.add(gate)
 
+        logger.debug(
+            "[FuseSingleQubitGatesPass] Fused {} gates down to {} gates",
+            len(circuit.gates),
+            len(output_circuit.gates),
+        )
         self.append_circuit_to_context(output_circuit)
         return output_circuit
 
