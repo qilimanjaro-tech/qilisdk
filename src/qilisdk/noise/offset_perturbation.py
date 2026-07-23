@@ -14,6 +14,8 @@
 
 from __future__ import annotations
 
+from loguru import logger
+
 from .parameter_perturbation import ParameterPerturbation
 
 
@@ -36,6 +38,7 @@ class OffsetPerturbation(ParameterPerturbation):
         return self._offset
 
     def perturb(self, value: float) -> float:
+        logger.debug("[OffsetPerturbation] Perturbing value {} by offset {}", value, self._offset)
         return value + self._offset
 
     def __repr__(self) -> str:

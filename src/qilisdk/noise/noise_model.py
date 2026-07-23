@@ -17,6 +17,8 @@ from __future__ import annotations
 from collections import defaultdict
 from typing import TypeAlias, TypeVar, overload
 
+from loguru import logger
+
 from qilisdk.digital import Gate
 
 from .noise import Noise
@@ -217,20 +219,29 @@ class NoiseModel:
         if qubits is None and gate is None:
             self._check_scope_allowed(noise, AttachmentScope.GLOBAL)
             self.global_noise.append(noise)
+            logger.debug("[NoiseModel] Added global noise {}", noise.__class__.__name__)
             return
         if qubits is not None and gate is None:
             self._check_scope_allowed(noise, AttachmentScope.PER_QUBIT)
             for q in qubits:
                 self.per_qubit_noise[q].append(noise)
+            logger.debug("[NoiseModel] Added per-qubit noise {} on qubits {}", noise.__class__.__name__, qubits)
             return
         if qubits is None and gate is not None:
             self._check_scope_allowed(noise, AttachmentScope.PER_GATE_TYPE)
             self.per_gate_noise[gate].append(noise)
+            logger.debug("[NoiseModel] Added per-gate noise {} on gate {}", noise.__class__.__name__, gate.__name__)
             return
         if qubits is not None and gate is not None:
             self._check_scope_allowed(noise, AttachmentScope.PER_GATE_TYPE_PER_QUBIT)
             for q in qubits:
                 self.per_gate_per_qubit_noise[gate, q].append(noise)
+            logger.debug(
+                "[NoiseModel] Added per-gate per-qubit noise {} on gate {} qubits {}",
+                noise.__class__.__name__,
+                gate.__name__,
+                qubits,
+            )
 
     def _add_parameter_perturbation(
         self,
@@ -254,9 +265,18 @@ class NoiseModel:
         if gate is None:
             self._check_scope_allowed(noise, AttachmentScope.GLOBAL)
             self.global_perturbations[parameter].append(noise)
+            logger.debug(
+                "[NoiseModel] Added global perturbation {} on parameter {}", noise.__class__.__name__, parameter
+            )
             return
         self._check_scope_allowed(noise, AttachmentScope.PER_GATE_TYPE)
         self.per_gate_perturbations[gate, parameter].append(noise)
+        logger.debug(
+            "[NoiseModel] Added per-gate perturbation {} on gate {} parameter {}",
+            noise.__class__.__name__,
+            gate.__name__,
+            parameter,
+        )
 
     def __repr__(self) -> str:
         SO_SONARQUBE_DOESNT_COMPLAIN = "  },"

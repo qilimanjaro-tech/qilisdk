@@ -17,6 +17,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
+from loguru import logger
+
 if TYPE_CHECKING:
     from qilisdk.digital import Circuit
     from qilisdk.digital.types import LayoutMap
@@ -31,3 +33,6 @@ class TranspilationContext:
     final_layout: LayoutMap = field(default_factory=dict)  # logical -> physical (after router)
     metrics: dict[str, Any] = field(default_factory=dict)
     circuits: dict[str, Circuit] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        logger.debug("[TranspilationContext] Initialized transpilation context")

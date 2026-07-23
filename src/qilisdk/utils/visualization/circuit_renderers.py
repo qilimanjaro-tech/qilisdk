@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING, Final, Iterable
 
 import matplotlib.pyplot as plt
 import numpy as np
+from loguru import logger
 from matplotlib.figure import Figure
 from matplotlib.patches import Arc, Circle, FancyArrow, FancyBboxPatch
 
@@ -74,6 +75,7 @@ class MatplotlibCircuitRenderer:
         deferring final-column measurements as needed, draws wires and finalizes
         the figure.
         """
+        logger.debug("[CircuitRenderer] Rendering circuit with {} qubits", self.circuit.nqubits)
         self._generate_layer_gate_mapping()
         self._draw_wire_labels()
 
@@ -145,6 +147,7 @@ class MatplotlibCircuitRenderer:
         Args:
             filename: Path to save the figure (e.g., 'circuit.png').
         """
+        logger.debug("[CircuitRenderer] Saving figure to {}", filename)
         if isinstance(self.axes.figure, Figure):
             self.axes.figure.savefig(filename, bbox_inches="tight")
 

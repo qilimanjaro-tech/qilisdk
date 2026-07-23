@@ -14,6 +14,7 @@
 
 import keyring
 from keyring.errors import PasswordDeleteError
+from loguru import logger
 from pydantic import ValidationError
 
 from .speqtrum_models import Token
@@ -25,6 +26,7 @@ def store_credentials(username: str, token: Token) -> None:
     """
     Store the username and token in the keyring.
     """
+    logger.debug("[Keyring] Storing credentials for username {}", username)
     keyring.set_password(KEYRING_IDENTIFIER, "username", username)
     keyring.set_password(KEYRING_IDENTIFIER, "token", token.model_dump_json())
 
@@ -33,10 +35,12 @@ def delete_credentials() -> None:
     """
     Delete username and token from the keyring.
     """
+    logger.debug("[Keyring] Deleting stored credentials")
     try:
         keyring.delete_password(KEYRING_IDENTIFIER, "username")
         keyring.delete_password(KEYRING_IDENTIFIER, "token")
     except PasswordDeleteError:
+        logger.debug("[Keyring] No stored credentials found to delete")
         return
 
 
@@ -47,12 +51,15 @@ def load_credentials() -> tuple[str, Token] | None:
     Returns:
         A tuple (username, Token) if both exist and can be parsed; otherwise, None.
     """
+    logger.debug("[Keyring] Loading stored credentials")
     username = keyring.get_password(KEYRING_IDENTIFIER, "username")
     token_json = keyring.get_password(KEYRING_IDENTIFIER, "token")
     if username is None or token_json is None:
+        logger.debug("[Keyring] No stored credentials found")
         return None
     try:
         token = Token.model_validate_json(token_json)
         return username, token
     except ValidationError:
+        logger.debug("[Keyring] Stored token failed validation")
         return None

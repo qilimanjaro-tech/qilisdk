@@ -219,7 +219,7 @@ class CudaBackend(Backend):
             PauliI: CudaBackend._handle_PauliI,
         }
         self._sampling_method = sampling_method
-        logger.success("CudaBackend initialised (sampling_method={})", sampling_method.value)
+        logger.info("[CudaBackend] CudaBackend initialised (sampling_method={})", sampling_method.value)
 
     def _execute_digital_propagation(
         self, functional: DigitalPropagation, readout: list[ReadoutMethod]
@@ -247,7 +247,7 @@ class CudaBackend(Backend):
             ValueError: If a noise model is set and a non-sampling readout
                 is requested.
         """
-        logger.info("Executing Digital Propagation")
+        logger.info("[CudaBackend] Executing Digital Propagation")
         self._validate_digital_readout_with_noise(readout=readout)
         self._apply_digital_simulation_method()
         kernel = cudaq.make_kernel()
@@ -299,7 +299,7 @@ class CudaBackend(Backend):
             cudaq_result = self._handle_readout_errors(cudaq_result, self._noise_model, functional.circuit.nqubits)
             if og_param:
                 functional.set_parameters(og_param)
-            logger.success("Sampling finished; {} distinct bitstrings", len(cudaq_result))
+            logger.info("[CudaBackend] Sampling finished, {} distinct bitstrings", len(cudaq_result))
             sampling_readout = next((ro for ro in readout if isinstance(ro, SamplingReadout)), None)
             expand_samples = sampling_readout.expand_samples if sampling_readout else True
             return FunctionalResult(
@@ -320,7 +320,7 @@ class CudaBackend(Backend):
             cudaq_result = cudaq.sample(kernel, shots_count=sampling_readout.nshots)
             if og_param:
                 functional.set_parameters(og_param)
-            logger.success("Sampling finished; {} distinct bitstrings", len(cudaq_result))
+            logger.info("[CudaBackend] Sampling finished, {} distinct bitstrings", len(cudaq_result))
             return FunctionalResult(
                 ReadoutCompositeResults(
                     sampling=SamplingReadoutResult.from_samples(
@@ -371,10 +371,12 @@ class CudaBackend(Backend):
                 intermediate-state readouts when
                 ``functional.store_intermediate_results`` is ``True``.
         """
-        logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
+        logger.info(
+            "[CudaBackend] Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt
+        )
         if get_settings().complex_precision != Precision.COMPLEX_128:
             logger.warning(
-                "CUDA-Q dynamics simulation only supports fp64; ignoring complex_precision={} and using fp64.",
+                "[CudaBackend] CUDA-Q dynamics simulation only supports fp64, ignoring complex_precision={} and using fp64.",
                 get_settings().complex_precision.value,
             )
         cudaq.set_target("dynamics", option="fp64")
@@ -390,7 +392,7 @@ class CudaBackend(Backend):
 
         cuda_hamiltonian = self._get_cuda_hamiltonian(functional.schedule)
 
-        logger.trace("Hamiltonian compiled for evolution")
+        logger.debug("[CudaBackend] Hamiltonian compiled for evolution")
 
         cuda_observables = []
 
@@ -422,7 +424,7 @@ class CudaBackend(Backend):
             store_intermediate_results=functional.store_intermediate_results,
         )
 
-        logger.success("TimeEvolution finished")
+        logger.info("[CudaBackend] TimeEvolution finished")
         # Dynamics computes in fp64; keep the results complex128 to match.
         final_state = np.array(
             evolution_result.final_state(),  # ty:ignore[unresolved-attribute]
@@ -501,34 +503,34 @@ class CudaBackend(Backend):
         Raises:
             ValueError: If an unsupported sampling method is configured.
         """
-        logger.info("Applying sampling simulation method {}", self.sampling_method.value)
+        logger.info("[CudaBackend] Applying sampling simulation method {}", self.sampling_method.value)
         if self.sampling_method in {CudaSamplingMethod.STATE_VECTOR, CudaSamplingMethod.STATE_VECTOR_MGPU}:
             float_precision = "fp64" if get_settings().complex_precision == Precision.COMPLEX_128 else "fp32"
             num_gpus = cudaq.num_available_gpus()
             if num_gpus == 0:
                 cudaq.set_target("qpp-cpu")
-                logger.debug("No GPU detected, using cudaq's 'qpp-cpu' backend")
+                logger.debug("[CudaBackend] No GPU detected, using cudaq's 'qpp-cpu' backend")
             elif self.sampling_method == CudaSamplingMethod.STATE_VECTOR_MGPU:
                 if num_gpus < 2:  # noqa: PLR2004 # come on, two isn't a magic numbr
                     cudaq.set_target("nvidia", option=float_precision)
                     logger.warning(
-                        "Multiple GPU simulation method selected but only single GPU detected. Falling back to single GPU."
+                        "[CudaBackend] Multiple GPU simulation method selected but only single GPU detected. Falling back to single GPU."
                     )
                 else:
                     cudaq.set_target("nvidia", option="mgpu," + float_precision)
-                    logger.debug("Multiple GPUs detected, using cudaq's 'nvidia-mgpu' backend")
+                    logger.debug("[CudaBackend] Multiple GPUs detected, using cudaq's 'nvidia-mgpu' backend")
             else:
                 cudaq.set_target("nvidia", option=float_precision)
-                logger.debug("GPU detected, using cudaq's 'nvidia' backend")
+                logger.debug("[CudaBackend] GPU detected, using cudaq's 'nvidia' backend")
         elif self.sampling_method == CudaSamplingMethod.CPU:
             cudaq.set_target("qpp-cpu")
-            logger.debug("Using cudaq's 'qpp-cpu' backend")
+            logger.debug("[CudaBackend] Using cudaq's 'qpp-cpu' backend")
         elif self.sampling_method == CudaSamplingMethod.TENSOR_NETWORK:
             cudaq.set_target("tensornet")
-            logger.debug("Using cudaq's 'tensornet' backend")
+            logger.debug("[CudaBackend] Using cudaq's 'tensornet' backend")
         elif self.sampling_method == CudaSamplingMethod.MATRIX_PRODUCT_STATE:
             cudaq.set_target("tensornet-mps")
-            logger.debug("Using cudaq's 'tensornet-mps' backend")
+            logger.debug("[CudaBackend] Using cudaq's 'tensornet-mps' backend")
         else:
             raise ValueError(f"Unsupported sampling method: {self.sampling_method.value}")
 
@@ -1117,12 +1119,12 @@ class CudaBackend(Backend):
             UnsupportedGateError: If the number of control qubits is not equal to one or if the basic gate is unsupported.
         """
         if len(gate.control_qubits) != 1:
-            logger.error("Controlled gate with {} control qubits not supported", len(gate.control_qubits))
+            logger.error("[CudaBackend] Controlled gate with {} control qubits not supported", len(gate.control_qubits))
             raise UnsupportedGateError
         target_kernel, qubit = cudaq.make_kernel(cudaq.qubit)
         handler = self._basic_gate_handlers.get(type(gate.basic_gate), None)
         if handler is None:
-            logger.error("Unsupported gate inside Controlled: {}", type(gate.basic_gate).__name__)
+            logger.error("[CudaBackend] Unsupported gate inside Controlled: {}", type(gate.basic_gate).__name__)
             raise UnsupportedGateError
         handler(target_kernel, gate.basic_gate, qubit)
         kernel.control(target_kernel, control_qubit, target_qubit)
@@ -1145,7 +1147,7 @@ class CudaBackend(Backend):
         target_kernel, qubit = cudaq.make_kernel(cudaq.qubit)
         handler = self._basic_gate_handlers.get(type(gate.basic_gate), None)
         if handler is None:
-            logger.error("Unsupported gate inside Adjoint: {}", type(gate.basic_gate).__name__)
+            logger.error("[CudaBackend] Unsupported gate inside Adjoint: {}", type(gate.basic_gate).__name__)
             raise UnsupportedGateError
         handler(target_kernel, gate.basic_gate, qubit)
         kernel.adjoint(target_kernel, target_qubit)

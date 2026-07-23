@@ -16,6 +16,8 @@ from __future__ import annotations
 from abc import ABC
 from typing import TYPE_CHECKING, ClassVar, Generic, TypeVar
 
+from loguru import logger
+
 from qilisdk.experiments.experiment_result import (
     ExperimentResult,
     RabiExperimentResult,
@@ -53,6 +55,12 @@ class ExperimentFunctional(Functional, ABC, Generic[TResult_co]):
             qubit (int): The physical qubit index on which the experiment is performed.
             averages (int): Number of averages to acquire for the experiment.
         """
+        logger.debug(
+            "[ExperimentFunctional] Constructing {} on qubit {} with {} averages",
+            type(self).__name__,
+            qubit,
+            averages,
+        )
         self._qubit = qubit
         self._averages = averages
 

@@ -20,6 +20,8 @@ from collections import deque
 from copy import deepcopy
 from typing import TYPE_CHECKING, Iterable, TypeGuard
 
+from loguru import logger
+
 from qilisdk.digital import (
     SWAP,
     Adjoint,
@@ -164,6 +166,11 @@ class SabreSwapPass(CircuitTranspilerPass):
             RuntimeError: If all attempts fail due to exhausted swap budgets.
         """
         max_attempt_count = max(1, self.max_attempts)
+        logger.debug(
+            "[SabreSwapPass] Running on circuit with {} gates, up to {} attempts",
+            len(circuit.gates),
+            max_attempt_count,
+        )
         last_exception: RuntimeError | None = None
         base_seed = self.seed
         # Obtain layout hint without mutating instance attributes so repeated runs
@@ -185,9 +192,15 @@ class SabreSwapPass(CircuitTranspilerPass):
             except RuntimeError as exc:
                 if "Exceeded swap budget" not in str(exc):
                     raise
+                logger.warning("[SabreSwapPass] Attempt {} exceeded swap budget, retrying", attempt)
                 last_exception = exc
                 continue
 
+            logger.debug(
+                "[SabreSwapPass] Attempt {} routed successfully with {} swaps inserted",
+                attempt,
+                swap_count,
+            )
             self.last_swap_count = swap_count
             self.last_final_layout = final_layout
 
@@ -246,6 +259,7 @@ class SabreSwapPass(CircuitTranspilerPass):
         layout = self._init_layout(num_logical_qubits, physical_nodes, active_qubits, layout_hint)
 
         if self._is_layout_routable(circuit, layout):
+            logger.debug("[SabreSwapPass] Initial layout is already routable, no swaps needed")
             output_num_qubits = max(
                 max_physical_label_plus_one,
                 max(layout) + 1 if layout else max_physical_label_plus_one,
@@ -458,6 +472,11 @@ class SabreSwapPass(CircuitTranspilerPass):
                 chosen_physical_a, chosen_physical_b = chosen_edge
                 routed_circuit.add(SWAP(chosen_physical_a, chosen_physical_b))
                 swap_count += 1
+                logger.trace(
+                    "[SabreSwapPass] Inserted SWAP on physical qubits {} and {}",
+                    chosen_physical_a,
+                    chosen_physical_b,
+                )
                 logical_at_a = inverse_layout[physical_to_dense_index[chosen_physical_a]]
                 logical_at_b = inverse_layout[physical_to_dense_index[chosen_physical_b]]
                 self._swap_mapping(
