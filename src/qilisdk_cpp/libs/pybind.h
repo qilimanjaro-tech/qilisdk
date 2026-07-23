@@ -41,6 +41,7 @@ extern py::object logger;
 
 // Globally-available Python loguru logger (see logging.h for the C++ wrappers).
 extern py::object logger;
+extern py::object logger_core;
 
 // Internal types
 extern py::object Circuit;

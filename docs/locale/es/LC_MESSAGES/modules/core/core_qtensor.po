@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-08 09:47+0200\n"
+"POT-Creation-Date: 2026-07-20 14:10+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -68,8 +68,8 @@ msgstr "Ejemplos de creación de distintos objetos cuánticos:"
 
 #: ../../modules/core/core_qtensor.rst:42
 #: ../../modules/core/core_qtensor.rst:88
-#: ../../modules/core/core_qtensor.rst:175
-#: ../../modules/core/core_qtensor.rst:225
+#: ../../modules/core/core_qtensor.rst:176
+#: ../../modules/core/core_qtensor.rst:226
 msgid "**Output**"
 msgstr "**Salida**"
 
@@ -146,8 +146,8 @@ msgid ""
 "Regardless of the internal storage method, you can retrieve dense or "
 "sparse views:"
 msgstr ""
-"Sea cual sea el método de almacenamiento interno, se pueden obtener vistas "
-"densas o dispersas:"
+"Sea cual sea el método de almacenamiento interno, se pueden obtener "
+"vistas densas o dispersas:"
 
 #: ../../modules/core/core_qtensor.rst:111
 msgid ""
@@ -288,13 +288,23 @@ msgstr ""
 
 #: ../../modules/core/core_qtensor.rst:135
 msgid ""
+":meth:`.magic(alpha)<qilisdk.core.qtensor.QTensor.magic>`: compute the "
+"magic (non-stabilizerness) of a pure state via the stabilizer Rényi "
+"entropy"
+msgstr ""
+":meth:`.magic(alpha)<qilisdk.core.qtensor.QTensor.magic>`: calcula la "
+"magia (no-estabilizabilidad) de un estado puro mediante la entropía de "
+"Rényi de estabilizador"
+
+#: ../../modules/core/core_qtensor.rst:136
+msgid ""
 ":meth:`.commutator(other)<qilisdk.core.qtensor.QTensor.commutator>`: "
 "compute the commutator with another operator"
 msgstr ""
 ":meth:`.commutator(other)<qilisdk.core.qtensor.QTensor.commutator>`: "
 "calcula el conmutador con otro operador"
 
-#: ../../modules/core/core_qtensor.rst:136
+#: ../../modules/core/core_qtensor.rst:137
 msgid ""
 ":meth:`.anticommutator(other)<qilisdk.core.qtensor.QTensor.anticommutator>`:"
 " compute the anticommutator with another operator"
@@ -302,7 +312,7 @@ msgstr ""
 ":meth:`.anticommutator(other)<qilisdk.core.qtensor.QTensor.anticommutator>`:"
 " calcula el anticonmutador con otro operador"
 
-#: ../../modules/core/core_qtensor.rst:137
+#: ../../modules/core/core_qtensor.rst:138
 msgid ""
 ":meth:`.fidelity(other)<qilisdk.core.qtensor.QTensor.fidelity>`: compute "
 "the fidelity between two quantum states"
@@ -310,7 +320,7 @@ msgstr ""
 ":meth:`.fidelity(other)<qilisdk.core.qtensor.QTensor.fidelity>`: calcula "
 "la fidelidad entre dos estados cuánticos"
 
-#: ../../modules/core/core_qtensor.rst:138
+#: ../../modules/core/core_qtensor.rst:139
 msgid ""
 ":meth:`.probabilities()<qilisdk.core.qtensor.QTensor.probabilities>`: "
 "compute the probability distribution of each state in the computational "
@@ -320,7 +330,7 @@ msgstr ""
 "calcula la distribución de probabilidad de cada estado en la base "
 "computacional"
 
-#: ../../modules/core/core_qtensor.rst:139
+#: ../../modules/core/core_qtensor.rst:140
 msgid ""
 ":meth:`.partial_trace(keep)<qilisdk.core.qtensor.QTensor.ptrace>`: "
 "partial trace"
@@ -328,7 +338,7 @@ msgstr ""
 ":meth:`.partial_trace(keep)<qilisdk.core.qtensor.QTensor.ptrace>`: traza "
 "parcial"
 
-#: ../../modules/core/core_qtensor.rst:140
+#: ../../modules/core/core_qtensor.rst:141
 msgid ""
 ":meth:`.reset_qubits(qubits)<qilisdk.core.qtensor.QTensor.reset_qubits>`:"
 " reset specified qubits to 0"
@@ -336,31 +346,31 @@ msgstr ""
 ":meth:`.reset_qubits(qubits)<qilisdk.core.qtensor.QTensor.reset_qubits>`:"
 " restablece los qubits especificados a 0"
 
-#: ../../modules/core/core_qtensor.rst:141
+#: ../../modules/core/core_qtensor.rst:142
 msgid ":meth:`.dagger()<qilisdk.core.qtensor.QTensor.dagger>`: alias for adjoint"
 msgstr ":meth:`.dagger()<qilisdk.core.qtensor.QTensor.dagger>`: alias de adjoint"
 
-#: ../../modules/core/core_qtensor.rst:143
+#: ../../modules/core/core_qtensor.rst:144
 msgid "Examples:"
 msgstr "Ejemplos:"
 
-#: ../../modules/core/core_qtensor.rst:202
+#: ../../modules/core/core_qtensor.rst:203
 msgid "Extra Utilities"
 msgstr "Utilidades adicionales"
 
-#: ../../modules/core/core_qtensor.rst:204
+#: ../../modules/core/core_qtensor.rst:205
 msgid "**Tensor product** with :func:`~qilisdk.core.qtensor.tensor_prod`"
 msgstr "**Producto tensorial** con :func:`~qilisdk.core.qtensor.tensor_prod`"
 
-#: ../../modules/core/core_qtensor.rst:205
+#: ../../modules/core/core_qtensor.rst:206
 msgid "**Expectation value** with :func:`~qilisdk.core.qtensor.expect_val`"
 msgstr "**Valor esperado** con :func:`~qilisdk.core.qtensor.expect_val`"
 
-#: ../../modules/core/core_qtensor.rst:237
+#: ../../modules/core/core_qtensor.rst:238
 msgid "Visualization of Quantum States"
 msgstr "Visualización de estados cuánticos"
 
-#: ../../modules/core/core_qtensor.rst:239
+#: ../../modules/core/core_qtensor.rst:240
 msgid ""
 "You can also visualize single-qubit states on the Bloch sphere using "
 ":meth:`.draw()<qilisdk.core.qtensor.QTensor.draw>`:"
@@ -368,7 +378,7 @@ msgstr ""
 "También puede visualizar estados de un solo qubit en la esfera de Bloch "
 "usando :meth:`.draw()<qilisdk.core.qtensor.QTensor.draw>`:"
 
-#: ../../modules/core/core_qtensor.rst:248
+#: ../../modules/core/core_qtensor.rst:249
 msgid ""
 "The appearance of this plot can be customized using a "
 ":class:`~qilisdk.utils.visualization.style.QTensorStyle` object, which "

@@ -408,7 +408,7 @@ class Interpolator(Parameterizable):
         Raises:
             ValueError: If the coefficient type is unsupported or the callable uses invalid variables.
         """
-        logger.trace("[Interpolator] Adding time point at t={}", time)
+        logger.opt(lazy=True).trace("[Interpolator] Adding time point at t={}", lambda: time)
         self._extract_parameters(time)
         coeff = coefficient
         if callable(coeff):
@@ -449,7 +449,7 @@ class Interpolator(Parameterizable):
         Args:
             parameters (dict[str, int | float]): Mapping from parameter labels to numeric values.
         """
-        logger.trace("[Interpolator] Setting {} parameters by label", len(parameters))
+        logger.opt(lazy=True).trace("[Interpolator] Setting parameters by label {}", lambda: parameters)
         self.delete_cache()
         super().set_parameters(parameters)
 
@@ -460,7 +460,7 @@ class Interpolator(Parameterizable):
         Args:
             ranges (dict[str, tuple[float, float]]): Bounds keyed by parameter label.
         """
-        logger.trace("[Interpolator] Setting bounds for {} parameters", len(ranges))
+        logger.opt(lazy=True).trace("[Interpolator] Setting bounds for parameters {}", lambda: ranges)
         self.delete_cache()
         super().set_parameter_bounds(ranges)
 

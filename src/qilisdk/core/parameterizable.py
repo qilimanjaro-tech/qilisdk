@@ -250,7 +250,7 @@ class Parameterizable(ABC):
         Raises:
             ValueError: If ``values`` does not match the number of parameters selected by ``where``.
         """
-        logger.trace("[Parameterizable] Setting {} parameter values", len(values))
+        logger.opt(lazy=True).trace("[Parameterizable] Setting parameter values {}", lambda: values)
         param_names = self.get_parameter_names(where=where)
         if len(values) != len(param_names):
             raise ValueError(f"Provided {len(values)} but this object has {len(param_names)} parameters.")
@@ -267,7 +267,7 @@ class Parameterizable(ABC):
         Raises:
             ValueError: If an unknown parameter label is provided or constraints are violated.
         """
-        logger.trace("[Parameterizable] Setting {} parameters by label", len(parameters))
+        logger.opt(lazy=True).trace("[Parameterizable] Setting parameters by label {}", lambda: parameters)
         available_parameters = self._filtered_parameter_map()
         if not self.check_constraints(parameters):
             raise ValueError(
@@ -299,7 +299,7 @@ class Parameterizable(ABC):
         Raises:
             ValueError: If an unknown parameter label is provided.
         """
-        logger.trace("[Parameterizable] Setting bounds for {} parameters", len(ranges))
+        logger.opt(lazy=True).trace("[Parameterizable] Setting bounds for parameters {}", lambda: ranges)
         available_parameters = self._filtered_parameter_map()
         for label, bound in ranges.items():
             if label not in available_parameters:

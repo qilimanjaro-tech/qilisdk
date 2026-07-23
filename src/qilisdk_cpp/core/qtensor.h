@@ -164,6 +164,7 @@ class QTensorCpp {
     QTensorCpp as_density_matrix(double atol = default_atol, double max_relative_correction = 0.1);
     double entropy_von_neumann();
     double entropy_renyi(double alpha);
+    double magic(double alpha = 2.0);
     double fidelity(const QTensorCpp& other);
     double fidelity_python(const py::object& other);
     double purity();

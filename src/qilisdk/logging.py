@@ -112,6 +112,17 @@ class InterceptHandler(logging.Handler):
         logger.opt(depth=depth, exception=record.exc_info).log(level, record.getMessage())
 
 
+def _refresh_cpp_log_level() -> None:
+    """
+    Notify any already-imported QiliSDK C++ extension modules that the log level changed.
+    """
+    for module_name in ("qilisim_module", "qtensor_module"):
+        module = sys.modules.get(module_name)
+        refresh = getattr(module, "_refresh_log_level", None)
+        if refresh is not None:
+            refresh()
+
+
 def configure_logging(level: str | None = None, filename: str | Path | None = None, stderr: bool = True) -> None:
     """
     Configure QiliSDK logging. This is the main entry point for controlling log output.
@@ -208,3 +219,6 @@ def configure_logging(level: str | None = None, filename: str | Path | None = No
     for logger_name in logging.root.manager.loggerDict:
         logging.getLogger(logger_name).handlers = []
         logging.getLogger(logger_name).propagate = True
+
+    # 5) Re-sync the cached log level held by the C++ extensions
+    _refresh_cpp_log_level()
