@@ -29,6 +29,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from loguru import logger
 from pyqir import (
     BasicQisBuilder,
     Call,
@@ -183,7 +184,9 @@ def _populate_module(circuit: Circuit, module: SimpleModule) -> None:
     qis = BasicQisBuilder(module.builder)
     qubits = list(module.qubits)
     results = list(module.results)
+    logger.debug("[QIR] Emitting {} gates into module", len(circuit.gates))
     for gate in circuit.gates:
+        logger.trace("[QIR] Emitting gate {} on qubits {}", gate.name, gate.qubits)
         _produce_gate(module, qis, qubits, results, gate)
 
 
@@ -301,7 +304,9 @@ def _circuit_from_module(module: Module) -> Circuit:
     for block in entry.basic_blocks:
         for instr in block.instructions:
             if isinstance(instr, Call):
+                logger.trace("[QIR] Reconstructing gate from call {}", instr.callee.name)
                 circuit.add(_gate_from_call(instr.callee.name, list(instr.args)))
+    logger.debug("[QIR] Reconstructed circuit with {} qubits and {} gates", circuit.nqubits, len(circuit.gates))
     return circuit
 
 
@@ -327,6 +332,7 @@ def to_qir(circuit: Circuit, *, name: str = "circuit") -> str:
         NotImplementedError: If the circuit contains a gate with no Base-Profile
             mapping (e.g. ``U1`` / ``U2`` / ``U3``, three-qubit gates).
     """
+    logger.info("[QIR] Exporting circuit to QIR")
     module = SimpleModule(name=name, num_qubits=circuit.nqubits, num_results=circuit.nqubits)
     _populate_module(circuit, module)
     return module.ir()
@@ -345,6 +351,7 @@ def to_qir_file(circuit: Circuit, filename: str, *, name: str | None = None) -> 
     """
     path = Path(filename)
     module_name = name if name is not None else path.stem
+    logger.debug("[QIR] Writing QIR to file {}", filename)
     if path.suffix.lower() == ".bc":
         module = SimpleModule(
             name=module_name,
@@ -370,6 +377,7 @@ def from_qir(qir_text: str) -> Circuit:
         ValueError: If the module has no Base-Profile entry-point function.
         NotImplementedError: If the IR uses an unsupported QIS intrinsic.
     """
+    logger.info("[QIR] Importing circuit from QIR")
     module = Module.from_ir(Context(), qir_text)
     return _circuit_from_module(module)
 
@@ -383,6 +391,7 @@ def from_qir_file(filename: str) -> Circuit:
     Returns:
         Circuit: The reconstructed circuit.
     """
+    logger.debug("[QIR] Reading QIR from file {}", filename)
     path = Path(filename)
     ctx = Context()
     if path.suffix.lower() == ".bc":

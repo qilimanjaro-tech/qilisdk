@@ -1442,7 +1442,7 @@ def test_big_bounds(monkeypatch):
     # capture output of logger.warning
     out = []
 
-    def log_append(msg):
+    def log_append(msg, *args, **kwargs):
         out.append(msg)
 
     monkeypatch.setattr("loguru.logger.warning", log_append)

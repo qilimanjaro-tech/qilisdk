@@ -15,6 +15,8 @@
 import math
 from typing import TypeGuard
 
+from loguru import logger
+
 from qilisdk.digital import RX, RY, RZ, U1, U2, U3, Circuit, Gate, H, I, S, T, X, Y, Z
 from qilisdk.digital.gates import BasicGate, Controlled
 
@@ -45,11 +47,13 @@ class DecomposeMultiControlledGatesPass(CircuitTranspilerPass):
         Returns:
             Circuit: Newly built circuit containing only supported primitives.
         """
+        logger.debug("[DecomposeMultiControlledGatesPass] Running on circuit with {} gates", len(circuit.gates))
         output_circuit = Circuit(circuit.nqubits)
         for gate in circuit.gates:
             for rewritten_gate in self._rewrite_gate(gate):
                 output_circuit.add(rewritten_gate)
 
+        logger.debug("[DecomposeMultiControlledGatesPass] Produced circuit with {} gates", len(output_circuit.gates))
         self.append_circuit_to_context(output_circuit)
 
         return output_circuit
@@ -69,6 +73,11 @@ class DecomposeMultiControlledGatesPass(CircuitTranspilerPass):
             if basic_gate.nqubits != 1:
                 raise NotImplementedError("Controlled version of multi-qubit gates is not supported.")
 
+            logger.trace(
+                "[DecomposeMultiControlledGatesPass] Decomposing {}-controlled {}",
+                len(gate.control_qubits),
+                type(basic_gate).__name__,
+            )
             return _decompose(gate)
 
         # Everything else is untouched.

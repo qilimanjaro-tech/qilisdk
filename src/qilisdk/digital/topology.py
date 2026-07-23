@@ -15,6 +15,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, TypeGuard
 
+from loguru import logger
 from rustworkx import PyGraph
 
 if TYPE_CHECKING:
@@ -52,8 +53,10 @@ def build_topology_graph(topology: Topology) -> PyGraph[int, None]:
         PyGraph[int, None]: Coupling map in ``PyGraph`` form.
     """
     if _is_topology_graph(topology):
+        logger.debug("[Topology] Using provided PyGraph with {} nodes", len(topology.node_indices()))
         return topology
     if _is_topology_list(topology):
+        logger.debug("[Topology] Building topology graph from edge list with {} edges", len(topology))
         graph = PyGraph[int, None]()
 
         # Collect the physical qubit labels that actually appear in the coupling map.
@@ -74,5 +77,10 @@ def build_topology_graph(topology: Topology) -> PyGraph[int, None]:
         for missing_node in sorted(missing_nodes, reverse=True):
             graph.remove_node(missing_node)
 
+        logger.debug(
+            "[Topology] Built topology graph with {} nodes and {} edges",
+            graph.num_nodes(),
+            graph.num_edges(),
+        )
         return graph
     raise ValueError("topology has incorrect format.")
