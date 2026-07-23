@@ -1,16 +1,163 @@
-# Keeps GitHub Actions dependencies up to date, including the SHA-pinned
-# reference to the shared backport workflow (qilimanjaro-tech/workflows) and the
-# action versions used across the other workflows. Bumps are grouped into a
-# single weekly PR.
+# Dependabot configuration (schema version 2).
+#
+# Manages two ecosystems from the repo root ("/"):
+#   1. github-actions -> action pins in .github/workflows (incl. the SHA-pinned
+#                        shared backport workflow).
+#   2. uv             -> Python dependencies, read from pyproject.toml + uv.lock.
+#
+# Design goal: LOW NOISE (weekly, grouped, cooled-down) while respecting the
+# repo's intentional pins, its custom/private indexes, and its git-sourced dep.
+#
+# SCOPE: this file configures VERSION updates only. Dependabot SECURITY updates
+# are a separate, repo-level feature (Settings > Advanced Security) and are NOT
+# affected by the schedule, `cooldown`, or the update-types-scoped `ignore`
+# rules below -- per GitHub docs, `update-types` and `cooldown` apply to version
+# updates only, so security fixes still flow for every package listed here.
 version: 2
+
 updates:
+  # ---------------------------------------------------------------------------
+  # GitHub Actions -- keeps workflow action pins current, consolidated into a
+  # single weekly PR.
+  # ---------------------------------------------------------------------------
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
+      # Fixed, predictable local slot instead of a UTC-drifting default.
       interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Madrid"
+    # Let a release sit public for a week before proposing it (supply-chain bake
+    # time). GitHub applies a 3-day cooldown by default; 7 makes it explicit.
+    # Cooldown never delays security updates.
+    cooldown:
+      default-days: 7
     groups:
       github-actions:
         patterns: ["*"]
     commit-message:
       prefix: "ci"
+    labels:
+      - "dependencies"
+      - "github-actions"
     open-pull-requests-limit: 5
+
+  # ---------------------------------------------------------------------------
+  # Python dependencies via the first-class "uv" ecosystem (do NOT use "pip" --
+  # this repo is uv-locked, so Dependabot runs uv itself to relock).
+  #
+  # uv reads [[tool.uv.index]] and [tool.uv.sources] straight from
+  # pyproject.toml, so the public "numpy-mkl" index and the git source are
+  # picked up automatically -- no top-level `registries:` block is needed for
+  # them (a commented template for the FUTURE private pyx.dev indexes is at the
+  # bottom of this file).
+  #
+  # `versioning-strategy` is intentionally omitted (not supported for uv yet);
+  # Dependabot uses its default uv behavior: refresh uv.lock, adjusting the
+  # pyproject.toml pins as needed.
+  # ---------------------------------------------------------------------------
+  - package-ecosystem: "uv"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Madrid"
+    cooldown:
+      default-days: 7
+    # One consolidated weekly PR for minor+patch bumps. MAJOR bumps are left out
+    # of the group on purpose, so each arrives as its own PR to be reviewed and
+    # tested in isolation.
+    groups:
+      python-minor-and-patch:
+        patterns: ["*"]
+        update-types:
+          - "minor"
+          - "patch"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps-dev"
+    labels:
+      - "dependencies"
+      - "python"
+    # -------------------------------------------------------------------------
+    # ignore: suppress ROUTINE version bumps of pinned / index-sensitive deps.
+    #
+    # Every entry lists all three `version-update:semver-*` levels. Per GitHub
+    # docs, `update-types` scoping affects VERSION updates ONLY -- Dependabot
+    # SECURITY-update PRs are still raised for these packages. (A bare
+    # dependency-name with no `update-types` can also mute security updates, so
+    # that form is deliberately never used here.)
+    # -------------------------------------------------------------------------
+    ignore:
+      # Scientific stack pinned to the custom public "numpy-mkl" index via
+      # [tool.uv.sources]. That index can lag PyPI, so a routine bump may pick a
+      # PyPI-only version that uv then fails to relock (dependabot-core#14397).
+      # Let uv.lock + the custom index govern these; security still flows.
+      - dependency-name: "numpy"
+        update-types: ["version-update:semver-major", "version-update:semver-minor", "version-update:semver-patch"]
+      - dependency-name: "scipy"
+        update-types: ["version-update:semver-major", "version-update:semver-minor", "version-update:semver-patch"]
+      - dependency-name: "mkl-service"
+        update-types: ["version-update:semver-major", "version-update:semver-minor", "version-update:semver-patch"]
+      # Hard-pinned CUDA runtimes (== 0.14.2) -- must move in lockstep with the
+      # QiliSim C++ GPU shim, never by a bot. A security-update PR could still
+      # appear and should be assessed/closed manually.
+      - dependency-name: "cuda-quantum-cu12"
+        update-types: ["version-update:semver-major", "version-update:semver-minor", "version-update:semver-patch"]
+      - dependency-name: "cuda-quantum-cu13"
+        update-types: ["version-update:semver-major", "version-update:semver-minor", "version-update:semver-patch"]
+      # Whole NVIDIA CUDA-library family (both -cu12 and unsuffixed) -- the ABI
+      # must match the CUDA toolkit, so no auto-bumps.
+      - dependency-name: "nvidia-*"
+        update-types: ["version-update:semver-major", "version-update:semver-minor", "version-update:semver-patch"]
+      # Intentional exact "==" pins elsewhere in pyproject. Dependabot CAN edit
+      # exact pins, producing recurring "move the pin" PRs we don't want; bump
+      # these deliberately when needed.
+      - dependency-name: "httpx"               # speqtrum extra, == 0.28.1
+        update-types: ["version-update:semver-major", "version-update:semver-minor", "version-update:semver-patch"]
+      - dependency-name: "sphinx"              # docs group, == 8.2.3
+        update-types: ["version-update:semver-major", "version-update:semver-minor", "version-update:semver-patch"]
+      - dependency-name: "sphinxawesome-theme" # docs group, == 5.3.2
+        update-types: ["version-update:semver-major", "version-update:semver-minor", "version-update:semver-patch"]
+      # Git-sourced dep ([tool.uv.sources] -> sphinx-contrib/multiversion@main).
+      # Dependabot cannot version-bump a VCS source anyway; this documents intent
+      # and keeps it out of any grouped PR.
+      - dependency-name: "sphinx-multiversion"
+        update-types: ["version-update:semver-major", "version-update:semver-minor", "version-update:semver-patch"]
+
+# =============================================================================
+# FUTURE (do not enable yet): private pyx.dev indexes.
+#
+# The speqtrum/euroqcs indexes in pyproject.toml are `explicit = true` and are
+# NOT present in uv.lock, so default resolution never queries them and no
+# credentials are needed today. Enable this block ONLY once speqtrum/euroqcs
+# packages actually enter resolution (i.e. appear in uv.lock):
+#
+#   1. Uncomment the top-level `registries:` block below. Each `url` MUST match
+#      the [[tool.uv.index]] url in pyproject.toml VERBATIM -- Dependabot maps
+#      registry -> uv index by URL.
+#   2. Add PYX_USERNAME / PYX_PASSWORD under
+#      Settings > Secrets and variables > Dependabot (NOT Actions secrets).
+#      Use `token:` instead if pyx.dev issues bearer tokens.
+#   3. Reference them from the uv update entry above by adding:
+#          registries:
+#            - pyx-speqtrum
+#            - pyx-euroqcs
+#
+# registries:
+#   pyx-speqtrum:
+#     type: python-index
+#     url: "https://api.pyx.dev/simple/qilimanjaro/speqtrum"
+#     username: "${{secrets.PYX_USERNAME}}"
+#     password: "${{secrets.PYX_PASSWORD}}"
+#     replaces-base: false
+#   pyx-euroqcs:
+#     type: python-index
+#     url: "https://api.pyx.dev/simple/qilimanjaro/euroqcs"
+#     username: "${{secrets.PYX_USERNAME}}"
+#     password: "${{secrets.PYX_PASSWORD}}"
+#     replaces-base: false
+# =============================================================================
