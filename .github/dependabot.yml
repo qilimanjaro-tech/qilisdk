@@ -1,0 +1,16 @@
+# Keeps GitHub Actions dependencies up to date, including the SHA-pinned
+# reference to the shared backport workflow (qilimanjaro-tech/workflows) and the
+# action versions used across the other workflows. Bumps are grouped into a
+# single weekly PR.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      github-actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: "ci"
+    open-pull-requests-limit: 5
