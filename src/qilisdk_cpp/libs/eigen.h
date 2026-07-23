@@ -42,22 +42,17 @@ typedef Eigen::Matrix<Real, Eigen::Dynamic, 1> RealVector;
 typedef Eigen::Triplet<Complex> Triplet;
 typedef std::vector<Triplet> Triplets;
 
-// A NaN complex scalar, used to mark a diverged / numerically-invalid state so it can never be
-// mistaken for a valid one (see set_nan / mark_nan_if_diverged below).
+// A NaN complex scalar
 inline Complex nan_complex() {
     return Complex(std::numeric_limits<Real>::quiet_NaN(), std::numeric_limits<Real>::quiet_NaN());
 }
 
-// Overwrite a matrix with NaN to explicitly mark it as a diverged / invalid state. Callers use
-// this at the point they detect an unstable normalization (e.g. a trace whose magnitude has
-// overflowed to inf, which would otherwise silently collapse the matrix to all zeros).
+// Overwrite a matrix with NaN to explicitly mark it as diverged
 inline void set_nan(DenseMatrix& matrix) {
     matrix.setConstant(nan_complex());
 }
 
-// If a matrix has already become non-finite (NaN/Inf anywhere), replace it with an explicit NaN
-// state and return true; otherwise leave it untouched and return false. Lets a caller detect
-// divergence once, after a step, and react (warn, stop stepping) uniformly.
+// If the matrix has diverged to a non-finite state, overwrite it with NaN and return true
 inline bool mark_nan_if_diverged(DenseMatrix& matrix) {
     if (matrix.allFinite()) {
         return false;

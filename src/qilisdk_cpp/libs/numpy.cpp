@@ -180,8 +180,6 @@ SparseMatrix from_spmatrix(const py::object& matrix, double atol) {
     auto data_ptr = static_cast<std::complex<double>*>(data_buf.ptr);
     for (int i = 0; i < nnz; ++i) {
         Complex val(data_ptr[i]);
-        // Keep values above tolerance, but never silently drop non-finite (NaN/Inf) entries
-        // (see from_numpy): dropping them would hide a diverged state behind an all-zero matrix.
         if (std::abs(val) > atol || !std::isfinite(val.real()) || !std::isfinite(val.imag())) {
             entries.emplace_back(Triplet(row_ptr[i], col_ptr[i], val));
         }
@@ -209,8 +207,6 @@ py::object to_spmatrix(const SparseMatrix& matrix) {
     for (int r = 0; r < rows; ++r) {
         for (int c = 0; c < cols; ++c) {
             std::complex<double> val = matrix.coeff(r, c);
-            // Keep non-zero values, but never silently drop non-finite (NaN/Inf) entries (see
-            // from_numpy): dropping them would hide a diverged state behind an all-zero matrix.
             if (std::abs(val) > 0.0 || !std::isfinite(val.real()) || !std::isfinite(val.imag())) {
                 row_indices.push_back(r);
                 col_indices.push_back(c);

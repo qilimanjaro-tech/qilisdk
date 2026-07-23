@@ -397,8 +397,6 @@ QTensorCpp::QTensorCpp(const py::object& data) {
             }
             for (int j = 0; j < cols; ++j) {
                 Complex val = row[j].cast<Complex>();
-                // Keep values above tolerance, but never silently drop non-finite (NaN/Inf)
-                // entries, so an invalid state can't masquerade as a valid all-zero matrix.
                 if (std::abs(val) > default_atol || !std::isfinite(val.real()) || !std::isfinite(val.imag())) {
                     row_major.insert(i, j) = val;
                 }

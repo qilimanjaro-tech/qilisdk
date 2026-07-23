@@ -24,18 +24,12 @@
 namespace {
 
 // If the integrator has diverged to a non-finite state, replace it with an explicit NaN state
-// (via mark_nan_if_diverged in eigen.h) and warn once, then return true so the caller can stop
-// stepping. Returning a NaN state — rather than silently collapsing to an all-zero (trace-0)
-// matrix — makes the divergence visible downstream.
 bool state_diverged(DenseMatrix& rho_t, const std::string& method) {
     if (!mark_nan_if_diverged(rho_t)) {
         return false;
     }
     qilisdk::log_warning("[QiliSim, C++] Analog integrator '" + method +
-                         "' diverged: the state became non-finite, most likely because ||H||*dt exceeds the "
-                         "integrator's stability limit. Returning a NaN state. Reduce the schedule dt, use "
-                         "smaller Hamiltonian coefficients, or switch to a stable method such as "
-                         "AnalogMethod.arnoldi() or AnalogMethod.adaptive_integrator().");
+                         "' diverged: the state became non-finite, try with a smaller dt or a different integrator.");
     return true;
 }
 
