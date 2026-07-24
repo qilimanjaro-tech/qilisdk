@@ -13,6 +13,9 @@
 // limitations under the License.
 #pragma once
 
+#include <cmath>
+#include <limits>
+
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 #include <unsupported/Eigen/KroneckerProduct>
@@ -38,6 +41,25 @@ typedef Eigen::Matrix<Real, Eigen::Dynamic, Eigen::Dynamic> RealMatrix;
 typedef Eigen::Matrix<Real, Eigen::Dynamic, 1> RealVector;
 typedef Eigen::Triplet<Complex> Triplet;
 typedef std::vector<Triplet> Triplets;
+
+// A NaN complex scalar
+inline Complex nan_complex() {
+    return Complex(std::numeric_limits<Real>::quiet_NaN(), std::numeric_limits<Real>::quiet_NaN());
+}
+
+// Overwrite a matrix with NaN to explicitly mark it as diverged
+inline void set_nan(DenseMatrix& matrix) {
+    matrix.setConstant(nan_complex());
+}
+
+// If the matrix has diverged to a non-finite state, overwrite it with NaN and return true
+inline bool mark_nan_if_diverged(DenseMatrix& matrix) {
+    if (matrix.allFinite()) {
+        return false;
+    }
+    set_nan(matrix);
+    return true;
+}
 
 // Identity matrix constant
 const SparseMatrix I = []() {

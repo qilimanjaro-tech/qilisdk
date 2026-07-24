@@ -714,6 +714,79 @@ def test_reservoir_schedule_hamiltonians_of_differing_qubit_support(method):
     )
 
 
+def _dense_state(qtensor) -> np.ndarray:
+    data = qtensor.data
+    return np.asarray(data.todense() if hasattr(data, "todense") else data)
+
+
+@pytest.mark.parametrize("matrix_free", [False, True])
+def test_diverging_integrator_returns_nan_not_silent_zeros(matrix_free):
+    """Regression (SDK-359): a fixed-step RK4 integrator whose ``||H||*dt`` exceeds the
+    stability limit overflows to inf and, when normalizing by the (overflowed) trace, used to
+    silently collapse the state to an all-zero (trace-0) matrix — no warning, no error, so the
+    user got ``<Z> = 0`` and an invalid state that looked valid.
+
+    The integrator must now surface the divergence: it logs a warning (see ``state_diverged`` in
+    ``time_evolution.cpp``) and returns an explicit NaN state, which — unlike the old all-zero
+    state — is visibly invalid downstream. Here we assert on that NaN state, the deterministic
+    signal; the accompanying log warning is not asserted because capturing C++-emitted loguru
+    records in-process is unreliable.
+    """
+    # Large coefficients + dt=0.01 put ||H||*dt well above the RK4 stability threshold.
+    hamiltonian = 500 * pauli_x(0) + 500 * pauli_z(0)
+    schedule = Schedule.constant(hamiltonian, total_time=10, dt=0.01)
+    noise_model = NoiseModel()
+    noise_model.add(AmplitudeDamping(t1=50), qubits=[0])
+
+    backend = QiliSim(
+        execution_config=ExecutionConfig(num_threads=1),
+        noise_model=noise_model,
+        analog_simulation_method=AnalogMethod.integrator(matrix_free=matrix_free),
+    )
+    result = backend.execute(
+        AnalogEvolution(schedule=schedule, initial_state=ket(0)),
+        Readout().with_state_tomography().with_expectation(observables=[pauli_z(0)]),
+    )
+
+    # The state must be an explicit NaN state, not a silent all-zero matrix.
+    state = _dense_state(result.get_state())
+    assert np.any(np.isnan(state))
+
+
+def test_adaptive_integrator_supported_in_reservoir():
+    """Regression (SDK-359): ``AnalogMethod.adaptive_integrator()`` (RK45) worked for plain
+    analog evolution but the reservoir C++ dispatch omitted ``integrate_rk45_matrix_free``,
+    raising ``ValueError: Unknown time evolution method``. It must now run on the reservoir
+    path and, being adaptive, produce a stable (finite, trace-1) result.
+    """
+    nqubits = 2
+
+    def _build() -> QuantumReservoir:
+        pre = Circuit(nqubits)
+        pre.add(RY(1, theta=ReservoirInput("theta", 0.0)))
+        layer = ReservoirLayer(
+            evolution_dynamics=Schedule.constant(
+                50 * pauli_x(0) + 50 * pauli_z(0) + 50 * pauli_z(0) * pauli_z(1),
+                total_time=10,
+                dt=0.01,
+            ),
+            input_encoding=pre,
+        )
+        return QuantumReservoir(
+            initial_state=QTensor.zero(nqubits).unit(),
+            reservoir_layer=layer,
+            input_per_layer=[{"RY(1)_theta_0": 0.5}, {"RY(1)_theta_0": 0.5}],
+        )
+
+    readout = Readout().with_state_tomography().with_expectation(observables=[pauli_z(0), pauli_z(1)])
+    # Must not raise "Unknown time evolution method".
+    result = QiliSim(analog_simulation_method=AnalogMethod.adaptive_integrator(tol=1e-4)).execute(_build(), readout)
+
+    state = _dense_state(result.get_state())
+    assert np.all(np.isfinite(state))
+    assert abs(np.trace(state) - 1.0) < 1e-6
+
+
 # ──────────────────────────────────────────────────────────────────────────────
 # Stabilizer backend integration tests
 # ──────────────────────────────────────────────────────────────────────────────
