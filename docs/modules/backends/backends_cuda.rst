@@ -9,9 +9,25 @@ also run on an accelerated machine.
 Installation
 ============
 
-.. code-block:: console
+.. tabs::
 
-    pip install qilisdk[cuda12]   # or [cuda13]
+    .. group-tab:: Linux
+
+        .. code-block:: console
+
+            pip install qilisdk[cuda12]   # or [cuda13]
+
+    .. group-tab:: Mac OSX
+
+        .. code-block:: console
+
+            pip install "qilisdk[cuda12]"   # or "qilisdk[cuda13]"
+
+    .. group-tab:: Windows
+
+        .. code-block:: console
+
+            pip install qilisdk[cuda12]   # or [cuda13]
 
 Quick start
 ===========

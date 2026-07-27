@@ -185,7 +185,7 @@ To help demonstrate the limits of classical solvers, a variety of wrappers to di
 
 - :class:`~qilisdk.utils.classical_solvers.brute_force_solver.BruteForceSolver` - A brute-force solver that evaluates all possible solutions.
 - :class:`~qilisdk.utils.classical_solvers.scipy_solver.ScipySolver` - A solver that uses one of SciPy's `optimize` routines to find a solution.
-- :class:`~qilisdk.utils.classical_solvers.scip_solver.ScipSolver` - A wrapper to SCIP, a mixed-integer programming solver. This requires the SCIP extra (i.e. `pip install qilisdk[scip]`).
+- :class:`~qilisdk.utils.classical_solvers.scip_solver.ScipSolver` - A wrapper to SCIP, a mixed-integer programming solver. This requires the SCIP extra (i.e. ``pip install "qilisdk[scip]"``).
 
 These can be used as follows:
 
