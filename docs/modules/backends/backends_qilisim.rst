@@ -214,15 +214,12 @@ Execution and Monte Carlo
 :class:`~qilisdk.backends.backend_config.ExecutionConfig` controls threading, randomness, and
 optional Monte Carlo trajectory sampling for open-system simulations.
 
-- ``num_threads=0`` (default) lets the simulator use every physical core.
-- ``seed=None`` (default) draws a fresh random seed at construction time; pass an integer for
-  reproducibility.
-- ``monte_carlo=MonteCarloConfig(trajectories=N)`` enables stochastic trajectory sampling for
-  noise models that admit a Monte Carlo unraveling; leave it ``None`` for deterministic master-equation
-  evolution.
-- ``measurement_collapse`` controls whether measurements collapse the statevector in place
-  (relevant for mid-circuit measurement and reservoir computing); defaults to ``False``.
-- ``gpu=True`` enables GPU acceleration if a CUDA-capable device is available; defaults to ``False``. 
+- ``num_threads`` controls the number of threads used for parallelization, defaults to using all available cores.
+- ``seed`` controls the random number generator seed, defaults to a random seed.
+- ``monte_carlo=MonteCarloConfig(trajectories=N)`` enabled Monte Carlo sampling with ``N`` trajectories, if omitted, Monte Carlo is disabled.
+- ``measurement_collapse`` controls whether measurements collapse the statevector in place (relevant for mid-circuit measurement and reservoirs) - defaults to ``False``.
+- ``normalize_state`` controls whether the state should be renormalized - defaults to ``True``.
+- ``gpu`` controls whether to use GPU acceleration if available - defaults to ``False``.
 
 .. code-block:: python
 
@@ -233,7 +230,8 @@ optional Monte Carlo trajectory sampling for open-system simulations.
             num_threads=8,
             seed=42,
             monte_carlo=MonteCarloConfig(trajectories=500),
-            measurement_collapse=False,
+            measurement_collapse=True,
+            normalize_state=False,
             gpu=True,
         ),
     )
