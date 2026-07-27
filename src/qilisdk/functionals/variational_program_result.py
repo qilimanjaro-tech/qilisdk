@@ -13,6 +13,8 @@
 # limitations under the License.
 from pprint import pformat
 
+from loguru import logger
+
 from qilisdk.core.result import Result
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.optimizers.optimizer_result import OptimizerIntermediateResult, OptimizerResult
@@ -32,6 +34,7 @@ class VariationalProgramResult(Result):
         super().__init__()
         self._optimizer_result = optimizer_result
         self._result = result
+        logger.debug("[VariationalProgramResult] Created VariationalProgramResult")
 
     @property
     def optimal_cost(self) -> float:

@@ -41,6 +41,7 @@ from qilisdk.experiments.experiment_functional import (
 )
 from qilisdk.functionals.analog_evolution import AnalogEvolution
 from qilisdk.functionals.digital_propagation import DigitalPropagation
+from qilisdk.functionals.quantum_reservoirs import QuantumReservoir
 from qilisdk.functionals.variational_program import VariationalProgram
 from qilisdk.readout import Readout
 
@@ -136,6 +137,10 @@ class FakeAnalogEvolution(AnalogEvolution):
     def __init__(self): ...
 
 
+class FakeQuantumReservoir(QuantumReservoir):
+    def __init__(self): ...
+
+
 class FakeRabiExperiment(RabiExperiment):
     def __init__(self): ...
 
@@ -215,6 +220,20 @@ def test_submit_dispatches_to_analog_evolution_handler(monkeypatch):
     q = speqtrum.SpeQtrum()
     handle = q.submit(FakeAnalogEvolution(), device="some_device", job_name="te_job", readout=Readout())
     assert handle.id == 77
+
+
+def test_submit_dispatches_to_quantum_reservoir_handler(monkeypatch):
+    monkeypatch.setattr(speqtrum, "QuantumReservoir", FakeQuantumReservoir)
+    monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
+    monkeypatch.setattr(
+        speqtrum.SpeQtrum,
+        "_create_client",
+        lambda self: DummyClient(post_payload={"id": 76}),
+        raising=True,
+    )
+    q = speqtrum.SpeQtrum()
+    handle = q.submit(FakeQuantumReservoir(), device="some_device", job_name="qr_job", readout=Readout())
+    assert handle.id == 76
 
 
 def test_submit_dispatches_to_rabi_handler(monkeypatch):

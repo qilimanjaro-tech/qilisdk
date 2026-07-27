@@ -28,7 +28,7 @@ py::object construct_result_object(const DenseMatrix& state_dense, const py::obj
 py::object construct_result_object(const ExponentialAnsatz& state, const py::object& readout, int n_qubits);
 py::object construct_result_object(const StabilizerStateSum& state, const py::object& readout, NoiseModelCpp& noise_model_cpp, int n_qubits, const QiliSimConfig& config, const std::vector<bool>& qubits_to_measure);
 QILISIM_EXPORT std::vector<MatrixFreeHamiltonian> parse_hamiltonians_matrix_free(int nqubits, const py::object& Hs);
-std::vector<SparseMatrix> parse_hamiltonians(const py::object& Hs, double atol);
+std::vector<SparseMatrix> parse_hamiltonians(const py::object& Hs, double atol, int nqubits);
 NoiseModelCpp parse_noise_model(const py::object& noise_model, int nqubits, double atol, const py::object& circuit = py::none(), const std::vector<double>* step_list = nullptr);
 std::vector<SparseMatrix> parse_observables(const py::object& observables, long nqubits, double atol);
 std::vector<MatrixFreeHamiltonian> parse_observables_matrix_free(int nqubits, const py::object& observables);

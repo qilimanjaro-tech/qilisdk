@@ -143,7 +143,7 @@ SampleSet ExponentialAnsatz::draw_samples(int N_s, int n_warmup) const {
 
     Args:
         N_s (int): The number of samples to draw.
-        n_warmup (int): Warmup sweeps at chain start, and thinning sweeps between samples.
+        n_warmup (int): Warmup sweeps at chain start.
 
     Returns:
         SampleSet: A struct containing the drawn samples and their corresponding log-derivatives.
@@ -201,8 +201,9 @@ SampleSet ExponentialAnsatz::draw_samples(int N_s, int n_warmup) const {
         // Start from a random bitstring.
         Bitset x;
         for (int i = 0; i < num_qubits; ++i) {
-            if (rand01(rng) < 0.5)
+            if (rand01(rng) < 0.5) {
                 x.set(i);
+            }
         }
 
         // Per-term parity and weighted contribution: contrib[k] = 2*coeff_k * (-1)^parity_k

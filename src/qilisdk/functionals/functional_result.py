@@ -15,6 +15,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Generic, overload
 
+from loguru import logger
+
 from qilisdk.core.result import Result
 from qilisdk.readout.readout_result import (
     E,
@@ -78,6 +80,10 @@ class FunctionalResult(Result, Generic[S, E, T]):
         """
         self._readout_results = readout_results
         self._intermediate_results = intermediate_results or []
+        logger.debug(
+            "[FunctionalResult] Created FunctionalResult with {} intermediate results",
+            len(self._intermediate_results),
+        )
 
     # -- forwarding properties (typed safe path) --------------------------
     # These return the generic type parameters S, E, T directly, so the
@@ -142,6 +148,7 @@ class FunctionalResult(Result, Generic[S, E, T]):
         Raises:
             ValueError: If sampling readout was not provided.
         """
+        logger.trace("[FunctionalResult] Retrieving final samples")
         if has_sampling(self._readout_results):
             return self._readout_results.sampling.samples
         raise ValueError("Sampling readout was not provided.")
@@ -161,6 +168,7 @@ class FunctionalResult(Result, Generic[S, E, T]):
         Raises:
             ValueError: If neither sampling nor state-tomography readout was provided.
         """
+        logger.trace("[FunctionalResult] Retrieving final probabilities")
         if has_sampling(self._readout_results):
             return self._readout_results.sampling.probabilities
         if has_state_tomography(self._readout_results):
@@ -180,6 +188,7 @@ class FunctionalResult(Result, Generic[S, E, T]):
         Raises:
             ValueError: If state-tomography readout was not provided.
         """
+        logger.trace("[FunctionalResult] Retrieving final state")
         if has_state_tomography(self._readout_results):
             return self._readout_results.state_tomography.state
         raise ValueError("Can't obtain the final state if State Tomography readout is not specified.")
@@ -197,6 +206,7 @@ class FunctionalResult(Result, Generic[S, E, T]):
         Raises:
             ValueError: If expectation readout was not provided.
         """
+        logger.trace("[FunctionalResult] Retrieving final expectation values")
         if has_expectation_values(self._readout_results):
             return self._readout_results.expectation_values.expectation_values
         raise ValueError("Can't compute expectation values because Expectation readout was not specified.")
@@ -217,6 +227,7 @@ class FunctionalResult(Result, Generic[S, E, T]):
         Returns:
             list[dict[str, int]]: List of mappings of measured bitstring to count, one per intermediate step.
         """
+        logger.trace("[FunctionalResult] Retrieving intermediate samples for {} steps", len(self._intermediate_results))
         if self._intermediate_results:
             results = []
             for res in self._intermediate_results:
@@ -241,6 +252,9 @@ class FunctionalResult(Result, Generic[S, E, T]):
         Returns:
             list[dict[str, float]]: List of mappings of bitstring to probability, one per intermediate step.
         """
+        logger.trace(
+            "[FunctionalResult] Retrieving intermediate probabilities for {} steps", len(self._intermediate_results)
+        )
         if self._intermediate_results:
             results = []
             for res in self._intermediate_results:
@@ -265,6 +279,7 @@ class FunctionalResult(Result, Generic[S, E, T]):
         Returns:
             list[QTensor]: List of quantum states, one per intermediate step.
         """
+        logger.trace("[FunctionalResult] Retrieving intermediate states for {} steps", len(self._intermediate_results))
         if self._intermediate_results:
             results = []
             for res in self._intermediate_results:
@@ -289,6 +304,10 @@ class FunctionalResult(Result, Generic[S, E, T]):
         Returns:
             list[list[float]]: List of expectation values, one per intermediate step.
         """
+        logger.trace(
+            "[FunctionalResult] Retrieving intermediate expectation values for {} steps",
+            len(self._intermediate_results),
+        )
         if self._intermediate_results:
             results = []
             for res in self._intermediate_results:

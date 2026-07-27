@@ -116,7 +116,7 @@ def test_t1_plotting(monkeypatch):
     monkeypatch.setattr(logger, "warning", fakeWarning)
     t1_result.plot(save_to="./.tmp/test_t1_phase_fit.png", fit=True, plot_type="phase")
     fakeWarning.assert_called_with(
-        "Fitting is only implemented for amplitude plots. Ignoring fit request for non-amplitude plot."
+        "[ExperimentResult] Fitting is only implemented for amplitude plots. Ignoring fit request for non-amplitude plot."
     )
 
 
@@ -147,7 +147,7 @@ def test_rabi_plotting(monkeypatch):
     monkeypatch.setattr(logger, "warning", fakeWarning)
     result_rabi.plot(save_to="./.tmp/test_rabi_phase_fit.png", fit=True, plot_type="phase")
     fakeWarning.assert_called_with(
-        "Fitting is only implemented for amplitude plots. Ignoring fit request for non-amplitude plot."
+        "[ExperimentResult] Fitting is only implemented for amplitude plots. Ignoring fit request for non-amplitude plot."
     )
 
 
@@ -180,7 +180,7 @@ def test_two_tones_at_flux_bias_plotting(monkeypatch):
     monkeypatch.setattr(logger, "warning", fakeWarning)
     result_at.plot(save_to="./.tmp/test_two_tones_at_phase_fit.png", fit=True, plot_type="phase")
     fakeWarning.assert_called_with(
-        "Fitting is only implemented for amplitude plots. Ignoring fit request for non-amplitude plot."
+        "[ExperimentResult] Fitting is only implemented for amplitude plots. Ignoring fit request for non-amplitude plot."
     )
 
 
@@ -218,7 +218,7 @@ def test_two_tones_vs_flux_bias_plotting(monkeypatch):
     monkeypatch.setattr(logger, "warning", fakeWarning)
     result_vs.plot(save_to="./.tmp/test_two_tones_vs_phase_fit.png", fit=True, plot_type="phase")
     fakeWarning.assert_called_with(
-        "Fitting is only implemented for amplitude plots. Ignoring fit request for non-amplitude plot."
+        "[ExperimentResult] Fitting is only implemented for amplitude plots. Ignoring fit request for non-amplitude plot."
     )
 
 
@@ -249,7 +249,7 @@ def test_t2_plotting(monkeypatch):
     monkeypatch.setattr(logger, "warning", fakeWarning)
     result_t2.plot(save_to="./.tmp/test_t2_phase_fit.png", fit=True, plot_type="phase")
     fakeWarning.assert_called_with(
-        "Fitting is only implemented for amplitude plots. Ignoring fit request for non-amplitude plot."
+        "[ExperimentResult] Fitting is only implemented for amplitude plots. Ignoring fit request for non-amplitude plot."
     )
 
 
@@ -286,7 +286,7 @@ def test_two_tones_frequency_vs_flux_qdac_ramp_cw_plotting(monkeypatch):
     monkeypatch.setattr(logger, "warning", fakeWarning)
     result.plot(save_to="./.tmp/test_two_tones_qdac_cw_phase_fit.png", fit=True, plot_type="phase")
     fakeWarning.assert_called_with(
-        "Fitting is only implemented for amplitude plots. Ignoring fit request for non-amplitude plot."
+        "[ExperimentResult] Fitting is only implemented for amplitude plots. Ignoring fit request for non-amplitude plot."
     )
 
 
@@ -318,7 +318,7 @@ def test_two_tones_pulsed_soft_plotting(monkeypatch):
     monkeypatch.setattr(logger, "warning", fakeWarning)
     result.plot(save_to="./.tmp/test_two_tones_pulsed_soft_phase_fit.png", fit=True, plot_type="phase")
     fakeWarning.assert_called_with(
-        "Fitting is only implemented for amplitude plots. Ignoring fit request for non-amplitude plot."
+        "[ExperimentResult] Fitting is only implemented for amplitude plots. Ignoring fit request for non-amplitude plot."
     )
 
 
@@ -346,7 +346,7 @@ def test_t1_soft_saturation_hwl_plotting(monkeypatch):
     monkeypatch.setattr(logger, "warning", fakeWarning)
     result.plot(save_to="./.tmp/test_t1_soft_hwl_phase_fit.png", fit=True, plot_type="phase")
     fakeWarning.assert_called_with(
-        "Fitting is only implemented for amplitude plots. Ignoring fit request for non-amplitude plot."
+        "[ExperimentResult] Fitting is only implemented for amplitude plots. Ignoring fit request for non-amplitude plot."
     )
 
 

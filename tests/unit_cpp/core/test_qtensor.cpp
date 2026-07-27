@@ -1521,6 +1521,58 @@ TEST(EntropyTest, Renyi_Alpha2_Succeeds) {
     EXPECT_NO_THROW(q.entropy_renyi(2.0));
 }
 
+static SparseMatrix make_t_plus() {
+    constexpr double pi = 3.14159265358979323846;
+    SparseMatrix m(2, 1);
+    m.insert(0, 0) = Complex(1.0 / std::sqrt(2.0), 0.0);
+    m.insert(1, 0) = std::exp(Complex(0.0, pi / 4.0)) / std::sqrt(2.0);
+    m.makeCompressed();
+    return m;
+}
+
+TEST(MagicTest, Ket0_IsStabilizer_Zero) {
+    QTensorCpp q(make_ket0());
+    EXPECT_NEAR(q.magic(2.0), 0.0, 1e-10);
+}
+
+TEST(MagicTest, GHZ_IsStabilizer_Zero) {
+    QTensorCpp q = QTensorCpp::ghz(3);
+    EXPECT_NEAR(q.magic(2.0), 0.0, 1e-10);
+}
+
+TEST(MagicTest, TPlus_Alpha2_IsLog2FourThirds) {
+    QTensorCpp q(make_t_plus());
+    EXPECT_NEAR(q.magic(2.0), std::log2(4.0 / 3.0), 1e-10);
+}
+
+TEST(MagicTest, TPlus_Alpha1_ShannonLimit) {
+    QTensorCpp q(make_t_plus());
+    EXPECT_NEAR(q.magic(1.0), 0.5, 1e-10);
+}
+
+TEST(MagicTest, Bra_MatchesKet) {
+    QTensorCpp ket(make_t_plus());
+    QTensorCpp bra = ket.adjoint();
+    EXPECT_NEAR(bra.magic(2.0), ket.magic(2.0), 1e-10);
+}
+
+TEST(MagicTest, Operator_Throws) {
+    QTensorCpp q(make_identity2());
+    EXPECT_THROW(q.magic(2.0), py::value_error);
+}
+
+TEST(MagicTest, AlphaZero_Throws) {
+    QTensorCpp q(make_t_plus());
+    EXPECT_THROW(q.magic(0.0), py::value_error);
+}
+
+TEST(MagicTest, ZeroState_Throws) {
+    SparseMatrix m(2, 1);
+    m.makeCompressed();
+    QTensorCpp q(m);
+    EXPECT_THROW(q.magic(2.0), py::value_error);
+}
+
 TEST(RankTest, Ket_Rank1) {
     QTensorCpp q(make_ket0());
     EXPECT_EQ(q.rank(), 1);

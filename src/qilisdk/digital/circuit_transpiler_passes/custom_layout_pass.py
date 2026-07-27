@@ -17,6 +17,8 @@ from __future__ import annotations
 from collections import deque
 from typing import TYPE_CHECKING
 
+from loguru import logger
+
 from qilisdk.digital import CNOT, CZ, RX, RY, RZ, SWAP, U3, Circuit, Gate, M
 from qilisdk.digital.topology import build_topology_graph
 
@@ -96,6 +98,11 @@ class CustomLayoutPass(CircuitTranspilerPass):
             RuntimeError: If routing swaps fail to make a two-qubit gate adjacent.
         """
         num_logical_qubits = circuit.nqubits
+        logger.debug(
+            "[CustomLayoutPass] Running on circuit with {} logical qubits and {} gates",
+            num_logical_qubits,
+            len(circuit.gates),
+        )
 
         physical_nodes = [int(node_index) for node_index in self.topology.node_indices()]
         if not physical_nodes:
@@ -141,6 +148,7 @@ class CustomLayoutPass(CircuitTranspilerPass):
         # Build the layout list[int] where layout[logical] = physical and keep a copy for diagnostics
         logical_to_physical_layout = [self._user_layout[logical_qubit] for logical_qubit in range(num_logical_qubits)]
         initial_layout = logical_to_physical_layout.copy()
+        logger.debug("[CustomLayoutPass] Applying user layout {}", logical_to_physical_layout)
 
         # Track which logical qubit currently occupies each physical node
         inverse_layout: list[int | None] = [None] * num_physical_qubits
@@ -190,6 +198,11 @@ class CustomLayoutPass(CircuitTranspilerPass):
                     f"{logical_to_physical_layout[logical_qubit_b]}."
                 )
 
+            logger.trace(
+                "[CustomLayoutPass] Routing 2Q gate {} along path {}",
+                type(gate).__name__,
+                routing_path,
+            )
             applied_swap_edges: list[tuple[int, int]] = []
             # Move the second qubit along the path until it neighbors the first one.
             for path_position in range(len(routing_path) - 1, 1, -1):
@@ -227,6 +240,11 @@ class CustomLayoutPass(CircuitTranspilerPass):
             self.context.initial_layout = initial_layout
             self.context.final_layout = self._user_layout
 
+        logger.debug(
+            "[CustomLayoutPass] Produced circuit with {} qubits and {} gates",
+            num_physical_qubits,
+            len(output_circuit.gates),
+        )
         self.append_circuit_to_context(output_circuit)
 
         return output_circuit

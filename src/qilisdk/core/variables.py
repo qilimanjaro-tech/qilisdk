@@ -1051,8 +1051,9 @@ class Variable(BaseVariable):
         if self._term is None:
             if self.bounds[1] > LARGE_BOUND or self.bounds[0] < -LARGE_BOUND:
                 logger.warning(
-                    f"Encoding variable {self.label} which has the bounds {self.bounds}"
-                    + "is very expensive and may take a very long time."
+                    "[Variables] Encoding variable {} which has the bounds {} is very expensive and may take a very long time.",
+                    self.label,
+                    self.bounds,
                 )
             self._term = self.to_binary()
         return self._term
@@ -1884,7 +1885,7 @@ class ComparisonTerm:
             list: a list constructed from all the elements in the left and right hand sides of the comparison term.
         """
         logger.info(
-            "to_list(): The elements of output list assume the comparison term has been transformed "
+            "[Variables] to_list(): The elements of output list assume the comparison term has been transformed "
             + f"from (lhs {self.operation.value} rhs) to (lhs - rhs {self.operation.value} 0).",
         )
         out = self.lhs.to_list()

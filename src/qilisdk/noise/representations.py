@@ -17,6 +17,7 @@ from numbers import Real
 from typing import TYPE_CHECKING, Callable, Self, Union, cast
 
 import numpy as np
+from loguru import logger
 
 from .noise import Noise
 from .protocols import AttachmentScope
@@ -36,6 +37,7 @@ class KrausChannel(Noise):
         """Args:
         operators (list[QTensor]): Kraus operators defining the channel."""
         self._operators: list[QTensor] = operators
+        logger.debug("[NoiseRepresentations] Built Kraus channel with {} operators", len(operators))
 
     @property
     def operators(self) -> list[QTensor]:
@@ -105,6 +107,12 @@ class LindbladGenerator(Noise):
         self._jump_operators = jump_operators
         self._rates = rates
         self._hamiltonian = hamiltonian
+        logger.debug(
+            "[NoiseRepresentations] Built Lindblad generator with {} jump operators, rates set {}, hamiltonian set {}",
+            len(jump_operators),
+            rates is not None,
+            hamiltonian is not None,
+        )
 
     @property
     def is_time_dependent(self) -> bool:
@@ -147,6 +155,7 @@ class LindbladGenerator(Noise):
         if self.is_time_dependent:
             raise ValueError("Cannot statically scale jump operators by time-dependent (callable) rates. ")
         # All rates are constant here (time-dependent rates are rejected above).
+        logger.debug("[NoiseRepresentations] Scaling {} jump operators by their rates", len(self._jump_operators))
         return [
             self._jump_operators[i] * np.sqrt(cast("float", self._rates[i])) for i in range(len(self._jump_operators))
         ]

@@ -20,6 +20,7 @@ from collections import defaultdict, deque
 
 import numpy as np
 from dill import dumps, loads
+from loguru import logger
 from pydantic import BaseModel
 from ruamel.yaml import YAML
 from scipy import sparse
@@ -29,6 +30,7 @@ def csr_representer(representer, data: sparse.csr_matrix):
     """
     Representer for CSR matrix.
     """
+    logger.trace("[Yaml] Serializing csr_matrix")
     value = {
         "data": data.data.tolist(),
         "indices": data.indices.tolist(),
@@ -42,6 +44,7 @@ def csr_constructor(constructor, node):
     """
     Constructor for CSR matrix.
     """
+    logger.trace("[Yaml] Deserializing csr_matrix")
     mapping = constructor.construct_mapping(node, deep=True)
     return sparse.csr_matrix(
         (mapping["data"], mapping["indices"], mapping["indptr"]),
@@ -53,6 +56,7 @@ def ndarray_representer(representer, data):
     """
     Representer for ndarray.
     """
+    logger.trace("[Yaml] Serializing ndarray")
     value = {"dtype": str(data.dtype), "shape": data.shape, "data": data.ravel().tolist()}
     return representer.represent_mapping("!ndarray", value)
 
@@ -61,6 +65,7 @@ def ndarray_constructor(constructor, node):
     """
     Constructor for ndarray.
     """
+    logger.trace("[Yaml] Deserializing ndarray")
     mapping = constructor.construct_mapping(node, deep=True)
     dtype = np.dtype(mapping["dtype"])
     shape = tuple(mapping["shape"])
@@ -72,6 +77,7 @@ def np_scalar_representer(representer, data: np.generic):
     """
     Represent any NumPy scalar (e.g. np.int64, np.float32).
     """
+    logger.trace("[Yaml] Serializing numpy scalar")
     return representer.represent_mapping(
         "!np_scalar",
         {"dtype": str(data.dtype), "value": data.item()},
@@ -82,6 +88,7 @@ def np_scalar_constructor(constructor, node):
     """
     Reconstruct a NumPy scalar.
     """
+    logger.trace("[Yaml] Deserializing numpy scalar")
     mapping = constructor.construct_mapping(node, deep=True)
     dtype = np.dtype(mapping["dtype"])
     return dtype.type(mapping["value"])
@@ -92,6 +99,7 @@ def defaultdict_representer(representer, data: defaultdict):
     Represent a defaultdict by serializing its default_factory
     (as module+qualname) plus its items dict.
     """
+    logger.trace("[Yaml] Serializing defaultdict")
     factory = data.default_factory
     factory_name = (
         f"{factory.__module__}.{factory.__qualname__}"
@@ -108,6 +116,7 @@ def defaultdict_constructor(constructor, node):
     """
     Reconstruct a defaultdict, restoring its factory and contents.
     """
+    logger.trace("[Yaml] Deserializing defaultdict")
     mapping = constructor.construct_mapping(node, deep=True)
     fname = mapping["default_factory"]
     if fname is None:
@@ -125,6 +134,7 @@ def function_representer(representer, data):
     """
     Represent a non-lambda function by serializing it.
     """
+    logger.trace("[Yaml] Serializing function")
     serialized_function = base64.b64encode(dumps(data, recurse=True)).decode("utf-8")
     return representer.represent_scalar("!function", serialized_function)
 
@@ -133,6 +143,7 @@ def function_constructor(constructor, node):
     """
     Reconstruct a function from the serialized data.
     """
+    logger.trace("[Yaml] Deserializing function")
     serialized_function = base64.b64decode(node.value)
     return loads(serialized_function)  # noqa: S301
 
@@ -141,6 +152,7 @@ def lambda_representer(representer, data):
     """
     Represent a lambda function by serializing its code.
     """
+    logger.trace("[Yaml] Serializing lambda")
     serialized_lambda = base64.b64encode(dumps(data, recurse=True)).decode("utf-8")
     return representer.represent_scalar("!lambda", serialized_lambda)
 
@@ -149,6 +161,7 @@ def lambda_constructor(constructor, node):
     """
     Reconstruct a lambda function from the serialized data.
     """
+    logger.trace("[Yaml] Deserializing lambda")
     # Decode the base64-encoded string and load the lambda function
     serialized_lambda = base64.b64decode(node.value)
     return loads(serialized_lambda)  # noqa: S301
@@ -158,6 +171,7 @@ def pydantic_model_representer(representer, data):
     """
     Representer for Pydantic Models.
     """
+    logger.trace("[Yaml] Serializing pydantic model {}", data.__class__.__name__)
     value = {"type": f"{data.__class__.__module__}.{data.__class__.__name__}", "data": data.model_dump()}
     return representer.represent_mapping("!PydanticModel", value)
 
@@ -166,6 +180,7 @@ def pydantic_model_constructor(constructor, node):
     """
     Constructor for Pydantic Models.
     """
+    logger.trace("[Yaml] Deserializing pydantic model")
     mapping = constructor.construct_mapping(node, deep=True)
     model_type_str = mapping["type"]
     data = mapping["data"]
@@ -179,6 +194,7 @@ def complex_representer(representer, data: complex):
     """
     Representer for built-in Python complex numbers.
     """
+    logger.trace("[Yaml] Serializing complex")
     value = {"real": data.real, "imag": data.imag}
     return representer.represent_mapping("!complex", value)
 
@@ -187,6 +203,7 @@ def complex_constructor(constructor, node):
     """
     Constructor for built-in Python complex numbers.
     """
+    logger.trace("[Yaml] Deserializing complex")
     mapping = constructor.construct_mapping(node, deep=True)
     return complex(mapping["real"], mapping["imag"])
 
@@ -195,6 +212,7 @@ def tuple_representer(representer, data: tuple):
     """
     Representer for built-in Python tuple.
     """
+    logger.trace("[Yaml] Serializing tuple")
     # Emit a tuple as a YAML sequence with tag !tuple
     return representer.represent_sequence("!tuple", list(data))
 
@@ -203,6 +221,7 @@ def tuple_constructor(constructor, node):
     """
     Constructor for built-in Python tuple.
     """
+    logger.trace("[Yaml] Deserializing tuple")
     seq = constructor.construct_sequence(node, deep=True)
     return tuple(seq)
 
@@ -212,6 +231,7 @@ def type_representer(representer, data: type):
     Represent any Python class/type by its import path.
     E.g. datetime.datetime → 'datetime.datetime'
     """
+    logger.trace("[Yaml] Serializing type {}", data.__qualname__)
     path = f"{data.__module__}.{data.__qualname__}"
     # emit as a simple scalar under !type
     return representer.represent_scalar("!type", path)
@@ -221,6 +241,7 @@ def type_constructor(constructor, node):
     """
     Reconstruct a class/type from its import path.
     """
+    logger.trace("[Yaml] Deserializing type")
     path = node.value  # e.g. "datetime.datetime"
     module_name, qualname = path.rsplit(".", 1)
     mod = __import__(module_name, fromlist=[qualname])
@@ -231,6 +252,7 @@ def deque_representer(representer, data):
     """
     Representer for deque
     """
+    logger.trace("[Yaml] Serializing deque")
     return representer.represent_sequence("!deque", list(data))
 
 
@@ -238,6 +260,7 @@ def deque_constructor(constructor, node):
     """
     Constructor for ndarray
     """
+    logger.trace("[Yaml] Deserializing deque")
     return deque(constructor.construct_sequence(node))
 
 
@@ -251,6 +274,7 @@ class QiliYAML(YAML):
         """
         Initialize the YAML handler with custom settings.
         """
+        logger.debug("[Yaml] Initializing QiliYAML handler")
         super().__init__(**kwargs)
 
     def register_class(self, cls=None, *, shared: bool = False):
@@ -263,6 +287,7 @@ class QiliYAML(YAML):
                 return self.register_class(target_cls, shared=shared)
 
             return decorator
+        logger.trace("[Yaml] Registering class {}", cls.__name__)
         if not cls.__dict__.get("yaml_tag", None):
             cls.yaml_tag = f"!{cls.__module__.split('.')[0]}.{cls.__name__}" if shared else f"!{cls.__name__}"
         return super().register_class(cls)

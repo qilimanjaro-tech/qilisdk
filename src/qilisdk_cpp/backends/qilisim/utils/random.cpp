@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <chrono>
 #include <random>
+#include <unordered_map>
 #include "../../../libs/pybind.h"
 #include "matrix_utils.h"
 #if defined(_OPENMP)
@@ -66,12 +67,13 @@ std::map<std::string, int> sample_from_probabilities(const std::vector<std::tupl
     return counts;
 }
 
-std::map<std::string, int> sample_from_probabilities(const std::vector<double>& probabilities, int n_qubits, int n_shots, int seed) {
+std::map<std::string, int> sample_from_probabilities(double* probabilities, std::size_t size, int n_qubits, int n_shots, int seed) {
     /*
     Sample measurement outcomes from a probability distribution.
 
     Args:
-        probabilities (std::vector<double>): List of probabilities for each state index.
+        probabilities (double*): Pointer to the probability of each state index (changed in-place)
+        size (std::size_t): Number of entries in probabilities.
         n_qubits (int): Number of qubits.
         n_shots (int): Number of measurement shots.
         seed (int): Random seed for sampling.
@@ -79,20 +81,20 @@ std::map<std::string, int> sample_from_probabilities(const std::vector<double>& 
     Returns:
         std::map<std::string, int>: A map of bitstring outcomes to their counts.
     */
-    std::vector<int> counts(probabilities.size(), 0);
-
-    // Precompute the cumulative distribution
-    std::vector<double> cdf(probabilities.size());
+    // Turn the probabilities into a cumulative distribution in-place
+    const size_t dim = size;
+    double* cdf = probabilities;
     double running = 0.0;
-    for (size_t state_index = 0; state_index < probabilities.size(); ++state_index) {
+    for (size_t state_index = 0; state_index < dim; ++state_index) {
         running += probabilities[state_index];
         cdf[state_index] = running;
     }
-    if (!cdf.empty()) {
-        cdf.back() = 1.0;
+    if (dim > 0) {
+        cdf[dim - 1] = 1.0;
     }
 
-    // Each thread gets its own RNG and its own histogram
+    // Accumulate a sparse list of counts
+    std::map<size_t, int> index_counts;
 #if defined(_OPENMP)
 #pragma omp parallel
 #endif
@@ -104,39 +106,40 @@ std::map<std::string, int> sample_from_probabilities(const std::vector<double>& 
         std::seed_seq seq{static_cast<unsigned>(seed), static_cast<unsigned>(thread_id)};
         std::default_random_engine generator(seq);
         std::uniform_real_distribution<double> distribution(0.0, 1.0);
-        std::vector<int> local_counts(probabilities.size(), 0);
+        std::unordered_map<size_t, int> local_counts;
 #if defined(_OPENMP)
 #pragma omp for schedule(static)
 #endif
         for (int shot = 0; shot < n_shots; ++shot) {
             double random_value = distribution(generator);
             // First state whose cumulative probability reaches the draw
-            size_t state_index = static_cast<size_t>(std::lower_bound(cdf.begin(), cdf.end(), random_value) - cdf.begin());
-            if (state_index >= cdf.size()) {
-                state_index = cdf.size() - 1;
+            size_t state_index = static_cast<size_t>(std::lower_bound(cdf, cdf + dim, random_value) - cdf);
+            if (state_index >= dim) {
+                state_index = dim - 1;
             }
             local_counts[state_index]++;
         }
 
-        // Merge this thread's histogram into the shared result.
+        // Merge this thread's sparse histogram into the shared result
 #if defined(_OPENMP)
 #pragma omp critical
 #endif
-        for (size_t i = 0; i < counts.size(); ++i) {
-            counts[i] += local_counts[i];
+        for (const auto& entry : local_counts) {
+            index_counts[entry.first] += entry.second;
         }
     }
 
     // Go from counts by index to counts by bitstring
     std::map<std::string, int> result;
-    for (size_t state_index = 0; state_index < counts.size(); ++state_index) {
-        if (counts[state_index] > 0) {
-            std::string bitstring = "";
-            for (int b = n_qubits - 1; b >= 0; --b) {
-                bitstring += ((state_index >> b) & 1) ? '1' : '0';
+    for (const auto& entry : index_counts) {
+        size_t state_index = entry.first;
+        std::string bitstring(n_qubits, '0');
+        for (int b = n_qubits - 1; b >= 0; --b) {
+            if ((state_index >> b) & 1) {
+                bitstring[n_qubits - 1 - b] = '1';
             }
-            result[bitstring] = counts[state_index];
         }
+        result[bitstring] = entry.second;
     }
     return result;
 }
@@ -237,6 +240,32 @@ DenseMatrix sample_from_density_matrix(const DenseMatrix& rho, int n_trajectorie
         DenseMatrix: A matrix who's columns are the sampled statevectors.
     */
 
+    const long dim = rho.rows();
+
+    // Fast path: a pure state rho = |psi><psi| needs no eigendecomposition - every
+    // trajectory is just |psi>. Purity tr(rho^2) == 1 detects it, and for a
+    // Hermitian rho tr(rho^2) is the squared Frobenius norm (an O(dim^2) reduction
+    // versus the O(dim^3), single-threaded eigensolve below). Recover |psi> from
+    // its highest-norm column: rho[:,j] = psi * conj(psi_j) is proportional to psi.
+    constexpr double purity_tol = 1e-9;
+    if (std::abs(rho.squaredNorm() - 1.0) <= purity_tol) {
+        long best_col = 0;
+        double best_norm = -1.0;
+        for (long j = 0; j < dim; ++j) {
+            double col_norm = rho.col(j).squaredNorm();
+            if (col_norm > best_norm) {
+                best_norm = col_norm;
+                best_col = j;
+            }
+        }
+        DenseMatrix psi = rho.col(best_col);
+        double norm = std::sqrt(psi.squaredNorm());
+        if (norm > atol) {
+            psi /= norm;
+        }
+        return psi.replicate(1, n_trajectories);
+    }
+
     // Eigendecompose the density matrix
     Eigen::SelfAdjointEigenSolver<DenseMatrix> es(rho);
     DenseMatrix evals = es.eigenvalues();
@@ -261,7 +290,6 @@ DenseMatrix sample_from_density_matrix(const DenseMatrix& rho, int n_trajectorie
     std::map<std::string, int> counts = sample_from_probabilities(prob_entries, n_qubits, n_trajectories, seed);
 
     // Construct the sampled states matrix
-    long dim = 1L << n_qubits;
     DenseMatrix sampled_states(dim, n_trajectories);
     int traj_index = 0;
     for (const auto& pair : counts) {
@@ -307,6 +335,74 @@ DenseMatrix trajectories_to_density_matrix(const DenseMatrix& trajectories) {
     return rho;
 }
 
+DenseMatrix reset_trajectories(const DenseMatrix& trajectories, unsigned long long reset_mask, int seed) {
+    /*
+    Apply a reset of the masked qubits to each Monte Carlo trajectory (columns are
+    state vectors). This is the stochastic unravelling of the reset channel
+    (trace out the reset qubits then re-initialise them to |0>): for each
+    trajectory we Born-sample a joint outcome of the reset qubits, collapse the
+    state onto it, renormalise, and relabel the reset qubits to |0>. Averaging the
+    returned trajectories reproduces the deterministic reset channel in expectation.
+
+    Args:
+        trajectories (DenseMatrix): dim x n_trajectories batch of state vectors.
+        reset_mask (unsigned long long): Bitmask of the full-state indices' bits
+            corresponding to the qubits being reset.
+        seed (int): Base random seed (each trajectory uses a deterministic offset).
+
+    Returns:
+        DenseMatrix: The reset trajectories (same shape).
+    */
+    const long dim = trajectories.rows();
+    const long n_traj = trajectories.cols();
+    DenseMatrix out = DenseMatrix::Zero(dim, n_traj);
+
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+    for (long c = 0; c < n_traj; ++c) {
+        // Born probabilities of each joint configuration of the reset qubits.
+        // std::map keeps a deterministic iteration order for reproducible sampling.
+        std::map<unsigned long long, double> config_probs;
+        for (long i = 0; i < dim; ++i) {
+            double w = std::norm(trajectories(i, c));
+            if (w == 0.0) {
+                continue;
+            }
+            config_probs[static_cast<unsigned long long>(i) & reset_mask] += w;
+        }
+        if (config_probs.empty()) {
+            continue;  // zero column, leave it zero
+        }
+
+        // Per-trajectory RNG, offset by the column so parallel runs stay deterministic.
+        std::mt19937_64 rng(static_cast<unsigned long long>(seed) + 0x9e3779b97f4a7c15ULL * static_cast<unsigned long long>(c));
+        std::uniform_real_distribution<double> unif(0.0, 1.0);
+        const double r = unif(rng);
+
+        unsigned long long chosen = config_probs.rbegin()->first;  // fallback: last bucket
+        double cumulative = 0.0;
+        for (const auto& kv : config_probs) {
+            cumulative += kv.second;
+            if (r <= cumulative) {
+                chosen = kv.first;
+                break;
+            }
+        }
+
+        // Collapse onto the chosen configuration, renormalise, and clear the reset bits.
+        const double norm = std::sqrt(config_probs[chosen]);
+        for (long i = 0; i < dim; ++i) {
+            if ((static_cast<unsigned long long>(i) & reset_mask) == chosen) {
+                long target = static_cast<long>(static_cast<unsigned long long>(i) & ~reset_mask);
+                out(target, c) = trajectories(i, c) / norm;
+            }
+        }
+    }
+
+    return out;
+}
+
 // Sample from a density matrix
 SparseMatrix sample_from_density_matrix(const SparseMatrix& rho, int n_trajectories, int seed, double atol) {
     /*
@@ -321,6 +417,40 @@ SparseMatrix sample_from_density_matrix(const SparseMatrix& rho, int n_trajector
     Returns:
         SparseMatrix: A matrix who's columns are the sampled statevectors.
     */
+
+    const long dim = rho.rows();
+
+    // Fast path: a pure state rho = |psi><psi| needs no eigendecomposition - every
+    // trajectory is just |psi>. See the dense overload for the derivation; here we
+    // keep everything sparse.
+    constexpr double purity_tol = 1e-9;
+    if (std::abs(rho.squaredNorm() - 1.0) <= purity_tol) {
+        long best_col = 0;
+        double best_norm = -1.0;
+        for (long j = 0; j < dim; ++j) {
+            double col_norm = rho.col(j).squaredNorm();
+            if (col_norm > best_norm) {
+                best_norm = col_norm;
+                best_col = j;
+            }
+        }
+        SparseMatrix psi = rho.col(best_col);
+        double norm = std::sqrt(psi.squaredNorm());
+        if (norm > atol) {
+            psi /= norm;
+        }
+        Triplets entries;
+        for (int c = 0; c < n_trajectories; ++c) {
+            for (int k = 0; k < psi.outerSize(); ++k) {
+                for (SparseMatrix::InnerIterator it(psi, k); it; ++it) {
+                    entries.emplace_back(Triplet(int(it.row()), c, it.value()));
+                }
+            }
+        }
+        SparseMatrix sampled_states(dim, n_trajectories);
+        sampled_states.setFromTriplets(entries.begin(), entries.end());
+        return sampled_states;
+    }
 
     // Eigendecompose the density matrix
     Eigen::SelfAdjointEigenSolver<DenseMatrix> es(rho);
@@ -346,7 +476,6 @@ SparseMatrix sample_from_density_matrix(const SparseMatrix& rho, int n_trajector
     std::map<std::string, int> counts = sample_from_probabilities(prob_entries, n_qubits, n_trajectories, seed);
 
     // Construct the sampled states matrix
-    long dim = 1L << n_qubits;
     Triplets new_mat_entries;
     int traj_index = 0;
     for (const auto& pair : counts) {

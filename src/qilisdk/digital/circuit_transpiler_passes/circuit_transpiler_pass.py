@@ -14,6 +14,8 @@
 
 from abc import ABC, abstractmethod
 
+from loguru import logger
+
 from qilisdk.digital import Circuit
 
 from .transpilation_context import TranspilationContext
@@ -29,6 +31,7 @@ class CircuitTranspilerPass(ABC):
     context: TranspilationContext | None = None
 
     def attach_context(self, context: TranspilationContext) -> None:
+        logger.debug("[CircuitTranspilerPass] Attaching context to {}", self.__class__.__name__)
         self.context = context
 
     def append_circuit_to_context(self, circuit: Circuit) -> None:
@@ -39,6 +42,7 @@ class CircuitTranspilerPass(ABC):
                 i += 1
                 key = f"{name}_{i}"
             self.context.circuits[key] = circuit
+            logger.trace("[CircuitTranspilerPass] Stored circuit in context under key {}", key)
 
     @abstractmethod
     def run(self, circuit: Circuit) -> Circuit:

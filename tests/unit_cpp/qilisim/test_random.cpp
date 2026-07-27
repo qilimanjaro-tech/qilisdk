@@ -16,6 +16,8 @@
 
 #include <gtest/gtest.h>
 
+#include <cmath>
+#include <complex>
 #include "../../../src/qilisdk_cpp/backends/qilisim/utils/random.h"
 
 TEST(SampleFromProbabilitiesTest, SampleFromProbabilitiesReturnsValidSamples) {
@@ -37,7 +39,7 @@ TEST(SampleFromProbabilitiesTest, SampleFromProbabilitiesWithExplicitProbabiliti
     int n_qubits = 1;
     int n_shots = 1000;
     int seed = 42;
-    std::map<std::string, int> samples = sample_from_probabilities(probabilities, n_qubits, n_shots, seed);
+    std::map<std::string, int> samples = sample_from_probabilities(probabilities.data(), probabilities.size(), n_qubits, n_shots, seed);
     int total_samples = 0;
     for (const auto& entry : samples) {
         total_samples += entry.second;
@@ -74,6 +76,48 @@ TEST(SampleFromDensityMatrixTest, SampleFromDensityMatrixSparse) {
     EXPECT_EQ(total_trajectories, n_trajectories);
     for (int i = 0; i < trajectories.rows(); ++i) {
         EXPECT_TRUE(std::abs(trajectories.coeff(i, 0) - 0.0) < 1e-6 || std::abs(trajectories.coeff(i, 0) - 1.0) < 1e-6);
+    }
+}
+
+TEST(SampleFromDensityMatrixTest, PureSuperpositionStateDense) {
+    // rho = |+><+| is pure (purity 1) and has off-diagonal coherences, so it
+    // exercises the pure-state fast path. Every trajectory must be |+>, and they
+    // must reconstruct rho exactly (a pure state carries no sampling noise).
+    DenseMatrix rho = DenseMatrix::Zero(2, 2);
+    rho(0, 0) = 0.5;
+    rho(0, 1) = 0.5;
+    rho(1, 0) = 0.5;
+    rho(1, 1) = 0.5;
+    int n_trajectories = 128;
+    DenseMatrix trajectories = sample_from_density_matrix(rho, n_trajectories, 7);
+    ASSERT_EQ(trajectories.cols(), n_trajectories);
+    const double inv_sqrt2 = 1.0 / std::sqrt(2.0);
+    for (int c = 0; c < n_trajectories; ++c) {
+        EXPECT_NEAR(std::abs(trajectories(0, c)), inv_sqrt2, 1e-9);
+        EXPECT_NEAR(std::abs(trajectories(1, c)), inv_sqrt2, 1e-9);
+    }
+    DenseMatrix reconstructed = trajectories_to_density_matrix(trajectories);
+    for (int i = 0; i < 2; ++i) {
+        for (int j = 0; j < 2; ++j) {
+            EXPECT_NEAR(std::abs(reconstructed(i, j)), 0.5, 1e-9);
+        }
+    }
+}
+
+TEST(SampleFromDensityMatrixTest, PureSuperpositionStateSparse) {
+    SparseMatrix rho(2, 2);
+    rho.insert(0, 0) = 0.5;
+    rho.insert(0, 1) = 0.5;
+    rho.insert(1, 0) = 0.5;
+    rho.insert(1, 1) = 0.5;
+    rho.makeCompressed();
+    int n_trajectories = 64;
+    SparseMatrix trajectories = sample_from_density_matrix(rho, n_trajectories, 7);
+    ASSERT_EQ(trajectories.cols(), n_trajectories);
+    const double inv_sqrt2 = 1.0 / std::sqrt(2.0);
+    for (int c = 0; c < n_trajectories; ++c) {
+        EXPECT_NEAR(std::abs(trajectories.coeff(0, c)), inv_sqrt2, 1e-9);
+        EXPECT_NEAR(std::abs(trajectories.coeff(1, c)), inv_sqrt2, 1e-9);
     }
 }
 
@@ -155,6 +199,25 @@ TEST(GetVectorFromDensityMatrixTest, GetVectorFromZeroMatrixDense) {
 TEST(GetVectorFromDensityMatrixTest, GetVectorFromZeroMatrixSparse) {
     SparseMatrix rho(2, 2);
     EXPECT_ANY_THROW(get_vector_from_density_matrix(rho, 1e-10));
+}
+
+TEST(ResetTrajectoriesTest, ResetsMaskedQubitToZeroAcrossTrajectories) {
+    const long dim = 2;
+    const long n_traj = 3;
+    DenseMatrix traj = DenseMatrix::Zero(dim, n_traj);
+    traj(1, 0) = 1.0;
+    traj(0, 1) = 1.0 / std::sqrt(2.0);
+    traj(1, 1) = 1.0 / std::sqrt(2.0);
+
+    DenseMatrix out = reset_trajectories(traj, 1ULL, 42);
+    ASSERT_EQ(out.rows(), dim);
+    ASSERT_EQ(out.cols(), n_traj);
+
+    EXPECT_NEAR(std::abs(out(1, 0)), 0.0, 1e-12);
+    EXPECT_NEAR(std::abs(out(0, 0)), 1.0, 1e-12);
+    EXPECT_NEAR(std::abs(out(1, 1)), 0.0, 1e-12);
+    EXPECT_NEAR(std::abs(out(0, 1)), 1.0, 1e-12);
+    EXPECT_TRUE(out.col(2).isZero(1e-12));
 }
 
 // GCOV_EXCL_BR_STOP
