@@ -1050,7 +1050,7 @@ class SpeQtrum:
             JobHandle[FunctionalResult]: A handle for tracking the submitted job.
         """
         payload = ExecutePayload(
-            type=ExecuteType.ANALOG_EVOLUTION,
+            type=ExecuteType.QUANTUM_RESERVOIR,
             quantum_reservoir_payload=QuantumReservoirPayload(quantum_reservoir=functional, readout=readout),
         )
         json = {
