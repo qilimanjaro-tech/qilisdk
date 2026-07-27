@@ -711,6 +711,7 @@ def test_reservoir_normalize_state_flag():
     assert np.isclose(np.trace(normalized.get_state().dense()), 1.0, atol=1e-6)
     assert np.isclose(np.trace(raw.get_state().dense()), 3.0, atol=1e-6)
 
+
 @pytest.mark.parametrize("method", [AnalogMethod.direct(), AnalogMethod.arnoldi(), AnalogMethod.integrator()])
 def test_reservoir_schedule_hamiltonians_of_differing_qubit_support(method):
     """Regression: a schedule whose Hamiltonian terms touch different qubits produces
