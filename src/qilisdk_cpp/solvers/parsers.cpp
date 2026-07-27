@@ -89,7 +89,6 @@ void add_monomial(const py::object& monomial, double coefficient, ParsedCostCpp&
     if (py::isinstance(monomial, Term)) {
         // If it's a term, it is a product of factors, which are either variables or the constant
         for (py::handle factor_handle : monomial) {
-            
             // Make sure the factor is not a sum, which would be a nested Term and is not allowed in a QUBO
             const py::object factor = py::reinterpret_borrow<py::object>(factor_handle);
             if (py::isinstance(factor, Term)) {
@@ -105,7 +104,6 @@ void add_monomial(const py::object& monomial, double coefficient, ParsedCostCpp&
 
             // The exponent of a factor is irrelevant, since x * x == x for a binary variable
             variables.push_back(index_of(label));
-
         }
     } else {
         // A lone variable, unless it is the constant, whose coefficient is the constant itself
@@ -119,11 +117,10 @@ void add_monomial(const py::object& monomial, double coefficient, ParsedCostCpp&
     if (variables.empty()) {
         parsed.offset += coefficient;
 
-    // Otherwise add the monomial to the cost function
+        // Otherwise add the monomial to the cost function
     } else {
         parsed.monomials.emplace_back(variables, coefficient);
     }
-
 }
 
 py::dict build_sample(const py::object& qubo, const std::vector<int>& state, const std::vector<std::string>& labels) {
@@ -139,13 +136,13 @@ py::dict build_sample(const py::object& qubo, const std::vector<int>& state, con
     Returns:
         py::dict: a dict mapping each of the QUBO's variables to its annealed value.
     */
-    
+
     // Convert the annealed bitstring into a map from each variable's label to its value
     std::unordered_map<std::string, int> bits;
     for (std::size_t index = 0; index < labels.size(); ++index) {
         bits[labels[index]] = state[index];
     }
-    
+
     // Build a dict mapping each of the QUBO's variables to its annealed value
     py::dict sample;
     for (py::handle variable_handle : qubo.attr("variables")()) {
@@ -177,7 +174,7 @@ ParsedCostCpp parse_qubo(const py::object& qubo) {
     Raises:
         py::value_error: if the given model is not a QUBO.
     */
-    
+
     // Make sure it's a QUBO
     if (!py::isinstance(qubo, QUBO)) {
         throw py::value_error("Simulated annealing requires a QUBO model, but got " + py::str(qubo.attr("__class__").attr("__name__")).cast<std::string>() + ". Convert the model first with model.to_qubo().");
@@ -186,7 +183,7 @@ ParsedCostCpp parse_qubo(const py::object& qubo) {
     // Get the objective
     const py::object objective = qubo.attr("qubo_objective");
     if (objective.is_none()) {
-        throw py::value_error("Cannot solve a QUBO that has neither an objective nor any constraints."); // GCOVR_EXCL_LINE
+        throw py::value_error("Cannot solve a QUBO that has neither an objective nor any constraints.");  // GCOVR_EXCL_LINE
     }
     const py::object term = objective.attr("term");
     const std::string operation = term.attr("operation").attr("value").cast<std::string>();
@@ -202,14 +199,14 @@ ParsedCostCpp parse_qubo(const py::object& qubo) {
     if (operation == "*") {
         add_monomial(term, 1.0, parsed, indices, constant, atol);
 
-    // If it's a sum, we have to process each
+        // If it's a sum, we have to process each
     } else if (operation == "+") {
         for (py::handle monomial_handle : term) {
             const py::object monomial = py::reinterpret_borrow<py::object>(monomial_handle);
             add_monomial(monomial, assert_real(py::object(term[monomial]), atol), parsed, indices, constant, atol);
         }
     } else {
-        throw py::value_error("A QUBO objective must be a sum or a product, but got the operation " + operation + "."); // GCOVR_EXCL_LINE
+        throw py::value_error("A QUBO objective must be a sum or a product, but got the operation " + operation + ".");  // GCOVR_EXCL_LINE
     }
     parsed.num_variables = static_cast<int>(parsed.labels.size());
     return parsed;
@@ -238,7 +235,7 @@ py::object solve_with_simulated_annealing(const py::object& qubo, int num_reads,
     Raises:
         py::value_error: if the given model is not a QUBO, or if the annealing settings are invalid.
     */
-    
+
     // Parse the Python object into a C++ one
     const ParsedCostCpp parsed = parse_qubo(qubo);
     qilisdk::log_debug("[SimulatedAnnealing, C++] Read QUBO " + qubo.attr("label").cast<std::string>() + " as " + std::to_string(parsed.num_variables) + " binary variables and " + std::to_string(parsed.monomials.size()) + " monomials");

@@ -49,27 +49,25 @@ SimulatedAnnealingCpp::SimulatedAnnealingCpp(int num_variables, const std::vecto
     }
     this->variable_monomials.resize(static_cast<std::size_t>(num_variables));
     for (const auto& entry : monomials) {
-        
         // If it has no variables, it is just a constant
         if (entry.first.empty()) {
             this->offset += entry.second;
             continue;
         }
-        
+
         // Loop over the variables to make sure they are in range
         for (int variable : entry.first) {
             if (variable < 0 || variable >= num_variables) {
                 throw std::invalid_argument("Monomial refers to variable index " + std::to_string(variable) + ", which is outside of the range [0, " + std::to_string(num_variables) + ").");
             }
         }
-        
+
         // Add the monomial to the cost function and record which monomials each variable is in
         const int index = static_cast<int>(this->monomials.size());
         this->monomials.push_back(MonomialCpp{entry.first, entry.second});
         for (int variable : entry.first) {
             this->variable_monomials[static_cast<std::size_t>(variable)].push_back(index);
         }
-
     }
 }
 
@@ -146,7 +144,7 @@ std::pair<double, double> SimulatedAnnealingCpp::default_beta_range() const {
     Returns:
         std::pair<double, double>: the (minimum, maximum) inverse temperature to anneal over.
     */
-    
+
     // The probability of accepting the largest flip at the hot end
     constexpr double kHotAcceptanceProbability = 0.5;
 
@@ -174,7 +172,6 @@ std::pair<double, double> SimulatedAnnealingCpp::default_beta_range() const {
     }
 
     return {-std::log(kHotAcceptanceProbability) / largest_delta, -std::log(kColdAcceptanceProbability) / smallest_delta};
-
 }
 
 std::pair<std::vector<int>, double> SimulatedAnnealingCpp::single_read(int num_sweeps, double beta_min, double beta_max, unsigned long long seed) const {
@@ -193,7 +190,7 @@ std::pair<std::vector<int>, double> SimulatedAnnealingCpp::single_read(int num_s
     Returns:
         std::pair<std::vector<int>, double>: the lowest cost assignment visited and its cost.
     */
-    
+
     // Prep the rng
     std::mt19937_64 generator(seed);
     std::uniform_real_distribution<double> uniform(0.0, 1.0);
@@ -213,13 +210,11 @@ std::pair<std::vector<int>, double> SimulatedAnnealingCpp::single_read(int num_s
 
     // Perform the sweeps
     for (int sweep = 0; sweep < num_sweeps; ++sweep) {
-        
         // The inverse temperature
         const double beta = std::exp(log_beta_min + log_beta_step * static_cast<double>(sweep));
-        
+
         // Loop over the variables in order, offering each a Metropolis flip
         for (int variable = 0; variable < num_variables; ++variable) {
-            
             // How much the cost would change if we flipped this variable
             const double delta = flip_delta(state, variable);
 
@@ -232,7 +227,6 @@ std::pair<std::vector<int>, double> SimulatedAnnealingCpp::single_read(int num_s
                     best_state = state;
                 }
             }
-
         }
     }
     return {best_state, best_energy};
