@@ -98,7 +98,7 @@ QiliSim is configured at construction time through three orthogonal sections, al
     )
 
     backend = QiliSim(
-        analog_simulation_method=AnalogMethod.arnoldi(dim=16, num_substeps=2),
+        analog_simulation_method=AnalogMethod.arnoldi(dim=16, num_substeps=2, matrix_free=True),
         digital_simulation_method=DigitalMethod.statevector(
             matrix_free=True,
             max_cache_size=2_000,
@@ -142,7 +142,7 @@ schedule is integrated:
    * - :meth:`AnalogMethod.adaptive_integrator(tol=1e-2) <qilisdk.backends.backend_config.AnalogMethod.adaptive_integrator>`
      - Dormand-Prince RK4/5
      - Adaptive step size; ``tol`` bounds the fidelity error between the RK4 and RK5 estimates.
-   * - :meth:`AnalogMethod.arnoldi(dim=10, num_substeps=1) <qilisdk.backends.backend_config.AnalogMethod.arnoldi>`
+   * - :meth:`AnalogMethod.arnoldi(dim=10, num_substeps=1, matrix_free=True) <qilisdk.backends.backend_config.AnalogMethod.arnoldi>`
      - Krylov / Arnoldi
      - Can offer decent scaling for large sparse Hamiltonians; tune ``dim`` for the Krylov subspace size.
    * - :meth:`AnalogMethod.direct() <qilisdk.backends.backend_config.AnalogMethod.direct>`
@@ -219,6 +219,7 @@ optional Monte Carlo trajectory sampling for open-system simulations.
 - ``monte_carlo=MonteCarloConfig(trajectories=N)`` enabled Monte Carlo sampling with ``N`` trajectories, if omitted, Monte Carlo is disabled.
 - ``measurement_collapse`` controls whether measurements collapse the statevector in place (relevant for mid-circuit measurement and reservoirs) - defaults to ``False``.
 - ``normalize_state`` controls whether the state should be renormalized - defaults to ``True``.
+- ``gpu`` controls whether to use GPU acceleration if available - defaults to ``False``.
 
 .. code-block:: python
 
@@ -227,10 +228,11 @@ optional Monte Carlo trajectory sampling for open-system simulations.
     backend = QiliSim(
         execution_config=ExecutionConfig(
             num_threads=8,
-            seed=1234,
+            seed=42,
             monte_carlo=MonteCarloConfig(trajectories=500),
             measurement_collapse=True,
             normalize_state=False,
+            gpu=True,
         ),
     )
 
@@ -250,3 +252,34 @@ noise channels:
     nm.add(Depolarizing(probability=1e-3))
 
     backend = QiliSim(noise_model=nm)
+
+GPU acceleration
+-------------------
+
+Some simulation methods in QiliSim support GPU acceleration if a CUDA-capable device is available.
+These require the ``cuda`` extra to be installed:
+
+.. code-block:: console
+
+    pip install qilisdk[cuda13]
+
+.. list-table::
+    :header-rows: 1
+    :widths: 35 65
+  
+    * - Method
+      - GPU support
+    * - :meth:`AnalogMethod.direct() <qilisdk.backends.backend_config.AnalogMethod.direct>`
+      - |n|
+    * - :meth:`AnalogMethod.integrator() <qilisdk.backends.backend_config.AnalogMethod.integrator>`
+      - |n|
+    * - :meth:`AnalogMethod.adaptive_integrator() <qilisdk.backends.backend_config.AnalogMethod.adaptive_integrator>`
+      - |n|
+    * - :meth:`AnalogMethod.arnoldi() <qilisdk.backends.backend_config.AnalogMethod.arnoldi>`
+      - |n|
+    * - :meth:`AnalogMethod.variational_annealing() <qilisdk.backends.backend_config.AnalogMethod.variational_annealing>`
+      - |y|
+    * - :meth:`DigitalMethod.statevector() <qilisdk.backends.backend_config.DigitalMethod.statevector>`
+      - |n|
+    * - :meth:`DigitalMethod.stabilizer() <qilisdk.backends.backend_config.DigitalMethod.stabilizer>`
+      - |n|

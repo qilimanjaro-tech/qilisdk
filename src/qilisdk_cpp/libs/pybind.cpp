@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 #include "pybind.h"
+#include "logging.h"
 
 // GCOV_EXCL_BR_START
 
@@ -25,6 +26,8 @@ py::object coomatrix;
 py::object sparray;
 py::dtype dtype;
 py::object py_complex;
+py::object logger;
+py::object logger_core;
 py::object QTensor;
 py::object InitialState;
 py::object Hamiltonian;
@@ -51,7 +54,6 @@ py::object ExpectationReadoutResult;
 py::object StateTomographyReadoutResult;
 py::object ReadoutResult;
 py::object ReadoutCompositeResults;
-py::object logger;
 
 void initialize_all_pybind_types() {
     Circuit = py::module_::import("qilisdk.digital.circuit").attr("Circuit");
@@ -93,6 +95,8 @@ void initialize_external_pybind_types() {
     dtype = py::dtype("complex128");
     py_complex = py::module_::import("builtins").attr("complex");
     logger = py::module_::import("loguru").attr("logger");
+    logger_core = logger.attr("_core");
+    qilisdk::refresh_log_level();
 }
 
 // Logging functions
@@ -149,6 +153,8 @@ void finalize_all_pybind_types() {
     dtype = py::object();
     py_complex = py::object();
     logger = py::object();
+    logger_core = py::object();
+    qilisdk::refresh_log_level();
 }
 // GCOVR_EXCL_STOP
 

@@ -113,7 +113,7 @@ class QutipBackend(Backend):
             U3: QutipBackend._handle_U3,
             SWAP: QutipBackend._handle_SWAP,
         }  # ty:ignore[invalid-assignment]
-        logger.success("QutipBackend initialised")
+        logger.info("[QutipBackend] QutipBackend initialised")
 
     def _execute_digital_propagation(
         self, functional: DigitalPropagation, readout: list[ReadoutMethod]
@@ -137,7 +137,7 @@ class QutipBackend(Backend):
         Raises:
             ValueError: If the circuit contains mid-circuit measurements.
         """
-        logger.info("Executing Sampling")
+        logger.info("[QutipBackend] Executing Sampling")
 
         # Warn if noise model is provided, since we don't support digital noise here for now
         if self.noise_model is not None:
@@ -172,7 +172,7 @@ class QutipBackend(Backend):
 
         final_state = QTensor(sim.run(init_state).get_final_states()[0].full())
 
-        logger.success("Sampling finished; ")
+        logger.info("[QutipBackend] Sampling finished")
         if len(measurements) > 0 and len(measurements) != functional.circuit.nqubits:
             return FunctionalResult(
                 readout_results=QutipBackend._construct_results_list(
@@ -205,7 +205,9 @@ class QutipBackend(Backend):
                 (must be a ket, bra, or density matrix).
         """
 
-        logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
+        logger.info(
+            "[QutipBackend] Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt
+        )
         steps = functional.schedule.tlist
 
         qutip_hamiltonians = []
@@ -239,7 +241,7 @@ class QutipBackend(Backend):
         elif initial_state.is_ket():
             state_dim = [[2 for _ in range(initial_state.nqubits)], [1]]
         else:
-            logger.error("Invalid initial state provided")
+            logger.error("[QutipBackend] Invalid initial state provided")
             raise ValueError("invalid initial state provided.")
 
         qutip_init_state = Qobj(initial_state.dense(), dims=state_dim)
@@ -267,7 +269,7 @@ class QutipBackend(Backend):
             },
         )
 
-        logger.success("TimeEvolution finished")
+        logger.info("[QutipBackend] TimeEvolution finished")
         return FunctionalResult(
             readout_results=QutipBackend._construct_results_list(
                 final_state=QTensor(results.final_state.full()), readout=readout
@@ -451,7 +453,7 @@ class QutipBackend(Backend):
             aux_obs = obs
         if aux_obs is not None:
             return Qobj(aux_obs.dense(), dims=[[2 for _ in range(nqubits)] for _ in range(2)])
-        logger.error("Unsupported observable type {}", obs.__class__.__name__)
+        logger.error("[QutipBackend] Unsupported observable type {}", obs.__class__.__name__)
         raise ValueError(f"unsupported observable type of {obs.__class__}")
 
     def _get_qutip_circuit(self, circuit: Circuit) -> QubitCircuit:
@@ -480,7 +482,7 @@ class QutipBackend(Backend):
             else:
                 handler = self._basic_gate_handlers.get(type(gate), None)
                 if handler is None:
-                    logger.error("Unsupported gate {}", type(gate).__name__)
+                    logger.error("[QutipBackend] Unsupported gate {}", type(gate).__name__)
                     raise UnsupportedGateError(f"Unsupported gate {type(gate).__name__}")
                 qubits = gate.target_qubits
                 handler(qutip_circuit, gate, *qubits)

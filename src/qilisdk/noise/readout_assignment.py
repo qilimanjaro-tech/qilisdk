@@ -13,6 +13,8 @@
 # limitations under the License.
 from __future__ import annotations
 
+from loguru import logger
+
 from .noise import Noise
 from .protocols import AttachmentScope, HasAllowedScopes
 from .utils import _check_probability
@@ -31,6 +33,7 @@ class ReadoutAssignment(Noise, HasAllowedScopes):
         """
         self._p01 = _check_probability(p01, "p01")
         self._p10 = _check_probability(p10, "p10")
+        logger.debug("[ReadoutAssignment] Built readout assignment with p01={}, p10={}", self._p01, self._p10)
 
     @property
     def p01(self) -> float:

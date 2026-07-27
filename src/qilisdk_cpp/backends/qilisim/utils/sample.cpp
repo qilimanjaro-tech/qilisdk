@@ -121,31 +121,43 @@ std::map<std::string, int> construct_samples(const DenseMatrix& state, int n_qub
     bool is_statevector = (state.cols() == 1 && state.rows() == dim);
 
     // Get the probabilities
-    std::vector<double> probabilities(state.rows());
+    const long n_rows = state.rows();
+    Eigen::VectorXd probabilities(n_rows);
     double total_prob = 0.0;
+    if (is_statevector) {
+        const auto amplitudes = state.col(0);
 #if defined(_OPENMP)
-#pragma omp parallel for reduction(+ : total_prob) schedule(static)
-#endif
-    for (int row = 0; row < state.rows(); ++row) {
-        double prob = 0.0;
-        if (is_statevector) {
-            prob = std::norm(state(row, 0));
-        } else {
-            prob = state.coeff(row, row).real();
+        // Chunk across threads
+#pragma omp parallel reduction(+ : total_prob)
+        {
+            const long n_threads = omp_get_num_threads();
+            const long tid = omp_get_thread_num();
+            const long chunk = (n_rows + n_threads - 1) / n_threads;
+            const long begin = std::min(tid * chunk, n_rows);
+            const long len = std::min(chunk, n_rows - begin);
+            if (len > 0) {
+                probabilities.segment(begin, len) = amplitudes.segment(begin, len).cwiseAbs2().cast<double>();
+                // Sum the just-written (cache-hot) probabilities
+                total_prob += probabilities.segment(begin, len).sum();
+            }
         }
-        total_prob += prob;
-        probabilities[row] = prob;
+#else
+        probabilities = amplitudes.cwiseAbs2().cast<double>();
+        total_prob = probabilities.sum();
+#endif
+    } else {
+        // Only the diagonal of the density matrix carries probability
+        probabilities = state.diagonal().real().cast<double>();
+        total_prob = probabilities.sum();
     }
 
     // Make sure probabilities sum to 1
     if (std::abs(total_prob - 1.0) > config.get_atol()) {
-        for (int row = 0; row < state.rows(); ++row) {
-            probabilities[row] /= total_prob;
-        }
+        probabilities /= total_prob;
     }
 
     // Sample from these probabilities
-    counts = sample_from_probabilities(probabilities, n_qubits, n_shots, config.get_seed());
+    counts = sample_from_probabilities(probabilities.data(), static_cast<std::size_t>(n_rows), n_qubits, n_shots, config.get_seed());
 
     // Apply readout error to counts
     if (has_noise) {

@@ -12,12 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "../libs/logging.h"
 #include "../libs/pybind.h"
 #include "qtensor.h"
 
 // GCOVR_EXCL_START
 PYBIND11_MODULE(qtensor_module, m) {
     initialize_external_pybind_types();
+    m.def("_refresh_log_level", &qilisdk::refresh_log_level);
+    m.add_object("_qilisdk_cleanup", py::capsule(&finalize_all_pybind_types));
     // Make the QTensor class available in Python as well as the various methods
     py::class_<QTensorCpp>(m, "QTensorCpp")
         .def("as_scipy", &QTensorCpp::as_scipy)
@@ -65,6 +68,7 @@ PYBIND11_MODULE(qtensor_module, m) {
         .def("dot_python", &QTensorCpp::dot_python)
         .def("entropy_von_neumann", &QTensorCpp::entropy_von_neumann)
         .def("entropy_renyi", &QTensorCpp::entropy_renyi)
+        .def("magic", &QTensorCpp::magic)
         .def("fidelity_python", &QTensorCpp::fidelity_python)
         .def("purity", &QTensorCpp::purity)
         .def("div", &QTensorCpp::div)

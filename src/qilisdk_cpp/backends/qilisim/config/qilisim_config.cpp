@@ -31,7 +31,7 @@ void QiliSimConfig::validate() const {
     if (num_arnoldi_substeps <= 0) {
         throw py::value_error("Number of Arnoldi substeps must be positive.");
     }
-    const std::string valid_evolution_methods = "'direct', 'arnoldi', 'variational_exponential', 'integrate_rk4', 'integrate_rk45_matrix_free', or 'integrate_rk4_matrix_free'";
+    const std::string valid_evolution_methods = "'direct', 'arnoldi', 'arnoldi_matrix_free', 'variational_exponential', 'integrate_rk4', 'integrate_rk45_matrix_free', or 'integrate_rk4_matrix_free'";
     if (valid_evolution_methods.find(time_evolution_method) == std::string::npos) {
         throw py::value_error("Time evolution method must be one of " + valid_evolution_methods);
     }
@@ -51,8 +51,8 @@ void QiliSimConfig::validate() const {
     if (max_cache_size <= 0) {
         throw py::value_error("Max cache size must be positive.");
     }
-    if (max_fused_qubits < 1) {
-        throw py::value_error("Max fused qubits must be at least 1.");
+    if (max_fused_qubits < 0) {
+        throw py::value_error("Max fused qubits must be non-negative (0 selects an automatic depth based on the qubit count).");
     }
     if (adaptive_tol <= 0) {
         throw py::value_error("Adaptive tolerance must be positive.");

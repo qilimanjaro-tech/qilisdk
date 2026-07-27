@@ -18,6 +18,8 @@ import math
 from enum import Enum
 from typing import TypeGuard
 
+from loguru import logger
+
 from qilisdk.digital import Circuit
 from qilisdk.digital.gates import (
     CNOT,
@@ -465,12 +467,23 @@ class DecomposeToCanonicalBasisPass(CircuitTranspilerPass):
         Returns:
             Circuit: New circuit containing only canonical gates and measurements.
         """
+        logger.debug(
+            "[DecomposeToCanonicalBasisPass] Running on {} gates with single-qubit basis {} and two-qubit basis {}",
+            len(circuit.gates),
+            self._single_qubit_basis.value,
+            self._two_qubit_basis.value,
+        )
         rewritten_sequence = self._rewrite_list(circuit.gates)
 
         output_circuit = Circuit(circuit.nqubits)
         for gate in rewritten_sequence:
             output_circuit.add(gate)
 
+        logger.debug(
+            "[DecomposeToCanonicalBasisPass] Rewrote {} gates into {} canonical gates",
+            len(circuit.gates),
+            len(output_circuit.gates),
+        )
         self.append_circuit_to_context(output_circuit)
         return output_circuit
 
