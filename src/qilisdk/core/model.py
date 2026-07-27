@@ -617,13 +617,14 @@ class Model:
         model = cls(label)
         variables = [BinaryVariable(f"x{i}") for i in range(num_variables)]
         generator = np.random.default_rng(seed)
-        term = Term([0], Operation.ADD)
+        list_of_terms: list[BaseVariable | Term | Number] = []
         for i in range(num_variables):
-            term += generator.uniform(low=coefficient_range[0], high=coefficient_range[1]) * variables[i]
+            list_of_terms.append(generator.uniform(low=coefficient_range[0], high=coefficient_range[1]) * variables[i])
             for j in range(i + 1, num_variables):
-                term += (
+                list_of_terms.append(
                     generator.uniform(low=coefficient_range[0], high=coefficient_range[1]) * variables[i] * variables[j]
                 )
+        term = Term(list_of_terms, Operation.ADD)
         model.set_objective(term)
         return model
 
