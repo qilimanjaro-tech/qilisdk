@@ -767,7 +767,7 @@ class SpeQtrum:
     def _submit_experiment(
         self, experiment: ExperimentFunctional, device: str, job_name: str | None = None
     ) -> JobHandle[ExperimentResult]:
-        """Submit a Rabi experiment to the SpeQtrum API.
+        """Submit an experiment to the SpeQtrum API.
 
         Args:
             experiment (ExperimentFunctional): The experiment to execute.
@@ -790,15 +790,15 @@ class SpeQtrum:
         }
         if job_name:
             json["name"] = job_name
-        logger.debug("[SpeQtrum] Executing Rabi experiment on device {}", device)
+        logger.debug("[SpeQtrum] Executing experiment on device {}", device)
         with self._create_client() as client:
             response = client.post(
                 _EXECUTE_URL,
                 json=json,
-                extensions=_request_extensions(context="Executing Rabi experiment"),
+                extensions=_request_extensions(context="Executing experiment"),
             )
         job = JobId(**response.json())
-        logger.info("[SpeQtrum] Rabi experiment job submitted: {}", job.id)
+        logger.info("[SpeQtrum] Experiment job submitted: {}", job.id)
         if job.message is not None:
             logger.warning("{}", job.message)
         return JobHandle.experiment(job.id)

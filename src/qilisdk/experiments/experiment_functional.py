@@ -14,16 +14,13 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import TYPE_CHECKING, Generic, TypeVar
+from typing import Generic, TypeVar
 
 from loguru import logger
 
 from qilisdk.experiments.experiment_result import ExperimentResult
 from qilisdk.functionals.functional import Functional
 from qilisdk.yaml import yaml
-
-if TYPE_CHECKING:
-    import numpy as np
 
 TResult_co = TypeVar("TResult_co", bound=ExperimentResult, covariant=True)
 

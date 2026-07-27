@@ -16,13 +16,14 @@ from __future__ import annotations
 
 from email.utils import parsedate_to_datetime
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Callable, Generic, TypeVar, cast, overload
+from typing import Any, Callable, Generic, TypeVar, cast, overload
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_serializer, field_validator
 
 from qilisdk.core.result import Result
 from qilisdk.experiments import (
     ExperimentFunctional,
+    ExperimentResult,
 )
 from qilisdk.functionals import (
     AnalogEvolution,
@@ -34,11 +35,6 @@ from qilisdk.functionals import (
 )
 from qilisdk.readout import Readout
 from qilisdk.utils.serialization import deserialize, serialize
-
-if TYPE_CHECKING:
-    from qilisdk.experiments import (
-        ExperimentResult,
-    )
 
 
 class SpeQtrumModel(BaseModel):
@@ -220,7 +216,7 @@ class VariationalProgramPayload(SpeQtrumModel):
 
 
 class ExperimentPayload(SpeQtrumModel):
-    """Payload model wrapping a ``ExperimentFunctional`` for API submission."""
+    """Payload model wrapping an ``ExperimentFunctional`` for API submission."""
 
     experiment: ExperimentFunctional = Field(...)
 
@@ -287,6 +283,12 @@ class ExecuteResult(SpeQtrumModel):
     def _serialize_experiment_result(self, experiment_result: ExperimentResult, _info):
         return serialize(experiment_result) if experiment_result is not None else None
 
+    @field_validator("experiment_result", mode="before")
+    def _load_experiment_result(cls, v):
+        if isinstance(v, str) and v.startswith("!"):
+            return deserialize(v, ExperimentResult)
+        return v
+
 
 TFunctionalResult_co = TypeVar("TFunctionalResult_co", bound=Result, covariant=True)
 TVariationalInnerResult = TypeVar("TVariationalInnerResult", bound=FunctionalResult)
@@ -344,7 +346,7 @@ def _require_experiment_result(result: ExecuteResult) -> ExperimentResult:
         RuntimeError: If the ``experiment_result`` field is ``None``.
     """
     if result.experiment_result is None:
-        raise RuntimeError("SpeQtrum did not return an experiment_result for a Experiment execution.")
+        raise RuntimeError("SpeQtrum did not return an experiment_result for an experiment execution.")
     return result.experiment_result
 
 
@@ -439,7 +441,7 @@ class JobHandle(SpeQtrumModel, Generic[TFunctionalResult_co]):
 
     @classmethod
     def experiment(cls: type[JobHandle[ExperimentResult]], job_id: int) -> JobHandle[ExperimentResult]:
-        """Create a handle for a experiment job.
+        """Create a handle for an experiment job.
 
         Args:
             job_id (int): Numeric identifier returned by the SpeQtrum service.
