@@ -286,19 +286,22 @@ def test_simulated_annealing_empty_qubo_has_nothing_to_anneal():
 
 def test_simulated_annealing_requires_a_qubo():
     m = Model.random_ising(4, seed=1)
+    solver = SimulatedAnnealingSolver()
     with pytest.raises(ValueError, match="requires a QUBO"):
-        SimulatedAnnealingSolver().solve(m)
+        solver.solve(m)
 
 
 @pytest.mark.parametrize("beta_range", [(0.0, 1.0), (1.0, -1.0), (10.0, 1.0)])
 def test_simulated_annealing_invalid_beta_range_raises(beta_range):
     qubo = Model.random_ising(4, seed=1).to_qubo()
+    solver = SimulatedAnnealingSolver(beta_range=beta_range)
     with pytest.raises(ValueError, match="inverse temperature"):
-        SimulatedAnnealingSolver(beta_range=beta_range).solve(qubo)
+        solver.solve(qubo)
 
 
 @pytest.mark.parametrize(("num_reads", "num_sweeps"), [(0, 10), (10, 0)])
 def test_simulated_annealing_invalid_effort_raises(num_reads, num_sweeps):
     qubo = Model.random_ising(4, seed=1).to_qubo()
+    solver = SimulatedAnnealingSolver(num_reads=num_reads, num_sweeps=num_sweeps)
     with pytest.raises(ValueError, match="must be positive"):
-        SimulatedAnnealingSolver(num_reads=num_reads, num_sweeps=num_sweeps).solve(qubo)
+        solver.solve(qubo)
