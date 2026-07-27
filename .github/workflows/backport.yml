@@ -21,7 +21,7 @@ jobs:
   backport:
     # First-party reusable workflow, pinned to a full commit SHA. Dependabot
     # bumps it; the trailing comment tracks the release tag it resolves to.
-    uses: qilimanjaro-tech/workflows/.github/workflows/backport.yml@8ddee038fc2c678b4a1546b664e3e6ac4923a5e4  # v1
+    uses: qilimanjaro-tech/devops/.github/workflows/backport.yml@4eb9d253ca61bec34ab18e63d14004289496e800  # v1.0.0
     with:
       client_id: ${{ vars.BACKPORT_CLIENT_ID }}
     secrets:
