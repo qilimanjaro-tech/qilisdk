@@ -524,4 +524,51 @@ TEST(NormalizeStateTest, MultiColumnDensityMatrix) {
     EXPECT_NEAR(tr.imag(), 0.0, kTol);
 }
 
+TEST(NormalizeStateTest, SparseStatevectorNormBecomesOne) {
+    SparseMatrixCol state(4, 1);
+    state.insert(0, 0) = std::complex<double>(3, 0);
+    state.insert(2, 0) = std::complex<double>(0, 4);
+    normalize_state(state);
+    EXPECT_NEAR(state.norm(), 1.0, kTol);
+    EXPECT_NEAR(std::abs(state.coeff(0, 0) - std::complex<double>(0.6, 0.0)), 0.0, kTol);
+    EXPECT_NEAR(std::abs(state.coeff(2, 0) - std::complex<double>(0.0, 0.8)), 0.0, kTol);
+}
+
+TEST(NormalizeStateTest, SparseDensityMatrixTraceBecomesOne) {
+    SparseMatrix rho(2, 2);
+    rho.insert(0, 0) = std::complex<double>(2, 0);
+    rho.insert(1, 1) = std::complex<double>(2, 0);
+    rho.insert(0, 1) = std::complex<double>(1, 0);
+    normalize_state(rho);
+    std::complex<double> tr = trace(rho);
+    EXPECT_NEAR(tr.real(), 1.0, kTol);
+    EXPECT_NEAR(tr.imag(), 0.0, kTol);
+    // Off-diagonal entries are scaled by the same divisor
+    EXPECT_NEAR(std::abs(rho.coeff(0, 1) - std::complex<double>(0.25, 0.0)), 0.0, kTol);
+}
+
+TEST(NormalizeStateTest, AlreadyNormalizedSparseStateUnchanged) {
+    SparseMatrixCol state(2, 1);
+    state.insert(0, 0) = std::complex<double>(1.0 / std::sqrt(2), 0);
+    state.insert(1, 0) = std::complex<double>(1.0 / std::sqrt(2), 0);
+    SparseMatrixCol before = state;
+    normalize_state(state);
+    EXPECT_LT((DenseMatrix(state) - DenseMatrix(before)).norm(), kTol);
+}
+
+TEST(NormalizeStateTest, SparseZeroStateLeftAlone) {
+    SparseMatrixCol state(4, 1);
+    normalize_state(state);
+    EXPECT_EQ(state.nonZeros(), 0);
+    EXPECT_TRUE(std::isfinite(state.norm()));
+
+    // A traceless matrix is likewise left untouched rather than turned into NaNs
+    SparseMatrix rho(2, 2);
+    rho.insert(0, 0) = std::complex<double>(1, 0);
+    rho.insert(1, 1) = std::complex<double>(-1, 0);
+    normalize_state(rho);
+    EXPECT_NEAR(rho.coeff(0, 0).real(), 1.0, kTol);
+    EXPECT_NEAR(rho.coeff(1, 1).real(), -1.0, kTol);
+}
+
 // GCOV_EXCL_BR_STOP
