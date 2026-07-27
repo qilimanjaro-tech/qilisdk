@@ -16,23 +16,13 @@ from __future__ import annotations
 
 from email.utils import parsedate_to_datetime
 from enum import Enum
-from typing import Any, Callable, Generic, TypeVar, cast, overload
+from typing import TYPE_CHECKING, Any, Callable, Generic, TypeVar, cast, overload
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_serializer, field_validator
 
 from qilisdk.core.result import Result
 from qilisdk.experiments import (
-    RabiExperiment,
-    RabiExperimentResult,
-    T1Experiment,
-    T1ExperimentResult,
-    T2Experiment,
-    T2ExperimentResult,
-)
-from qilisdk.experiments.experiment_functional import TwoTonesAtFixedFluxBiasExperiment, TwoTonesVsFluxBiasExperiment
-from qilisdk.experiments.experiment_result import (
-    TwoTonesAtFixedFluxBiasExperimentResult,
-    TwoTonesVsFluxBiasExperimentResult,
+    ExperimentFunctional,
 )
 from qilisdk.functionals import (
     AnalogEvolution,
@@ -44,6 +34,11 @@ from qilisdk.functionals import (
 )
 from qilisdk.readout import Readout
 from qilisdk.utils.serialization import deserialize, serialize
+
+if TYPE_CHECKING:
+    from qilisdk.experiments import (
+        ExperimentResult,
+    )
 
 
 class SpeQtrumModel(BaseModel):
@@ -113,11 +108,7 @@ class ExecuteType(str, Enum):
     ANALOG_EVOLUTION = "analog_evolution"
     QUANTUM_RESERVOIR = "quantum_reservoir"
     VARIATIONAL_PROGRAM = "variational_program"
-    RABI_EXPERIMENT = "rabi_experiment"
-    T1_EXPERIMENT = "t1_experiment"
-    T2_EXPERIMENT = "t2_experiment"
-    TWO_TONES_AT_FIXED_FLUX_EXPERIMENT = "two_tones_at_fixed_flux_experiment"
-    TWO_TONES_VS_FLUX_BIAS_EXPERIMENT = "two_tones_vs_flux_bias_experiment"
+    EXPERIMENT = "experiment"
 
 
 class DigitalPropagationPayload(SpeQtrumModel):
@@ -228,83 +219,19 @@ class VariationalProgramPayload(SpeQtrumModel):
         return v
 
 
-class RabiExperimentPayload(SpeQtrumModel):
-    """Payload model wrapping a ``RabiExperiment`` for API submission."""
+class ExperimentPayload(SpeQtrumModel):
+    """Payload model wrapping a ``ExperimentFunctional`` for API submission."""
 
-    experiment: RabiExperiment = Field(...)
+    experiment: ExperimentFunctional = Field(...)
 
     @field_serializer("experiment")
-    def _serialize_experiment(self, experiment: RabiExperiment, _info):
+    def _serialize_experiment(self, experiment: ExperimentFunctional, _info):
         return serialize(experiment)
 
     @field_validator("experiment", mode="before")
     def _load_experiment(cls, v):
         if isinstance(v, str):
-            return deserialize(v, RabiExperiment)
-        return v
-
-
-class T1ExperimentPayload(SpeQtrumModel):
-    """Payload model wrapping a ``T1Experiment`` for API submission."""
-
-    experiment: T1Experiment = Field(...)
-
-    @field_serializer("experiment")
-    def _serialize_experiment(self, experiment: T1Experiment, _info):
-        return serialize(experiment)
-
-    @field_validator("experiment", mode="before")
-    def _load_experiment(cls, v):
-        if isinstance(v, str):
-            return deserialize(v, T1Experiment)
-        return v
-
-
-class T2ExperimentPayload(SpeQtrumModel):
-    """Payload model wrapping a ``T2Experiment`` for API submission."""
-
-    experiment: T2Experiment = Field(...)
-
-    @field_serializer("experiment")
-    def _serialize_experiment(self, experiment: T2Experiment, _info):
-        return serialize(experiment)
-
-    @field_validator("experiment", mode="before")
-    def _load_experiment(cls, v):
-        if isinstance(v, str):
-            return deserialize(v, T2Experiment)
-        return v
-
-
-class TwoTonesAtFixedFluxBiasExperimentPayload(SpeQtrumModel):
-    """Payload model wrapping a ``TwoTonesAtFixedFluxBiasExperiment`` for API submission."""
-
-    experiment: TwoTonesAtFixedFluxBiasExperiment = Field(...)
-
-    @field_serializer("experiment")
-    def _serialize_experiment(self, experiment: TwoTonesAtFixedFluxBiasExperiment, _info):
-        return serialize(experiment)
-
-    @field_validator("experiment", mode="before")
-    def _load_experiment(cls, v):
-        if isinstance(v, str):
-            return deserialize(v, TwoTonesAtFixedFluxBiasExperiment)
-        return v
-
-
-class TwoTonesVsFluxBiasExperimentPayload(SpeQtrumModel):
-    """Payload model wrapping a ``TwoTonesVsFluxBiasExperiment`` for API submission."""
-
-    experiment: TwoTonesVsFluxBiasExperiment = Field(...)
-
-    @field_serializer("experiment")
-    def _serialize_experiment(self, experiment: TwoTonesVsFluxBiasExperiment, _info):
-        return serialize(experiment)
-
-    @field_validator("experiment", mode="before")
-    def _load_experiment(cls, v):
-        if isinstance(v, str):
-            return deserialize(v, TwoTonesVsFluxBiasExperiment)
+            return deserialize(v, ExperimentFunctional)
         return v
 
 
@@ -320,11 +247,7 @@ class ExecutePayload(SpeQtrumModel):
     analog_evolution_payload: AnalogEvolutionPayload | None = None
     quantum_reservoir_payload: QuantumReservoirPayload | None = None
     variational_program_payload: VariationalProgramPayload | None = None
-    rabi_experiment_payload: RabiExperimentPayload | None = None
-    t1_experiment_payload: T1ExperimentPayload | None = None
-    t2_experiment_payload: T2ExperimentPayload | None = None
-    two_tones_at_flux_bias_experiment_payload: TwoTonesAtFixedFluxBiasExperimentPayload | None = None
-    two_tones_vs_flux_bias_experiment_payload: TwoTonesVsFluxBiasExperimentPayload | None = None
+    experiment_payload: ExperimentPayload | None = None
 
 
 class ExecuteResult(SpeQtrumModel):
@@ -338,11 +261,7 @@ class ExecuteResult(SpeQtrumModel):
     type: ExecuteType = Field(...)
     functional_result: FunctionalResult | None = None
     variational_program_result: VariationalProgramResult | None = None
-    rabi_experiment_result: RabiExperimentResult | None = None
-    t1_experiment_result: T1ExperimentResult | None = None
-    t2_experiment_result: T2ExperimentResult | None = None
-    two_tones_at_fixed_flux_bias_experiment_result: TwoTonesAtFixedFluxBiasExperimentResult | None = None
-    two_tones_vs_flux_bias_experiment_result: TwoTonesVsFluxBiasExperimentResult | None = None
+    experiment_result: ExperimentResult | None = None
 
     @field_serializer("functional_result")
     def _serialize_sampling_result(self, functional_result: FunctionalResult, _info):
@@ -364,67 +283,9 @@ class ExecuteResult(SpeQtrumModel):
             return deserialize(v, VariationalProgramResult)
         return v
 
-    @field_serializer("rabi_experiment_result")
-    def _serialize_rabi_experiment_result(self, rabi_experiment_result: RabiExperimentResult, _info):
-        return serialize(rabi_experiment_result) if rabi_experiment_result is not None else None
-
-    @field_validator("rabi_experiment_result", mode="before")
-    def _load_rabi_experiment_result(cls, v):
-        if isinstance(v, str) and v.startswith("!"):
-            return deserialize(v, RabiExperimentResult)
-        return v
-
-    @field_serializer("t1_experiment_result")
-    def _serialize_t1_experiment_result(self, t1_experiment_result: T1ExperimentResult, _info):
-        return serialize(t1_experiment_result) if t1_experiment_result is not None else None
-
-    @field_validator("t1_experiment_result", mode="before")
-    def _load_t1_experiment_result(cls, v):
-        if isinstance(v, str) and v.startswith("!"):
-            return deserialize(v, T1ExperimentResult)
-        return v
-
-    @field_serializer("t2_experiment_result")
-    def _serialize_t2_experiment_result(self, t2_experiment_result: T2ExperimentResult, _info):
-        return serialize(t2_experiment_result) if t2_experiment_result is not None else None
-
-    @field_validator("t2_experiment_result", mode="before")
-    def _load_t2_experiment_result(cls, v):
-        if isinstance(v, str) and v.startswith("!"):
-            return deserialize(v, T2ExperimentResult)
-        return v
-
-    @field_serializer("two_tones_at_fixed_flux_bias_experiment_result")
-    def _serialize_two_tones_at_fixed_flux_bias_experiment_result(
-        self, two_tones_at_fixed_flux_bias_experiment_result: TwoTonesAtFixedFluxBiasExperimentResult, _info
-    ):
-        return (
-            serialize(two_tones_at_fixed_flux_bias_experiment_result)
-            if two_tones_at_fixed_flux_bias_experiment_result is not None
-            else None
-        )
-
-    @field_validator("two_tones_at_fixed_flux_bias_experiment_result", mode="before")
-    def _load_ttwo_tones_at_fixed_flux_bias_experiment_result(cls, v):
-        if isinstance(v, str) and v.startswith("!"):
-            return deserialize(v, TwoTonesAtFixedFluxBiasExperimentResult)
-        return v
-
-    @field_serializer("two_tones_vs_flux_bias_experiment_result")
-    def _serialize_two_tones_vs_flux_bias_experiment_result(
-        self, two_tones_vs_flux_bias_experiment_result: TwoTonesVsFluxBiasExperimentResult, _info
-    ):
-        return (
-            serialize(two_tones_vs_flux_bias_experiment_result)
-            if two_tones_vs_flux_bias_experiment_result is not None
-            else None
-        )
-
-    @field_validator("two_tones_vs_flux_bias_experiment_result", mode="before")
-    def _load_two_tones_vs_flux_bias_experiment_result(cls, v):
-        if isinstance(v, str) and v.startswith("!"):
-            return deserialize(v, TwoTonesVsFluxBiasExperimentResult)
-        return v
+    @field_serializer("experiment_result")
+    def _serialize_experiment_result(self, experiment_result: ExperimentResult, _info):
+        return serialize(experiment_result) if experiment_result is not None else None
 
 
 TFunctionalResult_co = TypeVar("TFunctionalResult_co", bound=Result, covariant=True)
@@ -470,93 +331,21 @@ def _require_variational_program_result(result: ExecuteResult) -> VariationalPro
     return result.variational_program_result
 
 
-def _require_rabi_experiment_result(result: ExecuteResult) -> RabiExperimentResult:
-    """Extract and return the ``RabiExperimentResult`` from *result*.
+def _require_experiment_result(result: ExecuteResult) -> ExperimentResult:
+    """Extract and return the ``ExperimentResult`` from *result*.
 
     Args:
         result (ExecuteResult): The execution result to inspect.
 
     Returns:
-        RabiExperimentResult: The contained Rabi experiment result.
+        ExperimentResult: The contained experiment result.
 
     Raises:
-        RuntimeError: If the ``rabi_experiment_result`` field is ``None``.
+        RuntimeError: If the ``experiment_result`` field is ``None``.
     """
-    if result.rabi_experiment_result is None:
-        raise RuntimeError("SpeQtrum did not return a rabi_experiment_result for a Rabi experiment execution.")
-    return result.rabi_experiment_result
-
-
-def _require_t1_experiment_result(result: ExecuteResult) -> T1ExperimentResult:
-    """Extract and return the ``T1ExperimentResult`` from *result*.
-
-    Args:
-        result (ExecuteResult): The execution result to inspect.
-
-    Returns:
-        T1ExperimentResult: The contained T1 experiment result.
-
-    Raises:
-        RuntimeError: If the ``t1_experiment_result`` field is ``None``.
-    """
-    if result.t1_experiment_result is None:
-        raise RuntimeError("SpeQtrum did not return a t1_experiment_result for a T1 experiment execution.")
-    return result.t1_experiment_result
-
-
-def _require_t2_experiment_result(result: ExecuteResult) -> T2ExperimentResult:
-    """Extract and return the ``T2ExperimentResult`` from *result*.
-
-    Args:
-        result (ExecuteResult): The execution result to inspect.
-
-    Returns:
-        T2ExperimentResult: The contained T2 experiment result.
-
-    Raises:
-        RuntimeError: If the ``t2_experiment_result`` field is ``None``.
-    """
-    if result.t2_experiment_result is None:
-        raise RuntimeError("SpeQtrum did not return a t2_experiment_result for a T2 experiment execution.")
-    return result.t2_experiment_result
-
-
-def _require_two_tones_experiment_result(result: ExecuteResult) -> TwoTonesAtFixedFluxBiasExperimentResult:
-    """Extract and return the ``TwoTonesAtFixedFluxBiasExperimentResult`` from *result*.
-
-    Args:
-        result (ExecuteResult): The execution result to inspect.
-
-    Returns:
-        TwoTonesAtFixedFluxBiasExperimentResult: The contained Two-Tones at flux bias experiment result.
-
-    Raises:
-        RuntimeError: If the ``two_tones_experiment_result`` field is ``None``.
-    """
-    if result.two_tones_at_fixed_flux_bias_experiment_result is None:
-        raise RuntimeError(
-            "SpeQtrum did not return a two_tones_at_fixed_flux_bias_experiment_result for a Two-Tones at flux bias experiment execution."
-        )
-    return result.two_tones_at_fixed_flux_bias_experiment_result
-
-
-def _require_two_tones_vs_flux_bias_experiment_result(result: ExecuteResult) -> TwoTonesVsFluxBiasExperimentResult:
-    """Extract and return the ``TwoTonesVsFluxBiasExperimentResult`` from *result*.
-
-    Args:
-        result (ExecuteResult): The execution result to inspect.
-
-    Returns:
-        TwoTonesVsFluxBiasExperimentResult: The contained Two-Tones vs flux bias experiment result.
-
-    Raises:
-        RuntimeError: If the ``two_tones_vs_flux_bias_experiment_result`` field is ``None``.
-    """
-    if result.two_tones_vs_flux_bias_experiment_result is None:
-        raise RuntimeError(
-            "SpeQtrum did not return a two_tones_vs_flux_bias_experiment_result for a Two-Tones vs flux bias experiment execution."
-        )
-    return result.two_tones_vs_flux_bias_experiment_result
+    if result.experiment_result is None:
+        raise RuntimeError("SpeQtrum did not return an experiment_result for a Experiment execution.")
+    return result.experiment_result
 
 
 def _require_variational_program_result_typed(
@@ -649,81 +438,17 @@ class JobHandle(SpeQtrumModel, Generic[TFunctionalResult_co]):
         return cast("JobHandle[VariationalProgramResult[TVariationalInnerResult]]", handle)
 
     @classmethod
-    def rabi_experiment(cls: type[JobHandle[RabiExperimentResult]], job_id: int) -> JobHandle[RabiExperimentResult]:
-        """Create a handle for a Rabi experiment job.
+    def experiment(cls: type[JobHandle[ExperimentResult]], job_id: int) -> JobHandle[ExperimentResult]:
+        """Create a handle for a experiment job.
 
         Args:
             job_id (int): Numeric identifier returned by the SpeQtrum service.
 
         Returns:
-            JobHandle[RabiExperimentResult]: A handle whose result type is
-            ``RabiExperimentResult``.
+            JobHandle[ExperimentResult]: A handle whose result type is
+            ``ExperimentResult``.
         """
-        return cls(id=job_id, execute_type=ExecuteType.RABI_EXPERIMENT, extractor=_require_rabi_experiment_result)
-
-    @classmethod
-    def t1_experiment(cls: type[JobHandle[T1ExperimentResult]], job_id: int) -> JobHandle[T1ExperimentResult]:
-        """Create a handle for a T1 experiment job.
-
-        Args:
-            job_id (int): Numeric identifier returned by the SpeQtrum service.
-
-        Returns:
-            JobHandle[T1ExperimentResult]: A handle whose result type is
-            ``T1ExperimentResult``.
-        """
-        return cls(id=job_id, execute_type=ExecuteType.T1_EXPERIMENT, extractor=_require_t1_experiment_result)
-
-    @classmethod
-    def t2_experiment(cls: type[JobHandle[T2ExperimentResult]], job_id: int) -> JobHandle[T2ExperimentResult]:
-        """Create a handle for a T2 experiment job.
-
-        Args:
-            job_id (int): Numeric identifier returned by the SpeQtrum service.
-
-        Returns:
-            JobHandle[T2ExperimentResult]: A handle whose result type is
-            ``T2ExperimentResult``.
-        """
-        return cls(id=job_id, execute_type=ExecuteType.T2_EXPERIMENT, extractor=_require_t2_experiment_result)
-
-    @classmethod
-    def two_tones_experiment(
-        cls: type[JobHandle[TwoTonesAtFixedFluxBiasExperimentResult]], job_id: int
-    ) -> JobHandle[TwoTonesAtFixedFluxBiasExperimentResult]:
-        """Create a handle for a Two-Tones at flux bias experiment job.
-
-        Args:
-            job_id (int): Numeric identifier returned by the SpeQtrum service.
-
-        Returns:
-            JobHandle[TwoTonesAtFixedFluxBiasExperimentResult]: A handle whose result type is
-            ``TwoTonesAtFixedFluxBiasExperimentResult``.
-        """
-        return cls(
-            id=job_id,
-            execute_type=ExecuteType.TWO_TONES_AT_FIXED_FLUX_EXPERIMENT,
-            extractor=_require_two_tones_experiment_result,
-        )
-
-    @classmethod
-    def two_tones_vs_flux_bias_experiment(
-        cls: type[JobHandle[TwoTonesVsFluxBiasExperimentResult]], job_id: int
-    ) -> JobHandle[TwoTonesVsFluxBiasExperimentResult]:
-        """Create a handle for a Two-Tones vs flux bias experiment job.
-
-        Args:
-            job_id (int): Numeric identifier returned by the SpeQtrum service.
-
-        Returns:
-            JobHandle[TwoTonesVsFluxBiasExperimentResult]: A handle whose result type is
-            ``TwoTonesVsFluxBiasExperimentResult``.
-        """
-        return cls(
-            id=job_id,
-            execute_type=ExecuteType.TWO_TONES_VS_FLUX_BIAS_EXPERIMENT,
-            extractor=_require_two_tones_vs_flux_bias_experiment_result,
-        )
+        return cls(id=job_id, execute_type=ExecuteType.EXPERIMENT, extractor=_require_experiment_result)
 
     def bind(self, detail: "JobDetail") -> "TypedJobDetail[TFunctionalResult_co]":
         """Attach this handle's typing information to a concrete job detail.
@@ -770,6 +495,7 @@ class JobType(str, Enum):
     DIGITAL = "digital"
     PULSE = "pulse"
     ANALOG = "analog"
+    QUANTUM_RESERVOIR = "quantum_reservoir"
     VARIATIONAL = "variational"
 
 
