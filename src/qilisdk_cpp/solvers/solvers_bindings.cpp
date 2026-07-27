@@ -20,7 +20,7 @@
 // GCOVR_EXCL_START
 
 PYBIND11_MODULE(solvers_module, m) {
-    initialize_external_pybind_types();
+    initialize_all_pybind_types();
     m.def("_refresh_log_level", &qilisdk::refresh_log_level);
     m.add_object("_qilisdk_cleanup", py::capsule(&finalize_all_pybind_types));
     m.def("solve_with_simulated_annealing", &solve_with_simulated_annealing, "qubo"_a, "num_reads"_a, "num_sweeps"_a, "beta_min"_a = 0.0, "beta_max"_a = 0.0, "seed"_a = 0, "num_threads"_a = 0);

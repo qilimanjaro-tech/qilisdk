@@ -44,6 +44,8 @@ extern py::object logger;
 extern py::object logger_core;
 
 // Internal types
+extern py::object QUBO;
+extern py::object Term;
 extern py::object Circuit;
 extern py::object Schedule;
 extern py::object DigitalPropagation;

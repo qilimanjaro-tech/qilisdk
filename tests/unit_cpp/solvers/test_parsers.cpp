@@ -45,10 +45,11 @@ double coefficient_of(const ParsedCostCpp& parsed, const std::vector<std::string
 
 }  // namespace
 
-TEST(SolverParsersTest, ParseQuboFlattensNestedTerms) {
+TEST(SolverParsersTest, ParseQuboReadsTheMonomialsOfTheObjective) {
     py::gil_scoped_acquire gil;
 
-    // x is binary so x * x == x, giving 3 * (2x + y + x * y) + 2
+    // Term arithmetic stores the objective expanded, and x is binary so x * x == x, leaving the
+    // monomials of 3 * (2x + y + x * y) + 2
     py::exec(R"(
         from qilisdk.core.model import QUBO
         from qilisdk.core.variables import BinaryVariable
@@ -115,6 +116,39 @@ TEST(SolverParsersTest, ParseQuboCoversTheBitsOfAnEncodedVariable) {
     std::vector<std::string> labels = parsed.labels;
     std::sort(labels.begin(), labels.end());
     EXPECT_EQ(labels, std::vector<std::string>({"x(0)", "x(1)", "x(2)", "x(3)"}));
+}
+
+TEST(SolverParsersTest, ParseQuboReadsAnObjectiveThatIsASingleProduct) {
+    py::gil_scoped_acquire gil;
+
+    py::exec(R"(
+        from qilisdk.core.model import QUBO
+        from qilisdk.core.variables import BinaryVariable
+        product = QUBO("product")
+        product.set_objective(2 * BinaryVariable("x") * BinaryVariable("y"))
+    )");
+
+    const ParsedCostCpp parsed = parse_qubo(py::globals()["product"]);
+    EXPECT_EQ(parsed.num_variables, 2);
+    EXPECT_EQ(parsed.monomials.size(), 1u);
+    EXPECT_DOUBLE_EQ(coefficient_of(parsed, {"x", "y"}), 2.0);
+    EXPECT_DOUBLE_EQ(parsed.offset, 0.0);
+}
+
+TEST(SolverParsersTest, ParseQuboRejectsAnObjectiveThatWasNotMultipliedOut) {
+    py::gil_scoped_acquire gil;
+
+    // Building the product by hand skips the Term arithmetic that would have multiplied the two sums
+    // out, leaving an objective that is not a sum over its monomials
+    py::exec(R"(
+        from qilisdk.core.model import QUBO
+        from qilisdk.core.variables import BinaryVariable, Operation, Term
+        x, y = BinaryVariable("x"), BinaryVariable("y")
+        nested = QUBO("nested")
+        nested.set_objective(Term([Term([x, y], Operation.ADD), Term([x, 1], Operation.ADD)], Operation.MUL))
+    )");
+
+    EXPECT_THROW(parse_qubo(py::globals()["nested"]), py::value_error);
 }
 
 TEST(SolverParsersTest, ParseQuboRejectsUnsupportedOperations) {
