@@ -71,3 +71,56 @@ you can use the Pauli ``Z`` operators from the library:
 
     - Z(0) Z(1) - 2 Z(0) Z(2) - 4 Z(1) Z(2) - Z(0) - 2 Z(1) - 3 Z(2)
 
+
+Visualizing
+============================
+
+:meth:`H.draw()<qilisdk.analog.hamiltonian.Hamiltonian.draw>` renders a Hamiltonian as an interaction graph:
+
+- every qubit is a node, whose disc is split into one slice per local field acting on it, labelled with its Pauli type,
+- every two-qubit term is an edge between the qubits it couples, drawn with a line style per coupling type (see the legend),
+- every term acting on three or more qubits is a star-shaped hyperedge joined at the centroid of the qubits involved,
+- slice and edge colours encode the coefficient of the corresponding term, as described by the colour bar,
+- a constant (identity) term is annotated below the graph as an energy offset.
+
+.. code-block:: python
+
+    from qilisdk.analog import X, Z
+
+    nqubits = 3
+    J = {(0, 1): 1, (0, 2): 2, (1, 2): 4}
+
+    H = sum(weight * Z(i) * Z(j) for (i, j), weight in J.items()) + sum(X(i) for i in range(nqubits))
+    H.draw()
+
+The appearance is controlled with :class:`~qilisdk.utils.visualization.style.HamiltonianStyle`, which shares the
+themes of the circuit and schedule renderers. It selects the ``rustworkx`` layout used to place the qubits
+(``"spring"``, ``"circular"``, ``"shell"``, ``"spiral"`` or ``"random"``, or explicit ``positions``), whether local
+fields and couplings share a single colour scale, and which annotations are drawn:
+
+.. code-block:: python
+
+    from qilisdk.analog import X, Z
+    from qilisdk.utils.visualization.style import HamiltonianStyle
+    from qilisdk.utils.visualization.themes import dark
+
+    H = 5 * X(0) - 3 * Z(0) + X(1) + 0.1 * Z(0) * Z(1) + 0.05 * X(0) * X(1)
+
+    H.draw(
+        HamiltonianStyle(
+            theme=dark,
+            layout="circular",
+            title="My Hamiltonian",
+            # Local fields and couplings live on very different scales here, so give each its own colour bar.
+            separate_color_scales=True,
+        )
+    )
+
+To save the figure instead of showing it, pass a ``filepath`` (the format is inferred from the extension):
+
+.. code-block:: python
+
+    from qilisdk.analog import X, Z
+
+    H = X(0) + Z(0) * Z(1)
+    H.draw(filepath="hamiltonian.png")
