@@ -490,7 +490,12 @@ class MatplotlibHamiltonianRenderer:
         origin = positions[qubit]
         occupied: list[float] = []
         for qubit_a, qubit_b in self._couplings:
-            neighbour = qubit_b if qubit_a == qubit else qubit_a if qubit_b == qubit else None
+            if qubit == qubit_a:
+                neighbour = qubit_b
+            elif qubit == qubit_b:
+                neighbour = qubit_a
+            else:
+                neighbour = None
             if neighbour is not None:
                 occupied.append(self._angle_between(origin, positions[neighbour]))
         if self.style.show_multi_body:

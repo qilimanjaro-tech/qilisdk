@@ -605,8 +605,9 @@ def test_hamiltonian_renderer_title_and_save(no_plot, tmp_path):
 
 
 def test_hamiltonian_renderer_empty_hamiltonian_raises():
+    empty_H = Hamiltonian()
     with pytest.raises(ValueError, match="does not act on any qubit"):
-        MatplotlibHamiltonianRenderer(Hamiltonian()).plot()
+        empty_H.draw()
 
 
 def test_hamiltonian_renderer_optional_edge_labels(no_plot):
