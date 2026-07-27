@@ -123,7 +123,7 @@ void arnoldi_mat(const SparseMatrix& Hsys, const DenseMatrix& rho0, int m, std::
     }
 }
 
-DenseMatrix iter_arnoldi(const DenseMatrix& rho_0, double dt, const SparseMatrix& currentH, const std::vector<SparseMatrix>& jump_operators, int arnoldi_dim, int num_substeps, bool is_unitary_on_statevector, double atol) {
+DenseMatrix iter_arnoldi(const DenseMatrix& rho_0, double dt, const SparseMatrix& currentH, const std::vector<SparseMatrix>& jump_operators, int arnoldi_dim, int num_substeps, bool is_unitary_on_statevector, double atol, bool normalize) {
     /*
     Perform time evolution using the Arnoldi iteration.
 
@@ -198,6 +198,7 @@ DenseMatrix iter_arnoldi(const DenseMatrix& rho_0, double dt, const SparseMatrix
     double dt_sub = dt / static_cast<double>(num_substeps);
     for (int substep_ind = 0; substep_ind < num_substeps; ++substep_ind) {
         // Run the Arnoldi iteration to build the basis
+        double beta = rho_t.norm();
         if (is_unitary_on_statevector) {
             arnoldi(Complex(0, -1) * currentH, rho_t, arnoldi_dim, V, A, atol);
             subspace_dim = int(V.size());
@@ -218,7 +219,7 @@ DenseMatrix iter_arnoldi(const DenseMatrix& rho_0, double dt, const SparseMatrix
 
         // Compute the action of the matrix exponential
         SparseMatrix e1(subspace_dim, 1);
-        e1.coeffRef(0, 0) = 1;
+        e1.coeffRef(0, 0) = beta;
         SparseMatrix y = exp_mat_action(A, dt_sub, e1);
 
         // Reconstruct the final density matrix using the basis vectors
@@ -228,19 +229,21 @@ DenseMatrix iter_arnoldi(const DenseMatrix& rho_0, double dt, const SparseMatrix
         }
         rho_t = rho_t_new;
 
-        // Normalize the state
-        if (is_unitary_on_statevector) {
-            rho_t /= rho_t.norm();
-        } else if (is_unitary) {
-            rho_t /= trace(rho_t);
-            continue;
-        } else if (!is_unitary_on_statevector) {
-            Complex tr = 0;
-            for (long i = 0; i < dim; ++i) {
-                long vec_index = i * dim + i;
-                tr += rho_t.coeff(vec_index, 0);
+        // Normalize the density matrix
+        if (normalize) {
+            if (is_unitary_on_statevector) {
+                rho_t /= rho_t.norm();
+            } else if (is_unitary) {
+                rho_t /= trace(rho_t);
+                continue;
+            } else if (!is_unitary_on_statevector) {
+                std::complex<double> tr = 0;
+                for (long i = 0; i < dim; ++i) {
+                    long vec_index = i * dim + i;
+                    tr += rho_t.coeff(vec_index, 0);
+                }
+                rho_t /= tr;
             }
-            rho_t /= tr;
         }
     }
 
