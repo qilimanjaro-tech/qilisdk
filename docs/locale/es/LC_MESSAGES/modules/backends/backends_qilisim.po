@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-27 11:20+0200\n"
+"POT-Creation-Date: 2026-07-27 17:03+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -85,7 +85,7 @@ msgstr ":class:`~qilisdk.functionals.digital_propagation.DigitalPropagation`"
 #: ../../modules/backends/backends_qilisim.rst:64
 #: ../../modules/backends/backends_qilisim.rst:67
 #: ../../modules/backends/backends_qilisim.rst:70
-#: ../../modules/backends/backends_qilisim.rst:281
+#: ../../modules/backends/backends_qilisim.rst:297
 msgid "|y|"
 msgstr "|y|"
 
@@ -247,7 +247,7 @@ msgstr ""
 "Hamiltonianos dispersos."
 
 #: ../../modules/backends/backends_qilisim.rst:139
-#: ../../modules/backends/backends_qilisim.rst:280
+#: ../../modules/backends/backends_qilisim.rst:296
 msgid ""
 ":meth:`AnalogMethod.variational_annealing() "
 "<qilisdk.backends.backend_config.AnalogMethod.variational_annealing>`"
@@ -313,7 +313,7 @@ msgstr ""
 "ajuste ``dim`` para el tamaño del subespacio de Krylov."
 
 #: ../../modules/backends/backends_qilisim.rst:148
-#: ../../modules/backends/backends_qilisim.rst:272
+#: ../../modules/backends/backends_qilisim.rst:288
 msgid ""
 ":meth:`AnalogMethod.direct() "
 "<qilisdk.backends.backend_config.AnalogMethod.direct>`"
@@ -522,24 +522,36 @@ msgstr ""
 "si hay disponible un dispositivo compatible con CUDA. Estos requieren "
 "instalar el extra ``cuda``:"
 
+#: ../../modules/backends/backends_qilisim.rst:264
+msgid "Linux"
+msgstr "Linux"
+
 #: ../../modules/backends/backends_qilisim.rst:270
+msgid "Mac OSX"
+msgstr "Mac OSX"
+
+#: ../../modules/backends/backends_qilisim.rst:276
+msgid "Windows"
+msgstr "Windows"
+
+#: ../../modules/backends/backends_qilisim.rst:286
 msgid "Method"
 msgstr "Método"
 
-#: ../../modules/backends/backends_qilisim.rst:271
+#: ../../modules/backends/backends_qilisim.rst:287
 msgid "GPU support"
 msgstr "Soporte de GPU"
 
-#: ../../modules/backends/backends_qilisim.rst:273
-#: ../../modules/backends/backends_qilisim.rst:275
-#: ../../modules/backends/backends_qilisim.rst:277
-#: ../../modules/backends/backends_qilisim.rst:279
-#: ../../modules/backends/backends_qilisim.rst:283
-#: ../../modules/backends/backends_qilisim.rst:285
+#: ../../modules/backends/backends_qilisim.rst:289
+#: ../../modules/backends/backends_qilisim.rst:291
+#: ../../modules/backends/backends_qilisim.rst:293
+#: ../../modules/backends/backends_qilisim.rst:295
+#: ../../modules/backends/backends_qilisim.rst:299
+#: ../../modules/backends/backends_qilisim.rst:301
 msgid "|n|"
 msgstr "|n|"
 
-#: ../../modules/backends/backends_qilisim.rst:274
+#: ../../modules/backends/backends_qilisim.rst:290
 msgid ""
 ":meth:`AnalogMethod.integrator() "
 "<qilisdk.backends.backend_config.AnalogMethod.integrator>`"
@@ -547,7 +559,7 @@ msgstr ""
 ":meth:`AnalogMethod.integrator() "
 "<qilisdk.backends.backend_config.AnalogMethod.integrator>`"
 
-#: ../../modules/backends/backends_qilisim.rst:276
+#: ../../modules/backends/backends_qilisim.rst:292
 msgid ""
 ":meth:`AnalogMethod.adaptive_integrator() "
 "<qilisdk.backends.backend_config.AnalogMethod.adaptive_integrator>`"
@@ -555,7 +567,7 @@ msgstr ""
 ":meth:`AnalogMethod.adaptive_integrator() "
 "<qilisdk.backends.backend_config.AnalogMethod.adaptive_integrator>`"
 
-#: ../../modules/backends/backends_qilisim.rst:278
+#: ../../modules/backends/backends_qilisim.rst:294
 msgid ""
 ":meth:`AnalogMethod.arnoldi() "
 "<qilisdk.backends.backend_config.AnalogMethod.arnoldi>`"
@@ -563,7 +575,7 @@ msgstr ""
 ":meth:`AnalogMethod.arnoldi() "
 "<qilisdk.backends.backend_config.AnalogMethod.arnoldi>`"
 
-#: ../../modules/backends/backends_qilisim.rst:282
+#: ../../modules/backends/backends_qilisim.rst:298
 msgid ""
 ":meth:`DigitalMethod.statevector() "
 "<qilisdk.backends.backend_config.DigitalMethod.statevector>`"
@@ -571,7 +583,7 @@ msgstr ""
 ":meth:`DigitalMethod.statevector() "
 "<qilisdk.backends.backend_config.DigitalMethod.statevector>`"
 
-#: ../../modules/backends/backends_qilisim.rst:284
+#: ../../modules/backends/backends_qilisim.rst:300
 msgid ""
 ":meth:`DigitalMethod.stabilizer() "
 "<qilisdk.backends.backend_config.DigitalMethod.stabilizer>`"
