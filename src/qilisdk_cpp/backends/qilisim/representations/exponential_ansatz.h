@@ -46,7 +46,7 @@ class ExponentialAnsatz {
     MatrixFreeHamiltonian& get_terms() { return terms; }
     SampleSet draw_samples() const;
     SampleSet draw_samples(int N_s, int n_warmup) const;
-    Eigen::VectorXcd local_energy(const SampleSet& samples, const MatrixFreeHamiltonian& H) const;
+    DenseVector local_energy(const SampleSet& samples, const MatrixFreeHamiltonian& H) const;
     double expectation_value(const MatrixFreeHamiltonian& observable) const;
     void prune_terms_not_in_hamiltonian(const MatrixFreeHamiltonian& H);
     ExponentialAnsatz operator*(const double& scalar) const;

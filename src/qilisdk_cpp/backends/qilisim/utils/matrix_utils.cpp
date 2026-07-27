@@ -17,13 +17,13 @@
 
 // GCOV_EXCL_BR_START
 
-SparseMatrix exp_mat_action(const SparseMatrix& H, std::complex<double> dt, const SparseMatrix& e1) {
+SparseMatrix exp_mat_action(const SparseMatrix& H, Complex dt, const SparseMatrix& e1) {
     /*
     Compute the action of the matrix exponential exp(H*dt) acting on a vector e1.
 
     Args:
         H (SparseMatrix): The upper Hessenberg matrix.
-        dt (std::complex<double>): The time step. Can be complex if needed.
+        dt (Complex): The time step. Can be complex if needed.
         e1 (SparseMatrix): The vector to apply the exponential to.
 
     Returns:
@@ -35,13 +35,13 @@ SparseMatrix exp_mat_action(const SparseMatrix& H, std::complex<double> dt, cons
     return exp_H_sparse;
 }
 
-DenseMatrix exp_mat_action(const SparseMatrix& H, std::complex<double> dt, const DenseMatrix& e1) {
+DenseMatrix exp_mat_action(const SparseMatrix& H, Complex dt, const DenseMatrix& e1) {
     /*
     Compute the action of the matrix exponential exp(H*dt) acting on a vector e1.
 
     Args:
         H (SparseMatrix): The upper Hessenberg matrix.
-        dt (std::complex<double>): The time step. Can be complex if needed.
+        dt (Complex): The time step. Can be complex if needed.
         e1 (SparseMatrix): The vector to apply the exponential to.
 
     Returns:
@@ -50,13 +50,13 @@ DenseMatrix exp_mat_action(const SparseMatrix& H, std::complex<double> dt, const
     return (dt * DenseMatrix(H)).exp() * e1;
 }
 
-SparseMatrix exp_mat(const SparseMatrix& H, std::complex<double> dt) {
+SparseMatrix exp_mat(const SparseMatrix& H, Complex dt) {
     /*
     Compute the matrix exponential exp(H*dt).
 
     Args:
         H (SparseMatrix): The matrix to exponentiate.
-        dt (std::complex<double>): The time step. Can be complex if needed.
+        dt (Complex): The time step. Can be complex if needed.
 
     Returns:
         SparseMatrix: The matrix exponential exp(H*dt).
@@ -67,7 +67,7 @@ SparseMatrix exp_mat(const SparseMatrix& H, std::complex<double> dt) {
     return exp_H_sparse;
 }
 
-std::complex<double> dot(const SparseMatrix& v1, const SparseMatrix& v2) {
+Complex dot(const SparseMatrix& v1, const SparseMatrix& v2) {
     /*
     Compute the inner product between two sparse matrices.
     Note that the first matrix is conjugated.
@@ -77,12 +77,12 @@ std::complex<double> dot(const SparseMatrix& v1, const SparseMatrix& v2) {
         v2 (SparseMatrix): The second matrix.
 
     Returns:
-        std::complex<double>: The inner product result.
+        Complex: The inner product result.
     */
     return v1.conjugate().cwiseProduct(v2).sum();
 }
 
-std::complex<double> dot(const DenseMatrix& v1, const DenseMatrix& v2) {
+Complex dot(const DenseMatrix& v1, const DenseMatrix& v2) {
     /*
     Compute the inner product between two dense matrices.
     Note that the first matrix is conjugated.
@@ -92,12 +92,12 @@ std::complex<double> dot(const DenseMatrix& v1, const DenseMatrix& v2) {
         v2 (DenseMatrix): The second matrix.
 
     Returns:
-        std::complex<double>: The inner product result.
+        Complex: The inner product result.
     */
     return v1.conjugate().cwiseProduct(v2).sum();
 }
 
-std::complex<double> trace(const DenseMatrix& matrix) {
+Complex trace(const DenseMatrix& matrix) {
     /*
     Compute the trace of a square matrix.
 
@@ -105,7 +105,7 @@ std::complex<double> trace(const DenseMatrix& matrix) {
         matrix (DenseMatrix): The input square matrix.
 
     Returns:
-        std::complex<double>: The trace of the matrix.
+        Complex: The trace of the matrix.
     */
     if (matrix.rows() != matrix.cols()) {
         throw py::value_error("Matrix must be square to compute trace.");
@@ -113,7 +113,7 @@ std::complex<double> trace(const DenseMatrix& matrix) {
     return matrix.trace();
 }
 
-std::complex<double> trace(const SparseMatrix& matrix) {
+Complex trace(const SparseMatrix& matrix) {
     /*
     Compute the trace of a square matrix.
 
@@ -121,12 +121,12 @@ std::complex<double> trace(const SparseMatrix& matrix) {
         matrix (SparseMatrix): The input square matrix.
 
     Returns:
-        std::complex<double>: The trace of the matrix.
+        Complex: The trace of the matrix.
     */
     if (matrix.rows() != matrix.cols()) {
         throw py::value_error("Matrix must be square to compute trace.");
     }
-    std::complex<double> tr = 0.0;
+    Complex tr = 0.0;
     for (int i = 0; i < matrix.rows(); ++i) {
         tr += matrix.coeff(i, i);
     }
@@ -237,7 +237,7 @@ SparseMatrix vectorize(const SparseMatrix& matrix, double atol) {
     Triplets vec_entries;
     for (int c = 0; c < cols; ++c) {
         for (int r = 0; r < rows; ++r) {
-            std::complex<double> val = matrix.coeff(r, c);
+            Complex val = matrix.coeff(r, c);
             if (std::abs(val) > atol) {
                 vec_entries.emplace_back(Triplet(r + c * rows, 0, val));
             }
@@ -284,7 +284,7 @@ SparseMatrix devectorize(const SparseMatrix& vec_matrix, double atol) {
     Triplets mat_entries;
     for (int c = 0; c < dim; ++c) {
         for (int r = 0; r < dim; ++r) {
-            std::complex<double> val = vec_matrix.coeff(r + c * dim, 0);
+            Complex val = vec_matrix.coeff(r + c * dim, 0);
             if (std::abs(val) > atol) {
                 mat_entries.emplace_back(Triplet(r, c, val));
             }

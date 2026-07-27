@@ -18,6 +18,8 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Callable, NoReturn
 
+from loguru import logger
+
 
 class OptionalDependencyError(ImportError):
     """Raised when an optional dependency is missing, with a custom message."""
@@ -126,11 +128,13 @@ class _OptionalDependencyStub:
 
 
 def _group_installed(dists: list[str]) -> tuple[bool, list[str]]:
+    logger.trace("[Optionals] Checking distributions {}", dists)
     missing: list[str] = []
     for dist in dists:
         try:
             importlib.metadata.version(dist)
         except importlib.metadata.PackageNotFoundError:
+            logger.debug("[Optionals] Distribution {} not installed", dist)
             missing.append(dist)
     return (len(missing) == 0), missing
 
@@ -165,6 +169,7 @@ def import_optional_dependencies(feature: OptionalFeature) -> ImportedFeature:
     Returns:
         Dict[str, Union[Any, Callable]]: A dict { symbol_name: symbol_or_stub }
     """
+    logger.debug("[Optionals] Resolving optional feature {}", feature.name)
 
     def make_stub(symbol_name: str, *, import_error: Exception | None = None) -> _OptionalDependencyStub:
         return _OptionalDependencyStub(
@@ -184,6 +189,9 @@ def import_optional_dependencies(feature: OptionalFeature) -> ImportedFeature:
             all_dists.extend(g.dists)
         ok, missing = _group_installed(all_dists)
         if not ok:
+            logger.warning(
+                "[Optionals] Optional feature {} unavailable, missing distributions {}", feature.name, missing
+            )
             # stubs
             stubs: dict[str, Any] = {s.name: make_stub(s.name) for s in feature.symbols}
             return ImportedFeature(name=feature.name, symbols=stubs)
@@ -198,15 +206,20 @@ def import_optional_dependencies(feature: OptionalFeature) -> ImportedFeature:
             missing_by_group.append((g, missing))
 
         if satisfied_group is None:
+            logger.warning("[Optionals] Optional feature {} unavailable, no dependency group satisfied", feature.name)
             stubs: dict[str, Any] = {s.name: make_stub(s.name) for s in feature.symbols}
             return ImportedFeature(name=feature.name, symbols=stubs)
 
     # All good: import real symbols
+    logger.debug("[Optionals] Optional feature {} resolved, importing symbols", feature.name)
     symbols: dict[str, Any | Callable] = {}
     for symbol in feature.symbols:
         try:
             module = importlib.import_module(symbol.path)
             symbols[symbol.name] = getattr(module, symbol.name)
         except Exception as exc:  # noqa: BLE001
+            logger.warning(
+                "[Optionals] Failed to import symbol {} for feature {}, using stub", symbol.name, feature.name
+            )
             symbols[symbol.name] = make_stub(symbol.name, import_error=exc)
     return ImportedFeature(name=feature.name, symbols=symbols)

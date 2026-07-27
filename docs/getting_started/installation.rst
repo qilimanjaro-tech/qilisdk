@@ -156,6 +156,39 @@ If you want to install with extras, you can run the following, adjusting as need
 .. code-block:: bash
 
     uv sync --extra cuda13 --extra qutip --extra speqtrum
+    
+There are also a number of extra compile flags that can be set to enable/disable certain features:
+
+.. list-table::
+    :header-rows: 1
+    :widths: 45 55
+
+    * - Flag
+      - What it does
+    * - ``-Ccmake.define.build_native=ON``
+      - Build for the architecture of the current machine for increased performance. Only recommended if you are building for your own machine.
+    * - ``-Ccmake.define.single_precision=ON``
+      - Use single precision (``float``) instead of double precision (``double``). Slightly faster, but less accurate.
+    * - ``-Ccmake.build-type=Debug``
+      - Enable a debug build (no optimizations, debug symbols).
+    * - ``-Ccmake.build-type=RelWithDebInfo``
+      - Enable an optimized debug build (optimizations plus debug symbols).
+    * - ``-Ccmake.build-type=Release``
+      - Enable a release build (optimizations, no debug symbols). This is the default.
+    * - ``-Ccmake.define.tidy=ON``
+      - Run ``clang-tidy`` on the code during compilation.
+    * - ``-Ccmake.define.verbose=ON``
+      - Enable (very) verbose output from the C++ code.
+    * - ``-Ccmake.define.tests=ON``
+      - Build the C++ test suite, which will then be available as a ``test_cpp`` executable in the tests directory.
+    * - ``-Ccmake.define.coverage=ON``
+      - Enable coverage instrumentation flags.
+
+These can be passed to ``uv sync`` by simply appending to the build command, for example:
+
+.. code-block:: bash
+
+    uv sync -Ccmake.define.build_native=ON -Ccmake.build-type=RelWithDebInfo
 
 You then have an environment with the latest version of QiliSDK installed.
 If you want to install other things to the environment you'll need to use pip with uv:

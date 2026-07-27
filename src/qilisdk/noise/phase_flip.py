@@ -14,6 +14,8 @@
 
 from __future__ import annotations
 
+from loguru import logger
+
 from .pauli_channel import PauliChannel
 from .protocols import SupportsStaticKraus
 from .utils import _check_probability
@@ -33,6 +35,7 @@ class PhaseFlip(PauliChannel, SupportsStaticKraus):
             ValueError: If probability is outside [0, 1].
         """
         self._probability = _check_probability(probability, "probability")
+        logger.debug("[PhaseFlip] Built phase-flip channel with probability {}", self._probability)
         super().__init__(pZ=probability)
 
     @property

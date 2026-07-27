@@ -1521,6 +1521,58 @@ TEST(EntropyTest, Renyi_Alpha2_Succeeds) {
     EXPECT_NO_THROW(q.entropy_renyi(2.0));
 }
 
+static SparseMatrix make_t_plus() {
+    constexpr double pi = 3.14159265358979323846;
+    SparseMatrix m(2, 1);
+    m.insert(0, 0) = Complex(1.0 / std::sqrt(2.0), 0.0);
+    m.insert(1, 0) = std::exp(Complex(0.0, pi / 4.0)) / std::sqrt(2.0);
+    m.makeCompressed();
+    return m;
+}
+
+TEST(MagicTest, Ket0_IsStabilizer_Zero) {
+    QTensorCpp q(make_ket0());
+    EXPECT_NEAR(q.magic(2.0), 0.0, 1e-10);
+}
+
+TEST(MagicTest, GHZ_IsStabilizer_Zero) {
+    QTensorCpp q = QTensorCpp::ghz(3);
+    EXPECT_NEAR(q.magic(2.0), 0.0, 1e-10);
+}
+
+TEST(MagicTest, TPlus_Alpha2_IsLog2FourThirds) {
+    QTensorCpp q(make_t_plus());
+    EXPECT_NEAR(q.magic(2.0), std::log2(4.0 / 3.0), 1e-10);
+}
+
+TEST(MagicTest, TPlus_Alpha1_ShannonLimit) {
+    QTensorCpp q(make_t_plus());
+    EXPECT_NEAR(q.magic(1.0), 0.5, 1e-10);
+}
+
+TEST(MagicTest, Bra_MatchesKet) {
+    QTensorCpp ket(make_t_plus());
+    QTensorCpp bra = ket.adjoint();
+    EXPECT_NEAR(bra.magic(2.0), ket.magic(2.0), 1e-10);
+}
+
+TEST(MagicTest, Operator_Throws) {
+    QTensorCpp q(make_identity2());
+    EXPECT_THROW(q.magic(2.0), py::value_error);
+}
+
+TEST(MagicTest, AlphaZero_Throws) {
+    QTensorCpp q(make_t_plus());
+    EXPECT_THROW(q.magic(0.0), py::value_error);
+}
+
+TEST(MagicTest, ZeroState_Throws) {
+    SparseMatrix m(2, 1);
+    m.makeCompressed();
+    QTensorCpp q(m);
+    EXPECT_THROW(q.magic(2.0), py::value_error);
+}
+
 TEST(RankTest, Ket_Rank1) {
     QTensorCpp q(make_ket0());
     EXPECT_EQ(q.rank(), 1);
@@ -1812,6 +1864,97 @@ TEST(ExpectationValueMatrixFree, KetZeroWithX_GivesZero) {
     QTensorCpp ket(make_ket0());
     auto ev = ket.expectation_value(make_mf_x());
     EXPECT_NEAR(ev.real(), 0.0, 1e-10);
+}
+
+// ---------------------------------------------------------------------------
+// Storage backend selection (row-sparse / column-sparse / dense).
+// ---------------------------------------------------------------------------
+
+TEST(StorageFormatTest, KetIsColumnSparse) {
+    SparseMatrix m(8, 1);
+    m.insert(0, 0) = 1.0;
+    m.makeCompressed();
+    QTensorCpp ket(m);
+    EXPECT_EQ(ket.get_format(), StorageFormat::ColSparse);
+    EXPECT_EQ(ket.get_format_string(), "col_sparse");
+    EXPECT_TRUE(ket.is_ket());
+}
+
+TEST(StorageFormatTest, BraIsRowSparse) {
+    SparseMatrix m(1, 8);
+    m.insert(0, 0) = 1.0;
+    m.makeCompressed();
+    QTensorCpp bra(m);
+    EXPECT_EQ(bra.get_format(), StorageFormat::RowSparse);
+    EXPECT_EQ(bra.get_format_string(), "row_sparse");
+    EXPECT_TRUE(bra.is_bra());
+}
+
+TEST(StorageFormatTest, SparseOperatorIsRowSparse) {
+    SparseMatrix m(4, 4);
+    for (int i = 0; i < 4; ++i) {
+        m.insert(i, i) = 1.0;
+    }
+    m.makeCompressed();
+    QTensorCpp op(m);
+    EXPECT_EQ(op.get_format(), StorageFormat::RowSparse);
+}
+
+TEST(StorageFormatTest, DenseOperatorIsDense) {
+    SparseMatrix m(2, 2);
+    m.insert(0, 0) = 1.0;
+    m.insert(0, 1) = 2.0;
+    m.insert(1, 0) = 3.0;
+    m.insert(1, 1) = 4.0;
+    m.makeCompressed();
+    QTensorCpp op(m);
+    EXPECT_EQ(op.get_format(), StorageFormat::Dense);
+    EXPECT_EQ(op.get_format_string(), "dense");
+}
+
+TEST(StorageFormatTest, ForcedFormatOverridesDefault) {
+    QTensorCpp forced_dense(make_identity2(), StorageFormat::Dense);
+    EXPECT_EQ(forced_dense.get_format(), StorageFormat::Dense);
+    QTensorCpp forced_col(make_identity2(), StorageFormat::ColSparse);
+    EXPECT_EQ(forced_col.get_format(), StorageFormat::ColSparse);
+}
+
+TEST(StorageFormatTest, FactoriesPickExpectedFormat) {
+    EXPECT_EQ(QTensorCpp::zero(3).get_format(), StorageFormat::ColSparse);
+    EXPECT_EQ(QTensorCpp::one(3).get_format(), StorageFormat::ColSparse);
+    EXPECT_EQ(QTensorCpp::ghz(3).get_format(), StorageFormat::ColSparse);
+    EXPECT_EQ(QTensorCpp::ket({0, 1, 0}).get_format(), StorageFormat::ColSparse);
+    QTensorCpp u = QTensorCpp::uniform(3);
+    EXPECT_EQ(u.get_format(), StorageFormat::Dense);
+    EXPECT_TRUE(u.is_ket());
+}
+
+TEST(StorageFormatTest, FormatIsReselectedAfterOperations) {
+    QTensorCpp ket(make_ket0());
+    QTensorCpp bra = ket.adjoint();
+    EXPECT_TRUE(bra.is_bra());
+    EXPECT_NE(bra.get_format(), StorageFormat::ColSparse);
+}
+
+TEST(StorageFormatTest, ConversionsAgreeAcrossFormats) {
+    SparseMatrix m(2, 2);
+    m.insert(0, 0) = std::complex<double>(1.0, 0.0);
+    m.insert(1, 0) = std::complex<double>(0.0, 2.0);
+    m.insert(1, 1) = std::complex<double>(3.0, 0.0);
+    m.makeCompressed();
+    QTensorCpp row(m, StorageFormat::RowSparse);
+    QTensorCpp col(m, StorageFormat::ColSparse);
+    QTensorCpp dense(m, StorageFormat::Dense);
+    for (int r = 0; r < 2; ++r) {
+        for (int c = 0; c < 2; ++c) {
+            EXPECT_EQ(row.coeff(r, c), col.coeff(r, c));
+            EXPECT_EQ(row.coeff(r, c), dense.coeff(r, c));
+        }
+    }
+    EXPECT_TRUE(row.equals(col));
+    EXPECT_TRUE(row.equals(dense));
+    EXPECT_EQ(row.nnz(), col.nnz());
+    EXPECT_EQ(row.nnz(), dense.nnz());
 }
 
 // GCOV_EXCL_BR_STOP

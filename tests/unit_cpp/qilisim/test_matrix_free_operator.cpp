@@ -1155,4 +1155,123 @@ TEST(MatrixFreeOperator, ControlledAsymComplexGate_LeftAndRight_MixedStateStaysH
     ASSERT_TRUE(rho.isApprox(rho.adjoint(), 1e-10)) << "Result must stay Hermitian, got:\n" << rho;
 }
 
+// --- Dense multi-qubit (fused) gate application ---------------------------
+
+namespace {
+
+DenseMatrix hMat() {
+    DenseMatrix h(2, 2);
+    Real v = 1.0 / std::sqrt(2.0);
+    h(0, 0) = v;
+    h(0, 1) = v;
+    h(1, 0) = v;
+    h(1, 1) = -v;
+    return h;
+}
+
+DenseMatrix swap4() {
+    DenseMatrix m(4, 4);
+    m.setZero();
+    m(0, 0) = 1.0;
+    m(1, 2) = 1.0;
+    m(2, 1) = 1.0;
+    m(3, 3) = 1.0;
+    return m;
+}
+
+// Reference: apply a dense base matrix on `targets` of an n-qubit state by
+// expanding it to the full register via Gate::get_full_matrix.
+DenseMatrix applyViaFullMatrix(const DenseMatrix& base, const std::vector<int>& targets, int n, const DenseMatrix& state) {
+    SparseMatrix sparse_base = base.sparseView();
+    Gate g("FUSED", sparse_base, {}, targets, {});
+    SparseMatrix full = g.get_full_matrix(n);
+    return DenseMatrix(full * state);
+}
+
+DenseMatrix randomState(int n, unsigned seed) {
+    long dim = 1L << n;
+    DenseMatrix s(dim, 1);
+    // Deterministic pseudo-random fill (no <random> dependency needed here).
+    unsigned x = seed * 2654435761u + 1u;
+    for (long i = 0; i < dim; ++i) {
+        x = x * 1664525u + 1013904223u;
+        Real re = static_cast<Real>((x >> 9) & 0xFFFF) / 65535.0 - 0.5;
+        x = x * 1664525u + 1013904223u;
+        Real im = static_cast<Real>((x >> 9) & 0xFFFF) / 65535.0 - 0.5;
+        s(i, 0) = Complex(re, im);
+    }
+    return s / s.norm();
+}
+
+}  // namespace
+
+TEST(MatrixFreeOperator, DenseMultiQubit_ConstructorAllowsTwoTargets) {
+    MatrixFreeOperator op("FUSED", {}, {0, 1}, swap4());
+    EXPECT_EQ(op.get_target_qubits().size(), 2u);
+    EXPECT_EQ(op.get_control_qubits().size(), 0u);
+}
+
+TEST(MatrixFreeOperator, DenseMultiQubit_SwapMatrixActsAsSwap) {
+    // A dense SWAP matrix applied on targets {0,1} should swap |01> and |10>.
+    MatrixFreeOperator op("FUSED", {}, {0, 1}, swap4());
+    DenseMatrix s = ket01();
+    op.apply(s, MatrixFreeApplicationType::Left);
+    ASSERT_TRUE(s.isApprox(ket10(), 1e-5)) << "Dense SWAP|01> should be |10>, got:\n" << s;
+}
+
+TEST(MatrixFreeOperator, DenseMultiQubit_TwoQubitDense_AdjacentTargets) {
+    // H⊗H applied on adjacent targets {0,1} of a 3-qubit state.
+    DenseMatrix hh = Eigen::kroneckerProduct(hMat(), hMat()).eval();
+    DenseMatrix state = randomState(3, 1);
+    DenseMatrix expected = applyViaFullMatrix(hh, {0, 1}, 3, state);
+    MatrixFreeOperator op("FUSED", {}, {0, 1}, hh);
+    op.apply(state, MatrixFreeApplicationType::Left);
+    ASSERT_TRUE(state.isApprox(expected, 1e-5)) << "Dense 2-qubit apply mismatch, got:\n" << state << "\nexpected:\n" << expected;
+}
+
+TEST(MatrixFreeOperator, DenseMultiQubit_TwoQubitDense_NonAdjacentTargets) {
+    // Targets {0,2} on a 4-qubit register exercise the scattered gather/scatter.
+    DenseMatrix hh = Eigen::kroneckerProduct(hMat(), hMat()).eval();
+    DenseMatrix state = randomState(4, 7);
+    DenseMatrix expected = applyViaFullMatrix(hh, {0, 2}, 4, state);
+    MatrixFreeOperator op("FUSED", {}, {0, 2}, hh);
+    op.apply(state, MatrixFreeApplicationType::Left);
+    ASSERT_TRUE(state.isApprox(expected, 1e-5)) << "Dense 2-qubit non-adjacent apply mismatch";
+}
+
+TEST(MatrixFreeOperator, DenseMultiQubit_ThreeQubitDense_ScatteredTargets) {
+    // A dense 8x8 (H⊗H⊗H) on targets {0,2,4} of a 5-qubit register.
+    DenseMatrix hhh = Eigen::kroneckerProduct(hMat(), Eigen::kroneckerProduct(hMat(), hMat()).eval()).eval();
+    DenseMatrix state = randomState(5, 13);
+    DenseMatrix expected = applyViaFullMatrix(hhh, {0, 2, 4}, 5, state);
+    MatrixFreeOperator op("FUSED", {}, {0, 2, 4}, hhh);
+    op.apply(state, MatrixFreeApplicationType::Left);
+    ASSERT_TRUE(state.isApprox(expected, 1e-5)) << "Dense 3-qubit apply mismatch";
+}
+
+TEST(MatrixFreeOperator, DenseMultiQubit_DiagonalBlock_AppliesPhases) {
+    // A diagonal dense block (e.g. a fused run of phase gates) takes the operator's
+    // dedicated diagonal fast path: each amplitude is multiplied by its phase.
+    DenseMatrix diag(4, 4);
+    diag.setZero();
+    diag(0, 0) = Complex(1.0, 0.0);
+    diag(1, 1) = Complex(0.0, 1.0);
+    diag(2, 2) = Complex(-1.0, 0.0);
+    diag(3, 3) = Complex(0.0, -1.0);
+    DenseMatrix state = randomState(3, 5);
+    DenseMatrix expected = applyViaFullMatrix(diag, {0, 2}, 3, state);
+    MatrixFreeOperator op("FUSED", {}, {0, 2}, diag);
+    op.apply(state, MatrixFreeApplicationType::Left);
+    ASSERT_TRUE(state.isApprox(expected, 1e-5)) << "Dense diagonal apply mismatch, got:\n" << state << "\nexpected:\n" << expected;
+}
+
+TEST(MatrixFreeOperator, DenseMultiQubit_ThrowsOnDensityMatrix) {
+    // Fused operators are statevector-only; applying to a density matrix throws.
+    MatrixFreeOperator op("FUSED", {}, {0, 1}, swap4());
+    DenseMatrix rho(4, 4);
+    rho.setZero();
+    rho(1, 1) = 1.0;
+    EXPECT_ANY_THROW(op.apply(rho, MatrixFreeApplicationType::LeftAndRight));
+}
+
 // GCOV_EXCL_BR_STOP

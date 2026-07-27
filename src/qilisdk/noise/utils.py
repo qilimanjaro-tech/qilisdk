@@ -15,6 +15,7 @@
 from __future__ import annotations
 
 import numpy as np
+from loguru import logger
 
 
 def _check_probability(p: float, name: str = "p") -> float:
@@ -33,6 +34,7 @@ def _check_probability(p: float, name: str = "p") -> float:
     p = float(p)
     if not (0.0 <= p <= 1.0):
         raise ValueError(f"{name} must be in [0, 1].")
+    logger.trace("[NoiseUtils] Validated probability {}={}", name, p)
     return p
 
 

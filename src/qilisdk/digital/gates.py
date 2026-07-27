@@ -18,6 +18,7 @@ from functools import cached_property
 from typing import TYPE_CHECKING, ClassVar, Generic, TypeVar
 
 import numpy as np
+from loguru import logger
 from scipy.linalg import expm
 from typing_extensions import Self
 
@@ -53,6 +54,7 @@ class Gate(Parameterizable, ABC):
 
     def __init__(self) -> None:
         super().__init__()
+        logger.trace("[Gates] Initializing gate {}", type(self).__name__)
 
     @property
     @abstractmethod
@@ -279,6 +281,7 @@ class BasicGate(Gate):
             ValueError: if any parameter transform is not a parameterized term.
             InvalidParameterNameError: if any parameter mentioned in parameter_transforms is not in parameters.
         """
+        logger.trace("[Gates] Building basic gate {} on target qubits {}", type(self).__name__, target_qubits)
         # Check for duplicate integers in target_qubits.
         super().__init__()
         if len(target_qubits) != len(set(target_qubits)):
@@ -342,6 +345,9 @@ class BasicGate(Gate):
         Returns:
             Controlled: A new Controlled gate instance that wraps this unitary gate with the specified control qubits.
         """
+        logger.trace(
+            "[Gates] Creating controlled version of {} with control qubits {}", type(self).__name__, control_qubits
+        )
         return Controlled(*control_qubits, basic_gate=self)
 
     def adjoint(self: Self) -> Adjoint[Self]:
@@ -354,6 +360,7 @@ class BasicGate(Gate):
         Returns:
             Adjoint: A new Adjoint gate instance representing the adjoint of this gate.
         """
+        logger.trace("[Gates] Creating adjoint of {}", type(self).__name__)
         return Adjoint(basic_gate=self)
 
     def exponential(self: Self) -> Exponential[Self]:
@@ -367,6 +374,7 @@ class BasicGate(Gate):
         Returns:
             Exponential: A new Exponential gate instance whose matrix is the matrix exponential of the current gate's matrix.
         """
+        logger.trace("[Gates] Creating exponential of {}", type(self).__name__)
         return Exponential(basic_gate=self)
 
     @abstractmethod
@@ -377,6 +385,7 @@ class BasicGate(Gate):
 class Modified(Gate, Generic[TBasicGate]):
     def __init__(self, basic_gate: TBasicGate) -> None:
         super().__init__()
+        logger.trace("[Gates] Wrapping gate {} in {}", type(basic_gate).__name__, type(self).__name__)
         self._basic_gate: TBasicGate = basic_gate
         self._link_parameters(self._basic_gate)
 
@@ -452,6 +461,7 @@ class Modified(Gate, Generic[TBasicGate]):
 @yaml.register_class
 class Controlled(Modified[TBasicGate]):
     def __init__(self, *control_qubits: int, basic_gate: TBasicGate | Controlled[TBasicGate]) -> None:
+        logger.trace("[Gates] Constructing Controlled gate with control qubits {}", control_qubits)
         # If doing Controlled of another Controlled, combine into one with all control qubits.
         if isinstance(basic_gate, Controlled) and isinstance(basic_gate.basic_gate, Gate):
             control_qubits += basic_gate.control_qubits
@@ -474,6 +484,7 @@ class Controlled(Modified[TBasicGate]):
         self._control_qubits = control_qubits + basic_gate.control_qubits
 
     def _generate_matrix(self) -> np.ndarray:
+        logger.trace("[Gates] Generating Controlled matrix for {} on {} qubits", self.name, self.nqubits)
         i_full = np.eye(1 << self.nqubits, dtype=_complex_dtype())
         # Construct projector P_control = |1...1><1...1| on the n control qubits.
         P = np.array([[0, 0], [0, 1]], dtype=_complex_dtype())
@@ -502,8 +513,10 @@ class Adjoint(Modified[TBasicGate]):
 
     def __init__(self, basic_gate: TBasicGate) -> None:
         super().__init__(basic_gate=basic_gate)
+        logger.trace("[Gates] Constructing Adjoint of {}", type(basic_gate).__name__)
 
     def _generate_matrix(self) -> np.ndarray:
+        logger.trace("[Gates] Generating Adjoint matrix for {}", self.name)
         return self.basic_gate.matrix.conj().T
 
     @property
@@ -530,8 +543,10 @@ class Exponential(Modified[TBasicGate]):
 
     def __init__(self, basic_gate: TBasicGate) -> None:
         super().__init__(basic_gate=basic_gate)
+        logger.trace("[Gates] Constructing Exponential of {}", type(basic_gate).__name__)
 
     def _generate_matrix(self) -> np.ndarray:
+        logger.trace("[Gates] Generating Exponential matrix for {}", self.name)
         return expm(self.basic_gate.matrix)
 
     @property
@@ -817,6 +832,7 @@ def _process_param(
     Raises:
         ValueError: If a Term is provided that contains Variables instead of Parameters.
     """
+    logger.trace("[Gates] Processing parameter {}", name)
     if isinstance(value, Parameter):
         params_to_init[name] = value
     elif isinstance(value, Term):

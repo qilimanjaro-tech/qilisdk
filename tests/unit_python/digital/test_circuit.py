@@ -704,3 +704,13 @@ def test_circuit_set_prefix_then_set_parameters_updates_all_shared_gates():
     expected = np.exp(1j * 5.0)
     assert np.isclose(g0.matrix[1, 1], expected)
     assert np.isclose(g1.matrix[1, 0], expected / np.sqrt(2))
+
+
+@pytest.mark.parametrize("bad_qubit", [-1, 2, 5])
+def test_circuit_rejects_out_of_range_qubit(bad_qubit):
+    """QSDK-05: the Python layer must reject both negative and too-large qubit
+    indices (the negative case was previously unguarded)."""
+    circuit = Circuit(2)
+    gate = X(bad_qubit)
+    with pytest.raises(QubitOutOfRangeError):
+        circuit.add(gate)

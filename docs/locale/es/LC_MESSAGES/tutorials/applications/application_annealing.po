@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-16 12:04+0200\n"
+"POT-Creation-Date: 2026-07-06 12:26+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -263,8 +263,8 @@ msgid ""
 msgstr ""
 "Donde :math:`Z(i)` es el operador de Pauli-Z que actúa sobre el cúbit "
 ":math:`i`, y :math:`c_{ij}` son los coeficientes de nuestra formulación "
-"QUBO. Tenga en cuenta que estas variables :math:`Z(i)` están relacionadas "
-"con las variables binarias de nuestro problema original mediante la "
+"QUBO. Tenga en cuenta que estas variables :math:`Z(i)` están relacionadas"
+" con las variables binarias de nuestro problema original mediante la "
 "transformación :math:`x_i = (1 - Z(i))/2`."
 
 #: ../../tutorials/applications/application_annealing.rst:39
@@ -333,8 +333,8 @@ msgid ""
 "simple linear mixing:"
 msgstr ""
 "También necesitamos definir el esquema: cómo cambian los coeficientes de "
-"los Hamiltonianos del problema y de mezcla a lo largo del tiempo. En este "
-"caso, simplemente usaremos una mezcla lineal sencilla:"
+"los Hamiltonianos del problema y de mezcla a lo largo del tiempo. En este"
+" caso, simplemente usaremos una mezcla lineal sencilla:"
 
 #: ../../tutorials/applications/application_annealing.rst:81
 msgid ""
@@ -371,15 +371,36 @@ msgstr ""
 " equipo y Bob/Carol en el otro) son las soluciones óptimas a nuestro "
 "problema, siendo 9 la puntuación de compatibilidad máxima obtenible."
 
-#: ../../tutorials/applications/application_annealing.rst:123
+#: ../../tutorials/applications/application_annealing.rst:122
+msgid ""
+"To help to visualize the evolution we just performed, we can re-run our "
+"simulation, this time recording the full state at each timestep and then "
+"using the "
+":meth:`Schedule.draw_eigenvalues()<qilisdk.analog.schedule.Schedule.draw_eigenvalues>`"
+" method to plot how our state evolved versus the eigenvalues of the "
+"Hamiltonian over time:"
+msgstr ""
+
+#: ../../tutorials/applications/application_annealing.rst:152
+msgid ""
+"As we can see from this plot, the state started in the ground state of "
+"the mixing Hamiltonian (the bottom line, at the very left) and then "
+"evolved to the ground state of the problem Hamiltonian (at the very "
+"right). By moving slow enough we stayed in the ground state, with only a "
+"small percentage of our state leaking out to some of the excited states. "
+"A larger total time (and thus a slower evolution) would result in less "
+"state leaking out, at the cost of taking longer to run."
+msgstr ""
+
+#: ../../tutorials/applications/application_annealing.rst:158
 msgid "Further Reading"
 msgstr "Lectura adicional"
 
-#: ../../tutorials/applications/application_annealing.rst:125
+#: ../../tutorials/applications/application_annealing.rst:160
 msgid "`QUBO`_"
 msgstr "`QUBO`_"
 
-#: ../../tutorials/applications/application_annealing.rst:126
+#: ../../tutorials/applications/application_annealing.rst:161
 msgid "`Quantum Annealing`_"
 msgstr "`Quantum Annealing`_"
 

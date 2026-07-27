@@ -17,11 +17,13 @@ from functools import lru_cache
 from pathlib import Path
 
 import numpy as np
+from loguru import logger
 from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 def default_logging_config_path() -> Path:
+    logger.trace("[Settings] Resolving default logging config path")
     return Path(__file__).with_name("logging_config.yaml").resolve()
 
 
@@ -102,4 +104,5 @@ def get_settings() -> QiliSDKSettings:
     Returns:
         QiliSDKSettings: The cached configuration object populated from environment variables.
     """
-    return QiliSDKSettings()
+    settings = QiliSDKSettings()
+    return settings

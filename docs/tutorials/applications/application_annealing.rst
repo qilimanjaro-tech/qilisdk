@@ -119,6 +119,41 @@ As you can see from these results, the samples satisfy the constraint (i.e. have
 More specifically, the two samples "0110" and "1001" (corresponding to Alice/Dave on a team and Bob/Carol on the other team) are
 the optimal solutions to our problem, with 9 being the highest obtainable compatibility score.
 
+To help to visualize the evolution we just performed, we can re-run our simulation, 
+this time recording the full state at each timestep and then using
+the :meth:`Schedule.draw_eigenvalues()<qilisdk.analog.schedule.Schedule.draw_eigenvalues>` method 
+to plot how our state evolved versus the eigenvalues of the Hamiltonian over time:
+
+.. code-block:: python
+
+    evolution = AnalogEvolution(
+        schedule=schedule,
+        initial_state=initial_state,
+        store_intermediate_results=True
+    )
+    readout = Readout().with_state_tomography()
+    results = backend.execute(evolution, readout)
+
+    schedule.draw_eigenvalues(
+        intermediate_states=results.get_intermediate_states(), 
+        show_overlaps=True
+    )
+
+.. image:: ../../_static/annealing_example_schedule_eigenvalues.svg
+   :align: center
+   :class: only-light
+   :scale: 90%
+
+.. image:: ../../_static/annealing_example_schedule_eigenvalues_dark.svg
+   :align: center
+   :class: only-dark
+   :scale: 90%
+
+As we can see from this plot, the state started in the ground state of the mixing Hamiltonian (the bottom line, at the very left) 
+and then evolved to the ground state of the problem Hamiltonian (at the very right). By moving slow enough we stayed in the ground state,
+with only a small percentage of our state leaking out to some of the excited states. A larger total time (and thus a slower evolution) 
+would result in less state leaking out, at the cost of taking longer to run.
+
 Further Reading
 --------------------
 

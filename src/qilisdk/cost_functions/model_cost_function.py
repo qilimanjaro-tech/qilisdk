@@ -16,6 +16,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import numpy as np
+from loguru import logger
 
 from qilisdk.core.model import QUBO, Model
 from qilisdk.core.qtensor import QTensor, expect_val, ket
@@ -85,8 +86,10 @@ class ModelCostFunction(CostFunction):
                 nor a ``Sampling`` readout.
         """
         if results.has_state():
+            logger.trace("[ModelCostFunction] Computing cost from final state")
             return self._compute_from_state(results)
         if results.has_samples():
+            logger.trace("[ModelCostFunction] Computing cost from samples")
             return self._compute_from_samples(results)
         raise ValueError("ModelCostFunction requires either a StateTomography or Sampling readout in the results.")
 
@@ -112,6 +115,7 @@ class ModelCostFunction(CostFunction):
         final_state = results.get_state()
 
         if isinstance(self.model, QUBO):
+            logger.trace("[ModelCostFunction] Computing QUBO Hamiltonian expectation value from state")
             ham = self.model.to_hamiltonian()
             total_cost = complex(
                 np.real_if_close(expect_val(QTensor(ham.to_matrix()), final_state), tol=get_settings().atol)
@@ -182,6 +186,7 @@ class ModelCostFunction(CostFunction):
         """
         total_cost = complex(0.0)
         probabilities = results.get_probabilities()
+        logger.trace("[ModelCostFunction] Evaluating model over {} sampled bitstrings", len(probabilities))
         for sample, prob in probabilities.items():
             bit_configuration = [int(i) for i in sample]
             if len(self.model.variables()) != len(bit_configuration):

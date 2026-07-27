@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
+from loguru import logger
 from matplotlib.figure import Figure
 from mpl_toolkits import mplot3d
 
@@ -67,6 +68,8 @@ class MatplotlibQTensorRenderer:
             raise ValueError(
                 "Drawing is only supported for single-qubit states: consider using .partial_trace([i]) to reduce to a single qubit i"
             )
+
+        logger.debug("[QTensorRenderer] Rendering single-qubit state on Bloch sphere")
 
         # Get the values from the style
         sphere_points = self.style.sphere_points
@@ -142,6 +145,7 @@ class MatplotlibQTensorRenderer:
         Args:
             filename: Path to save the figure (e.g., 'circuit.png').
         """
+        logger.debug("[QTensorRenderer] Saving figure to {}", filename)
         if isinstance(self.axes.figure, Figure):
             self.axes.figure.savefig(filename, bbox_inches="tight")
 

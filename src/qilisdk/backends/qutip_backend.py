@@ -13,7 +13,7 @@
 # limitations under the License.
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Callable, Type, TypeVar
+from typing import TYPE_CHECKING, Callable, Type, TypeVar, cast
 
 import numpy as np
 import qutip_qip.operations as QutipGates
@@ -30,10 +30,12 @@ from qilisdk.digital.circuit_transpiler_passes import DecomposeMultiControlledGa
 from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import Adjoint, BasicGate, Controlled
 from qilisdk.functionals.functional_result import FunctionalResult
+from qilisdk.noise import SupportsStaticLindblad, SupportsTimeDerivedLindblad
 from qilisdk.settings import get_settings
 
 if TYPE_CHECKING:
     from qilisdk.functionals import AnalogEvolution, DigitalPropagation
+    from qilisdk.noise import LindbladGenerator, NoiseModel
     from qilisdk.readout import ReadoutMethod
 
 
@@ -79,13 +81,19 @@ class QutipBackend(Backend):
     notebooks.
     """
 
-    def __init__(self, nsteps: int = 10_000) -> None:
+    def __init__(self, nsteps: int = 10_000, noise_model: NoiseModel | None = None) -> None:
         """Instantiate a new :class:`QutipBackend`.
 
         Args:
             nsteps (int): The maximum number of internal steps for the
                 ODE solver. Defaults to ``10_000``.
+            noise_model (NoiseModel | None): Optional noise model. For analog
+                time evolution, its global and per-qubit Lindblad channels are
+                converted into QuTiP collapse operators (including
+                time-dependent rates ``rate(t)``). Digital-circuit noise is not
+                supported and is ignored with a warning.
         """
+        self.noise_model = noise_model
         self.nsteps = nsteps
 
         super().__init__()
@@ -105,7 +113,7 @@ class QutipBackend(Backend):
             U3: QutipBackend._handle_U3,
             SWAP: QutipBackend._handle_SWAP,
         }  # ty:ignore[invalid-assignment]
-        logger.success("QutipBackend initialised")
+        logger.info("[QutipBackend] QutipBackend initialised")
 
     def _execute_digital_propagation(
         self, functional: DigitalPropagation, readout: list[ReadoutMethod]
@@ -129,7 +137,14 @@ class QutipBackend(Backend):
         Raises:
             ValueError: If the circuit contains mid-circuit measurements.
         """
-        logger.info("Executing Sampling")
+        logger.info("[QutipBackend] Executing Sampling")
+
+        # Warn if noise model is provided, since we don't support digital noise here for now
+        if self.noise_model is not None:
+            logger.warning(
+                "Noise model provided to QutipBackend, but digital noise is not supported. "
+                "The noise model will be ignored."
+            )
 
         init_state = tensor(*[basis(2, 0) for _ in range(functional.circuit.nqubits)])
 
@@ -157,7 +172,7 @@ class QutipBackend(Backend):
 
         final_state = QTensor(sim.run(init_state).get_final_states()[0].full())
 
-        logger.success("Sampling finished; ")
+        logger.info("[QutipBackend] Sampling finished")
         if len(measurements) > 0 and len(measurements) != functional.circuit.nqubits:
             return FunctionalResult(
                 readout_results=QutipBackend._construct_results_list(
@@ -190,7 +205,9 @@ class QutipBackend(Backend):
                 (must be a ket, bra, or density matrix).
         """
 
-        logger.info("Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
+        logger.info(
+            "[QutipBackend] Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt
+        )
         steps = functional.schedule.tlist
 
         qutip_hamiltonians = []
@@ -224,16 +241,25 @@ class QutipBackend(Backend):
         elif initial_state.is_ket():
             state_dim = [[2 for _ in range(initial_state.nqubits)], [1]]
         else:
-            logger.error("Invalid initial state provided")
+            logger.error("[QutipBackend] Invalid initial state provided")
             raise ValueError("invalid initial state provided.")
 
         qutip_init_state = Qobj(initial_state.dense(), dims=state_dim)
 
         qutip_obs: list[Qobj] = []
 
+        jump_ops: list = []
+        if self.noise_model is not None:
+            jump_ops, hamiltonian_deltas = self._noise_model_to_qutip_cops(
+                self.noise_model, functional.schedule.nqubits, steps, functional.schedule.dt
+            )
+            for h in hamiltonian_deltas:
+                h_t.append([h, np.ones(len(steps), dtype=_complex_dtype())])
+
         results = mesolve(
             H=h_t,
             e_ops=qutip_obs,
+            c_ops=jump_ops,
             rho0=qutip_init_state,
             tlist=steps,
             options={
@@ -243,7 +269,7 @@ class QutipBackend(Backend):
             },
         )
 
-        logger.success("TimeEvolution finished")
+        logger.info("[QutipBackend] TimeEvolution finished")
         return FunctionalResult(
             readout_results=QutipBackend._construct_results_list(
                 final_state=QTensor(results.final_state.full()), readout=readout
@@ -257,6 +283,140 @@ class QutipBackend(Backend):
                 else None
             ),
         )
+
+    def _noise_model_to_qutip_cops(
+        self, noise_model: NoiseModel, nqubits: int, steps: list[float], dt: float
+    ) -> tuple[list, list[Qobj]]:
+        """Convert a noise model into QuTiP collapse operators for ``mesolve``.
+
+        Args:
+            noise_model (NoiseModel): The qiliSDK noise model to convert.
+            nqubits (int): Total number of qubits in the system.
+            steps (list[float]): The schedule time grid (``mesolve`` ``tlist``),
+                used to sample time-dependent rates.
+            dt (float): Schedule time step, used to derive time-dependent
+                Lindblad generators.
+
+        Returns:
+            tuple[list, list[Qobj]]: A pair ``(jump_ops, hamiltonian_deltas)``
+                where ``jump_ops`` is the list of (possibly time-dependent)
+                collapse operators and ``hamiltonian_deltas`` are constant
+                coherent Hamiltonian corrections to add to the Hamiltonian.
+        """
+        jump_ops: list = []
+        hamiltonian_deltas: list[Qobj] = []
+
+        # Global noise
+        for noise in noise_model.global_noise:
+            generator = self._noise_as_lindblad(noise, dt)
+            if generator is not None:
+                self._add_lindblad_cops(generator, nqubits, steps, jump_ops, hamiltonian_deltas, qubits=None)
+
+        # Per-qubit noise
+        for qubit, noises in noise_model.per_qubit_noise.items():
+            for noise in noises:
+                generator = self._noise_as_lindblad(noise, dt)
+                if generator is not None:
+                    self._add_lindblad_cops(generator, nqubits, steps, jump_ops, hamiltonian_deltas, qubits=[qubit])
+
+        return jump_ops, hamiltonian_deltas
+
+    @staticmethod
+    def _noise_as_lindblad(noise: object, dt: float) -> LindbladGenerator | None:
+        """Return the Lindblad generator for a noise source, if it exposes one.
+
+        Args:
+            noise (object): The noise source to convert.
+            dt (float): Schedule time step, used to derive time-derived
+                Lindblad generators.
+
+        Returns:
+            LindbladGenerator | None: The Lindblad generator, or ``None`` if the
+                noise source does not expose a Lindblad representation.
+        """
+        if isinstance(noise, SupportsStaticLindblad):
+            return noise.as_lindblad()
+        if isinstance(noise, SupportsTimeDerivedLindblad):
+            return noise.as_lindblad_from_duration(duration=dt)
+        return None
+
+    def _add_lindblad_cops(
+        self,
+        generator: LindbladGenerator,
+        nqubits: int,
+        steps: list[float],
+        jump_ops: list,
+        hamiltonian_deltas: list[Qobj],
+        qubits: list[int] | None,
+    ) -> None:
+        """Append the collapse operators of a Lindblad generator to ``jump_ops``.
+
+        Single-qubit jump operators are embedded into the full ``nqubits``
+        Hilbert space; full-system operators are used as-is. Constant rates
+        scale the operator by ``sqrt(rate)``; callable rates ``rate(t)`` are
+        emitted as QuTiP time-dependent collapse operators.
+
+        Args:
+            generator (LindbladGenerator): The Lindblad generator to convert.
+            nqubits (int): Total number of qubits in the system.
+            steps (list[float]): The schedule time grid used to sample
+                time-dependent rates.
+            jump_ops (list): Accumulator for QuTiP collapse operators.
+            hamiltonian_deltas (list[Qobj]): Accumulator for coherent
+                Hamiltonian corrections.
+            qubits (list[int] | None): Target qubit indices for single-qubit
+                operators, or ``None`` to broadcast over every qubit (global).
+
+        Raises:
+            ValueError: If a jump operator is not a square matrix, its
+                dimension is not a power of 2, or a single-qubit operator is
+                requested on a multi-qubit operator scope.
+        """
+        rates = generator.rates
+        target_qubits = list(range(nqubits)) if qubits is None else qubits
+        for i, jump_op in enumerate(generator.jump_operators):
+            op_np = np.array(jump_op.dense(), dtype=_complex_dtype())
+            dim = op_np.shape[0]
+            if op_np.shape[1] != dim:
+                raise ValueError("Lindblad jump operators must be square matrices.")
+            operator_nqubits = int(np.round(np.log2(dim)))
+
+            if dim == 2**nqubits:
+                embedded = [Qobj(op_np, dims=[[2 for _ in range(nqubits)] for _ in range(2)])]
+            elif operator_nqubits == 1:
+                embedded = [self._embed_single_qubit_operator(op_np, q, nqubits) for q in target_qubits]
+            else:
+                raise ValueError("Lindblad jump operators must be either single-qubit or full-system operators.")
+
+            rate = rates[i] if rates is not None else None
+            for op in embedded:
+                if rate is None:
+                    jump_ops.append(op)
+                elif callable(rate):
+                    rate_fn = cast("Callable[[float], float]", rate)  # needed for type safety
+                    coeff = np.array([np.sqrt(rate_fn(t)) for t in steps], dtype=_complex_dtype())
+                    jump_ops.append([op, coeff])
+                else:
+                    jump_ops.append(np.sqrt(float(cast("float", rate))) * op)
+
+        if generator.hamiltonian is not None:
+            hamiltonian_deltas.append(self._to_qubip_observables(generator.hamiltonian, nqubits))
+
+    @staticmethod
+    def _embed_single_qubit_operator(op: np.ndarray, target_qubit: int, nqubits: int) -> Qobj:
+        """Embed a single-qubit operator into the full ``nqubits`` Hilbert space.
+
+        Args:
+            op (np.ndarray): The 2x2 single-qubit operator matrix.
+            target_qubit (int): The qubit index the operator acts on.
+            nqubits (int): Total number of qubits in the system.
+
+        Returns:
+            Qobj: The operator acting on ``target_qubit`` and identity elsewhere.
+        """
+        factors = [qeye(2) for _ in range(nqubits)]
+        factors[target_qubit] = Qobj(op, dims=[[2], [2]])
+        return tensor(*factors)
 
     @staticmethod
     def _to_qubip_observables(obs: QTensor | Hamiltonian | PauliOperator, nqubits: int) -> Qobj:
@@ -293,7 +453,7 @@ class QutipBackend(Backend):
             aux_obs = obs
         if aux_obs is not None:
             return Qobj(aux_obs.dense(), dims=[[2 for _ in range(nqubits)] for _ in range(2)])
-        logger.error("Unsupported observable type {}", obs.__class__.__name__)
+        logger.error("[QutipBackend] Unsupported observable type {}", obs.__class__.__name__)
         raise ValueError(f"unsupported observable type of {obs.__class__}")
 
     def _get_qutip_circuit(self, circuit: Circuit) -> QubitCircuit:
@@ -322,7 +482,7 @@ class QutipBackend(Backend):
             else:
                 handler = self._basic_gate_handlers.get(type(gate), None)
                 if handler is None:
-                    logger.error("Unsupported gate {}", type(gate).__name__)
+                    logger.error("[QutipBackend] Unsupported gate {}", type(gate).__name__)
                     raise UnsupportedGateError(f"Unsupported gate {type(gate).__name__}")
                 qubits = gate.target_qubits
                 handler(qutip_circuit, gate, *qubits)

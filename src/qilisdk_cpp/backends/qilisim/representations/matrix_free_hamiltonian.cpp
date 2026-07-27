@@ -13,9 +13,14 @@
 // limitations under the License.
 
 #include "matrix_free_hamiltonian.h"
+#include <algorithm>
 #include <unordered_map>
 #if defined(_MSC_VER)
 #include <intrin.h>
+#endif
+#if defined(__SSE3__) && defined(__FMA__)
+#include <immintrin.h>
+#define QILI_PACKED_COMPLEX 1
 #endif
 #include "../../../libs/pybind.h"
 #include "../utils/matrix_utils.h"
@@ -33,9 +38,69 @@ int popcount_u64(unsigned long long value) {
     return __builtin_popcountll(value);
 #endif
 }
+
+// Define a bunch of assembly-optimized operations on complex numbers
+// These help hint to the compiler that we want to do SIMD operations on complex numbers,
+// and allow us to use FMA instructions when available
+#if defined(QILI_PACKED_COMPLEX)
+using cvec = __m128d;
+inline cvec cv_zero() {
+    return _mm_setzero_pd();
+}
+inline cvec cv_load(const Complex* p) {
+    return _mm_loadu_pd(reinterpret_cast<const double*>(p));
+}
+inline cvec cv_add(cvec a, cvec b) {
+    return _mm_add_pd(a, b);
+}
+// (ar + i ai)(br + i bi) = (ar*br - ai*bi) + i (ar*bi + ai*br)
+inline cvec cv_cmul(cvec a, cvec b) {
+    cvec ar = _mm_movedup_pd(a);              // [ar, ar]
+    cvec ai = _mm_unpackhi_pd(a, a);          // [ai, ai]
+    cvec b_swap = _mm_shuffle_pd(b, b, 0x1);  // [bi, br]
+    cvec t = _mm_mul_pd(ai, b_swap);          // [ai*bi, ai*br]
+    return _mm_fmaddsub_pd(ar, b, t);         // [ar*br - ai*bi, ar*bi + ai*br]
+}
+// acc += r * x, with r a real scalar
+inline cvec cv_fma_real(cvec acc, double r, cvec x) {
+    return _mm_fmadd_pd(_mm_set1_pd(r), x, acc);
+}
+// acc += phase * x, with phase complex
+inline cvec cv_fma_cplx(cvec acc, const Complex& phase, cvec x) {
+    return cv_add(acc, cv_cmul(cv_load(&phase), x));
+}
+inline Complex cv_store(cvec v) {
+    Complex out;
+    _mm_storeu_pd(reinterpret_cast<double*>(&out), v);
+    return out;
+}
+#else
+using cvec = Complex;
+inline cvec cv_zero() {
+    return Complex(0.0, 0.0);
+}
+inline cvec cv_load(const Complex* p) {
+    return *p;
+}
+inline cvec cv_add(cvec a, cvec b) {
+    return a + b;
+}
+inline cvec cv_cmul(cvec a, cvec b) {
+    return a * b;
+}
+inline cvec cv_fma_real(cvec acc, double r, cvec x) {
+    return acc + r * x;
+}
+inline cvec cv_fma_cplx(cvec acc, const Complex& phase, cvec x) {
+    return acc + phase * x;
+}
+inline Complex cv_store(cvec v) {
+    return v;
+}
+#endif
 }  // namespace
 
-MatrixFreeHamiltonian::MatrixFreeHamiltonian(int nqubits, const MatrixFreeOperator& op, std::complex<double> coeff) : nqubits(nqubits) {
+MatrixFreeHamiltonian::MatrixFreeHamiltonian(int nqubits, const MatrixFreeOperator& op, Complex coeff) : nqubits(nqubits) {
     PauliString ps(nqubits, {op});
     operators[ps] = coeff;
 }
@@ -51,10 +116,10 @@ void MatrixFreeHamiltonian::apply(const DenseMatrix& input_state, MatrixFreeAppl
         output_state: The state where the result will be stored.
     */
     struct Term {
-        std::complex<double> base_phase;      // coefficient * (-i)^n_Y, precomputed
-        std::complex<double> base_phase_neg;  // -coefficient * (-i)^n_Y, precomputed
-        long flip_mask;                       // XOR of all X and Y qubit masks
-        long sign_mask;                       // OR of all Y and Z qubit masks (popcount parity = sign flip)
+        Complex base_phase;      // coefficient * (-i)^n_Y, precomputed
+        Complex base_phase_neg;  // -coefficient * (-i)^n_Y, precomputed
+        long flip_mask;          // XOR of all X and Y qubit masks
+        long sign_mask;          // OR of all Y and Z qubit masks (popcount parity = sign flip)
     };
 
     // Precompute things
@@ -77,82 +142,140 @@ void MatrixFreeHamiltonian::apply(const DenseMatrix& input_state, MatrixFreeAppl
                 ++n_y;
             }
         }
-        static const std::complex<double> neg_i_powers[4] = {{1, 0}, {0, -1}, {-1, 0}, {0, 1}};
-        std::complex<double> base_phase = coefficient * neg_i_powers[n_y & 3];
-        std::complex<double> base_phase_neg = -base_phase;
+        static const Complex neg_i_powers[4] = {{1, 0}, {0, -1}, {-1, 0}, {0, 1}};
+        Complex base_phase = coefficient * neg_i_powers[n_y & 3];
+        Complex base_phase_neg = -base_phase;
         terms.push_back({base_phase, base_phase_neg, flip_mask, sign_mask});
     }
 
-    // Make sure output_state has the right shape and is initialized to zero
+    // Move all diagonal terms to the front of the vector, preserving relative order
+    auto diag_mid = std::stable_partition(terms.begin(), terms.end(), [](const Term& t) { return t.flip_mask == 0; });
+    const long n_diag = static_cast<long>(diag_mid - terms.begin());
+
+    // Seperate simple (i.e. no sign flip, real phase) off-diagonal terms from general off-diagonal terms
+    auto simple_mid = std::stable_partition(diag_mid, terms.end(), [](const Term& t) { return t.sign_mask == 0 && t.base_phase.imag() == 0.0; });
+    const long n_simple_off = static_cast<long>(simple_mid - diag_mid);
+
+    // Make sure output_state has the right shape
     output_state.resizeLike(input_state);
-    output_state.setZero();
+    if (input_state.cols() != 1) {
+        output_state.setZero();
+    }
 
     // Cache some pointers
-    const std::complex<double>* in_ptr = input_state.data();
-    std::complex<double>* out_ptr = output_state.data();
+    const Complex* in_ptr = input_state.data();
+    Complex* out_ptr = output_state.data();
     const Term* t_begin = terms.data();
     const Term* t_end = t_begin + terms.size();
+    const Term* diag_end = t_begin + n_diag;
+    const Term* simple_end = diag_end + n_simple_off;
 
-    // If it's a statevector
-    if (input_state.cols() == 1) {
-#if defined(_OPENMP)
-#pragma omp parallel for schedule(static)
-#endif
-        for (int i = 0; i < output_state.size(); ++i) {
-            std::complex<double> coeff = 0.0;
-            for (const Term* t = t_begin; t != t_end; ++t) {
-                long index = i ^ t->flip_mask;
-                bool neg = popcount_u64(static_cast<unsigned long long>(i) & static_cast<unsigned long long>(t->sign_mask)) & 1;
-                coeff += (neg ? t->base_phase_neg : t->base_phase) * in_ptr[index];
-            }
-            out_ptr[i] = coeff;
+    // Define a lambda to apply the Hamiltonian to a single index of the input state
+    // This is used for both statevector and density matrix applications, and is parallelized over the index
+    auto apply_index = [&](long i, const Complex* vec) -> Complex {
+        const unsigned long long ii = static_cast<unsigned long long>(i);
+
+        // Diagonal terms only contribute a per-index phase to vec[i]
+        cvec d0 = cv_zero(), d1 = cv_zero();
+        const Term* t = t_begin;
+        for (; t + 2 <= diag_end; t += 2) {
+            bool n0 = popcount_u64(ii & static_cast<unsigned long long>(t[0].sign_mask)) & 1;
+            bool n1 = popcount_u64(ii & static_cast<unsigned long long>(t[1].sign_mask)) & 1;
+            d0 = cv_add(d0, cv_load(n0 ? &t[0].base_phase_neg : &t[0].base_phase));
+            d1 = cv_add(d1, cv_load(n1 ? &t[1].base_phase_neg : &t[1].base_phase));
         }
-    } else {
-        long N = output_state.rows();
-        if (application_type == MatrixFreeApplicationType::Left) {
+        for (; t != diag_end; ++t) {
+            bool n0 = popcount_u64(ii & static_cast<unsigned long long>(t->sign_mask)) & 1;
+            d0 = cv_add(d0, cv_load(n0 ? &t->base_phase_neg : &t->base_phase));
+        }
+        cvec acc = cv_cmul(cv_add(d0, d1), cv_load(&vec[i]));
+
+        // Simple off-diagonal terms: real phase, no sign flips
+        cvec s0 = cv_zero(), s1 = cv_zero(), s2 = cv_zero(), s3 = cv_zero();
+        t = diag_end;
+        for (; t + 4 <= simple_end; t += 4) {
+            s0 = cv_fma_real(s0, t[0].base_phase.real(), cv_load(&vec[i ^ t[0].flip_mask]));
+            s1 = cv_fma_real(s1, t[1].base_phase.real(), cv_load(&vec[i ^ t[1].flip_mask]));
+            s2 = cv_fma_real(s2, t[2].base_phase.real(), cv_load(&vec[i ^ t[2].flip_mask]));
+            s3 = cv_fma_real(s3, t[3].base_phase.real(), cv_load(&vec[i ^ t[3].flip_mask]));
+        }
+        for (; t != simple_end; ++t) {
+            s0 = cv_fma_real(s0, t->base_phase.real(), cv_load(&vec[i ^ t->flip_mask]));
+        }
+        acc = cv_add(acc, cv_add(cv_add(s0, s1), cv_add(s2, s3)));
+
+        // General off-diagonal terms: full complex multiply, possible sign flip
+        cvec g0 = cv_zero(), g1 = cv_zero();
+        t = simple_end;
+        for (; t + 2 <= t_end; t += 2) {
+            bool n0 = popcount_u64(ii & static_cast<unsigned long long>(t[0].sign_mask)) & 1;
+            bool n1 = popcount_u64(ii & static_cast<unsigned long long>(t[1].sign_mask)) & 1;
+            g0 = cv_fma_cplx(g0, n0 ? t[0].base_phase_neg : t[0].base_phase, cv_load(&vec[i ^ t[0].flip_mask]));
+            g1 = cv_fma_cplx(g1, n1 ? t[1].base_phase_neg : t[1].base_phase, cv_load(&vec[i ^ t[1].flip_mask]));
+        }
+        for (; t != t_end; ++t) {
+            bool n0 = popcount_u64(ii & static_cast<unsigned long long>(t->sign_mask)) & 1;
+            g0 = cv_fma_cplx(g0, n0 ? t->base_phase_neg : t->base_phase, cv_load(&vec[i ^ t->flip_mask]));
+        }
+        acc = cv_add(acc, cv_add(g0, g1));
+
+        return cv_store(acc);
+    };
+
+    // Statevector: a single column, out = H * psi
+    if (input_state.cols() == 1) {
+        const long total = output_state.size();
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
 #endif
+        for (long i = 0; i < total; ++i) {
+            out_ptr[i] = apply_index(i, in_ptr);
+        }
+        return;
+    }
+
+    // Left multiplication H * rho
+    const long N = output_state.rows();
+    const long ncols = output_state.cols();
+    if (application_type == MatrixFreeApplicationType::Left || application_type == MatrixFreeApplicationType::LeftAndRight) {
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+        for (long c = 0; c < ncols; ++c) {
+            const Complex* in_col = in_ptr + c * N;
+            Complex* out_col = out_ptr + c * N;
             for (long i = 0; i < N; ++i) {
-                for (const Term* t = t_begin; t != t_end; ++t) {
-                    long index = i ^ t->flip_mask;
-                    bool neg = popcount_u64(static_cast<unsigned long long>(i) & static_cast<unsigned long long>(t->sign_mask)) & 1;
-                    output_state.row(i) += (neg ? t->base_phase_neg : t->base_phase) * input_state.row(index);
-                }
+                out_col[i] = apply_index(i, in_col);
             }
-        } else if (application_type == MatrixFreeApplicationType::Right) {
+        }
+    }
+
+    // Right multiplication rho * H^dagger
+    if (application_type == MatrixFreeApplicationType::Right) {
+        output_state.setZero();
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
 #endif
-            for (long j = 0; j < N; ++j) {
-                for (const Term* t = t_begin; t != t_end; ++t) {
-                    long index = j ^ t->flip_mask;
-                    bool neg = popcount_u64(static_cast<unsigned long long>(j) & static_cast<unsigned long long>(t->sign_mask)) & 1;
-                    output_state.col(j) += std::conj(neg ? t->base_phase_neg : t->base_phase) * input_state.col(index);
-                }
+        for (long j = 0; j < N; ++j) {
+            for (const Term* t = t_begin; t != t_end; ++t) {
+                long index = j ^ t->flip_mask;
+                bool neg = popcount_u64(static_cast<unsigned long long>(j) & static_cast<unsigned long long>(t->sign_mask)) & 1;
+                output_state.col(j) += std::conj(neg ? t->base_phase_neg : t->base_phase) * input_state.col(index);
             }
-        } else if (application_type == MatrixFreeApplicationType::LeftAndRight) {
+        }
+    } else if (application_type == MatrixFreeApplicationType::LeftAndRight) {
+        // The Left pass above already wrote H * rho into output_state,
+        // so we just need to do the Right pass on that result
+        DenseMatrix hr_temp = output_state;
+        output_state.setZero();
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
 #endif
-            for (long i = 0; i < N; ++i) {
-                for (const Term* t = t_begin; t != t_end; ++t) {
-                    long index = i ^ t->flip_mask;
-                    bool neg = popcount_u64(static_cast<unsigned long long>(i) & static_cast<unsigned long long>(t->sign_mask)) & 1;
-                    output_state.row(i) += (neg ? t->base_phase_neg : t->base_phase) * input_state.row(index);
-                }
-            }
-            DenseMatrix hr_temp = output_state;
-            output_state.setZero();
-#if defined(_OPENMP)
-#pragma omp parallel for schedule(static)
-#endif
-            for (long j = 0; j < N; ++j) {
-                for (const Term* t = t_begin; t != t_end; ++t) {
-                    long index = j ^ t->flip_mask;
-                    bool neg = popcount_u64(static_cast<unsigned long long>(j) & static_cast<unsigned long long>(t->sign_mask)) & 1;
-                    output_state.col(j) += std::conj(neg ? t->base_phase_neg : t->base_phase) * hr_temp.col(index);
-                }
+        for (long j = 0; j < N; ++j) {
+            for (const Term* t = t_begin; t != t_end; ++t) {
+                long index = j ^ t->flip_mask;
+                bool neg = popcount_u64(static_cast<unsigned long long>(j) & static_cast<unsigned long long>(t->sign_mask)) & 1;
+                output_state.col(j) += std::conj(neg ? t->base_phase_neg : t->base_phase) * hr_temp.col(index);
             }
         }
     }
@@ -199,7 +322,7 @@ double MatrixFreeHamiltonian::expectation_value(const MatrixFreeHamiltonian& oth
     MatrixFreeHamiltonian temp = (*this).conjugate() * other * (*this);
 
     // Since <+|P|+> is 1 if P is identity or X and 0 otherwise, we just need to sum the coefficients
-    std::complex<double> exp_val = 0.0;
+    Complex exp_val = 0.0;
     for (const auto& [pauli, coefficient] : temp.operators) {
         if (pauli.z_mask.none()) {
             exp_val += coefficient;
@@ -208,7 +331,7 @@ double MatrixFreeHamiltonian::expectation_value(const MatrixFreeHamiltonian& oth
     return std::real(exp_val);
 }
 
-MatrixFreeHamiltonian& MatrixFreeHamiltonian::operator*=(const std::complex<double>& scalar) {
+MatrixFreeHamiltonian& MatrixFreeHamiltonian::operator*=(const Complex& scalar) {
     /*
     Scale in-place by a complex scalar.
 
@@ -224,7 +347,7 @@ MatrixFreeHamiltonian& MatrixFreeHamiltonian::operator*=(const std::complex<doub
     return *this;
 }
 
-MatrixFreeHamiltonian MatrixFreeHamiltonian::operator*(const std::complex<double>& scalar) const {
+MatrixFreeHamiltonian MatrixFreeHamiltonian::operator*(const Complex& scalar) const {
     /*
     Scale by a complex scalar and return a new Hamiltonian.
 
@@ -293,7 +416,7 @@ std::ostream& operator<<(std::ostream& os, const MatrixFreeHamiltonian& hamilton
     return os;
 }
 
-void MatrixFreeHamiltonian::add(const std::complex<double>& coeff, const PauliString& op) {
+void MatrixFreeHamiltonian::add(const Complex& coeff, const PauliString& op) {
     /*
     Add a term to the Hamiltonian with a given coefficient and operator.
 
@@ -304,7 +427,7 @@ void MatrixFreeHamiltonian::add(const std::complex<double>& coeff, const PauliSt
     operators[op] += coeff;
 }
 
-void MatrixFreeHamiltonian::add(const std::complex<double>& coeff, const std::vector<MatrixFreeOperator>& ops) {
+void MatrixFreeHamiltonian::add(const Complex& coeff, const std::vector<MatrixFreeOperator>& ops) {
     /*
     Add a term to the Hamiltonian with a given coefficient and a vector of operators.
 
@@ -316,7 +439,7 @@ void MatrixFreeHamiltonian::add(const std::complex<double>& coeff, const std::ve
     operators[ps] += coeff;
 }
 
-void MatrixFreeHamiltonian::add(const std::complex<double>& coeff, const MatrixFreeOperator& op) {
+void MatrixFreeHamiltonian::add(const Complex& coeff, const MatrixFreeOperator& op) {
     add(coeff, std::vector<MatrixFreeOperator>{op});
 }
 
@@ -333,7 +456,7 @@ bool MatrixFreeHamiltonian::operator==(const MatrixFreeHamiltonian& other) const
     return operators == other.operators;
 }
 
-MatrixFreeHamiltonian operator*(const std::complex<double>& scalar, const MatrixFreeHamiltonian& hamiltonian) {
+MatrixFreeHamiltonian operator*(const Complex& scalar, const MatrixFreeHamiltonian& hamiltonian) {
     /*
     Scale a Hamiltonian by a complex scalar from the left.
 
@@ -347,7 +470,7 @@ MatrixFreeHamiltonian operator*(const std::complex<double>& scalar, const Matrix
     return hamiltonian * scalar;
 }
 
-std::pair<PauliString, std::complex<double>> _multiply_pauli_strings(const PauliString& a, const PauliString& b) {
+std::pair<PauliString, Complex> _multiply_pauli_strings(const PauliString& a, const PauliString& b) {
     size_t n = a.nqubits;
     PauliString result(n);
 
@@ -384,7 +507,7 @@ std::pair<PauliString, std::complex<double>> _multiply_pauli_strings(const Pauli
 
     phase_exp = ((phase_exp % 4) + 4) % 4;
 
-    static const std::complex<double> phase_table[4] = {{1.0, 0.0}, {0.0, 1.0}, {-1.0, 0.0}, {0.0, -1.0}};
+    static const Complex phase_table[4] = {{1.0, 0.0}, {0.0, 1.0}, {-1.0, 0.0}, {0.0, -1.0}};
 
     return {result, phase_table[phase_exp]};
 }
@@ -403,16 +526,16 @@ MatrixFreeHamiltonian MatrixFreeHamiltonian::operator*(const MatrixFreeHamiltoni
 
 #if defined(_OPENMP)
     // Convert to vector for indexed parallel access
-    std::vector<std::pair<PauliString, std::complex<double>>> ops_vec(operators.begin(), operators.end());
+    std::vector<std::pair<PauliString, Complex>> ops_vec(operators.begin(), operators.end());
     const int nops = static_cast<int>(ops_vec.size());
     const int nthreads = omp_get_max_threads();
-    std::vector<std::unordered_map<PauliString, std::complex<double>, PauliString::HashFunction>> local(nthreads);
+    std::vector<std::unordered_map<PauliString, Complex, PauliString::HashFunction>> local(nthreads);
 
 #pragma omp parallel for schedule(static)
     for (int i = 0; i < nops; ++i) {
         const int tid = omp_get_thread_num();
         const PauliString& ps_a = ops_vec[i].first;
-        const std::complex<double> coeff_a = ops_vec[i].second;
+        const Complex coeff_a = ops_vec[i].second;
         for (const auto& [ps_b, coeff_b] : other.operators) {
             auto [ps_result, phase] = _multiply_pauli_strings(ps_a, ps_b);
             local[tid][ps_result] += coeff_a * coeff_b * phase;
@@ -463,7 +586,7 @@ MatrixFreeHamiltonian MatrixFreeHamiltonian::operator-(const MatrixFreeHamiltoni
         A new Hamiltonian that is the result of subtracting the other Hamiltonian from this Hamiltonian.
     */
     MatrixFreeHamiltonian result = *this;
-    result += other * std::complex<double>(-1.0, 0.0);
+    result += other * Complex(-1.0, 0.0);
     return result;
 }
 
@@ -477,7 +600,7 @@ void MatrixFreeHamiltonian::prune(double threshold, int max_terms) {
     */
 
     // Create a vector of terms and sort by absolute value of coefficients
-    std::vector<std::pair<PauliString, std::complex<double>>> term_vector(operators.begin(), operators.end());
+    std::vector<std::pair<PauliString, Complex>> term_vector(operators.begin(), operators.end());
     std::sort(term_vector.begin(), term_vector.end(), [](const auto& a, const auto& b) { return std::abs(a.second) > std::abs(b.second); });
     if (term_vector.size() > static_cast<size_t>(max_terms)) {
         term_vector.resize(max_terms);

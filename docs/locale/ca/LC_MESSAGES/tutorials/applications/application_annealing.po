@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-16 12:04+0200\n"
+"POT-Creation-Date: 2026-07-06 12:26+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -330,8 +330,8 @@ msgid ""
 "simple linear mixing:"
 msgstr ""
 "També necessitem definir l'esquema: com canvien els coeficients dels "
-"Hamiltonians del problema i de barreja al llarg del temps. En aquest cas, "
-"simplement farem servir una barreja lineal senzilla:"
+"Hamiltonians del problema i de barreja al llarg del temps. En aquest cas,"
+" simplement farem servir una barreja lineal senzilla:"
 
 #: ../../tutorials/applications/application_annealing.rst:81
 msgid ""
@@ -368,15 +368,36 @@ msgstr ""
 "en l'altre) són les solucions òptimes al nostre problema, amb 9 sent la "
 "puntuació de compatibilitat màxima assolible."
 
-#: ../../tutorials/applications/application_annealing.rst:123
+#: ../../tutorials/applications/application_annealing.rst:122
+msgid ""
+"To help to visualize the evolution we just performed, we can re-run our "
+"simulation, this time recording the full state at each timestep and then "
+"using the "
+":meth:`Schedule.draw_eigenvalues()<qilisdk.analog.schedule.Schedule.draw_eigenvalues>`"
+" method to plot how our state evolved versus the eigenvalues of the "
+"Hamiltonian over time:"
+msgstr ""
+
+#: ../../tutorials/applications/application_annealing.rst:152
+msgid ""
+"As we can see from this plot, the state started in the ground state of "
+"the mixing Hamiltonian (the bottom line, at the very left) and then "
+"evolved to the ground state of the problem Hamiltonian (at the very "
+"right). By moving slow enough we stayed in the ground state, with only a "
+"small percentage of our state leaking out to some of the excited states. "
+"A larger total time (and thus a slower evolution) would result in less "
+"state leaking out, at the cost of taking longer to run."
+msgstr ""
+
+#: ../../tutorials/applications/application_annealing.rst:158
 msgid "Further Reading"
 msgstr "Lectura addicional"
 
-#: ../../tutorials/applications/application_annealing.rst:125
+#: ../../tutorials/applications/application_annealing.rst:160
 msgid "`QUBO`_"
 msgstr "`QUBO`_"
 
-#: ../../tutorials/applications/application_annealing.rst:126
+#: ../../tutorials/applications/application_annealing.rst:161
 msgid "`Quantum Annealing`_"
 msgstr "`Quantum Annealing`_"
 

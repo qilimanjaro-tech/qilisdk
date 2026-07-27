@@ -54,7 +54,7 @@ void arnoldi(const SparseMatrix& L, const DenseMatrix& v0, int m, std::vector<De
 
         // Orthogonalize against previous vectors
         for (int i = 0; i <= j; ++i) {
-            std::complex<double> prod = dot(V[i], w);
+            Complex prod = dot(V[i], w);
             H.coeffRef(i, j) = prod;
             w -= V[i] * prod;
         }
@@ -74,7 +74,7 @@ void arnoldi(const SparseMatrix& L, const DenseMatrix& v0, int m, std::vector<De
 
 void arnoldi_mat(const SparseMatrix& Hsys, const DenseMatrix& rho0, int m, std::vector<DenseMatrix>& V, SparseMatrix& Hk, double atol) {
     /*
-    Arnoldi iteration for the unitary Liouvillian:
+    Arnoldi iteration for the unitary Lindbladian:
         L(rho) = -i (H rho - rho H)
 
     Args:
@@ -100,12 +100,12 @@ void arnoldi_mat(const SparseMatrix& Hsys, const DenseMatrix& rho0, int m, std::
     V.push_back(v);
 
     for (int j = 0; j < m; ++j) {
-        // Apply reduced Liouvillian: w = -i (H v - v H)
-        DenseMatrix w = -std::complex<double>(0.0, 1.0) * (Hsys * V[j] - V[j] * Hsys);
+        // Apply reduced Lindbladian: w = -i (H v - v H)
+        DenseMatrix w = -Complex(0.0, 1.0) * (Hsys * V[j] - V[j] * Hsys);
 
         // Modified Gram–Schmidt
         for (int i = 0; i <= j; ++i) {
-            std::complex<double> hij = dot(V[i], w);  // Tr(V[i]† w)
+            Complex hij = dot(V[i], w);  // Tr(V[i]† w)
             Hk.coeffRef(i, j) = hij;
             w -= V[i] * hij;
         }
@@ -198,10 +198,8 @@ DenseMatrix iter_arnoldi(const DenseMatrix& rho_0, double dt, const SparseMatrix
     double dt_sub = dt / static_cast<double>(num_substeps);
     for (int substep_ind = 0; substep_ind < num_substeps; ++substep_ind) {
         // Run the Arnoldi iteration to build the basis
-        // After this, we have our operator approximated in the basis as A
-        // and the basis vectors in V
         if (is_unitary_on_statevector) {
-            arnoldi(std::complex<double>(0, 1) * currentH, rho_t, arnoldi_dim, V, A, atol);
+            arnoldi(Complex(0, -1) * currentH, rho_t, arnoldi_dim, V, A, atol);
             subspace_dim = int(V.size());
         } else if (!is_unitary) {
             arnoldi(L, rho_t, arnoldi_dim, V, A, atol);
@@ -230,14 +228,14 @@ DenseMatrix iter_arnoldi(const DenseMatrix& rho_0, double dt, const SparseMatrix
         }
         rho_t = rho_t_new;
 
-        // Normalize the density matrix
+        // Normalize the state
         if (is_unitary_on_statevector) {
             rho_t /= rho_t.norm();
         } else if (is_unitary) {
             rho_t /= trace(rho_t);
             continue;
         } else if (!is_unitary_on_statevector) {
-            std::complex<double> tr = 0;
+            Complex tr = 0;
             for (long i = 0; i < dim; ++i) {
                 long vec_index = i * dim + i;
                 tr += rho_t.coeff(vec_index, 0);
@@ -249,6 +247,128 @@ DenseMatrix iter_arnoldi(const DenseMatrix& rho_0, double dt, const SparseMatrix
     // If we vectorized, need to devectorize before returning
     if (!is_unitary && !is_unitary_on_statevector) {
         rho_t = devectorize(rho_t);
+    }
+
+    return rho_t;
+}
+
+DenseMatrix iter_arnoldi_matrix_free(const DenseMatrix& rho_0, double dt, const MatrixFreeHamiltonian& currentH, const std::vector<SparseMatrix>& jump_operators, int arnoldi_dim, int num_substeps, bool is_unitary_on_statevector, double atol) {
+    /*
+    Perform matrix-free time evolution using the Arnoldi iteration.
+
+    Args:
+        rho_0 (DenseMatrix): The initial density matrix.
+        dt (double): The total time step.
+        currentH (MatrixFreeHamiltonian): The current Hamiltonian.
+        jump_operators (std::vector<SparseMatrix>): The list of jump operators.
+        arnoldi_dim (int): Dimension of the subspace.
+        num_substeps (int): Number of substeps to divide the time step into.
+        is_unitary_on_statevector (bool): Whether the evolution is unitary on a state vector.
+        atol (double): Absolute tolerance for numerical operations.
+
+    Returns:
+        DenseMatrix: The evolved density matrix after time dt.
+
+    Raises:
+        py::value_error: If arnoldi_dim is non-positive.
+        py::value_error: If num_substeps is non-positive.
+    */
+
+    // Sanity checks
+    if (arnoldi_dim <= 0) {
+        throw py::value_error("Arnoldi dimension must be positive.");
+    }
+    if (num_substeps <= 0) {
+        throw py::value_error("Number of substeps must be positive.");
+    }
+
+    // If we don't have jump operators, we can work directly with the density matrix
+    bool is_unitary = (jump_operators.size() == 0);
+
+    // The Lindbladian is applied matrix-free, so the state is kept in its natural shape
+    DenseMatrix rho_t = rho_0;
+
+    // Vars for the Arnoldi iteration
+    std::vector<DenseMatrix> V;
+    SparseMatrix A;
+    int subspace_dim = 0;
+
+    // Divide into smaller timesteps if requested
+    double dt_sub = dt / static_cast<double>(num_substeps);
+    for (int substep_ind = 0; substep_ind < num_substeps; ++substep_ind) {
+        // Run the Arnoldi iteration to build the basis
+        V.clear();
+        A = SparseMatrix(arnoldi_dim + 1, arnoldi_dim);
+
+        // Normalize the initial vector
+        DenseMatrix v = rho_t;
+        double beta = v.norm();
+        if (beta < atol) {
+            continue;
+        }
+        v /= beta;
+
+        // Add the first vector to the list
+        V.push_back(v);
+
+        // For each Arnoldi iteration
+        for (int j = 0; j < arnoldi_dim; ++j) {
+            // Apply the Lindbladian to the previous vector (matrix-free). w is
+            // pre-sized to V[j] since lindblad_rhs writes the statevector case in place.
+            DenseMatrix w = V[j];
+            lindblad_rhs(w, V[j], currentH, jump_operators, is_unitary_on_statevector);
+
+            // Orthogonalize against previous vectors
+            for (int i = 0; i <= j; ++i) {
+                Complex prod = dot(V[i], w);
+                A.coeffRef(i, j) = prod;
+                w -= V[i] * prod;
+            }
+
+            // Update A and check for convergence
+            double to_add = w.norm();
+            A.coeffRef(j + 1, j) = to_add;
+            if (to_add < atol) {
+                break;
+            }
+
+            // Normalize and add to V
+            w /= to_add;
+            V.push_back(w);
+        }
+
+        // The vectorized (non-unitary) case drops the trailing residual vector, while
+        // the state-vector and unitary density-matrix cases keep the full basis
+        subspace_dim = int(V.size());
+        if (!is_unitary && !is_unitary_on_statevector) {
+            subspace_dim = int(V.size()) - 1;
+        }
+        A.conservativeResize(subspace_dim, subspace_dim);
+        V.resize(subspace_dim);
+
+        // If everything is zero then we're probably in an eigenstate and need to skip until we aren't
+        if (subspace_dim == 0) {
+            continue;
+        }
+
+        // Compute the action of the matrix exponential
+        SparseMatrix e1(subspace_dim, 1);
+        e1.coeffRef(0, 0) = 1;
+        SparseMatrix y = exp_mat_action(A, dt_sub, e1);
+
+        // Reconstruct the final density matrix using the basis vectors
+        DenseMatrix rho_t_new = DenseMatrix::Zero(rho_t.rows(), rho_t.cols());
+        for (int j = 0; j < int(V.size()); ++j) {
+            rho_t_new += V[j] * y.coeff(j, 0);
+        }
+        rho_t = rho_t_new;
+
+        // Normalize the state
+        if (is_unitary_on_statevector) {
+            rho_t /= rho_t.norm();
+        } else {
+            rho_t /= trace(rho_t);
+        }
     }
 
     return rho_t;

@@ -849,3 +849,9 @@ def test_negation():
     H = Z(0) + 2 * X(1) + 3j * Y(2)
 
     assert -H == (-1) * H
+
+
+def test_pauli_operator_rejects_negative_qubit():
+    """QSDK-05: a Pauli operator must reject a negative qubit at construction."""
+    with pytest.raises(ValueError, match="non-negative"):
+        PauliX(-1)

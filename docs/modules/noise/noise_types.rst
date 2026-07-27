@@ -47,6 +47,17 @@ The class is initialized with a list of jump operators given as QTensors and the
     J2 = QTensor(np.array([[1, 0], [0, 0]]))
     lindblad_noise = LindbladGenerator(jump_operators=[J1, J2], rates=[0.1, 0.2])
 
+Time-dependent Lindblad rates are supported by QiliSim's analog evolution, which evaluates the rate 
+at each time step, when rates are given as lambda functions of time:
+
+.. code-block:: python
+
+    from qilisdk.noise import LindbladGenerator
+    from qilisdk.core import QTensor
+    import numpy as np
+    J1 = QTensor(np.array([[0, 1], [0, 0]]))
+    lindblad_noise = LindbladGenerator(jump_operators=[J1], rates=[lambda t: 0.005 * (1 + np.sin(t / T))])
+
 PauliChannel
 ^^^^^^^^^^^^^^^
 
