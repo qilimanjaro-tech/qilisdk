@@ -27,6 +27,7 @@
 #include "qilisim.h"
 #include "representations/exponential_ansatz.h"
 #include "representations/matrix_free_hamiltonian.h"
+#include "utils/matrix_utils.h"
 #include "utils/parsers.h"
 #include "utils/random.h"
 #include "utils/sample.h"
@@ -122,6 +123,11 @@ py::object QiliSimCpp::execute_digital_propagation(const py::object& functional,
             initial_state_cpp.makeCompressed();
         } else {
             initial_state_cpp = parse_initial_state(initial_state, config.get_atol(), n_qubits);
+
+            // Start the evolution from a normalized state, unless the user opts out
+            if (config.get_normalize_state()) {
+                normalize_state(initial_state_cpp);
+            }
         }
 
         // Run the simulation
@@ -251,6 +257,11 @@ py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, co
         qilisdk::log_trace("[QiliSim, C++] Using full-state evolution (method=" + config.get_time_evolution_method() + ")");
         // Common between methods
         SparseMatrix rho_0 = parse_initial_state(initial_state, config.get_atol(), n_qubits);
+
+        // Start the evolution from a normalized state, unless the user opts out
+        if (config.get_normalize_state()) {
+            normalize_state(rho_0);
+        }
         int nqubits = static_cast<int>(std::log2(rho_0.rows()));
         // Parse the time steps before the noise model so time-dependent Lindblad rates can be
         // evaluated at the schedule time points.
@@ -350,6 +361,11 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
     NoiseModelCpp noise_model_cpp = parse_noise_model(noise_model, n_qubits, config.get_atol());
     py::object initial_state = functional.attr("initial_state");
     SparseMatrix rho_0 = parse_initial_state(initial_state, config.get_atol(), n_qubits);
+
+    // Start the evolution from a normalized state, unless the user opts out
+    if (config.get_normalize_state()) {
+        normalize_state(rho_0);
+    }
 
     // Ensure state is always a density matrix
     DenseMatrix state;

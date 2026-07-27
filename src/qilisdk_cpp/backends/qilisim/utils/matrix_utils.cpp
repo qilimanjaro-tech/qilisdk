@@ -373,4 +373,60 @@ void normalize_state(DenseMatrix& state, bool is_statevector, bool monte_carlo) 
     }
 }
 
+template <typename SparseType>
+static void normalize_state_sparse(SparseType& state) {
+    /*
+    Normalize a sparse state in place.
+
+    A column vector is treated as a statevector and divided by its L2 norm, anything
+    else is treated as a density matrix and divided by its trace.
+
+    Args:
+        state (SparseType&): The state to normalize (statevector or density matrix).
+    */
+    state.makeCompressed();
+    long nnz = static_cast<long>(state.nonZeros());
+    double divisor;
+    if (state.cols() == 1) {
+        const Complex* values = state.valuePtr();
+        double sum = 0.0;
+#if defined(_OPENMP)
+#pragma omp parallel for reduction(+ : sum) schedule(static)
+#endif
+        for (long i = 0; i < nnz; ++i) {
+            sum += std::norm(values[i]);
+        }
+        divisor = std::sqrt(sum);
+    } else {
+        double sum = 0.0;
+#if defined(_OPENMP)
+#pragma omp parallel for reduction(+ : sum) schedule(static)
+#endif
+        for (long i = 0; i < state.rows(); ++i) {
+            sum += state.coeff(i, i).real();
+        }
+        divisor = sum;
+    }
+    if (!std::isfinite(divisor) || std::abs(divisor) < 1e-15) {
+        return;
+    }
+
+    // Scaling by a real divisor keeps this off the slow complex-division path
+    Complex* values = state.valuePtr();
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+    for (long i = 0; i < nnz; ++i) {
+        values[i] /= divisor;
+    }
+}
+
+void normalize_state(SparseMatrix& state) {
+    normalize_state_sparse(state);
+}
+
+void normalize_state(SparseMatrixCol& state) {
+    normalize_state_sparse(state);
+}
+
 // GCOV_EXCL_BR_STOP
