@@ -21,6 +21,7 @@ from copy import deepcopy
 from typing import Any, ClassVar, TypeGuard
 
 import numpy as np
+from loguru import logger
 
 from qilisdk.digital import (
     CNOT,
@@ -153,8 +154,11 @@ class CancelIdentityPairsPass(CircuitTranspilerPass):
             Circuit: New circuit with cancellable identity pairs removed.
         """
         gates = list(circuit.gates)
+        logger.debug("[CancelIdentityPairsPass] Running on circuit with {} gates", len(gates))
 
+        sweep = 0
         while True:
+            sweep += 1
             stack: dict[tuple[Any, tuple[int, ...]], int] = {}
             to_delete: set[int] = set()
 
@@ -183,6 +187,12 @@ class CancelIdentityPairsPass(CircuitTranspilerPass):
                 if inv_lookup in stack:
                     prev_idx = stack.pop(inv_lookup)
                     to_delete.update((prev_idx, idx))
+                    logger.trace(
+                        "[CancelIdentityPairsPass] Cancelling inverse pair at indices {} and {} on qubits {}",
+                        prev_idx,
+                        idx,
+                        qkey,
+                    )
                     # Do not push current; pair is canceled
                     continue
 
@@ -193,7 +203,12 @@ class CancelIdentityPairsPass(CircuitTranspilerPass):
             if not to_delete:
                 break
 
+            logger.debug("[CancelIdentityPairsPass] Sweep {} removed {} gates", sweep, len(to_delete))
             gates = [gate for i, gate in enumerate(gates) if i not in to_delete]
+
+        logger.debug(
+            "[CancelIdentityPairsPass] Reached fixed point after {} sweeps, {} gates remain", sweep, len(gates)
+        )
 
         # Build new circuit (deepcopy to avoid Parameter sharing)
         out = Circuit(circuit.nqubits)

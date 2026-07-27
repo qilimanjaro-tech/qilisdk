@@ -111,6 +111,7 @@ class Backend(ABC):
                 functional type.
             ValueError: If the readout specification is empty.
         """
+        logger.debug("[Backend] Dispatching {} to {}", type(functional).__qualname__, type(self).__qualname__)
         try:
             handler = self._handlers[type(functional)]
         except KeyError as exc:
@@ -121,6 +122,7 @@ class Backend(ABC):
         readout_list = readout.to_list()
         if not readout_list:
             raise ValueError("At least one readout method must be provided in the Readout.")
+        logger.opt(lazy=True).debug("[Backend] Readout methods: {}", lambda: [type(ro).__name__ for ro in readout_list])
 
         start = perf_counter()
         result = handler(functional, readout_list)
@@ -147,8 +149,9 @@ class Backend(ABC):
         Raises:
             ValueError:if throughout the execution the state becomes invalid due to numerical instabilities.
         """
+        logger.info("[Backend] Executing Quantum Reservoir")
         if self._noise_model:
-            logger.warning("Noise Models are not supported with Quantum Reservoirs, so they will be ignored.")
+            logger.warning("[Backend] Noise Models are not supported with Quantum Reservoirs, so they will be ignored.")
         state = functional.initial_state
         if isinstance(state, InitialState):
             state = state.as_qtensor(functional.reservoir_layer.nqubits).to_density_matrix()
@@ -156,16 +159,19 @@ class Backend(ABC):
             state = state.to_density_matrix()
         inter_results: list[ReadoutCompositeResults] = []
         cache: dict[Circuit, tuple[tuple[float, ...], QTensor]] = {}
-        for input_dict in functional.input_per_layer:
+        for layer_index, input_dict in enumerate(functional.input_per_layer):
+            logger.debug("[Backend] Reservoir layer {}/{}", layer_index + 1, len(functional.input_per_layer))
             functional.reservoir_layer.set_parameters(input_dict)
             for step in functional.reservoir_layer:
                 if isinstance(step, Circuit):
                     param_signature = tuple(step.get_parameter_values())
                     cached = cache.get(step)
                     if cached is None or cached[0] != param_signature:
+                        logger.trace("[Backend] Reservoir circuit cache miss, computing unitary")
                         U = step.to_qtensor()
                         cache[step] = (param_signature, U)
                     else:
+                        logger.trace("[Backend] Reservoir circuit cache hit")
                         U = cached[1]
                     state = U @ state @ U.adjoint()
                 elif isinstance(step, Schedule):
@@ -186,17 +192,21 @@ class Backend(ABC):
             inter_results.append(Backend._construct_results_list(state, readout))
 
             if functional.reservoir_layer.qubits_to_reset:
+                logger.trace("[Backend] Resetting qubits {}", functional.reservoir_layer.qubits_to_reset)
                 state = reset_qubits(state, functional.reservoir_layer.qubits_to_reset)
 
+        logger.info("[Backend] Quantum Reservoir finished")
         return FunctionalResult(readout_results=inter_results[-1], intermediate_results=inter_results[:-1])
 
     def _execute_variational_program(
         self, functional: VariationalProgram, readout: list[ReadoutMethod]
     ) -> VariationalProgramResult:
+        logger.info("[Backend] Executing Variational Program")
         # Wrap the flat readout list back into a spec for the recursive execute() call
         spec = _readout_list_to_spec(readout)
 
         def evaluate_sample(parameters: list[float]) -> float:
+            logger.trace("[Backend] Evaluating cost sample at {} parameters", len(parameters))
             param_names = functional.functional.get_parameter_names(where=lambda param: param.is_trainable)
             param_bounds = functional.functional.get_parameter_bounds()
             new_param_dict = {}
@@ -220,6 +230,7 @@ class Backend(ABC):
         if len(functional.functional.get_parameters(where=lambda param: param.is_trainable)) == 0:
             raise ValueError("Functional provided does not contain trainable parameters.")
 
+        logger.debug("[Backend] Starting optimization with {}", type(functional.optimizer).__name__)
         optimizer_result = functional.optimizer.optimize(
             cost_function=evaluate_sample,
             init_parameters=list(functional.functional.get_parameters(where=lambda param: param.is_trainable).values()),
@@ -237,6 +248,7 @@ class Backend(ABC):
         functional.functional.set_parameters(optimal_parameter_dict)
         optimal_results = self.execute(functional.functional, spec)
 
+        logger.info("[Backend] Variational Program finished")
         return VariationalProgramResult(optimizer_result=optimizer_result, result=optimal_results)
 
     def __repr__(self) -> str:

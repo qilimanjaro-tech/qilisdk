@@ -16,6 +16,7 @@
 #include <random>
 #include <sstream>
 
+#include "../../../libs/logging.h"
 #include "../../../libs/pybind.h"
 #include "../digital/circuit_optimizations.h"
 #include "../noise/noise_model.h"
@@ -133,6 +134,7 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrixCo
     densify_initial_state(initial_state, state);
     bool is_statevector = (state.cols() == 1 && state.rows() == dim);
     bool initially_was_statevector = is_statevector;
+    qilisdk::log_debug("[Sampling, C++] Preparing initial state for " + std::to_string(n_qubits) + " qubits (" + (is_statevector ? "statevector" : "density matrix") + ")");
 
     // Check if the input is a bunch of monte carlo trajectories
     bool input_is_trajectories = (state.cols() > 1 && state.rows() != state.cols());
@@ -152,6 +154,7 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrixCo
 
     // If we have noise but start with a statevector, convert to density matrix
     if (has_noise && is_statevector) {
+        qilisdk::log_debug("[Sampling, C++] Noise model present, promoting statevector to density matrix");
         state = state * state.adjoint();
         is_statevector = false;
     }
@@ -159,6 +162,7 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrixCo
     // Whether we should do monte-carlo sampling
     bool monte_carlo = input_is_trajectories || (!is_statevector && config.get_monte_carlo());
     if (monte_carlo && !input_is_trajectories) {
+        qilisdk::log_debug("[Sampling, C++] Monte-Carlo sampling with " + std::to_string(config.get_num_monte_carlo_trajectories()) + " trajectories");
         state = sample_from_density_matrix(state, config.get_num_monte_carlo_trajectories(), config.get_seed());
     }
 
@@ -166,6 +170,7 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrixCo
     std::vector<Gate> optimized_gates = gates;
     if (!has_noise && config.get_combine_single_qubit_gates()) {
         optimized_gates = combine_single_qubit_gates(optimized_gates);
+        qilisdk::log_debug("[Sampling, C++] Combined single-qubit gates: " + std::to_string(gates.size()) + " -> " + std::to_string(optimized_gates.size()) + " gates");
     }
 
     // Determine the start/end use of each gate
@@ -181,6 +186,7 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrixCo
 
     // Pre-cache up to the limit (in parallel)
     int initial_cache_size = std::min(int(optimized_gates.size()), config.get_max_cache_size());
+    qilisdk::log_debug("[Sampling, C++] Pre-caching " + std::to_string(initial_cache_size) + " of " + std::to_string(optimized_gates.size()) + " gate matrices");
     std::vector<std::pair<std::string, SparseMatrix>> precomputed_gates(initial_cache_size);
 #if defined(_OPENMP)
     Eigen::setNbThreads(1);
@@ -234,6 +240,8 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrixCo
                 }
             }
 
+            qilisdk::log_trace("[Sampling, C++] Measuring " + std::to_string(num_measurements) + " qubits at gate index " + std::to_string(i));
+
             // Construct the result
             if (!are_final_measurements) {
                 py::object result = construct_result_object(state, readout, noise_model_cpp, n_qubits, config, qubits_to_measure_after_gate);
@@ -262,6 +270,8 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrixCo
             gate_is_new = true;
             gate_matrix = gate.get_full_matrix(n_qubits);
         }
+
+        qilisdk::log_trace("[Sampling, C++] Applying gate " + gate.get_id() + (gate_is_new ? " (cache miss)" : " (cache hit)"));
 
         // If it will be used again later and we have space, cache it
         if (gate_is_new && gate_first_last_use[gate_id].second > gate_count && int(gate_cache.size()) < config.get_max_cache_size()) {
@@ -309,6 +319,8 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrixCo
     if (!initially_was_statevector && is_statevector) {
         state = state * state.adjoint();
     }
+
+    qilisdk::log_debug("[Sampling, C++] Applied " + std::to_string(gate_count) + " gates, circuit sampling complete");
 }
 
 void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const SparseMatrixCol& initial_state, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, std::vector<py::object>& intermediate_results, const QiliSimConfig& config, const py::object& readout) {
@@ -342,6 +354,7 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const Sp
     densify_initial_state(initial_state, state);
     bool is_statevector = (state.cols() == 1 && state.rows() == (1L << n_qubits));
     bool initially_was_statevector = is_statevector;
+    qilisdk::log_debug("[Sampling, C++] Preparing initial state for " + std::to_string(n_qubits) + " qubits (matrix-free, " + (is_statevector ? "statevector" : "density matrix") + ")");
 
     // Check if we have noise
     bool has_noise = !noise_model_cpp.is_empty();
@@ -361,6 +374,7 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const Sp
 
     // If we have noise but start with a statevector, convert to density matrix
     if (has_noise && is_statevector) {
+        qilisdk::log_debug("[Sampling, C++] Noise model present, promoting statevector to density matrix");
         state = state * state.adjoint();
         is_statevector = false;
     }
@@ -368,6 +382,7 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const Sp
     // Whether we should do monte-carlo sampling
     bool monte_carlo = input_is_trajectories || (!is_statevector && config.get_monte_carlo());
     if (monte_carlo && !input_is_trajectories) {
+        qilisdk::log_debug("[Sampling, C++] Monte-Carlo sampling with " + std::to_string(config.get_num_monte_carlo_trajectories()) + " trajectories");
         state = sample_from_density_matrix(state, config.get_num_monte_carlo_trajectories(), config.get_seed());
     }
 
@@ -389,6 +404,7 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const Sp
         }
     } else if (!has_noise && config.get_combine_single_qubit_gates()) {
         optimized_gates = combine_single_qubit_gates(optimized_gates);
+        qilisdk::log_debug("[Sampling, C++] Combined single-qubit gates: " + std::to_string(gates.size()) + " -> " + std::to_string(optimized_gates.size()) + " gates");
     }
 
     // Apply each gate
@@ -430,10 +446,14 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const Sp
                 }
             }
 
+            qilisdk::log_trace("[Sampling, C++] Measuring " + std::to_string(num_measurements) + " qubits at gate index " + std::to_string(i));
+
             // Skip the next measurements since we did them all at once
             i += (num_measurements - 1);
             continue;
         }
+
+        qilisdk::log_trace("[Sampling, C++] Applying gate " + gate.get_id() + " (matrix-free)");
 
         // Apply the gate
         if (monte_carlo) {
@@ -475,6 +495,8 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const Sp
     if (!initially_was_statevector && is_statevector) {
         state = state * state.adjoint();
     }
+
+    qilisdk::log_debug("[Sampling, C++] Applied " + std::to_string(optimized_gates.size()) + " gates, matrix-free circuit sampling complete");
 }
 
 #include <iostream>

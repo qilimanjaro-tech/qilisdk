@@ -14,6 +14,7 @@
 from __future__ import annotations
 
 import numpy as np
+from loguru import logger
 
 from qilisdk.core import QTensor
 
@@ -51,6 +52,7 @@ class Dephasing(Noise, SupportsTimeDerivedKraus, SupportsStaticLindblad, HasAllo
         return self._t_phi
 
     def as_lindblad(self) -> LindbladGenerator:
+        logger.debug("[Dephasing] Building Lindblad representation with t_phi={}", self._t_phi)
         gamma = 1.0 / self._t_phi
         rate = gamma / 2.0
         L = QTensor(_sigma_z())
@@ -59,6 +61,7 @@ class Dephasing(Noise, SupportsTimeDerivedKraus, SupportsStaticLindblad, HasAllo
     def as_kraus_from_duration(self, *, duration: float) -> KrausChannel:
         if duration < 0:
             raise ValueError("duration must be >= 0.")
+        logger.debug("[Dephasing] Building Kraus representation from duration {} with t_phi={}", duration, self._t_phi)
         gamma = float(np.exp(-duration / self._t_phi))
         K0 = np.sqrt((1.0 + gamma) / 2.0) * _identity()
         K1 = np.sqrt((1.0 - gamma) / 2.0) * _sigma_z()

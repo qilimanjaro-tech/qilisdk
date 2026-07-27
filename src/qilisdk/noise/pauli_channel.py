@@ -15,6 +15,7 @@
 from __future__ import annotations
 
 import numpy as np
+from loguru import logger
 
 from qilisdk.core import QTensor
 
@@ -75,6 +76,9 @@ class PauliChannel(Noise, SupportsStaticKraus, SupportsTimeDerivedLindblad, HasA
         return self._pZ
 
     def as_kraus(self) -> KrausChannel:
+        logger.debug(
+            "[PauliChannel] Building Kraus representation with pX={}, pY={}, pZ={}", self._pX, self._pY, self._pZ
+        )
         pI = max(0.0, 1.0 - (self._pX + self._pY + self._pZ))
         operators = []
         if pI > 0:
@@ -90,6 +94,7 @@ class PauliChannel(Noise, SupportsStaticKraus, SupportsTimeDerivedLindblad, HasA
     def as_lindblad_from_duration(self, *, duration: float) -> LindbladGenerator:
         if duration <= 0:
             raise ValueError("Duration must be positive.")
+        logger.debug("[PauliChannel] Building Lindblad representation from duration {}", duration)
         rates = []
         operators = []
         if self._pX > 0:

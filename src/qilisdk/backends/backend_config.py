@@ -18,6 +18,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Literal
 
 import psutil
+from loguru import logger
 from pydantic import BaseModel, Field, field_validator
 from pydantic import ConfigDict as PydanticConfigDict
 
@@ -150,7 +151,6 @@ class AnalogMethod(BaseSimulatorConfig):
             "variational_warmups": self.variational_warmups,
             "variational_order": self.variational_order,
         }
-
         return d
 
     @classmethod
@@ -166,6 +166,7 @@ class AnalogMethod(BaseSimulatorConfig):
             AnalogMethod: Configured integrate-method analog configuration.
         """
         evolution_method = "integrate_rk4_matrix_free" if matrix_free else "integrate_rk4"
+        logger.debug("[BackendConfig] Configuring integrator analog method (matrix_free={})", matrix_free)
         return cls(evolution_method=evolution_method)
 
     @classmethod
@@ -183,6 +184,12 @@ class AnalogMethod(BaseSimulatorConfig):
         Returns:
             AnalogMethod: Configured variational-method analog configuration.
         """
+        logger.debug(
+            "[BackendConfig] Configuring variational_annealing analog method (order={}, shots={}, warmups={})",
+            order,
+            shots,
+            warmups,
+        )
         return cls(
             evolution_method="variational_exponential",
             variational_order=order,
@@ -204,6 +211,7 @@ class AnalogMethod(BaseSimulatorConfig):
         Returns:
             AnalogMethod: Configured integrate-method analog configuration.
         """
+        logger.debug("[BackendConfig] Configuring adaptive_integrator analog method (tol={})", tol)
         return cls(evolution_method="integrate_rk45_matrix_free", adaptive_tol=tol)
 
     @classmethod
@@ -226,6 +234,7 @@ class AnalogMethod(BaseSimulatorConfig):
         Returns:
             AnalogMethod: Configured arnoldi-method analog configuration.
         """
+        logger.debug("[BackendConfig] Configuring arnoldi analog method (dim={}, num_substeps={})", dim, num_substeps)
         return cls(
             evolution_method="arnoldi_matrix_free" if matrix_free else "arnoldi",
             arnoldi_dim=dim,
@@ -239,6 +248,7 @@ class AnalogMethod(BaseSimulatorConfig):
         Returns:
             AnalogMethod: Configured direct-method analog configuration.
         """
+        logger.debug("[BackendConfig] Configuring direct analog method")
         return cls(evolution_method="direct")
 
 
@@ -311,14 +321,18 @@ class ExecutionConfig(BaseSimulatorConfig):
     @classmethod
     def _validate_num_threads(cls, num_threads: int) -> int:
         if num_threads <= 0:
-            return psutil.cpu_count(logical=False) or 1
+            resolved = psutil.cpu_count(logical=False) or 1
+            logger.debug("[BackendConfig] num_threads=0 requested, resolved to {} physical cores", resolved)
+            return resolved
         return num_threads
 
     @field_validator("seed", mode="after")
     @classmethod
     def _validate_seed(cls, seed: int | None) -> int:
         if seed is None:
-            return secrets.randbelow(2**15)
+            generated = secrets.randbelow(2**15)
+            logger.debug("[BackendConfig] No seed provided, generated random seed {}", generated)
+            return generated
         return seed
 
 
@@ -397,7 +411,7 @@ class DigitalMethod(BaseSimulatorConfig):
 
     def get_config(self) -> SolverConfigDict:
         """Return digital simulation settings in backend-compatible key names."""
-        return {
+        d: SolverConfigDict = {
             "max_cache_size": self.max_cache_size,
             "digital_method": self.digital_method,
             "normalize_after_each_gate": self.normalize_after_each_gate,
@@ -406,6 +420,7 @@ class DigitalMethod(BaseSimulatorConfig):
             "max_fused_qubits": self.max_fused_qubits,
             "stabilizer_max_states": self.stabilizer_max_states,
         }
+        return d
 
     @classmethod
     def statevector(
@@ -437,6 +452,14 @@ class DigitalMethod(BaseSimulatorConfig):
         Returns:
             DigitalMethod: Configured statevector digital configuration.
         """
+        logger.debug(
+            "[BackendConfig] Configuring statevector digital method (max_cache_size={}, matrix_free={}, "
+            "normalize_after_each_gate={}, combine_single_qubit_gates={})",
+            max_cache_size,
+            matrix_free,
+            normalize_after_each_gate,
+            combine_single_qubit_gates,
+        )
         return cls(
             digital_method="statevector_matrix_free" if matrix_free else "statevector",
             max_cache_size=max_cache_size,

@@ -17,6 +17,7 @@
 #include <random>
 #include <sstream>
 
+#include "../../libs/logging.h"
 #include "../../libs/numpy.h"
 #include "analog/time_evolution.h"
 #include "config/qilisim_config.h"
@@ -80,10 +81,13 @@ py::object QiliSimCpp::execute_digital_propagation(const py::object& functional,
     NoiseModelCpp noise_model_cpp = parse_noise_model(noise_model, n_qubits, config.get_atol(), functional.attr("circuit"));
     std::vector<Gate> gates = parse_gates(functional.attr("circuit"), config.get_atol(), noise_model);
 
+    qilisdk::log_debug("[QiliSim, C++] Digital propagation: " + std::to_string(n_qubits) + " qubits, " + std::to_string(gates.size()) + " gates, method=" + config.get_digital_method());
+
     // If we have any exponential gates, we need to force renormalization
     for (const auto& gate : gates) {
         if (!gate.is_normalized()) {
             config.set_normalize_after_gate(true);
+            qilisdk::log_trace("[QiliSim, C++] Non-unitary gate detected, forcing renormalization after each gate");
             break;
         }
     }
@@ -124,6 +128,7 @@ py::object QiliSimCpp::execute_digital_propagation(const py::object& functional,
         } else {
             sampling(gates, n_qubits, initial_state_cpp, noise_model_cpp, state_dense, intermediate_results, config, readout);
         }
+        qilisdk::log_debug("[QiliSim, C++] Statevector simulation complete, constructing result");
 
         // Construct the final result object
         result = construct_result_object(state_dense, readout, noise_model_cpp, n_qubits, config, final_qubits_to_measure);
@@ -201,8 +206,11 @@ py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, co
         config.set_store_intermediate_results(true);
     }
 
+    qilisdk::log_debug("[QiliSim, C++] Analog evolution: " + std::to_string(n_qubits) + " qubits, " + std::to_string(py::len(steps)) + " time steps, method=" + config.get_time_evolution_method());
+
     // A scalable method, so we should never construct any matrix or state
     if (config.get_time_evolution_method() == "variational_exponential") {
+        qilisdk::log_trace("[QiliSim, C++] Using matrix-free variational exponential ansatz");
         // Ensure that the initial state is a plus state (a InitialState)
         if (!py::isinstance(initial_state, InitialState) || initial_state.attr("name").cast<std::string>() != "UNIFORM") {
             throw py::value_error("Initial state must be a InitialState.UNIFORM instance for the variational annealing method.");
@@ -237,6 +245,7 @@ py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, co
 
         // In all of these methods the state is fully stored
     } else {
+        qilisdk::log_trace("[QiliSim, C++] Using full-state evolution (method=" + config.get_time_evolution_method() + ")");
         // Common between methods
         SparseMatrix rho_0 = parse_initial_state(initial_state, config.get_atol(), n_qubits);
         int nqubits = static_cast<int>(std::log2(rho_0.rows()));
@@ -331,6 +340,8 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
         throw py::value_error("nqubits must be positive.");
     }
 
+    qilisdk::log_debug("[QiliSim, C++] Quantum reservoir: " + std::to_string(n_qubits) + " qubits, " + std::to_string(py::len(functional.attr("input_per_layer"))) + " layers");
+
     // Parse the Python objects into C++ objects
     std::vector<bool> qubits_to_measure(n_qubits, true);
     NoiseModelCpp noise_model_cpp = parse_noise_model(noise_model, n_qubits, config.get_atol());
@@ -356,6 +367,7 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
     py::list inter_results;
     int layer_index = 0;
     for (py::handle input_handler : functional.attr("input_per_layer")) {
+        qilisdk::log_trace("[QiliSim, C++] Reservoir layer " + std::to_string(++layer_index));
         py::object input_dict = py::reinterpret_borrow<py::object>(input_handler);
         functional.attr("reservoir_layer").attr("set_parameters")(input_dict);
         for (py::handle step_handler : functional.attr("reservoir_layer")) {
