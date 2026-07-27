@@ -26,8 +26,9 @@ from qilisdk._optionals import (
 from .base_solver import ClassicalSolver
 from .brute_force_solver import BruteForceSolver
 from .scipy_solver import ScipySolver
+from .simulated_annealing_solver import SimulatedAnnealingSolver
 
-__all__ = ["BruteForceSolver", "ClassicalSolver", "ScipySolver"]
+__all__ = ["BruteForceSolver", "ClassicalSolver", "ScipySolver", "SimulatedAnnealingSolver"]
 
 # ScipSolver relies on the optional ``pyscipopt`` dependency
 OPTIONAL_FEATURES: list[OptionalFeature] = [

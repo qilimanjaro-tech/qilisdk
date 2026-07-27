@@ -17,9 +17,9 @@ from unittest.mock import patch
 import numpy as np
 import pytest
 
-from qilisdk.core.model import Model, ObjectiveSense
-from qilisdk.core.variables import EQ, BinaryVariable, Domain, Operation, SpinVariable, Term, Variable
-from qilisdk.utils.classical_solvers import BruteForceSolver, ClassicalSolver, ScipySolver
+from qilisdk.core.model import QUBO, Model, ObjectiveSense
+from qilisdk.core.variables import EQ, BinaryVariable, Domain, OneHot, Operation, SpinVariable, Term, Variable
+from qilisdk.utils.classical_solvers import BruteForceSolver, ClassicalSolver, ScipySolver, SimulatedAnnealingSolver
 from qilisdk.utils.classical_solvers.base_solver import _assert_real, _variable_bounds
 from qilisdk.utils.classical_solvers.scipy_solver import _decode_value
 
@@ -219,3 +219,86 @@ def test_scipy_solver_returns_evaluate_of_best():
     m.set_objective(1 * x)
     results, sample = ScipySolver().solve(m)
     assert results == m.evaluate(sample)
+
+
+def test_simulated_annealing_minimizes_binary():
+    x = BinaryVariable("x")
+    qubo = QUBO("bin")
+    qubo.set_objective(1 * x)
+    results, sample = SimulatedAnnealingSolver().solve(qubo)
+    assert sample[x] == 0
+    assert results == qubo.evaluate(sample)
+
+
+def test_simulated_annealing_maximize():
+    x = BinaryVariable("x")
+    m = Model("max_bin")
+    m.set_objective(1 * x, sense=ObjectiveSense.MAXIMIZE)
+    _, sample = SimulatedAnnealingSolver().solve(m.to_qubo())
+    assert sample[x] == 1
+
+
+def test_simulated_annealing_matches_brute_force_on_random_ising():
+    m = Model.random_ising(10, seed=7)
+    annealed, _ = SimulatedAnnealingSolver(num_reads=50, seed=3).solve(m.to_qubo())
+    exhaustive, _ = BruteForceSolver().solve(m)
+    assert np.isclose(annealed[m.objective.label], exhaustive[m.objective.label])
+
+
+def test_simulated_annealing_respects_constraint_penalties():
+    m = Model.knapsack(values=[5, 4, 3], weights=[3, 2, 1], max_weight=3)
+    results, _ = SimulatedAnnealingSolver(num_reads=50, seed=1).solve(m.to_qubo())
+    assert np.isclose(results[m.objective.label], -7)
+    # The slack form of the weight constraint is satisfied, so its penalty contributes nothing
+    assert np.isclose(results["weight"], 0)
+
+
+def test_simulated_annealing_samples_the_bits_of_an_encoded_variable():
+    x = Variable("x", Domain.POSITIVE_INTEGER, bounds=(0, 3), encoding=OneHot)
+    m = Model("encoded")
+    m.set_objective((x - 2) * (x - 2))
+    _, sample = SimulatedAnnealingSolver(num_reads=50, seed=1).solve(m.to_qubo())
+    # The QUBO is defined over the bits of the encoding, which decode back to the best value of x
+    bits = [sample[bit] for bit in x.bin_vars]
+    assert x.evaluate(bits) == 2
+
+
+def test_simulated_annealing_is_deterministic_for_a_given_seed():
+    qubo = Model.random_ising(12, seed=2).to_qubo()
+    first, _ = SimulatedAnnealingSolver(num_reads=8, seed=11).solve(qubo)
+    second, _ = SimulatedAnnealingSolver(num_reads=8, seed=11).solve(qubo)
+    assert first == second
+
+
+def test_simulated_annealing_explicit_beta_range():
+    m = Model.random_ising(8, seed=5)
+    annealed, _ = SimulatedAnnealingSolver(num_reads=20, seed=1, beta_range=(0.01, 10.0)).solve(m.to_qubo())
+    exhaustive, _ = BruteForceSolver().solve(m)
+    assert np.isclose(annealed[m.objective.label], exhaustive[m.objective.label])
+
+
+def test_simulated_annealing_empty_qubo_has_nothing_to_anneal():
+    qubo = QUBO("empty")
+    results, sample = SimulatedAnnealingSolver().solve(qubo)
+    assert sample == {}
+    assert results == qubo.evaluate(sample)
+
+
+def test_simulated_annealing_requires_a_qubo():
+    m = Model.random_ising(4, seed=1)
+    with pytest.raises(ValueError, match="requires a QUBO"):
+        SimulatedAnnealingSolver().solve(m)
+
+
+@pytest.mark.parametrize("beta_range", [(0.0, 1.0), (1.0, -1.0), (10.0, 1.0)])
+def test_simulated_annealing_invalid_beta_range_raises(beta_range):
+    qubo = Model.random_ising(4, seed=1).to_qubo()
+    with pytest.raises(ValueError, match="inverse temperature"):
+        SimulatedAnnealingSolver(beta_range=beta_range).solve(qubo)
+
+
+@pytest.mark.parametrize(("num_reads", "num_sweeps"), [(0, 10), (10, 0)])
+def test_simulated_annealing_invalid_effort_raises(num_reads, num_sweeps):
+    qubo = Model.random_ising(4, seed=1).to_qubo()
+    with pytest.raises(ValueError, match="must be positive"):
+        SimulatedAnnealingSolver(num_reads=num_reads, num_sweeps=num_sweeps).solve(qubo)

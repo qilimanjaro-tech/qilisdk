@@ -227,6 +227,18 @@ msgstr ""
 
 #: ../../modules/core/core_model.rst:188
 msgid ""
+":class:`~qilisdk.utils.classical_solvers.simulated_annealing_solver.SimulatedAnnealingSolver`"
+" - A simulated annealing solver, implemented entirely in C++. It requires a "
+"QUBO, so a general model must be converted with "
+":meth:`~qilisdk.core.model.Model.to_qubo` first."
+msgstr ""
+":class:`~qilisdk.utils.classical_solvers.simulated_annealing_solver.SimulatedAnnealingSolver`"
+" - Un solucionador de recocido simulado, implementado completamente en C++. "
+"Requiere un QUBO, por lo que un modelo general debe convertirse primero con "
+":meth:`~qilisdk.core.model.Model.to_qubo`."
+
+#: ../../modules/core/core_model.rst:189
+msgid ""
 ":class:`~qilisdk.utils.classical_solvers.scip_solver.ScipSolver` - A "
 "wrapper to SCIP, a mixed-integer programming solver. This requires the "
 "SCIP extra (i.e. `pip install qilisdk[scip]`)."
