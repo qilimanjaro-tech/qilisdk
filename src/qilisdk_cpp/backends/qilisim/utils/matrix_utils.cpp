@@ -338,7 +338,7 @@ void normalize_state(DenseMatrix& state, bool is_statevector, bool monte_carlo) 
             state.col(col) /= norm;
         }
         if (diverged) {
-            set_nan(state);
+            nan_error();
         }
     } else if (is_statevector) {
         double sum = 0.0;
@@ -349,9 +349,7 @@ void normalize_state(DenseMatrix& state, bool is_statevector, bool monte_carlo) 
             sum += std::norm(state(i, 0));
         }
         const double norm = std::sqrt(sum);
-        if (mark_nan_if_bad_divisor(state, norm)) {
-            return;
-        }
+        check_valid_divisor(norm);
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
 #endif
@@ -366,9 +364,7 @@ void normalize_state(DenseMatrix& state, bool is_statevector, bool monte_carlo) 
         for (int i = 0; i < state.rows(); ++i) {
             sum += state.coeff(i, i).real();
         }
-        if (mark_nan_if_bad_divisor(state, sum)) {
-            return;
-        }
+        check_valid_divisor(sum);
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
 #endif

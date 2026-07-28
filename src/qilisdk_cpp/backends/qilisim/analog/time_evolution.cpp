@@ -21,19 +21,6 @@
 
 // GCOV_EXCL_BR_START
 
-namespace {
-
-// If the integrator has diverged to a non-finite state, replace it with an explicit NaN state
-bool state_diverged(DenseMatrix& rho_t, const std::string& method) {
-    if (!mark_nan_if_diverged(rho_t)) {
-        return false;
-    }
-    qilisdk::log_warning("[QiliSim, C++] Analog integrator '" + method + "' diverged: the state became non-finite, try with a smaller dt or a different integrator.");
-    return true;
-}
-
-}  // namespace
-
 void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, NoiseModelCpp& noise_model_cpp, QiliSimConfig& config, DenseMatrix& rho_t, std::vector<DenseMatrix>& intermediate_rhos) {
     /*
     Execute a time evolution functional.
@@ -182,9 +169,7 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
         }
 
         // Stop early if the integrator has diverged to a non-finite state
-        if (state_diverged(rho_t, config.get_time_evolution_method())) {
-            break;
-        }
+        check_state_diverged(rho_t);
 
         // If we should store intermediates, do it here
         if (config.get_store_intermediate_results()) {
@@ -323,9 +308,7 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
             double dt_taken = iter_rk45(rho_t, current_time, dt, step_list, hamiltonians, parameters_list, jump_operators, is_unitary_on_statevector, config.get_adaptive_tol(), k_saved, config.get_normalize_state());
 
             // Stop early if the integrator has diverged to a non-finite state
-            if (state_diverged(rho_t, config.get_time_evolution_method())) {
-                break;
-            }
+            check_state_diverged(rho_t);
 
             // If we should store intermediates, do it here
             if (config.get_store_intermediate_results() && dt_taken > 0) {
@@ -372,9 +355,7 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
             iter_rk4(rho_t, t_start, dt, step_list, hamiltonians, parameters_list, current_jumps, is_unitary_on_statevector, config.get_normalize_state());
 
             // Stop early if the integrator has diverged to a non-finite state
-            if (state_diverged(rho_t, config.get_time_evolution_method())) {
-                break;
-            }
+            check_state_diverged(rho_t);
 
             // If we should store intermediates, do it here
             if (config.get_store_intermediate_results()) {
@@ -407,9 +388,7 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
             rho_t = iter_arnoldi_matrix_free(rho_t, dt, currentH, jump_operators, config.get_arnoldi_dim(), config.get_num_arnoldi_substeps(), is_unitary_on_statevector, config.get_atol());
 
             // Stop early if the integrator has diverged to a non-finite state
-            if (state_diverged(rho_t, config.get_time_evolution_method())) {
-                break;
-            }
+            check_state_diverged(rho_t);
 
             // If we should store intermediates, do it here
             if (config.get_store_intermediate_results()) {

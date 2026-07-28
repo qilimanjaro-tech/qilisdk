@@ -321,9 +321,7 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrixCo
     }
 
     // Make sure we haven't diverged
-    if (mark_nan_if_diverged(state)) {
-        qilisdk::log_warning("[QiliSim, C++] Digital circuit sampling diverged: the state became non-finite.");
-    }
+    check_state_diverged(state);
 
     qilisdk::log_debug("[Sampling, C++] Applied " + std::to_string(gate_count) + " gates, circuit sampling complete");
 }
@@ -502,9 +500,7 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const Sp
     }
 
     // Make sure we haven't diverged
-    if (mark_nan_if_diverged(state)) {
-        qilisdk::log_warning("[QiliSim, C++] Digital circuit sampling diverged: the state became non-finite.");
-    }
+    check_state_diverged(state);
 
     qilisdk::log_debug("[Sampling, C++] Applied " + std::to_string(optimized_gates.size()) + " gates, matrix-free circuit sampling complete");
 }

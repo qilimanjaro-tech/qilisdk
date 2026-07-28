@@ -233,15 +233,11 @@ DenseMatrix iter_arnoldi(const DenseMatrix& rho_0, double dt, const SparseMatrix
         if (normalize) {
             if (is_unitary_on_statevector) {
                 const double norm = rho_t.norm();
-                if (mark_nan_if_bad_divisor(rho_t, norm)) {
-                    break;
-                }
+                check_valid_divisor(norm);
                 rho_t /= norm;
             } else if (is_unitary) {
                 const Complex tr = trace(rho_t);
-                if (mark_nan_if_bad_divisor(rho_t, tr)) {
-                    break;
-                }
+                check_valid_divisor(tr);
                 rho_t /= tr;
                 continue;
             } else if (!is_unitary_on_statevector) {
@@ -250,9 +246,7 @@ DenseMatrix iter_arnoldi(const DenseMatrix& rho_0, double dt, const SparseMatrix
                     long vec_index = i * dim + i;
                     tr += rho_t.coeff(vec_index, 0);
                 }
-                if (mark_nan_if_bad_divisor(rho_t, tr)) {
-                    break;
-                }
+                check_valid_divisor(tr);
                 rho_t /= tr;
             }
         }
@@ -318,8 +312,7 @@ DenseMatrix iter_arnoldi_matrix_free(const DenseMatrix& rho_0, double dt, const 
         DenseMatrix v = rho_t;
         double beta = v.norm();
         if (!std::isfinite(beta)) {
-            set_nan(rho_t);
-            break;
+            nan_error();
         }
         if (beta < atol) {
             continue;
@@ -384,15 +377,11 @@ DenseMatrix iter_arnoldi_matrix_free(const DenseMatrix& rho_0, double dt, const 
         // Normalize the state
         if (is_unitary_on_statevector) {
             const double norm = rho_t.norm();
-            if (mark_nan_if_bad_divisor(rho_t, norm)) {
-                break;
-            }
+            check_valid_divisor(norm);
             rho_t /= norm;
         } else {
             const Complex tr = trace(rho_t);
-            if (mark_nan_if_bad_divisor(rho_t, tr)) {
-                break;
-            }
+            check_valid_divisor(tr);
             rho_t /= tr;
         }
     }

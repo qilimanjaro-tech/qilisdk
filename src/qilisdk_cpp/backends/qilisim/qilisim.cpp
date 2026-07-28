@@ -389,6 +389,8 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
         qilisdk::log_trace("[QiliSim, C++] Reservoir layer " + std::to_string(++layer_index));
         py::object input_dict = py::reinterpret_borrow<py::object>(input_handler);
         functional.attr("reservoir_layer").attr("set_parameters")(input_dict);
+        
+        // For everything in this layer
         for (py::handle step_handler : functional.attr("reservoir_layer")) {
             py::object step = py::reinterpret_borrow<py::object>(step_handler);
 
@@ -486,6 +488,12 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
                     throw py::value_error("Unknown time evolution method: " + config.get_time_evolution_method());
                 }
             }
+            
+            // Stop if it's NaN
+            if (!state.allFinite()) {
+                throw py::value_error("State has become NaN during evolution. Consider increasing the atol or adaptive_tol parameters.");
+            }
+
         }
 
         // Ensure state is a density matrix after each layer
