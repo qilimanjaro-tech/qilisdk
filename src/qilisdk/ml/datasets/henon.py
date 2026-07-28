@@ -34,6 +34,9 @@ class HenonMap(Dataset):
     ``targets`` are both shaped ``(npoints, 2)``.
     """
 
+    _DEFAULT_DRAW_STYLE = "2d"
+    _DRAW_COMPONENT_LABELS = ("x", "y")
+
     def __init__(
         self,
         *,

@@ -43,6 +43,9 @@ class NARMA(Dataset):
     (``order=10``).
     """
 
+    _DEFAULT_DRAW_STYLE = "1d"
+    _DRAW_COMPONENT_LABELS = ("u",)
+
     def __init__(
         self,
         order: int = 10,

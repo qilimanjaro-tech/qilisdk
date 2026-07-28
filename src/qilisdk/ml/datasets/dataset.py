@@ -15,15 +15,20 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Callable, Iterator, TypeAlias, TypeVar, cast
+from typing import TYPE_CHECKING, Callable, ClassVar, Iterator, TypeAlias, TypeVar, cast
+from qilisdk.settings import get_settings
 
 import numpy as np
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
+    from qilisdk.utils.visualization.style import DatasetStyle
 
-FloatArray: TypeAlias = "NDArray[np.float64]"
-"""Alias for a NumPy array of 64-bit floats, used throughout the datasets module."""
+if get_settings().complex_precision == "COMPLEX_64":
+    FloatArray: TypeAlias = "NDArray[np.float32]"
+else:
+    FloatArray: TypeAlias = "NDArray[np.float64]"
+
 
 # A single integration state: either a scalar (1-D system) or a vector of states.
 State = TypeVar("State", float, "FloatArray")
@@ -111,6 +116,12 @@ class Dataset(ABC):
     Abstract base class for ML datasets
     """
 
+    # Default plot mode used by :meth:`draw` when none is supplied
+    _DEFAULT_DRAW_STYLE: ClassVar[str] = "1d"
+
+    # Labels for the components of the series
+    _DRAW_COMPONENT_LABELS: ClassVar[tuple[str, ...] | None] = None
+
     def __init__(self, *, seed: int | None = None) -> None:
         """Initialise the dataset.
 
@@ -147,3 +158,51 @@ class Dataset(ABC):
             DatasetSample: The generated ``(inputs, targets)`` pair.
         """
         ...
+
+    @classmethod
+    def draw(
+        cls,
+        sample: DatasetSample,
+        style: str | None = None,
+        *,
+        config: DatasetStyle | None = None,
+        filepath: str | None = None,
+    ) -> None:
+        """Render a generated :class:`DatasetSample` with matplotlib.
+
+        The kind of plot is selected by ``style``:
+
+        * ``"1d"`` -- each component of the series against the sample index.
+        * ``"2d"`` -- a phase portrait (two components, or a delay embedding of a
+          one-dimensional series).
+        * ``"3d"`` -- a three-dimensional phase portrait (three components, or a
+          delay embedding of a lower-dimensional series).
+
+        The plot's *appearance* (theme, fonts, colours, grid, ...) is controlled
+        independently via ``config``, mirroring how :class:`ScheduleStyle` and
+        :class:`CircuitStyle` customise schedule and circuit plots.
+
+        Args:
+            sample (DatasetSample): A sample produced by :meth:`generate`.
+            style (str | None): Plot mode, one of ``"1d"``, ``"2d"`` or ``"3d"``.
+                Defaults to the dataset's natural mode.
+            config (DatasetStyle | None): Visual style configuration. Defaults to
+                :class:`DatasetStyle`.
+            filepath (str | None): If given, the figure is saved to this path
+                (format inferred from the extension) instead of being shown.
+        """
+        from qilisdk.utils.visualization.dataset_renderers import MatplotlibDatasetRenderer  # noqa: PLC0415
+
+        mode = style or cls._DEFAULT_DRAW_STYLE
+        renderer = MatplotlibDatasetRenderer(
+            sample,
+            mode,
+            config=config,
+            labels=cls._DRAW_COMPONENT_LABELS,
+            title=cls.__name__,
+        )
+        renderer.plot()
+        if filepath:
+            renderer.save(filepath)
+        else:
+            renderer.show()

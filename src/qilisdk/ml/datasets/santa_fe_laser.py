@@ -39,6 +39,9 @@ class SantaFeLaser(Dataset):
     of the Santa Fe recording.
     """
 
+    _DEFAULT_DRAW_STYLE = "1d"
+    _DRAW_COMPONENT_LABELS = ("intensity",)
+
     def __init__(
         self,
         *,

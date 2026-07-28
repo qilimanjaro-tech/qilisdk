@@ -68,6 +68,9 @@ class Lorenz(Dataset):
     Lorenz attractor, a chaotic dynamical system.
     """
 
+    _DEFAULT_DRAW_STYLE = "3d"
+    _DRAW_COMPONENT_LABELS = ("x", "y", "z")
+
     def __init__(
         self,
         *,

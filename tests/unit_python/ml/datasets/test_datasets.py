@@ -12,6 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import matplotlib as mpl
+
+mpl.use("Agg")  # headless backend so draw() never opens a window
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
@@ -26,6 +31,7 @@ from qilisdk.ml.datasets import (
     SantaFeLaser,
 )
 from qilisdk.ml.datasets.dataset import build_prediction_sample
+from qilisdk.utils.visualization import DatasetStyle, dark
 
 # (dataset factory, expected feature dimension)
 DATASETS = [
@@ -156,3 +162,57 @@ def test_build_prediction_sample_invalid_horizon_raises():
     series = np.arange(10, dtype=np.float64)
     with pytest.raises(ValueError, match="horizon"):
         build_prediction_sample(series, horizon=0)
+
+
+@pytest.fixture(autouse=True)
+def _close_figures():
+    yield
+    plt.close("all")
+
+
+@pytest.mark.parametrize(("factory", "_features"), DATASETS)
+@pytest.mark.parametrize("style", ["1d", "2d", "3d"])
+def test_draw_all_styles_saves_file(factory, _features, style, tmp_path):
+    sample = factory().generate(200)
+    out = tmp_path / f"plot_{style}.png"
+    factory().draw(sample, style=style, filepath=str(out))
+    assert out.exists()
+    assert out.stat().st_size > 0
+
+
+@pytest.mark.parametrize(("factory", "_features"), DATASETS)
+def test_draw_default_style_saves_file(factory, _features, tmp_path):
+    # No explicit style falls back to each dataset's natural default mode.
+    sample = factory().generate(200)
+    out = tmp_path / "plot_default.png"
+    factory().draw(sample, filepath=str(out))
+    assert out.exists()
+
+
+def test_draw_is_a_classmethod(tmp_path):
+    sample = MackeyGlass(tau=17.0).generate(200)
+    # Callable straight off the class (no instance), as in the usage example.
+    out = tmp_path / "mg.png"
+    MackeyGlass.draw(sample, style="1d", filepath=str(out))
+    assert out.exists()
+
+
+def test_draw_respects_config(tmp_path):
+    sample = Lorenz().generate(300)
+    config = DatasetStyle(theme=dark, trajectory_style="line", colorbar=False)
+    out = tmp_path / "lorenz_dark.png"
+    Lorenz().draw(sample, style="3d", config=config, filepath=str(out))
+    assert out.exists()
+
+
+def test_draw_invalid_style_raises():
+    sample = MackeyGlass(tau=17.0).generate(50)
+    with pytest.raises(ValueError, match="style"):
+        MackeyGlass.draw(sample, style="4d", filepath=None)
+
+
+def test_draw_too_short_series_for_embedding_raises():
+    sample = LogisticMap().generate(2)
+    config = DatasetStyle(delay=5)
+    with pytest.raises(ValueError, match="delay embedding"):
+        LogisticMap.draw(sample, style="3d", config=config, filepath=None)

@@ -42,6 +42,9 @@ class MackeyGlass(Dataset):
     ``(npoints, 1)``.
     """
 
+    _DEFAULT_DRAW_STYLE = "1d"
+    _DRAW_COMPONENT_LABELS = ("x",)
+
     def __init__(
         self,
         *,

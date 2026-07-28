@@ -32,6 +32,9 @@ class LogisticMap(Dataset):
     ``inputs`` and ``targets`` are shaped ``(npoints, 1)``.
     """
 
+    _DEFAULT_DRAW_STYLE = "1d"
+    _DRAW_COMPONENT_LABELS = ("x",)
+
     def __init__(
         self,
         *,
