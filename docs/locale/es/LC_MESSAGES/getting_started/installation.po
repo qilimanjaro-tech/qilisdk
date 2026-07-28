@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-29 19:17+0200\n"
+"POT-Creation-Date: 2026-07-27 17:03+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -40,7 +40,19 @@ msgstr "**Paquete base**"
 msgid "**Optional extras**"
 msgstr "**Extras opcionales**"
 
-#: ../../getting_started/installation.rst:14
+#: ../../getting_started/installation.rst:15
+msgid ""
+"On macOS the default shell is ``zsh``, which treats square brackets as a "
+"globbing pattern, so the extras must be quoted (``pip install "
+"\"qilisdk[qutip]\"``). Select your operating system in the tabs below to "
+"get the right command."
+msgstr ""
+"En macOS el shell por defecto es ``zsh``, que trata los corchetes como un "
+"patrón de expansión de nombres, por lo que los extras deben escribirse "
+"entre comillas (``pip install \"qilisdk[qutip]\"``). Seleccione su sistema "
+"operativo en las pestañas siguientes para obtener el comando correcto."
+
+#: ../../getting_started/installation.rst:19
 msgid ""
 "**CUDA acceleration** (NVIDIA GPU support with "
 ":mod:`~qilisdk.backends.cuda_backend.CudaBackend`):"
@@ -48,7 +60,37 @@ msgstr ""
 "**Aceleración CUDA** (soporte de GPU NVIDIA con "
 ":mod:`~qilisdk.backends.cuda_backend.CudaBackend`):"
 
-#: ../../getting_started/installation.rst:21
+#: ../../getting_started/installation.rst:23
+#: ../../getting_started/installation.rst:49
+#: ../../getting_started/installation.rst:71
+#: ../../getting_started/installation.rst:93
+#: ../../getting_started/installation.rst:136
+#: ../../getting_started/installation.rst:162
+#: ../../getting_started/installation.rst:197
+msgid "Linux"
+msgstr "Linux"
+
+#: ../../getting_started/installation.rst:29
+#: ../../getting_started/installation.rst:55
+#: ../../getting_started/installation.rst:77
+#: ../../getting_started/installation.rst:99
+#: ../../getting_started/installation.rst:143
+#: ../../getting_started/installation.rst:168
+#: ../../getting_started/installation.rst:203
+msgid "Mac OSX"
+msgstr "Mac OSX"
+
+#: ../../getting_started/installation.rst:35
+#: ../../getting_started/installation.rst:61
+#: ../../getting_started/installation.rst:83
+#: ../../getting_started/installation.rst:105
+#: ../../getting_started/installation.rst:150
+#: ../../getting_started/installation.rst:174
+#: ../../getting_started/installation.rst:209
+msgid "Windows"
+msgstr "Windows"
+
+#: ../../getting_started/installation.rst:42
 msgid ""
 "The CUDA backend requires a CUDA accelerated GPU to be available on your "
 "system and proper drivers to be installed. More information can be found "
@@ -60,7 +102,7 @@ msgstr ""
 "información en su sitio web oficial: https://nvidia.github.io/cuda-"
 "quantum/latest/using/quick_start.html#install-cuda-q"
 
-#: ../../getting_started/installation.rst:24
+#: ../../getting_started/installation.rst:45
 msgid ""
 "**Qutip CPU backend** (CPU simulation with "
 ":mod:`~qilisdk.backends.qutip_backend.QutipBackend`):"
@@ -68,39 +110,39 @@ msgstr ""
 "**Backend CPU de Qutip** (simulación por CPU con "
 ":mod:`~qilisdk.backends.qutip_backend.QutipBackend`):"
 
-#: ../../getting_started/installation.rst:30
+#: ../../getting_started/installation.rst:67
 msgid "**SpeQtrum** (cloud submission via :class:`~qilisdk.speqtrum`):"
 msgstr "**SpeQtrum** (envío a la nube a través de :class:`~qilisdk.speqtrum`):"
 
-#: ../../getting_started/installation.rst:36
+#: ../../getting_started/installation.rst:89
 msgid "You can combine extras:"
 msgstr "Puede combinar extras:"
 
-#: ../../getting_started/installation.rst:44
+#: ../../getting_started/installation.rst:113
 msgid "QiliSDK requires a python version 3.11 or higher."
 msgstr "QiliSDK requiere una versión de Python 3.11 o superior."
 
-#: ../../getting_started/installation.rst:46
+#: ../../getting_started/installation.rst:115
 msgid "Minimum OS requirements:"
 msgstr "Requisitos mínimos del sistema operativo:"
 
-#: ../../getting_started/installation.rst:47
+#: ../../getting_started/installation.rst:116
 msgid "Linux: Ubuntu 22.04 or higher"
 msgstr "Linux: Ubuntu 22.04 o superior"
 
-#: ../../getting_started/installation.rst:48
+#: ../../getting_started/installation.rst:117
 msgid "Windows: Windows 11 or higher"
 msgstr "Windows: Windows 11 o superior"
 
-#: ../../getting_started/installation.rst:49
+#: ../../getting_started/installation.rst:118
 msgid "MacOS: MacOS 14 or higher"
 msgstr "MacOS: MacOS 14 o superior"
 
-#: ../../getting_started/installation.rst:52
+#: ../../getting_started/installation.rst:121
 msgid "Compiling From Source"
 msgstr "Compilar desde el código fuente"
 
-#: ../../getting_started/installation.rst:54
+#: ../../getting_started/installation.rst:123
 msgid ""
 "The above method will install the pre-built binaries of QiliSDK of the "
 "most recent release. If you want to get the newest features (those that "
@@ -115,7 +157,7 @@ msgstr ""
 "recomienda para la mayoría de los usuarios, y no garantizamos que el "
 "código más reciente sea estable."
 
-#: ../../getting_started/installation.rst:58
+#: ../../getting_started/installation.rst:127
 msgid ""
 "Support for Windows is limited, so we recommend using WSL, which can be "
 "installed as per `this guide <https://learn.microsoft.com/en-"
@@ -131,7 +173,7 @@ msgstr ""
 "Windows a continuación deberían funcionar, aunque deshabilitan ciertas "
 "funciones del código (especialmente algunos bucles paralelizados)."
 
-#: ../../getting_started/installation.rst:63
+#: ../../getting_started/installation.rst:132
 msgid ""
 "First, make sure you have Python, pip, git, cmake and a C++ compiler "
 "installed:"
@@ -139,33 +181,15 @@ msgstr ""
 "Primero, asegúrese de tener instalados Python, pip, git, cmake y un "
 "compilador de C++:"
 
-#: ../../getting_started/installation.rst:67
-#: ../../getting_started/installation.rst:93
-#: ../../getting_started/installation.rst:128
-msgid "Linux"
-msgstr "Linux"
-
-#: ../../getting_started/installation.rst:74
-#: ../../getting_started/installation.rst:99
-#: ../../getting_started/installation.rst:134
-msgid "Mac OSX"
-msgstr "Mac OSX"
-
-#: ../../getting_started/installation.rst:81
-#: ../../getting_started/installation.rst:105
-#: ../../getting_started/installation.rst:140
-msgid "Windows"
-msgstr "Windows"
-
-#: ../../getting_started/installation.rst:83
+#: ../../getting_started/installation.rst:152
 msgid "Install Python via the Microsoft Store."
 msgstr "Instale Python a través de la Microsoft Store."
 
-#: ../../getting_started/installation.rst:85
+#: ../../getting_started/installation.rst:154
 msgid "Install Git via https://git-scm.com/install/windows."
 msgstr "Instale Git desde https://git-scm.com/install/windows."
 
-#: ../../getting_started/installation.rst:87
+#: ../../getting_started/installation.rst:156
 msgid ""
 "Install C++ build tools by installing the \"C/C++ Extension Pack\" "
 "extension for VSCode."
@@ -173,27 +197,27 @@ msgstr ""
 "Instale las herramientas de compilación de C++ instalando la extensión "
 "\"C/C++ Extension Pack\" para VSCode."
 
-#: ../../getting_started/installation.rst:89
+#: ../../getting_started/installation.rst:158
 msgid "Install uv globally with:"
 msgstr "Instale uv globalmente con:"
 
-#: ../../getting_started/installation.rst:111
+#: ../../getting_started/installation.rst:180
 msgid "Then, clone (i.e. download) and enter the repository:"
 msgstr "Luego, clone (es decir, descargue) y acceda al repositorio:"
 
-#: ../../getting_started/installation.rst:118
+#: ../../getting_started/installation.rst:187
 msgid "Create a new virtual environment using uv:"
 msgstr "Cree un nuevo entorno virtual usando uv:"
 
-#: ../../getting_started/installation.rst:124
+#: ../../getting_started/installation.rst:193
 msgid "Then activate the environment:"
 msgstr "Luego active el entorno:"
 
-#: ../../getting_started/installation.rst:148
+#: ../../getting_started/installation.rst:217
 msgid "To then install QiliSDK into this new environment, run:"
 msgstr "Para instalar QiliSDK en este nuevo entorno, ejecute:"
 
-#: ../../getting_started/installation.rst:154
+#: ../../getting_started/installation.rst:223
 msgid ""
 "If you want to install with extras, you can run the following, adjusting "
 "as needed:"
@@ -201,7 +225,7 @@ msgstr ""
 "Si desea instalar con extras, puede ejecutar lo siguiente, ajustando "
 "según sea necesario:"
 
-#: ../../getting_started/installation.rst:160
+#: ../../getting_started/installation.rst:229
 msgid ""
 "There are also a number of extra compile flags that can be set to "
 "enable/disable certain features:"
@@ -209,19 +233,19 @@ msgstr ""
 "También hay una serie de indicadores de compilación adicionales que se "
 "pueden establecer para habilitar/deshabilitar ciertas funciones:"
 
-#: ../../getting_started/installation.rst:166
+#: ../../getting_started/installation.rst:235
 msgid "Flag"
 msgstr "Indicador"
 
-#: ../../getting_started/installation.rst:167
+#: ../../getting_started/installation.rst:236
 msgid "What it does"
 msgstr "Qué hace"
 
-#: ../../getting_started/installation.rst:168
+#: ../../getting_started/installation.rst:237
 msgid "``-Ccmake.define.build_native=ON``"
 msgstr "``-Ccmake.define.build_native=ON``"
 
-#: ../../getting_started/installation.rst:169
+#: ../../getting_started/installation.rst:238
 msgid ""
 "Build for the architecture of the current machine for increased "
 "performance. Only recommended if you are building for your own machine."
@@ -230,11 +254,11 @@ msgstr ""
 "rendimiento. Solo se recomienda si está compilando para su propia "
 "máquina."
 
-#: ../../getting_started/installation.rst:170
+#: ../../getting_started/installation.rst:239
 msgid "``-Ccmake.define.single_precision=ON``"
 msgstr "``-Ccmake.define.single_precision=ON``"
 
-#: ../../getting_started/installation.rst:171
+#: ../../getting_started/installation.rst:240
 msgid ""
 "Use single precision (``float``) instead of double precision "
 "(``double``). Slightly faster, but less accurate."
@@ -242,31 +266,31 @@ msgstr ""
 "Usa precisión simple (``float``) en lugar de precisión doble "
 "(``double``). Ligeramente más rápido, pero menos preciso."
 
-#: ../../getting_started/installation.rst:172
+#: ../../getting_started/installation.rst:241
 msgid "``-Ccmake.build-type=Debug``"
 msgstr "``-Ccmake.build-type=Debug``"
 
-#: ../../getting_started/installation.rst:173
+#: ../../getting_started/installation.rst:242
 msgid "Enable a debug build (no optimizations, debug symbols)."
 msgstr ""
 "Habilita una compilación de depuración (sin optimizaciones, con símbolos "
 "de depuración)."
 
-#: ../../getting_started/installation.rst:174
+#: ../../getting_started/installation.rst:243
 msgid "``-Ccmake.build-type=RelWithDebInfo``"
 msgstr "``-Ccmake.build-type=RelWithDebInfo``"
 
-#: ../../getting_started/installation.rst:175
+#: ../../getting_started/installation.rst:244
 msgid "Enable an optimized debug build (optimizations plus debug symbols)."
 msgstr ""
 "Habilita una compilación de depuración optimizada (optimizaciones más "
 "símbolos de depuración)."
 
-#: ../../getting_started/installation.rst:176
+#: ../../getting_started/installation.rst:245
 msgid "``-Ccmake.build-type=Release``"
 msgstr "``-Ccmake.build-type=Release``"
 
-#: ../../getting_started/installation.rst:177
+#: ../../getting_started/installation.rst:246
 msgid ""
 "Enable a release build (optimizations, no debug symbols). This is the "
 "default."
@@ -274,27 +298,27 @@ msgstr ""
 "Habilita una compilación de lanzamiento (optimizaciones, sin símbolos de "
 "depuración). Esta es la opción predeterminada."
 
-#: ../../getting_started/installation.rst:178
+#: ../../getting_started/installation.rst:247
 msgid "``-Ccmake.define.tidy=ON``"
 msgstr "``-Ccmake.define.tidy=ON``"
 
-#: ../../getting_started/installation.rst:179
+#: ../../getting_started/installation.rst:248
 msgid "Run ``clang-tidy`` on the code during compilation."
 msgstr "Ejecuta ``clang-tidy`` sobre el código durante la compilación."
 
-#: ../../getting_started/installation.rst:180
+#: ../../getting_started/installation.rst:249
 msgid "``-Ccmake.define.verbose=ON``"
 msgstr "``-Ccmake.define.verbose=ON``"
 
-#: ../../getting_started/installation.rst:181
+#: ../../getting_started/installation.rst:250
 msgid "Enable (very) verbose output from the C++ code."
 msgstr "Habilita una salida (muy) detallada del código C++."
 
-#: ../../getting_started/installation.rst:182
+#: ../../getting_started/installation.rst:251
 msgid "``-Ccmake.define.tests=ON``"
 msgstr "``-Ccmake.define.tests=ON``"
 
-#: ../../getting_started/installation.rst:183
+#: ../../getting_started/installation.rst:252
 msgid ""
 "Build the C++ test suite, which will then be available as a ``test_cpp`` "
 "executable in the tests directory."
@@ -302,23 +326,23 @@ msgstr ""
 "Compila el conjunto de pruebas de C++, que luego estará disponible como "
 "un ejecutable ``test_cpp`` en el directorio de pruebas."
 
-#: ../../getting_started/installation.rst:184
+#: ../../getting_started/installation.rst:253
 msgid "``-Ccmake.define.coverage=ON``"
 msgstr "``-Ccmake.define.coverage=ON``"
 
-#: ../../getting_started/installation.rst:185
+#: ../../getting_started/installation.rst:254
 msgid "Enable coverage instrumentation flags."
 msgstr "Habilita los indicadores de instrumentación de cobertura."
 
-#: ../../getting_started/installation.rst:187
+#: ../../getting_started/installation.rst:256
 msgid ""
 "These can be passed to ``uv sync`` by simply appending to the build "
 "command, for example:"
 msgstr ""
-"Estos se pueden pasar a ``uv sync`` simplemente añadiéndolos al comando de"
-" compilación, por ejemplo:"
+"Estos se pueden pasar a ``uv sync`` simplemente añadiéndolos al comando "
+"de compilación, por ejemplo:"
 
-#: ../../getting_started/installation.rst:193
+#: ../../getting_started/installation.rst:262
 msgid ""
 "You then have an environment with the latest version of QiliSDK "
 "installed. If you want to install other things to the environment you'll "
@@ -327,7 +351,7 @@ msgstr ""
 "Entonces tendrá un entorno con la última versión de QiliSDK instalada. Si"
 " desea instalar otras cosas en el entorno, necesitará usar pip con uv:"
 
-#: ../../getting_started/installation.rst:200
+#: ../../getting_started/installation.rst:269
 msgid "And then to run a Python script within the environment, you can use:"
 msgstr "Y para ejecutar un script de Python dentro del entorno, puede usar:"
 
