@@ -35,5 +35,7 @@ SparseMatrix expand_operator(int qubit, int nqubits, const SparseMatrix& op);
 SparseMatrix expand_operator(int nqubits, const SparseMatrix& op);
 SparseMatrix expand_operator(const std::vector<int>& target_qubits, int nqubits, const SparseMatrix& op);
 void normalize_state(DenseMatrix& state, bool is_statevector, bool monte_carlo);
+void normalize_state(SparseMatrix& state);
+void normalize_state(SparseMatrixCol& state);
 
 // GCOV_EXCL_BR_STOP

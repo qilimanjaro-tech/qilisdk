@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-20 15:47+0200\n"
+"POT-Creation-Date: 2026-07-27 17:03+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -85,7 +85,7 @@ msgstr ":class:`~qilisdk.functionals.digital_propagation.DigitalPropagation`"
 #: ../../modules/backends/backends_qilisim.rst:64
 #: ../../modules/backends/backends_qilisim.rst:67
 #: ../../modules/backends/backends_qilisim.rst:70
-#: ../../modules/backends/backends_qilisim.rst:283
+#: ../../modules/backends/backends_qilisim.rst:297
 msgid "|y|"
 msgstr "|y|"
 
@@ -247,7 +247,7 @@ msgstr ""
 "Hamiltonians dispersos."
 
 #: ../../modules/backends/backends_qilisim.rst:139
-#: ../../modules/backends/backends_qilisim.rst:282
+#: ../../modules/backends/backends_qilisim.rst:296
 msgid ""
 ":meth:`AnalogMethod.variational_annealing() "
 "<qilisdk.backends.backend_config.AnalogMethod.variational_annealing>`"
@@ -313,7 +313,7 @@ msgstr ""
 "``dim`` per a la mida del subespai de Krylov."
 
 #: ../../modules/backends/backends_qilisim.rst:148
-#: ../../modules/backends/backends_qilisim.rst:274
+#: ../../modules/backends/backends_qilisim.rst:288
 msgid ""
 ":meth:`AnalogMethod.direct() "
 "<qilisdk.backends.backend_config.AnalogMethod.direct>`"
@@ -443,53 +443,60 @@ msgstr ""
 "Carlo per a simulacions de sistemes oberts."
 
 #: ../../modules/backends/backends_qilisim.rst:217
-msgid "``num_threads=0`` (default) lets the simulator use every physical core."
+msgid ""
+"``num_threads`` controls the number of threads used for parallelization, "
+"defaults to using all available cores."
 msgstr ""
-"``num_threads=0`` (per defecte) permet al simulador utilitzar tots els "
-"nuclis físics."
+"``num_threads`` controla el nombre de fils utilitzats per a la "
+"paral·lelització; per defecte utilitza tots els nuclis disponibles."
 
 #: ../../modules/backends/backends_qilisim.rst:218
 msgid ""
-"``seed=None`` (default) draws a fresh random seed at construction time; "
-"pass an integer for reproducibility."
+"``seed`` controls the random number generator seed, defaults to a random "
+"seed."
 msgstr ""
-"``seed=None`` (per defecte) genera una nova llavor aleatòria en el moment"
-" de la construcció; passeu un enter per a reproducibilitat."
+"``seed`` controla la llavor del generador de nombres aleatoris; per "
+"defecte s'utilitza una llavor aleatòria."
+
+#: ../../modules/backends/backends_qilisim.rst:219
+msgid ""
+"``monte_carlo=MonteCarloConfig(trajectories=N)`` enabled Monte Carlo "
+"sampling with ``N`` trajectories, if omitted, Monte Carlo is disabled."
+msgstr ""
+"``monte_carlo=MonteCarloConfig(trajectories=N)`` activa el mostreig Monte"
+" Carlo amb ``N`` trajectòries; si s'omet, Monte Carlo queda desactivat."
 
 #: ../../modules/backends/backends_qilisim.rst:220
 msgid ""
-"``monte_carlo=MonteCarloConfig(trajectories=N)`` enables stochastic "
-"trajectory sampling for noise models that admit a Monte Carlo unraveling;"
-" leave it ``None`` for deterministic master-equation evolution."
-msgstr ""
-"``monte_carlo=MonteCarloConfig(trajectories=N)`` activa el mostreig "
-"estocàstic de trajectòries per a models de soroll que admeten un "
-"unraveling de Monte Carlo; deixeu-ho a ``None`` per a una evolució "
-"determinista de l'equació mestra."
-
-#: ../../modules/backends/backends_qilisim.rst:223
-msgid ""
 "``measurement_collapse`` controls whether measurements collapse the "
-"statevector in place (relevant for mid-circuit measurement and reservoir "
-"computing); defaults to ``False``."
+"statevector in place (relevant for mid-circuit measurement and "
+"reservoirs) - defaults to ``False``."
 msgstr ""
 "``measurement_collapse`` controla si les mesures col·lapsen el vector "
-"d'estat in situ (rellevant per a mesures a mig circuit i computació de "
-"reservoris); per defecte ``False``."
+"d'estat in situ (rellevant per a mesures a mig circuit i reservoris); per"
+" defecte ``False``."
 
-#: ../../modules/backends/backends_qilisim.rst:225
+#: ../../modules/backends/backends_qilisim.rst:221
 msgid ""
-"``gpu=True`` enables GPU acceleration if a CUDA-capable device is "
-"available; defaults to ``False``."
+"``normalize_state`` controls whether the state should be renormalized - "
+"defaults to ``True``."
 msgstr ""
-"``gpu=True`` activa l'acceleració per GPU si hi ha disponible un "
-"dispositiu compatible amb CUDA; per defecte ``False``."
+"``normalize_state`` controla si l'estat s'ha de renormalitzar; per "
+"defecte ``True``."
 
-#: ../../modules/backends/backends_qilisim.rst:242
+#: ../../modules/backends/backends_qilisim.rst:222
+msgid ""
+"``gpu`` controls whether to use GPU acceleration if available - defaults "
+"to ``False``."
+msgstr ""
+"``gpu`` controla si s'utilitza l'acceleració per GPU si està disponible; "
+"per defecte ``False``."
+
+#: ../../modules/backends/backends_qilisim.rst:240
 msgid "Noise model support"
 msgstr "Suport del model de soroll"
 
-#: ../../modules/backends/backends_qilisim.rst:244
+#: ../../modules/backends/backends_qilisim.rst:242
 msgid ""
 "Any :class:`~qilisdk.noise.NoiseModel` accepted by the SDK can be passed "
 "directly to the constructor; QiliSim applies it inside the C++ solver, so"
@@ -500,38 +507,50 @@ msgstr ""
 "C++, de manera que les execucions digitals, analògiques i de reservori "
 "veuen totes els mateixos canals de soroll:"
 
-#: ../../modules/backends/backends_qilisim.rst:259
+#: ../../modules/backends/backends_qilisim.rst:257
 msgid "GPU acceleration"
 msgstr "Acceleració per GPU"
 
-#: ../../modules/backends/backends_qilisim.rst:261
+#: ../../modules/backends/backends_qilisim.rst:259
 msgid ""
 "Some simulation methods in QiliSim support GPU acceleration if a CUDA-"
 "capable device is available. These require the ``cuda`` extra to be "
 "installed:"
 msgstr ""
 "Alguns mètodes de simulació de QiliSim suporten l'acceleració per GPU si "
-"hi ha disponible un dispositiu compatible amb CUDA. Aquests requereixen la"
-" instal·lació de l'extra ``cuda``:"
+"hi ha disponible un dispositiu compatible amb CUDA. Aquests requereixen "
+"la instal·lació de l'extra ``cuda``:"
 
-#: ../../modules/backends/backends_qilisim.rst:272
+#: ../../modules/backends/backends_qilisim.rst:264
+msgid "Linux"
+msgstr "Linux"
+
+#: ../../modules/backends/backends_qilisim.rst:270
+msgid "Mac OSX"
+msgstr "Mac OSX"
+
+#: ../../modules/backends/backends_qilisim.rst:276
+msgid "Windows"
+msgstr "Windows"
+
+#: ../../modules/backends/backends_qilisim.rst:286
 msgid "Method"
 msgstr "Mètode"
 
-#: ../../modules/backends/backends_qilisim.rst:273
+#: ../../modules/backends/backends_qilisim.rst:287
 msgid "GPU support"
 msgstr "Suport de GPU"
 
-#: ../../modules/backends/backends_qilisim.rst:275
-#: ../../modules/backends/backends_qilisim.rst:277
-#: ../../modules/backends/backends_qilisim.rst:279
-#: ../../modules/backends/backends_qilisim.rst:281
-#: ../../modules/backends/backends_qilisim.rst:285
-#: ../../modules/backends/backends_qilisim.rst:287
+#: ../../modules/backends/backends_qilisim.rst:289
+#: ../../modules/backends/backends_qilisim.rst:291
+#: ../../modules/backends/backends_qilisim.rst:293
+#: ../../modules/backends/backends_qilisim.rst:295
+#: ../../modules/backends/backends_qilisim.rst:299
+#: ../../modules/backends/backends_qilisim.rst:301
 msgid "|n|"
 msgstr "|n|"
 
-#: ../../modules/backends/backends_qilisim.rst:276
+#: ../../modules/backends/backends_qilisim.rst:290
 msgid ""
 ":meth:`AnalogMethod.integrator() "
 "<qilisdk.backends.backend_config.AnalogMethod.integrator>`"
@@ -539,7 +558,7 @@ msgstr ""
 ":meth:`AnalogMethod.integrator() "
 "<qilisdk.backends.backend_config.AnalogMethod.integrator>`"
 
-#: ../../modules/backends/backends_qilisim.rst:278
+#: ../../modules/backends/backends_qilisim.rst:292
 msgid ""
 ":meth:`AnalogMethod.adaptive_integrator() "
 "<qilisdk.backends.backend_config.AnalogMethod.adaptive_integrator>`"
@@ -547,7 +566,7 @@ msgstr ""
 ":meth:`AnalogMethod.adaptive_integrator() "
 "<qilisdk.backends.backend_config.AnalogMethod.adaptive_integrator>`"
 
-#: ../../modules/backends/backends_qilisim.rst:280
+#: ../../modules/backends/backends_qilisim.rst:294
 msgid ""
 ":meth:`AnalogMethod.arnoldi() "
 "<qilisdk.backends.backend_config.AnalogMethod.arnoldi>`"
@@ -555,7 +574,7 @@ msgstr ""
 ":meth:`AnalogMethod.arnoldi() "
 "<qilisdk.backends.backend_config.AnalogMethod.arnoldi>`"
 
-#: ../../modules/backends/backends_qilisim.rst:284
+#: ../../modules/backends/backends_qilisim.rst:298
 msgid ""
 ":meth:`DigitalMethod.statevector() "
 "<qilisdk.backends.backend_config.DigitalMethod.statevector>`"
@@ -563,7 +582,7 @@ msgstr ""
 ":meth:`DigitalMethod.statevector() "
 "<qilisdk.backends.backend_config.DigitalMethod.statevector>`"
 
-#: ../../modules/backends/backends_qilisim.rst:286
+#: ../../modules/backends/backends_qilisim.rst:300
 msgid ""
 ":meth:`DigitalMethod.stabilizer() "
 "<qilisdk.backends.backend_config.DigitalMethod.stabilizer>`"
@@ -679,4 +698,34 @@ msgstr ""
 #~ "acceleration for other methods is "
 #~ "planned in future releases."
 #~ msgstr ""
+
+#~ msgid "``num_threads=0`` (default) lets the simulator use every physical core."
+#~ msgstr ""
+#~ "``num_threads=0`` (per defecte) permet al "
+#~ "simulador utilitzar tots els nuclis "
+#~ "físics."
+
+#~ msgid ""
+#~ "``seed=None`` (default) draws a fresh "
+#~ "random seed at construction time; pass"
+#~ " an integer for reproducibility."
+#~ msgstr ""
+#~ "``seed=None`` (per defecte) genera una "
+#~ "nova llavor aleatòria en el moment "
+#~ "de la construcció; passeu un enter "
+#~ "per a reproducibilitat."
+
+#~ msgid ""
+#~ "``monte_carlo=MonteCarloConfig(trajectories=N)`` enables "
+#~ "stochastic trajectory sampling for noise "
+#~ "models that admit a Monte Carlo "
+#~ "unraveling; leave it ``None`` for "
+#~ "deterministic master-equation evolution."
+#~ msgstr ""
+#~ "``monte_carlo=MonteCarloConfig(trajectories=N)`` activa el"
+#~ " mostreig estocàstic de trajectòries per"
+#~ " a models de soroll que admeten "
+#~ "un unraveling de Monte Carlo; deixeu-"
+#~ "ho a ``None`` per a una evolució"
+#~ " determinista de l'equació mestra."
 
