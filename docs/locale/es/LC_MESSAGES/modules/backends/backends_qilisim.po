@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-26 10:22+0200\n"
+"POT-Creation-Date: 2026-07-27 11:20+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -85,6 +85,7 @@ msgstr ":class:`~qilisdk.functionals.digital_propagation.DigitalPropagation`"
 #: ../../modules/backends/backends_qilisim.rst:64
 #: ../../modules/backends/backends_qilisim.rst:67
 #: ../../modules/backends/backends_qilisim.rst:70
+#: ../../modules/backends/backends_qilisim.rst:281
 msgid "|y|"
 msgstr "|y|"
 
@@ -246,6 +247,7 @@ msgstr ""
 "Hamiltonianos dispersos."
 
 #: ../../modules/backends/backends_qilisim.rst:139
+#: ../../modules/backends/backends_qilisim.rst:280
 msgid ""
 ":meth:`AnalogMethod.variational_annealing() "
 "<qilisdk.backends.backend_config.AnalogMethod.variational_annealing>`"
@@ -292,10 +294,10 @@ msgstr ""
 
 #: ../../modules/backends/backends_qilisim.rst:145
 msgid ""
-":meth:`AnalogMethod.arnoldi(dim=10, num_substeps=1) "
+":meth:`AnalogMethod.arnoldi(dim=10, num_substeps=1, matrix_free=True) "
 "<qilisdk.backends.backend_config.AnalogMethod.arnoldi>`"
 msgstr ""
-":meth:`AnalogMethod.arnoldi(dim=10, num_substeps=1) "
+":meth:`AnalogMethod.arnoldi(dim=10, num_substeps=1, matrix_free=True) "
 "<qilisdk.backends.backend_config.AnalogMethod.arnoldi>`"
 
 #: ../../modules/backends/backends_qilisim.rst:146
@@ -311,6 +313,7 @@ msgstr ""
 "ajuste ``dim`` para el tamaño del subespacio de Krylov."
 
 #: ../../modules/backends/backends_qilisim.rst:148
+#: ../../modules/backends/backends_qilisim.rst:272
 msgid ""
 ":meth:`AnalogMethod.direct() "
 "<qilisdk.backends.backend_config.AnalogMethod.direct>`"
@@ -341,6 +344,9 @@ msgid ""
 "There are currently two digital simulation methods available. The first "
 "is a statevector simulator, which can be configured through the options:"
 msgstr ""
+"Actualmente hay dos métodos de simulación digital disponibles. El primero"
+" es un simulador de vector de estado, que se puede configurar mediante "
+"las opciones:"
 
 #: ../../modules/backends/backends_qilisim.rst:169
 #: ../../modules/backends/backends_qilisim.rst:198
@@ -405,6 +411,10 @@ msgid ""
 "of being slower if the circuit contains many non-Clifford gates. It has "
 "the following options:"
 msgstr ""
+"El segundo es un simulador estabilizador, que puede simular de forma "
+"eficiente circuitos compuestos por puertas de Clifford y mediciones de "
+"Pauli, a costa de ser más lento si el circuito contiene muchas puertas "
+"no-Clifford. Tiene las siguientes opciones:"
 
 #: ../../modules/backends/backends_qilisim.rst:200
 msgid "``max_states``"
@@ -415,6 +425,8 @@ msgid ""
 "Maximum number of terms in the stabilizer sum. Increasing this can "
 "improve accuracy at the cost of memory and runtime."
 msgstr ""
+"Número máximo de términos en la suma de estabilizadores. Aumentarlo puede"
+" mejorar la precisión a costa de memoria y tiempo de ejecución."
 
 #: ../../modules/backends/backends_qilisim.rst:212
 msgid "Execution and Monte Carlo"
@@ -431,39 +443,55 @@ msgstr ""
 " para simulaciones de sistemas abiertos."
 
 #: ../../modules/backends/backends_qilisim.rst:217
-msgid "``num_threads=0`` (default) lets the simulator use every physical core."
+msgid ""
+"``num_threads`` controls the number of threads used for parallelization, "
+"defaults to using all available cores."
 msgstr ""
-"``num_threads=0`` (por defecto) permite al simulador utilizar todos los "
-"núcleos físicos."
+"``num_threads`` controla el número de hilos usados para la "
+"paralelización; por defecto usa todos los núcleos disponibles."
 
 #: ../../modules/backends/backends_qilisim.rst:218
 msgid ""
-"``seed=None`` (default) draws a fresh random seed at construction time; "
-"pass an integer for reproducibility."
+"``seed`` controls the random number generator seed, defaults to a random "
+"seed."
 msgstr ""
-"``seed=None`` (por defecto) genera una semilla aleatoria nueva en el "
-"momento de la construcción; pase un entero para reproducibilidad."
+"``seed`` controla la semilla del generador de números aleatorios; por "
+"defecto se usa una semilla aleatoria."
+
+#: ../../modules/backends/backends_qilisim.rst:219
+msgid ""
+"``monte_carlo=MonteCarloConfig(trajectories=N)`` enabled Monte Carlo "
+"sampling with ``N`` trajectories, if omitted, Monte Carlo is disabled."
+msgstr ""
+"``monte_carlo=MonteCarloConfig(trajectories=N)`` activa el muestreo Monte"
+" Carlo con ``N`` trayectorias; si se omite, Monte Carlo queda "
+"desactivado."
 
 #: ../../modules/backends/backends_qilisim.rst:220
 msgid ""
-"``monte_carlo=MonteCarloConfig(trajectories=N)`` enables stochastic "
-"trajectory sampling for noise models that admit a Monte Carlo unraveling;"
-" leave it ``None`` for deterministic master-equation evolution."
-msgstr ""
-"``monte_carlo=MonteCarloConfig(trajectories=N)`` activa el muestreo "
-"estocástico de trayectorias para modelos de ruido que admiten un "
-"unraveling de Monte Carlo; déjelo en ``None`` para una evolución "
-"determinista de la ecuación maestra."
-
-#: ../../modules/backends/backends_qilisim.rst:223
-msgid ""
 "``measurement_collapse`` controls whether measurements collapse the "
-"statevector in place (relevant for mid-circuit measurement and reservoir "
-"computing); defaults to ``False``."
+"statevector in place (relevant for mid-circuit measurement and "
+"reservoirs) - defaults to ``False``."
 msgstr ""
 "``measurement_collapse`` controla si las mediciones colapsan el vector de"
 " estado in situ (relevante para mediciones en mitad del circuito y "
-"computación de reservorios); por defecto ``False``."
+"reservorios); por defecto ``False``."
+
+#: ../../modules/backends/backends_qilisim.rst:221
+msgid ""
+"``normalize_state`` controls whether the state should be renormalized - "
+"defaults to ``True``."
+msgstr ""
+"``normalize_state`` controla si el estado debe renormalizarse; por "
+"defecto ``True``."
+
+#: ../../modules/backends/backends_qilisim.rst:222
+msgid ""
+"``gpu`` controls whether to use GPU acceleration if available - defaults "
+"to ``False``."
+msgstr ""
+"``gpu`` controla si se usa la aceleración por GPU si está disponible; por"
+" defecto ``False``."
 
 #: ../../modules/backends/backends_qilisim.rst:240
 msgid "Noise model support"
@@ -479,6 +507,77 @@ msgstr ""
 " pasar directamente al constructor; QiliSim lo aplica dentro del solver "
 "de C++, de modo que las ejecuciones digitales, analógicas y de reservorio"
 " ven todos los mismos canales de ruido:"
+
+#: ../../modules/backends/backends_qilisim.rst:257
+msgid "GPU acceleration"
+msgstr "Aceleración por GPU"
+
+#: ../../modules/backends/backends_qilisim.rst:259
+msgid ""
+"Some simulation methods in QiliSim support GPU acceleration if a CUDA-"
+"capable device is available. These require the ``cuda`` extra to be "
+"installed:"
+msgstr ""
+"Algunos métodos de simulación de QiliSim admiten la aceleración por GPU "
+"si hay disponible un dispositivo compatible con CUDA. Estos requieren "
+"instalar el extra ``cuda``:"
+
+#: ../../modules/backends/backends_qilisim.rst:270
+msgid "Method"
+msgstr "Método"
+
+#: ../../modules/backends/backends_qilisim.rst:271
+msgid "GPU support"
+msgstr "Soporte de GPU"
+
+#: ../../modules/backends/backends_qilisim.rst:273
+#: ../../modules/backends/backends_qilisim.rst:275
+#: ../../modules/backends/backends_qilisim.rst:277
+#: ../../modules/backends/backends_qilisim.rst:279
+#: ../../modules/backends/backends_qilisim.rst:283
+#: ../../modules/backends/backends_qilisim.rst:285
+msgid "|n|"
+msgstr "|n|"
+
+#: ../../modules/backends/backends_qilisim.rst:274
+msgid ""
+":meth:`AnalogMethod.integrator() "
+"<qilisdk.backends.backend_config.AnalogMethod.integrator>`"
+msgstr ""
+":meth:`AnalogMethod.integrator() "
+"<qilisdk.backends.backend_config.AnalogMethod.integrator>`"
+
+#: ../../modules/backends/backends_qilisim.rst:276
+msgid ""
+":meth:`AnalogMethod.adaptive_integrator() "
+"<qilisdk.backends.backend_config.AnalogMethod.adaptive_integrator>`"
+msgstr ""
+":meth:`AnalogMethod.adaptive_integrator() "
+"<qilisdk.backends.backend_config.AnalogMethod.adaptive_integrator>`"
+
+#: ../../modules/backends/backends_qilisim.rst:278
+msgid ""
+":meth:`AnalogMethod.arnoldi() "
+"<qilisdk.backends.backend_config.AnalogMethod.arnoldi>`"
+msgstr ""
+":meth:`AnalogMethod.arnoldi() "
+"<qilisdk.backends.backend_config.AnalogMethod.arnoldi>`"
+
+#: ../../modules/backends/backends_qilisim.rst:282
+msgid ""
+":meth:`DigitalMethod.statevector() "
+"<qilisdk.backends.backend_config.DigitalMethod.statevector>`"
+msgstr ""
+":meth:`DigitalMethod.statevector() "
+"<qilisdk.backends.backend_config.DigitalMethod.statevector>`"
+
+#: ../../modules/backends/backends_qilisim.rst:284
+msgid ""
+":meth:`DigitalMethod.stabilizer() "
+"<qilisdk.backends.backend_config.DigitalMethod.stabilizer>`"
+msgstr ""
+":meth:`DigitalMethod.stabilizer() "
+"<qilisdk.backends.backend_config.DigitalMethod.stabilizer>`"
 
 #~ msgid "Go to a specific subheading of a page."
 #~ msgstr "Ir a un subtítulo específico de una página."
@@ -572,4 +671,49 @@ msgstr ""
 #~ ":class:`~qilisdk.backends.backend_config.DigitalMethod` ajusta"
 #~ " sus características de rendimiento en "
 #~ "lugar de elegir un algoritmo distinto:"
+
+#~ msgid ""
+#~ "``gpu=True`` enables GPU acceleration if "
+#~ "a CUDA-capable device is available; "
+#~ "defaults to ``False``. Right now only"
+#~ " the Variational Annealing method supports"
+#~ " GPU acceleration."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Right now only the varational annealing"
+#~ " method supports GPU acceleration, but "
+#~ "acceleration for other methods is "
+#~ "planned in future releases."
+#~ msgstr ""
+
+#~ msgid "``num_threads=0`` (default) lets the simulator use every physical core."
+#~ msgstr ""
+#~ "``num_threads=0`` (por defecto) permite al "
+#~ "simulador utilizar todos los núcleos "
+#~ "físicos."
+
+#~ msgid ""
+#~ "``seed=None`` (default) draws a fresh "
+#~ "random seed at construction time; pass"
+#~ " an integer for reproducibility."
+#~ msgstr ""
+#~ "``seed=None`` (por defecto) genera una "
+#~ "semilla aleatoria nueva en el momento"
+#~ " de la construcción; pase un entero"
+#~ " para reproducibilidad."
+
+#~ msgid ""
+#~ "``monte_carlo=MonteCarloConfig(trajectories=N)`` enables "
+#~ "stochastic trajectory sampling for noise "
+#~ "models that admit a Monte Carlo "
+#~ "unraveling; leave it ``None`` for "
+#~ "deterministic master-equation evolution."
+#~ msgstr ""
+#~ "``monte_carlo=MonteCarloConfig(trajectories=N)`` activa el"
+#~ " muestreo estocástico de trayectorias para"
+#~ " modelos de ruido que admiten un "
+#~ "unraveling de Monte Carlo; déjelo en "
+#~ "``None`` para una evolución determinista "
+#~ "de la ecuación maestra."
 

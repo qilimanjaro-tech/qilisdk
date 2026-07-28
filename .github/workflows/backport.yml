@@ -1,0 +1,28 @@
+name: Backport
+
+# Thin caller. The actual backport logic lives in the shared reusable workflow.
+#
+# Label a merged PR `backport <branch>` (e.g. `backport qilisdk-0.2.1`) and the
+# reusable workflow cherry-picks it onto <branch> and opens a backport PR.
+
+# pull_request_target is required so the backport has a writable token for PRs
+# from forks. This workflow runs no PR-head code: the reusable workflow checks
+# out the base branch and only runs the backport action.
+on:
+  # zizmor: ignore[dangerous-triggers]
+  pull_request_target:
+    types: [closed, labeled]
+
+# The reusable workflow uses an App token for every operation, so the caller's
+# built-in GITHUB_TOKEN needs no permissions.
+permissions: {}
+
+jobs:
+  backport:
+    # First-party reusable workflow, pinned to a full commit SHA. Dependabot
+    # bumps it; the trailing comment tracks the release tag it resolves to.
+    uses: qilimanjaro-tech/devops/.github/workflows/backport.yml@4eb9d253ca61bec34ab18e63d14004289496e800  # v1.0.0
+    with:
+      client_id: ${{ vars.BACKPORT_CLIENT_ID }}
+    secrets:
+      app_private_key: ${{ secrets.BACKPORT_APP_PRIVATE_KEY }}

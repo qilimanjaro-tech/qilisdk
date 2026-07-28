@@ -14,6 +14,7 @@
 import math
 
 import numpy as np
+from loguru import logger
 
 # ======================= numeric helpers =======================
 
@@ -33,6 +34,7 @@ def _wrap_angle(angle: float) -> float:
     Returns:
         float: Angle mapped into the open-closed interval (-pi, pi].
     """
+    logger.trace("[NumericHelpers] Wrapping angle {}", angle)
     angle = (angle + math.pi) % (2.0 * math.pi) - math.pi
     if angle <= -math.pi:
         angle = math.pi
@@ -49,6 +51,7 @@ def _zyz_from_unitary(unitary: np.ndarray) -> tuple[float, float, float]:
     Raises:
         ValueError: If matrix is not 2x2.
     """
+    logger.trace("[NumericHelpers] Recovering ZYZ Euler angles from unitary")
     if unitary.shape != (2, 2):
         raise ValueError("Expected 2x2 unitary for ZYZ decomposition.")
     det = np.linalg.det(unitary)
@@ -80,6 +83,7 @@ def _unitary_sqrt_2x2(unitary: np.ndarray) -> np.ndarray:
     Returns:
         np.ndarray: Matrix V such that V · V equals U.
     """
+    logger.trace("[NumericHelpers] Computing principal square root of 2x2 unitary")
     w, V = np.linalg.eig(unitary)
     ph = np.angle(w)
     sqrt_w = np.exp(0.5j * ph)
@@ -91,19 +95,23 @@ def _is_close_mod_2pi(a: float, b: float, eps: float = _EPS) -> bool:
 
 
 def _mat_RZ(phi: float) -> np.ndarray:
+    logger.trace("[NumericHelpers] Building RZ matrix for phi {}", phi)
     return np.array([[np.exp(-0.5j * phi), 0.0], [0.0, np.exp(0.5j * phi)]], dtype=complex)
 
 
 def _mat_RY(theta: float) -> np.ndarray:
+    logger.trace("[NumericHelpers] Building RY matrix for theta {}", theta)
     c, s = math.cos(theta / 2.0), math.sin(theta / 2.0)
     return np.array([[c, -s], [s, c]], dtype=complex)
 
 
 def _mat_RX(theta: float) -> np.ndarray:
+    logger.trace("[NumericHelpers] Building RX matrix for theta {}", theta)
     c, s = math.cos(theta / 2.0), -1j * math.sin(theta / 2.0)
     return np.array([[c, s], [s, c]], dtype=complex)
 
 
 def _mat_U3(theta: float, phi: float, lam: float) -> np.ndarray:
+    logger.trace("[NumericHelpers] Building U3 matrix for theta {}, phi {}, lam {}", theta, phi, lam)
     # Convention: U3(θ, φ, λ) = RZ(φ) · RY(θ) · RZ(λ)
     return _mat_RZ(phi) @ _mat_RY(theta) @ _mat_RZ(lam) * np.exp(0.5j * (phi + lam), dtype=complex)

@@ -63,28 +63,22 @@ TEST(ParseHamiltonians, MatrixFreeOutOfRangeQubitThrows) {
 
 TEST(ParseHamiltonians, ParseEmptyHamiltoniansThrows) {
     py::list empty;
-    EXPECT_ANY_THROW(parse_hamiltonians(empty, 1e-10));
+    EXPECT_ANY_THROW(parse_hamiltonians(empty, 1e-10, 1));
 }
 
 TEST(ParseHamiltonians, SparseSingleHamiltonian) {
     py::gil_scoped_acquire gil;
 
     py::exec(R"(
-        import scipy.sparse as sp
-        import numpy as np
-
-        class FakeSparseHamiltonian:
-            def to_matrix(self):
-                return sp.eye(2, format='csr')
-
-        fake_sparse_H = FakeSparseHamiltonian()
+        from qilisdk.analog.hamiltonian import X
+        fake_sparse_H = X(0)
     )");
 
     py::object fake_sparse_H = py::globals()["fake_sparse_H"];
     py::list Hs;
     Hs.append(fake_sparse_H);
 
-    auto result = parse_hamiltonians(Hs, 1e-10);
+    auto result = parse_hamiltonians(Hs, 1e-10, 1);
     EXPECT_EQ(result.size(), 1);
     EXPECT_EQ(result[0].rows(), 2);
     EXPECT_EQ(result[0].cols(), 2);
@@ -1732,10 +1726,12 @@ TEST(ParseSolverParams, AllFieldsParsedCorrectly) {
     params["num_threads"] = py::int_(4);
     params["store_intermediate_results"] = py::bool_(true);
     params["normalize_after_each_gate"] = py::bool_(true);
+    params["normalize_state"] = py::bool_(false);
     params["combine_single_qubit_gates"] = py::bool_(false);
     params["fuse_gates"] = py::bool_(true);
     params["max_fused_qubits"] = py::int_(3);
     params["measurement_collapse"] = py::bool_(true);
+    params["gpu"] = py::bool_(true);
 
     auto config = parse_solver_params(params);
 
@@ -1751,11 +1747,13 @@ TEST(ParseSolverParams, AllFieldsParsedCorrectly) {
     EXPECT_EQ(config.get_num_threads(), 4);
     EXPECT_TRUE(config.get_store_intermediate_results());
     EXPECT_TRUE(config.get_normalize_after_gate());
+    EXPECT_FALSE(config.get_normalize_state());
     EXPECT_FALSE(config.get_combine_single_qubit_gates());
     EXPECT_TRUE(config.get_fuse_gates());
     EXPECT_EQ(config.get_max_fused_qubits(), 3);
     EXPECT_TRUE(config.get_measurement_collapse());
     EXPECT_NEAR(config.get_adaptive_tol(), 1e-2, 1e-15);
+    EXPECT_TRUE(config.get_gpu());
 }
 
 TEST(ParseSolverParams, PartialFieldsParsed) {

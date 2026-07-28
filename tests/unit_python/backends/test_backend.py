@@ -20,7 +20,7 @@ import pytest
 from qilisdk.analog import Schedule, Z
 from qilisdk.backends.backend import Backend
 from qilisdk.backends.backend_config import AnalogMethod
-from qilisdk.core import LT, Parameter, ket
+from qilisdk.core import LT, InitialState, Parameter, ket
 from qilisdk.digital import Circuit
 from qilisdk.digital.gates import RZ, H
 from qilisdk.functionals import (
@@ -252,6 +252,28 @@ def test_quantum_reservoir_with_noise_model_warns(monkeypatch):
         input_per_layer=[{}],
     )
 
+    result = backend._execute_quantum_reservoir(functional, [StateTomographyReadout()])
+    assert result is not None
+
+
+def test_quantum_reservoir_accepts_initial_state_enum():
+    # When the reservoir's initial state is an InitialState enum (rather than a
+    # QTensor), the base backend must materialise it into a density matrix.
+    class _MockBackend(Backend):
+        def _execute_analog_evolution(self, functional, readout):
+            state = functional.initial_state
+            return FunctionalResult(
+                readout_results=ReadoutCompositeResults(state_tomography=StateTomographyReadoutResult(state=state))
+            )
+
+    backend = _MockBackend()
+    schedule = Schedule(dt=1, hamiltonians={"h": Z(0)}, coefficients={"h": {(0, 1): 1.0}})
+    reservoir_layer = ReservoirLayer(evolution_dynamics=schedule)
+    functional = QuantumReservoir(
+        initial_state=InitialState.UNIFORM,
+        reservoir_layer=reservoir_layer,
+        input_per_layer=[{}],
+    )
     result = backend._execute_quantum_reservoir(functional, [StateTomographyReadout()])
     assert result is not None
 

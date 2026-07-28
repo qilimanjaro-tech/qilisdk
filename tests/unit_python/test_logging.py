@@ -19,10 +19,10 @@ from types import SimpleNamespace
 import pytest
 from loguru_caplog import loguru_caplog as caplog  # noqa: F401
 
-from qilisdk import _logging
-from qilisdk._logging import InterceptHandler
+from qilisdk import logging as qilisdk_logging
 from qilisdk.core.model import Model, ObjectiveSense
 from qilisdk.core.variables import LT, BinaryVariable, Domain, OneHot, Variable
+from qilisdk.logging import InterceptHandler
 
 
 def test_log_output(caplog):  # noqa: F811
@@ -54,13 +54,13 @@ def test_configure_logging_loads_resolved_path(monkeypatch):
     rel_path = "./nonexistent.yaml"
 
     monkeypatch.setattr(
-        _logging,
+        qilisdk_logging,
         "get_settings",
         lambda: SimpleNamespace(logging_config_path=rel_path),
     )
 
     with pytest.raises(FileNotFoundError, match=r"nonexistent.yaml"):
-        _logging.configure_logging()
+        qilisdk_logging.configure_logging()
 
 
 def test_configure_logging_adds_sinks(monkeypatch):
@@ -81,7 +81,7 @@ def test_configure_logging_adds_sinks(monkeypatch):
     )
 
     monkeypatch.setattr(
-        _logging.LoggingSettings,
+        qilisdk_logging.LoggingSettings,
         "load",
         staticmethod(lambda _: settings),
     )
@@ -91,15 +91,194 @@ def test_configure_logging_adds_sinks(monkeypatch):
     def fake_add(target, **kwargs):
         added.append({"target": target, "kwargs": kwargs})
 
-    monkeypatch.setattr(_logging.logger, "add", fake_add)
+    monkeypatch.setattr(qilisdk_logging.logger, "add", fake_add)
 
-    _logging.configure_logging()
+    qilisdk_logging.configure_logging()
 
     assert len(added) == 2
     assert added[0]["target"] == sys.stdout
     assert added[0]["kwargs"]["level"] == "DEBUG"
     assert added[1]["target"] == sys.stderr
     assert added[1]["kwargs"]["level"] == "INFO"
+
+
+def test_configure_logging_level_override(monkeypatch):
+    # A level override should replace every sink's configured level while
+    # preserving all other sink options (format, filter, colorize, ...).
+    sink_out = FakeSink(
+        sink="stdout",
+        level="DEBUG",
+        format="custom-format",
+        filter="qilisdk",
+        colorize=True,
+    )
+    sink_err = FakeSink(
+        sink="stderr",
+        level="INFO",
+        format="custom-format",
+        filter="qilisdk",
+        colorize=True,
+    )
+
+    settings = SimpleNamespace(
+        sinks=[sink_out, sink_err],
+        intercept_libraries=[],
+    )
+
+    monkeypatch.setattr(
+        qilisdk_logging.LoggingSettings,
+        "load",
+        staticmethod(lambda _: settings),
+    )
+
+    added = []
+
+    def fake_add(target, **kwargs):
+        added.append({"target": target, "kwargs": kwargs})
+
+    monkeypatch.setattr(qilisdk_logging.logger, "add", fake_add)
+
+    qilisdk_logging.configure_logging(level="ERROR")
+
+    assert len(added) == 2
+    # Levels overridden ...
+    assert added[0]["kwargs"]["level"] == "ERROR"
+    assert added[1]["kwargs"]["level"] == "ERROR"
+    # ... but every other sink option preserved.
+    for entry in added:
+        assert entry["kwargs"]["format"] == "custom-format"
+        assert entry["kwargs"]["filter"] == "qilisdk"
+        assert entry["kwargs"]["colorize"] is True
+
+
+def test_configure_logging_adds_file_sink(monkeypatch, tmp_path):
+    # Passing a filename should add a plain-text file sink in addition to the
+    # configured console sinks, mirroring their format/filter.
+    sink_err = FakeSink(
+        sink="stderr",
+        level="WARNING",
+        format="custom-format",
+        filter="qilisdk",
+        colorize=True,
+    )
+
+    settings = SimpleNamespace(
+        sinks=[sink_err],
+        intercept_libraries=[],
+    )
+
+    monkeypatch.setattr(
+        qilisdk_logging.LoggingSettings,
+        "load",
+        staticmethod(lambda _: settings),
+    )
+
+    added = []
+
+    def fake_add(target, **kwargs):
+        added.append({"target": target, "kwargs": kwargs})
+
+    monkeypatch.setattr(qilisdk_logging.logger, "add", fake_add)
+
+    log_file = tmp_path / "run.log"
+    qilisdk_logging.configure_logging(level="TRACE", filename=log_file)
+
+    # Console sink + file sink.
+    assert len(added) == 2
+    console, file_sink = added
+
+    assert console["target"] == sys.stderr
+    assert console["kwargs"]["level"] == "TRACE"
+
+    # The file sink points at the requested path, is plain text, and mirrors format/filter.
+    assert file_sink["target"] == str(log_file)
+    assert file_sink["kwargs"]["level"] == "TRACE"
+    assert file_sink["kwargs"]["colorize"] is False
+    assert file_sink["kwargs"]["format"] == "custom-format"
+    assert file_sink["kwargs"]["filter"] == "qilisdk"
+
+
+def test_configure_logging_file_sink_defaults_to_config_level(monkeypatch, tmp_path):
+    # Without a level override, the file sink should inherit the configured sink's level.
+    sink_err = FakeSink(sink="stderr", level="WARNING", format="custom-format", filter="qilisdk", colorize=True)
+    settings = SimpleNamespace(sinks=[sink_err], intercept_libraries=[])
+
+    monkeypatch.setattr(qilisdk_logging.LoggingSettings, "load", staticmethod(lambda _: settings))
+
+    added = []
+    monkeypatch.setattr(
+        qilisdk_logging.logger, "add", lambda target, **kwargs: added.append({"target": target, "kwargs": kwargs})
+    )
+
+    qilisdk_logging.configure_logging(filename=tmp_path / "run.log")
+
+    assert len(added) == 2
+    assert added[1]["kwargs"]["level"] == "WARNING"
+
+
+def test_configure_logging_no_filename_uses_only_config_sinks(monkeypatch):
+    # Without a filename, only the configured sinks are added (no file sink).
+    sink_err = FakeSink(sink="stderr", level="INFO", format=None)
+    settings = SimpleNamespace(sinks=[sink_err], intercept_libraries=[])
+
+    monkeypatch.setattr(qilisdk_logging.LoggingSettings, "load", staticmethod(lambda _: settings))
+
+    added = []
+    monkeypatch.setattr(
+        qilisdk_logging.logger, "add", lambda target, **kwargs: added.append({"target": target, "kwargs": kwargs})
+    )
+
+    qilisdk_logging.configure_logging()
+
+    assert len(added) == 1
+    assert added[0]["target"] == sys.stderr
+
+
+def _capture_added(monkeypatch, sinks):
+    settings = SimpleNamespace(sinks=sinks, intercept_libraries=[])
+    monkeypatch.setattr(qilisdk_logging.LoggingSettings, "load", staticmethod(lambda _: settings))
+    added = []
+    monkeypatch.setattr(
+        qilisdk_logging.logger, "add", lambda target, **kwargs: added.append({"target": target, "kwargs": kwargs})
+    )
+    return added
+
+
+def test_configure_logging_file_only(monkeypatch, tmp_path):
+    # stderr=False with a filename should produce only the file sink (no console).
+    sink_err = FakeSink(sink="stderr", level="INFO", format="custom-format", filter="qilisdk", colorize=True)
+    added = _capture_added(monkeypatch, [sink_err])
+
+    qilisdk_logging.configure_logging(filename=tmp_path / "run.log", stderr=False)
+
+    assert len(added) == 1
+    assert added[0]["target"] == str(tmp_path / "run.log")
+    # The file sink still mirrors the configured format/filter even though the console sink was skipped.
+    assert added[0]["kwargs"]["format"] == "custom-format"
+    assert added[0]["kwargs"]["filter"] == "qilisdk"
+    assert added[0]["kwargs"]["colorize"] is False
+
+
+def test_configure_logging_console_and_file(monkeypatch, tmp_path):
+    # stderr=True (default) with a filename produces both console and file sinks.
+    sink_err = FakeSink(sink="stderr", level="INFO", format="custom-format", filter="qilisdk", colorize=True)
+    added = _capture_added(monkeypatch, [sink_err])
+
+    qilisdk_logging.configure_logging(filename=tmp_path / "run.log")
+
+    assert len(added) == 2
+    assert added[0]["target"] == sys.stderr
+    assert added[1]["target"] == str(tmp_path / "run.log")
+
+
+def test_configure_logging_disabled(monkeypatch):
+    # stderr=False and no filename disables all output.
+    sink_err = FakeSink(sink="stderr", level="INFO", format=None)
+    added = _capture_added(monkeypatch, [sink_err])
+
+    qilisdk_logging.configure_logging(stderr=False)
+
+    assert len(added) == 0
 
 
 def test_emit_falls_back_to_levelno(monkeypatch):
@@ -119,14 +298,14 @@ def test_emit_falls_back_to_levelno(monkeypatch):
         raise ValueError
 
     monkeypatch.setattr(
-        "qilisdk._logging.logger.level",
+        "qilisdk.logging.logger.level",
         raise_value_error,
     )
 
     captured = {}
 
     monkeypatch.setattr(
-        "qilisdk._logging.logger.opt",
+        "qilisdk.logging.logger.opt",
         lambda **kwargs: SimpleNamespace(log=lambda level, msg: captured.update({"level": level, "message": msg})),
     )
 
@@ -169,12 +348,12 @@ def test_emit_executes_while_loop(monkeypatch):
     )
 
     monkeypatch.setattr(
-        "qilisdk._logging.logger.level",
+        "qilisdk.logging.logger.level",
         lambda name: type("L", (), {"name": name}),
     )
 
     monkeypatch.setattr(
-        "qilisdk._logging.logger.opt",
+        "qilisdk.logging.logger.opt",
         lambda **kwargs: type("Opt", (), {"log": lambda *_: None})(),
     )
 

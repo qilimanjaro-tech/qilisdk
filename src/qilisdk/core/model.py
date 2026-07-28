@@ -617,13 +617,14 @@ class Model:
         model = cls(label)
         variables = [BinaryVariable(f"x{i}") for i in range(num_variables)]
         generator = np.random.default_rng(seed)
-        term = Term([0], Operation.ADD)
+        list_of_terms: list[BaseVariable | Term | Number] = []
         for i in range(num_variables):
-            term += generator.uniform(low=coefficient_range[0], high=coefficient_range[1]) * variables[i]
+            list_of_terms.append(generator.uniform(low=coefficient_range[0], high=coefficient_range[1]) * variables[i])
             for j in range(i + 1, num_variables):
-                term += (
+                list_of_terms.append(
                     generator.uniform(low=coefficient_range[0], high=coefficient_range[1]) * variables[i] * variables[j]
                 )
+        term = Term(list_of_terms, Operation.ADD)
         model.set_objective(term)
         return model
 
@@ -1146,7 +1147,9 @@ class QUBO(Model):
 
         if term_upper_limit <= upper_cut and term_lower_limit >= lower_cut:
             logger.warning(
-                f'constraint "{label}" was not added to model "{self.label}" because it is always feasible.',
+                '[Model] constraint "{}" was not added to model "{}" because it is always feasible.',
+                label,
+                self.label,
             )
             return None
 
@@ -1332,7 +1335,7 @@ class QUBO(Model):
             if lower_penalization == "unbalanced" and lagrange_multiplier != 1:
                 self.lagrange_multipliers[label] = 1
                 logger.warning(
-                    "add_constraint() in QUBO model:"
+                    "[Model] add_constraint() in QUBO model:"
                     + f' The Lagrange Multiplier for the constraint "{label}" in the QUBO model ({self.label})'
                     + " has been set to 1 because the constraint uses unbalanced"
                     + " penalization method."
@@ -1599,7 +1602,8 @@ class QUBO(Model):
         emitted noting that no conversion was performed.
         """
         logger.warning(
-            f"Running `to_qubo()` on the model {self.label} that is already in QUBO format.",
+            "[Model] Running `to_qubo()` on the model {} that is already in QUBO format.",
+            self.label,
         )
         return copy.copy(self)
 

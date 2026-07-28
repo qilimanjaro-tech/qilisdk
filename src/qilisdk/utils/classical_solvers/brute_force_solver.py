@@ -80,7 +80,8 @@ class BruteForceSolver(ClassicalSolver):
         MAX_COMBINATIONS = 8192
         if total_combinations > MAX_COMBINATIONS:
             logger.warning(
-                f"Model has {total_combinations} combinations, brute-force enumeration may take a long time."
+                "[ClassicalSolvers] Model has {} combinations, brute-force enumeration may take a long time.",
+                total_combinations,
             )
 
         best_sample = {}

@@ -24,6 +24,7 @@ qili*.lib
 callgrind*
 perf.*
 *.annotation
+python3*.json
 
 # Virtual environments
 .venv

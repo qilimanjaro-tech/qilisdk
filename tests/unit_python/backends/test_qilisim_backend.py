@@ -66,7 +66,7 @@ def test_qilisim_config_builders_and_validation():
     )
     config = backend.get_config()
 
-    assert config["evolution_method"] == "arnoldi"
+    assert config["evolution_method"] == "arnoldi_matrix_free"
     assert config["arnoldi_dim"] == 16
     assert config["num_arnoldi_substeps"] == 3
     assert config["monte_carlo"] is True
@@ -87,6 +87,17 @@ def test_qilisim_config_builders_and_validation():
         ExecutionConfig(seed=-1)
     with pytest.raises(TypeError, match="does not accept positional arguments"):
         ExecutionConfig(1)
+
+
+def test_normalize_state_flag_defaults_and_propagates():
+    # Defaults to True and is exported to the backend config.
+    assert ExecutionConfig().normalize_state is True
+    backend = QiliSim()
+    assert backend.get_config()["normalize_state"] is True
+
+    # Can be disabled and is forwarded to the backend config.
+    backend_raw = QiliSim(execution_config=ExecutionConfig(normalize_state=False))
+    assert backend_raw.get_config()["normalize_state"] is False
 
 
 def test_stabilizer_method_creates_okay():

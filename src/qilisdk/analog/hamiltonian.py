@@ -21,6 +21,7 @@ from itertools import product
 from typing import TYPE_CHECKING, Callable, ClassVar
 
 import numpy as np
+from loguru import logger
 from scipy.sparse import csr_matrix, kron, spmatrix
 
 from qilisdk.core.parameterizable import Parameterizable
@@ -406,6 +407,7 @@ class Hamiltonian(Parameterizable):
         Returns:
             spmatrix: The sparse matrix representation of the Hamiltonian.
         """
+        logger.debug("[Hamiltonian] Building sparse matrix representation over {} qubits", self.nqubits)
         dim = 2**self.nqubits
         # Initialize a zero matrix of the appropriate dimension.
         result = csr_matrix((dim, dim), dtype=_complex_dtype())
@@ -433,6 +435,7 @@ class Hamiltonian(Parameterizable):
                 f"The total number of qubits can't be less than the number of the qubits effected by this hamiltonian ({self.nqubits})"
             )
 
+        logger.debug("[Hamiltonian] Building QTensor representation over {} qubits", nqubits)
         dim = 2 ** (nqubits)
 
         # Initialize a zero matrix of the appropriate dimension.
@@ -566,6 +569,7 @@ class Hamiltonian(Parameterizable):
             list[dict[tuple[PauliOperator, ...], complex | Term | Parameter]]:
                 A list of dictionaries, each representing a partition of the Hamiltonian containing commuting terms.
         """
+        logger.debug("[Hamiltonian] Partitioning Hamiltonian into commuting groups")
         partitions: list[dict[tuple[PauliOperator, ...], complex | Term | Parameter]] = []
 
         # Check each term with each partition
@@ -612,6 +616,7 @@ class Hamiltonian(Parameterizable):
 
         dim = tensor.shape[0]
         n = round(np.log2(dim))
+        logger.debug("[Hamiltonian] Expanding {}-qubit dense operator into Pauli basis", n)
         if not tensor.is_hermitian():
             raise ValueError("Matrix is not Hermitian within tolerance; cannot form a Hamiltonian.")
 
@@ -655,6 +660,7 @@ class Hamiltonian(Parameterizable):
 
     @classmethod
     def parse(cls, hamiltonian_str: str) -> Hamiltonian:
+        logger.debug("[Hamiltonian] Parsing Hamiltonian from string")
         hamiltonian_str = hamiltonian_str.strip()
 
         # 1) remove *all* spaces inside any ( … ) group (coefficients or indices)
