@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-21 16:31+0200\n"
+"POT-Creation-Date: 2026-07-27 17:03+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -39,37 +39,49 @@ msgstr ""
 msgid "Installation"
 msgstr "Instal·lació"
 
-#: ../../modules/backends/backends_qutip.rst:16
+#: ../../modules/backends/backends_qutip.rst:13
+msgid "Linux"
+msgstr "Linux"
+
+#: ../../modules/backends/backends_qutip.rst:19
+msgid "Mac OSX"
+msgstr "Mac OSX"
+
+#: ../../modules/backends/backends_qutip.rst:25
+msgid "Windows"
+msgstr "Windows"
+
+#: ../../modules/backends/backends_qutip.rst:32
 msgid "Quick start"
 msgstr "Inici ràpid"
 
-#: ../../modules/backends/backends_qutip.rst:55
+#: ../../modules/backends/backends_qutip.rst:71
 msgid "Functional support"
 msgstr "Suport de funcionals"
 
-#: ../../modules/backends/backends_qutip.rst:61
+#: ../../modules/backends/backends_qutip.rst:77
 msgid "Functional"
 msgstr "Funcional"
 
-#: ../../modules/backends/backends_qutip.rst:62
+#: ../../modules/backends/backends_qutip.rst:78
 msgid "Support"
 msgstr "Suport"
 
-#: ../../modules/backends/backends_qutip.rst:63
+#: ../../modules/backends/backends_qutip.rst:79
 msgid "Notes"
 msgstr "Notes"
 
-#: ../../modules/backends/backends_qutip.rst:64
+#: ../../modules/backends/backends_qutip.rst:80
 msgid ":class:`~qilisdk.functionals.digital_propagation.DigitalPropagation`"
 msgstr ":class:`~qilisdk.functionals.digital_propagation.DigitalPropagation`"
 
-#: ../../modules/backends/backends_qutip.rst:65
-#: ../../modules/backends/backends_qutip.rst:68
-#: ../../modules/backends/backends_qutip.rst:74
+#: ../../modules/backends/backends_qutip.rst:81
+#: ../../modules/backends/backends_qutip.rst:84
+#: ../../modules/backends/backends_qutip.rst:90
 msgid "|y|"
 msgstr "|y|"
 
-#: ../../modules/backends/backends_qutip.rst:66
+#: ../../modules/backends/backends_qutip.rst:82
 msgid ""
 "Statevector simulation via ``qutip_qip``'s :class:`CircuitSimulator`. "
 "Mid-circuit measurements raise ``ValueError``; all measurements must be "
@@ -79,11 +91,11 @@ msgstr ""
 "de ``qutip_qip``. Les mesures a mig circuit llancen ``ValueError``; totes"
 " les mesures han d'estar al final del circuit."
 
-#: ../../modules/backends/backends_qutip.rst:67
+#: ../../modules/backends/backends_qutip.rst:83
 msgid ":class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`"
 msgstr ":class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`"
 
-#: ../../modules/backends/backends_qutip.rst:69
+#: ../../modules/backends/backends_qutip.rst:85
 msgid ""
 "Master-equation integration via QuTiP's :func:`qutip.mesolve`. ``nsteps``"
 " (default ``10_000``) caps the internal ODE substeps."
@@ -92,15 +104,15 @@ msgstr ""
 " ``nsteps`` (per defecte ``10_000``) limita els subpassos interns de "
 "l'integrador ODE."
 
-#: ../../modules/backends/backends_qutip.rst:70
+#: ../../modules/backends/backends_qutip.rst:86
 msgid ":class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir`"
 msgstr ":class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir`"
 
-#: ../../modules/backends/backends_qutip.rst:71
+#: ../../modules/backends/backends_qutip.rst:87
 msgid "|p|"
 msgstr "|p|"
 
-#: ../../modules/backends/backends_qutip.rst:72
+#: ../../modules/backends/backends_qutip.rst:88
 msgid ""
 "The QutipBackend does not natively implement "
 ":meth:`Backend._execute_quantum_reservoir "
@@ -111,42 +123,42 @@ msgid ""
 msgstr ""
 "QutipBackend no implementa de manera nativa "
 ":meth:`Backend._execute_quantum_reservoir "
-"<qilisdk.backends.backend.Backend._execute_quantum_reservoir>`. Els passos "
-"``Circuit`` de la capa del reservori recauen en una multiplicació unitària "
-"``QTensor`` densa a CPU; els passos ``Schedule`` segueixen utilitzant "
-":func:`mesolve` de QuTiP."
+"<qilisdk.backends.backend.Backend._execute_quantum_reservoir>`. Els "
+"passos ``Circuit`` de la capa del reservori recauen en una multiplicació "
+"unitària ``QTensor`` densa a CPU; els passos ``Schedule`` segueixen "
+"utilitzant :func:`mesolve` de QuTiP."
 
-#: ../../modules/backends/backends_qutip.rst:73
+#: ../../modules/backends/backends_qutip.rst:89
 msgid ":class:`~qilisdk.functionals.variational_program.VariationalProgram`"
 msgstr ":class:`~qilisdk.functionals.variational_program.VariationalProgram`"
 
-#: ../../modules/backends/backends_qutip.rst:75
+#: ../../modules/backends/backends_qutip.rst:91
 msgid "Reuses the digital/analog handlers above for each optimization step."
 msgstr ""
 "Reutilitza els manejadors digital/analògic anteriors a cada pas "
 "d'optimització."
 
-#: ../../modules/backends/backends_qutip.rst:82
+#: ../../modules/backends/backends_qutip.rst:98
 msgid "Configuration"
 msgstr "Configuració"
 
-#: ../../modules/backends/backends_qutip.rst:84
+#: ../../modules/backends/backends_qutip.rst:100
 msgid "QutipBackend has a single constructor option:"
 msgstr "QutipBackend té una única opció de constructor:"
 
-#: ../../modules/backends/backends_qutip.rst:90
+#: ../../modules/backends/backends_qutip.rst:106
 msgid "Option"
 msgstr "Opció"
 
-#: ../../modules/backends/backends_qutip.rst:91
+#: ../../modules/backends/backends_qutip.rst:107
 msgid "Meaning"
 msgstr "Significat"
 
-#: ../../modules/backends/backends_qutip.rst:92
+#: ../../modules/backends/backends_qutip.rst:108
 msgid "``nsteps``"
 msgstr "``nsteps``"
 
-#: ../../modules/backends/backends_qutip.rst:93
+#: ../../modules/backends/backends_qutip.rst:109
 msgid ""
 "Upper bound on the number of internal ODE substeps used by "
 ":func:`qutip.mesolve` per schedule interval. Increase it if a long or "
@@ -158,7 +170,7 @@ msgstr ""
 "Augmenteu-lo si un schedule llarg o rígid fa que el solver de QuTiP falli"
 " amb un avís \"max steps exceeded\". Per defecte ``10_000``."
 
-#: ../../modules/backends/backends_qutip.rst:105
+#: ../../modules/backends/backends_qutip.rst:121
 msgid ""
 "QutipBackend does **not** accept a :class:`~qilisdk.noise.NoiseModel`. "
 "For noisy digital or analog simulations use "

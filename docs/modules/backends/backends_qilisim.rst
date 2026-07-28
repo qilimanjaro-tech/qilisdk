@@ -259,9 +259,25 @@ GPU acceleration
 Some simulation methods in QiliSim support GPU acceleration if a CUDA-capable device is available.
 These require the ``cuda`` extra to be installed:
 
-.. code-block:: console
+.. tabs::
 
-    pip install qilisdk[cuda13]
+    .. group-tab:: Linux
+
+        .. code-block:: console
+
+            pip install qilisdk[cuda13]
+
+    .. group-tab:: Mac OSX
+
+        .. code-block:: console
+
+            pip install "qilisdk[cuda13]"
+
+    .. group-tab:: Windows
+
+        .. code-block:: console
+
+            pip install qilisdk[cuda13]
 
 .. list-table::
     :header-rows: 1

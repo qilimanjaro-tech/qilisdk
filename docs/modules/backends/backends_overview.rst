@@ -12,9 +12,25 @@ Currently, three backends are supported:
 
     Backends other than QiliSim are optional; to install one, include its extra when installing QILISDK:
 
-    .. code-block:: console
+    .. tabs::
 
-        pip install qilisdk[<backend_name>]
+        .. group-tab:: Linux
+
+            .. code-block:: console
+
+                pip install qilisdk[<backend_name>]
+
+        .. group-tab:: Mac OSX
+
+            .. code-block:: console
+
+                pip install "qilisdk[<backend_name>]"
+
+        .. group-tab:: Windows
+
+            .. code-block:: console
+
+                pip install qilisdk[<backend_name>]
 
     For more information check the :doc:`../../getting_started/installation` page.
 

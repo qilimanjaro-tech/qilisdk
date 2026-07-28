@@ -13,9 +13,25 @@ entry-points live in :mod:`qilisdk.utils.qir`:
 
 The ``pyqir`` dependency is optional; install it with the ``qir`` extra:
 
-.. code-block:: bash
+.. tabs::
 
-    pip install qilisdk[qir]
+    .. group-tab:: Linux
+
+        .. code-block:: bash
+
+            pip install qilisdk[qir]
+
+    .. group-tab:: Mac OSX
+
+        .. code-block:: bash
+
+            pip install "qilisdk[qir]"
+
+    .. group-tab:: Windows
+
+        .. code-block:: bash
+
+            pip install qilisdk[qir]
 
 Quick start
 ^^^^^^^^^^^
