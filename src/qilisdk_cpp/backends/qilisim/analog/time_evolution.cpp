@@ -28,8 +28,7 @@ bool state_diverged(DenseMatrix& rho_t, const std::string& method) {
     if (!mark_nan_if_diverged(rho_t)) {
         return false;
     }
-    qilisdk::log_warning("[QiliSim, C++] Analog integrator '" + method +
-                         "' diverged: the state became non-finite, try with a smaller dt or a different integrator.");
+    qilisdk::log_warning("[QiliSim, C++] Analog integrator '" + method + "' diverged: the state became non-finite, try with a smaller dt or a different integrator.");
     return true;
 }
 
