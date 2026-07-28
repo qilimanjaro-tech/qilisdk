@@ -33,8 +33,6 @@ _DIVISION_MESSAGE = "Division by zero is not allowed"
 
 GenericVar = TypeVar("GenericVar", bound="Variable")
 CONST_KEY = "_const_"
-# Sentinel used to distinguish "variable absent from the value map" from a legitimately provided
-# value (which may be falsy) in a single dict lookup during term evaluation.
 _UNSET = object()
 MAX_INT = np.iinfo(np.int64).max
 MIN_INT = np.iinfo(np.int64).min
@@ -663,8 +661,7 @@ class BaseVariable(ABC):
 
     TOL = get_settings().atol
 
-    # This is quicker than checking "isinstance(self, Variable)",
-    # can now do "if getattr(x, '_is_variable', False):" instead.
+    # Checking this via getattr is quicker than checking isinstance
     _is_variable = True
 
     def __init__(self, label: str, domain: Domain, bounds: tuple[float | None, float | None] = (None, None)) -> None:
@@ -1501,9 +1498,6 @@ class Term:
         Returns:
             bool: True if the variable is a constant, False otherwise.
         """
-        # Equality on variables is purely label-based (see BaseVariable.__eq__), so comparing labels
-        # is equivalent to `variable == self.CONST` but avoids the ABCMeta isinstance check and the
-        # hashing behind variable equality. This is called for every element of every term built.
         return variable.label == self.CONST.label
 
     def to_list(self) -> list[BaseVariable | Term | Number]:
