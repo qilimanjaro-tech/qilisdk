@@ -134,6 +134,8 @@ constraint-dependencies = [
     "cryptography>=48.0.1",       # high
     "pydantic-settings>=2.14.2",
     "tornado>=6.5.7",
+    "pillow>=12.3.0",             # high (W-30)
+    "setuptools>=83.0.0",         # W-30: MANIFEST.in exclusion bypass
 ]
 conflicts = [
     [
