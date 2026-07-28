@@ -47,7 +47,7 @@ SimulatedAnnealingCpp::SimulatedAnnealingCpp(int num_variables, const std::vecto
     if (num_variables < 0) {
         throw std::invalid_argument("The number of variables must not be negative.");
     }
-    this->variable_monomials.resize(static_cast<std::size_t>(num_variables));
+    this->variable_terms.resize(static_cast<std::size_t>(num_variables));
     for (const auto& entry : monomials) {
         // If it has no variables, it is just a constant
         if (entry.first.empty()) {
@@ -66,7 +66,31 @@ SimulatedAnnealingCpp::SimulatedAnnealingCpp(int num_variables, const std::vecto
         const int index = static_cast<int>(this->monomials.size());
         this->monomials.push_back(MonomialCpp{entry.first, entry.second});
         for (int variable : entry.first) {
-            this->variable_monomials[static_cast<std::size_t>(variable)].push_back(index);
+            this->variable_terms[static_cast<std::size_t>(variable)].push_back(VariableTermCpp{index, entry.second});
+        }
+    }
+
+    // If every monomial has degree at most two, we can use a more efficient representation
+    this->is_quadratic = true;
+    for (const MonomialCpp& monomial : this->monomials) {
+        const std::size_t degree = monomial.variables.size();
+        if (degree > 2 || (degree == 2 && monomial.variables[0] == monomial.variables[1])) {
+            this->is_quadratic = false;
+            break;
+        }
+    }
+    if (this->is_quadratic) {
+        this->linear_field.assign(static_cast<std::size_t>(num_variables), 0.0);
+        this->couplings.resize(static_cast<std::size_t>(num_variables));
+        for (const MonomialCpp& monomial : this->monomials) {
+            if (monomial.variables.size() == 1) {
+                this->linear_field[static_cast<std::size_t>(monomial.variables[0])] += monomial.coefficient;
+            } else {
+                const int a = monomial.variables[0];
+                const int b = monomial.variables[1];
+                this->couplings[static_cast<std::size_t>(a)].push_back(QuadraticCouplingCpp{b, monomial.coefficient});
+                this->couplings[static_cast<std::size_t>(b)].push_back(QuadraticCouplingCpp{a, monomial.coefficient});
+            }
         }
     }
 }
@@ -103,33 +127,31 @@ double SimulatedAnnealingCpp::energy(const std::vector<int>& state) const {
     return total;
 }
 
-double SimulatedAnnealingCpp::flip_delta(const std::vector<int>& state, int variable) const {
+double SimulatedAnnealingCpp::flip_delta(const std::vector<int>& state, const std::vector<int>& zero_count, int variable) const {
     /*
     Compute the change in cost caused by flipping a single binary variable.
 
+    A monomial only changes value when every one of its variables other than the flipped one is
+    already 1. Rather than rescan each monomial's variables, this uses zero_count[m], the number of
+    variables in monomial m currently set to 0.
+
     Args:
         state (std::vector<int>&): the current value (0 or 1) of each binary variable.
+        zero_count (std::vector<int>&): the number of currently-zero variables in each monomial.
         variable (int): the index of the variable to flip.
 
     Returns:
         double: the cost of the flipped state minus the cost of the current state.
     */
     const bool currently_one = state[static_cast<std::size_t>(variable)] == 1;
+    const int target = currently_one ? 0 : 1;
     double delta = 0.0;
-    for (int index : variable_monomials[static_cast<std::size_t>(variable)]) {
-        const MonomialCpp& monomial = monomials[static_cast<std::size_t>(index)];
-        bool others_all_one = true;
-        for (int other : monomial.variables) {
-            if (other != variable && state[static_cast<std::size_t>(other)] == 0) {
-                others_all_one = false;
-                break;
-            }
-        }
-        if (others_all_one) {
-            delta += currently_one ? -monomial.coefficient : monomial.coefficient;
+    for (const VariableTermCpp& term : variable_terms[static_cast<std::size_t>(variable)]) {
+        if (zero_count[static_cast<std::size_t>(term.monomial)] == target) {
+            delta += term.coefficient;
         }
     }
-    return delta;
+    return currently_one ? -delta : delta;
 }
 
 std::pair<double, double> SimulatedAnnealingCpp::default_beta_range() const {
@@ -156,8 +178,8 @@ std::pair<double, double> SimulatedAnnealingCpp::default_beta_range() const {
     double smallest_delta = std::numeric_limits<double>::infinity();
     for (int variable = 0; variable < num_variables; ++variable) {
         double bound = 0.0;
-        for (int index : variable_monomials[static_cast<std::size_t>(variable)]) {
-            const double magnitude = std::abs(monomials[static_cast<std::size_t>(index)].coefficient);
+        for (const VariableTermCpp& term : variable_terms[static_cast<std::size_t>(variable)]) {
+            const double magnitude = std::abs(term.coefficient);
             bound += magnitude;
             if (magnitude > 0.0) {
                 smallest_delta = std::min(smallest_delta, magnitude);
@@ -200,7 +222,22 @@ std::pair<std::vector<int>, double> SimulatedAnnealingCpp::single_read(int num_s
     for (int variable = 0; variable < num_variables; ++variable) {
         state[static_cast<std::size_t>(variable)] = uniform(generator) < 0.5 ? 0 : 1;
     }
-    double current_energy = energy(state);
+
+    // Track per monomial how many of its variables are currently 0
+    std::vector<int> zero_count(monomials.size(), 0);
+    double current_energy = offset;
+    for (std::size_t m = 0; m < monomials.size(); ++m) {
+        int zeros = 0;
+        for (int variable : monomials[m].variables) {
+            if (state[static_cast<std::size_t>(variable)] == 0) {
+                ++zeros;
+            }
+        }
+        zero_count[m] = zeros;
+        if (zeros == 0) {
+            current_energy += monomials[m].coefficient;
+        }
+    }
     std::vector<int> best_state = state;
     double best_energy = current_energy;
 
@@ -216,11 +253,107 @@ std::pair<std::vector<int>, double> SimulatedAnnealingCpp::single_read(int num_s
         // Loop over the variables in order, offering each a Metropolis flip
         for (int variable = 0; variable < num_variables; ++variable) {
             // How much the cost would change if we flipped this variable
-            const double delta = flip_delta(state, variable);
+            const double delta = flip_delta(state, zero_count, variable);
 
             // Downhill flips are always taken, uphill ones only with the probability based on the temp
             if (delta <= 0.0 || uniform(generator) < std::exp(-beta * delta)) {
                 state[static_cast<std::size_t>(variable)] ^= 1;
+
+                // Keep the per-monomial zero counts up to date
+                const int step = state[static_cast<std::size_t>(variable)] == 0 ? 1 : -1;
+                for (const VariableTermCpp& term : variable_terms[static_cast<std::size_t>(variable)]) {
+                    zero_count[static_cast<std::size_t>(term.monomial)] += step;
+                }
+                current_energy += delta;
+                if (current_energy < best_energy) {
+                    best_energy = current_energy;
+                    best_state = state;
+                }
+            }
+        }
+    }
+    return {best_state, best_energy};
+}
+
+std::pair<std::vector<int>, double> SimulatedAnnealingCpp::single_read_quadratic(int num_sweeps, double beta_min, double beta_max, unsigned long long seed) const {
+    /*
+    Quadratic (QUBO) specialisation of single_read.
+
+    Args:
+        num_sweeps (int): the number of sweeps over all variables to perform.
+        beta_min (double): the inverse temperature to start the anneal at.
+        beta_max (double): the inverse temperature to end the anneal at.
+        seed (unsigned long long): the seed of this read's random number generator.
+
+    Returns:
+        std::pair<std::vector<int>, double>: the lowest cost assignment visited and its cost
+    */
+
+    // Prep the rng
+    std::mt19937_64 generator(seed);
+    std::uniform_real_distribution<double> uniform(0.0, 1.0);
+
+    // Start from a random assignment (identical rng consumption to the general path)
+    std::vector<int> state(static_cast<std::size_t>(num_variables));
+    for (int variable = 0; variable < num_variables; ++variable) {
+        state[static_cast<std::size_t>(variable)] = uniform(generator) < 0.5 ? 0 : 1;
+    }
+
+    // The local field of each variable, h_i + sum_j J_ij*state[j], which the flip delta reads directly
+    std::vector<double> field = linear_field;
+    for (std::size_t i = 0; i < field.size(); ++i) {
+        for (const QuadraticCouplingCpp& coupling : couplings[i]) {
+            if (state[static_cast<std::size_t>(coupling.other)] == 1) {
+                field[i] += coupling.coefficient;
+            }
+        }
+    }
+
+    // Energy of the starting assignment, computed exactly as the general path does
+    double current_energy = offset;
+    for (const MonomialCpp& monomial : monomials) {
+        bool all_one = true;
+        for (int variable : monomial.variables) {
+            if (state[static_cast<std::size_t>(variable)] == 0) {
+                all_one = false;
+                break;
+            }
+        }
+        if (all_one) {
+            current_energy += monomial.coefficient;
+        }
+    }
+
+    std::vector<int> best_state = state;
+    double best_energy = current_energy;
+
+    // Ramp geometrically, i.e. linearly in the logarithm of the inverse temperature
+    const double log_beta_min = std::log(beta_min);
+    const double log_beta_step = num_sweeps > 1 ? (std::log(beta_max) - log_beta_min) / static_cast<double>(num_sweeps - 1) : 0.0;
+
+    // Perform the sweeps
+    for (int sweep = 0; sweep < num_sweeps; ++sweep) {
+        // The inverse temperature
+        const double beta = std::exp(log_beta_min + log_beta_step * static_cast<double>(sweep));
+
+        // Loop over the variables in order, offering each a Metropolis flip
+        for (int variable = 0; variable < num_variables; ++variable) {
+            const std::size_t v = static_cast<std::size_t>(variable);
+
+            // Flipping a currently-one variable removes its field contribution to the cost, and a
+            // currently-zero one adds it
+            const double delta = state[v] == 1 ? -field[v] : field[v];
+
+            // Downhill flips are always taken, uphill ones only with the probability based on the temp
+            if (delta <= 0.0 || uniform(generator) < std::exp(-beta * delta)) {
+                // How this variable's value changes, new minus old, i.e. +1 when going 0 -> 1
+                const int step = state[v] == 0 ? 1 : -1;
+                state[v] ^= 1;
+
+                // The flip shifts each neighbour's local field by this variable's coupling
+                for (const QuadraticCouplingCpp& coupling : couplings[v]) {
+                    field[static_cast<std::size_t>(coupling.other)] += coupling.coefficient * static_cast<double>(step);
+                }
                 current_energy += delta;
                 if (current_energy < best_energy) {
                     best_energy = current_energy;
@@ -295,7 +428,9 @@ AnnealingResultCpp SimulatedAnnealingCpp::anneal(int num_reads, int num_sweeps, 
 #endif
     for (int read = 0; read < num_reads; ++read) {
         // Each read gets its own generator, so that the result does not depend on the thread count
-        const std::pair<std::vector<int>, double> outcome = single_read(num_sweeps, beta_min, beta_max, static_cast<unsigned long long>(seed) + 0x9e3779b97f4a7c15ULL * static_cast<unsigned long long>(read + 1));
+        const unsigned long long read_seed = static_cast<unsigned long long>(seed) + 0x9e3779b97f4a7c15ULL * static_cast<unsigned long long>(read + 1);
+        // A pure QUBO takes a more efficient path
+        const std::pair<std::vector<int>, double> outcome = is_quadratic ? single_read_quadratic(num_sweeps, beta_min, beta_max, read_seed) : single_read(num_sweeps, beta_min, beta_max, read_seed);
         states[static_cast<std::size_t>(read)] = outcome.first;
         energies[static_cast<std::size_t>(read)] = outcome.second;
     }

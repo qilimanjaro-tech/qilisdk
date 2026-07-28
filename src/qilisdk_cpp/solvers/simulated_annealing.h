@@ -24,6 +24,16 @@ struct MonomialCpp {
     double coefficient;
 };
 
+struct VariableTermCpp {
+    int monomial;
+    double coefficient;
+};
+
+struct QuadraticCouplingCpp {
+    int other;
+    double coefficient;
+};
+
 struct AnnealingResultCpp {
     std::vector<int> state;
     double energy;
@@ -44,13 +54,18 @@ class SimulatedAnnealingCpp {
     std::size_t get_num_monomials() const { return monomials.size(); }
 
    private:
-    double flip_delta(const std::vector<int>& state, int variable) const;
+    double flip_delta(const std::vector<int>& state, const std::vector<int>& zero_count, int variable) const;
     std::pair<std::vector<int>, double> single_read(int num_sweeps, double beta_min, double beta_max, unsigned long long seed) const;
+    std::pair<std::vector<int>, double> single_read_quadratic(int num_sweeps, double beta_min, double beta_max, unsigned long long seed) const;
 
     int num_variables;
     double offset;
     std::vector<MonomialCpp> monomials;
-    std::vector<std::vector<int>> variable_monomials;
+    std::vector<std::vector<VariableTermCpp>> variable_terms;
+
+    bool is_quadratic = false;
+    std::vector<double> linear_field;
+    std::vector<std::vector<QuadraticCouplingCpp>> couplings;
 };
 
 // GCOV_EXCL_BR_STOP

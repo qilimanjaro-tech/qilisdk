@@ -26,6 +26,7 @@ struct ParsedCostCpp {
     std::vector<std::pair<std::vector<int>, double>> monomials;
     double offset;
     std::vector<std::string> labels;
+    std::vector<py::object> variables;
 };
 
 ParsedCostCpp parse_qubo(const py::object& qubo);

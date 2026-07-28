@@ -33,6 +33,9 @@ _DIVISION_MESSAGE = "Division by zero is not allowed"
 
 GenericVar = TypeVar("GenericVar", bound="Variable")
 CONST_KEY = "_const_"
+# Sentinel used to distinguish "variable absent from the value map" from a legitimately provided
+# value (which may be falsy) in a single dict lookup during term evaluation.
+_UNSET = object()
 MAX_INT = np.iinfo(np.int64).max
 MIN_INT = np.iinfo(np.int64).min
 LARGE_BOUND = 100
@@ -660,6 +663,10 @@ class BaseVariable(ABC):
 
     TOL = get_settings().atol
 
+    # This is quicker than checking "isinstance(self, Variable)",
+    # can now do "if getattr(x, '_is_variable', False):" instead.
+    _is_variable = True
+
     def __init__(self, label: str, domain: Domain, bounds: tuple[float | None, float | None] = (None, None)) -> None:
         """initialize a new Variable object
 
@@ -924,7 +931,9 @@ class BaseVariable(ABC):
         return self._hash_cache
 
     def __eq__(self, other: object) -> bool:
-        if not isinstance(other, BaseVariable):
+        if self is other:
+            return True
+        if not getattr(other, "_is_variable", False):
             return False
         return hash(self) == hash(other)
 
@@ -1307,6 +1316,7 @@ class Term:
         self._operation = operation
         self._elements: dict[BaseVariable | Term, Number] = {}  # The list of elements in the term.
         # key: the term or variable | value: the coefficient corresponding to that value.
+        self._hash_cache: int | None = None
         for e in elements:
             if isinstance(e, BaseVariable):
                 if e in self:
@@ -1476,9 +1486,11 @@ class Term:
             Number: the coefficient of the removed item.
         """
         try:
-            return self._elements.pop(item)
+            value = self._elements.pop(item)
         except KeyError as e:
             raise KeyError(f'item "{item}" not found in the term.') from e
+        self._hash_cache = None
+        return value
 
     def _is_constant(self, variable: BaseVariable) -> bool:
         """Checks if the variable is a constant variable as defined by the Term class.
@@ -1489,7 +1501,10 @@ class Term:
         Returns:
             bool: True if the variable is a constant, False otherwise.
         """
-        return variable == self.CONST
+        # Equality on variables is purely label-based (see BaseVariable.__eq__), so comparing labels
+        # is equivalent to `variable == self.CONST` but avoids the ABCMeta isinstance check and the
+        # hashing behind variable equality. This is called for every element of every term built.
+        return variable.label == self.CONST.label
 
     def to_list(self) -> list[BaseVariable | Term | Number]:
         """Exports the current term into a list of its elements.
@@ -1554,6 +1569,7 @@ class Term:
                 to_be_popped.append(e)
         for p in to_be_popped:
             self._elements.pop(p)
+        self._hash_cache = None
 
     def evaluate(self, var_values: Mapping[BaseVariable, list[int] | RealNumber]) -> Number:
         """Evaluates the term given a set of values for the variables in the term.
@@ -1572,29 +1588,41 @@ class Term:
         """
         if len(self._elements) == 0:
             return 0
-        _var_values = dict(var_values)
-        for var in self.variables():
-            if isinstance(var, Parameter):
-                if var not in _var_values:
-                    _var_values[var] = var.value
-                else:
-                    value = _var_values[var]
-                    if not isinstance(value, RealNumber):
-                        raise ValueError(f"setting a parameter ({var}) value with a list is not supported.")
-                    # var.set_value(value)
-            if var not in _var_values:
-                raise ValueError(f"Can not evaluate term because the value of the variable {var} is not provided.")
+        return self._evaluate(dict(var_values))
+
+    def _evaluate(self, _var_values: dict[BaseVariable, list[int] | RealNumber]) -> Number:
+        """Recursive core of :meth:`evaluate`.
+
+        Returns:
+            Number: the result from evaluating the term.
+
+        Raises:
+            ValueError: if a non-parameter variable in the term has no value in ``_var_values``, or a
+                parameter is given a list value.
+        """
+        if len(self._elements) == 0:
+            return 0
         output = complex(0.0) if self.operation in {Operation.ADD, Operation.SUB} else complex(1.0)
         for e in self:
             if isinstance(e, Term):
-                output = self._apply_operation_on_constants([output, e.evaluate(_var_values) * self[e]])
+                output = self._apply_operation_on_constants([output, e._evaluate(_var_values) * self[e]])  # noqa: SLF001
             elif isinstance(e, BaseVariable):
-                if e == self.CONST:
+                if self._is_constant(e):
                     output = self._apply_operation_on_constants([output, self[e]])
-                elif self.operation == Operation.MUL:
-                    output = self._apply_operation_on_constants([output, e.evaluate(_var_values[e]) ** self[e]])
+                    continue
+                raw = _var_values.get(e, _UNSET)
+                if raw is _UNSET:
+                    if isinstance(e, Parameter):
+                        raw = e.value
+                    else:
+                        raise ValueError(f"Cannot evaluate term because the value of the variable {e} is not provided.")
+                elif isinstance(e, Parameter) and not isinstance(raw, RealNumber):
+                    raise ValueError(f"Setting a parameter ({e}) value with a list is not supported.")
+                value = cast("list[int] | RealNumber", raw)
+                if self.operation == Operation.MUL:
+                    output = self._apply_operation_on_constants([output, e.evaluate(value) ** self[e]])
                 else:
-                    output = self._apply_operation_on_constants([output, e.evaluate(_var_values[e]) * self[e]])
+                    output = self._apply_operation_on_constants([output, e.evaluate(value) * self[e]])
         if isinstance(output, RealNumber):
             return float(output)
         if isinstance(output, complex) and abs(output.imag) < self.TOL:
@@ -1614,7 +1642,12 @@ class Term:
         return all(isinstance(var, Parameter) for var in self.variables())
 
     def __copy__(self) -> Term:
-        return Term(copy.copy(self.to_list()), copy.copy(self.operation))
+        # This shallow copy is safe because the elements of a Term are immutable (BaseVariable, Term, Number).
+        new = Term.__new__(Term)
+        new._operation = self._operation  # noqa: SLF001
+        new._elements = dict(self._elements)  # noqa: SLF001
+        new._hash_cache = self._hash_cache  # noqa: SLF001
+        return new
 
     def __repr__(self) -> str:
         if len(self) == 0:
@@ -1659,6 +1692,7 @@ class Term:
 
     def __setitem__(self, key: BaseVariable | Term, item: Number) -> None:
         self._elements[key] = item
+        self._hash_cache = None
 
     def __iter__(self) -> Iterator[BaseVariable | Term]:
         yield from self._elements
@@ -1791,7 +1825,9 @@ class Term:
         )
 
     def __hash__(self) -> int:
-        return qili_hash(self.operation.value, self._elements)
+        if self._hash_cache is None:
+            self._hash_cache = qili_hash(self.operation.value, self._elements)
+        return self._hash_cache
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Term):
@@ -2021,6 +2057,28 @@ class MathematicalMap(Term, ABC):
 
             value += aux * self[e]
 
+        return self._apply_mathematical_map(value)
+
+    def _evaluate(self, _var_values: dict[BaseVariable, list[int] | RealNumber]) -> Number:
+        """
+        Recursive core of :meth:`evaluate`.
+        This is used when the MathematicalMap is part of a larger Term.
+
+        Args:
+            _var_values (dict[BaseVariable, list[int]  |  RealNumber]): the values of the variables in the term.
+
+        Returns:
+            Number: the result from evaluating the term.
+        """
+        value: Number = 0
+        for e in self:
+            if e not in _var_values and isinstance(e, Parameter):
+                aux: Number = e.evaluate()
+            elif isinstance(e, Term):
+                aux = e._evaluate(_var_values)  # noqa: SLF001
+            else:
+                aux = e.evaluate(_var_values[e])
+            value += aux * self[e]
         return self._apply_mathematical_map(value)
 
     def __repr__(self) -> str:

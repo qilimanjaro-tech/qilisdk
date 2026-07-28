@@ -76,11 +76,13 @@ void add_monomial(const py::object& monomial, double coefficient, ParsedCostCpp&
                 objective built by nesting Terms by hand rather than with the usual operators.
     */
 
-    // Give a variable the next free index, or return the index it already has
-    const auto index_of = [&parsed, &indices](const std::string& label) {
+    // Give a variable the next free index, or return the index it already has, noting the Python
+    // variable object the first time each label is seen so the sample can be rebuilt from it later
+    const auto index_of = [&parsed, &indices](const std::string& label, const py::object& variable) {
         const auto inserted = indices.emplace(label, static_cast<int>(parsed.labels.size()));
         if (inserted.second) {
             parsed.labels.push_back(label);
+            parsed.variables.push_back(variable);
         }
         return inserted.first->second;
     };
@@ -103,13 +105,13 @@ void add_monomial(const py::object& monomial, double coefficient, ParsedCostCpp&
             }
 
             // The exponent of a factor is irrelevant, since x * x == x for a binary variable
-            variables.push_back(index_of(label));
+            variables.push_back(index_of(label, factor));
         }
     } else {
         // A lone variable, unless it is the constant, whose coefficient is the constant itself
         const std::string label = monomial.attr("label").cast<std::string>();
         if (label != constant) {
-            variables.push_back(index_of(label));
+            variables.push_back(index_of(label, monomial));
         }
     }
 
@@ -123,32 +125,22 @@ void add_monomial(const py::object& monomial, double coefficient, ParsedCostCpp&
     }
 }
 
-py::dict build_sample(const py::object& qubo, const std::vector<int>& state, const std::vector<std::string>& labels) {
+py::dict build_sample(const std::vector<py::object>& variables, const std::vector<int>& state) {
     /*
     Turn an annealed bitstring into a sample over the QUBO's own binary variables,
     i.e. go from our C++ representation back to the Python's.
 
     Args:
-        qubo (py::object&): the QUBO that was annealed.
+        variables (std::vector<py::object>&): the Python variable object at each cost-function index.
         state (std::vector<int>&): the annealed value of each binary variable of the cost function.
-        labels (std::vector<std::string>&): the label of each binary variable of the cost function.
 
     Returns:
         py::dict: a dict mapping each of the QUBO's variables to its annealed value.
     */
 
-    // Convert the annealed bitstring into a map from each variable's label to its value
-    std::unordered_map<std::string, int> bits;
-    for (std::size_t index = 0; index < labels.size(); ++index) {
-        bits[labels[index]] = state[index];
-    }
-
-    // Build a dict mapping each of the QUBO's variables to its annealed value
     py::dict sample;
-    for (py::handle variable_handle : qubo.attr("variables")()) {
-        const py::object variable = py::reinterpret_borrow<py::object>(variable_handle);
-        const auto found = bits.find(variable.attr("label").cast<std::string>());
-        sample[variable] = py::int_(found == bits.end() ? 0 : found->second);
+    for (std::size_t index = 0; index < variables.size(); ++index) {
+        sample[variables[index]] = py::int_(state[index]);
     }
     return sample;
 }
@@ -248,9 +240,19 @@ py::object solve_with_simulated_annealing(const py::object& qubo, int num_reads,
 
     // Put the results back into a Python form
     qilisdk::log_trace("[SimulatedAnnealing, C++] Building sample from best solution found");
-    const py::dict sample = build_sample(qubo, result.state, parsed.labels);
+    const py::dict sample = build_sample(parsed.variables, result.state);
     qilisdk::log_trace("[SimulatedAnnealing, C++] Finished building sample");
-    return py::make_tuple(qubo.attr("evaluate")(sample), sample);
+
+    // Report the objective (and any constraint) values
+    py::object results;
+    if (py::len(qubo.attr("constraints")) == 0) {
+        py::dict objective_values;
+        objective_values[qubo.attr("objective").attr("label")] = result.energy;
+        results = std::move(objective_values);
+    } else {
+        results = qubo.attr("evaluate")(sample);
+    }
+    return py::make_tuple(results, sample);
 }
 
 #pragma GCC visibility pop
