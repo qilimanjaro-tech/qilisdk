@@ -54,7 +54,53 @@ inline void set_nan(DenseMatrix& matrix) {
 
 // If the matrix has diverged to a non-finite state, overwrite it with NaN and return true
 inline bool mark_nan_if_diverged(DenseMatrix& matrix) {
+    /*
+    Check if the matrix has diverged to a non-finite state.
+
+    Args:
+        matrix (DenseMatrix): The matrix to check and potentially overwrite.
+
+    Returns:
+        bool: True if the matrix has diverged, false otherwise.
+    */
     if (matrix.allFinite()) {
+        return false;
+    }
+    set_nan(matrix);
+    return true;
+}
+
+inline bool mark_nan_if_bad_divisor(DenseMatrix& matrix, double divisor) {
+    /*
+    Check if the divisor is valid.
+
+    Args:
+        matrix (DenseMatrix): The matrix to check and potentially overwrite.
+        divisor (double): The divisor to check.
+
+    Returns:
+        bool: True if the divisor is non-finite or zero, false otherwise.
+    */
+    if (std::isfinite(divisor) && divisor != 0.0) {
+        return false;
+    }
+    set_nan(matrix);
+    return true;
+}
+
+inline bool mark_nan_if_bad_divisor(DenseMatrix& matrix, Complex divisor) {
+    /*
+    Check if the complex divisor is valid.
+
+    Args:
+        matrix (DenseMatrix): The matrix to check and potentially overwrite.
+        divisor (Complex): The complex divisor to check.
+
+    Returns:
+        bool: True if the divisor is non-finite or zero, false otherwise.
+    */
+    const double magnitude_sq = divisor.real() * divisor.real() + divisor.imag() * divisor.imag();
+    if (std::isfinite(magnitude_sq) && magnitude_sq != 0.0) {
         return false;
     }
     set_nan(matrix);

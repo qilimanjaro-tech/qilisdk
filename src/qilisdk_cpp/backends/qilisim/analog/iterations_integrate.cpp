@@ -101,8 +101,7 @@ DenseMatrix iter_rk4_matrix(const DenseMatrix& rho_0, double dt, const SparseMat
     if (normalize) {
         if (is_unitary_on_statevector) {
             const double norm = rho.norm();
-            if (!std::isfinite(norm) || norm == 0.0) {
-                set_nan(rho);
+            if (mark_nan_if_bad_divisor(rho, norm)) {
                 return rho;
             }
             rho /= norm;
@@ -111,9 +110,7 @@ DenseMatrix iter_rk4_matrix(const DenseMatrix& rho_0, double dt, const SparseMat
             for (int i = 0; i < dim; ++i) {
                 tr += rho(i, i);
             }
-            const double denom = tr.real() * tr.real() + tr.imag() * tr.imag();
-            if (!std::isfinite(denom) || denom == 0.0) {
-                set_nan(rho);
+            if (mark_nan_if_bad_divisor(rho, tr)) {
                 return rho;
             }
             rho /= tr;
@@ -307,8 +304,7 @@ void iter_rk4(DenseMatrix& rho_t, double t, double dt, const std::vector<double>
             norm_sq += std::norm(rho_t(i, 0));
         }
         const Real norm = static_cast<Real>(std::sqrt(norm_sq));
-        if (!std::isfinite(norm) || norm == 0.0) {
-            set_nan(rho_t);
+        if (mark_nan_if_bad_divisor(rho_t, norm)) {
             return;
         }
 #if defined(_OPENMP)
@@ -328,11 +324,10 @@ void iter_rk4(DenseMatrix& rho_t, double t, double dt, const std::vector<double>
             norm += rho_t(i, i);
         }
         // Divide the whole (contiguous) matrix by the scalar trace
-        const Real denom = norm.real() * norm.real() + norm.imag() * norm.imag();
-        if (!std::isfinite(denom) || denom == 0.0) {
-            set_nan(rho_t);
+        if (mark_nan_if_bad_divisor(rho_t, norm)) {
             return;
         }
+        const Real denom = norm.real() * norm.real() + norm.imag() * norm.imag();
         const Real inv_re = norm.real() / denom;
         const Real inv_im = -norm.imag() / denom;
         Complex* rt_ptr = rho_t.data();
@@ -547,9 +542,11 @@ double iter_rk45(DenseMatrix& rho_t, double t, double& dt, const std::vector<dou
     // Scale the error by the tolerance
     err_norm /= tol;
 
-    // Make sure it's not zero
-    if (std::abs(rho_4_norm) < 1e-14 || std::abs(rho_5_norm) < 1e-14) {
-        throw py::value_error("Density matrix has zero norm, cannot perform adaptive step.");
+    // Make sure we haven't diverged
+    const double norm_4 = std::abs(rho_4_norm);
+    const double norm_5 = std::abs(rho_5_norm);
+    if (mark_nan_if_bad_divisor(rho_t, norm_4) || mark_nan_if_bad_divisor(rho_t, norm_5)) {
+        return 0.0;
     }
 
     // Normalize the 5th order solution

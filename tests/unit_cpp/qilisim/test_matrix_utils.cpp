@@ -524,6 +524,36 @@ TEST(NormalizeStateTest, MultiColumnDensityMatrix) {
     EXPECT_NEAR(tr.imag(), 0.0, kTol);
 }
 
+// Divergence handling: a non-finite or zero divisor means the state has blown up. The dense
+// normalizer must overwrite it with quiet NaNs (rather than dividing to produce inf/garbage) so the
+// caller's divergence check can detect it. (The sparse overload cannot carry a structural NaN and so
+// leaves such states untouched instead, see SparseZeroStateLeftAlone.)
+TEST(NormalizeStateTest, StatevectorZeroNormBecomesNaN) {
+    DenseMatrix state = DenseMatrix::Zero(4, 1);
+    normalize_state(state, true, false);
+    EXPECT_FALSE(state.allFinite());
+}
+
+TEST(NormalizeStateTest, StatevectorNonFiniteBecomesNaN) {
+    DenseMatrix state(2, 1);
+    state << std::complex<double>(std::numeric_limits<double>::infinity(), 0), std::complex<double>(1, 0);
+    normalize_state(state, true, false);
+    EXPECT_FALSE(state.allFinite());
+}
+
+TEST(NormalizeStateTest, DensityMatrixZeroTraceBecomesNaN) {
+    DenseMatrix rho = DenseMatrix::Zero(2, 2);
+    normalize_state(rho, false, false);
+    EXPECT_FALSE(rho.allFinite());
+}
+
+TEST(NormalizeStateTest, MonteCarloZeroColumnBecomesNaN) {
+    DenseMatrix state(2, 2);
+    state << std::complex<double>(1, 0), std::complex<double>(0, 0), std::complex<double>(0, 0), std::complex<double>(0, 0);
+    normalize_state(state, true, true);
+    EXPECT_FALSE(state.allFinite());
+}
+
 TEST(NormalizeStateTest, SparseStatevectorNormBecomesOne) {
     SparseMatrixCol state(4, 1);
     state.insert(0, 0) = std::complex<double>(3, 0);

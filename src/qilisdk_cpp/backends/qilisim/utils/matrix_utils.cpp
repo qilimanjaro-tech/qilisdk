@@ -325,50 +325,55 @@ void normalize_state(DenseMatrix& state, bool is_statevector, bool monte_carlo) 
         monte_carlo (bool): Whether we are doing monte-carlo sampling.
     */
     if (monte_carlo) {
+        bool diverged = false;
 #if defined(_OPENMP)
-#pragma omp parallel for schedule(static)
+#pragma omp parallel for schedule(static) reduction(|| : diverged)
 #endif
         for (int col = 0; col < state.cols(); ++col) {
-            state.col(col) /= state.col(col).norm();
+            const double norm = state.col(col).norm();
+            if (!std::isfinite(norm) || norm == 0.0) {
+                diverged = true;
+                continue;
+            }
+            state.col(col) /= norm;
+        }
+        if (diverged) {
+            set_nan(state);
         }
     } else if (is_statevector) {
         double sum = 0.0;
 #if defined(_OPENMP)
-#pragma omp parallel
+#pragma omp parallel for reduction(+ : sum) schedule(static)
 #endif
-        {
+        for (int i = 0; i < state.rows(); ++i) {
+            sum += std::norm(state(i, 0));
+        }
+        const double norm = std::sqrt(sum);
+        if (mark_nan_if_bad_divisor(state, norm)) {
+            return;
+        }
 #if defined(_OPENMP)
-#pragma omp for reduction(+ : sum) schedule(static)
+#pragma omp parallel for schedule(static)
 #endif
-            for (int i = 0; i < state.rows(); ++i) {
-                sum += std::norm(state(i, 0));
-            }
-            double norm = std::sqrt(sum);
-#if defined(_OPENMP)
-#pragma omp for schedule(static)
-#endif
-            for (int i = 0; i < state.rows(); ++i) {
-                state(i, 0) /= norm;
-            }
+        for (int i = 0; i < state.rows(); ++i) {
+            state(i, 0) /= norm;
         }
     } else {
         double sum = 0.0;
 #if defined(_OPENMP)
-#pragma omp parallel
+#pragma omp parallel for reduction(+ : sum) schedule(static)
 #endif
-        {
+        for (int i = 0; i < state.rows(); ++i) {
+            sum += state.coeff(i, i).real();
+        }
+        if (mark_nan_if_bad_divisor(state, sum)) {
+            return;
+        }
 #if defined(_OPENMP)
-#pragma omp for reduction(+ : sum) schedule(static)
+#pragma omp parallel for schedule(static)
 #endif
-            for (int i = 0; i < state.rows(); ++i) {
-                sum += state.coeff(i, i).real();
-            }
-#if defined(_OPENMP)
-#pragma omp for schedule(static)
-#endif
-            for (int i = 0; i < state.rows(); ++i) {
-                state.coeffRef(i, i) /= sum;
-            }
+        for (int i = 0; i < state.rows(); ++i) {
+            state.coeffRef(i, i) /= sum;
         }
     }
 }

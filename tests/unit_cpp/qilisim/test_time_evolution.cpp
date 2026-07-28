@@ -1044,4 +1044,21 @@ TEST_F(TimeEvolutionAdaptiveTest, AdaptiveRK45StopsOnNonFiniteState) {
     EXPECT_FALSE(out.rho_t.allFinite());
 }
 
+TEST_F(TimeEvolutionAdaptiveTest, AdaptiveRK45DivergenceDoesNotThrow) {
+    // A diverged (zero/non-finite norm) state used to make iter_rk45 throw py::value_error, crashing
+    // the whole evolution. It must now return quiet NaNs instead of throwing.
+    EXPECT_NO_THROW({
+        auto out = run_time_evolution_mf(nan_statevector_sparse(), hamiltonians, params, steps, empty_noise, {}, config);
+        EXPECT_FALSE(out.rho_t.allFinite());
+    });
+}
+
+TEST_F(TimeEvolutionTest, ArnoldiDivergesToNaN) {
+    // Non-matrix-free Krylov path: a huge Hamiltonian coefficient overflows the reconstructed state
+    // within a substep, which the norm/trace guards in iter_arnoldi must catch and mark as NaN.
+    config.set_time_evolution_method("arnoldi");
+    auto out = run_time_evolution(pure_plus_sparse(), hamiltonians, kHugeParams, steps, empty_noise, {}, config);
+    EXPECT_FALSE(out.rho_t.allFinite());
+}
+
 // GCOV_EXCL_BR_STOP
