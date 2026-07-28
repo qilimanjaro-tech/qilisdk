@@ -25,6 +25,7 @@ callgrind*
 perf.*
 *.annotation
 python3*.json
+*.speedscope
 
 # Virtual environments
 .venv
