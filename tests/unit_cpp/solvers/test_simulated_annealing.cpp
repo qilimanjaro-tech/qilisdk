@@ -29,6 +29,12 @@ std::vector<std::pair<std::vector<int>, double>> frustrated_monomials() {
     return {{{0}, -2.0}, {{1}, -1.0}, {{2}, -3.0}, {{3}, 1.5}, {{0, 1}, 1.0}, {{1, 2}, 4.0}, {{2, 3}, -1.0}};
 }
 
+// A cost function with a degree-three monomial, so the annealer must use the general (non-quadratic)
+// path. Its unique minimum is 111, costing -4.
+std::vector<std::pair<std::vector<int>, double>> cubic_monomials() {
+    return {{{0}, -1.0}, {{1}, -1.0}, {{2}, -1.0}, {{0, 1}, 2.0}, {{0, 1, 2}, -3.0}};
+}
+
 }  // namespace
 
 TEST(SimulatedAnnealingTest, EnergyEvaluatesMonomialsAndOffset) {
@@ -63,6 +69,16 @@ TEST(SimulatedAnnealingTest, AnnealFindsTheMinimumOfAFrustratedCostFunction) {
     const AnnealingResultCpp result = annealer.anneal(20, 200, 0.0, 0.0, 42, 1);
     EXPECT_EQ(result.state, std::vector<int>({1, 0, 1, 0}));
     EXPECT_DOUBLE_EQ(result.energy, -5.0);
+    EXPECT_DOUBLE_EQ(result.energy, annealer.energy(result.state));
+}
+
+TEST(SimulatedAnnealingTest, AnnealHandlesHigherOrderMonomials) {
+    // The degree-three monomial forces the general (non-quadratic) annealing path.
+    SimulatedAnnealingCpp annealer(3, cubic_monomials(), 0.0);
+    EXPECT_DOUBLE_EQ(annealer.energy({1, 1, 1}), -4.0);
+    const AnnealingResultCpp result = annealer.anneal(20, 200, 0.0, 0.0, 42, 1);
+    EXPECT_EQ(result.state, std::vector<int>({1, 1, 1}));
+    EXPECT_DOUBLE_EQ(result.energy, -4.0);
     EXPECT_DOUBLE_EQ(result.energy, annealer.energy(result.state));
 }
 
