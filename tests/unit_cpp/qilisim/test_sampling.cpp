@@ -703,6 +703,22 @@ TEST_F(SamplingMatrixFreeTest, HadamardCircuit_StatisticsMatchStandardSampling) 
     }
 }
 
+TEST_F(SamplingMatrixFreeTest, DivergingCircuitProducesNaNState) {
+    // Matrix-free analogue of the dense diverging-circuit test: two non-unitary gates that each scale
+    // the amplitudes by 1e200 overflow the state to +inf. The matrix-free sampling path must mark the
+    // blown-up state as quiet NaN (and warn) rather than returning inf/garbage.
+    int n = 1;
+    SparseMatrix huge(2, 2);
+    huge.insert(0, 0) = std::complex<double>(1e200, 0);
+    huge.insert(1, 1) = std::complex<double>(1e200, 0);
+    huge.makeCompressed();
+    std::vector<Gate> gates = {Gate("HUGE", huge, {}, {0}, {}), Gate("HUGE", huge, {}, {0}, {})};
+    DenseMatrix state;
+    std::vector<py::object> intermediate_results;
+    sampling_matrix_free(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfg, readout);
+    EXPECT_FALSE(state.allFinite());
+}
+
 TEST_F(SamplingMatrixFreeTest, DensityMatrixInitialState_ZeroState_AllCountsAreZero) {
     int n = 2;
     std::vector<Gate> gates;

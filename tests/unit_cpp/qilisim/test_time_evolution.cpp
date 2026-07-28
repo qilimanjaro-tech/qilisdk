@@ -1061,4 +1061,43 @@ TEST_F(TimeEvolutionTest, ArnoldiDivergesToNaN) {
     EXPECT_FALSE(out.rho_t.allFinite());
 }
 
+TEST_F(TimeEvolutionTest, ArnoldiTracelessDensityMatrixMarkedNaN) {
+    // A finite but traceless density matrix stays traceless under unitary density-matrix Arnoldi
+    // evolution (H_z commutes with it), so the trace-normalization guard divides by zero. It must
+    // mark the state NaN rather than dividing through. A mixed (non-pure) input keeps the evolution
+    // on the density-matrix branch instead of collapsing to a state vector.
+    config.set_time_evolution_method("arnoldi");
+    DenseMatrix traceless = DenseMatrix::Zero(2, 2);
+    traceless(0, 0) = 1.0;
+    traceless(1, 1) = -1.0;
+    auto out = run_time_evolution(to_sparse(traceless), hamiltonians, params, steps, empty_noise, {}, config);
+    EXPECT_FALSE(out.rho_t.allFinite());
+}
+
+TEST_F(TimeEvolutionTest, ArnoldiLindbladTraceOverflowMarkedNaN) {
+    // Vectorized Lindblad Arnoldi path: a huge jump rate overflows the (vectorized) trace, which the
+    // trace guard in iter_arnoldi must catch and mark as NaN.
+    config.set_time_evolution_method("arnoldi");
+    NoiseModelCpp noise;
+    noise.add_jump_operator(huge_amp_damp_jump());
+    auto out = run_time_evolution(pure_plus_sparse(), hamiltonians, params, steps, noise, {}, config);
+    EXPECT_FALSE(out.rho_t.allFinite());
+}
+
+TEST_F(TimeEvolutionArnoldiMatrixFreeTest, NonFiniteInitialNormMarkedNaN) {
+    // An already-non-finite state makes the substep's initial norm non-finite; the matrix-free
+    // Arnoldi loop must detect this up front, mark the state NaN, and stop.
+    auto out = run_time_evolution_mf(nan_statevector_sparse(), hamiltonians, params, steps, empty_noise, {}, config);
+    EXPECT_FALSE(out.rho_t.allFinite());
+}
+
+TEST_F(TimeEvolutionArnoldiMatrixFreeTest, DensityMatrixTraceOverflowMarkedNaN) {
+    // Matrix-free Arnoldi density-matrix path: a huge jump rate overflows the trace, which the trace
+    // guard must catch and mark the reconstructed state NaN.
+    NoiseModelCpp noise;
+    noise.add_jump_operator(huge_amp_damp_jump());
+    auto out = run_time_evolution_mf(pure_plus_sparse(), hamiltonians, params, steps, noise, {}, config);
+    EXPECT_FALSE(out.rho_t.allFinite());
+}
+
 // GCOV_EXCL_BR_STOP
