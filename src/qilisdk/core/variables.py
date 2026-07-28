@@ -1610,26 +1610,53 @@ class Term:
                 if self._is_constant(e):
                     output = self._apply_operation_on_constants([output, self[e]])
                     continue
-                raw = _var_values.get(e, _UNSET)
-                if raw is _UNSET:
-                    if isinstance(e, Parameter):
-                        raw = e.value
-                    else:
-                        raise ValueError(
-                            f"Can not evaluate term because the value of the variable {e} is not provided."
-                        )
-                elif isinstance(e, Parameter) and not isinstance(raw, RealNumber):
-                    raise ValueError(f"setting a parameter ({e}) value with a list is not supported.")
-                value = cast("list[int] | RealNumber", raw)
+                value = self._variable_value(e, _var_values)
                 if self.operation == Operation.MUL:
                     output = self._apply_operation_on_constants([output, e.evaluate(value) ** self[e]])
                 else:
                     output = self._apply_operation_on_constants([output, e.evaluate(value) * self[e]])
+        return self._finalize_output(output)
+
+    def _finalize_output(self, output: Number) -> Number:
+        """Reduce an accumulated result to a real ``float`` when it has no imaginary part.
+
+        Args:
+            output (Number): the raw accumulated evaluation result.
+
+        Returns:
+            Number: ``output`` as a ``float`` when it is real (within tolerance), otherwise unchanged.
+        """
         if isinstance(output, RealNumber):
             return float(output)
         if isinstance(output, complex) and abs(output.imag) < self.TOL:
             return float(output.real)
         return output
+
+    @staticmethod
+    def _variable_value(
+        variable: BaseVariable, _var_values: dict[BaseVariable, list[int] | RealNumber]
+    ) -> list[int] | RealNumber:
+        """Resolve the value a variable evaluates with, filling in Parameter defaults.
+
+        Args:
+            variable (BaseVariable): the (non-constant) variable to resolve a value for.
+            _var_values (dict): the values supplied to :meth:`evaluate`.
+
+        Returns:
+            list[int] | RealNumber: the value to evaluate the variable with.
+
+        Raises:
+            ValueError: if a non-parameter variable has no value in ``_var_values``, or a parameter
+                is given a list value.
+        """
+        raw = _var_values.get(variable, _UNSET)
+        if raw is _UNSET:
+            if isinstance(variable, Parameter):
+                return variable.value
+            raise ValueError(f"Can not evaluate term because the value of the variable {variable} is not provided.")
+        if isinstance(variable, Parameter) and not isinstance(raw, RealNumber):
+            raise ValueError(f"setting a parameter ({variable}) value with a list is not supported.")
+        return cast("list[int] | RealNumber", raw)
 
     def get_constant(self) -> Number:
         """
