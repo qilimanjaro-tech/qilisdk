@@ -1695,3 +1695,229 @@ def test_parameter_non_trainable_bounds_are_locked_to_value():
 
     p.set_bounds(0.0, 3.0)
     assert p.bounds == (0.0, 3.0)
+
+
+# ---------------------------------------------------------------------------
+# Regression tests for the caching added to Term/BaseVariable: the memoized hash
+# and the structural __copy__. These guard specifically against a stale cache
+# after a term is mutated, including through deeply nested terms. Each mutation
+# is checked against an independently, freshly-built equal term (and against
+# evaluate(), which never uses the hash cache) so a stale hash would be caught.
+# ---------------------------------------------------------------------------
+
+
+def test_term_hash_cache_refreshes_after_setitem():
+    x = Variable("x", Domain.REAL)
+    y = Variable("y", Domain.REAL)
+
+    t = x + y
+    first_hash = hash(t)  # populate the memoized hash
+
+    t[x] = 5  # mutate through __setitem__
+
+    assert t == 5 * x + y
+    assert hash(t) == hash(5 * x + y)
+    assert hash(t) != first_hash
+    assert t.evaluate({x: 2, y: 3}) == 13
+
+
+def test_term_hash_cache_refreshes_after_pop():
+    x = Variable("x", Domain.REAL)
+    y = Variable("y", Domain.REAL)
+
+    t = x + y + 3
+    _ = hash(t)  # populate the memoized hash
+
+    t.pop(x)
+
+    assert t == y + 3
+    assert hash(t) == hash(y + 3)
+    assert t.evaluate({y: 4}) == 7
+
+
+def test_term_hash_cache_refreshes_after_in_place_coefficient_change():
+    x = Variable("x", Domain.REAL)
+    y = Variable("y", Domain.REAL)
+
+    t = x + y  # an ADD term, whose entries are coefficients
+    _ = hash(t)  # populate the memoized hash
+
+    t[x] += 4  # getitem followed by setitem, both must leave the cache correct
+
+    assert t == 5 * x + y
+    assert hash(t) == hash(5 * x + y)
+    assert t.evaluate({x: 1, y: 1}) == 6
+
+
+def test_term_hash_cache_refreshes_when_terms_cancel_to_zero():
+    x = Variable("x", Domain.REAL)
+    y = Variable("y", Domain.REAL)
+
+    # (3x) - (3x) exercises _remove_zeros, which mutates _elements directly
+    t = (3 * x) - 3 * x
+    empty = Term([], Operation.ADD)
+
+    assert t == empty
+    assert hash(t) == hash(empty)
+    assert t.evaluate({x: 7}) == 0
+
+    # a mix where only some terms cancel
+    t2 = x + y - x
+    _ = hash(t2)
+    expected = Term([y], Operation.ADD)
+    assert t2 == expected
+    assert hash(t2) == hash(expected)
+    assert t2.evaluate({x: 3, y: 5}) == 5
+
+
+def test_term_copy_is_independent_and_refreshes_its_own_hash():
+    x = Variable("x", Domain.REAL)
+    y = Variable("y", Domain.REAL)
+
+    t = x + 2 * y + 4
+    original_hash = hash(t)  # populate the source cache before copying
+    c = copy(t)
+
+    # a fresh copy must be equal and hash-equal to the source
+    assert c == t
+    assert hash(c) == original_hash
+
+    # mutating the copy must not touch the source, and must refresh the copy's hash
+    c[x] = 9
+    assert t == x + 2 * y + 4
+    assert hash(t) == original_hash
+    assert c == 9 * x + 2 * y + 4
+    assert hash(c) == hash(9 * x + 2 * y + 4)
+    assert c != t
+
+    # mutating the source afterwards must not reach back into the earlier copy
+    t.pop(y)
+    assert c == 9 * x + 2 * y + 4
+    assert t == x + 4
+
+
+def test_copying_a_never_hashed_term_still_hashes_correctly():
+    x = Variable("x", Domain.REAL)
+    y = Variable("y", Domain.REAL)
+
+    t = 2 * x + y  # never hashed, so its cache is empty
+    c = copy(t)  # copy carries over the (empty) cache
+
+    assert hash(c) == hash(2 * x + y)
+    assert hash(c) == hash(t)
+
+
+def test_cached_subterm_used_as_key_stays_correct():
+    # Hashing a sub-term populates its cache before it is nested into a larger
+    # term as a dict key; the result must match nesting a pristine sub-term.
+    x = Variable("x", Domain.REAL)
+    y = Variable("y", Domain.REAL)
+
+    sub = (x + y) * (x + 1)  # a product of sums, kept as a nested term
+    _ = hash(sub)  # populate the sub-term cache
+
+    from_cached = 3 * sub + 1
+    from_fresh = 3 * ((x + y) * (x + 1)) + 1
+
+    assert from_cached == from_fresh
+    assert hash(from_cached) == hash(from_fresh)
+    for values in ({x: 0, y: 0}, {x: 1, y: 1}, {x: 2, y: -3}):
+        assert from_cached.evaluate(values) == from_fresh.evaluate(values)
+
+
+def test_nested_terms_are_hash_and_eval_stable_across_build_orders():
+    # The same nested expression built with commuted operands must be equal,
+    # hash-equal, and evaluate identically - a stale cache in any sub-term
+    # would break one of these.
+    x = Variable("x", Domain.REAL)
+    y = Variable("y", Domain.REAL)
+    z = Variable("z", Domain.REAL)
+
+    a = (x + y) * (y + z) + 2 * x * z + 5
+    b = 5 + 2 * z * x + (z + y) * (y + x)
+
+    assert a == b
+    assert hash(a) == hash(b)
+    for values in ({x: 0, y: 0, z: 0}, {x: 1, y: 2, z: 3}, {x: -2, y: 1, z: 4}):
+        assert a.evaluate(values) == b.evaluate(values)
+
+
+def test_evaluate_of_deeply_nested_term_matches_manual_computation():
+    x = Variable("x", Domain.REAL)
+    y = Variable("y", Domain.REAL)
+    z = Variable("z", Domain.REAL)
+
+    t = ((x + 1) * (y + 2)) * (z + 3) + 4 * x * y - 2
+
+    for xv, yv, zv in ((0, 0, 0), (1, 1, 1), (2, -1, 3), (-2, 5, -4)):
+        expected = ((xv + 1) * (yv + 2)) * (zv + 3) + 4 * xv * yv - 2
+        assert t.evaluate({x: xv, y: yv, z: zv}) == expected
+
+
+def test_evaluate_missing_variable_raises_for_partial_assignment():
+    x = Variable("x", Domain.REAL)
+    y = Variable("y", Domain.REAL)
+
+    t = x * y + x
+    with pytest.raises(ValueError, match=r"is not provided"):
+        t.evaluate({x: 1})
+
+
+def test_evaluate_uses_parameter_default_and_allows_override():
+    x = Variable("x", Domain.REAL)
+    p = Parameter("p", 5)
+
+    t = p + x
+    assert t.evaluate({x: 2}) == 7  # p falls back to its stored value of 5
+    assert t.evaluate({x: 2, p: 3}) == 5  # provided value overrides the default
+
+
+def test_evaluate_rejects_list_value_for_parameter():
+    x = Variable("x", Domain.REAL)
+    p = Parameter("p", 1)
+
+    t = p + x
+    with pytest.raises(ValueError, match=r"setting a parameter .* value with a list is not supported"):
+        t.evaluate({x: 1, p: [1, 0]})
+
+
+def test_evaluate_applies_math_map_nested_inside_a_term():
+    # Regression: a MathematicalMap nested inside another term must still have
+    # its function applied when reached through the recursive evaluation.
+    p = Parameter("p", 1)
+
+    t = Sin(p) + 2
+    assert t.evaluate({}) == pytest.approx(np.sin(1) + 2)
+
+    # a map alongside a plain variable in the same ADD term, and a map wrapping a term
+    x = Variable("x", Domain.REAL)
+    t2 = Sin(x) + x
+    assert t2.evaluate({x: 0.5}) == pytest.approx(np.sin(0.5) + 0.5)
+
+    t3 = Cos(2 * x) + 1
+    assert t3.evaluate({x: 0.5}) == pytest.approx(np.cos(1.0) + 1)
+
+
+def test_variable_equality_marker_is_label_based_and_type_safe():
+    x1 = Variable("x", Domain.REAL)
+    x2 = Variable("x", Domain.REAL)
+    y = Variable("y", Domain.REAL)
+
+    assert x1 == x2  # equal by label
+    assert x1 != y
+    # equality against non-variables must be False, never an error
+    assert (x1 == 5) is False
+    assert (x1 == "x") is False
+    assert (x1 == (x1 + 1)) is False  # a Term is not a variable
+    # different variable subclasses with the same label still compare equal by label
+    assert BinaryVariable("v") == SpinVariable("v")
+
+
+def test_is_constant_detects_the_term_constant():
+    x = Variable("x", Domain.REAL)
+
+    t = 3 * x + 7  # the constant 7 is stored under Term.CONST
+    assert Term.CONST in t
+    assert t._is_constant(Term.CONST) is True
+    assert t._is_constant(x) is False
+    assert t.get_constant() == 7

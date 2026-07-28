@@ -1270,3 +1270,95 @@ def test_qubo_copy_includes_encoding_constraints():
     q._encoding_constraints["enc"] = Constraint("enc", EQ(b, 0))
     q2 = copy.copy(q)
     assert "enc" in q2._encoding_constraints
+
+
+# ---------------------------------------------------------------------------
+# Regression tests for the qubo_objective cache. The property memoizes an
+# expensive build and only rebuilds when the objective or the constraints
+# change. These tests populate the cache, then mutate the model, and assert the
+# next read reflects the change (i.e. the cache is not served stale), comparing
+# against an independently, freshly-built QUBO.
+# ---------------------------------------------------------------------------
+
+
+def test_qubo_objective_cache_is_consistent_across_repeated_reads():
+    x = BinaryVariable("x")
+    y = BinaryVariable("y")
+    q = QUBO("q")
+    q.set_objective(2 * x + 3 * y)
+
+    first = q.qubo_objective
+    second = q.qubo_objective
+
+    # repeated reads without mutation must be consistent (and are served from cache)
+    assert first is second
+    assert first.term == second.term
+
+
+def test_qubo_objective_cache_refreshes_after_set_objective():
+    x = BinaryVariable("x")
+    y = BinaryVariable("y")
+
+    q = QUBO("q")
+    q.set_objective(2 * x)
+    before = q.qubo_objective.term  # populate the cache
+
+    q.set_objective(3 * y)  # replacing the objective must invalidate the cache
+    after = q.qubo_objective.term
+
+    assert after != before
+
+    reference = QUBO("ref")
+    reference.set_objective(3 * y)
+    assert after == reference.qubo_objective.term
+
+
+def test_qubo_objective_cache_refreshes_after_add_constraint():
+    x = BinaryVariable("x")
+    y = BinaryVariable("y")
+
+    q = QUBO("q")
+    q.set_objective(x + y)
+    before = q.qubo_objective.term  # populate the cache without any penalties
+
+    q.add_constraint("c", EQ(x + y, 1))  # folds a penalty into the objective
+    after = q.qubo_objective.term
+
+    assert after != before  # the penalty must now be part of the objective
+
+    reference = QUBO("ref")
+    reference.set_objective(x + y)
+    reference.add_constraint("c", EQ(x + y, 1))
+    assert after == reference.qubo_objective.term
+
+
+def test_qubo_objective_cache_reflects_multiple_mutations_in_sequence():
+    x = BinaryVariable("x")
+    y = BinaryVariable("y")
+
+    q = QUBO("q")
+    q.set_objective(x + y)
+    _ = q.qubo_objective  # populate
+    q.add_constraint("c1", EQ(x, 0))
+    _ = q.qubo_objective  # populate again, now with one constraint
+    q.add_constraint("c2", EQ(y, 1))
+    final = q.qubo_objective.term
+
+    reference = QUBO("ref")
+    reference.set_objective(x + y)
+    reference.add_constraint("c1", EQ(x, 0))
+    reference.add_constraint("c2", EQ(y, 1))
+    assert final == reference.qubo_objective.term
+
+
+def test_qubo_objective_cache_matches_uncached_read_on_encoded_variable():
+    # A QUBO with an encoded (integer) variable exercises the already-binary
+    # objective path; the cached read must equal a fresh to_qubo() build.
+    q = QUBO("q")
+    v = Variable("v", Domain.POSITIVE_INTEGER, encoding=OneHot, bounds=(0, 2))
+    q.set_objective(v + v**2)
+    q.add_constraint("c", EQ(v, 1))
+
+    cached = q.qubo_objective.term
+    assert q.qubo_objective.term == cached  # stable across reads
+    assert cached == q.to_qubo().qubo_objective.term

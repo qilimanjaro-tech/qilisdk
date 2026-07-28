@@ -1615,9 +1615,9 @@ class Term:
                     if isinstance(e, Parameter):
                         raw = e.value
                     else:
-                        raise ValueError(f"Cannot evaluate term because the value of the variable {e} is not provided.")
+                        raise ValueError(f"Can not evaluate term because the value of the variable {e} is not provided.")
                 elif isinstance(e, Parameter) and not isinstance(raw, RealNumber):
-                    raise ValueError(f"Setting a parameter ({e}) value with a list is not supported.")
+                    raise ValueError(f"setting a parameter ({e}) value with a list is not supported.")
                 value = cast("list[int] | RealNumber", raw)
                 if self.operation == Operation.MUL:
                     output = self._apply_operation_on_constants([output, e.evaluate(value) ** self[e]])
