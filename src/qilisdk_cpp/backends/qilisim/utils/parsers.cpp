@@ -19,6 +19,7 @@
 #include "../digital/gate.h"
 #include "../representations/matrix_free_hamiltonian.h"
 #include "../utils/matrix_utils.h"
+#include "random.h"
 #include "sample.h"
 
 // GCOV_EXCL_BR_START
@@ -232,7 +233,65 @@ py::object construct_result_object(const ExponentialAnsatz& state, const py::obj
     return ReadoutCompositeResults.attr("from_list")(results);
 }
 
-py::object construct_result_object(const DenseMatrix& state_dense, const py::object& readout, NoiseModelCpp& noise_model_cpp, int n_qubits, const QiliSimConfig& config, const std::vector<bool>& qubits_to_measure) {
+namespace {
+
+inline double average_trajectory_expectation(const DenseMatrix& trajectories, const DenseMatrix& applied, double atol) {
+    /*
+    Compute the average expectation value of an observable over a Monte Carlo ensemble.
+
+    Args:
+        trajectories (DenseMatrix&): The batch of Monte Carlo state vectors (dim x n_trajectories).
+        applied (DenseMatrix&): The same batch with the observable already applied to each column.
+        atol (double): Absolute tolerance for checking that the expectation value is real.
+
+    Returns:
+        double: The average expectation value of the observable over the ensemble.
+    */
+    Complex total = 0.0;
+    double weight = 0.0;
+    for (long c = 0; c < trajectories.cols(); ++c) {
+        total += trajectories.col(c).dot(applied.col(c));
+        weight += trajectories.col(c).squaredNorm();
+    }
+    total /= weight;
+    if (std::abs(total.imag()) > atol) {
+        throw py::value_error("Encountered an imaginary expectation value while computing the expectation values, try reducing the total tolerance or improving simulation precision.");
+    }
+    return total.real();
+}
+
+inline py::list trajectory_expectation_values(const DenseMatrix& trajectories, const py::object& expectation_readout, int n_qubits, double atol) {
+    /*
+    Compute the expectation values of a list of observables over a Monte Carlo ensemble.
+
+    Args:
+        trajectories (DenseMatrix&): The batch of Monte Carlo state vectors (dim x n_trajectories).
+        expectation_readout (py::object): The ExpectationReadout object containing the list of observables.
+        n_qubits (int): The number of qubits in the circuit.
+        atol (double): Absolute tolerance for checking that the expectation value is real.
+
+    Returns:
+        py::list: The list of average expectation values of the observables over the ensemble.
+    */
+    py::list expectations_py;
+    DenseMatrix applied;
+    for (py::handle obs_handle : expectation_readout.attr("observables")) {
+        py::object obs = py::reinterpret_borrow<py::object>(obs_handle);
+        if (py::isinstance(obs, Hamiltonian) || py::isinstance(obs, PauliOperator)) {
+            std::vector<MatrixFreeHamiltonian> observable = parse_observables_matrix_free(n_qubits, py::make_tuple(obs));
+            observable[0].apply(trajectories, MatrixFreeApplicationType::Left, applied);
+        } else {
+            py::object expanded = py::isinstance(obs, QTensor) ? obs.attr("expand")(n_qubits) : obs;
+            std::vector<SparseMatrix> observable = parse_observables(py::make_tuple(expanded), n_qubits, atol);
+            applied = observable[0] * trajectories;
+        }
+        expectations_py.append(py::cast(average_trajectory_expectation(trajectories, applied, atol)));
+    }
+    return expectations_py;
+}
+}  // namespace
+
+py::object construct_result_object(const DenseMatrix& state_dense, const py::object& readout, NoiseModelCpp& noise_model_cpp, int n_qubits, const QiliSimConfig& config, const std::vector<bool>& qubits_to_measure, bool state_is_trajectories) {
     /*
     Construct a result object for a given state and readout.
 
@@ -244,6 +303,10 @@ py::object construct_result_object(const DenseMatrix& state_dense, const py::obj
         config (QiliSimConfig): The simulation configuration.
         qubits_to_measure (std::map<int, std::vector<bool>>&): A map indicating which qubits to measure after each gate.
         gate_ind (int): The index of the gate after which this state was obtained.
+        state_is_trajectories (bool): Whether state_dense is a dim x n_trajectories batch of Monte
+            Carlo state vectors (rather than a single state vector or density matrix). If so, each
+            readout is evaluated per trajectory and averaged, which avoids assembling the density
+            matrix for everything but state tomography.
 
     Returns:
         py::object: The result object for the given state and readout.
@@ -253,12 +316,23 @@ py::object construct_result_object(const DenseMatrix& state_dense, const py::obj
     */
     py::list results;
 
+    // Only assemble the ensemble density matrix if a readout genuinely needs it
+    DenseMatrix ensemble_rho;
+    bool ensemble_rho_ready = false;
+    auto readout_state = [&]() -> const DenseMatrix& {
+        if (state_is_trajectories && !ensemble_rho_ready) {
+            ensemble_rho = trajectories_to_density_matrix(state_dense);
+            ensemble_rho_ready = true;
+        }
+        return state_is_trajectories ? ensemble_rho : state_dense;
+    };
+
     // Only compute this once and only if we actually use it
     py::array final_state_numpy;
     bool final_state_numpy_ready = false;
     auto state_numpy = [&]() -> py::array& {
         if (!final_state_numpy_ready) {
-            final_state_numpy = to_numpy(state_dense);
+            final_state_numpy = to_numpy(readout_state());
             final_state_numpy_ready = true;
         }
         return final_state_numpy;
@@ -276,15 +350,21 @@ py::object construct_result_object(const DenseMatrix& state_dense, const py::obj
             }
             results.append(StateTomographyReadoutResult("state"_a = QTensor(state_numpy())));
 
-            // If we have an expectation readout, use the code on the Python side
+            // If we have an expectation readout, average over the trajectories if we have them,
+            // otherwise use the code on the Python side
         } else if (py::isinstance(ro, ExpectationReadout)) {
-            results.append(ExpectationReadoutResult.attr("from_state")("expectation_readout"_a = py::module_::import("copy").attr("copy")(ro), "state"_a = QTensor(state_numpy())));
+            if (state_is_trajectories) {
+                py::list expectations_py = trajectory_expectation_values(state_dense, ro, n_qubits, config.get_atol());
+                results.append(ExpectationReadoutResult.attr("from_expectations")("expectation_values"_a = expectations_py, "nshots"_a = ro.attr("nshots")));
+            } else {
+                results.append(ExpectationReadoutResult.attr("from_state")("expectation_readout"_a = py::module_::import("copy").attr("copy")(ro), "state"_a = QTensor(state_numpy())));
+            }
 
             // If we have a sampling readout, sample from the state and return the counts directly
         } else if (py::isinstance(ro, SamplingReadout)) {
             int n_shots = ro.attr("nshots").cast<int>();
             bool expand_samples = ro.attr("expand_samples").cast<bool>();
-            std::map<std::string, int> counts = construct_samples(state_dense, n_qubits, n_shots, noise_model_cpp, config, qubits_to_measure);
+            std::map<std::string, int> counts = state_is_trajectories ? construct_samples_trajectories(state_dense, n_qubits, n_shots, noise_model_cpp, config, qubits_to_measure) : construct_samples(state_dense, n_qubits, n_shots, noise_model_cpp, config, qubits_to_measure);
             py::dict samples;
             for (const auto& pair : counts) {
                 samples[py::cast(pair.first)] = py::cast(pair.second);

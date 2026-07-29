@@ -132,15 +132,16 @@ py::object QiliSimCpp::execute_digital_propagation(const py::object& functional,
 
         // Run the simulation
         DenseMatrix state_dense;
+        bool state_is_trajectories = false;
         if (config.get_digital_method() == "statevector_matrix_free") {
-            sampling_matrix_free(gates, n_qubits, initial_state_cpp, noise_model_cpp, state_dense, intermediate_results, config, readout);
+            sampling_matrix_free(gates, n_qubits, initial_state_cpp, noise_model_cpp, state_dense, intermediate_results, config, readout, &state_is_trajectories);
         } else {
-            sampling(gates, n_qubits, initial_state_cpp, noise_model_cpp, state_dense, intermediate_results, config, readout);
+            sampling(gates, n_qubits, initial_state_cpp, noise_model_cpp, state_dense, intermediate_results, config, readout, &state_is_trajectories);
         }
         qilisdk::log_debug("[QiliSim, C++] Statevector simulation complete, constructing result");
 
         // Construct the final result object
-        result = construct_result_object(state_dense, readout, noise_model_cpp, n_qubits, config, final_qubits_to_measure);
+        result = construct_result_object(state_dense, readout, noise_model_cpp, n_qubits, config, final_qubits_to_measure, state_is_trajectories);
     }
 
     // If we have intermediate results, return them as well
@@ -272,6 +273,7 @@ py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, co
         // Depending on the method, call the internal implementation
         std::vector<DenseMatrix> intermediate_rhos;
         DenseMatrix rho_t;
+        bool state_is_trajectories = false;
         std::vector<double> expectation_values;
         if (config.get_time_evolution_method() == "integrate_rk4_matrix_free" || config.get_time_evolution_method() == "integrate_rk45_matrix_free" || config.get_time_evolution_method() == "arnoldi_matrix_free") {
             // Parse the Hamiltonians
@@ -281,7 +283,7 @@ py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, co
             }
 
             // Call the implementation
-            time_evolution_matrix_free(rho_0, hamiltonians, parameters_list, step_list, noise_model_cpp, config, rho_t, intermediate_rhos);
+            time_evolution_matrix_free(rho_0, hamiltonians, parameters_list, step_list, noise_model_cpp, config, rho_t, intermediate_rhos, &state_is_trajectories);
 
         } else if (config.get_time_evolution_method() == "integrate_rk4" || config.get_time_evolution_method() == "arnoldi" || config.get_time_evolution_method() == "direct") {
             // Parse the Hamiltonians
@@ -291,7 +293,7 @@ py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, co
             }
 
             // Call the implementation
-            time_evolution(rho_0, hamiltonians, parameters_list, step_list, noise_model_cpp, config, rho_t, intermediate_rhos);
+            time_evolution(rho_0, hamiltonians, parameters_list, step_list, noise_model_cpp, config, rho_t, intermediate_rhos, &state_is_trajectories);
 
         } else {
             throw py::value_error("Unknown time evolution method: " + config.get_time_evolution_method());  // GCOV_EXCL_LINE
@@ -299,7 +301,7 @@ py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, co
 
         // Construct the result object
         std::vector<bool> qubits_to_measure(n_qubits, true);
-        py::object result = construct_result_object(rho_t, readout, noise_model_cpp, n_qubits, config, qubits_to_measure);
+        py::object result = construct_result_object(rho_t, readout, noise_model_cpp, n_qubits, config, qubits_to_measure, state_is_trajectories);
         bool store_intermediate_results = functional.attr("store_intermediate_results").cast<bool>();
 
         // If we have intermediates, process them too
@@ -307,7 +309,7 @@ py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, co
             py::list inter_results;
             for (size_t step = 0; step < intermediate_rhos.size(); ++step) {
                 auto& rho_intermediate = intermediate_rhos[step];
-                inter_results.append(construct_result_object(rho_intermediate, readout, noise_model_cpp, n_qubits, config, qubits_to_measure));
+                inter_results.append(construct_result_object(rho_intermediate, readout, noise_model_cpp, n_qubits, config, qubits_to_measure, state_is_trajectories));
             }
             return FunctionalResult("readout_results"_a = result, "intermediate_results"_a = inter_results);
         }
@@ -497,8 +499,7 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
         Eigen::setNbThreads(config.get_num_threads());
 
         // Build the layer result
-        DenseMatrix readout_state = trajectory_mode ? trajectories_to_density_matrix(state) : state;
-        inter_results.append(construct_result_object(readout_state, readout, noise_model_cpp, n_qubits, config, qubits_to_measure));
+        inter_results.append(construct_result_object(state, readout, noise_model_cpp, n_qubits, config, qubits_to_measure, trajectory_mode));
 
         // Reset qubits
         if (!functional.attr("reservoir_layer").attr("qubits_to_reset").is_none()) {
