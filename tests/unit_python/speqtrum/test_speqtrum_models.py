@@ -53,8 +53,9 @@ pytest.importorskip(
 
 from unittest.mock import MagicMock
 
-from qilisdk.digital import Circuit
+from qilisdk.digital import RY, Circuit
 from qilisdk.functionals.functional_result import FunctionalResult
+from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
 from qilisdk.functionals.variational_program_result import VariationalProgramResult
 from qilisdk.optimizers.optimizer_result import OptimizerResult
 from qilisdk.readout import Readout
@@ -64,7 +65,10 @@ from qilisdk.speqtrum.speqtrum_models import (
     DigitalPropagationPayload,
     ExecuteResult,
     ExperimentPayload,
+    JobHandle,
+    QuantumReservoirPayload,
     VariationalProgramPayload,
+    _require_experiment_result_typed,
 )
 
 
@@ -137,6 +141,94 @@ def test_experiment_payload_keeps_already_deserialized_experiments():
     experiment = SweepExperiment(qubit=0, averages=1000, sweep_values=[10, 20, 30])
     payload = ExperimentPayload(experiment=experiment)
     assert payload._load_experiment(experiment) is experiment
+
+
+def _make_quantum_reservoir() -> QuantumReservoir:
+    """Build a minimal reservoir out of real objects, since YAML can't serialize mocks."""
+    schedule = Schedule(hamiltonians={"h": Hamiltonian({(PauliZ(0),): 1})}, dt=0.1, total_time=1.0)
+    encoding = Circuit(1)
+    encoding.add(RY(0, theta=ReservoirInput("q0", 0)))
+    layer = ReservoirLayer(evolution_dynamics=schedule, input_encoding=encoding, qubits_to_reset=[0])
+    return QuantumReservoir(initial_state=ket(0).unit(), reservoir_layer=layer, input_per_layer=[{"q0": 0.5}])
+
+
+def test_quantum_reservoir_payload():
+    quantum_reservoir = _make_quantum_reservoir()
+    payload = QuantumReservoirPayload(quantum_reservoir=quantum_reservoir, readout=Readout())
+    serialized = payload._serialize_time_evolution(quantum_reservoir=quantum_reservoir, _info={})
+    deserialized = payload._load_time_evolution(serialized)
+    assert isinstance(deserialized, QuantumReservoir)
+    assert deserialized.initial_state == quantum_reservoir.initial_state
+
+
+def test_quantum_reservoir_payload_round_trips_through_validation():
+    """Regression: the validator deserialized as ``AnalogEvolution``, so this always raised."""
+    quantum_reservoir = _make_quantum_reservoir()
+    payload = QuantumReservoirPayload(quantum_reservoir=quantum_reservoir, readout=Readout())
+
+    restored = QuantumReservoirPayload.model_validate_json(payload.model_dump_json())
+
+    assert isinstance(restored.quantum_reservoir, QuantumReservoir)
+    assert restored.quantum_reservoir.initial_state == quantum_reservoir.initial_state
+
+
+def test_payloads_load_serialized_readout():
+    """Every payload's readout validator must accept a serialized string and pass objects through."""
+    readout = Readout().with_state_tomography()
+    circuit = Circuit(2)
+    payloads = [
+        DigitalPropagationPayload(digital_propagation=DigitalPropagation(circuit=circuit), readout=readout),
+        AnalogEvolutionPayload(
+            analog_evolution=AnalogEvolution(
+                schedule=Schedule(hamiltonians={"h": Hamiltonian({(PauliZ(0),): 1})}, dt=0.1, total_time=1.0),
+                initial_state=ket(0).unit(),
+            ),
+            readout=readout,
+        ),
+        QuantumReservoirPayload(quantum_reservoir=_make_quantum_reservoir(), readout=readout),
+        VariationalProgramPayload(
+            variational_program=VariationalProgram(
+                functional=DigitalPropagation(circuit=circuit),
+                optimizer=SciPyOptimizer(method="Nelder-Mead"),
+                cost_function=ObservableCostFunction(observable=PauliZ(0)),
+            ),
+            readout=readout,
+        ),
+    ]
+
+    for payload in payloads:
+        serialized = payload._serialize_readout(readout=readout, _info={})
+        assert isinstance(serialized, str)
+        assert isinstance(payload._load_readout(serialized), Readout)
+        assert payload._load_readout(readout) is readout
+
+
+def test_require_experiment_result_typed_accepts_matching_and_rejects_mismatching():
+    extractor = _require_experiment_result_typed(SweepExperimentResult)
+
+    matching = MagicMock()
+    matching.experiment_result = SweepExperimentResult(qubit=0, averages=1, data=[[0.0]], dims=[])
+    assert extractor(matching) is matching.experiment_result
+
+    class OtherExperimentResult(ExperimentResult):
+        plot_title = "Other Experiment"
+
+    mismatching = MagicMock()
+    mismatching.experiment_result = OtherExperimentResult(qubit=0, averages=1, data=[[0.0]], dims=[])
+    with pytest.raises(RuntimeError, match="does not match the expected"):
+        extractor(mismatching)
+
+
+def test_job_handle_experiment_without_result_type():
+    """The untyped path falls back to the plain experiment extractor."""
+    handle = JobHandle.experiment(11)
+
+    assert handle.id == 11
+    assert handle.execute_type is ExecuteType.EXPERIMENT
+
+    result = MagicMock()
+    result.experiment_result = SweepExperimentResult(qubit=0, averages=1, data=[[0.0]], dims=[])
+    assert handle.extractor(result) is result.experiment_result
 
 
 def test_execute_result_sampling():

@@ -174,7 +174,7 @@ class QuantumReservoirPayload(SpeQtrumModel):
     @field_validator("quantum_reservoir", mode="before")
     def _load_time_evolution(cls, v):
         if isinstance(v, str):
-            return deserialize(v, AnalogEvolution)
+            return deserialize(v, QuantumReservoir)
         return v
 
     @field_serializer("readout")

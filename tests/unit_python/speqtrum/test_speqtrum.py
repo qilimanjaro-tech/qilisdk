@@ -31,8 +31,10 @@ from types import SimpleNamespace
 from typing import Any
 
 import pytest
+from loguru_caplog import loguru_caplog as caplog  # noqa: F401
 
 from qilisdk.experiments.experiment_functional import ExperimentFunctional
+from qilisdk.experiments.experiment_result import ExperimentResult
 from qilisdk.functionals.analog_evolution import AnalogEvolution
 from qilisdk.functionals.digital_propagation import DigitalPropagation
 from qilisdk.functionals.quantum_reservoirs import QuantumReservoir
@@ -135,7 +137,13 @@ class FakeQuantumReservoir(QuantumReservoir):
     def __init__(self): ...
 
 
+class FakeExperimentResult(ExperimentResult):
+    """Concrete result type so ``FakeExperiment.result_type`` resolves."""
+
+
 class FakeExperiment(ExperimentFunctional):
+    result_type = FakeExperimentResult
+
     def __init__(self): ...
 
 
@@ -237,6 +245,70 @@ def test_submit_unknown_functional_raises(monkeypatch):
 
     with pytest.raises(NotImplementedError):
         client.submit(SomethingElse(), device="some_device", readout=Readout())
+
+
+def test_submit_functional_without_readout_raises(monkeypatch):
+    """A readout is mandatory for functionals; only experiments may omit it."""
+    monkeypatch.setattr(speqtrum, "DigitalPropagation", FakeDigitalPropagation)
+    monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
+    client = speqtrum.SpeQtrum()
+
+    with pytest.raises(ValueError, match="Readout can't be none"):
+        client.submit(FakeDigitalPropagation(), device="some_device", readout=None)
+
+
+_API_MESSAGE = "Scheduled maintenance window: results may be delayed."
+
+
+def _make_variational_program():
+    return FakeVariationalProgram(FakeDigitalPropagation())
+
+
+_MESSAGE_CASES = [
+    (["DigitalPropagation"], FakeDigitalPropagation, 99, True),
+    (["AnalogEvolution"], FakeAnalogEvolution, 77, True),
+    (["QuantumReservoir"], FakeQuantumReservoir, 76, True),
+    (["DigitalPropagation", "AnalogEvolution"], _make_variational_program, 88, True),
+    (["ExperimentFunctional"], FakeExperiment, 66, False),
+]
+
+
+@pytest.mark.parametrize(
+    ("patches", "make_functional", "job_id", "needs_readout"),
+    _MESSAGE_CASES,
+    ids=["digital_propagation", "analog_evolution", "quantum_reservoir", "variational_program", "experiment"],
+)
+def test_submit_surfaces_api_message_as_warning(
+    monkeypatch,
+    caplog,  # noqa: F811
+    patches,
+    make_functional,
+    job_id,
+    needs_readout,
+):
+    """Every submit handler must surface a ``message`` returned alongside the job id."""
+    fakes = {
+        "DigitalPropagation": FakeDigitalPropagation,
+        "AnalogEvolution": FakeAnalogEvolution,
+        "QuantumReservoir": FakeQuantumReservoir,
+        "ExperimentFunctional": FakeExperiment,
+    }
+    for name in patches:
+        monkeypatch.setattr(speqtrum, name, fakes[name])
+    monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
+    monkeypatch.setattr(
+        speqtrum.SpeQtrum,
+        "_create_client",
+        lambda self: DummyClient(post_payload={"id": job_id, "message": _API_MESSAGE}),
+        raising=True,
+    )
+
+    q = speqtrum.SpeQtrum()
+    extra = {"readout": Readout()} if needs_readout else {}
+    handle = q.submit(make_functional(), device="some_device", job_name="msg_job", **extra)
+
+    assert handle.id == job_id
+    assert _API_MESSAGE in caplog.text
 
 
 def test_wait_for_job_completes(monkeypatch):
