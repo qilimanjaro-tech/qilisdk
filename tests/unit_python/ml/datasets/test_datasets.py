@@ -19,6 +19,7 @@ mpl.use("Agg")  # headless backend so draw() never opens a window
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
+from matplotlib.colors import to_rgba
 
 from qilisdk.ml.datasets import (
     NARMA,
@@ -32,6 +33,7 @@ from qilisdk.ml.datasets import (
 )
 from qilisdk.ml.datasets.dataset import build_prediction_sample
 from qilisdk.utils.visualization import DatasetStyle, dark
+from qilisdk.utils.visualization.dataset_renderers import MatplotlibDatasetRenderer
 
 # (dataset factory, expected feature dimension)
 DATASETS = [
@@ -211,8 +213,117 @@ def test_draw_invalid_style_raises():
         MackeyGlass.draw(sample, style="4d", filepath=None)
 
 
+@pytest.mark.parametrize(("factory", "_features"), DATASETS)
+@pytest.mark.parametrize("style", ["1d", "2d", "3d"])
+def test_draw_accepts_raw_inputs_array(factory, _features, style, tmp_path):
+    # draw() takes the series directly, so half of an unpacked sample can be plotted.
+    inputs, _ = factory().generate(200)
+    out = tmp_path / f"inputs_{style}.png"
+    factory().draw(inputs, style=style, filepath=str(out))
+    assert out.exists()
+    assert out.stat().st_size > 0
+
+
+def test_draw_raw_targets_array_matches_sample_of_same_series(tmp_path):
+    # Passing an array plots exactly that array: targets drawn raw must match a
+    # DatasetSample whose inputs are those same targets.
+    _, targets = Lorenz().generate(200)
+    raw = tmp_path / "raw.png"
+    wrapped = tmp_path / "wrapped.png"
+    Lorenz.draw(targets, style="3d", filepath=str(raw))
+    Lorenz.draw(DatasetSample(inputs=targets, targets=targets), style="3d", filepath=str(wrapped))
+    assert raw.read_bytes() == wrapped.read_bytes()
+
+
+def test_draw_accepts_one_dimensional_array(tmp_path):
+    # A single component sliced out of a multi-component sample is 1-D, not (n, 1).
+    inputs, _ = Lorenz().generate(200)
+    column = inputs[:, 0]
+    assert column.ndim == 1
+    out = tmp_path / "column.png"
+    Lorenz.draw(column, style="1d", filepath=str(out))
+    assert out.exists()
+
+
+def test_draw_rejects_higher_dimensional_array():
+    series = np.zeros((10, 2, 2))
+    with pytest.raises(ValueError, match="at most 2-dimensional"):
+        MackeyGlass.draw(series, style="1d", filepath=None)
+
+
+def test_draw_rejects_empty_array():
+    series = np.zeros((0, 1))
+    with pytest.raises(ValueError, match="empty"):
+        MackeyGlass.draw(series, style="1d", filepath=None)
+
+
 def test_draw_too_short_series_for_embedding_raises():
     sample = LogisticMap().generate(2)
     config = DatasetStyle(delay=5)
     with pytest.raises(ValueError, match="delay embedding"):
         LogisticMap.draw(sample, style="3d", config=config, filepath=None)
+
+
+def test_draw_without_filepath_shows_the_figure(monkeypatch):
+    # With no filepath the figure is shown interactively rather than written to disk.
+    shown = []
+    monkeypatch.setattr(plt, "show", lambda *args, **kwargs: shown.append(True))
+    sample = LogisticMap().generate(50)
+    LogisticMap().draw(sample, style="1d", filepath=None)
+    assert shown == [True]
+
+
+def test_draw_labels_fall_back_to_positional_for_unlabelled_components(tmp_path):
+    # MackeyGlass names a single component ("x"), but a raw array may carry more than the
+    # dataset labels: the surplus components fall back to positional "x<i>" labels.
+    inputs, _ = MackeyGlass(tau=17.0).generate(100)
+    two_components = np.hstack([inputs, inputs * 2.0])
+    MackeyGlass.draw(two_components, style="1d", filepath=str(tmp_path / "two_components.png"))
+    ax = plt.gcf().axes[0]
+    assert [line.get_label() for line in ax.lines] == ["x", "x1"]
+
+
+def test_renderer_plots_onto_supplied_axes():
+    # plot(ax=...) retargets the renderer onto a caller-owned axes, so a dataset can be
+    # drawn into an existing figure (e.g. one panel of a subplot grid).
+    inputs, _ = LogisticMap().generate(50)
+    _, (left, right) = plt.subplots(1, 2)
+    renderer = MatplotlibDatasetRenderer(inputs, "1d")
+    own_axes = renderer.ax
+    renderer.plot(ax=right)
+    assert renderer.ax is right
+    assert right.lines
+    assert not left.lines
+    assert not own_axes.lines  # nothing was drawn on the axes the renderer made for itself
+
+
+@pytest.mark.parametrize("style", ["2d", "3d"])
+def test_draw_scatter_without_color_by_time(style, tmp_path):
+    # A scatter trajectory that is not coloured by time uses one flat theme colour, and so
+    # needs no colour bar (which would otherwise add a second axes to the figure).
+    sample = Lorenz().generate(200)
+    config = DatasetStyle(trajectory_style="scatter", color_by_time=False)
+    out = tmp_path / f"flat_scatter_{style}.png"
+    Lorenz().draw(sample, style=style, config=config, filepath=str(out))
+    assert out.exists()
+    fig = plt.gcf()
+    assert len(fig.axes) == 1
+    assert fig.axes[0].collections
+
+
+def test_draw_grid_style_without_color_uses_theme_color(tmp_path):
+    # grid_style need not name a colour; the theme's muted surface colour is filled in.
+    sample = LogisticMap().generate(50)
+    config = DatasetStyle(theme=dark, grid_style={"linestyle": ":"})
+    LogisticMap().draw(sample, style="1d", config=config, filepath=str(tmp_path / "themed_grid.png"))
+    gridline = plt.gcf().axes[0].xaxis.get_gridlines()[0]
+    assert to_rgba(gridline.get_color()) == to_rgba(dark.surface_muted)
+
+
+def test_draw_grid_style_color_is_respected(tmp_path):
+    # An explicit grid colour must win over the theme default.
+    sample = LogisticMap().generate(50)
+    config = DatasetStyle(theme=dark, grid_style={"linestyle": ":", "color": "#ff00ff"})
+    LogisticMap().draw(sample, style="1d", config=config, filepath=str(tmp_path / "explicit_grid.png"))
+    gridline = plt.gcf().axes[0].xaxis.get_gridlines()[0]
+    assert to_rgba(gridline.get_color()) == to_rgba("#ff00ff")

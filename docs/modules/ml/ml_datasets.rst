@@ -16,6 +16,16 @@ Every generator derives from :class:`~qilisdk.ml.datasets.dataset.Dataset` and e
 
 The returned :class:`~qilisdk.ml.datasets.dataset.DatasetSample` is an ``(inputs, targets)`` pair.
 
+You can also visualize the generated datasets using the `.draw()` method of each generator:
+
+.. code-block:: python
+
+    from qilisdk.ml.datasets import NARMA
+
+    dataset = NARMA(order=10, seed=0)
+    sample = dataset.generate(1000)
+    dataset.draw(sample, style="1d")
+
 Available generators
 ====================
 

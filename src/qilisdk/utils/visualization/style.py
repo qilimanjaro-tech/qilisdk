@@ -212,9 +212,15 @@ class DatasetStyle(Style):
     # Title and labels
     title_fontsize: int = Field(default=16, description="Font size for the plot title.")
     label_fontsize: int = Field(default=14, description="Font size for axis labels.")
-    xlabel: Optional[str] = Field(default=None, description="Override for the x-axis label (None uses a sensible default).")
-    ylabel: Optional[str] = Field(default=None, description="Override for the y-axis label (None uses a sensible default).")
-    zlabel: Optional[str] = Field(default=None, description="Override for the z-axis label (None uses a sensible default).")
+    xlabel: Optional[str] = Field(
+        default=None, description="Override for the x-axis label (None uses a sensible default)."
+    )
+    ylabel: Optional[str] = Field(
+        default=None, description="Override for the y-axis label (None uses a sensible default)."
+    )
+    zlabel: Optional[str] = Field(
+        default=None, description="Override for the z-axis label (None uses a sensible default)."
+    )
 
     # Legend
     legend_loc: str = Field(

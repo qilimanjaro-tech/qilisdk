@@ -69,7 +69,7 @@ class HenonMap(Dataset):
         Iterate the Hénon map and build a prediction sample.
 
         This produces a single time series of length ``npoints + horizon``, discarding
-        the first ``washout`` steps. The resulting series is split into ``inputs`` and 
+        the first ``washout`` steps. The resulting series is split into ``inputs`` and
         ``targets``, where ``targets`` is the same series shifted forward by ``horizon``.
 
         Args:

@@ -33,13 +33,18 @@ if TYPE_CHECKING:
 _VALID_STYLES = ("1d", "2d", "3d")
 _MIN_2D_COMPONENTS = 2
 _MIN_3D_COMPONENTS = 3
+_MAX_SERIES_NDIM = 2
+
 
 class MatplotlibDatasetRenderer:
     """Render a dataset sample using matplotlib, with theme support.
 
     This is the common drawing class shared by every dataset's
-    :meth:`~qilisdk.ml.datasets.dataset.Dataset.draw` method. The kind of plot
-    is chosen with ``style``:
+    :meth:`~qilisdk.ml.datasets.dataset.Dataset.draw` method. The series to plot
+    is taken either from a :class:`~qilisdk.ml.datasets.dataset.DatasetSample`
+    (whose ``inputs`` are used) or from a raw array, so that a single component
+    of a sample -- or any series of the same shape -- can be plotted directly.
+    The kind of plot is chosen with ``style``:
 
     * ``"1d"`` -- each component of the series plotted against the sample index.
     * ``"2d"`` -- a phase portrait. For series with two or more components the
@@ -51,7 +56,7 @@ class MatplotlibDatasetRenderer:
 
     def __init__(
         self,
-        sample: DatasetSample,
+        sample: DatasetSample | NDArray[np.floating[Any]],
         style: str = "1d",
         *,
         config: DatasetStyle | None = None,
@@ -66,22 +71,36 @@ class MatplotlibDatasetRenderer:
         self.style = config or DatasetStyle()
         self.labels = labels
         self.title = title
-        self.series = self._as_matrix(sample.inputs)
+        self.series = self._as_matrix(sample)
         self.ax = ax or self._make_axes(self.mode, self.style)
 
     @staticmethod
-    def _as_matrix(inputs: NDArray[np.float64]) -> NDArray[np.float64]:
-        """Make a sample's inputs into a 2-D array.
+    def _as_matrix(sample: DatasetSample | NDArray[np.floating[Any]]) -> NDArray[np.float64]:
+        """Make the series to plot into a 2-D array.
+
+        Accepts either a :class:`~qilisdk.ml.datasets.dataset.DatasetSample` (in
+        which case its ``inputs`` are plotted) or a raw array holding the series
+        itself, one row per time step.
 
         Args:
-            inputs (NDArray[np.float64]): The raw series, one row per time step.
+            sample (DatasetSample | NDArray[np.floating[Any]]): The sample or raw series.
 
         Returns:
             NDArray[np.float64]: The series shaped ``(n_points, n_components)``.
+
+        Raises:
+            ValueError: If the series is empty or has more than two dimensions.
         """
+        inputs = sample.inputs if hasattr(sample, "inputs") else sample
         arr = np.asarray(inputs, dtype=np.float64)
+        if arr.ndim > _MAX_SERIES_NDIM:
+            raise ValueError(
+                f"series must be at most {_MAX_SERIES_NDIM}-dimensional (n_points, n_components), got shape {arr.shape}."
+            )
         if arr.ndim == 1:
             arr = arr.reshape(-1, 1)
+        if arr.size == 0:
+            raise ValueError("series is empty, nothing to plot.")
         return arr
 
     def _cmap(self) -> LinearSegmentedColormap:

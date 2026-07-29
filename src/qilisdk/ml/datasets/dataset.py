@@ -16,12 +16,14 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Callable, ClassVar, Iterator, TypeAlias, TypeVar, cast
-from qilisdk.settings import get_settings
 
 import numpy as np
 
+from qilisdk.settings import get_settings
+
 if TYPE_CHECKING:
     from numpy.typing import NDArray
+
     from qilisdk.utils.visualization.style import DatasetStyle
 
 if get_settings().complex_precision == "COMPLEX_64":
@@ -162,13 +164,13 @@ class Dataset(ABC):
     @classmethod
     def draw(
         cls,
-        sample: DatasetSample,
+        sample: DatasetSample | FloatArray,
         style: str | None = None,
         *,
         config: DatasetStyle | None = None,
         filepath: str | None = None,
     ) -> None:
-        """Render a generated :class:`DatasetSample` with matplotlib.
+        """Render a generated :class:`DatasetSample`, or a raw series, with matplotlib.
 
         The kind of plot is selected by ``style``:
 
@@ -183,7 +185,16 @@ class Dataset(ABC):
         :class:`CircuitStyle` customise schedule and circuit plots.
 
         Args:
-            sample (DatasetSample): A sample produced by :meth:`generate`.
+            sample (DatasetSample | FloatArray): A sample produced by
+                :meth:`generate`, of which the ``inputs`` are plotted, or an array
+                holding the series to plot directly -- so that just one half of a
+                sample can be drawn::
+
+                    inputs, targets = MackeyGlass(tau=17.0).generate(2000)
+                    MackeyGlass.draw(inputs, style="1d")
+
+                The array is either one-dimensional or shaped
+                ``(n_points, n_components)``.
             style (str | None): Plot mode, one of ``"1d"``, ``"2d"`` or ``"3d"``.
                 Defaults to the dataset's natural mode.
             config (DatasetStyle | None): Visual style configuration. Defaults to
