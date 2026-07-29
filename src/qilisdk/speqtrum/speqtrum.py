@@ -685,8 +685,8 @@ class SpeQtrum:
         * :class:`~qilisdk.functionals.digital_propagation.DigitalPropagation`
         * :class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`
         * :class:`~qilisdk.functionals.variational_program.VariationalProgram`
-        * any :class:`~qilisdk.experiments.experiment_functional.ExperimentFunctional`
-          (e.g. those provided by the ``qili-experiments`` plugin library)
+        * :class:`~qilisdk.experiments.experiment_functional.ExperimentFunctional`
+            (e.g. those provided by the ``qili-experiments`` plugin library)
 
         Args:
             functional: A fully configured functional instance that defines the quantum workload.
@@ -791,7 +791,7 @@ class SpeQtrum:
         }
         if job_name:
             json["name"] = job_name
-        logger.debug("Executing {} on device {}", experiment_name, device)
+        logger.debug("[SpeQtrum] Executing {} on device {}", experiment_name, device)
         with self._create_client() as client:
             response = client.post(
                 _EXECUTE_URL,
@@ -799,7 +799,9 @@ class SpeQtrum:
                 extensions=_request_extensions(context=f"Executing {experiment_name}"),
             )
         job = JobId(**response.json())
-        logger.info("{} job submitted: {}", experiment_name, job.id)
+        logger.info("[SpeQtrum] {} job submitted: {}", experiment_name, job.id)
+        if job.message is not None:
+            logger.warning("{}", job.message)
         return JobHandle.experiment(job.id, result_type=experiment.result_type)
 
     def _submit_analog_evolution(
@@ -860,7 +862,7 @@ class SpeQtrum:
         json = {
             "device_code": device,
             "payload": payload.model_dump_json(),
-            "job_type": JobType.ANALOG,
+            "job_type": JobType.QUANTUM_RESERVOIR,
             "meta": {},
         }
         if job_name:

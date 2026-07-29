@@ -174,7 +174,7 @@ class QuantumReservoirPayload(SpeQtrumModel):
     @field_validator("quantum_reservoir", mode="before")
     def _load_time_evolution(cls, v):
         if isinstance(v, str):
-            return deserialize(v, AnalogEvolution)
+            return deserialize(v, QuantumReservoir)
         return v
 
     @field_serializer("readout")
@@ -217,7 +217,6 @@ class VariationalProgramPayload(SpeQtrumModel):
 
 class ExperimentPayload(SpeQtrumModel):
     """Generic payload wrapping any ``ExperimentFunctional`` for API submission.
-
     Concrete experiment types are identified by their YAML tag inside the
     serialized experiment, so this single model handles every experiment and
     speqtrum never needs to import a concrete experiment class.
@@ -340,7 +339,7 @@ def _require_variational_program_result(result: ExecuteResult) -> VariationalPro
 
 
 def _require_experiment_result(result: ExecuteResult) -> ExperimentResult:
-    """Extract and return the generic ``ExperimentResult`` from *result*.
+    """Extract and return the ``ExperimentResult`` from *result*.
 
     Args:
         result (ExecuteResult): The execution result to inspect.
@@ -545,6 +544,7 @@ class JobType(str, Enum):
     DIGITAL = "digital"
     PULSE = "pulse"
     ANALOG = "analog"
+    QUANTUM_RESERVOIR = "quantum_reservoir"
     VARIATIONAL = "variational"
 
 

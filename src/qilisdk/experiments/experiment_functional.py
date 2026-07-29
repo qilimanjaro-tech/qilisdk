@@ -39,6 +39,9 @@ class ExperimentFunctional(Functional, ABC, Generic[TResult_co]):
     plugin library, not by qilisdk.
     """
 
+    result_type: ClassVar[type[ExperimentResult]]
+    """Concrete :class:`~qilisdk.experiments.experiment_result.ExperimentResult` subclass returned."""
+
     def __init__(self, qubit: int, averages: int) -> None:
         """Initialize the experiment functional.
 
