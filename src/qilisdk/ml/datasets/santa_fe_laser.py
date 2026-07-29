@@ -89,11 +89,18 @@ class SantaFeLaser(Dataset):
         """
         Integrate the laser equations and build an intensity prediction sample.
 
+        This produces a single time series of length ``npoints + horizon``, discarding
+        the first ``washout`` steps, and then sub-sampling every ``sample_every` steps.
+        The resulting series is split into ``inputs`` and ``targets``, where
+        ``targets`` is the same series shifted forward by ``horizon``.
+
         Args:
             npoints (int): Number of time steps to produce.
 
         Returns:
             DatasetSample: The DataSetSample containing the inputs and targets.
+                The output is a ``horizon``-step-ahead prediction task, so both ``inputs`` and
+                ``targets`` are shaped ``(npoints, 1)``.
 
         Raises:
             ValueError: If ``npoints`` is not positive.

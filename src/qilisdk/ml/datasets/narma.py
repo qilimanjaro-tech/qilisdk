@@ -98,6 +98,8 @@ class NARMA(Dataset):
 
         Returns:
             DatasetSample: The DataSetSample containing the inputs and targets.
+                The output is a ``horizon``-step-ahead prediction task, so both ``inputs`` and
+                ``targets`` are shaped ``(npoints, 1)``.
 
         Raises:
             ValueError: If ``npoints`` is not positive.

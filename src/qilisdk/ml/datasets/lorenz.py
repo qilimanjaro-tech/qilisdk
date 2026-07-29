@@ -118,10 +118,17 @@ class Lorenz(Dataset):
         """
         Integrate the Lorenz system and build a prediction sample.
 
+        This produces a single time series of length ``npoints + horizon``, discarding
+        the first ``washout`` steps, and then sub-sampling every ``sample_every` steps.
+        The resulting series is split into ``inputs`` and ``targets``, where
+        ``targets`` is the same series shifted forward by ``horizon``.
+
         Args:
             npoints (int): Number of time steps to produce.
 
         Returns:
+            DatasetSample: A ``horizon``-step-ahead prediction pair, both arrays
+            shaped ``(npoints, 3)``.
 
         Raises:
             ValueError: If ``npoints`` is not positive.

@@ -96,6 +96,11 @@ class MackeyGlass(Dataset):
     def generate(self, npoints: int) -> DatasetSample:
         """Integrate the Mackey--Glass equation and build a prediction sample.
 
+        This produces a single time series of length ``npoints + horizon``, discarding
+        the first ``washout`` steps, and then sub-sampling every ``sample_every` steps.
+        The resulting series is split into ``inputs`` and ``targets``, where
+        ``targets`` is the same series shifted forward by ``horizon``.
+
         Args:
             npoints (int): Number of time steps to produce.
 
