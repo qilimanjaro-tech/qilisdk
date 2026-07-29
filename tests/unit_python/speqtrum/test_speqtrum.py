@@ -252,9 +252,9 @@ def test_submit_functional_without_readout_raises(monkeypatch):
     monkeypatch.setattr(speqtrum, "DigitalPropagation", FakeDigitalPropagation)
     monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
     client = speqtrum.SpeQtrum()
-
+    functional = FakeDigitalPropagation()
     with pytest.raises(ValueError, match="Readout can't be none"):
-        client.submit(FakeDigitalPropagation(), device="some_device", readout=None)
+        client.submit(functional, device="some_device", readout=None)
 
 
 _API_MESSAGE = "Scheduled maintenance window: results may be delayed."
