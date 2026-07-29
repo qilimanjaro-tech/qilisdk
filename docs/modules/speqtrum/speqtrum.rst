@@ -10,9 +10,25 @@ Installation
 
 SpeQtrum support is shipped as an optional dependency group. Install it alongside QiliSDK with:
 
-.. code-block:: console
+.. tabs::
 
-    pip install "qilisdk[speqtrum]"
+    .. group-tab:: Linux
+
+        .. code-block:: console
+
+            pip install qilisdk[speqtrum]
+
+    .. group-tab:: Mac OSX
+
+        .. code-block:: console
+
+            pip install "qilisdk[speqtrum]"
+
+    .. group-tab:: Windows
+
+        .. code-block:: console
+
+            pip install qilisdk[speqtrum]
 
 Authentication
 --------------

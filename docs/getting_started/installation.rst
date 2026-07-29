@@ -11,33 +11,102 @@ QiliSDK and its optional extras are distributed via PyPI. Use pip to install the
 
 **Optional extras**
 
+.. NOTE::
+    On macOS the default shell is ``zsh``, which treats square brackets as a globbing pattern,
+    so the extras must be quoted (``pip install "qilisdk[qutip]"``). Select your operating system
+    in the tabs below to get the right command.
+
 - **CUDA acceleration** (NVIDIA GPU support with :mod:`~qilisdk.backends.cuda_backend.CudaBackend`):
 
-  .. code-block:: bash
+  .. tabs::
 
-      pip install qilisdk[cuda]
+      .. group-tab:: Linux
+
+          .. code-block:: bash
+
+              pip install qilisdk[cuda]
+
+      .. group-tab:: Mac OSX
+
+          .. code-block:: bash
+
+              pip install "qilisdk[cuda]"
+
+      .. group-tab:: Windows
+
+          .. code-block:: bash
+
+              pip install qilisdk[cuda]
 
 .. NOTE::
-    The CUDA backend requires a CUDA accelerated GPU to be available on your system and proper drivers to be installed. 
+    The CUDA backend requires a CUDA accelerated GPU to be available on your system and proper drivers to be installed.
     More information can be found on their official website: https://nvidia.github.io/cuda-quantum/latest/using/quick_start.html#install-cuda-q
 
 - **Qutip CPU backend** (CPU simulation with :mod:`~qilisdk.backends.qutip_backend.QutipBackend`):
 
-  .. code-block:: bash
+  .. tabs::
 
-      pip install qilisdk[qutip]
+      .. group-tab:: Linux
+
+          .. code-block:: bash
+
+              pip install qilisdk[qutip]
+
+      .. group-tab:: Mac OSX
+
+          .. code-block:: bash
+
+              pip install "qilisdk[qutip]"
+
+      .. group-tab:: Windows
+
+          .. code-block:: bash
+
+              pip install qilisdk[qutip]
 
 - **SpeQtrum** (cloud submission via :class:`~qilisdk.speqtrum`):
 
-  .. code-block:: bash
+  .. tabs::
 
-      pip install qilisdk[speqtrum]
+      .. group-tab:: Linux
+
+          .. code-block:: bash
+
+              pip install qilisdk[speqtrum]
+
+      .. group-tab:: Mac OSX
+
+          .. code-block:: bash
+
+              pip install "qilisdk[speqtrum]"
+
+      .. group-tab:: Windows
+
+          .. code-block:: bash
+
+              pip install qilisdk[speqtrum]
 
 You can combine extras:
 
-.. code-block:: bash
+.. tabs::
 
-    pip install qilisdk[cuda,qutip,speqtrum]
+    .. group-tab:: Linux
+
+        .. code-block:: bash
+
+            pip install qilisdk[cuda,qutip,speqtrum]
+
+    .. group-tab:: Mac OSX
+
+        .. code-block:: bash
+
+            pip install "qilisdk[cuda,qutip,speqtrum]"
+
+    .. group-tab:: Windows
+
+        .. code-block:: bash
+
+            pip install qilisdk[cuda,qutip,speqtrum]
 
 .. NOTE::
 

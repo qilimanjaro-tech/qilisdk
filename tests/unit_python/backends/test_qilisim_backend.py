@@ -89,6 +89,17 @@ def test_qilisim_config_builders_and_validation():
         ExecutionConfig(1)
 
 
+def test_normalize_state_flag_defaults_and_propagates():
+    # Defaults to True and is exported to the backend config.
+    assert ExecutionConfig().normalize_state is True
+    backend = QiliSim()
+    assert backend.get_config()["normalize_state"] is True
+
+    # Can be disabled and is forwarded to the backend config.
+    backend_raw = QiliSim(execution_config=ExecutionConfig(normalize_state=False))
+    assert backend_raw.get_config()["normalize_state"] is False
+
+
 def test_stabilizer_method_creates_okay():
     method = DigitalMethod.stabilizer(max_states=50)
     assert method.digital_method == "stabilizer"
