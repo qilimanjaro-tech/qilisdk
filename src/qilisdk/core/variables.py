@@ -2010,6 +2010,9 @@ class MathematicalMap(Term, ABC):
     @abstractmethod
     def _apply_mathematical_map(self, value: Number) -> Number: ...
 
+    def __hash__(self) -> int:
+        return qili_hash(self.operation.value, self._elements, type(self).__qualname__)
+
     def evaluate(self, var_values: Mapping[BaseVariable, list[int] | RealNumber]) -> Number:
         value: Number = 0
 
@@ -2113,6 +2116,9 @@ class Pow(MathematicalMap):
             raise ValueError(_DIVISION_MESSAGE)
         result = value**self._exponent
         return result
+
+    def __hash__(self) -> int:
+        return qili_hash(self.operation.value, self._elements, type(self).__qualname__, self._exponent)
 
     def __copy__(self) -> Pow:
         return Pow(super().__copy__(), self._exponent)
