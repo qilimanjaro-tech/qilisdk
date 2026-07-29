@@ -216,7 +216,11 @@ class VariationalProgramPayload(SpeQtrumModel):
 
 
 class ExperimentPayload(SpeQtrumModel):
-    """Payload model wrapping an ``ExperimentFunctional`` for API submission."""
+    """Generic payload wrapping any ``ExperimentFunctional`` for API submission.
+    Concrete experiment types are identified by their YAML tag inside the
+    serialized experiment, so this single model handles every experiment and
+    speqtrum never needs to import a concrete experiment class.
+    """
 
     experiment: ExperimentFunctional = Field(...)
 
@@ -292,6 +296,7 @@ class ExecuteResult(SpeQtrumModel):
 
 TFunctionalResult_co = TypeVar("TFunctionalResult_co", bound=Result, covariant=True)
 TVariationalInnerResult = TypeVar("TVariationalInnerResult", bound=FunctionalResult)
+TExperimentResult = TypeVar("TExperimentResult", bound=ExperimentResult)
 
 
 ResultExtractor = Callable[[ExecuteResult], TFunctionalResult_co]
@@ -348,6 +353,32 @@ def _require_experiment_result(result: ExecuteResult) -> ExperimentResult:
     if result.experiment_result is None:
         raise RuntimeError("SpeQtrum did not return an experiment_result for an experiment execution.")
     return result.experiment_result
+
+
+def _require_experiment_result_typed(
+    result_type: type[TExperimentResult],
+) -> ResultExtractor[TExperimentResult]:
+    """Build a ``ResultExtractor`` that validates the concrete experiment result type.
+
+    Args:
+        result_type (type[TExperimentResult]): Expected concrete result type
+            (e.g. ``T1ExperimentResult``), taken from the functional's ``result_type``.
+
+    Returns:
+        ResultExtractor[TExperimentResult]: An extractor that raises ``RuntimeError``
+        when the returned result is not an instance of ``result_type``.
+    """
+
+    def _extractor(result: ExecuteResult) -> TExperimentResult:
+        experiment_result = _require_experiment_result(result)
+        if not isinstance(experiment_result, result_type):
+            raise RuntimeError(
+                f"SpeQtrum returned an experiment result of type {type(experiment_result).__qualname__} "
+                f"that does not match the expected {result_type.__qualname__}."
+            )
+        return experiment_result
+
+    return _extractor
 
 
 def _require_variational_program_result_typed(
@@ -439,18 +470,34 @@ class JobHandle(SpeQtrumModel, Generic[TFunctionalResult_co]):
         handle = cls(id=job_id, execute_type=ExecuteType.VARIATIONAL_PROGRAM, extractor=extractor)
         return cast("JobHandle[VariationalProgramResult[TVariationalInnerResult]]", handle)
 
+    @overload
     @classmethod
-    def experiment(cls: type[JobHandle[ExperimentResult]], job_id: int) -> JobHandle[ExperimentResult]:
-        """Create a handle for an experiment job.
+    def experiment(cls, job_id: int) -> JobHandle[ExperimentResult]: ...
+
+    @overload
+    @classmethod
+    def experiment(cls, job_id: int, *, result_type: type[TExperimentResult]) -> JobHandle[TExperimentResult]: ...
+
+    @classmethod
+    def experiment(cls, job_id: int, *, result_type: type[TExperimentResult] | None = None) -> JobHandle[Any]:
+        """Create a handle for any experiment job (generic path).
 
         Args:
             job_id (int): Numeric identifier returned by the SpeQtrum service.
+            result_type: Optional concrete result type to validate against, taken
+                from the submitted functional's ``result_type``. When provided, the
+                returned handle enforces that the result matches this type.
 
         Returns:
-            JobHandle[ExperimentResult]: A handle whose result type is
-            ``ExperimentResult``.
+            JobHandle: A handle whose ``get_results`` yields an ``ExperimentResult``
+            (the concrete type when ``result_type`` is supplied).
         """
-        return cls(id=job_id, execute_type=ExecuteType.EXPERIMENT, extractor=_require_experiment_result)
+        if result_type is None:
+            handle = cls(id=job_id, execute_type=ExecuteType.EXPERIMENT, extractor=_require_experiment_result)
+            return cast("JobHandle[ExperimentResult]", handle)
+        extractor = _require_experiment_result_typed(result_type)
+        handle = cls(id=job_id, execute_type=ExecuteType.EXPERIMENT, extractor=extractor)
+        return cast("JobHandle[TExperimentResult]", handle)
 
     def bind(self, detail: "JobDetail") -> "TypedJobDetail[TFunctionalResult_co]":
         """Attach this handle's typing information to a concrete job detail.

@@ -686,6 +686,7 @@ class SpeQtrum:
         * :class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`
         * :class:`~qilisdk.functionals.variational_program.VariationalProgram`
         * :class:`~qilisdk.experiments.experiment_functional.ExperimentFunctional`
+            (e.g. those provided by the ``qili-experiments`` plugin library)
 
         Args:
             functional: A fully configured functional instance that defines the quantum workload.
@@ -702,8 +703,7 @@ class SpeQtrum:
             ValueError: If *readout* is required but not provided, or contains invalid methods.
         """
 
-        # Experiments without readout
-
+        # Experiments (no readout) are dispatched generically via the plugin registry.
         if isinstance(functional, ExperimentFunctional):
             return self._submit_experiment(functional, device, job_name)
 
@@ -767,7 +767,10 @@ class SpeQtrum:
     def _submit_experiment(
         self, experiment: ExperimentFunctional, device: str, job_name: str | None = None
     ) -> JobHandle[ExperimentResult]:
-        """Submit an experiment to the SpeQtrum API.
+        """Submit any experiment functional to the SpeQtrum API (generic path).
+
+            The concrete experiment type is carried by the serialized payload's YAML
+            tag, so no per-type wiring is needed here.
 
         Args:
             experiment (ExperimentFunctional): The experiment to execute.
@@ -778,6 +781,7 @@ class SpeQtrum:
             JobHandle[ExperimentResult]: A handle for tracking the submitted job.
         """
 
+        experiment_name = type(experiment).__qualname__
         payload = ExecutePayload(
             type=ExecuteType.EXPERIMENT,
             experiment_payload=ExperimentPayload(experiment=experiment),
@@ -790,18 +794,18 @@ class SpeQtrum:
         }
         if job_name:
             json["name"] = job_name
-        logger.debug("[SpeQtrum] Executing experiment on device {}", device)
+        logger.debug("[SpeQtrum] Executing {} on device {}", experiment_name, device)
         with self._create_client() as client:
             response = client.post(
                 _EXECUTE_URL,
                 json=json,
-                extensions=_request_extensions(context="Executing experiment"),
+                extensions=_request_extensions(context=f"Executing {experiment_name}"),
             )
         job = JobId(**response.json())
-        logger.info("[SpeQtrum] Experiment job submitted: {}", job.id)
+        logger.info("[SpeQtrum] {} job submitted: {}", experiment_name, job.id)
         if job.message is not None:
             logger.warning("{}", job.message)
-        return JobHandle.experiment(job.id)
+        return JobHandle.experiment(job.id, result_type=experiment.result_type)
 
     def _submit_analog_evolution(
         self, functional: AnalogEvolution, device: str, readout: Readout[S, E, T], job_name: str | None = None

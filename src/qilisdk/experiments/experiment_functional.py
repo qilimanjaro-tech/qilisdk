@@ -14,7 +14,7 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import Generic, TypeVar
+from typing import ClassVar, Generic, TypeVar
 
 from loguru import logger
 
@@ -33,7 +33,13 @@ class ExperimentFunctional(Functional, ABC, Generic[TResult_co]):
     characterization experiments such as Rabi or T1. Each subclass
     specifies a concrete `ExperimentResult` type and the corresponding
     sweep parameters.
+
+    Concrete experiment functionals are provided by the ``qili-experiments``
+    plugin library, not by qilisdk.
     """
+
+    result_type: ClassVar[type[ExperimentResult]]
+    """Concrete :class:`~qilisdk.experiments.experiment_result.ExperimentResult` subclass returned."""
 
     def __init__(self, qubit: int, averages: int) -> None:
         """Initialize the experiment functional.
