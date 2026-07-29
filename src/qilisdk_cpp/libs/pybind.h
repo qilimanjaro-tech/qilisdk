@@ -79,49 +79,6 @@ void info(std::string message);
 void warning(std::string message);
 void error(std::string message);
 
-void nan_error() {
-    /*
-    Raise a Python ValueError indicating that the state has become invalid (NaN or Inf).
-    */
-    throw py::value_error("State became invalid during evolution (NaN or Inf). Consider increasing the atol or adaptive_tol parameters.");
-}
-
-void check_state_diverged(const DenseMatrix& matrix) {
-    /*
-    Check if the matrix has diverged to a non-finite state.
-
-    Args:
-        matrix (DenseMatrix): The matrix to check.
-    */
-    if (!matrix.allFinite()) {
-        nan_error();
-    }
-}
-
-void check_valid_divisor(std::complex<double> divisor) {
-    /*
-    Check if the divisor is valid, errors if not.
-
-    Args:
-        divisor (std::complex<double>): The divisor to check.
-    */
-    if (!(std::isfinite(divisor.real()) && std::isfinite(divisor.imag()) && divisor != Complex(0.0, 0.0))) {
-        nan_error();
-    }
-}
-
-void check_valid_divisor(double divisor) {
-    /*
-    Check if the divisor is valid, errors if not.
-
-    Args:
-        divisor (double): The divisor to check.
-    */
-    if (!(std::isfinite(divisor) && divisor != 0.0)) {
-        nan_error();
-    }
-}
-
 #pragma GCC visibility pop
 
 // GCOV_EXCL_BR_STOP

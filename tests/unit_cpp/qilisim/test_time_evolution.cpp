@@ -996,108 +996,103 @@ TEST_F(TimeEvolutionVariationalTest, AnsatzParametersComeFromVariationalConfig) 
 }
 
 // Divergence handling: when ||H||*dt exceeds an integrator's stability limit the state overflows
-// to a non-finite value. The integrators must detect this, mark the state as NaN (rather than
-// silently collapsing it to zeros), and stop stepping early. A huge Hamiltonian coefficient forces
-// the overflow within a single step for the fixed-step and Krylov methods.
+// to a non-finite value. The integrators must detect this and raise (std::invalid_argument, which
+// pybind11 surfaces as a Python ValueError) rather than silently returning inf/garbage or a state
+// collapsed to zeros. A huge Hamiltonian coefficient forces the overflow within a single step for
+// the fixed-step and Krylov methods.
 
 // A Hamiltonian coefficient large enough that a single RK step overflows to +/-inf.
 static const std::vector<std::vector<double>> kHugeParams = {{1e300, 1e300, 1e300}};
 
-TEST_F(TimeEvolutionTest, DenseRK4StatevectorDivergesToNaN) {
+TEST_F(TimeEvolutionTest, DenseRK4StatevectorDivergenceThrows) {
     // Unitary-on-statevector path: overflow is caught by the norm guard in iter_rk4_matrix.
-    auto out = run_time_evolution(statevector_zero_sparse(), hamiltonians, kHugeParams, steps, empty_noise, {}, config);
-    EXPECT_FALSE(out.rho_t.allFinite());
+    EXPECT_THROW(run_time_evolution(statevector_zero_sparse(), hamiltonians, kHugeParams, steps, empty_noise, {}, config), std::invalid_argument);
 }
 
-TEST_F(TimeEvolutionTest, DenseRK4DensityMatrixDivergesToNaN) {
+TEST_F(TimeEvolutionTest, DenseRK4DensityMatrixDivergenceThrows) {
     // Density-matrix path (jump operator forces non-unitary dynamics): a huge jump rate overflows
     // the trace, which is caught by the trace guard in iter_rk4_matrix.
     NoiseModelCpp noise;
     noise.add_jump_operator(huge_amp_damp_jump());
-    auto out = run_time_evolution(pure_plus_sparse(), hamiltonians, params, steps, noise, {}, config);
-    EXPECT_FALSE(out.rho_t.allFinite());
+    EXPECT_THROW(run_time_evolution(pure_plus_sparse(), hamiltonians, params, steps, noise, {}, config), std::invalid_argument);
 }
 
-TEST_F(TimeEvolutionMatrixFreeTest, MatrixFreeRK4StatevectorDivergesToNaN) {
-    auto out = run_time_evolution_mf(statevector_zero_sparse(), hamiltonians, kHugeParams, steps, empty_noise, {}, config);
-    EXPECT_FALSE(out.rho_t.allFinite());
+TEST_F(TimeEvolutionMatrixFreeTest, MatrixFreeRK4StatevectorDivergenceThrows) {
+    EXPECT_THROW(run_time_evolution_mf(statevector_zero_sparse(), hamiltonians, kHugeParams, steps, empty_noise, {}, config), std::invalid_argument);
 }
 
-TEST_F(TimeEvolutionMatrixFreeTest, MatrixFreeRK4DensityMatrixDivergesToNaN) {
+TEST_F(TimeEvolutionMatrixFreeTest, MatrixFreeRK4DensityMatrixDivergenceThrows) {
     // A huge jump rate overflows the trace, caught by the trace guard in the matrix-free iter_rk4.
     NoiseModelCpp noise;
     noise.add_jump_operator(huge_amp_damp_jump());
-    auto out = run_time_evolution_mf(pure_plus_sparse(), hamiltonians, params, steps, noise, {}, config);
-    EXPECT_FALSE(out.rho_t.allFinite());
+    EXPECT_THROW(run_time_evolution_mf(pure_plus_sparse(), hamiltonians, params, steps, noise, {}, config), std::invalid_argument);
 }
 
-TEST_F(TimeEvolutionArnoldiMatrixFreeTest, ArnoldiMatrixFreeDivergesToNaN) {
-    auto out = run_time_evolution_mf(pure_plus_sparse(), hamiltonians, kHugeParams, steps, empty_noise, {}, config);
-    EXPECT_FALSE(out.rho_t.allFinite());
+TEST_F(TimeEvolutionArnoldiMatrixFreeTest, ArnoldiMatrixFreeDivergenceThrows) {
+    EXPECT_THROW(run_time_evolution_mf(pure_plus_sparse(), hamiltonians, kHugeParams, steps, empty_noise, {}, config), std::invalid_argument);
 }
 
-TEST_F(TimeEvolutionAdaptiveTest, AdaptiveRK45StopsOnNonFiniteState) {
+TEST_F(TimeEvolutionAdaptiveTest, AdaptiveRK45NonFiniteStateThrows) {
     // The adaptive stepper shrinks dt in response to a huge Hamiltonian rather than overflowing, so
-    // feed it an already-non-finite state: the divergence guard must catch it and stop the loop
-    // (returning the NaN state) instead of iterating.
-    auto out = run_time_evolution_mf(nan_statevector_sparse(), hamiltonians, params, steps, empty_noise, {}, config);
-    EXPECT_FALSE(out.rho_t.allFinite());
+    // feed it an already-non-finite state: the divergence guard must catch it and raise instead of
+    // iterating on garbage.
+    EXPECT_THROW(run_time_evolution_mf(nan_statevector_sparse(), hamiltonians, params, steps, empty_noise, {}, config), std::invalid_argument);
 }
 
-TEST_F(TimeEvolutionAdaptiveTest, AdaptiveRK45DivergenceDoesNotThrow) {
-    // A diverged (zero/non-finite norm) state used to make iter_rk45 throw py::value_error, crashing
-    // the whole evolution. It must now return quiet NaNs instead of throwing.
-    EXPECT_NO_THROW({
-        auto out = run_time_evolution_mf(nan_statevector_sparse(), hamiltonians, params, steps, empty_noise, {}, config);
-        EXPECT_FALSE(out.rho_t.allFinite());
-    });
+TEST_F(TimeEvolutionAdaptiveTest, DivergenceErrorMentionsToleranceParameters) {
+    // The raised message must point the user at the knobs that can fix the divergence, since that is
+    // the only actionable information they get from a blown-up run.
+    try {
+        run_time_evolution_mf(nan_statevector_sparse(), hamiltonians, params, steps, empty_noise, {}, config);
+        FAIL() << "expected a divergence error";
+    } catch (const std::invalid_argument& e) {
+        const std::string message = e.what();
+        EXPECT_NE(message.find("State became invalid during evolution"), std::string::npos) << message;
+        EXPECT_NE(message.find("atol"), std::string::npos) << message;
+        EXPECT_NE(message.find("adaptive_tol"), std::string::npos) << message;
+    }
 }
 
-TEST_F(TimeEvolutionTest, ArnoldiDivergesToNaN) {
+TEST_F(TimeEvolutionTest, ArnoldiDivergenceThrows) {
     // Non-matrix-free Krylov path: a huge Hamiltonian coefficient overflows the reconstructed state
-    // within a substep, which the norm/trace guards in iter_arnoldi must catch and mark as NaN.
+    // within a substep, which the norm/trace guards in iter_arnoldi must catch.
     config.set_time_evolution_method("arnoldi");
-    auto out = run_time_evolution(pure_plus_sparse(), hamiltonians, kHugeParams, steps, empty_noise, {}, config);
-    EXPECT_FALSE(out.rho_t.allFinite());
+    EXPECT_THROW(run_time_evolution(pure_plus_sparse(), hamiltonians, kHugeParams, steps, empty_noise, {}, config), std::invalid_argument);
 }
 
-TEST_F(TimeEvolutionTest, ArnoldiTracelessDensityMatrixMarkedNaN) {
+TEST_F(TimeEvolutionTest, ArnoldiTracelessDensityMatrixThrows) {
     // A finite but traceless density matrix stays traceless under unitary density-matrix Arnoldi
     // evolution (H_z commutes with it), so the trace-normalization guard divides by zero. It must
-    // mark the state NaN rather than dividing through. A mixed (non-pure) input keeps the evolution
-    // on the density-matrix branch instead of collapsing to a state vector.
+    // raise rather than dividing through. A mixed (non-pure) input keeps the evolution on the
+    // density-matrix branch instead of collapsing to a state vector.
     config.set_time_evolution_method("arnoldi");
     DenseMatrix traceless = DenseMatrix::Zero(2, 2);
     traceless(0, 0) = 1.0;
     traceless(1, 1) = -1.0;
-    auto out = run_time_evolution(to_sparse(traceless), hamiltonians, params, steps, empty_noise, {}, config);
-    EXPECT_FALSE(out.rho_t.allFinite());
+    EXPECT_THROW(run_time_evolution(to_sparse(traceless), hamiltonians, params, steps, empty_noise, {}, config), std::invalid_argument);
 }
 
-TEST_F(TimeEvolutionTest, ArnoldiLindbladTraceOverflowMarkedNaN) {
+TEST_F(TimeEvolutionTest, ArnoldiLindbladTraceOverflowThrows) {
     // Vectorized Lindblad Arnoldi path: a huge jump rate overflows the (vectorized) trace, which the
-    // trace guard in iter_arnoldi must catch and mark as NaN.
+    // trace guard in iter_arnoldi must catch.
     config.set_time_evolution_method("arnoldi");
     NoiseModelCpp noise;
     noise.add_jump_operator(huge_amp_damp_jump());
-    auto out = run_time_evolution(pure_plus_sparse(), hamiltonians, params, steps, noise, {}, config);
-    EXPECT_FALSE(out.rho_t.allFinite());
+    EXPECT_THROW(run_time_evolution(pure_plus_sparse(), hamiltonians, params, steps, noise, {}, config), std::invalid_argument);
 }
 
-TEST_F(TimeEvolutionArnoldiMatrixFreeTest, NonFiniteInitialNormMarkedNaN) {
+TEST_F(TimeEvolutionArnoldiMatrixFreeTest, NonFiniteInitialNormThrows) {
     // An already-non-finite state makes the substep's initial norm non-finite; the matrix-free
-    // Arnoldi loop must detect this up front, mark the state NaN, and stop.
-    auto out = run_time_evolution_mf(nan_statevector_sparse(), hamiltonians, params, steps, empty_noise, {}, config);
-    EXPECT_FALSE(out.rho_t.allFinite());
+    // Arnoldi loop must detect this up front and raise.
+    EXPECT_THROW(run_time_evolution_mf(nan_statevector_sparse(), hamiltonians, params, steps, empty_noise, {}, config), std::invalid_argument);
 }
 
-TEST_F(TimeEvolutionArnoldiMatrixFreeTest, DensityMatrixTraceOverflowMarkedNaN) {
+TEST_F(TimeEvolutionArnoldiMatrixFreeTest, DensityMatrixTraceOverflowThrows) {
     // Matrix-free Arnoldi density-matrix path: a huge jump rate overflows the trace, which the trace
-    // guard must catch and mark the reconstructed state NaN.
+    // guard must catch.
     NoiseModelCpp noise;
     noise.add_jump_operator(huge_amp_damp_jump());
-    auto out = run_time_evolution_mf(pure_plus_sparse(), hamiltonians, params, steps, noise, {}, config);
-    EXPECT_FALSE(out.rho_t.allFinite());
+    EXPECT_THROW(run_time_evolution_mf(pure_plus_sparse(), hamiltonians, params, steps, noise, {}, config), std::invalid_argument);
 }
 
 // GCOV_EXCL_BR_STOP

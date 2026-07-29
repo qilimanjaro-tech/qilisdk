@@ -760,17 +760,15 @@ def _dense_state(qtensor) -> np.ndarray:
 
 
 @pytest.mark.parametrize("matrix_free", [False, True])
-def test_diverging_integrator_returns_nan_not_silent_zeros(matrix_free):
+def test_diverging_integrator_raises_instead_of_silent_zeros(matrix_free):
     """Regression (SDK-359): a fixed-step RK4 integrator whose ``||H||*dt`` exceeds the
     stability limit overflows to inf and, when normalizing by the (overflowed) trace, used to
     silently collapse the state to an all-zero (trace-0) matrix — no warning, no error, so the
     user got ``<Z> = 0`` and an invalid state that looked valid.
 
-    The integrator must now surface the divergence: it logs a warning (see ``state_diverged`` in
-    ``time_evolution.cpp``) and returns an explicit NaN state, which — unlike the old all-zero
-    state — is visibly invalid downstream. Here we assert on that NaN state, the deterministic
-    signal; the accompanying log warning is not asserted because capturing C++-emitted loguru
-    records in-process is unreliable.
+    The integrator must now surface the divergence by raising ``ValueError`` (see
+    ``check_state_diverged``/``check_valid_divisor`` in ``eigen.h``) rather than handing back a
+    state that looks valid, and the message must name the tolerance knobs that can fix it.
     """
     # Large coefficients + dt=0.01 put ||H||*dt well above the RK4 stability threshold.
     hamiltonian = 500 * pauli_x(0) + 500 * pauli_z(0)
@@ -783,14 +781,10 @@ def test_diverging_integrator_returns_nan_not_silent_zeros(matrix_free):
         noise_model=noise_model,
         analog_simulation_method=AnalogMethod.integrator(matrix_free=matrix_free),
     )
-    result = backend.execute(
-        AnalogEvolution(schedule=schedule, initial_state=ket(0)),
-        Readout().with_state_tomography().with_expectation(observables=[pauli_z(0)]),
-    )
-
-    # The state must be an explicit NaN state, not a silent all-zero matrix.
-    state = _dense_state(result.get_state())
-    assert np.any(np.isnan(state))
+    evolution = AnalogEvolution(schedule=schedule, initial_state=ket(0))
+    readout = Readout().with_state_tomography().with_expectation(observables=[pauli_z(0)])
+    with pytest.raises(ValueError, match="State became invalid during evolution"):
+        backend.execute(evolution, readout)
 
 
 def test_adaptive_integrator_supported_in_reservoir():

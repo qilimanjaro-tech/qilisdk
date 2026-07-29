@@ -334,10 +334,10 @@ TEST_F(SamplingTest, FusionWithSingleQubitGateCombiningEnabled) {
     EXPECT_EQ(counts.at("01"), 1000);
 }
 
-TEST_F(SamplingTest, DivergingCircuitProducesNaNState) {
+TEST_F(SamplingTest, DivergingCircuitThrows) {
     // Two non-unitary gates that each scale the amplitudes by 1e200 overflow the state to +inf.
-    // The digital sampling path must mark the blown-up state as quiet NaN (consistent with the
-    // analog path) rather than returning inf/garbage.
+    // The digital sampling path must raise on the blown-up state (consistent with the analog path)
+    // rather than returning inf/garbage.
     int n = 1;
     SparseMatrix huge(2, 2);
     huge.insert(0, 0) = std::complex<double>(1e200, 0);
@@ -346,8 +346,7 @@ TEST_F(SamplingTest, DivergingCircuitProducesNaNState) {
     std::vector<Gate> gates = {Gate("HUGE", huge, {}, {0}, {}), Gate("HUGE", huge, {}, {0}, {})};
     DenseMatrix state;
     std::vector<py::object> intermediate_results;
-    sampling(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfg, readout);
-    EXPECT_FALSE(state.allFinite());
+    EXPECT_THROW(sampling(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfg, readout), std::invalid_argument);
 }
 
 TEST_F(SamplingTest, DoubleXGateOnQubit0_AllCountsAre00_NoCache) {
@@ -703,10 +702,10 @@ TEST_F(SamplingMatrixFreeTest, HadamardCircuit_StatisticsMatchStandardSampling) 
     }
 }
 
-TEST_F(SamplingMatrixFreeTest, DivergingCircuitProducesNaNState) {
+TEST_F(SamplingMatrixFreeTest, DivergingCircuitThrows) {
     // Matrix-free analogue of the dense diverging-circuit test: two non-unitary gates that each scale
-    // the amplitudes by 1e200 overflow the state to +inf. The matrix-free sampling path must mark the
-    // blown-up state as quiet NaN (and warn) rather than returning inf/garbage.
+    // the amplitudes by 1e200 overflow the state to +inf. The matrix-free sampling path must raise on
+    // the blown-up state rather than returning inf/garbage.
     int n = 1;
     SparseMatrix huge(2, 2);
     huge.insert(0, 0) = std::complex<double>(1e200, 0);
@@ -715,8 +714,7 @@ TEST_F(SamplingMatrixFreeTest, DivergingCircuitProducesNaNState) {
     std::vector<Gate> gates = {Gate("HUGE", huge, {}, {0}, {}), Gate("HUGE", huge, {}, {0}, {})};
     DenseMatrix state;
     std::vector<py::object> intermediate_results;
-    sampling_matrix_free(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfg, readout);
-    EXPECT_FALSE(state.allFinite());
+    EXPECT_THROW(sampling_matrix_free(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfg, readout), std::invalid_argument);
 }
 
 TEST_F(SamplingMatrixFreeTest, DensityMatrixInitialState_ZeroState_AllCountsAreZero) {

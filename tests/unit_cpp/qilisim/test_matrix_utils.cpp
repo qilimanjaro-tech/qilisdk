@@ -524,34 +524,30 @@ TEST(NormalizeStateTest, MultiColumnDensityMatrix) {
     EXPECT_NEAR(tr.imag(), 0.0, kTol);
 }
 
-// Divergence handling: a non-finite or zero divisor means the state has blown up. The dense
-// normalizer must overwrite it with quiet NaNs (rather than dividing to produce inf/garbage) so the
-// caller's divergence check can detect it. (The sparse overload cannot carry a structural NaN and so
-// leaves such states untouched instead, see SparseZeroStateLeftAlone.)
-TEST(NormalizeStateTest, StatevectorZeroNormBecomesNaN) {
+// Divergence handling: a non-finite or zero divisor means the state has blown up. Rather than
+// dividing through to produce inf/garbage, the dense normalizer raises (std::invalid_argument, which
+// pybind11 surfaces as a Python ValueError) so the caller sees the failure immediately. (The sparse
+// overload has no divisor to guard and leaves such states untouched, see SparseZeroStateLeftAlone.)
+TEST(NormalizeStateTest, StatevectorZeroNormThrows) {
     DenseMatrix state = DenseMatrix::Zero(4, 1);
-    normalize_state(state, true, false);
-    EXPECT_FALSE(state.allFinite());
+    EXPECT_THROW(normalize_state(state, true, false), std::invalid_argument);
 }
 
-TEST(NormalizeStateTest, StatevectorNonFiniteBecomesNaN) {
+TEST(NormalizeStateTest, StatevectorNonFiniteThrows) {
     DenseMatrix state(2, 1);
     state << std::complex<double>(std::numeric_limits<double>::infinity(), 0), std::complex<double>(1, 0);
-    normalize_state(state, true, false);
-    EXPECT_FALSE(state.allFinite());
+    EXPECT_THROW(normalize_state(state, true, false), std::invalid_argument);
 }
 
-TEST(NormalizeStateTest, DensityMatrixZeroTraceBecomesNaN) {
+TEST(NormalizeStateTest, DensityMatrixZeroTraceThrows) {
     DenseMatrix rho = DenseMatrix::Zero(2, 2);
-    normalize_state(rho, false, false);
-    EXPECT_FALSE(rho.allFinite());
+    EXPECT_THROW(normalize_state(rho, false, false), std::invalid_argument);
 }
 
-TEST(NormalizeStateTest, MonteCarloZeroColumnBecomesNaN) {
+TEST(NormalizeStateTest, MonteCarloZeroColumnThrows) {
     DenseMatrix state(2, 2);
     state << std::complex<double>(1, 0), std::complex<double>(0, 0), std::complex<double>(0, 0), std::complex<double>(0, 0);
-    normalize_state(state, true, true);
-    EXPECT_FALSE(state.allFinite());
+    EXPECT_THROW(normalize_state(state, true, true), std::invalid_argument);
 }
 
 TEST(NormalizeStateTest, SparseStatevectorNormBecomesOne) {
