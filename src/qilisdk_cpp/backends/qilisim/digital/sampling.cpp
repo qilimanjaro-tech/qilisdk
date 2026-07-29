@@ -259,9 +259,16 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrixCo
 
                 // If we have measurement_collapse enabled, apply the measurement and collapse the state
                 if (config.get_measurement_collapse()) {
+                    
+                    // If we have trajectories, convert to a density matrix first
+                    if (state_is_trajectories) {
+                        state = trajectories_to_density_matrix(state);
+                        state_is_trajectories = false;
+                    }
+
+                    // Collapse the state based on the measurement result
                     state = collapse_state(state, qubits_to_measure_after_gate);
                     is_statevector = false;
-                    state_is_trajectories = false;
                 }
             }
 
@@ -290,7 +297,7 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrixCo
         }
 
         // Apply the gate (Sparse-Dense multiplication, already OpenMP parallel if enabled)
-        if (is_statevector || monte_carlo) {
+        if (is_statevector || state_is_trajectories) {
             state = gate_matrix * state;
         } else {
             state = gate_matrix * state * gate_matrix.adjoint();
@@ -310,7 +317,7 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrixCo
 
         // Renormalize the state
         if (config.get_normalize_state() && config.get_normalize_after_gate()) {
-            normalize_state(state, is_statevector, monte_carlo);
+            normalize_state(state, is_statevector, state_is_trajectories);
         }
 
         // Clear the gate from the cache if this was its last use
@@ -323,7 +330,7 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrixCo
     // If we have statevectors but we should return a density matrix, unless we are keeping the trajectories
     if (state_is_trajectories && keep_trajectories) {
         *output_is_trajectories = true;
-    } else if (monte_carlo && !input_is_trajectories) {
+    } else if (state_is_trajectories && !input_is_trajectories) {
         state = trajectories_to_density_matrix(state);
     }
 
@@ -463,9 +470,16 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const Sp
 
                 // If we have measurement_collapse enabled, apply the measurement and collapse the state
                 if (config.get_measurement_collapse()) {
+                    
+                    // If we have trajectories, convert to a density matrix first
+                    if (state_is_trajectories) {
+                        state = trajectories_to_density_matrix(state);
+                        state_is_trajectories = false;
+                    }
+                    
+                    // Collapse the state based on the measurement result
                     state = collapse_state(state, qubits_to_measure_after_gate);
                     is_statevector = false;
-                    state_is_trajectories = false;
                 }
             }
 
@@ -479,7 +493,7 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const Sp
         qilisdk::log_trace("[Sampling, C++] Applying gate " + gate.get_id() + " (matrix-free)");
 
         // Apply the gate
-        if (monte_carlo) {
+        if (state_is_trajectories) {
             for (int col = 0; col < state.cols(); ++col) {
                 DenseMatrix traj = state.col(col);
                 op.apply(traj, MatrixFreeApplicationType::Left);
@@ -505,14 +519,14 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const Sp
 
         // Renormalize the state
         if (config.get_normalize_state() && config.get_normalize_after_gate()) {
-            normalize_state(state, is_statevector, monte_carlo);
+            normalize_state(state, is_statevector, state_is_trajectories);
         }
     }
 
     // If we have statevectors but we should return a density matrix, unless we are keeping the trajectories
     if (state_is_trajectories && keep_trajectories) {
         *output_is_trajectories = true;
-    } else if (monte_carlo && !input_is_trajectories) {
+    } else if (state_is_trajectories && !input_is_trajectories) {
         state = trajectories_to_density_matrix(state);
     }
 

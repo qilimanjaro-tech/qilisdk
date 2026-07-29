@@ -1882,6 +1882,26 @@ _traj_ro_qt = [ExpectationReadout(observables=[QTensor(sp.csr_matrix(np.array([[
     EXPECT_NEAR(averaged[0], reference[0], 1e-12);
 }
 
+TEST(ConstructResultsTrajectories, ImaginaryExpectationValueThrows) {
+    py::gil_scoped_acquire gil;
+    // The raising operator is not Hermitian, so its expectation value over this ensemble has a
+    // non-zero imaginary part, which is never a physically meaningful expectation value.
+    py::exec(R"(
+from qilisdk.readout import ExpectationReadout
+from qilisdk.core.qtensor import QTensor
+import numpy as np, scipy.sparse as sp
+_traj_ro_imag = [ExpectationReadout(observables=[QTensor(sp.csr_matrix(np.array([[0.0, 1.0], [0.0, 0.0]], dtype=complex)))])]
+    )");
+    py::list readout = py::globals()["_traj_ro_imag"].cast<py::list>();
+
+    DenseMatrix trajectories = two_qubit_trajectories();
+    NoiseModelCpp noise_model_cpp;
+    QiliSimConfig config;
+    std::vector<bool> qubits_to_measure = {true, true};
+
+    EXPECT_THROW({ auto results = construct_result_object(trajectories, readout, noise_model_cpp, 2, config, qubits_to_measure, true); }, py::value_error);
+}
+
 TEST(ConstructResultsTrajectories, SamplingMatchesAveragedDensityMatrix) {
     py::gil_scoped_acquire gil;
     py::exec(R"(
