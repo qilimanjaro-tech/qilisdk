@@ -225,7 +225,7 @@ class ExperimentResult(FunctionalResult):
         y_dim = self.dims_override[1](dims[1]) if len(self.dims_override) > 1 and self.dims_override[1] else dims[1]
         z_override = (
             self.dims_override[2]
-            if apply_z_override and len(self.dims_override) > 2  # ruff:ignore[magic-value-comparison]
+            if apply_z_override and len(self.dims_override) > 2  # noqa: PLR2004
             else None
         )
         x_labels, x_values = x_dim.labels, x_dim.values

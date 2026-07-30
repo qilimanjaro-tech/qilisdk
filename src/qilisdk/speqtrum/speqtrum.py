@@ -760,6 +760,8 @@ class SpeQtrum:
             )
         job = JobId(**response.json())
         logger.info("DigitalPropagation job submitted: {}", job.id)
+        if job.message is not None:
+            logger.warning("{}", job.message)
         return JobHandle.functional(job.id)
 
     def _submit_experiment(
@@ -839,6 +841,8 @@ class SpeQtrum:
             )
         job = JobId(**response.json())
         logger.info("AnalogEvolution job submitted: {}", job.id)
+        if job.message is not None:
+            logger.warning("{}", job.message)
         return JobHandle.functional(job.id)
 
     def _submit_quantum_reservoir_functional(
@@ -876,6 +880,8 @@ class SpeQtrum:
             )
         job = JobId(**response.json())
         logger.info("AnalogEvolution job submitted: {}", job.id)
+        if job.message is not None:
+            logger.warning("{}", job.message)
         return JobHandle.functional(job.id)
 
     def _submit_variational_program(
@@ -921,6 +927,8 @@ class SpeQtrum:
             )
         job = JobId(**response.json())
         logger.info("Variational program job submitted: {}", job.id)
+        if job.message is not None:
+            logger.warning("{}", job.message)
         return JobHandle.variational_program(job.id)
 
     def __repr__(self) -> str:
