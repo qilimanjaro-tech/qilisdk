@@ -21,6 +21,7 @@ from scipy.linalg import expm, logm, sqrtm
 from scipy.sparse import coo_matrix, csc_array, issparse
 from scipy.sparse.linalg import norm as scipy_norm
 
+from qilisdk.analog import X, Z
 from qilisdk.core.qtensor import (
     InitialState,
     QTensor,
@@ -553,6 +554,45 @@ def test_expect_bra():
     exp_val = expect_val(identity, qbra_obj)
     # For a normalized bra, ⟨ψ|I|ψ⟩ should equal 1.
     assert np.isclose(exp_val, 1)
+
+
+def test_expect_hamiltonian_sampled():
+    """Test that sampling a Hamiltonian observable converges towards the exact expectation value."""
+    state = QTensor.uniform(2)
+    observable = 0.5 * X(0) + 2 * Z(1) + 3
+
+    # X(0) has no variance on the uniform state, so any number of shots gives the exact value
+    assert np.isclose(state.expectation_value(X(0), nshots=10), 1)
+
+    # Z(1) is maximally uncertain on the uniform state, so the estimates fluctuate around zero
+    samples = [state.expectation_value(Z(1), nshots=1).real for _ in range(100)]
+    assert set(samples) == {-1.0, 1.0}
+
+    # More shots reduce the shot noise, the standard error scales as 1 / sqrt(nshots)
+    estimates = [state.expectation_value(observable, nshots=10000).real for _ in range(10)]
+    assert np.allclose(estimates, 3.5, atol=0.2)
+    assert not np.allclose(estimates, 3.5, atol=1e-10)
+
+
+def test_expect_qtensor_sampled():
+    """Test that sampling a QTensor observable does not require a precomputed eigendecomposition."""
+    observable = (0.7 * Z(0) + 2 * X(1) + 1.5).to_qtensor(2)
+    state = QTensor.uniform(2)
+
+    exact = state.expectation_value(observable)
+    estimates = [state.expectation_value(observable, nshots=100000).real for _ in range(5)]
+    assert np.allclose(estimates, exact.real, atol=0.05)
+    assert not np.allclose(estimates, exact.real, atol=1e-10)
+
+    # The eigendecomposition is cached on the observable, not on the state
+    assert len(observable.eigenvalues) == 4
+
+
+def test_expect_hamiltonian_sampled_shapes():
+    """Test that sampling a Hamiltonian observable works for kets, bras and density matrices."""
+    for state in [ket(0, 1), bra(0, 1), ket(0, 1).to_density_matrix()]:
+        assert np.isclose(state.expectation_value(Z(0), nshots=100), 1)
+        assert np.isclose(state.expectation_value(Z(1), nshots=100), -1)
 
 
 def test_to_density_matrix():
