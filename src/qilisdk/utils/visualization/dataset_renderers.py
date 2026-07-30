@@ -15,7 +15,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, TypeAlias, cast
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -26,14 +26,24 @@ from matplotlib.figure import Figure
 from qilisdk.utils.visualization.style import DatasetStyle
 
 if TYPE_CHECKING:
+    from collections.abc import Callable, Sequence
+
     from numpy.typing import NDArray
 
     from qilisdk.ml.datasets.dataset import DatasetSample
 
+    # An array to plot, optionally paired with a label for the axis or line. A transform may return any number of these.
+    Channel: TypeAlias = tuple[str, NDArray[np.float64]] | NDArray[np.float64]
+
+    # A callable that takes the full series and returns a sequence of channels to plot.
+    Transform: TypeAlias = Callable[[NDArray[np.float64]], Sequence[Channel]]
+
 _VALID_STYLES = ("1d", "2d", "3d")
+_MODE_NDIM = {"2d": 2, "3d": 3}
 _MIN_2D_COMPONENTS = 2
 _MIN_3D_COMPONENTS = 3
 _MAX_SERIES_NDIM = 2
+_LABELLED_CHANNEL_LEN = 2
 
 
 class MatplotlibDatasetRenderer:
@@ -44,14 +54,23 @@ class MatplotlibDatasetRenderer:
     is taken either from a :class:`~qilisdk.ml.datasets.dataset.DatasetSample`
     (whose ``inputs`` are used) or from a raw array, so that a single component
     of a sample -- or any series of the same shape -- can be plotted directly.
-    The kind of plot is chosen with ``style``:
 
-    * ``"1d"`` -- each component of the series plotted against the sample index.
-    * ``"2d"`` -- a phase portrait. For series with two or more components the
-      first two are plotted against each other; a one-dimensional series is
+    What is drawn on each axis is decided by a *transform*: a callable mapping
+    the full ``(n_points, n_components)`` series to the coordinates to plot. A
+    transform returns the channels for the current mode -- two arrays for a
+    ``"2d"`` view, three for ``"3d"``, or any number of lines for ``"1d"`` --
+    each optionally paired with an axis label. It is free to reshape, slice or
+    delay-embed the data rather than merely selecting columns, so the view is
+    fully general: e.g. ``lambda d: [("x", d[:, 0]), ("z", d[:, 2])]`` picks the
+    Lorenz ``x``--``z`` plane, and ``lambda d: [("P(t)", d[17:, 0]),
+    ("P(t-17)", d[:-17, 0])]`` builds a delay embedding. When no transform is
+    given, a sensible default is used per mode:
+
+    * ``"1d"`` -- every component plotted against the sample index.
+    * ``"2d"`` -- the first two components; a one-dimensional series is
       delay-embedded as ``x(t)`` vs ``x(t + delay)``.
-    * ``"3d"`` -- a three-dimensional phase portrait. Series with three or more
-      components use the first three, lower-dimensional series are delay-embedded.
+    * ``"3d"`` -- the first three components; lower-dimensional series are
+      delay-embedded.
     """
 
     def __init__(
@@ -62,8 +81,24 @@ class MatplotlibDatasetRenderer:
         config: DatasetStyle | None = None,
         labels: tuple[str, ...] | None = None,
         title: str | None = None,
+        transform: Transform | None = None,
         ax: plt.Axes | None = None,
     ) -> None:
+        """
+        Initialize a renderer for a dataset sample.
+
+        Args:
+            sample (DatasetSample | NDArray[np.floating[Any]]): The sample to plot, or a raw array holding the series itself, one row per time step.
+            style (str): The plot mode, one of ``"1d"``, ``"2d"`` or ``"3d"``. Defaults to ``"1d"``.
+            config (DatasetStyle | None): Optional style configuration. Defaults to ``None`` (use dataset defaults).
+            labels (tuple[str, ...] | None): Optional labels for the components of the series. Defaults to ``None`` (use dataset defaults).
+            title (str | None): Optional title for the plot. Defaults to ``None`` (use dataset defaults).
+            transform (Transform | None): Optional callable mapping the full series to the coordinates to plot. Defaults to ``None`` (use dataset defaults).
+            ax (plt.Axes | None): Optional Matplotlib Axes to draw on. Defaults to ``None`` (create a new figure and axes).
+
+        Raises:
+            ValueError: If ``style`` is not one of ``"1d"``, ``"2d"``, or ``"3d"``.
+        """
         if style not in _VALID_STYLES:
             raise ValueError(f"style must be one of {_VALID_STYLES}, got {style!r}.")
         self.sample = sample
@@ -71,6 +106,7 @@ class MatplotlibDatasetRenderer:
         self.style = config or DatasetStyle()
         self.labels = labels
         self.title = title
+        self.transform = transform
         self.series = self._as_matrix(sample)
         self.ax = ax or self._make_axes(self.mode, self.style)
 
@@ -104,19 +140,52 @@ class MatplotlibDatasetRenderer:
         return arr
 
     def _cmap(self) -> LinearSegmentedColormap:
+        """
+        Build a colormap for coloring points by time, from the theme's primary to accent color.
+
+        Returns:
+            LinearSegmentedColormap: The colormap for time-based coloring.
+        """
         theme = self.style.theme
         return LinearSegmentedColormap.from_list("qili_time", [theme.primary, theme.accent])
 
     @staticmethod
     def _hex_to_rgb(hex_color: str) -> tuple[int, ...]:
+        """
+        Convert a hex color string to an RGB tuple.
+
+        Args:
+            hex_color (str): The hex color string (e.g., ``"#RRGGBB"``).
+
+        Returns:
+            tuple[int, ...]: The corresponding RGB tuple.
+        """
         hex_color = hex_color.lstrip("#")
         return tuple(int(hex_color[i : i + 2], 16) for i in (0, 2, 4))
 
     @staticmethod
     def _rgb_to_hex(rgb: tuple[int, ...]) -> str:
+        """
+        Convert an RGB tuple to a hex color string.
+
+        Args:
+            rgb (tuple[int, ...]): The RGB tuple (e.g., ``(255, 0, 0)``).
+
+        Returns:
+            str: The corresponding hex color string (e.g., ``"#RRGGBB"``).
+        """
         return "#{:02x}{:02x}{:02x}".format(*rgb)
 
     def _gradient_colors(self, n: int) -> list[str]:
+        """
+        Generate a list of colors forming a gradient from the theme's primary to accent color.
+
+        Args:
+            n (int): The number of colors to generate.
+
+        Returns:
+            list[str]: A list of hex color strings forming the gradient.
+        """
         start = self._hex_to_rgb(self.style.theme.primary)
         end = self._hex_to_rgb(self.style.theme.accent)
         colors = []
@@ -150,6 +219,18 @@ class MatplotlibDatasetRenderer:
         return [col[i * lag : i * lag + stop] for i in range(dims)]
 
     def _component_label(self, index: int, embedded: bool, lag: int) -> str:
+        """
+        Build a label for a component of the series, either from the dataset's
+        component labels or by default naming.
+
+        Args:
+            index (int): The index of the component.
+            embedded (bool): Whether the component is part of a delay embedding.
+            lag (int): The delay used for embedding, in sampled points.
+
+        Returns:
+            str: The label for the component, e.g. ``"x(t)"``, ``"x(t + 5)"``, or a dataset-provided label.
+        """
         base = self.labels[0] if self.labels else "x"
         if embedded:
             if index == 0:
@@ -160,31 +241,113 @@ class MatplotlibDatasetRenderer:
         return f"x{index}"
 
     def plot(self, ax: plt.Axes | None = None) -> None:
-        """Render the sample onto the renderer's axes."""
+        """
+        Render the sample onto the renderer's axes.
+
+        Args:
+            ax (plt.Axes | None): Optional Matplotlib Axes to draw on. If not provided, the renderer's own axes are used.
+        """
         if ax is not None:
             self.ax = ax
         logger.debug("[DatasetRenderer] Rendering sample as {} ({} points)", self.mode, len(self.series))
+        channels = self._resolve_channels()
         if self.mode == "1d":
-            self._plot_1d()
-        elif self.mode == "2d":
-            self._plot_2d()
+            self._plot_lines(channels)
         else:
-            self._plot_3d()
+            self._plot_trajectory(channels)
         self._setup_axes()
         plt.draw()
 
-    def _plot_1d(self) -> None:
+    def _resolve_channels(self) -> list[tuple[str, NDArray[np.float64]]]:
+        """
+        Run the transform (or the per-mode default) and validate its output.
+
+        Returns:
+            list[tuple[str, NDArray[np.float64]]]: The labelled coordinate arrays
+            to plot -- one per line for ``"1d"``, or one per axis for ``"2d"``/``"3d"``.
+
+        Raises:
+            ValueError: If the transform yields the wrong number of channels for
+                the mode, or trajectory coordinates of unequal length.
+        """
+        raw = list(self.transform(self.series)) if self.transform is not None else self._default_channels()
+        channels = self._normalise_channels(raw)
+
+        expected = _MODE_NDIM.get(self.mode)
+        if expected is not None and len(channels) != expected:
+            raise ValueError(
+                f"a {self.mode} plot needs exactly {expected} coordinates, but the transform returned {len(channels)}."
+            )
+        if not channels:
+            raise ValueError("the transform returned no channels to plot.")
+        if expected is not None and len({len(values) for _, values in channels}) > 1:
+            raise ValueError("the transform returned coordinates of unequal length.")
+        return channels
+
+    def _default_channels(self) -> list[tuple[str, NDArray[np.float64]]]:
+        """
+        Build the default channels for the current mode from the raw series.
+
+        Returns:
+            list[tuple[str, NDArray[np.float64]]]: Every component as a line for
+            ``"1d"``; otherwise the first components (or a delay embedding of a
+            one-dimensional series), one labelled array per axis.
+        """
+        d = self.series.shape[1]
+        if self.mode == "1d":
+            return [
+                (self._component_label(i, embedded=False, lag=self.style.delay), self.series[:, i]) for i in range(d)
+            ]
+        dims = _MODE_NDIM[self.mode]
+        min_components = _MIN_2D_COMPONENTS if self.mode == "2d" else _MIN_3D_COMPONENTS
+        if d < min_components:
+            coords = self._embed(dims)
+            return [
+                (self._component_label(i, embedded=True, lag=max(1, self.style.delay)), coords[i]) for i in range(dims)
+            ]
+        return [
+            (self._component_label(i, embedded=False, lag=self.style.delay), self.series[:, i]) for i in range(dims)
+        ]
+
+    def _normalise_channels(self, raw: Sequence[Channel]) -> list[tuple[str, NDArray[np.float64]]]:
+        """
+        Coerce a transform's output to ``(label, values)`` pairs.
+
+        Each item is either a ``(label, array)`` pair or a bare array, which is
+        then labelled positionally from the dataset's component labels.
+
+        Args:
+            raw (Sequence[Channel]): The raw channels returned by a transform.
+
+        Returns:
+            list[tuple[str, NDArray[np.float64]]]: The labelled coordinate arrays.
+        """
+        channels: list[tuple[str, NDArray[np.float64]]] = []
+        for i, item in enumerate(raw):
+            if isinstance(item, tuple) and len(item) == _LABELLED_CHANNEL_LEN and isinstance(item[0], str):
+                label, values = item
+            else:
+                values = cast("NDArray[np.float64]", item)
+                label = self.labels[i] if self.labels and i < len(self.labels) else f"x{i}"
+            channels.append((label, np.asarray(values, dtype=np.float64)))
+        return channels
+
+    def _plot_lines(self, channels: list[tuple[str, NDArray[np.float64]]]) -> None:
+        """
+        Plot a set of lines on the renderer's axes, one per channel.
+
+        Args:
+            channels (list[tuple[str, NDArray[np.float64]]]): The labelled coordinate arrays to plot, one per line.
+        """
         style = self.style
-        n, d = self.series.shape
-        t = np.arange(n)
-        colors = self._gradient_colors(d)
+        colors = self._gradient_colors(len(channels))
         line_style = dict(style.line_style)
         line_style.pop("color", None)
-        for i in range(d):
+        for i, (label, values) in enumerate(channels):
             self.ax.plot(
-                t,
-                self.series[:, i],
-                label=self._component_label(i, embedded=False, lag=style.delay),
+                np.arange(len(values)),
+                values,
+                label=label,
                 color=colors[i],
                 marker=style.marker,
                 markersize=style.marker_size,
@@ -192,41 +355,30 @@ class MatplotlibDatasetRenderer:
             )
         self._xlabel = style.xlabel or "step"
         self._ylabel = style.ylabel or "value"
-        self._show_legend = d > 1 or self.labels is not None
+        self._show_legend = len(channels) > 1 or self.labels is not None
 
-    def _plot_2d(self) -> None:
+    def _plot_trajectory(self, channels: list[tuple[str, NDArray[np.float64]]]) -> None:
+        """
+        Plot a trajectory on the renderer's axes, using the first two or three channels as coordinates.
+
+        Args:
+            channels (list[tuple[str, NDArray[np.float64]]]): The labelled coordinate arrays to plot, one per axis.
+        """
         style = self.style
-        d = self.series.shape[1]
-        embedded = d < _MIN_2D_COMPONENTS
-        if embedded:
-            x, y = self._embed(2)
-            self._xlabel = style.xlabel or self._component_label(0, True, style.delay)
-            self._ylabel = style.ylabel or self._component_label(1, True, style.delay)
-        else:
-            x, y = self.series[:, 0], self.series[:, 1]
-            self._xlabel = style.xlabel or self._component_label(0, False, style.delay)
-            self._ylabel = style.ylabel or self._component_label(1, False, style.delay)
-        self._draw_trajectory((x, y))
+        self._xlabel = style.xlabel or channels[0][0]
+        self._ylabel = style.ylabel or channels[1][0]
+        if self.mode == "3d":
+            self._zlabel = style.zlabel or channels[2][0]
+        self._draw_coords(tuple(values for _, values in channels))
         self._show_legend = False
 
-    def _plot_3d(self) -> None:
-        style = self.style
-        d = self.series.shape[1]
-        embedded = d < _MIN_3D_COMPONENTS
-        if embedded:
-            x, y, z = self._embed(3)
-            self._xlabel = style.xlabel or self._component_label(0, True, style.delay)
-            self._ylabel = style.ylabel or self._component_label(1, True, style.delay)
-            self._zlabel = style.zlabel or self._component_label(2, True, style.delay)
-        else:
-            x, y, z = self.series[:, 0], self.series[:, 1], self.series[:, 2]
-            self._xlabel = style.xlabel or self._component_label(0, False, style.delay)
-            self._ylabel = style.ylabel or self._component_label(1, False, style.delay)
-            self._zlabel = style.zlabel or self._component_label(2, False, style.delay)
-        self._draw_trajectory((x, y, z))
-        self._show_legend = False
+    def _draw_coords(self, coords: tuple[NDArray[np.float64], ...]) -> None:
+        """
+        Draw the trajectory on the axes, either as a line or a scatter plot.
 
-    def _draw_trajectory(self, coords: tuple[NDArray[np.float64], ...]) -> None:
+        Args:
+            coords (tuple[NDArray[np.float64], ...]): The coordinate arrays to plot, one per axis.
+        """
         style = self.style
         n = len(coords[0])
         if style.trajectory_style == "line" or not style.color_by_time:
@@ -246,6 +398,9 @@ class MatplotlibDatasetRenderer:
             plt.setp(plt.getp(cbar.ax.axes, "yticklabels"), color=self.style.theme.on_background)
 
     def _setup_axes(self) -> None:
+        """
+        Configure the axes with titles, labels, grid, and legend according to the style and theme.
+        """
         style = self.style
         theme = style.theme
         text_color = theme.on_background
@@ -305,7 +460,8 @@ class MatplotlibDatasetRenderer:
 
     @staticmethod
     def _make_axes(mode: str, style: DatasetStyle) -> plt.Axes:
-        """Create a new figure and axes appropriate for the requested plot mode.
+        """
+        Create a new figure and axes appropriate for the requested plot mode.
 
         Args:
             mode (str): The plot mode, one of ``"1d"``, ``"2d"`` or ``"3d"``.

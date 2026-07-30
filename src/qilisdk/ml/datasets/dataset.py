@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Callable, ClassVar, Iterator, TypeAlias, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, Iterator, TypeAlias, TypeVar, cast
 
 import numpy as np
 
@@ -24,6 +24,7 @@ from qilisdk.settings import get_settings
 if TYPE_CHECKING:
     from numpy.typing import NDArray
 
+    from qilisdk.utils.visualization.dataset_renderers import Transform
     from qilisdk.utils.visualization.style import DatasetStyle
 
 if get_settings().complex_precision == "COMPLEX_64":
@@ -124,6 +125,12 @@ class Dataset(ABC):
     # Labels for the components of the series
     _DRAW_COMPONENT_LABELS: ClassVar[tuple[str, ...] | None] = None
 
+    # Per-mode :class:`DatasetStyle` field defaults
+    _DRAW_STYLE_DEFAULTS: ClassVar[dict[str, dict[str, Any]]] = {}
+
+    # Per-mode transforms deciding what each axis shows
+    _DRAW_TRANSFORMS: ClassVar[dict[str, Transform]] = {}
+
     def __init__(self, *, seed: int | None = None) -> None:
         """Initialise the dataset.
 
@@ -168,21 +175,29 @@ class Dataset(ABC):
         style: str | None = None,
         *,
         config: DatasetStyle | None = None,
+        transform: Transform | None = None,
         filepath: str | None = None,
     ) -> None:
         """Render a generated :class:`DatasetSample`, or a raw series, with matplotlib.
 
         The kind of plot is selected by ``style``:
 
-        * ``"1d"`` -- each component of the series against the sample index.
-        * ``"2d"`` -- a phase portrait (two components, or a delay embedding of a
-          one-dimensional series).
-        * ``"3d"`` -- a three-dimensional phase portrait (three components, or a
-          delay embedding of a lower-dimensional series).
+        * ``"1d"`` -- every component of the series against the sample index.
+        * ``"2d"`` -- a phase portrait (two coordinates).
+        * ``"3d"`` -- a three-dimensional phase portrait (three coordinates).
+
+        What each axis shows is decided by a *transform*: a callable mapping the
+        full ``(n_points, n_components)`` series to the coordinates to plot. It may
+        reshape, slice or delay-embed the data, not merely select columns. If none
+        is given, the dataset's per-mode transform (:attr:`_DRAW_TRANSFORMS`) is
+        used, and failing that a dimension-based default (the first components, or
+        a delay embedding of a one-dimensional series).
 
         The plot's *appearance* (theme, fonts, colours, grid, ...) is controlled
         independently via ``config``, mirroring how :class:`ScheduleStyle` and
-        :class:`CircuitStyle` customise schedule and circuit plots.
+        :class:`CircuitStyle` customise schedule and circuit plots. Each dataset
+        may tailor the defaults of a given mode via :attr:`_DRAW_STYLE_DEFAULTS`;
+        any field you set explicitly on ``config`` overrides those defaults.
 
         Args:
             sample (DatasetSample | FloatArray): A sample produced by
@@ -198,7 +213,13 @@ class Dataset(ABC):
             style (str | None): Plot mode, one of ``"1d"``, ``"2d"`` or ``"3d"``.
                 Defaults to the dataset's natural mode.
             config (DatasetStyle | None): Visual style configuration. Defaults to
-                :class:`DatasetStyle`.
+                :class:`DatasetStyle`, merged over the dataset's per-mode defaults.
+            transform (Transform | None): Callable mapping the series to the
+                coordinates to plot, overriding the dataset's default view. Returns
+                two arrays for ``"2d"``, three for ``"3d"``, or any number of lines
+                for ``"1d"``, each optionally paired with an axis label::
+
+                    Lorenz.draw(sample, style="2d", transform=lambda d: [("x", d[:, 0]), ("z", d[:, 2])])
             filepath (str | None): If given, the figure is saved to this path
                 (format inferred from the extension) instead of being shown.
         """
@@ -208,12 +229,38 @@ class Dataset(ABC):
         renderer = MatplotlibDatasetRenderer(
             sample,
             mode,
-            config=config,
+            config=cls._resolve_draw_style(mode, config),
             labels=cls._DRAW_COMPONENT_LABELS,
             title=cls.__name__,
+            transform=transform or cls._DRAW_TRANSFORMS.get(mode),
         )
         renderer.plot()
         if filepath:
             renderer.save(filepath)
         else:
             renderer.show()
+
+    @classmethod
+    def _resolve_draw_style(cls, mode: str, config: DatasetStyle | None) -> DatasetStyle:
+        """Merge the dataset's per-mode style defaults with a user ``config``.
+
+        Fields the user set explicitly on ``config`` always take precedence; any
+        field left at its default is filled from :attr:`_DRAW_STYLE_DEFAULTS` for
+        the requested ``mode``, falling back to the :class:`DatasetStyle` defaults.
+
+        Args:
+            mode (str): The plot mode being drawn.
+            config (DatasetStyle | None): The user-supplied style, if any.
+
+        Returns:
+            DatasetStyle: The effective style to render with.
+        """
+        from qilisdk.utils.visualization.style import DatasetStyle  # noqa: PLC0415
+
+        defaults = cls._DRAW_STYLE_DEFAULTS.get(mode, {})
+        if not defaults:
+            return config or DatasetStyle()
+        if config is None:
+            return DatasetStyle(**defaults)
+        user_set = {name: getattr(config, name) for name in config.model_fields_set}
+        return DatasetStyle(**{**defaults, **user_set})

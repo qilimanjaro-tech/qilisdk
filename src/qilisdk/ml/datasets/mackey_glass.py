@@ -13,9 +13,16 @@
 # limitations under the License.
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, Any, ClassVar
+
 import numpy as np
 
 from qilisdk.ml.datasets.dataset import Dataset, DatasetSample, build_prediction_sample, rk4_step
+
+if TYPE_CHECKING:
+    from qilisdk.utils.visualization.dataset_renderers import Transform
+
+_ATTRACTOR_DELAY = 17
 
 
 class MackeyGlass(Dataset):
@@ -44,6 +51,24 @@ class MackeyGlass(Dataset):
 
     _DEFAULT_DRAW_STYLE = "1d"
     _DRAW_COMPONENT_LABELS = ("x",)
+
+    _DRAW_STYLE_DEFAULTS: ClassVar[dict[str, dict[str, Any]]] = {
+        "2d": {"title": "Mackey-Glass attractor"},
+        "3d": {"title": "Mackey-Glass attractor"},
+    }
+
+    # The classic Mackey-Glass attractor is the plot of ``(P(t), P(t - tau))``.
+    _DRAW_TRANSFORMS: ClassVar[dict[str, Transform]] = {
+        "2d": lambda d: [
+            ("P(t)", d[_ATTRACTOR_DELAY:, 0]),
+            (f"P(t - {_ATTRACTOR_DELAY})", d[:-_ATTRACTOR_DELAY, 0]),
+        ],
+        "3d": lambda d: [
+            ("P(t)", d[2 * _ATTRACTOR_DELAY :, 0]),
+            (f"P(t - {_ATTRACTOR_DELAY})", d[_ATTRACTOR_DELAY:-_ATTRACTOR_DELAY, 0]),
+            (f"P(t - {2 * _ATTRACTOR_DELAY})", d[: -2 * _ATTRACTOR_DELAY, 0]),
+        ],
+    }
 
     def __init__(
         self,

@@ -13,11 +13,14 @@
 # limitations under the License.
 from __future__ import annotations
 
-from typing import cast
+from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 import numpy as np
 
 from qilisdk.ml.datasets.dataset import Dataset, DatasetSample, FloatArray, build_prediction_sample, rk4_step
+
+if TYPE_CHECKING:
+    from qilisdk.utils.visualization.dataset_renderers import Transform
 
 
 def integrate_lorenz(
@@ -70,6 +73,15 @@ class Lorenz(Dataset):
 
     _DEFAULT_DRAW_STYLE = "3d"
     _DRAW_COMPONENT_LABELS = ("x", "y", "z")
+
+    _DRAW_STYLE_DEFAULTS: ClassVar[dict[str, dict[str, Any]]] = {
+        "2d": {"title": "Lorenz attractor (x-z projection)"},
+        "3d": {"title": "Lorenz attractor"},
+    }
+
+    _DRAW_TRANSFORMS: ClassVar[dict[str, Transform]] = {
+        "2d": lambda d: [("x", d[:, 0]), ("z", d[:, 2])],
+    }
 
     def __init__(
         self,

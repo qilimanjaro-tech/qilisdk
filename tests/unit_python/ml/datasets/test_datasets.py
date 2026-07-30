@@ -327,3 +327,148 @@ def test_draw_grid_style_color_is_respected(tmp_path):
     LogisticMap().draw(sample, style="1d", config=config, filepath=str(tmp_path / "explicit_grid.png"))
     gridline = plt.gcf().axes[0].xaxis.get_gridlines()[0]
     assert to_rgba(gridline.get_color()) == to_rgba("#ff00ff")
+
+
+def test_mackey_glass_registers_attractor_transforms():
+    # The tau delay is folded into the dataset's transforms rather than into
+    # style.delay, so drawing 2-D/3-D uses a delay embedding out of the box.
+    assert set(MackeyGlass._DRAW_TRANSFORMS) == {"2d", "3d"}
+    resolved = MackeyGlass._resolve_draw_style("2d", None)
+    assert resolved.title == "Mackey-Glass attractor"
+    assert resolved.delay == 1  # untouched global default; the delay lives in the transform
+
+
+def test_explicit_config_field_overrides_per_mode_default():
+    # A field the caller sets explicitly wins over the dataset's per-mode default.
+    resolved = MackeyGlass._resolve_draw_style("2d", DatasetStyle(title="custom"))
+    assert resolved.title == "custom"
+
+
+def test_unrelated_config_field_keeps_per_mode_default():
+    # Setting an unrelated field must not wipe out the dataset's per-mode title.
+    resolved = MackeyGlass._resolve_draw_style("2d", DatasetStyle(theme=dark))
+    assert resolved.title == "Mackey-Glass attractor"
+    assert resolved.theme == dark
+
+
+def test_dataset_without_per_mode_defaults_returns_config_unchanged():
+    # A dataset that declares no per-mode defaults leaves the caller's config intact.
+    assert not LogisticMap._DRAW_STYLE_DEFAULTS
+    config = DatasetStyle(delay=9)
+    assert LogisticMap._resolve_draw_style("2d", config) is config
+
+
+def test_mackey_glass_attractor_embeds_with_tau_delay(tmp_path):
+    # End-to-end: the 2-D transform plots (P(t), P(t - 17)).
+    inputs, _ = MackeyGlass(tau=17.0).generate(500)
+    MackeyGlass.draw(inputs, style="2d", filepath=str(tmp_path / "attractor.png"))
+    ax = plt.gcf().axes[0]
+    offsets = ax.collections[0].get_offsets()
+    assert np.allclose(offsets[:, 0], inputs[17:, 0])  # P(t)
+    assert np.allclose(offsets[:, 1], inputs[:-17, 0])  # P(t - 17)
+    assert (ax.get_xlabel(), ax.get_ylabel()) == ("P(t)", "P(t - 17)")
+
+
+def test_mackey_glass_delay_folded_into_transform_ignores_style_delay(tmp_path):
+    # Because the delay lives in the transform, changing style.delay does not
+    # change the attractor embedding.
+    inputs, _ = MackeyGlass(tau=17.0).generate(500)
+    MackeyGlass.draw(inputs, style="2d", config=DatasetStyle(delay=1), filepath=str(tmp_path / "a.png"))
+    offsets = plt.gcf().axes[0].collections[0].get_offsets()
+    assert np.allclose(offsets[:, 0], inputs[17:, 0])
+    assert np.allclose(offsets[:, 1], inputs[:-17, 0])
+
+
+def test_mackey_glass_3d_transform_embeds_three_delays(tmp_path):
+    # The 3-D transform embeds the series at delays 0, 17 and 34.
+    inputs, _ = MackeyGlass(tau=17.0).generate(500)
+    MackeyGlass.draw(inputs, style="3d", filepath=str(tmp_path / "mg3d.png"))
+    xs, ys, zs = plt.gcf().axes[0].collections[0]._offsets3d
+    assert np.allclose(xs, inputs[34:, 0])
+    assert np.allclose(ys, inputs[17:-17, 0])
+    assert np.allclose(zs, inputs[:-34, 0])
+
+
+def test_lorenz_2d_defaults_to_xz_projection(tmp_path):
+    # Lorenz declares an x-z projection for its 2-D view, not the default x-y.
+    inputs, _ = Lorenz().generate(300)
+    Lorenz.draw(inputs, style="2d", filepath=str(tmp_path / "lorenz_xz.png"))
+    ax = plt.gcf().axes[0]
+    offsets = ax.collections[0].get_offsets()
+    assert np.allclose(offsets[:, 0], inputs[:, 0])  # x
+    assert np.allclose(offsets[:, 1], inputs[:, 2])  # z (not y)
+    assert ax.get_xlabel() == "x"
+    assert ax.get_ylabel() == "z"
+
+
+def test_lorenz_1d_and_3d_use_all_three_components(tmp_path):
+    # 1-D shows three lines (x, y, z); 3-D plots the full attractor.
+    inputs, _ = Lorenz().generate(300)
+    Lorenz.draw(inputs, style="1d", filepath=str(tmp_path / "lorenz_1d.png"))
+    assert [line.get_label() for line in plt.gcf().axes[0].lines] == ["x", "y", "z"]
+    Lorenz.draw(inputs, style="3d", filepath=str(tmp_path / "lorenz_3d.png"))
+    assert plt.gcf().axes[0].collections  # a 3-D trajectory was drawn
+
+
+def test_draw_accepts_custom_transform(tmp_path):
+    # A caller-supplied transform overrides the dataset's default view.
+    inputs, _ = Lorenz().generate(300)
+    Lorenz.draw(
+        inputs,
+        style="2d",
+        transform=lambda d: [("y", d[:, 1]), ("z", d[:, 2])],
+        filepath=str(tmp_path / "lorenz_yz.png"),
+    )
+    ax = plt.gcf().axes[0]
+    offsets = ax.collections[0].get_offsets()
+    assert np.allclose(offsets[:, 0], inputs[:, 1])  # y
+    assert np.allclose(offsets[:, 1], inputs[:, 2])  # z
+    assert (ax.get_xlabel(), ax.get_ylabel()) == ("y", "z")
+
+
+def test_custom_transform_may_return_bare_arrays(tmp_path):
+    # Channels need not be labelled; bare arrays fall back to positional labels.
+    inputs, _ = Lorenz().generate(200)
+
+    def first_two(d):
+        return [d[:, 0], d[:, 1]]
+
+    Lorenz.draw(inputs, style="2d", transform=first_two, filepath=str(tmp_path / "bare.png"))
+    ax = plt.gcf().axes[0]
+    assert (ax.get_xlabel(), ax.get_ylabel()) == ("x", "y")
+
+
+def test_transform_may_reshape_beyond_column_selection(tmp_path):
+    # A transform is a general data transformation, not just column selection:
+    # here it delay-embeds a 3-D series' first component into a 2-D portrait.
+    inputs, _ = Lorenz().generate(200)
+
+    def delay_embed(d):
+        return [("x(t)", d[5:, 0]), ("x(t-5)", d[:-5, 0])]
+
+    Lorenz.draw(inputs, style="2d", transform=delay_embed, filepath=str(tmp_path / "embed.png"))
+    offsets = plt.gcf().axes[0].collections[0].get_offsets()
+    assert np.allclose(offsets[:, 0], inputs[5:, 0])
+    assert np.allclose(offsets[:, 1], inputs[:-5, 0])
+
+
+def test_transform_with_wrong_channel_count_raises():
+    # A 2-D plot needs exactly two coordinates.
+    inputs, _ = Lorenz().generate(200)
+    with pytest.raises(ValueError, match="needs exactly 2 coordinates"):
+        Lorenz.draw(inputs, style="2d", transform=lambda d: [("x", d[:, 0])], filepath=None)
+
+
+def test_transform_with_unequal_lengths_raises():
+    inputs, _ = Lorenz().generate(200)
+    with pytest.raises(ValueError, match="unequal length"):
+        Lorenz.draw(inputs, style="2d", transform=lambda d: [("x", d[:, 0]), ("z", d[:-5, 2])], filepath=None)
+
+
+def test_one_dimensional_transform_can_select_components(tmp_path):
+    # In 1-D any number of lines may be returned, e.g. a subset of components.
+    inputs, _ = Lorenz().generate(200)
+    Lorenz.draw(inputs, style="1d", transform=lambda d: [("z only", d[:, 2])], filepath=str(tmp_path / "z.png"))
+    lines = plt.gcf().axes[0].lines
+    assert len(lines) == 1
+    assert np.allclose(lines[0].get_ydata(), inputs[:, 2])
