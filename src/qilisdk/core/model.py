@@ -75,6 +75,71 @@ def _validate_undirected_edges(edges: list[tuple[int, int]]) -> None:
         seen.add(key)
 
 
+def _validate_positive_count(value: int, name: str) -> None:
+    """Validate that a count used to size a random instance is strictly positive.
+
+    Args:
+        value (int): the count to validate.
+        name (str): the name of the count, used in the error message.
+
+    Raises:
+        ValueError: if ``value`` is not greater than zero.
+    """
+    if value <= 0:
+        raise ValueError(f"{name} must be greater than zero, got {value}.")
+
+
+def _validate_range(value_range: tuple[float, float], name: str) -> None:
+    """Validate that a ``(low, high)`` sampling range is well ordered.
+
+    Args:
+        value_range (tuple[float, float]): the range to validate.
+        name (str): the name of the range, used in the error message.
+
+    Raises:
+        ValueError: if the lower bound is greater than the upper bound.
+    """
+    if value_range[0] > value_range[1]:
+        raise ValueError(f"{name} must be a (low, high) pair with low <= high, got {value_range}.")
+
+
+def _random_connected_edges(
+    num_nodes: int, edge_probability: float, generator: np.random.Generator
+) -> list[tuple[int, int]]:
+    """Generate the edges of a random connected undirected graph on ``num_nodes`` nodes.
+
+    Args:
+        num_nodes (int): the number of nodes in the graph. Must be greater than one.
+        edge_probability (float): the probability of adding each edge that is not part of the
+            spanning tree. Must be in ``[0, 1]``.
+        generator (np.random.Generator): the random number generator to draw from.
+
+    Returns:
+        list[tuple[int, int]]: the edges of the graph as ``(u, v)`` pairs with ``u < v``.
+
+    Raises:
+        ValueError: if ``num_nodes`` is smaller than two.
+        ValueError: if ``edge_probability`` is outside ``[0, 1]``.
+    """
+    if num_nodes < 2:  # noqa: PLR2004
+        raise ValueError(f"A graph must have at least two nodes, got {num_nodes}.")
+    if not 0 <= edge_probability <= 1:
+        raise ValueError(f"edge_probability must be between 0 and 1, got {edge_probability}.")
+
+    order = list(generator.permutation(num_nodes))
+    edges: set[tuple[int, int]] = set()
+    for index in range(1, num_nodes):
+        parent = order[int(generator.integers(index))]
+        child = order[index]
+        edges.add((min(parent, child), max(parent, child)))
+
+    for u, v in itertools.combinations(range(num_nodes), 2):
+        if (u, v) not in edges and generator.random() < edge_probability:
+            edges.add((u, v))
+
+    return sorted(edges)
+
+
 class SlackCounter:
     """A singleton class to generate a slack counter id that increments continuously within the user's active session."""
 
@@ -596,37 +661,163 @@ class Model:
         return model
 
     @classmethod
+    def random_knapsack(
+        cls,
+        num_items: int,
+        value_range: tuple[float, float] = (1, 10),
+        weight_range: tuple[float, float] = (1, 10),
+        capacity_ratio: float = 0.5,
+        label: str = "Random Knapsack",
+        seed: int = 1,
+        lagrange_multiplier: float = 100,
+    ) -> Model:
+        """
+        Factory method to generate a random knapsack model.
+
+        Values and weights are drawn uniformly at random from the given ranges, and the capacity of
+        the knapsack is set to ``capacity_ratio`` times the total weight of all items, so that the
+        instance is neither trivially feasible nor infeasible.
+
+        Args:
+            num_items (int): the number of items to generate.
+            value_range (tuple[float, float], optional): the range from which item values are drawn uniformly at random. Defaults to (1, 10).
+            weight_range (tuple[float, float], optional): the range from which item weights are drawn uniformly at random. Defaults to (1, 10).
+            capacity_ratio (float, optional): the fraction of the total weight that the knapsack can carry. Defaults to 0.5.
+            label (str, optional): the model label. Defaults to "Random Knapsack".
+            seed (int, optional): the seed for the random number generator. Defaults to 1.
+            lagrange_multiplier (float, optional): penalty scale for the weight constraint when converting to QUBO. Defaults to 100.
+
+        Returns:
+            Model: a model of a random knapsack problem with the given parameters.
+
+        Raises:
+            ValueError: if the number of items is not greater than zero.
+            ValueError: if a range is not a well-ordered ``(low, high)`` pair.
+            ValueError: if ``capacity_ratio`` is negative.
+        """
+        _validate_positive_count(num_items, "num_items")
+        _validate_range(value_range, "value_range")
+        _validate_range(weight_range, "weight_range")
+        if capacity_ratio < 0:
+            raise ValueError(f"capacity_ratio must be non-negative, got {capacity_ratio}.")
+
+        generator = np.random.default_rng(seed)
+        values = [float(generator.uniform(low=value_range[0], high=value_range[1])) for _ in range(num_items)]
+        weights = [float(generator.uniform(low=weight_range[0], high=weight_range[1])) for _ in range(num_items)]
+        return cls.knapsack(
+            values=values,
+            weights=weights,
+            max_weight=capacity_ratio * sum(weights),
+            label=label,
+            lagrange_multiplier=lagrange_multiplier,
+        )
+
+    @classmethod
+    def ising(
+        cls,
+        edges: list[tuple[int, int]],
+        couplings: list[float] | None = None,
+        fields: Mapping[int, float] | list[float] | None = None,
+        label: str = "Ising",
+    ) -> Model:
+        """Factory method to generate an Ising model from a weighted graph.
+
+        .. math::
+
+            \\text{minimise} \\quad \\sum_{(u,v) \\in E} J_{uv}\\, x_u x_v + \\sum_i h_i x_i
+
+        Args:
+            edges (list[tuple[int, int]]): the edges of the graph as ``(u, v)`` pairs.
+            couplings (list[float] | None, optional): the coupling ``J`` of each edge, parallel to ``edges``. Defaults to 1 for all edges.
+            fields (Mapping[int, float] | list[float] | None, optional): the local field ``h`` of each node, either as a
+                mapping from node to field (which may introduce nodes that are not part of any edge) or as a list
+                parallel to the sorted nodes of the graph. Defaults to no local fields.
+            label (str, optional): the model label. Defaults to "Ising".
+
+        Returns:
+            Model: a model of the Ising problem for the given graph.
+
+        Raises:
+            ValueError: if couplings are provided and their number is different from the number of edges.
+            ValueError: if fields are provided as a list whose length differs from the number of nodes.
+            ValueError: if the graph contains a self-loop or a duplicate (undirected) edge.
+            ValueError: if the resulting model has no variables.
+        """
+        if couplings is not None and len(couplings) != len(edges):
+            raise ValueError("the number of couplings must be equal to the number of edges.")
+        _validate_undirected_edges(edges)
+
+        nodes = sorted({n for u, v in edges for n in (u, v)})
+        if isinstance(fields, list):
+            if len(fields) != len(nodes):
+                raise ValueError("the number of fields must be equal to the number of nodes in the graph.")
+            field_map: dict[int, float] = dict(zip(nodes, fields))
+        else:
+            field_map = dict(fields) if fields is not None else {}
+            nodes = sorted(set(nodes) | set(field_map))
+
+        if not nodes:
+            raise ValueError(_EMPTY_GRAPH_MSG)
+
+        x = {n: BinaryVariable(f"x{n}") for n in nodes}
+        list_of_terms: list[BaseVariable | Term | Number] = [
+            field_map[n] * x[n] for n in nodes if field_map.get(n, 0) != 0
+        ]
+        list_of_terms.extend((1 if couplings is None else couplings[i]) * x[u] * x[v] for i, (u, v) in enumerate(edges))
+
+        model = cls(label)
+        model.set_objective(Term(list_of_terms, Operation.ADD), sense=ObjectiveSense.MINIMIZE)
+        return model
+
+    @classmethod
     def random_ising(
         cls,
         num_variables: int,
+        edge_probability: float = 1.0,
         coefficient_range: tuple[float, float] = (-1, 1),
         label: str = "Random Ising",
         seed: int = 1,
     ) -> Model:
         """Factory method to generate a random Ising model.
 
+        Every node carries a local field, and the nodes are coupled according to a random connected
+        graph, with all coefficients drawn uniformly at random. By default the graph is fully
+        connected, so every pair of nodes is coupled.
+
         Args:
             num_variables (int): the number of variables in the Ising model.
+            edge_probability (float, optional): the probability of coupling each pair of nodes that is not part of the random spanning tree that keeps the graph connected. Defaults to 1.0, i.e. a fully connected model.
             coefficient_range (tuple[float, float], optional): the range from which the coefficients of the Ising model are drawn uniformly at random. Defaults to (-1, 1).
             label (str, optional): the model label. Defaults to "Random Ising".
             seed (int, optional): the seed for the random number generator. Defaults to 1.
 
         Returns:
             Model: a model of a random Ising problem with the given parameters.
+
+        Raises:
+            ValueError: if the number of variables is not greater than zero.
+            ValueError: if ``edge_probability`` is outside ``[0, 1]``.
+            ValueError: if ``coefficient_range`` is not a well-ordered ``(low, high)`` pair.
         """
-        model = cls(label)
-        variables = [BinaryVariable(f"x{i}") for i in range(num_variables)]
+        _validate_positive_count(num_variables, "num_variables")
+        _validate_range(coefficient_range, "coefficient_range")
+        if not 0 <= edge_probability <= 1:
+            raise ValueError(f"edge_probability must be between 0 and 1, got {edge_probability}.")
+
         generator = np.random.default_rng(seed)
-        list_of_terms: list[BaseVariable | Term | Number] = []
-        for i in range(num_variables):
-            list_of_terms.append(generator.uniform(low=coefficient_range[0], high=coefficient_range[1]) * variables[i])
-            for j in range(i + 1, num_variables):
-                list_of_terms.append(
-                    generator.uniform(low=coefficient_range[0], high=coefficient_range[1]) * variables[i] * variables[j]
-                )
-        term = Term(list_of_terms, Operation.ADD)
-        model.set_objective(term)
-        return model
+        if num_variables == 1:
+            edges: list[tuple[int, int]] = []
+        elif edge_probability >= 1:
+            edges = list(itertools.combinations(range(num_variables), 2))
+        else:
+            edges = _random_connected_edges(num_variables, edge_probability, generator)
+
+        fields = {
+            i: float(generator.uniform(low=coefficient_range[0], high=coefficient_range[1]))
+            for i in range(num_variables)
+        }
+        couplings = [float(generator.uniform(low=coefficient_range[0], high=coefficient_range[1])) for _ in edges]
+        return cls.ising(edges=edges, couplings=couplings, fields=fields, label=label)
 
     @classmethod
     def factoring(
@@ -701,6 +892,43 @@ class Model:
         return model
 
     @classmethod
+    def random_max_cut(
+        cls,
+        num_nodes: int,
+        edge_probability: float = 0.5,
+        weight_range: tuple[float, float] | None = None,
+        label: str = "Random Max-Cut",
+        seed: int = 1,
+    ) -> Model:
+        """Factory method to generate a max-cut model on a random connected graph.
+
+        Args:
+            num_nodes (int): the number of nodes in the graph. Must be greater than one.
+            edge_probability (float, optional): the probability of adding each edge that is not part of the random spanning tree that keeps the graph connected. Defaults to 0.5.
+            weight_range (tuple[float, float] | None, optional): the range from which the edge weights are drawn uniformly at random. Defaults to unweighted (all weights equal to 1).
+            label (str, optional): the model label. Defaults to "Random Max-Cut".
+            seed (int, optional): the seed for the random number generator. Defaults to 1.
+
+        Returns:
+            Model: a model of the max-cut problem for a random graph with the given parameters.
+
+        Raises:
+            ValueError: if ``num_nodes`` is smaller than two.
+            ValueError: if ``edge_probability`` is outside ``[0, 1]``.
+            ValueError: if ``weight_range`` is not a well-ordered ``(low, high)`` pair.
+        """
+        if weight_range is not None:
+            _validate_range(weight_range, "weight_range")
+        generator = np.random.default_rng(seed)
+        edges = _random_connected_edges(num_nodes, edge_probability, generator)
+        weights = (
+            None
+            if weight_range is None
+            else [float(generator.uniform(low=weight_range[0], high=weight_range[1])) for _ in edges]
+        )
+        return cls.max_cut(edges=edges, weights=weights, label=label)
+
+    @classmethod
     def graph_coloring(
         cls,
         edges: list[tuple[int, int]],
@@ -755,6 +983,44 @@ class Model:
                 model.set_objective(objective, sense=ObjectiveSense.MINIMIZE)
 
         return model
+
+    @classmethod
+    def random_graph_coloring(
+        cls,
+        num_nodes: int,
+        num_colors: int,
+        edge_probability: float = 0.5,
+        label: str = "Random Graph Coloring",
+        seed: int = 1,
+        lagrange_multiplier: float = 100,
+    ) -> Model:
+        """Factory method to generate a graph coloring model on a random connected graph.
+
+        Args:
+            num_nodes (int): the number of nodes in the graph. Must be greater than one.
+            num_colors (int): the number of colors available.
+            edge_probability (float, optional): the probability of adding each edge that is not part of the random spanning tree that keeps the graph connected. Defaults to 0.5.
+            label (str, optional): the model label. Defaults to "Random Graph Coloring".
+            seed (int, optional): the seed for the random number generator. Defaults to 1.
+            lagrange_multiplier (float, optional): penalty scale for the one-color constraints when converting to QUBO. Defaults to 100.
+
+        Returns:
+            Model: a model of the graph coloring problem for a random graph with the given parameters.
+
+        Raises:
+            ValueError: if ``num_nodes`` is smaller than two.
+            ValueError: if ``num_colors`` is not greater than zero.
+            ValueError: if ``edge_probability`` is outside ``[0, 1]``.
+        """
+        _validate_positive_count(num_colors, "num_colors")
+        generator = np.random.default_rng(seed)
+        edges = _random_connected_edges(num_nodes, edge_probability, generator)
+        return cls.graph_coloring(
+            edges=edges,
+            num_colors=num_colors,
+            label=label,
+            lagrange_multiplier=lagrange_multiplier,
+        )
 
     @classmethod
     def travelling_salesman(
@@ -835,6 +1101,60 @@ class Model:
             raise ValueError(_EMPTY_GRAPH_MSG)
 
         return model
+
+    @classmethod
+    def random_travelling_salesman(
+        cls,
+        num_cities: int,
+        edge_probability: float = 1.0,
+        distance_range: tuple[float, float] = (1, 10),
+        label: str = "Random Travelling Salesman",
+        seed: int = 1,
+        lagrange_multiplier: float = 100,
+    ) -> Model:
+        """Factory method to generate a travelling salesman model on a random graph.
+
+        The distance of each edge is drawn uniformly at random from ``distance_range``. By default
+        the graph is complete, so every pair of cities is connected.
+
+        Note that a sparser graph is only guaranteed to be connected, not Hamiltonian, and that the
+        objective charges nothing for travelling between two cities that are not connected by an
+        edge, so the optimal tour of a sparse instance may use city pairs that have no edge.
+
+        Args:
+            num_cities (int): the number of cities. Must be greater than one.
+            edge_probability (float, optional): the probability of connecting each pair of cities that is not part of the random spanning tree that keeps the graph connected. Defaults to 1.0, i.e. a complete graph.
+            distance_range (tuple[float, float], optional): the range from which the distances are drawn uniformly at random. Defaults to (1, 10).
+            label (str, optional): the model label. Defaults to "Random Travelling Salesman".
+            seed (int, optional): the seed for the random number generator. Defaults to 1.
+            lagrange_multiplier (float, optional): penalty scale for the tour validity constraints when converting to QUBO. Defaults to 100.
+
+        Returns:
+            Model: a model of the travelling salesman problem for a random graph with the given parameters.
+
+        Raises:
+            ValueError: if ``num_cities`` is smaller than two.
+            ValueError: if ``edge_probability`` is outside ``[0, 1]``.
+            ValueError: if ``distance_range`` is not a well-ordered ``(low, high)`` pair.
+        """
+        if num_cities < 2:  # noqa: PLR2004
+            raise ValueError(f"num_cities must be greater than one, got {num_cities}.")
+        if not 0 <= edge_probability <= 1:
+            raise ValueError(f"edge_probability must be between 0 and 1, got {edge_probability}.")
+        _validate_range(distance_range, "distance_range")
+
+        generator = np.random.default_rng(seed)
+        if edge_probability >= 1:
+            edges = list(itertools.combinations(range(num_cities), 2))
+        else:
+            edges = _random_connected_edges(num_cities, edge_probability, generator)
+        distances = [float(generator.uniform(low=distance_range[0], high=distance_range[1])) for _ in edges]
+        return cls.travelling_salesman(
+            edges=edges,
+            distances=distances,
+            label=label,
+            lagrange_multiplier=lagrange_multiplier,
+        )
 
 
 class _Linearizer:
