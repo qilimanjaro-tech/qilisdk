@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import copy
 import itertools
-from typing import TYPE_CHECKING, Literal, Mapping, Type
+from typing import TYPE_CHECKING, Literal, Mapping, Type, cast
 
 import numpy as np
 from loguru import logger
@@ -748,13 +748,14 @@ class Model:
         _validate_undirected_edges(edges)
 
         nodes = sorted({n for u, v in edges for n in (u, v)})
-        if isinstance(fields, list):
+        field_map: dict[int, float] = {}
+        if isinstance(fields, Mapping):
+            field_map = dict(cast("Mapping[int, float]", fields))
+            nodes = sorted(set(nodes) | set(field_map))
+        elif fields is not None:
             if len(fields) != len(nodes):
                 raise ValueError("the number of fields must be equal to the number of nodes in the graph.")
-            field_map: dict[int, float] = dict(zip(nodes, fields))
-        else:
-            field_map = dict(fields) if fields is not None else {}
-            nodes = sorted(set(nodes) | set(field_map))
+            field_map = dict(zip(nodes, cast("list[float]", fields)))
 
         if not nodes:
             raise ValueError(_EMPTY_GRAPH_MSG)
