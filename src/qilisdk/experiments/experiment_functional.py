@@ -16,8 +16,6 @@ from __future__ import annotations
 from abc import ABC
 from typing import ClassVar, Generic, TypeVar
 
-from loguru import logger
-
 from qilisdk.experiments.experiment_result import ExperimentResult
 from qilisdk.functionals.functional import Functional
 from qilisdk.yaml import yaml

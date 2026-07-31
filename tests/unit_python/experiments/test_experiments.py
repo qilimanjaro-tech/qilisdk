@@ -21,9 +21,7 @@ from loguru import logger
 
 from qilisdk.experiments import Dimension, ExperimentResult
 
-_FIT_WARNING = (
-    "[ExperimentResult] Fitting is only implemented for amplitude plots. Ignoring fit request for non-amplitude plot."
-)
+_FIT_WARNING = "Fitting is only implemented for amplitude plots. Ignoring fit request for non-amplitude plot."
 
 
 class RecordingResult(ExperimentResult):
