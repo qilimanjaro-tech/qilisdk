@@ -855,3 +855,130 @@ def test_pauli_operator_rejects_negative_qubit():
     """QSDK-05: a Pauli operator must reject a negative qubit at construction."""
     with pytest.raises(ValueError, match="non-negative"):
         PauliX(-1)
+
+
+@pytest.mark.parametrize(
+    ("nqubits", "terms", "expected"),
+    [
+        # The docstring example: a one-qubit word is placed on every qubit.
+        (2, [(1.3, "X"), (-2, "ZZ")], 1.3 * X(0) + 1.3 * X(1) - 2 * Z(0) * Z(1)),
+        # Two-qubit words are placed on every combination of qubits in increasing order.
+        (
+            3,
+            [(1, "Z"), (2, "ZZ")],
+            Z(0) + Z(1) + Z(2) + 2 * Z(0) * Z(1) + 2 * Z(0) * Z(2) + 2 * Z(1) * Z(2),
+        ),
+        # Mixed-letter words follow the same increasing-index placement.
+        (3, [(1, "XY")], X(0) * Y(1) + X(0) * Y(2) + X(1) * Y(2)),
+        # Words are case insensitive.
+        (2, [(1.3, "x"), (-2, "zZ")], 1.3 * X(0) + 1.3 * X(1) - 2 * Z(0) * Z(1)),
+        # Complex coefficients are allowed.
+        (2, [(2j, "Y")], 2j * Y(0) + 2j * Y(1)),
+        # Identity letters are stripped from the word, so "IZ" is just "Z".
+        (3, [(1, "IZ")], Z(0) + Z(1) + Z(2)),
+        (3, [(1, "ZIZ")], Z(0) * Z(1) + Z(0) * Z(2) + Z(1) * Z(2)),
+        # A word of identities is a plain scalar term.
+        (2, [(2.5, "I")], 2.5 * I(0)),
+        # Stripping happens before the width check, so "IIZ" fits on a single qubit.
+        (1, [(1, "IIZ")], Z(0)),
+        # Repeated words accumulate their coefficients.
+        (2, [(1, "ZZ"), (0.5, "ZZ")], 1.5 * Z(0) * Z(1)),
+        # A word spanning every qubit has a single placement.
+        (3, [(1, "ZZZ")], Z(0) * Z(1) * Z(2)),
+        # An empty term list gives the zero Hamiltonian.
+        (2, [], Hamiltonian()),
+    ],
+)
+def test_hamiltonian_constant(nqubits: int, terms: list[tuple[complex, str]], expected: Hamiltonian):
+    assert Hamiltonian.constant(nqubits=nqubits, terms=terms) == expected
+
+
+def test_hamiltonian_constant_nqubits():
+    H = Hamiltonian.constant(nqubits=4, terms=[(1.0, "ZZ")])
+
+    assert H.nqubits == 4
+    # C(4, 2) placements of a two-qubit word.
+    assert len(H.elements) == 6
+
+
+@pytest.mark.parametrize(
+    ("nqubits", "terms", "match"),
+    [
+        (0, [(1.0, "X")], "nqubits must be greater than zero"),
+        (-1, [(1.0, "X")], "nqubits must be greater than zero"),
+        (2, [(1.0, "A")], "Invalid Pauli word"),
+        (2, [(1.0, "XA")], "Invalid Pauli word"),
+        (2, [(1.0, "")], "Invalid Pauli word"),
+        (2, [(1.0, "X 0")], "Invalid Pauli word"),
+        (2, [(1.0, "ZZZ")], "acts on 3 qubits, but only 2 are available"),
+    ],
+)
+def test_hamiltonian_constant_invalid_arguments(nqubits: int, terms: list[tuple[complex, str]], match: str):
+    with pytest.raises(ValueError, match=match):
+        Hamiltonian.constant(nqubits=nqubits, terms=terms)
+
+
+def test_hamiltonian_identity_letters_are_stripped_from_words():
+    assert Hamiltonian.constant(nqubits=3, terms=[(1.0, "IZ")]) == Hamiltonian.constant(nqubits=3, terms=[(1.0, "Z")])
+    assert Hamiltonian.random(nqubits=3, terms=["ZIZ"], seed=4) == Hamiltonian.random(nqubits=3, terms=["ZZ"], seed=4)
+
+
+def test_hamiltonian_words_are_placed_in_increasing_qubit_order():
+    # Documented behaviour: "XY" gives X(0) Y(1), not X(1) Y(0). Pass both words to be symmetric.
+    assert Hamiltonian.constant(nqubits=2, terms=[(1.0, "XY")]) == X(0) * Y(1)
+    assert Hamiltonian.constant(nqubits=2, terms=[(1.0, "XY"), (1.0, "YX")]) == X(0) * Y(1) + Y(0) * X(1)
+
+
+def test_hamiltonian_random_structure():
+    H = Hamiltonian.random(nqubits=2, coefficient_range=(-1, 1), terms=["X", "ZZ"])
+
+    # Same operator products as the constant counterpart, but each with its own coefficient.
+    assert set(H.elements) == set(Hamiltonian.constant(nqubits=2, terms=[(1.0, "X"), (1.0, "ZZ")]).elements)
+    assert H.nqubits == 2
+    coefficients = list(H.elements.values())
+    assert len(coefficients) == 3
+    assert all(isinstance(c, float) or c.imag == 0 for c in coefficients)
+    assert len(set(coefficients)) == 3, "each placement should get an independently drawn coefficient"
+
+
+def test_hamiltonian_random_respects_coefficient_range():
+    H = Hamiltonian.random(nqubits=4, terms=["Z", "ZZ"], coefficient_range=(2.5, 3.5), seed=12)
+
+    assert len(H.elements) == 4 + 6
+    assert all(2.5 <= complex(c).real <= 3.5 for c in H.elements.values())
+    assert all(complex(c).imag == 0 for c in H.elements.values())
+
+
+def test_hamiltonian_random_is_seeded():
+    H1 = Hamiltonian.random(nqubits=3, terms=["X", "ZZ"], seed=42)
+    H2 = Hamiltonian.random(nqubits=3, terms=["X", "ZZ"], seed=42)
+    H3 = Hamiltonian.random(nqubits=3, terms=["X", "ZZ"], seed=43)
+
+    assert H1 == H2
+    assert H1 != H3
+
+
+def test_hamiltonian_random_default_range_is_symmetric_unit_interval():
+    H = Hamiltonian.random(nqubits=5, terms=["Z"], seed=3)
+
+    assert all(-1.0 <= complex(c).real <= 1.0 for c in H.elements.values())
+
+
+def test_hamiltonian_random_is_case_insensitive():
+    assert Hamiltonian.random(nqubits=3, terms=["x", "zZ"], seed=5) == Hamiltonian.random(
+        nqubits=3, terms=["X", "ZZ"], seed=5
+    )
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "match"),
+    [
+        ({"nqubits": 0, "terms": ["X"]}, "nqubits must be greater than zero"),
+        ({"nqubits": 2, "terms": ["A"]}, "Invalid Pauli word"),
+        ({"nqubits": 2, "terms": ["ZZZ"]}, "acts on 3 qubits, but only 2 are available"),
+        ({"nqubits": 2, "terms": ["X"], "coefficient_range": (1.0, -1.0)}, "must be a \\(low, high\\) pair"),
+    ],
+)
+def test_hamiltonian_random_invalid_arguments(kwargs: dict, match: str):
+    with pytest.raises(ValueError, match=match):
+        Hamiltonian.random(**kwargs)

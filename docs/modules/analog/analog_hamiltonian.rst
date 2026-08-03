@@ -10,6 +10,43 @@ To construct a Hamiltonian with a single Pauli, you can use the constructors ``X
 From these single-qubit operators, you can build multi-qubit Hamiltonians using arithmetic operations.
 The operations follow Python syntax, for example: ``2 * Z(0) + Z(1)`` and ``Z(0) * Z(1)`` build multi-qubit Hamiltonians.
 
+Alternatively, you can use the :meth:`~qilisdk.analog.hamiltonian.Hamiltonian.constant` method to construct a Hamiltonian 
+from a list of terms (strings specifying which Pauli operators) and their coefficients.
+
+
+.. code-block:: python
+
+    from qilisdk.analog import Hamiltonian
+
+    H = Hamiltonian.constant(nqubits=2, terms=[(1.3, "X"), (-2, "ZZ")])
+    print(H)
+
+**Output:**
+
+::
+
+    1.3 X(0) + 1.3 X(1) - 2 Z(0) Z(1)
+
+:meth:`~qilisdk.analog.hamiltonian.Hamiltonian.random` instead draws an independent coefficient for
+each placement, uniformly at random from ``coefficient_range`` (``(-1.0, 1.0)`` by default):
+
+.. code-block:: python
+
+    from qilisdk.analog import Hamiltonian
+
+    H = Hamiltonian.random(nqubits=2, coefficient_range=(-1, 1), terms=["X", "ZZ"], seed=1)
+    print(H)
+
+**Output:**
+
+::
+
+    0.023643249400513433 X(0) + 0.9009273926518706 X(1) - 0.7116807745607325 Z(0) Z(1)
+
+Note that for both of these constructors, the terms are built for i < j, such that building a 2-qubit
+Hamiltonian with the term ``XY`` will result in ``X(0) Y(1)``, and not ``X(1) Y(0)``. If you want something
+more symmetric, use ``XY`` and ``YX`` terms.
+
 List of Operations
 ======================
 
@@ -39,6 +76,8 @@ List of Operations
 
 - from qtensor: :meth:`Hamiltonian.from_qtensor(qtensor)<qilisdk.analog.hamiltonian.Hamiltonian.from_qtensor>`
 - from string: :meth:`Hamiltonian.parse(hamiltonian_string)<qilisdk.analog.hamiltonian.Hamiltonian.parse>`
+- from Pauli words: :meth:`Hamiltonian.constant(nqubits, terms)<qilisdk.analog.hamiltonian.Hamiltonian.constant>`
+- from Pauli words, randomly weighted: :meth:`Hamiltonian.random(nqubits, terms)<qilisdk.analog.hamiltonian.Hamiltonian.random>`
 
 Example: Ising Hamiltonian
 ============================

@@ -17,7 +17,7 @@ import copy
 import re
 from abc import ABC
 from collections import defaultdict
-from itertools import product
+from itertools import combinations, product, starmap
 from typing import TYPE_CHECKING, Callable, ClassVar
 
 import numpy as np
@@ -35,7 +35,7 @@ from qilisdk.yaml import yaml
 from .exceptions import InvalidHamiltonianOperation
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Iterator, Sequence
 
 _DIVISION_BY_OPERATORS_MESSAGE = "Division by operators is not supported"
 _GENERIC_VARIABLE_IN_TERM_MESSAGE = "Term provided contains generic variables that are not Parameter."
@@ -232,6 +232,9 @@ class PauliI(PauliOperator):
 
 
 _PAULI_CLASS_BY_NAME: dict[str, type[PauliOperator]] = {cls._NAME: cls for cls in (PauliI, PauliX, PauliY, PauliZ)}
+
+# A Pauli word such as "X", "ZZ" or "xYz"
+_PAULI_WORD_PATTERN = re.compile(r"[IXYZ]+")
 
 # Cache sparse single-qubit matrices once per dtype to avoid rebuilding them for every term.
 _SINGLE_QUBIT_SPARSE: dict[tuple[str, np.dtype], csr_matrix] = {}
@@ -590,6 +593,138 @@ class Hamiltonian(Parameterizable):
                 partitions.append({term: coeff})
 
         return partitions
+
+    @staticmethod
+    def _parse_pauli_word(word: str, nqubits: int) -> str:
+        """Normalise a Pauli word such as ``"zz"`` into its canonical upper-case, identity-free form.
+
+        Args:
+            word (str): the Pauli word to normalise, case insensitive.
+            nqubits (int): the number of qubits the word has to fit on.
+
+        Returns:
+            str: the upper-case Pauli word with identity letters removed.
+
+        Raises:
+            ValueError: if the word is empty or contains letters other than ``I``, ``X``, ``Y`` and ``Z``.
+            ValueError: if the word acts on more qubits than ``nqubits``.
+        """
+        normalized = word.strip().upper()
+        if not _PAULI_WORD_PATTERN.fullmatch(normalized):
+            raise ValueError(
+                f"Invalid Pauli word {word!r}: expected a non-empty string of I, X, Y and Z letters (case insensitive)."
+            )
+        normalized = normalized.replace("I", "")
+        if len(normalized) > nqubits:
+            raise ValueError(f"Pauli word {word!r} acts on {len(normalized)} qubits, but only {nqubits} are available.")
+        logger.debug("[Hamiltonian] Normalized Pauli word {} to {}", word, normalized)
+        return normalized
+
+    @staticmethod
+    def _place_pauli_word(word: str, nqubits: int) -> list[tuple[PauliOperator, ...]]:
+        """Enumerate every placement of a Pauli word on ``nqubits`` qubits.
+
+        The word is placed on every combination of qubit indices in increasing order, so a word of
+        length ``k`` yields ``C(nqubits, k)`` operator products. For instance ``"ZZ"`` on 3 qubits
+        gives ``Z(0) Z(1)``, ``Z(0) Z(2)`` and ``Z(1) Z(2)``, while ``"XY"`` gives ``X(0) Y(1)``,
+        ``X(0) Y(2)`` and ``X(1) Y(2)``.
+
+        Args:
+            word (str): a normalised (upper-case, identity-free) Pauli word.
+            nqubits (int): the number of qubits to distribute the word over.
+
+        Returns:
+            list[tuple[PauliOperator, ...]]: the operator products. The empty word has the single
+                placement ``(I(0),)``, i.e. a plain scalar term.
+        """
+        if not word:
+            return [(PauliI(0),)]
+        return [
+            tuple(starmap(_get_pauli, zip(word, qubits, strict=True)))
+            for qubits in combinations(range(nqubits), len(word))
+        ]
+
+    @classmethod
+    def constant(cls, nqubits: int, terms: Sequence[tuple[Number, str]]) -> Hamiltonian:
+        """
+        Build a Hamiltonian in which every placement of a Pauli word shares the same coefficient.
+
+        Example:
+            .. code-block:: python
+
+                from qilisdk.analog import Hamiltonian
+
+                H = Hamiltonian.constant(nqubits=2, terms=[(1.3, "X"), (-2, "ZZ")])
+                # 1.3 X(0) + 1.3 X(1) - 2 Z(0) Z(1)
+
+        Args:
+            nqubits (int): the number of qubits the Hamiltonian acts on.
+            terms (Sequence[tuple[Number, str]]): the ``(coefficient, Pauli word)`` pairs. Pauli
+                words are case insensitive, so ``"zz"`` and ``"ZZ"`` are equivalent.
+
+        Returns:
+            Hamiltonian: the Hamiltonian summing every placement of every requested word.
+
+        Raises:
+            ValueError: if ``nqubits`` is not greater than zero.
+            ValueError: if a Pauli word is malformed or acts on more than ``nqubits`` qubits.
+        """
+        if nqubits <= 0:
+            raise ValueError(f"nqubits must be greater than zero, got {nqubits}.")
+        logger.debug("[Hamiltonian] Building constant Hamiltonian over {} qubits from {} words", nqubits, len(terms))
+        elements: dict[tuple[PauliOperator, ...], complex | Term | Parameter] = defaultdict(complex)
+        for coefficient, word in terms:
+            for operators in cls._place_pauli_word(cls._parse_pauli_word(word, nqubits), nqubits):
+                elements[operators] += coefficient
+        return cls(elements)
+
+    @classmethod
+    def random(
+        cls,
+        nqubits: int,
+        terms: Sequence[str],
+        coefficient_range: tuple[float, float] = (-1.0, 1.0),
+        seed: int = 1,
+    ) -> Hamiltonian:
+        """
+        Build a Hamiltonian with random coefficients for every Pauli word.
+
+        Example:
+            .. code-block:: python
+
+                from qilisdk.analog import Hamiltonian
+
+                H = Hamiltonian.random(nqubits=2, coefficient_range=(-1, 1), terms=["X", "ZZ"])
+                # -0.8 X(0) + 0.3 X(1) + 0.6 Z(0) Z(1)
+
+        Args:
+            nqubits (int): the number of qubits the Hamiltonian acts on.
+            terms (Sequence[str]): the Pauli words to place. Case insensitive, so ``"zz"`` and
+                ``"ZZ"`` are equivalent.
+            coefficient_range (tuple[float, float], optional): the range from which coefficients are
+                drawn uniformly at random. Defaults to (-1.0, 1.0).
+            seed (int, optional): the seed for the random number generator. Defaults to 1.
+
+        Returns:
+            Hamiltonian: the Hamiltonian with randomly weighted placements of every requested word.
+
+        Raises:
+            ValueError: if ``nqubits`` is not greater than zero.
+            ValueError: if ``coefficient_range`` is not a well-ordered ``(low, high)`` pair.
+            ValueError: if a Pauli word is malformed or acts on more than ``nqubits`` qubits.
+        """
+        if nqubits <= 0:
+            raise ValueError(f"nqubits must be greater than zero, got {nqubits}.")
+        if coefficient_range[0] > coefficient_range[1]:
+            raise ValueError(f"coefficient_range must be a (low, high) pair with low <= high, got {coefficient_range}.")
+
+        logger.debug("[Hamiltonian] Building random Hamiltonian over {} qubits from {} words", nqubits, len(terms))
+        generator = np.random.default_rng(seed)
+        elements: dict[tuple[PauliOperator, ...], complex | Term | Parameter] = defaultdict(complex)
+        for word in terms:
+            for operators in cls._place_pauli_word(cls._parse_pauli_word(word, nqubits), nqubits):
+                elements[operators] += float(generator.uniform(low=coefficient_range[0], high=coefficient_range[1]))
+        return cls(elements)
 
     @classmethod
     def from_qtensor(cls, tensor: QTensor, tol: float | None = None, prune: float | None = None) -> Hamiltonian:
