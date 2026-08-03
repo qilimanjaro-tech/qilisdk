@@ -209,32 +209,26 @@ function) and submit it as any other functional.
 Pulse Experiments
 -----------------
 
-The SpeQtrum client also supports calibration-style experiments defined in :mod:`qilisdk.experiments.experiment_functional`. These
-functional objects mirror the interfaces described in the :doc:`/modules/functionals/functionals` chapter and return rich result types.
+The SpeQtrum client also supports calibration-style experiments. An experiment is any subclass of
+:class:`~qilisdk.experiments.experiment_functional.ExperimentFunctional`; the concrete experiments (Rabi, T1, T2,
+spectroscopy, ...) are provided privately to the SpeQtrum user, together with the matching
+:class:`~qilisdk.experiments.experiment_result.ExperimentResult` subclass. Experiments are submitted without a
+readout, since the acquisition is defined by the experiment itself.
 
 .. SKIP
 .. code-block:: python
 
-    import numpy as np
     from qilisdk.speqtrum import DeviceType, SpeQtrum
-    from qilisdk.experiments import RabiExperiment, T1Experiment
 
     client = SpeQtrum()
     device = client.list_devices(
         where=lambda d: d.type in (DeviceType.QPU_ANALOG, DeviceType.QPU_DIGITAL)
     )[0].code
 
-    # Rabi experiment: sweep drive durations
-    rabi = RabiExperiment(qubit=0, averages=10_000, drive_duration_values=np.linspace(0, 200, 21))
-    rabi_handle = client.submit(rabi, device=device)
-    rabi_response = client.wait_for_job(rabi_handle, timeout=600)
-    rabi_result = rabi_response.get_results()
+    # `experiment` is an ExperimentFunctional subclass provided to the user.
+    handle = client.submit(experiment, device=device)
+    response = client.wait_for_job(handle, timeout=600)
+    result = response.get_results()
 
-    # T1 relaxation experiment: sweep wait durations
-    t1 = T1Experiment(qubit=0, averages=10_000, wait_duration_values=np.linspace(0, 400, 41))
-    t1_handle = client.submit(t1, device=device)
-    t1_response = client.wait_for_job(t1_handle, timeout=600)
-    t1_result = t1_response.get_results()
-
-The resulting :class:`~qilisdk.experiments.experiment_result.RabiExperimentResult` and
-:class:`~qilisdk.experiments.experiment_result.T1ExperimentResult` objects can then be used directly.
+The resulting :class:`~qilisdk.experiments.experiment_result.ExperimentResult` carries the acquired sweep data
+(``s21``, ``s21_modulus``, ``s21_db``, ``s21_phase``) and its ``plot`` method renders the 1D or 2D sweep directly.

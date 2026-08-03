@@ -1313,6 +1313,54 @@ def test_pow_map():
         Pow(p, -1).evaluate({p: 0})
 
 
+def test_different_mathematical_maps_of_same_argument_are_not_equal():
+    p = Parameter("p", 0.5)
+
+    sin_a, sin_b = Sin(p), Sin(p)
+    assert sin_a == sin_b
+    assert hash(sin_a) == hash(sin_b)
+
+    for lhs, rhs in [(Sin(p), Cos(p)), (Sin(p), Tan(p)), (Exp(p), Log(p)), (Sqrt(p), Inv(p)), (Inv(p), Abs(p))]:
+        assert lhs != rhs
+        assert hash(lhs) != hash(rhs)
+
+    assert Sin(p) != DummyMap(p)
+    assert hash(Sin(p)) != hash(DummyMap(p))
+
+    b = BinaryVariable("b")
+    term = 2 * b + p
+    assert Sin(term) != Cos(term)
+    assert Sin(b) != Cos(b)
+
+
+def test_pow_maps_with_different_exponents_are_not_equal():
+    p = Parameter("p", 2)
+
+    squared_a, squared_b = Pow(p, 2), Pow(p, 2)
+    assert squared_a == squared_b
+    assert hash(squared_a) == hash(squared_b)
+
+    assert Pow(p, 2) != Pow(p, 3)
+    assert hash(Pow(p, 2)) != hash(Pow(p, 3))
+
+
+def test_sum_of_different_mathematical_maps_is_not_merged():
+    p = Parameter("p", 0.5)
+
+    term = Sin(p) + Cos(p)
+    assert len(term) == 2
+    assert np.isclose(_assert_real(term.evaluate({})), np.sin(0.5) + np.cos(0.5))
+
+    # Maps of the same kind must still be merged.
+    same_kind = Sin(p) + Sin(p)
+    assert len(same_kind) == 1
+    assert np.isclose(_assert_real(same_kind.evaluate({})), 2 * np.sin(0.5))
+
+    pow_term = Pow(p, 2) + Pow(p, 3)
+    assert len(pow_term) == 2
+    assert np.isclose(_assert_real(pow_term.evaluate({})), 0.5**2 + 0.5**3)
+
+
 def test_abs_map():
     p = Parameter("p", -1)
     term = 2 * p
