@@ -858,127 +858,305 @@ def test_pauli_operator_rejects_negative_qubit():
 
 
 @pytest.mark.parametrize(
-    ("nqubits", "terms", "expected"),
+    ("built", "expected"),
     [
-        # The docstring example: a one-qubit word is placed on every qubit.
-        (2, [(1.3, "X"), (-2, "ZZ")], 1.3 * X(0) + 1.3 * X(1) - 2 * Z(0) * Z(1)),
-        # Two-qubit words are placed on every combination of qubits in increasing order.
+        # Transverse / longitudinal fields put a single-qubit term on every qubit.
+        (Hamiltonian.transverse_field(nqubits=2, x_coefficient=1.3), 1.3 * X(0) + 1.3 * X(1)),
+        (Hamiltonian.transverse_field(nqubits=1), X(0)),
+        (Hamiltonian.longitudinal_field(nqubits=2, z_coefficient=1.3), 1.3 * Z(0) + 1.3 * Z(1)),
+        (Hamiltonian.longitudinal_field(nqubits=1), Z(0)),
+        # Ising couples every pair i < j, with an optional longitudinal field.
+        (Hamiltonian.ising(nqubits=2, zz_coefficient=2.0), 2.0 * Z(0) * Z(1)),
         (
-            3,
-            [(1, "Z"), (2, "ZZ")],
-            Z(0) + Z(1) + Z(2) + 2 * Z(0) * Z(1) + 2 * Z(0) * Z(2) + 2 * Z(1) * Z(2),
+            Hamiltonian.ising(nqubits=3, zz_coefficient=2.0),
+            2.0 * (Z(0) * Z(1) + Z(0) * Z(2) + Z(1) * Z(2)),
         ),
-        # Mixed-letter words follow the same increasing-index placement.
-        (3, [(1, "XY")], X(0) * Y(1) + X(0) * Y(2) + X(1) * Y(2)),
-        # Words are case insensitive.
-        (2, [(1.3, "x"), (-2, "zZ")], 1.3 * X(0) + 1.3 * X(1) - 2 * Z(0) * Z(1)),
-        # Complex coefficients are allowed.
-        (2, [(2j, "Y")], 2j * Y(0) + 2j * Y(1)),
-        # Identity letters are stripped from the word, so "IZ" is just "Z".
-        (3, [(1, "IZ")], Z(0) + Z(1) + Z(2)),
-        (3, [(1, "ZIZ")], Z(0) * Z(1) + Z(0) * Z(2) + Z(1) * Z(2)),
-        # A word of identities is a plain scalar term.
-        (2, [(2.5, "I")], 2.5 * I(0)),
-        # Stripping happens before the width check, so "IIZ" fits on a single qubit.
-        (1, [(1, "IIZ")], Z(0)),
-        # Repeated words accumulate their coefficients.
-        (2, [(1, "ZZ"), (0.5, "ZZ")], 1.5 * Z(0) * Z(1)),
-        # A word spanning every qubit has a single placement.
-        (3, [(1, "ZZZ")], Z(0) * Z(1) * Z(2)),
-        # An empty term list gives the zero Hamiltonian.
-        (2, [], Hamiltonian()),
+        (
+            Hamiltonian.ising(nqubits=2, zz_coefficient=2.0, z_coefficient=0.5),
+            2.0 * Z(0) * Z(1) + 0.5 * Z(0) + 0.5 * Z(1),
+        ),
+        # The default z_coefficient of 0 leaves the field out entirely.
+        (
+            Hamiltonian.ising(nqubits=2, zz_coefficient=2.0),
+            Hamiltonian.ising(nqubits=2, zz_coefficient=2.0, z_coefficient=0.0),
+        ),
+        # Transverse-field Ising is the sum of the two.
+        (
+            Hamiltonian.transverse_field_ising(nqubits=2, x_coefficient=1.3, zz_coefficient=-2),
+            1.3 * X(0) + 1.3 * X(1) - 2 * Z(0) * Z(1),
+        ),
+        (
+            Hamiltonian.transverse_field_ising(nqubits=2, x_coefficient=1.3, zz_coefficient=-2),
+            Hamiltonian.transverse_field(nqubits=2, x_coefficient=1.3)
+            + Hamiltonian.ising(nqubits=2, zz_coefficient=-2),
+        ),
+        (
+            Hamiltonian.transverse_field_ising(nqubits=2, x_coefficient=1.0, zz_coefficient=1.0, z_coefficient=0.5),
+            X(0) + X(1) + Z(0) * Z(1) + 0.5 * Z(0) + 0.5 * Z(1),
+        ),
+        # XY: yy_coefficient defaults to xx_coefficient, giving the isotropic model.
+        (Hamiltonian.xy(nqubits=2, xx_coefficient=0.5), 0.5 * X(0) * X(1) + 0.5 * Y(0) * Y(1)),
+        (
+            Hamiltonian.xy(nqubits=2, xx_coefficient=0.5, yy_coefficient=0.25),
+            0.5 * X(0) * X(1) + 0.25 * Y(0) * Y(1),
+        ),
+        # Heisenberg XXX: both other couplings default to xx_coefficient.
+        (
+            Hamiltonian.heisenberg(nqubits=2, xx_coefficient=0.5),
+            0.5 * X(0) * X(1) + 0.5 * Y(0) * Y(1) + 0.5 * Z(0) * Z(1),
+        ),
+        # Heisenberg XXZ: only the ZZ coupling is anisotropic.
+        (
+            Hamiltonian.heisenberg(nqubits=2, xx_coefficient=1.0, zz_coefficient=0.3),
+            X(0) * X(1) + Y(0) * Y(1) + 0.3 * Z(0) * Z(1),
+        ),
+        # Heisenberg XYZ with a longitudinal field.
+        (
+            Hamiltonian.heisenberg(nqubits=2, xx_coefficient=1, yy_coefficient=2, zz_coefficient=3, z_coefficient=0.5),
+            X(0) * X(1) + 2 * Y(0) * Y(1) + 3 * Z(0) * Z(1) + 0.5 * Z(0) + 0.5 * Z(1),
+        ),
+        # Heisenberg reduces to XY plus an Ising ZZ coupling.
+        (
+            Hamiltonian.heisenberg(nqubits=3, xx_coefficient=1.0),
+            Hamiltonian.xy(nqubits=3, xx_coefficient=1.0) + Hamiltonian.ising(nqubits=3, zz_coefficient=1.0),
+        ),
     ],
 )
-def test_hamiltonian_constant(nqubits: int, terms: list[tuple[complex, str]], expected: Hamiltonian):
-    assert Hamiltonian.constant(nqubits=nqubits, terms=terms) == expected
-
-
-def test_hamiltonian_constant_nqubits():
-    H = Hamiltonian.constant(nqubits=4, terms=[(1.0, "ZZ")])
-
-    assert H.nqubits == 4
-    # C(4, 2) placements of a two-qubit word.
-    assert len(H.elements) == 6
+def test_named_hamiltonian_constructors(built: Hamiltonian, expected: Hamiltonian):
+    assert built == expected
 
 
 @pytest.mark.parametrize(
-    ("nqubits", "terms", "match"),
+    ("built", "expected"),
     [
-        (0, [(1.0, "X")], "nqubits must be greater than zero"),
-        (-1, [(1.0, "X")], "nqubits must be greater than zero"),
-        (2, [(1.0, "A")], "Invalid Pauli word"),
-        (2, [(1.0, "XA")], "Invalid Pauli word"),
-        (2, [(1.0, "")], "Invalid Pauli word"),
-        (2, [(1.0, "X 0")], "Invalid Pauli word"),
-        (2, [(1.0, "ZZZ")], "acts on 3 qubits, but only 2 are available"),
+        # A chain couples adjacent qubits only.
+        (Hamiltonian.ising_chain(nqubits=3, zz_coefficient=2.0), 2.0 * Z(0) * Z(1) + 2.0 * Z(1) * Z(2)),
+        (
+            Hamiltonian.ising_chain(nqubits=4),
+            Z(0) * Z(1) + Z(1) * Z(2) + Z(2) * Z(3),
+        ),
+        # Two qubits give a single bond, matching the all-to-all Ising model.
+        (Hamiltonian.ising_chain(nqubits=2), Hamiltonian.ising(nqubits=2)),
+        # Closing the ring adds the bond between the two ends.
+        (
+            Hamiltonian.ising_chain(nqubits=4, periodic=True),
+            Z(0) * Z(1) + Z(1) * Z(2) + Z(2) * Z(3) + Z(0) * Z(3),
+        ),
+        # On three qubits the ring is the complete graph, i.e. the all-to-all model.
+        (Hamiltonian.ising_chain(nqubits=3, periodic=True), Hamiltonian.ising(nqubits=3)),
+        # Wrapping is skipped on two qubits, where it would double the only bond.
+        (Hamiltonian.ising_chain(nqubits=2, periodic=True), Hamiltonian.ising_chain(nqubits=2)),
+        # The optional longitudinal field lands on every qubit.
+        (
+            Hamiltonian.ising_chain(nqubits=3, z_coefficient=0.5),
+            Z(0) * Z(1) + Z(1) * Z(2) + 0.5 * Z(0) + 0.5 * Z(1) + 0.5 * Z(2),
+        ),
     ],
 )
-def test_hamiltonian_constant_invalid_arguments(nqubits: int, terms: list[tuple[complex, str]], match: str):
-    with pytest.raises(ValueError, match=match):
-        Hamiltonian.constant(nqubits=nqubits, terms=terms)
+def test_ising_chain(built: Hamiltonian, expected: Hamiltonian):
+    assert built == expected
 
 
-def test_hamiltonian_identity_letters_are_stripped_from_words():
-    assert Hamiltonian.constant(nqubits=3, terms=[(1.0, "IZ")]) == Hamiltonian.constant(nqubits=3, terms=[(1.0, "Z")])
-    assert Hamiltonian.random(nqubits=3, terms=["ZIZ"], seed=4) == Hamiltonian.random(nqubits=3, terms=["ZZ"], seed=4)
+@pytest.mark.parametrize(
+    ("built", "expected"),
+    [
+        # 2x2: qubits 0 1 on the top row, 2 3 on the bottom.
+        (
+            Hamiltonian.ising_grid(rows=2, columns=2),
+            Z(0) * Z(1) + Z(2) * Z(3) + Z(0) * Z(2) + Z(1) * Z(3),
+        ),
+        # A single row or column degenerates to a chain.
+        (Hamiltonian.ising_grid(rows=1, columns=3), Hamiltonian.ising_chain(nqubits=3)),
+        (Hamiltonian.ising_grid(rows=3, columns=1), Hamiltonian.ising_chain(nqubits=3)),
+        # 2x3, row-major indexing: 0 1 2 / 3 4 5.
+        (
+            Hamiltonian.ising_grid(rows=2, columns=3, zz_coefficient=2.0),
+            2.0
+            * (
+                Z(0) * Z(1)
+                + Z(1) * Z(2)  # top row
+                + Z(3) * Z(4)
+                + Z(4) * Z(5)  # bottom row
+                + Z(0) * Z(3)
+                + Z(1) * Z(4)
+                + Z(2) * Z(5)  # columns
+            ),
+        ),
+        # Wrapping a 3-wide row adds the bond between its two ends.
+        (
+            Hamiltonian.ising_grid(rows=1, columns=3, periodic=True),
+            Hamiltonian.ising_chain(nqubits=3, periodic=True),
+        ),
+        # A 2x2 torus would duplicate every bond, so wrapping is skipped in both directions.
+        (Hamiltonian.ising_grid(rows=2, columns=2, periodic=True), Hamiltonian.ising_grid(rows=2, columns=2)),
+        # The optional longitudinal field lands on every site.
+        (
+            Hamiltonian.ising_grid(rows=1, columns=2, z_coefficient=0.5),
+            Z(0) * Z(1) + 0.5 * Z(0) + 0.5 * Z(1),
+        ),
+    ],
+)
+def test_ising_grid(built: Hamiltonian, expected: Hamiltonian):
+    assert built == expected
 
 
-def test_hamiltonian_words_are_placed_in_increasing_qubit_order():
-    # Documented behaviour: "XY" gives X(0) Y(1), not X(1) Y(0). Pass both words to be symmetric.
-    assert Hamiltonian.constant(nqubits=2, terms=[(1.0, "XY")]) == X(0) * Y(1)
-    assert Hamiltonian.constant(nqubits=2, terms=[(1.0, "XY"), (1.0, "YX")]) == X(0) * Y(1) + Y(0) * X(1)
+def test_ising_grid_dimensions():
+    H = Hamiltonian.ising_grid(rows=3, columns=4)
+
+    assert H.nqubits == 12
+    # A rows x columns open lattice has rows*(columns-1) horizontal and (rows-1)*columns vertical bonds.
+    assert len(H.elements) == 3 * 3 + 2 * 4
 
 
-def test_hamiltonian_random_structure():
-    H = Hamiltonian.random(nqubits=2, coefficient_range=(-1, 1), terms=["X", "ZZ"])
+def test_ising_grid_torus_has_two_bonds_per_site():
+    H = Hamiltonian.ising_grid(rows=3, columns=3, periodic=True)
 
-    # Same operator products as the constant counterpart, but each with its own coefficient.
-    assert set(H.elements) == set(Hamiltonian.constant(nqubits=2, terms=[(1.0, "X"), (1.0, "ZZ")]).elements)
-    assert H.nqubits == 2
-    coefficients = list(H.elements.values())
-    assert len(coefficients) == 3
-    assert all(isinstance(c, float) or c.imag == 0 for c in coefficients)
-    assert len(set(coefficients)) == 3, "each placement should get an independently drawn coefficient"
+    assert H.nqubits == 9
+    assert len(H.elements) == 2 * 9
 
 
-def test_hamiltonian_random_respects_coefficient_range():
-    H = Hamiltonian.random(nqubits=4, terms=["Z", "ZZ"], coefficient_range=(2.5, 3.5), seed=12)
-
-    assert len(H.elements) == 4 + 6
-    assert all(2.5 <= complex(c).real <= 3.5 for c in H.elements.values())
-    assert all(complex(c).imag == 0 for c in H.elements.values())
-
-
-def test_hamiltonian_random_is_seeded():
-    H1 = Hamiltonian.random(nqubits=3, terms=["X", "ZZ"], seed=42)
-    H2 = Hamiltonian.random(nqubits=3, terms=["X", "ZZ"], seed=42)
-    H3 = Hamiltonian.random(nqubits=3, terms=["X", "ZZ"], seed=43)
-
-    assert H1 == H2
-    assert H1 != H3
+@pytest.mark.parametrize(
+    "constructor",
+    [
+        Hamiltonian.ising,
+        Hamiltonian.ising_chain,
+        Hamiltonian.transverse_field_ising,
+        Hamiltonian.xy,
+        Hamiltonian.heisenberg,
+    ],
+)
+def test_two_body_constructors_need_at_least_two_qubits(constructor):
+    with pytest.raises(ValueError, match="Hamiltonians need at least 2 qubits, got 1"):
+        constructor(nqubits=1)
 
 
-def test_hamiltonian_random_default_range_is_symmetric_unit_interval():
-    H = Hamiltonian.random(nqubits=5, terms=["Z"], seed=3)
-
-    assert all(-1.0 <= complex(c).real <= 1.0 for c in H.elements.values())
-
-
-def test_hamiltonian_random_is_case_insensitive():
-    assert Hamiltonian.random(nqubits=3, terms=["x", "zZ"], seed=5) == Hamiltonian.random(
-        nqubits=3, terms=["X", "ZZ"], seed=5
-    )
+@pytest.mark.parametrize(
+    "constructor",
+    [
+        Hamiltonian.transverse_field,
+        Hamiltonian.longitudinal_field,
+        Hamiltonian.ising,
+        Hamiltonian.ising_chain,
+        Hamiltonian.transverse_field_ising,
+        Hamiltonian.xy,
+        Hamiltonian.heisenberg,
+    ],
+)
+def test_named_constructors_reject_non_positive_nqubits(constructor):
+    with pytest.raises(ValueError, match="nqubits must be greater than zero"):
+        constructor(nqubits=0)
 
 
 @pytest.mark.parametrize(
     ("kwargs", "match"),
     [
-        ({"nqubits": 0, "terms": ["X"]}, "nqubits must be greater than zero"),
-        ({"nqubits": 2, "terms": ["A"]}, "Invalid Pauli word"),
-        ({"nqubits": 2, "terms": ["ZZZ"]}, "acts on 3 qubits, but only 2 are available"),
-        ({"nqubits": 2, "terms": ["X"], "coefficient_range": (1.0, -1.0)}, "must be a \\(low, high\\) pair"),
+        ({"rows": 0, "columns": 2}, "rows must be greater than zero"),
+        ({"rows": -1, "columns": 2}, "rows must be greater than zero"),
+        ({"rows": 2, "columns": 0}, "columns must be greater than zero"),
+        ({"rows": 1, "columns": 1}, "Ising grid Hamiltonians need at least 2 qubits, got 1"),
     ],
 )
-def test_hamiltonian_random_invalid_arguments(kwargs: dict, match: str):
+def test_ising_grid_rejects_invalid_dimensions(kwargs: dict, match: str):
     with pytest.raises(ValueError, match=match):
-        Hamiltonian.random(**kwargs)
+        Hamiltonian.ising_grid(**kwargs)
+
+
+###############################################################################
+# randomize_coefficients
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "model",
+    [
+        Hamiltonian.transverse_field(nqubits=3),
+        Hamiltonian.longitudinal_field(nqubits=3),
+        Hamiltonian.ising(nqubits=3),
+        Hamiltonian.ising_chain(nqubits=4),
+        Hamiltonian.ising_grid(rows=2, columns=2),
+        Hamiltonian.transverse_field_ising(nqubits=3),
+        Hamiltonian.xy(nqubits=3),
+        Hamiltonian.heisenberg(nqubits=3),
+        X(0) * Y(1) + 3 * Z(2),
+    ],
+)
+def test_randomize_coefficients_keeps_the_structure(model: Hamiltonian):
+    operators = set(model.elements)
+    randomized = model.randomize_coefficients()
+
+    # Only the coefficients change: the operator products are untouched.
+    assert set(randomized.elements) == operators
+    assert all(-1.0 <= complex(c).real <= 1.0 for c in randomized.elements.values())
+    assert all(complex(c).imag == 0 for c in randomized.elements.values())
+
+
+def test_randomize_coefficients_mutates_in_place_and_returns_self():
+    H = Hamiltonian.ising(nqubits=3)
+    original = list(H.elements.values())
+
+    returned = H.randomize_coefficients()
+
+    assert returned is H
+    assert list(H.elements.values()) != original
+
+
+def test_randomize_coefficients_respects_the_range():
+    H = Hamiltonian.heisenberg(nqubits=3).randomize_coefficients(range=(2.5, 3.5))
+
+    assert H.elements
+    assert all(2.5 <= complex(c).real <= 3.5 for c in H.elements.values())
+
+
+def test_randomize_coefficients_defaults_to_the_symmetric_unit_interval():
+    H = Hamiltonian.ising(nqubits=6).randomize_coefficients()
+
+    assert any(complex(c).real < 0 for c in H.elements.values())
+    assert any(complex(c).real > 0 for c in H.elements.values())
+    assert all(-1.0 <= complex(c).real <= 1.0 for c in H.elements.values())
+
+
+def test_randomize_coefficients_is_seeded():
+    first = Hamiltonian.ising(nqubits=3).randomize_coefficients(seed=7)
+    repeat = Hamiltonian.ising(nqubits=3).randomize_coefficients(seed=7)
+    other = Hamiltonian.ising(nqubits=3).randomize_coefficients(seed=8)
+
+    assert first == repeat
+    assert first != other
+
+
+def test_randomize_coefficients_draws_each_term_independently():
+    H = Hamiltonian.heisenberg(nqubits=3).randomize_coefficients()
+
+    coefficients = list(H.elements.values())
+    assert len(coefficients) == 9
+    assert len(set(coefficients)) == 9
+
+
+def test_randomize_coefficients_drops_symbolic_parameters():
+    H = Parameter("theta", 0.5) * Z(0) + X(1)
+    assert H.get_parameters() == {"theta": 0.5}
+
+    H.randomize_coefficients()
+
+    # The symbolic coefficient has been replaced by a number, so no parameter is left to track.
+    assert H.get_parameters() == {}
+    assert H.nparameters == 0
+    assert all(complex(c).imag == 0 for c in H.elements.values())
+
+
+def test_randomize_coefficients_on_an_empty_hamiltonian():
+    H = Hamiltonian()
+
+    assert H.randomize_coefficients() == Hamiltonian.ZERO
+
+
+def test_randomize_coefficients_rejects_a_misordered_range():
+    with pytest.raises(ValueError, match=r"range must be a \(low, high\) pair"):
+        Hamiltonian.ising(nqubits=2).randomize_coefficients(range=(1.0, -1.0))
+
+
+def test_randomized_hamiltonian_is_still_usable():
+    H = Hamiltonian.ising_chain(nqubits=3).randomize_coefficients()
+
+    assert H.to_matrix().shape == (8, 8)
+    assert H.to_qtensor().is_hermitian()

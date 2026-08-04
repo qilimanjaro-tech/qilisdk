@@ -10,15 +10,39 @@ To construct a Hamiltonian with a single Pauli, you can use the constructors ``X
 From these single-qubit operators, you can build multi-qubit Hamiltonians using arithmetic operations.
 The operations follow Python syntax, for example: ``2 * Z(0) + Z(1)`` and ``Z(0) * Z(1)`` build multi-qubit Hamiltonians.
 
-Alternatively, you can use the :meth:`~qilisdk.analog.hamiltonian.Hamiltonian.constant` method to construct a Hamiltonian 
-from a list of terms (strings specifying which Pauli operators) and their coefficients.
+Common Hamiltonians
+======================
 
+Alternatively, for the models that come up most often there are named constructors:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 40 60
+
+   * - Constructor
+     - Hamiltonian
+   * - :meth:`~qilisdk.analog.hamiltonian.Hamiltonian.transverse_field`
+     - :math:`\sum_i h_x X_i`
+   * - :meth:`~qilisdk.analog.hamiltonian.Hamiltonian.longitudinal_field`
+     - :math:`\sum_i h_z Z_i`
+   * - :meth:`~qilisdk.analog.hamiltonian.Hamiltonian.ising`
+     - :math:`\sum_{i<j} J Z_i Z_j + \sum_i h_z Z_i`
+   * - :meth:`~qilisdk.analog.hamiltonian.Hamiltonian.ising_chain`
+     - :math:`\sum_i J Z_i Z_{i+1} + \sum_i h_z Z_i`
+   * - :meth:`~qilisdk.analog.hamiltonian.Hamiltonian.ising_grid`
+     - :math:`\sum_{\langle i, j \rangle} J Z_i Z_j + \sum_i h_z Z_i` on a square lattice
+   * - :meth:`~qilisdk.analog.hamiltonian.Hamiltonian.transverse_field_ising`
+     - :math:`\sum_{i<j} J Z_i Z_j + \sum_i h_x X_i + \sum_i h_z Z_i`
+   * - :meth:`~qilisdk.analog.hamiltonian.Hamiltonian.xy`
+     - :math:`\sum_{i<j} \left( J_x X_i X_j + J_y Y_i Y_j \right)`
+   * - :meth:`~qilisdk.analog.hamiltonian.Hamiltonian.heisenberg`
+     - :math:`\sum_{i<j} \left( J_x X_i X_j + J_y Y_i Y_j + J_z Z_i Z_j \right) + \sum_i h_z Z_i`
 
 .. code-block:: python
 
     from qilisdk.analog import Hamiltonian
 
-    H = Hamiltonian.constant(nqubits=2, terms=[(1.3, "X"), (-2, "ZZ")])
+    H = Hamiltonian.transverse_field_ising(nqubits=2, x_coefficient=1.3, zz_coefficient=-2)
     print(H)
 
 **Output:**
@@ -27,14 +51,19 @@ from a list of terms (strings specifying which Pauli operators) and their coeffi
 
     1.3 X(0) + 1.3 X(1) - 2 Z(0) Z(1)
 
-:meth:`~qilisdk.analog.hamiltonian.Hamiltonian.random` instead draws an independent coefficient for
-each placement, uniformly at random from ``coefficient_range`` (``(-1.0, 1.0)`` by default):
+Randomizing coefficients
+==========================
+
+Any Hamiltonian can be turned into a disordered version with
+:meth:`~qilisdk.analog.hamiltonian.Hamiltonian.randomize_coefficients`, which replaces every
+coefficient with one drawn uniformly at random from ``range`` (``(-1.0, 1.0)`` by default) while
+leaving the operators untouched. Note that this mutates the Hamiltonian and returns it.
 
 .. code-block:: python
 
     from qilisdk.analog import Hamiltonian
 
-    H = Hamiltonian.random(nqubits=2, coefficient_range=(-1, 1), terms=["X", "ZZ"], seed=1)
+    H = Hamiltonian.transverse_field_ising(nqubits=2).randomize_coefficients(range=(-1, 1), seed=1)
     print(H)
 
 **Output:**
@@ -43,9 +72,6 @@ each placement, uniformly at random from ``coefficient_range`` (``(-1.0, 1.0)`` 
 
     0.023643249400513433 X(0) + 0.9009273926518706 X(1) - 0.7116807745607325 Z(0) Z(1)
 
-Note that for both of these constructors, the terms are built for i < j, such that building a 2-qubit
-Hamiltonian with the term ``XY`` will result in ``X(0) Y(1)``, and not ``X(1) Y(0)``. If you want something
-more symmetric, use ``XY`` and ``YX`` terms.
 
 List of Operations
 ======================
@@ -76,8 +102,18 @@ List of Operations
 
 - from qtensor: :meth:`Hamiltonian.from_qtensor(qtensor)<qilisdk.analog.hamiltonian.Hamiltonian.from_qtensor>`
 - from string: :meth:`Hamiltonian.parse(hamiltonian_string)<qilisdk.analog.hamiltonian.Hamiltonian.parse>`
-- from Pauli words: :meth:`Hamiltonian.constant(nqubits, terms)<qilisdk.analog.hamiltonian.Hamiltonian.constant>`
-- from Pauli words, randomly weighted: :meth:`Hamiltonian.random(nqubits, terms)<qilisdk.analog.hamiltonian.Hamiltonian.random>`
+
+**Common Hamiltonians**:
+
+- transverse field: :meth:`Hamiltonian.transverse_field(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.transverse_field>`
+- longitudinal field: :meth:`Hamiltonian.longitudinal_field(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.longitudinal_field>`
+- Ising: :meth:`Hamiltonian.ising(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.ising>`
+- Ising chain: :meth:`Hamiltonian.ising_chain(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.ising_chain>`
+- Ising grid: :meth:`Hamiltonian.ising_grid(rows, columns)<qilisdk.analog.hamiltonian.Hamiltonian.ising_grid>`
+- transverse-field Ising: :meth:`Hamiltonian.transverse_field_ising(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.transverse_field_ising>`
+- XY: :meth:`Hamiltonian.xy(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.xy>`
+- Heisenberg: :meth:`Hamiltonian.heisenberg(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.heisenberg>`
+- randomly weighted: :meth:`H.randomize_coefficients(range)<qilisdk.analog.hamiltonian.Hamiltonian.randomize_coefficients>`
 
 Example: Ising Hamiltonian
 ============================
