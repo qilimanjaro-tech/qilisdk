@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-21 10:34+0200\n"
+"POT-Creation-Date: 2026-07-27 17:03+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -113,341 +113,353 @@ msgstr ""
 "La dependència ``openqasm3`` és opcional; instal·leu-la amb l'extra "
 "``openqasm``:"
 
-#: ../../modules/digital/digital_qasm.rst:28
+#: ../../modules/digital/digital_qasm.rst:25
+msgid "Linux"
+msgstr "Linux"
+
+#: ../../modules/digital/digital_qasm.rst:31
+msgid "Mac OSX"
+msgstr "Mac OSX"
+
+#: ../../modules/digital/digital_qasm.rst:37
+msgid "Windows"
+msgstr "Windows"
+
+#: ../../modules/digital/digital_qasm.rst:44
 msgid "Quick start"
 msgstr "Inici ràpid"
 
-#: ../../modules/digital/digital_qasm.rst:50
+#: ../../modules/digital/digital_qasm.rst:66
 msgid "Reading and writing files:"
 msgstr "Lectura i escriptura de fitxers:"
 
-#: ../../modules/digital/digital_qasm.rst:64
+#: ../../modules/digital/digital_qasm.rst:80
 msgid "OpenQASM 3.0 supported features"
 msgstr "Funcionalitats suportades d'OpenQASM 3.0"
 
-#: ../../modules/digital/digital_qasm.rst:66
+#: ../../modules/digital/digital_qasm.rst:82
 msgid "✅: The feature is fully supported"
 msgstr "✅: La funcionalitat és totalment suportada"
 
-#: ../../modules/digital/digital_qasm.rst:67
+#: ../../modules/digital/digital_qasm.rst:83
 msgid "🟡: The feature is partially supported, see the note for explanation"
 msgstr ""
 "🟡: La funcionalitat és parcialment suportada, vegeu la nota per a més "
 "explicació"
 
-#: ../../modules/digital/digital_qasm.rst:68
+#: ../../modules/digital/digital_qasm.rst:84
 msgid "❌: The feature is not supported"
 msgstr "❌: La funcionalitat no està suportada"
 
-#: ../../modules/digital/digital_qasm.rst:71
+#: ../../modules/digital/digital_qasm.rst:87
 msgid "OpenQASM 3 feature"
 msgstr "Característica OpenQASM 3"
 
-#: ../../modules/digital/digital_qasm.rst:71
+#: ../../modules/digital/digital_qasm.rst:87
 msgid "Supported"
 msgstr "Suportat"
 
-#: ../../modules/digital/digital_qasm.rst:71
+#: ../../modules/digital/digital_qasm.rst:87
 msgid "Notes"
 msgstr "Notes"
 
-#: ../../modules/digital/digital_qasm.rst:73
+#: ../../modules/digital/digital_qasm.rst:89
 msgid "comments"
 msgstr "comentaris"
 
-#: ../../modules/digital/digital_qasm.rst:73
-#: ../../modules/digital/digital_qasm.rst:74
-#: ../../modules/digital/digital_qasm.rst:75
-#: ../../modules/digital/digital_qasm.rst:76
-#: ../../modules/digital/digital_qasm.rst:77
-#: ../../modules/digital/digital_qasm.rst:85
-#: ../../modules/digital/digital_qasm.rst:86
-#: ../../modules/digital/digital_qasm.rst:87
 #: ../../modules/digital/digital_qasm.rst:89
+#: ../../modules/digital/digital_qasm.rst:90
+#: ../../modules/digital/digital_qasm.rst:91
 #: ../../modules/digital/digital_qasm.rst:92
-#: ../../modules/digital/digital_qasm.rst:97
-#: ../../modules/digital/digital_qasm.rst:100
+#: ../../modules/digital/digital_qasm.rst:93
+#: ../../modules/digital/digital_qasm.rst:101
 #: ../../modules/digital/digital_qasm.rst:102
+#: ../../modules/digital/digital_qasm.rst:103
+#: ../../modules/digital/digital_qasm.rst:105
+#: ../../modules/digital/digital_qasm.rst:108
+#: ../../modules/digital/digital_qasm.rst:113
+#: ../../modules/digital/digital_qasm.rst:116
+#: ../../modules/digital/digital_qasm.rst:118
 msgid "✅"
 msgstr "✅"
 
-#: ../../modules/digital/digital_qasm.rst:74
+#: ../../modules/digital/digital_qasm.rst:90
 msgid "QASM version string"
 msgstr "Cadena de versió QASM"
 
-#: ../../modules/digital/digital_qasm.rst:75
+#: ../../modules/digital/digital_qasm.rst:91
 msgid "include"
 msgstr "include"
 
-#: ../../modules/digital/digital_qasm.rst:76
+#: ../../modules/digital/digital_qasm.rst:92
 msgid "unicode names"
 msgstr "noms unicode"
 
-#: ../../modules/digital/digital_qasm.rst:77
+#: ../../modules/digital/digital_qasm.rst:93
 msgid "qubit"
 msgstr "qubit"
 
-#: ../../modules/digital/digital_qasm.rst:78
+#: ../../modules/digital/digital_qasm.rst:94
 msgid "bit"
 msgstr "bit"
 
-#: ../../modules/digital/digital_qasm.rst:78
-#: ../../modules/digital/digital_qasm.rst:79
-#: ../../modules/digital/digital_qasm.rst:80
-#: ../../modules/digital/digital_qasm.rst:81
-#: ../../modules/digital/digital_qasm.rst:82
-#: ../../modules/digital/digital_qasm.rst:83
-#: ../../modules/digital/digital_qasm.rst:84
-#: ../../modules/digital/digital_qasm.rst:90
-#: ../../modules/digital/digital_qasm.rst:93
+#: ../../modules/digital/digital_qasm.rst:94
+#: ../../modules/digital/digital_qasm.rst:95
+#: ../../modules/digital/digital_qasm.rst:96
+#: ../../modules/digital/digital_qasm.rst:97
 #: ../../modules/digital/digital_qasm.rst:98
-#: ../../modules/digital/digital_qasm.rst:101
-#: ../../modules/digital/digital_qasm.rst:103
-#: ../../modules/digital/digital_qasm.rst:105
+#: ../../modules/digital/digital_qasm.rst:99
+#: ../../modules/digital/digital_qasm.rst:100
 #: ../../modules/digital/digital_qasm.rst:106
-#: ../../modules/digital/digital_qasm.rst:107
-#: ../../modules/digital/digital_qasm.rst:108
 #: ../../modules/digital/digital_qasm.rst:109
-#: ../../modules/digital/digital_qasm.rst:110
-#: ../../modules/digital/digital_qasm.rst:111
-#: ../../modules/digital/digital_qasm.rst:112
-#: ../../modules/digital/digital_qasm.rst:113
 #: ../../modules/digital/digital_qasm.rst:114
-#: ../../modules/digital/digital_qasm.rst:115
-#: ../../modules/digital/digital_qasm.rst:116
 #: ../../modules/digital/digital_qasm.rst:117
 #: ../../modules/digital/digital_qasm.rst:119
-#: ../../modules/digital/digital_qasm.rst:120
 #: ../../modules/digital/digital_qasm.rst:121
+#: ../../modules/digital/digital_qasm.rst:122
+#: ../../modules/digital/digital_qasm.rst:123
+#: ../../modules/digital/digital_qasm.rst:124
+#: ../../modules/digital/digital_qasm.rst:125
+#: ../../modules/digital/digital_qasm.rst:126
+#: ../../modules/digital/digital_qasm.rst:127
+#: ../../modules/digital/digital_qasm.rst:128
+#: ../../modules/digital/digital_qasm.rst:129
+#: ../../modules/digital/digital_qasm.rst:130
+#: ../../modules/digital/digital_qasm.rst:131
+#: ../../modules/digital/digital_qasm.rst:132
+#: ../../modules/digital/digital_qasm.rst:133
+#: ../../modules/digital/digital_qasm.rst:135
+#: ../../modules/digital/digital_qasm.rst:136
+#: ../../modules/digital/digital_qasm.rst:137
 msgid "🟡"
 msgstr "🟡"
 
-#: ../../modules/digital/digital_qasm.rst:78
-#: ../../modules/digital/digital_qasm.rst:79
-#: ../../modules/digital/digital_qasm.rst:80
-#: ../../modules/digital/digital_qasm.rst:81
-#: ../../modules/digital/digital_qasm.rst:82
-#: ../../modules/digital/digital_qasm.rst:83
-#: ../../modules/digital/digital_qasm.rst:84
-#: ../../modules/digital/digital_qasm.rst:90
-#: ../../modules/digital/digital_qasm.rst:93
+#: ../../modules/digital/digital_qasm.rst:94
+#: ../../modules/digital/digital_qasm.rst:95
+#: ../../modules/digital/digital_qasm.rst:96
+#: ../../modules/digital/digital_qasm.rst:97
 #: ../../modules/digital/digital_qasm.rst:98
-#: ../../modules/digital/digital_qasm.rst:101
+#: ../../modules/digital/digital_qasm.rst:99
+#: ../../modules/digital/digital_qasm.rst:100
 #: ../../modules/digital/digital_qasm.rst:106
-#: ../../modules/digital/digital_qasm.rst:107
-#: ../../modules/digital/digital_qasm.rst:108
 #: ../../modules/digital/digital_qasm.rst:109
-#: ../../modules/digital/digital_qasm.rst:110
-#: ../../modules/digital/digital_qasm.rst:111
-#: ../../modules/digital/digital_qasm.rst:112
-#: ../../modules/digital/digital_qasm.rst:113
 #: ../../modules/digital/digital_qasm.rst:114
-#: ../../modules/digital/digital_qasm.rst:115
-#: ../../modules/digital/digital_qasm.rst:116
 #: ../../modules/digital/digital_qasm.rst:117
-#: ../../modules/digital/digital_qasm.rst:119
-#: ../../modules/digital/digital_qasm.rst:120
-#: ../../modules/digital/digital_qasm.rst:121
+#: ../../modules/digital/digital_qasm.rst:122
+#: ../../modules/digital/digital_qasm.rst:123
+#: ../../modules/digital/digital_qasm.rst:124
+#: ../../modules/digital/digital_qasm.rst:125
+#: ../../modules/digital/digital_qasm.rst:126
+#: ../../modules/digital/digital_qasm.rst:127
+#: ../../modules/digital/digital_qasm.rst:128
+#: ../../modules/digital/digital_qasm.rst:129
+#: ../../modules/digital/digital_qasm.rst:130
+#: ../../modules/digital/digital_qasm.rst:131
+#: ../../modules/digital/digital_qasm.rst:132
+#: ../../modules/digital/digital_qasm.rst:133
+#: ../../modules/digital/digital_qasm.rst:135
+#: ../../modules/digital/digital_qasm.rst:136
+#: ../../modules/digital/digital_qasm.rst:137
 msgid "1"
 msgstr "1"
 
-#: ../../modules/digital/digital_qasm.rst:79
+#: ../../modules/digital/digital_qasm.rst:95
 msgid "bool"
 msgstr "bool"
 
-#: ../../modules/digital/digital_qasm.rst:80
+#: ../../modules/digital/digital_qasm.rst:96
 msgid "int"
 msgstr "int"
 
-#: ../../modules/digital/digital_qasm.rst:81
+#: ../../modules/digital/digital_qasm.rst:97
 msgid "uint"
 msgstr "uint"
 
-#: ../../modules/digital/digital_qasm.rst:82
+#: ../../modules/digital/digital_qasm.rst:98
 msgid "float"
 msgstr "float"
 
-#: ../../modules/digital/digital_qasm.rst:83
+#: ../../modules/digital/digital_qasm.rst:99
 msgid "angle"
 msgstr "angle"
 
-#: ../../modules/digital/digital_qasm.rst:84
+#: ../../modules/digital/digital_qasm.rst:100
 msgid "complex"
 msgstr "complex"
 
-#: ../../modules/digital/digital_qasm.rst:85
+#: ../../modules/digital/digital_qasm.rst:101
 msgid "const"
 msgstr "const"
 
-#: ../../modules/digital/digital_qasm.rst:86
+#: ../../modules/digital/digital_qasm.rst:102
 msgid "pi/π/tau/τ/euler/ℇ"
 msgstr "pi/π/tau/τ/euler/ℇ"
 
-#: ../../modules/digital/digital_qasm.rst:87
+#: ../../modules/digital/digital_qasm.rst:103
 msgid "Aliasing: ``let``"
 msgstr "Àlies: ``let``"
 
-#: ../../modules/digital/digital_qasm.rst:88
+#: ../../modules/digital/digital_qasm.rst:104
 msgid "register concatenation"
 msgstr "concatenació de registres"
 
-#: ../../modules/digital/digital_qasm.rst:88
-#: ../../modules/digital/digital_qasm.rst:91
-#: ../../modules/digital/digital_qasm.rst:94
-#: ../../modules/digital/digital_qasm.rst:95
-#: ../../modules/digital/digital_qasm.rst:96
-#: ../../modules/digital/digital_qasm.rst:99
 #: ../../modules/digital/digital_qasm.rst:104
-#: ../../modules/digital/digital_qasm.rst:118
-#: ../../modules/digital/digital_qasm.rst:122
+#: ../../modules/digital/digital_qasm.rst:107
+#: ../../modules/digital/digital_qasm.rst:110
+#: ../../modules/digital/digital_qasm.rst:111
+#: ../../modules/digital/digital_qasm.rst:112
+#: ../../modules/digital/digital_qasm.rst:115
+#: ../../modules/digital/digital_qasm.rst:120
+#: ../../modules/digital/digital_qasm.rst:134
+#: ../../modules/digital/digital_qasm.rst:138
 msgid "❌"
 msgstr "❌"
 
-#: ../../modules/digital/digital_qasm.rst:89
+#: ../../modules/digital/digital_qasm.rst:105
 msgid "casting (``expr.Cast``)"
 msgstr "conversió de tipus (``expr.Cast``)"
 
-#: ../../modules/digital/digital_qasm.rst:90
+#: ../../modules/digital/digital_qasm.rst:106
 msgid "duration"
 msgstr "duration"
 
-#: ../../modules/digital/digital_qasm.rst:91
+#: ../../modules/digital/digital_qasm.rst:107
 msgid "durationof"
 msgstr "durationof"
 
-#: ../../modules/digital/digital_qasm.rst:92
+#: ../../modules/digital/digital_qasm.rst:108
 msgid "ns/μs/us/ms/s/dt"
 msgstr "ns/μs/us/ms/s/dt"
 
-#: ../../modules/digital/digital_qasm.rst:93
+#: ../../modules/digital/digital_qasm.rst:109
 msgid "stretch (``expr.Stretch``)"
 msgstr "stretch (``expr.Stretch``)"
 
-#: ../../modules/digital/digital_qasm.rst:94
+#: ../../modules/digital/digital_qasm.rst:110
 msgid "delay"
 msgstr "delay"
 
-#: ../../modules/digital/digital_qasm.rst:95
+#: ../../modules/digital/digital_qasm.rst:111
 msgid "barrier"
 msgstr "barrier"
 
-#: ../../modules/digital/digital_qasm.rst:96
+#: ../../modules/digital/digital_qasm.rst:112
 msgid "box"
 msgstr "box"
 
-#: ../../modules/digital/digital_qasm.rst:97
+#: ../../modules/digital/digital_qasm.rst:113
 msgid "built-in ``U``"
 msgstr "``U`` integrada"
 
-#: ../../modules/digital/digital_qasm.rst:98
+#: ../../modules/digital/digital_qasm.rst:114
 msgid "gate definition"
 msgstr "definició de porta"
 
-#: ../../modules/digital/digital_qasm.rst:99
+#: ../../modules/digital/digital_qasm.rst:115
 msgid "gphase"
 msgstr "gphase"
 
-#: ../../modules/digital/digital_qasm.rst:100
+#: ../../modules/digital/digital_qasm.rst:116
 msgid "``ctrl @``"
 msgstr "``ctrl @``"
 
-#: ../../modules/digital/digital_qasm.rst:101
+#: ../../modules/digital/digital_qasm.rst:117
 msgid "``negctrl @``"
 msgstr "``negctrl @``"
 
-#: ../../modules/digital/digital_qasm.rst:102
+#: ../../modules/digital/digital_qasm.rst:118
 msgid "``inv @``"
 msgstr "``inv @``"
 
-#: ../../modules/digital/digital_qasm.rst:103
+#: ../../modules/digital/digital_qasm.rst:119
 msgid "``pow(k) @``"
 msgstr "``pow(k) @``"
 
-#: ../../modules/digital/digital_qasm.rst:103
+#: ../../modules/digital/digital_qasm.rst:119
 msgid "1, 2"
 msgstr "1, 2"
 
-#: ../../modules/digital/digital_qasm.rst:104
+#: ../../modules/digital/digital_qasm.rst:120
 msgid "reset"
 msgstr "reset"
 
-#: ../../modules/digital/digital_qasm.rst:105
+#: ../../modules/digital/digital_qasm.rst:121
 msgid "measure"
 msgstr "measure"
 
-#: ../../modules/digital/digital_qasm.rst:105
+#: ../../modules/digital/digital_qasm.rst:121
 msgid "3"
 msgstr "3"
 
-#: ../../modules/digital/digital_qasm.rst:106
+#: ../../modules/digital/digital_qasm.rst:122
 msgid "bit operations"
 msgstr "operacions de bits"
 
-#: ../../modules/digital/digital_qasm.rst:107
+#: ../../modules/digital/digital_qasm.rst:123
 msgid "boolean operations"
 msgstr "operacions booleanes"
 
-#: ../../modules/digital/digital_qasm.rst:108
+#: ../../modules/digital/digital_qasm.rst:124
 msgid "arithmetic expressions"
 msgstr "expressions aritmètiques"
 
-#: ../../modules/digital/digital_qasm.rst:109
+#: ../../modules/digital/digital_qasm.rst:125
 msgid "comparisons"
 msgstr "comparacions"
 
-#: ../../modules/digital/digital_qasm.rst:110
+#: ../../modules/digital/digital_qasm.rst:126
 msgid "``if``"
 msgstr "``if``"
 
-#: ../../modules/digital/digital_qasm.rst:111
+#: ../../modules/digital/digital_qasm.rst:127
 msgid "``else``"
 msgstr "``else``"
 
-#: ../../modules/digital/digital_qasm.rst:112
+#: ../../modules/digital/digital_qasm.rst:128
 msgid "``else if``"
 msgstr "``else if``"
 
-#: ../../modules/digital/digital_qasm.rst:113
+#: ../../modules/digital/digital_qasm.rst:129
 msgid "for loops"
 msgstr "bucles for"
 
-#: ../../modules/digital/digital_qasm.rst:114
+#: ../../modules/digital/digital_qasm.rst:130
 msgid "switch"
 msgstr "switch"
 
-#: ../../modules/digital/digital_qasm.rst:115
+#: ../../modules/digital/digital_qasm.rst:131
 msgid "while loops"
 msgstr "bucles while"
 
-#: ../../modules/digital/digital_qasm.rst:116
+#: ../../modules/digital/digital_qasm.rst:132
 msgid "``continue``"
 msgstr "``continue``"
 
-#: ../../modules/digital/digital_qasm.rst:117
+#: ../../modules/digital/digital_qasm.rst:133
 msgid "``break``"
 msgstr "``break``"
 
-#: ../../modules/digital/digital_qasm.rst:118
+#: ../../modules/digital/digital_qasm.rst:134
 msgid "extern"
 msgstr "extern"
 
-#: ../../modules/digital/digital_qasm.rst:119
+#: ../../modules/digital/digital_qasm.rst:135
 msgid "def subroutines"
 msgstr "subrutines def"
 
-#: ../../modules/digital/digital_qasm.rst:120
+#: ../../modules/digital/digital_qasm.rst:136
 msgid "return"
 msgstr "return"
 
-#: ../../modules/digital/digital_qasm.rst:121
+#: ../../modules/digital/digital_qasm.rst:137
 msgid "input"
 msgstr "input"
 
-#: ../../modules/digital/digital_qasm.rst:122
+#: ../../modules/digital/digital_qasm.rst:138
 msgid "output"
 msgstr "output"
 
-#: ../../modules/digital/digital_qasm.rst:125
+#: ../../modules/digital/digital_qasm.rst:141
 msgid ""
 "Reading these constructs is fully supported, but the expressions are not "
 "stored in the :class:`~qilisdk.digital.Circuit` object and will not be "
@@ -464,7 +476,7 @@ msgstr ""
 "apareixerà a l'objecte de circuit resultant ni en cap cadena QASM "
 "reexportada."
 
-#: ../../modules/digital/digital_qasm.rst:132
+#: ../../modules/digital/digital_qasm.rst:148
 msgid ""
 "``pow(k) @`` is only supported when ``k`` is an integer; it is "
 "implemented by repeated gate application."
@@ -472,7 +484,7 @@ msgstr ""
 "``pow(k) @`` només està suportat quan ``k`` és un enter; s'implementa "
 "mitjançant aplicació repetida de la porta."
 
-#: ../../modules/digital/digital_qasm.rst:135
+#: ../../modules/digital/digital_qasm.rst:151
 msgid "Mid-circuit measurements are not supported in QiliSDK."
 msgstr "Les mesures a mig circuit no estan suportades a QiliSDK."
 

@@ -16,6 +16,7 @@
 import copy
 from unittest.mock import MagicMock
 
+import numpy as np
 import pytest
 
 import qilisdk.core.model as model_module
@@ -306,6 +307,25 @@ def test_model_random_ising_different_seeds_differ():
     assert hash(m1.objective.term) != hash(m2.objective.term)
 
 
+def test_model_random_ising_is_fully_connected_by_default():
+    # 5 fields + one coupling per pair of nodes.
+    m = Model.random_ising(num_variables=5)
+    assert len(m.objective.term) == 5 + 10
+
+
+def test_model_random_ising_sparse():
+    # With no extra edges the couplings are those of a spanning tree, i.e. num_variables - 1.
+    m = Model.random_ising(num_variables=5, edge_probability=0.0)
+    assert len(m.variables()) == 5
+    assert len(m.objective.term) == 5 + 4
+
+
+def test_model_random_ising_single_variable():
+    m = Model.random_ising(num_variables=1)
+    assert len(m.variables()) == 1
+    assert len(m.objective.term) == 1
+
+
 def test_model_factoring_basic():
     m = Model.factoring(6)
     assert m.label == "Factoring"
@@ -486,6 +506,171 @@ def test_model_travelling_salesman_evaluate_valid_tour():
     results = m.evaluate(sample)
     assert results[m.objective.label] == 6
     assert all(results[c.label] == 0 for c in m.constraints)
+
+
+# ---------- Ising ----------
+
+
+def test_model_ising_basic():
+    m = Model.ising(edges=[(0, 1), (1, 2)])
+    assert m.label == "Ising"
+    assert m.objective.sense == ObjectiveSense.MINIMIZE
+    assert len(m.variables()) == 3
+    assert len(m.constraints) == 0
+
+
+def test_model_ising_couplings_and_fields_evaluate():
+    # H = 2*x0*x1 - 3*x1*x2 + 0.5*x0 - x2
+    m = Model.ising(edges=[(0, 1), (1, 2)], couplings=[2.0, -3.0], fields=[0.5, 0.0, -1.0], label="MyIsing")
+    assert m.label == "MyIsing"
+    vars_by_label = {v.label: v for v in m.variables()}
+    sample = {vars_by_label["x0"]: 1, vars_by_label["x1"]: 1, vars_by_label["x2"]: 1}
+    assert m.evaluate(sample)[m.objective.label] == pytest.approx(2.0 - 3.0 + 0.5 - 1.0)
+
+
+def test_model_ising_fields_as_mapping_adds_isolated_nodes():
+    m = Model.ising(edges=[(0, 1)], fields={2: 1.0})
+    assert {v.label for v in m.variables()} == {"x0", "x1", "x2"}
+
+
+def test_model_ising_mismatched_couplings():
+    with pytest.raises(ValueError, match=r"number of couplings must be equal"):
+        Model.ising(edges=[(0, 1), (1, 2)], couplings=[1.0])
+
+
+def test_model_ising_mismatched_fields():
+    with pytest.raises(ValueError, match=r"number of fields must be equal"):
+        Model.ising(edges=[(0, 1)], fields=[1.0])
+
+
+def test_model_ising_rejects_empty_graph():
+    with pytest.raises(ValueError, match=r"at least one edge"):
+        Model.ising(edges=[])
+
+
+def test_model_ising_rejects_reversed_duplicate_edge():
+    with pytest.raises(ValueError, match=r"Duplicate edge"):
+        Model.ising(edges=[(0, 1), (1, 0)])
+
+
+# ---------- Random constructors ----------
+
+
+@pytest.mark.parametrize(
+    ("factory", "kwargs"),
+    [
+        (Model.random_ising, {"num_variables": 4}),
+        (Model.random_knapsack, {"num_items": 4}),
+        (Model.random_max_cut, {"num_nodes": 5, "weight_range": (1.0, 2.0)}),
+        (Model.random_graph_coloring, {"num_nodes": 5, "num_colors": 3}),
+        (Model.random_travelling_salesman, {"num_cities": 4}),
+    ],
+)
+def test_random_factories_are_seed_reproducible(factory, kwargs):
+    m1 = factory(seed=7, **kwargs)
+    m2 = factory(seed=7, **kwargs)
+    m3 = factory(seed=8, **kwargs)
+    assert hash(m1.objective.term) == hash(m2.objective.term)
+    assert hash(m1.objective.term) != hash(m3.objective.term)
+
+
+@pytest.mark.parametrize(
+    ("factory", "kwargs", "expected_label"),
+    [
+        (Model.random_knapsack, {"num_items": 4}, "Random Knapsack"),
+        (Model.random_max_cut, {"num_nodes": 5}, "Random Max-Cut"),
+        (Model.random_graph_coloring, {"num_nodes": 5, "num_colors": 3}, "Random Graph Coloring"),
+        (Model.random_travelling_salesman, {"num_cities": 4}, "Random Travelling Salesman"),
+    ],
+)
+def test_random_factories_labels(factory, kwargs, expected_label):
+    assert factory(**kwargs).label == expected_label
+    assert factory(label="Custom", **kwargs).label == "Custom"
+
+
+def test_model_random_knapsack_structure():
+    m = Model.random_knapsack(num_items=5, value_range=(1, 2), weight_range=(3, 4), capacity_ratio=0.5)
+    assert m.objective.sense == ObjectiveSense.MAXIMIZE
+    assert len(m.variables()) == 5
+    assert [c.label for c in m.constraints] == ["weight"]
+    # capacity is half the total weight, which lies within [5 * 3, 5 * 4] / 2
+    capacity = m.constraints[0].rhs.evaluate({})
+    assert 7.5 <= capacity <= 10
+
+
+@pytest.mark.parametrize(
+    ("factory", "kwargs", "message"),
+    [
+        (Model.random_ising, {"num_variables": 0}, r"num_variables must be greater than zero"),
+        (Model.random_ising, {"num_variables": 3, "coefficient_range": (1, -1)}, r"coefficient_range must be"),
+        (Model.random_ising, {"num_variables": 3, "edge_probability": 1.5}, r"edge_probability must be between"),
+        (Model.random_knapsack, {"num_items": 0}, r"num_items must be greater than zero"),
+        (Model.random_knapsack, {"num_items": 3, "value_range": (5, 1)}, r"value_range must be"),
+        (Model.random_knapsack, {"num_items": 3, "weight_range": (5, 1)}, r"weight_range must be"),
+        (Model.random_knapsack, {"num_items": 3, "capacity_ratio": -0.1}, r"capacity_ratio must be non-negative"),
+        (Model.random_max_cut, {"num_nodes": 1}, r"at least two nodes"),
+        (Model.random_max_cut, {"num_nodes": 4, "edge_probability": 1.5}, r"edge_probability must be between"),
+        (Model.random_max_cut, {"num_nodes": 4, "weight_range": (2, 1)}, r"weight_range must be"),
+        (Model.random_graph_coloring, {"num_nodes": 4, "num_colors": 0}, r"num_colors must be greater than zero"),
+        (Model.random_graph_coloring, {"num_nodes": 1, "num_colors": 2}, r"at least two nodes"),
+        (Model.random_travelling_salesman, {"num_cities": 1}, r"num_cities must be greater than one"),
+        (
+            Model.random_travelling_salesman,
+            {"num_cities": 4, "edge_probability": -0.1},
+            r"edge_probability must be between",
+        ),
+        (Model.random_travelling_salesman, {"num_cities": 4, "distance_range": (5, 1)}, r"distance_range must be"),
+    ],
+)
+def test_random_factories_reject_invalid_arguments(factory, kwargs, message):
+    with pytest.raises(ValueError, match=message):
+        factory(**kwargs)
+
+
+def test_model_random_max_cut_graph_is_connected_and_simple():
+    m = Model.random_max_cut(num_nodes=6, edge_probability=0.0)
+    # A spanning tree keeps every node present even when no extra edges are added.
+    assert len(m.variables()) == 6
+
+
+def test_model_random_graph_coloring_structure():
+    m = Model.random_graph_coloring(num_nodes=5, num_colors=3)
+    assert len(m.variables()) == 15  # 5 nodes * 3 colors
+    assert len(m.constraints) == 5  # one "exactly one color" constraint per node
+    assert m.objective.sense == ObjectiveSense.MINIMIZE
+
+
+def test_model_random_travelling_salesman_structure():
+    m = Model.random_travelling_salesman(num_cities=4)
+    assert len(m.variables()) == 16  # 4 cities * 4 positions
+    assert len(m.constraints) == 8  # one per city plus one per position
+    assert m.objective.sense == ObjectiveSense.MINIMIZE
+
+
+def test_model_random_travelling_salesman_sparse():
+    # With no extra edges only the 3 spanning-tree edges contribute distance terms, but all 4
+    # cities still take part in the tour.
+    m = Model.random_travelling_salesman(num_cities=4, edge_probability=0.0)
+    assert len(m.variables()) == 16
+    assert len(m.constraints) == 8
+    assert len(m.objective.term) == 3 * 4 * 2  # edges * positions * both orientations
+
+
+def test_random_connected_edges_is_connected():
+    generator = np.random.default_rng(3)
+    edges = model_module._random_connected_edges(8, 0.3, generator)
+    assert all(u < v for u, v in edges)
+    assert len(edges) == len(set(edges))
+    reached = {0}
+    frontier = [0]
+    while frontier:
+        node = frontier.pop()
+        for u, v in edges:
+            for a, b in ((u, v), (v, u)):
+                if a == node and b not in reached:
+                    reached.add(b)
+                    frontier.append(b)
+    assert reached == set(range(8))
 
 
 # ---------- BruteForceSolver ----------
