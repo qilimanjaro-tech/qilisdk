@@ -1151,8 +1151,9 @@ def test_randomize_coefficients_on_an_empty_hamiltonian():
 
 
 def test_randomize_coefficients_rejects_a_misordered_range():
+    ising = Hamiltonian.ising(nqubits=2)
     with pytest.raises(ValueError, match=r"range must be a \(low, high\) pair"):
-        Hamiltonian.ising(nqubits=2).randomize_coefficients(range=(1.0, -1.0))
+        ising.randomize_coefficients(range=(1.0, -1.0))
 
 
 def test_randomized_hamiltonian_is_still_usable():
