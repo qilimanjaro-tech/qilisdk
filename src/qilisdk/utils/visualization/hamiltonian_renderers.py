@@ -865,6 +865,7 @@ class MatplotlibHamiltonianRenderer:
         ]
         legend = self.ax.legend(
             handles=handles,
+            handlelength=4,
             loc=cast("Any", style.legend_loc),
             fontsize=style.legend_fontsize,
             frameon=style.legend_frame,

@@ -77,11 +77,11 @@ Visualizing
 
 :meth:`H.draw()<qilisdk.analog.hamiltonian.Hamiltonian.draw>` renders a Hamiltonian as an interaction graph:
 
-- every qubit is a node, whose disc is split into one slice per local field acting on it, labelled with its Pauli type,
-- every two-qubit term is an edge between the qubits it couples, drawn with a line style per coupling type (see the legend),
-- every term acting on three or more qubits is a star-shaped hyperedge joined at the centroid of the qubits involved,
-- slice and edge colours encode the coefficient of the corresponding term, as described by the colour bar,
-- a constant (identity) term is annotated below the graph as an energy offset.
+- Every qubit is a node, whose disc is split into one slice per local field acting on it, labelled with its Pauli type.
+- Every two-qubit term is an edge between the qubits it couples, drawn with a line style per coupling type (see the legend).
+- Every term acting on three or more qubits is a star-shaped hyperedge joined at the centroid of the qubits involved.
+- Slice and edge colours encode the coefficient of the corresponding term, as described by the colour bar.
+- A constant (identity) term is annotated below the graph as an energy offset.
 
 .. code-block:: python
 
