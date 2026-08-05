@@ -2001,60 +2001,58 @@ std::vector<double> QTensorCpp::probabilities() const {
     const Eigen::Index dim = state_is_bra ? cols() : rows();
     std::vector<double> probs(std::size_t(dim), 0.0);
     double* probs_data = probs.data();
-    std::visit(
-        [&](const auto& mat) {
-            using M = std::decay_t<decltype(mat)>;
-            if constexpr (std::is_same_v<M, DenseMatrix>) {
-                
-                // For dense kets, it's the norm of the i'th element
-                if (state_is_ket) {
+
+    // For dense matrices
+    const DenseMatrix* dense = std::get_if<DenseMatrix>(&_data);
+    if (dense != nullptr) {
+        // For dense kets, it's the norm of the i'th element
+        if (state_is_ket) {
 #ifndef _WIN32
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
 #endif
 #endif
-                    for (Eigen::Index i = 0; i < dim; ++i) {
-                        probs_data[i] = std::norm(mat(i, 0));
-                    }
-                
-                // For dense bras, it's the norm of the i'th element
-                } else if (state_is_bra) {
-#ifndef _WIN32
-#if defined(_OPENMP)
-#pragma omp parallel for schedule(static)
-#endif
-#endif
-                    for (Eigen::Index i = 0; i < dim; ++i) {
-                        probs_data[i] = std::norm(mat(0, i));
-                    }
-                
-                // For dense operators, it's the real part of the i'th diagonal element
-                } else {
-#ifndef _WIN32
-#if defined(_OPENMP)
-#pragma omp parallel for schedule(static)
-#endif
-#endif
-                    for (Eigen::Index i = 0; i < dim; ++i) {
-                        probs_data[i] = mat(i, i).real();
-                    }
-                }
-            // For sparse matrices, we need to iterate over the non-zero elements
-            } else {
-                for (Eigen::Index k = 0; k < mat.outerSize(); ++k) {
-                    for (typename M::InnerIterator it(mat, k); it; ++it) {
-                        if (state_is_ket) {
-                            probs_data[it.row()] += std::norm(it.value());
-                        } else if (state_is_bra) {
-                            probs_data[it.col()] += std::norm(it.value());
-                        } else if (it.row() == it.col()) {
-                            probs_data[it.row()] += it.value().real();
-                        }
-                    }
-                }
+            for (Eigen::Index i = 0; i < dim; ++i) {
+                probs_data[i] = std::norm((*dense)(i, 0));
             }
-        },
-        _data);
+
+            // For dense bras, it's the norm of the i'th element
+        } else if (state_is_bra) {
+#ifndef _WIN32
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+#endif
+            for (Eigen::Index i = 0; i < dim; ++i) {
+                probs_data[i] = std::norm((*dense)(0, i));
+            }
+
+            // For dense operators, it's the real part of the i'th diagonal element
+        } else {
+#ifndef _WIN32
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+#endif
+            for (Eigen::Index i = 0; i < dim; ++i) {
+                probs_data[i] = (*dense)(i, i).real();
+            }
+        }
+        return probs;
+    }
+
+    // For sparse matrices, iterate over the nonzero entries and accumulate the probabilities in parallel
+    if (state_is_ket) {
+        for_each_nonzero([&](int row, int, Complex val) { probs_data[row] += std::norm(val); });
+    } else if (state_is_bra) {
+        for_each_nonzero([&](int, int col, Complex val) { probs_data[col] += std::norm(val); });
+    } else {
+        for_each_nonzero([&](int row, int col, Complex val) {
+            if (row == col) {
+                probs_data[row] += val.real();
+            }
+        });
+    }
     return probs;
 }
 

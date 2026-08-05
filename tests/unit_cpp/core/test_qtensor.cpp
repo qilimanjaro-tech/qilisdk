@@ -1348,6 +1348,47 @@ TEST(ProbabilitiesTest, Scalar_Throws) {
     EXPECT_THROW(q.probabilities(), py::value_error);
 }
 
+TEST(ProbabilitiesTest, SparseKet_StoredEntriesOnly) {
+    // Sparse enough (density < 1/3) that the tensor is not converted to dense storage
+    SparseMatrix m(8, 1);
+    m.insert(3, 0) = std::sqrt(0.25);
+    m.insert(6, 0) = std::sqrt(0.75);
+    m.makeCompressed();
+    QTensorCpp q(m);
+    auto probs = q.probabilities();
+    ASSERT_EQ(probs.size(), 8u);
+    EXPECT_NEAR(probs[3], 0.25, 1e-10);
+    EXPECT_NEAR(probs[6], 0.75, 1e-10);
+    EXPECT_NEAR(probs[0], 0.0, 1e-10);
+}
+
+TEST(ProbabilitiesTest, SparseBra_StoredEntriesOnly) {
+    SparseMatrix m(1, 8);
+    m.insert(0, 2) = std::sqrt(0.5);
+    m.insert(0, 5) = std::sqrt(0.5);
+    m.makeCompressed();
+    QTensorCpp q(m);
+    auto probs = q.probabilities();
+    ASSERT_EQ(probs.size(), 8u);
+    EXPECT_NEAR(probs[2], 0.5, 1e-10);
+    EXPECT_NEAR(probs[5], 0.5, 1e-10);
+    EXPECT_NEAR(probs[7], 0.0, 1e-10);
+}
+
+TEST(ProbabilitiesTest, SparseOperator_DiagonalOnly) {
+    SparseMatrix m(4, 4);
+    m.insert(0, 0) = 0.25;
+    m.insert(2, 2) = 0.75;
+    m.insert(0, 3) = 0.5;  // off-diagonal, must not contribute
+    m.makeCompressed();
+    QTensorCpp q(m);
+    auto probs = q.probabilities();
+    ASSERT_EQ(probs.size(), 4u);
+    EXPECT_NEAR(probs[0], 0.25, 1e-10);
+    EXPECT_NEAR(probs[2], 0.75, 1e-10);
+    EXPECT_NEAR(probs[3], 0.0, 1e-10);
+}
+
 TEST(ProbabilitiesPythonTest, ReturnsList) {
     py::gil_scoped_acquire gil;
     QTensorCpp q(make_ket0());
@@ -1391,6 +1432,16 @@ TEST(SampleTest, TwoQubitState_BitstringLength) {
     for (const auto& pair : counts) {
         EXPECT_EQ(pair.first.size(), 2u);
     }
+}
+
+TEST(SampleTest, SparseKet_OnlyStoredOutcomes) {
+    SparseMatrix m(8, 1);
+    m.insert(3, 0) = 1.0;
+    m.makeCompressed();
+    QTensorCpp q(m);
+    std::map<std::string, int> counts = q.sample(100, 42);
+    EXPECT_EQ(counts.size(), 1u);
+    EXPECT_EQ(counts["011"], 100);
 }
 
 TEST(SampleTest, UnnormalizedState_Renormalized) {
