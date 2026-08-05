@@ -13,6 +13,7 @@
 # limitations under the License.
 from __future__ import annotations
 
+import secrets
 from copy import copy
 from enum import Enum
 from typing import TYPE_CHECKING, Literal
@@ -729,6 +730,28 @@ class QTensor:
         """
         logger.trace("[QTensor] QTensor.probabilities computing measurement probabilities on {} qubits", self.nqubits)
         return self._qtensor_cpp.probabilities_python()
+
+    def sample(self, nshots: int = 1000, seed: int | None = None) -> dict[str, int]:
+        """
+        Sample measurement outcomes in the computational basis.
+
+        Args:
+            nshots (int): The number of shots to draw. Defaults to 1000.
+            seed (int | None): The random seed used for the sampling. If None, a random seed is generated.
+
+        Returns:
+            dict[str, int]: A mapping from bitstring (with qubit zero first) to the number of times it was obtained.
+
+        Raises:
+            ValueError: If nshots is not positive, if this QTensor is neither a ket, bra, nor operator, or if the
+                probabilities do not form a valid distribution.
+        """
+        if seed is None:
+            seed = secrets.randbelow(2**15)
+        logger.trace(
+            "[QTensor] QTensor.sample drawing {} samples on {} qubits with seed {}", nshots, self.nqubits, seed
+        )
+        return self._qtensor_cpp.sample_python(nshots, seed)
 
     def entropy_von_neumann(self) -> float:
         """

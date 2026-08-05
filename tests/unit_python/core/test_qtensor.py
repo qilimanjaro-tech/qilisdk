@@ -1067,6 +1067,67 @@ def test_qtensor_probabilities():
     np.testing.assert_allclose(probs, expected, atol=1e-8)
 
 
+def test_qtensor_sample_ket():
+    qket = (ket(0, 0) + ket(1, 1)) * (1 / np.sqrt(2))
+    samples = qket.sample(nshots=1000, seed=42)
+    assert sum(samples.values()) == 1000
+    assert set(samples) == {"00", "11"}
+    assert samples["00"] > 400
+    assert samples["11"] > 400
+
+
+def test_qtensor_sample_density_matrix_matches_ket():
+    qket = (ket(0, 1) + ket(1, 0)) * (1 / np.sqrt(2))
+    assert qket.sample(nshots=500, seed=7) == qket.to_density_matrix().sample(nshots=500, seed=7)
+
+
+def test_qtensor_sample_bra():
+    qbra = bra(1, 0)
+    assert qbra.sample(nshots=100, seed=1) == {"10": 100}
+
+
+def test_qtensor_sample_mixed_state():
+    rho = QTensor(np.diag([0.25, 0.25, 0.25, 0.25]))
+    samples = rho.sample(nshots=4000, seed=3)
+    assert sum(samples.values()) == 4000
+    assert set(samples) == {"00", "01", "10", "11"}
+
+
+def test_qtensor_sample_unnormalized_state():
+    assert (ket(0) * 5).sample(nshots=50, seed=42) == {"0": 50}
+
+
+def test_qtensor_sample_is_deterministic_with_seed():
+    qtensor = ghz(3)
+    first = qtensor.sample(nshots=200, seed=11)
+    second = qtensor.sample(nshots=200, seed=11)
+    assert first == second
+
+
+def test_qtensor_sample_random_seed():
+    samples = QTensor(np.ones((8, 1)) / np.sqrt(8)).sample(nshots=100)
+    assert sum(samples.values()) == 100
+    assert all(len(bitstring) == 3 for bitstring in samples)
+
+
+def test_qtensor_sample_invalid_nshots():
+    qket = ket(0)
+    with pytest.raises(ValueError, match="number of shots must be positive"):
+        qket.sample(nshots=0)
+    with pytest.raises(ValueError, match="number of shots must be positive"):
+        qket.sample(nshots=-1)
+
+
+def test_qtensor_sample_zero_probability():
+    with pytest.raises(ValueError, match="zero total probability"):
+        QTensor(np.zeros((2, 1))).sample(nshots=10)
+
+
+def test_qtensor_sample_negative_probability_ignored():
+    # Negative diagonal entries are numerical noise, they should not contribute any outcomes
+    assert QTensor(np.diag([-1e-14, 2.0])).sample(nshots=10, seed=1) == {"1": 10}
+
+
 def test_qtensor_negative_norm():
     arr = np.array([[1, 2], [3, 4]])
     qobj = QTensor(arr)
