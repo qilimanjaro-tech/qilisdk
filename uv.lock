@@ -3027,7 +3027,7 @@ wheels = [
 
 [[package]]
 name = "qilisdk"
-version = "0.2.0"
+version = "0.2.0.post3"
 source = { editable = "." }
 dependencies = [
     { name = "dill" },

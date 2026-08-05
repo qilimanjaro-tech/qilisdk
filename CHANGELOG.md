@@ -1,3 +1,12 @@
+# qilisdk 0.2.0.post3 (2026-08-05)
+
+## Deprecations and Removals
+
+- Removed the concrete calibration experiments from `qilisdk.experiments`, keeping only the generic `ExperimentFunctional`, `ExperimentResult` and `Dimension` base classes. The `RabiExperiment`, `T1Experiment`, `T1SoftSaturationHWLExperiment`, `T2Experiment`, `TwoTonesAtFixedFluxBiasExperiment`, `TwoTonesVsFluxBiasExperiment`, `TwoTonesPulsedSoftExperiment` and `TwoTonesFrequencyVsFluxQdacRampCWExperiment` classes (and their matching `*ExperimentResult` classes).
+
+  The SpeQtrum backend follows the same simplification: the per-experiment payloads, results and job handles collapse into a single generic experiment path. `ExecuteType` now exposes one `EXPERIMENT` member instead of the five experiment-specific ones, `ExecutePayload` carries a single `experiment_payload: ExperimentPayload` field, and `ExecuteResult` a single `experiment_result: ExperimentResult` field. ([PR #300](https://github.com/qilimanjaro-tech/qilisdk/pull/300))
+
+
 # qilisdk 0.2.0.post2 (2026-06-04)
 
 ## Misc
