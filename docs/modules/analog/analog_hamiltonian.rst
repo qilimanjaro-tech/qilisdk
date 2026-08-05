@@ -51,19 +51,16 @@ Alternatively, for the models that come up most often there are named constructo
 
     1.3 X(0) + 1.3 X(1) - 2 Z(0) Z(1)
 
-Randomizing coefficients
-==========================
-
-Any Hamiltonian can be turned into a disordered version with
-:meth:`~qilisdk.analog.hamiltonian.Hamiltonian.randomize_coefficients`, which replaces every
-coefficient with one drawn uniformly at random from ``range`` (``(-1.0, 1.0)`` by default) while
-leaving the operators untouched. Note that this mutates the Hamiltonian and returns it.
+Every coefficient argument accepts either a fixed value or a ``(low, high)`` range. Given a range,
+each term it weights gets its own value drawn uniformly at random from it, so any of the constructors
+above can build a disordered model just by passing a tuple instead of a number. A ``seed`` can
+also be passed for reproducibility.
 
 .. code-block:: python
 
     from qilisdk.analog import Hamiltonian
 
-    H = Hamiltonian.transverse_field_ising(nqubits=2).randomize_coefficients(range=(-1, 1), seed=1)
+    H = Hamiltonian.transverse_field_ising(nqubits=2, x_coefficient=(-1, 1), zz_coefficient=(-1, 1), seed=1)
     print(H)
 
 **Output:**
@@ -71,7 +68,6 @@ leaving the operators untouched. Note that this mutates the Hamiltonian and retu
 ::
 
     0.023643249400513433 X(0) + 0.9009273926518706 X(1) - 0.7116807745607325 Z(0) Z(1)
-
 
 List of Operations
 ======================
@@ -113,7 +109,6 @@ List of Operations
 - transverse-field Ising: :meth:`Hamiltonian.transverse_field_ising(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.transverse_field_ising>`
 - XY: :meth:`Hamiltonian.xy(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.xy>`
 - Heisenberg: :meth:`Hamiltonian.heisenberg(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.heisenberg>`
-- randomly weighted: :meth:`H.randomize_coefficients(range)<qilisdk.analog.hamiltonian.Hamiltonian.randomize_coefficients>`
 
 Example: Ising Hamiltonian
 ============================

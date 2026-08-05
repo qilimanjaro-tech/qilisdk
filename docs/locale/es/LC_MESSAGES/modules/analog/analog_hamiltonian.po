@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-04 16:28+0200\n"
+"POT-Creation-Date: 2026-08-05 13:32+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -150,67 +150,63 @@ msgstr ""
 "\\right) + \\sum_i h_z Z_i`"
 
 #: ../../modules/analog/analog_hamiltonian.rst:48
-#: ../../modules/analog/analog_hamiltonian.rst:69
-#: ../../modules/analog/analog_hamiltonian.rst:143
+#: ../../modules/analog/analog_hamiltonian.rst:66
+#: ../../modules/analog/analog_hamiltonian.rst:138
 msgid "**Output:**"
 msgstr "**Salida:**"
 
-#: ../../modules/analog/analog_hamiltonian.rst:55
-msgid "Randomizing coefficients"
-msgstr "Aleatorización de coeficientes"
-
-#: ../../modules/analog/analog_hamiltonian.rst:57
+#: ../../modules/analog/analog_hamiltonian.rst:54
 msgid ""
-"Any Hamiltonian can be turned into a disordered version with "
-":meth:`~qilisdk.analog.hamiltonian.Hamiltonian.randomize_coefficients`, "
-"which replaces every coefficient with one drawn uniformly at random from "
-"``range`` (``(-1.0, 1.0)`` by default) while leaving the operators "
-"untouched. Note that this mutates the Hamiltonian and returns it."
+"Every coefficient argument accepts either a fixed value or a ``(low, "
+"high)`` range. Given a range, each term it weights gets its own value "
+"drawn uniformly at random from it, so any of the constructors above can "
+"build a disordered model just by passing a tuple instead of a number. A "
+"``seed`` can also be passed for reproducibility."
 msgstr ""
-"Cualquier Hamiltoniano se puede convertir en una versión desordenada con "
-":meth:`~qilisdk.analog.hamiltonian.Hamiltonian.randomize_coefficients`, "
-"que sustituye cada coeficiente por uno extraído de forma uniforme y "
-"aleatoria de ``range`` (``(-1.0, 1.0)`` por defecto) sin tocar los "
-"operadores. Tenga en cuenta que esto modifica el Hamiltoniano y lo "
-"devuelve."
+"Todos los argumentos de coeficiente aceptan tanto un valor fijo como un "
+"rango ``(low, high)``. Si se da un rango, cada término al que da peso "
+"obtiene su propio valor extraído de forma uniforme y aleatoria de dicho "
+"rango, de modo que cualquiera de los constructores anteriores puede "
+"construir un modelo desordenado simplemente pasando una tupla en lugar de "
+"un número. También se puede pasar una ``seed`` para la reproducibilidad."
 
-#: ../../modules/analog/analog_hamiltonian.rst:77
+#: ../../modules/analog/analog_hamiltonian.rst:73
 msgid "List of Operations"
 msgstr "Lista de operaciones"
 
-#: ../../modules/analog/analog_hamiltonian.rst:79
+#: ../../modules/analog/analog_hamiltonian.rst:75
 msgid "**Arithmetic operations**:"
 msgstr "**Operaciones aritméticas**:"
 
-#: ../../modules/analog/analog_hamiltonian.rst:81
+#: ../../modules/analog/analog_hamiltonian.rst:77
 msgid "Addition: ``H1 + H2``"
 msgstr "Suma: ``H1 + H2``"
 
-#: ../../modules/analog/analog_hamiltonian.rst:82
+#: ../../modules/analog/analog_hamiltonian.rst:78
 msgid "Scalar multiplication: ``5 * H``"
 msgstr "Multiplicación escalar: ``5 * H``"
 
-#: ../../modules/analog/analog_hamiltonian.rst:83
+#: ../../modules/analog/analog_hamiltonian.rst:79
 msgid "multiplication: ``H0 * H1``"
 msgstr "Multiplicación: ``H0 * H1``"
 
-#: ../../modules/analog/analog_hamiltonian.rst:84
+#: ../../modules/analog/analog_hamiltonian.rst:80
 msgid "Subtraction: ``H1 - H2``"
 msgstr "Resta: ``H1 - H2``"
 
-#: ../../modules/analog/analog_hamiltonian.rst:85
+#: ../../modules/analog/analog_hamiltonian.rst:81
 msgid "Division by scalar: ``H / 5``"
 msgstr "División por escalar: ``H / 5``"
 
-#: ../../modules/analog/analog_hamiltonian.rst:86
+#: ../../modules/analog/analog_hamiltonian.rst:82
 msgid "Negation: ``-H``"
 msgstr "Negación: ``-H``"
 
-#: ../../modules/analog/analog_hamiltonian.rst:88
+#: ../../modules/analog/analog_hamiltonian.rst:84
 msgid "**Extra Symbolic Operators**:"
 msgstr "**Operadores Simbólicos Adicionales**:"
 
-#: ../../modules/analog/analog_hamiltonian.rst:90
+#: ../../modules/analog/analog_hamiltonian.rst:86
 msgid ""
 "commutator: "
 ":meth:`H1.commutator(H2)<qilisdk.analog.hamiltonian.Hamiltonian.commutator>`"
@@ -218,7 +214,7 @@ msgstr ""
 "conmutador: "
 ":meth:`H1.commutator(H2)<qilisdk.analog.hamiltonian.Hamiltonian.commutator>`"
 
-#: ../../modules/analog/analog_hamiltonian.rst:91
+#: ../../modules/analog/analog_hamiltonian.rst:87
 msgid ""
 "anticommutator: "
 ":meth:`H1.anticommutator(H2)<qilisdk.analog.hamiltonian.Hamiltonian.anticommutator>`"
@@ -226,7 +222,7 @@ msgstr ""
 "anticonmutador: "
 ":meth:`H1.anticommutator(H2)<qilisdk.analog.hamiltonian.Hamiltonian.anticommutator>`"
 
-#: ../../modules/analog/analog_hamiltonian.rst:92
+#: ../../modules/analog/analog_hamiltonian.rst:88
 msgid ""
 "vector_norm: "
 ":meth:`H.vector_norm()<qilisdk.analog.hamiltonian.Hamiltonian.vector_norm>`"
@@ -234,7 +230,7 @@ msgstr ""
 "norma vectorial: "
 ":meth:`H.vector_norm()<qilisdk.analog.hamiltonian.Hamiltonian.vector_norm>`"
 
-#: ../../modules/analog/analog_hamiltonian.rst:93
+#: ../../modules/analog/analog_hamiltonian.rst:89
 msgid ""
 "frobenius_norm: "
 ":meth:`H.frobenius_norm()<qilisdk.analog.hamiltonian.Hamiltonian.frobenius_norm>`"
@@ -242,15 +238,15 @@ msgstr ""
 "norma de Frobenius: "
 ":meth:`H.frobenius_norm()<qilisdk.analog.hamiltonian.Hamiltonian.frobenius_norm>`"
 
-#: ../../modules/analog/analog_hamiltonian.rst:94
+#: ../../modules/analog/analog_hamiltonian.rst:90
 msgid "trace: :meth:`H.trace()<qilisdk.analog.hamiltonian.Hamiltonian.trace>`"
 msgstr "traza: :meth:`H.trace()<qilisdk.analog.hamiltonian.Hamiltonian.trace>`"
 
-#: ../../modules/analog/analog_hamiltonian.rst:96
+#: ../../modules/analog/analog_hamiltonian.rst:92
 msgid "**Exporting Hamiltonians**:"
 msgstr "**Exportación de Hamiltonianos**:"
 
-#: ../../modules/analog/analog_hamiltonian.rst:98
+#: ../../modules/analog/analog_hamiltonian.rst:94
 msgid ""
 "to matrix: "
 ":meth:`H.to_matrix(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.to_matrix>`"
@@ -258,7 +254,7 @@ msgstr ""
 "a matriz: "
 ":meth:`H.to_matrix(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.to_matrix>`"
 
-#: ../../modules/analog/analog_hamiltonian.rst:99
+#: ../../modules/analog/analog_hamiltonian.rst:95
 msgid ""
 "to qtensor: "
 ":meth:`H.to_qtensor(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.to_qtensor>`"
@@ -266,11 +262,11 @@ msgstr ""
 "a qtensor: "
 ":meth:`H.to_qtensor(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.to_qtensor>`"
 
-#: ../../modules/analog/analog_hamiltonian.rst:101
+#: ../../modules/analog/analog_hamiltonian.rst:97
 msgid "**Importing Hamiltonians**:"
 msgstr "**Importación de Hamiltonianos**:"
 
-#: ../../modules/analog/analog_hamiltonian.rst:103
+#: ../../modules/analog/analog_hamiltonian.rst:99
 msgid ""
 "from qtensor: "
 ":meth:`Hamiltonian.from_qtensor(qtensor)<qilisdk.analog.hamiltonian.Hamiltonian.from_qtensor>`"
@@ -278,7 +274,7 @@ msgstr ""
 "desde qtensor: "
 ":meth:`Hamiltonian.from_qtensor(qtensor)<qilisdk.analog.hamiltonian.Hamiltonian.from_qtensor>`"
 
-#: ../../modules/analog/analog_hamiltonian.rst:104
+#: ../../modules/analog/analog_hamiltonian.rst:100
 msgid ""
 "from string: "
 ":meth:`Hamiltonian.parse(hamiltonian_string)<qilisdk.analog.hamiltonian.Hamiltonian.parse>`"
@@ -286,11 +282,11 @@ msgstr ""
 "desde cadena de texto: "
 ":meth:`Hamiltonian.parse(hamiltonian_string)<qilisdk.analog.hamiltonian.Hamiltonian.parse>`"
 
-#: ../../modules/analog/analog_hamiltonian.rst:106
+#: ../../modules/analog/analog_hamiltonian.rst:102
 msgid "**Common Hamiltonians**:"
 msgstr "**Hamiltonianos comunes**:"
 
-#: ../../modules/analog/analog_hamiltonian.rst:108
+#: ../../modules/analog/analog_hamiltonian.rst:104
 msgid ""
 "transverse field: "
 ":meth:`Hamiltonian.transverse_field(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.transverse_field>`"
@@ -298,7 +294,7 @@ msgstr ""
 "campo transversal: "
 ":meth:`Hamiltonian.transverse_field(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.transverse_field>`"
 
-#: ../../modules/analog/analog_hamiltonian.rst:109
+#: ../../modules/analog/analog_hamiltonian.rst:105
 msgid ""
 "longitudinal field: "
 ":meth:`Hamiltonian.longitudinal_field(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.longitudinal_field>`"
@@ -306,7 +302,7 @@ msgstr ""
 "campo longitudinal: "
 ":meth:`Hamiltonian.longitudinal_field(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.longitudinal_field>`"
 
-#: ../../modules/analog/analog_hamiltonian.rst:110
+#: ../../modules/analog/analog_hamiltonian.rst:106
 msgid ""
 "Ising: "
 ":meth:`Hamiltonian.ising(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.ising>`"
@@ -314,7 +310,7 @@ msgstr ""
 "Ising: "
 ":meth:`Hamiltonian.ising(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.ising>`"
 
-#: ../../modules/analog/analog_hamiltonian.rst:111
+#: ../../modules/analog/analog_hamiltonian.rst:107
 msgid ""
 "Ising chain: "
 ":meth:`Hamiltonian.ising_chain(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.ising_chain>`"
@@ -322,7 +318,7 @@ msgstr ""
 "cadena de Ising: "
 ":meth:`Hamiltonian.ising_chain(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.ising_chain>`"
 
-#: ../../modules/analog/analog_hamiltonian.rst:112
+#: ../../modules/analog/analog_hamiltonian.rst:108
 msgid ""
 "Ising grid: :meth:`Hamiltonian.ising_grid(rows, "
 "columns)<qilisdk.analog.hamiltonian.Hamiltonian.ising_grid>`"
@@ -330,7 +326,7 @@ msgstr ""
 "red de Ising: :meth:`Hamiltonian.ising_grid(rows, "
 "columns)<qilisdk.analog.hamiltonian.Hamiltonian.ising_grid>`"
 
-#: ../../modules/analog/analog_hamiltonian.rst:113
+#: ../../modules/analog/analog_hamiltonian.rst:109
 msgid ""
 "transverse-field Ising: "
 ":meth:`Hamiltonian.transverse_field_ising(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.transverse_field_ising>`"
@@ -338,39 +334,31 @@ msgstr ""
 "Ising con campo transversal: "
 ":meth:`Hamiltonian.transverse_field_ising(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.transverse_field_ising>`"
 
+#: ../../modules/analog/analog_hamiltonian.rst:110
+msgid ""
+"XY: "
+":meth:`Hamiltonian.xy(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.xy>`"
+msgstr ""
+"XY: "
+":meth:`Hamiltonian.xy(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.xy>`"
+
+#: ../../modules/analog/analog_hamiltonian.rst:111
+msgid ""
+"Heisenberg: "
+":meth:`Hamiltonian.heisenberg(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.heisenberg>`"
+msgstr ""
+"Heisenberg: "
+":meth:`Hamiltonian.heisenberg(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.heisenberg>`"
+
 #: ../../modules/analog/analog_hamiltonian.rst:114
-msgid ""
-"XY: "
-":meth:`Hamiltonian.xy(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.xy>`"
-msgstr ""
-"XY: "
-":meth:`Hamiltonian.xy(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.xy>`"
-
-#: ../../modules/analog/analog_hamiltonian.rst:115
-msgid ""
-"Heisenberg: "
-":meth:`Hamiltonian.heisenberg(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.heisenberg>`"
-msgstr ""
-"Heisenberg: "
-":meth:`Hamiltonian.heisenberg(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.heisenberg>`"
-
-#: ../../modules/analog/analog_hamiltonian.rst:116
-msgid ""
-"randomly weighted: "
-":meth:`H.randomize_coefficients(range)<qilisdk.analog.hamiltonian.Hamiltonian.randomize_coefficients>`"
-msgstr ""
-"con pesos aleatorios: "
-":meth:`H.randomize_coefficients(range)<qilisdk.analog.hamiltonian.Hamiltonian.randomize_coefficients>`"
-
-#: ../../modules/analog/analog_hamiltonian.rst:119
 msgid "Example: Ising Hamiltonian"
 msgstr "Ejemplo: Hamiltoniano de Ising"
 
-#: ../../modules/analog/analog_hamiltonian.rst:121
+#: ../../modules/analog/analog_hamiltonian.rst:116
 msgid "To define an Ising Hamiltonian of the form:"
 msgstr "Para definir un Hamiltoniano de Ising de la forma:"
 
-#: ../../modules/analog/analog_hamiltonian.rst:123
+#: ../../modules/analog/analog_hamiltonian.rst:118
 msgid ""
 "H_{\\text{Ising}}  =  - \\sum_{\\langle i, j \\rangle} J_{ij} \\sigma^Z_i"
 " \\sigma^Z_j - \\sum_j h_j \\sigma^Z_j"
@@ -378,7 +366,7 @@ msgstr ""
 "H_{\\text{Ising}}  =  - \\sum_{\\langle i, j \\rangle} J_{ij} \\sigma^Z_i"
 " \\sigma^Z_j - \\sum_j h_j \\sigma^Z_j"
 
-#: ../../modules/analog/analog_hamiltonian.rst:127
+#: ../../modules/analog/analog_hamiltonian.rst:122
 msgid "you can use the Pauli ``Z`` operators from the library:"
 msgstr "puede utilizar los operadores de Pauli ``Z`` de la biblioteca:"
 
@@ -610,4 +598,69 @@ msgstr "puede utilizar los operadores de Pauli ``Z`` de la biblioteca:"
 #~ "Heisenberg con campo aleatorio, utilizado "
 #~ "para estudiar la localización de muchos"
 #~ " cuerpos:"
+
+#~ msgid ""
+#~ "Any Hamiltonian can be turned into "
+#~ "a disordered version with "
+#~ ":meth:`~qilisdk.analog.hamiltonian.Hamiltonian.randomize_coefficients`,"
+#~ " which replaces every coefficient with "
+#~ "one drawn uniformly at random from "
+#~ "``range`` (``(-1.0, 1.0)`` by default) "
+#~ "while leaving the operators untouched. "
+#~ "Note that this mutates the Hamiltonian"
+#~ " and returns it."
+#~ msgstr ""
+#~ "Cualquier Hamiltoniano se puede convertir "
+#~ "en una versión desordenada con "
+#~ ":meth:`~qilisdk.analog.hamiltonian.Hamiltonian.randomize_coefficients`,"
+#~ " que sustituye cada coeficiente por "
+#~ "uno extraído de forma uniforme y "
+#~ "aleatoria de ``range`` (``(-1.0, 1.0)`` "
+#~ "por defecto) sin tocar los operadores."
+#~ " Tenga en cuenta que esto modifica"
+#~ " el Hamiltoniano y lo devuelve."
+
+#~ msgid ""
+#~ "randomly weighted: "
+#~ ":meth:`H.randomize_coefficients(range)<qilisdk.analog.hamiltonian.Hamiltonian.randomize_coefficients>`"
+#~ msgstr ""
+#~ "con pesos aleatorios: "
+#~ ":meth:`H.randomize_coefficients(range)<qilisdk.analog.hamiltonian.Hamiltonian.randomize_coefficients>`"
+
+#~ msgid "Randomizing coefficients"
+#~ msgstr "Aleatorización de coeficientes"
+
+#~ msgid ""
+#~ "Fixed and randomized coefficients can be"
+#~ " mixed freely in the same call, "
+#~ "which is how the standard disordered "
+#~ "models are built: random couplings on"
+#~ " an Ising model give a "
+#~ "Sherrington-Kirkpatrick instance, while a "
+#~ "random field over uniform Heisenberg "
+#~ "couplings gives the random-field "
+#~ "Heisenberg model used to study many-"
+#~ "body localisation."
+#~ msgstr ""
+#~ "Los coeficientes fijos y aleatorios se"
+#~ " pueden combinar libremente en la "
+#~ "misma llamada, que es la forma de"
+#~ " construir los modelos desordenados "
+#~ "estándar: unos acoplamientos aleatorios en "
+#~ "un modelo de Ising dan una "
+#~ "instancia de Sherrington-Kirkpatrick, mientras"
+#~ " que un campo aleatorio sobre "
+#~ "acoplamientos de Heisenberg uniformes da "
+#~ "el modelo de Heisenberg con campo "
+#~ "aleatorio, utilizado para estudiar la "
+#~ "localización de muchos cuerpos."
+
+#~ msgid ""
+#~ "randomly weighted: pass a ``(low, "
+#~ "high)`` range instead of a value "
+#~ "for any coefficient"
+#~ msgstr ""
+#~ "con pesos aleatorios: pase un rango "
+#~ "``(low, high)`` en lugar de un "
+#~ "valor para cualquier coeficiente"
 
