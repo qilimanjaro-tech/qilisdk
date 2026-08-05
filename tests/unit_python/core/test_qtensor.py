@@ -1119,8 +1119,9 @@ def test_qtensor_sample_invalid_nshots():
 
 
 def test_qtensor_sample_zero_probability():
+    tensor = QTensor(np.zeros((2, 1)))
     with pytest.raises(ValueError, match="zero total probability"):
-        QTensor(np.zeros((2, 1))).sample(nshots=10)
+        tensor.sample(nshots=10)
 
 
 def test_qtensor_sample_negative_probability_ignored():
