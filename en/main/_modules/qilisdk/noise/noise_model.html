@@ -277,6 +277,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/functionals/variational_program_result/index.html">qilisdk.functionals.variational_program_result</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/logging/index.html">qilisdk.logging</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/noise/index.html">qilisdk.noise</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/amplitude_damping/index.html">qilisdk.noise.amplitude_damping</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/bit_flip/index.html">qilisdk.noise.bit_flip</a></li>
@@ -435,318 +436,338 @@
 </span><span id="line-17"><span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">defaultdict</span>
 </span><span id="line-18"><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeAlias</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">overload</span>
 </span><span id="line-19">
-</span><span id="line-20"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.digital</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gate</span>
+</span><span id="line-20"><span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
 </span><span id="line-21">
-</span><span id="line-22"><span class="kn">from</span><span class="w"> </span><span class="nn">.noise</span><span class="w"> </span><span class="kn">import</span> <span class="n">Noise</span>
-</span><span id="line-23"><span class="kn">from</span><span class="w"> </span><span class="nn">.noise_config</span><span class="w"> </span><span class="kn">import</span> <span class="n">NoiseConfig</span>
-</span><span id="line-24"><span class="kn">from</span><span class="w"> </span><span class="nn">.parameter_perturbation</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParameterPerturbation</span>
-</span><span id="line-25"><span class="kn">from</span><span class="w"> </span><span class="nn">.protocols</span><span class="w"> </span><span class="kn">import</span> <span class="n">AttachmentScope</span>
-</span><span id="line-26">
+</span><span id="line-22"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.digital</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gate</span>
+</span><span id="line-23">
+</span><span id="line-24"><span class="kn">from</span><span class="w"> </span><span class="nn">.noise</span><span class="w"> </span><span class="kn">import</span> <span class="n">Noise</span>
+</span><span id="line-25"><span class="kn">from</span><span class="w"> </span><span class="nn">.noise_config</span><span class="w"> </span><span class="kn">import</span> <span class="n">NoiseConfig</span>
+</span><span id="line-26"><span class="kn">from</span><span class="w"> </span><span class="nn">.parameter_perturbation</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParameterPerturbation</span>
+</span><span id="line-27"><span class="kn">from</span><span class="w"> </span><span class="nn">.protocols</span><span class="w"> </span><span class="kn">import</span> <span class="n">AttachmentScope</span>
+</span><span id="line-28">
 <div class="viewcode-block" id="Qubit">
 <a class="viewcode-back" href="../../../code/api/qilisdk/noise/noise_model/index.html#qilisdk.noise.noise_model.Qubit">[docs]</a>
-</span><span id="line-27"><span class="n">Qubit</span><span class="p">:</span> <span class="n">TypeAlias</span> <span class="o">=</span> <span class="nb">int</span></div>
+</span><span id="line-29"><span class="n">Qubit</span><span class="p">:</span> <span class="n">TypeAlias</span> <span class="o">=</span> <span class="nb">int</span></div>
 
 <div class="viewcode-block" id="GateType">
 <a class="viewcode-back" href="../../../code/api/qilisdk/noise/noise_model/index.html#qilisdk.noise.noise_model.GateType">[docs]</a>
-</span><span id="line-28"><span class="n">GateType</span><span class="p">:</span> <span class="n">TypeAlias</span> <span class="o">=</span> <span class="nb">type</span><span class="p">[</span><span class="n">Gate</span><span class="p">]</span></div>
+</span><span id="line-30"><span class="n">GateType</span><span class="p">:</span> <span class="n">TypeAlias</span> <span class="o">=</span> <span class="nb">type</span><span class="p">[</span><span class="n">Gate</span><span class="p">]</span></div>
 
 <div class="viewcode-block" id="ParameterName">
 <a class="viewcode-back" href="../../../code/api/qilisdk/noise/noise_model/index.html#qilisdk.noise.noise_model.ParameterName">[docs]</a>
-</span><span id="line-29"><span class="n">ParameterName</span><span class="p">:</span> <span class="n">TypeAlias</span> <span class="o">=</span> <span class="nb">str</span></div>
+</span><span id="line-31"><span class="n">ParameterName</span><span class="p">:</span> <span class="n">TypeAlias</span> <span class="o">=</span> <span class="nb">str</span></div>
 
-</span><span id="line-30">
+</span><span id="line-32">
 <div class="viewcode-block" id="TNoise">
 <a class="viewcode-back" href="../../../code/api/qilisdk/noise/noise_model/index.html#qilisdk.noise.noise_model.TNoise">[docs]</a>
-</span><span id="line-31"><span class="n">TNoise</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;TNoise&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">Noise</span><span class="p">)</span></div>
+</span><span id="line-33"><span class="n">TNoise</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;TNoise&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">Noise</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="TParameterPerturbation">
 <a class="viewcode-back" href="../../../code/api/qilisdk/noise/noise_model/index.html#qilisdk.noise.noise_model.TParameterPerturbation">[docs]</a>
-</span><span id="line-32"><span class="n">TParameterPerturbation</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;TParameterPerturbation&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">ParameterPerturbation</span><span class="p">)</span></div>
+</span><span id="line-34"><span class="n">TParameterPerturbation</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;TParameterPerturbation&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">ParameterPerturbation</span><span class="p">)</span></div>
 
-</span><span id="line-33">
-</span><span id="line-34">
+</span><span id="line-35">
+</span><span id="line-36">
 <div class="viewcode-block" id="NoiseModel">
 <a class="viewcode-back" href="../../../code/api/qilisdk/noise/noise_model/index.html#qilisdk.noise.noise_model.NoiseModel">[docs]</a>
-</span><span id="line-35"><span class="k">class</span><span class="w"> </span><span class="nc">NoiseModel</span><span class="p">:</span>
-</span><span id="line-36"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Container for noise sources and parameter perturbations.</span>
-</span><span id="line-37">
-</span><span id="line-38"><span class="sd">    Stores global, per-qubit, and per-gate noise along with parameter-level</span>
-</span><span id="line-39"><span class="sd">    perturbations for later application in backends.</span>
-</span><span id="line-40"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-41">
-</span><span id="line-42">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">noise_config</span><span class="p">:</span> <span class="n">NoiseConfig</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-43">        <span class="c1"># configuration</span>
-</span><span id="line-44">        <span class="k">if</span> <span class="n">noise_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-45">            <span class="bp">self</span><span class="o">.</span><span class="n">_noise_config</span> <span class="o">=</span> <span class="n">noise_config</span>
-</span><span id="line-46">        <span class="k">else</span><span class="p">:</span>
-</span><span id="line-47">            <span class="bp">self</span><span class="o">.</span><span class="n">_noise_config</span> <span class="o">=</span> <span class="n">NoiseConfig</span><span class="p">()</span>
-</span><span id="line-48">
-</span><span id="line-49">        <span class="c1"># noises</span>
-</span><span id="line-50">        <span class="bp">self</span><span class="o">.</span><span class="n">_global_noise</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Noise</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span id="line-51">        <span class="bp">self</span><span class="o">.</span><span class="n">_per_qubit_noise</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Qubit</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Noise</span><span class="p">]]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
-</span><span id="line-52">        <span class="bp">self</span><span class="o">.</span><span class="n">_per_gate_noise</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">GateType</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Noise</span><span class="p">]]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
-</span><span id="line-53">        <span class="bp">self</span><span class="o">.</span><span class="n">_per_gate_per_qubit_noise</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">GateType</span><span class="p">,</span> <span class="n">Qubit</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">Noise</span><span class="p">]]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
-</span><span id="line-54">
-</span><span id="line-55">        <span class="c1"># parameter perturbations</span>
-</span><span id="line-56">        <span class="bp">self</span><span class="o">.</span><span class="n">_global_perturbations</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">ParameterName</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">ParameterPerturbation</span><span class="p">]]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
-</span><span id="line-57">        <span class="bp">self</span><span class="o">.</span><span class="n">_per_gate_perturbations</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">GateType</span><span class="p">,</span> <span class="n">ParameterName</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">ParameterPerturbation</span><span class="p">]]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span>
-</span><span id="line-58">            <span class="nb">list</span>
-</span><span id="line-59">        <span class="p">)</span>
-</span><span id="line-60">
-</span><span id="line-61">    <span class="nd">@property</span>
+</span><span id="line-37"><span class="k">class</span><span class="w"> </span><span class="nc">NoiseModel</span><span class="p">:</span>
+</span><span id="line-38"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Container for noise sources and parameter perturbations.</span>
+</span><span id="line-39">
+</span><span id="line-40"><span class="sd">    Stores global, per-qubit, and per-gate noise along with parameter-level</span>
+</span><span id="line-41"><span class="sd">    perturbations for later application in backends.</span>
+</span><span id="line-42"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-43">
+</span><span id="line-44">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">noise_config</span><span class="p">:</span> <span class="n">NoiseConfig</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-45">        <span class="c1"># configuration</span>
+</span><span id="line-46">        <span class="k">if</span> <span class="n">noise_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-47">            <span class="bp">self</span><span class="o">.</span><span class="n">_noise_config</span> <span class="o">=</span> <span class="n">noise_config</span>
+</span><span id="line-48">        <span class="k">else</span><span class="p">:</span>
+</span><span id="line-49">            <span class="bp">self</span><span class="o">.</span><span class="n">_noise_config</span> <span class="o">=</span> <span class="n">NoiseConfig</span><span class="p">()</span>
+</span><span id="line-50">
+</span><span id="line-51">        <span class="c1"># noises</span>
+</span><span id="line-52">        <span class="bp">self</span><span class="o">.</span><span class="n">_global_noise</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Noise</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="line-53">        <span class="bp">self</span><span class="o">.</span><span class="n">_per_qubit_noise</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Qubit</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Noise</span><span class="p">]]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+</span><span id="line-54">        <span class="bp">self</span><span class="o">.</span><span class="n">_per_gate_noise</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">GateType</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Noise</span><span class="p">]]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+</span><span id="line-55">        <span class="bp">self</span><span class="o">.</span><span class="n">_per_gate_per_qubit_noise</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">GateType</span><span class="p">,</span> <span class="n">Qubit</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">Noise</span><span class="p">]]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+</span><span id="line-56">
+</span><span id="line-57">        <span class="c1"># parameter perturbations</span>
+</span><span id="line-58">        <span class="bp">self</span><span class="o">.</span><span class="n">_global_perturbations</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">ParameterName</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">ParameterPerturbation</span><span class="p">]]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+</span><span id="line-59">        <span class="bp">self</span><span class="o">.</span><span class="n">_per_gate_perturbations</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">GateType</span><span class="p">,</span> <span class="n">ParameterName</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">ParameterPerturbation</span><span class="p">]]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span>
+</span><span id="line-60">            <span class="nb">list</span>
+</span><span id="line-61">        <span class="p">)</span>
+</span><span id="line-62">
+</span><span id="line-63">    <span class="nd">@property</span>
 <div class="viewcode-block" id="NoiseModel.noise_config">
 <a class="viewcode-back" href="../../../code/api/qilisdk/noise/noise_model/index.html#qilisdk.noise.noise_model.NoiseModel.noise_config">[docs]</a>
-</span><span id="line-62">    <span class="k">def</span><span class="w"> </span><span class="nf">noise_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NoiseConfig</span><span class="p">:</span>
-</span><span id="line-63"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the noise configuration.</span>
-</span><span id="line-64">
-</span><span id="line-65"><span class="sd">        Returns:</span>
-</span><span id="line-66"><span class="sd">            NoiseConfig: The noise configuration instance.</span>
-</span><span id="line-67"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-68">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_noise_config</span></div>
+</span><span id="line-64">    <span class="k">def</span><span class="w"> </span><span class="nf">noise_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NoiseConfig</span><span class="p">:</span>
+</span><span id="line-65"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the noise configuration.</span>
+</span><span id="line-66">
+</span><span id="line-67"><span class="sd">        Returns:</span>
+</span><span id="line-68"><span class="sd">            NoiseConfig: The noise configuration instance.</span>
+</span><span id="line-69"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-70">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_noise_config</span></div>
 
-</span><span id="line-69">
-</span><span id="line-70">    <span class="nd">@property</span>
+</span><span id="line-71">
+</span><span id="line-72">    <span class="nd">@property</span>
 <div class="viewcode-block" id="NoiseModel.global_noise">
 <a class="viewcode-back" href="../../../code/api/qilisdk/noise/noise_model/index.html#qilisdk.noise.noise_model.NoiseModel.global_noise">[docs]</a>
-</span><span id="line-71">    <span class="k">def</span><span class="w"> </span><span class="nf">global_noise</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Noise</span><span class="p">]:</span>
-</span><span id="line-72"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the list of globally applied noise sources.</span>
-</span><span id="line-73">
-</span><span id="line-74"><span class="sd">        Returns:</span>
-</span><span id="line-75"><span class="sd">            list[Noise]: Noise sources applied to all operations.</span>
-</span><span id="line-76"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-77">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_noise</span></div>
+</span><span id="line-73">    <span class="k">def</span><span class="w"> </span><span class="nf">global_noise</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Noise</span><span class="p">]:</span>
+</span><span id="line-74"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the list of globally applied noise sources.</span>
+</span><span id="line-75">
+</span><span id="line-76"><span class="sd">        Returns:</span>
+</span><span id="line-77"><span class="sd">            list[Noise]: Noise sources applied to all operations.</span>
+</span><span id="line-78"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-79">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_noise</span></div>
 
-</span><span id="line-78">
-</span><span id="line-79">    <span class="nd">@property</span>
+</span><span id="line-80">
+</span><span id="line-81">    <span class="nd">@property</span>
 <div class="viewcode-block" id="NoiseModel.per_qubit_noise">
 <a class="viewcode-back" href="../../../code/api/qilisdk/noise/noise_model/index.html#qilisdk.noise.noise_model.NoiseModel.per_qubit_noise">[docs]</a>
-</span><span id="line-80">    <span class="k">def</span><span class="w"> </span><span class="nf">per_qubit_noise</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Qubit</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Noise</span><span class="p">]]:</span>
-</span><span id="line-81"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the per-qubit noise mapping.</span>
-</span><span id="line-82">
-</span><span id="line-83"><span class="sd">        Returns:</span>
-</span><span id="line-84"><span class="sd">            dict[int, list[Noise]]: Noise sources keyed by qubit index.</span>
-</span><span id="line-85"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-86">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_per_qubit_noise</span></div>
+</span><span id="line-82">    <span class="k">def</span><span class="w"> </span><span class="nf">per_qubit_noise</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Qubit</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Noise</span><span class="p">]]:</span>
+</span><span id="line-83"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the per-qubit noise mapping.</span>
+</span><span id="line-84">
+</span><span id="line-85"><span class="sd">        Returns:</span>
+</span><span id="line-86"><span class="sd">            dict[int, list[Noise]]: Noise sources keyed by qubit index.</span>
+</span><span id="line-87"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-88">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_per_qubit_noise</span></div>
 
-</span><span id="line-87">
-</span><span id="line-88">    <span class="nd">@property</span>
+</span><span id="line-89">
+</span><span id="line-90">    <span class="nd">@property</span>
 <div class="viewcode-block" id="NoiseModel.per_gate_noise">
 <a class="viewcode-back" href="../../../code/api/qilisdk/noise/noise_model/index.html#qilisdk.noise.noise_model.NoiseModel.per_gate_noise">[docs]</a>
-</span><span id="line-89">    <span class="k">def</span><span class="w"> </span><span class="nf">per_gate_noise</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">GateType</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Noise</span><span class="p">]]:</span>
-</span><span id="line-90"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the per-gate-type noise mapping.</span>
-</span><span id="line-91">
-</span><span id="line-92"><span class="sd">        Returns:</span>
-</span><span id="line-93"><span class="sd">            dict[type[Gate], list[Noise]]: Noise sources keyed by gate type.</span>
-</span><span id="line-94"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-95">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_per_gate_noise</span></div>
+</span><span id="line-91">    <span class="k">def</span><span class="w"> </span><span class="nf">per_gate_noise</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">GateType</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Noise</span><span class="p">]]:</span>
+</span><span id="line-92"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the per-gate-type noise mapping.</span>
+</span><span id="line-93">
+</span><span id="line-94"><span class="sd">        Returns:</span>
+</span><span id="line-95"><span class="sd">            dict[type[Gate], list[Noise]]: Noise sources keyed by gate type.</span>
+</span><span id="line-96"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-97">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_per_gate_noise</span></div>
 
-</span><span id="line-96">
-</span><span id="line-97">    <span class="nd">@property</span>
+</span><span id="line-98">
+</span><span id="line-99">    <span class="nd">@property</span>
 <div class="viewcode-block" id="NoiseModel.per_gate_per_qubit_noise">
 <a class="viewcode-back" href="../../../code/api/qilisdk/noise/noise_model/index.html#qilisdk.noise.noise_model.NoiseModel.per_gate_per_qubit_noise">[docs]</a>
-</span><span id="line-98">    <span class="k">def</span><span class="w"> </span><span class="nf">per_gate_per_qubit_noise</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">GateType</span><span class="p">,</span> <span class="n">Qubit</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">Noise</span><span class="p">]]:</span>
-</span><span id="line-99"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the per-gate-type and per-qubit noise mapping.</span>
-</span><span id="line-100">
-</span><span id="line-101"><span class="sd">        Returns:</span>
-</span><span id="line-102"><span class="sd">            dict[tuple[type[Gate], int], list[Noise]]: Noise sources keyed by gate type and qubit index.</span>
-</span><span id="line-103"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-104">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_per_gate_per_qubit_noise</span></div>
+</span><span id="line-100">    <span class="k">def</span><span class="w"> </span><span class="nf">per_gate_per_qubit_noise</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">GateType</span><span class="p">,</span> <span class="n">Qubit</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">Noise</span><span class="p">]]:</span>
+</span><span id="line-101"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the per-gate-type and per-qubit noise mapping.</span>
+</span><span id="line-102">
+</span><span id="line-103"><span class="sd">        Returns:</span>
+</span><span id="line-104"><span class="sd">            dict[tuple[type[Gate], int], list[Noise]]: Noise sources keyed by gate type and qubit index.</span>
+</span><span id="line-105"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-106">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_per_gate_per_qubit_noise</span></div>
 
-</span><span id="line-105">
-</span><span id="line-106">    <span class="nd">@property</span>
+</span><span id="line-107">
+</span><span id="line-108">    <span class="nd">@property</span>
 <div class="viewcode-block" id="NoiseModel.global_perturbations">
 <a class="viewcode-back" href="../../../code/api/qilisdk/noise/noise_model/index.html#qilisdk.noise.noise_model.NoiseModel.global_perturbations">[docs]</a>
-</span><span id="line-107">    <span class="k">def</span><span class="w"> </span><span class="nf">global_perturbations</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">ParameterName</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">ParameterPerturbation</span><span class="p">]]:</span>
-</span><span id="line-108"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the global parameter perturbation mapping.</span>
-</span><span id="line-109">
-</span><span id="line-110"><span class="sd">        Returns:</span>
-</span><span id="line-111"><span class="sd">            dict[str, list[ParameterPerturbation]]: Perturbations keyed by parameter name.</span>
-</span><span id="line-112"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-113">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_perturbations</span></div>
+</span><span id="line-109">    <span class="k">def</span><span class="w"> </span><span class="nf">global_perturbations</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">ParameterName</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">ParameterPerturbation</span><span class="p">]]:</span>
+</span><span id="line-110"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the global parameter perturbation mapping.</span>
+</span><span id="line-111">
+</span><span id="line-112"><span class="sd">        Returns:</span>
+</span><span id="line-113"><span class="sd">            dict[str, list[ParameterPerturbation]]: Perturbations keyed by parameter name.</span>
+</span><span id="line-114"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-115">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_perturbations</span></div>
 
-</span><span id="line-114">
-</span><span id="line-115">    <span class="nd">@property</span>
+</span><span id="line-116">
+</span><span id="line-117">    <span class="nd">@property</span>
 <div class="viewcode-block" id="NoiseModel.per_gate_perturbations">
 <a class="viewcode-back" href="../../../code/api/qilisdk/noise/noise_model/index.html#qilisdk.noise.noise_model.NoiseModel.per_gate_perturbations">[docs]</a>
-</span><span id="line-116">    <span class="k">def</span><span class="w"> </span><span class="nf">per_gate_perturbations</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">GateType</span><span class="p">,</span> <span class="n">ParameterName</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">ParameterPerturbation</span><span class="p">]]:</span>
-</span><span id="line-117"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the per-gate-type parameter perturbation mapping.</span>
-</span><span id="line-118">
-</span><span id="line-119"><span class="sd">        Returns:</span>
-</span><span id="line-120"><span class="sd">            dict[tuple[type[Gate], str], list[ParameterPerturbation]]: Perturbations keyed by gate type and parameter.</span>
-</span><span id="line-121"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-122">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_per_gate_perturbations</span></div>
+</span><span id="line-118">    <span class="k">def</span><span class="w"> </span><span class="nf">per_gate_perturbations</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">GateType</span><span class="p">,</span> <span class="n">ParameterName</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">ParameterPerturbation</span><span class="p">]]:</span>
+</span><span id="line-119"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the per-gate-type parameter perturbation mapping.</span>
+</span><span id="line-120">
+</span><span id="line-121"><span class="sd">        Returns:</span>
+</span><span id="line-122"><span class="sd">            dict[tuple[type[Gate], str], list[ParameterPerturbation]]: Perturbations keyed by gate type and parameter.</span>
+</span><span id="line-123"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-124">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_per_gate_perturbations</span></div>
 
-</span><span id="line-123">
-</span><span id="line-124">    <span class="c1"># Overloads (typing)</span>
-</span><span id="line-125">    <span class="c1"># -----------------------</span>
-</span><span id="line-126">
-</span><span id="line-127">    <span class="c1"># Noise: global/per_qubit/per_gate_type</span>
-</span><span id="line-128">    <span class="nd">@overload</span>
+</span><span id="line-125">
+</span><span id="line-126">    <span class="c1"># Overloads (typing)</span>
+</span><span id="line-127">    <span class="c1"># -----------------------</span>
+</span><span id="line-128">
+</span><span id="line-129">    <span class="c1"># Noise: global/per_qubit/per_gate_type</span>
+</span><span id="line-130">    <span class="nd">@overload</span>
 <div class="viewcode-block" id="NoiseModel.add">
 <a class="viewcode-back" href="../../../code/api/qilisdk/noise/noise_model/index.html#qilisdk.noise.noise_model.NoiseModel.add">[docs]</a>
-</span><span id="line-129">    <span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">noise</span><span class="p">:</span> <span class="n">TNoise</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span></div>
+</span><span id="line-131">    <span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">noise</span><span class="p">:</span> <span class="n">TNoise</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span></div>
 
-</span><span id="line-130">    <span class="nd">@overload</span>
-</span><span id="line-131">    <span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">noise</span><span class="p">:</span> <span class="n">TNoise</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">qubits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Qubit</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
 </span><span id="line-132">    <span class="nd">@overload</span>
-</span><span id="line-133">    <span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">noise</span><span class="p">:</span> <span class="n">TNoise</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">gate</span><span class="p">:</span> <span class="n">GateType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
-</span><span id="line-134">
-</span><span id="line-135">    <span class="c1"># ParameterPerturbation: global/per_gate_type</span>
-</span><span id="line-136">    <span class="nd">@overload</span>
-</span><span id="line-137">    <span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">noise</span><span class="p">:</span> <span class="n">TParameterPerturbation</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">parameter</span><span class="p">:</span> <span class="n">ParameterName</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
+</span><span id="line-133">    <span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">noise</span><span class="p">:</span> <span class="n">TNoise</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">qubits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Qubit</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
+</span><span id="line-134">    <span class="nd">@overload</span>
+</span><span id="line-135">    <span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">noise</span><span class="p">:</span> <span class="n">TNoise</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">gate</span><span class="p">:</span> <span class="n">GateType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
+</span><span id="line-136">
+</span><span id="line-137">    <span class="c1"># ParameterPerturbation: global/per_gate_type</span>
 </span><span id="line-138">    <span class="nd">@overload</span>
-</span><span id="line-139">    <span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">noise</span><span class="p">:</span> <span class="n">TParameterPerturbation</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">gate</span><span class="p">:</span> <span class="n">GateType</span><span class="p">,</span> <span class="n">parameter</span><span class="p">:</span> <span class="n">ParameterName</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
-</span><span id="line-140">
-</span><span id="line-141">    <span class="c1"># -----------------------</span>
-</span><span id="line-142">    <span class="c1"># Implementation</span>
+</span><span id="line-139">    <span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">noise</span><span class="p">:</span> <span class="n">TParameterPerturbation</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">parameter</span><span class="p">:</span> <span class="n">ParameterName</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
+</span><span id="line-140">    <span class="nd">@overload</span>
+</span><span id="line-141">    <span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">noise</span><span class="p">:</span> <span class="n">TParameterPerturbation</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">gate</span><span class="p">:</span> <span class="n">GateType</span><span class="p">,</span> <span class="n">parameter</span><span class="p">:</span> <span class="n">ParameterName</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
+</span><span id="line-142">
 </span><span id="line-143">    <span class="c1"># -----------------------</span>
-</span><span id="line-144">
-</span><span id="line-145">    <span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span>
-</span><span id="line-146">        <span class="bp">self</span><span class="p">,</span>
-</span><span id="line-147">        <span class="n">noise</span><span class="p">:</span> <span class="n">Noise</span> <span class="o">|</span> <span class="n">ParameterPerturbation</span><span class="p">,</span>
-</span><span id="line-148">        <span class="o">*</span><span class="p">,</span>
-</span><span id="line-149">        <span class="n">qubits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Qubit</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="line-150">        <span class="n">gate</span><span class="p">:</span> <span class="n">GateType</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="line-151">        <span class="n">parameter</span><span class="p">:</span> <span class="n">ParameterName</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="line-152">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-153"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Attach a noise source or parameter perturbation to the model.</span>
-</span><span id="line-154">
-</span><span id="line-155"><span class="sd">        Args:</span>
-</span><span id="line-156"><span class="sd">            noise (Noise | ParameterPerturbation): The noise or parameter perturbation instance to attach.</span>
-</span><span id="line-157"><span class="sd">            qubits (list[int] | None): Target qubit index or indices for per-qubit noise attachments.</span>
-</span><span id="line-158"><span class="sd">            gate (type[Gate] | None): Target gate type for per-gate noise or perturbation attachments.</span>
-</span><span id="line-159"><span class="sd">            parameter (str | None): Target parameter name for perturbation attachments.</span>
-</span><span id="line-160">
-</span><span id="line-161"><span class="sd">        Raises:</span>
-</span><span id="line-162"><span class="sd">            ValueError: If the noise/perturbation does not allow the inferred scope.</span>
-</span><span id="line-163"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-164">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">noise</span><span class="p">,</span> <span class="n">ParameterPerturbation</span><span class="p">):</span>
-</span><span id="line-165">            <span class="k">if</span> <span class="n">qubits</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-166">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">noise</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> cannot be applied to specific qubits.&quot;</span><span class="p">)</span>
-</span><span id="line-167">            <span class="bp">self</span><span class="o">.</span><span class="n">_add_parameter_perturbation</span><span class="p">(</span>
-</span><span id="line-168">                <span class="n">noise</span><span class="o">=</span><span class="n">noise</span><span class="p">,</span>
-</span><span id="line-169">                <span class="n">gate</span><span class="o">=</span><span class="n">gate</span><span class="p">,</span>
-</span><span id="line-170">                <span class="n">parameter</span><span class="o">=</span><span class="n">parameter</span><span class="p">,</span>
-</span><span id="line-171">            <span class="p">)</span>
-</span><span id="line-172">        <span class="k">else</span><span class="p">:</span>
-</span><span id="line-173">            <span class="bp">self</span><span class="o">.</span><span class="n">_add_noise</span><span class="p">(</span>
-</span><span id="line-174">                <span class="n">noise</span><span class="o">=</span><span class="n">noise</span><span class="p">,</span>
-</span><span id="line-175">                <span class="n">qubits</span><span class="o">=</span><span class="n">qubits</span><span class="p">,</span>
-</span><span id="line-176">                <span class="n">gate</span><span class="o">=</span><span class="n">gate</span><span class="p">,</span>
-</span><span id="line-177">                <span class="n">parameter</span><span class="o">=</span><span class="n">parameter</span><span class="p">,</span>
-</span><span id="line-178">            <span class="p">)</span>
-</span><span id="line-179">
-</span><span id="line-180">    <span class="nd">@staticmethod</span>
-</span><span id="line-181">    <span class="k">def</span><span class="w"> </span><span class="nf">_check_scope_allowed</span><span class="p">(</span>
-</span><span id="line-182">        <span class="n">noise</span><span class="p">:</span> <span class="n">Noise</span> <span class="o">|</span> <span class="n">ParameterPerturbation</span><span class="p">,</span>
-</span><span id="line-183">        <span class="n">scope</span><span class="p">:</span> <span class="n">AttachmentScope</span><span class="p">,</span>
-</span><span id="line-184">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-185"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if the noise/perturbation allows the given scope.</span>
-</span><span id="line-186">
-</span><span id="line-187"><span class="sd">        Args:</span>
-</span><span id="line-188"><span class="sd">            noise (Noise | ParameterPerturbation): The noise or parameter perturbation instance to check.</span>
-</span><span id="line-189"><span class="sd">            scope (AttachmentScope): The scope to check.</span>
-</span><span id="line-190"><span class="sd">        Raises:</span>
-</span><span id="line-191"><span class="sd">            ValueError: If the noise/perturbation does not allow the given scope.</span>
-</span><span id="line-192"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-193">        <span class="k">if</span> <span class="n">scope</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">noise</span><span class="o">.</span><span class="n">allowed_scopes</span><span class="p">():</span>
-</span><span id="line-194">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">noise</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> cannot be added with scope &#39;</span><span class="si">{</span><span class="n">scope</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span>
-</span><span id="line-195">
-</span><span id="line-196">    <span class="k">def</span><span class="w"> </span><span class="nf">_add_noise</span><span class="p">(</span>
-</span><span id="line-197">        <span class="bp">self</span><span class="p">,</span>
-</span><span id="line-198">        <span class="n">noise</span><span class="p">:</span> <span class="n">Noise</span><span class="p">,</span>
-</span><span id="line-199">        <span class="o">*</span><span class="p">,</span>
-</span><span id="line-200">        <span class="n">qubits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Qubit</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="line-201">        <span class="n">gate</span><span class="p">:</span> <span class="n">GateType</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="line-202">        <span class="n">parameter</span><span class="p">:</span> <span class="n">ParameterName</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="line-203">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-204"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Attach a noise source to the model.</span>
-</span><span id="line-205">
-</span><span id="line-206"><span class="sd">        Args:</span>
-</span><span id="line-207"><span class="sd">            noise (Noise): The noise instance to attach.</span>
-</span><span id="line-208"><span class="sd">            qubits (list[int] | None): Target qubit index or indices for per-qubit noise attachments.</span>
-</span><span id="line-209"><span class="sd">            gate (type[Gate] | None): Target gate type for per-gate noise attachments.</span>
-</span><span id="line-210"><span class="sd">            parameter (str | None): Target parameter name for perturbation attachments.</span>
-</span><span id="line-211">
-</span><span id="line-212"><span class="sd">        Raises:</span>
-</span><span id="line-213"><span class="sd">            ValueError: If the noise does not allow the inferred scope.</span>
-</span><span id="line-214"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-215">        <span class="k">if</span> <span class="n">parameter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-216">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">noise</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> cannot be applied to parameters.&quot;</span><span class="p">)</span>
-</span><span id="line-217">        <span class="k">if</span> <span class="n">qubits</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">gate</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-218">            <span class="bp">self</span><span class="o">.</span><span class="n">_check_scope_allowed</span><span class="p">(</span><span class="n">noise</span><span class="p">,</span> <span class="n">AttachmentScope</span><span class="o">.</span><span class="n">GLOBAL</span><span class="p">)</span>
-</span><span id="line-219">            <span class="bp">self</span><span class="o">.</span><span class="n">global_noise</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">noise</span><span class="p">)</span>
-</span><span id="line-220">            <span class="k">return</span>
-</span><span id="line-221">        <span class="k">if</span> <span class="n">qubits</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">gate</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-222">            <span class="bp">self</span><span class="o">.</span><span class="n">_check_scope_allowed</span><span class="p">(</span><span class="n">noise</span><span class="p">,</span> <span class="n">AttachmentScope</span><span class="o">.</span><span class="n">PER_QUBIT</span><span class="p">)</span>
-</span><span id="line-223">            <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">qubits</span><span class="p">:</span>
-</span><span id="line-224">                <span class="bp">self</span><span class="o">.</span><span class="n">per_qubit_noise</span><span class="p">[</span><span class="n">q</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">noise</span><span class="p">)</span>
-</span><span id="line-225">            <span class="k">return</span>
-</span><span id="line-226">        <span class="k">if</span> <span class="n">qubits</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">gate</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-227">            <span class="bp">self</span><span class="o">.</span><span class="n">_check_scope_allowed</span><span class="p">(</span><span class="n">noise</span><span class="p">,</span> <span class="n">AttachmentScope</span><span class="o">.</span><span class="n">PER_GATE_TYPE</span><span class="p">)</span>
-</span><span id="line-228">            <span class="bp">self</span><span class="o">.</span><span class="n">per_gate_noise</span><span class="p">[</span><span class="n">gate</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">noise</span><span class="p">)</span>
+</span><span id="line-144">    <span class="c1"># Implementation</span>
+</span><span id="line-145">    <span class="c1"># -----------------------</span>
+</span><span id="line-146">
+</span><span id="line-147">    <span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span>
+</span><span id="line-148">        <span class="bp">self</span><span class="p">,</span>
+</span><span id="line-149">        <span class="n">noise</span><span class="p">:</span> <span class="n">Noise</span> <span class="o">|</span> <span class="n">ParameterPerturbation</span><span class="p">,</span>
+</span><span id="line-150">        <span class="o">*</span><span class="p">,</span>
+</span><span id="line-151">        <span class="n">qubits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Qubit</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-152">        <span class="n">gate</span><span class="p">:</span> <span class="n">GateType</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-153">        <span class="n">parameter</span><span class="p">:</span> <span class="n">ParameterName</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-154">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-155"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Attach a noise source or parameter perturbation to the model.</span>
+</span><span id="line-156">
+</span><span id="line-157"><span class="sd">        Args:</span>
+</span><span id="line-158"><span class="sd">            noise (Noise | ParameterPerturbation): The noise or parameter perturbation instance to attach.</span>
+</span><span id="line-159"><span class="sd">            qubits (list[int] | None): Target qubit index or indices for per-qubit noise attachments.</span>
+</span><span id="line-160"><span class="sd">            gate (type[Gate] | None): Target gate type for per-gate noise or perturbation attachments.</span>
+</span><span id="line-161"><span class="sd">            parameter (str | None): Target parameter name for perturbation attachments.</span>
+</span><span id="line-162">
+</span><span id="line-163"><span class="sd">        Raises:</span>
+</span><span id="line-164"><span class="sd">            ValueError: If the noise/perturbation does not allow the inferred scope.</span>
+</span><span id="line-165"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-166">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">noise</span><span class="p">,</span> <span class="n">ParameterPerturbation</span><span class="p">):</span>
+</span><span id="line-167">            <span class="k">if</span> <span class="n">qubits</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-168">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">noise</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> cannot be applied to specific qubits.&quot;</span><span class="p">)</span>
+</span><span id="line-169">            <span class="bp">self</span><span class="o">.</span><span class="n">_add_parameter_perturbation</span><span class="p">(</span>
+</span><span id="line-170">                <span class="n">noise</span><span class="o">=</span><span class="n">noise</span><span class="p">,</span>
+</span><span id="line-171">                <span class="n">gate</span><span class="o">=</span><span class="n">gate</span><span class="p">,</span>
+</span><span id="line-172">                <span class="n">parameter</span><span class="o">=</span><span class="n">parameter</span><span class="p">,</span>
+</span><span id="line-173">            <span class="p">)</span>
+</span><span id="line-174">        <span class="k">else</span><span class="p">:</span>
+</span><span id="line-175">            <span class="bp">self</span><span class="o">.</span><span class="n">_add_noise</span><span class="p">(</span>
+</span><span id="line-176">                <span class="n">noise</span><span class="o">=</span><span class="n">noise</span><span class="p">,</span>
+</span><span id="line-177">                <span class="n">qubits</span><span class="o">=</span><span class="n">qubits</span><span class="p">,</span>
+</span><span id="line-178">                <span class="n">gate</span><span class="o">=</span><span class="n">gate</span><span class="p">,</span>
+</span><span id="line-179">                <span class="n">parameter</span><span class="o">=</span><span class="n">parameter</span><span class="p">,</span>
+</span><span id="line-180">            <span class="p">)</span>
+</span><span id="line-181">
+</span><span id="line-182">    <span class="nd">@staticmethod</span>
+</span><span id="line-183">    <span class="k">def</span><span class="w"> </span><span class="nf">_check_scope_allowed</span><span class="p">(</span>
+</span><span id="line-184">        <span class="n">noise</span><span class="p">:</span> <span class="n">Noise</span> <span class="o">|</span> <span class="n">ParameterPerturbation</span><span class="p">,</span>
+</span><span id="line-185">        <span class="n">scope</span><span class="p">:</span> <span class="n">AttachmentScope</span><span class="p">,</span>
+</span><span id="line-186">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-187"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if the noise/perturbation allows the given scope.</span>
+</span><span id="line-188">
+</span><span id="line-189"><span class="sd">        Args:</span>
+</span><span id="line-190"><span class="sd">            noise (Noise | ParameterPerturbation): The noise or parameter perturbation instance to check.</span>
+</span><span id="line-191"><span class="sd">            scope (AttachmentScope): The scope to check.</span>
+</span><span id="line-192"><span class="sd">        Raises:</span>
+</span><span id="line-193"><span class="sd">            ValueError: If the noise/perturbation does not allow the given scope.</span>
+</span><span id="line-194"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-195">        <span class="k">if</span> <span class="n">scope</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">noise</span><span class="o">.</span><span class="n">allowed_scopes</span><span class="p">():</span>
+</span><span id="line-196">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">noise</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> cannot be added with scope &#39;</span><span class="si">{</span><span class="n">scope</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span>
+</span><span id="line-197">
+</span><span id="line-198">    <span class="k">def</span><span class="w"> </span><span class="nf">_add_noise</span><span class="p">(</span>
+</span><span id="line-199">        <span class="bp">self</span><span class="p">,</span>
+</span><span id="line-200">        <span class="n">noise</span><span class="p">:</span> <span class="n">Noise</span><span class="p">,</span>
+</span><span id="line-201">        <span class="o">*</span><span class="p">,</span>
+</span><span id="line-202">        <span class="n">qubits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Qubit</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-203">        <span class="n">gate</span><span class="p">:</span> <span class="n">GateType</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-204">        <span class="n">parameter</span><span class="p">:</span> <span class="n">ParameterName</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-205">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-206"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Attach a noise source to the model.</span>
+</span><span id="line-207">
+</span><span id="line-208"><span class="sd">        Args:</span>
+</span><span id="line-209"><span class="sd">            noise (Noise): The noise instance to attach.</span>
+</span><span id="line-210"><span class="sd">            qubits (list[int] | None): Target qubit index or indices for per-qubit noise attachments.</span>
+</span><span id="line-211"><span class="sd">            gate (type[Gate] | None): Target gate type for per-gate noise attachments.</span>
+</span><span id="line-212"><span class="sd">            parameter (str | None): Target parameter name for perturbation attachments.</span>
+</span><span id="line-213">
+</span><span id="line-214"><span class="sd">        Raises:</span>
+</span><span id="line-215"><span class="sd">            ValueError: If the noise does not allow the inferred scope.</span>
+</span><span id="line-216"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-217">        <span class="k">if</span> <span class="n">parameter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-218">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">noise</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> cannot be applied to parameters.&quot;</span><span class="p">)</span>
+</span><span id="line-219">        <span class="k">if</span> <span class="n">qubits</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">gate</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-220">            <span class="bp">self</span><span class="o">.</span><span class="n">_check_scope_allowed</span><span class="p">(</span><span class="n">noise</span><span class="p">,</span> <span class="n">AttachmentScope</span><span class="o">.</span><span class="n">GLOBAL</span><span class="p">)</span>
+</span><span id="line-221">            <span class="bp">self</span><span class="o">.</span><span class="n">global_noise</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">noise</span><span class="p">)</span>
+</span><span id="line-222">            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;[NoiseModel] Added global noise </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">noise</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+</span><span id="line-223">            <span class="k">return</span>
+</span><span id="line-224">        <span class="k">if</span> <span class="n">qubits</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">gate</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-225">            <span class="bp">self</span><span class="o">.</span><span class="n">_check_scope_allowed</span><span class="p">(</span><span class="n">noise</span><span class="p">,</span> <span class="n">AttachmentScope</span><span class="o">.</span><span class="n">PER_QUBIT</span><span class="p">)</span>
+</span><span id="line-226">            <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">qubits</span><span class="p">:</span>
+</span><span id="line-227">                <span class="bp">self</span><span class="o">.</span><span class="n">per_qubit_noise</span><span class="p">[</span><span class="n">q</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">noise</span><span class="p">)</span>
+</span><span id="line-228">            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;[NoiseModel] Added per-qubit noise </span><span class="si">{}</span><span class="s2"> on qubits </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">noise</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">qubits</span><span class="p">)</span>
 </span><span id="line-229">            <span class="k">return</span>
-</span><span id="line-230">        <span class="k">if</span> <span class="n">qubits</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">gate</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-231">            <span class="bp">self</span><span class="o">.</span><span class="n">_check_scope_allowed</span><span class="p">(</span><span class="n">noise</span><span class="p">,</span> <span class="n">AttachmentScope</span><span class="o">.</span><span class="n">PER_GATE_TYPE_PER_QUBIT</span><span class="p">)</span>
-</span><span id="line-232">            <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">qubits</span><span class="p">:</span>
-</span><span id="line-233">                <span class="bp">self</span><span class="o">.</span><span class="n">per_gate_per_qubit_noise</span><span class="p">[</span><span class="n">gate</span><span class="p">,</span> <span class="n">q</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">noise</span><span class="p">)</span>
-</span><span id="line-234">
-</span><span id="line-235">    <span class="k">def</span><span class="w"> </span><span class="nf">_add_parameter_perturbation</span><span class="p">(</span>
-</span><span id="line-236">        <span class="bp">self</span><span class="p">,</span>
-</span><span id="line-237">        <span class="n">noise</span><span class="p">:</span> <span class="n">ParameterPerturbation</span><span class="p">,</span>
-</span><span id="line-238">        <span class="o">*</span><span class="p">,</span>
-</span><span id="line-239">        <span class="n">gate</span><span class="p">:</span> <span class="n">GateType</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="line-240">        <span class="n">parameter</span><span class="p">:</span> <span class="n">ParameterName</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="line-241">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-242"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Attach a parameter perturbation to the model.</span>
-</span><span id="line-243">
-</span><span id="line-244"><span class="sd">        Args:</span>
-</span><span id="line-245"><span class="sd">            noise (ParameterPerturbation): The parameter perturbation instance to attach.</span>
-</span><span id="line-246"><span class="sd">            gate (type[Gate] | None): Target gate type for per-gate perturbation attachments.</span>
-</span><span id="line-247"><span class="sd">            parameter (str | None): Target parameter name for perturbation attachments.</span>
-</span><span id="line-248">
-</span><span id="line-249"><span class="sd">        Raises:</span>
-</span><span id="line-250"><span class="sd">            ValueError: If the perturbation does not allow the inferred scope.</span>
-</span><span id="line-251"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-252">        <span class="k">if</span> <span class="n">parameter</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-253">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">noise</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> requires a parameter name.&quot;</span><span class="p">)</span>
-</span><span id="line-254">        <span class="k">if</span> <span class="n">gate</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-255">            <span class="bp">self</span><span class="o">.</span><span class="n">_check_scope_allowed</span><span class="p">(</span><span class="n">noise</span><span class="p">,</span> <span class="n">AttachmentScope</span><span class="o">.</span><span class="n">GLOBAL</span><span class="p">)</span>
-</span><span id="line-256">            <span class="bp">self</span><span class="o">.</span><span class="n">global_perturbations</span><span class="p">[</span><span class="n">parameter</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">noise</span><span class="p">)</span>
-</span><span id="line-257">            <span class="k">return</span>
-</span><span id="line-258">        <span class="bp">self</span><span class="o">.</span><span class="n">_check_scope_allowed</span><span class="p">(</span><span class="n">noise</span><span class="p">,</span> <span class="n">AttachmentScope</span><span class="o">.</span><span class="n">PER_GATE_TYPE</span><span class="p">)</span>
-</span><span id="line-259">        <span class="bp">self</span><span class="o">.</span><span class="n">per_gate_perturbations</span><span class="p">[</span><span class="n">gate</span><span class="p">,</span> <span class="n">parameter</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">noise</span><span class="p">)</span>
-</span><span id="line-260">
-</span><span id="line-261">    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="line-262">        <span class="n">SO_SONARQUBE_DOESNT_COMPLAIN</span> <span class="o">=</span> <span class="s2">&quot;  },&quot;</span>
-</span><span id="line-263">        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span>
-</span><span id="line-264">            <span class="s2">&quot;NoiseModel(&quot;</span><span class="p">,</span>
-</span><span id="line-265">            <span class="sa">f</span><span class="s2">&quot;  noise_config=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">noise_config</span><span class="si">!r}</span><span class="s2">,&quot;</span><span class="p">,</span>
-</span><span id="line-266">            <span class="sa">f</span><span class="s2">&quot;  global_noise=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">global_noise</span><span class="si">!r}</span><span class="s2">,&quot;</span><span class="p">,</span>
-</span><span id="line-267">            <span class="s2">&quot;  per_qubit_noise={&quot;</span><span class="p">,</span>
-</span><span id="line-268">            <span class="o">*</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    </span><span class="si">{</span><span class="n">qubit</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">noises</span><span class="si">!r}</span><span class="s2">,&quot;</span> <span class="k">for</span> <span class="n">qubit</span><span class="p">,</span> <span class="n">noises</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">per_qubit_noise</span><span class="o">.</span><span class="n">items</span><span class="p">()),</span>
-</span><span id="line-269">            <span class="n">SO_SONARQUBE_DOESNT_COMPLAIN</span><span class="p">,</span>
-</span><span id="line-270">            <span class="s2">&quot;  per_gate_noise={&quot;</span><span class="p">,</span>
-</span><span id="line-271">            <span class="o">*</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    </span><span class="si">{</span><span class="n">gate</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">noises</span><span class="si">!r}</span><span class="s2">,&quot;</span> <span class="k">for</span> <span class="n">gate</span><span class="p">,</span> <span class="n">noises</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">per_gate_noise</span><span class="o">.</span><span class="n">items</span><span class="p">()),</span>
-</span><span id="line-272">            <span class="n">SO_SONARQUBE_DOESNT_COMPLAIN</span><span class="p">,</span>
-</span><span id="line-273">            <span class="s2">&quot;  per_gate_per_qubit_noise={&quot;</span><span class="p">,</span>
-</span><span id="line-274">            <span class="o">*</span><span class="p">(</span>
-</span><span id="line-275">                <span class="sa">f</span><span class="s2">&quot;    (</span><span class="si">{</span><span class="n">gate</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">qubit</span><span class="si">}</span><span class="s2">): </span><span class="si">{</span><span class="n">noises</span><span class="si">!r}</span><span class="s2">,&quot;</span>
-</span><span id="line-276">                <span class="k">for</span> <span class="p">(</span><span class="n">gate</span><span class="p">,</span> <span class="n">qubit</span><span class="p">),</span> <span class="n">noises</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">per_gate_per_qubit_noise</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-</span><span id="line-277">            <span class="p">),</span>
-</span><span id="line-278">            <span class="n">SO_SONARQUBE_DOESNT_COMPLAIN</span><span class="p">,</span>
-</span><span id="line-279">            <span class="s2">&quot;  global_perturbations={&quot;</span><span class="p">,</span>
-</span><span id="line-280">            <span class="o">*</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    </span><span class="si">{</span><span class="n">param</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">perturbations</span><span class="si">!r}</span><span class="s2">,&quot;</span> <span class="k">for</span> <span class="n">param</span><span class="p">,</span> <span class="n">perturbations</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">global_perturbations</span><span class="o">.</span><span class="n">items</span><span class="p">()),</span>
-</span><span id="line-281">            <span class="n">SO_SONARQUBE_DOESNT_COMPLAIN</span><span class="p">,</span>
-</span><span id="line-282">            <span class="s2">&quot;  per_gate_perturbations={&quot;</span><span class="p">,</span>
-</span><span id="line-283">            <span class="o">*</span><span class="p">(</span>
-</span><span id="line-284">                <span class="sa">f</span><span class="s2">&quot;    (</span><span class="si">{</span><span class="n">gate</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">param</span><span class="si">}</span><span class="s2">): </span><span class="si">{</span><span class="n">perturbations</span><span class="si">!r}</span><span class="s2">,&quot;</span>
-</span><span id="line-285">                <span class="k">for</span> <span class="p">(</span><span class="n">gate</span><span class="p">,</span> <span class="n">param</span><span class="p">),</span> <span class="n">perturbations</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">per_gate_perturbations</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-</span><span id="line-286">            <span class="p">),</span>
-</span><span id="line-287">            <span class="n">SO_SONARQUBE_DOESNT_COMPLAIN</span><span class="p">,</span>
-</span><span id="line-288">            <span class="s2">&quot;)&quot;</span><span class="p">,</span>
-</span><span id="line-289">        <span class="p">]</span>
-</span><span id="line-290">        <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span></div>
+</span><span id="line-230">        <span class="k">if</span> <span class="n">qubits</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">gate</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-231">            <span class="bp">self</span><span class="o">.</span><span class="n">_check_scope_allowed</span><span class="p">(</span><span class="n">noise</span><span class="p">,</span> <span class="n">AttachmentScope</span><span class="o">.</span><span class="n">PER_GATE_TYPE</span><span class="p">)</span>
+</span><span id="line-232">            <span class="bp">self</span><span class="o">.</span><span class="n">per_gate_noise</span><span class="p">[</span><span class="n">gate</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">noise</span><span class="p">)</span>
+</span><span id="line-233">            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;[NoiseModel] Added per-gate noise </span><span class="si">{}</span><span class="s2"> on gate </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">noise</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">gate</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+</span><span id="line-234">            <span class="k">return</span>
+</span><span id="line-235">        <span class="k">if</span> <span class="n">qubits</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">gate</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-236">            <span class="bp">self</span><span class="o">.</span><span class="n">_check_scope_allowed</span><span class="p">(</span><span class="n">noise</span><span class="p">,</span> <span class="n">AttachmentScope</span><span class="o">.</span><span class="n">PER_GATE_TYPE_PER_QUBIT</span><span class="p">)</span>
+</span><span id="line-237">            <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">qubits</span><span class="p">:</span>
+</span><span id="line-238">                <span class="bp">self</span><span class="o">.</span><span class="n">per_gate_per_qubit_noise</span><span class="p">[</span><span class="n">gate</span><span class="p">,</span> <span class="n">q</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">noise</span><span class="p">)</span>
+</span><span id="line-239">            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+</span><span id="line-240">                <span class="s2">&quot;[NoiseModel] Added per-gate per-qubit noise </span><span class="si">{}</span><span class="s2"> on gate </span><span class="si">{}</span><span class="s2"> qubits </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span>
+</span><span id="line-241">                <span class="n">noise</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+</span><span id="line-242">                <span class="n">gate</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+</span><span id="line-243">                <span class="n">qubits</span><span class="p">,</span>
+</span><span id="line-244">            <span class="p">)</span>
+</span><span id="line-245">
+</span><span id="line-246">    <span class="k">def</span><span class="w"> </span><span class="nf">_add_parameter_perturbation</span><span class="p">(</span>
+</span><span id="line-247">        <span class="bp">self</span><span class="p">,</span>
+</span><span id="line-248">        <span class="n">noise</span><span class="p">:</span> <span class="n">ParameterPerturbation</span><span class="p">,</span>
+</span><span id="line-249">        <span class="o">*</span><span class="p">,</span>
+</span><span id="line-250">        <span class="n">gate</span><span class="p">:</span> <span class="n">GateType</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-251">        <span class="n">parameter</span><span class="p">:</span> <span class="n">ParameterName</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-252">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-253"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Attach a parameter perturbation to the model.</span>
+</span><span id="line-254">
+</span><span id="line-255"><span class="sd">        Args:</span>
+</span><span id="line-256"><span class="sd">            noise (ParameterPerturbation): The parameter perturbation instance to attach.</span>
+</span><span id="line-257"><span class="sd">            gate (type[Gate] | None): Target gate type for per-gate perturbation attachments.</span>
+</span><span id="line-258"><span class="sd">            parameter (str | None): Target parameter name for perturbation attachments.</span>
+</span><span id="line-259">
+</span><span id="line-260"><span class="sd">        Raises:</span>
+</span><span id="line-261"><span class="sd">            ValueError: If the perturbation does not allow the inferred scope.</span>
+</span><span id="line-262"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-263">        <span class="k">if</span> <span class="n">parameter</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-264">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">noise</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> requires a parameter name.&quot;</span><span class="p">)</span>
+</span><span id="line-265">        <span class="k">if</span> <span class="n">gate</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-266">            <span class="bp">self</span><span class="o">.</span><span class="n">_check_scope_allowed</span><span class="p">(</span><span class="n">noise</span><span class="p">,</span> <span class="n">AttachmentScope</span><span class="o">.</span><span class="n">GLOBAL</span><span class="p">)</span>
+</span><span id="line-267">            <span class="bp">self</span><span class="o">.</span><span class="n">global_perturbations</span><span class="p">[</span><span class="n">parameter</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">noise</span><span class="p">)</span>
+</span><span id="line-268">            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+</span><span id="line-269">                <span class="s2">&quot;[NoiseModel] Added global perturbation </span><span class="si">{}</span><span class="s2"> on parameter </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">noise</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">parameter</span>
+</span><span id="line-270">            <span class="p">)</span>
+</span><span id="line-271">            <span class="k">return</span>
+</span><span id="line-272">        <span class="bp">self</span><span class="o">.</span><span class="n">_check_scope_allowed</span><span class="p">(</span><span class="n">noise</span><span class="p">,</span> <span class="n">AttachmentScope</span><span class="o">.</span><span class="n">PER_GATE_TYPE</span><span class="p">)</span>
+</span><span id="line-273">        <span class="bp">self</span><span class="o">.</span><span class="n">per_gate_perturbations</span><span class="p">[</span><span class="n">gate</span><span class="p">,</span> <span class="n">parameter</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">noise</span><span class="p">)</span>
+</span><span id="line-274">        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+</span><span id="line-275">            <span class="s2">&quot;[NoiseModel] Added per-gate perturbation </span><span class="si">{}</span><span class="s2"> on gate </span><span class="si">{}</span><span class="s2"> parameter </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span>
+</span><span id="line-276">            <span class="n">noise</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+</span><span id="line-277">            <span class="n">gate</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+</span><span id="line-278">            <span class="n">parameter</span><span class="p">,</span>
+</span><span id="line-279">        <span class="p">)</span>
+</span><span id="line-280">
+</span><span id="line-281">    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="line-282">        <span class="n">SO_SONARQUBE_DOESNT_COMPLAIN</span> <span class="o">=</span> <span class="s2">&quot;  },&quot;</span>
+</span><span id="line-283">        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span>
+</span><span id="line-284">            <span class="s2">&quot;NoiseModel(&quot;</span><span class="p">,</span>
+</span><span id="line-285">            <span class="sa">f</span><span class="s2">&quot;  noise_config=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">noise_config</span><span class="si">!r}</span><span class="s2">,&quot;</span><span class="p">,</span>
+</span><span id="line-286">            <span class="sa">f</span><span class="s2">&quot;  global_noise=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">global_noise</span><span class="si">!r}</span><span class="s2">,&quot;</span><span class="p">,</span>
+</span><span id="line-287">            <span class="s2">&quot;  per_qubit_noise={&quot;</span><span class="p">,</span>
+</span><span id="line-288">            <span class="o">*</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    </span><span class="si">{</span><span class="n">qubit</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">noises</span><span class="si">!r}</span><span class="s2">,&quot;</span> <span class="k">for</span> <span class="n">qubit</span><span class="p">,</span> <span class="n">noises</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">per_qubit_noise</span><span class="o">.</span><span class="n">items</span><span class="p">()),</span>
+</span><span id="line-289">            <span class="n">SO_SONARQUBE_DOESNT_COMPLAIN</span><span class="p">,</span>
+</span><span id="line-290">            <span class="s2">&quot;  per_gate_noise={&quot;</span><span class="p">,</span>
+</span><span id="line-291">            <span class="o">*</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    </span><span class="si">{</span><span class="n">gate</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">noises</span><span class="si">!r}</span><span class="s2">,&quot;</span> <span class="k">for</span> <span class="n">gate</span><span class="p">,</span> <span class="n">noises</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">per_gate_noise</span><span class="o">.</span><span class="n">items</span><span class="p">()),</span>
+</span><span id="line-292">            <span class="n">SO_SONARQUBE_DOESNT_COMPLAIN</span><span class="p">,</span>
+</span><span id="line-293">            <span class="s2">&quot;  per_gate_per_qubit_noise={&quot;</span><span class="p">,</span>
+</span><span id="line-294">            <span class="o">*</span><span class="p">(</span>
+</span><span id="line-295">                <span class="sa">f</span><span class="s2">&quot;    (</span><span class="si">{</span><span class="n">gate</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">qubit</span><span class="si">}</span><span class="s2">): </span><span class="si">{</span><span class="n">noises</span><span class="si">!r}</span><span class="s2">,&quot;</span>
+</span><span id="line-296">                <span class="k">for</span> <span class="p">(</span><span class="n">gate</span><span class="p">,</span> <span class="n">qubit</span><span class="p">),</span> <span class="n">noises</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">per_gate_per_qubit_noise</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+</span><span id="line-297">            <span class="p">),</span>
+</span><span id="line-298">            <span class="n">SO_SONARQUBE_DOESNT_COMPLAIN</span><span class="p">,</span>
+</span><span id="line-299">            <span class="s2">&quot;  global_perturbations={&quot;</span><span class="p">,</span>
+</span><span id="line-300">            <span class="o">*</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    </span><span class="si">{</span><span class="n">param</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">perturbations</span><span class="si">!r}</span><span class="s2">,&quot;</span> <span class="k">for</span> <span class="n">param</span><span class="p">,</span> <span class="n">perturbations</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">global_perturbations</span><span class="o">.</span><span class="n">items</span><span class="p">()),</span>
+</span><span id="line-301">            <span class="n">SO_SONARQUBE_DOESNT_COMPLAIN</span><span class="p">,</span>
+</span><span id="line-302">            <span class="s2">&quot;  per_gate_perturbations={&quot;</span><span class="p">,</span>
+</span><span id="line-303">            <span class="o">*</span><span class="p">(</span>
+</span><span id="line-304">                <span class="sa">f</span><span class="s2">&quot;    (</span><span class="si">{</span><span class="n">gate</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">param</span><span class="si">}</span><span class="s2">): </span><span class="si">{</span><span class="n">perturbations</span><span class="si">!r}</span><span class="s2">,&quot;</span>
+</span><span id="line-305">                <span class="k">for</span> <span class="p">(</span><span class="n">gate</span><span class="p">,</span> <span class="n">param</span><span class="p">),</span> <span class="n">perturbations</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">per_gate_perturbations</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+</span><span id="line-306">            <span class="p">),</span>
+</span><span id="line-307">            <span class="n">SO_SONARQUBE_DOESNT_COMPLAIN</span><span class="p">,</span>
+</span><span id="line-308">            <span class="s2">&quot;)&quot;</span><span class="p">,</span>
+</span><span id="line-309">        <span class="p">]</span>
+</span><span id="line-310">        <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span></div>
 
 </span></code></pre></div>
     </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">

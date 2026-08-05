@@ -14,6 +14,7 @@
 <link href="../../_static/theme.css?v=42baaae4" rel="stylesheet" type="text/css"/>
 <link href="../../_static/graphviz.css?v=4ae1632d" rel="stylesheet" type="text/css"/>
 <link href="../../_static/sphinx-design.min.css?v=95c83b7e" rel="stylesheet" type="text/css"/>
+<link href="../../_static/tabs.css?v=a5c4661c" rel="stylesheet" type="text/css"/>
 <link href="../../_static/custom.css?v=e4e41e26" rel="stylesheet" type="text/css"/>
 <link href="../../_static/awesome-sphinx-design.css?v=15e0fffa" rel="stylesheet" type="text/css"/>
 <link href="../../_static/QiliSDK_q.png" rel="icon"/>
@@ -231,6 +232,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/functionals/variational_program_result/index.html">qilisdk.functionals.variational_program_result</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="../../code/api/qilisdk/logging/index.html">qilisdk.logging</a></li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../code/api/qilisdk/noise/index.html">qilisdk.noise<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/noise/amplitude_damping/index.html">qilisdk.noise.amplitude_damping</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/noise/bit_flip/index.html">qilisdk.noise.bit_flip</a></li>
@@ -428,7 +430,7 @@
 </span><span id="line-7"><span class="p">)</span>
 </span><span id="line-8">
 </span><span id="line-9"><span class="n">backend</span> <span class="o">=</span> <span class="n">QiliSim</span><span class="p">(</span>
-</span><span id="line-10">    <span class="n">analog_simulation_method</span><span class="o">=</span><span class="n">AnalogMethod</span><span class="o">.</span><span class="n">arnoldi</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">num_substeps</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
+</span><span id="line-10">    <span class="n">analog_simulation_method</span><span class="o">=</span><span class="n">AnalogMethod</span><span class="o">.</span><span class="n">arnoldi</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">num_substeps</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">matrix_free</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
 </span><span id="line-11">    <span class="n">digital_simulation_method</span><span class="o">=</span><span class="n">DigitalMethod</span><span class="o">.</span><span class="n">statevector</span><span class="p">(</span>
 </span><span id="line-12">        <span class="n">matrix_free</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 </span><span id="line-13">        <span class="n">max_cache_size</span><span class="o">=</span><span class="mi">2_000</span><span class="p">,</span>
@@ -477,7 +479,7 @@
 <td><p>Dormand-Prince RK4/5</p></td>
 <td><p>Mida de pas adaptativa; <code class="docutils literal notranslate"><span class="pre">tol</span></code> limita l’error de fidelitat entre les estimacions RK4 i RK5.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../../code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.AnalogMethod.arnoldi" title="qilisdk.backends.backend_config.AnalogMethod.arnoldi"><code class="xref py py-meth docutils literal notranslate"><span class="pre">AnalogMethod.arnoldi(dim=10,</span> <span class="pre">num_substeps=1)</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="../../code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.AnalogMethod.arnoldi" title="qilisdk.backends.backend_config.AnalogMethod.arnoldi"><code class="xref py py-meth docutils literal notranslate"><span class="pre">AnalogMethod.arnoldi(dim=10,</span> <span class="pre">num_substeps=1,</span> <span class="pre">matrix_free=True)</span></code></a></p></td>
 <td><p>Krylov / Arnoldi</p></td>
 <td><p>Pot oferir un escalat decent per a Hamiltonians dispersos grans; ajusteu <code class="docutils literal notranslate"><span class="pre">dim</span></code> per a la mida del subespai de Krylov.</p></td>
 </tr>
@@ -496,7 +498,7 @@
 </section>
 <section id="digital-simulation-methods">
 <h3>Mètodes de simulació digital<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#digital-simulation-methods" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#digital-simulation-methods'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h3>
-<p>L’execució digital es basa actualment sempre en vector d’estat; la configuració <a class="reference internal" href="../../code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.DigitalMethod" title="qilisdk.backends.backend_config.DigitalMethod"><code class="xref py py-class docutils literal notranslate"><span class="pre">DigitalMethod</span></code></a> ajusta les seves característiques de rendiment en lloc de triar un algoritme diferent:</p>
+<p>There are currently two digital simulation methods available. The first is a statevector simulator, which can be configured through the options:</p>
 <table class="docutils align-default">
 <colgroup>
 <col style="width: 35.0%"/>
@@ -532,26 +534,55 @@
 </span><span id="line-8"><span class="p">)</span>
 </span></code></pre></div>
 </div>
+<p>The second is a stabilizer simulator, which can efficiently simulate circuits composed of Clifford gates and Pauli measurements,
+at the cost of being slower if the circuit contains many non-Clifford gates. It has the following options:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 35.0%"/>
+<col style="width: 65.0%"/>
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Opció</p></th>
+<th class="head"><p>Significat</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">max_states</span></code></p></td>
+<td><p>Maximum number of terms in the stabilizer sum. Increasing this can improve accuracy at the cost of memory and runtime.</p></td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.backends</span><span class="w"> </span><span class="kn">import</span> <span class="n">DigitalMethod</span><span class="p">,</span> <span class="n">QiliSim</span>
+</span><span id="line-2">
+</span><span id="line-3"><span class="n">backend</span> <span class="o">=</span> <span class="n">QiliSim</span><span class="p">(</span>
+</span><span id="line-4">    <span class="n">digital_simulation_method</span><span class="o">=</span><span class="n">DigitalMethod</span><span class="o">.</span><span class="n">stabilizer</span><span class="p">(</span><span class="n">max_states</span><span class="o">=</span><span class="mi">100</span><span class="p">),</span>
+</span><span id="line-5"><span class="p">)</span>
+</span></code></pre></div>
+</div>
 </section>
 <section id="execution-and-monte-carlo">
 <h3>Execució i Monte Carlo<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#execution-and-monte-carlo" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#execution-and-monte-carlo'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h3>
 <p><a class="reference internal" href="../../code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.ExecutionConfig" title="qilisdk.backends.backend_config.ExecutionConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExecutionConfig</span></code></a> controla els fils, l’aleatorietat i el mostreig opcional de trajectòries de Monte Carlo per a simulacions de sistemes oberts.</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">num_threads=0</span></code> (per defecte) permet al simulador utilitzar tots els nuclis físics.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">seed=None</span></code> (per defecte) genera una nova llavor aleatòria en el moment de la construcció; passeu un enter per a reproducibilitat.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">monte_carlo=MonteCarloConfig(trajectories=N)</span></code> activa el mostreig estocàstic de trajectòries per a models de soroll que admeten un unraveling de Monte Carlo; deixeu-ho a <code class="docutils literal notranslate"><span class="pre">None</span></code> per a una evolució determinista de l’equació mestra.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">measurement_collapse</span></code> controla si les mesures col·lapsen el vector d’estat in situ (rellevant per a mesures a mig circuit i computació de reservoris); per defecte <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">num_threads</span></code> controls the number of threads used for parallelization, defaults to using all available cores.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">seed</span></code> controls the random number generator seed, defaults to a random seed.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">monte_carlo=MonteCarloConfig(trajectories=N)</span></code> enabled Monte Carlo sampling with <code class="docutils literal notranslate"><span class="pre">N</span></code> trajectories, if omitted, Monte Carlo is disabled.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">measurement_collapse</span></code> controls whether measurements collapse the statevector in place (relevant for mid-circuit measurement and reservoirs) - defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">normalize_state</span></code> controls whether the state should be renormalized - defaults to <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">gpu</span></code> controls whether to use GPU acceleration if available - defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
 </ul>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.backends</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExecutionConfig</span><span class="p">,</span> <span class="n">MonteCarloConfig</span><span class="p">,</span> <span class="n">QiliSim</span>
 </span><span id="line-2">
 </span><span id="line-3"><span class="n">backend</span> <span class="o">=</span> <span class="n">QiliSim</span><span class="p">(</span>
 </span><span id="line-4">    <span class="n">execution_config</span><span class="o">=</span><span class="n">ExecutionConfig</span><span class="p">(</span>
 </span><span id="line-5">        <span class="n">num_threads</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
-</span><span id="line-6">        <span class="n">seed</span><span class="o">=</span><span class="mi">1234</span><span class="p">,</span>
+</span><span id="line-6">        <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span>
 </span><span id="line-7">        <span class="n">monte_carlo</span><span class="o">=</span><span class="n">MonteCarloConfig</span><span class="p">(</span><span class="n">trajectories</span><span class="o">=</span><span class="mi">500</span><span class="p">),</span>
 </span><span id="line-8">        <span class="n">measurement_collapse</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-</span><span id="line-9">    <span class="p">),</span>
-</span><span id="line-10"><span class="p">)</span>
+</span><span id="line-9">        <span class="n">normalize_state</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+</span><span id="line-10">        <span class="n">gpu</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+</span><span id="line-11">    <span class="p">),</span>
+</span><span id="line-12"><span class="p">)</span>
 </span></code></pre></div>
 </div>
 </section>
@@ -568,6 +599,56 @@
 </span><span id="line-7"><span class="n">backend</span> <span class="o">=</span> <span class="n">QiliSim</span><span class="p">(</span><span class="n">noise_model</span><span class="o">=</span><span class="n">nm</span><span class="p">)</span>
 </span></code></pre></div>
 </div>
+</section>
+<section id="gpu-acceleration">
+<h2>GPU acceleration<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#gpu-acceleration" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#gpu-acceleration'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
+<p>Some simulation methods in QiliSim support GPU acceleration if a CUDA-capable device is available.
+These require the <code class="docutils literal notranslate"><span class="pre">cuda</span></code> extra to be installed:</p>
+<div class="sphinx-tabs docutils container">
+<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-0-TGludXg=" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-0-TGludXg=" name="TGludXg=" role="tab" tabindex="0">Linux</button><button aria-controls="panel-0-TWFjIE9TWA==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-TWFjIE9TWA==" name="TWFjIE9TWA==" role="tab" tabindex="-1">Mac OSX</button><button aria-controls="panel-0-V2luZG93cw==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-V2luZG93cw==" name="V2luZG93cw==" role="tab" tabindex="-1">Windows</button></div><div aria-labelledby="tab-0-TGludXg=" class="sphinx-tabs-panel group-tab" id="panel-0-TGludXg=" name="TGludXg=" role="tabpanel" tabindex="0"><div class="highlight-console notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="go">pip install qilisdk[cuda13]</span>
+</span></code></pre></div>
+</div>
+</div><div aria-labelledby="tab-0-TWFjIE9TWA==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-0-TWFjIE9TWA==" name="TWFjIE9TWA==" role="tabpanel" tabindex="0"><div class="highlight-console notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="go">pip install "qilisdk[cuda13]"</span>
+</span></code></pre></div>
+</div>
+</div><div aria-labelledby="tab-0-V2luZG93cw==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-0-V2luZG93cw==" name="V2luZG93cw==" role="tabpanel" tabindex="0"><div class="highlight-console notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="go">pip install qilisdk[cuda13]</span>
+</span></code></pre></div>
+</div>
+</div></div>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 35.0%"/>
+<col style="width: 65.0%"/>
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Method</p></th>
+<th class="head"><p>GPU support</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><a class="reference internal" href="../../code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.AnalogMethod.direct" title="qilisdk.backends.backend_config.AnalogMethod.direct"><code class="xref py py-meth docutils literal notranslate"><span class="pre">AnalogMethod.direct()</span></code></a></p></td>
+<td><p>❌</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../../code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.AnalogMethod.integrator" title="qilisdk.backends.backend_config.AnalogMethod.integrator"><code class="xref py py-meth docutils literal notranslate"><span class="pre">AnalogMethod.integrator()</span></code></a></p></td>
+<td><p>❌</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../../code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.AnalogMethod.adaptive_integrator" title="qilisdk.backends.backend_config.AnalogMethod.adaptive_integrator"><code class="xref py py-meth docutils literal notranslate"><span class="pre">AnalogMethod.adaptive_integrator()</span></code></a></p></td>
+<td><p>❌</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../../code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.AnalogMethod.arnoldi" title="qilisdk.backends.backend_config.AnalogMethod.arnoldi"><code class="xref py py-meth docutils literal notranslate"><span class="pre">AnalogMethod.arnoldi()</span></code></a></p></td>
+<td><p>❌</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../../code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.AnalogMethod.variational_annealing" title="qilisdk.backends.backend_config.AnalogMethod.variational_annealing"><code class="xref py py-meth docutils literal notranslate"><span class="pre">AnalogMethod.variational_annealing()</span></code></a></p></td>
+<td><p>✅</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../../code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.DigitalMethod.statevector" title="qilisdk.backends.backend_config.DigitalMethod.statevector"><code class="xref py py-meth docutils literal notranslate"><span class="pre">DigitalMethod.statevector()</span></code></a></p></td>
+<td><p>❌</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../../code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.DigitalMethod.stabilizer" title="qilisdk.backends.backend_config.DigitalMethod.stabilizer"><code class="xref py py-meth docutils literal notranslate"><span class="pre">DigitalMethod.stabilizer()</span></code></a></p></td>
+<td><p>❌</p></td>
+</tr>
+</tbody>
+</table>
 </section>
 </section>
 </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">
@@ -600,6 +681,7 @@
 </ul>
 </li>
 <li><a :data-current="activeSection === '#noise-model-support'" class="reference internal" href="#noise-model-support">Suport del model de soroll</a></li>
+<li><a :data-current="activeSection === '#gpu-acceleration'" class="reference internal" href="#gpu-acceleration">GPU acceleration</a></li>
 </ul>
 </div>
 </aside>
@@ -620,5 +702,6 @@
 <script src="../../_static/translations.js?v=5e30842e"></script>
 <script src="../../_static/design-tabs.js?v=f930bc37"></script>
 <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+<script src="../../_static/tabs.js?v=3030b3cb"></script>
 </body>
 </html>

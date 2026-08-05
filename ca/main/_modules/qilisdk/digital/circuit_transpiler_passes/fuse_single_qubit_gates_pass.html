@@ -277,6 +277,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/functionals/variational_program_result/index.html">qilisdk.functionals.variational_program_result</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../code/api/qilisdk/logging/index.html">qilisdk.logging</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../../code/api/qilisdk/noise/index.html">qilisdk.noise</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/noise/amplitude_damping/index.html">qilisdk.noise.amplitude_damping</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/noise/bit_flip/index.html">qilisdk.noise.bit_flip</a></li>
@@ -435,163 +436,175 @@
 </span><span id="line-17"><span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
 </span><span id="line-18">
 </span><span id="line-19"><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-</span><span id="line-20">
-</span><span id="line-21"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.digital</span><span class="w"> </span><span class="kn">import</span> <span class="n">Circuit</span>
-</span><span id="line-22"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.digital.circuit_transpiler_passes.decompose_to_canonical_basis_pass</span><span class="w"> </span><span class="kn">import</span> <span class="n">SingleQubitGateBasis</span>
-</span><span id="line-23"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.digital.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">GateHasNoMatrixError</span>
-</span><span id="line-24"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.digital.gates</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-</span><span id="line-25">    <span class="n">RX</span><span class="p">,</span>
-</span><span id="line-26">    <span class="n">RY</span><span class="p">,</span>
-</span><span id="line-27">    <span class="n">RZ</span><span class="p">,</span>
-</span><span id="line-28">    <span class="n">U3</span><span class="p">,</span>
-</span><span id="line-29">    <span class="n">Gate</span><span class="p">,</span>
-</span><span id="line-30"><span class="p">)</span>
-</span><span id="line-31">
-</span><span id="line-32"><span class="kn">from</span><span class="w"> </span><span class="nn">.circuit_transpiler_pass</span><span class="w"> </span><span class="kn">import</span> <span class="n">CircuitTranspilerPass</span>
-</span><span id="line-33"><span class="kn">from</span><span class="w"> </span><span class="nn">.numeric_helpers</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-</span><span id="line-34">    <span class="n">_is_close_mod_2pi</span><span class="p">,</span>
-</span><span id="line-35">    <span class="n">_wrap_angle</span><span class="p">,</span>
-</span><span id="line-36">    <span class="n">_zyz_from_unitary</span><span class="p">,</span>
-</span><span id="line-37"><span class="p">)</span>
-</span><span id="line-38">
+</span><span id="line-20"><span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
+</span><span id="line-21">
+</span><span id="line-22"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.digital</span><span class="w"> </span><span class="kn">import</span> <span class="n">Circuit</span>
+</span><span id="line-23"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.digital.circuit_transpiler_passes.decompose_to_canonical_basis_pass</span><span class="w"> </span><span class="kn">import</span> <span class="n">SingleQubitGateBasis</span>
+</span><span id="line-24"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.digital.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">GateHasNoMatrixError</span>
+</span><span id="line-25"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.digital.gates</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+</span><span id="line-26">    <span class="n">RX</span><span class="p">,</span>
+</span><span id="line-27">    <span class="n">RY</span><span class="p">,</span>
+</span><span id="line-28">    <span class="n">RZ</span><span class="p">,</span>
+</span><span id="line-29">    <span class="n">U3</span><span class="p">,</span>
+</span><span id="line-30">    <span class="n">Gate</span><span class="p">,</span>
+</span><span id="line-31"><span class="p">)</span>
+</span><span id="line-32">
+</span><span id="line-33"><span class="kn">from</span><span class="w"> </span><span class="nn">.circuit_transpiler_pass</span><span class="w"> </span><span class="kn">import</span> <span class="n">CircuitTranspilerPass</span>
+</span><span id="line-34"><span class="kn">from</span><span class="w"> </span><span class="nn">.numeric_helpers</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+</span><span id="line-35">    <span class="n">_is_close_mod_2pi</span><span class="p">,</span>
+</span><span id="line-36">    <span class="n">_wrap_angle</span><span class="p">,</span>
+</span><span id="line-37">    <span class="n">_zyz_from_unitary</span><span class="p">,</span>
+</span><span id="line-38"><span class="p">)</span>
 </span><span id="line-39">
+</span><span id="line-40">
 <div class="viewcode-block" id="FuseSingleQubitGatesPass">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/digital/circuit_transpiler_passes/fuse_single_qubit_gates_pass/index.html#qilisdk.digital.circuit_transpiler_passes.fuse_single_qubit_gates_pass.FuseSingleQubitGatesPass">[documents]</a>
-</span><span id="line-40"><span class="k">class</span><span class="w"> </span><span class="nc">FuseSingleQubitGatesPass</span><span class="p">(</span><span class="n">CircuitTranspilerPass</span><span class="p">):</span>
-</span><span id="line-41"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-42"><span class="sd">    Fuse maximal adjacent runs of 1-qubit unitary gates per wire into a basis-respecting sequence:</span>
-</span><span id="line-43">
-</span><span id="line-44"><span class="sd">      - For ``SingleQubitGateBasis.U3``: emit a single ``U3``.</span>
-</span><span id="line-45"><span class="sd">      - For ``SingleQubitGateBasis.RxRyRz``: emit ``RZ``, ``RY``, ``RX`` when recognizable, otherwise emit</span>
-</span><span id="line-46"><span class="sd">        the equivalent ``RZ(phi) · RY(theta) · RZ(gamma)`` sequence.</span>
-</span><span id="line-47">
-</span><span id="line-48"><span class="sd">    Any gate that is not a 1-qubit unitary matrix (including measurements or</span>
-</span><span id="line-49"><span class="sd">    unsupported/no-matrix gates) acts as a boundary for the touched qubits.</span>
-</span><span id="line-50"><span class="sd">    Always returns a NEW circuit.</span>
-</span><span id="line-51"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-52">
-</span><span id="line-53">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">single_qubit_basis</span><span class="p">:</span> <span class="n">SingleQubitGateBasis</span> <span class="o">=</span> <span class="n">SingleQubitGateBasis</span><span class="o">.</span><span class="n">U3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-54">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">single_qubit_basis</span><span class="p">,</span> <span class="n">SingleQubitGateBasis</span><span class="p">):</span>
-</span><span id="line-55">            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-</span><span id="line-56">                <span class="sa">f</span><span class="s2">&quot;single_qubit_basis must be a SingleQubitGateBasis value (got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">single_qubit_basis</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">).&quot;</span>
-</span><span id="line-57">            <span class="p">)</span>
-</span><span id="line-58">        <span class="bp">self</span><span class="o">.</span><span class="n">_single_qubit_basis</span> <span class="o">=</span> <span class="n">single_qubit_basis</span>
-</span><span id="line-59">
-</span><span id="line-60">    <span class="nd">@property</span>
+</span><span id="line-41"><span class="k">class</span><span class="w"> </span><span class="nc">FuseSingleQubitGatesPass</span><span class="p">(</span><span class="n">CircuitTranspilerPass</span><span class="p">):</span>
+</span><span id="line-42"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-43"><span class="sd">    Fuse maximal adjacent runs of 1-qubit unitary gates per wire into a basis-respecting sequence:</span>
+</span><span id="line-44">
+</span><span id="line-45"><span class="sd">      - For ``SingleQubitGateBasis.U3``: emit a single ``U3``.</span>
+</span><span id="line-46"><span class="sd">      - For ``SingleQubitGateBasis.RxRyRz``: emit ``RZ``, ``RY``, ``RX`` when recognizable, otherwise emit</span>
+</span><span id="line-47"><span class="sd">        the equivalent ``RZ(phi) · RY(theta) · RZ(gamma)`` sequence.</span>
+</span><span id="line-48">
+</span><span id="line-49"><span class="sd">    Any gate that is not a 1-qubit unitary matrix (including measurements or</span>
+</span><span id="line-50"><span class="sd">    unsupported/no-matrix gates) acts as a boundary for the touched qubits.</span>
+</span><span id="line-51"><span class="sd">    Always returns a NEW circuit.</span>
+</span><span id="line-52"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-53">
+</span><span id="line-54">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">single_qubit_basis</span><span class="p">:</span> <span class="n">SingleQubitGateBasis</span> <span class="o">=</span> <span class="n">SingleQubitGateBasis</span><span class="o">.</span><span class="n">U3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-55">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">single_qubit_basis</span><span class="p">,</span> <span class="n">SingleQubitGateBasis</span><span class="p">):</span>
+</span><span id="line-56">            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+</span><span id="line-57">                <span class="sa">f</span><span class="s2">&quot;single_qubit_basis must be a SingleQubitGateBasis value (got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">single_qubit_basis</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">).&quot;</span>
+</span><span id="line-58">            <span class="p">)</span>
+</span><span id="line-59">        <span class="bp">self</span><span class="o">.</span><span class="n">_single_qubit_basis</span> <span class="o">=</span> <span class="n">single_qubit_basis</span>
+</span><span id="line-60">
+</span><span id="line-61">    <span class="nd">@property</span>
 <div class="viewcode-block" id="FuseSingleQubitGatesPass.single_qubit_basis">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/digital/circuit_transpiler_passes/fuse_single_qubit_gates_pass/index.html#qilisdk.digital.circuit_transpiler_passes.fuse_single_qubit_gates_pass.FuseSingleQubitGatesPass.single_qubit_basis">[documents]</a>
-</span><span id="line-61">    <span class="k">def</span><span class="w"> </span><span class="nf">single_qubit_basis</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SingleQubitGateBasis</span><span class="p">:</span>
-</span><span id="line-62">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_single_qubit_basis</span></div>
+</span><span id="line-62">    <span class="k">def</span><span class="w"> </span><span class="nf">single_qubit_basis</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SingleQubitGateBasis</span><span class="p">:</span>
+</span><span id="line-63">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_single_qubit_basis</span></div>
 
-</span><span id="line-63">
-</span><span id="line-64">    <span class="nd">@staticmethod</span>
-</span><span id="line-65">    <span class="k">def</span><span class="w"> </span><span class="nf">_try_single_qubit_unitary</span><span class="p">(</span><span class="n">gate</span><span class="p">:</span> <span class="n">Gate</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-66"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a 2x2 unitary matrix for a single-qubit gate when available.</span>
-</span><span id="line-67">
-</span><span id="line-68"><span class="sd">        Args:</span>
-</span><span id="line-69"><span class="sd">            gate (Gate): Gate candidate to validate and convert to matrix form.</span>
-</span><span id="line-70">
-</span><span id="line-71"><span class="sd">        Returns:</span>
-</span><span id="line-72"><span class="sd">            np.ndarray | None: Complex 2x2 unitary matrix when ``gate`` is a valid one-qubit unitary; otherwise ``None``.</span>
-</span><span id="line-73"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-74">        <span class="k">if</span> <span class="n">gate</span><span class="o">.</span><span class="n">nqubits</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
-</span><span id="line-75">            <span class="k">return</span> <span class="kc">None</span>
-</span><span id="line-76">
-</span><span id="line-77">        <span class="k">try</span><span class="p">:</span>
-</span><span id="line-78">            <span class="n">unitary</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">gate</span><span class="o">.</span><span class="n">matrix</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-</span><span id="line-79">        <span class="k">except</span> <span class="n">GateHasNoMatrixError</span><span class="p">:</span>
-</span><span id="line-80">            <span class="k">return</span> <span class="kc">None</span>
-</span><span id="line-81">
-</span><span id="line-82">        <span class="k">if</span> <span class="n">unitary</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">):</span>
-</span><span id="line-83">            <span class="k">return</span> <span class="kc">None</span>
-</span><span id="line-84">
-</span><span id="line-85">        <span class="n">identity</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
-</span><span id="line-86">        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">unitary</span><span class="o">.</span><span class="n">conj</span><span class="p">()</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">unitary</span><span class="p">,</span> <span class="n">identity</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">):</span>
-</span><span id="line-87">            <span class="k">return</span> <span class="kc">None</span>
-</span><span id="line-88">        <span class="k">return</span> <span class="n">unitary</span>
-</span><span id="line-89">
+</span><span id="line-64">
+</span><span id="line-65">    <span class="nd">@staticmethod</span>
+</span><span id="line-66">    <span class="k">def</span><span class="w"> </span><span class="nf">_try_single_qubit_unitary</span><span class="p">(</span><span class="n">gate</span><span class="p">:</span> <span class="n">Gate</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-67"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a 2x2 unitary matrix for a single-qubit gate when available.</span>
+</span><span id="line-68">
+</span><span id="line-69"><span class="sd">        Args:</span>
+</span><span id="line-70"><span class="sd">            gate (Gate): Gate candidate to validate and convert to matrix form.</span>
+</span><span id="line-71">
+</span><span id="line-72"><span class="sd">        Returns:</span>
+</span><span id="line-73"><span class="sd">            np.ndarray | None: Complex 2x2 unitary matrix when ``gate`` is a valid one-qubit unitary; otherwise ``None``.</span>
+</span><span id="line-74"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-75">        <span class="k">if</span> <span class="n">gate</span><span class="o">.</span><span class="n">nqubits</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+</span><span id="line-76">            <span class="k">return</span> <span class="kc">None</span>
+</span><span id="line-77">
+</span><span id="line-78">        <span class="k">try</span><span class="p">:</span>
+</span><span id="line-79">            <span class="n">unitary</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">gate</span><span class="o">.</span><span class="n">matrix</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="line-80">        <span class="k">except</span> <span class="n">GateHasNoMatrixError</span><span class="p">:</span>
+</span><span id="line-81">            <span class="k">return</span> <span class="kc">None</span>
+</span><span id="line-82">
+</span><span id="line-83">        <span class="k">if</span> <span class="n">unitary</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">):</span>
+</span><span id="line-84">            <span class="k">return</span> <span class="kc">None</span>
+</span><span id="line-85">
+</span><span id="line-86">        <span class="n">identity</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
+</span><span id="line-87">        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">unitary</span><span class="o">.</span><span class="n">conj</span><span class="p">()</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">unitary</span><span class="p">,</span> <span class="n">identity</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">):</span>
+</span><span id="line-88">            <span class="k">return</span> <span class="kc">None</span>
+</span><span id="line-89">        <span class="k">return</span> <span class="n">unitary</span>
+</span><span id="line-90">
 <div class="viewcode-block" id="FuseSingleQubitGatesPass.run">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/digital/circuit_transpiler_passes/fuse_single_qubit_gates_pass/index.html#qilisdk.digital.circuit_transpiler_passes.fuse_single_qubit_gates_pass.FuseSingleQubitGatesPass.run">[documents]</a>
-</span><span id="line-90">    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">circuit</span><span class="p">:</span> <span class="n">Circuit</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Circuit</span><span class="p">:</span>
-</span><span id="line-91"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Fuse adjacent one-qubit unitary sequences into canonical single gates.</span>
-</span><span id="line-92">
-</span><span id="line-93"><span class="sd">        Non-unitary or multi-qubit gates define boundaries and force flushing of pending fused unitaries on touched qubits.</span>
-</span><span id="line-94">
-</span><span id="line-95"><span class="sd">        Args:</span>
-</span><span id="line-96"><span class="sd">            circuit (Circuit): Input circuit to optimize.</span>
-</span><span id="line-97">
-</span><span id="line-98"><span class="sd">        Returns:</span>
-</span><span id="line-99"><span class="sd">            Circuit: New circuit with fused one-qubit runs and unchanged behavior.</span>
-</span><span id="line-100"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-101">        <span class="n">output_gates</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Gate</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span id="line-102">        <span class="n">pending</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-</span><span id="line-103">
-</span><span id="line-104">        <span class="k">def</span><span class="w"> </span><span class="nf">flush_pending_qubit</span><span class="p">(</span><span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-105"><span class="w">            </span><span class="sd">&quot;&quot;&quot;Emit the fused gate accumulated for a qubit, if any.</span>
-</span><span id="line-106">
-</span><span id="line-107"><span class="sd">            This helper mutates ``pending`` and appends a basis-respecting canonical sequence to ``output_gates``.</span>
-</span><span id="line-108">
-</span><span id="line-109"><span class="sd">            Args:</span>
-</span><span id="line-110"><span class="sd">                qubit (int): Qubit whose pending fused unitary is materialized in the configured single-qubit basis.</span>
-</span><span id="line-111"><span class="sd">            &quot;&quot;&quot;</span>
-</span><span id="line-112">            <span class="k">if</span> <span class="n">qubit</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">pending</span><span class="p">:</span>
-</span><span id="line-113">                <span class="k">return</span>
-</span><span id="line-114">            <span class="n">U</span> <span class="o">=</span> <span class="n">pending</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">qubit</span><span class="p">)</span>
-</span><span id="line-115">            <span class="n">output_gates</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_emit_fused_basis_gates</span><span class="p">(</span><span class="n">qubit</span><span class="p">,</span> <span class="n">U</span><span class="p">))</span>
-</span><span id="line-116">
-</span><span id="line-117">        <span class="k">for</span> <span class="n">gate</span> <span class="ow">in</span> <span class="n">circuit</span><span class="o">.</span><span class="n">gates</span><span class="p">:</span>
-</span><span id="line-118">            <span class="n">unitary</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_try_single_qubit_unitary</span><span class="p">(</span><span class="n">gate</span><span class="p">)</span>
-</span><span id="line-119">            <span class="k">if</span> <span class="n">unitary</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-120">                <span class="n">qubit</span> <span class="o">=</span> <span class="n">gate</span><span class="o">.</span><span class="n">qubits</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-</span><span id="line-121">                <span class="n">pending</span><span class="p">[</span><span class="n">qubit</span><span class="p">]</span> <span class="o">=</span> <span class="n">unitary</span> <span class="o">@</span> <span class="n">pending</span><span class="p">[</span><span class="n">qubit</span><span class="p">]</span> <span class="k">if</span> <span class="n">qubit</span> <span class="ow">in</span> <span class="n">pending</span> <span class="k">else</span> <span class="n">unitary</span>
-</span><span id="line-122">                <span class="k">continue</span>
+</span><span id="line-91">    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">circuit</span><span class="p">:</span> <span class="n">Circuit</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Circuit</span><span class="p">:</span>
+</span><span id="line-92"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Fuse adjacent one-qubit unitary sequences into canonical single gates.</span>
+</span><span id="line-93">
+</span><span id="line-94"><span class="sd">        Non-unitary or multi-qubit gates define boundaries and force flushing of pending fused unitaries on touched qubits.</span>
+</span><span id="line-95">
+</span><span id="line-96"><span class="sd">        Args:</span>
+</span><span id="line-97"><span class="sd">            circuit (Circuit): Input circuit to optimize.</span>
+</span><span id="line-98">
+</span><span id="line-99"><span class="sd">        Returns:</span>
+</span><span id="line-100"><span class="sd">            Circuit: New circuit with fused one-qubit runs and unchanged behavior.</span>
+</span><span id="line-101"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-102">        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+</span><span id="line-103">            <span class="s2">&quot;[FuseSingleQubitGatesPass] Running on </span><span class="si">{}</span><span class="s2"> gates with single-qubit basis </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span>
+</span><span id="line-104">            <span class="nb">len</span><span class="p">(</span><span class="n">circuit</span><span class="o">.</span><span class="n">gates</span><span class="p">),</span>
+</span><span id="line-105">            <span class="bp">self</span><span class="o">.</span><span class="n">_single_qubit_basis</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+</span><span id="line-106">        <span class="p">)</span>
+</span><span id="line-107">        <span class="n">output_gates</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Gate</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="line-108">        <span class="n">pending</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+</span><span id="line-109">
+</span><span id="line-110">        <span class="k">def</span><span class="w"> </span><span class="nf">flush_pending_qubit</span><span class="p">(</span><span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-111"><span class="w">            </span><span class="sd">&quot;&quot;&quot;Emit the fused gate accumulated for a qubit, if any.</span>
+</span><span id="line-112">
+</span><span id="line-113"><span class="sd">            This helper mutates ``pending`` and appends a basis-respecting canonical sequence to ``output_gates``.</span>
+</span><span id="line-114">
+</span><span id="line-115"><span class="sd">            Args:</span>
+</span><span id="line-116"><span class="sd">                qubit (int): Qubit whose pending fused unitary is materialized in the configured single-qubit basis.</span>
+</span><span id="line-117"><span class="sd">            &quot;&quot;&quot;</span>
+</span><span id="line-118">            <span class="k">if</span> <span class="n">qubit</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">pending</span><span class="p">:</span>
+</span><span id="line-119">                <span class="k">return</span>
+</span><span id="line-120">            <span class="n">U</span> <span class="o">=</span> <span class="n">pending</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">qubit</span><span class="p">)</span>
+</span><span id="line-121">            <span class="n">logger</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="s2">&quot;[FuseSingleQubitGatesPass] Flushing fused single-qubit run on qubit </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">qubit</span><span class="p">)</span>
+</span><span id="line-122">            <span class="n">output_gates</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_emit_fused_basis_gates</span><span class="p">(</span><span class="n">qubit</span><span class="p">,</span> <span class="n">U</span><span class="p">))</span>
 </span><span id="line-123">
-</span><span id="line-124">            <span class="c1"># Boundary: flush pending runs that touch gate qubits.</span>
-</span><span id="line-125">            <span class="k">for</span> <span class="n">qubit</span> <span class="ow">in</span> <span class="n">gate</span><span class="o">.</span><span class="n">qubits</span><span class="p">:</span>
-</span><span id="line-126">                <span class="n">flush_pending_qubit</span><span class="p">(</span><span class="n">qubit</span><span class="p">)</span>
-</span><span id="line-127">            <span class="n">output_gates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gate</span><span class="p">)</span>
-</span><span id="line-128">
-</span><span id="line-129">        <span class="c1"># flush any remaining</span>
-</span><span id="line-130">        <span class="k">while</span> <span class="n">pending</span><span class="p">:</span>
-</span><span id="line-131">            <span class="n">flush_pending_qubit</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">pending</span><span class="p">)))</span>
-</span><span id="line-132">
-</span><span id="line-133">        <span class="n">output_circuit</span> <span class="o">=</span> <span class="n">Circuit</span><span class="p">(</span><span class="n">circuit</span><span class="o">.</span><span class="n">nqubits</span><span class="p">)</span>
-</span><span id="line-134">        <span class="k">for</span> <span class="n">gate</span> <span class="ow">in</span> <span class="n">output_gates</span><span class="p">:</span>
-</span><span id="line-135">            <span class="n">output_circuit</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">gate</span><span class="p">)</span>
-</span><span id="line-136">
-</span><span id="line-137">        <span class="bp">self</span><span class="o">.</span><span class="n">append_circuit_to_context</span><span class="p">(</span><span class="n">output_circuit</span><span class="p">)</span>
-</span><span id="line-138">        <span class="k">return</span> <span class="n">output_circuit</span></div>
-
+</span><span id="line-124">        <span class="k">for</span> <span class="n">gate</span> <span class="ow">in</span> <span class="n">circuit</span><span class="o">.</span><span class="n">gates</span><span class="p">:</span>
+</span><span id="line-125">            <span class="n">unitary</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_try_single_qubit_unitary</span><span class="p">(</span><span class="n">gate</span><span class="p">)</span>
+</span><span id="line-126">            <span class="k">if</span> <span class="n">unitary</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-127">                <span class="n">qubit</span> <span class="o">=</span> <span class="n">gate</span><span class="o">.</span><span class="n">qubits</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</span><span id="line-128">                <span class="n">pending</span><span class="p">[</span><span class="n">qubit</span><span class="p">]</span> <span class="o">=</span> <span class="n">unitary</span> <span class="o">@</span> <span class="n">pending</span><span class="p">[</span><span class="n">qubit</span><span class="p">]</span> <span class="k">if</span> <span class="n">qubit</span> <span class="ow">in</span> <span class="n">pending</span> <span class="k">else</span> <span class="n">unitary</span>
+</span><span id="line-129">                <span class="k">continue</span>
+</span><span id="line-130">
+</span><span id="line-131">            <span class="c1"># Boundary: flush pending runs that touch gate qubits.</span>
+</span><span id="line-132">            <span class="k">for</span> <span class="n">qubit</span> <span class="ow">in</span> <span class="n">gate</span><span class="o">.</span><span class="n">qubits</span><span class="p">:</span>
+</span><span id="line-133">                <span class="n">flush_pending_qubit</span><span class="p">(</span><span class="n">qubit</span><span class="p">)</span>
+</span><span id="line-134">            <span class="n">output_gates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gate</span><span class="p">)</span>
+</span><span id="line-135">
+</span><span id="line-136">        <span class="c1"># flush any remaining</span>
+</span><span id="line-137">        <span class="k">while</span> <span class="n">pending</span><span class="p">:</span>
+</span><span id="line-138">            <span class="n">flush_pending_qubit</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">pending</span><span class="p">)))</span>
 </span><span id="line-139">
-</span><span id="line-140">    <span class="k">def</span><span class="w"> </span><span class="nf">_emit_fused_basis_gates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">unitary</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Gate</span><span class="p">]:</span>
-</span><span id="line-141">        <span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">gamma</span> <span class="o">=</span> <span class="n">_zyz_from_unitary</span><span class="p">(</span><span class="n">unitary</span><span class="p">)</span>
-</span><span id="line-142">        <span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">gamma</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">theta</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">phi</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">gamma</span><span class="p">)</span>
-</span><span id="line-143">        <span class="n">theta</span> <span class="o">=</span> <span class="n">_wrap_angle</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
-</span><span id="line-144">        <span class="n">phi</span> <span class="o">=</span> <span class="n">_wrap_angle</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span>
-</span><span id="line-145">        <span class="n">gamma</span> <span class="o">=</span> <span class="n">_wrap_angle</span><span class="p">(</span><span class="n">gamma</span><span class="p">)</span>
-</span><span id="line-146">
-</span><span id="line-147">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_single_qubit_basis</span> <span class="o">==</span> <span class="n">SingleQubitGateBasis</span><span class="o">.</span><span class="n">U3</span><span class="p">:</span>
-</span><span id="line-148">            <span class="k">return</span> <span class="p">[</span><span class="n">U3</span><span class="p">(</span><span class="n">qubit</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="o">=</span><span class="n">phi</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">gamma</span><span class="p">)]</span>
-</span><span id="line-149">
-</span><span id="line-150">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_single_qubit_basis</span> <span class="o">==</span> <span class="n">SingleQubitGateBasis</span><span class="o">.</span><span class="n">RxRyRz</span><span class="p">:</span>
-</span><span id="line-151">            <span class="k">if</span> <span class="n">_is_close_mod_2pi</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">):</span>
-</span><span id="line-152">                <span class="c1"># pure Z: RZ(ph + lam)</span>
-</span><span id="line-153">                <span class="k">return</span> <span class="p">[</span><span class="n">RZ</span><span class="p">(</span><span class="n">qubit</span><span class="p">,</span> <span class="n">phi</span><span class="o">=</span><span class="n">_wrap_angle</span><span class="p">(</span><span class="n">phi</span> <span class="o">+</span> <span class="n">gamma</span><span class="p">))]</span>
-</span><span id="line-154">            <span class="k">if</span> <span class="n">_is_close_mod_2pi</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span> <span class="ow">and</span> <span class="n">_is_close_mod_2pi</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">):</span>
-</span><span id="line-155">                <span class="k">return</span> <span class="p">[</span><span class="n">RY</span><span class="p">(</span><span class="n">qubit</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="n">theta</span><span class="p">)]</span>
-</span><span id="line-156">            <span class="k">if</span> <span class="n">_is_close_mod_2pi</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="ow">and</span> <span class="n">_is_close_mod_2pi</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span><span class="p">):</span>
-</span><span id="line-157">                <span class="k">return</span> <span class="p">[</span><span class="n">RY</span><span class="p">(</span><span class="n">qubit</span><span class="p">,</span> <span class="n">theta</span><span class="o">=-</span><span class="n">theta</span><span class="p">)]</span>
-</span><span id="line-158">            <span class="k">if</span> <span class="n">_is_close_mod_2pi</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span> <span class="o">-</span><span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">)</span> <span class="ow">and</span> <span class="n">_is_close_mod_2pi</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">):</span>
-</span><span id="line-159">                <span class="k">return</span> <span class="p">[</span><span class="n">RX</span><span class="p">(</span><span class="n">qubit</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="n">theta</span><span class="p">)]</span>
-</span><span id="line-160">            <span class="k">if</span> <span class="n">_is_close_mod_2pi</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">)</span> <span class="ow">and</span> <span class="n">_is_close_mod_2pi</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span> <span class="o">-</span><span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">):</span>
-</span><span id="line-161">                <span class="k">return</span> <span class="p">[</span><span class="n">RX</span><span class="p">(</span><span class="n">qubit</span><span class="p">,</span> <span class="n">theta</span><span class="o">=-</span><span class="n">theta</span><span class="p">)]</span>
-</span><span id="line-162">            <span class="k">return</span> <span class="p">[</span>
-</span><span id="line-163">                <span class="n">RZ</span><span class="p">(</span><span class="n">qubit</span><span class="p">,</span> <span class="n">phi</span><span class="o">=</span><span class="n">gamma</span><span class="p">),</span>
-</span><span id="line-164">                <span class="n">RY</span><span class="p">(</span><span class="n">qubit</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="n">theta</span><span class="p">),</span>
-</span><span id="line-165">                <span class="n">RZ</span><span class="p">(</span><span class="n">qubit</span><span class="p">,</span> <span class="n">phi</span><span class="o">=</span><span class="n">phi</span><span class="p">),</span>
-</span><span id="line-166">            <span class="p">]</span>
-</span><span id="line-167">
-</span><span id="line-168">        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported single-qubit basis </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_single_qubit_basis</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+</span><span id="line-140">        <span class="n">output_circuit</span> <span class="o">=</span> <span class="n">Circuit</span><span class="p">(</span><span class="n">circuit</span><span class="o">.</span><span class="n">nqubits</span><span class="p">)</span>
+</span><span id="line-141">        <span class="k">for</span> <span class="n">gate</span> <span class="ow">in</span> <span class="n">output_gates</span><span class="p">:</span>
+</span><span id="line-142">            <span class="n">output_circuit</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">gate</span><span class="p">)</span>
+</span><span id="line-143">
+</span><span id="line-144">        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+</span><span id="line-145">            <span class="s2">&quot;[FuseSingleQubitGatesPass] Fused </span><span class="si">{}</span><span class="s2"> gates down to </span><span class="si">{}</span><span class="s2"> gates&quot;</span><span class="p">,</span>
+</span><span id="line-146">            <span class="nb">len</span><span class="p">(</span><span class="n">circuit</span><span class="o">.</span><span class="n">gates</span><span class="p">),</span>
+</span><span id="line-147">            <span class="nb">len</span><span class="p">(</span><span class="n">output_circuit</span><span class="o">.</span><span class="n">gates</span><span class="p">),</span>
+</span><span id="line-148">        <span class="p">)</span>
+</span><span id="line-149">        <span class="bp">self</span><span class="o">.</span><span class="n">append_circuit_to_context</span><span class="p">(</span><span class="n">output_circuit</span><span class="p">)</span>
+</span><span id="line-150">        <span class="k">return</span> <span class="n">output_circuit</span></div>
+
+</span><span id="line-151">
+</span><span id="line-152">    <span class="k">def</span><span class="w"> </span><span class="nf">_emit_fused_basis_gates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">unitary</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Gate</span><span class="p">]:</span>
+</span><span id="line-153">        <span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">gamma</span> <span class="o">=</span> <span class="n">_zyz_from_unitary</span><span class="p">(</span><span class="n">unitary</span><span class="p">)</span>
+</span><span id="line-154">        <span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">gamma</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">theta</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">phi</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">gamma</span><span class="p">)</span>
+</span><span id="line-155">        <span class="n">theta</span> <span class="o">=</span> <span class="n">_wrap_angle</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+</span><span id="line-156">        <span class="n">phi</span> <span class="o">=</span> <span class="n">_wrap_angle</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span>
+</span><span id="line-157">        <span class="n">gamma</span> <span class="o">=</span> <span class="n">_wrap_angle</span><span class="p">(</span><span class="n">gamma</span><span class="p">)</span>
+</span><span id="line-158">
+</span><span id="line-159">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_single_qubit_basis</span> <span class="o">==</span> <span class="n">SingleQubitGateBasis</span><span class="o">.</span><span class="n">U3</span><span class="p">:</span>
+</span><span id="line-160">            <span class="k">return</span> <span class="p">[</span><span class="n">U3</span><span class="p">(</span><span class="n">qubit</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="o">=</span><span class="n">phi</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">gamma</span><span class="p">)]</span>
+</span><span id="line-161">
+</span><span id="line-162">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_single_qubit_basis</span> <span class="o">==</span> <span class="n">SingleQubitGateBasis</span><span class="o">.</span><span class="n">RxRyRz</span><span class="p">:</span>
+</span><span id="line-163">            <span class="k">if</span> <span class="n">_is_close_mod_2pi</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">):</span>
+</span><span id="line-164">                <span class="c1"># pure Z: RZ(ph + lam)</span>
+</span><span id="line-165">                <span class="k">return</span> <span class="p">[</span><span class="n">RZ</span><span class="p">(</span><span class="n">qubit</span><span class="p">,</span> <span class="n">phi</span><span class="o">=</span><span class="n">_wrap_angle</span><span class="p">(</span><span class="n">phi</span> <span class="o">+</span> <span class="n">gamma</span><span class="p">))]</span>
+</span><span id="line-166">            <span class="k">if</span> <span class="n">_is_close_mod_2pi</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span> <span class="ow">and</span> <span class="n">_is_close_mod_2pi</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">):</span>
+</span><span id="line-167">                <span class="k">return</span> <span class="p">[</span><span class="n">RY</span><span class="p">(</span><span class="n">qubit</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="n">theta</span><span class="p">)]</span>
+</span><span id="line-168">            <span class="k">if</span> <span class="n">_is_close_mod_2pi</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="ow">and</span> <span class="n">_is_close_mod_2pi</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span><span class="p">):</span>
+</span><span id="line-169">                <span class="k">return</span> <span class="p">[</span><span class="n">RY</span><span class="p">(</span><span class="n">qubit</span><span class="p">,</span> <span class="n">theta</span><span class="o">=-</span><span class="n">theta</span><span class="p">)]</span>
+</span><span id="line-170">            <span class="k">if</span> <span class="n">_is_close_mod_2pi</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span> <span class="o">-</span><span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">)</span> <span class="ow">and</span> <span class="n">_is_close_mod_2pi</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">):</span>
+</span><span id="line-171">                <span class="k">return</span> <span class="p">[</span><span class="n">RX</span><span class="p">(</span><span class="n">qubit</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="n">theta</span><span class="p">)]</span>
+</span><span id="line-172">            <span class="k">if</span> <span class="n">_is_close_mod_2pi</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">)</span> <span class="ow">and</span> <span class="n">_is_close_mod_2pi</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span> <span class="o">-</span><span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">):</span>
+</span><span id="line-173">                <span class="k">return</span> <span class="p">[</span><span class="n">RX</span><span class="p">(</span><span class="n">qubit</span><span class="p">,</span> <span class="n">theta</span><span class="o">=-</span><span class="n">theta</span><span class="p">)]</span>
+</span><span id="line-174">            <span class="k">return</span> <span class="p">[</span>
+</span><span id="line-175">                <span class="n">RZ</span><span class="p">(</span><span class="n">qubit</span><span class="p">,</span> <span class="n">phi</span><span class="o">=</span><span class="n">gamma</span><span class="p">),</span>
+</span><span id="line-176">                <span class="n">RY</span><span class="p">(</span><span class="n">qubit</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="n">theta</span><span class="p">),</span>
+</span><span id="line-177">                <span class="n">RZ</span><span class="p">(</span><span class="n">qubit</span><span class="p">,</span> <span class="n">phi</span><span class="o">=</span><span class="n">phi</span><span class="p">),</span>
+</span><span id="line-178">            <span class="p">]</span>
+</span><span id="line-179">
+</span><span id="line-180">        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported single-qubit basis </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_single_qubit_basis</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
 </span></code></pre></div>
     </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">

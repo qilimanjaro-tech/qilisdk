@@ -277,6 +277,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/functionals/variational_program_result/index.html">qilisdk.functionals.variational_program_result</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/logging/index.html">qilisdk.logging</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/noise/index.html">qilisdk.noise</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/amplitude_damping/index.html">qilisdk.noise.amplitude_damping</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/bit_flip/index.html">qilisdk.noise.bit_flip</a></li>
@@ -431,104 +432,108 @@
 </span><span id="line-13"><span class="c1"># limitations under the License.</span>
 </span><span id="line-14"><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">ClassVar</span><span class="p">,</span> <span class="n">Iterator</span>
 </span><span id="line-15">
-</span><span id="line-16"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Parameter</span>
-</span><span id="line-17"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core.parameterizable</span><span class="w"> </span><span class="kn">import</span> <span class="n">Parameterizable</span>
-</span><span id="line-18"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.digital.circuit</span><span class="w"> </span><span class="kn">import</span> <span class="n">Circuit</span>
-</span><span id="line-19"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.functionals.functional</span><span class="w"> </span><span class="kn">import</span> <span class="n">PrimitiveFunctional</span>
-</span><span id="line-20"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.functionals.functional_result</span><span class="w"> </span><span class="kn">import</span> <span class="n">FunctionalResult</span>
-</span><span id="line-21"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.yaml</span><span class="w"> </span><span class="kn">import</span> <span class="n">yaml</span>
-</span><span id="line-22">
-</span><span id="line-23">
-</span><span id="line-24"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
+</span><span id="line-16"><span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
+</span><span id="line-17">
+</span><span id="line-18"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Parameter</span>
+</span><span id="line-19"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core.parameterizable</span><span class="w"> </span><span class="kn">import</span> <span class="n">Parameterizable</span>
+</span><span id="line-20"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.digital.circuit</span><span class="w"> </span><span class="kn">import</span> <span class="n">Circuit</span>
+</span><span id="line-21"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.functionals.functional</span><span class="w"> </span><span class="kn">import</span> <span class="n">PrimitiveFunctional</span>
+</span><span id="line-22"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.functionals.functional_result</span><span class="w"> </span><span class="kn">import</span> <span class="n">FunctionalResult</span>
+</span><span id="line-23"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.yaml</span><span class="w"> </span><span class="kn">import</span> <span class="n">yaml</span>
+</span><span id="line-24">
+</span><span id="line-25">
+</span><span id="line-26"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
 <div class="viewcode-block" id="DigitalPropagation">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/digital_propagation/index.html#qilisdk.functionals.digital_propagation.DigitalPropagation">[documentos]</a>
-</span><span id="line-25"><span class="k">class</span><span class="w"> </span><span class="nc">DigitalPropagation</span><span class="p">(</span><span class="n">PrimitiveFunctional</span><span class="p">):</span>
-</span><span id="line-26"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-27"><span class="sd">    Propagate a quantum state through a digital circuit.</span>
-</span><span id="line-28">
-</span><span id="line-29"><span class="sd">    The circuit is executed and results are returned based on the :class:`~qilisdk.readout.Readout`</span>
-</span><span id="line-30"><span class="sd">    passed to :meth:`~qilisdk.backends.Backend.execute`.</span>
-</span><span id="line-31">
-</span><span id="line-32"><span class="sd">    Example:</span>
-</span><span id="line-33"><span class="sd">        .. code-block:: python</span>
-</span><span id="line-34">
-</span><span id="line-35"><span class="sd">            from qilisdk.digital.circuit import Circuit</span>
-</span><span id="line-36"><span class="sd">            from qilisdk.functionals import DigitalPropagation</span>
-</span><span id="line-37"><span class="sd">            from qilisdk.readout import Readout</span>
-</span><span id="line-38">
-</span><span id="line-39"><span class="sd">            circuit = Circuit(nqubits=2)</span>
-</span><span id="line-40"><span class="sd">            circuit.h(0)</span>
-</span><span id="line-41"><span class="sd">            functional = DigitalPropagation(circuit)</span>
-</span><span id="line-42"><span class="sd">            result = backend.execute(functional, readout=Readout().with_sampling(nshots=1024))</span>
-</span><span id="line-43"><span class="sd">            counts = result.samples  # dict[str, int]</span>
-</span><span id="line-44"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-45">
+</span><span id="line-27"><span class="k">class</span><span class="w"> </span><span class="nc">DigitalPropagation</span><span class="p">(</span><span class="n">PrimitiveFunctional</span><span class="p">):</span>
+</span><span id="line-28"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-29"><span class="sd">    Propagate a quantum state through a digital circuit.</span>
+</span><span id="line-30">
+</span><span id="line-31"><span class="sd">    The circuit is executed and results are returned based on the :class:`~qilisdk.readout.Readout`</span>
+</span><span id="line-32"><span class="sd">    passed to :meth:`~qilisdk.backends.Backend.execute`.</span>
+</span><span id="line-33">
+</span><span id="line-34"><span class="sd">    Example:</span>
+</span><span id="line-35"><span class="sd">        .. code-block:: python</span>
+</span><span id="line-36">
+</span><span id="line-37"><span class="sd">            from qilisdk.digital.circuit import Circuit</span>
+</span><span id="line-38"><span class="sd">            from qilisdk.functionals import DigitalPropagation</span>
+</span><span id="line-39"><span class="sd">            from qilisdk.readout import Readout</span>
+</span><span id="line-40">
+</span><span id="line-41"><span class="sd">            circuit = Circuit(nqubits=2)</span>
+</span><span id="line-42"><span class="sd">            circuit.h(0)</span>
+</span><span id="line-43"><span class="sd">            functional = DigitalPropagation(circuit)</span>
+</span><span id="line-44"><span class="sd">            result = backend.execute(functional, readout=Readout().with_sampling(nshots=1024))</span>
+</span><span id="line-45"><span class="sd">            counts = result.samples  # dict[str, int]</span>
+</span><span id="line-46"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-47">
 <div class="viewcode-block" id="DigitalPropagation.result_type">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/digital_propagation/index.html#qilisdk.functionals.digital_propagation.DigitalPropagation.result_type">[documentos]</a>
-</span><span id="line-46">    <span class="n">result_type</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">FunctionalResult</span><span class="p">]]</span> <span class="o">=</span> <span class="n">FunctionalResult</span></div>
+</span><span id="line-48">    <span class="n">result_type</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">FunctionalResult</span><span class="p">]]</span> <span class="o">=</span> <span class="n">FunctionalResult</span></div>
 
-</span><span id="line-47">
-</span><span id="line-48">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">circuit</span><span class="p">:</span> <span class="n">Circuit</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-49"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-50"><span class="sd">        Args:</span>
-</span><span id="line-51"><span class="sd">            circuit (Circuit): Circuit to propagate.</span>
-</span><span id="line-52"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-53">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+</span><span id="line-49">
+</span><span id="line-50">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">circuit</span><span class="p">:</span> <span class="n">Circuit</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-51"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-52"><span class="sd">        Args:</span>
+</span><span id="line-53"><span class="sd">            circuit (Circuit): Circuit to propagate.</span>
+</span><span id="line-54"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-55">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
 <div class="viewcode-block" id="DigitalPropagation.circuit">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/digital_propagation/index.html#qilisdk.functionals.digital_propagation.DigitalPropagation.circuit">[documentos]</a>
-</span><span id="line-54">        <span class="bp">self</span><span class="o">.</span><span class="n">circuit</span> <span class="o">=</span> <span class="n">circuit</span></div>
+</span><span id="line-56">        <span class="bp">self</span><span class="o">.</span><span class="n">circuit</span> <span class="o">=</span> <span class="n">circuit</span></div>
 
-</span><span id="line-55">
-</span><span id="line-56">    <span class="k">def</span><span class="w"> </span><span class="nf">_iter_parameter_children</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Parameterizable</span><span class="p">]:</span>
-</span><span id="line-57"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Yield the circuit as the sole parameterizable child.</span>
+</span><span id="line-57">        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;[DigitalPropagation] Created DigitalPropagation over circuit with </span><span class="si">{}</span><span class="s2"> qubits&quot;</span><span class="p">,</span> <span class="n">circuit</span><span class="o">.</span><span class="n">nqubits</span><span class="p">)</span>
 </span><span id="line-58">
-</span><span id="line-59"><span class="sd">        Yields:</span>
-</span><span id="line-60"><span class="sd">            Iterator[Parameterizable]: The underlying ``Circuit``.</span>
-</span><span id="line-61"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-62">        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">circuit</span>
-</span><span id="line-63">
-</span><span id="line-64">    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="line-65">        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;DigitalPropagation(circuit=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">circuit</span><span class="si">}</span><span class="s2">)&quot;</span>
+</span><span id="line-59">    <span class="k">def</span><span class="w"> </span><span class="nf">_iter_parameter_children</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Parameterizable</span><span class="p">]:</span>
+</span><span id="line-60"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Yield the circuit as the sole parameterizable child.</span>
+</span><span id="line-61">
+</span><span id="line-62"><span class="sd">        Yields:</span>
+</span><span id="line-63"><span class="sd">            Iterator[Parameterizable]: The underlying ``Circuit``.</span>
+</span><span id="line-64"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-65">        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">circuit</span>
 </span><span id="line-66">
+</span><span id="line-67">    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="line-68">        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;DigitalPropagation(circuit=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">circuit</span><span class="si">}</span><span class="s2">)&quot;</span>
+</span><span id="line-69">
 <div class="viewcode-block" id="DigitalPropagation.set_parameter_values">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/digital_propagation/index.html#qilisdk.functionals.digital_propagation.DigitalPropagation.set_parameter_values">[documentos]</a>
-</span><span id="line-67">    <span class="k">def</span><span class="w"> </span><span class="nf">set_parameter_values</span><span class="p">(</span>
-</span><span id="line-68">        <span class="bp">self</span><span class="p">,</span>
-</span><span id="line-69">        <span class="n">values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
-</span><span id="line-70">        <span class="n">where</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Parameter</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="line-71">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-72"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-73"><span class="sd">        Assign parameter values by position and clear caches.</span>
-</span><span id="line-74">
-</span><span id="line-75"><span class="sd">        Args:</span>
-</span><span id="line-76"><span class="sd">            values (list[float]): New values ordered consistently with ``get_parameter_names()``.</span>
-</span><span id="line-77"><span class="sd">            where (Callable[[Parameter], bool] | None): Optional predicate selecting parameters to update.</span>
-</span><span id="line-78"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-79">        <span class="bp">self</span><span class="o">.</span><span class="n">circuit</span><span class="o">.</span><span class="n">set_parameter_values</span><span class="p">(</span><span class="n">values</span><span class="o">=</span><span class="n">values</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="n">where</span><span class="p">)</span></div>
+</span><span id="line-70">    <span class="k">def</span><span class="w"> </span><span class="nf">set_parameter_values</span><span class="p">(</span>
+</span><span id="line-71">        <span class="bp">self</span><span class="p">,</span>
+</span><span id="line-72">        <span class="n">values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+</span><span id="line-73">        <span class="n">where</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Parameter</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-74">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-75"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-76"><span class="sd">        Assign parameter values by position and clear caches.</span>
+</span><span id="line-77">
+</span><span id="line-78"><span class="sd">        Args:</span>
+</span><span id="line-79"><span class="sd">            values (list[float]): New values ordered consistently with ``get_parameter_names()``.</span>
+</span><span id="line-80"><span class="sd">            where (Callable[[Parameter], bool] | None): Optional predicate selecting parameters to update.</span>
+</span><span id="line-81"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-82">        <span class="n">logger</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="s2">&quot;[DigitalPropagation] Setting </span><span class="si">{}</span><span class="s2"> parameter values on DigitalPropagation&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">))</span>
+</span><span id="line-83">        <span class="bp">self</span><span class="o">.</span><span class="n">circuit</span><span class="o">.</span><span class="n">set_parameter_values</span><span class="p">(</span><span class="n">values</span><span class="o">=</span><span class="n">values</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="n">where</span><span class="p">)</span></div>
 
-</span><span id="line-80">
+</span><span id="line-84">
 <div class="viewcode-block" id="DigitalPropagation.set_parameters">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/digital_propagation/index.html#qilisdk.functionals.digital_propagation.DigitalPropagation.set_parameters">[documentos]</a>
-</span><span id="line-81">    <span class="k">def</span><span class="w"> </span><span class="nf">set_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-82"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-83"><span class="sd">        Assign parameter values by name and clear caches.</span>
-</span><span id="line-84">
-</span><span id="line-85"><span class="sd">        Args:</span>
-</span><span id="line-86"><span class="sd">            parameters (dict[str, int | float]): Mapping from parameter labels to numeric values.</span>
-</span><span id="line-87"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-88">        <span class="bp">self</span><span class="o">.</span><span class="n">circuit</span><span class="o">.</span><span class="n">set_parameters</span><span class="p">(</span><span class="n">parameters</span><span class="p">)</span></div>
+</span><span id="line-85">    <span class="k">def</span><span class="w"> </span><span class="nf">set_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-86"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-87"><span class="sd">        Assign parameter values by name and clear caches.</span>
+</span><span id="line-88">
+</span><span id="line-89"><span class="sd">        Args:</span>
+</span><span id="line-90"><span class="sd">            parameters (dict[str, int | float]): Mapping from parameter labels to numeric values.</span>
+</span><span id="line-91"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-92">        <span class="bp">self</span><span class="o">.</span><span class="n">circuit</span><span class="o">.</span><span class="n">set_parameters</span><span class="p">(</span><span class="n">parameters</span><span class="p">)</span></div>
 
-</span><span id="line-89">
+</span><span id="line-93">
 <div class="viewcode-block" id="DigitalPropagation.set_parameter_bounds">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/digital_propagation/index.html#qilisdk.functionals.digital_propagation.DigitalPropagation.set_parameter_bounds">[documentos]</a>
-</span><span id="line-90">    <span class="k">def</span><span class="w"> </span><span class="nf">set_parameter_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ranges</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-91"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-92"><span class="sd">        Update parameter bounds and clear caches.</span>
-</span><span id="line-93">
-</span><span id="line-94"><span class="sd">        Args:</span>
-</span><span id="line-95"><span class="sd">            ranges (dict[str, tuple[float, float]]): Bounds keyed by parameter label.</span>
-</span><span id="line-96"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-97">        <span class="bp">self</span><span class="o">.</span><span class="n">circuit</span><span class="o">.</span><span class="n">set_parameter_bounds</span><span class="p">(</span><span class="n">ranges</span><span class="p">)</span></div>
+</span><span id="line-94">    <span class="k">def</span><span class="w"> </span><span class="nf">set_parameter_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ranges</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-95"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-96"><span class="sd">        Update parameter bounds and clear caches.</span>
+</span><span id="line-97">
+</span><span id="line-98"><span class="sd">        Args:</span>
+</span><span id="line-99"><span class="sd">            ranges (dict[str, tuple[float, float]]): Bounds keyed by parameter label.</span>
+</span><span id="line-100"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-101">        <span class="bp">self</span><span class="o">.</span><span class="n">circuit</span><span class="o">.</span><span class="n">set_parameter_bounds</span><span class="p">(</span><span class="n">ranges</span><span class="p">)</span></div>
 </div>
 
 </span></code></pre></div>

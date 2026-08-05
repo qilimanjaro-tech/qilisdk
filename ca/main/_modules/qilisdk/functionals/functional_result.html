@@ -277,6 +277,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/functionals/variational_program_result/index.html">qilisdk.functionals.variational_program_result</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/logging/index.html">qilisdk.logging</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/noise/index.html">qilisdk.noise</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/amplitude_damping/index.html">qilisdk.noise.amplitude_damping</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/bit_flip/index.html">qilisdk.noise.bit_flip</a></li>
@@ -433,403 +434,425 @@
 </span><span id="line-15">
 </span><span id="line-16"><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Generic</span><span class="p">,</span> <span class="n">overload</span>
 </span><span id="line-17">
-</span><span id="line-18"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core.result</span><span class="w"> </span><span class="kn">import</span> <span class="n">Result</span>
-</span><span id="line-19"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.readout.readout_result</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-</span><span id="line-20">    <span class="n">E</span><span class="p">,</span>
-</span><span id="line-21">    <span class="n">ExpectationReadoutResult</span><span class="p">,</span>
-</span><span id="line-22">    <span class="n">ReadoutCompositeResults</span><span class="p">,</span>
-</span><span id="line-23">    <span class="n">S</span><span class="p">,</span>
-</span><span id="line-24">    <span class="n">SamplingReadoutResult</span><span class="p">,</span>
-</span><span id="line-25">    <span class="n">StateTomographyReadoutResult</span><span class="p">,</span>
-</span><span id="line-26">    <span class="n">T</span><span class="p">,</span>
-</span><span id="line-27">    <span class="n">has_expectation_values</span><span class="p">,</span>
-</span><span id="line-28">    <span class="n">has_sampling</span><span class="p">,</span>
-</span><span id="line-29">    <span class="n">has_state_tomography</span><span class="p">,</span>
-</span><span id="line-30"><span class="p">)</span>
-</span><span id="line-31"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.yaml</span><span class="w"> </span><span class="kn">import</span> <span class="n">yaml</span>
-</span><span id="line-32">
-</span><span id="line-33"><span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
-</span><span id="line-34">    <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterator</span>
-</span><span id="line-35">    <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Never</span>
-</span><span id="line-36">
-</span><span id="line-37">    <span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">QTensor</span>
+</span><span id="line-18"><span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
+</span><span id="line-19">
+</span><span id="line-20"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core.result</span><span class="w"> </span><span class="kn">import</span> <span class="n">Result</span>
+</span><span id="line-21"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.readout.readout_result</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+</span><span id="line-22">    <span class="n">E</span><span class="p">,</span>
+</span><span id="line-23">    <span class="n">ExpectationReadoutResult</span><span class="p">,</span>
+</span><span id="line-24">    <span class="n">ReadoutCompositeResults</span><span class="p">,</span>
+</span><span id="line-25">    <span class="n">S</span><span class="p">,</span>
+</span><span id="line-26">    <span class="n">SamplingReadoutResult</span><span class="p">,</span>
+</span><span id="line-27">    <span class="n">StateTomographyReadoutResult</span><span class="p">,</span>
+</span><span id="line-28">    <span class="n">T</span><span class="p">,</span>
+</span><span id="line-29">    <span class="n">has_expectation_values</span><span class="p">,</span>
+</span><span id="line-30">    <span class="n">has_sampling</span><span class="p">,</span>
+</span><span id="line-31">    <span class="n">has_state_tomography</span><span class="p">,</span>
+</span><span id="line-32"><span class="p">)</span>
+</span><span id="line-33"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.yaml</span><span class="w"> </span><span class="kn">import</span> <span class="n">yaml</span>
+</span><span id="line-34">
+</span><span id="line-35"><span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+</span><span id="line-36">    <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterator</span>
+</span><span id="line-37">    <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Never</span>
 </span><span id="line-38">
-</span><span id="line-39">
-</span><span id="line-40"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
+</span><span id="line-39">    <span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">QTensor</span>
+</span><span id="line-40">
+</span><span id="line-41">
+</span><span id="line-42"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
 <div class="viewcode-block" id="FunctionalResult">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/functional_result/index.html#qilisdk.functionals.functional_result.FunctionalResult">[documents]</a>
-</span><span id="line-41"><span class="k">class</span><span class="w"> </span><span class="nc">FunctionalResult</span><span class="p">(</span><span class="n">Result</span><span class="p">,</span> <span class="n">Generic</span><span class="p">[</span><span class="n">S</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">T</span><span class="p">]):</span>
-</span><span id="line-42"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Container for the outputs produced by executing a functional on a backend.</span>
-</span><span id="line-43">
-</span><span id="line-44"><span class="sd">    Instances of this class are returned by :meth:`~qilisdk.backends.Backend.execute`.  The three type</span>
-</span><span id="line-45"><span class="sd">    parameters correspond directly to the readout types declared in the</span>
-</span><span id="line-46"><span class="sd">    :class:`~qilisdk.readout.Readout` passed at execution time:</span>
-</span><span id="line-47">
-</span><span id="line-48"><span class="sd">    * ``S``: :class:`~qilisdk.readout.SamplingReadoutResult` when :meth:`~qilisdk.readout.Readout.with_sampling`</span>
-</span><span id="line-49"><span class="sd">        was used, ``None`` otherwise.</span>
-</span><span id="line-50"><span class="sd">    * ``E``: :class:`~qilisdk.readout.ExpectationReadoutResult` when</span>
-</span><span id="line-51"><span class="sd">        :meth:`~qilisdk.readout.Readout.with_expectation` was used, ``None`` otherwise.</span>
-</span><span id="line-52"><span class="sd">    * ``T``: :class:`~qilisdk.readout.StateTomographyReadoutResult` when</span>
-</span><span id="line-53"><span class="sd">        :meth:`~qilisdk.readout.Readout.with_state_tomography` was used, ``None`` otherwise.</span>
-</span><span id="line-54">
-</span><span id="line-55"><span class="sd">    **Typed access** — use the forwarding properties that return the readout result objects directly.</span>
-</span><span id="line-56"><span class="sd">    The type checker knows whether each is ``None`` or populated based on the type parameters::</span>
-</span><span id="line-57">
-</span><span id="line-58"><span class="sd">        result.sampling.samples  # ✅ when S = SamplingReadoutResult</span>
-</span><span id="line-59"><span class="sd">        result.state_tomography.state  # ✅ when T = StateTomographyReadoutResult</span>
-</span><span id="line-60"><span class="sd">        result.expectation  # None when E = None → .expectation_values is a type error</span>
-</span><span id="line-61">
-</span><span id="line-62"><span class="sd">    **Convenience shortcuts** — ``result.get_samples()``, ``result.get_state()``, ``result.get_expectation_values()``,</span>
-</span><span id="line-63"><span class="sd">    etc. remain available for interactive / notebook use.  They raise ``ValueError`` at runtime when</span>
-</span><span id="line-64"><span class="sd">    the corresponding readout is absent.</span>
-</span><span id="line-65"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-66">
-</span><span id="line-67">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
-</span><span id="line-68">        <span class="bp">self</span><span class="p">,</span>
-</span><span id="line-69">        <span class="n">readout_results</span><span class="p">:</span> <span class="n">ReadoutCompositeResults</span><span class="p">[</span><span class="n">S</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">T</span><span class="p">],</span>
-</span><span id="line-70">        <span class="n">intermediate_results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ReadoutCompositeResults</span><span class="p">[</span><span class="n">S</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">T</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="line-71">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-72"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialise a functional result from readout outputs.</span>
-</span><span id="line-73">
-</span><span id="line-74"><span class="sd">        Args:</span>
-</span><span id="line-75"><span class="sd">            readout_results: Final readout results.</span>
-</span><span id="line-76"><span class="sd">            intermediate_results: Optional per-step intermediate readout</span>
-</span><span id="line-77"><span class="sd">                results. Defaults to ``None``.</span>
-</span><span id="line-78"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-79">        <span class="bp">self</span><span class="o">.</span><span class="n">_readout_results</span> <span class="o">=</span> <span class="n">readout_results</span>
-</span><span id="line-80">        <span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_results</span> <span class="o">=</span> <span class="n">intermediate_results</span> <span class="ow">or</span> <span class="p">[]</span>
-</span><span id="line-81">
-</span><span id="line-82">    <span class="c1"># -- forwarding properties (typed safe path) --------------------------</span>
-</span><span id="line-83">    <span class="c1"># These return the generic type parameters S, E, T directly, so the</span>
-</span><span id="line-84">    <span class="c1"># type checker knows the exact type from the FunctionalResult&#39;s</span>
-</span><span id="line-85">    <span class="c1"># parameterisation.  No descriptors or overloads needed.</span>
-</span><span id="line-86">
-</span><span id="line-87">    <span class="nd">@property</span>
+</span><span id="line-43"><span class="k">class</span><span class="w"> </span><span class="nc">FunctionalResult</span><span class="p">(</span><span class="n">Result</span><span class="p">,</span> <span class="n">Generic</span><span class="p">[</span><span class="n">S</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">T</span><span class="p">]):</span>
+</span><span id="line-44"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Container for the outputs produced by executing a functional on a backend.</span>
+</span><span id="line-45">
+</span><span id="line-46"><span class="sd">    Instances of this class are returned by :meth:`~qilisdk.backends.Backend.execute`.  The three type</span>
+</span><span id="line-47"><span class="sd">    parameters correspond directly to the readout types declared in the</span>
+</span><span id="line-48"><span class="sd">    :class:`~qilisdk.readout.Readout` passed at execution time:</span>
+</span><span id="line-49">
+</span><span id="line-50"><span class="sd">    * ``S``: :class:`~qilisdk.readout.SamplingReadoutResult` when :meth:`~qilisdk.readout.Readout.with_sampling`</span>
+</span><span id="line-51"><span class="sd">        was used, ``None`` otherwise.</span>
+</span><span id="line-52"><span class="sd">    * ``E``: :class:`~qilisdk.readout.ExpectationReadoutResult` when</span>
+</span><span id="line-53"><span class="sd">        :meth:`~qilisdk.readout.Readout.with_expectation` was used, ``None`` otherwise.</span>
+</span><span id="line-54"><span class="sd">    * ``T``: :class:`~qilisdk.readout.StateTomographyReadoutResult` when</span>
+</span><span id="line-55"><span class="sd">        :meth:`~qilisdk.readout.Readout.with_state_tomography` was used, ``None`` otherwise.</span>
+</span><span id="line-56">
+</span><span id="line-57"><span class="sd">    **Typed access** — use the forwarding properties that return the readout result objects directly.</span>
+</span><span id="line-58"><span class="sd">    The type checker knows whether each is ``None`` or populated based on the type parameters::</span>
+</span><span id="line-59">
+</span><span id="line-60"><span class="sd">        result.sampling.samples  # ✅ when S = SamplingReadoutResult</span>
+</span><span id="line-61"><span class="sd">        result.state_tomography.state  # ✅ when T = StateTomographyReadoutResult</span>
+</span><span id="line-62"><span class="sd">        result.expectation  # None when E = None → .expectation_values is a type error</span>
+</span><span id="line-63">
+</span><span id="line-64"><span class="sd">    **Convenience shortcuts** — ``result.get_samples()``, ``result.get_state()``, ``result.get_expectation_values()``,</span>
+</span><span id="line-65"><span class="sd">    etc. remain available for interactive / notebook use.  They raise ``ValueError`` at runtime when</span>
+</span><span id="line-66"><span class="sd">    the corresponding readout is absent.</span>
+</span><span id="line-67"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-68">
+</span><span id="line-69">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+</span><span id="line-70">        <span class="bp">self</span><span class="p">,</span>
+</span><span id="line-71">        <span class="n">readout_results</span><span class="p">:</span> <span class="n">ReadoutCompositeResults</span><span class="p">[</span><span class="n">S</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">T</span><span class="p">],</span>
+</span><span id="line-72">        <span class="n">intermediate_results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ReadoutCompositeResults</span><span class="p">[</span><span class="n">S</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">T</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-73">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-74"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialise a functional result from readout outputs.</span>
+</span><span id="line-75">
+</span><span id="line-76"><span class="sd">        Args:</span>
+</span><span id="line-77"><span class="sd">            readout_results: Final readout results.</span>
+</span><span id="line-78"><span class="sd">            intermediate_results: Optional per-step intermediate readout</span>
+</span><span id="line-79"><span class="sd">                results. Defaults to ``None``.</span>
+</span><span id="line-80"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-81">        <span class="bp">self</span><span class="o">.</span><span class="n">_readout_results</span> <span class="o">=</span> <span class="n">readout_results</span>
+</span><span id="line-82">        <span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_results</span> <span class="o">=</span> <span class="n">intermediate_results</span> <span class="ow">or</span> <span class="p">[]</span>
+</span><span id="line-83">        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+</span><span id="line-84">            <span class="s2">&quot;[FunctionalResult] Created FunctionalResult with </span><span class="si">{}</span><span class="s2"> intermediate results&quot;</span><span class="p">,</span>
+</span><span id="line-85">            <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_results</span><span class="p">),</span>
+</span><span id="line-86">        <span class="p">)</span>
+</span><span id="line-87">
+</span><span id="line-88">    <span class="c1"># -- forwarding properties (typed safe path) --------------------------</span>
+</span><span id="line-89">    <span class="c1"># These return the generic type parameters S, E, T directly, so the</span>
+</span><span id="line-90">    <span class="c1"># type checker knows the exact type from the FunctionalResult&#39;s</span>
+</span><span id="line-91">    <span class="c1"># parameterisation.  No descriptors or overloads needed.</span>
+</span><span id="line-92">
+</span><span id="line-93">    <span class="nd">@property</span>
 <div class="viewcode-block" id="FunctionalResult.sampling">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/functional_result/index.html#qilisdk.functionals.functional_result.FunctionalResult.sampling">[documents]</a>
-</span><span id="line-88">    <span class="k">def</span><span class="w"> </span><span class="nf">sampling</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">S</span><span class="p">:</span>
-</span><span id="line-89"><span class="w">        </span><span class="sd">&quot;&quot;&quot;The sampling readout result, or ``None`` if not requested.</span>
-</span><span id="line-90">
-</span><span id="line-91"><span class="sd">        When ``S = SamplingReadoutResult``, this returns the result object</span>
-</span><span id="line-92"><span class="sd">        with typed access to ``.samples``, ``.probabilities``, etc.</span>
-</span><span id="line-93"><span class="sd">        When ``S = None``, the type checker sees ``None``.</span>
-</span><span id="line-94"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-95">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_readout_results</span><span class="o">.</span><span class="n">sampling</span></div>
-
+</span><span id="line-94">    <span class="k">def</span><span class="w"> </span><span class="nf">sampling</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">S</span><span class="p">:</span>
+</span><span id="line-95"><span class="w">        </span><span class="sd">&quot;&quot;&quot;The sampling readout result, or ``None`` if not requested.</span>
 </span><span id="line-96">
-</span><span id="line-97">    <span class="nd">@property</span>
+</span><span id="line-97"><span class="sd">        When ``S = SamplingReadoutResult``, this returns the result object</span>
+</span><span id="line-98"><span class="sd">        with typed access to ``.samples``, ``.probabilities``, etc.</span>
+</span><span id="line-99"><span class="sd">        When ``S = None``, the type checker sees ``None``.</span>
+</span><span id="line-100"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-101">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_readout_results</span><span class="o">.</span><span class="n">sampling</span></div>
+
+</span><span id="line-102">
+</span><span id="line-103">    <span class="nd">@property</span>
 <div class="viewcode-block" id="FunctionalResult.expectation">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/functional_result/index.html#qilisdk.functionals.functional_result.FunctionalResult.expectation">[documents]</a>
-</span><span id="line-98">    <span class="k">def</span><span class="w"> </span><span class="nf">expectation</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">E</span><span class="p">:</span>
-</span><span id="line-99"><span class="w">        </span><span class="sd">&quot;&quot;&quot;The expectation-value readout result, or ``None`` if not requested.</span>
-</span><span id="line-100">
-</span><span id="line-101"><span class="sd">        When ``E = ExpectationReadoutResult``, this returns the result object</span>
-</span><span id="line-102"><span class="sd">        with typed access to ``.expectation_values``.</span>
-</span><span id="line-103"><span class="sd">        When ``E = None``, the type checker sees ``None``.</span>
-</span><span id="line-104"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-105">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_readout_results</span><span class="o">.</span><span class="n">expectation_values</span></div>
-
+</span><span id="line-104">    <span class="k">def</span><span class="w"> </span><span class="nf">expectation</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">E</span><span class="p">:</span>
+</span><span id="line-105"><span class="w">        </span><span class="sd">&quot;&quot;&quot;The expectation-value readout result, or ``None`` if not requested.</span>
 </span><span id="line-106">
-</span><span id="line-107">    <span class="nd">@property</span>
+</span><span id="line-107"><span class="sd">        When ``E = ExpectationReadoutResult``, this returns the result object</span>
+</span><span id="line-108"><span class="sd">        with typed access to ``.expectation_values``.</span>
+</span><span id="line-109"><span class="sd">        When ``E = None``, the type checker sees ``None``.</span>
+</span><span id="line-110"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-111">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_readout_results</span><span class="o">.</span><span class="n">expectation_values</span></div>
+
+</span><span id="line-112">
+</span><span id="line-113">    <span class="nd">@property</span>
 <div class="viewcode-block" id="FunctionalResult.state_tomography">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/functional_result/index.html#qilisdk.functionals.functional_result.FunctionalResult.state_tomography">[documents]</a>
-</span><span id="line-108">    <span class="k">def</span><span class="w"> </span><span class="nf">state_tomography</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">T</span><span class="p">:</span>
-</span><span id="line-109"><span class="w">        </span><span class="sd">&quot;&quot;&quot;The state-tomography readout result, or ``None`` if not requested.</span>
-</span><span id="line-110">
-</span><span id="line-111"><span class="sd">        When ``T = StateTomographyReadoutResult``, this returns the result</span>
-</span><span id="line-112"><span class="sd">        object with typed access to ``.state``, ``.probabilities``, etc.</span>
-</span><span id="line-113"><span class="sd">        When ``T = None``, the type checker sees ``None``.</span>
-</span><span id="line-114"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-115">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_readout_results</span><span class="o">.</span><span class="n">state_tomography</span></div>
-
+</span><span id="line-114">    <span class="k">def</span><span class="w"> </span><span class="nf">state_tomography</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">T</span><span class="p">:</span>
+</span><span id="line-115"><span class="w">        </span><span class="sd">&quot;&quot;&quot;The state-tomography readout result, or ``None`` if not requested.</span>
 </span><span id="line-116">
-</span><span id="line-117">    <span class="nd">@property</span>
+</span><span id="line-117"><span class="sd">        When ``T = StateTomographyReadoutResult``, this returns the result</span>
+</span><span id="line-118"><span class="sd">        object with typed access to ``.state``, ``.probabilities``, etc.</span>
+</span><span id="line-119"><span class="sd">        When ``T = None``, the type checker sees ``None``.</span>
+</span><span id="line-120"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-121">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_readout_results</span><span class="o">.</span><span class="n">state_tomography</span></div>
+
+</span><span id="line-122">
+</span><span id="line-123">    <span class="nd">@property</span>
 <div class="viewcode-block" id="FunctionalResult.readout_results">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/functional_result/index.html#qilisdk.functionals.functional_result.FunctionalResult.readout_results">[documents]</a>
-</span><span id="line-118">    <span class="k">def</span><span class="w"> </span><span class="nf">readout_results</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ReadoutCompositeResults</span><span class="p">[</span><span class="n">S</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">T</span><span class="p">]:</span>
-</span><span id="line-119"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Composite readout results from the final execution step.&quot;&quot;&quot;</span>
-</span><span id="line-120">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_readout_results</span></div>
+</span><span id="line-124">    <span class="k">def</span><span class="w"> </span><span class="nf">readout_results</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ReadoutCompositeResults</span><span class="p">[</span><span class="n">S</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">T</span><span class="p">]:</span>
+</span><span id="line-125"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Composite readout results from the final execution step.&quot;&quot;&quot;</span>
+</span><span id="line-126">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_readout_results</span></div>
 
-</span><span id="line-121">
-</span><span id="line-122">    <span class="nd">@property</span>
+</span><span id="line-127">
+</span><span id="line-128">    <span class="nd">@property</span>
 <div class="viewcode-block" id="FunctionalResult.intermediate_results">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/functional_result/index.html#qilisdk.functionals.functional_result.FunctionalResult.intermediate_results">[documents]</a>
-</span><span id="line-123">    <span class="k">def</span><span class="w"> </span><span class="nf">intermediate_results</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ReadoutCompositeResults</span><span class="p">[</span><span class="n">S</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">T</span><span class="p">]]:</span>
-</span><span id="line-124"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Intermediate readout results for each time-step, if stored.&quot;&quot;&quot;</span>
-</span><span id="line-125">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_results</span></div>
+</span><span id="line-129">    <span class="k">def</span><span class="w"> </span><span class="nf">intermediate_results</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ReadoutCompositeResults</span><span class="p">[</span><span class="n">S</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">T</span><span class="p">]]:</span>
+</span><span id="line-130"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Intermediate readout results for each time-step, if stored.&quot;&quot;&quot;</span>
+</span><span id="line-131">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_results</span></div>
 
-</span><span id="line-126">
-</span><span id="line-127">    <span class="c1"># -- convenience methods (type-narrowed via self-type overloads) ------</span>
-</span><span id="line-128">    <span class="c1"># Each method has overloads keyed on the *type of self*, so the type</span>
-</span><span id="line-129">    <span class="c1"># checker returns the concrete type when the readout is present and</span>
-</span><span id="line-130">    <span class="c1"># ``Never`` when it is absent (flagging the call as unreachable).</span>
-</span><span id="line-131">
-</span><span id="line-132">    <span class="nd">@overload</span>
+</span><span id="line-132">
+</span><span id="line-133">    <span class="c1"># -- convenience methods (type-narrowed via self-type overloads) ------</span>
+</span><span id="line-134">    <span class="c1"># Each method has overloads keyed on the *type of self*, so the type</span>
+</span><span id="line-135">    <span class="c1"># checker returns the concrete type when the readout is present and</span>
+</span><span id="line-136">    <span class="c1"># ``Never`` when it is absent (flagging the call as unreachable).</span>
+</span><span id="line-137">
+</span><span id="line-138">    <span class="nd">@overload</span>
 <div class="viewcode-block" id="FunctionalResult.get_samples">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/functional_result/index.html#qilisdk.functionals.functional_result.FunctionalResult.get_samples">[documents]</a>
-</span><span id="line-133">    <span class="k">def</span><span class="w"> </span><span class="nf">get_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">FunctionalResult</span><span class="p">[</span><span class="n">SamplingReadoutResult</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span> <span class="o">...</span></div>
+</span><span id="line-139">    <span class="k">def</span><span class="w"> </span><span class="nf">get_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">FunctionalResult</span><span class="p">[</span><span class="n">SamplingReadoutResult</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span> <span class="o">...</span></div>
 
-</span><span id="line-134">    <span class="nd">@overload</span>
-</span><span id="line-135">    <span class="k">def</span><span class="w"> </span><span class="nf">get_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">FunctionalResult</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Never</span><span class="p">:</span> <span class="o">...</span>
-</span><span id="line-136">    <span class="k">def</span><span class="w"> </span><span class="nf">get_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
-</span><span id="line-137"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Measurement samples from the final execution step.</span>
-</span><span id="line-138">
-</span><span id="line-139"><span class="sd">        Returns:</span>
-</span><span id="line-140"><span class="sd">            dict[str, int]: Mapping of measured bitstring to count.</span>
-</span><span id="line-141">
-</span><span id="line-142"><span class="sd">        Raises:</span>
-</span><span id="line-143"><span class="sd">            ValueError: If sampling readout was not provided.</span>
-</span><span id="line-144"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-145">        <span class="k">if</span> <span class="n">has_sampling</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_readout_results</span><span class="p">):</span>
-</span><span id="line-146">            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_readout_results</span><span class="o">.</span><span class="n">sampling</span><span class="o">.</span><span class="n">samples</span>
-</span><span id="line-147">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Sampling readout was not provided.&quot;</span><span class="p">)</span>
-</span><span id="line-148">
-</span><span id="line-149">    <span class="nd">@overload</span>
+</span><span id="line-140">    <span class="nd">@overload</span>
+</span><span id="line-141">    <span class="k">def</span><span class="w"> </span><span class="nf">get_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">FunctionalResult</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Never</span><span class="p">:</span> <span class="o">...</span>
+</span><span id="line-142">    <span class="k">def</span><span class="w"> </span><span class="nf">get_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+</span><span id="line-143"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Measurement samples from the final execution step.</span>
+</span><span id="line-144">
+</span><span id="line-145"><span class="sd">        Returns:</span>
+</span><span id="line-146"><span class="sd">            dict[str, int]: Mapping of measured bitstring to count.</span>
+</span><span id="line-147">
+</span><span id="line-148"><span class="sd">        Raises:</span>
+</span><span id="line-149"><span class="sd">            ValueError: If sampling readout was not provided.</span>
+</span><span id="line-150"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-151">        <span class="n">logger</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="s2">&quot;[FunctionalResult] Retrieving final samples&quot;</span><span class="p">)</span>
+</span><span id="line-152">        <span class="k">if</span> <span class="n">has_sampling</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_readout_results</span><span class="p">):</span>
+</span><span id="line-153">            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_readout_results</span><span class="o">.</span><span class="n">sampling</span><span class="o">.</span><span class="n">samples</span>
+</span><span id="line-154">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Sampling readout was not provided.&quot;</span><span class="p">)</span>
+</span><span id="line-155">
+</span><span id="line-156">    <span class="nd">@overload</span>
 <div class="viewcode-block" id="FunctionalResult.get_probabilities">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/functional_result/index.html#qilisdk.functionals.functional_result.FunctionalResult.get_probabilities">[documents]</a>
-</span><span id="line-150">    <span class="k">def</span><span class="w"> </span><span class="nf">get_probabilities</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">FunctionalResult</span><span class="p">[</span><span class="n">SamplingReadoutResult</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span> <span class="o">...</span></div>
+</span><span id="line-157">    <span class="k">def</span><span class="w"> </span><span class="nf">get_probabilities</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">FunctionalResult</span><span class="p">[</span><span class="n">SamplingReadoutResult</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span> <span class="o">...</span></div>
 
-</span><span id="line-151">    <span class="nd">@overload</span>
-</span><span id="line-152">    <span class="k">def</span><span class="w"> </span><span class="nf">get_probabilities</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">FunctionalResult</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">StateTomographyReadoutResult</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span> <span class="o">...</span>
-</span><span id="line-153">    <span class="nd">@overload</span>
-</span><span id="line-154">    <span class="k">def</span><span class="w"> </span><span class="nf">get_probabilities</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">FunctionalResult</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Never</span><span class="p">:</span> <span class="o">...</span>
-</span><span id="line-155">    <span class="k">def</span><span class="w"> </span><span class="nf">get_probabilities</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
-</span><span id="line-156"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Outcome probabilities from the final execution step.</span>
-</span><span id="line-157">
-</span><span id="line-158"><span class="sd">        Returns:</span>
-</span><span id="line-159"><span class="sd">            dict[str, float]: Mapping of bitstring to probability.</span>
-</span><span id="line-160">
-</span><span id="line-161"><span class="sd">        Raises:</span>
-</span><span id="line-162"><span class="sd">            ValueError: If neither sampling nor state-tomography readout was provided.</span>
-</span><span id="line-163"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-164">        <span class="k">if</span> <span class="n">has_sampling</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_readout_results</span><span class="p">):</span>
-</span><span id="line-165">            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_readout_results</span><span class="o">.</span><span class="n">sampling</span><span class="o">.</span><span class="n">probabilities</span>
-</span><span id="line-166">        <span class="k">if</span> <span class="n">has_state_tomography</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_readout_results</span><span class="p">):</span>
-</span><span id="line-167">            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_readout_results</span><span class="o">.</span><span class="n">state_tomography</span><span class="o">.</span><span class="n">probabilities</span>
-</span><span id="line-168">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Can&#39;t compute probabilities if Sampling or State tomography readouts are not specified.&quot;</span><span class="p">)</span>
-</span><span id="line-169">
-</span><span id="line-170">    <span class="nd">@overload</span>
+</span><span id="line-158">    <span class="nd">@overload</span>
+</span><span id="line-159">    <span class="k">def</span><span class="w"> </span><span class="nf">get_probabilities</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">FunctionalResult</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">StateTomographyReadoutResult</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span> <span class="o">...</span>
+</span><span id="line-160">    <span class="nd">@overload</span>
+</span><span id="line-161">    <span class="k">def</span><span class="w"> </span><span class="nf">get_probabilities</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">FunctionalResult</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Never</span><span class="p">:</span> <span class="o">...</span>
+</span><span id="line-162">    <span class="k">def</span><span class="w"> </span><span class="nf">get_probabilities</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+</span><span id="line-163"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Outcome probabilities from the final execution step.</span>
+</span><span id="line-164">
+</span><span id="line-165"><span class="sd">        Returns:</span>
+</span><span id="line-166"><span class="sd">            dict[str, float]: Mapping of bitstring to probability.</span>
+</span><span id="line-167">
+</span><span id="line-168"><span class="sd">        Raises:</span>
+</span><span id="line-169"><span class="sd">            ValueError: If neither sampling nor state-tomography readout was provided.</span>
+</span><span id="line-170"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-171">        <span class="n">logger</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="s2">&quot;[FunctionalResult] Retrieving final probabilities&quot;</span><span class="p">)</span>
+</span><span id="line-172">        <span class="k">if</span> <span class="n">has_sampling</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_readout_results</span><span class="p">):</span>
+</span><span id="line-173">            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_readout_results</span><span class="o">.</span><span class="n">sampling</span><span class="o">.</span><span class="n">probabilities</span>
+</span><span id="line-174">        <span class="k">if</span> <span class="n">has_state_tomography</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_readout_results</span><span class="p">):</span>
+</span><span id="line-175">            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_readout_results</span><span class="o">.</span><span class="n">state_tomography</span><span class="o">.</span><span class="n">probabilities</span>
+</span><span id="line-176">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Can&#39;t compute probabilities if Sampling or State tomography readouts are not specified.&quot;</span><span class="p">)</span>
+</span><span id="line-177">
+</span><span id="line-178">    <span class="nd">@overload</span>
 <div class="viewcode-block" id="FunctionalResult.get_state">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/functional_result/index.html#qilisdk.functionals.functional_result.FunctionalResult.get_state">[documents]</a>
-</span><span id="line-171">    <span class="k">def</span><span class="w"> </span><span class="nf">get_state</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">FunctionalResult</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">StateTomographyReadoutResult</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">QTensor</span><span class="p">:</span> <span class="o">...</span></div>
+</span><span id="line-179">    <span class="k">def</span><span class="w"> </span><span class="nf">get_state</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">FunctionalResult</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">StateTomographyReadoutResult</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">QTensor</span><span class="p">:</span> <span class="o">...</span></div>
 
-</span><span id="line-172">    <span class="nd">@overload</span>
-</span><span id="line-173">    <span class="k">def</span><span class="w"> </span><span class="nf">get_state</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">FunctionalResult</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Never</span><span class="p">:</span> <span class="o">...</span>
-</span><span id="line-174">    <span class="k">def</span><span class="w"> </span><span class="nf">get_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QTensor</span><span class="p">:</span>
-</span><span id="line-175"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Quantum state vector from the final execution step.</span>
-</span><span id="line-176">
-</span><span id="line-177"><span class="sd">        Returns:</span>
-</span><span id="line-178"><span class="sd">            QTensor: The final quantum state.</span>
-</span><span id="line-179">
-</span><span id="line-180"><span class="sd">        Raises:</span>
-</span><span id="line-181"><span class="sd">            ValueError: If state-tomography readout was not provided.</span>
-</span><span id="line-182"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-183">        <span class="k">if</span> <span class="n">has_state_tomography</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_readout_results</span><span class="p">):</span>
-</span><span id="line-184">            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_readout_results</span><span class="o">.</span><span class="n">state_tomography</span><span class="o">.</span><span class="n">state</span>
-</span><span id="line-185">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Can&#39;t obtain the final state if State Tomography readout is not specified.&quot;</span><span class="p">)</span>
-</span><span id="line-186">
-</span><span id="line-187">    <span class="nd">@overload</span>
+</span><span id="line-180">    <span class="nd">@overload</span>
+</span><span id="line-181">    <span class="k">def</span><span class="w"> </span><span class="nf">get_state</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">FunctionalResult</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Never</span><span class="p">:</span> <span class="o">...</span>
+</span><span id="line-182">    <span class="k">def</span><span class="w"> </span><span class="nf">get_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QTensor</span><span class="p">:</span>
+</span><span id="line-183"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Quantum state vector from the final execution step.</span>
+</span><span id="line-184">
+</span><span id="line-185"><span class="sd">        Returns:</span>
+</span><span id="line-186"><span class="sd">            QTensor: The final quantum state.</span>
+</span><span id="line-187">
+</span><span id="line-188"><span class="sd">        Raises:</span>
+</span><span id="line-189"><span class="sd">            ValueError: If state-tomography readout was not provided.</span>
+</span><span id="line-190"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-191">        <span class="n">logger</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="s2">&quot;[FunctionalResult] Retrieving final state&quot;</span><span class="p">)</span>
+</span><span id="line-192">        <span class="k">if</span> <span class="n">has_state_tomography</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_readout_results</span><span class="p">):</span>
+</span><span id="line-193">            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_readout_results</span><span class="o">.</span><span class="n">state_tomography</span><span class="o">.</span><span class="n">state</span>
+</span><span id="line-194">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Can&#39;t obtain the final state if State Tomography readout is not specified.&quot;</span><span class="p">)</span>
+</span><span id="line-195">
+</span><span id="line-196">    <span class="nd">@overload</span>
 <div class="viewcode-block" id="FunctionalResult.get_expectation_values">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/functional_result/index.html#qilisdk.functionals.functional_result.FunctionalResult.get_expectation_values">[documents]</a>
-</span><span id="line-188">    <span class="k">def</span><span class="w"> </span><span class="nf">get_expectation_values</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">FunctionalResult</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">ExpectationReadoutResult</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span> <span class="o">...</span></div>
+</span><span id="line-197">    <span class="k">def</span><span class="w"> </span><span class="nf">get_expectation_values</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">FunctionalResult</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">ExpectationReadoutResult</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span> <span class="o">...</span></div>
 
-</span><span id="line-189">    <span class="nd">@overload</span>
-</span><span id="line-190">    <span class="k">def</span><span class="w"> </span><span class="nf">get_expectation_values</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">FunctionalResult</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Never</span><span class="p">:</span> <span class="o">...</span>
-</span><span id="line-191">    <span class="k">def</span><span class="w"> </span><span class="nf">get_expectation_values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
-</span><span id="line-192"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Expectation values from the final execution step.</span>
-</span><span id="line-193">
-</span><span id="line-194"><span class="sd">        Returns:</span>
-</span><span id="line-195"><span class="sd">            list[float]: One expectation value per observable.</span>
-</span><span id="line-196">
-</span><span id="line-197"><span class="sd">        Raises:</span>
-</span><span id="line-198"><span class="sd">            ValueError: If expectation readout was not provided.</span>
-</span><span id="line-199"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-200">        <span class="k">if</span> <span class="n">has_expectation_values</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_readout_results</span><span class="p">):</span>
-</span><span id="line-201">            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_readout_results</span><span class="o">.</span><span class="n">expectation_values</span><span class="o">.</span><span class="n">expectation_values</span>
-</span><span id="line-202">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Can&#39;t compute expectation values because Expectation readout was not specified.&quot;</span><span class="p">)</span>
-</span><span id="line-203">
-</span><span id="line-204">    <span class="c1"># -- intermediate accessors (runtime-checked) -------------------------</span>
+</span><span id="line-198">    <span class="nd">@overload</span>
+</span><span id="line-199">    <span class="k">def</span><span class="w"> </span><span class="nf">get_expectation_values</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">FunctionalResult</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Never</span><span class="p">:</span> <span class="o">...</span>
+</span><span id="line-200">    <span class="k">def</span><span class="w"> </span><span class="nf">get_expectation_values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+</span><span id="line-201"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Expectation values from the final execution step.</span>
+</span><span id="line-202">
+</span><span id="line-203"><span class="sd">        Returns:</span>
+</span><span id="line-204"><span class="sd">            list[float]: One expectation value per observable.</span>
 </span><span id="line-205">
-</span><span id="line-206">    <span class="nd">@overload</span>
+</span><span id="line-206"><span class="sd">        Raises:</span>
+</span><span id="line-207"><span class="sd">            ValueError: If expectation readout was not provided.</span>
+</span><span id="line-208"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-209">        <span class="n">logger</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="s2">&quot;[FunctionalResult] Retrieving final expectation values&quot;</span><span class="p">)</span>
+</span><span id="line-210">        <span class="k">if</span> <span class="n">has_expectation_values</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_readout_results</span><span class="p">):</span>
+</span><span id="line-211">            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_readout_results</span><span class="o">.</span><span class="n">expectation_values</span><span class="o">.</span><span class="n">expectation_values</span>
+</span><span id="line-212">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Can&#39;t compute expectation values because Expectation readout was not specified.&quot;</span><span class="p">)</span>
+</span><span id="line-213">
+</span><span id="line-214">    <span class="c1"># -- intermediate accessors (runtime-checked) -------------------------</span>
+</span><span id="line-215">
+</span><span id="line-216">    <span class="nd">@overload</span>
 <div class="viewcode-block" id="FunctionalResult.get_intermediate_samples">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/functional_result/index.html#qilisdk.functionals.functional_result.FunctionalResult.get_intermediate_samples">[documents]</a>
-</span><span id="line-207">    <span class="k">def</span><span class="w"> </span><span class="nf">get_intermediate_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">FunctionalResult</span><span class="p">[</span><span class="n">SamplingReadoutResult</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span> <span class="o">...</span></div>
+</span><span id="line-217">    <span class="k">def</span><span class="w"> </span><span class="nf">get_intermediate_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">FunctionalResult</span><span class="p">[</span><span class="n">SamplingReadoutResult</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span> <span class="o">...</span></div>
 
-</span><span id="line-208">    <span class="nd">@overload</span>
-</span><span id="line-209">    <span class="k">def</span><span class="w"> </span><span class="nf">get_intermediate_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">FunctionalResult</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Never</span><span class="p">:</span> <span class="o">...</span>
-</span><span id="line-210">    <span class="k">def</span><span class="w"> </span><span class="nf">get_intermediate_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
-</span><span id="line-211"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Measurement samples for every intermediate time-step.</span>
-</span><span id="line-212">
-</span><span id="line-213"><span class="sd">        Raises:</span>
-</span><span id="line-214"><span class="sd">            ValueError: If no intermediate results were stored or no</span>
-</span><span id="line-215"><span class="sd">                ``SamplingReadout`` was provided.</span>
-</span><span id="line-216">
-</span><span id="line-217"><span class="sd">        Returns:</span>
-</span><span id="line-218"><span class="sd">            list[dict[str, int]]: List of mappings of measured bitstring to count, one per intermediate step.</span>
-</span><span id="line-219"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-220">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_results</span><span class="p">:</span>
-</span><span id="line-221">            <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span id="line-222">            <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_results</span><span class="p">:</span>
-</span><span id="line-223">                <span class="k">if</span> <span class="n">has_sampling</span><span class="p">(</span><span class="n">res</span><span class="p">):</span>
-</span><span id="line-224">                    <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">sampling</span><span class="o">.</span><span class="n">samples</span><span class="p">)</span>
-</span><span id="line-225">            <span class="k">return</span> <span class="n">results</span>
-</span><span id="line-226">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Can&#39;t find intermediate samples because intermediate Results were not stored.&quot;</span><span class="p">)</span>
-</span><span id="line-227">
-</span><span id="line-228">    <span class="nd">@overload</span>
+</span><span id="line-218">    <span class="nd">@overload</span>
+</span><span id="line-219">    <span class="k">def</span><span class="w"> </span><span class="nf">get_intermediate_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">FunctionalResult</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Never</span><span class="p">:</span> <span class="o">...</span>
+</span><span id="line-220">    <span class="k">def</span><span class="w"> </span><span class="nf">get_intermediate_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
+</span><span id="line-221"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Measurement samples for every intermediate time-step.</span>
+</span><span id="line-222">
+</span><span id="line-223"><span class="sd">        Raises:</span>
+</span><span id="line-224"><span class="sd">            ValueError: If no intermediate results were stored or no</span>
+</span><span id="line-225"><span class="sd">                ``SamplingReadout`` was provided.</span>
+</span><span id="line-226">
+</span><span id="line-227"><span class="sd">        Returns:</span>
+</span><span id="line-228"><span class="sd">            list[dict[str, int]]: List of mappings of measured bitstring to count, one per intermediate step.</span>
+</span><span id="line-229"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-230">        <span class="n">logger</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="s2">&quot;[FunctionalResult] Retrieving intermediate samples for </span><span class="si">{}</span><span class="s2"> steps&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_results</span><span class="p">))</span>
+</span><span id="line-231">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_results</span><span class="p">:</span>
+</span><span id="line-232">            <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="line-233">            <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_results</span><span class="p">:</span>
+</span><span id="line-234">                <span class="k">if</span> <span class="n">has_sampling</span><span class="p">(</span><span class="n">res</span><span class="p">):</span>
+</span><span id="line-235">                    <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">sampling</span><span class="o">.</span><span class="n">samples</span><span class="p">)</span>
+</span><span id="line-236">            <span class="k">return</span> <span class="n">results</span>
+</span><span id="line-237">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Can&#39;t find intermediate samples because intermediate Results were not stored.&quot;</span><span class="p">)</span>
+</span><span id="line-238">
+</span><span id="line-239">    <span class="nd">@overload</span>
 <div class="viewcode-block" id="FunctionalResult.get_intermediate_probabilities">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/functional_result/index.html#qilisdk.functionals.functional_result.FunctionalResult.get_intermediate_probabilities">[documents]</a>
-</span><span id="line-229">    <span class="k">def</span><span class="w"> </span><span class="nf">get_intermediate_probabilities</span><span class="p">(</span>
-</span><span id="line-230">        <span class="bp">self</span><span class="p">:</span> <span class="n">FunctionalResult</span><span class="p">[</span><span class="n">SamplingReadoutResult</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">StateTomographyReadoutResult</span> <span class="o">|</span> <span class="kc">None</span><span class="p">],</span>
-</span><span id="line-231">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span> <span class="o">...</span></div>
+</span><span id="line-240">    <span class="k">def</span><span class="w"> </span><span class="nf">get_intermediate_probabilities</span><span class="p">(</span>
+</span><span id="line-241">        <span class="bp">self</span><span class="p">:</span> <span class="n">FunctionalResult</span><span class="p">[</span><span class="n">SamplingReadoutResult</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">StateTomographyReadoutResult</span> <span class="o">|</span> <span class="kc">None</span><span class="p">],</span>
+</span><span id="line-242">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span> <span class="o">...</span></div>
 
-</span><span id="line-232">    <span class="nd">@overload</span>
-</span><span id="line-233">    <span class="k">def</span><span class="w"> </span><span class="nf">get_intermediate_probabilities</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">FunctionalResult</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Never</span><span class="p">:</span> <span class="o">...</span>
-</span><span id="line-234">    <span class="k">def</span><span class="w"> </span><span class="nf">get_intermediate_probabilities</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
-</span><span id="line-235"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Outcome probabilities for every intermediate time-step.</span>
-</span><span id="line-236">
-</span><span id="line-237"><span class="sd">        Raises:</span>
-</span><span id="line-238"><span class="sd">            ValueError: If no intermediate results were stored or no</span>
-</span><span id="line-239"><span class="sd">                ``SamplingReadout`` / ``StateTomographyReadout`` was provided.</span>
-</span><span id="line-240">
-</span><span id="line-241"><span class="sd">        Returns:</span>
-</span><span id="line-242"><span class="sd">            list[dict[str, float]]: List of mappings of bitstring to probability, one per intermediate step.</span>
-</span><span id="line-243"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-244">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_results</span><span class="p">:</span>
-</span><span id="line-245">            <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span id="line-246">            <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_results</span><span class="p">:</span>
-</span><span id="line-247">                <span class="k">if</span> <span class="n">has_state_tomography</span><span class="p">(</span><span class="n">res</span><span class="p">):</span>
-</span><span id="line-248">                    <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">state_tomography</span><span class="o">.</span><span class="n">probabilities</span><span class="p">)</span>
-</span><span id="line-249">                <span class="k">elif</span> <span class="n">has_sampling</span><span class="p">(</span><span class="n">res</span><span class="p">):</span>
-</span><span id="line-250">                    <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">sampling</span><span class="o">.</span><span class="n">probabilities</span><span class="p">)</span>
-</span><span id="line-251">            <span class="k">return</span> <span class="n">results</span>
-</span><span id="line-252">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Can&#39;t find intermediate probabilities because intermediate Results were not stored.&quot;</span><span class="p">)</span>
-</span><span id="line-253">
-</span><span id="line-254">    <span class="nd">@overload</span>
+</span><span id="line-243">    <span class="nd">@overload</span>
+</span><span id="line-244">    <span class="k">def</span><span class="w"> </span><span class="nf">get_intermediate_probabilities</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">FunctionalResult</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Never</span><span class="p">:</span> <span class="o">...</span>
+</span><span id="line-245">    <span class="k">def</span><span class="w"> </span><span class="nf">get_intermediate_probabilities</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
+</span><span id="line-246"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Outcome probabilities for every intermediate time-step.</span>
+</span><span id="line-247">
+</span><span id="line-248"><span class="sd">        Raises:</span>
+</span><span id="line-249"><span class="sd">            ValueError: If no intermediate results were stored or no</span>
+</span><span id="line-250"><span class="sd">                ``SamplingReadout`` / ``StateTomographyReadout`` was provided.</span>
+</span><span id="line-251">
+</span><span id="line-252"><span class="sd">        Returns:</span>
+</span><span id="line-253"><span class="sd">            list[dict[str, float]]: List of mappings of bitstring to probability, one per intermediate step.</span>
+</span><span id="line-254"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-255">        <span class="n">logger</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span>
+</span><span id="line-256">            <span class="s2">&quot;[FunctionalResult] Retrieving intermediate probabilities for </span><span class="si">{}</span><span class="s2"> steps&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_results</span><span class="p">)</span>
+</span><span id="line-257">        <span class="p">)</span>
+</span><span id="line-258">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_results</span><span class="p">:</span>
+</span><span id="line-259">            <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="line-260">            <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_results</span><span class="p">:</span>
+</span><span id="line-261">                <span class="k">if</span> <span class="n">has_state_tomography</span><span class="p">(</span><span class="n">res</span><span class="p">):</span>
+</span><span id="line-262">                    <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">state_tomography</span><span class="o">.</span><span class="n">probabilities</span><span class="p">)</span>
+</span><span id="line-263">                <span class="k">elif</span> <span class="n">has_sampling</span><span class="p">(</span><span class="n">res</span><span class="p">):</span>
+</span><span id="line-264">                    <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">sampling</span><span class="o">.</span><span class="n">probabilities</span><span class="p">)</span>
+</span><span id="line-265">            <span class="k">return</span> <span class="n">results</span>
+</span><span id="line-266">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Can&#39;t find intermediate probabilities because intermediate Results were not stored.&quot;</span><span class="p">)</span>
+</span><span id="line-267">
+</span><span id="line-268">    <span class="nd">@overload</span>
 <div class="viewcode-block" id="FunctionalResult.get_intermediate_states">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/functional_result/index.html#qilisdk.functionals.functional_result.FunctionalResult.get_intermediate_states">[documents]</a>
-</span><span id="line-255">    <span class="k">def</span><span class="w"> </span><span class="nf">get_intermediate_states</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">FunctionalResult</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">StateTomographyReadoutResult</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">QTensor</span><span class="p">]:</span> <span class="o">...</span></div>
+</span><span id="line-269">    <span class="k">def</span><span class="w"> </span><span class="nf">get_intermediate_states</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">FunctionalResult</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">StateTomographyReadoutResult</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">QTensor</span><span class="p">]:</span> <span class="o">...</span></div>
 
-</span><span id="line-256">    <span class="nd">@overload</span>
-</span><span id="line-257">    <span class="k">def</span><span class="w"> </span><span class="nf">get_intermediate_states</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">FunctionalResult</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Never</span><span class="p">:</span> <span class="o">...</span>
-</span><span id="line-258">    <span class="k">def</span><span class="w"> </span><span class="nf">get_intermediate_states</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">QTensor</span><span class="p">]:</span>
-</span><span id="line-259"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Quantum state vectors for every intermediate time-step.</span>
-</span><span id="line-260">
-</span><span id="line-261"><span class="sd">        Raises:</span>
-</span><span id="line-262"><span class="sd">            ValueError: If no intermediate results were stored or no</span>
-</span><span id="line-263"><span class="sd">                ``StateTomographyReadout`` was provided.</span>
-</span><span id="line-264">
-</span><span id="line-265"><span class="sd">        Returns:</span>
-</span><span id="line-266"><span class="sd">            list[QTensor]: List of quantum states, one per intermediate step.</span>
-</span><span id="line-267"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-268">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_results</span><span class="p">:</span>
-</span><span id="line-269">            <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span id="line-270">            <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_results</span><span class="p">:</span>
-</span><span id="line-271">                <span class="k">if</span> <span class="n">has_state_tomography</span><span class="p">(</span><span class="n">res</span><span class="p">):</span>
-</span><span id="line-272">                    <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">state_tomography</span><span class="o">.</span><span class="n">state</span><span class="p">)</span>
-</span><span id="line-273">            <span class="k">return</span> <span class="n">results</span>
-</span><span id="line-274">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Can&#39;t find intermediate states because intermediate Results were not stored.&quot;</span><span class="p">)</span>
-</span><span id="line-275">
-</span><span id="line-276">    <span class="nd">@overload</span>
+</span><span id="line-270">    <span class="nd">@overload</span>
+</span><span id="line-271">    <span class="k">def</span><span class="w"> </span><span class="nf">get_intermediate_states</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">FunctionalResult</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Never</span><span class="p">:</span> <span class="o">...</span>
+</span><span id="line-272">    <span class="k">def</span><span class="w"> </span><span class="nf">get_intermediate_states</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">QTensor</span><span class="p">]:</span>
+</span><span id="line-273"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Quantum state vectors for every intermediate time-step.</span>
+</span><span id="line-274">
+</span><span id="line-275"><span class="sd">        Raises:</span>
+</span><span id="line-276"><span class="sd">            ValueError: If no intermediate results were stored or no</span>
+</span><span id="line-277"><span class="sd">                ``StateTomographyReadout`` was provided.</span>
+</span><span id="line-278">
+</span><span id="line-279"><span class="sd">        Returns:</span>
+</span><span id="line-280"><span class="sd">            list[QTensor]: List of quantum states, one per intermediate step.</span>
+</span><span id="line-281"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-282">        <span class="n">logger</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="s2">&quot;[FunctionalResult] Retrieving intermediate states for </span><span class="si">{}</span><span class="s2"> steps&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_results</span><span class="p">))</span>
+</span><span id="line-283">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_results</span><span class="p">:</span>
+</span><span id="line-284">            <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="line-285">            <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_results</span><span class="p">:</span>
+</span><span id="line-286">                <span class="k">if</span> <span class="n">has_state_tomography</span><span class="p">(</span><span class="n">res</span><span class="p">):</span>
+</span><span id="line-287">                    <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">state_tomography</span><span class="o">.</span><span class="n">state</span><span class="p">)</span>
+</span><span id="line-288">            <span class="k">return</span> <span class="n">results</span>
+</span><span id="line-289">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Can&#39;t find intermediate states because intermediate Results were not stored.&quot;</span><span class="p">)</span>
+</span><span id="line-290">
+</span><span id="line-291">    <span class="nd">@overload</span>
 <div class="viewcode-block" id="FunctionalResult.get_intermediate_expectation_values">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/functional_result/index.html#qilisdk.functionals.functional_result.FunctionalResult.get_intermediate_expectation_values">[documents]</a>
-</span><span id="line-277">    <span class="k">def</span><span class="w"> </span><span class="nf">get_intermediate_expectation_values</span><span class="p">(</span>
-</span><span id="line-278">        <span class="bp">self</span><span class="p">:</span> <span class="n">FunctionalResult</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">ExpectationReadoutResult</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
-</span><span id="line-279">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span> <span class="o">...</span></div>
+</span><span id="line-292">    <span class="k">def</span><span class="w"> </span><span class="nf">get_intermediate_expectation_values</span><span class="p">(</span>
+</span><span id="line-293">        <span class="bp">self</span><span class="p">:</span> <span class="n">FunctionalResult</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">ExpectationReadoutResult</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+</span><span id="line-294">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span> <span class="o">...</span></div>
 
-</span><span id="line-280">    <span class="nd">@overload</span>
-</span><span id="line-281">    <span class="k">def</span><span class="w"> </span><span class="nf">get_intermediate_expectation_values</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">FunctionalResult</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Never</span><span class="p">:</span> <span class="o">...</span>
-</span><span id="line-282">    <span class="k">def</span><span class="w"> </span><span class="nf">get_intermediate_expectation_values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
-</span><span id="line-283"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Expectation values for every intermediate time-step.</span>
-</span><span id="line-284">
-</span><span id="line-285"><span class="sd">        Raises:</span>
-</span><span id="line-286"><span class="sd">            ValueError: If no intermediate results were stored or no</span>
-</span><span id="line-287"><span class="sd">                ``ExpectationReadout`` was provided.</span>
-</span><span id="line-288">
-</span><span id="line-289"><span class="sd">        Returns:</span>
-</span><span id="line-290"><span class="sd">            list[list[float]]: List of expectation values, one per intermediate step.</span>
-</span><span id="line-291"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-292">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_results</span><span class="p">:</span>
-</span><span id="line-293">            <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span id="line-294">            <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_results</span><span class="p">:</span>
-</span><span id="line-295">                <span class="k">if</span> <span class="n">has_expectation_values</span><span class="p">(</span><span class="n">res</span><span class="p">):</span>
-</span><span id="line-296">                    <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">expectation_values</span><span class="o">.</span><span class="n">expectation_values</span><span class="p">)</span>
-</span><span id="line-297">            <span class="k">return</span> <span class="n">results</span>
-</span><span id="line-298">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Can&#39;t find intermediate expectation values because intermediate Results were not stored.&quot;</span><span class="p">)</span>
+</span><span id="line-295">    <span class="nd">@overload</span>
+</span><span id="line-296">    <span class="k">def</span><span class="w"> </span><span class="nf">get_intermediate_expectation_values</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">FunctionalResult</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Never</span><span class="p">:</span> <span class="o">...</span>
+</span><span id="line-297">    <span class="k">def</span><span class="w"> </span><span class="nf">get_intermediate_expectation_values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
+</span><span id="line-298"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Expectation values for every intermediate time-step.</span>
 </span><span id="line-299">
-</span><span id="line-300">    <span class="c1"># -- has_* helpers (useful for runtime checks) ------------------------</span>
-</span><span id="line-301">
+</span><span id="line-300"><span class="sd">        Raises:</span>
+</span><span id="line-301"><span class="sd">            ValueError: If no intermediate results were stored or no</span>
+</span><span id="line-302"><span class="sd">                ``ExpectationReadout`` was provided.</span>
+</span><span id="line-303">
+</span><span id="line-304"><span class="sd">        Returns:</span>
+</span><span id="line-305"><span class="sd">            list[list[float]]: List of expectation values, one per intermediate step.</span>
+</span><span id="line-306"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-307">        <span class="n">logger</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span>
+</span><span id="line-308">            <span class="s2">&quot;[FunctionalResult] Retrieving intermediate expectation values for </span><span class="si">{}</span><span class="s2"> steps&quot;</span><span class="p">,</span>
+</span><span id="line-309">            <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_results</span><span class="p">),</span>
+</span><span id="line-310">        <span class="p">)</span>
+</span><span id="line-311">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_results</span><span class="p">:</span>
+</span><span id="line-312">            <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="line-313">            <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_results</span><span class="p">:</span>
+</span><span id="line-314">                <span class="k">if</span> <span class="n">has_expectation_values</span><span class="p">(</span><span class="n">res</span><span class="p">):</span>
+</span><span id="line-315">                    <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">expectation_values</span><span class="o">.</span><span class="n">expectation_values</span><span class="p">)</span>
+</span><span id="line-316">            <span class="k">return</span> <span class="n">results</span>
+</span><span id="line-317">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Can&#39;t find intermediate expectation values because intermediate Results were not stored.&quot;</span><span class="p">)</span>
+</span><span id="line-318">
+</span><span id="line-319">    <span class="c1"># -- has_* helpers (useful for runtime checks) ------------------------</span>
+</span><span id="line-320">
 <div class="viewcode-block" id="FunctionalResult.has_state">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/functional_result/index.html#qilisdk.functionals.functional_result.FunctionalResult.has_state">[documents]</a>
-</span><span id="line-302">    <span class="k">def</span><span class="w"> </span><span class="nf">has_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-</span><span id="line-303"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Check whether the result contains a final quantum state.</span>
-</span><span id="line-304"><span class="sd">        Returns:</span>
-</span><span id="line-305"><span class="sd">            bool: True if the Functional result has the state. False Otherwise.</span>
-</span><span id="line-306"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-307">        <span class="k">return</span> <span class="n">has_state_tomography</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_readout_results</span><span class="p">)</span></div>
+</span><span id="line-321">    <span class="k">def</span><span class="w"> </span><span class="nf">has_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+</span><span id="line-322"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Check whether the result contains a final quantum state.</span>
+</span><span id="line-323"><span class="sd">        Returns:</span>
+</span><span id="line-324"><span class="sd">            bool: True if the Functional result has the state. False Otherwise.</span>
+</span><span id="line-325"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-326">        <span class="k">return</span> <span class="n">has_state_tomography</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_readout_results</span><span class="p">)</span></div>
 
-</span><span id="line-308">
+</span><span id="line-327">
 <div class="viewcode-block" id="FunctionalResult.has_samples">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/functional_result/index.html#qilisdk.functionals.functional_result.FunctionalResult.has_samples">[documents]</a>
-</span><span id="line-309">    <span class="k">def</span><span class="w"> </span><span class="nf">has_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-</span><span id="line-310"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Check whether the result contains measurement samples.</span>
-</span><span id="line-311"><span class="sd">        Returns:</span>
-</span><span id="line-312"><span class="sd">            bool: True if the Functional result has samples. False Otherwise.</span>
-</span><span id="line-313"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-314">        <span class="k">return</span> <span class="n">has_sampling</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_readout_results</span><span class="p">)</span></div>
+</span><span id="line-328">    <span class="k">def</span><span class="w"> </span><span class="nf">has_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+</span><span id="line-329"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Check whether the result contains measurement samples.</span>
+</span><span id="line-330"><span class="sd">        Returns:</span>
+</span><span id="line-331"><span class="sd">            bool: True if the Functional result has samples. False Otherwise.</span>
+</span><span id="line-332"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-333">        <span class="k">return</span> <span class="n">has_sampling</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_readout_results</span><span class="p">)</span></div>
 
-</span><span id="line-315">
+</span><span id="line-334">
 <div class="viewcode-block" id="FunctionalResult.has_probabilities">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/functional_result/index.html#qilisdk.functionals.functional_result.FunctionalResult.has_probabilities">[documents]</a>
-</span><span id="line-316">    <span class="k">def</span><span class="w"> </span><span class="nf">has_probabilities</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-</span><span id="line-317"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Check whether the result contains outcome probabilities.</span>
-</span><span id="line-318"><span class="sd">        Returns:</span>
-</span><span id="line-319"><span class="sd">            bool: True if the Functional result has probabilities. False Otherwise.</span>
-</span><span id="line-320"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-321">        <span class="k">return</span> <span class="n">has_state_tomography</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_readout_results</span><span class="p">)</span> <span class="ow">or</span> <span class="n">has_sampling</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_readout_results</span><span class="p">)</span></div>
+</span><span id="line-335">    <span class="k">def</span><span class="w"> </span><span class="nf">has_probabilities</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+</span><span id="line-336"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Check whether the result contains outcome probabilities.</span>
+</span><span id="line-337"><span class="sd">        Returns:</span>
+</span><span id="line-338"><span class="sd">            bool: True if the Functional result has probabilities. False Otherwise.</span>
+</span><span id="line-339"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-340">        <span class="k">return</span> <span class="n">has_state_tomography</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_readout_results</span><span class="p">)</span> <span class="ow">or</span> <span class="n">has_sampling</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_readout_results</span><span class="p">)</span></div>
 
-</span><span id="line-322">
+</span><span id="line-341">
 <div class="viewcode-block" id="FunctionalResult.has_expectation_values">
 <a class="viewcode-back" href="../../../code/api/qilisdk/functionals/functional_result/index.html#qilisdk.functionals.functional_result.FunctionalResult.has_expectation_values">[documents]</a>
-</span><span id="line-323">    <span class="k">def</span><span class="w"> </span><span class="nf">has_expectation_values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-</span><span id="line-324"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Check whether the result contains expectation values.</span>
-</span><span id="line-325"><span class="sd">        Returns:</span>
-</span><span id="line-326"><span class="sd">            bool: True if the Functional result has expectation values. False Otherwise.</span>
-</span><span id="line-327"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-328">        <span class="k">return</span> <span class="n">has_expectation_values</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_readout_results</span><span class="p">)</span></div>
+</span><span id="line-342">    <span class="k">def</span><span class="w"> </span><span class="nf">has_expectation_values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+</span><span id="line-343"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Check whether the result contains expectation values.</span>
+</span><span id="line-344"><span class="sd">        Returns:</span>
+</span><span id="line-345"><span class="sd">            bool: True if the Functional result has expectation values. False Otherwise.</span>
+</span><span id="line-346"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-347">        <span class="k">return</span> <span class="n">has_expectation_values</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_readout_results</span><span class="p">)</span></div>
 
-</span><span id="line-329">
-</span><span id="line-330">    <span class="c1"># -- container protocol -----------------------------------------------</span>
-</span><span id="line-331">
-</span><span id="line-332">    <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-</span><span id="line-333">        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_results</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_results</span> <span class="k">else</span> <span class="mi">1</span>
-</span><span id="line-334">
-</span><span id="line-335">    <span class="k">def</span><span class="w"> </span><span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">ReadoutCompositeResults</span><span class="p">[</span><span class="n">S</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">T</span><span class="p">]]:</span>
-</span><span id="line-336">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_results</span><span class="p">:</span>
-</span><span id="line-337">            <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_results</span>
-</span><span id="line-338">        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_readout_results</span>
-</span><span id="line-339">
-</span><span id="line-340">    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ReadoutCompositeResults</span><span class="p">[</span><span class="n">S</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">T</span><span class="p">]:</span>
-</span><span id="line-341">        <span class="k">if</span> <span class="n">index</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-</span><span id="line-342">            <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Index </span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2"> out of range for FunctionalResult of length </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</span><span id="line-343">        <span class="k">if</span> <span class="n">index</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_results</span><span class="p">):</span>
-</span><span id="line-344">            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_results</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
-</span><span id="line-345">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_readout_results</span>
-</span><span id="line-346">
-</span><span id="line-347">    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="line-348">        <span class="n">LIMIT</span> <span class="o">=</span> <span class="mi">10</span>
-</span><span id="line-349">        <span class="n">out</span> <span class="o">=</span> <span class="s2">&quot;- Functional Results: [</span><span class="se">\n\n</span><span class="s2">&quot;</span>
-</span><span id="line-350">        <span class="n">out</span> <span class="o">+=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_readout_results</span><span class="p">)</span>
-</span><span id="line-351">        <span class="n">out</span> <span class="o">+=</span> <span class="s2">&quot;]&quot;</span>
-</span><span id="line-352">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_results</span><span class="p">:</span>
-</span><span id="line-353">            <span class="n">out</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\n\n\n</span><span class="s2">- Intermediate Results: [</span><span class="se">\n\n</span><span class="s2">&quot;</span>
-</span><span id="line-354">            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">res</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_results</span><span class="p">[:</span><span class="n">LIMIT</span><span class="p">]):</span>
-</span><span id="line-355">                <span class="n">out</span> <span class="o">+=</span> <span class="nb">str</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
-</span><span id="line-356">                <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_results</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">LIMIT</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
-</span><span id="line-357">                    <span class="n">out</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="s2">&quot;-&quot;</span> <span class="o">*</span> <span class="mi">20</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
-</span><span id="line-358">            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_results</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">LIMIT</span><span class="p">:</span>
-</span><span id="line-359">                <span class="n">out</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">...</span><span class="se">\n\n</span><span class="s2">&quot;</span>
-</span><span id="line-360">            <span class="n">out</span> <span class="o">+=</span> <span class="s2">&quot;]&quot;</span>
-</span><span id="line-361">        <span class="k">return</span> <span class="n">out</span></div>
+</span><span id="line-348">
+</span><span id="line-349">    <span class="c1"># -- container protocol -----------------------------------------------</span>
+</span><span id="line-350">
+</span><span id="line-351">    <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+</span><span id="line-352">        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_results</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_results</span> <span class="k">else</span> <span class="mi">1</span>
+</span><span id="line-353">
+</span><span id="line-354">    <span class="k">def</span><span class="w"> </span><span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">ReadoutCompositeResults</span><span class="p">[</span><span class="n">S</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">T</span><span class="p">]]:</span>
+</span><span id="line-355">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_results</span><span class="p">:</span>
+</span><span id="line-356">            <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_results</span>
+</span><span id="line-357">        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_readout_results</span>
+</span><span id="line-358">
+</span><span id="line-359">    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ReadoutCompositeResults</span><span class="p">[</span><span class="n">S</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">T</span><span class="p">]:</span>
+</span><span id="line-360">        <span class="k">if</span> <span class="n">index</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span><span id="line-361">            <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Index </span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2"> out of range for FunctionalResult of length </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span id="line-362">        <span class="k">if</span> <span class="n">index</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_results</span><span class="p">):</span>
+</span><span id="line-363">            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_results</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+</span><span id="line-364">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_readout_results</span>
+</span><span id="line-365">
+</span><span id="line-366">    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="line-367">        <span class="n">LIMIT</span> <span class="o">=</span> <span class="mi">10</span>
+</span><span id="line-368">        <span class="n">out</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+</span><span id="line-369">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">execution_time</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-370">            <span class="n">out</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;- Execution Time: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">execution_time</span><span class="si">:</span><span class="s2">.6g</span><span class="si">}</span><span class="s2"> s</span><span class="se">\n\n</span><span class="s2">&quot;</span>
+</span><span id="line-371">        <span class="n">out</span> <span class="o">+=</span> <span class="s2">&quot;- Functional Results: [</span><span class="se">\n\n</span><span class="s2">&quot;</span>
+</span><span id="line-372">        <span class="n">out</span> <span class="o">+=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_readout_results</span><span class="p">)</span>
+</span><span id="line-373">        <span class="n">out</span> <span class="o">+=</span> <span class="s2">&quot;]&quot;</span>
+</span><span id="line-374">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_results</span><span class="p">:</span>
+</span><span id="line-375">            <span class="n">out</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\n\n\n</span><span class="s2">- Intermediate Results: [</span><span class="se">\n\n</span><span class="s2">&quot;</span>
+</span><span id="line-376">            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">res</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_results</span><span class="p">[:</span><span class="n">LIMIT</span><span class="p">]):</span>
+</span><span id="line-377">                <span class="n">out</span> <span class="o">+=</span> <span class="nb">str</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
+</span><span id="line-378">                <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_results</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">LIMIT</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+</span><span id="line-379">                    <span class="n">out</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="s2">&quot;-&quot;</span> <span class="o">*</span> <span class="mi">20</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+</span><span id="line-380">            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_results</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">LIMIT</span><span class="p">:</span>
+</span><span id="line-381">                <span class="n">out</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">...</span><span class="se">\n\n</span><span class="s2">&quot;</span>
+</span><span id="line-382">            <span class="n">out</span> <span class="o">+=</span> <span class="s2">&quot;]&quot;</span>
+</span><span id="line-383">        <span class="k">return</span> <span class="n">out</span></div>
 
 </span></code></pre></div>
     </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">

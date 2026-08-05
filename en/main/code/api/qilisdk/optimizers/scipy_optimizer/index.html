@@ -231,6 +231,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../functionals/variational_program_result/index.html">qilisdk.functionals.variational_program_result</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging/index.html">qilisdk.logging</a></li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../noise/index.html">qilisdk.noise<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="../../noise/amplitude_damping/index.html">qilisdk.noise.amplitude_damping</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../noise/bit_flip/index.html">qilisdk.noise.bit_flip</a></li>
@@ -389,6 +390,7 @@ inheritance.</p>
 - ‘dual_annealing’ (global)
 - ‘differential_evolution’ (global)
 - ‘shgo’ (global)
+- ‘brute’ (global)
 - custom - a callable object, see <a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html" rel="nofollow noopener">scipy.optimize.minimize<svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a> for description.</p>
 <p>If not given, chosen to be one of <code class="docutils literal notranslate"><span class="pre">BFGS</span></code>, <code class="docutils literal notranslate"><span class="pre">L-BFGS-B</span></code>, <code class="docutils literal notranslate"><span class="pre">SLSQP</span></code>,
 depending on whether or not the problem has constraints or bounds.</p>

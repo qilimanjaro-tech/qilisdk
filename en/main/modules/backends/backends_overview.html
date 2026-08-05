@@ -14,6 +14,7 @@
 <link href="../../_static/theme.css?v=42baaae4" rel="stylesheet" type="text/css"/>
 <link href="../../_static/graphviz.css?v=4ae1632d" rel="stylesheet" type="text/css"/>
 <link href="../../_static/sphinx-design.min.css?v=95c83b7e" rel="stylesheet" type="text/css"/>
+<link href="../../_static/tabs.css?v=a5c4661c" rel="stylesheet" type="text/css"/>
 <link href="../../_static/custom.css?v=e4e41e26" rel="stylesheet" type="text/css"/>
 <link href="../../_static/awesome-sphinx-design.css?v=15e0fffa" rel="stylesheet" type="text/css"/>
 <link href="../../_static/QiliSDK_q.png" rel="icon"/>
@@ -231,6 +232,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/functionals/variational_program_result/index.html">qilisdk.functionals.variational_program_result</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="../../code/api/qilisdk/logging/index.html">qilisdk.logging</a></li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../code/api/qilisdk/noise/index.html">qilisdk.noise<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/noise/amplitude_damping/index.html">qilisdk.noise.amplitude_damping</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/noise/bit_flip/index.html">qilisdk.noise.bit_flip</a></li>
@@ -354,9 +356,17 @@ Currently, three backends are supported:</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>Backends other than QiliSim are optional; to install one, include its extra when installing QILISDK:</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="go">pip install qilisdk[&lt;backend_name&gt;]</span>
+<div class="sphinx-tabs docutils container">
+<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-0-TGludXg=" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-0-TGludXg=" name="TGludXg=" role="tab" tabindex="0">Linux</button><button aria-controls="panel-0-TWFjIE9TWA==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-TWFjIE9TWA==" name="TWFjIE9TWA==" role="tab" tabindex="-1">Mac OSX</button><button aria-controls="panel-0-V2luZG93cw==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-V2luZG93cw==" name="V2luZG93cw==" role="tab" tabindex="-1">Windows</button></div><div aria-labelledby="tab-0-TGludXg=" class="sphinx-tabs-panel group-tab" id="panel-0-TGludXg=" name="TGludXg=" role="tabpanel" tabindex="0"><div class="highlight-console notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="go">pip install qilisdk[&lt;backend_name&gt;]</span>
 </span></code></pre></div>
 </div>
+</div><div aria-labelledby="tab-0-TWFjIE9TWA==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-0-TWFjIE9TWA==" name="TWFjIE9TWA==" role="tabpanel" tabindex="0"><div class="highlight-console notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="go">pip install "qilisdk[&lt;backend_name&gt;]"</span>
+</span></code></pre></div>
+</div>
+</div><div aria-labelledby="tab-0-V2luZG93cw==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-0-V2luZG93cw==" name="V2luZG93cw==" role="tabpanel" tabindex="0"><div class="highlight-console notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="go">pip install qilisdk[&lt;backend_name&gt;]</span>
+</span></code></pre></div>
+</div>
+</div></div>
 <p>For more information check the <a class="reference internal" href="../../getting_started/installation.html"><span class="doc">Installation</span></a> page.</p>
 </div>
 <p>Once installed, any primitive functional can be executed by passing it to the backend’s <a class="reference internal" href="../../code/api/qilisdk/backends/backend/index.html#qilisdk.backends.backend.Backend.execute" title="qilisdk.backends.backend.Backend.execute"><code class="xref py py-meth docutils literal notranslate"><span class="pre">execute()</span></code></a> method
@@ -517,5 +527,6 @@ drivers to be present on the system.</p>
 <script defer="defer" src="../../_static/theme.js?v=073f68d9"></script>
 <script src="../../_static/design-tabs.js?v=f930bc37"></script>
 <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+<script src="../../_static/tabs.js?v=3030b3cb"></script>
 </body>
 </html>

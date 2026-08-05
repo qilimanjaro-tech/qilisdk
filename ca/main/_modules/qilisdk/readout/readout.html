@@ -277,6 +277,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/functionals/variational_program_result/index.html">qilisdk.functionals.variational_program_result</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/logging/index.html">qilisdk.logging</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/noise/index.html">qilisdk.noise</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/amplitude_damping/index.html">qilisdk.noise.amplitude_damping</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/bit_flip/index.html">qilisdk.noise.bit_flip</a></li>
@@ -444,210 +445,217 @@
 </span><span id="line-26">
 </span><span id="line-27"><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span>
 </span><span id="line-28">
-</span><span id="line-29"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.analog</span><span class="w"> </span><span class="kn">import</span> <span class="n">Hamiltonian</span>
-</span><span id="line-30"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">QTensor</span>
-</span><span id="line-31"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.yaml</span><span class="w"> </span><span class="kn">import</span> <span class="n">yaml</span>
-</span><span id="line-32">
-</span><span id="line-33">
-</span><span id="line-34"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
+</span><span id="line-29"><span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
+</span><span id="line-30">
+</span><span id="line-31"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.analog</span><span class="w"> </span><span class="kn">import</span> <span class="n">Hamiltonian</span>
+</span><span id="line-32"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">QTensor</span>
+</span><span id="line-33"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.yaml</span><span class="w"> </span><span class="kn">import</span> <span class="n">yaml</span>
+</span><span id="line-34">
+</span><span id="line-35">
+</span><span id="line-36"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
 <div class="viewcode-block" id="ReadoutMethod">
 <a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout/index.html#qilisdk.readout.readout.ReadoutMethod">[documents]</a>
-</span><span id="line-35"><span class="k">class</span><span class="w"> </span><span class="nc">ReadoutMethod</span><span class="p">:</span>
-</span><span id="line-36"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Base type for readout configurations.</span>
-</span><span id="line-37">
-</span><span id="line-38"><span class="sd">    :class:`ReadoutMethod` is not meant to be instantiated directly.  Use</span>
-</span><span id="line-39"><span class="sd">    :class:`~qilisdk.readout.Readout` to compose a readout specification and pass it to</span>
-</span><span id="line-40"><span class="sd">    :meth:`~qilisdk.backends.Backend.execute`.</span>
-</span><span id="line-41"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-42">
+</span><span id="line-37"><span class="k">class</span><span class="w"> </span><span class="nc">ReadoutMethod</span><span class="p">:</span>
+</span><span id="line-38"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Base type for readout configurations.</span>
+</span><span id="line-39">
+</span><span id="line-40"><span class="sd">    :class:`ReadoutMethod` is not meant to be instantiated directly.  Use</span>
+</span><span id="line-41"><span class="sd">    :class:`~qilisdk.readout.Readout` to compose a readout specification and pass it to</span>
+</span><span id="line-42"><span class="sd">    :meth:`~qilisdk.backends.Backend.execute`.</span>
+</span><span id="line-43"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-44">
 <div class="viewcode-block" id="ReadoutMethod.is_sampling_readout">
 <a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout/index.html#qilisdk.readout.readout.ReadoutMethod.is_sampling_readout">[documents]</a>
-</span><span id="line-43">    <span class="k">def</span><span class="w"> </span><span class="nf">is_sampling_readout</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-</span><span id="line-44"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Check whether this readout is a :class:`SamplingReadout`.</span>
-</span><span id="line-45">
-</span><span id="line-46"><span class="sd">        Returns:</span>
-</span><span id="line-47"><span class="sd">            bool: ``True`` if this instance is a :class:`SamplingReadout`,</span>
-</span><span id="line-48"><span class="sd">            ``False`` otherwise.</span>
-</span><span id="line-49"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-50">        <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">SamplingReadout</span><span class="p">)</span></div>
+</span><span id="line-45">    <span class="k">def</span><span class="w"> </span><span class="nf">is_sampling_readout</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+</span><span id="line-46"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Check whether this readout is a :class:`SamplingReadout`.</span>
+</span><span id="line-47">
+</span><span id="line-48"><span class="sd">        Returns:</span>
+</span><span id="line-49"><span class="sd">            bool: ``True`` if this instance is a :class:`SamplingReadout`,</span>
+</span><span id="line-50"><span class="sd">            ``False`` otherwise.</span>
+</span><span id="line-51"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-52">        <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">SamplingReadout</span><span class="p">)</span></div>
 
-</span><span id="line-51">
+</span><span id="line-53">
 <div class="viewcode-block" id="ReadoutMethod.is_expectation_readout">
 <a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout/index.html#qilisdk.readout.readout.ReadoutMethod.is_expectation_readout">[documents]</a>
-</span><span id="line-52">    <span class="k">def</span><span class="w"> </span><span class="nf">is_expectation_readout</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-</span><span id="line-53"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Check whether this readout is an :class:`ExpectationReadout`.</span>
-</span><span id="line-54">
-</span><span id="line-55"><span class="sd">        Returns:</span>
-</span><span id="line-56"><span class="sd">            bool: ``True`` if this instance is an :class:`ExpectationReadout`,</span>
-</span><span id="line-57"><span class="sd">            ``False`` otherwise.</span>
-</span><span id="line-58"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-59">        <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ExpectationReadout</span><span class="p">)</span></div>
+</span><span id="line-54">    <span class="k">def</span><span class="w"> </span><span class="nf">is_expectation_readout</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+</span><span id="line-55"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Check whether this readout is an :class:`ExpectationReadout`.</span>
+</span><span id="line-56">
+</span><span id="line-57"><span class="sd">        Returns:</span>
+</span><span id="line-58"><span class="sd">            bool: ``True`` if this instance is an :class:`ExpectationReadout`,</span>
+</span><span id="line-59"><span class="sd">            ``False`` otherwise.</span>
+</span><span id="line-60"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-61">        <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ExpectationReadout</span><span class="p">)</span></div>
 
-</span><span id="line-60">
+</span><span id="line-62">
 <div class="viewcode-block" id="ReadoutMethod.is_state_tomography_readout">
 <a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout/index.html#qilisdk.readout.readout.ReadoutMethod.is_state_tomography_readout">[documents]</a>
-</span><span id="line-61">    <span class="k">def</span><span class="w"> </span><span class="nf">is_state_tomography_readout</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-</span><span id="line-62"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Check whether this readout is a :class:`StateTomographyReadout`.</span>
-</span><span id="line-63">
-</span><span id="line-64"><span class="sd">        Returns:</span>
-</span><span id="line-65"><span class="sd">            bool: ``True`` if this instance is a</span>
-</span><span id="line-66"><span class="sd">            :class:`StateTomographyReadout`, ``False`` otherwise.</span>
-</span><span id="line-67"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-68">        <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">StateTomographyReadout</span><span class="p">)</span></div>
+</span><span id="line-63">    <span class="k">def</span><span class="w"> </span><span class="nf">is_state_tomography_readout</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+</span><span id="line-64"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Check whether this readout is a :class:`StateTomographyReadout`.</span>
+</span><span id="line-65">
+</span><span id="line-66"><span class="sd">        Returns:</span>
+</span><span id="line-67"><span class="sd">            bool: ``True`` if this instance is a</span>
+</span><span id="line-68"><span class="sd">            :class:`StateTomographyReadout`, ``False`` otherwise.</span>
+</span><span id="line-69"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-70">        <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">StateTomographyReadout</span><span class="p">)</span></div>
 </div>
 
-</span><span id="line-69">
-</span><span id="line-70">
-</span><span id="line-71"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
+</span><span id="line-71">
+</span><span id="line-72">
+</span><span id="line-73"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
 <div class="viewcode-block" id="SamplingReadout">
 <a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout/index.html#qilisdk.readout.readout.SamplingReadout">[documents]</a>
-</span><span id="line-72"><span class="k">class</span><span class="w"> </span><span class="nc">SamplingReadout</span><span class="p">(</span><span class="n">ReadoutMethod</span><span class="p">):</span>
-</span><span id="line-73"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Sampling readout configuration.</span>
-</span><span id="line-74">
-</span><span id="line-75"><span class="sd">    Instructs the backend to perform repeated measurement shots and return bitstring counts.</span>
-</span><span id="line-76"><span class="sd">    Typically constructed via :meth:`Readout.with_sampling &lt;qilisdk.readout.Readout.with_sampling&gt;`.</span>
-</span><span id="line-77">
-</span><span id="line-78"><span class="sd">    Args:</span>
-</span><span id="line-79"><span class="sd">        nshots (int): Number of measurement shots.  Must be a positive integer.</span>
-</span><span id="line-80">
-</span><span id="line-81"><span class="sd">    Examples:</span>
-</span><span id="line-82"><span class="sd">        &gt;&gt;&gt; from qilisdk.readout import Readout</span>
-</span><span id="line-83"><span class="sd">        &gt;&gt;&gt; spec = Readout().with_sampling(nshots=1000)</span>
-</span><span id="line-84"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-85">
-</span><span id="line-86">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nshots</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">expand_samples</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-87"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-88">
-</span><span id="line-89"><span class="sd">        Args:</span>
-</span><span id="line-90"><span class="sd">            nshots (int): The number of shots to use during sampling. Needs to be a positive integer.</span>
-</span><span id="line-91"><span class="sd">            expand_samples (bool): Whether to display partial samples as &quot;00_0&quot; instead of &quot;000&quot; for better readability.</span>
-</span><span id="line-92">
-</span><span id="line-93"><span class="sd">        Raises:</span>
-</span><span id="line-94"><span class="sd">            ValueError: If the number of shots is not a positive integer.</span>
-</span><span id="line-95"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-96">        <span class="k">if</span> <span class="n">nshots</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">nshots</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
-</span><span id="line-97">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The number of shots has to be a positive integer&quot;</span><span class="p">)</span>
-</span><span id="line-98">        <span class="bp">self</span><span class="o">.</span><span class="n">_nshots</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">nshots</span>
-</span><span id="line-99">        <span class="bp">self</span><span class="o">.</span><span class="n">_expand_samples</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">expand_samples</span>
-</span><span id="line-100">
-</span><span id="line-101">    <span class="nd">@property</span>
+</span><span id="line-74"><span class="k">class</span><span class="w"> </span><span class="nc">SamplingReadout</span><span class="p">(</span><span class="n">ReadoutMethod</span><span class="p">):</span>
+</span><span id="line-75"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Sampling readout configuration.</span>
+</span><span id="line-76">
+</span><span id="line-77"><span class="sd">    Instructs the backend to perform repeated measurement shots and return bitstring counts.</span>
+</span><span id="line-78"><span class="sd">    Typically constructed via :meth:`Readout.with_sampling &lt;qilisdk.readout.Readout.with_sampling&gt;`.</span>
+</span><span id="line-79">
+</span><span id="line-80"><span class="sd">    Args:</span>
+</span><span id="line-81"><span class="sd">        nshots (int): Number of measurement shots.  Must be a positive integer.</span>
+</span><span id="line-82">
+</span><span id="line-83"><span class="sd">    Examples:</span>
+</span><span id="line-84"><span class="sd">        &gt;&gt;&gt; from qilisdk.readout import Readout</span>
+</span><span id="line-85"><span class="sd">        &gt;&gt;&gt; spec = Readout().with_sampling(nshots=1000)</span>
+</span><span id="line-86"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-87">
+</span><span id="line-88">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nshots</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">expand_samples</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-89"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-90">
+</span><span id="line-91"><span class="sd">        Args:</span>
+</span><span id="line-92"><span class="sd">            nshots (int): The number of shots to use during sampling. Needs to be a positive integer.</span>
+</span><span id="line-93"><span class="sd">            expand_samples (bool): Whether to display partial samples as &quot;00_0&quot; instead of &quot;000&quot; for better readability.</span>
+</span><span id="line-94">
+</span><span id="line-95"><span class="sd">        Raises:</span>
+</span><span id="line-96"><span class="sd">            ValueError: If the number of shots is not a positive integer.</span>
+</span><span id="line-97"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-98">        <span class="k">if</span> <span class="n">nshots</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">nshots</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+</span><span id="line-99">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The number of shots has to be a positive integer&quot;</span><span class="p">)</span>
+</span><span id="line-100">        <span class="n">logger</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="s2">&quot;[Readout] Constructing sampling readout with </span><span class="si">{}</span><span class="s2"> shots&quot;</span><span class="p">,</span> <span class="n">nshots</span><span class="p">)</span>
+</span><span id="line-101">        <span class="bp">self</span><span class="o">.</span><span class="n">_nshots</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">nshots</span>
+</span><span id="line-102">        <span class="bp">self</span><span class="o">.</span><span class="n">_expand_samples</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">expand_samples</span>
+</span><span id="line-103">
+</span><span id="line-104">    <span class="nd">@property</span>
 <div class="viewcode-block" id="SamplingReadout.nshots">
 <a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout/index.html#qilisdk.readout.readout.SamplingReadout.nshots">[documents]</a>
-</span><span id="line-102">    <span class="k">def</span><span class="w"> </span><span class="nf">nshots</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-</span><span id="line-103">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nshots</span></div>
+</span><span id="line-105">    <span class="k">def</span><span class="w"> </span><span class="nf">nshots</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+</span><span id="line-106">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nshots</span></div>
 
-</span><span id="line-104">
-</span><span id="line-105">    <span class="nd">@property</span>
+</span><span id="line-107">
+</span><span id="line-108">    <span class="nd">@property</span>
 <div class="viewcode-block" id="SamplingReadout.expand_samples">
 <a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout/index.html#qilisdk.readout.readout.SamplingReadout.expand_samples">[documents]</a>
-</span><span id="line-106">    <span class="k">def</span><span class="w"> </span><span class="nf">expand_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-</span><span id="line-107">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expand_samples</span></div>
+</span><span id="line-109">    <span class="k">def</span><span class="w"> </span><span class="nf">expand_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+</span><span id="line-110">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expand_samples</span></div>
 </div>
 
-</span><span id="line-108">
-</span><span id="line-109">
-</span><span id="line-110"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
+</span><span id="line-111">
+</span><span id="line-112">
+</span><span id="line-113"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
 <div class="viewcode-block" id="ExpectationReadout">
 <a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout/index.html#qilisdk.readout.readout.ExpectationReadout">[documents]</a>
-</span><span id="line-111"><span class="k">class</span><span class="w"> </span><span class="nc">ExpectationReadout</span><span class="p">(</span><span class="n">ReadoutMethod</span><span class="p">):</span>
-</span><span id="line-112"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Expectation-value readout configuration.</span>
-</span><span id="line-113">
-</span><span id="line-114"><span class="sd">    Instructs the backend to compute ``&lt;psi|O|psi&gt;`` for one or more observables.</span>
-</span><span id="line-115"><span class="sd">    Typically constructed via</span>
-</span><span id="line-116"><span class="sd">    :meth:`Readout.with_expectation &lt;qilisdk.readout.Readout.with_expectation&gt;`.</span>
-</span><span id="line-117">
-</span><span id="line-118"><span class="sd">    Args:</span>
-</span><span id="line-119"><span class="sd">        observables (list[Hamiltonian | QTensor]): Observables whose expectation values are requested.</span>
-</span><span id="line-120"><span class="sd">        nshots (int): Number of measurement shots.  Use ``0`` (the default) for exact state-vector</span>
-</span><span id="line-121"><span class="sd">            evaluation.</span>
-</span><span id="line-122">
-</span><span id="line-123"><span class="sd">    Examples:</span>
-</span><span id="line-124"><span class="sd">        &gt;&gt;&gt; from qilisdk.analog import Z</span>
-</span><span id="line-125"><span class="sd">        &gt;&gt;&gt; from qilisdk.readout import Readout</span>
-</span><span id="line-126"><span class="sd">        &gt;&gt;&gt; spec = Readout().with_expectation(observables=[Z(0)], nshots=0)</span>
-</span><span id="line-127"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-128">
-</span><span id="line-129">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observables</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Hamiltonian</span> <span class="o">|</span> <span class="n">QTensor</span><span class="p">],</span> <span class="n">nshots</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-130">        <span class="k">if</span> <span class="n">nshots</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">nshots</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
-</span><span id="line-131">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The number of shots has to be a positive integer&quot;</span><span class="p">)</span>
-</span><span id="line-132">        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="p">(</span><span class="n">Hamiltonian</span><span class="p">,</span> <span class="n">QTensor</span><span class="p">))</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">observables</span><span class="p">):</span>
-</span><span id="line-133">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid Observable: All observables need to be QTensors or a Hamiltonian.&quot;</span><span class="p">)</span>
-</span><span id="line-134">        <span class="bp">self</span><span class="o">.</span><span class="n">_nshots</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">nshots</span>
-</span><span id="line-135">        <span class="bp">self</span><span class="o">.</span><span class="n">_observables</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Hamiltonian</span> <span class="o">|</span> <span class="n">QTensor</span><span class="p">]</span> <span class="o">=</span> <span class="n">observables</span>
-</span><span id="line-136">        <span class="bp">self</span><span class="o">.</span><span class="n">_scaled_nqubits</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-</span><span id="line-137">        <span class="bp">self</span><span class="o">.</span><span class="n">_expanded_observables</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Hamiltonian</span> <span class="o">|</span> <span class="n">QTensor</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-</span><span id="line-138">
-</span><span id="line-139">    <span class="nd">@property</span>
+</span><span id="line-114"><span class="k">class</span><span class="w"> </span><span class="nc">ExpectationReadout</span><span class="p">(</span><span class="n">ReadoutMethod</span><span class="p">):</span>
+</span><span id="line-115"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Expectation-value readout configuration.</span>
+</span><span id="line-116">
+</span><span id="line-117"><span class="sd">    Instructs the backend to compute ``&lt;psi|O|psi&gt;`` for one or more observables.</span>
+</span><span id="line-118"><span class="sd">    Typically constructed via</span>
+</span><span id="line-119"><span class="sd">    :meth:`Readout.with_expectation &lt;qilisdk.readout.Readout.with_expectation&gt;`.</span>
+</span><span id="line-120">
+</span><span id="line-121"><span class="sd">    Args:</span>
+</span><span id="line-122"><span class="sd">        observables (list[Hamiltonian | QTensor]): Observables whose expectation values are requested.</span>
+</span><span id="line-123"><span class="sd">        nshots (int): Number of measurement shots.  Use ``0`` (the default) for exact state-vector</span>
+</span><span id="line-124"><span class="sd">            evaluation.</span>
+</span><span id="line-125">
+</span><span id="line-126"><span class="sd">    Examples:</span>
+</span><span id="line-127"><span class="sd">        &gt;&gt;&gt; from qilisdk.analog import Z</span>
+</span><span id="line-128"><span class="sd">        &gt;&gt;&gt; from qilisdk.readout import Readout</span>
+</span><span id="line-129"><span class="sd">        &gt;&gt;&gt; spec = Readout().with_expectation(observables=[Z(0)], nshots=0)</span>
+</span><span id="line-130"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-131">
+</span><span id="line-132">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observables</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Hamiltonian</span> <span class="o">|</span> <span class="n">QTensor</span><span class="p">],</span> <span class="n">nshots</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-133">        <span class="k">if</span> <span class="n">nshots</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">nshots</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+</span><span id="line-134">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The number of shots has to be a positive integer&quot;</span><span class="p">)</span>
+</span><span id="line-135">        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="p">(</span><span class="n">Hamiltonian</span><span class="p">,</span> <span class="n">QTensor</span><span class="p">))</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">observables</span><span class="p">):</span>
+</span><span id="line-136">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid Observable: All observables need to be QTensors or a Hamiltonian.&quot;</span><span class="p">)</span>
+</span><span id="line-137">        <span class="n">logger</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span>
+</span><span id="line-138">            <span class="s2">&quot;[Readout] Constructing expectation readout with </span><span class="si">{}</span><span class="s2"> observables, </span><span class="si">{}</span><span class="s2"> shots&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">observables</span><span class="p">),</span> <span class="n">nshots</span>
+</span><span id="line-139">        <span class="p">)</span>
+</span><span id="line-140">        <span class="bp">self</span><span class="o">.</span><span class="n">_nshots</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">nshots</span>
+</span><span id="line-141">        <span class="bp">self</span><span class="o">.</span><span class="n">_observables</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Hamiltonian</span> <span class="o">|</span> <span class="n">QTensor</span><span class="p">]</span> <span class="o">=</span> <span class="n">observables</span>
+</span><span id="line-142">        <span class="bp">self</span><span class="o">.</span><span class="n">_scaled_nqubits</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</span><span id="line-143">        <span class="bp">self</span><span class="o">.</span><span class="n">_expanded_observables</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Hamiltonian</span> <span class="o">|</span> <span class="n">QTensor</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</span><span id="line-144">
+</span><span id="line-145">    <span class="nd">@property</span>
 <div class="viewcode-block" id="ExpectationReadout.nshots">
 <a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout/index.html#qilisdk.readout.readout.ExpectationReadout.nshots">[documents]</a>
-</span><span id="line-140">    <span class="k">def</span><span class="w"> </span><span class="nf">nshots</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-</span><span id="line-141"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-142"><span class="sd">        The number of shots to use when estimating the expectation values.</span>
-</span><span id="line-143"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-144">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nshots</span></div>
+</span><span id="line-146">    <span class="k">def</span><span class="w"> </span><span class="nf">nshots</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+</span><span id="line-147"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-148"><span class="sd">        The number of shots to use when estimating the expectation values.</span>
+</span><span id="line-149"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-150">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nshots</span></div>
 
-</span><span id="line-145">
-</span><span id="line-146">    <span class="nd">@property</span>
+</span><span id="line-151">
+</span><span id="line-152">    <span class="nd">@property</span>
 <div class="viewcode-block" id="ExpectationReadout.observables">
 <a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout/index.html#qilisdk.readout.readout.ExpectationReadout.observables">[documents]</a>
-</span><span id="line-147">    <span class="k">def</span><span class="w"> </span><span class="nf">observables</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Hamiltonian</span> <span class="o">|</span> <span class="n">QTensor</span><span class="p">]:</span>
-</span><span id="line-148"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-149"><span class="sd">        The observables whose expectation values are requested, in their original form as provided by the user.</span>
-</span><span id="line-150"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-151">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_observables</span></div>
+</span><span id="line-153">    <span class="k">def</span><span class="w"> </span><span class="nf">observables</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Hamiltonian</span> <span class="o">|</span> <span class="n">QTensor</span><span class="p">]:</span>
+</span><span id="line-154"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-155"><span class="sd">        The observables whose expectation values are requested, in their original form as provided by the user.</span>
+</span><span id="line-156"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-157">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_observables</span></div>
 
-</span><span id="line-152">
+</span><span id="line-158">
 <div class="viewcode-block" id="ExpectationReadout.expanded_observables">
 <a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout/index.html#qilisdk.readout.readout.ExpectationReadout.expanded_observables">[documents]</a>
-</span><span id="line-153">    <span class="k">def</span><span class="w"> </span><span class="nf">expanded_observables</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nqubits</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Hamiltonian</span> <span class="o">|</span> <span class="n">QTensor</span><span class="p">]:</span>
-</span><span id="line-154"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Scale each observable to match a given number of qubits.</span>
-</span><span id="line-155">
-</span><span id="line-156"><span class="sd">        The conversion is cached: calling this method again with the same</span>
-</span><span id="line-157"><span class="sd">        ``nqubits`` value is a no-op.</span>
-</span><span id="line-158">
-</span><span id="line-159"><span class="sd">        Note that only QTensors are expanded, Hamiltonians are returned as-is.</span>
-</span><span id="line-160">
-</span><span id="line-161"><span class="sd">        Args:</span>
-</span><span id="line-162"><span class="sd">            nqubits (int): Target qubit count to scale the observables to.</span>
-</span><span id="line-163">
-</span><span id="line-164"><span class="sd">        Returns:</span>
-</span><span id="line-165"><span class="sd">            list[Hamiltonian | QTensor]: The scaled observables as QTensors.</span>
-</span><span id="line-166"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-167">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scaled_nqubits</span> <span class="o">==</span> <span class="n">nqubits</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expanded_observables</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-168">            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expanded_observables</span>
-</span><span id="line-169">        <span class="bp">self</span><span class="o">.</span><span class="n">_expanded_observables</span> <span class="o">=</span> <span class="p">[(</span><span class="n">o</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">nqubits</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="n">QTensor</span><span class="p">)</span> <span class="k">else</span> <span class="n">o</span><span class="p">)</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">observables</span><span class="p">]</span>
-</span><span id="line-170">        <span class="bp">self</span><span class="o">.</span><span class="n">_scaled_nqubits</span> <span class="o">=</span> <span class="n">nqubits</span>
-</span><span id="line-171">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expanded_observables</span></div>
+</span><span id="line-159">    <span class="k">def</span><span class="w"> </span><span class="nf">expanded_observables</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nqubits</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Hamiltonian</span> <span class="o">|</span> <span class="n">QTensor</span><span class="p">]:</span>
+</span><span id="line-160"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Scale each observable to match a given number of qubits.</span>
+</span><span id="line-161">
+</span><span id="line-162"><span class="sd">        The conversion is cached: calling this method again with the same</span>
+</span><span id="line-163"><span class="sd">        ``nqubits`` value is a no-op.</span>
+</span><span id="line-164">
+</span><span id="line-165"><span class="sd">        Note that only QTensors are expanded, Hamiltonians are returned as-is.</span>
+</span><span id="line-166">
+</span><span id="line-167"><span class="sd">        Args:</span>
+</span><span id="line-168"><span class="sd">            nqubits (int): Target qubit count to scale the observables to.</span>
+</span><span id="line-169">
+</span><span id="line-170"><span class="sd">        Returns:</span>
+</span><span id="line-171"><span class="sd">            list[Hamiltonian | QTensor]: The scaled observables as QTensors.</span>
+</span><span id="line-172"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-173">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scaled_nqubits</span> <span class="o">==</span> <span class="n">nqubits</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expanded_observables</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-174">            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expanded_observables</span>
+</span><span id="line-175">        <span class="bp">self</span><span class="o">.</span><span class="n">_expanded_observables</span> <span class="o">=</span> <span class="p">[(</span><span class="n">o</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">nqubits</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="n">QTensor</span><span class="p">)</span> <span class="k">else</span> <span class="n">o</span><span class="p">)</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">observables</span><span class="p">]</span>
+</span><span id="line-176">        <span class="bp">self</span><span class="o">.</span><span class="n">_scaled_nqubits</span> <span class="o">=</span> <span class="n">nqubits</span>
+</span><span id="line-177">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expanded_observables</span></div>
 </div>
 
-</span><span id="line-172">
-</span><span id="line-173">
-</span><span id="line-174"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
+</span><span id="line-178">
+</span><span id="line-179">
+</span><span id="line-180"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
 <div class="viewcode-block" id="StateTomographyReadout">
 <a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout/index.html#qilisdk.readout.readout.StateTomographyReadout">[documents]</a>
-</span><span id="line-175"><span class="k">class</span><span class="w"> </span><span class="nc">StateTomographyReadout</span><span class="p">(</span><span class="n">ReadoutMethod</span><span class="p">):</span>
-</span><span id="line-176"><span class="w">    </span><span class="sd">&quot;&quot;&quot;State-tomography readout configuration.</span>
-</span><span id="line-177">
-</span><span id="line-178"><span class="sd">    Instructs the backend to return the full quantum state (ket or density matrix) after execution.</span>
-</span><span id="line-179"><span class="sd">    Typically constructed via</span>
-</span><span id="line-180"><span class="sd">    :meth:`Readout.with_state_tomography &lt;qilisdk.readout.Readout.with_state_tomography&gt;`.</span>
-</span><span id="line-181">
-</span><span id="line-182"><span class="sd">    Args:</span>
-</span><span id="line-183"><span class="sd">        method (Literal): Tomography method identifier.  Currently only &#39;exact&#39; is supported.</span>
-</span><span id="line-184">
-</span><span id="line-185"><span class="sd">    Examples:</span>
-</span><span id="line-186"><span class="sd">        &gt;&gt;&gt; from qilisdk.readout import Readout</span>
-</span><span id="line-187"><span class="sd">        &gt;&gt;&gt; spec = Readout().with_state_tomography()</span>
-</span><span id="line-188"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-189">
-</span><span id="line-190">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;exact&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;exact&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-191">        <span class="bp">self</span><span class="o">.</span><span class="n">_method</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;exact&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">method</span>
-</span><span id="line-192">
-</span><span id="line-193">    <span class="nd">@property</span>
+</span><span id="line-181"><span class="k">class</span><span class="w"> </span><span class="nc">StateTomographyReadout</span><span class="p">(</span><span class="n">ReadoutMethod</span><span class="p">):</span>
+</span><span id="line-182"><span class="w">    </span><span class="sd">&quot;&quot;&quot;State-tomography readout configuration.</span>
+</span><span id="line-183">
+</span><span id="line-184"><span class="sd">    Instructs the backend to return the full quantum state (ket or density matrix) after execution.</span>
+</span><span id="line-185"><span class="sd">    Typically constructed via</span>
+</span><span id="line-186"><span class="sd">    :meth:`Readout.with_state_tomography &lt;qilisdk.readout.Readout.with_state_tomography&gt;`.</span>
+</span><span id="line-187">
+</span><span id="line-188"><span class="sd">    Args:</span>
+</span><span id="line-189"><span class="sd">        method (Literal): Tomography method identifier.  Currently only &#39;exact&#39; is supported.</span>
+</span><span id="line-190">
+</span><span id="line-191"><span class="sd">    Examples:</span>
+</span><span id="line-192"><span class="sd">        &gt;&gt;&gt; from qilisdk.readout import Readout</span>
+</span><span id="line-193"><span class="sd">        &gt;&gt;&gt; spec = Readout().with_state_tomography()</span>
+</span><span id="line-194"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-195">
+</span><span id="line-196">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;exact&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;exact&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-197">        <span class="n">logger</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="s2">&quot;[Readout] Constructing state-tomography readout with method </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">method</span><span class="p">)</span>
+</span><span id="line-198">        <span class="bp">self</span><span class="o">.</span><span class="n">_method</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;exact&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">method</span>
+</span><span id="line-199">
+</span><span id="line-200">    <span class="nd">@property</span>
 <div class="viewcode-block" id="StateTomographyReadout.method">
 <a class="viewcode-back" href="../../../code/api/qilisdk/readout/readout/index.html#qilisdk.readout.readout.StateTomographyReadout.method">[documents]</a>
-</span><span id="line-194">    <span class="k">def</span><span class="w"> </span><span class="nf">method</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;exact&quot;</span><span class="p">]:</span>
-</span><span id="line-195">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_method</span></div>
+</span><span id="line-201">    <span class="k">def</span><span class="w"> </span><span class="nf">method</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;exact&quot;</span><span class="p">]:</span>
+</span><span id="line-202">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_method</span></div>
 </div>
 
 </span></code></pre></div>

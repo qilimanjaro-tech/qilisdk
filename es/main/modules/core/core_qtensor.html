@@ -231,6 +231,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/functionals/variational_program_result/index.html">qilisdk.functionals.variational_program_result</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="../../code/api/qilisdk/logging/index.html">qilisdk.logging</a></li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../code/api/qilisdk/noise/index.html">qilisdk.noise<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/noise/amplitude_damping/index.html">qilisdk.noise.amplitude_damping</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../code/api/qilisdk/noise/bit_flip/index.html">qilisdk.noise.bit_flip</a></li>
@@ -345,7 +346,8 @@
 <section id="qtensor">
 <h1>QTensor<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qtensor"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h1>
 <p>El módulo <a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#module-qilisdk.core.qtensor" title="qilisdk.core.qtensor"><code class="xref py py-mod docutils literal notranslate"><span class="pre">qtensor</span></code></a> define la clase <a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor" title="qilisdk.core.qtensor.QTensor"><code class="xref py py-class docutils literal notranslate"><span class="pre">QTensor</span></code></a> y funciones auxiliares relacionadas para representar y manipular estados cuánticos y operadores en forma dispersa.</p>
-<p>La clase <a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor" title="qilisdk.core.qtensor.QTensor"><code class="xref py py-class docutils literal notranslate"><span class="pre">QTensor</span></code></a> envuelve un array denso de NumPy o una matriz dispersa de SciPy en una matriz dispersa en formato CSR y puede representar:</p>
+<p>The <a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor" title="qilisdk.core.qtensor.QTensor"><code class="xref py py-class docutils literal notranslate"><span class="pre">QTensor</span></code></a> wraps an array, storing it in the optimal storage format
+based on its shape and sparsity. It supports a variety of quantum objects, including:</p>
 <ul class="simple">
 <li><p><strong>Kets</strong> (vectores columna de forma <code class="docutils literal notranslate"><span class="pre">(2**N,</span> <span class="pre">1)</span></code>)</p></li>
 <li><p><strong>Bras</strong> (vectores fila de forma <code class="docutils literal notranslate"><span class="pre">(1,</span> <span class="pre">2**N)</span></code>)</p></li>
@@ -439,9 +441,9 @@
 </section>
 <section id="quantum-object-properties-operations">
 <h2>Propiedades y operaciones de objetos cuánticos<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#quantum-object-properties-operations" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#quantum-object-properties-operations'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
-<p>Todos los datos se almacenan en formato disperso, pero se pueden obtener vistas densas o dispersas:</p>
+<p>Regardless of the internal storage method, you can retrieve dense or sparse views:</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.data" title="qilisdk.core.qtensor.QTensor.data"><code class="xref py py-attr docutils literal notranslate"><span class="pre">.data</span></code></a>: obtiene la matriz dispersa subyacente (formato CSR de SciPy)</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.data" title="qilisdk.core.qtensor.QTensor.data"><code class="xref py py-attr docutils literal notranslate"><span class="pre">.data</span></code></a>: get the contents as a SciPy sparse matrix (always CSR format)</p></li>
 <li><p><a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.dense" title="qilisdk.core.qtensor.QTensor.dense"><code class="xref py py-meth docutils literal notranslate"><span class="pre">.dense()</span></code></a>: convierte a un array denso de NumPy (usar con precaución para tensores grandes)</p></li>
 <li><p>o accediendo directamente a elementos por valor con <code class="docutils literal notranslate"><span class="pre">qtensor[i,</span> <span class="pre">j]</span></code></p></li>
 </ul>
@@ -465,6 +467,7 @@
 <ul class="simple">
 <li><p><a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.entropy_von_neumann" title="qilisdk.core.qtensor.QTensor.entropy_von_neumann"><code class="xref py py-meth docutils literal notranslate"><span class="pre">.entropy_von_neumann()</span></code></a>: calcula la entropía de von Neumann de una matriz de densidad</p></li>
 <li><p><a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.entropy_renyi" title="qilisdk.core.qtensor.QTensor.entropy_renyi"><code class="xref py py-meth docutils literal notranslate"><span class="pre">.entropy_renyi(alpha)</span></code></a>: calcula la entropía de Rényi de una matriz de densidad para un orden alpha dado</p></li>
+<li><p><a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.magic" title="qilisdk.core.qtensor.QTensor.magic"><code class="xref py py-meth docutils literal notranslate"><span class="pre">.magic(alpha)</span></code></a>: compute the magic (non-stabilizerness) of a pure state via the stabilizer Rényi entropy</p></li>
 <li><p><a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.commutator" title="qilisdk.core.qtensor.QTensor.commutator"><code class="xref py py-meth docutils literal notranslate"><span class="pre">.commutator(other)</span></code></a>: calcula el conmutador con otro operador</p></li>
 <li><p><a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.anticommutator" title="qilisdk.core.qtensor.QTensor.anticommutator"><code class="xref py py-meth docutils literal notranslate"><span class="pre">.anticommutator(other)</span></code></a>: calcula el anticonmutador con otro operador</p></li>
 <li><p><a class="reference internal" href="../../code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.fidelity" title="qilisdk.core.qtensor.QTensor.fidelity"><code class="xref py py-meth docutils literal notranslate"><span class="pre">.fidelity(other)</span></code></a>: calcula la fidelidad entre dos estados cuánticos</p></li>
@@ -516,7 +519,7 @@
 </span><span id="line-10">||ket0|| = 1.0
 </span><span id="line-11">trace norm(dm) = 1.0
 </span><span id="line-12">rho_bell:
-</span><span id="line-13">QTensor(shape=4x4, nnz=4, format='csr')
+</span><span id="line-13">QTensor(shape=4x4, nnz=4):
 </span><span id="line-14">[[0.5 0.  0.  0.5]
 </span><span id="line-15">[0.  0.  0.  0. ]
 </span><span id="line-16">[0.  0.  0.  0. ]

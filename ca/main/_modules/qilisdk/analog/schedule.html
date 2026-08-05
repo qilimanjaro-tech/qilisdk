@@ -277,6 +277,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/functionals/variational_program_result/index.html">qilisdk.functionals.variational_program_result</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/logging/index.html">qilisdk.logging</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/noise/index.html">qilisdk.noise</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/amplitude_damping/index.html">qilisdk.noise.amplitude_damping</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/bit_flip/index.html">qilisdk.noise.bit_flip</a></li>
@@ -1127,120 +1128,124 @@
 </span><span id="line-642">
 </span><span id="line-643">        <span class="c1"># If we try to show overlaps but haven&#39;t given intermediate states, raise an error</span>
 </span><span id="line-644">        <span class="k">if</span> <span class="n">show_overlaps</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">intermediate_states</span><span class="p">:</span>
-</span><span id="line-645">            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Overlaps can&#39;t be shown without intermediate states. Setting show_overlaps to False.&quot;</span><span class="p">)</span>
-</span><span id="line-646">            <span class="n">show_overlaps</span> <span class="o">=</span> <span class="kc">False</span>
-</span><span id="line-647">
-</span><span id="line-648">        <span class="n">renderer</span> <span class="o">=</span> <span class="n">MatplotlibEigenvalueRenderer</span><span class="p">(</span>
-</span><span id="line-649">            <span class="bp">self</span><span class="p">,</span> <span class="n">levels</span><span class="o">=</span><span class="n">levels</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="n">style</span><span class="p">,</span> <span class="n">intermediate_states</span><span class="o">=</span><span class="n">intermediate_states</span><span class="p">,</span> <span class="n">show_overlaps</span><span class="o">=</span><span class="n">show_overlaps</span>
-</span><span id="line-650">        <span class="p">)</span>
-</span><span id="line-651">        <span class="n">renderer</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
-</span><span id="line-652">        <span class="k">if</span> <span class="n">filepath</span><span class="p">:</span>
-</span><span id="line-653">            <span class="n">renderer</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span>
-</span><span id="line-654">        <span class="k">else</span><span class="p">:</span>
-</span><span id="line-655">            <span class="n">renderer</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></div>
+</span><span id="line-645">            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+</span><span id="line-646">                <span class="s2">&quot;[Schedule] Overlaps can&#39;t be shown without intermediate states. Setting show_overlaps to False.&quot;</span>
+</span><span id="line-647">            <span class="p">)</span>
+</span><span id="line-648">            <span class="n">show_overlaps</span> <span class="o">=</span> <span class="kc">False</span>
+</span><span id="line-649">
+</span><span id="line-650">        <span class="n">renderer</span> <span class="o">=</span> <span class="n">MatplotlibEigenvalueRenderer</span><span class="p">(</span>
+</span><span id="line-651">            <span class="bp">self</span><span class="p">,</span> <span class="n">levels</span><span class="o">=</span><span class="n">levels</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="n">style</span><span class="p">,</span> <span class="n">intermediate_states</span><span class="o">=</span><span class="n">intermediate_states</span><span class="p">,</span> <span class="n">show_overlaps</span><span class="o">=</span><span class="n">show_overlaps</span>
+</span><span id="line-652">        <span class="p">)</span>
+</span><span id="line-653">        <span class="n">renderer</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
+</span><span id="line-654">        <span class="k">if</span> <span class="n">filepath</span><span class="p">:</span>
+</span><span id="line-655">            <span class="n">renderer</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span>
+</span><span id="line-656">        <span class="k">else</span><span class="p">:</span>
+</span><span id="line-657">            <span class="n">renderer</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></div>
 
-</span><span id="line-656">
+</span><span id="line-658">
 <div class="viewcode-block" id="Schedule.eig">
 <a class="viewcode-back" href="../../../code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule.eig">[documents]</a>
-</span><span id="line-657">    <span class="k">def</span><span class="w"> </span><span class="nf">eig</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">levels</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">QTensor</span><span class="p">]]]:</span>
-</span><span id="line-658"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-659"><span class="sd">        Calculate the lowest eigenvalues and corresponding eigenstates of the schedule&#39;s Hamiltonians at each time step.</span>
-</span><span id="line-660">
-</span><span id="line-661"><span class="sd">        Args:</span>
-</span><span id="line-662"><span class="sd">            levels (int): The number of lowest eigenvalues and corresponding eigenstates to compute for each Hamiltonian at each time step.</span>
-</span><span id="line-663">
-</span><span id="line-664"><span class="sd">        Returns:</span>
-</span><span id="line-665"><span class="sd">            tuple[list[list[float]], list[list[QTensor]]]: A tuple containing two lists, the first is a list</span>
-</span><span id="line-666"><span class="sd">            of lists of eigenvalues for each Hamiltonian at each time step, and the second is a</span>
-</span><span id="line-667"><span class="sd">            list of lists of corresponding eigenstates as QTensors.</span>
-</span><span id="line-668">
-</span><span id="line-669"><span class="sd">        Raises:</span>
-</span><span id="line-670"><span class="sd">            ValueError: If the Hamiltonian at any time step is not a valid Hamiltonian object that can be converted to a QTensor for eigenvalue computation.</span>
-</span><span id="line-671"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-672">        <span class="n">_MAX_QUBITS_FOR_EIGENVALUE_PLOTTING</span> <span class="o">=</span> <span class="mi">7</span>
-</span><span id="line-673">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span> <span class="o">&gt;</span> <span class="n">_MAX_QUBITS_FOR_EIGENVALUE_PLOTTING</span><span class="p">:</span>
-</span><span id="line-674">            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-</span><span id="line-675">                <span class="sa">f</span><span class="s2">&quot;Calculating eigenvalues with more than </span><span class="si">{</span><span class="n">_MAX_QUBITS_FOR_EIGENVALUE_PLOTTING</span><span class="si">}</span><span class="s2"> qubits may be very slow and is not supported. This schedule has </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span><span class="si">}</span><span class="s2"> qubits.&quot;</span>
-</span><span id="line-676">            <span class="p">)</span>
-</span><span id="line-677">        <span class="n">full_eigenvalues</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span id="line-678">        <span class="n">full_eigenstates</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">QTensor</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span id="line-679">        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tlist</span><span class="p">):</span>
-</span><span id="line-680">            <span class="n">full_hamiltonian</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="n">h</span><span class="p">][</span><span class="nb">float</span><span class="p">(</span><span class="n">t</span><span class="p">)]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">hamiltonians</span><span class="p">[</span><span class="n">h</span><span class="p">]</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">hamiltonians</span><span class="p">)</span>
-</span><span id="line-681">            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">full_hamiltonian</span><span class="p">,</span> <span class="n">Hamiltonian</span><span class="p">):</span>
-</span><span id="line-682">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Expected full_hamiltonian to be a Hamiltonian, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">full_hamiltonian</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</span><span id="line-683">            <span class="n">as_qtensor</span> <span class="o">=</span> <span class="n">full_hamiltonian</span><span class="o">.</span><span class="n">to_qtensor</span><span class="p">()</span>
-</span><span id="line-684">            <span class="n">vals</span><span class="p">,</span> <span class="n">vecs</span> <span class="o">=</span> <span class="n">as_qtensor</span><span class="o">.</span><span class="n">eig</span><span class="p">()</span>
-</span><span id="line-685">
-</span><span id="line-686">            <span class="n">full_eigenvalues</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="nb">float</span><span class="p">(</span><span class="n">ev</span><span class="o">.</span><span class="n">real</span><span class="p">)</span> <span class="k">for</span> <span class="n">ev</span> <span class="ow">in</span> <span class="n">vals</span><span class="p">[:</span><span class="n">levels</span><span class="p">]])</span>
-</span><span id="line-687">            <span class="n">full_eigenstates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">vecs</span><span class="p">[:</span><span class="n">levels</span><span class="p">]))</span>
-</span><span id="line-688">
-</span><span id="line-689">        <span class="k">return</span> <span class="n">full_eigenvalues</span><span class="p">,</span> <span class="n">full_eigenstates</span></div>
+</span><span id="line-659">    <span class="k">def</span><span class="w"> </span><span class="nf">eig</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">levels</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">QTensor</span><span class="p">]]]:</span>
+</span><span id="line-660"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-661"><span class="sd">        Calculate the lowest eigenvalues and corresponding eigenstates of the schedule&#39;s Hamiltonians at each time step.</span>
+</span><span id="line-662">
+</span><span id="line-663"><span class="sd">        Args:</span>
+</span><span id="line-664"><span class="sd">            levels (int): The number of lowest eigenvalues and corresponding eigenstates to compute for each Hamiltonian at each time step.</span>
+</span><span id="line-665">
+</span><span id="line-666"><span class="sd">        Returns:</span>
+</span><span id="line-667"><span class="sd">            tuple[list[list[float]], list[list[QTensor]]]: A tuple containing two lists, the first is a list</span>
+</span><span id="line-668"><span class="sd">            of lists of eigenvalues for each Hamiltonian at each time step, and the second is a</span>
+</span><span id="line-669"><span class="sd">            list of lists of corresponding eigenstates as QTensors.</span>
+</span><span id="line-670">
+</span><span id="line-671"><span class="sd">        Raises:</span>
+</span><span id="line-672"><span class="sd">            ValueError: If the Hamiltonian at any time step is not a valid Hamiltonian object that can be converted to a QTensor for eigenvalue computation.</span>
+</span><span id="line-673"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-674">        <span class="n">_MAX_QUBITS_FOR_EIGENVALUE_PLOTTING</span> <span class="o">=</span> <span class="mi">7</span>
+</span><span id="line-675">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span> <span class="o">&gt;</span> <span class="n">_MAX_QUBITS_FOR_EIGENVALUE_PLOTTING</span><span class="p">:</span>
+</span><span id="line-676">            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+</span><span id="line-677">                <span class="s2">&quot;[Schedule] Calculating eigenvalues with more than </span><span class="si">{}</span><span class="s2"> qubits may be very slow and is not supported. This schedule has </span><span class="si">{}</span><span class="s2"> qubits.&quot;</span><span class="p">,</span>
+</span><span id="line-678">                <span class="n">_MAX_QUBITS_FOR_EIGENVALUE_PLOTTING</span><span class="p">,</span>
+</span><span id="line-679">                <span class="bp">self</span><span class="o">.</span><span class="n">nqubits</span><span class="p">,</span>
+</span><span id="line-680">            <span class="p">)</span>
+</span><span id="line-681">        <span class="n">full_eigenvalues</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="line-682">        <span class="n">full_eigenstates</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">QTensor</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="line-683">        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tlist</span><span class="p">):</span>
+</span><span id="line-684">            <span class="n">full_hamiltonian</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="n">h</span><span class="p">][</span><span class="nb">float</span><span class="p">(</span><span class="n">t</span><span class="p">)]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">hamiltonians</span><span class="p">[</span><span class="n">h</span><span class="p">]</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">hamiltonians</span><span class="p">)</span>
+</span><span id="line-685">            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">full_hamiltonian</span><span class="p">,</span> <span class="n">Hamiltonian</span><span class="p">):</span>
+</span><span id="line-686">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Expected full_hamiltonian to be a Hamiltonian, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">full_hamiltonian</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span id="line-687">            <span class="n">as_qtensor</span> <span class="o">=</span> <span class="n">full_hamiltonian</span><span class="o">.</span><span class="n">to_qtensor</span><span class="p">()</span>
+</span><span id="line-688">            <span class="n">vals</span><span class="p">,</span> <span class="n">vecs</span> <span class="o">=</span> <span class="n">as_qtensor</span><span class="o">.</span><span class="n">eig</span><span class="p">()</span>
+</span><span id="line-689">
+</span><span id="line-690">            <span class="n">full_eigenvalues</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="nb">float</span><span class="p">(</span><span class="n">ev</span><span class="o">.</span><span class="n">real</span><span class="p">)</span> <span class="k">for</span> <span class="n">ev</span> <span class="ow">in</span> <span class="n">vals</span><span class="p">[:</span><span class="n">levels</span><span class="p">]])</span>
+</span><span id="line-691">            <span class="n">full_eigenstates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">vecs</span><span class="p">[:</span><span class="n">levels</span><span class="p">]))</span>
+</span><span id="line-692">
+</span><span id="line-693">        <span class="k">return</span> <span class="n">full_eigenvalues</span><span class="p">,</span> <span class="n">full_eigenstates</span></div>
 
-</span><span id="line-690">
-</span><span id="line-691">    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="line-692">        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span>
-</span><span id="line-693">            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__qualname__</span><span class="si">}</span><span class="s2">(&quot;</span><span class="p">,</span>
-</span><span id="line-694">            <span class="s2">&quot;  hamiltonians={&quot;</span><span class="p">,</span>
-</span><span id="line-695">            <span class="o">*</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    &#39;</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">&#39;: </span><span class="si">{</span><span class="n">ham</span><span class="si">!r}</span><span class="s2">,&quot;</span> <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">ham</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hamiltonians</span><span class="o">.</span><span class="n">items</span><span class="p">()),</span>
-</span><span id="line-696">            <span class="s2">&quot;  },&quot;</span><span class="p">,</span>
-</span><span id="line-697">            <span class="s2">&quot;  coefficients={&quot;</span><span class="p">,</span>
-</span><span id="line-698">            <span class="o">*</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    &#39;</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">&#39;: </span><span class="si">{</span><span class="n">coeff</span><span class="si">!r}</span><span class="s2">,&quot;</span> <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">coeff</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()),</span>
-</span><span id="line-699">            <span class="s2">&quot;  },&quot;</span><span class="p">,</span>
-</span><span id="line-700">            <span class="sa">f</span><span class="s2">&quot;  dt=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dt</span><span class="si">!r}</span><span class="s2">,&quot;</span><span class="p">,</span>
-</span><span id="line-701">            <span class="sa">f</span><span class="s2">&quot;  total_time=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_max_time</span><span class="si">!r}</span><span class="s2">,&quot;</span><span class="p">,</span>
-</span><span id="line-702">            <span class="sa">f</span><span class="s2">&quot;  interpolation=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_interpolation</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">,</span>
-</span><span id="line-703">            <span class="s2">&quot;)&quot;</span><span class="p">,</span>
-</span><span id="line-704">        <span class="p">]</span>
-</span><span id="line-705">        <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
-</span><span id="line-706">
+</span><span id="line-694">
+</span><span id="line-695">    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="line-696">        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span>
+</span><span id="line-697">            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__qualname__</span><span class="si">}</span><span class="s2">(&quot;</span><span class="p">,</span>
+</span><span id="line-698">            <span class="s2">&quot;  hamiltonians={&quot;</span><span class="p">,</span>
+</span><span id="line-699">            <span class="o">*</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    &#39;</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">&#39;: </span><span class="si">{</span><span class="n">ham</span><span class="si">!r}</span><span class="s2">,&quot;</span> <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">ham</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hamiltonians</span><span class="o">.</span><span class="n">items</span><span class="p">()),</span>
+</span><span id="line-700">            <span class="s2">&quot;  },&quot;</span><span class="p">,</span>
+</span><span id="line-701">            <span class="s2">&quot;  coefficients={&quot;</span><span class="p">,</span>
+</span><span id="line-702">            <span class="o">*</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    &#39;</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">&#39;: </span><span class="si">{</span><span class="n">coeff</span><span class="si">!r}</span><span class="s2">,&quot;</span> <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">coeff</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()),</span>
+</span><span id="line-703">            <span class="s2">&quot;  },&quot;</span><span class="p">,</span>
+</span><span id="line-704">            <span class="sa">f</span><span class="s2">&quot;  dt=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dt</span><span class="si">!r}</span><span class="s2">,&quot;</span><span class="p">,</span>
+</span><span id="line-705">            <span class="sa">f</span><span class="s2">&quot;  total_time=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_max_time</span><span class="si">!r}</span><span class="s2">,&quot;</span><span class="p">,</span>
+</span><span id="line-706">            <span class="sa">f</span><span class="s2">&quot;  interpolation=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_interpolation</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">,</span>
+</span><span id="line-707">            <span class="s2">&quot;)&quot;</span><span class="p">,</span>
+</span><span id="line-708">        <span class="p">]</span>
+</span><span id="line-709">        <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
+</span><span id="line-710">
 <div class="viewcode-block" id="Schedule.set_parameter_values">
 <a class="viewcode-back" href="../../../code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule.set_parameter_values">[documents]</a>
-</span><span id="line-707">    <span class="k">def</span><span class="w"> </span><span class="nf">set_parameter_values</span><span class="p">(</span>
-</span><span id="line-708">        <span class="bp">self</span><span class="p">,</span>
-</span><span id="line-709">        <span class="n">values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
-</span><span id="line-710">        <span class="n">where</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Parameter</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="line-711">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-712"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-713"><span class="sd">        Assign parameter values by position and clear caches.</span>
-</span><span id="line-714">
-</span><span id="line-715"><span class="sd">        Args:</span>
-</span><span id="line-716"><span class="sd">            values (list[float]): New values ordered consistently with ``get_parameter_names()``.</span>
-</span><span id="line-717"><span class="sd">            where (Callable[[Parameter], bool] | None): Optional predicate selecting parameters to update.</span>
+</span><span id="line-711">    <span class="k">def</span><span class="w"> </span><span class="nf">set_parameter_values</span><span class="p">(</span>
+</span><span id="line-712">        <span class="bp">self</span><span class="p">,</span>
+</span><span id="line-713">        <span class="n">values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+</span><span id="line-714">        <span class="n">where</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Parameter</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-715">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-716"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-717"><span class="sd">        Assign parameter values by position and clear caches.</span>
 </span><span id="line-718">
-</span><span id="line-719"><span class="sd">        Raises:</span>
-</span><span id="line-720"><span class="sd">            ValueError: if the length of the values is not the same as the number of parameters in this object.</span>
-</span><span id="line-721"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-722">        <span class="k">for</span> <span class="n">coeff</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
-</span><span id="line-723">            <span class="n">coeff</span><span class="o">.</span><span class="n">delete_cache</span><span class="p">()</span>
-</span><span id="line-724">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">set_parameter_values</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">where</span><span class="p">)</span></div>
+</span><span id="line-719"><span class="sd">        Args:</span>
+</span><span id="line-720"><span class="sd">            values (list[float]): New values ordered consistently with ``get_parameter_names()``.</span>
+</span><span id="line-721"><span class="sd">            where (Callable[[Parameter], bool] | None): Optional predicate selecting parameters to update.</span>
+</span><span id="line-722">
+</span><span id="line-723"><span class="sd">        Raises:</span>
+</span><span id="line-724"><span class="sd">            ValueError: if the length of the values is not the same as the number of parameters in this object.</span>
+</span><span id="line-725"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-726">        <span class="k">for</span> <span class="n">coeff</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+</span><span id="line-727">            <span class="n">coeff</span><span class="o">.</span><span class="n">delete_cache</span><span class="p">()</span>
+</span><span id="line-728">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">set_parameter_values</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">where</span><span class="p">)</span></div>
 
-</span><span id="line-725">
+</span><span id="line-729">
 <div class="viewcode-block" id="Schedule.set_parameters">
 <a class="viewcode-back" href="../../../code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule.set_parameters">[documents]</a>
-</span><span id="line-726">    <span class="k">def</span><span class="w"> </span><span class="nf">set_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-727"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-728"><span class="sd">        Assign parameter values by name and clear caches.</span>
-</span><span id="line-729">
-</span><span id="line-730"><span class="sd">        Args:</span>
-</span><span id="line-731"><span class="sd">            parameters (dict[str, int | float]): Mapping from parameter labels to numeric values.</span>
-</span><span id="line-732"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-733">        <span class="k">for</span> <span class="n">coeff</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
-</span><span id="line-734">            <span class="n">coeff</span><span class="o">.</span><span class="n">delete_cache</span><span class="p">()</span>
-</span><span id="line-735">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">set_parameters</span><span class="p">(</span><span class="n">parameters</span><span class="p">)</span></div>
+</span><span id="line-730">    <span class="k">def</span><span class="w"> </span><span class="nf">set_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-731"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-732"><span class="sd">        Assign parameter values by name and clear caches.</span>
+</span><span id="line-733">
+</span><span id="line-734"><span class="sd">        Args:</span>
+</span><span id="line-735"><span class="sd">            parameters (dict[str, int | float]): Mapping from parameter labels to numeric values.</span>
+</span><span id="line-736"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-737">        <span class="k">for</span> <span class="n">coeff</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+</span><span id="line-738">            <span class="n">coeff</span><span class="o">.</span><span class="n">delete_cache</span><span class="p">()</span>
+</span><span id="line-739">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">set_parameters</span><span class="p">(</span><span class="n">parameters</span><span class="p">)</span></div>
 
-</span><span id="line-736">
+</span><span id="line-740">
 <div class="viewcode-block" id="Schedule.set_parameter_bounds">
 <a class="viewcode-back" href="../../../code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule.set_parameter_bounds">[documents]</a>
-</span><span id="line-737">    <span class="k">def</span><span class="w"> </span><span class="nf">set_parameter_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ranges</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-738"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-739"><span class="sd">        Update parameter bounds and clear caches.</span>
-</span><span id="line-740">
-</span><span id="line-741"><span class="sd">        Args:</span>
-</span><span id="line-742"><span class="sd">            ranges (dict[str, tuple[float, float]]): Bounds keyed by parameter label.</span>
-</span><span id="line-743"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-744">        <span class="k">for</span> <span class="n">coeff</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
-</span><span id="line-745">            <span class="n">coeff</span><span class="o">.</span><span class="n">delete_cache</span><span class="p">()</span>
-</span><span id="line-746">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">set_parameter_bounds</span><span class="p">(</span><span class="n">ranges</span><span class="p">)</span></div>
+</span><span id="line-741">    <span class="k">def</span><span class="w"> </span><span class="nf">set_parameter_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ranges</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-742"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-743"><span class="sd">        Update parameter bounds and clear caches.</span>
+</span><span id="line-744">
+</span><span id="line-745"><span class="sd">        Args:</span>
+</span><span id="line-746"><span class="sd">            ranges (dict[str, tuple[float, float]]): Bounds keyed by parameter label.</span>
+</span><span id="line-747"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-748">        <span class="k">for</span> <span class="n">coeff</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+</span><span id="line-749">            <span class="n">coeff</span><span class="o">.</span><span class="n">delete_cache</span><span class="p">()</span>
+</span><span id="line-750">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">set_parameter_bounds</span><span class="p">(</span><span class="n">ranges</span><span class="p">)</span></div>
 </div>
 
 </span></code></pre></div>

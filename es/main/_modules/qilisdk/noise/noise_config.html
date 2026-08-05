@@ -277,6 +277,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/functionals/variational_program_result/index.html">qilisdk.functionals.variational_program_result</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/logging/index.html">qilisdk.logging</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/noise/index.html">qilisdk.noise</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/amplitude_damping/index.html">qilisdk.noise.amplitude_damping</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/bit_flip/index.html">qilisdk.noise.bit_flip</a></li>
@@ -433,83 +434,87 @@
 </span><span id="line-15">
 </span><span id="line-16"><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
 </span><span id="line-17">
-</span><span id="line-18"><span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
-</span><span id="line-19">    <span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.digital</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gate</span>
-</span><span id="line-20">
-</span><span id="line-21">
+</span><span id="line-18"><span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
+</span><span id="line-19">
+</span><span id="line-20"><span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+</span><span id="line-21">    <span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.digital</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gate</span>
+</span><span id="line-22">
+</span><span id="line-23">
 <div class="viewcode-block" id="NoiseConfig">
 <a class="viewcode-back" href="../../../code/api/qilisdk/noise/noise_config/index.html#qilisdk.noise.noise_config.NoiseConfig">[documentos]</a>
-</span><span id="line-22"><span class="k">class</span><span class="w"> </span><span class="nc">NoiseConfig</span><span class="p">:</span>
-</span><span id="line-23"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration options for noise models.&quot;&quot;&quot;</span>
-</span><span id="line-24">
-</span><span id="line-25">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-26"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-27"><span class="sd">        Initialize a NoiseConfig with default settings.</span>
-</span><span id="line-28"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-29">        <span class="bp">self</span><span class="o">.</span><span class="n">_gate_times</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">Gate</span><span class="p">],</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-</span><span id="line-30">        <span class="bp">self</span><span class="o">.</span><span class="n">_default_gate_time</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>
-</span><span id="line-31">
+</span><span id="line-24"><span class="k">class</span><span class="w"> </span><span class="nc">NoiseConfig</span><span class="p">:</span>
+</span><span id="line-25"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration options for noise models.&quot;&quot;&quot;</span>
+</span><span id="line-26">
+</span><span id="line-27">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-28"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-29"><span class="sd">        Initialize a NoiseConfig with default settings.</span>
+</span><span id="line-30"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-31">        <span class="bp">self</span><span class="o">.</span><span class="n">_gate_times</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">Gate</span><span class="p">],</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+</span><span id="line-32">        <span class="bp">self</span><span class="o">.</span><span class="n">_default_gate_time</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>
+</span><span id="line-33">
 <div class="viewcode-block" id="NoiseConfig.get_gate_time">
 <a class="viewcode-back" href="../../../code/api/qilisdk/noise/noise_config/index.html#qilisdk.noise.noise_config.NoiseConfig.get_gate_time">[documentos]</a>
-</span><span id="line-32">    <span class="k">def</span><span class="w"> </span><span class="nf">get_gate_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gate_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">Gate</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-</span><span id="line-33"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the execution time for a specific gate type.</span>
-</span><span id="line-34">
-</span><span id="line-35"><span class="sd">        Args:</span>
-</span><span id="line-36"><span class="sd">            gate_type (type[Gate]): The type of the gate to query.</span>
-</span><span id="line-37">
-</span><span id="line-38"><span class="sd">        Returns:</span>
-</span><span id="line-39"><span class="sd">            float: The execution time for the gate. If not specified, returns the default gate time.</span>
-</span><span id="line-40"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-41">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gate_times</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">gate_type</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_gate_time</span><span class="p">)</span></div>
+</span><span id="line-34">    <span class="k">def</span><span class="w"> </span><span class="nf">get_gate_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gate_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">Gate</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="line-35"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the execution time for a specific gate type.</span>
+</span><span id="line-36">
+</span><span id="line-37"><span class="sd">        Args:</span>
+</span><span id="line-38"><span class="sd">            gate_type (type[Gate]): The type of the gate to query.</span>
+</span><span id="line-39">
+</span><span id="line-40"><span class="sd">        Returns:</span>
+</span><span id="line-41"><span class="sd">            float: The execution time for the gate. If not specified, returns the default gate time.</span>
+</span><span id="line-42"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-43">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gate_times</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">gate_type</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_gate_time</span><span class="p">)</span></div>
 
-</span><span id="line-42">
-</span><span id="line-43">    <span class="nd">@property</span>
+</span><span id="line-44">
+</span><span id="line-45">    <span class="nd">@property</span>
 <div class="viewcode-block" id="NoiseConfig.default_gate_time">
 <a class="viewcode-back" href="../../../code/api/qilisdk/noise/noise_config/index.html#qilisdk.noise.noise_config.NoiseConfig.default_gate_time">[documentos]</a>
-</span><span id="line-44">    <span class="k">def</span><span class="w"> </span><span class="nf">default_gate_time</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-</span><span id="line-45"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the default execution time for gates.</span>
-</span><span id="line-46">
-</span><span id="line-47"><span class="sd">        Returns:</span>
-</span><span id="line-48"><span class="sd">            The default gate time.</span>
-</span><span id="line-49"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-50">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_gate_time</span></div>
+</span><span id="line-46">    <span class="k">def</span><span class="w"> </span><span class="nf">default_gate_time</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="line-47"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the default execution time for gates.</span>
+</span><span id="line-48">
+</span><span id="line-49"><span class="sd">        Returns:</span>
+</span><span id="line-50"><span class="sd">            The default gate time.</span>
+</span><span id="line-51"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-52">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_gate_time</span></div>
 
-</span><span id="line-51">
+</span><span id="line-53">
 <div class="viewcode-block" id="NoiseConfig.set_gate_time">
 <a class="viewcode-back" href="../../../code/api/qilisdk/noise/noise_config/index.html#qilisdk.noise.noise_config.NoiseConfig.set_gate_time">[documentos]</a>
-</span><span id="line-52">    <span class="k">def</span><span class="w"> </span><span class="nf">set_gate_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gate_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">Gate</span><span class="p">],</span> <span class="n">time</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-53"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Update the execution time for a specific gate type.</span>
-</span><span id="line-54">
-</span><span id="line-55"><span class="sd">        Args:</span>
-</span><span id="line-56"><span class="sd">            gate_type (type[Gate]): The type of the gate to update.</span>
-</span><span id="line-57"><span class="sd">            time (float): The new execution time for the gate.</span>
-</span><span id="line-58">
-</span><span id="line-59"><span class="sd">        Raises:</span>
-</span><span id="line-60"><span class="sd">            ValueError: If the provided time is not positive.</span>
-</span><span id="line-61"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-62">        <span class="k">if</span> <span class="n">time</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
-</span><span id="line-63">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Execution time must be positive.&quot;</span><span class="p">)</span>
-</span><span id="line-64">        <span class="bp">self</span><span class="o">.</span><span class="n">_gate_times</span><span class="p">[</span><span class="n">gate_type</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span></div>
+</span><span id="line-54">    <span class="k">def</span><span class="w"> </span><span class="nf">set_gate_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gate_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">Gate</span><span class="p">],</span> <span class="n">time</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-55"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Update the execution time for a specific gate type.</span>
+</span><span id="line-56">
+</span><span id="line-57"><span class="sd">        Args:</span>
+</span><span id="line-58"><span class="sd">            gate_type (type[Gate]): The type of the gate to update.</span>
+</span><span id="line-59"><span class="sd">            time (float): The new execution time for the gate.</span>
+</span><span id="line-60">
+</span><span id="line-61"><span class="sd">        Raises:</span>
+</span><span id="line-62"><span class="sd">            ValueError: If the provided time is not positive.</span>
+</span><span id="line-63"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-64">        <span class="k">if</span> <span class="n">time</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+</span><span id="line-65">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Execution time must be positive.&quot;</span><span class="p">)</span>
+</span><span id="line-66">        <span class="bp">self</span><span class="o">.</span><span class="n">_gate_times</span><span class="p">[</span><span class="n">gate_type</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span>
+</span><span id="line-67">        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;[NoiseConfig] Set gate time for </span><span class="si">{}</span><span class="s2"> to </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">gate_type</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">time</span><span class="p">)</span></div>
 
-</span><span id="line-65">
+</span><span id="line-68">
 <div class="viewcode-block" id="NoiseConfig.set_default_gate_time">
 <a class="viewcode-back" href="../../../code/api/qilisdk/noise/noise_config/index.html#qilisdk.noise.noise_config.NoiseConfig.set_default_gate_time">[documentos]</a>
-</span><span id="line-66">    <span class="k">def</span><span class="w"> </span><span class="nf">set_default_gate_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-67"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Set the default execution time for gates not explicitly specified.</span>
-</span><span id="line-68">
-</span><span id="line-69"><span class="sd">        Args:</span>
-</span><span id="line-70"><span class="sd">            time (float): The new default execution time.</span>
+</span><span id="line-69">    <span class="k">def</span><span class="w"> </span><span class="nf">set_default_gate_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-70"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Set the default execution time for gates not explicitly specified.</span>
 </span><span id="line-71">
-</span><span id="line-72"><span class="sd">        Raises:</span>
-</span><span id="line-73"><span class="sd">            ValueError: If the provided time is not positive.</span>
-</span><span id="line-74"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-75">        <span class="k">if</span> <span class="n">time</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
-</span><span id="line-76">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Default execution time must be positive.&quot;</span><span class="p">)</span>
-</span><span id="line-77">        <span class="bp">self</span><span class="o">.</span><span class="n">_default_gate_time</span> <span class="o">=</span> <span class="n">time</span></div>
+</span><span id="line-72"><span class="sd">        Args:</span>
+</span><span id="line-73"><span class="sd">            time (float): The new default execution time.</span>
+</span><span id="line-74">
+</span><span id="line-75"><span class="sd">        Raises:</span>
+</span><span id="line-76"><span class="sd">            ValueError: If the provided time is not positive.</span>
+</span><span id="line-77"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-78">        <span class="k">if</span> <span class="n">time</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+</span><span id="line-79">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Default execution time must be positive.&quot;</span><span class="p">)</span>
+</span><span id="line-80">        <span class="bp">self</span><span class="o">.</span><span class="n">_default_gate_time</span> <span class="o">=</span> <span class="n">time</span>
+</span><span id="line-81">        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;[NoiseConfig] Set default gate time to </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">time</span><span class="p">)</span></div>
 
-</span><span id="line-78">
-</span><span id="line-79">    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="line-80">        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__qualname__</span><span class="si">}</span><span class="s2">(default_gate_time=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_default_gate_time</span><span class="si">}</span><span class="s2">, gate_times=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_gate_times</span><span class="si">}</span><span class="s2">)&quot;</span></div>
+</span><span id="line-82">
+</span><span id="line-83">    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="line-84">        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__qualname__</span><span class="si">}</span><span class="s2">(default_gate_time=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_default_gate_time</span><span class="si">}</span><span class="s2">, gate_times=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_gate_times</span><span class="si">}</span><span class="s2">)&quot;</span></div>
 
 </span></code></pre></div>
     </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">

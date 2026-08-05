@@ -277,6 +277,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/functionals/variational_program_result/index.html">qilisdk.functionals.variational_program_result</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../code/api/qilisdk/logging/index.html">qilisdk.logging</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../../code/api/qilisdk/noise/index.html">qilisdk.noise</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/noise/amplitude_damping/index.html">qilisdk.noise.amplitude_damping</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/noise/bit_flip/index.html">qilisdk.noise.bit_flip</a></li>
@@ -437,177 +438,181 @@
 </span><span id="line-19"><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">mpl</span>
 </span><span id="line-20"><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 </span><span id="line-21"><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-</span><span id="line-22"><span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.figure</span><span class="w"> </span><span class="kn">import</span> <span class="n">Figure</span>
-</span><span id="line-23"><span class="kn">from</span><span class="w"> </span><span class="nn">mpl_toolkits</span><span class="w"> </span><span class="kn">import</span> <span class="n">mplot3d</span>
-</span><span id="line-24">
-</span><span id="line-25"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.utils.visualization.style</span><span class="w"> </span><span class="kn">import</span> <span class="n">QTensorStyle</span>
-</span><span id="line-26">
-</span><span id="line-27"><span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
-</span><span id="line-28">    <span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">QTensor</span>
-</span><span id="line-29">
+</span><span id="line-22"><span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
+</span><span id="line-23"><span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.figure</span><span class="w"> </span><span class="kn">import</span> <span class="n">Figure</span>
+</span><span id="line-24"><span class="kn">from</span><span class="w"> </span><span class="nn">mpl_toolkits</span><span class="w"> </span><span class="kn">import</span> <span class="n">mplot3d</span>
+</span><span id="line-25">
+</span><span id="line-26"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.utils.visualization.style</span><span class="w"> </span><span class="kn">import</span> <span class="n">QTensorStyle</span>
+</span><span id="line-27">
+</span><span id="line-28"><span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+</span><span id="line-29">    <span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">QTensor</span>
 </span><span id="line-30">
-</span><span id="line-31"><span class="c1">###############################################################################</span>
-</span><span id="line-32"><span class="c1"># Matplotlib implementation</span>
-</span><span id="line-33"><span class="c1">###############################################################################</span>
-</span><span id="line-34">
-</span><span id="line-35"><span class="c1"># the type of axes is a 3d axes:</span>
+</span><span id="line-31">
+</span><span id="line-32"><span class="c1">###############################################################################</span>
+</span><span id="line-33"><span class="c1"># Matplotlib implementation</span>
+</span><span id="line-34"><span class="c1">###############################################################################</span>
+</span><span id="line-35">
+</span><span id="line-36"><span class="c1"># the type of axes is a 3d axes:</span>
 <div class="viewcode-block" id="AXIS_TYPE">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/qtensor_renderers/index.html#qilisdk.utils.visualization.qtensor_renderers.AXIS_TYPE">[documents]</a>
-</span><span id="line-36"><span class="n">AXIS_TYPE</span> <span class="o">=</span> <span class="n">mplot3d</span><span class="o">.</span><span class="n">axes3d</span><span class="o">.</span><span class="n">Axes3D</span></div>
+</span><span id="line-37"><span class="n">AXIS_TYPE</span> <span class="o">=</span> <span class="n">mplot3d</span><span class="o">.</span><span class="n">axes3d</span><span class="o">.</span><span class="n">Axes3D</span></div>
 
-</span><span id="line-37">
 </span><span id="line-38">
+</span><span id="line-39">
 <div class="viewcode-block" id="MatplotlibQTensorRenderer">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/qtensor_renderers/index.html#qilisdk.utils.visualization.qtensor_renderers.MatplotlibQTensorRenderer">[documents]</a>
-</span><span id="line-39"><span class="k">class</span><span class="w"> </span><span class="nc">MatplotlibQTensorRenderer</span><span class="p">:</span>
-</span><span id="line-40"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Render a :class:`~qilisdk.core.QTensor` using *matplotlib*.&quot;&quot;&quot;</span>
-</span><span id="line-41">
-</span><span id="line-42">    <span class="c1"># ------------------------------------------------------------------</span>
-</span><span id="line-43">    <span class="c1"># Construction</span>
-</span><span id="line-44">    <span class="c1"># ------------------------------------------------------------------</span>
-</span><span id="line-45">
-</span><span id="line-46">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qtensor</span><span class="p">:</span> <span class="n">QTensor</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n">AXIS_TYPE</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">style</span><span class="p">:</span> <span class="n">QTensorStyle</span> <span class="o">=</span> <span class="n">QTensorStyle</span><span class="p">())</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-40"><span class="k">class</span><span class="w"> </span><span class="nc">MatplotlibQTensorRenderer</span><span class="p">:</span>
+</span><span id="line-41"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Render a :class:`~qilisdk.core.QTensor` using *matplotlib*.&quot;&quot;&quot;</span>
+</span><span id="line-42">
+</span><span id="line-43">    <span class="c1"># ------------------------------------------------------------------</span>
+</span><span id="line-44">    <span class="c1"># Construction</span>
+</span><span id="line-45">    <span class="c1"># ------------------------------------------------------------------</span>
+</span><span id="line-46">
+</span><span id="line-47">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qtensor</span><span class="p">:</span> <span class="n">QTensor</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n">AXIS_TYPE</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">style</span><span class="p">:</span> <span class="n">QTensorStyle</span> <span class="o">=</span> <span class="n">QTensorStyle</span><span class="p">())</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <div class="viewcode-block" id="MatplotlibQTensorRenderer.qtensor">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/qtensor_renderers/index.html#qilisdk.utils.visualization.qtensor_renderers.MatplotlibQTensorRenderer.qtensor">[documents]</a>
-</span><span id="line-47">        <span class="bp">self</span><span class="o">.</span><span class="n">qtensor</span> <span class="o">=</span> <span class="n">qtensor</span></div>
+</span><span id="line-48">        <span class="bp">self</span><span class="o">.</span><span class="n">qtensor</span> <span class="o">=</span> <span class="n">qtensor</span></div>
 
 <div class="viewcode-block" id="MatplotlibQTensorRenderer.style">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/qtensor_renderers/index.html#qilisdk.utils.visualization.qtensor_renderers.MatplotlibQTensorRenderer.style">[documents]</a>
-</span><span id="line-48">        <span class="bp">self</span><span class="o">.</span><span class="n">style</span> <span class="o">=</span> <span class="n">style</span></div>
+</span><span id="line-49">        <span class="bp">self</span><span class="o">.</span><span class="n">style</span> <span class="o">=</span> <span class="n">style</span></div>
 
-</span><span id="line-49">        <span class="bp">self</span><span class="o">.</span><span class="n">_ax</span> <span class="o">=</span> <span class="n">ax</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_axes</span><span class="p">(</span><span class="n">style</span><span class="o">.</span><span class="n">dpi</span><span class="p">)</span>
-</span><span id="line-50">
-</span><span id="line-51">    <span class="nd">@property</span>
+</span><span id="line-50">        <span class="bp">self</span><span class="o">.</span><span class="n">_ax</span> <span class="o">=</span> <span class="n">ax</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_axes</span><span class="p">(</span><span class="n">style</span><span class="o">.</span><span class="n">dpi</span><span class="p">)</span>
+</span><span id="line-51">
+</span><span id="line-52">    <span class="nd">@property</span>
 <div class="viewcode-block" id="MatplotlibQTensorRenderer.axes">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/qtensor_renderers/index.html#qilisdk.utils.visualization.qtensor_renderers.MatplotlibQTensorRenderer.axes">[documents]</a>
-</span><span id="line-52">    <span class="k">def</span><span class="w"> </span><span class="nf">axes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AXIS_TYPE</span><span class="p">:</span>
-</span><span id="line-53">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ax</span></div>
+</span><span id="line-53">    <span class="k">def</span><span class="w"> </span><span class="nf">axes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AXIS_TYPE</span><span class="p">:</span>
+</span><span id="line-54">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ax</span></div>
 
-</span><span id="line-54">
+</span><span id="line-55">
 <div class="viewcode-block" id="MatplotlibQTensorRenderer.plot">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/qtensor_renderers/index.html#qilisdk.utils.visualization.qtensor_renderers.MatplotlibQTensorRenderer.plot">[documents]</a>
-</span><span id="line-55">    <span class="k">def</span><span class="w"> </span><span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-56"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-57"><span class="sd">        Render the QTensor on the current axes.</span>
-</span><span id="line-58">
-</span><span id="line-59"><span class="sd">        Raises:</span>
-</span><span id="line-60"><span class="sd">            ValueError: If the QTensor is not a single-qubit state vector (ket or bra).</span>
-</span><span id="line-61"><span class="sd">            ValueError: If the QTensor has more than one qubit.</span>
-</span><span id="line-62"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-63">
-</span><span id="line-64">        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">qtensor</span><span class="o">.</span><span class="n">is_ket</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">qtensor</span><span class="o">.</span><span class="n">is_bra</span><span class="p">():</span>
-</span><span id="line-65">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Drawing is only supported for state vectors (kets or bras)&quot;</span><span class="p">)</span>
-</span><span id="line-66">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">qtensor</span><span class="o">.</span><span class="n">nqubits</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
-</span><span id="line-67">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-</span><span id="line-68">                <span class="s2">&quot;Drawing is only supported for single-qubit states: consider using .partial_trace([i]) to reduce to a single qubit i&quot;</span>
-</span><span id="line-69">            <span class="p">)</span>
-</span><span id="line-70">
-</span><span id="line-71">        <span class="c1"># Get the values from the style</span>
-</span><span id="line-72">        <span class="n">sphere_points</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">sphere_points</span>
-</span><span id="line-73">        <span class="n">sphere_color</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">sphere_color</span>
-</span><span id="line-74">        <span class="n">arrow_color</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">arrow_color</span>
-</span><span id="line-75">        <span class="n">arrow_length_ratio</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">arrow_length_ratio</span>
-</span><span id="line-76">        <span class="n">reference_point_distance</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">reference_point_distance</span>
-</span><span id="line-77">        <span class="n">draw_reference_points</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">draw_reference_points</span>
-</span><span id="line-78">        <span class="n">font_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">fontsize</span>
-</span><span id="line-79">        <span class="n">rotation_style</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">rotation_style</span>
-</span><span id="line-80">        <span class="n">figure_title</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">title</span> <span class="ow">or</span> <span class="s2">&quot;Bloch Sphere Visualization&quot;</span>
-</span><span id="line-81">        <span class="n">draw_center_circle</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">draw_center_circle</span>
-</span><span id="line-82">
-</span><span id="line-83">        <span class="c1"># Better mouse rotation style</span>
-</span><span id="line-84">        <span class="n">mpl</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;axes3d.mouserotationstyle&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">rotation_style</span>
+</span><span id="line-56">    <span class="k">def</span><span class="w"> </span><span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-57"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-58"><span class="sd">        Render the QTensor on the current axes.</span>
+</span><span id="line-59">
+</span><span id="line-60"><span class="sd">        Raises:</span>
+</span><span id="line-61"><span class="sd">            ValueError: If the QTensor is not a single-qubit state vector (ket or bra).</span>
+</span><span id="line-62"><span class="sd">            ValueError: If the QTensor has more than one qubit.</span>
+</span><span id="line-63"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-64">
+</span><span id="line-65">        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">qtensor</span><span class="o">.</span><span class="n">is_ket</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">qtensor</span><span class="o">.</span><span class="n">is_bra</span><span class="p">():</span>
+</span><span id="line-66">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Drawing is only supported for state vectors (kets or bras)&quot;</span><span class="p">)</span>
+</span><span id="line-67">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">qtensor</span><span class="o">.</span><span class="n">nqubits</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+</span><span id="line-68">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="line-69">                <span class="s2">&quot;Drawing is only supported for single-qubit states: consider using .partial_trace([i]) to reduce to a single qubit i&quot;</span>
+</span><span id="line-70">            <span class="p">)</span>
+</span><span id="line-71">
+</span><span id="line-72">        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;[QTensorRenderer] Rendering single-qubit state on Bloch sphere&quot;</span><span class="p">)</span>
+</span><span id="line-73">
+</span><span id="line-74">        <span class="c1"># Get the values from the style</span>
+</span><span id="line-75">        <span class="n">sphere_points</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">sphere_points</span>
+</span><span id="line-76">        <span class="n">sphere_color</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">sphere_color</span>
+</span><span id="line-77">        <span class="n">arrow_color</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">arrow_color</span>
+</span><span id="line-78">        <span class="n">arrow_length_ratio</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">arrow_length_ratio</span>
+</span><span id="line-79">        <span class="n">reference_point_distance</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">reference_point_distance</span>
+</span><span id="line-80">        <span class="n">draw_reference_points</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">draw_reference_points</span>
+</span><span id="line-81">        <span class="n">font_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">fontsize</span>
+</span><span id="line-82">        <span class="n">rotation_style</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">rotation_style</span>
+</span><span id="line-83">        <span class="n">figure_title</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">title</span> <span class="ow">or</span> <span class="s2">&quot;Bloch Sphere Visualization&quot;</span>
+</span><span id="line-84">        <span class="n">draw_center_circle</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">draw_center_circle</span>
 </span><span id="line-85">
-</span><span id="line-86">        <span class="c1"># Set up the plot</span>
-</span><span id="line-87">        <span class="n">ax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">axes</span>
-</span><span id="line-88">        <span class="n">u</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">sphere_points</span><span class="p">)</span>
-</span><span id="line-89">        <span class="n">v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">sphere_points</span><span class="p">)</span>
-</span><span id="line-90">        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">u</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">v</span><span class="p">))</span>
-</span><span id="line-91">        <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">u</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">v</span><span class="p">))</span>
-</span><span id="line-92">        <span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">u</span><span class="p">)),</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">v</span><span class="p">))</span>
-</span><span id="line-93">        <span class="n">ax</span><span class="o">.</span><span class="n">plot_surface</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">sphere_color</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
-</span><span id="line-94">        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">([</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
-</span><span id="line-95">        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">([</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
-</span><span id="line-96">        <span class="n">ax</span><span class="o">.</span><span class="n">set_zlim</span><span class="p">([</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
-</span><span id="line-97">        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;X&quot;</span><span class="p">)</span>
-</span><span id="line-98">        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Y&quot;</span><span class="p">)</span>
-</span><span id="line-99">        <span class="n">ax</span><span class="o">.</span><span class="n">set_zlabel</span><span class="p">(</span><span class="s2">&quot;Z&quot;</span><span class="p">)</span>
-</span><span id="line-100">        <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">figure_title</span><span class="p">)</span>
-</span><span id="line-101">        <span class="n">ax</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_major_locator</span><span class="p">(</span><span class="n">plt</span><span class="o">.</span><span class="n">MaxNLocator</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span>
-</span><span id="line-102">        <span class="n">ax</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_major_locator</span><span class="p">(</span><span class="n">plt</span><span class="o">.</span><span class="n">MaxNLocator</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span>
-</span><span id="line-103">        <span class="n">ax</span><span class="o">.</span><span class="n">zaxis</span><span class="o">.</span><span class="n">set_major_locator</span><span class="p">(</span><span class="n">plt</span><span class="o">.</span><span class="n">MaxNLocator</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span>
-</span><span id="line-104">
-</span><span id="line-105">        <span class="c1"># Fix the aspect ratio to be equal</span>
-</span><span id="line-106">        <span class="n">ax</span><span class="o">.</span><span class="n">set_box_aspect</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+</span><span id="line-86">        <span class="c1"># Better mouse rotation style</span>
+</span><span id="line-87">        <span class="n">mpl</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;axes3d.mouserotationstyle&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">rotation_style</span>
+</span><span id="line-88">
+</span><span id="line-89">        <span class="c1"># Set up the plot</span>
+</span><span id="line-90">        <span class="n">ax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">axes</span>
+</span><span id="line-91">        <span class="n">u</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">sphere_points</span><span class="p">)</span>
+</span><span id="line-92">        <span class="n">v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">sphere_points</span><span class="p">)</span>
+</span><span id="line-93">        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">u</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">v</span><span class="p">))</span>
+</span><span id="line-94">        <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">u</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">v</span><span class="p">))</span>
+</span><span id="line-95">        <span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">u</span><span class="p">)),</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">v</span><span class="p">))</span>
+</span><span id="line-96">        <span class="n">ax</span><span class="o">.</span><span class="n">plot_surface</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">sphere_color</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+</span><span id="line-97">        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">([</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+</span><span id="line-98">        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">([</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+</span><span id="line-99">        <span class="n">ax</span><span class="o">.</span><span class="n">set_zlim</span><span class="p">([</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+</span><span id="line-100">        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;X&quot;</span><span class="p">)</span>
+</span><span id="line-101">        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Y&quot;</span><span class="p">)</span>
+</span><span id="line-102">        <span class="n">ax</span><span class="o">.</span><span class="n">set_zlabel</span><span class="p">(</span><span class="s2">&quot;Z&quot;</span><span class="p">)</span>
+</span><span id="line-103">        <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">figure_title</span><span class="p">)</span>
+</span><span id="line-104">        <span class="n">ax</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_major_locator</span><span class="p">(</span><span class="n">plt</span><span class="o">.</span><span class="n">MaxNLocator</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span>
+</span><span id="line-105">        <span class="n">ax</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_major_locator</span><span class="p">(</span><span class="n">plt</span><span class="o">.</span><span class="n">MaxNLocator</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span>
+</span><span id="line-106">        <span class="n">ax</span><span class="o">.</span><span class="n">zaxis</span><span class="o">.</span><span class="n">set_major_locator</span><span class="p">(</span><span class="n">plt</span><span class="o">.</span><span class="n">MaxNLocator</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span>
 </span><span id="line-107">
-</span><span id="line-108">        <span class="c1"># Draw the arrow</span>
-</span><span id="line-109">        <span class="n">coeffs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qtensor</span><span class="o">.</span><span class="n">dense</span><span class="p">()</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
-</span><span id="line-110">        <span class="n">x</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">coeffs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">coeffs</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
-</span><span id="line-111">        <span class="n">y</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">coeffs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">coeffs</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
-</span><span id="line-112">        <span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">coeffs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">coeffs</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span>
-</span><span id="line-113">        <span class="n">ax</span><span class="o">.</span><span class="n">quiver</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">arrow_color</span><span class="p">,</span> <span class="n">arrow_length_ratio</span><span class="o">=</span><span class="n">arrow_length_ratio</span><span class="p">)</span>
-</span><span id="line-114">
-</span><span id="line-115">        <span class="c1"># Draw some key points for reference</span>
-</span><span id="line-116">        <span class="k">if</span> <span class="n">draw_reference_points</span><span class="p">:</span>
-</span><span id="line-117">            <span class="n">ax</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">reference_point_distance</span><span class="p">,</span> <span class="s2">&quot;|0⟩&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="n">font_size</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">)</span>
-</span><span id="line-118">            <span class="n">ax</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="n">reference_point_distance</span><span class="p">,</span> <span class="s2">&quot;|1⟩&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="n">font_size</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">)</span>
-</span><span id="line-119">            <span class="n">ax</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="n">reference_point_distance</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;|+⟩&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="n">font_size</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">)</span>
-</span><span id="line-120">            <span class="n">ax</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="o">-</span><span class="n">reference_point_distance</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;|-⟩&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="n">font_size</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">)</span>
-</span><span id="line-121">            <span class="n">ax</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">reference_point_distance</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;|+i⟩&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="n">font_size</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">)</span>
-</span><span id="line-122">            <span class="n">ax</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="n">reference_point_distance</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;|-i⟩&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="n">font_size</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">)</span>
-</span><span id="line-123">
-</span><span id="line-124">        <span class="c1"># Draw a circle around the centre</span>
-</span><span id="line-125">        <span class="k">if</span> <span class="n">draw_center_circle</span><span class="p">:</span>
-</span><span id="line-126">            <span class="n">u</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">sphere_points</span><span class="p">)</span>
-</span><span id="line-127">            <span class="n">radius</span> <span class="o">=</span> <span class="mf">1.0</span>
-</span><span id="line-128">            <span class="n">x</span> <span class="o">=</span> <span class="n">radius</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
-</span><span id="line-129">            <span class="n">y</span> <span class="o">=</span> <span class="n">radius</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
-</span><span id="line-130">            <span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-</span><span id="line-131">            <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
-</span><span id="line-132">
-</span><span id="line-133">        <span class="c1"># Hide the axes</span>
-</span><span id="line-134">        <span class="n">ax</span><span class="o">.</span><span class="n">set_axis_off</span><span class="p">()</span>
+</span><span id="line-108">        <span class="c1"># Fix the aspect ratio to be equal</span>
+</span><span id="line-109">        <span class="n">ax</span><span class="o">.</span><span class="n">set_box_aspect</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+</span><span id="line-110">
+</span><span id="line-111">        <span class="c1"># Draw the arrow</span>
+</span><span id="line-112">        <span class="n">coeffs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qtensor</span><span class="o">.</span><span class="n">dense</span><span class="p">()</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+</span><span id="line-113">        <span class="n">x</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">coeffs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">coeffs</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+</span><span id="line-114">        <span class="n">y</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">coeffs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">coeffs</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+</span><span id="line-115">        <span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">coeffs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">coeffs</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span>
+</span><span id="line-116">        <span class="n">ax</span><span class="o">.</span><span class="n">quiver</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">arrow_color</span><span class="p">,</span> <span class="n">arrow_length_ratio</span><span class="o">=</span><span class="n">arrow_length_ratio</span><span class="p">)</span>
+</span><span id="line-117">
+</span><span id="line-118">        <span class="c1"># Draw some key points for reference</span>
+</span><span id="line-119">        <span class="k">if</span> <span class="n">draw_reference_points</span><span class="p">:</span>
+</span><span id="line-120">            <span class="n">ax</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">reference_point_distance</span><span class="p">,</span> <span class="s2">&quot;|0⟩&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="n">font_size</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">)</span>
+</span><span id="line-121">            <span class="n">ax</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="n">reference_point_distance</span><span class="p">,</span> <span class="s2">&quot;|1⟩&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="n">font_size</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">)</span>
+</span><span id="line-122">            <span class="n">ax</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="n">reference_point_distance</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;|+⟩&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="n">font_size</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">)</span>
+</span><span id="line-123">            <span class="n">ax</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="o">-</span><span class="n">reference_point_distance</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;|-⟩&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="n">font_size</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">)</span>
+</span><span id="line-124">            <span class="n">ax</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">reference_point_distance</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;|+i⟩&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="n">font_size</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">)</span>
+</span><span id="line-125">            <span class="n">ax</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="n">reference_point_distance</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;|-i⟩&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="n">font_size</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">)</span>
+</span><span id="line-126">
+</span><span id="line-127">        <span class="c1"># Draw a circle around the centre</span>
+</span><span id="line-128">        <span class="k">if</span> <span class="n">draw_center_circle</span><span class="p">:</span>
+</span><span id="line-129">            <span class="n">u</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">sphere_points</span><span class="p">)</span>
+</span><span id="line-130">            <span class="n">radius</span> <span class="o">=</span> <span class="mf">1.0</span>
+</span><span id="line-131">            <span class="n">x</span> <span class="o">=</span> <span class="n">radius</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
+</span><span id="line-132">            <span class="n">y</span> <span class="o">=</span> <span class="n">radius</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
+</span><span id="line-133">            <span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</span><span id="line-134">            <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
 </span><span id="line-135">
-</span><span id="line-136">        <span class="c1"># Draw the plot</span>
-</span><span id="line-137">        <span class="n">plt</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span></div>
-
+</span><span id="line-136">        <span class="c1"># Hide the axes</span>
+</span><span id="line-137">        <span class="n">ax</span><span class="o">.</span><span class="n">set_axis_off</span><span class="p">()</span>
 </span><span id="line-138">
+</span><span id="line-139">        <span class="c1"># Draw the plot</span>
+</span><span id="line-140">        <span class="n">plt</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span></div>
+
+</span><span id="line-141">
 <div class="viewcode-block" id="MatplotlibQTensorRenderer.save">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/qtensor_renderers/index.html#qilisdk.utils.visualization.qtensor_renderers.MatplotlibQTensorRenderer.save">[documents]</a>
-</span><span id="line-139">    <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-140"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Save current figure to disk.</span>
-</span><span id="line-141">
-</span><span id="line-142"><span class="sd">        Args:</span>
-</span><span id="line-143"><span class="sd">            filename: Path to save the figure (e.g., &#39;circuit.png&#39;).</span>
-</span><span id="line-144"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-145">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">figure</span><span class="p">,</span> <span class="n">Figure</span><span class="p">):</span>
-</span><span id="line-146">            <span class="bp">self</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">&quot;tight&quot;</span><span class="p">)</span></div>
-
-</span><span id="line-147">
-<div class="viewcode-block" id="MatplotlibQTensorRenderer.show">
-<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/qtensor_renderers/index.html#qilisdk.utils.visualization.qtensor_renderers.MatplotlibQTensorRenderer.show">[documents]</a>
-</span><span id="line-148">    <span class="k">def</span><span class="w"> </span><span class="nf">show</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># noqa: PLR6301</span>
-</span><span id="line-149"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Show the current figure.&quot;&quot;&quot;</span>
-</span><span id="line-150">        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></div>
+</span><span id="line-142">    <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-143"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Save current figure to disk.</span>
+</span><span id="line-144">
+</span><span id="line-145"><span class="sd">        Args:</span>
+</span><span id="line-146"><span class="sd">            filename: Path to save the figure (e.g., &#39;circuit.png&#39;).</span>
+</span><span id="line-147"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-148">        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;[QTensorRenderer] Saving figure to </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+</span><span id="line-149">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">figure</span><span class="p">,</span> <span class="n">Figure</span><span class="p">):</span>
+</span><span id="line-150">            <span class="bp">self</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">&quot;tight&quot;</span><span class="p">)</span></div>
 
 </span><span id="line-151">
-</span><span id="line-152">    <span class="nd">@staticmethod</span>
-</span><span id="line-153">    <span class="k">def</span><span class="w"> </span><span class="nf">_make_axes</span><span class="p">(</span><span class="n">dpi</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AXIS_TYPE</span><span class="p">:</span>
-</span><span id="line-154"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-155"><span class="sd">        Create a new figure and axes with the given DPI.</span>
-</span><span id="line-156">
-</span><span id="line-157"><span class="sd">        Args:</span>
-</span><span id="line-158"><span class="sd">            dpi (int): The DPI of the figure</span>
-</span><span id="line-159">
-</span><span id="line-160"><span class="sd">        Returns:</span>
-</span><span id="line-161"><span class="sd">            A newly created Matplotlib Axes.</span>
-</span><span id="line-162">
-</span><span id="line-163"><span class="sd">        Raises:</span>
-</span><span id="line-164"><span class="sd">            TypeError: If the created axes is not of the expected type.</span>
-</span><span id="line-165"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-166">        <span class="n">_</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">dpi</span><span class="o">=</span><span class="n">dpi</span><span class="p">,</span> <span class="n">constrained_layout</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">subplot_kw</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;projection&quot;</span><span class="p">:</span> <span class="s2">&quot;3d&quot;</span><span class="p">})</span>
-</span><span id="line-167">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">AXIS_TYPE</span><span class="p">):</span>
-</span><span id="line-168">            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Expected axes of type </span><span class="si">{</span><span class="n">AXIS_TYPE</span><span class="si">}</span><span class="s2">, but got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">ax</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</span><span id="line-169">        <span class="k">return</span> <span class="n">ax</span></div>
+<div class="viewcode-block" id="MatplotlibQTensorRenderer.show">
+<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/qtensor_renderers/index.html#qilisdk.utils.visualization.qtensor_renderers.MatplotlibQTensorRenderer.show">[documents]</a>
+</span><span id="line-152">    <span class="k">def</span><span class="w"> </span><span class="nf">show</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># noqa: PLR6301</span>
+</span><span id="line-153"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Show the current figure.&quot;&quot;&quot;</span>
+</span><span id="line-154">        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></div>
+
+</span><span id="line-155">
+</span><span id="line-156">    <span class="nd">@staticmethod</span>
+</span><span id="line-157">    <span class="k">def</span><span class="w"> </span><span class="nf">_make_axes</span><span class="p">(</span><span class="n">dpi</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AXIS_TYPE</span><span class="p">:</span>
+</span><span id="line-158"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-159"><span class="sd">        Create a new figure and axes with the given DPI.</span>
+</span><span id="line-160">
+</span><span id="line-161"><span class="sd">        Args:</span>
+</span><span id="line-162"><span class="sd">            dpi (int): The DPI of the figure</span>
+</span><span id="line-163">
+</span><span id="line-164"><span class="sd">        Returns:</span>
+</span><span id="line-165"><span class="sd">            A newly created Matplotlib Axes.</span>
+</span><span id="line-166">
+</span><span id="line-167"><span class="sd">        Raises:</span>
+</span><span id="line-168"><span class="sd">            TypeError: If the created axes is not of the expected type.</span>
+</span><span id="line-169"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-170">        <span class="n">_</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">dpi</span><span class="o">=</span><span class="n">dpi</span><span class="p">,</span> <span class="n">constrained_layout</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">subplot_kw</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;projection&quot;</span><span class="p">:</span> <span class="s2">&quot;3d&quot;</span><span class="p">})</span>
+</span><span id="line-171">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">AXIS_TYPE</span><span class="p">):</span>
+</span><span id="line-172">            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Expected axes of type </span><span class="si">{</span><span class="n">AXIS_TYPE</span><span class="si">}</span><span class="s2">, but got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">ax</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span id="line-173">        <span class="k">return</span> <span class="n">ax</span></div>
 
 </span></code></pre></div>
     </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">

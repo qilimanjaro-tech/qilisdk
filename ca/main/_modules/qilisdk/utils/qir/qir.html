@@ -277,6 +277,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/functionals/variational_program_result/index.html">qilisdk.functionals.variational_program_result</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../code/api/qilisdk/logging/index.html">qilisdk.logging</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../../code/api/qilisdk/noise/index.html">qilisdk.noise</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/noise/amplitude_damping/index.html">qilisdk.noise.amplitude_damping</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/noise/bit_flip/index.html">qilisdk.noise.bit_flip</a></li>
@@ -447,378 +448,387 @@
 </span><span id="line-29">
 </span><span id="line-30"><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 </span><span id="line-31">
-</span><span id="line-32"><span class="kn">from</span><span class="w"> </span><span class="nn">pyqir</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-</span><span id="line-33">    <span class="n">BasicQisBuilder</span><span class="p">,</span>
-</span><span id="line-34">    <span class="n">Call</span><span class="p">,</span>
-</span><span id="line-35">    <span class="n">Context</span><span class="p">,</span>
-</span><span id="line-36">    <span class="n">FloatConstant</span><span class="p">,</span>
-</span><span id="line-37">    <span class="n">Module</span><span class="p">,</span>
-</span><span id="line-38">    <span class="n">SimpleModule</span><span class="p">,</span>
-</span><span id="line-39">    <span class="n">Value</span><span class="p">,</span>
-</span><span id="line-40">    <span class="n">is_entry_point</span><span class="p">,</span>
-</span><span id="line-41">    <span class="n">ptr_id</span><span class="p">,</span>
-</span><span id="line-42">    <span class="n">required_num_qubits</span><span class="p">,</span>
-</span><span id="line-43"><span class="p">)</span>
-</span><span id="line-44"><span class="kn">from</span><span class="w"> </span><span class="nn">pyqir.qis</span><span class="w"> </span><span class="kn">import</span> <span class="n">swap</span> <span class="k">as</span> <span class="n">qis_swap</span>
-</span><span id="line-45">
-</span><span id="line-46"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.digital</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-</span><span id="line-47">    <span class="n">CNOT</span><span class="p">,</span>
-</span><span id="line-48">    <span class="n">CZ</span><span class="p">,</span>
-</span><span id="line-49">    <span class="n">RX</span><span class="p">,</span>
-</span><span id="line-50">    <span class="n">RY</span><span class="p">,</span>
-</span><span id="line-51">    <span class="n">RZ</span><span class="p">,</span>
-</span><span id="line-52">    <span class="n">SWAP</span><span class="p">,</span>
-</span><span id="line-53">    <span class="n">Adjoint</span><span class="p">,</span>
-</span><span id="line-54">    <span class="n">Circuit</span><span class="p">,</span>
-</span><span id="line-55">    <span class="n">Gate</span><span class="p">,</span>
-</span><span id="line-56">    <span class="n">H</span><span class="p">,</span>
-</span><span id="line-57">    <span class="n">I</span><span class="p">,</span>
-</span><span id="line-58">    <span class="n">M</span><span class="p">,</span>
-</span><span id="line-59">    <span class="n">S</span><span class="p">,</span>
-</span><span id="line-60">    <span class="n">T</span><span class="p">,</span>
-</span><span id="line-61">    <span class="n">X</span><span class="p">,</span>
-</span><span id="line-62">    <span class="n">Y</span><span class="p">,</span>
-</span><span id="line-63">    <span class="n">Z</span><span class="p">,</span>
-</span><span id="line-64"><span class="p">)</span>
-</span><span id="line-65">
-</span><span id="line-66"><span class="c1"># === Gate ↔ QIR intrinsic mapping =================================================</span>
-</span><span id="line-67"><span class="c1">#</span>
-</span><span id="line-68"><span class="c1"># Each entry maps a qilisdk gate class to the matching method name on pyqir&#39;s</span>
-</span><span id="line-69"><span class="c1"># BasicQisBuilder. The Adjoint-of-S/T case is handled inline in `_emit_gate`</span>
-</span><span id="line-70"><span class="c1"># because it pattern-matches on the inner gate.</span>
-</span><span id="line-71">
-</span><span id="line-72"><span class="n">_SIMPLE_GATE_EMITTERS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">Gate</span><span class="p">],</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-</span><span id="line-73">    <span class="n">X</span><span class="p">:</span> <span class="s2">&quot;x&quot;</span><span class="p">,</span>
-</span><span id="line-74">    <span class="n">Y</span><span class="p">:</span> <span class="s2">&quot;y&quot;</span><span class="p">,</span>
-</span><span id="line-75">    <span class="n">Z</span><span class="p">:</span> <span class="s2">&quot;z&quot;</span><span class="p">,</span>
-</span><span id="line-76">    <span class="n">H</span><span class="p">:</span> <span class="s2">&quot;h&quot;</span><span class="p">,</span>
-</span><span id="line-77">    <span class="n">S</span><span class="p">:</span> <span class="s2">&quot;s&quot;</span><span class="p">,</span>
-</span><span id="line-78">    <span class="n">T</span><span class="p">:</span> <span class="s2">&quot;t&quot;</span><span class="p">,</span>
-</span><span id="line-79"><span class="p">}</span>
-</span><span id="line-80">
+</span><span id="line-32"><span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
+</span><span id="line-33"><span class="kn">from</span><span class="w"> </span><span class="nn">pyqir</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+</span><span id="line-34">    <span class="n">BasicQisBuilder</span><span class="p">,</span>
+</span><span id="line-35">    <span class="n">Call</span><span class="p">,</span>
+</span><span id="line-36">    <span class="n">Context</span><span class="p">,</span>
+</span><span id="line-37">    <span class="n">FloatConstant</span><span class="p">,</span>
+</span><span id="line-38">    <span class="n">Module</span><span class="p">,</span>
+</span><span id="line-39">    <span class="n">SimpleModule</span><span class="p">,</span>
+</span><span id="line-40">    <span class="n">Value</span><span class="p">,</span>
+</span><span id="line-41">    <span class="n">is_entry_point</span><span class="p">,</span>
+</span><span id="line-42">    <span class="n">ptr_id</span><span class="p">,</span>
+</span><span id="line-43">    <span class="n">required_num_qubits</span><span class="p">,</span>
+</span><span id="line-44"><span class="p">)</span>
+</span><span id="line-45"><span class="kn">from</span><span class="w"> </span><span class="nn">pyqir.qis</span><span class="w"> </span><span class="kn">import</span> <span class="n">swap</span> <span class="k">as</span> <span class="n">qis_swap</span>
+</span><span id="line-46">
+</span><span id="line-47"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.digital</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+</span><span id="line-48">    <span class="n">CNOT</span><span class="p">,</span>
+</span><span id="line-49">    <span class="n">CZ</span><span class="p">,</span>
+</span><span id="line-50">    <span class="n">RX</span><span class="p">,</span>
+</span><span id="line-51">    <span class="n">RY</span><span class="p">,</span>
+</span><span id="line-52">    <span class="n">RZ</span><span class="p">,</span>
+</span><span id="line-53">    <span class="n">SWAP</span><span class="p">,</span>
+</span><span id="line-54">    <span class="n">Adjoint</span><span class="p">,</span>
+</span><span id="line-55">    <span class="n">Circuit</span><span class="p">,</span>
+</span><span id="line-56">    <span class="n">Gate</span><span class="p">,</span>
+</span><span id="line-57">    <span class="n">H</span><span class="p">,</span>
+</span><span id="line-58">    <span class="n">I</span><span class="p">,</span>
+</span><span id="line-59">    <span class="n">M</span><span class="p">,</span>
+</span><span id="line-60">    <span class="n">S</span><span class="p">,</span>
+</span><span id="line-61">    <span class="n">T</span><span class="p">,</span>
+</span><span id="line-62">    <span class="n">X</span><span class="p">,</span>
+</span><span id="line-63">    <span class="n">Y</span><span class="p">,</span>
+</span><span id="line-64">    <span class="n">Z</span><span class="p">,</span>
+</span><span id="line-65"><span class="p">)</span>
+</span><span id="line-66">
+</span><span id="line-67"><span class="c1"># === Gate ↔ QIR intrinsic mapping =================================================</span>
+</span><span id="line-68"><span class="c1">#</span>
+</span><span id="line-69"><span class="c1"># Each entry maps a qilisdk gate class to the matching method name on pyqir&#39;s</span>
+</span><span id="line-70"><span class="c1"># BasicQisBuilder. The Adjoint-of-S/T case is handled inline in `_emit_gate`</span>
+</span><span id="line-71"><span class="c1"># because it pattern-matches on the inner gate.</span>
+</span><span id="line-72">
+</span><span id="line-73"><span class="n">_SIMPLE_GATE_EMITTERS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">Gate</span><span class="p">],</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+</span><span id="line-74">    <span class="n">X</span><span class="p">:</span> <span class="s2">&quot;x&quot;</span><span class="p">,</span>
+</span><span id="line-75">    <span class="n">Y</span><span class="p">:</span> <span class="s2">&quot;y&quot;</span><span class="p">,</span>
+</span><span id="line-76">    <span class="n">Z</span><span class="p">:</span> <span class="s2">&quot;z&quot;</span><span class="p">,</span>
+</span><span id="line-77">    <span class="n">H</span><span class="p">:</span> <span class="s2">&quot;h&quot;</span><span class="p">,</span>
+</span><span id="line-78">    <span class="n">S</span><span class="p">:</span> <span class="s2">&quot;s&quot;</span><span class="p">,</span>
+</span><span id="line-79">    <span class="n">T</span><span class="p">:</span> <span class="s2">&quot;t&quot;</span><span class="p">,</span>
+</span><span id="line-80"><span class="p">}</span>
 </span><span id="line-81">
-</span><span id="line-82"><span class="k">def</span><span class="w"> </span><span class="nf">_qubit_index</span><span class="p">(</span><span class="n">gate</span><span class="p">:</span> <span class="n">Gate</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-</span><span id="line-83"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the single target qubit of ``gate``.</span>
-</span><span id="line-84">
-</span><span id="line-85"><span class="sd">    Args:</span>
-</span><span id="line-86"><span class="sd">        gate (Gate): A single-qubit gate.</span>
-</span><span id="line-87">
-</span><span id="line-88"><span class="sd">    Returns:</span>
-</span><span id="line-89"><span class="sd">        int: The target qubit index.</span>
-</span><span id="line-90">
-</span><span id="line-91"><span class="sd">    Raises:</span>
-</span><span id="line-92"><span class="sd">        ValueError: If the gate targets a different number of qubits.</span>
-</span><span id="line-93"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-94">    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">gate</span><span class="o">.</span><span class="n">qubits</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
-</span><span id="line-95">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Expected a single-qubit gate, got </span><span class="si">{</span><span class="n">gate</span><span class="si">}</span><span class="s2"> on qubits </span><span class="si">{</span><span class="n">gate</span><span class="o">.</span><span class="n">qubits</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</span><span id="line-96">    <span class="k">return</span> <span class="n">gate</span><span class="o">.</span><span class="n">qubits</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-</span><span id="line-97">
+</span><span id="line-82">
+</span><span id="line-83"><span class="k">def</span><span class="w"> </span><span class="nf">_qubit_index</span><span class="p">(</span><span class="n">gate</span><span class="p">:</span> <span class="n">Gate</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+</span><span id="line-84"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the single target qubit of ``gate``.</span>
+</span><span id="line-85">
+</span><span id="line-86"><span class="sd">    Args:</span>
+</span><span id="line-87"><span class="sd">        gate (Gate): A single-qubit gate.</span>
+</span><span id="line-88">
+</span><span id="line-89"><span class="sd">    Returns:</span>
+</span><span id="line-90"><span class="sd">        int: The target qubit index.</span>
+</span><span id="line-91">
+</span><span id="line-92"><span class="sd">    Raises:</span>
+</span><span id="line-93"><span class="sd">        ValueError: If the gate targets a different number of qubits.</span>
+</span><span id="line-94"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-95">    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">gate</span><span class="o">.</span><span class="n">qubits</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+</span><span id="line-96">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Expected a single-qubit gate, got </span><span class="si">{</span><span class="n">gate</span><span class="si">}</span><span class="s2"> on qubits </span><span class="si">{</span><span class="n">gate</span><span class="o">.</span><span class="n">qubits</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span id="line-97">    <span class="k">return</span> <span class="n">gate</span><span class="o">.</span><span class="n">qubits</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 </span><span id="line-98">
-</span><span id="line-99"><span class="k">def</span><span class="w"> </span><span class="nf">_scalar_param</span><span class="p">(</span><span class="n">gate</span><span class="p">:</span> <span class="n">Gate</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-</span><span id="line-100"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the numeric value of a parameterized gate&#39;s angle.</span>
-</span><span id="line-101">
-</span><span id="line-102"><span class="sd">    Args:</span>
-</span><span id="line-103"><span class="sd">        gate (Gate): The parameterized gate.</span>
-</span><span id="line-104"><span class="sd">        name (str): Parameter name (``theta`` / ``phi`` / ``lam``).</span>
-</span><span id="line-105">
-</span><span id="line-106"><span class="sd">    Returns:</span>
-</span><span id="line-107"><span class="sd">        float: The angle value in radians.</span>
-</span><span id="line-108"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-109">    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">gate</span><span class="p">,</span> <span class="n">name</span><span class="p">))</span>
-</span><span id="line-110">
+</span><span id="line-99">
+</span><span id="line-100"><span class="k">def</span><span class="w"> </span><span class="nf">_scalar_param</span><span class="p">(</span><span class="n">gate</span><span class="p">:</span> <span class="n">Gate</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="line-101"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the numeric value of a parameterized gate&#39;s angle.</span>
+</span><span id="line-102">
+</span><span id="line-103"><span class="sd">    Args:</span>
+</span><span id="line-104"><span class="sd">        gate (Gate): The parameterized gate.</span>
+</span><span id="line-105"><span class="sd">        name (str): Parameter name (``theta`` / ``phi`` / ``lam``).</span>
+</span><span id="line-106">
+</span><span id="line-107"><span class="sd">    Returns:</span>
+</span><span id="line-108"><span class="sd">        float: The angle value in radians.</span>
+</span><span id="line-109"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-110">    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">gate</span><span class="p">,</span> <span class="n">name</span><span class="p">))</span>
 </span><span id="line-111">
-</span><span id="line-112"><span class="k">def</span><span class="w"> </span><span class="nf">_produce_gate</span><span class="p">(</span>
-</span><span id="line-113">    <span class="n">module</span><span class="p">:</span> <span class="n">SimpleModule</span><span class="p">,</span>
-</span><span id="line-114">    <span class="n">qis</span><span class="p">:</span> <span class="n">BasicQisBuilder</span><span class="p">,</span>
-</span><span id="line-115">    <span class="n">qubits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Value</span><span class="p">],</span>
-</span><span id="line-116">    <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Value</span><span class="p">],</span>
-</span><span id="line-117">    <span class="n">gate</span><span class="p">:</span> <span class="n">Gate</span><span class="p">,</span>
-</span><span id="line-118"><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-119"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Translate a single qilisdk :class:`Gate` into one (or more) QIS calls.</span>
-</span><span id="line-120">
-</span><span id="line-121"><span class="sd">    Args:</span>
-</span><span id="line-122"><span class="sd">        module (SimpleModule): The pyqir module whose builder backs ``qis``;</span>
-</span><span id="line-123"><span class="sd">            used for intrinsics like ``swap`` that only have a function-style</span>
-</span><span id="line-124"><span class="sd">            binding.</span>
-</span><span id="line-125"><span class="sd">        qis (BasicQisBuilder): A QIS builder bound to the entry point.</span>
-</span><span id="line-126"><span class="sd">        qubits (list[Value]): The module&#39;s statically allocated qubit values.</span>
-</span><span id="line-127"><span class="sd">        results (list[Value]): The module&#39;s statically allocated result values.</span>
-</span><span id="line-128"><span class="sd">        gate (Gate): The gate to produce.</span>
-</span><span id="line-129">
-</span><span id="line-130"><span class="sd">    Raises:</span>
-</span><span id="line-131"><span class="sd">        NotImplementedError: If the gate has no QIR Base-Profile mapping.</span>
-</span><span id="line-132"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-133">    <span class="bp">cls</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">gate</span><span class="p">)</span>
-</span><span id="line-134">    <span class="k">if</span> <span class="bp">cls</span> <span class="ow">is</span> <span class="n">I</span><span class="p">:</span>
-</span><span id="line-135">        <span class="k">return</span>  <span class="c1"># identity is a no-op in QIR</span>
-</span><span id="line-136">    <span class="k">if</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">_SIMPLE_GATE_EMITTERS</span><span class="p">:</span>
-</span><span id="line-137">        <span class="nb">getattr</span><span class="p">(</span><span class="n">qis</span><span class="p">,</span> <span class="n">_SIMPLE_GATE_EMITTERS</span><span class="p">[</span><span class="bp">cls</span><span class="p">])(</span><span class="n">qubits</span><span class="p">[</span><span class="n">_qubit_index</span><span class="p">(</span><span class="n">gate</span><span class="p">)])</span>
-</span><span id="line-138">        <span class="k">return</span>
-</span><span id="line-139">    <span class="k">if</span> <span class="bp">cls</span> <span class="ow">is</span> <span class="n">RX</span><span class="p">:</span>
-</span><span id="line-140">        <span class="n">qis</span><span class="o">.</span><span class="n">rx</span><span class="p">(</span><span class="n">_scalar_param</span><span class="p">(</span><span class="n">gate</span><span class="p">,</span> <span class="s2">&quot;theta&quot;</span><span class="p">),</span> <span class="n">qubits</span><span class="p">[</span><span class="n">_qubit_index</span><span class="p">(</span><span class="n">gate</span><span class="p">)])</span>
-</span><span id="line-141">        <span class="k">return</span>
-</span><span id="line-142">    <span class="k">if</span> <span class="bp">cls</span> <span class="ow">is</span> <span class="n">RY</span><span class="p">:</span>
-</span><span id="line-143">        <span class="n">qis</span><span class="o">.</span><span class="n">ry</span><span class="p">(</span><span class="n">_scalar_param</span><span class="p">(</span><span class="n">gate</span><span class="p">,</span> <span class="s2">&quot;theta&quot;</span><span class="p">),</span> <span class="n">qubits</span><span class="p">[</span><span class="n">_qubit_index</span><span class="p">(</span><span class="n">gate</span><span class="p">)])</span>
-</span><span id="line-144">        <span class="k">return</span>
-</span><span id="line-145">    <span class="k">if</span> <span class="bp">cls</span> <span class="ow">is</span> <span class="n">RZ</span><span class="p">:</span>
-</span><span id="line-146">        <span class="n">qis</span><span class="o">.</span><span class="n">rz</span><span class="p">(</span><span class="n">_scalar_param</span><span class="p">(</span><span class="n">gate</span><span class="p">,</span> <span class="s2">&quot;phi&quot;</span><span class="p">),</span> <span class="n">qubits</span><span class="p">[</span><span class="n">_qubit_index</span><span class="p">(</span><span class="n">gate</span><span class="p">)])</span>
-</span><span id="line-147">        <span class="k">return</span>
-</span><span id="line-148">    <span class="k">if</span> <span class="bp">cls</span> <span class="ow">is</span> <span class="n">CNOT</span><span class="p">:</span>
-</span><span id="line-149">        <span class="n">qis</span><span class="o">.</span><span class="n">cx</span><span class="p">(</span><span class="n">qubits</span><span class="p">[</span><span class="n">gate</span><span class="o">.</span><span class="n">control_qubits</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">qubits</span><span class="p">[</span><span class="n">gate</span><span class="o">.</span><span class="n">target_qubits</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
-</span><span id="line-150">        <span class="k">return</span>
-</span><span id="line-151">    <span class="k">if</span> <span class="bp">cls</span> <span class="ow">is</span> <span class="n">CZ</span><span class="p">:</span>
-</span><span id="line-152">        <span class="n">qis</span><span class="o">.</span><span class="n">cz</span><span class="p">(</span><span class="n">qubits</span><span class="p">[</span><span class="n">gate</span><span class="o">.</span><span class="n">control_qubits</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">qubits</span><span class="p">[</span><span class="n">gate</span><span class="o">.</span><span class="n">target_qubits</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
-</span><span id="line-153">        <span class="k">return</span>
-</span><span id="line-154">    <span class="k">if</span> <span class="bp">cls</span> <span class="ow">is</span> <span class="n">SWAP</span><span class="p">:</span>
-</span><span id="line-155">        <span class="n">qis_swap</span><span class="p">(</span><span class="n">module</span><span class="o">.</span><span class="n">builder</span><span class="p">,</span> <span class="n">qubits</span><span class="p">[</span><span class="n">gate</span><span class="o">.</span><span class="n">qubits</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">qubits</span><span class="p">[</span><span class="n">gate</span><span class="o">.</span><span class="n">qubits</span><span class="p">[</span><span class="mi">1</span><span class="p">]])</span>
-</span><span id="line-156">        <span class="k">return</span>
-</span><span id="line-157">    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">gate</span><span class="p">,</span> <span class="n">Adjoint</span><span class="p">):</span>
-</span><span id="line-158">        <span class="n">inner_cls</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">gate</span><span class="o">.</span><span class="n">basic_gate</span><span class="p">)</span>
-</span><span id="line-159">        <span class="k">if</span> <span class="n">inner_cls</span> <span class="ow">is</span> <span class="n">S</span><span class="p">:</span>
-</span><span id="line-160">            <span class="n">qis</span><span class="o">.</span><span class="n">s_adj</span><span class="p">(</span><span class="n">qubits</span><span class="p">[</span><span class="n">_qubit_index</span><span class="p">(</span><span class="n">gate</span><span class="o">.</span><span class="n">basic_gate</span><span class="p">)])</span>  <span class="c1"># ty:ignore[invalid-argument-type]</span>
-</span><span id="line-161">            <span class="k">return</span>
-</span><span id="line-162">        <span class="k">if</span> <span class="n">inner_cls</span> <span class="ow">is</span> <span class="n">T</span><span class="p">:</span>
-</span><span id="line-163">            <span class="n">qis</span><span class="o">.</span><span class="n">t_adj</span><span class="p">(</span><span class="n">qubits</span><span class="p">[</span><span class="n">_qubit_index</span><span class="p">(</span><span class="n">gate</span><span class="o">.</span><span class="n">basic_gate</span><span class="p">)])</span>  <span class="c1"># ty:ignore[invalid-argument-type]</span>
-</span><span id="line-164">            <span class="k">return</span>
-</span><span id="line-165">    <span class="k">if</span> <span class="bp">cls</span> <span class="ow">is</span> <span class="n">M</span><span class="p">:</span>
-</span><span id="line-166">        <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">gate</span><span class="o">.</span><span class="n">qubits</span><span class="p">:</span>
-</span><span id="line-167">            <span class="n">qis</span><span class="o">.</span><span class="n">mz</span><span class="p">(</span><span class="n">qubits</span><span class="p">[</span><span class="n">q</span><span class="p">],</span> <span class="n">results</span><span class="p">[</span><span class="n">q</span><span class="p">])</span>
-</span><span id="line-168">        <span class="k">return</span>
-</span><span id="line-169">    <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-</span><span id="line-170">        <span class="sa">f</span><span class="s2">&quot;Gate </span><span class="si">{</span><span class="n">gate</span><span class="o">.</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> (type </span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">) has no QIR Base-Profile &quot;</span>
-</span><span id="line-171">        <span class="s2">&quot;intrinsic. Decompose it into supported primitives before export.&quot;</span>
-</span><span id="line-172">    <span class="p">)</span>
-</span><span id="line-173">
+</span><span id="line-112">
+</span><span id="line-113"><span class="k">def</span><span class="w"> </span><span class="nf">_produce_gate</span><span class="p">(</span>
+</span><span id="line-114">    <span class="n">module</span><span class="p">:</span> <span class="n">SimpleModule</span><span class="p">,</span>
+</span><span id="line-115">    <span class="n">qis</span><span class="p">:</span> <span class="n">BasicQisBuilder</span><span class="p">,</span>
+</span><span id="line-116">    <span class="n">qubits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Value</span><span class="p">],</span>
+</span><span id="line-117">    <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Value</span><span class="p">],</span>
+</span><span id="line-118">    <span class="n">gate</span><span class="p">:</span> <span class="n">Gate</span><span class="p">,</span>
+</span><span id="line-119"><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-120"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Translate a single qilisdk :class:`Gate` into one (or more) QIS calls.</span>
+</span><span id="line-121">
+</span><span id="line-122"><span class="sd">    Args:</span>
+</span><span id="line-123"><span class="sd">        module (SimpleModule): The pyqir module whose builder backs ``qis``;</span>
+</span><span id="line-124"><span class="sd">            used for intrinsics like ``swap`` that only have a function-style</span>
+</span><span id="line-125"><span class="sd">            binding.</span>
+</span><span id="line-126"><span class="sd">        qis (BasicQisBuilder): A QIS builder bound to the entry point.</span>
+</span><span id="line-127"><span class="sd">        qubits (list[Value]): The module&#39;s statically allocated qubit values.</span>
+</span><span id="line-128"><span class="sd">        results (list[Value]): The module&#39;s statically allocated result values.</span>
+</span><span id="line-129"><span class="sd">        gate (Gate): The gate to produce.</span>
+</span><span id="line-130">
+</span><span id="line-131"><span class="sd">    Raises:</span>
+</span><span id="line-132"><span class="sd">        NotImplementedError: If the gate has no QIR Base-Profile mapping.</span>
+</span><span id="line-133"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-134">    <span class="bp">cls</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">gate</span><span class="p">)</span>
+</span><span id="line-135">    <span class="k">if</span> <span class="bp">cls</span> <span class="ow">is</span> <span class="n">I</span><span class="p">:</span>
+</span><span id="line-136">        <span class="k">return</span>  <span class="c1"># identity is a no-op in QIR</span>
+</span><span id="line-137">    <span class="k">if</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">_SIMPLE_GATE_EMITTERS</span><span class="p">:</span>
+</span><span id="line-138">        <span class="nb">getattr</span><span class="p">(</span><span class="n">qis</span><span class="p">,</span> <span class="n">_SIMPLE_GATE_EMITTERS</span><span class="p">[</span><span class="bp">cls</span><span class="p">])(</span><span class="n">qubits</span><span class="p">[</span><span class="n">_qubit_index</span><span class="p">(</span><span class="n">gate</span><span class="p">)])</span>
+</span><span id="line-139">        <span class="k">return</span>
+</span><span id="line-140">    <span class="k">if</span> <span class="bp">cls</span> <span class="ow">is</span> <span class="n">RX</span><span class="p">:</span>
+</span><span id="line-141">        <span class="n">qis</span><span class="o">.</span><span class="n">rx</span><span class="p">(</span><span class="n">_scalar_param</span><span class="p">(</span><span class="n">gate</span><span class="p">,</span> <span class="s2">&quot;theta&quot;</span><span class="p">),</span> <span class="n">qubits</span><span class="p">[</span><span class="n">_qubit_index</span><span class="p">(</span><span class="n">gate</span><span class="p">)])</span>
+</span><span id="line-142">        <span class="k">return</span>
+</span><span id="line-143">    <span class="k">if</span> <span class="bp">cls</span> <span class="ow">is</span> <span class="n">RY</span><span class="p">:</span>
+</span><span id="line-144">        <span class="n">qis</span><span class="o">.</span><span class="n">ry</span><span class="p">(</span><span class="n">_scalar_param</span><span class="p">(</span><span class="n">gate</span><span class="p">,</span> <span class="s2">&quot;theta&quot;</span><span class="p">),</span> <span class="n">qubits</span><span class="p">[</span><span class="n">_qubit_index</span><span class="p">(</span><span class="n">gate</span><span class="p">)])</span>
+</span><span id="line-145">        <span class="k">return</span>
+</span><span id="line-146">    <span class="k">if</span> <span class="bp">cls</span> <span class="ow">is</span> <span class="n">RZ</span><span class="p">:</span>
+</span><span id="line-147">        <span class="n">qis</span><span class="o">.</span><span class="n">rz</span><span class="p">(</span><span class="n">_scalar_param</span><span class="p">(</span><span class="n">gate</span><span class="p">,</span> <span class="s2">&quot;phi&quot;</span><span class="p">),</span> <span class="n">qubits</span><span class="p">[</span><span class="n">_qubit_index</span><span class="p">(</span><span class="n">gate</span><span class="p">)])</span>
+</span><span id="line-148">        <span class="k">return</span>
+</span><span id="line-149">    <span class="k">if</span> <span class="bp">cls</span> <span class="ow">is</span> <span class="n">CNOT</span><span class="p">:</span>
+</span><span id="line-150">        <span class="n">qis</span><span class="o">.</span><span class="n">cx</span><span class="p">(</span><span class="n">qubits</span><span class="p">[</span><span class="n">gate</span><span class="o">.</span><span class="n">control_qubits</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">qubits</span><span class="p">[</span><span class="n">gate</span><span class="o">.</span><span class="n">target_qubits</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+</span><span id="line-151">        <span class="k">return</span>
+</span><span id="line-152">    <span class="k">if</span> <span class="bp">cls</span> <span class="ow">is</span> <span class="n">CZ</span><span class="p">:</span>
+</span><span id="line-153">        <span class="n">qis</span><span class="o">.</span><span class="n">cz</span><span class="p">(</span><span class="n">qubits</span><span class="p">[</span><span class="n">gate</span><span class="o">.</span><span class="n">control_qubits</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">qubits</span><span class="p">[</span><span class="n">gate</span><span class="o">.</span><span class="n">target_qubits</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+</span><span id="line-154">        <span class="k">return</span>
+</span><span id="line-155">    <span class="k">if</span> <span class="bp">cls</span> <span class="ow">is</span> <span class="n">SWAP</span><span class="p">:</span>
+</span><span id="line-156">        <span class="n">qis_swap</span><span class="p">(</span><span class="n">module</span><span class="o">.</span><span class="n">builder</span><span class="p">,</span> <span class="n">qubits</span><span class="p">[</span><span class="n">gate</span><span class="o">.</span><span class="n">qubits</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">qubits</span><span class="p">[</span><span class="n">gate</span><span class="o">.</span><span class="n">qubits</span><span class="p">[</span><span class="mi">1</span><span class="p">]])</span>
+</span><span id="line-157">        <span class="k">return</span>
+</span><span id="line-158">    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">gate</span><span class="p">,</span> <span class="n">Adjoint</span><span class="p">):</span>
+</span><span id="line-159">        <span class="n">inner_cls</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">gate</span><span class="o">.</span><span class="n">basic_gate</span><span class="p">)</span>
+</span><span id="line-160">        <span class="k">if</span> <span class="n">inner_cls</span> <span class="ow">is</span> <span class="n">S</span><span class="p">:</span>
+</span><span id="line-161">            <span class="n">qis</span><span class="o">.</span><span class="n">s_adj</span><span class="p">(</span><span class="n">qubits</span><span class="p">[</span><span class="n">_qubit_index</span><span class="p">(</span><span class="n">gate</span><span class="o">.</span><span class="n">basic_gate</span><span class="p">)])</span>  <span class="c1"># ty:ignore[invalid-argument-type]</span>
+</span><span id="line-162">            <span class="k">return</span>
+</span><span id="line-163">        <span class="k">if</span> <span class="n">inner_cls</span> <span class="ow">is</span> <span class="n">T</span><span class="p">:</span>
+</span><span id="line-164">            <span class="n">qis</span><span class="o">.</span><span class="n">t_adj</span><span class="p">(</span><span class="n">qubits</span><span class="p">[</span><span class="n">_qubit_index</span><span class="p">(</span><span class="n">gate</span><span class="o">.</span><span class="n">basic_gate</span><span class="p">)])</span>  <span class="c1"># ty:ignore[invalid-argument-type]</span>
+</span><span id="line-165">            <span class="k">return</span>
+</span><span id="line-166">    <span class="k">if</span> <span class="bp">cls</span> <span class="ow">is</span> <span class="n">M</span><span class="p">:</span>
+</span><span id="line-167">        <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">gate</span><span class="o">.</span><span class="n">qubits</span><span class="p">:</span>
+</span><span id="line-168">            <span class="n">qis</span><span class="o">.</span><span class="n">mz</span><span class="p">(</span><span class="n">qubits</span><span class="p">[</span><span class="n">q</span><span class="p">],</span> <span class="n">results</span><span class="p">[</span><span class="n">q</span><span class="p">])</span>
+</span><span id="line-169">        <span class="k">return</span>
+</span><span id="line-170">    <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+</span><span id="line-171">        <span class="sa">f</span><span class="s2">&quot;Gate </span><span class="si">{</span><span class="n">gate</span><span class="o">.</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> (type </span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">) has no QIR Base-Profile &quot;</span>
+</span><span id="line-172">        <span class="s2">&quot;intrinsic. Decompose it into supported primitives before export.&quot;</span>
+</span><span id="line-173">    <span class="p">)</span>
 </span><span id="line-174">
-</span><span id="line-175"><span class="k">def</span><span class="w"> </span><span class="nf">_populate_module</span><span class="p">(</span><span class="n">circuit</span><span class="p">:</span> <span class="n">Circuit</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">SimpleModule</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-176"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Walk ``circuit`` and emit each gate into ``module``&#39;s entry point.</span>
-</span><span id="line-177">
-</span><span id="line-178"><span class="sd">    Args:</span>
-</span><span id="line-179"><span class="sd">        circuit (Circuit): The source circuit.</span>
-</span><span id="line-180"><span class="sd">        module (SimpleModule): A pyqir :class:`SimpleModule` pre-allocated with</span>
-</span><span id="line-181"><span class="sd">            enough qubits and results for the circuit.</span>
-</span><span id="line-182"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-183">    <span class="n">qis</span> <span class="o">=</span> <span class="n">BasicQisBuilder</span><span class="p">(</span><span class="n">module</span><span class="o">.</span><span class="n">builder</span><span class="p">)</span>
-</span><span id="line-184">    <span class="n">qubits</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">module</span><span class="o">.</span><span class="n">qubits</span><span class="p">)</span>
-</span><span id="line-185">    <span class="n">results</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">module</span><span class="o">.</span><span class="n">results</span><span class="p">)</span>
-</span><span id="line-186">    <span class="k">for</span> <span class="n">gate</span> <span class="ow">in</span> <span class="n">circuit</span><span class="o">.</span><span class="n">gates</span><span class="p">:</span>
-</span><span id="line-187">        <span class="n">_produce_gate</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">qis</span><span class="p">,</span> <span class="n">qubits</span><span class="p">,</span> <span class="n">results</span><span class="p">,</span> <span class="n">gate</span><span class="p">)</span>
-</span><span id="line-188">
-</span><span id="line-189">
-</span><span id="line-190"><span class="c1"># === QIR intrinsic → Gate factories (import side) =================================</span>
+</span><span id="line-175">
+</span><span id="line-176"><span class="k">def</span><span class="w"> </span><span class="nf">_populate_module</span><span class="p">(</span><span class="n">circuit</span><span class="p">:</span> <span class="n">Circuit</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">SimpleModule</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-177"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Walk ``circuit`` and emit each gate into ``module``&#39;s entry point.</span>
+</span><span id="line-178">
+</span><span id="line-179"><span class="sd">    Args:</span>
+</span><span id="line-180"><span class="sd">        circuit (Circuit): The source circuit.</span>
+</span><span id="line-181"><span class="sd">        module (SimpleModule): A pyqir :class:`SimpleModule` pre-allocated with</span>
+</span><span id="line-182"><span class="sd">            enough qubits and results for the circuit.</span>
+</span><span id="line-183"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-184">    <span class="n">qis</span> <span class="o">=</span> <span class="n">BasicQisBuilder</span><span class="p">(</span><span class="n">module</span><span class="o">.</span><span class="n">builder</span><span class="p">)</span>
+</span><span id="line-185">    <span class="n">qubits</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">module</span><span class="o">.</span><span class="n">qubits</span><span class="p">)</span>
+</span><span id="line-186">    <span class="n">results</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">module</span><span class="o">.</span><span class="n">results</span><span class="p">)</span>
+</span><span id="line-187">    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;[QIR] Emitting </span><span class="si">{}</span><span class="s2"> gates into module&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">circuit</span><span class="o">.</span><span class="n">gates</span><span class="p">))</span>
+</span><span id="line-188">    <span class="k">for</span> <span class="n">gate</span> <span class="ow">in</span> <span class="n">circuit</span><span class="o">.</span><span class="n">gates</span><span class="p">:</span>
+</span><span id="line-189">        <span class="n">logger</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="s2">&quot;[QIR] Emitting gate </span><span class="si">{}</span><span class="s2"> on qubits </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">gate</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">gate</span><span class="o">.</span><span class="n">qubits</span><span class="p">)</span>
+</span><span id="line-190">        <span class="n">_produce_gate</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">qis</span><span class="p">,</span> <span class="n">qubits</span><span class="p">,</span> <span class="n">results</span><span class="p">,</span> <span class="n">gate</span><span class="p">)</span>
 </span><span id="line-191">
 </span><span id="line-192">
-</span><span id="line-193"><span class="k">def</span><span class="w"> </span><span class="nf">_qid</span><span class="p">(</span><span class="n">arg</span><span class="p">:</span> <span class="n">Value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-</span><span id="line-194"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the qubit/result pointer ID for a QIR call argument.</span>
+</span><span id="line-193"><span class="c1"># === QIR intrinsic → Gate factories (import side) =================================</span>
+</span><span id="line-194">
 </span><span id="line-195">
-</span><span id="line-196"><span class="sd">    ``pyqir.ptr_id`` returns ``None`` for the implicit zero pointer (``null``),</span>
-</span><span id="line-197"><span class="sd">    which QIR uses to encode qubit/result index ``0``.</span>
+</span><span id="line-196"><span class="k">def</span><span class="w"> </span><span class="nf">_qid</span><span class="p">(</span><span class="n">arg</span><span class="p">:</span> <span class="n">Value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+</span><span id="line-197"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the qubit/result pointer ID for a QIR call argument.</span>
 </span><span id="line-198">
-</span><span id="line-199"><span class="sd">    Args:</span>
-</span><span id="line-200"><span class="sd">        arg (Value): A pyqir value representing a qubit or result pointer.</span>
+</span><span id="line-199"><span class="sd">    ``pyqir.ptr_id`` returns ``None`` for the implicit zero pointer (``null``),</span>
+</span><span id="line-200"><span class="sd">    which QIR uses to encode qubit/result index ``0``.</span>
 </span><span id="line-201">
-</span><span id="line-202"><span class="sd">    Returns:</span>
-</span><span id="line-203"><span class="sd">        int: The numeric ID; ``0`` for the null pointer.</span>
-</span><span id="line-204"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-205">    <span class="n">qid_value</span> <span class="o">=</span> <span class="n">ptr_id</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
-</span><span id="line-206">    <span class="k">return</span> <span class="mi">0</span> <span class="k">if</span> <span class="n">qid_value</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">qid_value</span>
-</span><span id="line-207">
-</span><span id="line-208">
-</span><span id="line-209"><span class="k">def</span><span class="w"> </span><span class="nf">_float_value</span><span class="p">(</span><span class="n">arg</span><span class="p">:</span> <span class="n">Value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-</span><span id="line-210"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract the numeric value of a :class:`FloatConstant` rotation angle.</span>
+</span><span id="line-202"><span class="sd">    Args:</span>
+</span><span id="line-203"><span class="sd">        arg (Value): A pyqir value representing a qubit or result pointer.</span>
+</span><span id="line-204">
+</span><span id="line-205"><span class="sd">    Returns:</span>
+</span><span id="line-206"><span class="sd">        int: The numeric ID; ``0`` for the null pointer.</span>
+</span><span id="line-207"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-208">    <span class="n">qid_value</span> <span class="o">=</span> <span class="n">ptr_id</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
+</span><span id="line-209">    <span class="k">return</span> <span class="mi">0</span> <span class="k">if</span> <span class="n">qid_value</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">qid_value</span>
+</span><span id="line-210">
 </span><span id="line-211">
-</span><span id="line-212"><span class="sd">    Args:</span>
-</span><span id="line-213"><span class="sd">        arg (Value): The first argument of a QIS rotation call.</span>
+</span><span id="line-212"><span class="k">def</span><span class="w"> </span><span class="nf">_float_value</span><span class="p">(</span><span class="n">arg</span><span class="p">:</span> <span class="n">Value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="line-213"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract the numeric value of a :class:`FloatConstant` rotation angle.</span>
 </span><span id="line-214">
-</span><span id="line-215"><span class="sd">    Returns:</span>
-</span><span id="line-216"><span class="sd">        float: The rotation angle.</span>
+</span><span id="line-215"><span class="sd">    Args:</span>
+</span><span id="line-216"><span class="sd">        arg (Value): The first argument of a QIS rotation call.</span>
 </span><span id="line-217">
-</span><span id="line-218"><span class="sd">    Raises:</span>
-</span><span id="line-219"><span class="sd">        TypeError: If ``arg`` is not a constant floating-point value.</span>
-</span><span id="line-220"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-221">    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">FloatConstant</span><span class="p">):</span>
-</span><span id="line-222">        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Expected FloatConstant rotation angle, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</span><span id="line-223">    <span class="k">return</span> <span class="n">arg</span><span class="o">.</span><span class="n">value</span>
-</span><span id="line-224">
-</span><span id="line-225">
-</span><span id="line-226"><span class="k">def</span><span class="w"> </span><span class="nf">_gate_from_call</span><span class="p">(</span><span class="n">callee</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Value</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Gate</span><span class="p">:</span>
-</span><span id="line-227"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Reconstruct a :class:`Gate` from a parsed QIS call.</span>
+</span><span id="line-218"><span class="sd">    Returns:</span>
+</span><span id="line-219"><span class="sd">        float: The rotation angle.</span>
+</span><span id="line-220">
+</span><span id="line-221"><span class="sd">    Raises:</span>
+</span><span id="line-222"><span class="sd">        TypeError: If ``arg`` is not a constant floating-point value.</span>
+</span><span id="line-223"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-224">    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">FloatConstant</span><span class="p">):</span>
+</span><span id="line-225">        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Expected FloatConstant rotation angle, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span id="line-226">    <span class="k">return</span> <span class="n">arg</span><span class="o">.</span><span class="n">value</span>
+</span><span id="line-227">
 </span><span id="line-228">
-</span><span id="line-229"><span class="sd">    Args:</span>
-</span><span id="line-230"><span class="sd">        callee (str): The mangled intrinsic name, e.g. ``__quantum__qis__h__body``.</span>
-</span><span id="line-231"><span class="sd">        args (list[Value]): The argument list; for rotations the first entry is</span>
-</span><span id="line-232"><span class="sd">            a :class:`FloatConstant` and the remaining entries are qubit /</span>
-</span><span id="line-233"><span class="sd">            result pointer constants.</span>
-</span><span id="line-234">
-</span><span id="line-235"><span class="sd">    Returns:</span>
-</span><span id="line-236"><span class="sd">        Gate: The reconstructed gate.</span>
+</span><span id="line-229"><span class="k">def</span><span class="w"> </span><span class="nf">_gate_from_call</span><span class="p">(</span><span class="n">callee</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Value</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Gate</span><span class="p">:</span>
+</span><span id="line-230"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Reconstruct a :class:`Gate` from a parsed QIS call.</span>
+</span><span id="line-231">
+</span><span id="line-232"><span class="sd">    Args:</span>
+</span><span id="line-233"><span class="sd">        callee (str): The mangled intrinsic name, e.g. ``__quantum__qis__h__body``.</span>
+</span><span id="line-234"><span class="sd">        args (list[Value]): The argument list; for rotations the first entry is</span>
+</span><span id="line-235"><span class="sd">            a :class:`FloatConstant` and the remaining entries are qubit /</span>
+</span><span id="line-236"><span class="sd">            result pointer constants.</span>
 </span><span id="line-237">
-</span><span id="line-238"><span class="sd">    Raises:</span>
-</span><span id="line-239"><span class="sd">        NotImplementedError: If the intrinsic is not recognized.</span>
-</span><span id="line-240"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-241">    <span class="k">if</span> <span class="n">callee</span> <span class="o">==</span> <span class="s2">&quot;__quantum__qis__x__body&quot;</span><span class="p">:</span>
-</span><span id="line-242">        <span class="k">return</span> <span class="n">X</span><span class="p">(</span><span class="n">_qid</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
-</span><span id="line-243">    <span class="k">if</span> <span class="n">callee</span> <span class="o">==</span> <span class="s2">&quot;__quantum__qis__y__body&quot;</span><span class="p">:</span>
-</span><span id="line-244">        <span class="k">return</span> <span class="n">Y</span><span class="p">(</span><span class="n">_qid</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
-</span><span id="line-245">    <span class="k">if</span> <span class="n">callee</span> <span class="o">==</span> <span class="s2">&quot;__quantum__qis__z__body&quot;</span><span class="p">:</span>
-</span><span id="line-246">        <span class="k">return</span> <span class="n">Z</span><span class="p">(</span><span class="n">_qid</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
-</span><span id="line-247">    <span class="k">if</span> <span class="n">callee</span> <span class="o">==</span> <span class="s2">&quot;__quantum__qis__h__body&quot;</span><span class="p">:</span>
-</span><span id="line-248">        <span class="k">return</span> <span class="n">H</span><span class="p">(</span><span class="n">_qid</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
-</span><span id="line-249">    <span class="k">if</span> <span class="n">callee</span> <span class="o">==</span> <span class="s2">&quot;__quantum__qis__s__body&quot;</span><span class="p">:</span>
-</span><span id="line-250">        <span class="k">return</span> <span class="n">S</span><span class="p">(</span><span class="n">_qid</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
-</span><span id="line-251">    <span class="k">if</span> <span class="n">callee</span> <span class="o">==</span> <span class="s2">&quot;__quantum__qis__t__body&quot;</span><span class="p">:</span>
-</span><span id="line-252">        <span class="k">return</span> <span class="n">T</span><span class="p">(</span><span class="n">_qid</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
-</span><span id="line-253">    <span class="k">if</span> <span class="n">callee</span> <span class="o">==</span> <span class="s2">&quot;__quantum__qis__s__adj&quot;</span><span class="p">:</span>
-</span><span id="line-254">        <span class="k">return</span> <span class="n">Adjoint</span><span class="p">(</span><span class="n">S</span><span class="p">(</span><span class="n">_qid</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])))</span>
-</span><span id="line-255">    <span class="k">if</span> <span class="n">callee</span> <span class="o">==</span> <span class="s2">&quot;__quantum__qis__t__adj&quot;</span><span class="p">:</span>
-</span><span id="line-256">        <span class="k">return</span> <span class="n">Adjoint</span><span class="p">(</span><span class="n">T</span><span class="p">(</span><span class="n">_qid</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])))</span>
-</span><span id="line-257">    <span class="k">if</span> <span class="n">callee</span> <span class="o">==</span> <span class="s2">&quot;__quantum__qis__rx__body&quot;</span><span class="p">:</span>
-</span><span id="line-258">        <span class="k">return</span> <span class="n">RX</span><span class="p">(</span><span class="n">_qid</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">theta</span><span class="o">=</span><span class="n">_float_value</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
-</span><span id="line-259">    <span class="k">if</span> <span class="n">callee</span> <span class="o">==</span> <span class="s2">&quot;__quantum__qis__ry__body&quot;</span><span class="p">:</span>
-</span><span id="line-260">        <span class="k">return</span> <span class="n">RY</span><span class="p">(</span><span class="n">_qid</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">theta</span><span class="o">=</span><span class="n">_float_value</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
-</span><span id="line-261">    <span class="k">if</span> <span class="n">callee</span> <span class="o">==</span> <span class="s2">&quot;__quantum__qis__rz__body&quot;</span><span class="p">:</span>
-</span><span id="line-262">        <span class="k">return</span> <span class="n">RZ</span><span class="p">(</span><span class="n">_qid</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">phi</span><span class="o">=</span><span class="n">_float_value</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
-</span><span id="line-263">    <span class="k">if</span> <span class="n">callee</span> <span class="o">==</span> <span class="s2">&quot;__quantum__qis__cnot__body&quot;</span><span class="p">:</span>
-</span><span id="line-264">        <span class="k">return</span> <span class="n">CNOT</span><span class="p">(</span><span class="n">_qid</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">_qid</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
-</span><span id="line-265">    <span class="k">if</span> <span class="n">callee</span> <span class="o">==</span> <span class="s2">&quot;__quantum__qis__cz__body&quot;</span><span class="p">:</span>
-</span><span id="line-266">        <span class="k">return</span> <span class="n">CZ</span><span class="p">(</span><span class="n">_qid</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">_qid</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
-</span><span id="line-267">    <span class="k">if</span> <span class="n">callee</span> <span class="o">==</span> <span class="s2">&quot;__quantum__qis__swap__body&quot;</span><span class="p">:</span>
-</span><span id="line-268">        <span class="k">return</span> <span class="n">SWAP</span><span class="p">(</span><span class="n">_qid</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">_qid</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
-</span><span id="line-269">    <span class="k">if</span> <span class="n">callee</span> <span class="o">==</span> <span class="s2">&quot;__quantum__qis__mz__body&quot;</span><span class="p">:</span>
-</span><span id="line-270">        <span class="k">return</span> <span class="n">M</span><span class="p">(</span><span class="n">_qid</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
-</span><span id="line-271">    <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-</span><span id="line-272">        <span class="sa">f</span><span class="s2">&quot;QIS intrinsic </span><span class="si">{</span><span class="n">callee</span><span class="si">!r}</span><span class="s2"> is not supported. Add a mapping in &quot;</span>
-</span><span id="line-273">        <span class="s2">&quot;`qilisdk.utils.qir._gate_from_call` to extend the supported set.&quot;</span>
-</span><span id="line-274">    <span class="p">)</span>
-</span><span id="line-275">
-</span><span id="line-276">
-</span><span id="line-277"><span class="c1"># === Internal: module → Circuit walk =============================================</span>
+</span><span id="line-238"><span class="sd">    Returns:</span>
+</span><span id="line-239"><span class="sd">        Gate: The reconstructed gate.</span>
+</span><span id="line-240">
+</span><span id="line-241"><span class="sd">    Raises:</span>
+</span><span id="line-242"><span class="sd">        NotImplementedError: If the intrinsic is not recognized.</span>
+</span><span id="line-243"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-244">    <span class="k">if</span> <span class="n">callee</span> <span class="o">==</span> <span class="s2">&quot;__quantum__qis__x__body&quot;</span><span class="p">:</span>
+</span><span id="line-245">        <span class="k">return</span> <span class="n">X</span><span class="p">(</span><span class="n">_qid</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+</span><span id="line-246">    <span class="k">if</span> <span class="n">callee</span> <span class="o">==</span> <span class="s2">&quot;__quantum__qis__y__body&quot;</span><span class="p">:</span>
+</span><span id="line-247">        <span class="k">return</span> <span class="n">Y</span><span class="p">(</span><span class="n">_qid</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+</span><span id="line-248">    <span class="k">if</span> <span class="n">callee</span> <span class="o">==</span> <span class="s2">&quot;__quantum__qis__z__body&quot;</span><span class="p">:</span>
+</span><span id="line-249">        <span class="k">return</span> <span class="n">Z</span><span class="p">(</span><span class="n">_qid</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+</span><span id="line-250">    <span class="k">if</span> <span class="n">callee</span> <span class="o">==</span> <span class="s2">&quot;__quantum__qis__h__body&quot;</span><span class="p">:</span>
+</span><span id="line-251">        <span class="k">return</span> <span class="n">H</span><span class="p">(</span><span class="n">_qid</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+</span><span id="line-252">    <span class="k">if</span> <span class="n">callee</span> <span class="o">==</span> <span class="s2">&quot;__quantum__qis__s__body&quot;</span><span class="p">:</span>
+</span><span id="line-253">        <span class="k">return</span> <span class="n">S</span><span class="p">(</span><span class="n">_qid</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+</span><span id="line-254">    <span class="k">if</span> <span class="n">callee</span> <span class="o">==</span> <span class="s2">&quot;__quantum__qis__t__body&quot;</span><span class="p">:</span>
+</span><span id="line-255">        <span class="k">return</span> <span class="n">T</span><span class="p">(</span><span class="n">_qid</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+</span><span id="line-256">    <span class="k">if</span> <span class="n">callee</span> <span class="o">==</span> <span class="s2">&quot;__quantum__qis__s__adj&quot;</span><span class="p">:</span>
+</span><span id="line-257">        <span class="k">return</span> <span class="n">Adjoint</span><span class="p">(</span><span class="n">S</span><span class="p">(</span><span class="n">_qid</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])))</span>
+</span><span id="line-258">    <span class="k">if</span> <span class="n">callee</span> <span class="o">==</span> <span class="s2">&quot;__quantum__qis__t__adj&quot;</span><span class="p">:</span>
+</span><span id="line-259">        <span class="k">return</span> <span class="n">Adjoint</span><span class="p">(</span><span class="n">T</span><span class="p">(</span><span class="n">_qid</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])))</span>
+</span><span id="line-260">    <span class="k">if</span> <span class="n">callee</span> <span class="o">==</span> <span class="s2">&quot;__quantum__qis__rx__body&quot;</span><span class="p">:</span>
+</span><span id="line-261">        <span class="k">return</span> <span class="n">RX</span><span class="p">(</span><span class="n">_qid</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">theta</span><span class="o">=</span><span class="n">_float_value</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+</span><span id="line-262">    <span class="k">if</span> <span class="n">callee</span> <span class="o">==</span> <span class="s2">&quot;__quantum__qis__ry__body&quot;</span><span class="p">:</span>
+</span><span id="line-263">        <span class="k">return</span> <span class="n">RY</span><span class="p">(</span><span class="n">_qid</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">theta</span><span class="o">=</span><span class="n">_float_value</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+</span><span id="line-264">    <span class="k">if</span> <span class="n">callee</span> <span class="o">==</span> <span class="s2">&quot;__quantum__qis__rz__body&quot;</span><span class="p">:</span>
+</span><span id="line-265">        <span class="k">return</span> <span class="n">RZ</span><span class="p">(</span><span class="n">_qid</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">phi</span><span class="o">=</span><span class="n">_float_value</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+</span><span id="line-266">    <span class="k">if</span> <span class="n">callee</span> <span class="o">==</span> <span class="s2">&quot;__quantum__qis__cnot__body&quot;</span><span class="p">:</span>
+</span><span id="line-267">        <span class="k">return</span> <span class="n">CNOT</span><span class="p">(</span><span class="n">_qid</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">_qid</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+</span><span id="line-268">    <span class="k">if</span> <span class="n">callee</span> <span class="o">==</span> <span class="s2">&quot;__quantum__qis__cz__body&quot;</span><span class="p">:</span>
+</span><span id="line-269">        <span class="k">return</span> <span class="n">CZ</span><span class="p">(</span><span class="n">_qid</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">_qid</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+</span><span id="line-270">    <span class="k">if</span> <span class="n">callee</span> <span class="o">==</span> <span class="s2">&quot;__quantum__qis__swap__body&quot;</span><span class="p">:</span>
+</span><span id="line-271">        <span class="k">return</span> <span class="n">SWAP</span><span class="p">(</span><span class="n">_qid</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">_qid</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+</span><span id="line-272">    <span class="k">if</span> <span class="n">callee</span> <span class="o">==</span> <span class="s2">&quot;__quantum__qis__mz__body&quot;</span><span class="p">:</span>
+</span><span id="line-273">        <span class="k">return</span> <span class="n">M</span><span class="p">(</span><span class="n">_qid</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+</span><span id="line-274">    <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+</span><span id="line-275">        <span class="sa">f</span><span class="s2">&quot;QIS intrinsic </span><span class="si">{</span><span class="n">callee</span><span class="si">!r}</span><span class="s2"> is not supported. Add a mapping in &quot;</span>
+</span><span id="line-276">        <span class="s2">&quot;`qilisdk.utils.qir._gate_from_call` to extend the supported set.&quot;</span>
+</span><span id="line-277">    <span class="p">)</span>
 </span><span id="line-278">
 </span><span id="line-279">
-</span><span id="line-280"><span class="k">def</span><span class="w"> </span><span class="nf">_circuit_from_module</span><span class="p">(</span><span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Circuit</span><span class="p">:</span>
-</span><span id="line-281"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Walk a parsed QIR module&#39;s entry point and rebuild a :class:`Circuit`.</span>
+</span><span id="line-280"><span class="c1"># === Internal: module → Circuit walk =============================================</span>
+</span><span id="line-281">
 </span><span id="line-282">
-</span><span id="line-283"><span class="sd">    Args:</span>
-</span><span id="line-284"><span class="sd">        module (Module): A pyqir :class:`Module` produced by</span>
-</span><span id="line-285"><span class="sd">            :meth:`Module.from_ir` or :meth:`Module.from_bitcode`.</span>
-</span><span id="line-286">
-</span><span id="line-287"><span class="sd">    Returns:</span>
-</span><span id="line-288"><span class="sd">        Circuit: The reconstructed circuit.</span>
+</span><span id="line-283"><span class="k">def</span><span class="w"> </span><span class="nf">_circuit_from_module</span><span class="p">(</span><span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Circuit</span><span class="p">:</span>
+</span><span id="line-284"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Walk a parsed QIR module&#39;s entry point and rebuild a :class:`Circuit`.</span>
+</span><span id="line-285">
+</span><span id="line-286"><span class="sd">    Args:</span>
+</span><span id="line-287"><span class="sd">        module (Module): A pyqir :class:`Module` produced by</span>
+</span><span id="line-288"><span class="sd">            :meth:`Module.from_ir` or :meth:`Module.from_bitcode`.</span>
 </span><span id="line-289">
-</span><span id="line-290"><span class="sd">    Raises:</span>
-</span><span id="line-291"><span class="sd">        ValueError: If no Base-Profile entry-point function is present.</span>
-</span><span id="line-292"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-293">    <span class="n">entry</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">functions</span> <span class="k">if</span> <span class="n">is_entry_point</span><span class="p">(</span><span class="n">f</span><span class="p">)),</span> <span class="kc">None</span><span class="p">)</span>
-</span><span id="line-294">    <span class="k">if</span> <span class="n">entry</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-295">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-</span><span id="line-296">            <span class="s2">&quot;QIR module has no entry-point function; expected a Base-Profile &quot;</span>
-</span><span id="line-297">            <span class="s2">&quot;module with one `entry_point`-attributed function.&quot;</span>
-</span><span id="line-298">        <span class="p">)</span>
-</span><span id="line-299">    <span class="n">nqubits</span> <span class="o">=</span> <span class="n">required_num_qubits</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span> <span class="ow">or</span> <span class="mi">0</span>
-</span><span id="line-300">    <span class="n">circuit</span> <span class="o">=</span> <span class="n">Circuit</span><span class="p">(</span><span class="n">nqubits</span><span class="o">=</span><span class="n">nqubits</span><span class="p">)</span>
-</span><span id="line-301">    <span class="k">for</span> <span class="n">block</span> <span class="ow">in</span> <span class="n">entry</span><span class="o">.</span><span class="n">basic_blocks</span><span class="p">:</span>
-</span><span id="line-302">        <span class="k">for</span> <span class="n">instr</span> <span class="ow">in</span> <span class="n">block</span><span class="o">.</span><span class="n">instructions</span><span class="p">:</span>
-</span><span id="line-303">            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">instr</span><span class="p">,</span> <span class="n">Call</span><span class="p">):</span>
-</span><span id="line-304">                <span class="n">circuit</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">_gate_from_call</span><span class="p">(</span><span class="n">instr</span><span class="o">.</span><span class="n">callee</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">instr</span><span class="o">.</span><span class="n">args</span><span class="p">)))</span>
-</span><span id="line-305">    <span class="k">return</span> <span class="n">circuit</span>
-</span><span id="line-306">
-</span><span id="line-307">
-</span><span id="line-308"><span class="c1"># === Public API ===================================================================</span>
-</span><span id="line-309">
-</span><span id="line-310">
+</span><span id="line-290"><span class="sd">    Returns:</span>
+</span><span id="line-291"><span class="sd">        Circuit: The reconstructed circuit.</span>
+</span><span id="line-292">
+</span><span id="line-293"><span class="sd">    Raises:</span>
+</span><span id="line-294"><span class="sd">        ValueError: If no Base-Profile entry-point function is present.</span>
+</span><span id="line-295"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-296">    <span class="n">entry</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">functions</span> <span class="k">if</span> <span class="n">is_entry_point</span><span class="p">(</span><span class="n">f</span><span class="p">)),</span> <span class="kc">None</span><span class="p">)</span>
+</span><span id="line-297">    <span class="k">if</span> <span class="n">entry</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-298">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="line-299">            <span class="s2">&quot;QIR module has no entry-point function; expected a Base-Profile &quot;</span>
+</span><span id="line-300">            <span class="s2">&quot;module with one `entry_point`-attributed function.&quot;</span>
+</span><span id="line-301">        <span class="p">)</span>
+</span><span id="line-302">    <span class="n">nqubits</span> <span class="o">=</span> <span class="n">required_num_qubits</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span> <span class="ow">or</span> <span class="mi">0</span>
+</span><span id="line-303">    <span class="n">circuit</span> <span class="o">=</span> <span class="n">Circuit</span><span class="p">(</span><span class="n">nqubits</span><span class="o">=</span><span class="n">nqubits</span><span class="p">)</span>
+</span><span id="line-304">    <span class="k">for</span> <span class="n">block</span> <span class="ow">in</span> <span class="n">entry</span><span class="o">.</span><span class="n">basic_blocks</span><span class="p">:</span>
+</span><span id="line-305">        <span class="k">for</span> <span class="n">instr</span> <span class="ow">in</span> <span class="n">block</span><span class="o">.</span><span class="n">instructions</span><span class="p">:</span>
+</span><span id="line-306">            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">instr</span><span class="p">,</span> <span class="n">Call</span><span class="p">):</span>
+</span><span id="line-307">                <span class="n">logger</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="s2">&quot;[QIR] Reconstructing gate from call </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">instr</span><span class="o">.</span><span class="n">callee</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+</span><span id="line-308">                <span class="n">circuit</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">_gate_from_call</span><span class="p">(</span><span class="n">instr</span><span class="o">.</span><span class="n">callee</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">instr</span><span class="o">.</span><span class="n">args</span><span class="p">)))</span>
+</span><span id="line-309">    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;[QIR] Reconstructed circuit with </span><span class="si">{}</span><span class="s2"> qubits and </span><span class="si">{}</span><span class="s2"> gates&quot;</span><span class="p">,</span> <span class="n">circuit</span><span class="o">.</span><span class="n">nqubits</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">circuit</span><span class="o">.</span><span class="n">gates</span><span class="p">))</span>
+</span><span id="line-310">    <span class="k">return</span> <span class="n">circuit</span>
+</span><span id="line-311">
+</span><span id="line-312">
+</span><span id="line-313"><span class="c1"># === Public API ===================================================================</span>
+</span><span id="line-314">
+</span><span id="line-315">
 <div class="viewcode-block" id="to_qir">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/qir/qir/index.html#qilisdk.utils.qir.qir.to_qir">[documents]</a>
-</span><span id="line-311"><span class="k">def</span><span class="w"> </span><span class="nf">to_qir</span><span class="p">(</span><span class="n">circuit</span><span class="p">:</span> <span class="n">Circuit</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;circuit&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="line-312"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Serialize a :class:`Circuit` to a QIR Base-Profile textual LLVM IR string.</span>
-</span><span id="line-313">
-</span><span id="line-314"><span class="sd">    Every qubit in the circuit gets its own pre-allocated result register, so</span>
-</span><span id="line-315"><span class="sd">    measurements can target any qubit. The module advertises itself as a Base</span>
-</span><span id="line-316"><span class="sd">    Profile module via the standard ``required_num_qubits`` /</span>
-</span><span id="line-317"><span class="sd">    ``required_num_results`` attributes that QIR consumers expect.</span>
+</span><span id="line-316"><span class="k">def</span><span class="w"> </span><span class="nf">to_qir</span><span class="p">(</span><span class="n">circuit</span><span class="p">:</span> <span class="n">Circuit</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;circuit&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="line-317"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Serialize a :class:`Circuit` to a QIR Base-Profile textual LLVM IR string.</span>
 </span><span id="line-318">
-</span><span id="line-319"><span class="sd">    Args:</span>
-</span><span id="line-320"><span class="sd">        circuit (Circuit): The circuit to serialize.</span>
-</span><span id="line-321"><span class="sd">        name (str): Module name embedded in the IR. Defaults to ``&quot;circuit&quot;``.</span>
-</span><span id="line-322">
-</span><span id="line-323"><span class="sd">    Returns:</span>
-</span><span id="line-324"><span class="sd">        str: The QIR textual LLVM IR (``.ll`` syntax).</span>
-</span><span id="line-325">
-</span><span id="line-326"><span class="sd">    Raises:</span>
-</span><span id="line-327"><span class="sd">        NotImplementedError: If the circuit contains a gate with no Base-Profile</span>
-</span><span id="line-328"><span class="sd">            mapping (e.g. ``U1`` / ``U2`` / ``U3``, three-qubit gates).</span>
-</span><span id="line-329"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-330">    <span class="n">module</span> <span class="o">=</span> <span class="n">SimpleModule</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">num_qubits</span><span class="o">=</span><span class="n">circuit</span><span class="o">.</span><span class="n">nqubits</span><span class="p">,</span> <span class="n">num_results</span><span class="o">=</span><span class="n">circuit</span><span class="o">.</span><span class="n">nqubits</span><span class="p">)</span>
-</span><span id="line-331">    <span class="n">_populate_module</span><span class="p">(</span><span class="n">circuit</span><span class="p">,</span> <span class="n">module</span><span class="p">)</span>
-</span><span id="line-332">    <span class="k">return</span> <span class="n">module</span><span class="o">.</span><span class="n">ir</span><span class="p">()</span></div>
+</span><span id="line-319"><span class="sd">    Every qubit in the circuit gets its own pre-allocated result register, so</span>
+</span><span id="line-320"><span class="sd">    measurements can target any qubit. The module advertises itself as a Base</span>
+</span><span id="line-321"><span class="sd">    Profile module via the standard ``required_num_qubits`` /</span>
+</span><span id="line-322"><span class="sd">    ``required_num_results`` attributes that QIR consumers expect.</span>
+</span><span id="line-323">
+</span><span id="line-324"><span class="sd">    Args:</span>
+</span><span id="line-325"><span class="sd">        circuit (Circuit): The circuit to serialize.</span>
+</span><span id="line-326"><span class="sd">        name (str): Module name embedded in the IR. Defaults to ``&quot;circuit&quot;``.</span>
+</span><span id="line-327">
+</span><span id="line-328"><span class="sd">    Returns:</span>
+</span><span id="line-329"><span class="sd">        str: The QIR textual LLVM IR (``.ll`` syntax).</span>
+</span><span id="line-330">
+</span><span id="line-331"><span class="sd">    Raises:</span>
+</span><span id="line-332"><span class="sd">        NotImplementedError: If the circuit contains a gate with no Base-Profile</span>
+</span><span id="line-333"><span class="sd">            mapping (e.g. ``U1`` / ``U2`` / ``U3``, three-qubit gates).</span>
+</span><span id="line-334"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-335">    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;[QIR] Exporting circuit to QIR&quot;</span><span class="p">)</span>
+</span><span id="line-336">    <span class="n">module</span> <span class="o">=</span> <span class="n">SimpleModule</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">num_qubits</span><span class="o">=</span><span class="n">circuit</span><span class="o">.</span><span class="n">nqubits</span><span class="p">,</span> <span class="n">num_results</span><span class="o">=</span><span class="n">circuit</span><span class="o">.</span><span class="n">nqubits</span><span class="p">)</span>
+</span><span id="line-337">    <span class="n">_populate_module</span><span class="p">(</span><span class="n">circuit</span><span class="p">,</span> <span class="n">module</span><span class="p">)</span>
+</span><span id="line-338">    <span class="k">return</span> <span class="n">module</span><span class="o">.</span><span class="n">ir</span><span class="p">()</span></div>
 
-</span><span id="line-333">
-</span><span id="line-334">
+</span><span id="line-339">
+</span><span id="line-340">
 <div class="viewcode-block" id="to_qir_file">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/qir/qir/index.html#qilisdk.utils.qir.qir.to_qir_file">[documents]</a>
-</span><span id="line-335"><span class="k">def</span><span class="w"> </span><span class="nf">to_qir_file</span><span class="p">(</span><span class="n">circuit</span><span class="p">:</span> <span class="n">Circuit</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-336"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Serialize a :class:`Circuit` to a QIR file.</span>
-</span><span id="line-337">
-</span><span id="line-338"><span class="sd">    Dispatches on the file extension: ``.ll`` is written as textual LLVM IR and</span>
-</span><span id="line-339"><span class="sd">    ``.bc`` as LLVM bitcode. Any other suffix is treated as textual.</span>
-</span><span id="line-340">
-</span><span id="line-341"><span class="sd">    Args:</span>
-</span><span id="line-342"><span class="sd">        circuit (Circuit): The circuit to serialize.</span>
-</span><span id="line-343"><span class="sd">        filename (str): Destination path.</span>
-</span><span id="line-344"><span class="sd">        name (str | None): Module name; defaults to the file stem.</span>
-</span><span id="line-345"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-346">    <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
-</span><span id="line-347">    <span class="n">module_name</span> <span class="o">=</span> <span class="n">name</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">path</span><span class="o">.</span><span class="n">stem</span>
-</span><span id="line-348">    <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">suffix</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;.bc&quot;</span><span class="p">:</span>
-</span><span id="line-349">        <span class="n">module</span> <span class="o">=</span> <span class="n">SimpleModule</span><span class="p">(</span>
-</span><span id="line-350">            <span class="n">name</span><span class="o">=</span><span class="n">module_name</span><span class="p">,</span>
-</span><span id="line-351">            <span class="n">num_qubits</span><span class="o">=</span><span class="n">circuit</span><span class="o">.</span><span class="n">nqubits</span><span class="p">,</span>
-</span><span id="line-352">            <span class="n">num_results</span><span class="o">=</span><span class="n">circuit</span><span class="o">.</span><span class="n">nqubits</span><span class="p">,</span>
-</span><span id="line-353">        <span class="p">)</span>
-</span><span id="line-354">        <span class="n">_populate_module</span><span class="p">(</span><span class="n">circuit</span><span class="p">,</span> <span class="n">module</span><span class="p">)</span>
-</span><span id="line-355">        <span class="n">path</span><span class="o">.</span><span class="n">write_bytes</span><span class="p">(</span><span class="n">module</span><span class="o">.</span><span class="n">bitcode</span><span class="p">())</span>
-</span><span id="line-356">        <span class="k">return</span>
-</span><span id="line-357">    <span class="n">path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">to_qir</span><span class="p">(</span><span class="n">circuit</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">module_name</span><span class="p">),</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span></div>
+</span><span id="line-341"><span class="k">def</span><span class="w"> </span><span class="nf">to_qir_file</span><span class="p">(</span><span class="n">circuit</span><span class="p">:</span> <span class="n">Circuit</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-342"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Serialize a :class:`Circuit` to a QIR file.</span>
+</span><span id="line-343">
+</span><span id="line-344"><span class="sd">    Dispatches on the file extension: ``.ll`` is written as textual LLVM IR and</span>
+</span><span id="line-345"><span class="sd">    ``.bc`` as LLVM bitcode. Any other suffix is treated as textual.</span>
+</span><span id="line-346">
+</span><span id="line-347"><span class="sd">    Args:</span>
+</span><span id="line-348"><span class="sd">        circuit (Circuit): The circuit to serialize.</span>
+</span><span id="line-349"><span class="sd">        filename (str): Destination path.</span>
+</span><span id="line-350"><span class="sd">        name (str | None): Module name; defaults to the file stem.</span>
+</span><span id="line-351"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-352">    <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+</span><span id="line-353">    <span class="n">module_name</span> <span class="o">=</span> <span class="n">name</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">path</span><span class="o">.</span><span class="n">stem</span>
+</span><span id="line-354">    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;[QIR] Writing QIR to file </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+</span><span id="line-355">    <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">suffix</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;.bc&quot;</span><span class="p">:</span>
+</span><span id="line-356">        <span class="n">module</span> <span class="o">=</span> <span class="n">SimpleModule</span><span class="p">(</span>
+</span><span id="line-357">            <span class="n">name</span><span class="o">=</span><span class="n">module_name</span><span class="p">,</span>
+</span><span id="line-358">            <span class="n">num_qubits</span><span class="o">=</span><span class="n">circuit</span><span class="o">.</span><span class="n">nqubits</span><span class="p">,</span>
+</span><span id="line-359">            <span class="n">num_results</span><span class="o">=</span><span class="n">circuit</span><span class="o">.</span><span class="n">nqubits</span><span class="p">,</span>
+</span><span id="line-360">        <span class="p">)</span>
+</span><span id="line-361">        <span class="n">_populate_module</span><span class="p">(</span><span class="n">circuit</span><span class="p">,</span> <span class="n">module</span><span class="p">)</span>
+</span><span id="line-362">        <span class="n">path</span><span class="o">.</span><span class="n">write_bytes</span><span class="p">(</span><span class="n">module</span><span class="o">.</span><span class="n">bitcode</span><span class="p">())</span>
+</span><span id="line-363">        <span class="k">return</span>
+</span><span id="line-364">    <span class="n">path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">to_qir</span><span class="p">(</span><span class="n">circuit</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">module_name</span><span class="p">),</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span></div>
 
-</span><span id="line-358">
-</span><span id="line-359">
+</span><span id="line-365">
+</span><span id="line-366">
 <div class="viewcode-block" id="from_qir">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/qir/qir/index.html#qilisdk.utils.qir.qir.from_qir">[documents]</a>
-</span><span id="line-360"><span class="k">def</span><span class="w"> </span><span class="nf">from_qir</span><span class="p">(</span><span class="n">qir_text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Circuit</span><span class="p">:</span>
-</span><span id="line-361"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse a QIR Base-Profile textual LLVM IR string into a :class:`Circuit`.</span>
-</span><span id="line-362">
-</span><span id="line-363"><span class="sd">    Args:</span>
-</span><span id="line-364"><span class="sd">        qir_text (str): The QIR textual LLVM IR.</span>
-</span><span id="line-365">
-</span><span id="line-366"><span class="sd">    Returns:</span>
-</span><span id="line-367"><span class="sd">        Circuit: The reconstructed circuit.</span>
-</span><span id="line-368">
-</span><span id="line-369"><span class="sd">    Raises:</span>
-</span><span id="line-370"><span class="sd">        ValueError: If the module has no Base-Profile entry-point function.</span>
-</span><span id="line-371"><span class="sd">        NotImplementedError: If the IR uses an unsupported QIS intrinsic.</span>
-</span><span id="line-372"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-373">    <span class="n">module</span> <span class="o">=</span> <span class="n">Module</span><span class="o">.</span><span class="n">from_ir</span><span class="p">(</span><span class="n">Context</span><span class="p">(),</span> <span class="n">qir_text</span><span class="p">)</span>
-</span><span id="line-374">    <span class="k">return</span> <span class="n">_circuit_from_module</span><span class="p">(</span><span class="n">module</span><span class="p">)</span></div>
-
+</span><span id="line-367"><span class="k">def</span><span class="w"> </span><span class="nf">from_qir</span><span class="p">(</span><span class="n">qir_text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Circuit</span><span class="p">:</span>
+</span><span id="line-368"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse a QIR Base-Profile textual LLVM IR string into a :class:`Circuit`.</span>
+</span><span id="line-369">
+</span><span id="line-370"><span class="sd">    Args:</span>
+</span><span id="line-371"><span class="sd">        qir_text (str): The QIR textual LLVM IR.</span>
+</span><span id="line-372">
+</span><span id="line-373"><span class="sd">    Returns:</span>
+</span><span id="line-374"><span class="sd">        Circuit: The reconstructed circuit.</span>
 </span><span id="line-375">
-</span><span id="line-376">
+</span><span id="line-376"><span class="sd">    Raises:</span>
+</span><span id="line-377"><span class="sd">        ValueError: If the module has no Base-Profile entry-point function.</span>
+</span><span id="line-378"><span class="sd">        NotImplementedError: If the IR uses an unsupported QIS intrinsic.</span>
+</span><span id="line-379"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-380">    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;[QIR] Importing circuit from QIR&quot;</span><span class="p">)</span>
+</span><span id="line-381">    <span class="n">module</span> <span class="o">=</span> <span class="n">Module</span><span class="o">.</span><span class="n">from_ir</span><span class="p">(</span><span class="n">Context</span><span class="p">(),</span> <span class="n">qir_text</span><span class="p">)</span>
+</span><span id="line-382">    <span class="k">return</span> <span class="n">_circuit_from_module</span><span class="p">(</span><span class="n">module</span><span class="p">)</span></div>
+
+</span><span id="line-383">
+</span><span id="line-384">
 <div class="viewcode-block" id="from_qir_file">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/qir/qir/index.html#qilisdk.utils.qir.qir.from_qir_file">[documents]</a>
-</span><span id="line-377"><span class="k">def</span><span class="w"> </span><span class="nf">from_qir_file</span><span class="p">(</span><span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Circuit</span><span class="p">:</span>
-</span><span id="line-378"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Read a QIR file (``.ll`` or ``.bc``) and parse it into a :class:`Circuit`.</span>
-</span><span id="line-379">
-</span><span id="line-380"><span class="sd">    Args:</span>
-</span><span id="line-381"><span class="sd">        filename (str): Path to a ``.ll`` or ``.bc`` QIR file.</span>
-</span><span id="line-382">
-</span><span id="line-383"><span class="sd">    Returns:</span>
-</span><span id="line-384"><span class="sd">        Circuit: The reconstructed circuit.</span>
-</span><span id="line-385"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-386">    <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
-</span><span id="line-387">    <span class="n">ctx</span> <span class="o">=</span> <span class="n">Context</span><span class="p">()</span>
-</span><span id="line-388">    <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">suffix</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;.bc&quot;</span><span class="p">:</span>
-</span><span id="line-389">        <span class="n">module</span> <span class="o">=</span> <span class="n">Module</span><span class="o">.</span><span class="n">from_bitcode</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">path</span><span class="o">.</span><span class="n">read_bytes</span><span class="p">())</span>
-</span><span id="line-390">    <span class="k">else</span><span class="p">:</span>
-</span><span id="line-391">        <span class="n">module</span> <span class="o">=</span> <span class="n">Module</span><span class="o">.</span><span class="n">from_ir</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">path</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">))</span>
-</span><span id="line-392">    <span class="k">return</span> <span class="n">_circuit_from_module</span><span class="p">(</span><span class="n">module</span><span class="p">)</span></div>
+</span><span id="line-385"><span class="k">def</span><span class="w"> </span><span class="nf">from_qir_file</span><span class="p">(</span><span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Circuit</span><span class="p">:</span>
+</span><span id="line-386"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Read a QIR file (``.ll`` or ``.bc``) and parse it into a :class:`Circuit`.</span>
+</span><span id="line-387">
+</span><span id="line-388"><span class="sd">    Args:</span>
+</span><span id="line-389"><span class="sd">        filename (str): Path to a ``.ll`` or ``.bc`` QIR file.</span>
+</span><span id="line-390">
+</span><span id="line-391"><span class="sd">    Returns:</span>
+</span><span id="line-392"><span class="sd">        Circuit: The reconstructed circuit.</span>
+</span><span id="line-393"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-394">    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;[QIR] Reading QIR from file </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+</span><span id="line-395">    <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+</span><span id="line-396">    <span class="n">ctx</span> <span class="o">=</span> <span class="n">Context</span><span class="p">()</span>
+</span><span id="line-397">    <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">suffix</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;.bc&quot;</span><span class="p">:</span>
+</span><span id="line-398">        <span class="n">module</span> <span class="o">=</span> <span class="n">Module</span><span class="o">.</span><span class="n">from_bitcode</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">path</span><span class="o">.</span><span class="n">read_bytes</span><span class="p">())</span>
+</span><span id="line-399">    <span class="k">else</span><span class="p">:</span>
+</span><span id="line-400">        <span class="n">module</span> <span class="o">=</span> <span class="n">Module</span><span class="o">.</span><span class="n">from_ir</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">path</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">))</span>
+</span><span id="line-401">    <span class="k">return</span> <span class="n">_circuit_from_module</span><span class="p">(</span><span class="n">module</span><span class="p">)</span></div>
 
 </span></code></pre></div>
     </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">

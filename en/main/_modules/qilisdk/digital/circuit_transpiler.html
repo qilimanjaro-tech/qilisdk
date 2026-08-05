@@ -277,6 +277,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/functionals/variational_program_result/index.html">qilisdk.functionals.variational_program_result</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/logging/index.html">qilisdk.logging</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/noise/index.html">qilisdk.noise</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/amplitude_damping/index.html">qilisdk.noise.amplitude_damping</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/bit_flip/index.html">qilisdk.noise.bit_flip</a></li>
@@ -433,238 +434,252 @@
 </span><span id="line-15">
 </span><span id="line-16"><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Self</span>
 </span><span id="line-17">
-</span><span id="line-18"><span class="kn">from</span><span class="w"> </span><span class="nn">.circuit_transpiler_passes</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-</span><span id="line-19">    <span class="n">CancelIdentityPairsPass</span><span class="p">,</span>
-</span><span id="line-20">    <span class="n">CircuitTranspilerPass</span><span class="p">,</span>
-</span><span id="line-21">    <span class="n">CustomLayoutPass</span><span class="p">,</span>
-</span><span id="line-22">    <span class="n">DecomposeMultiControlledGatesPass</span><span class="p">,</span>
-</span><span id="line-23">    <span class="n">DecomposeToCanonicalBasisPass</span><span class="p">,</span>
-</span><span id="line-24">    <span class="n">FuseSingleQubitGatesPass</span><span class="p">,</span>
-</span><span id="line-25">    <span class="n">SabreLayoutPass</span><span class="p">,</span>
-</span><span id="line-26">    <span class="n">SabreSwapPass</span><span class="p">,</span>
-</span><span id="line-27">    <span class="n">SingleQubitGateBasis</span><span class="p">,</span>
-</span><span id="line-28">    <span class="n">TranspilationContext</span><span class="p">,</span>
-</span><span id="line-29">    <span class="n">TwoQubitGateBasis</span><span class="p">,</span>
-</span><span id="line-30"><span class="p">)</span>
-</span><span id="line-31"><span class="kn">from</span><span class="w"> </span><span class="nn">.topology</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_topology_graph</span>
-</span><span id="line-32">
-</span><span id="line-33"><span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
-</span><span id="line-34">    <span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.digital</span><span class="w"> </span><span class="kn">import</span> <span class="n">Circuit</span>
-</span><span id="line-35">
-</span><span id="line-36">    <span class="kn">from</span><span class="w"> </span><span class="nn">.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">LayoutMap</span><span class="p">,</span> <span class="n">Topology</span>
+</span><span id="line-18"><span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
+</span><span id="line-19">
+</span><span id="line-20"><span class="kn">from</span><span class="w"> </span><span class="nn">.circuit_transpiler_passes</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+</span><span id="line-21">    <span class="n">CancelIdentityPairsPass</span><span class="p">,</span>
+</span><span id="line-22">    <span class="n">CircuitTranspilerPass</span><span class="p">,</span>
+</span><span id="line-23">    <span class="n">CustomLayoutPass</span><span class="p">,</span>
+</span><span id="line-24">    <span class="n">DecomposeMultiControlledGatesPass</span><span class="p">,</span>
+</span><span id="line-25">    <span class="n">DecomposeToCanonicalBasisPass</span><span class="p">,</span>
+</span><span id="line-26">    <span class="n">FuseSingleQubitGatesPass</span><span class="p">,</span>
+</span><span id="line-27">    <span class="n">SabreLayoutPass</span><span class="p">,</span>
+</span><span id="line-28">    <span class="n">SabreSwapPass</span><span class="p">,</span>
+</span><span id="line-29">    <span class="n">SingleQubitGateBasis</span><span class="p">,</span>
+</span><span id="line-30">    <span class="n">TranspilationContext</span><span class="p">,</span>
+</span><span id="line-31">    <span class="n">TwoQubitGateBasis</span><span class="p">,</span>
+</span><span id="line-32"><span class="p">)</span>
+</span><span id="line-33"><span class="kn">from</span><span class="w"> </span><span class="nn">.topology</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_topology_graph</span>
+</span><span id="line-34">
+</span><span id="line-35"><span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+</span><span id="line-36">    <span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.digital</span><span class="w"> </span><span class="kn">import</span> <span class="n">Circuit</span>
 </span><span id="line-37">
-</span><span id="line-38">
+</span><span id="line-38">    <span class="kn">from</span><span class="w"> </span><span class="nn">.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">LayoutMap</span><span class="p">,</span> <span class="n">Topology</span>
+</span><span id="line-39">
+</span><span id="line-40">
 <div class="viewcode-block" id="TranspilerPassResult">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/circuit_transpiler/index.html#qilisdk.digital.circuit_transpiler.TranspilerPassResult">[docs]</a>
-</span><span id="line-39"><span class="k">class</span><span class="w"> </span><span class="nc">TranspilerPassResult</span><span class="p">:</span>
-</span><span id="line-40"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Per-pass transpilation artifact containing pass identity and output circuit.&quot;&quot;&quot;</span>
-</span><span id="line-41">
-</span><span id="line-42">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">circuit</span><span class="p">:</span> <span class="n">Circuit</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-43">        <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="o">=</span> <span class="n">name</span>
-</span><span id="line-44">        <span class="bp">self</span><span class="o">.</span><span class="n">_circuit</span> <span class="o">=</span> <span class="n">circuit</span>
-</span><span id="line-45">
-</span><span id="line-46">    <span class="nd">@property</span>
+</span><span id="line-41"><span class="k">class</span><span class="w"> </span><span class="nc">TranspilerPassResult</span><span class="p">:</span>
+</span><span id="line-42"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Per-pass transpilation artifact containing pass identity and output circuit.&quot;&quot;&quot;</span>
+</span><span id="line-43">
+</span><span id="line-44">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">circuit</span><span class="p">:</span> <span class="n">Circuit</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-45">        <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="o">=</span> <span class="n">name</span>
+</span><span id="line-46">        <span class="bp">self</span><span class="o">.</span><span class="n">_circuit</span> <span class="o">=</span> <span class="n">circuit</span>
+</span><span id="line-47">
+</span><span id="line-48">    <span class="nd">@property</span>
 <div class="viewcode-block" id="TranspilerPassResult.name">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/circuit_transpiler/index.html#qilisdk.digital.circuit_transpiler.TranspilerPassResult.name">[docs]</a>
-</span><span id="line-47">    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="line-48"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Pass class name.&quot;&quot;&quot;</span>
-</span><span id="line-49">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name</span></div>
+</span><span id="line-49">    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="line-50"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Pass class name.&quot;&quot;&quot;</span>
+</span><span id="line-51">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name</span></div>
 
-</span><span id="line-50">
-</span><span id="line-51">    <span class="nd">@property</span>
+</span><span id="line-52">
+</span><span id="line-53">    <span class="nd">@property</span>
 <div class="viewcode-block" id="TranspilerPassResult.circuit">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/circuit_transpiler/index.html#qilisdk.digital.circuit_transpiler.TranspilerPassResult.circuit">[docs]</a>
-</span><span id="line-52">    <span class="k">def</span><span class="w"> </span><span class="nf">circuit</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Circuit</span><span class="p">:</span>
-</span><span id="line-53"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Circuit produced right after this pass.&quot;&quot;&quot;</span>
-</span><span id="line-54">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_circuit</span></div>
+</span><span id="line-54">    <span class="k">def</span><span class="w"> </span><span class="nf">circuit</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Circuit</span><span class="p">:</span>
+</span><span id="line-55"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Circuit produced right after this pass.&quot;&quot;&quot;</span>
+</span><span id="line-56">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_circuit</span></div>
 </div>
 
-</span><span id="line-55">
-</span><span id="line-56">
+</span><span id="line-57">
+</span><span id="line-58">
 <div class="viewcode-block" id="CircuitTranspilerResult">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/circuit_transpiler/index.html#qilisdk.digital.circuit_transpiler.CircuitTranspilerResult">[docs]</a>
-</span><span id="line-57"><span class="k">class</span><span class="w"> </span><span class="nc">CircuitTranspilerResult</span><span class="p">:</span>
-</span><span id="line-58"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Result of a full transpiler run with pass-by-pass diagnostics.&quot;&quot;&quot;</span>
-</span><span id="line-59">
-</span><span id="line-60">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
-</span><span id="line-61">        <span class="bp">self</span><span class="p">,</span>
-</span><span id="line-62">        <span class="n">circuit</span><span class="p">:</span> <span class="n">Circuit</span><span class="p">,</span>
-</span><span id="line-63">        <span class="n">intermediate_results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">TranspilerPassResult</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="line-64">        <span class="n">layout</span><span class="p">:</span> <span class="n">LayoutMap</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="line-65">        <span class="n">metrics</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="line-66">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-67">        <span class="bp">self</span><span class="o">.</span><span class="n">_circuit</span><span class="p">:</span> <span class="n">Circuit</span> <span class="o">=</span> <span class="n">circuit</span>
-</span><span id="line-68">        <span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">TranspilerPassResult</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-</span><span id="line-69">            <span class="nb">list</span><span class="p">(</span><span class="n">intermediate_results</span><span class="p">)</span> <span class="k">if</span> <span class="n">intermediate_results</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[]</span>
-</span><span id="line-70">        <span class="p">)</span>
-</span><span id="line-71">        <span class="bp">self</span><span class="o">.</span><span class="n">_layout</span><span class="p">:</span> <span class="n">LayoutMap</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">layout</span><span class="p">)</span> <span class="k">if</span> <span class="n">layout</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
-</span><span id="line-72">        <span class="bp">self</span><span class="o">.</span><span class="n">_metrics</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">metrics</span><span class="p">)</span> <span class="k">if</span> <span class="n">metrics</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{}</span>
-</span><span id="line-73">
-</span><span id="line-74">    <span class="nd">@property</span>
+</span><span id="line-59"><span class="k">class</span><span class="w"> </span><span class="nc">CircuitTranspilerResult</span><span class="p">:</span>
+</span><span id="line-60"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Result of a full transpiler run with pass-by-pass diagnostics.&quot;&quot;&quot;</span>
+</span><span id="line-61">
+</span><span id="line-62">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+</span><span id="line-63">        <span class="bp">self</span><span class="p">,</span>
+</span><span id="line-64">        <span class="n">circuit</span><span class="p">:</span> <span class="n">Circuit</span><span class="p">,</span>
+</span><span id="line-65">        <span class="n">intermediate_results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">TranspilerPassResult</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-66">        <span class="n">layout</span><span class="p">:</span> <span class="n">LayoutMap</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-67">        <span class="n">metrics</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-68">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-69">        <span class="bp">self</span><span class="o">.</span><span class="n">_circuit</span><span class="p">:</span> <span class="n">Circuit</span> <span class="o">=</span> <span class="n">circuit</span>
+</span><span id="line-70">        <span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">TranspilerPassResult</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+</span><span id="line-71">            <span class="nb">list</span><span class="p">(</span><span class="n">intermediate_results</span><span class="p">)</span> <span class="k">if</span> <span class="n">intermediate_results</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[]</span>
+</span><span id="line-72">        <span class="p">)</span>
+</span><span id="line-73">        <span class="bp">self</span><span class="o">.</span><span class="n">_layout</span><span class="p">:</span> <span class="n">LayoutMap</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">layout</span><span class="p">)</span> <span class="k">if</span> <span class="n">layout</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+</span><span id="line-74">        <span class="bp">self</span><span class="o">.</span><span class="n">_metrics</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">metrics</span><span class="p">)</span> <span class="k">if</span> <span class="n">metrics</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{}</span>
+</span><span id="line-75">
+</span><span id="line-76">    <span class="nd">@property</span>
 <div class="viewcode-block" id="CircuitTranspilerResult.circuit">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/circuit_transpiler/index.html#qilisdk.digital.circuit_transpiler.CircuitTranspilerResult.circuit">[docs]</a>
-</span><span id="line-75">    <span class="k">def</span><span class="w"> </span><span class="nf">circuit</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Circuit</span><span class="p">:</span>
-</span><span id="line-76"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Alias for the final transpiled circuit.&quot;&quot;&quot;</span>
-</span><span id="line-77">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_circuit</span></div>
+</span><span id="line-77">    <span class="k">def</span><span class="w"> </span><span class="nf">circuit</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Circuit</span><span class="p">:</span>
+</span><span id="line-78"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Alias for the final transpiled circuit.&quot;&quot;&quot;</span>
+</span><span id="line-79">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_circuit</span></div>
 
-</span><span id="line-78">
-</span><span id="line-79">    <span class="nd">@property</span>
+</span><span id="line-80">
+</span><span id="line-81">    <span class="nd">@property</span>
 <div class="viewcode-block" id="CircuitTranspilerResult.intermediate_results">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/circuit_transpiler/index.html#qilisdk.digital.circuit_transpiler.CircuitTranspilerResult.intermediate_results">[docs]</a>
-</span><span id="line-80">    <span class="k">def</span><span class="w"> </span><span class="nf">intermediate_results</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">TranspilerPassResult</span><span class="p">]:</span>
-</span><span id="line-81"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Ordered per-pass outputs.&quot;&quot;&quot;</span>
-</span><span id="line-82">        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_results</span><span class="p">)</span></div>
+</span><span id="line-82">    <span class="k">def</span><span class="w"> </span><span class="nf">intermediate_results</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">TranspilerPassResult</span><span class="p">]:</span>
+</span><span id="line-83"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Ordered per-pass outputs.&quot;&quot;&quot;</span>
+</span><span id="line-84">        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_intermediate_results</span><span class="p">)</span></div>
 
-</span><span id="line-83">
-</span><span id="line-84">    <span class="nd">@property</span>
+</span><span id="line-85">
+</span><span id="line-86">    <span class="nd">@property</span>
 <div class="viewcode-block" id="CircuitTranspilerResult.layout">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/circuit_transpiler/index.html#qilisdk.digital.circuit_transpiler.CircuitTranspilerResult.layout">[docs]</a>
-</span><span id="line-85">    <span class="k">def</span><span class="w"> </span><span class="nf">layout</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LayoutMap</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-86"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Final user-facing logical-to-physical mapping captured after the pipeline finishes.&quot;&quot;&quot;</span>
-</span><span id="line-87">        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_layout</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_layout</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span></div>
+</span><span id="line-87">    <span class="k">def</span><span class="w"> </span><span class="nf">layout</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LayoutMap</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-88"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Final user-facing logical-to-physical mapping captured after the pipeline finishes.&quot;&quot;&quot;</span>
+</span><span id="line-89">        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_layout</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_layout</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span></div>
 
-</span><span id="line-88">
-</span><span id="line-89">    <span class="nd">@property</span>
+</span><span id="line-90">
+</span><span id="line-91">    <span class="nd">@property</span>
 <div class="viewcode-block" id="CircuitTranspilerResult.metrics">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/circuit_transpiler/index.html#qilisdk.digital.circuit_transpiler.CircuitTranspilerResult.metrics">[docs]</a>
-</span><span id="line-90">    <span class="k">def</span><span class="w"> </span><span class="nf">metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-</span><span id="line-91"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Metrics collected by transpiler passes.&quot;&quot;&quot;</span>
-</span><span id="line-92">        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_metrics</span><span class="p">)</span></div>
+</span><span id="line-92">    <span class="k">def</span><span class="w"> </span><span class="nf">metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+</span><span id="line-93"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Metrics collected by transpiler passes.&quot;&quot;&quot;</span>
+</span><span id="line-94">        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_metrics</span><span class="p">)</span></div>
 </div>
 
-</span><span id="line-93">
-</span><span id="line-94">
+</span><span id="line-95">
+</span><span id="line-96">
 <div class="viewcode-block" id="CircuitTranspiler">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/circuit_transpiler/index.html#qilisdk.digital.circuit_transpiler.CircuitTranspiler">[docs]</a>
-</span><span id="line-95"><span class="k">class</span><span class="w"> </span><span class="nc">CircuitTranspiler</span><span class="p">:</span>
-</span><span id="line-96"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Orchestrate an ordered sequence of circuit transpilation passes.</span>
-</span><span id="line-97">
-</span><span id="line-98"><span class="sd">    Instantiate this class directly when you need full control over the pass</span>
-</span><span id="line-99"><span class="sd">    pipeline. For common workflows, use :meth:`default` to build a standard</span>
-</span><span id="line-100"><span class="sd">    pipeline for basis conversion only or for topology-aware transpilation.</span>
-</span><span id="line-101">
-</span><span id="line-102"><span class="sd">    Each pass receives the circuit produced by the previous pass and must return</span>
-</span><span id="line-103"><span class="sd">    a new circuit, which makes the overall transpilation flow deterministic and</span>
-</span><span id="line-104"><span class="sd">    easy to inspect through :meth:`transpile`.</span>
-</span><span id="line-105">
-</span><span id="line-106"><span class="sd">    Args:</span>
-</span><span id="line-107"><span class="sd">        pipeline (list[CircuitTranspilerPass]): Ordered passes to run during transpilation.</span>
-</span><span id="line-108"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-109">
-</span><span id="line-110">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pipeline</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">CircuitTranspilerPass</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-111">        <span class="bp">self</span><span class="o">.</span><span class="n">_pipeline</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">CircuitTranspilerPass</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">pipeline</span><span class="p">)</span>
-</span><span id="line-112">        <span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="p">:</span> <span class="n">TranspilationContext</span> <span class="o">=</span> <span class="n">TranspilationContext</span><span class="p">()</span>
-</span><span id="line-113">        <span class="bp">self</span><span class="o">.</span><span class="n">_attach_context_to_pipeline</span><span class="p">()</span>
-</span><span id="line-114">
-</span><span id="line-115">    <span class="nd">@classmethod</span>
+</span><span id="line-97"><span class="k">class</span><span class="w"> </span><span class="nc">CircuitTranspiler</span><span class="p">:</span>
+</span><span id="line-98"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Orchestrate an ordered sequence of circuit transpilation passes.</span>
+</span><span id="line-99">
+</span><span id="line-100"><span class="sd">    Instantiate this class directly when you need full control over the pass</span>
+</span><span id="line-101"><span class="sd">    pipeline. For common workflows, use :meth:`default` to build a standard</span>
+</span><span id="line-102"><span class="sd">    pipeline for basis conversion only or for topology-aware transpilation.</span>
+</span><span id="line-103">
+</span><span id="line-104"><span class="sd">    Each pass receives the circuit produced by the previous pass and must return</span>
+</span><span id="line-105"><span class="sd">    a new circuit, which makes the overall transpilation flow deterministic and</span>
+</span><span id="line-106"><span class="sd">    easy to inspect through :meth:`transpile`.</span>
+</span><span id="line-107">
+</span><span id="line-108"><span class="sd">    Args:</span>
+</span><span id="line-109"><span class="sd">        pipeline (list[CircuitTranspilerPass]): Ordered passes to run during transpilation.</span>
+</span><span id="line-110"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-111">
+</span><span id="line-112">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pipeline</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">CircuitTranspilerPass</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-113">        <span class="bp">self</span><span class="o">.</span><span class="n">_pipeline</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">CircuitTranspilerPass</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">pipeline</span><span class="p">)</span>
+</span><span id="line-114">        <span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="p">:</span> <span class="n">TranspilationContext</span> <span class="o">=</span> <span class="n">TranspilationContext</span><span class="p">()</span>
+</span><span id="line-115">        <span class="bp">self</span><span class="o">.</span><span class="n">_attach_context_to_pipeline</span><span class="p">()</span>
+</span><span id="line-116">
+</span><span id="line-117">    <span class="nd">@classmethod</span>
 <div class="viewcode-block" id="CircuitTranspiler.default">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/circuit_transpiler/index.html#qilisdk.digital.circuit_transpiler.CircuitTranspiler.default">[docs]</a>
-</span><span id="line-116">    <span class="k">def</span><span class="w"> </span><span class="nf">default</span><span class="p">(</span>
-</span><span id="line-117">        <span class="bp">cls</span><span class="p">,</span>
-</span><span id="line-118">        <span class="n">single_qubit_basis</span><span class="p">:</span> <span class="n">SingleQubitGateBasis</span> <span class="o">=</span> <span class="n">SingleQubitGateBasis</span><span class="o">.</span><span class="n">U3</span><span class="p">,</span>
-</span><span id="line-119">        <span class="n">two_qubit_basis</span><span class="p">:</span> <span class="n">TwoQubitGateBasis</span> <span class="o">=</span> <span class="n">TwoQubitGateBasis</span><span class="o">.</span><span class="n">CNOT</span><span class="p">,</span>
-</span><span id="line-120">        <span class="n">topology</span><span class="p">:</span> <span class="n">Topology</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="line-121">        <span class="n">qubit_mapping</span><span class="p">:</span> <span class="n">LayoutMap</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="line-122">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
-</span><span id="line-123"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Build the default transpiler pipeline.</span>
-</span><span id="line-124">
-</span><span id="line-125"><span class="sd">        Use this constructor for the standard transpilation flow. When</span>
-</span><span id="line-126"><span class="sd">        ``topology`` is omitted, the returned transpiler only performs generic</span>
-</span><span id="line-127"><span class="sd">        decomposition and simplification passes. When ``topology`` is provided,</span>
-</span><span id="line-128"><span class="sd">        the pipeline becomes hardware aware: it either computes a placement with</span>
-</span><span id="line-129"><span class="sd">        SABRE and routes the circuit automatically, or it enforces a</span>
-</span><span id="line-130"><span class="sd">        user-provided logical-to-physical layout through ``qubit_mapping``.</span>
-</span><span id="line-131">
-</span><span id="line-132"><span class="sd">        Args:</span>
-</span><span id="line-133"><span class="sd">            single_qubit_basis (SingleQubitGateBasis): Target single-qubit basis</span>
-</span><span id="line-134"><span class="sd">                used by canonical decomposition and final single-qubit fusion.</span>
-</span><span id="line-135"><span class="sd">            two_qubit_basis (TwoQubitGateBasis): Target two-qubit entangling gate</span>
-</span><span id="line-136"><span class="sd">                used by canonical decomposition.</span>
-</span><span id="line-137"><span class="sd">            topology (Topology | None): Optional hardware coupling map. It can</span>
-</span><span id="line-138"><span class="sd">                be provided either as a list of connected physical-qubit pairs</span>
-</span><span id="line-139"><span class="sd">                or as a ``rustworkx`` ``PyGraph`` whose node indices are</span>
-</span><span id="line-140"><span class="sd">                physical qubits.</span>
-</span><span id="line-141"><span class="sd">            qubit_mapping (LayoutMap | None): Optional logical-to-physical</span>
-</span><span id="line-142"><span class="sd">                qubit assignment. This argument is only used when ``topology`` is</span>
-</span><span id="line-143"><span class="sd">                provided. If omitted, the pipeline uses ``SabreLayoutPass`` and</span>
-</span><span id="line-144"><span class="sd">                ``SabreSwapPass``. If provided, the pipeline uses</span>
-</span><span id="line-145"><span class="sd">                ``CustomLayoutPass`` to preserve the requested mapping.</span>
-</span><span id="line-146">
-</span><span id="line-147"><span class="sd">        Returns:</span>
-</span><span id="line-148"><span class="sd">            CircuitTranspiler: A ``CircuitTranspiler`` instance configured with the default pass</span>
-</span><span id="line-149"><span class="sd">            sequence for the requested transpilation mode.</span>
-</span><span id="line-150"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-151">        <span class="k">if</span> <span class="n">topology</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-152">            <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
-</span><span id="line-153">                <span class="p">[</span>
-</span><span id="line-154">                    <span class="n">DecomposeMultiControlledGatesPass</span><span class="p">(),</span>
-</span><span id="line-155">                    <span class="n">CancelIdentityPairsPass</span><span class="p">(),</span>
-</span><span id="line-156">                    <span class="n">DecomposeToCanonicalBasisPass</span><span class="p">(</span>
-</span><span id="line-157">                        <span class="n">single_qubit_basis</span><span class="o">=</span><span class="n">single_qubit_basis</span><span class="p">,</span> <span class="n">two_qubit_basis</span><span class="o">=</span><span class="n">two_qubit_basis</span>
-</span><span id="line-158">                    <span class="p">),</span>
-</span><span id="line-159">                    <span class="n">FuseSingleQubitGatesPass</span><span class="p">(</span><span class="n">single_qubit_basis</span><span class="o">=</span><span class="n">single_qubit_basis</span><span class="p">),</span>
-</span><span id="line-160">                <span class="p">]</span>
-</span><span id="line-161">            <span class="p">)</span>
-</span><span id="line-162">
-</span><span id="line-163">        <span class="n">topology</span> <span class="o">=</span> <span class="n">build_topology_graph</span><span class="p">(</span><span class="n">topology</span><span class="p">)</span>
-</span><span id="line-164">        <span class="n">layout_routing_passes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">CircuitTranspilerPass</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-</span><span id="line-165">            <span class="p">[</span><span class="n">SabreLayoutPass</span><span class="p">(</span><span class="n">topology</span><span class="p">),</span> <span class="n">SabreSwapPass</span><span class="p">(</span><span class="n">topology</span><span class="p">)]</span>
-</span><span id="line-166">            <span class="k">if</span> <span class="n">qubit_mapping</span> <span class="ow">is</span> <span class="kc">None</span>
-</span><span id="line-167">            <span class="k">else</span> <span class="p">[</span><span class="n">CustomLayoutPass</span><span class="p">(</span><span class="n">topology</span><span class="p">,</span> <span class="n">qubit_mapping</span><span class="p">)]</span>
-</span><span id="line-168">        <span class="p">)</span>
-</span><span id="line-169">
-</span><span id="line-170">        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
-</span><span id="line-171">            <span class="p">[</span>
-</span><span id="line-172">                <span class="n">DecomposeMultiControlledGatesPass</span><span class="p">(),</span>
-</span><span id="line-173">                <span class="n">CancelIdentityPairsPass</span><span class="p">(),</span>
-</span><span id="line-174">                <span class="n">DecomposeToCanonicalBasisPass</span><span class="p">(</span><span class="n">single_qubit_basis</span><span class="o">=</span><span class="n">single_qubit_basis</span><span class="p">,</span> <span class="n">two_qubit_basis</span><span class="o">=</span><span class="n">two_qubit_basis</span><span class="p">),</span>
-</span><span id="line-175">                <span class="n">FuseSingleQubitGatesPass</span><span class="p">(</span><span class="n">single_qubit_basis</span><span class="o">=</span><span class="n">single_qubit_basis</span><span class="p">),</span>
-</span><span id="line-176">                <span class="o">*</span><span class="n">layout_routing_passes</span><span class="p">,</span>
-</span><span id="line-177">                <span class="n">DecomposeToCanonicalBasisPass</span><span class="p">(</span><span class="n">single_qubit_basis</span><span class="o">=</span><span class="n">single_qubit_basis</span><span class="p">,</span> <span class="n">two_qubit_basis</span><span class="o">=</span><span class="n">two_qubit_basis</span><span class="p">),</span>
-</span><span id="line-178">                <span class="n">FuseSingleQubitGatesPass</span><span class="p">(</span><span class="n">single_qubit_basis</span><span class="o">=</span><span class="n">single_qubit_basis</span><span class="p">),</span>
-</span><span id="line-179">            <span class="p">]</span>
-</span><span id="line-180">        <span class="p">)</span></div>
+</span><span id="line-118">    <span class="k">def</span><span class="w"> </span><span class="nf">default</span><span class="p">(</span>
+</span><span id="line-119">        <span class="bp">cls</span><span class="p">,</span>
+</span><span id="line-120">        <span class="n">single_qubit_basis</span><span class="p">:</span> <span class="n">SingleQubitGateBasis</span> <span class="o">=</span> <span class="n">SingleQubitGateBasis</span><span class="o">.</span><span class="n">U3</span><span class="p">,</span>
+</span><span id="line-121">        <span class="n">two_qubit_basis</span><span class="p">:</span> <span class="n">TwoQubitGateBasis</span> <span class="o">=</span> <span class="n">TwoQubitGateBasis</span><span class="o">.</span><span class="n">CNOT</span><span class="p">,</span>
+</span><span id="line-122">        <span class="n">topology</span><span class="p">:</span> <span class="n">Topology</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-123">        <span class="n">qubit_mapping</span><span class="p">:</span> <span class="n">LayoutMap</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-124">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
+</span><span id="line-125"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Build the default transpiler pipeline.</span>
+</span><span id="line-126">
+</span><span id="line-127"><span class="sd">        Use this constructor for the standard transpilation flow. When</span>
+</span><span id="line-128"><span class="sd">        ``topology`` is omitted, the returned transpiler only performs generic</span>
+</span><span id="line-129"><span class="sd">        decomposition and simplification passes. When ``topology`` is provided,</span>
+</span><span id="line-130"><span class="sd">        the pipeline becomes hardware aware: it either computes a placement with</span>
+</span><span id="line-131"><span class="sd">        SABRE and routes the circuit automatically, or it enforces a</span>
+</span><span id="line-132"><span class="sd">        user-provided logical-to-physical layout through ``qubit_mapping``.</span>
+</span><span id="line-133">
+</span><span id="line-134"><span class="sd">        Args:</span>
+</span><span id="line-135"><span class="sd">            single_qubit_basis (SingleQubitGateBasis): Target single-qubit basis</span>
+</span><span id="line-136"><span class="sd">                used by canonical decomposition and final single-qubit fusion.</span>
+</span><span id="line-137"><span class="sd">            two_qubit_basis (TwoQubitGateBasis): Target two-qubit entangling gate</span>
+</span><span id="line-138"><span class="sd">                used by canonical decomposition.</span>
+</span><span id="line-139"><span class="sd">            topology (Topology | None): Optional hardware coupling map. It can</span>
+</span><span id="line-140"><span class="sd">                be provided either as a list of connected physical-qubit pairs</span>
+</span><span id="line-141"><span class="sd">                or as a ``rustworkx`` ``PyGraph`` whose node indices are</span>
+</span><span id="line-142"><span class="sd">                physical qubits.</span>
+</span><span id="line-143"><span class="sd">            qubit_mapping (LayoutMap | None): Optional logical-to-physical</span>
+</span><span id="line-144"><span class="sd">                qubit assignment. This argument is only used when ``topology`` is</span>
+</span><span id="line-145"><span class="sd">                provided. If omitted, the pipeline uses ``SabreLayoutPass`` and</span>
+</span><span id="line-146"><span class="sd">                ``SabreSwapPass``. If provided, the pipeline uses</span>
+</span><span id="line-147"><span class="sd">                ``CustomLayoutPass`` to preserve the requested mapping.</span>
+</span><span id="line-148">
+</span><span id="line-149"><span class="sd">        Returns:</span>
+</span><span id="line-150"><span class="sd">            CircuitTranspiler: A ``CircuitTranspiler`` instance configured with the default pass</span>
+</span><span id="line-151"><span class="sd">            sequence for the requested transpilation mode.</span>
+</span><span id="line-152"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-153">        <span class="k">if</span> <span class="n">topology</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-154">            <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
+</span><span id="line-155">                <span class="p">[</span>
+</span><span id="line-156">                    <span class="n">DecomposeMultiControlledGatesPass</span><span class="p">(),</span>
+</span><span id="line-157">                    <span class="n">CancelIdentityPairsPass</span><span class="p">(),</span>
+</span><span id="line-158">                    <span class="n">DecomposeToCanonicalBasisPass</span><span class="p">(</span>
+</span><span id="line-159">                        <span class="n">single_qubit_basis</span><span class="o">=</span><span class="n">single_qubit_basis</span><span class="p">,</span> <span class="n">two_qubit_basis</span><span class="o">=</span><span class="n">two_qubit_basis</span>
+</span><span id="line-160">                    <span class="p">),</span>
+</span><span id="line-161">                    <span class="n">FuseSingleQubitGatesPass</span><span class="p">(</span><span class="n">single_qubit_basis</span><span class="o">=</span><span class="n">single_qubit_basis</span><span class="p">),</span>
+</span><span id="line-162">                <span class="p">]</span>
+</span><span id="line-163">            <span class="p">)</span>
+</span><span id="line-164">
+</span><span id="line-165">        <span class="n">topology</span> <span class="o">=</span> <span class="n">build_topology_graph</span><span class="p">(</span><span class="n">topology</span><span class="p">)</span>
+</span><span id="line-166">        <span class="n">layout_routing_passes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">CircuitTranspilerPass</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+</span><span id="line-167">            <span class="p">[</span><span class="n">SabreLayoutPass</span><span class="p">(</span><span class="n">topology</span><span class="p">),</span> <span class="n">SabreSwapPass</span><span class="p">(</span><span class="n">topology</span><span class="p">)]</span>
+</span><span id="line-168">            <span class="k">if</span> <span class="n">qubit_mapping</span> <span class="ow">is</span> <span class="kc">None</span>
+</span><span id="line-169">            <span class="k">else</span> <span class="p">[</span><span class="n">CustomLayoutPass</span><span class="p">(</span><span class="n">topology</span><span class="p">,</span> <span class="n">qubit_mapping</span><span class="p">)]</span>
+</span><span id="line-170">        <span class="p">)</span>
+</span><span id="line-171">
+</span><span id="line-172">        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
+</span><span id="line-173">            <span class="p">[</span>
+</span><span id="line-174">                <span class="n">DecomposeMultiControlledGatesPass</span><span class="p">(),</span>
+</span><span id="line-175">                <span class="n">CancelIdentityPairsPass</span><span class="p">(),</span>
+</span><span id="line-176">                <span class="n">DecomposeToCanonicalBasisPass</span><span class="p">(</span><span class="n">single_qubit_basis</span><span class="o">=</span><span class="n">single_qubit_basis</span><span class="p">,</span> <span class="n">two_qubit_basis</span><span class="o">=</span><span class="n">two_qubit_basis</span><span class="p">),</span>
+</span><span id="line-177">                <span class="n">FuseSingleQubitGatesPass</span><span class="p">(</span><span class="n">single_qubit_basis</span><span class="o">=</span><span class="n">single_qubit_basis</span><span class="p">),</span>
+</span><span id="line-178">                <span class="o">*</span><span class="n">layout_routing_passes</span><span class="p">,</span>
+</span><span id="line-179">                <span class="n">DecomposeToCanonicalBasisPass</span><span class="p">(</span><span class="n">single_qubit_basis</span><span class="o">=</span><span class="n">single_qubit_basis</span><span class="p">,</span> <span class="n">two_qubit_basis</span><span class="o">=</span><span class="n">two_qubit_basis</span><span class="p">),</span>
+</span><span id="line-180">                <span class="n">FuseSingleQubitGatesPass</span><span class="p">(</span><span class="n">single_qubit_basis</span><span class="o">=</span><span class="n">single_qubit_basis</span><span class="p">),</span>
+</span><span id="line-181">            <span class="p">]</span>
+</span><span id="line-182">        <span class="p">)</span></div>
 
-</span><span id="line-181">
+</span><span id="line-183">
 <div class="viewcode-block" id="CircuitTranspiler.transpile">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/circuit_transpiler/index.html#qilisdk.digital.circuit_transpiler.CircuitTranspiler.transpile">[docs]</a>
-</span><span id="line-182">    <span class="k">def</span><span class="w"> </span><span class="nf">transpile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">circuit</span><span class="p">:</span> <span class="n">Circuit</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CircuitTranspilerResult</span><span class="p">:</span>
-</span><span id="line-183"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Run the pipeline and return pass-by-pass transpilation diagnostics.</span>
-</span><span id="line-184">
-</span><span id="line-185"><span class="sd">        Args:</span>
-</span><span id="line-186"><span class="sd">            circuit (Circuit): Input circuit to transpile.</span>
-</span><span id="line-187"><span class="sd">        Returns:</span>
-</span><span id="line-188"><span class="sd">            CircuitTranspilerRunResult: Final circuit and intermediate pass outputs.</span>
-</span><span id="line-189"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-190">        <span class="bp">self</span><span class="o">.</span><span class="n">_reset_context</span><span class="p">()</span>
-</span><span id="line-191">
-</span><span id="line-192">        <span class="n">pass_results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">TranspilerPassResult</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span id="line-193">        <span class="n">transpiled_circuit</span> <span class="o">=</span> <span class="n">circuit</span>
-</span><span id="line-194">
-</span><span id="line-195">        <span class="k">for</span> <span class="n">transpiler_pass</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pipeline</span><span class="p">:</span>
-</span><span id="line-196">            <span class="n">transpiled_circuit</span> <span class="o">=</span> <span class="n">transpiler_pass</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">transpiled_circuit</span><span class="p">)</span>
-</span><span id="line-197">            <span class="n">pass_results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-</span><span id="line-198">                <span class="n">TranspilerPassResult</span><span class="p">(</span>
-</span><span id="line-199">                    <span class="n">name</span><span class="o">=</span><span class="n">transpiler_pass</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
-</span><span id="line-200">                    <span class="n">circuit</span><span class="o">=</span><span class="n">transpiled_circuit</span><span class="p">,</span>
-</span><span id="line-201">                <span class="p">)</span>
-</span><span id="line-202">            <span class="p">)</span>
-</span><span id="line-203">
-</span><span id="line-204">        <span class="k">return</span> <span class="n">CircuitTranspilerResult</span><span class="p">(</span>
-</span><span id="line-205">            <span class="n">circuit</span><span class="o">=</span><span class="n">transpiled_circuit</span><span class="p">,</span>
-</span><span id="line-206">            <span class="n">intermediate_results</span><span class="o">=</span><span class="n">pass_results</span><span class="p">,</span>
-</span><span id="line-207">            <span class="n">layout</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="o">.</span><span class="n">final_layout</span><span class="p">,</span>
-</span><span id="line-208">            <span class="n">metrics</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="o">.</span><span class="n">metrics</span><span class="p">,</span>
-</span><span id="line-209">        <span class="p">)</span></div>
-
-</span><span id="line-210">
-</span><span id="line-211">    <span class="k">def</span><span class="w"> </span><span class="nf">_attach_context_to_pipeline</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-212">        <span class="k">for</span> <span class="n">transpiler_pass</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pipeline</span><span class="p">:</span>
-</span><span id="line-213">            <span class="n">transpiler_pass</span><span class="o">.</span><span class="n">attach_context</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="p">)</span>
+</span><span id="line-184">    <span class="k">def</span><span class="w"> </span><span class="nf">transpile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">circuit</span><span class="p">:</span> <span class="n">Circuit</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CircuitTranspilerResult</span><span class="p">:</span>
+</span><span id="line-185"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Run the pipeline and return pass-by-pass transpilation diagnostics.</span>
+</span><span id="line-186">
+</span><span id="line-187"><span class="sd">        Args:</span>
+</span><span id="line-188"><span class="sd">            circuit (Circuit): Input circuit to transpile.</span>
+</span><span id="line-189"><span class="sd">        Returns:</span>
+</span><span id="line-190"><span class="sd">            CircuitTranspilerRunResult: Final circuit and intermediate pass outputs.</span>
+</span><span id="line-191"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-192">        <span class="bp">self</span><span class="o">.</span><span class="n">_reset_context</span><span class="p">()</span>
+</span><span id="line-193">
+</span><span id="line-194">        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;[CircuitTranspiler] Transpiling circuit through </span><span class="si">{}</span><span class="s2"> passes&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pipeline</span><span class="p">))</span>
+</span><span id="line-195">        <span class="n">pass_results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">TranspilerPassResult</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="line-196">        <span class="n">transpiled_circuit</span> <span class="o">=</span> <span class="n">circuit</span>
+</span><span id="line-197">
+</span><span id="line-198">        <span class="k">for</span> <span class="n">transpiler_pass</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pipeline</span><span class="p">:</span>
+</span><span id="line-199">            <span class="n">pass_name</span> <span class="o">=</span> <span class="n">transpiler_pass</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
+</span><span id="line-200">            <span class="n">gates_before</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">transpiled_circuit</span><span class="o">.</span><span class="n">gates</span><span class="p">)</span>
+</span><span id="line-201">            <span class="n">transpiled_circuit</span> <span class="o">=</span> <span class="n">transpiler_pass</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">transpiled_circuit</span><span class="p">)</span>
+</span><span id="line-202">            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+</span><span id="line-203">                <span class="s2">&quot;[CircuitTranspiler] Pass </span><span class="si">{}</span><span class="s2"> done: </span><span class="si">{}</span><span class="s2"> -&gt; </span><span class="si">{}</span><span class="s2"> gates&quot;</span><span class="p">,</span>
+</span><span id="line-204">                <span class="n">pass_name</span><span class="p">,</span>
+</span><span id="line-205">                <span class="n">gates_before</span><span class="p">,</span>
+</span><span id="line-206">                <span class="nb">len</span><span class="p">(</span><span class="n">transpiled_circuit</span><span class="o">.</span><span class="n">gates</span><span class="p">),</span>
+</span><span id="line-207">            <span class="p">)</span>
+</span><span id="line-208">            <span class="n">pass_results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+</span><span id="line-209">                <span class="n">TranspilerPassResult</span><span class="p">(</span>
+</span><span id="line-210">                    <span class="n">name</span><span class="o">=</span><span class="n">pass_name</span><span class="p">,</span>
+</span><span id="line-211">                    <span class="n">circuit</span><span class="o">=</span><span class="n">transpiled_circuit</span><span class="p">,</span>
+</span><span id="line-212">                <span class="p">)</span>
+</span><span id="line-213">            <span class="p">)</span>
 </span><span id="line-214">
-</span><span id="line-215">    <span class="k">def</span><span class="w"> </span><span class="nf">_reset_context</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-216">        <span class="bp">self</span><span class="o">.</span><span class="n">_context</span> <span class="o">=</span> <span class="n">TranspilationContext</span><span class="p">()</span>
-</span><span id="line-217">        <span class="bp">self</span><span class="o">.</span><span class="n">_attach_context_to_pipeline</span><span class="p">()</span></div>
+</span><span id="line-215">        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+</span><span id="line-216">            <span class="s2">&quot;[CircuitTranspiler] Transpilation finished: </span><span class="si">{}</span><span class="s2"> gates in final circuit&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">transpiled_circuit</span><span class="o">.</span><span class="n">gates</span><span class="p">)</span>
+</span><span id="line-217">        <span class="p">)</span>
+</span><span id="line-218">        <span class="k">return</span> <span class="n">CircuitTranspilerResult</span><span class="p">(</span>
+</span><span id="line-219">            <span class="n">circuit</span><span class="o">=</span><span class="n">transpiled_circuit</span><span class="p">,</span>
+</span><span id="line-220">            <span class="n">intermediate_results</span><span class="o">=</span><span class="n">pass_results</span><span class="p">,</span>
+</span><span id="line-221">            <span class="n">layout</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="o">.</span><span class="n">final_layout</span><span class="p">,</span>
+</span><span id="line-222">            <span class="n">metrics</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="o">.</span><span class="n">metrics</span><span class="p">,</span>
+</span><span id="line-223">        <span class="p">)</span></div>
+
+</span><span id="line-224">
+</span><span id="line-225">    <span class="k">def</span><span class="w"> </span><span class="nf">_attach_context_to_pipeline</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-226">        <span class="k">for</span> <span class="n">transpiler_pass</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pipeline</span><span class="p">:</span>
+</span><span id="line-227">            <span class="n">transpiler_pass</span><span class="o">.</span><span class="n">attach_context</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="p">)</span>
+</span><span id="line-228">
+</span><span id="line-229">    <span class="k">def</span><span class="w"> </span><span class="nf">_reset_context</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-230">        <span class="bp">self</span><span class="o">.</span><span class="n">_context</span> <span class="o">=</span> <span class="n">TranspilationContext</span><span class="p">()</span>
+</span><span id="line-231">        <span class="bp">self</span><span class="o">.</span><span class="n">_attach_context_to_pipeline</span><span class="p">()</span></div>
 
 </span></code></pre></div>
     </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">

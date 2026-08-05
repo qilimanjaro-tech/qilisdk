@@ -232,6 +232,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/functionals/variational_program_result/index.html">qilisdk.functionals.variational_program_result</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="../code/api/qilisdk/logging/index.html">qilisdk.logging</a></li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../code/api/qilisdk/noise/index.html">qilisdk.noise<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/noise/amplitude_damping/index.html">qilisdk.noise.amplitude_damping</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../code/api/qilisdk/noise/bit_flip/index.html">qilisdk.noise.bit_flip</a></li>
@@ -350,11 +351,25 @@
 </span></code></pre></div>
 </div>
 <p><strong>Extras opcionales</strong></p>
+<div class="admonition note">
+<p class="admonition-title">Nota</p>
+<p>On macOS the default shell is <code class="docutils literal notranslate"><span class="pre">zsh</span></code>, which treats square brackets as a globbing pattern,
+so the extras must be quoted (<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">"qilisdk[qutip]"</span></code>). Select your operating system
+in the tabs below to get the right command.</p>
+</div>
 <ul>
 <li><p><strong>Aceleración CUDA</strong> (soporte de GPU NVIDIA con <a class="reference internal" href="../code/api/qilisdk/backends/cuda_backend/index.html#qilisdk.backends.cuda_backend.CudaBackend" title="qilisdk.backends.cuda_backend.CudaBackend"><code class="xref py py-mod docutils literal notranslate"><span class="pre">CudaBackend</span></code></a>):</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">pip<span class="w"> </span>install<span class="w"> </span>qilisdk<span class="o">[</span>cuda<span class="o">]</span>
+<div class="sphinx-tabs docutils container">
+<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-0-TGludXg=" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-0-TGludXg=" name="TGludXg=" role="tab" tabindex="0">Linux</button><button aria-controls="panel-0-TWFjIE9TWA==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-TWFjIE9TWA==" name="TWFjIE9TWA==" role="tab" tabindex="-1">Mac OSX</button><button aria-controls="panel-0-V2luZG93cw==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-V2luZG93cw==" name="V2luZG93cw==" role="tab" tabindex="-1">Windows</button></div><div aria-labelledby="tab-0-TGludXg=" class="sphinx-tabs-panel group-tab" id="panel-0-TGludXg=" name="TGludXg=" role="tabpanel" tabindex="0"><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">pip<span class="w"> </span>install<span class="w"> </span>qilisdk<span class="o">[</span>cuda<span class="o">]</span>
 </span></code></pre></div>
 </div>
+</div><div aria-labelledby="tab-0-TWFjIE9TWA==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-0-TWFjIE9TWA==" name="TWFjIE9TWA==" role="tabpanel" tabindex="0"><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"qilisdk[cuda]"</span>
+</span></code></pre></div>
+</div>
+</div><div aria-labelledby="tab-0-V2luZG93cw==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-0-V2luZG93cw==" name="V2luZG93cw==" role="tabpanel" tabindex="0"><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">pip<span class="w"> </span>install<span class="w"> </span>qilisdk<span class="o">[</span>cuda<span class="o">]</span>
+</span></code></pre></div>
+</div>
+</div></div>
 </li>
 </ul>
 <div class="admonition note">
@@ -363,20 +378,44 @@
 </div>
 <ul>
 <li><p><strong>Backend CPU de Qutip</strong> (simulación por CPU con <a class="reference internal" href="../code/api/qilisdk/backends/qutip_backend/index.html#qilisdk.backends.qutip_backend.QutipBackend" title="qilisdk.backends.qutip_backend.QutipBackend"><code class="xref py py-mod docutils literal notranslate"><span class="pre">QutipBackend</span></code></a>):</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">pip<span class="w"> </span>install<span class="w"> </span>qilisdk<span class="o">[</span>qutip<span class="o">]</span>
+<div class="sphinx-tabs docutils container">
+<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-1-TGludXg=" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-1-TGludXg=" name="TGludXg=" role="tab" tabindex="0">Linux</button><button aria-controls="panel-1-TWFjIE9TWA==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-1-TWFjIE9TWA==" name="TWFjIE9TWA==" role="tab" tabindex="-1">Mac OSX</button><button aria-controls="panel-1-V2luZG93cw==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-1-V2luZG93cw==" name="V2luZG93cw==" role="tab" tabindex="-1">Windows</button></div><div aria-labelledby="tab-1-TGludXg=" class="sphinx-tabs-panel group-tab" id="panel-1-TGludXg=" name="TGludXg=" role="tabpanel" tabindex="0"><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">pip<span class="w"> </span>install<span class="w"> </span>qilisdk<span class="o">[</span>qutip<span class="o">]</span>
 </span></code></pre></div>
 </div>
+</div><div aria-labelledby="tab-1-TWFjIE9TWA==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-1-TWFjIE9TWA==" name="TWFjIE9TWA==" role="tabpanel" tabindex="0"><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"qilisdk[qutip]"</span>
+</span></code></pre></div>
+</div>
+</div><div aria-labelledby="tab-1-V2luZG93cw==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-1-V2luZG93cw==" name="V2luZG93cw==" role="tabpanel" tabindex="0"><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">pip<span class="w"> </span>install<span class="w"> </span>qilisdk<span class="o">[</span>qutip<span class="o">]</span>
+</span></code></pre></div>
+</div>
+</div></div>
 </li>
 <li><p><strong>SpeQtrum</strong> (envío a la nube a través de <a class="reference internal" href="../code/api/qilisdk/speqtrum/index.html#module-qilisdk.speqtrum" title="qilisdk.speqtrum"><code class="xref py py-class docutils literal notranslate"><span class="pre">speqtrum</span></code></a>):</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">pip<span class="w"> </span>install<span class="w"> </span>qilisdk<span class="o">[</span>speqtrum<span class="o">]</span>
+<div class="sphinx-tabs docutils container">
+<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-2-TGludXg=" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-2-TGludXg=" name="TGludXg=" role="tab" tabindex="0">Linux</button><button aria-controls="panel-2-TWFjIE9TWA==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-2-TWFjIE9TWA==" name="TWFjIE9TWA==" role="tab" tabindex="-1">Mac OSX</button><button aria-controls="panel-2-V2luZG93cw==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-2-V2luZG93cw==" name="V2luZG93cw==" role="tab" tabindex="-1">Windows</button></div><div aria-labelledby="tab-2-TGludXg=" class="sphinx-tabs-panel group-tab" id="panel-2-TGludXg=" name="TGludXg=" role="tabpanel" tabindex="0"><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">pip<span class="w"> </span>install<span class="w"> </span>qilisdk<span class="o">[</span>speqtrum<span class="o">]</span>
 </span></code></pre></div>
 </div>
+</div><div aria-labelledby="tab-2-TWFjIE9TWA==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-2-TWFjIE9TWA==" name="TWFjIE9TWA==" role="tabpanel" tabindex="0"><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"qilisdk[speqtrum]"</span>
+</span></code></pre></div>
+</div>
+</div><div aria-labelledby="tab-2-V2luZG93cw==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-2-V2luZG93cw==" name="V2luZG93cw==" role="tabpanel" tabindex="0"><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">pip<span class="w"> </span>install<span class="w"> </span>qilisdk<span class="o">[</span>speqtrum<span class="o">]</span>
+</span></code></pre></div>
+</div>
+</div></div>
 </li>
 </ul>
 <p>Puede combinar extras:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">pip<span class="w"> </span>install<span class="w"> </span>qilisdk<span class="o">[</span>cuda,qutip,speqtrum<span class="o">]</span>
+<div class="sphinx-tabs docutils container">
+<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-3-TGludXg=" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-3-TGludXg=" name="TGludXg=" role="tab" tabindex="0">Linux</button><button aria-controls="panel-3-TWFjIE9TWA==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-3-TWFjIE9TWA==" name="TWFjIE9TWA==" role="tab" tabindex="-1">Mac OSX</button><button aria-controls="panel-3-V2luZG93cw==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-3-V2luZG93cw==" name="V2luZG93cw==" role="tab" tabindex="-1">Windows</button></div><div aria-labelledby="tab-3-TGludXg=" class="sphinx-tabs-panel group-tab" id="panel-3-TGludXg=" name="TGludXg=" role="tabpanel" tabindex="0"><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">pip<span class="w"> </span>install<span class="w"> </span>qilisdk<span class="o">[</span>cuda,qutip,speqtrum<span class="o">]</span>
 </span></code></pre></div>
 </div>
+</div><div aria-labelledby="tab-3-TWFjIE9TWA==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-3-TWFjIE9TWA==" name="TWFjIE9TWA==" role="tabpanel" tabindex="0"><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"qilisdk[cuda,qutip,speqtrum]"</span>
+</span></code></pre></div>
+</div>
+</div><div aria-labelledby="tab-3-V2luZG93cw==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-3-V2luZG93cw==" name="V2luZG93cw==" role="tabpanel" tabindex="0"><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">pip<span class="w"> </span>install<span class="w"> </span>qilisdk<span class="o">[</span>cuda,qutip,speqtrum<span class="o">]</span>
+</span></code></pre></div>
+</div>
+</div></div>
 <div class="admonition note">
 <p class="admonition-title">Nota</p>
 <p>QiliSDK requiere una versión de Python 3.11 o superior.</p>
@@ -395,15 +434,15 @@
 <p>El soporte para Windows es limitado, por lo que recomendamos usar WSL, que se puede instalar según <a class="reference external" href="https://learn.microsoft.com/en-us/windows/wsl/install" rel="nofollow noopener">esta guía<svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a>. Con esto, debería seguir las instrucciones de Linux a continuación. Si debe usar Windows puro, las instrucciones de Windows a continuación deberían funcionar, aunque deshabilitan ciertas funciones del código (especialmente algunos bucles paralelizados).</p>
 <p>Primero, asegúrese de tener instalados Python, pip, git, cmake y un compilador de C++:</p>
 <div class="sphinx-tabs docutils container">
-<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-0-TGludXg=" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-0-TGludXg=" name="TGludXg=" role="tab" tabindex="0">Linux</button><button aria-controls="panel-0-TWFjIE9TWA==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-TWFjIE9TWA==" name="TWFjIE9TWA==" role="tab" tabindex="-1">Mac OSX</button><button aria-controls="panel-0-V2luZG93cw==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-V2luZG93cw==" name="V2luZG93cw==" role="tab" tabindex="-1">Windows</button></div><div aria-labelledby="tab-0-TGludXg=" class="sphinx-tabs-panel group-tab" id="panel-0-TGludXg=" name="TGludXg=" role="tabpanel" tabindex="0"><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">sudo<span class="w"> </span>apt<span class="w"> </span>update
+<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-4-TGludXg=" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-4-TGludXg=" name="TGludXg=" role="tab" tabindex="0">Linux</button><button aria-controls="panel-4-TWFjIE9TWA==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-4-TWFjIE9TWA==" name="TWFjIE9TWA==" role="tab" tabindex="-1">Mac OSX</button><button aria-controls="panel-4-V2luZG93cw==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-4-V2luZG93cw==" name="V2luZG93cw==" role="tab" tabindex="-1">Windows</button></div><div aria-labelledby="tab-4-TGludXg=" class="sphinx-tabs-panel group-tab" id="panel-4-TGludXg=" name="TGludXg=" role="tabpanel" tabindex="0"><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">sudo<span class="w"> </span>apt<span class="w"> </span>update
 </span><span id="line-2">sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>python3<span class="w"> </span>python3-pip<span class="w"> </span>git<span class="w"> </span>build-essential
 </span></code></pre></div>
 </div>
-</div><div aria-labelledby="tab-0-TWFjIE9TWA==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-0-TWFjIE9TWA==" name="TWFjIE9TWA==" role="tabpanel" tabindex="0"><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">xcode-select<span class="w"> </span>--install
+</div><div aria-labelledby="tab-4-TWFjIE9TWA==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-4-TWFjIE9TWA==" name="TWFjIE9TWA==" role="tabpanel" tabindex="0"><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">xcode-select<span class="w"> </span>--install
 </span><span id="line-2">brew<span class="w"> </span>install<span class="w"> </span>python<span class="w"> </span>git<span class="w"> </span>ninja<span class="w"> </span>cmake
 </span></code></pre></div>
 </div>
-</div><div aria-labelledby="tab-0-V2luZG93cw==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-0-V2luZG93cw==" name="V2luZG93cw==" role="tabpanel" tabindex="0"><ul class="simple">
+</div><div aria-labelledby="tab-4-V2luZG93cw==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-4-V2luZG93cw==" name="V2luZG93cw==" role="tabpanel" tabindex="0"><ul class="simple">
 <li><p>Instale Python a través de la Microsoft Store.</p></li>
 <li><p>Instale Git desde <a class="reference external" href="https://git-scm.com/install/windows" rel="nofollow noopener">https://git-scm.com/install/windows<svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a>.</p></li>
 <li><p>Instale las herramientas de compilación de C++ instalando la extensión «C/C++ Extension Pack» para VSCode.</p></li>
@@ -411,13 +450,13 @@
 </div></div>
 <p>Instale uv globalmente con:</p>
 <div class="sphinx-tabs docutils container">
-<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-1-TGludXg=" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-1-TGludXg=" name="TGludXg=" role="tab" tabindex="0">Linux</button><button aria-controls="panel-1-TWFjIE9TWA==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-1-TWFjIE9TWA==" name="TWFjIE9TWA==" role="tab" tabindex="-1">Mac OSX</button><button aria-controls="panel-1-V2luZG93cw==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-1-V2luZG93cw==" name="V2luZG93cw==" role="tab" tabindex="-1">Windows</button></div><div aria-labelledby="tab-1-TGludXg=" class="sphinx-tabs-panel group-tab" id="panel-1-TGludXg=" name="TGludXg=" role="tabpanel" tabindex="0"><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">curl<span class="w"> </span>-LsSf<span class="w"> </span>https://astral.sh/uv/install.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sh
+<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-5-TGludXg=" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-5-TGludXg=" name="TGludXg=" role="tab" tabindex="0">Linux</button><button aria-controls="panel-5-TWFjIE9TWA==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-5-TWFjIE9TWA==" name="TWFjIE9TWA==" role="tab" tabindex="-1">Mac OSX</button><button aria-controls="panel-5-V2luZG93cw==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-5-V2luZG93cw==" name="V2luZG93cw==" role="tab" tabindex="-1">Windows</button></div><div aria-labelledby="tab-5-TGludXg=" class="sphinx-tabs-panel group-tab" id="panel-5-TGludXg=" name="TGludXg=" role="tabpanel" tabindex="0"><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">curl<span class="w"> </span>-LsSf<span class="w"> </span>https://astral.sh/uv/install.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sh
 </span></code></pre></div>
 </div>
-</div><div aria-labelledby="tab-1-TWFjIE9TWA==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-1-TWFjIE9TWA==" name="TWFjIE9TWA==" role="tabpanel" tabindex="0"><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">curl<span class="w"> </span>-LsSf<span class="w"> </span>https://astral.sh/uv/install.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sh
+</div><div aria-labelledby="tab-5-TWFjIE9TWA==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-5-TWFjIE9TWA==" name="TWFjIE9TWA==" role="tabpanel" tabindex="0"><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">curl<span class="w"> </span>-LsSf<span class="w"> </span>https://astral.sh/uv/install.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sh
 </span></code></pre></div>
 </div>
-</div><div aria-labelledby="tab-1-V2luZG93cw==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-1-V2luZG93cw==" name="V2luZG93cw==" role="tabpanel" tabindex="0"><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">powershell<span class="w"> </span>-ExecutionPolicy<span class="w"> </span>ByPass<span class="w"> </span>-c<span class="w"> </span><span class="s2">"irm https://astral.sh/uv/install.ps1 | iex"</span>
+</div><div aria-labelledby="tab-5-V2luZG93cw==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-5-V2luZG93cw==" name="V2luZG93cw==" role="tabpanel" tabindex="0"><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">powershell<span class="w"> </span>-ExecutionPolicy<span class="w"> </span>ByPass<span class="w"> </span>-c<span class="w"> </span><span class="s2">"irm https://astral.sh/uv/install.ps1 | iex"</span>
 </span></code></pre></div>
 </div>
 </div></div>
@@ -432,13 +471,13 @@
 </div>
 <p>Luego active el entorno:</p>
 <div class="sphinx-tabs docutils container">
-<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-2-TGludXg=" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-2-TGludXg=" name="TGludXg=" role="tab" tabindex="0">Linux</button><button aria-controls="panel-2-TWFjIE9TWA==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-2-TWFjIE9TWA==" name="TWFjIE9TWA==" role="tab" tabindex="-1">Mac OSX</button><button aria-controls="panel-2-V2luZG93cw==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-2-V2luZG93cw==" name="V2luZG93cw==" role="tab" tabindex="-1">Windows</button></div><div aria-labelledby="tab-2-TGludXg=" class="sphinx-tabs-panel group-tab" id="panel-2-TGludXg=" name="TGludXg=" role="tabpanel" tabindex="0"><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="nb">source</span><span class="w"> </span>.venv/bin/activate
+<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-6-TGludXg=" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-6-TGludXg=" name="TGludXg=" role="tab" tabindex="0">Linux</button><button aria-controls="panel-6-TWFjIE9TWA==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-6-TWFjIE9TWA==" name="TWFjIE9TWA==" role="tab" tabindex="-1">Mac OSX</button><button aria-controls="panel-6-V2luZG93cw==" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-6-V2luZG93cw==" name="V2luZG93cw==" role="tab" tabindex="-1">Windows</button></div><div aria-labelledby="tab-6-TGludXg=" class="sphinx-tabs-panel group-tab" id="panel-6-TGludXg=" name="TGludXg=" role="tabpanel" tabindex="0"><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="nb">source</span><span class="w"> </span>.venv/bin/activate
 </span></code></pre></div>
 </div>
-</div><div aria-labelledby="tab-2-TWFjIE9TWA==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-2-TWFjIE9TWA==" name="TWFjIE9TWA==" role="tabpanel" tabindex="0"><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="nb">source</span><span class="w"> </span>.venv/bin/activate
+</div><div aria-labelledby="tab-6-TWFjIE9TWA==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-6-TWFjIE9TWA==" name="TWFjIE9TWA==" role="tabpanel" tabindex="0"><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="nb">source</span><span class="w"> </span>.venv/bin/activate
 </span></code></pre></div>
 </div>
-</div><div aria-labelledby="tab-2-V2luZG93cw==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-2-V2luZG93cw==" name="V2luZG93cw==" role="tabpanel" tabindex="0"><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">.venv<span class="se">\S</span>cripts<span class="se">\a</span>ctivate
+</div><div aria-labelledby="tab-6-V2luZG93cw==" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-6-V2luZG93cw==" name="V2luZG93cw==" role="tabpanel" tabindex="0"><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">.venv<span class="se">\S</span>cripts<span class="se">\a</span>ctivate
 </span></code></pre></div>
 </div>
 </div></div>
@@ -451,6 +490,51 @@
 </div>
 <p>Si desea instalar con extras, puede ejecutar lo siguiente, ajustando según sea necesario:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">uv<span class="w"> </span>sync<span class="w"> </span>--extra<span class="w"> </span>cuda13<span class="w"> </span>--extra<span class="w"> </span>qutip<span class="w"> </span>--extra<span class="w"> </span>speqtrum
+</span></code></pre></div>
+</div>
+<p>There are also a number of extra compile flags that can be set to enable/disable certain features:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 45.0%"/>
+<col style="width: 55.0%"/>
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Flag</p></th>
+<th class="head"><p>What it does</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">-Ccmake.define.build_native=ON</span></code></p></td>
+<td><p>Build for the architecture of the current machine for increased performance. Only recommended if you are building for your own machine.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">-Ccmake.define.single_precision=ON</span></code></p></td>
+<td><p>Use single precision (<code class="docutils literal notranslate"><span class="pre">float</span></code>) instead of double precision (<code class="docutils literal notranslate"><span class="pre">double</span></code>). Slightly faster, but less accurate.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">-Ccmake.build-type=Debug</span></code></p></td>
+<td><p>Enable a debug build (no optimizations, debug symbols).</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">-Ccmake.build-type=RelWithDebInfo</span></code></p></td>
+<td><p>Enable an optimized debug build (optimizations plus debug symbols).</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">-Ccmake.build-type=Release</span></code></p></td>
+<td><p>Enable a release build (optimizations, no debug symbols). This is the default.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">-Ccmake.define.tidy=ON</span></code></p></td>
+<td><p>Run <code class="docutils literal notranslate"><span class="pre">clang-tidy</span></code> on the code during compilation.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">-Ccmake.define.verbose=ON</span></code></p></td>
+<td><p>Enable (very) verbose output from the C++ code.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">-Ccmake.define.tests=ON</span></code></p></td>
+<td><p>Build the C++ test suite, which will then be available as a <code class="docutils literal notranslate"><span class="pre">test_cpp</span></code> executable in the tests directory.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">-Ccmake.define.coverage=ON</span></code></p></td>
+<td><p>Enable coverage instrumentation flags.</p></td>
+</tr>
+</tbody>
+</table>
+<p>These can be passed to <code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">sync</span></code> by simply appending to the build command, for example:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">uv<span class="w"> </span>sync<span class="w"> </span>-Ccmake.define.build_native<span class="o">=</span>ON<span class="w"> </span>-Ccmake.build-type<span class="o">=</span>RelWithDebInfo
 </span></code></pre></div>
 </div>
 <p>Entonces tendrá un entorno con la última versión de QiliSDK instalada. Si desea instalar otras cosas en el entorno, necesitará usar pip con uv:</p>

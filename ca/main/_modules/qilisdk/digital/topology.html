@@ -277,6 +277,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/functionals/variational_program_result/index.html">qilisdk.functionals.variational_program_result</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/logging/index.html">qilisdk.logging</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/noise/index.html">qilisdk.noise</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/amplitude_damping/index.html">qilisdk.noise.amplitude_damping</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/bit_flip/index.html">qilisdk.noise.bit_flip</a></li>
@@ -433,69 +434,77 @@
 </span><span id="line-15">
 </span><span id="line-16"><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">TypeGuard</span>
 </span><span id="line-17">
-</span><span id="line-18"><span class="kn">from</span><span class="w"> </span><span class="nn">rustworkx</span><span class="w"> </span><span class="kn">import</span> <span class="n">PyGraph</span>
-</span><span id="line-19">
-</span><span id="line-20"><span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
-</span><span id="line-21">    <span class="kn">from</span><span class="w"> </span><span class="nn">.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Topology</span>
-</span><span id="line-22">
+</span><span id="line-18"><span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
+</span><span id="line-19"><span class="kn">from</span><span class="w"> </span><span class="nn">rustworkx</span><span class="w"> </span><span class="kn">import</span> <span class="n">PyGraph</span>
+</span><span id="line-20">
+</span><span id="line-21"><span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+</span><span id="line-22">    <span class="kn">from</span><span class="w"> </span><span class="nn">.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Topology</span>
 </span><span id="line-23">
-</span><span id="line-24"><span class="n">_TOPOLOGY_TUPLE_ARITY</span> <span class="o">=</span> <span class="mi">2</span>
-</span><span id="line-25">
+</span><span id="line-24">
+</span><span id="line-25"><span class="n">_TOPOLOGY_TUPLE_ARITY</span> <span class="o">=</span> <span class="mi">2</span>
 </span><span id="line-26">
-</span><span id="line-27"><span class="k">def</span><span class="w"> </span><span class="nf">_is_topology_graph</span><span class="p">(</span><span class="n">topology</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">|</span> <span class="n">PyGraph</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">TypeGuard</span><span class="p">[</span><span class="n">PyGraph</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="kc">None</span><span class="p">]]:</span>
-</span><span id="line-28">    <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">topology</span><span class="p">,</span> <span class="n">PyGraph</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">topology</span><span class="o">.</span><span class="n">nodes</span><span class="p">())</span>
-</span><span id="line-29">
+</span><span id="line-27">
+</span><span id="line-28"><span class="k">def</span><span class="w"> </span><span class="nf">_is_topology_graph</span><span class="p">(</span><span class="n">topology</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">|</span> <span class="n">PyGraph</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">TypeGuard</span><span class="p">[</span><span class="n">PyGraph</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="kc">None</span><span class="p">]]:</span>
+</span><span id="line-29">    <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">topology</span><span class="p">,</span> <span class="n">PyGraph</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">topology</span><span class="o">.</span><span class="n">nodes</span><span class="p">())</span>
 </span><span id="line-30">
-</span><span id="line-31"><span class="k">def</span><span class="w"> </span><span class="nf">_is_topology_list</span><span class="p">(</span><span class="n">topology</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">|</span> <span class="n">PyGraph</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">TypeGuard</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]:</span>
-</span><span id="line-32">    <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">topology</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span>
-</span><span id="line-33">        <span class="nb">isinstance</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span>
-</span><span id="line-34">        <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">element</span><span class="p">)</span> <span class="o">==</span> <span class="n">_TOPOLOGY_TUPLE_ARITY</span>
-</span><span id="line-35">        <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">element</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">int</span><span class="p">)</span>
-</span><span id="line-36">        <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">element</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nb">int</span><span class="p">)</span>
-</span><span id="line-37">        <span class="k">for</span> <span class="n">element</span> <span class="ow">in</span> <span class="n">topology</span>
-</span><span id="line-38">    <span class="p">)</span>
-</span><span id="line-39">
+</span><span id="line-31">
+</span><span id="line-32"><span class="k">def</span><span class="w"> </span><span class="nf">_is_topology_list</span><span class="p">(</span><span class="n">topology</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">|</span> <span class="n">PyGraph</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">TypeGuard</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]:</span>
+</span><span id="line-33">    <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">topology</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span>
+</span><span id="line-34">        <span class="nb">isinstance</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span>
+</span><span id="line-35">        <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">element</span><span class="p">)</span> <span class="o">==</span> <span class="n">_TOPOLOGY_TUPLE_ARITY</span>
+</span><span id="line-36">        <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">element</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">int</span><span class="p">)</span>
+</span><span id="line-37">        <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">element</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nb">int</span><span class="p">)</span>
+</span><span id="line-38">        <span class="k">for</span> <span class="n">element</span> <span class="ow">in</span> <span class="n">topology</span>
+</span><span id="line-39">    <span class="p">)</span>
 </span><span id="line-40">
+</span><span id="line-41">
 <div class="viewcode-block" id="build_topology_graph">
 <a class="viewcode-back" href="../../../code/api/qilisdk/digital/topology/index.html#qilisdk.digital.topology.build_topology_graph">[documents]</a>
-</span><span id="line-41"><span class="k">def</span><span class="w"> </span><span class="nf">build_topology_graph</span><span class="p">(</span><span class="n">topology</span><span class="p">:</span> <span class="n">Topology</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PyGraph</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
-</span><span id="line-42"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a topology as a ``rustworkx.PyGraph``.</span>
-</span><span id="line-43">
-</span><span id="line-44"><span class="sd">    Args:</span>
-</span><span id="line-45"><span class="sd">        topology (Topology): Coupling map provided either as a list of</span>
-</span><span id="line-46"><span class="sd">            connected physical-qubit pairs or as an existing ``PyGraph``.</span>
-</span><span id="line-47">
-</span><span id="line-48"><span class="sd">    Raises:</span>
-</span><span id="line-49"><span class="sd">        ValueError:</span>
-</span><span id="line-50">
-</span><span id="line-51"><span class="sd">    Returns:</span>
-</span><span id="line-52"><span class="sd">        PyGraph[int, None]: Coupling map in ``PyGraph`` form.</span>
-</span><span id="line-53"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-54">    <span class="k">if</span> <span class="n">_is_topology_graph</span><span class="p">(</span><span class="n">topology</span><span class="p">):</span>
-</span><span id="line-55">        <span class="k">return</span> <span class="n">topology</span>
-</span><span id="line-56">    <span class="k">if</span> <span class="n">_is_topology_list</span><span class="p">(</span><span class="n">topology</span><span class="p">):</span>
-</span><span id="line-57">        <span class="n">graph</span> <span class="o">=</span> <span class="n">PyGraph</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="kc">None</span><span class="p">]()</span>
-</span><span id="line-58">
-</span><span id="line-59">        <span class="c1"># Collect the physical qubit labels that actually appear in the coupling map.</span>
-</span><span id="line-60">        <span class="n">active_nodes</span> <span class="o">=</span> <span class="p">{</span><span class="nb">int</span><span class="p">(</span><span class="n">qubit</span><span class="p">)</span> <span class="k">for</span> <span class="n">pair</span> <span class="ow">in</span> <span class="n">topology</span> <span class="k">for</span> <span class="n">qubit</span> <span class="ow">in</span> <span class="n">pair</span><span class="p">}</span>
-</span><span id="line-61">        <span class="k">if</span> <span class="ow">not</span> <span class="n">active_nodes</span><span class="p">:</span>
-</span><span id="line-62">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Topology edge list cannot be empty.&quot;</span><span class="p">)</span>
-</span><span id="line-63">
-</span><span id="line-64">        <span class="n">max_label</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">active_nodes</span><span class="p">)</span>
-</span><span id="line-65">
-</span><span id="line-66">        <span class="c1"># Add a dense block of nodes so that node indices match physical labels.</span>
-</span><span id="line-67">        <span class="n">graph</span><span class="o">.</span><span class="n">add_nodes_from</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">max_label</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
-</span><span id="line-68">        <span class="k">for</span> <span class="n">physical_qubit_a</span><span class="p">,</span> <span class="n">physical_qubit_b</span> <span class="ow">in</span> <span class="n">topology</span><span class="p">:</span>
-</span><span id="line-69">            <span class="n">graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">physical_qubit_a</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">physical_qubit_b</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
-</span><span id="line-70">
-</span><span id="line-71">        <span class="c1"># Remove any indices that are not populated in the topology. This keeps</span>
-</span><span id="line-72">        <span class="c1"># rustworkx node indices aligned with the real physical labels.</span>
-</span><span id="line-73">        <span class="n">missing_nodes</span> <span class="o">=</span> <span class="p">{</span><span class="n">node</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_label</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="n">node</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">active_nodes</span><span class="p">}</span>
-</span><span id="line-74">        <span class="k">for</span> <span class="n">missing_node</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">missing_nodes</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-</span><span id="line-75">            <span class="n">graph</span><span class="o">.</span><span class="n">remove_node</span><span class="p">(</span><span class="n">missing_node</span><span class="p">)</span>
-</span><span id="line-76">
-</span><span id="line-77">        <span class="k">return</span> <span class="n">graph</span>
-</span><span id="line-78">    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;topology has incorrect format.&quot;</span><span class="p">)</span></div>
+</span><span id="line-42"><span class="k">def</span><span class="w"> </span><span class="nf">build_topology_graph</span><span class="p">(</span><span class="n">topology</span><span class="p">:</span> <span class="n">Topology</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PyGraph</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+</span><span id="line-43"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a topology as a ``rustworkx.PyGraph``.</span>
+</span><span id="line-44">
+</span><span id="line-45"><span class="sd">    Args:</span>
+</span><span id="line-46"><span class="sd">        topology (Topology): Coupling map provided either as a list of</span>
+</span><span id="line-47"><span class="sd">            connected physical-qubit pairs or as an existing ``PyGraph``.</span>
+</span><span id="line-48">
+</span><span id="line-49"><span class="sd">    Raises:</span>
+</span><span id="line-50"><span class="sd">        ValueError:</span>
+</span><span id="line-51">
+</span><span id="line-52"><span class="sd">    Returns:</span>
+</span><span id="line-53"><span class="sd">        PyGraph[int, None]: Coupling map in ``PyGraph`` form.</span>
+</span><span id="line-54"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-55">    <span class="k">if</span> <span class="n">_is_topology_graph</span><span class="p">(</span><span class="n">topology</span><span class="p">):</span>
+</span><span id="line-56">        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;[Topology] Using provided PyGraph with </span><span class="si">{}</span><span class="s2"> nodes&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">topology</span><span class="o">.</span><span class="n">node_indices</span><span class="p">()))</span>
+</span><span id="line-57">        <span class="k">return</span> <span class="n">topology</span>
+</span><span id="line-58">    <span class="k">if</span> <span class="n">_is_topology_list</span><span class="p">(</span><span class="n">topology</span><span class="p">):</span>
+</span><span id="line-59">        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;[Topology] Building topology graph from edge list with </span><span class="si">{}</span><span class="s2"> edges&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">topology</span><span class="p">))</span>
+</span><span id="line-60">        <span class="n">graph</span> <span class="o">=</span> <span class="n">PyGraph</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="kc">None</span><span class="p">]()</span>
+</span><span id="line-61">
+</span><span id="line-62">        <span class="c1"># Collect the physical qubit labels that actually appear in the coupling map.</span>
+</span><span id="line-63">        <span class="n">active_nodes</span> <span class="o">=</span> <span class="p">{</span><span class="nb">int</span><span class="p">(</span><span class="n">qubit</span><span class="p">)</span> <span class="k">for</span> <span class="n">pair</span> <span class="ow">in</span> <span class="n">topology</span> <span class="k">for</span> <span class="n">qubit</span> <span class="ow">in</span> <span class="n">pair</span><span class="p">}</span>
+</span><span id="line-64">        <span class="k">if</span> <span class="ow">not</span> <span class="n">active_nodes</span><span class="p">:</span>
+</span><span id="line-65">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Topology edge list cannot be empty.&quot;</span><span class="p">)</span>
+</span><span id="line-66">
+</span><span id="line-67">        <span class="n">max_label</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">active_nodes</span><span class="p">)</span>
+</span><span id="line-68">
+</span><span id="line-69">        <span class="c1"># Add a dense block of nodes so that node indices match physical labels.</span>
+</span><span id="line-70">        <span class="n">graph</span><span class="o">.</span><span class="n">add_nodes_from</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">max_label</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+</span><span id="line-71">        <span class="k">for</span> <span class="n">physical_qubit_a</span><span class="p">,</span> <span class="n">physical_qubit_b</span> <span class="ow">in</span> <span class="n">topology</span><span class="p">:</span>
+</span><span id="line-72">            <span class="n">graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">physical_qubit_a</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">physical_qubit_b</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+</span><span id="line-73">
+</span><span id="line-74">        <span class="c1"># Remove any indices that are not populated in the topology. This keeps</span>
+</span><span id="line-75">        <span class="c1"># rustworkx node indices aligned with the real physical labels.</span>
+</span><span id="line-76">        <span class="n">missing_nodes</span> <span class="o">=</span> <span class="p">{</span><span class="n">node</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_label</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="n">node</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">active_nodes</span><span class="p">}</span>
+</span><span id="line-77">        <span class="k">for</span> <span class="n">missing_node</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">missing_nodes</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+</span><span id="line-78">            <span class="n">graph</span><span class="o">.</span><span class="n">remove_node</span><span class="p">(</span><span class="n">missing_node</span><span class="p">)</span>
+</span><span id="line-79">
+</span><span id="line-80">        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+</span><span id="line-81">            <span class="s2">&quot;[Topology] Built topology graph with </span><span class="si">{}</span><span class="s2"> nodes and </span><span class="si">{}</span><span class="s2"> edges&quot;</span><span class="p">,</span>
+</span><span id="line-82">            <span class="n">graph</span><span class="o">.</span><span class="n">num_nodes</span><span class="p">(),</span>
+</span><span id="line-83">            <span class="n">graph</span><span class="o">.</span><span class="n">num_edges</span><span class="p">(),</span>
+</span><span id="line-84">        <span class="p">)</span>
+</span><span id="line-85">        <span class="k">return</span> <span class="n">graph</span>
+</span><span id="line-86">    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;topology has incorrect format.&quot;</span><span class="p">)</span></div>
 
 </span></code></pre></div>
     </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">

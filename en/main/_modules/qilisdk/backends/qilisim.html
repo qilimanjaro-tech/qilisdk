@@ -277,6 +277,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/functionals/variational_program_result/index.html">qilisdk.functionals.variational_program_result</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/logging/index.html">qilisdk.logging</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/noise/index.html">qilisdk.noise</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/amplitude_damping/index.html">qilisdk.noise.amplitude_damping</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/bit_flip/index.html">qilisdk.noise.bit_flip</a></li>
@@ -436,212 +437,240 @@
 </span><span id="line-18"><span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
 </span><span id="line-19"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisim_module</span><span class="w"> </span><span class="kn">import</span> <span class="n">QiliSimCpp</span>  <span class="c1"># ty:ignore[unresolved-import]</span>
 </span><span id="line-20">
-</span><span id="line-21"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.settings</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_settings</span>
-</span><span id="line-22">
-</span><span id="line-23"><span class="kn">from</span><span class="w"> </span><span class="nn">.backend</span><span class="w"> </span><span class="kn">import</span> <span class="n">Backend</span>
-</span><span id="line-24"><span class="kn">from</span><span class="w"> </span><span class="nn">.backend_config</span><span class="w"> </span><span class="kn">import</span> <span class="n">AnalogMethod</span><span class="p">,</span> <span class="n">DigitalMethod</span><span class="p">,</span> <span class="n">ExecutionConfig</span><span class="p">,</span> <span class="n">SolverConfigDict</span>
-</span><span id="line-25">
-</span><span id="line-26"><span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
-</span><span id="line-27">    <span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">QTensor</span>
-</span><span id="line-28">    <span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.functionals</span><span class="w"> </span><span class="kn">import</span> <span class="n">AnalogEvolution</span><span class="p">,</span> <span class="n">DigitalPropagation</span><span class="p">,</span> <span class="n">QuantumReservoir</span>
-</span><span id="line-29">    <span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.functionals.functional_result</span><span class="w"> </span><span class="kn">import</span> <span class="n">FunctionalResult</span>
-</span><span id="line-30">    <span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.noise.noise_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">NoiseModel</span>
-</span><span id="line-31">    <span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.readout</span><span class="w"> </span><span class="kn">import</span> <span class="n">ReadoutMethod</span>
-</span><span id="line-32">
+</span><span id="line-21"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core.qtensor</span><span class="w"> </span><span class="kn">import</span> <span class="n">InitialState</span>
+</span><span id="line-22"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.settings</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_settings</span>
+</span><span id="line-23">
+</span><span id="line-24"><span class="kn">from</span><span class="w"> </span><span class="nn">.backend</span><span class="w"> </span><span class="kn">import</span> <span class="n">Backend</span>
+</span><span id="line-25"><span class="kn">from</span><span class="w"> </span><span class="nn">.backend_config</span><span class="w"> </span><span class="kn">import</span> <span class="n">AnalogMethod</span><span class="p">,</span> <span class="n">DigitalMethod</span><span class="p">,</span> <span class="n">ExecutionConfig</span><span class="p">,</span> <span class="n">SolverConfigDict</span>
+</span><span id="line-26">
+</span><span id="line-27"><span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+</span><span id="line-28">    <span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">QTensor</span>
+</span><span id="line-29">    <span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.functionals</span><span class="w"> </span><span class="kn">import</span> <span class="n">AnalogEvolution</span><span class="p">,</span> <span class="n">DigitalPropagation</span><span class="p">,</span> <span class="n">QuantumReservoir</span>
+</span><span id="line-30">    <span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.functionals.functional_result</span><span class="w"> </span><span class="kn">import</span> <span class="n">FunctionalResult</span>
+</span><span id="line-31">    <span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.noise.noise_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">NoiseModel</span>
+</span><span id="line-32">    <span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.readout</span><span class="w"> </span><span class="kn">import</span> <span class="n">ReadoutMethod</span>
 </span><span id="line-33">
+</span><span id="line-34">
 <div class="viewcode-block" id="QiliSim">
 <a class="viewcode-back" href="../../../code/api/qilisdk/backends/qilisim/index.html#qilisdk.backends.qilisim.QiliSim">[docs]</a>
-</span><span id="line-34"><span class="k">class</span><span class="w"> </span><span class="nc">QiliSim</span><span class="p">(</span><span class="n">Backend</span><span class="p">):</span>
-</span><span id="line-35"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Backend that runs digital-circuit and analog time-evolution experiments using a custom C++ simulator.</span>
-</span><span id="line-36">
-</span><span id="line-37"><span class="sd">    Example:</span>
-</span><span id="line-38"><span class="sd">        .. code-block:: python</span>
-</span><span id="line-39">
-</span><span id="line-40"><span class="sd">            from qilisdk.backends import (</span>
-</span><span id="line-41"><span class="sd">                AnalogMethod,</span>
-</span><span id="line-42"><span class="sd">                DigitalMethod,</span>
-</span><span id="line-43"><span class="sd">                ExecutionConfig,</span>
-</span><span id="line-44"><span class="sd">                MonteCarloConfig,</span>
-</span><span id="line-45"><span class="sd">                QiliSim,</span>
-</span><span id="line-46"><span class="sd">            )</span>
-</span><span id="line-47">
-</span><span id="line-48"><span class="sd">            backend = QiliSim(</span>
-</span><span id="line-49"><span class="sd">                analog_simulation_method=AnalogMethod.arnoldi(</span>
-</span><span id="line-50"><span class="sd">                    dim=16,</span>
-</span><span id="line-51"><span class="sd">                    num_substeps=2,</span>
-</span><span id="line-52"><span class="sd">                ),</span>
-</span><span id="line-53"><span class="sd">                digital_simulation_method=DigitalMethod.statevector(</span>
-</span><span id="line-54"><span class="sd">                    max_cache_size=2_000,</span>
-</span><span id="line-55"><span class="sd">                ),</span>
-</span><span id="line-56"><span class="sd">                execution_config=ExecutionConfig(</span>
-</span><span id="line-57"><span class="sd">                    num_threads=4,</span>
-</span><span id="line-58"><span class="sd">                    seed=42,</span>
-</span><span id="line-59"><span class="sd">                    monte_carlo=MonteCarloConfig(trajectories=200),</span>
-</span><span id="line-60"><span class="sd">                ),</span>
-</span><span id="line-61"><span class="sd">            )</span>
-</span><span id="line-62"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-63">
-</span><span id="line-64">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
-</span><span id="line-65">        <span class="bp">self</span><span class="p">,</span>
-</span><span id="line-66">        <span class="n">noise_model</span><span class="p">:</span> <span class="n">NoiseModel</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="line-67">        <span class="n">analog_simulation_method</span><span class="p">:</span> <span class="n">AnalogMethod</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="line-68">        <span class="n">digital_simulation_method</span><span class="p">:</span> <span class="n">DigitalMethod</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="line-69">        <span class="n">execution_config</span><span class="p">:</span> <span class="n">ExecutionConfig</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="line-70">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-71"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Instantiate a new :class:`QiliSim` backend.</span>
-</span><span id="line-72">
-</span><span id="line-73"><span class="sd">        This is a CPU-based simulator implemented in C++, using pybind11</span>
-</span><span id="line-74"><span class="sd">        for bindings.</span>
-</span><span id="line-75">
-</span><span id="line-76"><span class="sd">        Args:</span>
-</span><span id="line-77"><span class="sd">            noise_model (NoiseModel | None): Optional noise model applied</span>
-</span><span id="line-78"><span class="sd">                during execution. Defaults to ``None``.</span>
-</span><span id="line-79"><span class="sd">            analog_simulation_method (AnalogMethod | None): Analog simulation</span>
-</span><span id="line-80"><span class="sd">                configuration. Available options:</span>
-</span><span id="line-81"><span class="sd">                :meth:`AnalogMethod.integrator`,</span>
-</span><span id="line-82"><span class="sd">                :meth:`AnalogMethod.arnoldi`, or :meth:`AnalogMethod.direct`.</span>
-</span><span id="line-83"><span class="sd">                Defaults to :meth:`AnalogMethod.integrator`.</span>
-</span><span id="line-84"><span class="sd">            digital_simulation_method (DigitalMethod | None): Digital</span>
-</span><span id="line-85"><span class="sd">                simulation configuration. Available options:</span>
-</span><span id="line-86"><span class="sd">                :meth:`DigitalMethod.statevector`. Defaults to</span>
-</span><span id="line-87"><span class="sd">                :meth:`DigitalMethod.statevector`.</span>
-</span><span id="line-88"><span class="sd">            execution_config (ExecutionConfig | None): Execution-level</span>
-</span><span id="line-89"><span class="sd">                configuration for threading, random seed and Monte-Carlo</span>
-</span><span id="line-90"><span class="sd">                executions. Defaults to the default configuration in</span>
-</span><span id="line-91"><span class="sd">                :class:`ExecutionConfig`.</span>
-</span><span id="line-92">
-</span><span id="line-93"><span class="sd">        Raises:</span>
-</span><span id="line-94"><span class="sd">            ValueError: If a configuration argument has an invalid type.</span>
-</span><span id="line-95"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-96">
-</span><span id="line-97">        <span class="c1"># Initialize the backend and the class vars</span>
-</span><span id="line-98">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">noise_model</span><span class="o">=</span><span class="n">noise_model</span><span class="p">)</span>
+</span><span id="line-35"><span class="k">class</span><span class="w"> </span><span class="nc">QiliSim</span><span class="p">(</span><span class="n">Backend</span><span class="p">):</span>
+</span><span id="line-36"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Backend that runs digital-circuit and analog time-evolution experiments using a custom C++ simulator.</span>
+</span><span id="line-37">
+</span><span id="line-38"><span class="sd">    Example:</span>
+</span><span id="line-39"><span class="sd">        .. code-block:: python</span>
+</span><span id="line-40">
+</span><span id="line-41"><span class="sd">            from qilisdk.backends import (</span>
+</span><span id="line-42"><span class="sd">                AnalogMethod,</span>
+</span><span id="line-43"><span class="sd">                DigitalMethod,</span>
+</span><span id="line-44"><span class="sd">                ExecutionConfig,</span>
+</span><span id="line-45"><span class="sd">                MonteCarloConfig,</span>
+</span><span id="line-46"><span class="sd">                QiliSim,</span>
+</span><span id="line-47"><span class="sd">            )</span>
+</span><span id="line-48">
+</span><span id="line-49"><span class="sd">            backend = QiliSim(</span>
+</span><span id="line-50"><span class="sd">                analog_simulation_method=AnalogMethod.arnoldi(</span>
+</span><span id="line-51"><span class="sd">                    dim=16,</span>
+</span><span id="line-52"><span class="sd">                    num_substeps=2,</span>
+</span><span id="line-53"><span class="sd">                ),</span>
+</span><span id="line-54"><span class="sd">                digital_simulation_method=DigitalMethod.statevector(</span>
+</span><span id="line-55"><span class="sd">                    max_cache_size=2_000,</span>
+</span><span id="line-56"><span class="sd">                ),</span>
+</span><span id="line-57"><span class="sd">                execution_config=ExecutionConfig(</span>
+</span><span id="line-58"><span class="sd">                    num_threads=4,</span>
+</span><span id="line-59"><span class="sd">                    seed=42,</span>
+</span><span id="line-60"><span class="sd">                    monte_carlo=MonteCarloConfig(trajectories=200),</span>
+</span><span id="line-61"><span class="sd">                ),</span>
+</span><span id="line-62"><span class="sd">            )</span>
+</span><span id="line-63"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-64">
+</span><span id="line-65">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+</span><span id="line-66">        <span class="bp">self</span><span class="p">,</span>
+</span><span id="line-67">        <span class="n">noise_model</span><span class="p">:</span> <span class="n">NoiseModel</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-68">        <span class="n">analog_simulation_method</span><span class="p">:</span> <span class="n">AnalogMethod</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-69">        <span class="n">digital_simulation_method</span><span class="p">:</span> <span class="n">DigitalMethod</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-70">        <span class="n">execution_config</span><span class="p">:</span> <span class="n">ExecutionConfig</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-71">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-72"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Instantiate a new :class:`QiliSim` backend.</span>
+</span><span id="line-73">
+</span><span id="line-74"><span class="sd">        This is a CPU-based simulator implemented in C++, using pybind11</span>
+</span><span id="line-75"><span class="sd">        for bindings.</span>
+</span><span id="line-76">
+</span><span id="line-77"><span class="sd">        Args:</span>
+</span><span id="line-78"><span class="sd">            noise_model (NoiseModel | None): Optional noise model applied</span>
+</span><span id="line-79"><span class="sd">                during execution. Defaults to ``None``.</span>
+</span><span id="line-80"><span class="sd">            analog_simulation_method (AnalogMethod | None): Analog simulation</span>
+</span><span id="line-81"><span class="sd">                configuration. Available options:</span>
+</span><span id="line-82"><span class="sd">                :meth:`AnalogMethod.integrator`,</span>
+</span><span id="line-83"><span class="sd">                :meth:`AnalogMethod.arnoldi`, or :meth:`AnalogMethod.direct`.</span>
+</span><span id="line-84"><span class="sd">                Defaults to :meth:`AnalogMethod.integrator`.</span>
+</span><span id="line-85"><span class="sd">            digital_simulation_method (DigitalMethod | None): Digital</span>
+</span><span id="line-86"><span class="sd">                simulation configuration. Available options:</span>
+</span><span id="line-87"><span class="sd">                :meth:`DigitalMethod.statevector`. Defaults to</span>
+</span><span id="line-88"><span class="sd">                :meth:`DigitalMethod.statevector`.</span>
+</span><span id="line-89"><span class="sd">            execution_config (ExecutionConfig | None): Execution-level</span>
+</span><span id="line-90"><span class="sd">                configuration for threading, random seed and Monte-Carlo</span>
+</span><span id="line-91"><span class="sd">                executions. Defaults to the default configuration in</span>
+</span><span id="line-92"><span class="sd">                :class:`ExecutionConfig`.</span>
+</span><span id="line-93">
+</span><span id="line-94"><span class="sd">        Raises:</span>
+</span><span id="line-95"><span class="sd">            ValueError: If a configuration argument has an invalid type.</span>
+</span><span id="line-96"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-97">
+</span><span id="line-98">        <span class="c1"># Initialize the backend and the class vars</span>
+</span><span id="line-99">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">noise_model</span><span class="o">=</span><span class="n">noise_model</span><span class="p">)</span>
 <div class="viewcode-block" id="QiliSim.qili_sim">
 <a class="viewcode-back" href="../../../code/api/qilisdk/backends/qilisim/index.html#qilisdk.backends.qilisim.QiliSim.qili_sim">[docs]</a>
-</span><span id="line-99">        <span class="bp">self</span><span class="o">.</span><span class="n">qili_sim</span> <span class="o">=</span> <span class="n">QiliSimCpp</span><span class="p">()</span></div>
+</span><span id="line-100">        <span class="bp">self</span><span class="o">.</span><span class="n">qili_sim</span> <span class="o">=</span> <span class="n">QiliSimCpp</span><span class="p">()</span></div>
 
-</span><span id="line-100">
-</span><span id="line-101">        <span class="n">analog_simulation_method</span><span class="p">:</span> <span class="n">AnalogMethod</span> <span class="o">=</span> <span class="n">analog_simulation_method</span> <span class="ow">or</span> <span class="n">AnalogMethod</span><span class="o">.</span><span class="n">integrator</span><span class="p">()</span>
-</span><span id="line-102">        <span class="n">digital_simulation_method</span><span class="p">:</span> <span class="n">DigitalMethod</span> <span class="o">=</span> <span class="n">digital_simulation_method</span> <span class="ow">or</span> <span class="n">DigitalMethod</span><span class="o">.</span><span class="n">statevector</span><span class="p">()</span>
-</span><span id="line-103">        <span class="n">execution_config</span><span class="p">:</span> <span class="n">ExecutionConfig</span> <span class="o">=</span> <span class="n">execution_config</span> <span class="ow">or</span> <span class="n">ExecutionConfig</span><span class="p">()</span>
-</span><span id="line-104">
-</span><span id="line-105">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">analog_simulation_method</span><span class="p">,</span> <span class="n">AnalogMethod</span><span class="p">):</span>
-</span><span id="line-106">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-</span><span id="line-107">                <span class="sa">f</span><span class="s2">&quot;Analog simulation method provided (</span><span class="si">{</span><span class="n">analog_simulation_method</span><span class="o">.</span><span class="vm">__class__</span><span class="si">}</span><span class="s2">) is not a valid analog simulation method.&quot;</span>
-</span><span id="line-108">            <span class="p">)</span>
-</span><span id="line-109">
-</span><span id="line-110">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">digital_simulation_method</span><span class="p">,</span> <span class="n">DigitalMethod</span><span class="p">):</span>
-</span><span id="line-111">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-</span><span id="line-112">                <span class="sa">f</span><span class="s2">&quot;Digital simulation method provided (</span><span class="si">{</span><span class="n">digital_simulation_method</span><span class="o">.</span><span class="vm">__class__</span><span class="si">}</span><span class="s2">) is not a valid digital simulation method.&quot;</span>
-</span><span id="line-113">            <span class="p">)</span>
-</span><span id="line-114">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">execution_config</span><span class="p">,</span> <span class="n">ExecutionConfig</span><span class="p">):</span>
-</span><span id="line-115">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-</span><span id="line-116">                <span class="sa">f</span><span class="s2">&quot;Execution config provided (</span><span class="si">{</span><span class="n">execution_config</span><span class="o">.</span><span class="vm">__class__</span><span class="si">}</span><span class="s2">) is not a valid execution configuration.&quot;</span>
-</span><span id="line-117">            <span class="p">)</span>
-</span><span id="line-118">
-</span><span id="line-119">        <span class="bp">self</span><span class="o">.</span><span class="n">_solver_config</span> <span class="o">=</span> <span class="n">analog_simulation_method</span><span class="o">.</span><span class="n">get_config</span><span class="p">()</span>
-</span><span id="line-120">        <span class="bp">self</span><span class="o">.</span><span class="n">_solver_config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">execution_config</span><span class="o">.</span><span class="n">get_config</span><span class="p">())</span>
-</span><span id="line-121">        <span class="bp">self</span><span class="o">.</span><span class="n">_solver_config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">digital_simulation_method</span><span class="o">.</span><span class="n">get_config</span><span class="p">())</span>
-</span><span id="line-122">        <span class="bp">self</span><span class="o">.</span><span class="n">_solver_config</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;atol&quot;</span><span class="p">:</span> <span class="n">get_settings</span><span class="p">()</span><span class="o">.</span><span class="n">atol</span><span class="p">})</span>
-</span><span id="line-123">
-</span><span id="line-124">    <span class="nd">@property</span>
+</span><span id="line-101">
+</span><span id="line-102">        <span class="n">analog_simulation_method</span><span class="p">:</span> <span class="n">AnalogMethod</span> <span class="o">=</span> <span class="n">analog_simulation_method</span> <span class="ow">or</span> <span class="n">AnalogMethod</span><span class="o">.</span><span class="n">integrator</span><span class="p">()</span>
+</span><span id="line-103">        <span class="n">digital_simulation_method</span><span class="p">:</span> <span class="n">DigitalMethod</span> <span class="o">=</span> <span class="n">digital_simulation_method</span> <span class="ow">or</span> <span class="n">DigitalMethod</span><span class="o">.</span><span class="n">statevector</span><span class="p">()</span>
+</span><span id="line-104">        <span class="n">execution_config</span><span class="p">:</span> <span class="n">ExecutionConfig</span> <span class="o">=</span> <span class="n">execution_config</span> <span class="ow">or</span> <span class="n">ExecutionConfig</span><span class="p">()</span>
+</span><span id="line-105">
+</span><span id="line-106">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">analog_simulation_method</span><span class="p">,</span> <span class="n">AnalogMethod</span><span class="p">):</span>
+</span><span id="line-107">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="line-108">                <span class="sa">f</span><span class="s2">&quot;Analog simulation method provided (</span><span class="si">{</span><span class="n">analog_simulation_method</span><span class="o">.</span><span class="vm">__class__</span><span class="si">}</span><span class="s2">) is not a valid analog simulation method.&quot;</span>
+</span><span id="line-109">            <span class="p">)</span>
+</span><span id="line-110">
+</span><span id="line-111">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">digital_simulation_method</span><span class="p">,</span> <span class="n">DigitalMethod</span><span class="p">):</span>
+</span><span id="line-112">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="line-113">                <span class="sa">f</span><span class="s2">&quot;Digital simulation method provided (</span><span class="si">{</span><span class="n">digital_simulation_method</span><span class="o">.</span><span class="vm">__class__</span><span class="si">}</span><span class="s2">) is not a valid digital simulation method.&quot;</span>
+</span><span id="line-114">            <span class="p">)</span>
+</span><span id="line-115">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">execution_config</span><span class="p">,</span> <span class="n">ExecutionConfig</span><span class="p">):</span>
+</span><span id="line-116">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="line-117">                <span class="sa">f</span><span class="s2">&quot;Execution config provided (</span><span class="si">{</span><span class="n">execution_config</span><span class="o">.</span><span class="vm">__class__</span><span class="si">}</span><span class="s2">) is not a valid execution configuration.&quot;</span>
+</span><span id="line-118">            <span class="p">)</span>
+</span><span id="line-119">
+</span><span id="line-120">        <span class="bp">self</span><span class="o">.</span><span class="n">_solver_config</span> <span class="o">=</span> <span class="n">analog_simulation_method</span><span class="o">.</span><span class="n">get_config</span><span class="p">()</span>
+</span><span id="line-121">        <span class="bp">self</span><span class="o">.</span><span class="n">_solver_config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">execution_config</span><span class="o">.</span><span class="n">get_config</span><span class="p">())</span>
+</span><span id="line-122">        <span class="bp">self</span><span class="o">.</span><span class="n">_solver_config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">digital_simulation_method</span><span class="o">.</span><span class="n">get_config</span><span class="p">())</span>
+</span><span id="line-123">        <span class="bp">self</span><span class="o">.</span><span class="n">_solver_config</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;atol&quot;</span><span class="p">:</span> <span class="n">get_settings</span><span class="p">()</span><span class="o">.</span><span class="n">atol</span><span class="p">})</span>
+</span><span id="line-124">
+</span><span id="line-125">        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+</span><span id="line-126">            <span class="s2">&quot;[QiliSim] Initialized QiliSim backend (analog=</span><span class="si">{}</span><span class="s2">, digital=</span><span class="si">{}</span><span class="s2">, noise_model=</span><span class="si">{}</span><span class="s2">)&quot;</span><span class="p">,</span>
+</span><span id="line-127">            <span class="nb">type</span><span class="p">(</span><span class="n">analog_simulation_method</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+</span><span id="line-128">            <span class="nb">type</span><span class="p">(</span><span class="n">digital_simulation_method</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+</span><span id="line-129">            <span class="nb">type</span><span class="p">(</span><span class="n">noise_model</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span> <span class="k">if</span> <span class="n">noise_model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-130">        <span class="p">)</span>
+</span><span id="line-131">        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;[QiliSim] QiliSim solver config: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_solver_config</span><span class="p">)</span>
+</span><span id="line-132">
+</span><span id="line-133">        <span class="c1"># If GPU acceleration is requested, preload the CUDA libraries</span>
+</span><span id="line-134">        <span class="k">if</span> <span class="n">execution_config</span><span class="o">.</span><span class="n">gpu</span><span class="p">:</span>
+</span><span id="line-135">            <span class="kn">from</span><span class="w"> </span><span class="nn">._gpu</span><span class="w"> </span><span class="kn">import</span> <span class="n">preload_cuda_libraries</span>  <span class="c1"># noqa: PLC0415</span>
+</span><span id="line-136">
+</span><span id="line-137">            <span class="k">if</span> <span class="ow">not</span> <span class="n">preload_cuda_libraries</span><span class="p">():</span>
+</span><span id="line-138">                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+</span><span id="line-139">                    <span class="s2">&quot;GPU requested but no CUDA wheels were preloaded; relying on a system CUDA &quot;</span>
+</span><span id="line-140">                    <span class="s2">&quot;install if present, otherwise the simulator falls back to CPU.&quot;</span>
+</span><span id="line-141">                <span class="p">)</span>
+</span><span id="line-142">
+</span><span id="line-143">    <span class="nd">@property</span>
 <div class="viewcode-block" id="QiliSim.solver_params">
 <a class="viewcode-back" href="../../../code/api/qilisdk/backends/qilisim/index.html#qilisdk.backends.qilisim.QiliSim.solver_params">[docs]</a>
-</span><span id="line-125">    <span class="k">def</span><span class="w"> </span><span class="nf">solver_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SolverConfigDict</span><span class="p">:</span>
-</span><span id="line-126"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Backward-compatible alias for the backend configuration dictionary.&quot;&quot;&quot;</span>
-</span><span id="line-127">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_solver_config</span></div>
+</span><span id="line-144">    <span class="k">def</span><span class="w"> </span><span class="nf">solver_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SolverConfigDict</span><span class="p">:</span>
+</span><span id="line-145"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Backward-compatible alias for the backend configuration dictionary.&quot;&quot;&quot;</span>
+</span><span id="line-146">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_solver_config</span></div>
 
-</span><span id="line-128">
+</span><span id="line-147">
 <div class="viewcode-block" id="QiliSim.get_config">
 <a class="viewcode-back" href="../../../code/api/qilisdk/backends/qilisim/index.html#qilisdk.backends.qilisim.QiliSim.get_config">[docs]</a>
-</span><span id="line-129">    <span class="k">def</span><span class="w"> </span><span class="nf">get_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SolverConfigDict</span><span class="p">:</span>
-</span><span id="line-130"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the full flattened solver configuration used by the C++ backend.&quot;&quot;&quot;</span>
-</span><span id="line-131">        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_solver_config</span><span class="p">)</span></div>
+</span><span id="line-148">    <span class="k">def</span><span class="w"> </span><span class="nf">get_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SolverConfigDict</span><span class="p">:</span>
+</span><span id="line-149"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the full flattened solver configuration used by the C++ backend.&quot;&quot;&quot;</span>
+</span><span id="line-150">        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_solver_config</span><span class="p">)</span></div>
 
-</span><span id="line-132">
-</span><span id="line-133">    <span class="k">def</span><span class="w"> </span><span class="nf">_execute_digital_propagation</span><span class="p">(</span>
-</span><span id="line-134">        <span class="bp">self</span><span class="p">,</span> <span class="n">functional</span><span class="p">:</span> <span class="n">DigitalPropagation</span><span class="p">,</span> <span class="n">readout</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ReadoutMethod</span><span class="p">],</span> <span class="n">initial_state</span><span class="p">:</span> <span class="n">QTensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-</span><span id="line-135">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FunctionalResult</span><span class="p">:</span>
-</span><span id="line-136"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute a digital-circuit propagation functional and return measurement results.</span>
-</span><span id="line-137">
-</span><span id="line-138"><span class="sd">        Args:</span>
-</span><span id="line-139"><span class="sd">            functional (DigitalPropagation): The digital propagation</span>
-</span><span id="line-140"><span class="sd">                functional to execute.</span>
-</span><span id="line-141"><span class="sd">            readout (list[ReadoutMethod]): Readout specifications for</span>
-</span><span id="line-142"><span class="sd">                result extraction.</span>
-</span><span id="line-143"><span class="sd">            initial_state (QTensor | None): Optional initial state to start</span>
-</span><span id="line-144"><span class="sd">                the simulation from. Defaults to ``None`` (computational</span>
-</span><span id="line-145"><span class="sd">                basis zero state).</span>
-</span><span id="line-146">
-</span><span id="line-147"><span class="sd">        Returns:</span>
-</span><span id="line-148"><span class="sd">            FunctionalResult: The execution result containing the requested</span>
-</span><span id="line-149"><span class="sd">                readout data.</span>
-</span><span id="line-150"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-151">        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Executing Sampling&quot;</span><span class="p">)</span>
-</span><span id="line-152">        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qili_sim</span><span class="o">.</span><span class="n">execute_digital_propagation</span><span class="p">(</span>
-</span><span id="line-153">            <span class="n">functional</span><span class="p">,</span> <span class="n">readout</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_noise_model</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_solver_config</span>
-</span><span id="line-154">        <span class="p">)</span>
-</span><span id="line-155">        <span class="n">logger</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s2">&quot;Sampling finished&quot;</span><span class="p">)</span>
-</span><span id="line-156">        <span class="k">return</span> <span class="n">result</span>
-</span><span id="line-157">
-</span><span id="line-158">    <span class="k">def</span><span class="w"> </span><span class="nf">_execute_analog_evolution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">functional</span><span class="p">:</span> <span class="n">AnalogEvolution</span><span class="p">,</span> <span class="n">readout</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ReadoutMethod</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">FunctionalResult</span><span class="p">:</span>
-</span><span id="line-159"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute analog time evolution for the provided schedule and initial state.</span>
-</span><span id="line-160">
-</span><span id="line-161"><span class="sd">        Args:</span>
-</span><span id="line-162"><span class="sd">            functional (AnalogEvolution): The analog evolution functional</span>
-</span><span id="line-163"><span class="sd">                to execute, containing the schedule and initial state.</span>
-</span><span id="line-164"><span class="sd">            readout (list[ReadoutMethod]): Readout specifications for</span>
-</span><span id="line-165"><span class="sd">                result extraction.</span>
-</span><span id="line-166">
-</span><span id="line-167"><span class="sd">        Returns:</span>
-</span><span id="line-168"><span class="sd">            FunctionalResult: The execution result containing the requested</span>
-</span><span id="line-169"><span class="sd">                readout data.</span>
-</span><span id="line-170"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-171">
-</span><span id="line-172">        <span class="c1"># Get the time steps</span>
-</span><span id="line-173">        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Executing TimeEvolution (T=</span><span class="si">{}</span><span class="s2">, dt=</span><span class="si">{}</span><span class="s2">)&quot;</span><span class="p">,</span> <span class="n">functional</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">functional</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">dt</span><span class="p">)</span>
-</span><span id="line-174">
-</span><span id="line-175">        <span class="c1"># Execute the time evolution</span>
-</span><span id="line-176">        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qili_sim</span><span class="o">.</span><span class="n">execute_analog_evolution</span><span class="p">(</span><span class="n">functional</span><span class="p">,</span> <span class="n">readout</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_noise_model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_solver_config</span><span class="p">)</span>
-</span><span id="line-177">
-</span><span id="line-178">        <span class="n">logger</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s2">&quot;TimeEvolution finished&quot;</span><span class="p">)</span>
-</span><span id="line-179">        <span class="k">return</span> <span class="n">result</span>
-</span><span id="line-180">
-</span><span id="line-181">    <span class="k">def</span><span class="w"> </span><span class="nf">_execute_quantum_reservoir</span><span class="p">(</span>
-</span><span id="line-182">        <span class="bp">self</span><span class="p">,</span> <span class="n">functional</span><span class="p">:</span> <span class="n">QuantumReservoir</span><span class="p">,</span> <span class="n">readout</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ReadoutMethod</span><span class="p">]</span>
-</span><span id="line-183">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FunctionalResult</span><span class="p">:</span>
-</span><span id="line-184"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute a quantum reservoir computing functional via the C++ backend.</span>
+</span><span id="line-151">
+</span><span id="line-152">    <span class="k">def</span><span class="w"> </span><span class="nf">_execute_digital_propagation</span><span class="p">(</span>
+</span><span id="line-153">        <span class="bp">self</span><span class="p">,</span>
+</span><span id="line-154">        <span class="n">functional</span><span class="p">:</span> <span class="n">DigitalPropagation</span><span class="p">,</span>
+</span><span id="line-155">        <span class="n">readout</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ReadoutMethod</span><span class="p">],</span>
+</span><span id="line-156">        <span class="n">initial_state</span><span class="p">:</span> <span class="n">QTensor</span> <span class="o">|</span> <span class="n">InitialState</span> <span class="o">=</span> <span class="n">InitialState</span><span class="o">.</span><span class="n">ZERO</span><span class="p">,</span>
+</span><span id="line-157">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FunctionalResult</span><span class="p">:</span>
+</span><span id="line-158"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute a digital-circuit propagation functional and return measurement results.</span>
+</span><span id="line-159">
+</span><span id="line-160"><span class="sd">        Args:</span>
+</span><span id="line-161"><span class="sd">            functional (DigitalPropagation): The digital propagation</span>
+</span><span id="line-162"><span class="sd">                functional to execute.</span>
+</span><span id="line-163"><span class="sd">            readout (list[ReadoutMethod]): Readout specifications for</span>
+</span><span id="line-164"><span class="sd">                result extraction.</span>
+</span><span id="line-165"><span class="sd">            initial_state (QTensor | InitialState): Optional initial state to start</span>
+</span><span id="line-166"><span class="sd">                the simulation from. Defaults to ``InitialState.ZERO`` (computational</span>
+</span><span id="line-167"><span class="sd">                basis zero state).</span>
+</span><span id="line-168">
+</span><span id="line-169"><span class="sd">        Returns:</span>
+</span><span id="line-170"><span class="sd">            FunctionalResult: The execution result containing the requested</span>
+</span><span id="line-171"><span class="sd">                readout data.</span>
+</span><span id="line-172"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-173">        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;[QiliSim] Executing Digital Propagation&quot;</span><span class="p">)</span>
+</span><span id="line-174">        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+</span><span id="line-175">            <span class="s2">&quot;[QiliSim] DigitalPropagation, </span><span class="si">{}</span><span class="s2"> qubits, </span><span class="si">{}</span><span class="s2"> gates, </span><span class="si">{}</span><span class="s2"> readout methods&quot;</span><span class="p">,</span>
+</span><span id="line-176">            <span class="n">functional</span><span class="o">.</span><span class="n">circuit</span><span class="o">.</span><span class="n">nqubits</span><span class="p">,</span>
+</span><span id="line-177">            <span class="nb">len</span><span class="p">(</span><span class="n">functional</span><span class="o">.</span><span class="n">circuit</span><span class="o">.</span><span class="n">gates</span><span class="p">),</span>
+</span><span id="line-178">            <span class="nb">len</span><span class="p">(</span><span class="n">readout</span><span class="p">),</span>
+</span><span id="line-179">        <span class="p">)</span>
+</span><span id="line-180">        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qili_sim</span><span class="o">.</span><span class="n">execute_digital_propagation</span><span class="p">(</span>
+</span><span id="line-181">            <span class="n">functional</span><span class="p">,</span> <span class="n">readout</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_noise_model</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_solver_config</span>
+</span><span id="line-182">        <span class="p">)</span>
+</span><span id="line-183">        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;[QiliSim] Digital Propagation finished&quot;</span><span class="p">)</span>
+</span><span id="line-184">        <span class="k">return</span> <span class="n">result</span>
 </span><span id="line-185">
-</span><span id="line-186"><span class="sd">        Args:</span>
-</span><span id="line-187"><span class="sd">            functional (QuantumReservoir): The quantum reservoir functional</span>
-</span><span id="line-188"><span class="sd">                to execute.</span>
-</span><span id="line-189"><span class="sd">            readout (list[ReadoutMethod]): Readout specifications for</span>
-</span><span id="line-190"><span class="sd">                result extraction.</span>
-</span><span id="line-191">
-</span><span id="line-192"><span class="sd">        Returns:</span>
-</span><span id="line-193"><span class="sd">            FunctionalResult: The execution result containing the requested</span>
-</span><span id="line-194"><span class="sd">                readout data.</span>
-</span><span id="line-195"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-196">        <span class="c1"># Get the time steps</span>
-</span><span id="line-197">        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Executing Quantum Reservoir&quot;</span><span class="p">)</span>
-</span><span id="line-198">
-</span><span id="line-199">        <span class="c1"># Execute the time evolution</span>
-</span><span id="line-200">        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qili_sim</span><span class="o">.</span><span class="n">execute_quantum_reservoir</span><span class="p">(</span><span class="n">functional</span><span class="p">,</span> <span class="n">readout</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_noise_model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_solver_config</span><span class="p">)</span>
-</span><span id="line-201">
-</span><span id="line-202">        <span class="n">logger</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s2">&quot;TimeEvolution finished&quot;</span><span class="p">)</span>
-</span><span id="line-203">        <span class="k">return</span> <span class="n">result</span>
-</span><span id="line-204">
-</span><span id="line-205">    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="line-206"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a developer-friendly string representation including solver config.&quot;&quot;&quot;</span>
-</span><span id="line-207">        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span>
-</span><span id="line-208">            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__qualname__</span><span class="si">}</span><span class="s2">(&quot;</span><span class="p">,</span>
-</span><span id="line-209">            <span class="sa">f</span><span class="s2">&quot;  noise_model=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_noise_model</span><span class="si">!r}</span><span class="s2">,&quot;</span><span class="p">,</span>
-</span><span id="line-210">            <span class="s2">&quot;  solver_config={&quot;</span><span class="p">,</span>
-</span><span id="line-211">            <span class="o">*</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s2">,&quot;</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_solver_config</span><span class="o">.</span><span class="n">items</span><span class="p">()),</span>
-</span><span id="line-212">            <span class="s2">&quot;  }&quot;</span><span class="p">,</span>
-</span><span id="line-213">            <span class="s2">&quot;)&quot;</span><span class="p">,</span>
-</span><span id="line-214">        <span class="p">]</span>
-</span><span id="line-215">        <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span></div>
+</span><span id="line-186">    <span class="k">def</span><span class="w"> </span><span class="nf">_execute_analog_evolution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">functional</span><span class="p">:</span> <span class="n">AnalogEvolution</span><span class="p">,</span> <span class="n">readout</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ReadoutMethod</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">FunctionalResult</span><span class="p">:</span>
+</span><span id="line-187"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute analog time evolution for the provided schedule and initial state.</span>
+</span><span id="line-188">
+</span><span id="line-189"><span class="sd">        Args:</span>
+</span><span id="line-190"><span class="sd">            functional (AnalogEvolution): The analog evolution functional</span>
+</span><span id="line-191"><span class="sd">                to execute, containing the schedule and initial state.</span>
+</span><span id="line-192"><span class="sd">            readout (list[ReadoutMethod]): Readout specifications for</span>
+</span><span id="line-193"><span class="sd">                result extraction.</span>
+</span><span id="line-194">
+</span><span id="line-195"><span class="sd">        Returns:</span>
+</span><span id="line-196"><span class="sd">            FunctionalResult: The execution result containing the requested</span>
+</span><span id="line-197"><span class="sd">                readout data.</span>
+</span><span id="line-198"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-199">
+</span><span id="line-200">        <span class="c1"># Get the time steps</span>
+</span><span id="line-201">        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;[QiliSim] Executing TimeEvolution (T=</span><span class="si">{}</span><span class="s2">, dt=</span><span class="si">{}</span><span class="s2">)&quot;</span><span class="p">,</span> <span class="n">functional</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">functional</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">dt</span><span class="p">)</span>
+</span><span id="line-202">
+</span><span id="line-203">        <span class="c1"># Execute the time evolution</span>
+</span><span id="line-204">        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qili_sim</span><span class="o">.</span><span class="n">execute_analog_evolution</span><span class="p">(</span><span class="n">functional</span><span class="p">,</span> <span class="n">readout</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_noise_model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_solver_config</span><span class="p">)</span>
+</span><span id="line-205">
+</span><span id="line-206">        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;[QiliSim] TimeEvolution finished&quot;</span><span class="p">)</span>
+</span><span id="line-207">        <span class="k">return</span> <span class="n">result</span>
+</span><span id="line-208">
+</span><span id="line-209">    <span class="k">def</span><span class="w"> </span><span class="nf">_execute_quantum_reservoir</span><span class="p">(</span>
+</span><span id="line-210">        <span class="bp">self</span><span class="p">,</span> <span class="n">functional</span><span class="p">:</span> <span class="n">QuantumReservoir</span><span class="p">,</span> <span class="n">readout</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ReadoutMethod</span><span class="p">]</span>
+</span><span id="line-211">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FunctionalResult</span><span class="p">:</span>
+</span><span id="line-212"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute a quantum reservoir computing functional via the C++ backend.</span>
+</span><span id="line-213">
+</span><span id="line-214"><span class="sd">        Args:</span>
+</span><span id="line-215"><span class="sd">            functional (QuantumReservoir): The quantum reservoir functional</span>
+</span><span id="line-216"><span class="sd">                to execute.</span>
+</span><span id="line-217"><span class="sd">            readout (list[ReadoutMethod]): Readout specifications for</span>
+</span><span id="line-218"><span class="sd">                result extraction.</span>
+</span><span id="line-219">
+</span><span id="line-220"><span class="sd">        Returns:</span>
+</span><span id="line-221"><span class="sd">            FunctionalResult: The execution result containing the requested</span>
+</span><span id="line-222"><span class="sd">                readout data.</span>
+</span><span id="line-223"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-224">        <span class="c1"># Get the time steps</span>
+</span><span id="line-225">        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;[QiliSim] Executing Quantum Reservoir&quot;</span><span class="p">)</span>
+</span><span id="line-226">
+</span><span id="line-227">        <span class="c1"># Execute the time evolution</span>
+</span><span id="line-228">        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qili_sim</span><span class="o">.</span><span class="n">execute_quantum_reservoir</span><span class="p">(</span><span class="n">functional</span><span class="p">,</span> <span class="n">readout</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_noise_model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_solver_config</span><span class="p">)</span>
+</span><span id="line-229">
+</span><span id="line-230">        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;[QiliSim] Quantum Reservoir finished&quot;</span><span class="p">)</span>
+</span><span id="line-231">        <span class="k">return</span> <span class="n">result</span>
+</span><span id="line-232">
+</span><span id="line-233">    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="line-234"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a developer-friendly string representation including solver config.&quot;&quot;&quot;</span>
+</span><span id="line-235">        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span>
+</span><span id="line-236">            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__qualname__</span><span class="si">}</span><span class="s2">(&quot;</span><span class="p">,</span>
+</span><span id="line-237">            <span class="sa">f</span><span class="s2">&quot;  noise_model=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_noise_model</span><span class="si">!r}</span><span class="s2">,&quot;</span><span class="p">,</span>
+</span><span id="line-238">            <span class="s2">&quot;  solver_config={&quot;</span><span class="p">,</span>
+</span><span id="line-239">            <span class="o">*</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s2">,&quot;</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_solver_config</span><span class="o">.</span><span class="n">items</span><span class="p">()),</span>
+</span><span id="line-240">            <span class="s2">&quot;  }&quot;</span><span class="p">,</span>
+</span><span id="line-241">            <span class="s2">&quot;)&quot;</span><span class="p">,</span>
+</span><span id="line-242">        <span class="p">]</span>
+</span><span id="line-243">        <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span></div>
 
 </span></code></pre></div>
     </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">

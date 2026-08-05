@@ -19,7 +19,7 @@
 <link href="../../../../../_static/QiliSDK_q.png" rel="icon"/>
 <link href="../../../../../search.html" rel="search" title="Cerca"/>
 <link href="../../../../../genindex.html" rel="index" title="Índex"/>
-<link href="../hashing/index.html" rel="next" title="qilisdk.utils.hashing"/>
+<link href="base_solver/index.html" rel="next" title="qilisdk.utils.classical_solvers.base_solver"/>
 <link href="../index.html" rel="prev" title="qilisdk.utils"/>
 <script>
     <!-- Prevent Flash of wrong theme -->
@@ -231,6 +231,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../functionals/variational_program_result/index.html">qilisdk.functionals.variational_program_result</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging/index.html">qilisdk.logging</a></li>
 <li class="toctree-l3" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../../noise/index.html">qilisdk.noise<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l4"><a class="reference internal" href="../../noise/amplitude_damping/index.html">qilisdk.noise.amplitude_damping</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../noise/bit_flip/index.html">qilisdk.noise.bit_flip</a></li>
@@ -346,70 +347,16 @@
 <div id="content" role="main">
 <section id="module-qilisdk.utils.classical_solvers">
 <span id="qilisdk-utils-classical-solvers"></span><h1>qilisdk.utils.classical_solvers<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#module-qilisdk.utils.classical_solvers"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h1>
-<section id="classes">
-<h2>Classes<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#classes" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#classes'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
-<table class="autosummary longtable docutils align-default">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#qilisdk.utils.classical_solvers.ClassicalSolver" title="qilisdk.utils.classical_solvers.ClassicalSolver"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ClassicalSolver</span></code></a></p></td>
-<td><p>Base class for classical solvers.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#qilisdk.utils.classical_solvers.BruteForceSolver" title="qilisdk.utils.classical_solvers.BruteForceSolver"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BruteForceSolver</span></code></a></p></td>
-<td><p>Classical solver that uses brute-force search.</p></td>
-</tr>
-</tbody>
-</table>
-</section>
-<section id="module-contents">
-<h2>Module Contents<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#module-contents" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#module-contents'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
-<dl class="py class">
-<dt class="sig sig-object py" id="qilisdk.utils.classical_solvers.ClassicalSolver">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ClassicalSolver</span></span><a class="reference internal" href="../../../../../_modules/qilisdk/utils/classical_solvers.html#ClassicalSolver"><span class="viewcode-link"><span class="pre">[font]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.utils.classical_solvers.ClassicalSolver" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.utils.classical_solvers.ClassicalSolver'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Base class for classical solvers.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="qilisdk.utils.classical_solvers.ClassicalSolver.solve">
-<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">qilisdk.core.Model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">qilisdk.core.variables.Number</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../../core/variables/index.html#qilisdk.core.variables.BaseVariable" title="qilisdk.core.variables.BaseVariable"><span class="pre">qilisdk.core.variables.BaseVariable</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">qilisdk.core.variables.RealNumber</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/utils/classical_solvers.html#ClassicalSolver.solve"><span class="viewcode-link"><span class="pre">[font]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.utils.classical_solvers.ClassicalSolver.solve" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.utils.classical_solvers.ClassicalSolver.solve'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Solve the given model.</p>
-</dd></dl>
-</dd></dl>
-<dl class="py class">
-<dt class="sig sig-object py" id="qilisdk.utils.classical_solvers.BruteForceSolver">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">BruteForceSolver</span></span><a class="reference internal" href="../../../../../_modules/qilisdk/utils/classical_solvers.html#BruteForceSolver"><span class="viewcode-link"><span class="pre">[font]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.utils.classical_solvers.BruteForceSolver" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.utils.classical_solvers.BruteForceSolver'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#qilisdk.utils.classical_solvers.ClassicalSolver" title="qilisdk.utils.classical_solvers.ClassicalSolver"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ClassicalSolver</span></code></a></p>
-<p>Classical solver that uses brute-force search.</p>
-<p class="rubric">Exemple</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
-</span><span id="line-2"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.utils.classical_solvers</span><span class="w"> </span><span class="kn">import</span> <span class="n">BruteForceSolver</span>
-</span><span id="line-3">
-</span><span id="line-4"><span class="n">model</span> <span class="o">=</span> <span class="n">Model</span><span class="o">.</span><span class="n">knapsack</span><span class="p">(</span><span class="n">values</span><span class="o">=</span><span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span> <span class="n">weights</span><span class="o">=</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="n">max_weight</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
-</span><span id="line-5"><span class="n">results</span><span class="p">,</span> <span class="n">sample</span> <span class="o">=</span> <span class="n">BruteForceSolver</span><span class="p">()</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
-</span></code></pre></div>
+<section id="submodules">
+<h2>Submodules<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#submodules" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#submodules'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="base_solver/index.html">qilisdk.utils.classical_solvers.base_solver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="brute_force_solver/index.html">qilisdk.utils.classical_solvers.brute_force_solver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scip_solver/index.html">qilisdk.utils.classical_solvers.scip_solver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scipy_solver/index.html">qilisdk.utils.classical_solvers.scipy_solver</a></li>
+</ul>
 </div>
-<dl class="py method">
-<dt class="sig sig-object py" id="qilisdk.utils.classical_solvers.BruteForceSolver.solve">
-<span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">qilisdk.core.Model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">qilisdk.core.variables.Number</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../../core/variables/index.html#qilisdk.core.variables.BaseVariable" title="qilisdk.core.variables.BaseVariable"><span class="pre">qilisdk.core.variables.BaseVariable</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">qilisdk.core.variables.RealNumber</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../../_modules/qilisdk/utils/classical_solvers.html#BruteForceSolver.solve"><span class="viewcode-link"><span class="pre">[font]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.utils.classical_solvers.BruteForceSolver.solve" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.utils.classical_solvers.BruteForceSolver.solve'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
-<dd><p>Solve the given model by brute-force enumeration of all variable assignments.</p>
-<p>Binary variables are assigned values from {0, 1}. Any other <code class="docutils literal notranslate"><span class="pre">Variable</span></code> is decomposed
-via its encoding: all bit patterns are enumerated and decoded to their representable
-values, so the search covers every value the encoding can express regardless of domain.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Paràmetres<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>model</strong> – The <code class="docutils literal notranslate"><span class="pre">Model</span></code> instance to solve.</p>
-</dd>
-<dt class="field-even">Retorna<span class="colon">:</span></dt>
-<dd class="field-even"><p>a tuple of
-(results dict mapping objective/constraint labels to their evaluated values,
-sample dict mapping each variable to its value in the optimal solution).</p>
-</dd>
-<dt class="field-odd">Tipus de retorn<span class="colon">:</span></dt>
-<dd class="field-odd"><p>tuple[dict[str, Number], dict[<a class="reference internal" href="../../core/variables/index.html#qilisdk.core.variables.BaseVariable" title="qilisdk.core.variables.BaseVariable">BaseVariable</a>, RealNumber]]</p>
-</dd>
-<dt class="field-even">Llença<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – if the model contains a variable that has no encoding (i.e. is not a
-BinaryVariable or a bounded Variable).</p>
-</dd>
-</dl>
-</dd></dl>
-</dd></dl>
 </section>
 </section>
 </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">
@@ -422,8 +369,8 @@ BinaryVariable or a bounded Variable).</p>
       </a>
 </div>
 <div class="ml-auto">
-<a class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input hover:bg-accent hover:text-accent-foreground py-2 px-4" href="../hashing/index.html">
-        qilisdk.utils.hashing
+<a class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input hover:bg-accent hover:text-accent-foreground py-2 px-4" href="base_solver/index.html">
+        qilisdk.utils.classical_solvers.base_solver
         <svg class="ml-2 h-4 w-4" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
 <polyline points="9 18 15 12 9 6"></polyline>
 </svg>
@@ -432,18 +379,7 @@ BinaryVariable or a bounded Variable).</p>
 </div></div><aside class="hidden text-sm xl:block" id="right-sidebar">
 <div class="sticky top-16 -mt-10 max-h-[calc(100vh-5rem)] overflow-y-auto pt-6 space-y-2"><p class="font-medium">On this page</p>
 <ul>
-<li><a :data-current="activeSection === '#classes'" class="reference internal" href="#classes">Classes</a></li>
-<li><a :data-current="activeSection === '#module-contents'" class="reference internal" href="#module-contents">Module Contents</a><ul>
-<li><a :data-current="activeSection === '#qilisdk.utils.classical_solvers.ClassicalSolver'" class="reference internal" href="#qilisdk.utils.classical_solvers.ClassicalSolver"><code class="docutils literal notranslate"><span class="pre">ClassicalSolver</span></code></a><ul>
-<li><a :data-current="activeSection === '#qilisdk.utils.classical_solvers.ClassicalSolver.solve'" class="reference internal" href="#qilisdk.utils.classical_solvers.ClassicalSolver.solve"><code class="docutils literal notranslate"><span class="pre">ClassicalSolver.solve()</span></code></a></li>
-</ul>
-</li>
-<li><a :data-current="activeSection === '#qilisdk.utils.classical_solvers.BruteForceSolver'" class="reference internal" href="#qilisdk.utils.classical_solvers.BruteForceSolver"><code class="docutils literal notranslate"><span class="pre">BruteForceSolver</span></code></a><ul>
-<li><a :data-current="activeSection === '#qilisdk.utils.classical_solvers.BruteForceSolver.solve'" class="reference internal" href="#qilisdk.utils.classical_solvers.BruteForceSolver.solve"><code class="docutils literal notranslate"><span class="pre">BruteForceSolver.solve()</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
+<li><a :data-current="activeSection === '#submodules'" class="reference internal" href="#submodules">Submodules</a></li>
 </ul>
 </div>
 </aside>
