@@ -891,6 +891,14 @@ def test_Term_evaluate_variable_value_resolution():
     # A variable that cancels out is constant and needs no value at all.
     assert (x - x + 4).evaluate({}) == 4
 
+    # An empty term evaluates to 0 whatever its operation, and needs no values. An empty term is
+    # folded into a constant when nested, so the guard in the recursive core is exercised directly.
+    assert Term([], operation=Operation.ADD).evaluate({}) == 0
+    assert Term([], operation=Operation.MUL).evaluate({}) == 0
+    assert Term([], operation=Operation.ADD).evaluate({x: 2}) == 0
+    assert Term([], operation=Operation.ADD)._evaluate({}) == 0
+    assert Term([], operation=Operation.MUL)._evaluate({x: 2}) == 0
+
 
 def test_get_constant():
     x = Variable("x", Domain.POSITIVE_INTEGER, (0, 8), Bitwise)
@@ -1229,6 +1237,31 @@ def test_mathematical_map():
         DummyMap(1)
 
     assert isinstance(copy(dummy_map), DummyMap)
+
+
+def test_mathematical_map_nested_in_term():
+    """A map is evaluated through its recursive core when it is an element of a larger term."""
+    b = BinaryVariable("b")
+    c = BinaryVariable("c")
+    p = Parameter("p", 1)
+
+    # The map wraps a Term, and is itself nested in a Term, so ``MathematicalMap._evaluate`` runs.
+    nested = DummyMap(2 * b + p) + 1
+    assert nested.evaluate({b: 1}) == 4
+    assert nested.evaluate({b: 0}) == 2
+    assert nested.evaluate({b: 1, p: 3}) == 6
+
+    assert (Sin(2 * b + p) + 1).evaluate({b: 1}) == pytest.approx(np.sin(3) + 1)
+    assert (2 * DummyMap(2 * b + p)).evaluate({b: 1}) == 6
+
+    # Plain variables and parameters nested in a map inside a term.
+    assert (DummyMap(b) + c).evaluate({b: 1, c: 1}) == 2
+    assert (DummyMap(p) + c).evaluate({c: 1}) == 2
+
+    with pytest.raises(
+        ValueError, match=r"Can not evaluate term because the value of the variable .*? is not provided\."
+    ):
+        (DummyMap(2 * b + p) + c).evaluate({b: 1})
 
 
 def test_sin_map():
