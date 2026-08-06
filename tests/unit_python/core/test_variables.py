@@ -833,6 +833,65 @@ def test_Term_evaluate():
     assert t.evaluate({x: 1, y: 2}) == 12
 
 
+def test_Term_evaluate_variable_value_resolution():
+    """Cover every branch of the variable-value lookup performed during evaluation."""
+    x = Variable("x", Domain.POSITIVE_INTEGER, (0, 8), Bitwise)
+    y = Variable("y", Domain.POSITIVE_INTEGER, (0, 8), Bitwise)
+    b = BinaryVariable("b")
+    s = SpinVariable("s")
+    p = Parameter("p", 3)
+
+    # A falsy value is a provided value, not a missing one.
+    assert (2 * x + 3).evaluate({x: 0}) == 3
+    assert (b + 1).evaluate({b: 0}) == 1
+    assert (b + 1).evaluate({b: 0.0}) == 1
+    assert (s + 1).evaluate({s: 0}) == 0  # spin 0 -> -1
+
+    # Extra entries for variables that are not in the term are ignored.
+    assert (2 * x + 3).evaluate({x: 1, y: 7}) == 5
+
+    # Values may also be given as the binary list the variable encodes to.
+    assert (2 * x + 3).evaluate({x: [1, 0, 1]}) == 2 * x.evaluate([1, 0, 1]) + 3
+    assert (b + 1).evaluate({b: [1]}) == 2
+
+    # A parameter falls back to its own value when it is not in the mapping ...
+    assert (2 * p + 1).evaluate({}) == 7
+    assert (x * p).evaluate({x: 2}) == 6
+    p.set_value(5)
+    assert (2 * p + 1).evaluate({}) == 11
+
+    # ... and is overridden when it is.
+    assert (2 * p + 1).evaluate({p: 1}) == 3
+    assert (2 * p + 1).evaluate({p: 0}) == 1
+    assert (2 * p + 1).evaluate({p: 0.5}) == 2
+    assert p.value == 5  # evaluating must not mutate the parameter
+
+    # A parameter cannot be given a binary list.
+    with pytest.raises(ValueError, match=r"setting a parameter \(p\) value with a list is not supported\."):
+        (2 * p + 1).evaluate({p: [1]})
+
+    with pytest.raises(ValueError, match=r"setting a parameter \(p\) value with a list is not supported\."):
+        (x * p).evaluate({x: 2, p: [1, 0]})
+
+    # A non-parameter variable with no value is an error, however deeply it is nested ...
+    missing = r"Can not evaluate term because the value of the variable .*? is not provided\."
+    with pytest.raises(ValueError, match=missing):
+        (2 * x * y).evaluate({x: 2})
+
+    with pytest.raises(ValueError, match=missing):
+        (x * (y + 3) + 1).evaluate({x: 2})
+
+    with pytest.raises(ValueError, match=missing):
+        (2 * x + p).evaluate({})
+
+    # ... and is still an error when only unrelated variables are provided.
+    with pytest.raises(ValueError, match=missing):
+        (2 * x + 3).evaluate({y: 1})
+
+    # A variable that cancels out is constant and needs no value at all.
+    assert (x - x + 4).evaluate({}) == 4
+
+
 def test_get_constant():
     x = Variable("x", Domain.POSITIVE_INTEGER, (0, 8), Bitwise)
     y = Variable("y", Domain.POSITIVE_INTEGER, (0, 8), Bitwise)

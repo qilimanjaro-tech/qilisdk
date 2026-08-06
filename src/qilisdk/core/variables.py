@@ -33,7 +33,6 @@ _DIVISION_MESSAGE = "Division by zero is not allowed"
 
 GenericVar = TypeVar("GenericVar", bound="Variable")
 CONST_KEY = "_const_"
-_UNSET = object()
 MAX_INT = np.iinfo(np.int64).max
 MIN_INT = np.iinfo(np.int64).min
 LARGE_BOUND = 100
@@ -1643,14 +1642,14 @@ class Term:
             ValueError: if a non-parameter variable has no value in ``_var_values``, or a parameter
                 is given a list value.
         """
-        raw = _var_values.get(variable, _UNSET)
-        if raw is _UNSET:
+        raw = _var_values.get(variable)
+        if raw is None:
             if isinstance(variable, Parameter):
                 return variable.value
             raise ValueError(f"Can not evaluate term because the value of the variable {variable} is not provided.")
         if isinstance(variable, Parameter) and not isinstance(raw, RealNumber):
             raise ValueError(f"setting a parameter ({variable}) value with a list is not supported.")
-        return cast("list[int] | RealNumber", raw)
+        return raw
 
     def get_constant(self) -> Number:
         """
