@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import math
 from copy import copy
-from typing import TYPE_CHECKING, Callable, Iterator, Mapping, overload
+from typing import TYPE_CHECKING, Callable, Iterator, Mapping, cast, overload
 
 from loguru import logger
 from numpy import linspace
@@ -533,6 +533,43 @@ class Schedule(Parameterizable):
                 self._update_hamiltonian_from_dict(label, new_coefficients, interpolation)
             else:
                 raise ValueError("Unsupported type of coefficient.")
+
+        if self._max_time is not None:
+            self._coefficients[label].set_max_time(self._max_time)
+
+    def set_coefficient(
+        self,
+        label: str,
+        coefficient: Interpolator | TimeDict | PARAMETERIZED_NUMBER | Callable[..., PARAMETERIZED_NUMBER],
+        interpolation: Interpolation = Interpolation.LINEAR,
+    ) -> None:
+        """
+        Replace the coefficient of a single Hamiltonian, keeping the rest of the schedule untouched.
+
+        Args:
+            label (str): Label of the Hamiltonian whose coefficient should be updated.
+            coefficient (Interpolator | TimeDict | float | Parameter | Term | Callable): New coefficient. An
+                :class:`Interpolator` or a time dictionary is used as is, while a constant or a callable of time
+                is applied over the whole duration of the schedule.
+            interpolation (Interpolation): How to interpolate between time points when a time dictionary is given.
+
+        Raises:
+            ValueError: If the label is not associated with a Hamiltonian, or the coefficient type is unsupported.
+        """
+        if label not in self._hamiltonians:
+            raise ValueError(f"Can't set the coefficient of unknown hamiltonian {label}.")
+
+        if isinstance(coefficient, Interpolator):
+            self._update_hamiltonian_from_interpolator(label, coefficient)
+        elif isinstance(coefficient, dict):
+            self._update_hamiltonian_from_dict(label, cast("TimeDict", coefficient), interpolation)
+        elif isinstance(coefficient, (int, float, Parameter, Term)):
+            self._update_hamiltonian_from_dict(label, {0.0: coefficient, self.T: coefficient}, interpolation)
+        elif callable(coefficient):
+            sampled = cast("Callable[..., PARAMETERIZED_NUMBER]", coefficient)
+            self._update_hamiltonian_from_dict(label, {(0.0, self.T): sampled}, interpolation)
+        else:
+            raise ValueError(f"Unsupported type of coefficient {type(coefficient)}.")
 
         if self._max_time is not None:
             self._coefficients[label].set_max_time(self._max_time)
