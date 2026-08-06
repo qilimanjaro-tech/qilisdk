@@ -1,0 +1,25 @@
+name: Task
+description: A chore, refactor, deprecation or performance change in QiliSDK
+title: "[Task]: "
+type: Task
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Keep it short. A one-line title like `Move <thing> to <place>` plus a line on why is enough.
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: What needs doing
+      description: The change, in a sentence or two. Name the files if you already know them.
+    validations:
+      required: true
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Why
+      description: What is wrong or awkward today.
+    validations:
+      required: true
