@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-16 12:04+0200\n"
+"POT-Creation-Date: 2026-08-06 15:31+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -42,55 +42,79 @@ msgstr "Construcció"
 #: ../../modules/analog/analog_hamiltonian.rst:9
 msgid ""
 "To construct a Hamiltonian with a single Pauli, you can use the "
-"constructors ``X(i)``, ``Y(i)``, ``Z(i)``, ``I(i)``. From these single-"
-"qubit operators, you can build multi-qubit Hamiltonians using arithmetic "
-"operations. The operations follow Python syntax, for example: ``2 * Z(0) "
-"+ Z(1)`` and ``Z(0) * Z(1)`` build multi-qubit Hamiltonians."
+"constructors "
+":meth:`Hamiltonian.X(i)<qilisdk.analog.hamiltonian.Hamiltonian.X>`, "
+":meth:`Hamiltonian.Y(i)<qilisdk.analog.hamiltonian.Hamiltonian.Y>`, "
+":meth:`Hamiltonian.Z(i)<qilisdk.analog.hamiltonian.Hamiltonian.Z>`, "
+":meth:`Hamiltonian.I(i)<qilisdk.analog.hamiltonian.Hamiltonian.I>`."
 msgstr ""
 "Per construir un Hamiltonià amb un sol Pauli, podeu fer servir els "
-"constructors ``X(i)``, ``Y(i)``, ``Z(i)``, ``I(i)``. A partir d'aquests "
-"operadors d'un sol qubit, podeu construir Hamiltonians de múltiples "
-"qubits mitjançant operacions aritmètiques. Les operacions segueixen la "
-"sintaxi de Python; per exemple: ``2 * Z(0) + Z(1)`` i ``Z(0) * Z(1)`` "
-"construeixen Hamiltonians de múltiples qubits."
+"constructors "
+":meth:`Hamiltonian.X(i)<qilisdk.analog.hamiltonian.Hamiltonian.X>`, "
+":meth:`Hamiltonian.Y(i)<qilisdk.analog.hamiltonian.Hamiltonian.Y>`, "
+":meth:`Hamiltonian.Z(i)<qilisdk.analog.hamiltonian.Hamiltonian.Z>`, "
+":meth:`Hamiltonian.I(i)<qilisdk.analog.hamiltonian.Hamiltonian.I>`."
 
-#: ../../modules/analog/analog_hamiltonian.rst:14
+#: ../../modules/analog/analog_hamiltonian.rst:15
+msgid ""
+"From these single-qubit operators, you can build multi-qubit Hamiltonians"
+" using arithmetic operations. The operations follow Python syntax, for "
+"example:"
+msgstr ""
+"A partir d'aquests operadors d'un sol qubit, podeu construir Hamiltonians "
+"de múltiples qubits mitjançant operacions aritmètiques. Les operacions "
+"segueixen la sintaxi de Python; per exemple:"
+
+#: ../../modules/analog/analog_hamiltonian.rst:23
+msgid ""
+"The shorter module-level functions ``X(i)``, ``Y(i)``, ``Z(i)``, ``I(i)``"
+" remain available and behave identically, but they are discouraged "
+"because they clash with the ``X``, ``Y`` and ``Z`` *gates* from "
+":mod:`qilisdk.digital`. They may be deprecated in a future release."
+msgstr ""
+"Les funcions més curtes a nivell de mòdul ``X(i)``, ``Y(i)``, ``Z(i)``, "
+"``I(i)`` continuen disponibles i es comporten de manera idèntica, però no "
+"es recomanen perquè entren en conflicte amb les *portes* ``X``, ``Y`` i "
+"``Z`` de :mod:`qilisdk.digital`. Podrien quedar obsoletes en una versió "
+"futura."
+
+#: ../../modules/analog/analog_hamiltonian.rst:28
 msgid "List of Operations"
 msgstr "Llista d'operacions"
 
-#: ../../modules/analog/analog_hamiltonian.rst:16
+#: ../../modules/analog/analog_hamiltonian.rst:30
 msgid "**Arithmetic operations**:"
 msgstr "**Operacions aritmètiques**:"
 
-#: ../../modules/analog/analog_hamiltonian.rst:18
+#: ../../modules/analog/analog_hamiltonian.rst:32
 msgid "Addition: ``H1 + H2``"
 msgstr "Suma: ``H1 + H2``"
 
-#: ../../modules/analog/analog_hamiltonian.rst:19
+#: ../../modules/analog/analog_hamiltonian.rst:33
 msgid "Scalar multiplication: ``5 * H``"
 msgstr "Multiplicació escalar: ``5 * H``"
 
-#: ../../modules/analog/analog_hamiltonian.rst:20
+#: ../../modules/analog/analog_hamiltonian.rst:34
 msgid "multiplication: ``H0 * H1``"
 msgstr "Multiplicació: ``H0 * H1``"
 
-#: ../../modules/analog/analog_hamiltonian.rst:21
+#: ../../modules/analog/analog_hamiltonian.rst:35
 msgid "Subtraction: ``H1 - H2``"
 msgstr "Resta: ``H1 - H2``"
 
-#: ../../modules/analog/analog_hamiltonian.rst:22
+#: ../../modules/analog/analog_hamiltonian.rst:36
 msgid "Division by scalar: ``H / 5``"
 msgstr "Divisió per escalar: ``H / 5``"
 
-#: ../../modules/analog/analog_hamiltonian.rst:23
+#: ../../modules/analog/analog_hamiltonian.rst:37
 msgid "Negation: ``-H``"
 msgstr "Negació: ``-H``"
 
-#: ../../modules/analog/analog_hamiltonian.rst:25
+#: ../../modules/analog/analog_hamiltonian.rst:39
 msgid "**Extra Symbolic Operators**:"
 msgstr "**Operadors simbòlics addicionals**:"
 
-#: ../../modules/analog/analog_hamiltonian.rst:27
+#: ../../modules/analog/analog_hamiltonian.rst:41
 msgid ""
 "commutator: "
 ":meth:`H1.commutator(H2)<qilisdk.analog.hamiltonian.Hamiltonian.commutator>`"
@@ -98,7 +122,7 @@ msgstr ""
 "commutador: "
 ":meth:`H1.commutator(H2)<qilisdk.analog.hamiltonian.Hamiltonian.commutator>`"
 
-#: ../../modules/analog/analog_hamiltonian.rst:28
+#: ../../modules/analog/analog_hamiltonian.rst:42
 msgid ""
 "anticommutator: "
 ":meth:`H1.anticommutator(H2)<qilisdk.analog.hamiltonian.Hamiltonian.anticommutator>`"
@@ -106,7 +130,7 @@ msgstr ""
 "anticommutador: "
 ":meth:`H1.anticommutator(H2)<qilisdk.analog.hamiltonian.Hamiltonian.anticommutator>`"
 
-#: ../../modules/analog/analog_hamiltonian.rst:29
+#: ../../modules/analog/analog_hamiltonian.rst:43
 msgid ""
 "vector_norm: "
 ":meth:`H.vector_norm()<qilisdk.analog.hamiltonian.Hamiltonian.vector_norm>`"
@@ -114,7 +138,7 @@ msgstr ""
 "norma_vectorial: "
 ":meth:`H.vector_norm()<qilisdk.analog.hamiltonian.Hamiltonian.vector_norm>`"
 
-#: ../../modules/analog/analog_hamiltonian.rst:30
+#: ../../modules/analog/analog_hamiltonian.rst:44
 msgid ""
 "frobenius_norm: "
 ":meth:`H.frobenius_norm()<qilisdk.analog.hamiltonian.Hamiltonian.frobenius_norm>`"
@@ -122,15 +146,15 @@ msgstr ""
 "norma_frobenius: "
 ":meth:`H.frobenius_norm()<qilisdk.analog.hamiltonian.Hamiltonian.frobenius_norm>`"
 
-#: ../../modules/analog/analog_hamiltonian.rst:31
+#: ../../modules/analog/analog_hamiltonian.rst:45
 msgid "trace: :meth:`H.trace()<qilisdk.analog.hamiltonian.Hamiltonian.trace>`"
 msgstr "traça: :meth:`H.trace()<qilisdk.analog.hamiltonian.Hamiltonian.trace>`"
 
-#: ../../modules/analog/analog_hamiltonian.rst:33
+#: ../../modules/analog/analog_hamiltonian.rst:47
 msgid "**Exporting Hamiltonians**:"
 msgstr "**Exportació de Hamiltonians**:"
 
-#: ../../modules/analog/analog_hamiltonian.rst:35
+#: ../../modules/analog/analog_hamiltonian.rst:49
 msgid ""
 "to matrix: "
 ":meth:`H.to_matrix(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.to_matrix>`"
@@ -138,7 +162,7 @@ msgstr ""
 "a matriu: "
 ":meth:`H.to_matrix(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.to_matrix>`"
 
-#: ../../modules/analog/analog_hamiltonian.rst:36
+#: ../../modules/analog/analog_hamiltonian.rst:50
 msgid ""
 "to qtensor: "
 ":meth:`H.to_qtensor(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.to_qtensor>`"
@@ -146,11 +170,11 @@ msgstr ""
 "a qtensor: "
 ":meth:`H.to_qtensor(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.to_qtensor>`"
 
-#: ../../modules/analog/analog_hamiltonian.rst:38
+#: ../../modules/analog/analog_hamiltonian.rst:52
 msgid "**Importing Hamiltonians**:"
 msgstr "**Importació de Hamiltonians**:"
 
-#: ../../modules/analog/analog_hamiltonian.rst:40
+#: ../../modules/analog/analog_hamiltonian.rst:54
 msgid ""
 "from qtensor: "
 ":meth:`Hamiltonian.from_qtensor(qtensor)<qilisdk.analog.hamiltonian.Hamiltonian.from_qtensor>`"
@@ -158,7 +182,7 @@ msgstr ""
 "des de qtensor: "
 ":meth:`Hamiltonian.from_qtensor(qtensor)<qilisdk.analog.hamiltonian.Hamiltonian.from_qtensor>`"
 
-#: ../../modules/analog/analog_hamiltonian.rst:41
+#: ../../modules/analog/analog_hamiltonian.rst:55
 msgid ""
 "from string: "
 ":meth:`Hamiltonian.parse(hamiltonian_string)<qilisdk.analog.hamiltonian.Hamiltonian.parse>`"
@@ -166,15 +190,15 @@ msgstr ""
 "des de cadena: "
 ":meth:`Hamiltonian.parse(hamiltonian_string)<qilisdk.analog.hamiltonian.Hamiltonian.parse>`"
 
-#: ../../modules/analog/analog_hamiltonian.rst:44
+#: ../../modules/analog/analog_hamiltonian.rst:58
 msgid "Example: Ising Hamiltonian"
 msgstr "Exemple: Hamiltonià d'Ising"
 
-#: ../../modules/analog/analog_hamiltonian.rst:46
+#: ../../modules/analog/analog_hamiltonian.rst:60
 msgid "To define an Ising Hamiltonian of the form:"
 msgstr "Per definir un Hamiltonià d'Ising de la forma:"
 
-#: ../../modules/analog/analog_hamiltonian.rst:48
+#: ../../modules/analog/analog_hamiltonian.rst:62
 msgid ""
 "H_{\\text{Ising}}  =  - \\sum_{\\langle i, j \\rangle} J_{ij} \\sigma^Z_i"
 " \\sigma^Z_j - \\sum_j h_j \\sigma^Z_j"
@@ -182,11 +206,11 @@ msgstr ""
 "H_{\\text{Ising}}  =  - \\sum_{\\langle i, j \\rangle} J_{ij} \\sigma^Z_i"
 " \\sigma^Z_j - \\sum_j h_j \\sigma^Z_j"
 
-#: ../../modules/analog/analog_hamiltonian.rst:52
+#: ../../modules/analog/analog_hamiltonian.rst:66
 msgid "you can use the Pauli ``Z`` operators from the library:"
 msgstr "podeu fer servir els operadors de Pauli ``Z`` de la biblioteca:"
 
-#: ../../modules/analog/analog_hamiltonian.rst:68
+#: ../../modules/analog/analog_hamiltonian.rst:82
 msgid "**Output:**"
 msgstr "**Sortida:**"
 
