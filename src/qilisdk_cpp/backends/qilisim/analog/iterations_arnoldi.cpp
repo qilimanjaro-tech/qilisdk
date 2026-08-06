@@ -232,16 +232,21 @@ DenseMatrix iter_arnoldi(const DenseMatrix& rho_0, double dt, const SparseMatrix
         // Normalize the density matrix
         if (normalize) {
             if (is_unitary_on_statevector) {
-                rho_t /= rho_t.norm();
+                const double norm = rho_t.norm();
+                check_valid_divisor(norm);
+                rho_t /= norm;
             } else if (is_unitary) {
-                rho_t /= trace(rho_t);
+                const Complex tr = trace(rho_t);
+                check_valid_divisor(tr);
+                rho_t /= tr;
                 continue;
             } else if (!is_unitary_on_statevector) {
-                std::complex<double> tr = 0;
+                Complex tr = 0;
                 for (long i = 0; i < dim; ++i) {
                     long vec_index = i * dim + i;
                     tr += rho_t.coeff(vec_index, 0);
                 }
+                check_valid_divisor(tr);
                 rho_t /= tr;
             }
         }
@@ -306,6 +311,9 @@ DenseMatrix iter_arnoldi_matrix_free(const DenseMatrix& rho_0, double dt, const 
         // Normalize the initial vector
         DenseMatrix v = rho_t;
         double beta = v.norm();
+        if (!std::isfinite(beta)) {
+            nan_error();
+        }
         if (beta < atol) {
             continue;
         }
@@ -368,9 +376,13 @@ DenseMatrix iter_arnoldi_matrix_free(const DenseMatrix& rho_0, double dt, const 
 
         // Normalize the state
         if (is_unitary_on_statevector) {
-            rho_t /= rho_t.norm();
+            const double norm = rho_t.norm();
+            check_valid_divisor(norm);
+            rho_t /= norm;
         } else {
-            rho_t /= trace(rho_t);
+            const Complex tr = trace(rho_t);
+            check_valid_divisor(tr);
+            rho_t /= tr;
         }
     }
 

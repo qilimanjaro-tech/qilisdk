@@ -45,6 +45,30 @@ def test_constructor_valid_ndarray():
     assert issparse(qobj.data)
 
 
+@pytest.mark.parametrize("source", ["ndarray", "list", "scipy"])
+def test_constructor_preserves_non_finite_values(source):
+    """Regression (SDK-359): the sparse-construction paths threshold on ``abs(val) > atol``,
+    and ``abs(nan) > atol`` is False — so NaN/Inf entries used to be silently dropped, turning a
+    diverged (NaN) state into a valid-looking all-zero matrix. Non-finite values must survive
+    construction from every supported input type, in both the dense and scipy-sparse views."""
+    arr = np.array([[np.nan, 0.0], [0.0, np.inf]], dtype=complex)
+    if source == "ndarray":
+        qobj = QTensor(arr)
+    elif source == "list":
+        qobj = QTensor([[complex(np.nan), 0.0], [0.0, complex(np.inf)]])
+    else:  # scipy sparse
+        qobj = QTensor(coo_matrix(arr))
+
+    dense = np.asarray(qobj.dense())
+    assert np.isnan(dense[0, 0])
+    assert np.isinf(dense[1, 1])
+
+    # The scipy-sparse view (``.data``) must not hide the non-finite entries either.
+    data_dense = np.asarray(qobj.data.todense())
+    assert np.isnan(data_dense[0, 0])
+    assert np.isinf(data_dense[1, 1])
+
+
 def test_from_numpy_coerces_mismatched_dtype_and_strides():
     """QSDK-04: ``from_numpy`` must coerce a non-complex128 or non-contiguous
     input to a contiguous complex128 buffer instead of reinterpreting the raw
