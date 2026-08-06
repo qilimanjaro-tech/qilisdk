@@ -855,3 +855,37 @@ def test_pauli_operator_rejects_negative_qubit():
     """QSDK-05: a Pauli operator must reject a negative qubit at construction."""
     with pytest.raises(ValueError, match="non-negative"):
         PauliX(-1)
+
+
+@pytest.mark.parametrize(
+    ("static_constructor", "factory", "pauli"),
+    [
+        (Hamiltonian.X, X, PauliX),
+        (Hamiltonian.Y, Y, PauliY),
+        (Hamiltonian.Z, Z, PauliZ),
+        (Hamiltonian.I, I, PauliI),
+    ],
+)
+def test_hamiltonian_static_pauli_constructors(static_constructor, factory, pauli):
+    for qubit in (0, 3):
+        H = static_constructor(qubit)
+        assert isinstance(H, Hamiltonian)
+        assert factory(qubit) == H
+        assert H.elements == factory(qubit).elements
+        assert next(iter(H.elements))[0].name == pauli(qubit).name
+
+
+def test_hamiltonian_static_identity_defaults_to_qubit_zero():
+    assert Hamiltonian.I() == I()
+
+
+def test_hamiltonian_static_constructors_compose():
+    H = Hamiltonian.X(0) * Hamiltonian.X(1) + 2 * Hamiltonian.Z(1) - Hamiltonian.Y(2) / 2
+
+    assert X(0) * X(1) + 2 * Z(1) - Y(2) / 2 == H
+
+
+def test_hamiltonian_static_constructors_reject_negative_qubit():
+    for constructor in (Hamiltonian.X, Hamiltonian.Y, Hamiltonian.Z, Hamiltonian.I):
+        with pytest.raises(ValueError, match="non-negative"):
+            constructor(-1)

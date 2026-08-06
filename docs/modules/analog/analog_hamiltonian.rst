@@ -6,9 +6,23 @@ The :class:`~qilisdk.analog.hamiltonian.Hamiltonian` class represents a symbolic
 Constructing
 ======================
 
-To construct a Hamiltonian with a single Pauli, you can use the constructors ``X(i)``, ``Y(i)``, ``Z(i)``, ``I(i)``. 
+To construct a Hamiltonian with a single Pauli, you can use the constructors
+:meth:`Hamiltonian.X(i)<qilisdk.analog.hamiltonian.Hamiltonian.X>`,
+:meth:`Hamiltonian.Y(i)<qilisdk.analog.hamiltonian.Hamiltonian.Y>`,
+:meth:`Hamiltonian.Z(i)<qilisdk.analog.hamiltonian.Hamiltonian.Z>`,
+:meth:`Hamiltonian.I(i)<qilisdk.analog.hamiltonian.Hamiltonian.I>`.
+
 From these single-qubit operators, you can build multi-qubit Hamiltonians using arithmetic operations.
-The operations follow Python syntax, for example: ``2 * Z(0) + Z(1)`` and ``Z(0) * Z(1)`` build multi-qubit Hamiltonians.
+The operations follow Python syntax, for example:
+
+.. code-block:: python
+
+    from qilisdk.analog import Hamiltonian
+    H = Hamiltonian.X(0) * Hamiltonian.X(1) + Hamiltonian.Z(1)
+
+The shorter module-level functions ``X(i)``, ``Y(i)``, ``Z(i)``, ``I(i)`` remain available and behave
+identically, but they are discouraged because they clash with the ``X``, ``Y`` and ``Z`` *gates* from
+:mod:`qilisdk.digital`. They may be deprecated in a future release.
 
 List of Operations
 ======================
@@ -53,14 +67,14 @@ you can use the Pauli ``Z`` operators from the library:
 
 .. code-block:: python
 
-    from qilisdk.analog import Z
+    from qilisdk.analog import Hamiltonian
 
     nqubits = 3
     J = {(0, 1): 1, (0, 2): 2, (1, 2): 4}
     h = {0: 1, 1: 2, 2: 3}
 
-    coupling = sum(weight * Z(i) * Z(j) for (i, j), weight in J.items())
-    fields = sum(weight * Z(i) for i, weight in h.items())
+    coupling = sum(weight * Hamiltonian.Z(i) * Hamiltonian.Z(j) for (i, j), weight in J.items())
+    fields = sum(weight * Hamiltonian.Z(i) for i, weight in h.items())
 
     H = -(coupling + fields)
     print(H)

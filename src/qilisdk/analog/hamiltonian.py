@@ -77,20 +77,65 @@ def _get_pauli(name: str, qubit: int) -> PauliOperator:
 ###############################################################################
 # Public Factory Functions
 ###############################################################################
-def Z(qubit: int) -> Hamiltonian:
-    return _get_pauli("Z", qubit).to_hamiltonian()
+
+
+def I(qubit: int = 0) -> Hamiltonian:  # noqa: E743
+    """Build a Hamiltonian consisting of a single identity acting on ``qubit``.
+
+    Note: prefer :meth:`Hamiltonian.I<qilisdk.analog.hamiltonian.Hamiltonian.I>`.
+
+    Args:
+        qubit (int, optional): Index of the qubit the operator acts on. Defaults to 0.
+
+    Returns:
+        Hamiltonian: The Hamiltonian ``I(qubit)``.
+    """
+    return _get_pauli("I", qubit).to_hamiltonian()
 
 
 def X(qubit: int) -> Hamiltonian:
+    """Build a Hamiltonian consisting of a single Pauli X acting on ``qubit``.
+
+    Note: prefer :meth:`Hamiltonian.X<qilisdk.analog.hamiltonian.Hamiltonian.X>`, which avoids any
+    ambiguity with the ``X`` gate from :mod:`qilisdk.digital`.
+
+    Args:
+        qubit (int): Index of the qubit the operator acts on.
+
+    Returns:
+        Hamiltonian: The Hamiltonian ``X(qubit)``.
+    """
     return _get_pauli("X", qubit).to_hamiltonian()
 
 
 def Y(qubit: int) -> Hamiltonian:
+    """Build a Hamiltonian consisting of a single Pauli Y acting on ``qubit``.
+
+    Note: prefer :meth:`Hamiltonian.Y<qilisdk.analog.hamiltonian.Hamiltonian.Y>`, which avoids any
+    ambiguity with the ``Y`` gate from :mod:`qilisdk.digital`.
+
+    Args:
+        qubit (int): Index of the qubit the operator acts on.
+
+    Returns:
+        Hamiltonian: The Hamiltonian ``Y(qubit)``.
+    """
     return _get_pauli("Y", qubit).to_hamiltonian()
 
 
-def I(qubit: int = 0) -> Hamiltonian:  # noqa: E743
-    return _get_pauli("I", qubit).to_hamiltonian()
+def Z(qubit: int) -> Hamiltonian:
+    """Build a Hamiltonian consisting of a single Pauli Z acting on ``qubit``.
+
+    Note: prefer :meth:`Hamiltonian.Z<qilisdk.analog.hamiltonian.Hamiltonian.Z>`, which avoids any
+    ambiguity with the ``Z`` gate from :mod:`qilisdk.digital`.
+
+    Args:
+        qubit (int): Index of the qubit the operator acts on.
+
+    Returns:
+        Hamiltonian: The Hamiltonian ``Z(qubit)``.
+    """
+    return _get_pauli("Z", qubit).to_hamiltonian()
 
 
 ###############################################################################
@@ -109,7 +154,8 @@ class PauliOperator(ABC):
 
     Flyweight usage: do NOT instantiate directly—use PauliX(q), PauliY(q), etc.
 
-    Note: You can also use the factory functions X(q), Y(q), Z(q), I(q) to get a Hamiltonian object.
+    Note: You can also use Hamiltonian.X(q), Hamiltonian.Y(q), Hamiltonian.Z(q), Hamiltonian.I(q)
+    (or the older factory functions X(q), Y(q), Z(q), I(q)) to get a Hamiltonian object.
     """
 
     _NAME: ClassVar[str]
@@ -256,9 +302,9 @@ class Hamiltonian(Parameterizable):
     Example:
         .. code-block:: python
 
-            from qilisdk.analog.hamiltonian import Hamiltonian, X, Z
+            from qilisdk.analog import Hamiltonian
 
-            H = X(0) * X(1) + Z(1)
+            H = Hamiltonian.X(0) * Hamiltonian.X(1) + Hamiltonian.Z(1)
     """
 
     _EPS: float = 1e-14
@@ -590,6 +636,82 @@ class Hamiltonian(Parameterizable):
                 partitions.append({term: coeff})
 
         return partitions
+
+    @staticmethod
+    def I(qubit: int = 0) -> Hamiltonian:  # noqa: E743
+        """Build a Hamiltonian consisting of a single identity acting on ``qubit``.
+
+        Example:
+            .. code-block:: python
+
+                from qilisdk.analog import Hamiltonian
+
+                H = Hamiltonian.I(0)
+
+        Args:
+            qubit (int, optional): Index of the qubit the operator acts on. Defaults to 0.
+
+        Returns:
+            Hamiltonian: The Hamiltonian ``I(qubit)``.
+        """
+        return _get_pauli("I", qubit).to_hamiltonian()
+
+    @staticmethod
+    def X(qubit: int) -> Hamiltonian:
+        """Build a Hamiltonian consisting of a single Pauli X acting on ``qubit``.
+
+        Example:
+            .. code-block:: python
+
+                from qilisdk.analog import Hamiltonian
+
+                H = Hamiltonian.X(0)
+
+        Args:
+            qubit (int): Index of the qubit the operator acts on.
+
+        Returns:
+            Hamiltonian: The Hamiltonian ``X(qubit)``.
+        """
+        return _get_pauli("X", qubit).to_hamiltonian()
+
+    @staticmethod
+    def Y(qubit: int) -> Hamiltonian:
+        """Build a Hamiltonian consisting of a single Pauli Y acting on ``qubit``.
+
+        Example:
+            .. code-block:: python
+
+                from qilisdk.analog import Hamiltonian
+
+                H = Hamiltonian.Y(0)
+
+        Args:
+            qubit (int): Index of the qubit the operator acts on.
+
+        Returns:
+            Hamiltonian: The Hamiltonian ``Y(qubit)``.
+        """
+        return _get_pauli("Y", qubit).to_hamiltonian()
+
+    @staticmethod
+    def Z(qubit: int) -> Hamiltonian:
+        """Build a Hamiltonian consisting of a single Pauli Z acting on ``qubit``.
+
+        Example:
+            .. code-block:: python
+
+                from qilisdk.analog import Hamiltonian
+
+                H = Hamiltonian.Z(0)
+
+        Args:
+            qubit (int): Index of the qubit the operator acts on.
+
+        Returns:
+            Hamiltonian: The Hamiltonian ``Z(qubit)``.
+        """
+        return _get_pauli("Z", qubit).to_hamiltonian()
 
     @classmethod
     def from_qtensor(cls, tensor: QTensor, tol: float | None = None, prune: float | None = None) -> Hamiltonian:
