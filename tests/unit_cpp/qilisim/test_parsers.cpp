@@ -1387,6 +1387,7 @@ TEST(ParseGates, BasicGate) {
     py::gil_scoped_acquire gil;
     py::exec(R"(
         import numpy as np
+        from qilisdk.core.qtensor import QTensor
 
         class FakeHGate:
             name = 'H'
@@ -1396,7 +1397,7 @@ TEST(ParseGates, BasicGate) {
             @property
             def matrix(self):
                 s = 1 / np.sqrt(2)
-                return np.array([[s, s], [s, -s]], dtype=complex)
+                return QTensor(np.array([[s, s], [s, -s]], dtype=complex))
             def get_parameters(self):
                 return {}
 
@@ -1421,6 +1422,7 @@ TEST(ParseGates, MeasurementGateIsNotSkipped) {
     py::gil_scoped_acquire gil;
     py::exec(R"(
         import numpy as np
+        from qilisdk.core.qtensor import QTensor
 
         class FakeMGate:
             name = 'M'
@@ -1429,7 +1431,7 @@ TEST(ParseGates, MeasurementGateIsNotSkipped) {
             is_parameterized = False
             @property
             def matrix(self): 
-                return np.eye(2, dtype=complex)
+                return QTensor(np.eye(2, dtype=complex))
             def get_parameters(self): return {}
 
         class FakeCircuitMGate:
@@ -1449,6 +1451,7 @@ TEST(ParseGates, ParameterizedGate) {
     py::gil_scoped_acquire gil;
     py::exec(R"(
         import numpy as np
+        from qilisdk.core.qtensor import QTensor
 
         class FakeRZGate:
             name = 'RZ'
@@ -1458,10 +1461,10 @@ TEST(ParseGates, ParameterizedGate) {
             _theta = 0.5
             @property
             def matrix(self):
-                return np.array([
+                return QTensor(np.array([
                     [np.exp(-1j * self._theta / 2), 0],
                     [0, np.exp(1j * self._theta / 2)]
-                ], dtype=complex)
+                ], dtype=complex))
             def get_parameters(self):
                 return {'theta': self._theta}
             def set_parameters(self, params):
@@ -1488,6 +1491,7 @@ TEST(ParseGates, ControlledGate) {
     py::gil_scoped_acquire gil;
     py::exec(R"(
         import numpy as np
+        from qilisdk.core.qtensor import QTensor
 
         class FakeCXGate:
             name = 'CX'
@@ -1496,7 +1500,7 @@ TEST(ParseGates, ControlledGate) {
             is_parameterized = False
             @property
             def matrix(self):
-                return np.array([[1,0,0,0],[0,1,0,0],[0,0,0,1],[0,0,1,0]], dtype=complex)
+                return QTensor(np.array([[1,0,0,0],[0,1,0,0],[0,0,0,1],[0,0,1,0]], dtype=complex))
             def get_parameters(self): return {}
 
         class FakeCircuitControlledGate:
@@ -1522,6 +1526,7 @@ TEST(ParseGates, ControlledYGate) {
     py::gil_scoped_acquire gil;
     py::exec(R"(
         import numpy as np
+        from qilisdk.core.qtensor import QTensor
 
         class FakeCYGate:
             name = 'CY'
@@ -1530,7 +1535,7 @@ TEST(ParseGates, ControlledYGate) {
             is_parameterized = False
             @property
             def matrix(self):
-                return np.array([[1,0,0,0],[0,1,0,0],[0,0,0,-1j],[0,0,1j,0]], dtype=complex)
+                return QTensor(np.array([[1,0,0,0],[0,1,0,0],[0,0,0,-1j],[0,0,1j,0]], dtype=complex))
             def get_parameters(self): return {}
 
         class FakeCircuitControlledYGate:
@@ -1556,6 +1561,7 @@ TEST(ParseGates, ControlledZGate) {
     py::gil_scoped_acquire gil;
     py::exec(R"(
         import numpy as np
+        from qilisdk.core.qtensor import QTensor
         class FakeCZGate:
             name = 'CZ'
             control_qubits = [0]
@@ -1563,7 +1569,7 @@ TEST(ParseGates, ControlledZGate) {
             is_parameterized = False
             @property
             def matrix(self):
-                return np.array([[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,-1]], dtype=complex)
+                return QTensor(np.array([[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,-1]], dtype=complex))
             def get_parameters(self): return {}
 
         class FakeCircuitControlledZGate:
@@ -1603,6 +1609,7 @@ TEST(ParseGates, ParameterPerturbationAppliedGlobalNoise) {
     py::gil_scoped_acquire gil;
     py::exec(R"(
         import numpy as np
+        from qilisdk.core.qtensor import QTensor
 
         class FakePerturbation:
             def perturb(self, value):
@@ -1616,7 +1623,7 @@ TEST(ParseGates, ParameterPerturbationAppliedGlobalNoise) {
             _theta = 0.5
             @property
             def matrix(self):
-                return np.eye(2, dtype=complex)
+                return QTensor(np.eye(2, dtype=complex))
             def get_parameters(self):
                 return {'theta': self._theta}
             def set_parameters(self, params):
@@ -1646,6 +1653,7 @@ TEST(ParseGates, ParameterPerturbationAppliedPerGate) {
     py::gil_scoped_acquire gil;
     py::exec(R"(
         import numpy as np
+        from qilisdk.core.qtensor import QTensor
 
         class FakePerturbation:
             def perturb(self, value):
@@ -1659,7 +1667,7 @@ TEST(ParseGates, ParameterPerturbationAppliedPerGate) {
             _theta = 0.25
             @property
             def matrix(self):
-                return np.eye(2, dtype=complex)
+                return QTensor(np.eye(2, dtype=complex))
             def get_parameters(self):
                 return {'theta': self._theta}
             def set_parameters(self, params):

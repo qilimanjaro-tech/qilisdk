@@ -157,7 +157,7 @@ def _sqrt_of(gate: BasicGate) -> BasicGate:
 
     # Build the 2x2 unitary matrix for gate
     if isinstance(gate, BasicGate) and gate.nqubits == 1:
-        unitary_matrix = gate.matrix
+        unitary_matrix = gate.matrix.dense()
     else:
         raise NotImplementedError(f"_sqrt_1q_gate_as_basis only supports 1-qubit gates; got {type(gate).__name__}")
 
@@ -223,7 +223,7 @@ def _adjoint_of(gate: BasicGate) -> BasicGate:
     # ---------- Generic 1-qubit unitary via matrix adjoint ----------
 
     if isinstance(gate, BasicGate) and gate.nqubits == 1:
-        unitary_matrix = gate.matrix
+        unitary_matrix = gate.matrix.dense()
     else:
         raise NotImplementedError(f"_adjoint_1q only supports 1-qubit gates; got {type(gate).__name__}")
 

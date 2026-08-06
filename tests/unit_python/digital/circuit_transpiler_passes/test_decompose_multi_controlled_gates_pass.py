@@ -18,6 +18,7 @@ from unittest.mock import MagicMock
 import numpy as np
 import pytest
 
+from qilisdk.core import QTensor
 from qilisdk.digital import RX, RY, RZ, U1, U2, U3, Circuit, H, I, S, T, X, Y, Z
 from qilisdk.digital.circuit_transpiler_passes import DecomposeMultiControlledGatesPass
 from qilisdk.digital.circuit_transpiler_passes.decompose_multi_controlled_gates_pass import _adjoint_of, _sqrt_of
@@ -133,9 +134,9 @@ def test_wrap_angle():
 @pytest.mark.parametrize(("factory_name", "factory"), GATE_FACTORIES)
 def test_zyz_unitary(factory_name: str, factory) -> None:
     gate = factory(0)
-    unitary = gate.matrix
+    unitary = gate.matrix.dense()
     theta, phi, gamma = _zyz_from_unitary(unitary)
-    reconstructed = U3(0, theta=theta, phi=phi, gamma=gamma).matrix
+    reconstructed = U3(0, theta=theta, phi=phi, gamma=gamma).matrix.dense()
     assert np.allclose(unitary, reconstructed), f"ZYZ reconstruction failed for {factory_name}"
 
 
@@ -153,7 +154,7 @@ def test_zyz_unitary_errors():
 def test_adjoint_of_gate(factory_name: str, factory) -> None:
     gate = factory(0)
     adjoint_gate = _adjoint_of(gate)
-    assert _unitaries_equivalent(gate.matrix.conj().T, adjoint_gate.matrix), (
+    assert _unitaries_equivalent(gate.matrix.dense().conj().T, adjoint_gate.matrix.dense()), (
         f"Adjoint computation failed for {factory_name}"
     )
 
@@ -162,14 +163,14 @@ def test_adjoint_of_gate(factory_name: str, factory) -> None:
 def test_sqrt_of_gate(factory_name: str, factory) -> None:
     gate = factory(0)
     sqrt_gate = _sqrt_of(gate)
-    reconstructed = sqrt_gate.matrix @ sqrt_gate.matrix
-    assert _unitaries_equivalent(gate.matrix, reconstructed), f"Sqrt computation failed for {factory_name}"
+    reconstructed = (sqrt_gate.matrix @ sqrt_gate.matrix).dense()
+    assert _unitaries_equivalent(gate.matrix.dense(), reconstructed), f"Sqrt computation failed for {factory_name}"
 
 
 def test_sqrt_of_gate_errors():
     custom_matrix = np.array([[0, 1], [1, 0]], dtype=complex)  # X gate
     custom_gate = MagicMock(spec=BasicGate)
-    custom_gate.matrix = custom_matrix
+    custom_gate.matrix = QTensor(custom_matrix)
     custom_gate.qubits = (
         0,
         1,
@@ -182,11 +183,11 @@ def test_sqrt_of_gate_errors():
 def test_adjoint_of_generic_gate():
     custom_matrix = np.array([[0, 1], [1, 0]], dtype=complex)  # X gate
     custom_gate = MagicMock(spec=BasicGate)
-    custom_gate.matrix = custom_matrix
+    custom_gate.matrix = QTensor(custom_matrix)
     custom_gate.qubits = (0,)
     custom_gate.nqubits = 1
     adjoint_gate = _adjoint_of(custom_gate)
-    assert _unitaries_equivalent(custom_matrix.conj().T, adjoint_gate.matrix), (
+    assert _unitaries_equivalent(custom_matrix.conj().T, adjoint_gate.matrix.dense()), (
         "Adjoint computation failed for generic gate"
     )
 
@@ -194,7 +195,7 @@ def test_adjoint_of_generic_gate():
 def test_adjoint_of_generic_multi_qubit_gate():
     custom_matrix = np.array([[0, 1], [1, 0]], dtype=complex)  # X gate
     custom_gate = MagicMock(spec=BasicGate)
-    custom_gate.matrix = custom_matrix
+    custom_gate.matrix = QTensor(custom_matrix)
     custom_gate.qubits = (
         0,
         1,

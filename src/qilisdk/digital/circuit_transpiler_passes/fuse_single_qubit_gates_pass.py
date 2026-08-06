@@ -76,7 +76,7 @@ class FuseSingleQubitGatesPass(CircuitTranspilerPass):
             return None
 
         try:
-            unitary = np.array(gate.matrix, dtype=complex, copy=True)
+            unitary = np.array(gate.matrix.dense(), dtype=complex, copy=True)
         except GateHasNoMatrixError:
             return None
 

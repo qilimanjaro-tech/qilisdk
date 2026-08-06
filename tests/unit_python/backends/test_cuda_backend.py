@@ -165,8 +165,8 @@ class DummyGate(BasicGate):
     @property
     def name(self) -> str: ...  # type: ignore
 
-    def _generate_matrix(self) -> np.ndarray:
-        return np.eye(2, dtype=COMPLEX_DTYPE)
+    def _generate_matrix(self) -> QTensor:
+        return QTensor(np.eye(2, dtype=COMPLEX_DTYPE))
 
 
 def _build_quantum_reservoir_functional() -> QuantumReservoir:
@@ -390,7 +390,7 @@ def test_controlled_with_unsupported_basic_gate_raises(monkeypatch):
             super().__init__((q,))
 
         def _generate_matrix(self):
-            return np.eye(2)
+            return QTensor(np.eye(2))
 
     be = CudaBackend()
     circuit = Circuit(2)  # small helper from Backend superclass

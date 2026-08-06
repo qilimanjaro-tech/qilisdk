@@ -23,6 +23,7 @@ from scipy.linalg import expm
 from typing_extensions import Self
 
 from qilisdk.core.parameterizable import Parameterizable
+from qilisdk.core.qtensor import QTensor
 from qilisdk.core.variables import Parameter, Term
 from qilisdk.settings import get_settings
 from qilisdk.utils.hashing import hash as qili_hash
@@ -68,7 +69,7 @@ class Gate(Parameterizable, ABC):
 
     @property
     @abstractmethod
-    def matrix(self) -> np.ndarray:
+    def matrix(self) -> QTensor:
         """
         Retrieve the matrix of the gate.
 
@@ -76,7 +77,7 @@ class Gate(Parameterizable, ABC):
             GateHasNoMatrixError: If gate has no matrix.
 
         Returns:
-            np.ndarray: The matrix of the gate.
+            QTensor: The matrix of the gate.
         """
 
     @property
@@ -305,7 +306,7 @@ class BasicGate(Gate):
                     raise InvalidParameterNameError
 
     @cached_property
-    def matrix(self) -> np.ndarray:
+    def matrix(self) -> QTensor:
         return self._generate_matrix()
 
     @property
@@ -378,7 +379,7 @@ class BasicGate(Gate):
         return Exponential(basic_gate=self)
 
     @abstractmethod
-    def _generate_matrix(self) -> np.ndarray: ...
+    def _generate_matrix(self) -> QTensor: ...
 
 
 @yaml.register_class
@@ -394,7 +395,7 @@ class Modified(Gate, Generic[TBasicGate]):
         return self._basic_gate
 
     @cached_property
-    def matrix(self) -> np.ndarray:
+    def matrix(self) -> QTensor:
         return self._generate_matrix()
 
     @property
@@ -452,7 +453,7 @@ class Modified(Gate, Generic[TBasicGate]):
         self._basic_gate.set_parameter_bounds(ranges)
 
     @abstractmethod
-    def _generate_matrix(self) -> np.ndarray: ...
+    def _generate_matrix(self) -> QTensor: ...
 
     def is_modified_from(self, gate_type: type[TBasicGate]) -> bool:
         return isinstance(self.basic_gate, gate_type)
@@ -483,7 +484,7 @@ class Controlled(Modified[TBasicGate]):
 
         self._control_qubits = control_qubits + basic_gate.control_qubits
 
-    def _generate_matrix(self) -> np.ndarray:
+    def _generate_matrix(self) -> QTensor:
         logger.trace("[Gates] Generating Controlled matrix for {} on {} qubits", self.name, self.nqubits)
         i_full = np.eye(1 << self.nqubits, dtype=_complex_dtype())
         # Construct projector P_control = |1...1><1...1| on the n control qubits.
@@ -493,8 +494,8 @@ class Controlled(Modified[TBasicGate]):
         # Extend the projector to the full space (control qubits ⊗ target qubit). It acts as P_control ⊗ I_target.
         i_target = np.eye(1 << self.basic_gate.nqubits, dtype=_complex_dtype())
         # The controlled gate is then:
-        controlled = i_full + np.kron(P, self.basic_gate.matrix - i_target)
-        return controlled
+        controlled = i_full + np.kron(P, self.basic_gate.matrix.dense() - i_target)
+        return QTensor(controlled)
 
     @property
     def control_qubits(self) -> tuple[int, ...]:
@@ -515,9 +516,9 @@ class Adjoint(Modified[TBasicGate]):
         super().__init__(basic_gate=basic_gate)
         logger.trace("[Gates] Constructing Adjoint of {}", type(basic_gate).__name__)
 
-    def _generate_matrix(self) -> np.ndarray:
+    def _generate_matrix(self) -> QTensor:
         logger.trace("[Gates] Generating Adjoint matrix for {}", self.name)
-        return self.basic_gate.matrix.conj().T
+        return self.basic_gate.matrix.dagger()
 
     @property
     def name(self) -> str:
@@ -545,9 +546,9 @@ class Exponential(Modified[TBasicGate]):
         super().__init__(basic_gate=basic_gate)
         logger.trace("[Gates] Constructing Exponential of {}", type(basic_gate).__name__)
 
-    def _generate_matrix(self) -> np.ndarray:
+    def _generate_matrix(self) -> QTensor:
         logger.trace("[Gates] Generating Exponential matrix for {}", self.name)
-        return expm(self.basic_gate.matrix)
+        return QTensor(expm(self.basic_gate.matrix.dense()))
 
     @property
     def name(self) -> str:
@@ -585,7 +586,7 @@ class M(Gate):
         return "M"
 
     @property
-    def matrix(self) -> np.ndarray:
+    def matrix(self) -> QTensor:
         raise GateHasNoMatrixError
 
     @property
@@ -620,8 +621,8 @@ class I(BasicGate):
     def name(self) -> str:
         return "I"
 
-    def _generate_matrix(self) -> np.ndarray:  # noqa: PLR6301
-        return np.array([[1, 0], [0, 1]], dtype=_complex_dtype())
+    def _generate_matrix(self) -> QTensor:  # noqa: PLR6301
+        return QTensor(np.array([[1, 0], [0, 1]], dtype=_complex_dtype()))
 
 
 @yaml.register_class
@@ -652,8 +653,8 @@ class X(BasicGate):
     def name(self) -> str:
         return "X"
 
-    def _generate_matrix(self) -> np.ndarray:  # noqa: PLR6301
-        return np.array([[0, 1], [1, 0]], dtype=_complex_dtype())
+    def _generate_matrix(self) -> QTensor:  # noqa: PLR6301
+        return QTensor(np.array([[0, 1], [1, 0]], dtype=_complex_dtype()))
 
 
 @yaml.register_class
@@ -684,8 +685,8 @@ class Y(BasicGate):
     def name(self) -> str:
         return "Y"
 
-    def _generate_matrix(self) -> np.ndarray:  # noqa: PLR6301
-        return np.array([[0, -1j], [1j, 0]], dtype=_complex_dtype())
+    def _generate_matrix(self) -> QTensor:  # noqa: PLR6301
+        return QTensor(np.array([[0, -1j], [1j, 0]], dtype=_complex_dtype()))
 
 
 @yaml.register_class
@@ -716,8 +717,8 @@ class Z(BasicGate):
     def name(self) -> str:
         return "Z"
 
-    def _generate_matrix(self) -> np.ndarray:  # noqa: PLR6301
-        return np.array([[1, 0], [0, -1]], dtype=_complex_dtype())
+    def _generate_matrix(self) -> QTensor:  # noqa: PLR6301
+        return QTensor(np.array([[1, 0], [0, -1]], dtype=_complex_dtype()))
 
 
 @yaml.register_class
@@ -748,8 +749,8 @@ class H(BasicGate):
     def name(self) -> str:
         return "H"
 
-    def _generate_matrix(self) -> np.ndarray:  # noqa: PLR6301
-        return (1 / np.sqrt(2)) * np.array([[1, 1], [1, -1]], dtype=_complex_dtype())
+    def _generate_matrix(self) -> QTensor:  # noqa: PLR6301
+        return QTensor((1 / np.sqrt(2)) * np.array([[1, 1], [1, -1]], dtype=_complex_dtype()))
 
 
 @yaml.register_class
@@ -780,8 +781,8 @@ class S(BasicGate):
     def name(self) -> str:
         return "S"
 
-    def _generate_matrix(self) -> np.ndarray:  # noqa: PLR6301
-        return np.array([[1, 0], [0, 1j]], dtype=_complex_dtype())
+    def _generate_matrix(self) -> QTensor:  # noqa: PLR6301
+        return QTensor(np.array([[1, 0], [0, 1j]], dtype=_complex_dtype()))
 
 
 @yaml.register_class
@@ -812,8 +813,8 @@ class T(BasicGate):
     def name(self) -> str:
         return "T"
 
-    def _generate_matrix(self) -> np.ndarray:  # noqa: PLR6301
-        return np.array([[1, 0], [0, np.exp(1j * np.pi / 4)]], dtype=_complex_dtype())
+    def _generate_matrix(self) -> QTensor:  # noqa: PLR6301
+        return QTensor(np.array([[1, 0], [0, np.exp(1j * np.pi / 4)]], dtype=_complex_dtype()))
 
 
 def _process_param(
@@ -901,11 +902,11 @@ class RX(BasicGate):
             return val
         return self.get_parameters()["theta"]
 
-    def _generate_matrix(self) -> np.ndarray:
+    def _generate_matrix(self) -> QTensor:
         theta = self.theta
         cos_half = np.cos(theta / 2)
         sin_half = np.sin(theta / 2)
-        return np.array([[cos_half, -1j * sin_half], [-1j * sin_half, cos_half]], dtype=_complex_dtype())
+        return QTensor(np.array([[cos_half, -1j * sin_half], [-1j * sin_half, cos_half]], dtype=_complex_dtype()))
 
 
 @yaml.register_class
@@ -963,11 +964,11 @@ class RY(BasicGate):
             return val
         return self.get_parameters()["theta"]
 
-    def _generate_matrix(self) -> np.ndarray:
+    def _generate_matrix(self) -> QTensor:
         theta = self.theta
         cos_half = np.cos(theta / 2)
         sin_half = np.sin(theta / 2)
-        return np.array([[cos_half, -sin_half], [sin_half, cos_half]], dtype=_complex_dtype())
+        return QTensor(np.array([[cos_half, -sin_half], [sin_half, cos_half]], dtype=_complex_dtype()))
 
 
 @yaml.register_class
@@ -1033,9 +1034,9 @@ class RZ(BasicGate):
             return val
         return self.get_parameters()["phi"]
 
-    def _generate_matrix(self) -> np.ndarray:
+    def _generate_matrix(self) -> QTensor:
         phi = self.phi
-        return np.array([[np.exp(-0.5j * phi), 0.0], [0.0, np.exp(0.5j * phi)]], dtype=_complex_dtype())
+        return QTensor(np.array([[np.exp(-0.5j * phi), 0.0], [0.0, np.exp(0.5j * phi)]], dtype=_complex_dtype()))
 
 
 @yaml.register_class
@@ -1096,9 +1097,9 @@ class U1(BasicGate):
             return val
         return self.get_parameters()["phi"]
 
-    def _generate_matrix(self) -> np.ndarray:
+    def _generate_matrix(self) -> QTensor:
         phi = self.phi
-        return np.array([[1, 0], [0, np.exp(1j * phi)]], dtype=_complex_dtype())
+        return QTensor(np.array([[1, 0], [0, np.exp(1j * phi)]], dtype=_complex_dtype()))
 
 
 @yaml.register_class
@@ -1174,15 +1175,18 @@ class U2(BasicGate):
             return val
         return self.get_parameters()["gamma"]
 
-    def _generate_matrix(self) -> np.ndarray:
+    def _generate_matrix(self) -> QTensor:
         phi = self.phi
         gamma = self.gamma
-        return (1 / np.sqrt(2)) * np.array(
-            [
-                [1, -np.exp(1j * gamma)],
-                [np.exp(1j * phi), np.exp(1j * (phi + gamma))],
-            ],
-            dtype=_complex_dtype(),
+        return QTensor(
+            (1 / np.sqrt(2))
+            * np.array(
+                [
+                    [1, -np.exp(1j * gamma)],
+                    [np.exp(1j * phi), np.exp(1j * (phi + gamma))],
+                ],
+                dtype=_complex_dtype(),
+            )
         )
 
 
@@ -1279,16 +1283,18 @@ class U3(BasicGate):
             return val
         return self.get_parameters()["gamma"]
 
-    def _generate_matrix(self) -> np.ndarray:
+    def _generate_matrix(self) -> QTensor:
         theta = self.theta
         phi = self.phi
         gamma = self.gamma
-        return np.array(
-            [
-                [np.cos(theta / 2), -np.exp(1j * gamma) * np.sin(theta / 2)],
-                [np.exp(1j * phi) * np.sin(theta / 2), np.exp(1j * (phi + gamma)) * np.cos(theta / 2)],
-            ],
-            dtype=_complex_dtype(),
+        return QTensor(
+            np.array(
+                [
+                    [np.cos(theta / 2), -np.exp(1j * gamma) * np.sin(theta / 2)],
+                    [np.exp(1j * phi) * np.sin(theta / 2), np.exp(1j * (phi + gamma)) * np.cos(theta / 2)],
+                ],
+                dtype=_complex_dtype(),
+            )
         )
 
 
@@ -1371,5 +1377,5 @@ class SWAP(BasicGate):
     def name(self) -> str:
         return "SWAP"
 
-    def _generate_matrix(self) -> np.ndarray:  # noqa: PLR6301
-        return np.array([[1, 0, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 0, 1]], dtype=_complex_dtype())
+    def _generate_matrix(self) -> QTensor:  # noqa: PLR6301
+        return QTensor(np.array([[1, 0, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 0, 1]], dtype=_complex_dtype()))
