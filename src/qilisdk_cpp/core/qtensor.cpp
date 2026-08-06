@@ -18,6 +18,7 @@
 #include "../libs/pybind.h"
 
 #include <algorithm>
+#include <cmath>
 #include <random>
 #include <sstream>
 
@@ -397,7 +398,7 @@ QTensorCpp::QTensorCpp(const py::object& data) {
             }
             for (int j = 0; j < cols; ++j) {
                 Complex val = row[j].cast<Complex>();
-                if (std::abs(val) > default_atol) {
+                if (std::abs(val) > default_atol || !std::isfinite(val.real()) || !std::isfinite(val.imag())) {
                     row_major.insert(i, j) = val;
                 }
             }
