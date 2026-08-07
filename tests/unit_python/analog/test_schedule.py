@@ -209,6 +209,52 @@ def test_update_hamiltonian_coefficient_valid():
     assert _isclose(sched.coefficients["H1"][5], 3.0)
 
 
+def test_set_coefficient_constant():
+    """Setting a constant coefficient applies it over the whole schedule and keeps the total time."""
+    sched = Schedule.linear(PauliX(0).to_hamiltonian(), PauliZ(0).to_hamiltonian(), total_time=10, dt=1)
+    sched.set_coefficient("driver", 0.5)
+    assert _isclose(sched.T, 10)
+    for t in sched.tlist:
+        assert _isclose(sched.coefficients["driver"][t], 0.5)
+
+
+def test_set_coefficient_callable():
+    """Setting a callable coefficient samples it over the whole schedule."""
+    sched = Schedule.linear(PauliX(0).to_hamiltonian(), PauliZ(0).to_hamiltonian(), total_time=10, dt=1)
+    sched.set_coefficient("problem", lambda t: t / 10)
+    assert _isclose(sched.T, 10)
+    for t in sched.tlist:
+        assert _isclose(sched.coefficients["problem"][t], t / 10)
+
+
+def test_set_coefficient_dict_and_interpolator():
+    """Setting a coefficient from a time dictionary or an Interpolator replaces the existing one."""
+    sched = Schedule.linear(PauliX(0).to_hamiltonian(), PauliZ(0).to_hamiltonian(), total_time=10, dt=1)
+    sched.set_coefficient("driver", {0.0: 0.0, 10.0: 2.0})
+    assert _isclose(sched.coefficients["driver"][5.0], 1.0)
+
+    sched.set_coefficient("problem", Interpolator({0.0: 1.0, 10.0: 3.0}, Interpolation.LINEAR, nsamples=10))
+    assert _isclose(sched.coefficients["problem"][5.0], 2.0)
+
+
+def test_set_coefficient_rescaled_schedule():
+    """Setting a coefficient on a schedule with a total time keeps the new coefficient rescaled to it."""
+    hams = {"H0": PauliX(0).to_hamiltonian(), "H1": PauliZ(0).to_hamiltonian()}
+    sched = Schedule(dt=1, hamiltonians=hams, coefficients={"H0": {0.0: 1.0, 5.0: 0.0}}, total_time=10)
+    sched.set_coefficient("H1", {0.0: 0.0, 5.0: 1.0})
+    assert _isclose(sched.T, 10)
+    assert _isclose(sched.coefficients["H1"][10.0], 1.0)
+
+
+def test_set_coefficient_invalid():
+    """Setting a coefficient of an unknown Hamiltonian or with an unsupported type raises ValueError."""
+    sched = Schedule.linear(PauliX(0).to_hamiltonian(), PauliZ(0).to_hamiltonian(), total_time=10, dt=1)
+    with pytest.raises(ValueError, match=r"Can't set the coefficient of unknown hamiltonian H_unknown."):
+        sched.set_coefficient("H_unknown", 1.0)
+    with pytest.raises(ValueError, match=r"Unsupported type of coefficient"):
+        sched.set_coefficient("driver", "not a coefficient")
+
+
 def test_add_hamiltonian_new():
     """Adding a new Hamiltonian updates the schedule using a coefficient function."""
     sched = Schedule(dt=1)
