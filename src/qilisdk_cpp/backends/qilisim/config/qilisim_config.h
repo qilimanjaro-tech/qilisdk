@@ -111,7 +111,6 @@ class QiliSimConfig {
 
     // Advance the seed and return the next one
     int next_seed() const;
-
 };
 
 // GCOV_EXCL_BR_STOP

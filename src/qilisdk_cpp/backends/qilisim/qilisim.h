@@ -24,7 +24,6 @@
 
 class QiliSimCpp {
    private:
-
     // Persistent random stream, seeded once from the user's root seed
     std::mt19937_64 seed_rng;
     bool seed_rng_initialised = false;

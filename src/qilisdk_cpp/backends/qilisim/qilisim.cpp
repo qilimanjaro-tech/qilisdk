@@ -40,7 +40,7 @@
 
 void QiliSimCpp::set_seed_from_config(QiliSimConfig& config) {
     /*
-    Get the root seed from the config and use it to seed the persistent random 
+    Get the root seed from the config and use it to seed the persistent random
     stream if it hasn't already.
 
     Args:
