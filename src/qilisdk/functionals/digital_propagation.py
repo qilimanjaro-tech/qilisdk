@@ -17,6 +17,7 @@ from loguru import logger
 
 from qilisdk.core import Parameter
 from qilisdk.core.parameterizable import Parameterizable
+from qilisdk.core.qtensor import InitialState, QTensor
 from qilisdk.digital.circuit import Circuit
 from qilisdk.functionals.functional import PrimitiveFunctional
 from qilisdk.functionals.functional_result import FunctionalResult
@@ -47,13 +48,26 @@ class DigitalPropagation(PrimitiveFunctional):
 
     result_type: ClassVar[type[FunctionalResult]] = FunctionalResult
 
-    def __init__(self, circuit: Circuit) -> None:
+    def __init__(
+        self,
+        circuit: Circuit,
+        initial_state: QTensor | InitialState | Circuit = InitialState.ZERO,
+    ) -> None:
         """
         Args:
             circuit (Circuit): Circuit to propagate.
+            initial_state (QTensor | InitialState | Circuit): Quantum state used as the simulation starting point.
         """
         super().__init__()
-        self.circuit = circuit
+        # Circuit init just prepends it, that way if it's parameterized it will be handled correctly
+        if isinstance(initial_state, Circuit):
+            self.initial_state = InitialState.ZERO
+            self.circuit = initial_state
+            self.circuit.append(circuit)
+        # Otherwise we leave it as is and let the backend handle it
+        else:
+            self.initial_state = initial_state
+            self.circuit = circuit
         logger.debug("[DigitalPropagation] Created DigitalPropagation over circuit with {} qubits", circuit.nqubits)
 
     def _iter_parameter_children(self) -> Iterator[Parameterizable]:
@@ -65,7 +79,7 @@ class DigitalPropagation(PrimitiveFunctional):
         yield self.circuit
 
     def __repr__(self) -> str:
-        return f"DigitalPropagation(circuit={self.circuit})"
+        return f"DigitalPropagation(circuit={self.circuit}, initial_state={self.initial_state})"
 
     def set_parameter_values(
         self,
