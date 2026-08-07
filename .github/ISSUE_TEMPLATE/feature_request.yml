@@ -2,7 +2,6 @@ name: Feature Request
 description: Suggest a new feature or enhancement for QiliSDK
 title: "[Feature]: "
 type: Feature
-labels: ["enhancement"]
 body:
   - type: markdown
     attributes:
@@ -40,15 +39,3 @@ body:
         ```
     validations:
       required: false
-
-  - type: dropdown
-    id: priority
-    attributes:
-      label: Priority
-      description: How important is this feature to your workflow?
-      options:
-        - Low - Nice to have
-        - Medium - Would improve my workflow
-        - High - Blocking my use case
-    validations:
-      required: true
