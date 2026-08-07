@@ -163,7 +163,7 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrixCo
     bool monte_carlo = input_is_trajectories || (!is_statevector && config.get_monte_carlo());
     if (monte_carlo && !input_is_trajectories) {
         qilisdk::log_debug("[Sampling, C++] Monte-Carlo sampling with " + std::to_string(config.get_num_monte_carlo_trajectories()) + " trajectories");
-        state = sample_from_density_matrix(state, config.get_num_monte_carlo_trajectories(), config.get_seed());
+        state = sample_from_density_matrix(state, config.get_num_monte_carlo_trajectories(), config.next_seed());
     }
 
     // Combine single-qubit gates for speed if not using noise models
@@ -386,7 +386,7 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const Sp
     bool monte_carlo = input_is_trajectories || (!is_statevector && config.get_monte_carlo());
     if (monte_carlo && !input_is_trajectories) {
         qilisdk::log_debug("[Sampling, C++] Monte-Carlo sampling with " + std::to_string(config.get_num_monte_carlo_trajectories()) + " trajectories");
-        state = sample_from_density_matrix(state, config.get_num_monte_carlo_trajectories(), config.get_seed());
+        state = sample_from_density_matrix(state, config.get_num_monte_carlo_trajectories(), config.next_seed());
     }
 
     // Fuse gates for speed if not using noise models, either in groups of single-qubit gates or multi-qubit gates (up to a limit)

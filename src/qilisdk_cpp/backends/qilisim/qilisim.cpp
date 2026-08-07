@@ -38,6 +38,21 @@
 
 #include <iostream>
 
+void QiliSimCpp::set_seed_from_config(QiliSimConfig& config) {
+    /*
+    Get the root seed from the config and use it to seed the persistent random
+    stream if it hasn't already.
+
+    Args:
+        config (QiliSimConfig&): The config for this execution; its seed is overwritten.
+    */
+    const int seed = config.get_seed();
+    if (!seed_rng_initialised || seed != root_seed) {
+        reset_seed(seed);
+    }
+    config.set_seed(static_cast<int>(seed_rng() & 0x7fffffffULL));
+}
+
 // The public execute_sampling
 py::object QiliSimCpp::execute_digital_propagation(const py::object& functional, const py::object& readout, const py::object& noise_model, const py::object& initial_state, const py::dict& solver_params) {
     /*
@@ -71,6 +86,7 @@ py::object QiliSimCpp::execute_digital_propagation(const py::object& functional,
 
     // Get parameters
     QiliSimConfig config = parse_solver_params(solver_params);
+    set_seed_from_config(config);
 
     // Sanity checks
     if (n_qubits <= 0) {
@@ -211,6 +227,7 @@ py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, co
 
     // Get parameters
     QiliSimConfig config = parse_solver_params(solver_params);
+    set_seed_from_config(config);
     if (functional.attr("store_intermediate_results").cast<bool>()) {
         config.set_store_intermediate_results(true);
     }
@@ -348,6 +365,7 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
 
     // Get parameters
     QiliSimConfig config = parse_solver_params(solver_params);
+    set_seed_from_config(config);
 
     // Sanity checks
     if (n_qubits <= 0) {
@@ -379,7 +397,7 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
     // In Monte Carlo mode we sample once and then carry that ensemble through each layer
     bool trajectory_mode = config.get_monte_carlo();
     if (trajectory_mode) {
-        state = sample_from_density_matrix(state, config.get_num_monte_carlo_trajectories(), config.get_seed());
+        state = sample_from_density_matrix(state, config.get_num_monte_carlo_trajectories(), config.next_seed());
     }
 
     // For each layer of the reservoir
@@ -522,7 +540,7 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
                     reset_mask |= (1ULL << q);
                 }
                 if (trajectory_mode) {
-                    state = reset_trajectories(state, reset_mask, config.get_seed() + 104729 * (layer_index + 1));
+                    state = reset_trajectories(state, reset_mask, config.next_seed());
                 } else {
                     DenseMatrix reset_rho = DenseMatrix::Zero(state.rows(), state.cols());
                     for (Eigen::Index row = 0; row < state.rows(); ++row) {
