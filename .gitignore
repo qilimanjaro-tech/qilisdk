@@ -55,3 +55,6 @@ sphinx.log
 # Code Coverage
 junit.xml
 coverage.xml
+
+# CodeGraph
+.codegraph/*

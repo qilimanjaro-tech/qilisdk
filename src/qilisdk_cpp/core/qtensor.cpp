@@ -17,6 +17,8 @@
 #include "../libs/numpy.h"
 #include "../libs/pybind.h"
 
+#include <algorithm>
+#include <cmath>
 #include <random>
 #include <sstream>
 
@@ -396,7 +398,7 @@ QTensorCpp::QTensorCpp(const py::object& data) {
             }
             for (int j = 0; j < cols; ++j) {
                 Complex val = row[j].cast<Complex>();
-                if (std::abs(val) > default_atol) {
+                if (std::abs(val) > default_atol || !std::isfinite(val.real()) || !std::isfinite(val.imag())) {
                     row_major.insert(i, j) = val;
                 }
             }
@@ -1650,6 +1652,7 @@ Complex QTensorCpp::expectation_value_python(const py::object& other, int nshots
     If nshots <= 0, compute the exact expectation value using the trace formula.
     If nshots > 0, compute an estimated expectation value by sampling from the
     eigenvalues of the operator according to the probabilities given by the overlaps of the eigenvectors with this state.
+    Hamiltonian observables are handled matrix-free, by measuring each of their Pauli terms with nshots shots.
 
     Args:
         other (py::object): The other QTensor for which to compute the expectation value with respect to this QTensor.
@@ -1659,36 +1662,75 @@ Complex QTensorCpp::expectation_value_python(const py::object& other, int nshots
         Complex: The expectation value of the other QTensor with respect to this QTensor.
     */
     if (py::isinstance<QTensorCpp>(other)) {
-        return expectation_value(other.cast<QTensorCpp>(), nshots);
+        return expectation_value(other.cast<QTensorCpp&>(), nshots);
     } else if (py::hasattr(other, "_elements")) {
-        int nqubits = int(std::log2(rows()));
+        int nqubits = int(std::log2(std::max(rows(), cols())));
         py::list hamiltonians_py;
         hamiltonians_py.append(other);
         std::vector<MatrixFreeHamiltonian> hamiltonians = parse_hamiltonians_matrix_free(nqubits, hamiltonians_py);
-        return expectation_value(hamiltonians[0]);
+        return expectation_value(hamiltonians[0], nshots);
     } else if (py::hasattr(other, "_qtensor_cpp")) {
-        return expectation_value(other.attr("_qtensor_cpp").cast<QTensorCpp>(), nshots);
+        py::object other_cpp = other.attr("_qtensor_cpp");
+        return expectation_value(other_cpp.cast<QTensorCpp&>(), nshots);
     } else {
         throw py::value_error("Other object must be a QTensor");
     }
 }
 
-Complex QTensorCpp::expectation_value(const MatrixFreeHamiltonian& other) const {
+Complex QTensorCpp::expectation_value(const MatrixFreeHamiltonian& other, int nshots) const {
     /*
     Compute the expectation value of a matrix-free Hamiltonian with respect to this QTensor.
+    If nshots <= 0, compute the exact expectation value by applying the Hamiltonian to this QTensor.
+    If nshots > 0, compute an estimated expectation value by measuring each Pauli term of the
+    Hamiltonian with nshots shots, since each Pauli term has eigenvalues +1 and -1 the number of +1
+    outcomes is binomially distributed with a bias given by the exact expectation value of that term.
 
     Args:
         other (MatrixFreeHamiltonian): The matrix-free Hamiltonian for which to compute the expectation value with respect to this QTensor.
+        nshots (int): The number of samples to use per Pauli term when estimating the expectation value. If nshots <= 0, the exact expectation value is computed instead.
 
     Returns:
         Complex: The expectation value of the matrix-free Hamiltonian with respect to this QTensor.
     */
 
+    if (nshots > 0) {
+        // Create the random device
+        std::random_device rd;
+        std::mt19937 gen(rd());
+
+        // The expectation value of the identity gives the normalization of this QTensor
+        double normalization = expectation_value(MatrixFreeHamiltonian(other.get_nqubits(), 1.0)).real();
+        if (normalization <= 0) {
+            throw py::value_error("Invalid state: non-positive measurement probability normalization");
+        }
+
+        // For each Pauli in the Hamiltonian
+        Complex expectation = 0.0;
+        for (const auto& [pauli, coefficient] : other.get_operators()) {
+            // The identity term is not measured since it has no shot noise
+            if (pauli.size() == 0) {
+                expectation += coefficient * normalization;
+                continue;
+            }
+
+            // The exact expectation value of the single Pauli term gives the probability of a +1 outcome
+            double term_expectation = expectation_value(MatrixFreeHamiltonian(other.get_nqubits(), pauli)).real() / normalization;
+            double prob_plus = std::min(std::max(0.5 * (1.0 + term_expectation), 0.0), 1.0);
+
+            // Sample the number of +1 outcomes and turn the counts back into an estimate of the term
+            std::binomial_distribution<int> dist(nshots, prob_plus);
+            int plus_counts = dist(gen);
+            expectation += coefficient * normalization * (2.0 * double(plus_counts) / double(nshots) - 1.0);
+        }
+        return expectation;
+    }
+
     Complex expectation = 0.0;
 
-    // For kets we need to do <psi|H|psi> by applying H to the left and then taking the inner product with |psi>
-    if (cols() == 1) {
-        DenseMatrix psi_dense = to_dense();
+    // For kets we need to do <psi|H|psi> by applying H to the left and then taking the inner product with |psi>.
+    // Bras are turned into kets first, since applying H to the right of a single row is the same computation
+    if (cols() == 1 || rows() == 1) {
+        DenseMatrix psi_dense = is_bra() ? DenseMatrix(to_dense().adjoint()) : to_dense();
         DenseMatrix H_psi_dense;
         other.apply(psi_dense, MatrixFreeApplicationType::Left, H_psi_dense);
 #ifndef _WIN32
@@ -1698,19 +1740,6 @@ Complex QTensorCpp::expectation_value(const MatrixFreeHamiltonian& other) const 
 #endif
         for (int i = 0; i < H_psi_dense.rows(); ++i) {
             expectation += std::conj(psi_dense(i, 0)) * H_psi_dense(i, 0);
-        }
-        // for bras we need to do <psi|H by applying H to the right and then taking the inner product with |psi>
-    } else if (rows() == 1) {
-        DenseMatrix psi_dense = to_dense().adjoint();
-        DenseMatrix H_psi_dense;
-        other.apply(psi_dense, MatrixFreeApplicationType::Right, H_psi_dense);
-#ifndef _WIN32
-#if defined(_OPENMP)
-#pragma omp parallel for reduction(complex_double_reduction : expectation) schedule(static)
-#endif
-#endif
-        for (int i = 0; i < H_psi_dense.cols(); ++i) {
-            expectation += H_psi_dense(0, i) * std::conj(psi_dense(0, i));
         }
     } else {
         // need to do trace(H * rho) for a general operator and density matrix
@@ -1736,6 +1765,7 @@ Complex QTensorCpp::expectation_value(const QTensorCpp& other, int nshots) const
     If nshots <= 0, compute the exact expectation value using the trace formula.
     If nshots > 0, compute an estimated expectation value by sampling from the eigenvalues of
     the operator according to the probabilities given by the overlaps of the eigenvectors with this state.
+    The eigendecomposition of the operator is computed and cached on it if it is not available yet.
 
     Args:
         other (QTensorCpp): The other QTensor for which to compute the expectation value with respect to this QTensor.
@@ -1769,29 +1799,29 @@ Complex QTensorCpp::expectation_value(const QTensorCpp& other, int nshots) const
         std::mt19937 gen(rd());
 
         // Get the eigenvalues and eigenvectors of the operator
-        if (_eigenvalues.empty() || _eigenvectors.empty()) {
-            throw py::value_error("Eigendecomposition must be computed before calling expectation_value with nshots > 0");
-        }
-        const std::vector<Complex>& evals = _eigenvalues;
-        const std::vector<SparseMatrix>& evecs = _eigenvectors;
+        QTensorCpp& observable = const_cast<QTensorCpp&>(other);
+        observable.compute_eigendecomposition();
+        const std::vector<Complex>& evals = observable.get_eigenvalues();
+        const std::vector<SparseMatrix>& evecs = observable.get_eigenvectors();
 
-        // Compute the probabilities of each outcome
+        // Compute the probabilities of each outcome, which are the overlaps of this state with the eigenvectors
+        DenseMatrix evecs_dense = _get_dense_eigenvectors(evecs);
         std::vector<double> probs(evals.size(), 0.0);
-        for (size_t i = 0; i < evals.size(); ++i) {
-            const SparseMatrix& evec = evecs[i];
-            Complex overlap = 0.0;
-            for (int k = 0; k < evec.outerSize(); ++k) {
-                for (typename SparseMatrix::InnerIterator it(evec, k); it; ++it) {
-                    int row = int(it.row());
-                    int col = int(it.col());
-                    Complex val = it.value();
-                    overlap += val * coeff(row, col);
-                }
+        if (is_ket() || is_bra()) {
+            DenseMatrix psi_dense = is_bra() ? DenseMatrix(to_dense().adjoint()) : to_dense();
+            DenseMatrix overlaps = evecs_dense.adjoint() * psi_dense;
+            for (size_t i = 0; i < evals.size(); ++i) {
+                probs[i] = std::norm(overlaps(int(i), 0));
             }
-            probs[i] = std::norm(overlap);
+        } else {
+            // For a density matrix the probability of an outcome is <v|rho|v> rather than |<v|psi>|^2
+            DenseMatrix projected = evecs_dense.adjoint() * to_dense() * evecs_dense;
+            for (size_t i = 0; i < evals.size(); ++i) {
+                probs[i] = std::max(std::real(projected(int(i), int(i))), 0.0);
+            }
         }
 
-        // Normalize probabilities
+        // Normalize probabilities, their sum is the normalization of this state since the eigenvectors form a basis
         double sum_probs = std::accumulate(probs.begin(), probs.end(), 0.0);
         if (sum_probs <= 0) {
             throw py::value_error("Invalid state: non-positive measurement probability normalization");
@@ -1800,14 +1830,14 @@ Complex QTensorCpp::expectation_value(const QTensorCpp& other, int nshots) const
             p /= sum_probs;
         }
 
-        // Sample from the distribution
+        // Sample from the distribution, scaling by the normalization
         std::discrete_distribution<> dist(probs.begin(), probs.end());
         double sampled_mean = 0.0;
         for (int i = 0; i < nshots; ++i) {
             int outcome = dist(gen);
             sampled_mean += evals[outcome].real();
         }
-        sampled_mean /= nshots;
+        sampled_mean *= sum_probs / nshots;
         return sampled_mean;
     }
 }
