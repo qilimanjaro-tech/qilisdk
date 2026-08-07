@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <cmath>
+
 #include "../../../libs/gpu.h"
 #include "../../../libs/pybind.h"
 #include "iterations.h"
@@ -98,12 +100,15 @@ DenseMatrix iter_rk4_matrix(const DenseMatrix& rho_0, double dt, const SparseMat
     // Normalize the density matrix
     if (normalize) {
         if (is_unitary_on_statevector) {
-            rho /= rho.norm();
+            const double norm = rho.norm();
+            check_valid_divisor(norm);
+            rho /= norm;
         } else {
-            std::complex<double> tr = 0;
+            Complex tr = 0;
             for (int i = 0; i < dim; ++i) {
                 tr += rho(i, i);
             }
+            check_valid_divisor(tr);
             rho /= tr;
         }
     }
@@ -285,7 +290,6 @@ void iter_rk4(DenseMatrix& rho_t, double t, double dt, const std::vector<double>
     if (!normalize) {
         return;
     }
-    std::complex<double> norm = 0;
     if (is_unitary_on_statevector) {
         double norm_sq = 0.0;
 #if defined(_OPENMP)
@@ -295,6 +299,7 @@ void iter_rk4(DenseMatrix& rho_t, double t, double dt, const std::vector<double>
             norm_sq += std::norm(rho_t(i, 0));
         }
         const Real norm = static_cast<Real>(std::sqrt(norm_sq));
+        check_valid_divisor(norm);
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
 #endif
@@ -312,6 +317,7 @@ void iter_rk4(DenseMatrix& rho_t, double t, double dt, const std::vector<double>
             norm += rho_t(i, i);
         }
         // Divide the whole (contiguous) matrix by the scalar trace
+        check_valid_divisor(norm);
         const Real denom = norm.real() * norm.real() + norm.imag() * norm.imag();
         const Real inv_re = norm.real() / denom;
         const Real inv_im = -norm.imag() / denom;
@@ -527,10 +533,11 @@ double iter_rk45(DenseMatrix& rho_t, double t, double& dt, const std::vector<dou
     // Scale the error by the tolerance
     err_norm /= tol;
 
-    // Make sure it's not zero
-    if (std::abs(rho_4_norm) < 1e-14 || std::abs(rho_5_norm) < 1e-14) {
-        throw py::value_error("Density matrix has zero norm, cannot perform adaptive step.");
-    }
+    // Make sure we haven't diverged
+    const double norm_4 = std::abs(rho_4_norm);
+    const double norm_5 = std::abs(rho_5_norm);
+    check_valid_divisor(norm_4);
+    check_valid_divisor(norm_5);
 
     // Normalize the 5th order solution
     const std::complex<double> norm_divisor = normalize ? rho_5_norm : std::complex<double>(1.0, 0.0);
