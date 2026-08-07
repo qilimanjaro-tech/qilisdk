@@ -855,3 +855,399 @@ def test_pauli_operator_rejects_negative_qubit():
     """QSDK-05: a Pauli operator must reject a negative qubit at construction."""
     with pytest.raises(ValueError, match="non-negative"):
         PauliX(-1)
+
+
+@pytest.mark.parametrize(
+    ("built", "expected"),
+    [
+        # Transverse / longitudinal fields put a single-qubit term on every qubit.
+        (Hamiltonian.transverse_field(nqubits=2, x_coefficient=1.3), 1.3 * X(0) + 1.3 * X(1)),
+        (Hamiltonian.transverse_field(nqubits=1), X(0)),
+        (Hamiltonian.longitudinal_field(nqubits=2, z_coefficient=1.3), 1.3 * Z(0) + 1.3 * Z(1)),
+        (Hamiltonian.longitudinal_field(nqubits=1), Z(0)),
+        # Ising couples every pair i < j, with an optional longitudinal field.
+        (Hamiltonian.ising(nqubits=2, zz_coefficient=2.0), 2.0 * Z(0) * Z(1)),
+        (
+            Hamiltonian.ising(nqubits=3, zz_coefficient=2.0),
+            2.0 * (Z(0) * Z(1) + Z(0) * Z(2) + Z(1) * Z(2)),
+        ),
+        (
+            Hamiltonian.ising(nqubits=2, zz_coefficient=2.0, z_coefficient=0.5),
+            2.0 * Z(0) * Z(1) + 0.5 * Z(0) + 0.5 * Z(1),
+        ),
+        # The default z_coefficient of 0 leaves the field out entirely.
+        (
+            Hamiltonian.ising(nqubits=2, zz_coefficient=2.0),
+            Hamiltonian.ising(nqubits=2, zz_coefficient=2.0, z_coefficient=0.0),
+        ),
+        # Transverse-field Ising is the sum of the two.
+        (
+            Hamiltonian.transverse_field_ising(nqubits=2, x_coefficient=1.3, zz_coefficient=-2),
+            1.3 * X(0) + 1.3 * X(1) - 2 * Z(0) * Z(1),
+        ),
+        (
+            Hamiltonian.transverse_field_ising(nqubits=2, x_coefficient=1.3, zz_coefficient=-2),
+            Hamiltonian.transverse_field(nqubits=2, x_coefficient=1.3)
+            + Hamiltonian.ising(nqubits=2, zz_coefficient=-2),
+        ),
+        (
+            Hamiltonian.transverse_field_ising(nqubits=2, x_coefficient=1.0, zz_coefficient=1.0, z_coefficient=0.5),
+            X(0) + X(1) + Z(0) * Z(1) + 0.5 * Z(0) + 0.5 * Z(1),
+        ),
+        # XY: yy_coefficient defaults to xx_coefficient, giving the isotropic model.
+        (Hamiltonian.xy(nqubits=2, xx_coefficient=0.5), 0.5 * X(0) * X(1) + 0.5 * Y(0) * Y(1)),
+        (
+            Hamiltonian.xy(nqubits=2, xx_coefficient=0.5, yy_coefficient=0.25),
+            0.5 * X(0) * X(1) + 0.25 * Y(0) * Y(1),
+        ),
+        # Heisenberg XXX: both other couplings default to xx_coefficient.
+        (
+            Hamiltonian.heisenberg(nqubits=2, xx_coefficient=0.5),
+            0.5 * X(0) * X(1) + 0.5 * Y(0) * Y(1) + 0.5 * Z(0) * Z(1),
+        ),
+        # Heisenberg XXZ: only the ZZ coupling is anisotropic.
+        (
+            Hamiltonian.heisenberg(nqubits=2, xx_coefficient=1.0, zz_coefficient=0.3),
+            X(0) * X(1) + Y(0) * Y(1) + 0.3 * Z(0) * Z(1),
+        ),
+        # Heisenberg XYZ with a longitudinal field.
+        (
+            Hamiltonian.heisenberg(nqubits=2, xx_coefficient=1, yy_coefficient=2, zz_coefficient=3, z_coefficient=0.5),
+            X(0) * X(1) + 2 * Y(0) * Y(1) + 3 * Z(0) * Z(1) + 0.5 * Z(0) + 0.5 * Z(1),
+        ),
+        # Heisenberg reduces to XY plus an Ising ZZ coupling.
+        (
+            Hamiltonian.heisenberg(nqubits=3, xx_coefficient=1.0),
+            Hamiltonian.xy(nqubits=3, xx_coefficient=1.0) + Hamiltonian.ising(nqubits=3, zz_coefficient=1.0),
+        ),
+    ],
+)
+def test_named_hamiltonian_constructors(built: Hamiltonian, expected: Hamiltonian):
+    assert built == expected
+
+
+@pytest.mark.parametrize(
+    ("built", "expected"),
+    [
+        # A chain couples adjacent qubits only.
+        (Hamiltonian.ising_chain(nqubits=3, zz_coefficient=2.0), 2.0 * Z(0) * Z(1) + 2.0 * Z(1) * Z(2)),
+        (
+            Hamiltonian.ising_chain(nqubits=4),
+            Z(0) * Z(1) + Z(1) * Z(2) + Z(2) * Z(3),
+        ),
+        # Two qubits give a single bond, matching the all-to-all Ising model.
+        (Hamiltonian.ising_chain(nqubits=2), Hamiltonian.ising(nqubits=2)),
+        # Closing the ring adds the bond between the two ends.
+        (
+            Hamiltonian.ising_chain(nqubits=4, periodic=True),
+            Z(0) * Z(1) + Z(1) * Z(2) + Z(2) * Z(3) + Z(0) * Z(3),
+        ),
+        # On three qubits the ring is the complete graph, i.e. the all-to-all model.
+        (Hamiltonian.ising_chain(nqubits=3, periodic=True), Hamiltonian.ising(nqubits=3)),
+        # Wrapping is skipped on two qubits, where it would double the only bond.
+        (Hamiltonian.ising_chain(nqubits=2, periodic=True), Hamiltonian.ising_chain(nqubits=2)),
+        # The optional longitudinal field lands on every qubit.
+        (
+            Hamiltonian.ising_chain(nqubits=3, z_coefficient=0.5),
+            Z(0) * Z(1) + Z(1) * Z(2) + 0.5 * Z(0) + 0.5 * Z(1) + 0.5 * Z(2),
+        ),
+    ],
+)
+def test_ising_chain(built: Hamiltonian, expected: Hamiltonian):
+    assert built == expected
+
+
+@pytest.mark.parametrize(
+    ("built", "expected"),
+    [
+        # 2x2: qubits 0 1 on the top row, 2 3 on the bottom.
+        (
+            Hamiltonian.ising_grid(rows=2, columns=2),
+            Z(0) * Z(1) + Z(2) * Z(3) + Z(0) * Z(2) + Z(1) * Z(3),
+        ),
+        # A single row or column degenerates to a chain.
+        (Hamiltonian.ising_grid(rows=1, columns=3), Hamiltonian.ising_chain(nqubits=3)),
+        (Hamiltonian.ising_grid(rows=3, columns=1), Hamiltonian.ising_chain(nqubits=3)),
+        # 2x3, row-major indexing: 0 1 2 / 3 4 5.
+        (
+            Hamiltonian.ising_grid(rows=2, columns=3, zz_coefficient=2.0),
+            2.0
+            * (
+                Z(0) * Z(1)
+                + Z(1) * Z(2)  # top row
+                + Z(3) * Z(4)
+                + Z(4) * Z(5)  # bottom row
+                + Z(0) * Z(3)
+                + Z(1) * Z(4)
+                + Z(2) * Z(5)  # columns
+            ),
+        ),
+        # Wrapping a 3-wide row adds the bond between its two ends.
+        (
+            Hamiltonian.ising_grid(rows=1, columns=3, periodic=True),
+            Hamiltonian.ising_chain(nqubits=3, periodic=True),
+        ),
+        # A 2x2 torus would duplicate every bond, so wrapping is skipped in both directions.
+        (Hamiltonian.ising_grid(rows=2, columns=2, periodic=True), Hamiltonian.ising_grid(rows=2, columns=2)),
+        # The optional longitudinal field lands on every site.
+        (
+            Hamiltonian.ising_grid(rows=1, columns=2, z_coefficient=0.5),
+            Z(0) * Z(1) + 0.5 * Z(0) + 0.5 * Z(1),
+        ),
+    ],
+)
+def test_ising_grid(built: Hamiltonian, expected: Hamiltonian):
+    assert built == expected
+
+
+def test_ising_grid_dimensions():
+    H = Hamiltonian.ising_grid(rows=3, columns=4)
+
+    assert H.nqubits == 12
+    # A rows x columns open lattice has rows*(columns-1) horizontal and (rows-1)*columns vertical bonds.
+    assert len(H.elements) == 3 * 3 + 2 * 4
+
+
+def test_ising_grid_torus_has_two_bonds_per_site():
+    H = Hamiltonian.ising_grid(rows=3, columns=3, periodic=True)
+
+    assert H.nqubits == 9
+    assert len(H.elements) == 2 * 9
+
+
+@pytest.mark.parametrize(
+    "constructor",
+    [
+        Hamiltonian.ising,
+        Hamiltonian.ising_chain,
+        Hamiltonian.transverse_field_ising,
+        Hamiltonian.xy,
+        Hamiltonian.heisenberg,
+    ],
+)
+def test_two_body_constructors_need_at_least_two_qubits(constructor):
+    with pytest.raises(ValueError, match="Hamiltonians need at least 2 qubits, got 1"):
+        constructor(nqubits=1)
+
+
+@pytest.mark.parametrize(
+    "constructor",
+    [
+        Hamiltonian.transverse_field,
+        Hamiltonian.longitudinal_field,
+        Hamiltonian.ising,
+        Hamiltonian.ising_chain,
+        Hamiltonian.transverse_field_ising,
+        Hamiltonian.xy,
+        Hamiltonian.heisenberg,
+    ],
+)
+def test_named_constructors_reject_non_positive_nqubits(constructor):
+    with pytest.raises(ValueError, match="nqubits must be greater than zero"):
+        constructor(nqubits=0)
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "match"),
+    [
+        ({"rows": 0, "columns": 2}, "rows must be greater than zero"),
+        ({"rows": -1, "columns": 2}, "rows must be greater than zero"),
+        ({"rows": 2, "columns": 0}, "columns must be greater than zero"),
+        ({"rows": 1, "columns": 1}, "Ising grid Hamiltonians need at least 2 qubits, got 1"),
+    ],
+)
+def test_ising_grid_rejects_invalid_dimensions(kwargs: dict, match: str):
+    with pytest.raises(ValueError, match=match):
+        Hamiltonian.ising_grid(**kwargs)
+
+
+###############################################################################
+# Randomized coefficients, requested by passing a (low, high) range
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    ("randomized", "fixed"),
+    [
+        (
+            Hamiltonian.transverse_field(nqubits=3, x_coefficient=(-1, 1)),
+            Hamiltonian.transverse_field(nqubits=3),
+        ),
+        (
+            Hamiltonian.longitudinal_field(nqubits=3, z_coefficient=(-1, 1)),
+            Hamiltonian.longitudinal_field(nqubits=3),
+        ),
+        (Hamiltonian.ising(nqubits=3, zz_coefficient=(-1, 1)), Hamiltonian.ising(nqubits=3)),
+        (
+            Hamiltonian.ising(nqubits=3, zz_coefficient=(-1, 1), z_coefficient=(-1, 1)),
+            Hamiltonian.ising(nqubits=3, z_coefficient=1.0),
+        ),
+        (
+            Hamiltonian.ising_chain(nqubits=4, zz_coefficient=(-1, 1)),
+            Hamiltonian.ising_chain(nqubits=4),
+        ),
+        (
+            Hamiltonian.ising_grid(rows=2, columns=3, zz_coefficient=(-1, 1)),
+            Hamiltonian.ising_grid(rows=2, columns=3),
+        ),
+        (
+            Hamiltonian.transverse_field_ising(nqubits=3, x_coefficient=(-1, 1), zz_coefficient=(-1, 1)),
+            Hamiltonian.transverse_field_ising(nqubits=3),
+        ),
+        (Hamiltonian.xy(nqubits=3, xx_coefficient=(-1, 1)), Hamiltonian.xy(nqubits=3)),
+        (
+            Hamiltonian.heisenberg(nqubits=3, xx_coefficient=(-1, 1)),
+            Hamiltonian.heisenberg(nqubits=3),
+        ),
+    ],
+)
+def test_a_range_keeps_the_model_structure(randomized: Hamiltonian, fixed: Hamiltonian):
+    # Passing a range changes the coefficients only: the operator products are the same as the
+    # fixed-coefficient model's.
+    assert set(randomized.elements) == set(fixed.elements)
+    assert all(-1.0 <= complex(c).real <= 1.0 for c in randomized.elements.values())
+    assert all(complex(c).imag == 0 for c in randomized.elements.values())
+
+
+@pytest.mark.parametrize(
+    ("built", "count"),
+    [
+        (Hamiltonian.transverse_field(nqubits=4, x_coefficient=(2.5, 3.5)), 4),
+        (Hamiltonian.longitudinal_field(nqubits=4, z_coefficient=(2.5, 3.5)), 4),
+        (Hamiltonian.ising(nqubits=4, zz_coefficient=(2.5, 3.5)), 6),
+        (Hamiltonian.ising_chain(nqubits=4, zz_coefficient=(2.5, 3.5)), 3),
+        (Hamiltonian.ising_grid(rows=2, columns=2, zz_coefficient=(2.5, 3.5)), 4),
+        (
+            Hamiltonian.transverse_field_ising(nqubits=4, x_coefficient=(2.5, 3.5), zz_coefficient=(2.5, 3.5)),
+            10,
+        ),
+        (Hamiltonian.xy(nqubits=4, xx_coefficient=(2.5, 3.5)), 12),
+        (Hamiltonian.heisenberg(nqubits=4, xx_coefficient=(2.5, 3.5)), 18),
+    ],
+)
+def test_every_term_is_drawn_from_its_range(built: Hamiltonian, count: int):
+    assert len(built.elements) == count
+    assert all(2.5 <= complex(c).real <= 3.5 for c in built.elements.values())
+
+
+def test_each_term_gets_an_independent_draw():
+    H = Hamiltonian.heisenberg(nqubits=3, xx_coefficient=(-1, 1))
+
+    coefficients = list(H.elements.values())
+    assert len(coefficients) == 9
+    assert len(set(coefficients)) == 9
+
+
+def test_fixed_and_random_coefficients_can_be_mixed():
+    H = Hamiltonian.transverse_field_ising(nqubits=4, x_coefficient=(-2, 2), zz_coefficient=1.0)
+
+    fields = [c for operators, c in H.elements.items() if len(operators) == 1]
+    couplings = [c for operators, c in H.elements.items() if len(operators) == 2]
+
+    assert len(fields) == 4
+    assert len(set(fields)) == 4, "the ranged field should be drawn per qubit"
+    assert all(-2.0 <= complex(c).real <= 2.0 for c in fields)
+    assert set(couplings) == {1.0}, "the fixed coupling should be shared by every pair"
+
+
+@pytest.mark.parametrize(
+    ("constructor", "kwargs"),
+    [
+        (Hamiltonian.transverse_field, {"x_coefficient": (-1, 1)}),
+        (Hamiltonian.longitudinal_field, {"z_coefficient": (-1, 1)}),
+        (Hamiltonian.ising, {"zz_coefficient": (-1, 1)}),
+        (Hamiltonian.ising_chain, {"zz_coefficient": (-1, 1)}),
+        (Hamiltonian.transverse_field_ising, {"x_coefficient": (-1, 1)}),
+        (Hamiltonian.xy, {"xx_coefficient": (-1, 1)}),
+        (Hamiltonian.heisenberg, {"xx_coefficient": (-1, 1)}),
+    ],
+)
+def test_ranged_coefficients_are_seeded(constructor, kwargs: dict):
+    first = constructor(nqubits=3, seed=7, **kwargs)
+    repeat = constructor(nqubits=3, seed=7, **kwargs)
+    other = constructor(nqubits=3, seed=8, **kwargs)
+
+    assert first == repeat
+    assert first != other
+
+
+def test_ising_grid_ranged_coefficients_are_seeded():
+    first = Hamiltonian.ising_grid(rows=2, columns=3, zz_coefficient=(-1, 1), seed=7)
+    repeat = Hamiltonian.ising_grid(rows=2, columns=3, zz_coefficient=(-1, 1), seed=7)
+    other = Hamiltonian.ising_grid(rows=2, columns=3, zz_coefficient=(-1, 1), seed=8)
+
+    assert first == repeat
+    assert first != other
+
+
+def test_the_seed_is_ignored_when_no_range_is_given():
+    assert Hamiltonian.ising(nqubits=3, zz_coefficient=2.0, seed=1) == Hamiltonian.ising(
+        nqubits=3, zz_coefficient=2.0, seed=99
+    )
+
+
+@pytest.mark.parametrize(
+    ("constructor", "kwargs"),
+    [
+        (Hamiltonian.xy, {"xx_coefficient": (-1, 1)}),
+        (Hamiltonian.heisenberg, {"xx_coefficient": (-1, 1)}),
+    ],
+)
+def test_reusing_a_range_still_draws_each_axis_independently(constructor, kwargs: dict):
+    H = constructor(nqubits=3, **kwargs)
+
+    by_axis: dict[str, list[complex]] = {"X": [], "Y": [], "Z": []}
+    for operators, coefficient in H.elements.items():
+        by_axis[operators[0].name].append(coefficient)
+
+    assert by_axis["X"] != by_axis["Y"]
+    if by_axis["Z"]:
+        assert by_axis["Y"] != by_axis["Z"]
+
+
+def test_an_explicit_range_matches_the_reused_one():
+    default = Hamiltonian.xy(nqubits=3, xx_coefficient=(1.3, 2.3), seed=5)
+    explicit = Hamiltonian.xy(nqubits=3, xx_coefficient=(1.3, 2.3), yy_coefficient=(1.3, 2.3), seed=5)
+
+    assert default == explicit
+
+
+def test_a_degenerate_range_behaves_like_a_fixed_value():
+    assert Hamiltonian.ising(nqubits=3, zz_coefficient=(2.0, 2.0)) == Hamiltonian.ising(nqubits=3, zz_coefficient=2.0)
+
+
+@pytest.mark.parametrize(
+    ("constructor", "kwargs", "name"),
+    [
+        (Hamiltonian.transverse_field, {"x_coefficient": (1.0, -1.0)}, "x_coefficient"),
+        (Hamiltonian.longitudinal_field, {"z_coefficient": (1.0, -1.0)}, "z_coefficient"),
+        (Hamiltonian.ising, {"zz_coefficient": (1.0, -1.0)}, "zz_coefficient"),
+        (Hamiltonian.ising, {"z_coefficient": (1.0, -1.0)}, "z_coefficient"),
+        (Hamiltonian.ising_chain, {"zz_coefficient": (1.0, -1.0)}, "zz_coefficient"),
+        (Hamiltonian.ising_chain, {"z_coefficient": (1.0, -1.0)}, "z_coefficient"),
+        (Hamiltonian.transverse_field_ising, {"x_coefficient": (1.0, -1.0)}, "x_coefficient"),
+        (Hamiltonian.transverse_field_ising, {"zz_coefficient": (1.0, -1.0)}, "zz_coefficient"),
+        (Hamiltonian.transverse_field_ising, {"z_coefficient": (1.0, -1.0)}, "z_coefficient"),
+        (Hamiltonian.xy, {"xx_coefficient": (1.0, -1.0)}, "xx_coefficient"),
+        (Hamiltonian.xy, {"yy_coefficient": (1.0, -1.0)}, "yy_coefficient"),
+        (Hamiltonian.heisenberg, {"xx_coefficient": (1.0, -1.0)}, "xx_coefficient"),
+        (Hamiltonian.heisenberg, {"yy_coefficient": (1.0, -1.0)}, "yy_coefficient"),
+        (Hamiltonian.heisenberg, {"zz_coefficient": (1.0, -1.0)}, "zz_coefficient"),
+        (Hamiltonian.heisenberg, {"z_coefficient": (1.0, -1.0)}, "z_coefficient"),
+    ],
+)
+def test_misordered_ranges_are_rejected(constructor, kwargs: dict, name: str):
+    with pytest.raises(ValueError, match=f"{name} must be a \\(low, high\\) pair"):
+        constructor(nqubits=2, **kwargs)
+
+
+def test_ising_grid_rejects_misordered_ranges():
+    with pytest.raises(ValueError, match=r"zz_coefficient must be a \(low, high\) pair"):
+        Hamiltonian.ising_grid(rows=2, columns=2, zz_coefficient=(1.0, -1.0))
+
+
+def test_a_randomized_hamiltonian_is_still_usable():
+    H = Hamiltonian.ising_chain(nqubits=3, zz_coefficient=(-1, 1))
+
+    assert H.to_matrix().shape == (8, 8)
+    assert H.to_qtensor().is_hermitian()
