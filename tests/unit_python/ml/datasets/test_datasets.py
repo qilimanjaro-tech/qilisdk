@@ -332,7 +332,9 @@ def test_draw_grid_style_color_is_respected(tmp_path):
 def test_mackey_glass_registers_attractor_transforms():
     # The tau delay is folded into the dataset's transforms rather than into
     # style.delay, so drawing 2-D/3-D uses a delay embedding out of the box.
-    assert set(MackeyGlass._DRAW_TRANSFORMS) == {"2d", "3d"}
+    assert MackeyGlass._attractor_transform("2d", 17) is not None
+    assert MackeyGlass._attractor_transform("3d", 17) is not None
+    assert MackeyGlass._attractor_transform("1d", 17) is None
     resolved = MackeyGlass._resolve_draw_style("2d", None)
     assert resolved.title == "Mackey-Glass attractor"
     assert resolved.delay == 1  # untouched global default; the delay lives in the transform
@@ -387,6 +389,23 @@ def test_mackey_glass_3d_transform_embeds_three_delays(tmp_path):
     assert np.allclose(xs, inputs[34:, 0])
     assert np.allclose(ys, inputs[17:-17, 0])
     assert np.allclose(zs, inputs[:-34, 0])
+
+
+def test_mackey_glass_attractor_delay_is_configurable(tmp_path):
+    # The embedding delay can be overridden per draw call.
+    inputs, _ = MackeyGlass(tau=30.0).generate(500)
+    MackeyGlass.draw(inputs, style="2d", attractor_delay=30, filepath=str(tmp_path / "mg30.png"))
+    ax = plt.gcf().axes[0]
+    offsets = ax.collections[0].get_offsets()
+    assert np.allclose(offsets[:, 0], inputs[30:, 0])
+    assert np.allclose(offsets[:, 1], inputs[:-30, 0])
+    assert (ax.get_xlabel(), ax.get_ylabel()) == ("P(t)", "P(t - 30)")
+
+
+def test_mackey_glass_rejects_non_positive_attractor_delay(tmp_path):
+    inputs, _ = MackeyGlass().generate(50)
+    with pytest.raises(ValueError, match="attractor_delay must be a positive integer"):
+        MackeyGlass.draw(inputs, style="2d", attractor_delay=0, filepath=str(tmp_path / "bad.png"))
 
 
 def test_lorenz_2d_defaults_to_xz_projection(tmp_path):

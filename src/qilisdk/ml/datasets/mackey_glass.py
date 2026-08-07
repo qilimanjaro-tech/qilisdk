@@ -20,9 +20,11 @@ import numpy as np
 from qilisdk.ml.datasets.dataset import Dataset, DatasetSample, build_prediction_sample, rk4_step
 
 if TYPE_CHECKING:
+    from qilisdk.ml.datasets.dataset import FloatArray
     from qilisdk.utils.visualization.dataset_renderers import Transform
+    from qilisdk.utils.visualization.style import DatasetStyle
 
-_ATTRACTOR_DELAY = 17
+_DEFAULT_ATTRACTOR_DELAY = 17
 
 
 class MackeyGlass(Dataset):
@@ -57,18 +59,79 @@ class MackeyGlass(Dataset):
         "3d": {"title": "Mackey-Glass attractor"},
     }
 
-    # The classic Mackey-Glass attractor is the plot of ``(P(t), P(t - tau))``.
-    _DRAW_TRANSFORMS: ClassVar[dict[str, Transform]] = {
-        "2d": lambda d: [
-            ("P(t)", d[_ATTRACTOR_DELAY:, 0]),
-            (f"P(t - {_ATTRACTOR_DELAY})", d[:-_ATTRACTOR_DELAY, 0]),
-        ],
-        "3d": lambda d: [
-            ("P(t)", d[2 * _ATTRACTOR_DELAY :, 0]),
-            (f"P(t - {_ATTRACTOR_DELAY})", d[_ATTRACTOR_DELAY:-_ATTRACTOR_DELAY, 0]),
-            (f"P(t - {2 * _ATTRACTOR_DELAY})", d[: -2 * _ATTRACTOR_DELAY, 0]),
-        ],
-    }
+    @staticmethod
+    def _attractor_transform(mode: str, delay: int) -> Transform | None:
+        """
+        Build the delay-embedding transform for a plot mode.
+
+        The classic Mackey--Glass attractor is the plot of ``(P(t), P(t - tau))``,
+        extended in three dimensions with ``P(t - 2 tau)``.
+
+        Args:
+            mode (str): Plot mode, one of ``"1d"``, ``"2d"`` or ``"3d"``.
+            delay (int): Embedding delay :math:`\\tau`, in sampled steps.
+
+        Returns:
+            Transform | None: The transform for ``mode``, or ``None`` if the mode
+            needs no delay embedding.
+        """
+        if mode == "2d":
+            return lambda d: [
+                ("P(t)", d[delay:, 0]),
+                (f"P(t - {delay})", d[:-delay, 0]),
+            ]
+        if mode == "3d":
+            return lambda d: [
+                ("P(t)", d[2 * delay :, 0]),
+                (f"P(t - {delay})", d[delay:-delay, 0]),
+                (f"P(t - {2 * delay})", d[: -2 * delay, 0]),
+            ]
+        return None
+
+    @classmethod
+    def draw(
+        cls,
+        sample: DatasetSample | FloatArray,
+        style: str | None = None,
+        *,
+        config: DatasetStyle | None = None,
+        transform: Transform | None = None,
+        filepath: str | None = None,
+        attractor_delay: int = _DEFAULT_ATTRACTOR_DELAY,
+    ) -> None:
+        """
+        Render a generated :class:`DatasetSample`, or a raw series, with matplotlib.
+
+        Overrides :meth:`Dataset.draw`, except allows an extra arg: ``attractor_delay``.
+
+        Args:
+            sample (DatasetSample | FloatArray): A sample produced by
+                :meth:`generate`, of which the ``inputs`` are plotted, or an array
+                holding the series to plot directly.
+            style (str | None): Plot mode, one of ``"1d"``, ``"2d"`` or ``"3d"``.
+                Defaults to the dataset's natural mode.
+            config (DatasetStyle | None): Visual style configuration. Defaults to
+                :class:`DatasetStyle`, merged over the dataset's per-mode defaults.
+            transform (Transform | None): Callable mapping the series to the
+                coordinates to plot, overriding the delay embedding entirely.
+            filepath (str | None): If given, the figure is saved to this path
+                (format inferred from the extension) instead of being shown.
+            attractor_delay (int): Embedding delay, in sampled steps, used by the
+                default ``"2d"``/``"3d"`` transforms. Defaults to ``17``.
+
+        Raises:
+            ValueError: If ``attractor_delay`` is not positive.
+        """
+        if attractor_delay < 1:
+            raise ValueError(f"attractor_delay must be a positive integer, got {attractor_delay}.")
+        mode = style or cls._DEFAULT_DRAW_STYLE
+        super().draw(
+            sample,
+            mode,
+            config=config,
+            transform=transform or cls._attractor_transform(mode, attractor_delay),
+            filepath=filepath,
+        )
 
     def __init__(
         self,
@@ -84,7 +147,8 @@ class MackeyGlass(Dataset):
         horizon: int = 1,
         seed: int | None = None,
     ) -> None:
-        """Configure a Mackey--Glass generator.
+        """
+        Configure a Mackey--Glass generator.
 
         Args:
             tau (float): Delay :math:`\\tau`. Defaults to ``17.0``.
@@ -119,7 +183,8 @@ class MackeyGlass(Dataset):
         self._horizon = horizon
 
     def generate(self, npoints: int) -> DatasetSample:
-        """Integrate the Mackey--Glass equation and build a prediction sample.
+        """
+        Integrate the Mackey--Glass equation and build a prediction sample.
 
         This produces a single time series of length ``npoints + horizon``, discarding
         the first ``washout`` steps, and then sub-sampling every ``sample_every` steps.
