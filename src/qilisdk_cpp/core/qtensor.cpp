@@ -14,6 +14,7 @@
 
 #include "qtensor.h"
 #include "../backends/qilisim/utils/parsers.h"
+#include "../backends/qilisim/utils/random.h"
 #include "../libs/numpy.h"
 #include "../libs/pybind.h"
 
@@ -1929,6 +1930,84 @@ py::list QTensorCpp::probabilities_python() const {
     return py_probs;
 }
 
+std::map<std::string, int> QTensorCpp::sample(int nshots, int seed) const {
+    /*
+    Sample measurement outcomes in the computational basis from this QTensor.
+
+    The probability of each outcome is given by probabilities(), i.e. the squared magnitudes of the coefficients for a
+    ket or bra and the diagonal elements for a density matrix. The distribution is renormalized before sampling, so
+    states which are not perfectly normalized can be sampled too.
+
+    Args:
+        nshots (int): The number of shots to draw.
+        seed (int): The random seed used for the sampling.
+
+    Returns:
+        std::map<std::string, int>: A map from bitstring (qubit zero first) to the number of times it was obtained.
+
+    Raises:
+        py::value_error: If nshots is not positive, if this QTensor is not a ket, bra, or operator, or if the
+            probabilities do not form a valid distribution.
+
+    */
+    if (nshots <= 0) {
+        throw py::value_error("The number of shots must be positive");
+    }
+    std::vector<double> probs = probabilities();
+    const Eigen::Index dim = Eigen::Index(probs.size());
+    double* probs_data = probs.data();
+
+    // Accumulate the total probability
+    double total_prob = 0.0;
+#ifndef _WIN32
+#if defined(_OPENMP)
+#pragma omp parallel for reduction(+ : total_prob) schedule(static)
+#endif
+#endif
+    for (Eigen::Index i = 0; i < dim; ++i) {
+        if (probs_data[i] < 0.0) {
+            probs_data[i] = 0.0;
+        } else {
+            total_prob += probs_data[i];
+        }
+    }
+    if (total_prob <= 0.0) {
+        throw py::value_error("Cannot sample from a QTensor with zero total probability");
+    }
+    if (std::abs(total_prob - 1.0) > default_atol) {
+        const double inv_total_prob = 1.0 / total_prob;
+#ifndef _WIN32
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+#endif
+        for (Eigen::Index i = 0; i < dim; ++i) {
+            probs_data[i] *= inv_total_prob;
+        }
+    }
+    // Note that this consumes the probabilities, turning them into a cumulative distribution in-place
+    return sample_from_probabilities(probs.data(), probs.size(), get_nqubits(), nshots, seed);
+}
+
+py::dict QTensorCpp::sample_python(int nshots, int seed) const {
+    /*
+    Sample measurement outcomes in the computational basis from this QTensor, returning them as a Python dict.
+
+    Args:
+        nshots (int): The number of shots to draw.
+        seed (int): The random seed used for the sampling.
+
+    Returns:
+        py::dict: A dict from bitstring (qubit zero first) to the number of times it was obtained.
+
+    */
+    py::dict samples;
+    for (const auto& pair : sample(nshots, seed)) {
+        samples[py::cast(pair.first)] = py::cast(pair.second);
+    }
+    return samples;
+}
+
 std::vector<double> QTensorCpp::probabilities() const {
     /*
     Compute the probabilities associated with this QTensor, depending on whether it is a ket, bra, or operator.
@@ -1944,25 +2023,67 @@ std::vector<double> QTensorCpp::probabilities() const {
         py::value_error: If this QTensor is not a ket, bra, or operator.
 
     */
-    if (is_ket()) {
-        std::vector<double> probs(rows(), 0.0);
-        for_each_nonzero([&](int row, int, Complex val) { probs[row] += std::norm(val); });
-        return probs;
-    } else if (is_bra()) {
-        std::vector<double> probs(cols(), 0.0);
-        for_each_nonzero([&](int, int col, Complex val) { probs[col] += std::norm(val); });
-        return probs;
-    } else if (is_operator()) {
-        std::vector<double> probs(rows(), 0.0);
-        for_each_nonzero([&](int row, int col, Complex val) {
-            if (row == col) {
-                probs[row] += val.real();
-            }
-        });
-        return probs;
-    } else {
+    const bool state_is_ket = is_ket();
+    const bool state_is_bra = is_bra();
+    if (!state_is_ket && !state_is_bra && !is_operator()) {
         throw py::value_error("Probabilities can only be computed for kets, bras, or operators");
     }
+    const Eigen::Index dim = state_is_bra ? cols() : rows();
+    std::vector<double> probs(std::size_t(dim), 0.0);
+    double* probs_data = probs.data();
+
+    // For dense matrices
+    const DenseMatrix* dense = std::get_if<DenseMatrix>(&_data);
+    if (dense != nullptr) {
+        // For dense kets, it's the norm of the i'th element
+        if (state_is_ket) {
+#ifndef _WIN32
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+#endif
+            for (Eigen::Index i = 0; i < dim; ++i) {
+                probs_data[i] = std::norm((*dense)(i, 0));
+            }
+
+            // For dense bras, it's the norm of the i'th element
+        } else if (state_is_bra) {
+#ifndef _WIN32
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+#endif
+            for (Eigen::Index i = 0; i < dim; ++i) {
+                probs_data[i] = std::norm((*dense)(0, i));
+            }
+
+            // For dense operators, it's the real part of the i'th diagonal element
+        } else {
+#ifndef _WIN32
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+#endif
+            for (Eigen::Index i = 0; i < dim; ++i) {
+                probs_data[i] = (*dense)(i, i).real();
+            }
+        }
+        return probs;
+    }
+
+    // For sparse matrices, iterate over the nonzero entries and accumulate the probabilities in parallel
+    if (state_is_ket) {
+        for_each_nonzero([&](int row, int, Complex val) { probs_data[row] += std::norm(val); });
+    } else if (state_is_bra) {
+        for_each_nonzero([&](int, int col, Complex val) { probs_data[col] += std::norm(val); });
+    } else {
+        for_each_nonzero([&](int row, int col, Complex val) {
+            if (row == col) {
+                probs_data[row] += val.real();
+            }
+        });
+    }
+    return probs;
 }
 
 bool QTensorCpp::is_unitary(double atol) {

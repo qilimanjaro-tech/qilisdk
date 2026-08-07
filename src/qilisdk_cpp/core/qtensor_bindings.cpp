@@ -83,6 +83,7 @@ PYBIND11_MODULE(qtensor_module, m) {
         .def("is_pure", &QTensorCpp::is_pure)
         .def("clear_cache", &QTensorCpp::clear_cache)
         .def("probabilities_python", &QTensorCpp::probabilities_python)
+        .def("sample_python", &QTensorCpp::sample_python)
         .def("compute_eigendecomposition", &QTensorCpp::compute_eigendecomposition)
         .def("reset_qubits_python", &QTensorCpp::reset_qubits_python)
         .def(py::init<>())

@@ -1383,11 +1383,151 @@ TEST(ProbabilitiesTest, Scalar_Throws) {
     EXPECT_THROW(q.probabilities(), py::value_error);
 }
 
+TEST(ProbabilitiesTest, SparseKet_StoredEntriesOnly) {
+    // Sparse enough (density < 1/3) that the tensor is not converted to dense storage
+    SparseMatrix m(8, 1);
+    m.insert(3, 0) = std::sqrt(0.25);
+    m.insert(6, 0) = std::sqrt(0.75);
+    m.makeCompressed();
+    QTensorCpp q(m);
+    auto probs = q.probabilities();
+    ASSERT_EQ(probs.size(), 8u);
+    EXPECT_NEAR(probs[3], 0.25, 1e-10);
+    EXPECT_NEAR(probs[6], 0.75, 1e-10);
+    EXPECT_NEAR(probs[0], 0.0, 1e-10);
+}
+
+TEST(ProbabilitiesTest, SparseBra_StoredEntriesOnly) {
+    SparseMatrix m(1, 8);
+    m.insert(0, 2) = std::sqrt(0.5);
+    m.insert(0, 5) = std::sqrt(0.5);
+    m.makeCompressed();
+    QTensorCpp q(m);
+    auto probs = q.probabilities();
+    ASSERT_EQ(probs.size(), 8u);
+    EXPECT_NEAR(probs[2], 0.5, 1e-10);
+    EXPECT_NEAR(probs[5], 0.5, 1e-10);
+    EXPECT_NEAR(probs[7], 0.0, 1e-10);
+}
+
+TEST(ProbabilitiesTest, SparseOperator_DiagonalOnly) {
+    SparseMatrix m(4, 4);
+    m.insert(0, 0) = 0.25;
+    m.insert(2, 2) = 0.75;
+    m.insert(0, 3) = 0.5;  // off-diagonal, must not contribute
+    m.makeCompressed();
+    QTensorCpp q(m);
+    auto probs = q.probabilities();
+    ASSERT_EQ(probs.size(), 4u);
+    EXPECT_NEAR(probs[0], 0.25, 1e-10);
+    EXPECT_NEAR(probs[2], 0.75, 1e-10);
+    EXPECT_NEAR(probs[3], 0.0, 1e-10);
+}
+
 TEST(ProbabilitiesPythonTest, ReturnsList) {
     py::gil_scoped_acquire gil;
     QTensorCpp q(make_ket0());
     py::list probs = q.probabilities_python();
     EXPECT_EQ(py::len(probs), 2);
+}
+
+TEST(SampleTest, Ket0_AllShotsInZero) {
+    QTensorCpp q(make_ket0());
+    std::map<std::string, int> counts = q.sample(100, 42);
+    EXPECT_EQ(counts.size(), 1u);
+    EXPECT_EQ(counts["0"], 100);
+}
+
+TEST(SampleTest, Bra1_AllShotsInOne) {
+    SparseMatrix m(1, 2);
+    m.insert(0, 1) = 1.0;
+    m.makeCompressed();
+    QTensorCpp q(m);
+    std::map<std::string, int> counts = q.sample(100, 42);
+    EXPECT_EQ(counts.size(), 1u);
+    EXPECT_EQ(counts["1"], 100);
+}
+
+TEST(SampleTest, MixedDensityMatrix_BothOutcomes) {
+    QTensorCpp q(make_dm_mixed());
+    std::map<std::string, int> counts = q.sample(1000, 42);
+    int total = 0;
+    for (const auto& pair : counts) {
+        total += pair.second;
+    }
+    EXPECT_EQ(total, 1000);
+    EXPECT_GT(counts["0"], 400);
+    EXPECT_GT(counts["1"], 400);
+}
+
+TEST(SampleTest, TwoQubitState_BitstringLength) {
+    QTensorCpp q = QTensorCpp::uniform(2);
+    std::map<std::string, int> counts = q.sample(200, 7);
+    EXPECT_EQ(counts.size(), 4u);
+    for (const auto& pair : counts) {
+        EXPECT_EQ(pair.first.size(), 2u);
+    }
+}
+
+TEST(SampleTest, SparseKet_OnlyStoredOutcomes) {
+    SparseMatrix m(8, 1);
+    m.insert(3, 0) = 1.0;
+    m.makeCompressed();
+    QTensorCpp q(m);
+    std::map<std::string, int> counts = q.sample(100, 42);
+    EXPECT_EQ(counts.size(), 1u);
+    EXPECT_EQ(counts["011"], 100);
+}
+
+TEST(SampleTest, UnnormalizedState_Renormalized) {
+    QTensorCpp q = QTensorCpp(make_ket0()) * 3.0;
+    std::map<std::string, int> counts = q.sample(50, 42);
+    EXPECT_EQ(counts["0"], 50);
+}
+
+TEST(SampleTest, SameSeed_SameCounts) {
+    QTensorCpp q = QTensorCpp::uniform(3);
+    EXPECT_EQ(q.sample(500, 42), q.sample(500, 42));
+}
+
+TEST(SampleTest, NonPositiveShots_Throws) {
+    QTensorCpp q(make_ket0());
+    EXPECT_THROW(q.sample(0, 42), py::value_error);
+    EXPECT_THROW(q.sample(-10, 42), py::value_error);
+}
+
+TEST(SampleTest, ZeroProbability_Throws) {
+    SparseMatrix m(2, 1);
+    m.makeCompressed();
+    QTensorCpp q(m);
+    EXPECT_THROW(q.sample(10, 42), py::value_error);
+}
+
+TEST(SampleTest, NegativeProbability_Ignored) {
+    SparseMatrix m(2, 2);
+    m.insert(0, 0) = -1e-14;
+    m.insert(1, 1) = 2.0;
+    m.makeCompressed();
+    QTensorCpp q(m);
+    std::map<std::string, int> counts = q.sample(10, 42);
+    EXPECT_EQ(counts.size(), 1u);
+    EXPECT_EQ(counts["1"], 10);
+}
+
+TEST(SampleTest, Scalar_Throws) {
+    SparseMatrix m(1, 1);
+    m.insert(0, 0) = 1.0;
+    m.makeCompressed();
+    QTensorCpp q(m);
+    EXPECT_THROW(q.sample(10, 42), py::value_error);
+}
+
+TEST(SamplePythonTest, ReturnsDict) {
+    py::gil_scoped_acquire gil;
+    QTensorCpp q(make_ket0());
+    py::dict counts = q.sample_python(100, 42);
+    EXPECT_EQ(py::len(counts), 1);
+    EXPECT_EQ(counts["0"].cast<int>(), 100);
 }
 
 TEST(IsUnitaryTest, NonOperator_False) {
