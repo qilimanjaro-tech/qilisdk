@@ -205,5 +205,18 @@ These can be used as follows:
     from qilisdk.utils.classical_solvers import BruteForceSolver
     model = Model.random_ising(4)
     solver = BruteForceSolver()
-    results = solver.solve(model)
-    print(results)
+    result = solver.solve(model)
+    print(result)
+
+Each of them returns a :class:`~qilisdk.utils.classical_solvers.base_solver.ClassicalSolverResult`, which
+exposes the solution found:
+
+- ``result.objective`` - the value of the model's objective at the solution
+- ``result.constraints`` - the value of each of the model's constraints, keyed by label
+- ``result.results`` - the objective and every constraint together, keyed by label
+- ``result.sample`` - the value each of the model's variables takes in the solution
+
+.. code-block:: python
+
+    print(result.objective)
+    print(result.sample)

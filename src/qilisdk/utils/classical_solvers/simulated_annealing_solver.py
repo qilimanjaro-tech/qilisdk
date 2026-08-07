@@ -15,9 +15,8 @@
 from solvers_module import solve_with_simulated_annealing  # ty:ignore[unresolved-import]
 
 from qilisdk.core import Model
-from qilisdk.core.variables import BaseVariable, Number, RealNumber
 
-from .base_solver import ClassicalSolver
+from .base_solver import ClassicalSolver, ClassicalSolverResult
 
 
 class SimulatedAnnealingSolver(ClassicalSolver):
@@ -32,7 +31,7 @@ class SimulatedAnnealingSolver(ClassicalSolver):
             from qilisdk.utils.classical_solvers import SimulatedAnnealingSolver
 
             model = Model.knapsack(values=[5, 4], weights=[3, 2], max_weight=3)
-            results, sample = SimulatedAnnealingSolver(num_reads=100).solve(model.to_qubo())
+            result = SimulatedAnnealingSolver(num_reads=100).solve(model.to_qubo())
     """
 
     def __init__(
@@ -64,7 +63,7 @@ class SimulatedAnnealingSolver(ClassicalSolver):
         self.seed = seed
         self.num_threads = num_threads
 
-    def solve(self, model: Model) -> tuple[dict[str, Number], dict[BaseVariable, RealNumber]]:
+    def solve(self, model: Model) -> ClassicalSolverResult:
         """Solve the given QUBO by annealing it in C++.
 
         Args:
@@ -73,15 +72,13 @@ class SimulatedAnnealingSolver(ClassicalSolver):
                 a general ``Model`` must be converted with ``to_qubo()`` first.
 
         Returns:
-            tuple[dict[str, Number], dict[BaseVariable, RealNumber]]: a tuple of
-            (results dict mapping objective/constraint labels to their evaluated values,
-            sample dict mapping each binary variable to its value in the best solution found).
+            ClassicalSolverResult: the results of the optimization, including the objective value and best solution.
 
         Raises:
             ValueError: if the given model is not a QUBO, or if the annealing settings are invalid.
         """
         beta_min, beta_max = self.beta_range if self.beta_range is not None else (0.0, 0.0)
-        return solve_with_simulated_annealing(
+        results, sample = solve_with_simulated_annealing(
             qubo=model,
             num_reads=self.num_reads,
             num_sweeps=self.num_sweeps,
@@ -90,3 +87,4 @@ class SimulatedAnnealingSolver(ClassicalSolver):
             seed=self.seed,
             num_threads=self.num_threads,
         )
+        return ClassicalSolverResult(results, sample, model.objective.label)

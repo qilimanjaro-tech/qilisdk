@@ -24,7 +24,6 @@ from qilisdk.core.variables import (
     BinaryVariable,
     ComparisonOperation,
     Domain,
-    Number,
     Operation,
     RealNumber,
     SpinVariable,
@@ -32,7 +31,7 @@ from qilisdk.core.variables import (
     Variable,
 )
 
-from .base_solver import ClassicalSolver, _assert_real, _variable_bounds
+from .base_solver import ClassicalSolver, ClassicalSolverResult, _assert_real, _variable_bounds
 
 
 def _term_to_scip_expr(term: Term, var_exprs: dict[BaseVariable, Any]) -> Any:  # noqa: ANN401
@@ -107,7 +106,7 @@ class ScipSolver(ClassicalSolver):
             from qilisdk.utils.classical_solvers import ScipSolver
 
             model = Model.knapsack(values=[5, 4], weights=[3, 2], max_weight=3)
-            results, sample = ScipSolver().solve(model)
+            result = ScipSolver().solve(model)
     """
 
     def solve(  # noqa: PLR6301
@@ -115,7 +114,7 @@ class ScipSolver(ClassicalSolver):
         model: Model,
         verbose: bool = False,
         params: dict[str, Any] | None = None,
-    ) -> tuple[dict[str, Number], dict[BaseVariable, RealNumber]]:
+    ) -> ClassicalSolverResult:
         """Solve the given model to global optimality with SCIP.
 
         Args:
@@ -125,9 +124,7 @@ class ScipSolver(ClassicalSolver):
                 ``pyscipopt.Model.setParams`` (e.g. ``{"limits/time": 60}``).
 
         Returns:
-            tuple[dict[str, Number], dict[BaseVariable, RealNumber]]: a tuple of
-            (results dict mapping objective/constraint labels to their evaluated values,
-            sample dict mapping each variable to its value in the optimal solution).
+            ClassicalSolverResult: the results of the optimization, including the objective value and best solution.
 
         Raises:
             ValueError: if the model contains an unsupported variable, uses an unsupported
@@ -190,4 +187,4 @@ class ScipSolver(ClassicalSolver):
         # Extract the best solution and return it
         solution = scip_model.getBestSol()
         best_sample = {v: _decode_scip_value(v, solution[scip_var]) for v, scip_var in scip_vars.items()}
-        return model.evaluate(best_sample), best_sample
+        return ClassicalSolverResult.from_model(model, best_sample)
