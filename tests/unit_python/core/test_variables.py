@@ -1258,10 +1258,11 @@ def test_mathematical_map_nested_in_term():
     assert (DummyMap(b) + c).evaluate({b: 1, c: 1}) == 2
     assert (DummyMap(p) + c).evaluate({c: 1}) == 2
 
+    t = DummyMap(2 * b + p) + c
     with pytest.raises(
         ValueError, match=r"Can not evaluate term because the value of the variable .*? is not provided\."
     ):
-        (DummyMap(2 * b + p) + c).evaluate({b: 1})
+        t.evaluate({b: 1})
 
 
 def test_sin_map():
