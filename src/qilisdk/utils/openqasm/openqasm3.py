@@ -197,7 +197,6 @@ class OpenQasmParser:
 
     @staticmethod
     def _parse_return_val(return_str: str | complex | bool) -> str | int | float | complex | bool:
-
         # If we have "return:" at the start, remove it
         if isinstance(return_str, str):
             return_str = return_str.removeprefix("return:")
@@ -236,7 +235,6 @@ class OpenQasmParser:
     def _handle_standard_functions(
         func_name: str, args_evalled: list
     ) -> list | str | int | float | complex | bool | None:
-
         # With two int arguments
         if (
             len(args_evalled) >= 2  # noqa: PLR2004
@@ -452,7 +450,6 @@ class OpenQasmParser:
         raise ValueError(f"Undefined variable for index expression: {var_name}")  # pragma: no cover
 
     def _evaluate_expression(self, expr: object) -> list | str | int | float | complex | bool:
-
         # If it's a list, evaluate each element
         if isinstance(expr, list):
             return [self._evaluate_expression(element) for element in expr]
@@ -518,7 +515,6 @@ class OpenQasmParser:
         return flat_list
 
     def _evaluate_register(self, qb: object) -> list[int]:
-
         # We should always have a name for the register
         if hasattr(qb, "name") and qb.name is not None:
             # Get the reg info
@@ -588,7 +584,6 @@ class OpenQasmParser:
     def _to_qilisdk_gate(
         self, gate_name: str, qubits: list, arguments: list[float] = [], modifiers: list[str] = []
     ) -> list[Gate]:
-
         # Process the gate info
         gate_name = gate_name.lower()
         gates_to_return = []
@@ -638,7 +633,6 @@ class OpenQasmParser:
         return gates_to_return
 
     def _cast_to_type(self, var_name: str | Identifier) -> None:
-
         # If we have a variable name object, get the name string
         if isinstance(var_name, Identifier):
             var_name = var_name.name  # pragma: no cover
@@ -777,7 +771,6 @@ class OpenQasmParser:
                 modifiers.append(modifier_name)
 
     def _get_modifiers_for_statement(self, statement: QuantumGate) -> tuple[list[str], int]:
-
         modifiers = []
         num_controls = 0
 
@@ -799,7 +792,6 @@ class OpenQasmParser:
     def _handle_statement_quantum_gate(
         self, statement: QuantumGate, extra_qubits: list[int] = [], extra_modifiers: list[str] = []
     ) -> None:
-
         # Get info about the gates
         gate_name = statement.name.name
         qubits = extra_qubits.copy()
@@ -838,7 +830,6 @@ class OpenQasmParser:
     def _handle_statement_branching_statement(
         self, statement: BranchingStatement, extra_modifiers: list[str] = [], extra_qubits: list[int] = []
     ) -> complex | bool | int | float | str | None:
-
         # Check the condition
         condition_value = self._evaluate_expression(statement.condition)
 
@@ -863,7 +854,6 @@ class OpenQasmParser:
     def _handle_statement_switch_statement(
         self, statement: SwitchStatement, extra_modifiers: list[str] = [], extra_qubits: list[int] = []
     ) -> complex | bool | int | float | str | None:
-
         # Get the value of the target expression
         target_val = self._evaluate_expression(statement.target)
         found_case = False
@@ -895,7 +885,6 @@ class OpenQasmParser:
     def _handle_statement_for_in_loop(
         self, statement: ForInLoop, extra_modifiers: list[str] = [], extra_qubits: list[int] = []
     ) -> complex | bool | int | float | str | None:
-
         # The new variable to declare for the loop variable
         loop_var_name = statement.identifier.name
         loop_var_type = statement.type
@@ -993,7 +982,6 @@ class OpenQasmParser:
     def _process_statement(
         self, statement: object, extra_modifiers: list[str] = [], extra_qubits: list[int] = []
     ) -> str | int | float | complex | bool | None:
-
         # Initializing a qubit
         if isinstance(statement, QubitDeclaration):
             self._handle_statement_qubit_declaration(statement)

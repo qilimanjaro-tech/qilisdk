@@ -190,3 +190,73 @@ class ScheduleStyle(Style):
 
     # Misc
     tight_layout: bool = Field(default=True, description="Whether to use matplotlib's tight_layout for figure spacing.")
+
+
+class DatasetStyle(Style):
+    """
+    Customization options for matplotlib dataset plots, with theme support.
+
+    Controls only the *appearance* of a dataset plot (theme, fonts, colours,
+    grid, markers, ...). The *kind* of plot (``"1d"``, ``"2d"`` or ``"3d"``) is
+    selected separately via the ``style`` argument of :meth:`Dataset.draw`.
+    """
+
+    # Figure and axes
+    figsize: Optional[tuple] = Field(default=(8, 5), description="Figure size in inches (width, height).")
+    grid: bool = Field(default=True, description="Whether to show grid lines on the plot.")
+    grid_style: dict[str, Any] = Field(
+        default_factory=lambda: {"linestyle": "--", "color": "#e0e0e0", "alpha": 0.7},
+        description="Style dictionary for grid lines (linestyle, color, alpha, etc.).",
+    )
+
+    # Title and labels
+    title_fontsize: int = Field(default=16, description="Font size for the plot title.")
+    label_fontsize: int = Field(default=14, description="Font size for axis labels.")
+    xlabel: Optional[str] = Field(
+        default=None, description="Override for the x-axis label (None uses a sensible default)."
+    )
+    ylabel: Optional[str] = Field(
+        default=None, description="Override for the y-axis label (None uses a sensible default)."
+    )
+    zlabel: Optional[str] = Field(
+        default=None, description="Override for the z-axis label (None uses a sensible default)."
+    )
+
+    # Legend
+    legend_loc: str = Field(
+        default="best", description="Location of the legend (matplotlib string, e.g. 'best', 'upper right')."
+    )
+    legend_fontsize: int = Field(default=12, description="Font size for legend text.")
+    legend_frame: bool = Field(default=True, description="Whether to draw a frame around the legend.")
+
+    # Trajectory rendering
+    trajectory_style: Literal["scatter", "line"] = Field(
+        default="scatter",
+        description="How to render 2-D/3-D phase portraits: 'scatter' (points coloured by time) or 'line'.",
+    )
+    line_style: dict[str, Any] = Field(
+        default_factory=lambda: {"linestyle": "-", "linewidth": 1.5},
+        description="Line style used for 1-D series and 'line' trajectories.",
+    )
+    marker: Optional[str] = Field(
+        default=None, description="Matplotlib marker for 1-D series data points (e.g. 'o', None for no marker)."
+    )
+    marker_size: float = Field(default=6, description="Marker size for 1-D series markers.")
+    point_size: float = Field(default=6, description="Point size (area) for scatter trajectories.")
+    color_by_time: bool = Field(
+        default=True, description="Colour 2-D/3-D scatter trajectories by time index using a theme gradient."
+    )
+    colorbar: bool = Field(default=True, description="Show a colour bar for time when colouring trajectories by time.")
+
+    # Delay embedding
+    delay: int = Field(
+        default=1,
+        description="Delay (in samples) used to embed lower-dimensional series into a 2-D/3-D phase portrait.",
+    )
+
+    # Ticks
+    xtick_fontsize: int = Field(default=12, description="Font size for x-axis tick labels.")
+    ytick_fontsize: int = Field(default=12, description="Font size for y-axis tick labels.")
+
+    # Misc
+    tight_layout: bool = Field(default=True, description="Whether to use matplotlib's tight_layout for figure spacing.")
