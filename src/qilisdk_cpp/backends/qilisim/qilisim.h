@@ -13,17 +13,35 @@
 // limitations under the License.
 #pragma once
 
+#include <random>
+
 #include "../../libs/pybind.h"
+#include "config/qilisim_config.h"
 
 // GCOV_EXCL_BR_START
 
 #pragma GCC visibility push(default)
 
 class QiliSimCpp {
+   private:
+
+    // Persistent random stream, seeded once from the user's root seed
+    std::mt19937_64 seed_rng;
+    bool seed_rng_initialised = false;
+    int root_seed = 0;
+    void set_seed_from_config(QiliSimConfig& config);
+
    public:
     py::object execute_digital_propagation(const py::object& functional, const py::object& readout, const py::object& noise_model, const py::object& initial_state, const py::dict& solver_params);
     py::object execute_analog_evolution(const py::object& functional, const py::object& readout, const py::object& noise_model, const py::dict& solver_params);
     py::object execute_quantum_reservoir(const py::object& functional, const py::object& readout, const py::object& noise_model, const py::dict& solver_params);
+
+    // Restart the random stream with a given seed
+    void reset_seed(int seed) {
+        root_seed = seed;
+        seed_rng.seed(static_cast<uint64_t>(static_cast<uint32_t>(seed)));
+        seed_rng_initialised = true;
+    }
 };
 
 #pragma GCC visibility pop

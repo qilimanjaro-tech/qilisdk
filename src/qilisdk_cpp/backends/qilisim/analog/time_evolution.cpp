@@ -109,7 +109,7 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
     // If monte carlo, sample from rho_0 to get initial states
     bool use_monte_carlo = config.get_monte_carlo() && !input_is_trajectories;
     if (use_monte_carlo) {
-        rho_0 = sample_from_density_matrix(rho_0, config.get_num_monte_carlo_trajectories(), config.get_seed());
+        rho_0 = sample_from_density_matrix(rho_0, config.get_num_monte_carlo_trajectories(), config.next_seed());
         is_unitary_on_statevector = true;
     }
 
@@ -280,7 +280,7 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
     // If monte carlo, sample from rho_0 to get initial states (skipped when the
     // input already is a batch of trajectories). Then rho is state vector columns.
     if (use_monte_carlo) {
-        rho_0 = sample_from_density_matrix(rho_0, config.get_num_monte_carlo_trajectories(), config.get_seed());
+        rho_0 = sample_from_density_matrix(rho_0, config.get_num_monte_carlo_trajectories(), config.next_seed());
         is_unitary_on_statevector = true;
     }
 
