@@ -886,6 +886,41 @@ TEST_F(SamplingMonteCarloTest, MidCircuitCollapseKeepsTheTrajectoryBatch) {
     EXPECT_NEAR(std::real(state.trace()), 1.0, kTol);
 }
 
+TEST_F(SamplingMonteCarloTest, MatrixFreeMidCircuitCollapseKeepsTheTrajectoryBatch) {
+    int n = 1;
+    std::vector<Gate> gates = {makeH(0), makeM(0), makeX(0)};
+    QiliSimConfig cfgMC = cfg;
+    cfgMC.set_monte_carlo(true);
+    cfgMC.set_num_monte_carlo_trajectories(256);
+    cfgMC.set_measurement_collapse(true);
+    NoiseModelCpp nm = dampingKrausNoise(0.1);
+    DenseMatrix state;
+    std::vector<py::object> intermediate_results;
+    sampling_matrix_free(gates, n, zeroStateSparse(n), nm, state, intermediate_results, cfgMC, readout);
+    EXPECT_EQ(state.rows(), 2);
+    EXPECT_EQ(state.cols(), 2);
+    EXPECT_NEAR(std::real(state.trace()), 1.0, kTol);
+}
+
+TEST_F(SamplingMonteCarloTest, MidCircuitCollapseWithoutMonteCarloGivesADensityMatrix) {
+    // Without trajectories the collapse goes through the non-selective density-matrix version, which
+    // keeps both measurement outcomes as a mixture
+    int n = 1;
+    std::vector<Gate> gates = {makeH(0), makeM(0), makeX(0)};
+    QiliSimConfig cfgCollapse = cfg;
+    cfgCollapse.set_measurement_collapse(true);
+    DenseMatrix state;
+    std::vector<py::object> intermediate_results;
+    sampling(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfgCollapse, readout);
+    ASSERT_EQ(state.rows(), 2);
+    ASSERT_EQ(state.cols(), 2);
+    EXPECT_NEAR(std::real(state.trace()), 1.0, kTol);
+    // X after the collapse swaps the two halves of an even mixture, so it stays even and diagonal
+    EXPECT_NEAR(std::real(state(0, 0)), 0.5, kTol);
+    EXPECT_NEAR(std::real(state(1, 1)), 0.5, kTol);
+    EXPECT_NEAR(std::abs(state(0, 1)), 0.0, kTol);
+}
+
 TEST_F(SamplingMatrixFreeTest, BadGate_ThrowsException) {
     // MatrixFreeOperator rejects multi-target gates unless they are SWAP, M, or a
     // dense 2^k x 2^k block (gate fusion). A 2-target gate carrying a 2x2 matrix is

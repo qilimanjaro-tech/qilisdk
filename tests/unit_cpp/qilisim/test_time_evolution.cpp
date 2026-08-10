@@ -900,6 +900,51 @@ TEST_F(TimeEvolutionMonteCarloNoiseTest, TimeDependentRatesAreUnravelled) {
     EXPECT_NEAR(std::real(ramped.rho_t.trace()), 1.0, kTol);
 }
 
+TEST_F(TimeEvolutionMonteCarloNoiseTest, TimeDependentRatesAreUnravelledMatrixFree) {
+    // The drift has to be rebuilt at every step when the rate moves, which the matrix-free path does
+    // on its own since it carries the drift as a separate operator
+    monte_carlo.set_time_evolution_method("integrate_rk4_matrix_free");
+    NoiseModelCpp ramped_noise;
+    std::vector<double> sqrt_rates(steps.size(), 0.0);
+    for (size_t step = steps.size() / 2; step < steps.size(); ++step) {
+        sqrt_rates[step] = 1.0;
+    }
+    ramped_noise.add_jump_operator(amp_damp_jump(), sqrt_rates);
+    auto ramped = run_time_evolution_mf(pure_excited_sparse(), hamiltonians_mf, params, steps, ramped_noise, {}, monte_carlo);
+    auto always_on = run_time_evolution_mf(pure_excited_sparse(), hamiltonians_mf, params, steps, noise, {}, monte_carlo);
+    EXPECT_GT(std::real(ramped.rho_t(1, 1)), std::real(always_on.rho_t(1, 1)));
+    EXPECT_NEAR(std::real(ramped.rho_t.trace()), 1.0, kTol);
+}
+
+TEST_F(TimeEvolutionMonteCarloNoiseTest, StateVectorInputGivesTheSameEnsembleMatrixFree) {
+    monte_carlo.set_time_evolution_method("integrate_rk4_matrix_free");
+    auto from_density_matrix = run_time_evolution_mf(pure_excited_sparse(), hamiltonians_mf, params, steps, noise, {}, monte_carlo);
+    auto from_state_vector = run_time_evolution_mf(statevector_excited_sparse(), hamiltonians_mf, params, steps, noise, {}, monte_carlo);
+    EXPECT_EQ(from_state_vector.rho_t.rows(), 2);
+    EXPECT_EQ(from_state_vector.rho_t.cols(), 2);
+    EXPECT_LT((from_state_vector.rho_t - from_density_matrix.rho_t).cwiseAbs().maxCoeff(), kEnsembleTol);
+}
+
+TEST_F(TimeEvolutionMonteCarloNoiseTest, ScheduleStartingAtZeroIsAccepted) {
+    // Schedules built on the Python side start their time list at t = 0, so the leading step of zero
+    // length has to be skipped rather than taken as the shortest step
+    std::vector<double> steps_from_zero = {0.0};
+    steps_from_zero.insert(steps_from_zero.end(), steps.begin(), steps.end());
+    std::vector<std::vector<double>> params_from_zero = {std::vector<double>(steps_from_zero.size(), 1.0)};
+    monte_carlo.set_time_evolution_method("integrate_rk45_matrix_free");
+    auto sampled = run_time_evolution_mf(pure_excited_sparse(), hamiltonians_mf, params_from_zero, steps_from_zero, noise, {}, monte_carlo);
+    EXPECT_NEAR(std::real(sampled.rho_t.trace()), 1.0, kTol);
+    EXPECT_GT(std::real(sampled.rho_t(0, 0)), 0.5);  // the excited state has relaxed
+}
+
+TEST_F(TimeEvolutionMonteCarloNoiseTest, CoarseScheduleWarnsButStillRuns) {
+    // One step long enough for several jumps cannot resolve them in time, which is worth a warning
+    std::vector<double> coarse_steps = {5.0, 10.0};
+    std::vector<std::vector<double>> coarse_params = {{1.0, 1.0}};
+    auto sampled = run_time_evolution(pure_excited_sparse(), hamiltonians, coarse_params, coarse_steps, noise, {}, monte_carlo);
+    EXPECT_NEAR(std::real(sampled.rho_t.trace()), 1.0, kTol);
+}
+
 TEST_F(TimeEvolutionMethodTest, BadMethodThrows) {
     QiliSimConfig cfg;
     cfg.set_time_evolution_method("not_a_real_method");

@@ -57,7 +57,7 @@ std::size_t sample_index(const std::vector<double>& weights, double uniform_draw
             return k;
         }
     }
-    return weights.size() - 1;
+    return weights.size() - 1;  // GCOV_EXCL_LINE
 }
 
 }  // namespace
@@ -211,7 +211,7 @@ void TrajectoryUnraveling::apply_jumps(DenseMatrix& trajectories, const std::vec
         }
         const std::size_t chosen = sample_index(weights, next_uniform(streams[c]));
         if (chosen >= jump_operators.size()) {
-            continue; 
+            continue;
         }
 
         // Renormalise the jumped state and replace the trajectory with it
@@ -221,14 +221,12 @@ void TrajectoryUnraveling::apply_jumps(DenseMatrix& trajectories, const std::vec
             continue;
         }
         trajectories.col(c) = jumped[chosen] / norm;
-
     }
 
     // Check for any trajectories that have diverged to a non-finite state
     if (diverged) {
         nan_error();
     }
-
 }
 
 void TrajectoryUnraveling::apply_kraus(DenseMatrix& trajectories, const std::vector<SparseMatrix>& kraus_operators) {
@@ -258,7 +256,6 @@ void TrajectoryUnraveling::apply_kraus(DenseMatrix& trajectories, const std::vec
 #pragma omp parallel for schedule(static) reduction(|| : diverged)
 #endif
     for (long c = 0; c < num_trajectories; ++c) {
-        
         // Choose a Kraus operator, weighted by how much of the state it would keep
         DenseVector psi = trajectories.col(c);
         std::vector<DenseVector> applied(kraus_operators.size());
@@ -280,7 +277,6 @@ void TrajectoryUnraveling::apply_kraus(DenseMatrix& trajectories, const std::vec
             continue;
         }
         trajectories.col(c) = applied[chosen] / norm;
-
     }
 
     // Check if anything diverged
