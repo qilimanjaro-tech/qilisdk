@@ -255,8 +255,8 @@ class Gate(Parameterizable, ABC):
 
     def __hash__(self) -> int:
         atol = get_settings().atol
-        _PARAMETER_HASH_DECIMALS = int(-np.log10(atol))
-        rounded_values = tuple(round(value, _PARAMETER_HASH_DECIMALS) for value in self.get_parameter_values())
+        ndecimals = int(-np.log10(atol))
+        rounded_values = tuple(round(value, ndecimals) for value in self.get_parameter_values())
         return qili_hash((self.name, self.qubits, rounded_values))
 
 
