@@ -1052,3 +1052,85 @@ def test_gate_not_equals_circuit():
     gate = RX(qubit, theta=np.pi / 2)
     circuit = Circuit(1)
     assert gate != circuit
+
+
+# ------------------------------------------------------------------------------
+# Hashing
+# ------------------------------------------------------------------------------
+def test_hash_gate_without_matrix():
+    """Gates that have no matrix (e.g. M) must still be hashable."""
+    with pytest.raises(GateHasNoMatrixError):
+        _ = M(0).matrix
+    assert isinstance(hash(M(0)), int)
+
+
+def test_hash_circuit_containing_measurement():
+    """Regression: hashing a circuit with a measurement used to raise GateHasNoMatrixError."""
+    circuit = Circuit(1)
+    circuit.add([H(0), M(0)])
+    assert isinstance(hash(circuit), int)
+
+
+@pytest.mark.parametrize(
+    ("gate1", "gate2"),
+    [
+        (RX(0, theta=np.pi / 2), RX(0, theta=np.pi / 2)),
+        (H(0), H(0)),
+        (M(0), M(0)),
+    ],
+)
+def test_equal_gates_hash_equal(gate1: Gate, gate2: Gate):
+    assert gate1 == gate2
+    assert hash(gate1) == hash(gate2)
+
+
+@pytest.mark.parametrize(
+    ("gate1", "gate2"),
+    [
+        (RX(0, theta=0.1), RX(0, theta=0.2)),  # same gate and qubit, different parameter value
+        (RX(0, theta=0.1), RX(1, theta=0.1)),  # same gate and parameter value, different qubit
+        (RX(0, theta=0.1), RY(0, theta=0.1)),  # same qubit and parameter value, different gate
+        (H(0), M(0)),  # different gates, neither parameterized
+    ],
+)
+def test_different_gates_hash_differently(gate1: Gate, gate2: Gate):
+    assert gate1 != gate2
+    assert hash(gate1) != hash(gate2)
+
+
+def test_hash_distinguishes_parameter_values_not_names():
+    """Two U2 gates whose parameter values are swapped must not collide."""
+    gate1 = U2(0, phi=0.1, gamma=0.2)
+    gate2 = U2(0, phi=0.2, gamma=0.1)
+    assert gate1 != gate2
+    assert hash(gate1) != hash(gate2)
+
+
+@pytest.mark.parametrize(
+    ("atol", "expected_equal"),
+    [
+        (1e-2, True),  # difference of 1e-3 is within tolerance
+        (1e-10, False),  # difference of 1e-3 is far outside tolerance
+    ],
+)
+def test_atol_affects_equality_and_hash(monkeypatch, atol: float, expected_equal: bool):
+    """``atol`` drives both ``__eq__`` and ``__hash__``, so the two stay consistent."""
+    monkeypatch.setattr(get_settings(), "atol", atol)
+    gate1 = RX(0, theta=0.0)
+    gate2 = RX(0, theta=1e-3)
+    assert (gate1 == gate2) is expected_equal
+    assert (hash(gate1) == hash(gate2)) is expected_equal
+
+
+def test_loosening_atol_merges_previously_distinct_hashes(monkeypatch):
+    """Widening the tolerance makes nearby gates compare — and therefore hash — as one."""
+    gate1 = RX(0, theta=0.0)
+    gate2 = RX(0, theta=1e-6)
+
+    monkeypatch.setattr(get_settings(), "atol", 1e-10)
+    assert gate1 != gate2
+    assert hash(gate1) != hash(gate2)
+
+    monkeypatch.setattr(get_settings(), "atol", 1e-4)
+    assert gate1 == gate2
+    assert hash(gate1) == hash(gate2)
