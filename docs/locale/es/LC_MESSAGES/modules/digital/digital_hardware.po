@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-05 15:18+0200\n"
+"POT-Creation-Date: 2026-08-10 12:20+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -30,8 +30,8 @@ msgid ""
 "options:"
 msgstr ""
 ":class:`~qilisdk.digital.ansatz.HardwareEfficientAnsatz` es un ansatz "
-"eficiente en hardware adaptado a las topologías de dispositivos cuánticos. "
-"Opciones de configuración:"
+"eficiente en hardware adaptado a las topologías de dispositivos "
+"cuánticos. Opciones de configuración:"
 
 #: ../../modules/digital/digital_hardware.rst:7
 msgid "**layers**: Number of repeating layers of gates."
@@ -93,11 +93,20 @@ msgstr ""
 msgid "``interposed``: Interleaves single and two-qubit gates."
 msgstr "``interposed``: Intercala puertas de un qubit y de dos qubits."
 
-#: ../../modules/digital/digital_hardware.rst:22
+#: ../../modules/digital/digital_hardware.rst:20
+msgid ""
+"**final_rotation_layer**: If ``True`` (the default), a trailing single-"
+"qubit block is appended after the last entangling block, so the circuit "
+"has ``(layers + 1)`` parameterized blocks and ends on tunable rotations. "
+"If ``False``, the circuit has ``layers`` parameterized blocks and ends on"
+" an entangling block."
+msgstr ""
+
+#: ../../modules/digital/digital_hardware.rst:25
 msgid "**Example**"
 msgstr "**Ejemplo**"
 
-#: ../../modules/digital/digital_hardware.rst:41
+#: ../../modules/digital/digital_hardware.rst:44
 msgid ""
 "This ansatz can then be used as a circuit. For example, we can execute "
 "this ansatz using QuTiP backend (need to be installed separately):"
@@ -105,3 +114,4 @@ msgstr ""
 "Este ansatz puede usarse luego como un circuito. Por ejemplo, podemos "
 "ejecutar este ansatz usando el backend QuTiP (que debe instalarse por "
 "separado):"
+
