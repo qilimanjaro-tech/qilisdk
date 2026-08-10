@@ -171,7 +171,7 @@ class QTensorCpp {
     std::vector<double> probabilities() const;
     py::list probabilities_python() const;
     Complex expectation_value(const QTensorCpp& other, int nshots = 0) const;
-    Complex expectation_value(const MatrixFreeHamiltonian& other) const;
+    Complex expectation_value(const MatrixFreeHamiltonian& other, int nshots = 0) const;
     Complex expectation_value_python(const py::object& other, int nshots = 0) const;
     QTensorCpp partial_trace_python(const py::object& keep) const;
     QTensorCpp partial_trace(const std::set<int>& keep) const;
