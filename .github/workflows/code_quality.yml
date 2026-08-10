@@ -16,7 +16,7 @@ jobs:
     name: Code Quality for Python ${{ matrix.python-version }}
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
 
     env:
       HOME_REPO: /home/repo
@@ -42,9 +42,19 @@ jobs:
             **/uv.lock
           python-version: ${{ matrix.python-version }}
 
+      # Linting needs the modules importable, but it doesn't care past that
+      - name: Set up ccache
+        uses: hendrikmuhs/ccache-action@d62db5f07c26379fc4b4e0916f098a92573c3b03  # v1.2.23
+        with:
+          key: code-quality-${{ matrix.python-version }}
+          max-size: 500M
+
       - name: Install the project
         run: |
-          uv sync --frozen --group dev --extra all-cu13
+          uv sync --frozen --group dev --extra all-cu13 \
+            -Ccmake.build-type=Debug \
+            -Ccmake.define.CMAKE_CXX_FLAGS_DEBUG=-O0 \
+            -Ccmake.define.CMAKE_CXX_COMPILER_LAUNCHER=ccache
           echo "VIRTUAL_ENV=$PWD/.venv" >> "$GITHUB_ENV"
           echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
 
@@ -54,7 +64,7 @@ jobs:
       - name: Format
         run: ruff format --diff --output-format=github .
 
-      - name: Mypy
+      - name: Type Checking
         run: ty check --output-format=github
 
       - name: Cpp Linter
