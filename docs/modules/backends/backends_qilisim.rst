@@ -216,7 +216,7 @@ optional Monte Carlo trajectory sampling for open-system simulations.
 
 - ``num_threads`` controls the number of threads used for parallelization, defaults to using all available cores.
 - ``seed`` controls the random number generator seed, defaults to a random seed.
-- ``monte_carlo=MonteCarloConfig(trajectories=N)`` enabled Monte Carlo sampling with ``N`` trajectories, if omitted, Monte Carlo is disabled.
+- ``monte_carlo=MonteCarloConfig(trajectories=N)`` enables Monte Carlo sampling with ``N`` trajectories, if omitted, Monte Carlo is disabled.
 - ``measurement_collapse`` controls whether measurements collapse the statevector in place (relevant for mid-circuit measurement and reservoirs) - defaults to ``False``.
 - ``normalize_state`` controls whether the state should be renormalized - defaults to ``True``.
 - ``gpu`` controls whether to use GPU acceleration if available - defaults to ``False``.
@@ -246,7 +246,7 @@ noise channels:
 .. code-block:: python
 
     from qilisdk.backends import QiliSim
-    from qilisdk.noise import NoiseModel, Depolarizing 
+    from qilisdk.noise import NoiseModel, Depolarizing
 
     nm = NoiseModel()
     nm.add(Depolarizing(probability=1e-3))

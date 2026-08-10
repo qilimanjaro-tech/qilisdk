@@ -98,6 +98,20 @@ NoiseModelCpp emptyNoise() {
     return NoiseModelCpp();
 }
 
+NoiseModelCpp dampingKrausNoise(double p) {
+    // The amplitude-damping channel with jump probability p, as a global Kraus channel
+    DenseMatrix K0 = DenseMatrix::Zero(2, 2);
+    K0(0, 0) = cx(1, 0);
+    K0(1, 1) = cx(std::sqrt(1.0 - p), 0);
+    DenseMatrix K1 = DenseMatrix::Zero(2, 2);
+    K1(0, 1) = cx(std::sqrt(p), 0);
+    SparseMatrix K0_sparse = K0.sparseView();
+    SparseMatrix K1_sparse = K1.sparseView();
+    NoiseModelCpp nm;
+    nm.add_kraus_operators_global({K0_sparse, K1_sparse});
+    return nm;
+}
+
 NoiseModelCpp symmetricReadoutNoise(int n_qubits, double p) {
     NoiseModelCpp nm;
     for (int q = 0; q < n_qubits; ++q) {
@@ -775,6 +789,101 @@ TEST_F(SamplingMonteCarloTest, MatrixFreeMonteCarloEnabled_ProducesNonDeterminis
     std::map<std::string, int> counts = construct_samples(state, n, shots, noNoise, cfgMC, measure);
     EXPECT_TRUE(counts.count("0") > 0);
     EXPECT_TRUE(counts.count("1") > 0);
+}
+
+// With Monte Carlo enabled a noise channel is unravelled over the trajectories: each of them picks
+// one Kraus operator instead of the channel being applied to a density matrix. The ensemble average
+// has to come back to the deterministic result.
+TEST_F(SamplingMonteCarloTest, KrausNoiseIsUnravelledOverTrajectories) {
+    int n = 1;
+    std::vector<Gate> gates = {makeH(0)};
+    NoiseModelCpp nm = dampingKrausNoise(0.3);
+    QiliSimConfig cfgMC = cfg;
+    cfgMC.set_monte_carlo(true);
+    cfgMC.set_num_monte_carlo_trajectories(4000);
+
+    DenseMatrix deterministic_state;
+    DenseMatrix sampled_state;
+    std::vector<py::object> intermediate_results;
+    sampling(gates, n, zeroStateSparse(n), nm, deterministic_state, intermediate_results, cfg, readout);
+    sampling(gates, n, zeroStateSparse(n), nm, sampled_state, intermediate_results, cfgMC, readout);
+
+    ASSERT_EQ(sampled_state.rows(), 2);
+    ASSERT_EQ(sampled_state.cols(), 2);
+    EXPECT_NEAR(std::real(sampled_state.trace()), 1.0, kTol);
+    EXPECT_LT((sampled_state - deterministic_state).cwiseAbs().maxCoeff(), kLoose);
+}
+
+TEST_F(SamplingMonteCarloTest, MatrixFreeKrausNoiseIsUnravelledOverTrajectories) {
+    int n = 1;
+    std::vector<Gate> gates = {makeH(0)};
+    NoiseModelCpp nm = dampingKrausNoise(0.3);
+    QiliSimConfig cfgMC = cfg;
+    cfgMC.set_monte_carlo(true);
+    cfgMC.set_num_monte_carlo_trajectories(4000);
+
+    DenseMatrix deterministic_state;
+    DenseMatrix sampled_state;
+    std::vector<py::object> intermediate_results;
+    sampling_matrix_free(gates, n, zeroStateSparse(n), nm, deterministic_state, intermediate_results, cfg, readout);
+    sampling_matrix_free(gates, n, zeroStateSparse(n), nm, sampled_state, intermediate_results, cfgMC, readout);
+
+    ASSERT_EQ(sampled_state.cols(), 2);
+    EXPECT_LT((sampled_state - deterministic_state).cwiseAbs().maxCoeff(), kLoose);
+}
+
+TEST_F(SamplingMonteCarloTest, PureStateWithoutNoiseStaysASingleStateVector) {
+    // Trajectories of a noiseless pure state would all be identical, so Monte Carlo is skipped
+    int n = 1;
+    std::vector<Gate> gates = {makeH(0)};
+    QiliSimConfig cfgMC = cfg;
+    cfgMC.set_monte_carlo(true);
+    DenseMatrix state;
+    std::vector<py::object> intermediate_results;
+    sampling(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfgMC, readout);
+    EXPECT_EQ(state.cols(), 1);
+}
+
+TEST_F(SamplingMonteCarloTest, MidCircuitReadoutMeasuresTheEnsemble) {
+    // A mid-circuit readout of a trajectory batch has to sample the ensemble average, not try to
+    // read the batch as if it were a state
+    int n = 1;
+    std::vector<Gate> gates = {makeH(0), makeM(0), makeX(0), makeM(0)};
+    QiliSimConfig cfgMC = cfg;
+    cfgMC.set_monte_carlo(true);
+    cfgMC.set_num_monte_carlo_trajectories(512);
+    NoiseModelCpp nm = dampingKrausNoise(0.2);
+    py::list sampling_readout;
+    sampling_readout.append(SamplingReadout("nshots"_a = 1000));
+    DenseMatrix state;
+    std::vector<py::object> intermediate_results;
+    sampling(gates, n, zeroStateSparse(n), nm, state, intermediate_results, cfgMC, sampling_readout);
+
+    ASSERT_EQ(intermediate_results.size(), 1u);
+    py::dict counts = intermediate_results[0].attr("get_samples")().cast<py::dict>();
+    int total = 0;
+    for (auto item : counts) {
+        total += item.second.cast<int>();
+    }
+    EXPECT_EQ(total, 1000);
+}
+
+TEST_F(SamplingMonteCarloTest, MidCircuitCollapseKeepsTheTrajectoryBatch) {
+    // Collapsing a measurement is unravelled as well: every trajectory samples one outcome, so the
+    // batch stays a batch of state vectors of the expected width
+    int n = 1;
+    std::vector<Gate> gates = {makeH(0), makeM(0), makeX(0)};
+    QiliSimConfig cfgMC = cfg;
+    cfgMC.set_monte_carlo(true);
+    cfgMC.set_num_monte_carlo_trajectories(256);
+    cfgMC.set_measurement_collapse(true);
+    NoiseModelCpp nm = dampingKrausNoise(0.1);
+    DenseMatrix state;
+    std::vector<py::object> intermediate_results;
+    sampling(gates, n, zeroStateSparse(n), nm, state, intermediate_results, cfgMC, readout);
+    EXPECT_EQ(state.rows(), 2);
+    EXPECT_EQ(state.cols(), 2);
+    EXPECT_NEAR(std::real(state.trace()), 1.0, kTol);
 }
 
 TEST_F(SamplingMatrixFreeTest, BadGate_ThrowsException) {

@@ -62,7 +62,11 @@ class BaseSimulatorConfig(BaseModel, ABC):
 
 
 class MonteCarloConfig(BaseSimulatorConfig):
-    """Configuration for Monte Carlo trajectory sampling in open-system simulations.
+    """
+    Configuration for Monte Carlo trajectory sampling in open-system simulations.
+
+    A mixed state is represented as an ensemble of state vectors instead of a density matrix, which
+    keeps the memory cost at ``2**nqubits`` amplitudes per trajectory.
 
     Args:
         trajectories (int): Number of Monte Carlo trajectories to simulate
