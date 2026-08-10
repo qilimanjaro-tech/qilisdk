@@ -16,6 +16,7 @@
 
 #include "../../../libs/gpu.h"
 #include "../../../libs/pybind.h"
+#include "../utils/matrix_utils.h"
 #include "iterations.h"
 #include "lindblad.h"
 
@@ -100,9 +101,7 @@ DenseMatrix iter_rk4_matrix(const DenseMatrix& rho_0, double dt, const SparseMat
     // Normalize the density matrix
     if (normalize) {
         if (is_unitary_on_statevector) {
-            const double norm = rho.norm();
-            check_valid_divisor(norm);
-            rho /= norm;
+            normalize_state(rho, true, rho_cols > 1);
         } else {
             Complex tr = 0;
             for (int i = 0; i < dim; ++i) {
@@ -171,7 +170,7 @@ MatrixFreeHamiltonian construct_current_hamiltonian(double t, const std::vector<
     return currentH;
 }
 
-void iter_rk4(DenseMatrix& rho_t, double t, double dt, const std::vector<double>& step_list, const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<SparseMatrix>& jump_operators, bool is_unitary_on_statevector, bool normalize) {
+void iter_rk4(DenseMatrix& rho_t, double t, double dt, const std::vector<double>& step_list, const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<SparseMatrix>& jump_operators, bool is_unitary_on_statevector, bool normalize, const SparseMatrix* jump_drift) {
     /*
     4th-order Runge–Kutta integration of the Lindblad master equation using matrix-free methods.
 
@@ -184,6 +183,8 @@ void iter_rk4(DenseMatrix& rho_t, double t, double dt, const std::vector<double>
         parameters_list (std::vector<std::vector<double>>): The list of parameters for each Hamiltonian.
         jump_operators (std::vector<SparseMatrix>): The list of jump operators.
         is_unitary_on_statevector (bool): If the evolution should be treated as a unitary acting on a state vector.
+        normalize (bool): Whether to renormalize the state after the step.
+        jump_drift (const SparseMatrix*): Optional Monte Carlo drift, see lindblad_rhs.
 
     Raises:
         py::value_error: If rho_t is not square (and evolution is not unitary on state vector).
@@ -219,7 +220,7 @@ void iter_rk4(DenseMatrix& rho_t, double t, double dt, const std::vector<double>
     double t_step = t;
 
     // k1 at time t
-    lindblad_rhs(k, rho_t, construct_current_hamiltonian(t_step, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
+    lindblad_rhs(k, rho_t, construct_current_hamiltonian(t_step, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector, jump_drift);
     const long rho_size = rho_t.size();
     {
         Complex* rt_ptr = rho_t.data();
@@ -239,7 +240,7 @@ void iter_rk4(DenseMatrix& rho_t, double t, double dt, const std::vector<double>
     }
 
     // k2 at time t + dt/2
-    lindblad_rhs(k, rho_tmp, construct_current_hamiltonian(t_step + 0.5 * dt, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
+    lindblad_rhs(k, rho_tmp, construct_current_hamiltonian(t_step + 0.5 * dt, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector, jump_drift);
     {
         Complex* rt_ptr = rho_t.data();
         const Complex* ro_ptr = rho_old.data();
@@ -256,7 +257,7 @@ void iter_rk4(DenseMatrix& rho_t, double t, double dt, const std::vector<double>
     }
 
     // k3 at time t + dt/2
-    lindblad_rhs(k, rho_tmp, construct_current_hamiltonian(t_step + 0.5 * dt, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
+    lindblad_rhs(k, rho_tmp, construct_current_hamiltonian(t_step + 0.5 * dt, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector, jump_drift);
     {
         Complex* rt_ptr = rho_t.data();
         const Complex* ro_ptr = rho_old.data();
@@ -274,7 +275,7 @@ void iter_rk4(DenseMatrix& rho_t, double t, double dt, const std::vector<double>
     }
 
     // k4 at time t + dt
-    lindblad_rhs(k, rho_tmp, construct_current_hamiltonian(t_step + dt, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
+    lindblad_rhs(k, rho_tmp, construct_current_hamiltonian(t_step + dt, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector, jump_drift);
     {
         Complex* rt_ptr = rho_t.data();
         const Complex* k_ptr = k.data();
@@ -291,21 +292,7 @@ void iter_rk4(DenseMatrix& rho_t, double t, double dt, const std::vector<double>
         return;
     }
     if (is_unitary_on_statevector) {
-        double norm_sq = 0.0;
-#if defined(_OPENMP)
-#pragma omp parallel for reduction(+ : norm_sq) schedule(static)
-#endif
-        for (int i = 0; i < rho_t.rows(); ++i) {
-            norm_sq += std::norm(rho_t(i, 0));
-        }
-        const Real norm = static_cast<Real>(std::sqrt(norm_sq));
-        check_valid_divisor(norm);
-#if defined(_OPENMP)
-#pragma omp parallel for schedule(static)
-#endif
-        for (int i = 0; i < rho_t.rows(); ++i) {
-            rho_t(i, 0) /= norm;
-        }
+        normalize_state(rho_t, true, rho_cols > 1);
     } else {
         Complex norm = 0;
 #ifndef _WIN32
@@ -333,7 +320,7 @@ void iter_rk4(DenseMatrix& rho_t, double t, double dt, const std::vector<double>
     }
 }
 
-double iter_rk45(DenseMatrix& rho_t, double t, double& dt, const std::vector<double>& step_list, const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<SparseMatrix>& jump_operators, bool is_unitary_on_statevector, double tol, DenseMatrix& k_saved, bool normalize) {
+double iter_rk45(DenseMatrix& rho_t, double t, double& dt, const std::vector<double>& step_list, const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<SparseMatrix>& jump_operators, bool is_unitary_on_statevector, double tol, DenseMatrix& k_saved, bool normalize, const SparseMatrix* jump_drift) {
     /*
     Adaptive 4th/5th-order Runge–Kutta integration of the Lindblad master equation using matrix-free methods.
 
@@ -348,6 +335,8 @@ double iter_rk45(DenseMatrix& rho_t, double t, double& dt, const std::vector<dou
         is_unitary_on_statevector (bool): If the evolution should be treated as a unitary acting on a state vector.
         tol (double): Tolerance for the adaptive algorithm.
         k_saved (DenseMatrix&): The first Runge-Kutta matrix, which is the same as the last one from the previous step.
+        normalize (bool): Whether to renormalize the state after an accepted step.
+        jump_drift (const SparseMatrix*): Optional Monte Carlo drift, see lindblad_rhs.
 
     Raises:
         py::value_error: If rho_t is not square (and evolution is not unitary on state vector).
@@ -413,7 +402,7 @@ double iter_rk45(DenseMatrix& rho_t, double t, double& dt, const std::vector<dou
 
     if (!already_have_first_step) {
         double t_1 = t;
-        lindblad_rhs(k1, rho_t, construct_current_hamiltonian(t_1, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
+        lindblad_rhs(k1, rho_t, construct_current_hamiltonian(t_1, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector, jump_drift);
     }
 
 #if defined(_OPENMP)
@@ -425,7 +414,7 @@ double iter_rk45(DenseMatrix& rho_t, double t, double& dt, const std::vector<dou
         }
     }
     double t_2 = t + a2 * dt;
-    lindblad_rhs(k2, rho_tmp, construct_current_hamiltonian(t_2, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
+    lindblad_rhs(k2, rho_tmp, construct_current_hamiltonian(t_2, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector, jump_drift);
 
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
@@ -436,7 +425,7 @@ double iter_rk45(DenseMatrix& rho_t, double t, double& dt, const std::vector<dou
         }
     }
     double t_3 = t + a3 * dt;
-    lindblad_rhs(k3, rho_tmp, construct_current_hamiltonian(t_3, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
+    lindblad_rhs(k3, rho_tmp, construct_current_hamiltonian(t_3, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector, jump_drift);
 
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
@@ -447,7 +436,7 @@ double iter_rk45(DenseMatrix& rho_t, double t, double& dt, const std::vector<dou
         }
     }
     double t_4 = t + a4 * dt;
-    lindblad_rhs(k4, rho_tmp, construct_current_hamiltonian(t_4, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
+    lindblad_rhs(k4, rho_tmp, construct_current_hamiltonian(t_4, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector, jump_drift);
 
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
@@ -458,7 +447,7 @@ double iter_rk45(DenseMatrix& rho_t, double t, double& dt, const std::vector<dou
         }
     }
     double t_5 = t + a5 * dt;
-    lindblad_rhs(k5, rho_tmp, construct_current_hamiltonian(t_5, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
+    lindblad_rhs(k5, rho_tmp, construct_current_hamiltonian(t_5, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector, jump_drift);
 
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
@@ -469,7 +458,7 @@ double iter_rk45(DenseMatrix& rho_t, double t, double& dt, const std::vector<dou
         }
     }
     double t_6 = t + a6 * dt;
-    lindblad_rhs(k6, rho_tmp, construct_current_hamiltonian(t_6, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
+    lindblad_rhs(k6, rho_tmp, construct_current_hamiltonian(t_6, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector, jump_drift);
 
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
@@ -480,7 +469,7 @@ double iter_rk45(DenseMatrix& rho_t, double t, double& dt, const std::vector<dou
         }
     }
     double t_7 = t + a7 * dt;
-    lindblad_rhs(k7, rho_tmp, construct_current_hamiltonian(t_7, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector);
+    lindblad_rhs(k7, rho_tmp, construct_current_hamiltonian(t_7, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector, jump_drift);
 
     // All these loops combined into one
     Complex rho_4_norm = 0.0;

@@ -95,7 +95,7 @@ void lindblad_rhs(DenseMatrix& drho, const DenseMatrix& rho, const SparseMatrix&
     }
 }
 
-void lindblad_rhs(DenseMatrix& drho, const DenseMatrix& rho, const MatrixFreeHamiltonian& H, const std::vector<SparseMatrix>& jumps, bool is_unitary_on_statevector) {
+void lindblad_rhs(DenseMatrix& drho, const DenseMatrix& rho, const MatrixFreeHamiltonian& H, const std::vector<SparseMatrix>& jumps, bool is_unitary_on_statevector, const SparseMatrix* jump_drift) {
     /*
     Evaluate the right-hand side of the Lindblad master equation.
 
@@ -105,6 +105,9 @@ void lindblad_rhs(DenseMatrix& drho, const DenseMatrix& rho, const MatrixFreeHam
         H (MatrixFreeHamiltonian): The Hamiltonian.
         jumps (std::vector<SparseMatrix>): The list of jump operators.
         is_unitary_on_statevector (bool): Whether the evolution is unitary on a state vector.
+        jump_drift (const SparseMatrix*): Optional drift D = (1/2) sum_k L_k^dagger L_k of the Monte
+            Carlo effective Hamiltonian H_eff = H - i D. Only used on the state-vector path, where it
+            makes the norm decay at the trajectory's jump rate.
     */
     if (is_unitary_on_statevector) {
         H.apply(rho, MatrixFreeApplicationType::Left, drho);
@@ -114,6 +117,9 @@ void lindblad_rhs(DenseMatrix& drho, const DenseMatrix& rho, const MatrixFreeHam
         for (int i = 0; i < drho.size(); ++i) {
             const Complex v = drho(i);
             drho(i) = Complex(v.imag(), -v.real());
+        }
+        if (jump_drift != nullptr) {
+            drho -= (*jump_drift) * rho;
         }
     } else {
         DenseMatrix Hrho(rho.rows(), rho.cols());
