@@ -855,3 +855,32 @@ def test_pauli_operator_rejects_negative_qubit():
     """QSDK-05: a Pauli operator must reject a negative qubit at construction."""
     with pytest.raises(ValueError, match="non-negative"):
         PauliX(-1)
+
+
+def test_hamiltonian_draw(monkeypatch):
+    calls = []
+
+    class DummyRenderer:
+        def __init__(self, *a, **kw):
+            calls.append("init")
+
+        def plot(self, *a, **kw):
+            calls.append("plot")
+
+        def save(self, *a, **kw):
+            calls.append("save")
+
+        def show(self):
+            calls.append("show")
+
+    monkeypatch.setattr(
+        "qilisdk.utils.visualization.hamiltonian_renderers.MatplotlibHamiltonianRenderer", DummyRenderer
+    )
+
+    H = X(0) + Z(0) * Z(1)
+    H.draw()
+    assert calls == ["init", "plot", "show"]
+
+    calls.clear()
+    H.draw(filepath="dummy_path.png")
+    assert calls == ["init", "plot", "save"]

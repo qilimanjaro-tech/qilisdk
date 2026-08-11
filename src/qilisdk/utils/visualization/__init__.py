@@ -12,12 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .style import CircuitStyle, DatasetStyle, QTensorStyle, ScheduleStyle
+from .style import CircuitStyle, DatasetStyle, QTensorStyle, ScheduleStyle, HamiltonianStyle
 from .themes import Theme, dark, light
 
 __all__ = [
     "CircuitStyle",
     "DatasetStyle",
+    "HamiltonianStyle",
     "QTensorStyle",
     "ScheduleStyle",
     "Theme",

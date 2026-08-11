@@ -250,11 +250,14 @@ class Gate(Parameterizable, ABC):
         return (
             self.name == other.name
             and self.qubits == other.qubits
-            and np.allclose(self.get_parameter_values(), other.get_parameter_values())
+            and np.allclose(self.get_parameter_values(), other.get_parameter_values(), atol=get_settings().atol)
         )
 
     def __hash__(self) -> int:
-        return qili_hash((self.name, self.qubits, self.matrix, tuple(self.get_parameters())))
+        atol = get_settings().atol
+        ndecimals = int(-np.log10(atol))
+        rounded_values = tuple(round(value, ndecimals) for value in self.get_parameter_values())
+        return qili_hash((self.name, self.qubits, rounded_values))
 
 
 @yaml.register_class
