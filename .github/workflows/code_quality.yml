@@ -42,7 +42,6 @@ jobs:
             **/uv.lock
           python-version: ${{ matrix.python-version }}
 
-      # Linting needs the modules importable, but it doesn't care past that
       - name: Set up ccache
         uses: hendrikmuhs/ccache-action@d62db5f07c26379fc4b4e0916f098a92573c3b03  # v1.2.23
         with:
