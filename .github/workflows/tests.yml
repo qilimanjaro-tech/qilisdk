@@ -49,19 +49,12 @@ jobs:
             **/uv.lock
           python-version: ${{ matrix.python-version }}
 
-      - name: Set up ccache
-        uses: hendrikmuhs/ccache-action@d62db5f07c26379fc4b4e0916f098a92573c3b03  # v1.2.23
-        with:
-          key: tests-${{ matrix.python-version }}-coverage-${{ matrix.coverage }}
-          max-size: 500M
-
       - name: Install qilisdk with coverage
         if: matrix.coverage
         run: |
           uv sync --frozen --group dev --extra all-cu13 --reinstall-package qilisdk \
             -Ccmake.build-type=Debug \
             -Ccmake.define.CMAKE_CXX_FLAGS_DEBUG=-O0 \
-            -Ccmake.define.CMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -Ccmake.define.tests=ON \
             -Ccmake.define.coverage=ON
           echo "VIRTUAL_ENV=$PWD/.venv" >> "$GITHUB_ENV"
@@ -71,13 +64,9 @@ jobs:
         if: ${{ !matrix.coverage }}
         run: |
           uv sync --frozen --group dev --extra all-cu13 --reinstall-package qilisdk \
-            -Ccmake.build-type=Release \
-            -Ccmake.define.CMAKE_CXX_COMPILER_LAUNCHER=ccache
+            -Ccmake.build-type=Release
           echo "VIRTUAL_ENV=$PWD/.venv" >> "$GITHUB_ENV"
           echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
-
-      - name: Report ccache statistics
-        run: ccache --show-stats
 
       - name: Run Python tests
         if: ${{ !matrix.coverage }}

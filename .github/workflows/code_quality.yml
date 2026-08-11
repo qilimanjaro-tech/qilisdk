@@ -42,18 +42,11 @@ jobs:
             **/uv.lock
           python-version: ${{ matrix.python-version }}
 
-      - name: Set up ccache
-        uses: hendrikmuhs/ccache-action@d62db5f07c26379fc4b4e0916f098a92573c3b03  # v1.2.23
-        with:
-          key: code-quality-${{ matrix.python-version }}
-          max-size: 500M
-
       - name: Install the project
         run: |
           uv sync --frozen --group dev --extra all-cu13 \
             -Ccmake.build-type=Debug \
-            -Ccmake.define.CMAKE_CXX_FLAGS_DEBUG=-O0 \
-            -Ccmake.define.CMAKE_CXX_COMPILER_LAUNCHER=ccache
+            -Ccmake.define.CMAKE_CXX_FLAGS_DEBUG=-O0
           echo "VIRTUAL_ENV=$PWD/.venv" >> "$GITHUB_ENV"
           echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
 
