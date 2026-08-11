@@ -1,16 +1,46 @@
-# Keeps GitHub Actions dependencies up to date, including the SHA-pinned
-# reference to the shared backport workflow (qilimanjaro-tech/workflows) and the
-# action versions used across the other workflows. Bumps are grouped into a
-# single weekly PR.
+# Keeps GitHub Actions and Python dependencies up to date.
+#
+# Grouping strategy: minor + patch bumps are collected into one PR per ecosystem;
+# major bumps fall outside the group and therefore get their own PR each, since
+# they are the ones that can break us and deserve individual review.
 version: 2
+
 updates:
+  # ----------------------------- GitHub Actions -----------------------------
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
+      # Without day/time/timezone Dependabot defaults to Monday at a random hour UTC.
+      day: "monday"
+      time: "09:00"
+      timezone: "Europe/Madrid"  # follows CET/CEST, so 09:00 local year-round
     groups:
-      github-actions:
+      actions-minor-patch:
+        applies-to: version-updates  # default, stated so the security path stays visible
         patterns: ["*"]
+        update-types: ["minor", "patch"]
     commit-message:
       prefix: "ci"
-    open-pull-requests-limit: 5
+    # Majors arrive as one PR each now, so leave headroom above the default of 5.
+    open-pull-requests-limit: 10
+    labels: ["dependencies", "github-actions"]
+
+  # -------------------------------- Python ---------------------------------
+  - package-ecosystem: "uv"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Europe/Madrid"
+    groups:
+      python-minor-patch:
+        applies-to: version-updates
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps-dev"
+    open-pull-requests-limit: 10
+    labels: ["dependencies", "pyproject.toml"]

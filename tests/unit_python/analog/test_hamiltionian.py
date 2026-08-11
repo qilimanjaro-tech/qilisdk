@@ -856,7 +856,6 @@ def test_pauli_operator_rejects_negative_qubit():
     with pytest.raises(ValueError, match="non-negative"):
         PauliX(-1)
 
-
 @pytest.mark.parametrize(
     ("built", "expected"),
     [
@@ -1251,3 +1250,31 @@ def test_a_randomized_hamiltonian_is_still_usable():
 
     assert H.to_matrix().shape == (8, 8)
     assert H.to_qtensor().is_hermitian()
+    
+def test_hamiltonian_draw(monkeypatch):
+    calls = []
+
+    class DummyRenderer:
+        def __init__(self, *a, **kw):
+            calls.append("init")
+
+        def plot(self, *a, **kw):
+            calls.append("plot")
+
+        def save(self, *a, **kw):
+            calls.append("save")
+
+        def show(self):
+            calls.append("show")
+
+    monkeypatch.setattr(
+        "qilisdk.utils.visualization.hamiltonian_renderers.MatplotlibHamiltonianRenderer", DummyRenderer
+    )
+
+    H = X(0) + Z(0) * Z(1)
+    H.draw()
+    assert calls == ["init", "plot", "show"]
+
+    calls.clear()
+    H.draw(filepath="dummy_path.png")
+    assert calls == ["init", "plot", "save"]

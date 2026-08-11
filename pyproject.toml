@@ -1,6 +1,6 @@
 [project]
 name = "qilisdk"
-version = "0.2.2"
+version = "0.2.2rc1"
 description = "QiliSDK is a Python framework for writing digital and analog quantum algorithms and executing them across multiple quantum backends. Its modular design streamlines the development process and enables easy integration with a variety of quantum platforms."
 readme = "README.md"
 authors = [{name = "Qilimanjaro Quantum Tech", email = "info@qilimanjaro.tech"}]
@@ -26,11 +26,9 @@ classifiers = [
 ]
 dependencies = [
     "dill>=0.4.1",
-    "numpy>=2.3,<2.4.1; sys_platform == 'darwin'",
-    "numpy>=2.4.1; sys_platform != 'darwin'",
+    "numpy>=2.3",
     "ruamel-yaml>=0.18.16",
-    "scipy>=1.16.3; sys_platform == 'darwin'",
-    "scipy>=1.15,<1.16.3; sys_platform != 'darwin'",
+    "scipy>=1.15",
     "pydantic>=2.13.3",
     "pydantic-settings>=2.14.0",
     "loguru>=0.7.3",
@@ -38,7 +36,6 @@ dependencies = [
     "py-cpuinfo>=9.0.0",
     "setuptools>=82.0.1",
     "gputil>=1.4.0",
-    "mkl-service>=2.6.1; sys_platform != 'darwin' and platform_machine != 'aarch64'",
     "rustworkx>=0.17.1",
     "psutil>=7.2.2",
 ]
@@ -179,26 +176,6 @@ conflicts = [
 
 [tool.uv.sources]
 sphinx-multiversion = { git = "https://github.com/sphinx-contrib/multiversion", branch = "main"}
-numpy = [{ index = "numpy-mkl", marker = "sys_platform != 'darwin' and platform_machine != 'aarch64'" }]
-scipy = [{ index = "numpy-mkl", marker = "sys_platform != 'darwin' and platform_machine != 'aarch64'" }]
-mkl-service = [{ index = "numpy-mkl", marker = "sys_platform != 'darwin' and platform_machine != 'aarch64'" }]
-
-[[tool.uv.index]]
-name = "numpy-mkl"
-url = "https://urob.github.io/numpy-mkl"
-explicit = true
-
-[[tool.uv.index]]
-name = "speqtrum"
-url = "https://api.pyx.dev/simple/qilimanjaro/speqtrum"
-publish-url = "https://api.pyx.dev/v1/upload/qilimanjaro/speqtrum"
-explicit = true
-
-[[tool.uv.index]]
-name = "euroqcs"
-url = "https://api.pyx.dev/simple/qilimanjaro/euroqcs"
-publish-url = "https://api.pyx.dev/v1/upload/qilimanjaro/euroqcs"
-explicit = true
 
 [build-system]
 requires = ["scikit-build-core", "pybind11>=2.13,<3"]
