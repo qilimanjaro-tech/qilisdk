@@ -135,22 +135,14 @@ class Interpolator(Parameterizable):
 
         fixed_times: list[PARAMETERIZED_NUMBER | tuple[float, float]] = sorted(
             time_dict.keys(),
-            key=lambda t: self._get_value(
-                min(t, key=self._get_value)
-                if isinstance(t, tuple)
-                else self._get_value(t)
-            ),
+            key=lambda t: self._get_value(min(t, key=self._get_value) if isinstance(t, tuple) else self._get_value(t)),
         )
 
         for i in range(len(fixed_times) - 1):
             ti: PARAMETERIZED_NUMBER | tuple[float, float] = fixed_times[i]
             tj: PARAMETERIZED_NUMBER | tuple[float, float] = fixed_times[i + 1]
-            t0 = (
-                self._get_value(ti) if not isinstance(ti, tuple) else self._get_value(ti[1])
-            )
-            t1 = (
-                self._get_value(tj) if not isinstance(tj, tuple) else self._get_value(tj[0])
-            )
+            t0 = self._get_value(ti) if not isinstance(ti, tuple) else self._get_value(ti[1])
+            t1 = self._get_value(tj) if not isinstance(tj, tuple) else self._get_value(tj[0])
             if abs(t0 - t1) < get_settings().atol:
                 raise ValueError(f"The time point {t0} is defined twice.")
             if t0 > t1:

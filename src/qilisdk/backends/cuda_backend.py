@@ -438,10 +438,7 @@ class CudaBackend(Backend):
             functional.set_parameters(og_params)
 
         intermediate_states = []
-        if (
-            evolution_result.intermediate_states() is not None
-            and functional.store_intermediate_results
-        ):
+        if evolution_result.intermediate_states() is not None and functional.store_intermediate_results:
             for state in evolution_result.intermediate_states():
                 _state = np.array(state, dtype=np.complex128)
                 if len(_state.shape) == 1:
