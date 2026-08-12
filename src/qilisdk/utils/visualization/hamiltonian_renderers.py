@@ -166,7 +166,7 @@ class MatplotlibHamiltonianRenderer:
         if isinstance(self.ax.figure, Figure):
             self.ax.figure.savefig(filename, bbox_inches="tight")
 
-    def show(self) -> None:  # noqa: PLR6301
+    def show(self) -> None:  # ruff: ignore[no-self-use]
         """Show the current figure."""
         plt.show()
 
@@ -706,7 +706,7 @@ class MatplotlibHamiltonianRenderer:
         for index, label in enumerate(sorted(types - set(self._line_styles))):
             self._line_styles[label] = fallbacks[index % len(fallbacks)]
 
-    def _line_style(self, coupling_type: str) -> Any:  # noqa: ANN401
+    def _line_style(self, coupling_type: str) -> Any:  # ruff: ignore[any-type]
         """Resolve the line style used for a coupling type.
 
         Args:
