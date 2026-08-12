@@ -139,6 +139,93 @@ class CircuitStyle(Style):
     )
 
 
+class HamiltonianStyle(Style):
+    """All visual parameters controlling the appearance of a Hamiltonian interaction graph."""
+
+    # Figure
+    figsize: Optional[tuple] = Field(default=(7, 6), description="Figure size in inches (width, height).")
+    tight_layout: bool = Field(default=True, description="Whether to use matplotlib's tight_layout for figure spacing.")
+    title_fontsize: int = Field(default=16, description="Font size for the plot title.")
+
+    # Graph layout
+    layout: Literal["spring", "circular", "shell", "spiral", "random"] = Field(
+        default="spring",
+        description="Rustworkx layout algorithm used to position the qubit nodes.",
+    )
+    layout_seed: int = Field(default=42, description="Seed for the randomized layouts ('spring' and 'random').")
+    positions: Optional[dict[int, tuple[float, float]]] = Field(
+        default=None,
+        description="Explicit qubit positions, keyed by qubit index. Overrides `layout` when provided.",
+    )
+
+    # Nodes
+    node_radius: float = Field(
+        default=0.3,
+        description="Node radius as a fraction of the smallest distance between two nodes in the layout.",
+    )
+    min_node_radius: float = Field(
+        default=0.05, description="Lower bound on the node radius, in normalized layout units."
+    )
+    show_qubit_labels: bool = Field(default=True, description="Whether to label each node with its qubit index.")
+    qubit_label_fontsize: int = Field(default=11, description="Font size for the qubit index labels.")
+    show_field_labels: bool = Field(
+        default=True, description="Whether to write the Pauli type inside each local-field slice of a node."
+    )
+    field_label_fontsize: int = Field(default=10, description="Font size for the local-field labels inside the nodes.")
+
+    # Couplings
+    coupling_linewidth: float = Field(default=2.5, description="Line width of the coupling edges.")
+    coupling_curvature: float = Field(
+        default=0.3,
+        description="Curvature offset between parallel edges when several coupling types share the same qubit pair.",
+    )
+    coupling_line_styles: dict[str, Any] = Field(
+        default_factory=lambda: {"ZZ": "-", "XX": "--", "YY": "-.", "XZ": ":", "ZX": ":"},
+        description="Matplotlib line style per coupling type. Types not listed cycle through the remaining styles.",
+    )
+    default_coupling_line_styles: list[Any] = Field(
+        default_factory=lambda: ["-", "--", "-.", ":", (0, (3, 1, 1, 1, 1, 1))],
+        description="Line styles cycled through for coupling types missing from `coupling_line_styles`.",
+    )
+    show_coupling_labels: bool = Field(
+        default=False,
+        description="Whether to annotate each coupling edge with its Pauli type. Off by default, since the legend already maps line styles to coupling types.",
+    )
+    coupling_label_fontsize: int = Field(default=9, description="Font size for the coupling type labels.")
+    show_multi_body: bool = Field(
+        default=True,
+        description="Whether to draw terms acting on three or more qubits as a star-shaped hyperedge.",
+    )
+
+    # Colour scale
+    colormap: str | None = Field(
+        default=None,
+        description="Name of a matplotlib colormap for the coefficient strengths. Defaults to a theme gradient.",
+    )
+    show_colorbar: bool = Field(default=True, description="Whether to draw the coefficient strength colour bar.")
+    colorbar_shrink: float = Field(default=0.75, description="Fraction of the axes height taken up by the colour bar.")
+    colorbar_label: str | None = Field(
+        default=None, description="Label of the colour bar. Defaults to 'coefficient' (or '|coefficient|')."
+    )
+    separate_color_scales: bool = Field(
+        default=False,
+        description="Whether local fields and couplings get their own colour scale (and colour bar) instead of a shared one.",
+    )
+
+    # Legend
+    show_legend: bool = Field(
+        default=True, description="Whether to draw a legend mapping coupling types to their line style."
+    )
+    legend_loc: str = Field(default="upper right", description="Location of the coupling type legend.")
+    legend_fontsize: int = Field(default=10, description="Font size for legend text.")
+    legend_frame: bool = Field(default=True, description="Whether to draw a frame around the legend.")
+
+    # Misc
+    show_identity_offset: bool = Field(
+        default=True, description="Whether to annotate the constant (identity) energy offset of the Hamiltonian."
+    )
+
+
 class ScheduleStyle(Style):
     """
     Customization options for matplotlib schedule plots, with theme support.
