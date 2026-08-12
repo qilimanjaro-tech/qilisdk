@@ -13,6 +13,7 @@
 # limitations under the License.
 from __future__ import annotations
 
+from functools import partial
 from typing import TYPE_CHECKING, Any, ClassVar
 
 import numpy as np
@@ -217,8 +218,8 @@ class MackeyGlass(Dataset):
         traj[: tau_steps + 1] = self._x0
 
         for i in range(tau_steps, tau_steps + n_steps):
-            xd = traj[i - tau_steps]
-            traj[i + 1] = rk4_step(traj[i], dt, lambda x, xd=xd: deriv(x, xd))
+            xd = float(traj[i - tau_steps])
+            traj[i + 1] = rk4_step(traj[i], dt, partial(deriv, x_delayed=xd))
 
         start = tau_steps + self._washout
         sampled = traj[start :: self._sample_every][:needed]

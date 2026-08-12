@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .style import CircuitStyle, DatasetStyle, QTensorStyle, ScheduleStyle, HamiltonianStyle
+from .style import CircuitStyle, DatasetStyle, HamiltonianStyle, QTensorStyle, ScheduleStyle
 from .themes import Theme, dark, light
 
 __all__ = [

@@ -223,7 +223,9 @@ class Dataset(ABC):
             filepath (str | None): If given, the figure is saved to this path
                 (format inferred from the extension) instead of being shown.
         """
-        from qilisdk.utils.visualization.dataset_renderers import MatplotlibDatasetRenderer  # noqa: PLC0415
+        from qilisdk.utils.visualization.dataset_renderers import (  # ruff: ignore[import-outside-top-level]
+            MatplotlibDatasetRenderer,
+        )
 
         mode = style or cls._DEFAULT_DRAW_STYLE
         renderer = MatplotlibDatasetRenderer(
@@ -255,7 +257,7 @@ class Dataset(ABC):
         Returns:
             DatasetStyle: The effective style to render with.
         """
-        from qilisdk.utils.visualization.style import DatasetStyle  # noqa: PLC0415
+        from qilisdk.utils.visualization.style import DatasetStyle  # ruff: ignore[import-outside-top-level]
 
         defaults = cls._DRAW_STYLE_DEFAULTS.get(mode, {})
         if not defaults:
