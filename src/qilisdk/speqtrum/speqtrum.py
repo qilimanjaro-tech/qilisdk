@@ -663,7 +663,7 @@ class SpeQtrum:
         device: str,
         readout: Readout[S, E, T],
         job_name: str | None = None,
-    ) -> JobHandle[VariationalProgramResult]: ...
+    ) -> JobHandle[VariationalProgramResult[FunctionalResult[S, E, T]]]: ...
 
     @overload
     def submit(
@@ -891,7 +891,7 @@ class SpeQtrum:
         device: str,
         readout: Readout[S, E, T],
         job_name: str | None = None,
-    ) -> JobHandle[VariationalProgramResult[S, E, T]]:
+    ) -> JobHandle[VariationalProgramResult[FunctionalResult[S, E, T]]]:
         """Submit a ``VariationalProgram`` to the SpeQtrum API.
 
         Args:

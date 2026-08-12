@@ -466,25 +466,27 @@ class Controlled(Modified[TBasicGate]):
     def __init__(self, *control_qubits: int, basic_gate: TBasicGate | Controlled[TBasicGate]) -> None:
         logger.trace("[Gates] Constructing Controlled gate with control qubits {}", control_qubits)
         # If doing Controlled of another Controlled, combine into one with all control qubits.
-        if isinstance(basic_gate, Controlled) and isinstance(basic_gate.basic_gate, Gate):
+        if isinstance(basic_gate, Controlled):
             control_qubits += basic_gate.control_qubits
-            basic_gate = basic_gate.basic_gate
+            inner_gate = basic_gate.basic_gate
+        else:
+            inner_gate = basic_gate
 
-        super().__init__(basic_gate=basic_gate)  # ty: ignore[invalid-argument-type]
+        super().__init__(basic_gate=inner_gate)
 
         # Check for duplicate integers in control_qubits.
         if len(control_qubits) != len(set(control_qubits)):
             raise ValueError("Duplicate control qubits found.")
 
         # Check if any integer in control_qubits is also in unitary_gate.target_qubits.
-        if set(control_qubits) & set(basic_gate.target_qubits):
+        if set(control_qubits) & set(inner_gate.target_qubits):
             raise ValueError("Some control qubits are the same as unitary gate's target qubits.")
 
         # Make sure we have some control qubits
         if len(control_qubits) == 0:
             raise ValueError("At least one control qubit must be specified.")
 
-        self._control_qubits = control_qubits + basic_gate.control_qubits
+        self._control_qubits = control_qubits + inner_gate.control_qubits
 
     def _generate_matrix(self) -> np.ndarray:
         logger.trace("[Gates] Generating Controlled matrix for {} on {} qubits", self.name, self.nqubits)
