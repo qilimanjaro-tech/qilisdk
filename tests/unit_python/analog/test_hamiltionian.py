@@ -214,7 +214,7 @@ def test_invalid_multiplication_operation():
     ],
 )
 def test_hamiltonian_rmul(hamiltonian_rhs, hamiltonian_lhs, expected_hamiltonian):
-    assert hamiltonian_lhs.__rmul__(hamiltonian_rhs) == expected_hamiltonian  # noqa: PLC2801
+    assert hamiltonian_lhs.__rmul__(hamiltonian_rhs) == expected_hamiltonian  # ruff: ignore[unnecessary-dunder-call]
 
 
 class MockPauli(PauliOperator):

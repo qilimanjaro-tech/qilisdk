@@ -90,7 +90,7 @@ def Y(qubit: int) -> Hamiltonian:
     return _get_pauli("Y", qubit).to_hamiltonian()
 
 
-def I(qubit: int = 0) -> Hamiltonian:  # noqa: E743
+def I(qubit: int = 0) -> Hamiltonian:  # ruff: ignore[ambiguous-function-name]
     return _get_pauli("I", qubit).to_hamiltonian()
 
 
@@ -483,7 +483,9 @@ class Hamiltonian(Parameterizable):
                 H.draw()
         """
         logger.debug("[Hamiltonian] Drawing Hamiltonian with style: {} and filepath: {}", style, filepath)
-        from qilisdk.utils.visualization.hamiltonian_renderers import MatplotlibHamiltonianRenderer  # noqa: PLC0415
+        from qilisdk.utils.visualization.hamiltonian_renderers import (  # ruff:ignore[import-outside-top-level]
+            MatplotlibHamiltonianRenderer,
+        )
 
         renderer = MatplotlibHamiltonianRenderer(self, style=style or HamiltonianStyle())
         renderer.plot()
@@ -1038,10 +1040,10 @@ class Hamiltonian(Parameterizable):
             if not other.elements:
                 return
             # Otherwise, add each term
-            for key, val in other._elements.items():  # noqa: SLF001
+            for key, val in other._elements.items():  # ruff: ignore[private-member-access]
                 self._elements[key] += val
 
-            self._update_parameters(other._parameters)  # noqa: SLF001
+            self._update_parameters(other._parameters)  # ruff: ignore[private-member-access]
         elif isinstance(other, PauliOperator):
             # Just add 1 to that single operator key
             self._elements[other,] += 1
@@ -1063,9 +1065,9 @@ class Hamiltonian(Parameterizable):
 
     def _sub_inplace(self, other: Number | PauliOperator | Hamiltonian | Term | Parameter) -> None:
         if isinstance(other, Hamiltonian):
-            for key, val in other._elements.items():  # noqa: SLF001
+            for key, val in other._elements.items():  # ruff: ignore[private-member-access]
                 self._elements[key] -= val
-            self._update_parameters(other._parameters)  # noqa: SLF001
+            self._update_parameters(other._parameters)  # ruff: ignore[private-member-access]
         elif isinstance(other, PauliOperator):
             self._elements[other,] -= 1
         elif isinstance(other, (int, float, complex)):
@@ -1124,7 +1126,7 @@ class Hamiltonian(Parameterizable):
 
             # Check if 'other' is purely scalar identity => short-circuit
             if len(other.elements) == 1:
-                ((ops2, c2),) = other._elements.items()  # single item  # noqa: SLF001
+                ((ops2, c2),) = other._elements.items()  # single item  # ruff: ignore[private-member-access]
                 if len(ops2) == 1:
                     op2 = ops2[0]
                     if op2.name == "I" and op2.qubit == 0:
@@ -1134,11 +1136,11 @@ class Hamiltonian(Parameterizable):
             # Otherwise, we do the general multiply
             new_dict: dict[tuple[PauliOperator, ...], complex | Term | Parameter] = defaultdict(complex)
             for ops1, c1 in self._elements.items():
-                for ops2, c2 in other._elements.items():  # noqa: SLF001
+                for ops2, c2 in other._elements.items():  # ruff: ignore[private-member-access]
                     phase, new_ops = self._multiply_sets(ops1, ops2)
                     new_dict[new_ops] += phase * c1 * c2
             self._elements = new_dict
-            self._update_parameters(other._parameters)  # noqa: SLF001
+            self._update_parameters(other._parameters)  # ruff: ignore[private-member-access]
 
         else:
             raise InvalidHamiltonianOperation(

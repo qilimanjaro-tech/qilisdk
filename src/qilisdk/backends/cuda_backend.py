@@ -427,7 +427,7 @@ class CudaBackend(Backend):
         logger.info("[CudaBackend] TimeEvolution finished")
         # Dynamics computes in fp64; keep the results complex128 to match.
         final_state = np.array(
-            evolution_result.final_state(),  # ty:ignore[unresolved-attribute]
+            evolution_result.final_state(),
             dtype=np.complex128,
         )
         if len(final_state.shape) == 1:
@@ -438,11 +438,8 @@ class CudaBackend(Backend):
             functional.set_parameters(og_params)
 
         intermediate_states = []
-        if (
-            evolution_result.intermediate_states() is not None  # ty:ignore[unresolved-attribute]
-            and functional.store_intermediate_results
-        ):
-            for state in evolution_result.intermediate_states():  # ty:ignore[unresolved-attribute]
+        if evolution_result.intermediate_states() is not None and functional.store_intermediate_results:
+            for state in evolution_result.intermediate_states():
                 _state = np.array(state, dtype=np.complex128)
                 if len(_state.shape) == 1:
                     _state = _state.reshape(-1, 1)
@@ -511,7 +508,7 @@ class CudaBackend(Backend):
                 cudaq.set_target("qpp-cpu")
                 logger.debug("[CudaBackend] No GPU detected, using cudaq's 'qpp-cpu' backend")
             elif self.sampling_method == CudaSamplingMethod.STATE_VECTOR_MGPU:
-                if num_gpus < 2:  # noqa: PLR2004 # come on, two isn't a magic numbr
+                if num_gpus < 2:  # ruff: ignore[magic-value-comparison] # come on, two isn't a magic numbr
                     cudaq.set_target("nvidia", option=float_precision)
                     logger.warning(
                         "[CudaBackend] Multiple GPU simulation method selected but only single GPU detected. Falling back to single GPU."
