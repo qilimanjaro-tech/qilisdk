@@ -131,14 +131,14 @@ dev = [
 docs = [
     "astroid<4.4",
     "nbsphinx>=0.9.7",
-    "pypandoc>=1.15",
+    "pypandoc-binary>=1.15",
     "sphinx==8.2.3",
     "sphinx-autoapi>=3.4.0",
     "sphinx-automodapi>=0.20.0",
     "sphinx-design>=0.7.0",
     "sphinx-mdinclude>=0.6.2",
     "sphinx-multiversion==0.2.4",
-    "sphinxawesome-theme==5.3.2",
+    "sphinxawesome-theme==6.0.5",
     "sphinx-intl",
     "sphinx-tabs>=3.5.0",
 ]
