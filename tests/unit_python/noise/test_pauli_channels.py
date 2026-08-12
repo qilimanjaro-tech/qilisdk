@@ -76,7 +76,7 @@ def test_bit_flip_probability_and_scopes():
     expected_x = np.sqrt(0.2) * np.array([[0.0, 1.0], [1.0, 0.0]], dtype=complex)
     np.testing.assert_allclose(kraus.operators[1].dense(), expected_x)
 
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):  # ruff: ignore[pytest-raises-too-broad]
         BitFlip(probability=1.2)
 
 
@@ -99,7 +99,7 @@ def test_phase_flip_probability_and_scopes():
     expected_z = np.sqrt(0.3) * np.array([[1.0, 0.0], [0.0, -1.0]], dtype=complex)
     np.testing.assert_allclose(kraus.operators[1].dense(), expected_z)
 
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):  # ruff: ignore[pytest-raises-too-broad]
         PhaseFlip(probability=-0.1)
 
 
@@ -117,7 +117,7 @@ def test_depolarizing_probability_distribution():
     assert np.isclose(noise.pY, 0.1)
     assert np.isclose(noise.pZ, 0.1)
 
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):  # ruff: ignore[pytest-raises-too-broad]
         Depolarizing(probability=-0.1)
 
 
