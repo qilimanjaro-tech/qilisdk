@@ -34,7 +34,7 @@ from qilisdk.core.variables import (
 from .base_solver import ClassicalSolver, ClassicalSolverResult, _assert_real, _variable_bounds
 
 
-def _term_to_scip_expr(term: Term, var_exprs: dict[BaseVariable, Any]) -> Any:  # noqa: ANN401
+def _term_to_scip_expr(term: Term, var_exprs: dict[BaseVariable, Any]) -> Any:  # ruff: ignore[any-type]
     """
     Convert a QiliSDK ``Term`` to a SCIP expression, using the provided mapping of model
     variables to SCIP expressions.
@@ -109,7 +109,7 @@ class ScipSolver(ClassicalSolver):
             result = ScipSolver().solve(model)
     """
 
-    def solve(  # noqa: PLR6301
+    def solve(  # ruff: ignore[no-self-use]
         self,
         model: Model,
         verbose: bool = False,

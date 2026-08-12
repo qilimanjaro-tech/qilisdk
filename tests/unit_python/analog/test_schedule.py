@@ -354,7 +354,7 @@ def test_update_hamiltonian_coefficient_term_basevariable_errors():
         match=r"Tlist can only contain parameters and no variables, but the term dummy \* \(2\) contains objects other than parameters.",
     ):
         sched.update_hamiltonian("H1", new_coefficients={1: term})
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):  # ruff: ignore[pytest-raises-too-broad]
         sched.update_hamiltonian("H1", new_coefficients={2: dummy})
 
 
