@@ -1598,7 +1598,7 @@ class Term:
         output = complex(0.0) if self.operation in {Operation.ADD, Operation.SUB} else complex(1.0)
         for e in self:
             if isinstance(e, Term):
-                output = self._apply_operation_on_constants([output, e._evaluate(_var_values) * self[e]])  # noqa: SLF001
+                output = self._apply_operation_on_constants([output, e._evaluate(_var_values) * self[e]])  # ruff: ignore[private-member-access]
             elif isinstance(e, BaseVariable):
                 if self._is_constant(e):
                     output = self._apply_operation_on_constants([output, self[e]])
@@ -1666,9 +1666,9 @@ class Term:
     def __copy__(self) -> Term:
         # This shallow copy is safe because the elements of a Term are immutable (BaseVariable, Term, Number).
         new = Term.__new__(Term)
-        new._operation = self._operation  # noqa: SLF001
-        new._elements = dict(self._elements)  # noqa: SLF001
-        new._hash_cache = self._hash_cache  # noqa: SLF001
+        new._operation = self._operation  # ruff: ignore[private-member-access]
+        new._elements = dict(self._elements)  # ruff: ignore[private-member-access]
+        new._hash_cache = self._hash_cache  # ruff: ignore[private-member-access]
         return new
 
     def __repr__(self) -> str:
@@ -2100,7 +2100,7 @@ class MathematicalMap(Term, ABC):
             if e not in _var_values and isinstance(e, Parameter):
                 aux: Number = e.evaluate()
             elif isinstance(e, Term):
-                aux = e._evaluate(_var_values)  # noqa: SLF001
+                aux = e._evaluate(_var_values)  # ruff: ignore[private-member-access]
             else:
                 aux = e.evaluate(_var_values[e])
             value += aux * self[e]
