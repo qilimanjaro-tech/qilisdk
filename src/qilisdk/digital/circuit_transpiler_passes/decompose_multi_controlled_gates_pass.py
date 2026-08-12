@@ -64,7 +64,7 @@ class DecomposeMultiControlledGatesPass(CircuitTranspilerPass):
 
         return output_circuit
 
-    def _rewrite_gate(self, gate: Gate) -> list[Gate]:  # noqa: PLR6301
+    def _rewrite_gate(self, gate: Gate) -> list[Gate]:  # ruff: ignore[no-self-use]
         """Expand unsupported gates into equivalent elementary gates.
 
         Args:

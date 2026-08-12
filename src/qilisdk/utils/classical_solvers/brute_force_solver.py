@@ -35,7 +35,7 @@ class BruteForceSolver(ClassicalSolver):
             results, sample = BruteForceSolver().solve(model)
     """
 
-    def solve(self, model: Model) -> tuple[dict[str, Number], dict[BaseVariable, RealNumber]]:  # noqa: PLR6301
+    def solve(self, model: Model) -> tuple[dict[str, Number], dict[BaseVariable, RealNumber]]:  # ruff: ignore[no-self-use]
         """Solve the given model by brute-force enumeration of all variable assignments.
 
         Binary variables are assigned values from {0, 1}. Any other ``Variable`` is decomposed
