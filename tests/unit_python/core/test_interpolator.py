@@ -91,7 +91,7 @@ def test_set_max_time(points, interpolation, measured_expected, max_time):
     [
         ({(0, 1): lambda t: t}, Interpolation.LINEAR, [(0, 0), (10, 1), (0.5, 0.05), (0.7, 0.07)], 10),
         (
-            {(0, 1): lambda t: Sin(t), (1.1, 2): lambda t: t},  # noqa: PLW0108
+            {(0, 1): lambda t: Sin(t), (1.1, 2): lambda t: t},  # ruff: ignore[unnecessary-lambda]
             Interpolation.LINEAR,
             [(0, np.sin(0)), (1, 2), (0.5, np.sin(1)), (0.7, 1.4)],
             1,
@@ -114,7 +114,7 @@ def test_intervals(points, interpolation, measured_expected, max_time):
     ("points", "interpolation", "measured_expected", "max_time"),
     [
         (
-            {(0, 4): lambda t: Sin(t), (Parameter("o", 5), 10): lambda t: t},  # noqa: PLW0108
+            {(0, 4): lambda t: Sin(t), (Parameter("o", 5), 10): lambda t: t},  # ruff: ignore[unnecessary-lambda]
             Interpolation.LINEAR,
             [(0, np.sin(0)), (1, 10), (0.7, 7)],
             1,

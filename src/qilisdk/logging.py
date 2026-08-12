@@ -97,7 +97,7 @@ class InterceptHandler(logging.Handler):
     Redirect stdlib 'logging' records to Loguru, optionally filtering by name_prefix.
     """
 
-    def emit(self, record: logging.LogRecord) -> None:  # noqa: PLR6301
+    def emit(self, record: logging.LogRecord) -> None:  # ruff: ignore[no-self-use]
         try:
             level = logger.level(record.levelname).name
         except ValueError:
