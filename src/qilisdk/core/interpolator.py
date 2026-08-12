@@ -136,7 +136,7 @@ class Interpolator(Parameterizable):
         fixed_times: list[PARAMETERIZED_NUMBER | tuple[float, float]] = sorted(
             time_dict.keys(),
             key=lambda t: self._get_value(
-                min(t, key=self._get_value)  # ty:ignore[no-matching-overload]
+                min(t, key=self._get_value)
                 if isinstance(t, tuple)
                 else self._get_value(t)
             ),
@@ -146,10 +146,10 @@ class Interpolator(Parameterizable):
             ti: PARAMETERIZED_NUMBER | tuple[float, float] = fixed_times[i]
             tj: PARAMETERIZED_NUMBER | tuple[float, float] = fixed_times[i + 1]
             t0 = (
-                self._get_value(ti) if not isinstance(ti, tuple) else self._get_value(ti[1])  # ty:ignore[invalid-argument-type]
+                self._get_value(ti) if not isinstance(ti, tuple) else self._get_value(ti[1])
             )
             t1 = (
-                self._get_value(tj) if not isinstance(tj, tuple) else self._get_value(tj[0])  # ty:ignore[invalid-argument-type]
+                self._get_value(tj) if not isinstance(tj, tuple) else self._get_value(tj[0])
             )
             if abs(t0 - t1) < get_settings().atol:
                 raise ValueError(f"The time point {t0} is defined twice.")
@@ -158,12 +158,12 @@ class Interpolator(Parameterizable):
 
         for time, coefficient in time_dict.items():
             if isinstance(time, tuple):
-                if len(time) != 2:  # noqa: PLR2004
+                if len(time) != 2:  # ruff: ignore[magic-value-comparison]
                     raise ValueError(
                         f"time intervals need to be defined by two points, but this interval was provided: {time}"
                     )
-                self.add_time_point(time[0], coefficient)  # ty:ignore[invalid-argument-type]
-                self.add_time_point(time[1], coefficient)  # ty:ignore[invalid-argument-type]
+                self.add_time_point(time[0], coefficient)
+                self.add_time_point(time[1], coefficient)
             else:
                 self.add_time_point(time, coefficient)
         self._tlist = self._generate_tlist()
@@ -171,7 +171,7 @@ class Interpolator(Parameterizable):
         time_insertion_list = sorted(
             [k for item in time_dict for k in (item if isinstance(item, tuple) else (item,))],
             key=self._get_value,
-        )  # ty:ignore[no-matching-overload]
+        )
         l = len(time_insertion_list)
         for i in range(l):
             t = time_insertion_list[i]
@@ -475,7 +475,7 @@ class Interpolator(Parameterizable):
             float: Evaluated coefficient.
         """
         logger.trace("[Interpolator] Evaluating coefficient at t={}", time_step)
-        time_step = time_step.item() if isinstance(time_step, np.generic) else self._get_value(time_step)  # ty:ignore[invalid-assignment]
+        time_step = time_step.item() if isinstance(time_step, np.generic) else self._get_value(time_step)
         val = self.get_coefficient_expression(time_step=time_step)
 
         if self._max_time is not None:
@@ -498,7 +498,7 @@ class Interpolator(Parameterizable):
         Raises:
             ValueError: If the interpolation mode is unsupported or evaluation fails.
         """
-        time_step = time_step.item() if isinstance(time_step, np.generic) else self._get_value(time_step)  # ty:ignore[invalid-assignment]
+        time_step = time_step.item() if isinstance(time_step, np.generic) else self._get_value(time_step)
 
         # generate the tlist
         self._tlist = self._generate_tlist()

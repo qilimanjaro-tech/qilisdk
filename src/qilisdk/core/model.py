@@ -121,7 +121,7 @@ def _random_connected_edges(
         ValueError: if ``num_nodes`` is smaller than two.
         ValueError: if ``edge_probability`` is outside ``[0, 1]``.
     """
-    if num_nodes < 2:  # noqa: PLR2004
+    if num_nodes < 2:  # ruff: ignore[magic-value-comparison]
         raise ValueError(f"A graph must have at least two nodes, got {num_nodes}.")
     if not 0 <= edge_probability <= 1:
         raise ValueError(f"edge_probability must be between 0 and 1, got {edge_probability}.")
@@ -146,7 +146,7 @@ class SlackCounter:
     _instance: SlackCounter | None = None
     _count: int = 0
 
-    def __new__(cls: Type[SlackCounter]) -> SlackCounter:  # noqa: PYI034
+    def __new__(cls: Type[SlackCounter]) -> SlackCounter:  # ruff: ignore[non-self-return-type]
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
@@ -1138,7 +1138,7 @@ class Model:
             ValueError: if ``edge_probability`` is outside ``[0, 1]``.
             ValueError: if ``distance_range`` is not a well-ordered ``(low, high)`` pair.
         """
-        if num_cities < 2:  # noqa: PLR2004
+        if num_cities < 2:  # ruff: ignore[magic-value-comparison]
             raise ValueError(f"num_cities must be greater than one, got {num_cities}.")
         if not 0 <= edge_probability <= 1:
             raise ValueError(f"edge_probability must be between 0 and 1, got {edge_probability}.")
@@ -1270,7 +1270,7 @@ class _Linearizer:
         return self._substitutions[key][2]
 
     def _reduce_monomial(self, monomial: Term) -> Term:
-        if monomial.operation != Operation.MUL or monomial.degree <= 2:  # noqa: PLR2004
+        if monomial.operation != Operation.MUL or monomial.degree <= 2:  # ruff: ignore[magic-value-comparison]
             return monomial
 
         coeff: Number = 1
@@ -1290,7 +1290,7 @@ class _Linearizer:
 
         variables.sort(key=lambda v: v.label)
 
-        while len(variables) > 2:  # noqa: PLR2004
+        while len(variables) > 2:  # ruff: ignore[magic-value-comparison]
             a, b = self._pick_pair(variables)
             variables.remove(a)
             variables.remove(b)
@@ -1391,7 +1391,7 @@ class QUBO(Model):
     def __repr__(self) -> str:
         return self.label
 
-    def _compute_lower_and_upper_limits(  # noqa: PLR6301
+    def _compute_lower_and_upper_limits(  # ruff: ignore[no-self-use]
         self,
         term: Term,
     ) -> tuple[RealNumber, RealNumber, RealNumber]:
@@ -1529,7 +1529,7 @@ class QUBO(Model):
             # assuming the operation is h >= 0 or h > 0
             h = term.lhs - term.rhs
             if lower_penalization == "unbalanced":
-                if len(parameters) < 2:  # noqa: PLR2004
+                if len(parameters) < 2:  # ruff: ignore[magic-value-comparison]
                     raise ValueError("using unbalanced penalization requires at least 2 parameters.")
                 return -parameters[0] * h + parameters[1] * (h**2)
 
@@ -1555,7 +1555,7 @@ class QUBO(Model):
             if lower_penalization == "unbalanced":
                 # assuming the operation is -> 0 < h  or 0 <= h
                 h = term.rhs - term.lhs
-                if len(parameters) < 2:  # noqa: PLR2004
+                if len(parameters) < 2:  # ruff: ignore[magic-value-comparison]
                     raise ValueError("using unbalanced penalization requires at least 2 parameters.")
                 return -parameters[0] * h + parameters[1] * (h**2)
             if lower_penalization == "slack":
@@ -1634,7 +1634,7 @@ class QUBO(Model):
         if linearize and self._linearizer is None:
             self._linearizer = _Linearizer()
 
-        if self._linearizer is None and c.degree > 2:  # noqa: PLR2004
+        if self._linearizer is None and c.degree > 2:  # ruff: ignore[magic-value-comparison]
             raise ValueError(
                 f"QUBO constraints can not contain terms of order 2 or higher but received terms with degree {c.degree}. Set linearize=True to allow linearization."
             )
@@ -1691,7 +1691,7 @@ class QUBO(Model):
 
         self._check_variables(term)
 
-        if self._linearizer is None and term.degree > 2:  # noqa: PLR2004
+        if self._linearizer is None and term.degree > 2:  # ruff: ignore[magic-value-comparison]
             raise ValueError(
                 f"QUBO objective can not contain terms of order higher than 2 but received terms with degree {term.degree}. Set linearize=True to enable linearization."
             )
@@ -1869,7 +1869,7 @@ class QUBO(Model):
         Returns:
             Hamiltonian: An ising hamiltonian that represents the QUBO model.
         """
-        from qilisdk.analog.hamiltonian import Hamiltonian, Z  # noqa: PLC0415
+        from qilisdk.analog.hamiltonian import Hamiltonian, Z  # ruff: ignore[import-outside-top-level]
 
         spins: dict[BaseVariable, Hamiltonian] = {}
         obj = self.qubo_objective

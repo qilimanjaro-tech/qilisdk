@@ -470,7 +470,7 @@ class Controlled(Modified[TBasicGate]):
             control_qubits += basic_gate.control_qubits
             basic_gate = basic_gate.basic_gate
 
-        super().__init__(basic_gate=basic_gate)
+        super().__init__(basic_gate=basic_gate)  # ty: ignore[invalid-argument-type]
 
         # Check for duplicate integers in control_qubits.
         if len(control_qubits) != len(set(control_qubits)):
@@ -623,7 +623,7 @@ class I(BasicGate):
     def name(self) -> str:
         return "I"
 
-    def _generate_matrix(self) -> np.ndarray:  # noqa: PLR6301
+    def _generate_matrix(self) -> np.ndarray:  # ruff: ignore[no-self-use]
         return np.array([[1, 0], [0, 1]], dtype=_complex_dtype())
 
 
@@ -655,7 +655,7 @@ class X(BasicGate):
     def name(self) -> str:
         return "X"
 
-    def _generate_matrix(self) -> np.ndarray:  # noqa: PLR6301
+    def _generate_matrix(self) -> np.ndarray:  # ruff: ignore[no-self-use]
         return np.array([[0, 1], [1, 0]], dtype=_complex_dtype())
 
 
@@ -687,7 +687,7 @@ class Y(BasicGate):
     def name(self) -> str:
         return "Y"
 
-    def _generate_matrix(self) -> np.ndarray:  # noqa: PLR6301
+    def _generate_matrix(self) -> np.ndarray:  # ruff: ignore[no-self-use]
         return np.array([[0, -1j], [1j, 0]], dtype=_complex_dtype())
 
 
@@ -719,7 +719,7 @@ class Z(BasicGate):
     def name(self) -> str:
         return "Z"
 
-    def _generate_matrix(self) -> np.ndarray:  # noqa: PLR6301
+    def _generate_matrix(self) -> np.ndarray:  # ruff: ignore[no-self-use]
         return np.array([[1, 0], [0, -1]], dtype=_complex_dtype())
 
 
@@ -751,7 +751,7 @@ class H(BasicGate):
     def name(self) -> str:
         return "H"
 
-    def _generate_matrix(self) -> np.ndarray:  # noqa: PLR6301
+    def _generate_matrix(self) -> np.ndarray:  # ruff: ignore[no-self-use]
         return (1 / np.sqrt(2)) * np.array([[1, 1], [1, -1]], dtype=_complex_dtype())
 
 
@@ -783,7 +783,7 @@ class S(BasicGate):
     def name(self) -> str:
         return "S"
 
-    def _generate_matrix(self) -> np.ndarray:  # noqa: PLR6301
+    def _generate_matrix(self) -> np.ndarray:  # ruff: ignore[no-self-use]
         return np.array([[1, 0], [0, 1j]], dtype=_complex_dtype())
 
 
@@ -815,7 +815,7 @@ class T(BasicGate):
     def name(self) -> str:
         return "T"
 
-    def _generate_matrix(self) -> np.ndarray:  # noqa: PLR6301
+    def _generate_matrix(self) -> np.ndarray:  # ruff: ignore[no-self-use]
         return np.array([[1, 0], [0, np.exp(1j * np.pi / 4)]], dtype=_complex_dtype())
 
 
@@ -1374,5 +1374,5 @@ class SWAP(BasicGate):
     def name(self) -> str:
         return "SWAP"
 
-    def _generate_matrix(self) -> np.ndarray:  # noqa: PLR6301
+    def _generate_matrix(self) -> np.ndarray:  # ruff: ignore[no-self-use]
         return np.array([[1, 0, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 0, 1]], dtype=_complex_dtype())

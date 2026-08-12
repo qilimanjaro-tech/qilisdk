@@ -150,7 +150,7 @@ class HardwareEfficientAnsatz(Ansatz):
             elif kind == "circular":
                 edges = (
                     []
-                    if self.nqubits < 2  # noqa: PLR2004
+                    if self.nqubits < 2  # ruff: ignore[magic-value-comparison]
                     else [(i, i + 1) for i in range(self.nqubits - 1)] + [(self.nqubits - 1, 0)]
                 )
             elif kind == "linear":
@@ -247,7 +247,9 @@ class TrotterizedSchedule(Ansatz):
         super().__init__(schedule.nqubits)
 
         # Local import to avoid a circular import (see module-level note).
-        from qilisdk.utils.trotterization.trotterization import trotter_evolution  # noqa: PLC0415
+        from qilisdk.utils.trotterization.trotterization import (  # ruff:ignore[import-outside-top-level]
+            trotter_evolution,
+        )
 
         logger.debug(
             "[Ansatz] Building trotterized schedule with {} qubits, {} trotter steps",
@@ -388,7 +390,9 @@ class QAOA(Ansatz):
             self.add(H(qubit))
 
         # Local import to avoid a circular import (see module-level note).
-        from qilisdk.utils.trotterization.trotterization import _commuting_trotter_evolution  # noqa: PLC0415
+        from qilisdk.utils.trotterization.trotterization import (  # ruff:ignore[import-outside-top-level]
+            _commuting_trotter_evolution,
+        )
 
         # Build the layers
         for i in range(self.layers):
