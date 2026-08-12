@@ -352,7 +352,9 @@ class Circuit(Parameterizable):
                 If ``None``, the figure is not saved.
         """
         logger.debug("[Circuit] Drawing circuit with style: {} and filepath: {}", style, filepath)
-        from qilisdk.utils.visualization.circuit_renderers import MatplotlibCircuitRenderer  # noqa: PLC0415
+        from qilisdk.utils.visualization.circuit_renderers import (  # ruff:ignore[import-outside-top-level]
+            MatplotlibCircuitRenderer,
+        )
 
         renderer = MatplotlibCircuitRenderer(self, style=style)
         renderer.plot()

@@ -69,7 +69,7 @@ _OPTIONAL_FEATURE_BY_SYMBOL: dict[str, OptionalFeature] = {
 __all__ += list(_OPTIONAL_FEATURE_BY_SYMBOL)
 
 
-def __getattr__(name: str) -> Any:  # noqa: ANN401
+def __getattr__(name: str) -> Any:  # ruff: ignore[any-type]
     """Lazily import optional backend symbols on first access (PEP 562).
 
     This runs only when normal attribute lookup on the module fails, i.e. the

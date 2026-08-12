@@ -20,7 +20,7 @@ from types import SimpleNamespace
 
 import numpy as np
 from dill import dumps
-from loguru_caplog import loguru_caplog as caplog  # noqa: F401
+from loguru_caplog import loguru_caplog as caplog  # ruff: ignore[unused-import]
 from pydantic import BaseModel
 from ruamel.yaml import YAML
 from scipy import sparse
@@ -138,7 +138,7 @@ def test_function_roundtrip():
 
 
 def test_lambda_roundtrip():
-    f = lambda x: x * 2  # noqa: E731
+    f = lambda x: x * 2  # ruff: ignore[lambda-assignment]
 
     loaded = dump_load(f)
 

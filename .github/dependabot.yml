@@ -3,6 +3,11 @@
 # Grouping strategy: minor + patch bumps are collected into one PR per ecosystem;
 # major bumps fall outside the group and therefore get their own PR each, since
 # they are the ones that can break us and deserve individual review.
+#
+# Keeping the run green: Dependabot fails the *whole* scheduled run as soon as a
+# single dependency errors, even when every other bump succeeded and its PR was
+# opened. So anything we know is permanently unresolvable has to be listed under
+# `ignore` rather than left for Dependabot to retry and fail on every week.
 version: 2
 
 updates:
@@ -25,6 +30,11 @@ updates:
     # Majors arrive as one PR each now, so leave headroom above the default of 5.
     open-pull-requests-limit: 10
     labels: ["dependencies", "github-actions"]
+    # backport.yml calls a reusable workflow from the *private* qilimanjaro-tech/devops
+    # repo. Dependabot's job token is scoped to this repo only, so reading it depends on
+    # "Grant Dependabot access to private repositories" (org Settings -> Code security)
+    # listing qilimanjaro-tech/devops. Without that grant every run dies on
+    # `git_dependencies_not_reachable` (404/401 on devops.git/info/refs).
 
   # -------------------------------- Python ---------------------------------
   - package-ecosystem: "uv"
@@ -44,3 +54,13 @@ updates:
       prefix-development: "deps-dev"
     open-pull-requests-limit: 10
     labels: ["dependencies", "pyproject.toml"]
+    ignore:
+      # sphinx 9 is unreachable for us, for two independent reasons:
+      #   * sphinxawesome-theme 5.x requires sphinx >=8,<9 on Python <3.13;
+      #   * sphinx >=9.1 requires Python >=3.12, while we still support >=3.11,
+      #     so uv's universal resolution cannot pin it for the 3.11 split either.
+      # Dependabot retries the bump weekly, `uv lock` fails, and the run goes red.
+      # Revisit once requires-python is >=3.12 (the second blocker is the hard one;
+      # bumping the theme to 6.x alone is not enough).
+      - dependency-name: "sphinx"
+        update-types: ["version-update:semver-major"]

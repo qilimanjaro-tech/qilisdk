@@ -17,7 +17,7 @@ import subprocess
 import sys
 from unittest.mock import MagicMock, patch
 
-from loguru_caplog import loguru_caplog as caplog  # noqa: F401
+from loguru_caplog import loguru_caplog as caplog  # ruff: ignore[unused-import]
 
 from qilisdk import about
 
@@ -102,10 +102,10 @@ def test_about_bad_imports(monkeypatch):
         },
     ):
         # Re-import about so it runs with the patched sys.modules
-        import qilisdk  # noqa: PLC0415
+        import qilisdk  # ruff: ignore[import-outside-top-level]
 
         importlib.reload(qilisdk)
-        from qilisdk import about  # noqa: PLC0415
+        from qilisdk import about  # ruff: ignore[import-outside-top-level]
 
         about_str = about()
 
@@ -131,10 +131,10 @@ def test_about_qilisim_bad_init(monkeypatch):
             "qilisdk.core.qtensor": fake_qtensor,
         },
     ):
-        import qilisdk  # noqa: PLC0415
+        import qilisdk  # ruff: ignore[import-outside-top-level]
 
         importlib.reload(qilisdk)
-        from qilisdk import about  # noqa: PLC0415
+        from qilisdk import about  # ruff: ignore[import-outside-top-level]
 
         about_str = about()
     assert "QiliSim Import: Failed with error:" in about_str

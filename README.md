@@ -30,10 +30,10 @@ To create a simple quantum circuit:
 ```python
 from qilisdk.digital import Circuit, H, RX, CNOT
 
-circuit = Circuit(2)             # Create a circuit with 2 qubits
-circuit.add(H(0))                # Apply Hadamard on qubit 0
-circuit.add(RX(1, theta=3.14))   # Apply RX rotation on qubit 1
-circuit.add(CNOT(0, 1))          # Add a CNOT gate between qubit 0 and 1
+circuit = Circuit(2)  # Create a circuit with 2 qubits
+circuit.add(H(0))  # Apply Hadamard on qubit 0
+circuit.add(RX(1, theta=3.14))  # Apply RX rotation on qubit 1
+circuit.add(CNOT(0, 1))  # Add a CNOT gate between qubit 0 and 1
 ```
 
 ### Analog Evolution
@@ -43,7 +43,7 @@ To create a linear interpolation between an initial and final Hamiltonian:
 ```python
 from qilisdk.analog import Schedule, X, Z
 
-initial_hamiltonian = - X(0) - X(1)
+initial_hamiltonian = -X(0) - X(1)
 final_hamiltonian = Z(0) + Z(1) + 0.5 * Z(0) * Z(1)
 
 schedule = Schedule.linear(initial_hamiltonian, final_hamiltonian, total_time=10.0, dt=0.5)

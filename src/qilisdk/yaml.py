@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# ruff: noqa: ANN001, ANN201 DOC201, S403
+# ruff: file-ignore[missing-type-function-argument, missing-return-type-undocumented-public-function, docstring-missing-returns, suspicious-pickle-import]
 
 import base64
 import types
@@ -145,7 +145,7 @@ def function_constructor(constructor, node):
     """
     logger.trace("[Yaml] Deserializing function")
     serialized_function = base64.b64decode(node.value)
-    return loads(serialized_function)  # noqa: S301
+    return loads(serialized_function)  # ruff: ignore[suspicious-pickle-usage]
 
 
 def lambda_representer(representer, data):
@@ -164,7 +164,7 @@ def lambda_constructor(constructor, node):
     logger.trace("[Yaml] Deserializing lambda")
     # Decode the base64-encoded string and load the lambda function
     serialized_lambda = base64.b64decode(node.value)
-    return loads(serialized_lambda)  # noqa: S301
+    return loads(serialized_lambda)  # ruff: ignore[suspicious-pickle-usage]
 
 
 def pydantic_model_representer(representer, data):
@@ -283,7 +283,7 @@ class QiliYAML(YAML):
         """
         if cls is None:
 
-            def decorator(target_cls):  # noqa: ANN202
+            def decorator(target_cls):  # ruff: ignore[missing-return-type-private-function]
                 return self.register_class(target_cls, shared=shared)
 
             return decorator

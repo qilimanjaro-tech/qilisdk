@@ -742,11 +742,11 @@ class SabreLayoutPass(CircuitTranspilerPass):
             NotImplementedError: If the gate type does not provide known internal storage for control or target qubits.
         """
         if isinstance(gate, (BasicGate, M)):
-            gate._target_qubits = tuple(qubit_map[logical_qubit] for logical_qubit in gate.target_qubits)  # noqa: SLF001
+            gate._target_qubits = tuple(qubit_map[logical_qubit] for logical_qubit in gate.target_qubits)  # ruff: ignore[private-member-access]
             return
 
         if _is_controlled_gate(gate):
-            gate._control_qubits = tuple(qubit_map[control_qubit] for control_qubit in gate.control_qubits)  # noqa: SLF001
+            gate._control_qubits = tuple(qubit_map[control_qubit] for control_qubit in gate.control_qubits)  # ruff: ignore[private-member-access]
             SabreLayoutPass._remap_gate_qubits_inplace(gate.basic_gate, qubit_map)
             return
 

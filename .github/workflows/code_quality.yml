@@ -16,7 +16,7 @@ jobs:
     name: Code Quality for Python ${{ matrix.python-version }}
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
 
     env:
       HOME_REPO: /home/repo
@@ -44,7 +44,9 @@ jobs:
 
       - name: Install the project
         run: |
-          uv sync --frozen --group dev --extra all-cu13
+          uv sync --frozen --group dev --extra all-cu13 \
+            -Ccmake.build-type=Debug \
+            -Ccmake.define.CMAKE_CXX_FLAGS_DEBUG=-O0
           echo "VIRTUAL_ENV=$PWD/.venv" >> "$GITHUB_ENV"
           echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
 
@@ -54,7 +56,7 @@ jobs:
       - name: Format
         run: ruff format --diff --output-format=github .
 
-      - name: Mypy
+      - name: Type Checking
         run: ty check --output-format=github
 
       - name: Cpp Linter

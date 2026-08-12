@@ -30,6 +30,7 @@ from qilisdk.core.types import Number
 from qilisdk.core.variables import BaseVariable, Parameter, Term
 from qilisdk.settings import get_settings
 from qilisdk.utils.hashing import hash as qili_hash
+from qilisdk.utils.visualization.style import HamiltonianStyle
 from qilisdk.yaml import yaml
 
 from .exceptions import InvalidHamiltonianOperation
@@ -89,7 +90,7 @@ def Y(qubit: int) -> Hamiltonian:
     return _get_pauli("Y", qubit).to_hamiltonian()
 
 
-def I(qubit: int = 0) -> Hamiltonian:  # noqa: E743
+def I(qubit: int = 0) -> Hamiltonian:  # ruff: ignore[ambiguous-function-name]
     return _get_pauli("I", qubit).to_hamiltonian()
 
 
@@ -453,6 +454,45 @@ class Hamiltonian(Parameterizable):
                 aux *= p
             out += aux * value
         return out
+
+    def draw(self, style: HamiltonianStyle | None = None, filepath: str | None = None) -> None:
+        """Render this Hamiltonian as an interaction graph and optionally save it to a file.
+
+        Every qubit is drawn as a node whose disc is split into one slice per local field acting
+        on it (labelled with the Pauli type), and every two-qubit term is drawn as an edge between
+        the qubits it couples, with a line style per coupling type. Slice and edge colours encode
+        the coefficient of the corresponding term, as described by the accompanying colour bar.
+        Terms acting on three or more qubits are drawn as star-shaped hyperedges joined at their
+        centroid, and a constant (identity) term is annotated as an energy offset.
+
+        If ``filepath`` is given, the resulting figure is saved to disk (the output format is
+        inferred from the file extension, e.g. ``.png``, ``.pdf``, ``.svg``); otherwise the figure
+        is shown.
+
+        Args:
+            style (HamiltonianStyle | None, optional): Customization options for the plot appearance.
+                Defaults to :class:`HamiltonianStyle`.
+            filepath (str | None, optional): If provided, saves the plot to the specified file path.
+
+        Example:
+            .. code-block:: python
+
+                from qilisdk.analog import X, Z
+
+                H = X(0) + 2 * Z(1) + 0.5 * Z(0) * Z(1)
+                H.draw()
+        """
+        logger.debug("[Hamiltonian] Drawing Hamiltonian with style: {} and filepath: {}", style, filepath)
+        from qilisdk.utils.visualization.hamiltonian_renderers import (  # ruff:ignore[import-outside-top-level]
+            MatplotlibHamiltonianRenderer,
+        )
+
+        renderer = MatplotlibHamiltonianRenderer(self, style=style or HamiltonianStyle())
+        renderer.plot()
+        if filepath:
+            renderer.save(filepath)
+        else:
+            renderer.show()
 
     def __iter__(self) -> Iterator[tuple[complex, list[PauliOperator]]]:
         for key, value in self.elements.items():
@@ -1000,10 +1040,10 @@ class Hamiltonian(Parameterizable):
             if not other.elements:
                 return
             # Otherwise, add each term
-            for key, val in other._elements.items():  # noqa: SLF001
+            for key, val in other._elements.items():  # ruff: ignore[private-member-access]
                 self._elements[key] += val
 
-            self._update_parameters(other._parameters)  # noqa: SLF001
+            self._update_parameters(other._parameters)  # ruff: ignore[private-member-access]
         elif isinstance(other, PauliOperator):
             # Just add 1 to that single operator key
             self._elements[other,] += 1
@@ -1025,9 +1065,9 @@ class Hamiltonian(Parameterizable):
 
     def _sub_inplace(self, other: Number | PauliOperator | Hamiltonian | Term | Parameter) -> None:
         if isinstance(other, Hamiltonian):
-            for key, val in other._elements.items():  # noqa: SLF001
+            for key, val in other._elements.items():  # ruff: ignore[private-member-access]
                 self._elements[key] -= val
-            self._update_parameters(other._parameters)  # noqa: SLF001
+            self._update_parameters(other._parameters)  # ruff: ignore[private-member-access]
         elif isinstance(other, PauliOperator):
             self._elements[other,] -= 1
         elif isinstance(other, (int, float, complex)):
@@ -1086,7 +1126,7 @@ class Hamiltonian(Parameterizable):
 
             # Check if 'other' is purely scalar identity => short-circuit
             if len(other.elements) == 1:
-                ((ops2, c2),) = other._elements.items()  # single item  # noqa: SLF001
+                ((ops2, c2),) = other._elements.items()  # single item  # ruff: ignore[private-member-access]
                 if len(ops2) == 1:
                     op2 = ops2[0]
                     if op2.name == "I" and op2.qubit == 0:
@@ -1096,11 +1136,11 @@ class Hamiltonian(Parameterizable):
             # Otherwise, we do the general multiply
             new_dict: dict[tuple[PauliOperator, ...], complex | Term | Parameter] = defaultdict(complex)
             for ops1, c1 in self._elements.items():
-                for ops2, c2 in other._elements.items():  # noqa: SLF001
+                for ops2, c2 in other._elements.items():  # ruff: ignore[private-member-access]
                     phase, new_ops = self._multiply_sets(ops1, ops2)
                     new_dict[new_ops] += phase * c1 * c2
             self._elements = new_dict
-            self._update_parameters(other._parameters)  # noqa: SLF001
+            self._update_parameters(other._parameters)  # ruff: ignore[private-member-access]
 
         else:
             raise InvalidHamiltonianOperation(
