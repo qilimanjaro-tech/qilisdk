@@ -129,7 +129,7 @@ dev = [
     "diff-cover>=10.2.1",
 ]
 docs = [
-    "astroid<3.2",
+    "astroid<4.4",
     "nbsphinx>=0.9.7",
     "pypandoc>=1.15",
     "sphinx==8.2.3",
