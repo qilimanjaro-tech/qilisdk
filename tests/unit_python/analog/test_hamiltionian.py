@@ -856,6 +856,7 @@ def test_pauli_operator_rejects_negative_qubit():
     with pytest.raises(ValueError, match="non-negative"):
         PauliX(-1)
 
+
 @pytest.mark.parametrize(
     ("built", "expected"),
     [
@@ -1250,7 +1251,8 @@ def test_a_randomized_hamiltonian_is_still_usable():
 
     assert H.to_matrix().shape == (8, 8)
     assert H.to_qtensor().is_hermitian()
-    
+
+
 def test_hamiltonian_draw(monkeypatch):
     calls = []
 
