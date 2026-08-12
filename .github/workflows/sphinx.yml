@@ -27,9 +27,6 @@ jobs:
             **/uv.lock
           python-version: "3.13"
 
-      - name: Install pandoc
-        run: sudo apt-get update && sudo apt-get install -y pandoc
-
       - name: Install the requirements
         run: |
           uv sync --frozen --group docs
