@@ -30,11 +30,13 @@ updates:
     # Majors arrive as one PR each now, so leave headroom above the default of 5.
     open-pull-requests-limit: 10
     labels: ["dependencies", "github-actions"]
-    # backport.yml calls a reusable workflow from the *private* qilimanjaro-tech/devops
-    # repo. Dependabot's job token is scoped to this repo only, so reading it depends on
-    # "Grant Dependabot access to private repositories" (org Settings -> Code security)
-    # listing qilimanjaro-tech/devops. Without that grant every run dies on
-    # `git_dependencies_not_reachable` (404/401 on devops.git/info/refs).
+    # Every `uses:` here now points at a public repo, so Dependabot's repo-scoped job
+    # token can read them all. If a workflow ever references the *private*
+    # qilimanjaro-tech/devops again, reading it requires "Grant Dependabot access to
+    # private repositories" (org Settings -> Code security) to list that repo; without
+    # the grant every run dies on `git_dependencies_not_reachable` (404/401 on
+    # devops.git/info/refs). Note that a public repo cannot call a private repo's
+    # reusable workflows at runtime regardless of that grant.
 
   # -------------------------------- Python ---------------------------------
   - package-ecosystem: "uv"
