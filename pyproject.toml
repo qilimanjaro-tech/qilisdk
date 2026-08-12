@@ -131,7 +131,7 @@ dev = [
 docs = [
     "astroid<4.4",
     "nbsphinx>=0.9.7",
-    "pypandoc>=1.15",
+    "pypandoc-binary>=1.15",
     "sphinx==8.2.3",
     "sphinx-autoapi>=3.4.0",
     "sphinx-automodapi>=0.20.0",
