@@ -3350,7 +3350,7 @@ docs = [
     { name = "sphinx-mdinclude", specifier = ">=0.6.2" },
     { name = "sphinx-multiversion", git = "https://github.com/sphinx-contrib/multiversion?branch=main" },
     { name = "sphinx-tabs", specifier = ">=3.5.0" },
-    { name = "sphinxawesome-theme", specifier = "==5.3.2" },
+    { name = "sphinxawesome-theme", specifier = "==6.0.5" },
 ]
 
 [[package]]
@@ -3973,15 +3973,15 @@ wheels = [
 
 [[package]]
 name = "sphinxawesome-theme"
-version = "5.3.2"
+version = "6.0.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "beautifulsoup4" },
-    { name = "sphinx", marker = "python_full_version < '3.13' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "sphinx" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/45/58/6f3e05f77c881e1356d73fc1d99561efe1795671bd56e7fb47c63a32cc1f/sphinxawesome_theme-5.3.2.tar.gz", hash = "sha256:0629d38b80aefc279b1186c53a7a6faf21e721b5b2ecda14f488ca1074e2631f", size = 364039, upload-time = "2024-11-08T11:51:03.257Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/9a/3f/ba7f8dc2837c0ac362127c6cd491578c23ac4d4e8cc6a37726531be29256/sphinxawesome_theme-6.0.5.tar.gz", hash = "sha256:ed3d82b7f0e30e3d6f38f5245d89775e9472a80a45ffd73d6a0a4b9d05ac5736", size = 343775, upload-time = "2026-06-15T15:09:36.094Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/9b/e9/ca6a7178677bb171c8fd7f9eab726c00182168d38a79d2a58e7678590227/sphinxawesome_theme-5.3.2-py3-none-any.whl", hash = "sha256:5f2bb6b6ab8fa11db1ded5590106eb557351d6a6c36adea7ebd4e0f4bc96945d", size = 375173, upload-time = "2024-11-08T11:51:01.441Z" },
+    { url = "https://files.pythonhosted.org/packages/2d/5c/31521b6a35410cdced12af394b715387537a262bdd1bcf08b2a34a9a4df9/sphinxawesome_theme-6.0.5-py3-none-any.whl", hash = "sha256:c18e60b06f164f181e3ef7540a4a237f1cf4e82d8909a964e5c65e6e8293f51c", size = 376755, upload-time = "2026-06-15T15:09:34.523Z" },
 ]
 
 [[package]]
