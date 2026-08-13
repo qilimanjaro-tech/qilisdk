@@ -21,7 +21,7 @@
 
 // GCOV_EXCL_BR_START
 
-void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, NoiseModelCpp& noise_model_cpp, QiliSimConfig& config, DenseMatrix& rho_t, std::vector<DenseMatrix>& intermediate_rhos) {
+void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, NoiseModelCpp& noise_model_cpp, QiliSimConfig& config, DenseMatrix& rho_t, std::vector<DenseMatrix>& intermediate_rhos, bool* output_is_trajectories) {
     /*
     Execute a time evolution functional.
 
@@ -36,6 +36,9 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
         rho_t (DenseMatrix&): Output parameter to hold the final state after evolution.
         intermediate_rhos (std::vector<DenseMatrix>&): Output parameter to hold intermediate states if requested.
         expectation_values (std::vector<std::vector<double>>&): Output parameter to hold the expectation values of observables at final time.
+        output_is_trajectories (bool*): Optional output parameter. If given, a Monte Carlo ensemble is
+            returned as a batch of state vector columns instead of being averaged into a density
+            matrix, and the flag is set to true when that is what the outputs hold.
 
     Returns:
         TimeEvolutionResult: The results of the evolution.
@@ -116,6 +119,20 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
     // Init rho_0
     rho_t = rho_0;
 
+    // From here on the state is either a single density matrix or an ensemble of state vector columns
+    bool state_is_ensemble = use_monte_carlo || input_is_trajectories || (!input_was_vector && rho_t.cols() == 1);
+    bool keep_trajectories = (output_is_trajectories != nullptr);
+    if (keep_trajectories) {
+        *output_is_trajectories = false;
+    }
+    auto record_intermediate = [&](const DenseMatrix& current) {
+        if (state_is_ensemble && !keep_trajectories) {
+            intermediate_rhos.push_back(trajectories_to_density_matrix(current));
+        } else {
+            intermediate_rhos.push_back(current);
+        }
+    };
+
     // Precalculate the sparsity pattern of the combined Hamiltonians
     SparseMatrix combinedH(dim, dim);
     for (size_t h_ind = 0; h_ind < hamiltonians.size(); ++h_ind) {
@@ -173,21 +190,19 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
 
         // If we should store intermediates, do it here
         if (config.get_store_intermediate_results()) {
-            if (use_monte_carlo || input_is_trajectories || (!input_was_vector && rho_t.cols() == 1)) {
-                intermediate_rhos.push_back(trajectories_to_density_matrix(rho_t));
-            } else {
-                intermediate_rhos.push_back(rho_t);
-            }
+            record_intermediate(rho_t);
         }
     }
 
     // If we have statevector/s but we should return a density matrix
-    if (!input_is_trajectories && (use_monte_carlo || (!input_was_vector && rho_t.cols() == 1))) {
+    if (state_is_ensemble && keep_trajectories) {
+        *output_is_trajectories = true;
+    } else if (state_is_ensemble && !input_is_trajectories) {
         rho_t = trajectories_to_density_matrix(rho_t);
     }
 }
 
-void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, NoiseModelCpp& noise_model_cpp, QiliSimConfig& config, DenseMatrix& rho_t, std::vector<DenseMatrix>& intermediate_rhos) {
+void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, NoiseModelCpp& noise_model_cpp, QiliSimConfig& config, DenseMatrix& rho_t, std::vector<DenseMatrix>& intermediate_rhos, bool* output_is_trajectories) {
     /*
     Execute a time evolution functional.
 
@@ -201,6 +216,9 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
         rho_t (DenseMatrix&): Output parameter to hold the final state after evolution.
         intermediate_rhos (std::vector<DenseMatrix>&): Output parameter to hold intermediate states if requested.
         expectation_values (std::vector<std::vector<double>>&): Output parameter to hold the expectation values of observables at final time.
+        output_is_trajectories (bool*): Optional output parameter. If given, a Monte Carlo ensemble is
+            returned as a batch of state vector columns instead of being averaged into a density
+            matrix, and the flag is set to true when that is what the outputs hold.
 
     Returns:
         TimeEvolutionResult: The results of the evolution.
@@ -287,6 +305,20 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
     // Init rho_0
     rho_t = rho_0;
 
+    // From here on the state is either a single density matrix or an ensemble of state vector columns
+    bool state_is_ensemble = use_monte_carlo || input_is_trajectories || (!input_was_vector && rho_t.cols() == 1);
+    bool keep_trajectories = (output_is_trajectories != nullptr);
+    if (keep_trajectories) {
+        *output_is_trajectories = false;
+    }
+    auto record_intermediate = [&](const DenseMatrix& current) {
+        if (state_is_ensemble && !keep_trajectories) {
+            intermediate_rhos.push_back(trajectories_to_density_matrix(current));
+        } else {
+            intermediate_rhos.push_back(current);
+        }
+    };
+
     // If doing adaptive step size with rk45
     if (config.get_time_evolution_method() == "integrate_rk45_matrix_free") {
         // Initial step size
@@ -312,11 +344,7 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
 
             // If we should store intermediates, do it here
             if (config.get_store_intermediate_results() && dt_taken > 0) {
-                if (use_monte_carlo || input_is_trajectories || (!input_was_vector && rho_t.cols() == 1)) {
-                    intermediate_rhos.push_back(trajectories_to_density_matrix(rho_t));
-                } else {
-                    intermediate_rhos.push_back(rho_t);
-                }
+                record_intermediate(rho_t);
             }
 
             // Update the time and step index
@@ -359,11 +387,7 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
 
             // If we should store intermediates, do it here
             if (config.get_store_intermediate_results()) {
-                if (use_monte_carlo || input_is_trajectories || (!input_was_vector && rho_t.cols() == 1)) {
-                    intermediate_rhos.push_back(trajectories_to_density_matrix(rho_t));
-                } else {
-                    intermediate_rhos.push_back(rho_t);
-                }
+                record_intermediate(rho_t);
             }
         }
 
@@ -392,11 +416,7 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
 
             // If we should store intermediates, do it here
             if (config.get_store_intermediate_results()) {
-                if (use_monte_carlo || input_is_trajectories || (!input_was_vector && rho_t.cols() == 1)) {
-                    intermediate_rhos.push_back(trajectories_to_density_matrix(rho_t));
-                } else {
-                    intermediate_rhos.push_back(rho_t);
-                }
+                record_intermediate(rho_t);
             }
         }
     } else {
@@ -404,7 +424,9 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
     }
 
     // If we have statevector/s but we should return a density matrix
-    if (!input_is_trajectories && (use_monte_carlo || (!input_was_vector && rho_t.cols() == 1))) {
+    if (state_is_ensemble && keep_trajectories) {
+        *output_is_trajectories = true;
+    } else if (state_is_ensemble && !input_is_trajectories) {
         rho_t = trajectories_to_density_matrix(rho_t);
     }
 }

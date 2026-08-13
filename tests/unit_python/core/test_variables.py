@@ -240,7 +240,7 @@ def test_arithmetic_and_comparisons():
 
     t = a + b
 
-    assert t * a == a.__rmul__(t)  # noqa: PLC2801
+    assert t * a == a.__rmul__(t)  # ruff: ignore[unnecessary-dunder-call]
 
     t = -a
 
@@ -262,7 +262,7 @@ def test_arithmetic_and_comparisons():
     assert val == 2 + 1 * 2 - 3
 
     # test division by zero
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):  # ruff: ignore[pytest-raises-too-broad]
         _ = a / 0
     # test unsupported rtruediv
     with pytest.raises(NotSupportedOperation):
@@ -1459,21 +1459,21 @@ def test_base_variable():
     with pytest.raises(TypeError):
         _ = not_number + a
     assert (a + np_generic) == (a + 1.0)
-    assert (a.__radd__(np_generic)) == (1.0 + a)  # noqa: PLC2801
+    assert (a.__radd__(np_generic)) == (1.0 + a)  # ruff: ignore[unnecessary-dunder-call]
 
     with pytest.raises(TypeError):
         _ = a - not_number
     with pytest.raises(TypeError):
         _ = not_number - a
     assert (a - np_generic) == (a - 1.0)
-    assert (a.__rsub__(np_generic)) == (1.0 - a)  # noqa: PLC2801
+    assert (a.__rsub__(np_generic)) == (1.0 - a)  # ruff: ignore[unnecessary-dunder-call]
 
     with pytest.raises(TypeError):
         _ = a * not_number
     with pytest.raises(TypeError):
         _ = not_number * a
     assert (a * np_generic) == (1.0 * a)
-    assert (a.__rmul__(np_generic)) == (1.0 * a)  # noqa: PLC2801
+    assert (a.__rmul__(np_generic)) == (1.0 * a)  # ruff: ignore[unnecessary-dunder-call]
 
     with pytest.raises(NotImplementedError, match="Only division by real numbers"):
         _ = a / not_number
@@ -1593,21 +1593,21 @@ def test_term_arithmetic():
     with pytest.raises(TypeError):
         _ = not_number + t
     assert (t + np_generic) == (t + 1.0)
-    assert (t.__radd__(np_generic)) == (1.0 + t)  # noqa: PLC2801
+    assert (t.__radd__(np_generic)) == (1.0 + t)  # ruff: ignore[unnecessary-dunder-call]
 
     with pytest.raises(TypeError):
         _ = t - not_number
     with pytest.raises(TypeError):
         _ = not_number - t
     assert (t - np_generic) == (t - 1.0)
-    assert (t.__rsub__(np_generic)) == (1.0 - t)  # noqa: PLC2801
+    assert (t.__rsub__(np_generic)) == (1.0 - t)  # ruff: ignore[unnecessary-dunder-call]
 
     with pytest.raises(TypeError):
         _ = t * not_number
     with pytest.raises(TypeError):
         _ = not_number * t
     assert (t * np_generic) == (t * 1.0)
-    assert (t.__rmul__(np_generic)) == (1.0 * t)  # noqa: PLC2801
+    assert (t.__rmul__(np_generic)) == (1.0 * t)  # ruff: ignore[unnecessary-dunder-call]
 
     with pytest.raises(NotImplementedError, match="Only division by"):
         _ = t / not_number
