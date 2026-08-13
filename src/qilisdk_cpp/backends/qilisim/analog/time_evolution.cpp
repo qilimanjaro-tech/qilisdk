@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "time_evolution.h"
+#include "../../../libs/logging.h"
 #include "../noise/noise_model.h"
 #include "../utils/matrix_utils.h"
 #include "../utils/random.h"
@@ -184,6 +185,9 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
             throw std::invalid_argument("Invalid time evolution method: " + config.get_time_evolution_method());
         }
 
+        // Stop early if the integrator has diverged to a non-finite state
+        check_state_diverged(rho_t);
+
         // If we should store intermediates, do it here
         if (config.get_store_intermediate_results()) {
             record_intermediate(rho_t);
@@ -335,6 +339,9 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
             // dt is updated to the suggested next step; dt_taken is what was actually stepped0
             double dt_taken = iter_rk45(rho_t, current_time, dt, step_list, hamiltonians, parameters_list, jump_operators, is_unitary_on_statevector, config.get_adaptive_tol(), k_saved, config.get_normalize_state());
 
+            // Stop early if the integrator has diverged to a non-finite state
+            check_state_diverged(rho_t);
+
             // If we should store intermediates, do it here
             if (config.get_store_intermediate_results() && dt_taken > 0) {
                 record_intermediate(rho_t);
@@ -375,6 +382,9 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
             // Perform the iteration
             iter_rk4(rho_t, t_start, dt, step_list, hamiltonians, parameters_list, current_jumps, is_unitary_on_statevector, config.get_normalize_state());
 
+            // Stop early if the integrator has diverged to a non-finite state
+            check_state_diverged(rho_t);
+
             // If we should store intermediates, do it here
             if (config.get_store_intermediate_results()) {
                 record_intermediate(rho_t);
@@ -400,6 +410,9 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
 
             // Perform the iteration
             rho_t = iter_arnoldi_matrix_free(rho_t, dt, currentH, jump_operators, config.get_arnoldi_dim(), config.get_num_arnoldi_substeps(), is_unitary_on_statevector, config.get_atol());
+
+            // Stop early if the integrator has diverged to a non-finite state
+            check_state_diverged(rho_t);
 
             // If we should store intermediates, do it here
             if (config.get_store_intermediate_results()) {

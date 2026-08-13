@@ -41,7 +41,7 @@ class Parameterizable(ABC):
 
     # Private Methods
 
-    def _iter_parameter_children(self) -> Iterable[Parameterizable]:  # noqa: PLR6301
+    def _iter_parameter_children(self) -> Iterable[Parameterizable]:  # ruff: ignore[no-self-use]
         """Yield child objects that compose this object's parameter interface.
 
         Override this method in subclasses that expose nested
@@ -57,7 +57,7 @@ class Parameterizable(ABC):
         local_params = self._parameters or {}
         yield from local_params.items()
         for child in self._iter_parameter_children():
-            yield from child._iter_parameter_items()  # noqa: SLF001
+            yield from child._iter_parameter_items()  # ruff: ignore[private-member-access]
 
     def _add_parameter(self, label: str, parameter: Parameter) -> None:
         """Add a parameter under the current prefix.
@@ -146,7 +146,7 @@ class Parameterizable(ABC):
             return self._parameters.pop(label)
         for child in self._iter_parameter_children():
             if label in child.get_parameter_names():
-                return child._pop(label)  # noqa: SLF001
+                return child._pop(label)  # ruff: ignore[private-member-access]
         raise ValueError(f"Parameter {label} is not defined in the current object or any of its children.")
 
     # Public Methods

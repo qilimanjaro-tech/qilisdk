@@ -1,18 +1,18 @@
 name: Feature Request
 description: Suggest a new feature or enhancement for QiliSDK
 title: "[Feature]: "
-labels: ["enhancement"]
+type: Feature
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for suggesting a new feature! Please describe your idea in detail so we can understand and evaluate it.
+        Keep it short. A one-line title like `Add <thing>` plus a code example of the API you want is enough.
 
   - type: textarea
     id: summary
     attributes:
       label: Feature Summary
-      description: A brief, clear summary of the feature you're requesting.
+      description: What to add, in a sentence or two.
       placeholder: One or two sentences describing the feature.
     validations:
       required: true
@@ -21,9 +21,7 @@ body:
     id: motivation
     attributes:
       label: Motivation / Use Case
-      description: |
-        Why do you need this feature? What problem does it solve?
-        Describe the use case and how it would benefit you or other users.
+      description: What you cannot do today, and why the workaround is not good enough.
       placeholder: I'm trying to do X, but currently I have to work around it by...
     validations:
       required: true
@@ -32,39 +30,12 @@ body:
     id: proposed_solution
     attributes:
       label: Proposed Solution
-      description: Describe the solution or API you'd like to see. Include code examples if possible.
+      description: |
+        The API you want, as a code example. Add a note about any design decision the implementer has to settle.
       placeholder: |
+        ```python
         # Example of desired usage
         import qilisdk
-        # ...
-      render: python
-    validations:
-      required: false
-
-  - type: textarea
-    id: alternatives
-    attributes:
-      label: Alternatives Considered
-      description: Describe any alternative solutions or workarounds you've considered.
-    validations:
-      required: false
-
-  - type: dropdown
-    id: priority
-    attributes:
-      label: Priority
-      description: How important is this feature to your workflow?
-      options:
-        - Low - Nice to have
-        - Medium - Would improve my workflow
-        - High - Blocking my use case
-    validations:
-      required: true
-
-  - type: textarea
-    id: additional
-    attributes:
-      label: Additional Context
-      description: Any other context, references, or information about the feature request.
+        ```
     validations:
       required: false

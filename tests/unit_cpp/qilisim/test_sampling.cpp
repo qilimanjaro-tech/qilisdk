@@ -336,6 +336,21 @@ TEST_F(SamplingTest, FusionWithSingleQubitGateCombiningEnabled) {
     EXPECT_EQ(counts.at("01"), 1000);
 }
 
+TEST_F(SamplingTest, DivergingCircuitThrows) {
+    // Two non-unitary gates that each scale the amplitudes by 1e200 overflow the state to +inf.
+    // The digital sampling path must raise on the blown-up state (consistent with the analog path)
+    // rather than returning inf/garbage.
+    int n = 1;
+    SparseMatrix huge(2, 2);
+    huge.insert(0, 0) = std::complex<double>(1e200, 0);
+    huge.insert(1, 1) = std::complex<double>(1e200, 0);
+    huge.makeCompressed();
+    std::vector<Gate> gates = {Gate("HUGE", huge, {}, {0}, {}), Gate("HUGE", huge, {}, {0}, {})};
+    DenseMatrix state;
+    std::vector<py::object> intermediate_results;
+    EXPECT_THROW(sampling(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfg, readout), std::invalid_argument);
+}
+
 TEST_F(SamplingTest, DoubleXGateOnQubit0_AllCountsAre00_NoCache) {
     int n = 2;
     std::vector<Gate> gates = {makeX(0), makeX(0)};
@@ -687,6 +702,21 @@ TEST_F(SamplingMatrixFreeTest, HadamardCircuit_StatisticsMatchStandardSampling) 
         EXPECT_NEAR(fractionOf(cA, key), 0.25, kLoose) << "standard key=" << key;
         EXPECT_NEAR(fractionOf(cB, key), 0.25, kLoose) << "matrix_free key=" << key;
     }
+}
+
+TEST_F(SamplingMatrixFreeTest, DivergingCircuitThrows) {
+    // Matrix-free analogue of the dense diverging-circuit test: two non-unitary gates that each scale
+    // the amplitudes by 1e200 overflow the state to +inf. The matrix-free sampling path must raise on
+    // the blown-up state rather than returning inf/garbage.
+    int n = 1;
+    SparseMatrix huge(2, 2);
+    huge.insert(0, 0) = std::complex<double>(1e200, 0);
+    huge.insert(1, 1) = std::complex<double>(1e200, 0);
+    huge.makeCompressed();
+    std::vector<Gate> gates = {Gate("HUGE", huge, {}, {0}, {}), Gate("HUGE", huge, {}, {0}, {})};
+    DenseMatrix state;
+    std::vector<py::object> intermediate_results;
+    EXPECT_THROW(sampling_matrix_free(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfg, readout), std::invalid_argument);
 }
 
 TEST_F(SamplingMatrixFreeTest, DensityMatrixInitialState_ZeroState_AllCountsAreZero) {

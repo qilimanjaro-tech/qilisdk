@@ -339,6 +339,9 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrixCo
         state = state * state.adjoint();
     }
 
+    // Make sure we haven't diverged
+    check_state_diverged(state);
+
     qilisdk::log_debug("[Sampling, C++] Applied " + std::to_string(gate_count) + " gates, circuit sampling complete");
 }
 
@@ -534,6 +537,9 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const Sp
     if (!initially_was_statevector && is_statevector) {
         state = state * state.adjoint();
     }
+
+    // Make sure we haven't diverged
+    check_state_diverged(state);
 
     qilisdk::log_debug("[Sampling, C++] Applied " + std::to_string(optimized_gates.size()) + " gates, matrix-free circuit sampling complete");
 }
