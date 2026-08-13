@@ -239,7 +239,7 @@ class OpenQasmParser:
 
         # With two int arguments
         if (
-            len(args_evalled) >= 2  # noqa: PLR2004
+            len(args_evalled) >= 2  # ruff: ignore[magic-value-comparison]
             and isinstance(args_evalled[0], int)
             and isinstance(args_evalled[1], int)
         ):

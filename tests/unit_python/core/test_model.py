@@ -76,7 +76,7 @@ def test_constraint_init_and_repr():
     assert hash(cons.rhs) == hash(ct.rhs)
     assert cons.degree == max(ct.lhs.degree, ct.rhs.degree)
     # errors
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):  # ruff: ignore[pytest-raises-too-broad]
         Constraint(label="bad", term=Term([0], Operation.ADD))
 
 
@@ -129,9 +129,9 @@ def test_objective_init_and_copy_and_errors():
     assert hash(obj3.term) == hash(obj.term)
     assert obj3.sense == obj.sense
     # errors
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):  # ruff: ignore[pytest-raises-too-broad]
         Objective(label="bad", term=123, sense=ObjectiveSense.MINIMIZE)
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):  # ruff: ignore[pytest-raises-too-broad]
         Objective(label="bad", term=t, sense="wrong")
 
 
@@ -162,7 +162,7 @@ def test_model_add_duplicate_constraint(simple_model):
     ct = ComparisonTerm(lhs=var, rhs=0, operation=ComparisonOperation.EQ)
     m.add_constraint("c", ct)
     assert len(m.encoding_constraints) == 0
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):  # ruff: ignore[pytest-raises-too-broad]
         m.add_constraint("c", ct)
 
 
@@ -735,7 +735,7 @@ def test_brute_force_raises_for_unsupported_variable():
     m = Model("bf_spin")
     s = SpinVariable("s")
     m.set_objective(s + 0)
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):  # ruff: ignore[pytest-raises-too-broad]
         BruteForceSolver().solve(m)
 
 
@@ -767,19 +767,19 @@ def test_qubo_check_valid_constraint_always_feasible_and_unsat():
     assert slack is None
     # unsatisfiable: v > 2
     h2 = GT(v, 2)
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):  # ruff: ignore[pytest-raises-too-broad]
         q._check_valid_constraint("c2", h2.lhs - h2.rhs, h2.operation)
 
     h2 = LT(v, -1)
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):  # ruff: ignore[pytest-raises-too-broad]
         q._check_valid_constraint("c2", h2.lhs - h2.rhs, h2.operation)
 
     h2 = LT(v, -1)
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):  # ruff: ignore[pytest-raises-too-broad]
         q._check_valid_constraint("c2", h2.lhs - h2.rhs, h2.operation)
 
     h2 = LEQ(v, -10)
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):  # ruff: ignore[pytest-raises-too-broad]
         q._check_valid_constraint("c2", h2.lhs - h2.rhs, h2.operation)
 
 
@@ -788,7 +788,7 @@ def test_qubo_add_constraint_and_objective_errors():
     x = BinaryVariable("x")
     term = ComparisonTerm(lhs=x, rhs=0, operation=ComparisonOperation.EQ)
     # invalid penalization
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):  # ruff: ignore[pytest-raises-too-broad]
         q.add_constraint("c", term, penalization="bad")
     # add valid
     q.add_constraint("c", term)
@@ -797,7 +797,7 @@ def test_qubo_add_constraint_and_objective_errors():
     y = Variable("y", Domain.INTEGER)
     t2 = ComparisonTerm(lhs=y, rhs=0, operation=ComparisonOperation.EQ)
     q2 = QUBO(label="q4")
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):  # ruff: ignore[pytest-raises-too-broad]
         q2.add_constraint("c2", t2)
 
 
@@ -807,7 +807,7 @@ def test_qubo_set_objective_errors():
     # non-binary domain
     y = Variable("y", Domain.REAL, bounds=(0, 1))
     t = Term(elements=[y], operation=Operation.ADD)
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):  # ruff: ignore[pytest-raises-too-broad]
         q.set_objective(term=t)
     # valid binary
     b = BinaryVariable("b3")

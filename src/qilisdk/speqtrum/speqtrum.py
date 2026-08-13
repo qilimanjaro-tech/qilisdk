@@ -236,7 +236,7 @@ def _summarize_error_payload(response: httpx.Response) -> str:
         try:
             response.read()  # ensure body is buffered so we can reuse it later
             body_text = response.text or ""
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:  # ruff: ignore[blind-except]
             logger.debug("[SpeQtrum] Failed to read response body for {}: {}", context, exc)
             body_text = ""
     payload = _safe_json_loads(body_text, context=f"{context} error body") if body_text else None
@@ -398,7 +398,7 @@ class SpeQtrum:
         Returns:
             dict: Headers dictionary with at least the ``User-Agent`` key.
         """
-        from qilisdk import __version__  # noqa: PLC0415
+        from qilisdk import __version__  # ruff: ignore[import-outside-top-level]
 
         return {"User-Agent": f"qilisdk/{__version__}"}
 
@@ -663,7 +663,7 @@ class SpeQtrum:
         device: str,
         readout: Readout[S, E, T],
         job_name: str | None = None,
-    ) -> JobHandle[VariationalProgramResult]: ...
+    ) -> JobHandle[VariationalProgramResult[FunctionalResult[S, E, T]]]: ...
 
     @overload
     def submit(
@@ -891,7 +891,7 @@ class SpeQtrum:
         device: str,
         readout: Readout[S, E, T],
         job_name: str | None = None,
-    ) -> JobHandle[VariationalProgramResult[S, E, T]]:
+    ) -> JobHandle[VariationalProgramResult[FunctionalResult[S, E, T]]]:
         """Submit a ``VariationalProgram`` to the SpeQtrum API.
 
         Args:

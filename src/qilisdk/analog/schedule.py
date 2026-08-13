@@ -287,7 +287,7 @@ class Schedule(Parameterizable):
             raise ValueError("At least one Hamiltonian must be provided.")
         if num_hams == 1:
             return cls.constant(hamiltonians[0], total_time, dt)
-        if num_hams == 2:  # noqa: PLR2004
+        if num_hams == 2:  # ruff: ignore[magic-value-comparison]
             return cls.linear(hamiltonians[0], hamiltonians[1], total_time, dt)
         segment_time = total_time / (num_hams - 1)
         hamiltonians_dict = {f"h{i}": ham for i, ham in enumerate(hamiltonians)}
@@ -602,7 +602,9 @@ class Schedule(Parameterizable):
                 Defaults to ScheduleStyle().
             filepath (str | None, optional): If provided, saves the plot to the specified file path.
         """
-        from qilisdk.utils.visualization.schedule_renderers import MatplotlibScheduleRenderer  # noqa: PLC0415
+        from qilisdk.utils.visualization.schedule_renderers import (  # ruff:ignore[import-outside-top-level]
+            MatplotlibScheduleRenderer,
+        )
 
         style = style or ScheduleStyle()
         renderer = MatplotlibScheduleRenderer(self, style=style)
@@ -638,7 +640,9 @@ class Schedule(Parameterizable):
             ValueError: If show_overlaps is True but intermediate_states is not provided.
 
         """
-        from qilisdk.utils.visualization.schedule_renderers import MatplotlibEigenvalueRenderer  # noqa: PLC0415
+        from qilisdk.utils.visualization.schedule_renderers import (  # ruff:ignore[import-outside-top-level]
+            MatplotlibEigenvalueRenderer,
+        )
 
         # If we try to show overlaps but haven't given intermediate states, raise an error
         if show_overlaps and not intermediate_states:
