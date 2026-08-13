@@ -1296,8 +1296,9 @@ def test_abs_map():
 
     assert isinstance(copy(abs_map), Abs)
 
+    derivable = Abs(p)
     with pytest.raises(NotSupportedOperation, match=r"The derivative of abs is not supported."):
-        Abs(p).diff(p)
+        derivable.diff(p)
 
 
 def test_tan_map():

@@ -265,8 +265,9 @@ def test_diff_with_symbolic_exponent(params):
 
 def test_diff_of_abs_is_not_supported(params):
     x, _, _ = params
+    expr = Abs(x)
     with pytest.raises(NotSupportedOperation, match=r"The derivative of abs is not supported."):
-        Abs(x).diff(x)
+        expr.diff(x)
 
 
 def test_diff_of_a_constant_and_an_unrelated_symbol(params):
@@ -362,8 +363,9 @@ def test_zero_base_with_a_negative_exponent_is_an_error(params):
 
 def test_tan_rejects_the_poles(params):
     x, _, _ = params
+    expr = Tan(x)
     with pytest.raises(ValueError, match=r"Tangent is not defined"):
-        Tan(x).evaluate({x: math.pi / 2})
+        expr.evaluate({x: math.pi / 2})
 
 
 def test_numeric_coercion(params):

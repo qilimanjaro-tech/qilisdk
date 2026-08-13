@@ -63,8 +63,9 @@ def test_expression_to_scip_expr_unsupported_node_raises():
     x = BinaryVariable("x")
     scip_model = ScipModel("t")
     var_exprs = {x: scip_model.addVar(name="x", vtype="B")}
+    expr = Sin(x)
     with pytest.raises(ValueError, match="not supported by the SCIP solver"):
-        _expression_to_scip_expr(Sin(x), var_exprs)
+        _expression_to_scip_expr(expr, var_exprs)
 
 
 def test_expression_to_scip_expr_symbolic_exponent_raises():

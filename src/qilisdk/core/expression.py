@@ -157,6 +157,53 @@ def _safe_pow(base: Number, exponent: Number) -> Number:
     return base**exponent
 
 
+def _collect_mul_factors(raw: tuple[Expression, ...]) -> tuple[Number, dict[Expression, Expression]]:
+    """Flatten a product into a numeric coefficient and a base-to-exponent map.
+
+    Nested ``Mul`` nodes are folded in, constants are multiplied together, and repeated bases have
+    their exponents added, so ``2 * x * (3 * x**2)`` collapses to ``(6, {x: 3})``.
+
+    Returns:
+        tuple[Number, dict[Expression, Expression]]: the numeric coefficient and the collected powers.
+    """
+    coefficient: Number = 1
+    powers: dict[Expression, Expression] = {}
+
+    def accumulate(expr: Expression) -> None:
+        nonlocal coefficient
+        if isinstance(expr, Constant):
+            coefficient *= expr.value
+        elif isinstance(expr, Mul):
+            for factor in expr.args:
+                accumulate(factor)
+        else:
+            base, exponent = (expr.base, expr.exp) if isinstance(expr, Pow) else (expr, Constant(1))
+            powers[base] = exponent if base not in powers else powers[base] + exponent
+
+    for factor in raw:
+        accumulate(factor)
+
+    return _float_if_real(coefficient), powers
+
+
+def _rebuild_power_factors(powers: dict[Expression, Expression]) -> list[Expression]:
+    """Turn a base-to-exponent map back into a list of factors.
+
+    Exponents of zero drop out, exponents of one leave the bare base, and an idempotent base (a
+    binary variable) collapses any positive integer power back to itself.
+
+    Returns:
+        list[Expression]: the surviving factors.
+    """
+    factors: list[Expression] = []
+    for base, raw_exponent in powers.items():
+        exponent = Constant(1) if (base.is_idempotent_under_mul and _is_pos_int_const(raw_exponent)) else raw_exponent
+        if isinstance(exponent, Constant) and exponent.value == 0:
+            continue
+        factors.append(base if (isinstance(exponent, Constant) and exponent.value == 1) else Pow.build(base, exponent))
+    return factors
+
+
 def _mul_expand(left: Expression, right: Expression) -> Expression:
     """Distribute the product of two (possibly ``Add``) expressions.
 
@@ -538,40 +585,12 @@ class Mul(Expression):
 
     @classmethod
     def build(cls, raw: tuple[Expression, ...]) -> Expression:
-        coefficient: Number = 1
-        powers: dict[Expression, Expression] = {}
-
-        def accumulate(expr: Expression) -> None:
-            nonlocal coefficient
-            if isinstance(expr, Constant):
-                coefficient *= expr.value
-            elif isinstance(expr, Mul):
-                for factor in expr.args:
-                    accumulate(factor)
-            else:
-                base, exponent = (expr.base, expr.exp) if isinstance(expr, Pow) else (expr, Constant(1))
-                powers[base] = exponent if base not in powers else powers[base] + exponent
-
-        for factor in raw:
-            accumulate(factor)
-
-        coefficient = _float_if_real(coefficient)
+        coefficient, powers = _collect_mul_factors(raw)
         if coefficient == 0:
             return Constant(0)
 
-        factors: list[Expression] = []
-        for base, raw_exponent in powers.items():
-            exponent = (
-                Constant(1) if (base.is_idempotent_under_mul and _is_pos_int_const(raw_exponent)) else raw_exponent
-            )
-            if isinstance(exponent, Constant) and exponent.value == 0:
-                continue
-            factors.append(
-                base if (isinstance(exponent, Constant) and exponent.value == 1) else Pow.build(base, exponent)
-            )
-
         out: list[Expression] = [Constant(coefficient)] if coefficient != 1 else []
-        out.extend(factors)
+        out.extend(_rebuild_power_factors(powers))
         if not out:
             return Constant(1)
         if len(out) == 1:
