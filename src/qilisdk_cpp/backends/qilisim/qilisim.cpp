@@ -520,7 +520,7 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
                     if (q < 0 || q >= n_qubits) {
                         throw py::value_error("Invalid qubit indices in qubits_to_reset");
                     }
-                    reset_mask |= (1ULL << q);
+                    reset_mask |= (1ULL << (n_qubits - 1 - q));
                 }
                 if (trajectory_mode) {
                     state = reset_trajectories(state, reset_mask, config.get_seed() + 104729 * (layer_index + 1));
