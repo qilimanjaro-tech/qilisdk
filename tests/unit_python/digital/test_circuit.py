@@ -511,7 +511,7 @@ def test_prepend_circuit():
     rz_gate = RZ(0, phi=0.2)
     x2_gate = X(1)
     prepended.add([rz_gate, x2_gate])
-    new = base.__radd__(prepended)  # noqa: PLC2801
+    new = base.__radd__(prepended)  # ruff: ignore[unnecessary-dunder-call]
 
     assert new.gates == [rz_gate, x2_gate, x_gate]
 

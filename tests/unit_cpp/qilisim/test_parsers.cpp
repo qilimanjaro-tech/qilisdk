@@ -17,6 +17,7 @@
 #include <gtest/gtest.h>
 #include <pybind11/embed.h>
 #include "../../../src/qilisdk_cpp/backends/qilisim/utils/parsers.h"
+#include "../../../src/qilisdk_cpp/backends/qilisim/utils/random.h"
 
 namespace py = pybind11;
 
@@ -1807,6 +1808,145 @@ TEST(ConstructResults, BadReadoutTypeThrows) {
     QiliSimConfig config;
     std::vector<bool> qubits_to_measure = {true};
     EXPECT_THROW({ auto results = construct_result_object(state, readout, noise_model_cpp, n_qubits, config, qubits_to_measure); }, py::value_error);
+}
+
+// A Monte Carlo ensemble handed to construct_result_object as a batch of state vector columns must
+// produce exactly the same readouts as the density matrix that batch averages to.
+namespace {
+DenseMatrix two_qubit_trajectories() {
+    // Three unnormalized, non-orthogonal columns: a mixed ensemble with coherences
+    DenseMatrix trajectories(4, 3);
+    trajectories.setZero();
+    trajectories.col(0) << Complex(0.6, 0.0), Complex(0.0, 0.8), Complex(0.0, 0.0), Complex(0.0, 0.0);
+    trajectories.col(1) << Complex(0.5, 0.5), Complex(0.0, 0.0), Complex(0.5, -0.5), Complex(0.0, 0.0);
+    trajectories.col(2) << Complex(0.0, 0.0), Complex(0.3, 0.0), Complex(0.4, 0.2), Complex(0.6, -0.6);
+    for (long c = 0; c < trajectories.cols(); ++c) {
+        trajectories.col(c) /= std::sqrt(trajectories.col(c).squaredNorm());
+    }
+    return trajectories;
+}
+
+std::vector<double> expectations_of(const py::object& results) {
+    std::vector<double> values;
+    for (py::handle value : results.attr("expectation_values").attr("expectation_values")) {
+        values.push_back(value.cast<double>());
+    }
+    return values;
+}
+}  // namespace
+
+TEST(ConstructResultsTrajectories, ExpectationMatchesAveragedDensityMatrix) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.readout import ExpectationReadout
+from qilisdk.analog.hamiltonian import Z, X
+_traj_ro_exp = [ExpectationReadout(observables=[Z(0), X(1), Z(0) * Z(1), 0.5 * X(0) + 2.0 * Z(1)])]
+    )");
+    py::list readout = py::globals()["_traj_ro_exp"].cast<py::list>();
+
+    DenseMatrix trajectories = two_qubit_trajectories();
+    NoiseModelCpp noise_model_cpp;
+    QiliSimConfig config;
+    std::vector<bool> qubits_to_measure = {true, true};
+
+    py::object from_trajectories = construct_result_object(trajectories, readout, noise_model_cpp, 2, config, qubits_to_measure, true);
+    py::object from_density_matrix = construct_result_object(trajectories_to_density_matrix(trajectories), readout, noise_model_cpp, 2, config, qubits_to_measure);
+
+    std::vector<double> averaged = expectations_of(from_trajectories);
+    std::vector<double> reference = expectations_of(from_density_matrix);
+    ASSERT_EQ(averaged.size(), 4u);
+    ASSERT_EQ(reference.size(), 4u);
+    for (size_t i = 0; i < averaged.size(); ++i) {
+        EXPECT_NEAR(averaged[i], reference[i], 1e-12) << "observable " << i;
+    }
+}
+
+TEST(ConstructResultsTrajectories, ExpectationOfQTensorObservableMatchesAveragedDensityMatrix) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.readout import ExpectationReadout
+from qilisdk.core.qtensor import QTensor
+import numpy as np, scipy.sparse as sp
+_traj_ro_qt = [ExpectationReadout(observables=[QTensor(sp.csr_matrix(np.array([[1.0, 0.0], [0.0, -1.0]], dtype=complex)))])]
+    )");
+    py::list readout = py::globals()["_traj_ro_qt"].cast<py::list>();
+
+    DenseMatrix trajectories = two_qubit_trajectories();
+    NoiseModelCpp noise_model_cpp;
+    QiliSimConfig config;
+    std::vector<bool> qubits_to_measure = {true, true};
+
+    std::vector<double> averaged = expectations_of(construct_result_object(trajectories, readout, noise_model_cpp, 2, config, qubits_to_measure, true));
+    std::vector<double> reference = expectations_of(construct_result_object(trajectories_to_density_matrix(trajectories), readout, noise_model_cpp, 2, config, qubits_to_measure));
+    ASSERT_EQ(averaged.size(), 1u);
+    EXPECT_NEAR(averaged[0], reference[0], 1e-12);
+}
+
+TEST(ConstructResultsTrajectories, ImaginaryExpectationValueThrows) {
+    py::gil_scoped_acquire gil;
+    // The raising operator is not Hermitian, so its expectation value over this ensemble has a
+    // non-zero imaginary part, which is never a physically meaningful expectation value.
+    py::exec(R"(
+from qilisdk.readout import ExpectationReadout
+from qilisdk.core.qtensor import QTensor
+import numpy as np, scipy.sparse as sp
+_traj_ro_imag = [ExpectationReadout(observables=[QTensor(sp.csr_matrix(np.array([[0.0, 1.0], [0.0, 0.0]], dtype=complex)))])]
+    )");
+    py::list readout = py::globals()["_traj_ro_imag"].cast<py::list>();
+
+    DenseMatrix trajectories = two_qubit_trajectories();
+    NoiseModelCpp noise_model_cpp;
+    QiliSimConfig config;
+    std::vector<bool> qubits_to_measure = {true, true};
+
+    EXPECT_THROW({ auto results = construct_result_object(trajectories, readout, noise_model_cpp, 2, config, qubits_to_measure, true); }, py::value_error);
+}
+
+TEST(ConstructResultsTrajectories, SamplingMatchesAveragedDensityMatrix) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.readout import SamplingReadout
+_traj_ro_samp = [SamplingReadout(nshots=500)]
+    )");
+    py::list readout = py::globals()["_traj_ro_samp"].cast<py::list>();
+
+    DenseMatrix trajectories = two_qubit_trajectories();
+    NoiseModelCpp noise_model_cpp;
+    QiliSimConfig config;
+    config.set_seed(11);
+    std::vector<bool> qubits_to_measure = {true, true};
+
+    // Same outcome probabilities and same seed, so the counts must agree exactly
+    py::dict from_trajectories = construct_result_object(trajectories, readout, noise_model_cpp, 2, config, qubits_to_measure, true).attr("sampling").attr("samples");
+    py::dict from_density_matrix = construct_result_object(trajectories_to_density_matrix(trajectories), readout, noise_model_cpp, 2, config, qubits_to_measure).attr("sampling").attr("samples");
+    EXPECT_TRUE(from_trajectories.equal(from_density_matrix));
+}
+
+TEST(ConstructResultsTrajectories, StateTomographyReturnsAveragedDensityMatrix) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.readout import StateTomographyReadout
+_traj_ro_tomo = [StateTomographyReadout()]
+    )");
+    py::list readout = py::globals()["_traj_ro_tomo"].cast<py::list>();
+
+    DenseMatrix trajectories = two_qubit_trajectories();
+    NoiseModelCpp noise_model_cpp;
+    QiliSimConfig config;
+    std::vector<bool> qubits_to_measure = {true, true};
+
+    py::object results = construct_result_object(trajectories, readout, noise_model_cpp, 2, config, qubits_to_measure, true);
+    py::object state = results.attr("state_tomography").attr("state");
+    EXPECT_EQ(state.attr("nqubits").cast<int>(), 2);
+
+    DenseMatrix expected = trajectories_to_density_matrix(trajectories);
+    for (long i = 0; i < 4; ++i) {
+        for (long j = 0; j < 4; ++j) {
+            Complex entry = state.attr("__getitem__")(py::make_tuple(i, j)).cast<Complex>();
+            EXPECT_NEAR(entry.real(), expected(i, j).real(), 1e-12);
+            EXPECT_NEAR(entry.imag(), expected(i, j).imag(), 1e-12);
+        }
+    }
 }
 
 TEST(ConstructResultsExponentialAnsatz, WithExpectationReadout_Succeeds) {

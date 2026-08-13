@@ -17,7 +17,7 @@ import sys
 from types import SimpleNamespace
 
 import pytest
-from loguru_caplog import loguru_caplog as caplog  # noqa: F401
+from loguru_caplog import loguru_caplog as caplog  # ruff: ignore[unused-import]
 
 from qilisdk import logging as qilisdk_logging
 from qilisdk.core.model import Model, ObjectiveSense
@@ -25,7 +25,7 @@ from qilisdk.core.variables import LT, BinaryVariable, Domain, OneHot, Variable
 from qilisdk.logging import InterceptHandler
 
 
-def test_log_output(caplog):  # noqa: F811
+def test_log_output(caplog):  # ruff: ignore[redefined-while-unused]
     N = 2
     b = [BinaryVariable(f"b({i})") for i in range(N)]
     x = Variable("x", Domain.POSITIVE_INTEGER, bounds=(0, 10), encoding=OneHot)

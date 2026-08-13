@@ -106,7 +106,7 @@ def test_version_not_found(monkeypatch):
 
     sys.modules.pop("qilisdk", None)
 
-    import qilisdk  # noqa: PLC0415
+    import qilisdk  # ruff: ignore[import-outside-top-level]
 
     importlib.reload(qilisdk)
 

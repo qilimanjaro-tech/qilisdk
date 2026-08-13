@@ -217,7 +217,7 @@ def import_optional_dependencies(feature: OptionalFeature) -> ImportedFeature:
         try:
             module = importlib.import_module(symbol.path)
             symbols[symbol.name] = getattr(module, symbol.name)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:  # ruff: ignore[blind-except]
             logger.warning(
                 "[Optionals] Failed to import symbol {} for feature {}, using stub", symbol.name, feature.name
             )
