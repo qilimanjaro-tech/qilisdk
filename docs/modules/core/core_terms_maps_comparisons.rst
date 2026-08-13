@@ -119,7 +119,8 @@ any other variable, or a compound expression) and defer numeric evaluation until
 
 .. code-block:: python
 
-    from qilisdk.core.variables import Parameter, Sin, Cos
+    from qilisdk.core.expression import Cos, Sin
+    from qilisdk.core.variables import Parameter
 
     theta = Parameter("theta", 0.5)
     expr = Sin(theta) + Cos(2 * theta)
@@ -145,7 +146,8 @@ applied automatically), and evaluated. Wrapping a numeric constant folds eagerly
 
 .. code-block:: python
 
-    from qilisdk.core.variables import Cos, Sin, Exp, Parameter
+    from qilisdk.core.expression import Cos, Exp, Sin
+    from qilisdk.core.variables import Parameter
 
     theta = Parameter("theta", 0.5)
 
@@ -186,7 +188,8 @@ Powers are not functions. Use the ``**`` operator, which builds a
 
 .. code-block:: python
 
-    from qilisdk.core.variables import Inv, Parameter
+    from qilisdk.core.expression import Inv
+    from qilisdk.core.variables import Parameter
 
     x, y = Parameter("x", 4.0), Parameter("y", 0.5)
 

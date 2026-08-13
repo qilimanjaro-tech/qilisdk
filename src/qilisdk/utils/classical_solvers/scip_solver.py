@@ -18,18 +18,14 @@ from pyscipopt import Model as ScipModel
 from pyscipopt.recipes.nonlinear import set_nonlinear_objective
 
 from qilisdk.core import Model
+from qilisdk.core.expression import Add, Constant, Expression, Mul, Pow
 from qilisdk.core.model import ObjectiveSense
 from qilisdk.core.variables import (
-    Add,
     BaseVariable,
     BinaryVariable,
     ComparisonOperation,
-    Constant,
     Domain,
-    Expression,
-    Mul,
     Number,
-    Pow,
     RealNumber,
     SpinVariable,
     Variable,

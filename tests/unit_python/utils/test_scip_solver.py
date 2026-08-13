@@ -19,6 +19,7 @@ pytest.importorskip("pyscipopt", reason="ScipSolver tests require the 'scip' opt
 
 from pyscipopt import Model as ScipModel
 
+from qilisdk.core.expression import Constant, Sin
 from qilisdk.core.model import Model, ObjectiveSense
 from qilisdk.core.variables import (
     EQ,
@@ -26,10 +27,8 @@ from qilisdk.core.variables import (
     LEQ,
     NEQ,
     BinaryVariable,
-    Constant,
     Domain,
     Parameter,
-    Sin,
     SpinVariable,
     Variable,
 )

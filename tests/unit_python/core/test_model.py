@@ -21,6 +21,7 @@ import pytest
 
 import qilisdk.core.model as model_module
 from qilisdk.analog.hamiltonian import Z
+from qilisdk.core.expression import Constant, Expression, Sin
 from qilisdk.core.model import (
     QUBO,
     Constraint,
@@ -41,11 +42,8 @@ from qilisdk.core.variables import (
     Bitwise,
     ComparisonOperation,
     ComparisonTerm,
-    Constant,
     Domain,
-    Expression,
     OneHot,
-    Sin,
     SpinVariable,
     Variable,
 )

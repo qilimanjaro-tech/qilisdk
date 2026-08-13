@@ -37,24 +37,7 @@ from qilisdk.settings import get_settings
 from qilisdk.utils.hashing import hash as qili_hash
 from qilisdk.yaml import yaml
 
-# Re-export the expression algebra so existing ``from qilisdk.core.variables import ...`` keeps working.
-from .expression import (
-    Abs,
-    Add,
-    Constant,
-    Cos,
-    Exp,
-    Expression,
-    Function,
-    Inv,
-    Log,
-    Mul,
-    Pow,
-    Sin,
-    Sqrt,
-    Tan,
-    _coerce,
-)
+from .expression import Add, Constant, Expression, _coerce
 from .types import Number, QiliEnum, RealNumber
 
 if TYPE_CHECKING:
@@ -67,37 +50,23 @@ __all__ = [
     "LEQ",
     "LT",
     "NEQ",
-    "Abs",
-    "Add",
     "BaseVariable",
     "BinaryVariable",
     "Bitwise",
     "ComparisonOperation",
     "ComparisonTerm",
-    "Constant",
-    "Cos",
     "Domain",
     "DomainWall",
     "Encoding",
     "Equal",
-    "Exp",
-    "Expression",
-    "Function",
     "GreaterThan",
     "GreaterThanOrEqual",
-    "Inv",
     "LessThan",
     "LessThanOrEqual",
-    "Log",
-    "Mul",
     "NotEqual",
     "OneHot",
     "Parameter",
-    "Pow",
-    "Sin",
     "SpinVariable",
-    "Sqrt",
-    "Tan",
     "Variable",
 ]
 
