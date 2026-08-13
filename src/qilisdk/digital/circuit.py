@@ -363,7 +363,12 @@ class Circuit(Parameterizable):
 
     @classmethod
     def random(
-        cls, nqubits: int, single_qubit_gates: set[type[BasicGate]], two_qubit_gates: set[type[BasicGate]], ngates: int
+        cls,
+        nqubits: int,
+        single_qubit_gates: set[type[BasicGate]],
+        two_qubit_gates: set[type[BasicGate]],
+        ngates: int,
+        seed: int | None = None,
     ) -> Self:
         """
         Generate a random quantum circuit from a given set of gates.
@@ -373,6 +378,8 @@ class Circuit(Parameterizable):
             single_qubit_gates (set[Gate]): A set of single-qubit gate classes to choose from.
             two_qubit_gates (set[Gate]): A set of two-qubit gate classes to choose from.
             ngates (int): The number of gates to include in the circuit.
+            seed (int | None): Optional seed for the local random number generator, for reproducible circuits.
+                The global :mod:`random` state is never used or modified.
 
         Returns:
             Circuit: A randomly generated quantum circuit.
@@ -397,29 +404,37 @@ class Circuit(Parameterizable):
         if len(single_qubit_gates) == 0 and len(two_qubit_gates) == 0:
             raise ValueError("At least one gate must be provided to generate a random circuit.")
 
-        new_circuit = cls(nqubits)
-        gate_list: list[type[BasicGate]] = list(single_qubit_gates)
+        # Create a new rng with the seed
+        rng = random.Random(seed)
+
+        # Sort the gate lists for reproducibility
+        gate_list: list[type[BasicGate]] = sorted(single_qubit_gates, key=lambda g: g.__name__)
         if nqubits > 1:
-            gate_list.extend(list(two_qubit_gates))
+            gate_list.extend(sorted(two_qubit_gates, key=lambda g: g.__name__))
+
+        # Start adding gates to the circuit
+        new_circuit = cls(nqubits)
         prev_gate_type = None
         prev_qubits = None
-        for _ in range(ngates):
-            gate_class = random.choice(gate_list)
+        for gate_index in range(ngates):
+            gate_class = rng.choice(gate_list)
             gate_nqubits = 1 if gate_class in single_qubit_gates else 2
-            qubits = tuple(random.sample(range(nqubits), gate_nqubits))
+            qubits = tuple(rng.sample(range(nqubits), gate_nqubits))
             logger.trace("[Circuit] Randomly selected gate {} on qubits {}", gate_class.__name__, qubits)
 
             # Avoid adding the same gate on the same qubits consecutively
             if gate_class == prev_gate_type and qubits == prev_qubits:
                 # If we only have one qubit, pick a different gate
                 if nqubits == 1:
-                    possible_new_gates = [g for g in single_qubit_gates if g != gate_class]
-                    gate_class = random.choice(possible_new_gates)
+                    possible_new_gates = sorted(
+                        (g for g in single_qubit_gates if g != gate_class), key=lambda g: g.__name__
+                    )
+                    gate_class = rng.choice(possible_new_gates)
 
                 # If the gate list does not include all qubits, change the first to be a different qubit
                 if len(qubits) < nqubits:
                     possible_new_qubits: list[int] = [q for q in range(nqubits) if q not in qubits]
-                    new_qubit = random.choice(possible_new_qubits)
+                    new_qubit = rng.choice(possible_new_qubits)
                     qubits = (new_qubit, *qubits[1:])
 
                 # Otherwise, flip the order of the qubits
@@ -434,10 +449,8 @@ class Circuit(Parameterizable):
             params = {}
             if gate_class.PARAMETER_NAMES:
                 for param_name in gate_class.PARAMETER_NAMES:
-                    val = random.uniform(-np.pi, np.pi)
-                    params[param_name] = Parameter(
-                        label=param_name + str(val), value=val, domain=Domain.REAL, bounds=(val, val)
-                    )
+                    val = rng.uniform(-np.pi, np.pi)
+                    params[param_name] = Parameter(label=f"{param_name}_{gate_index}", value=val, domain=Domain.REAL)
 
             # Add the gate to the circuit
             new_circuit.add(gate_class(*qubits, **params))  # ty:ignore[invalid-argument-type]

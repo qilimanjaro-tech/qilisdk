@@ -314,6 +314,25 @@ def test_execute_quantum_reservoir_qilisim(monkeypatch):
     assert len(result.get_intermediate_states()) == 1
 
 
+@pytest.mark.parametrize(("qubit_to_reset", "expected"), [(0, [1.0, -1.0]), (1, [-1.0, 1.0])])
+def test_execute_quantum_reservoir_resets_requested_qubit(qubit_to_reset, expected):
+    # |11> is an eigenstate of the Hamiltonian, so only the reset can change <Z>
+    layer = ReservoirLayer(
+        evolution_dynamics=Schedule(hamiltonians={"h": pauli_z(0) + pauli_z(1)}, total_time=0.1, dt=0.05),
+        qubits_to_reset=[qubit_to_reset],
+    )
+    functional = QuantumReservoir(
+        initial_state=ket(1, 1),
+        reservoir_layer=layer,
+        input_per_layer=[{}, {}],
+    )
+    backend = QiliSim(execution_config=ExecutionConfig(seed=1, num_threads=1))
+
+    result = backend.execute(functional, Readout().with_expectation(observables=[pauli_z(0), pauli_z(1)]))
+
+    assert result.get_expectation_values() == pytest.approx(expected)
+
+
 def test_qilisim_repr():
     backend = QiliSim()
     repr_str = str(backend)
