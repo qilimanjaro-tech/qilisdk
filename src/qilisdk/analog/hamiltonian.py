@@ -24,10 +24,10 @@ import numpy as np
 from loguru import logger
 from scipy.sparse import csr_matrix, kron, spmatrix
 
+from qilisdk.core.expression import Expression
 from qilisdk.core.parameterizable import Parameterizable
 from qilisdk.core.qtensor import QTensor
 from qilisdk.core.types import Number
-from qilisdk.core.variables import Expression, Parameter
 from qilisdk.settings import get_settings
 from qilisdk.utils.hashing import hash as qili_hash
 from qilisdk.utils.visualization.style import HamiltonianStyle
@@ -37,6 +37,8 @@ from .exceptions import InvalidHamiltonianOperation
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+
+    from qilisdk.core.variables import Parameter
 
 _DIVISION_BY_OPERATORS_MESSAGE = "Division by operators is not supported"
 _GENERIC_VARIABLE_IN_TERM_MESSAGE = "Expression provided contains generic variables that are not Parameter."

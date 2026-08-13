@@ -111,10 +111,6 @@ def _coerce(obj: object) -> Expression | None:
     return None
 
 
-def _is_int_const(expr: Expression) -> bool:
-    return isinstance(expr, Constant) and isinstance(expr.value, RealNumber) and float(expr.value).is_integer()
-
-
 def _int_exponent(expr: Expression) -> int | None:
     """Return the integer value of a constant integer exponent, or ``None`` if it is not one."""
     if isinstance(expr, Constant) and isinstance(expr.value, RealNumber) and float(expr.value).is_integer():

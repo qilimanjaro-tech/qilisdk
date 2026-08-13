@@ -1161,7 +1161,7 @@ class _Linearizer:
     """Degree-reduction helper that rewrites binary polynomials as quadratic expressions.
 
     Given a pseudo-Boolean term (i.e. a polynomial in ``BinaryVariable``'s obtained via
-    :meth:`~qilisdk.core.variables.Expression.to_binary`), :meth:`reduce` iteratively replaces each monomial of degree greater
+    :meth:`~qilisdk.core.expression.Expression.to_binary`), :meth:`reduce` iteratively replaces each monomial of degree greater
     than two with an auxiliary binary variable that represents the product of two of its factors. Let's say the pair
     ``a`` and ``b`` are two binary variables contributing in a non-linear term, we can add an auxiliary binary
     variable ``w`` to substitute the pair, and the correctness of the substitution is enforced by the **Rosenberg** penalty:
@@ -1212,7 +1212,7 @@ class _Linearizer:
         """Rewrite ``term`` so that every monomial has degree at most two.
 
         The input is expected to be in binary-encoded form (i.e. the output of
-        :meth:`~qilisdk.core.variables.Expression.to_binary`). Terms that are already quadratic are returned unchanged
+        :meth:`~qilisdk.core.expression.Expression.to_binary`). Terms that are already quadratic are returned unchanged
         (up to a structural copy).
 
         Args:

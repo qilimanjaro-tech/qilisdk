@@ -16,10 +16,11 @@
 
 import math
 
+import numpy as np
 import pytest
 
-from qilisdk.core.exceptions import NonPolynomialError
-from qilisdk.core.expression import Constant, Cos, Exp, Expression, Log, Pow, Sin
+from qilisdk.core.exceptions import NonPolynomialError, NotSupportedOperation
+from qilisdk.core.expression import Abs, Add, Constant, Cos, Exp, Expression, Inv, Log, Mul, Pow, Sin, Sqrt, Tan
 from qilisdk.core.variables import BinaryVariable, Domain, Parameter, Variable
 from qilisdk.utils.serialization import deserialize, serialize
 
@@ -223,3 +224,189 @@ def test_simplify_does_not_affect_equality(params):
     assert expr.expand() != expr
     # but evaluating both agrees
     assert expr.evaluate({x: 4.0}) == expr.expand().evaluate({x: 4.0})
+
+
+# --------------------------------------------------------------------------- derivatives
+@pytest.mark.parametrize(
+    "factory",
+    [
+        Sin,
+        Cos,
+        Exp,
+        Log,
+        Tan,
+        Sqrt,
+        Inv,
+        lambda x: x**3,
+        lambda x: x**-2,
+        lambda x: x**0.5,
+        lambda x: Sin(x**2),
+        lambda x: Sin(x) * Cos(x),
+        lambda x: x**x,
+        lambda x: 2**x,
+        lambda x: Log(Sqrt(x)) + Tan(x),
+    ],
+)
+def test_diff_matches_finite_differences(params, factory):
+    x, _, _ = params
+    expr = factory(x)
+    at, h = 0.7, 1e-6
+    numeric = (expr.evaluate({x: at + h}) - expr.evaluate({x: at - h})) / (2 * h)
+    assert expr.diff(x).evaluate({x: at}) == pytest.approx(numeric, rel=1e-4)
+
+
+def test_diff_with_symbolic_exponent(params):
+    x, y, _ = params
+    # d/dx x**y = x**y * (y' ln x + y/x); with y independent of x this is y * x**(y-1).
+    assert (x**y).diff(x).evaluate({x: 2.0, y: 3.0}) == pytest.approx(3 * 2.0**2)
+    # d/dy x**y = x**y * ln x
+    assert (x**y).diff(y).evaluate({x: 2.0, y: 3.0}) == pytest.approx(2.0**3 * math.log(2.0))
+
+
+def test_diff_of_abs_is_not_supported(params):
+    x, _, _ = params
+    with pytest.raises(NotSupportedOperation, match=r"The derivative of abs is not supported."):
+        Abs(x).diff(x)
+
+
+def test_diff_of_a_constant_and_an_unrelated_symbol(params):
+    x, y, _ = params
+    assert Constant(7).diff(x) == Constant(0)
+    assert Sin(y).diff(x) == Constant(0)
+
+
+# --------------------------------------------------------------------------- simplify
+def test_simplify_recurses_into_every_node_type(params):
+    x, y, _ = params
+    assert (Sin(x * 1) + 0).simplify() == Sin(x)
+    assert ((x + 0) * (y * 1)).simplify() == x * y
+    assert ((x + 0) ** (y * 1)).simplify() == x**y
+    assert (x - x).simplify() == Constant(0)
+
+
+def test_simplify_leaves_semantics_untouched(params):
+    x, y, _ = params
+    expr = Sin(x) ** 2 + Cos(x) ** 2 + x * y
+    assert expr.simplify().evaluate({x: 0.3, y: 1.5}) == pytest.approx(expr.evaluate({x: 0.3, y: 1.5}))
+
+
+# --------------------------------------------------------------------------- substitute
+def test_substitute_into_every_node_type(params):
+    x, y, _ = params
+    assert (x + y).substitute({x: 5}) == 5 + y
+    assert (x * y).substitute({x: y}) == y**2
+    assert (x**y).substitute({y: 2}) == x**2
+    assert Sin(x).substitute({x: y}) == Sin(y)
+
+
+def test_substitute_replaces_a_whole_subtree(params):
+    x, y, _ = params
+    assert Sin(x).substitute({Sin(x): y}) == y
+    assert (x + y).substitute({x + y: 1}) == Constant(1)
+    assert (x * y).substitute({x * y: 1}) == Constant(1)
+    assert (x**2).substitute({x**2: 9}) == Constant(9)
+
+
+def test_substitute_ignores_unmappable_replacements(params):
+    x, y, _ = params
+    # A replacement that is neither an Expression nor a number leaves the node alone.
+    assert x.substitute({x: "not a number"}) == x
+    assert (x + y).substitute({}) == x + y
+
+
+# --------------------------------------------------------------------------- expand / monomials
+def test_expand_is_a_noop_for_non_integer_powers(params):
+    x, y, _ = params
+    assert ((x + y) ** -1).expand() == (x + y) ** -1
+    assert ((x + y) ** 0.5).expand() == (x + y) ** 0.5
+    assert ((x + y) ** x).expand() == (x + y) ** x
+
+
+def test_expand_recurses_into_functions(params):
+    x, y, _ = params
+    assert Sin(x * (y + 1)).expand() == Sin(x + x * y)
+
+
+def test_monomial_factors_of_a_power(params):
+    x, _, _ = params
+    assert (x**3).monomial_factors() == [(x, 3)]
+    for expr in (x**-1, x**0.5):
+        with pytest.raises(NonPolynomialError, match=r"is not a monomial with an integer power"):
+            expr.monomial_factors()
+
+
+def test_a_function_of_a_constant_folds_to_a_constant():
+    folded = Sin(Constant(2))
+    assert isinstance(folded, Constant)
+    assert folded.degree == 0
+    assert Constant(3).degree == 0
+
+
+# --------------------------------------------------------------------------- to_binary
+def test_to_binary_recurses_through_functions_and_powers():
+    v = Variable("v", domain=Domain.POSITIVE_INTEGER, bounds=(0, 3))
+    for expr in (Sin(v), v**2, v + 1):
+        assert all(isinstance(symbol, BinaryVariable) for symbol in expr.to_binary().free_symbols())
+
+
+# --------------------------------------------------------------------------- guards and coercion
+def test_zero_base_with_a_negative_exponent_is_an_error(params):
+    x, _, _ = params
+    with pytest.raises(ValueError, match=r"Division by zero is not allowed"):
+        (x**-1).evaluate({x: 0})
+    with pytest.raises(ValueError, match=r"Division by zero is not allowed"):
+        _ = Constant(0) ** -1
+    with pytest.raises(ValueError, match=r"Division by zero is not allowed"):
+        _ = x / 0
+
+
+def test_tan_rejects_the_poles(params):
+    x, _, _ = params
+    with pytest.raises(ValueError, match=r"Tangent is not defined"):
+        Tan(x).evaluate({x: math.pi / 2})
+
+
+def test_numeric_coercion(params):
+    x, _, _ = params
+    assert x + True == x + 1
+    assert x + np.float64(1.5) == x + 1.5
+    assert Constant(np.int64(3)).value == 3
+    assert Constant(True).value == 1
+    # a complex value with a negligible imaginary part collapses to a real one
+    assert Constant(2 + 0j).value == 2.0
+    assert (x * Constant(1j)).evaluate({x: 2.0}) == 2j
+
+
+def test_evaluation_drops_a_negligible_imaginary_part(params):
+    x, _, _ = params
+    # Squaring an imaginary coefficient gives a real result that arrives as a complex number.
+    expr = (Constant(1j) * x) ** 2
+    result = expr.evaluate({x: 2.0})
+    assert result == -4.0
+    assert isinstance(result, float)
+
+
+def test_one_to_a_symbolic_power_is_one(params):
+    _, y, _ = params
+    assert 1**y == Constant(1)
+    assert Pow.build(Constant(1), y) == Constant(1)
+
+
+def test_unsupported_operands_return_not_implemented(params):
+    x, _, _ = params
+    for op in ("__add__", "__sub__", "__mul__", "__pow__"):
+        assert getattr(x, op)("not a number") is NotImplemented
+    with pytest.raises(NotSupportedOperation):
+        _ = 3 // x
+
+
+def test_empty_products_and_sums_are_identities():
+    assert Add.build(()) == Constant(0)
+    assert Mul.build(()) == Constant(1)
+
+
+def test_a_product_of_the_same_function_is_a_square(params):
+    # The old flattened Term model turned this into 2 * sin(x) and evaluated it wrongly.
+    x, _, _ = params
+    assert Sin(x) * Sin(x) == Sin(x) ** 2
+    assert (Sin(x) * Sin(x)).evaluate({x: 0.5}) == pytest.approx(math.sin(0.5) ** 2)

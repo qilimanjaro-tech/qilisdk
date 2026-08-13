@@ -6,9 +6,9 @@ Expressions
 
 :class:`Variables<qilisdk.core.variables.Variable>` can be combined algebraically with the usual
 Python operators (``+``, ``-``, ``*``, ``/``, ``**``) to build a symbolic
-:class:`~qilisdk.core.variables.Expression`. Every leaf (a variable, parameter or numeric constant)
-and every operator node (:class:`~qilisdk.core.variables.Add`, :class:`~qilisdk.core.variables.Mul`,
-:class:`~qilisdk.core.variables.Pow`) is itself an ``Expression``, so expressions compose freely.
+:class:`~qilisdk.core.expression.Expression`. Every leaf (a variable, parameter or numeric constant)
+and every operator node (:class:`~qilisdk.core.expression.Add`, :class:`~qilisdk.core.expression.Mul`,
+:class:`~qilisdk.core.expression.Pow`) is itself an ``Expression``, so expressions compose freely.
 For example:
 
 .. code-block:: python
@@ -40,8 +40,8 @@ Construction *canonicalizes* the expression (flattening nested sums/products, co
 and powers, folding constants, ordering operands deterministically), which is why the numeric
 constant is printed first and ``x + y`` equals ``y + x``. Canonicalization is intentionally cheap:
 products are **not** distributed over sums, so ``e4`` keeps the factored ``-1 * (4 + 2 * x + 3 * x**2)``
-sub-expression. Use :meth:`~qilisdk.core.variables.Expression.expand` to distribute, and
-:meth:`~qilisdk.core.variables.Expression.simplify` to request a simpler (but semantically equal) form:
+sub-expression. Use :meth:`~qilisdk.core.expression.Expression.expand` to distribute, and
+:meth:`~qilisdk.core.expression.Expression.simplify` to request a simpler (but semantically equal) form:
 
 .. code-block:: python
 
@@ -54,7 +54,7 @@ sub-expression. Use :meth:`~qilisdk.core.variables.Expression.expand` to distrib
     -1 + -3 * x**2
 
 Expressions can be evaluated by providing values for the involved variables via
-:meth:`~qilisdk.core.variables.Expression.evaluate`:
+:meth:`~qilisdk.core.expression.Expression.evaluate`:
 
 .. code-block:: python
 
@@ -76,10 +76,10 @@ Expressions can be evaluated by providing values for the involved variables via
 Inspecting and differentiating expressions
 ===========================================
 
-An :class:`~qilisdk.core.variables.Expression` exposes a small introspection API. You can list the
+An :class:`~qilisdk.core.expression.Expression` exposes a small introspection API. You can list the
 named leaves it depends on, isolate just the free :class:`~qilisdk.core.variables.Parameter` leaves,
-read its polynomial :attr:`~qilisdk.core.variables.Expression.degree`, and take a symbolic
-derivative with :meth:`~qilisdk.core.variables.Expression.diff`:
+read its polynomial :attr:`~qilisdk.core.expression.Expression.degree`, and take a symbolic
+derivative with :meth:`~qilisdk.core.expression.Expression.diff`:
 
 .. code-block:: python
 
@@ -108,12 +108,13 @@ derivative with :meth:`~qilisdk.core.variables.Expression.diff`:
 Mathematical Functions
 ======================
 
-Non-polynomial operations are represented by :class:`~qilisdk.core.variables.Function`, the abstract
+Non-polynomial operations are represented by :class:`~qilisdk.core.expression.Function`, the abstract
 base for the unary maths functions. Its concrete subclasses
-:class:`~qilisdk.core.variables.Sin`, :class:`~qilisdk.core.variables.Cos`,
-:class:`~qilisdk.core.variables.Exp`, :class:`~qilisdk.core.variables.Log`,
-:class:`~qilisdk.core.variables.Tan` and :class:`~qilisdk.core.variables.Sqrt` each wrap a single
-:class:`~qilisdk.core.variables.Expression` operand (a :class:`~qilisdk.core.variables.Parameter`,
+:class:`~qilisdk.core.expression.Sin`, :class:`~qilisdk.core.expression.Cos`,
+:class:`~qilisdk.core.expression.Exp`, :class:`~qilisdk.core.expression.Log`,
+:class:`~qilisdk.core.expression.Tan`, :class:`~qilisdk.core.expression.Sqrt` and
+:class:`~qilisdk.core.expression.Abs` each wrap a single
+:class:`~qilisdk.core.expression.Expression` operand (a :class:`~qilisdk.core.variables.Parameter`,
 any other variable, or a compound expression) and defer numeric evaluation until values are provided.
 
 .. code-block:: python
@@ -140,7 +141,7 @@ any other variable, or a compound expression) and defer numeric evaluation until
 Because every function is a regular ``Expression`` node, it participates in the same algebra: it can
 be added to or multiplied with other expressions, differentiated symbolically (the chain rule is
 applied automatically), and evaluated. Wrapping a numeric constant folds eagerly to a
-:class:`~qilisdk.core.variables.Constant`:
+:class:`~qilisdk.core.expression.Constant`:
 
 .. code-block:: python
 
@@ -164,17 +165,46 @@ These functions compose naturally with the rest of the expression tree, so you c
 constraints, objectives, or schedule coefficients and rely on the same evaluation and encoding rules
 as any other symbolic expression.
 
-The list of possible mathematical maps includes:
+The available function nodes are:
 
-- :class:`~qilisdk.core.variables.Abs` for absolute value
-- :class:`~qilisdk.core.variables.Exp` for exponential
-- :class:`~qilisdk.core.variables.Log` for logarithm
-- :class:`~qilisdk.core.variables.Pow` for power functions
-- :class:`~qilisdk.core.variables.Sqrt` for square root
-- :class:`~qilisdk.core.variables.Inv` for inverse
-- :class:`~qilisdk.core.variables.Sin` for sine
-- :class:`~qilisdk.core.variables.Cos` for cosine
-- :class:`~qilisdk.core.variables.Tan` for tangent
+- :class:`~qilisdk.core.expression.Sin` for sine
+- :class:`~qilisdk.core.expression.Cos` for cosine
+- :class:`~qilisdk.core.expression.Tan` for tangent
+- :class:`~qilisdk.core.expression.Exp` for exponential
+- :class:`~qilisdk.core.expression.Log` for logarithm
+- :class:`~qilisdk.core.expression.Sqrt` for square root
+- :class:`~qilisdk.core.expression.Abs` for absolute value
+
+``Abs`` is the one function with no derivative: it is not differentiable at zero and there is no
+``sign`` node to write its derivative with, so :meth:`~qilisdk.core.expression.Expression.diff`
+raises on it.
+
+Powers are not functions. Use the ``**`` operator, which builds a
+:class:`~qilisdk.core.expression.Pow` node and accepts a fractional or symbolic exponent.
+:func:`~qilisdk.core.expression.Inv` is a shorthand for ``x ** -1``, so ``Inv(x)``, ``1 / x`` and
+``x ** -1`` are all the same expression:
+
+.. code-block:: python
+
+    from qilisdk.core.variables import Inv, Parameter
+
+    x, y = Parameter("x", 4.0), Parameter("y", 0.5)
+
+    print(x**y)                       # symbolic exponent
+    print((x**y).evaluate({}))
+    print(Inv(x) == 1 / x == x**-1)
+
+**Output**:
+
+::
+
+    x**y
+    2.0
+    True
+
+To write your own function, subclass :class:`~qilisdk.core.expression.Function` with a ``NAME``, a
+numeric kernel and a derivative. Everything else (canonicalization, equality, ``diff``, ``expand``,
+``substitute``, serialization) comes from the base class.
 
 Comparison Terms
 =======================

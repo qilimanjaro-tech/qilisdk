@@ -24,8 +24,9 @@ import numpy as np
 from loguru import logger
 from typing_extensions import TypeAlias
 
+from qilisdk.core.expression import Expression
 from qilisdk.core.parameterizable import Parameterizable
-from qilisdk.core.variables import LEQ, BaseVariable, Expression, Parameter
+from qilisdk.core.variables import LEQ, BaseVariable, Parameter
 from qilisdk.settings import get_settings
 from qilisdk.yaml import yaml
 

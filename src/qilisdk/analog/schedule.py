@@ -21,9 +21,10 @@ from loguru import logger
 from numpy import linspace
 
 from qilisdk.analog.hamiltonian import Hamiltonian
+from qilisdk.core.expression import Cos, Expression
 from qilisdk.core.interpolator import Interpolation, Interpolator, ParameterizedNumber, TimeDict
 from qilisdk.core.parameterizable import Parameterizable
-from qilisdk.core.variables import BaseVariable, Cos, Domain, Expression, Parameter
+from qilisdk.core.variables import BaseVariable, Domain, Parameter
 from qilisdk.settings import get_settings
 from qilisdk.utils.visualization import ScheduleStyle
 from qilisdk.yaml import yaml

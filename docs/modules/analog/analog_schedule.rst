@@ -112,7 +112,7 @@ Parameterized Schedules
 :class:`~qilisdk.analog.schedule.Schedule` coefficients can be symbolic, enabling classical optimization loops or
 experiments that scan over a family of time profiles. Coefficients can be
 instances of :class:`~qilisdk.core.variables.Parameter` or algebraic
-expressions (:class:`~qilisdk.core.variables.Expression`) built from parameters.
+expressions (:class:`~qilisdk.core.expression.Expression`) built from parameters.
 The schedule tracks every parameter it encounters so you can query or set them
 later.
 

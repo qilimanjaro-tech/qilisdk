@@ -19,7 +19,8 @@ from loguru import logger
 from numpy import pi
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliOperator
-from qilisdk.core.variables import Domain, Expression, Parameter
+from qilisdk.core.expression import Expression
+from qilisdk.core.variables import Domain, Parameter
 from qilisdk.digital.gates import CNOT, RX, RZ, BasicGate, H
 
 CommutingParts: TypeAlias = list[dict[tuple[PauliOperator, ...], complex | Expression | Parameter]]
