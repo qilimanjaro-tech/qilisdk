@@ -158,6 +158,58 @@ def test_sabre_layout_retargets_generic_gate_set_and_updates_diagnostics():
     assert any(key.startswith("SabreLayoutPass") for key in context.circuits)
 
 
+def test_sabre_layout_records_layout_without_applying_it():
+    topology = make_graph([(0, 1), (1, 2), (2, 3), (3, 4)])
+    layout_pass = SabreLayoutPass(topology, seed=2, apply_layout=False)
+    context = TranspilationContext()
+    layout_pass.attach_context(context)
+
+    circuit = Circuit(3)
+    circuit.add(H(0))
+    circuit.add(CNOT(0, 1))
+    circuit.add(CNOT(0, 2))
+
+    out = layout_pass.run(circuit)
+
+    # Circuit comes back untouched, so the router applies the mapping instead.
+    assert out is circuit
+    assert [gate.qubits for gate in out.gates] == [(0,), (0, 1), (0, 2)]
+    assert layout_pass.last_layout is not None
+    assert len(layout_pass.last_layout) == circuit.nqubits
+    assert context.initial_layout == layout_pass.last_layout
+    assert context.layout_applied is False
+
+
+def test_sabre_layout_marks_layout_as_applied_by_default():
+    topology = make_graph([(0, 1), (1, 2)])
+    layout_pass = SabreLayoutPass(topology, seed=0)
+    context = TranspilationContext()
+    layout_pass.attach_context(context)
+
+    circuit = Circuit(2)
+    circuit.add(CZ(0, 1))
+
+    layout_pass.run(circuit)
+
+    assert context.layout_applied is True
+
+
+def test_sabre_layout_without_two_qubit_gates_honours_apply_layout():
+    topology = make_graph([(0, 1), (1, 2)])
+    layout_pass = SabreLayoutPass(topology, seed=1, apply_layout=False)
+    context = TranspilationContext()
+    layout_pass.attach_context(context)
+
+    circuit = Circuit(2)
+    circuit.add(RX(0, theta=0.1))
+
+    out = layout_pass.run(circuit)
+
+    assert out is circuit
+    assert context.initial_layout == [0, 1]
+    assert context.layout_applied is False
+
+
 def test_sabre_layout_handles_sparse_physical_indices():
     topology = PyGraph()
     topology.add_nodes_from(range(5))
